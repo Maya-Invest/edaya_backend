@@ -14,6 +14,7 @@ export interface SessionArgs {
   kind: SessionKind
   startsAt: Date
   endsAt: Date
+  classSubjectId?: string | null
   moduleId?: string | null
   groupedSessionId?: string | null
   activityId?: string | null
@@ -33,6 +34,7 @@ export class Session {
   readonly kind: SessionKind
   readonly startsAt: Date
   readonly endsAt: Date
+  readonly classSubjectId?: string
   readonly moduleId?: string
   readonly groupedSessionId?: string
   readonly activityId?: string
@@ -46,6 +48,7 @@ export class Session {
     kind,
     startsAt,
     endsAt,
+    classSubjectId,
     moduleId,
     groupedSessionId,
     activityId,
@@ -58,6 +61,7 @@ export class Session {
     this.kind = kind
     this.startsAt = requireValidDate(startsAt, 'startsAt')
     this.endsAt = requireValidDate(endsAt, 'endsAt')
+    this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
     this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
     this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
     this.activityId = requireOptionalNonBlank(activityId, 'activityId')

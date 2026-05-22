@@ -1,17 +1,16 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
 
-export enum ModuleProgressStatus {
+export enum ClassSubjectMatterStatus {
   NotStarted = 'not_started',
   InProgress = 'in_progress',
   Completed = 'completed',
 }
 
-export interface ModuleProgressArgs {
+export interface ClassSubjectMatterArgs {
   id: string
-  classroomId: string
-  moduleId: string
+  classSubjectId: string
   subjectMatterId: string
-  status: ModuleProgressStatus
+  status: ClassSubjectMatterStatus
   completedPercentage: number
   updatedByStaffId?: string | null
   startedAt?: Date | null
@@ -20,12 +19,11 @@ export interface ModuleProgressArgs {
   updatedAt?: Date
 }
 
-export class ModuleProgress {
+export class ClassSubjectMatter {
   readonly id: string
-  readonly classroomId: string
-  readonly moduleId: string
+  readonly classSubjectId: string
   readonly subjectMatterId: string
-  readonly status: ModuleProgressStatus
+  readonly status: ClassSubjectMatterStatus
   readonly completedPercentage: number
   readonly updatedByStaffId?: string
   readonly startedAt?: Date
@@ -35,8 +33,7 @@ export class ModuleProgress {
 
   constructor({
     id,
-    classroomId,
-    moduleId,
+    classSubjectId,
     subjectMatterId,
     status,
     completedPercentage,
@@ -45,13 +42,12 @@ export class ModuleProgress {
     completedAt,
     notes,
     updatedAt,
-  }: ModuleProgressArgs) {
+  }: ClassSubjectMatterArgs) {
     this.id = requireNonBlank(id, 'id')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
-    this.moduleId = requireNonBlank(moduleId, 'moduleId')
+    this.classSubjectId = requireNonBlank(classSubjectId, 'classSubjectId')
     this.subjectMatterId = requireNonBlank(subjectMatterId, 'subjectMatterId')
     this.status = status
-    this.completedPercentage = requirePositiveNumber(completedPercentage, 'completedPercentage')
+    this.completedPercentage = requireNonNegativeNumber(completedPercentage, 'completedPercentage')
     this.updatedByStaffId = requireOptionalNonBlank(updatedByStaffId, 'updatedByStaffId')
     this.startedAt = startedAt ? requireValidDate(startedAt, 'startedAt') : undefined
     this.completedAt = completedAt ? requireValidDate(completedAt, 'completedAt') : undefined

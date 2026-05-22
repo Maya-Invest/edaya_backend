@@ -1,7 +1,8 @@
+export * from './academics/class-subject'
+export * from './academics/class-subject-matter'
 export * from './academics/curriculum'
 // academics
 export * from './academics/module'
-export * from './academics/module-progress'
 export * from './academics/subject'
 export * from './academics/subject-matter'
 
