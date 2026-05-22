@@ -1,7 +1,9 @@
+export * from './academics/curriculum'
 // academics
 export * from './academics/module'
-export * from './academics/module-template'
+export * from './academics/module-progress'
 export * from './academics/subject'
+export * from './academics/subject-matter'
 
 // administration
 export * from './administration/activity-enrollment'

@@ -104,7 +104,7 @@ const isAssigned = await this.moduleStaffAssignments.isTeacherAssigned({
   staffId: actor.id
 })
 if (!isAssigned && !actor.roles.includes(StaffRole.Admin)) {
-  throw new Error("UNAUTHORIZED: Only the assigned teacher can edit grades.")
+  throw new Error('UNAUTHORIZED: Only the assigned teacher can edit grades.')
 }
 ```
 

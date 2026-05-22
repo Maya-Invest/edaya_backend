@@ -1,91 +1,87 @@
 import { ModuleNodeKind } from '$lib/core/entities/academics/module'
 import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../../utils/validation'
 
-export interface ModuleTemplateArgs {
+export interface CurriculumArgs {
   id: string
   schoolId: string
+  gradeLevelId: string
+  academicYearId: string
   name: string
   description?: string | null
   createdAt?: Date
 }
 
-/**
- * Represents a reusable module structure template for a school.
- */
-export class ModuleTemplate {
+export class Curriculum {
   readonly id: string
   readonly schoolId: string
+  readonly gradeLevelId: string
+  readonly academicYearId: string
   readonly name: string
   readonly description?: string
   readonly createdAt: Date
 
-  constructor({ id, schoolId, name, description, createdAt }: ModuleTemplateArgs) {
+  constructor({ id, schoolId, gradeLevelId, academicYearId, name, description, createdAt }: CurriculumArgs) {
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
+    this.gradeLevelId = requireNonBlank(gradeLevelId, 'gradeLevelId')
+    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
     this.name = requireNonBlank(name, 'name')
     this.description = requireOptionalNonBlank(description, 'description')
     this.createdAt = createdAt ?? new Date()
   }
 }
 
-export interface ModuleTemplateNodeArgs {
+export interface CurriculumNodeArgs {
   id: string
-  templateId: string
+  curriculumId: string
   kind: ModuleNodeKind
   name?: string | null
   weight: number
-  parentTemplateNodeId?: string | null
+  parentCurriculumNodeId?: string | null
   subjectId?: string | null
-  staffId?: string | null
   createdAt?: Date
 }
 
-/**
- * Represents a node in a reusable module structure template.
- */
-export class ModuleTemplateNode {
+export class CurriculumNode {
   readonly id: string
-  readonly templateId: string
+  readonly curriculumId: string
   readonly kind: ModuleNodeKind
   readonly name?: string
   readonly weight: number
-  readonly parentTemplateNodeId?: string
+  readonly parentCurriculumNodeId?: string
   readonly subjectId?: string
-  readonly staffId?: string
   readonly createdAt: Date
 
   constructor({
     id,
-    templateId,
+    curriculumId,
     kind,
     name,
     weight,
-    parentTemplateNodeId,
+    parentCurriculumNodeId,
     subjectId,
-    staffId,
     createdAt,
-  }: ModuleTemplateNodeArgs) {
+  }: CurriculumNodeArgs) {
     this.id = requireNonBlank(id, 'id')
-    this.templateId = requireNonBlank(templateId, 'templateId')
+    this.curriculumId = requireNonBlank(curriculumId, 'curriculumId')
     this.kind = kind
     this.name = requireOptionalNonBlank(name, 'name')
     this.weight = requirePositiveNumber(weight, 'weight')
-    this.parentTemplateNodeId = parentTemplateNodeId ? requireNonBlank(parentTemplateNodeId, 'parentTemplateNodeId') : undefined
+    this.parentCurriculumNodeId = parentCurriculumNodeId ? requireNonBlank(parentCurriculumNodeId, 'parentCurriculumNodeId') : undefined
     this.subjectId = subjectId ? requireNonBlank(subjectId, 'subjectId') : undefined
-    this.staffId = staffId ? requireNonBlank(staffId, 'staffId') : undefined
     this.createdAt = createdAt ?? new Date()
 
     if (this.kind === ModuleNodeKind.Group) {
       if (!this.name) {
-        throw new Error('name is required for group modules')
+        throw new Error('name is required for group nodes')
       }
       if (this.subjectId) {
-        throw new Error('group modules must not reference a subject')
+        throw new Error('group nodes must not reference a subject')
       }
     }
 
     if (this.kind === ModuleNodeKind.Subject && !this.subjectId) {
-      throw new Error('subjectId is required for subject modules')
+      throw new Error('subjectId is required for subject nodes')
     }
   }
 }
