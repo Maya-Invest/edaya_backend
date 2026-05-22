@@ -1,15 +1,15 @@
-import type { Classroom } from '$lib/core/entities/classroom'
-import type { ModuleNodeKind } from '$lib/core/entities/module'
-import type { StaffMember } from '$lib/core/entities/staff-member'
-import type { Subject } from '$lib/core/entities/subject'
+import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ModuleNodeKind } from '$lib/core/entities/academics/module'
+import type { StaffMember } from '$lib/core/entities/core/staff-member'
+import type { Subject } from '$lib/core/entities/academics/subject'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
-import { Module } from '$lib/core/entities/module'
-import { ModuleStaffAssignment } from '$lib/core/entities/module-staff-assignment'
-import { StaffRole } from '$lib/core/entities/staff-member'
+import { Module } from '$lib/core/entities/academics/module'
+import { ModuleStaffAssignment } from '$lib/core/entities/administration/module-staff-assignment'
+import { StaffRole } from '$lib/core/entities/core/staff-member'
 
 export interface ModuleServiceArgs {
   classroomRepository: ClassroomRepository

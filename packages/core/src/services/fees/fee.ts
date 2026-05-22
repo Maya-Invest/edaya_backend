@@ -1,6 +1,6 @@
 import type { SchoolFeeRepository } from '$lib/core/ports/school-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { FeeStatus, FeeSummary, SchoolFee } from '$lib/core/entities/templates/school-fee'
+import { FeeStatus, FeeSummary, SchoolFee } from '$lib/core/entities/finance/school-fee'
 
 export interface FeeServiceArgs {
   studentRepository: StudentRepository

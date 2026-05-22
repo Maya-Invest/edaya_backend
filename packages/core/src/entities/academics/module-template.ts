@@ -1,5 +1,5 @@
+import { ModuleNodeKind } from '$lib/core/entities/academics/module'
 import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../../validation'
-import { ModuleNodeKind } from '../module'
 
 export interface ModuleTemplateArgs {
   id: string

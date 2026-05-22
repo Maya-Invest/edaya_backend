@@ -1,7 +1,7 @@
 import {
   GuardianContactMethod,
   GuardianContactMethodType,
-} from '$lib/core/entities/guardian-contact-method'
+} from '$lib/core/entities/core/guardian-contact-method'
 import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/validation'
 
 export interface GuardianArgs {

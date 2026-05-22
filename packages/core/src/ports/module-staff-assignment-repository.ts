@@ -1,4 +1,4 @@
-import type { ModuleStaffAssignment } from '$lib/core/entities/module-staff-assignment'
+import type { ModuleStaffAssignment } from '$lib/core/entities/administration/module-staff-assignment'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ModuleStaffAssignmentRepository extends BaseRepositoryInterface<ModuleStaffAssignment> {

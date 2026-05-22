@@ -1,6 +1,6 @@
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
-import { Announcement, AnnouncementAudience } from '$lib/core/entities/templates/announcement'
+import { Announcement, AnnouncementAudience } from '$lib/core/entities/core/announcement'
 
 export interface AnnouncementServiceArgs {
   classroomRepository: ClassroomRepository

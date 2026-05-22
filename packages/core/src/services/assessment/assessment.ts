@@ -1,16 +1,16 @@
-import type { AcademicPeriod } from '$lib/core/entities/academic-period'
-import type { AssessmentKind } from '$lib/core/entities/assessment'
-import type { Classroom } from '$lib/core/entities/classroom'
-import type { Deadline } from '$lib/core/entities/deadline'
-import type { Module } from '$lib/core/entities/module'
-import type { Session } from '$lib/core/entities/session'
+import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
+import type { AssessmentKind } from '$lib/core/entities/assessments/assessment'
+import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { Deadline } from '$lib/core/entities/assessments/deadline'
+import type { Module } from '$lib/core/entities/academics/module'
+import type { Session } from '$lib/core/entities/scheduling/session'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { DeadlineRepository } from '$lib/core/ports/deadline-repository'
 import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
-import { Assessment } from '$lib/core/entities/assessment'
+import { Assessment } from '$lib/core/entities/assessments/assessment'
 
 export interface AssessmentServiceArgs {
   classroomRepository: ClassroomRepository

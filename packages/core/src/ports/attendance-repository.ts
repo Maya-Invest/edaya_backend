@@ -1,4 +1,4 @@
-import type { AttendanceRecord } from '$lib/core/entities/attendance-record'
+import type { AttendanceRecord } from '$lib/core/entities/scheduling/attendance-record'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface AttendanceRepository extends BaseRepositoryInterface<AttendanceRecord> {

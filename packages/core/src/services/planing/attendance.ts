@@ -1,9 +1,9 @@
-import type { Session } from '$lib/core/entities/session'
+import type { Session } from '$lib/core/entities/scheduling/session'
 import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { AttendanceRecord, AttendanceStatus } from '$lib/core/entities/attendance-record'
+import { AttendanceRecord, AttendanceStatus } from '$lib/core/entities/scheduling/attendance-record'
 import { normalizeDate } from '$lib/core/validation'
 import { AttendanceSummary } from '$lib/core/value_object/attendance-summary'
 

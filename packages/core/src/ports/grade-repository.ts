@@ -1,4 +1,4 @@
-import type { Grade } from '$lib/core/entities/grade'
+import type { Grade } from '$lib/core/entities/assessments/grade'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface GradeRepository extends BaseRepositoryInterface<Grade> {

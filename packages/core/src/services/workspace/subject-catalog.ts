@@ -1,7 +1,7 @@
-import type { School } from '$lib/core/entities/school'
+import type { School } from '$lib/core/entities/core/school'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
-import { Subject } from '$lib/core/entities/subject'
+import { Subject } from '$lib/core/entities/academics/subject'
 
 export interface SubjectCatalogServiceArgs {
   schoolRepository: SchoolRepository

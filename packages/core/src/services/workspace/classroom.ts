@@ -1,9 +1,9 @@
-import type { AcademicYear } from '$lib/core/entities/academic-year'
-import type { School } from '$lib/core/entities/school'
+import type { AcademicYear } from '$lib/core/entities/core/academic-year'
+import type { School } from '$lib/core/entities/core/school'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import { Classroom } from '$lib/core/entities/classroom'
+import { Classroom } from '$lib/core/entities/core/classroom'
 
 export interface ClassroomServiceArgs {
   schoolRepository: SchoolRepository

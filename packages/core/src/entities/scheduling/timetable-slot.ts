@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank } from '../validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../../validation'
 
 export enum DayOfWeek {
   Monday = 'monday',

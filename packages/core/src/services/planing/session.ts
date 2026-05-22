@@ -1,10 +1,10 @@
-import type { Classroom } from '$lib/core/entities/classroom'
-import type { Module } from '$lib/core/entities/module'
-import type { SessionKind } from '$lib/core/entities/session'
+import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { Module } from '$lib/core/entities/academics/module'
+import type { SessionKind } from '$lib/core/entities/scheduling/session'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
-import { Session } from '$lib/core/entities/session'
+import { Session } from '$lib/core/entities/scheduling/session'
 
 export interface SessionServiceArgs {
   classroomRepository: ClassroomRepository

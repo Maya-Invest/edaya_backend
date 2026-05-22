@@ -1,8 +1,8 @@
-import type { AcademicPeriod } from '$lib/core/entities/academic-period'
-import type { AcademicYear } from '$lib/core/entities/academic-year'
-import type { Classroom } from '$lib/core/entities/classroom'
-import type { School } from '$lib/core/entities/school'
-import type { StaffMember } from '$lib/core/entities/staff-member'
+import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
+import type { AcademicYear } from '$lib/core/entities/core/academic-year'
+import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { School } from '$lib/core/entities/core/school'
+import type { StaffMember } from '$lib/core/entities/core/staff-member'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
@@ -10,7 +10,7 @@ import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
-import { StaffRole } from '$lib/core/entities/staff-member'
+import { StaffRole } from '$lib/core/entities/core/staff-member'
 
 export interface WorkspaceServiceArgs {
   schoolRepository: SchoolRepository

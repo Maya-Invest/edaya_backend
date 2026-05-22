@@ -1,4 +1,4 @@
-import type { ClassStaffAssignment } from '$lib/core/entities/class-staff-assignment'
+import type { ClassStaffAssignment } from '$lib/core/entities/administration/class-staff-assignment'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ClassStaffAssignmentRepository extends BaseRepositoryInterface<ClassStaffAssignment> {

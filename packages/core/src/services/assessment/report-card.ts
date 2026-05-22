@@ -1,7 +1,7 @@
-import type { AcademicPeriod } from '$lib/core/entities/academic-period'
-import type { Classroom } from '$lib/core/entities/classroom'
-import type { Student } from '$lib/core/entities/student'
-import type { StudentEnrollment } from '$lib/core/entities/student-enrollment'
+import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
+import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { Student } from '$lib/core/entities/core/student'
+import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'
@@ -10,7 +10,7 @@ import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enroll
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import type { GradeService } from '$lib/core/services/assessment/grade'
 import type { AttendanceService } from '$lib/core/services/planing/attendance'
-import { ReportCard, ReportCardStatus } from '$lib/core/entities/report-card'
+import { ReportCard, ReportCardStatus } from '$lib/core/entities/assessments/report-card'
 
 export interface ReportCardServiceArgs {
   studentRepository: StudentRepository

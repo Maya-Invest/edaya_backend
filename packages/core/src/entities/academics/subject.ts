@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../../validation'
 
 export interface SubjectArgs {
   id: string

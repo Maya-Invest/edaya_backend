@@ -1,4 +1,4 @@
-import type { ModuleResult } from '$lib/core/entities/module-result'
+import type { ModuleResult } from '$lib/core/entities/assessments/module-result'
 import type { AttendanceSummary } from '$lib/core/value_object/attendance-summary'
 import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '$lib/core/validation'
 

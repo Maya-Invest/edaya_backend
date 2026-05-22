@@ -1,14 +1,14 @@
-import type { GuardianContactMethod } from '$lib/core/entities/guardian-contact-method'
-import type { School } from '$lib/core/entities/school'
-import type { Student } from '$lib/core/entities/student'
+import type { GuardianContactMethod } from '$lib/core/entities/core/guardian-contact-method'
+import type { School } from '$lib/core/entities/core/school'
+import type { Student } from '$lib/core/entities/core/student'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { GuardianRepository } from '$lib/core/ports/guardian-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { Guardian } from '$lib/core/entities/guardian'
-import { GuardianStudentLink } from '$lib/core/entities/guardian-student-link'
+import { Guardian } from '$lib/core/entities/core/guardian'
+import { GuardianStudentLink } from '$lib/core/entities/core/guardian-student-link'
 
 export interface GuardianServiceArgs {
   schoolRepository: SchoolRepository

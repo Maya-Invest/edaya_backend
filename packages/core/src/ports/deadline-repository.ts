@@ -1,4 +1,4 @@
-import type { Deadline } from '$lib/core/entities/deadline'
+import type { Deadline } from '$lib/core/entities/assessments/deadline'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface DeadlineRepository extends BaseRepositoryInterface<Deadline> {

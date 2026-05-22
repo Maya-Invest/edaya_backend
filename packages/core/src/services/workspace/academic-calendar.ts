@@ -1,10 +1,10 @@
-import type { AcademicPeriodType } from '$lib/core/entities/academic-period'
-import type { School } from '$lib/core/entities/school'
+import type { AcademicPeriodType } from '$lib/core/entities/core/academic-period'
+import type { School } from '$lib/core/entities/core/school'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import { AcademicPeriod } from '$lib/core/entities/academic-period'
-import { AcademicYear } from '$lib/core/entities/academic-year'
+import { AcademicPeriod } from '$lib/core/entities/core/academic-period'
+import { AcademicYear } from '$lib/core/entities/core/academic-year'
 
 export interface AcademicCalendarServiceArgs {
   schoolRepository: SchoolRepository
