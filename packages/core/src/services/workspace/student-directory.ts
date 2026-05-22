@@ -1,16 +1,16 @@
+import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
+import type { ReportCard } from '$lib/core/entities/assessments/report-card'
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
 import type { Classroom } from '$lib/core/entities/core/classroom'
-import type { ReportCard } from '$lib/core/entities/assessments/report-card'
 import type { School } from '$lib/core/entities/core/school'
 import type { Student } from '$lib/core/entities/core/student'
-import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
 import type { ReportCardRepository } from '$lib/core/ports/report-card-repository'
-import type { SchoolFeeRepository } from '$lib/core/ports/school-fee-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 
 export interface StudentDirectoryServiceArgs {
@@ -21,7 +21,7 @@ export interface StudentDirectoryServiceArgs {
   studentEnrollmentRepository: StudentEnrollmentRepository
   guardianStudentLinkRepository: GuardianStudentLinkRepository
   reportCardRepository: ReportCardRepository
-  schoolFeeRepository: SchoolFeeRepository
+  studentFeeRepository: StudentFeeRepository
 }
 
 export interface StudentDirectoryRow {
@@ -48,7 +48,7 @@ export class StudentDirectoryService {
     this.enrollments = args.studentEnrollmentRepository
     this.guardianStudentLinks = args.guardianStudentLinkRepository
     this.reportCards = args.reportCardRepository
-    this.fees = args.schoolFeeRepository
+    this.fees = args.studentFeeRepository
   }
 
   private readonly schools: SchoolRepository
@@ -58,7 +58,7 @@ export class StudentDirectoryService {
   private readonly enrollments: StudentEnrollmentRepository
   private readonly guardianStudentLinks: GuardianStudentLinkRepository
   private readonly reportCards: ReportCardRepository
-  private readonly fees: SchoolFeeRepository
+  private readonly fees: StudentFeeRepository
 
   async listStudents({
     schoolId,
@@ -91,7 +91,7 @@ export class StudentDirectoryService {
           currentEnrollment,
           classroom: currentEnrollment ? classroomById.get(currentEnrollment.classroomId) : undefined,
           guardianCount: guardianLinks.length,
-          balanceDue: fees.reduce((sum, fee) => sum + fee.balanceDue, 0),
+          balanceDue: fees.reduce((sum, fee) => sum + fee.balanceDue.amount, 0),
           latestReportCard: this.pickLatestReportCard(reportCards),
         }
       }),

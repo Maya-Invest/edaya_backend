@@ -6,7 +6,7 @@ import {
   requireOptionalNonBlank,
   requirePositiveNumber,
   roundTo2,
-} from '$lib/core/validation'
+} from '$lib/core/utils/validation'
 
 export enum ExamReportCardStatus {
   Draft = 'draft',

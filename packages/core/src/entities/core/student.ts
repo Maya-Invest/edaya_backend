@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../../validation'
+import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
 
 export enum StudentStatus {
   Active = 'active',

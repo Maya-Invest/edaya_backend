@@ -1,15 +1,15 @@
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { School } from '$lib/core/entities/core/school'
 import type { Announcement } from '$lib/core/entities/core/announcement'
+import type { School } from '$lib/core/entities/core/school'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { ReportCardRepository } from '$lib/core/ports/report-card-repository'
-import type { SchoolFeeRepository } from '$lib/core/ports/school-fee-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
+import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import { ReportCardStatus } from '$lib/core/entities/assessments/report-card'
-import { FeeStatus } from '$lib/core/entities/finance/school-fee'
+import { FeeStatus } from '$lib/core/entities/finance/student-fee'
 
 export interface SchoolOverviewServiceArgs {
   schoolRepository: SchoolRepository
@@ -17,7 +17,7 @@ export interface SchoolOverviewServiceArgs {
   classroomRepository: ClassroomRepository
   studentRepository: StudentRepository
   announcementRepository: AnnouncementRepository
-  schoolFeeRepository: SchoolFeeRepository
+  studentFeeRepository: StudentFeeRepository
   reportCardRepository: ReportCardRepository
 }
 
@@ -38,7 +38,7 @@ export class SchoolOverviewService {
     this.classrooms = args.classroomRepository
     this.students = args.studentRepository
     this.announcements = args.announcementRepository
-    this.fees = args.schoolFeeRepository
+    this.fees = args.studentFeeRepository
     this.reportCards = args.reportCardRepository
   }
 
@@ -47,7 +47,7 @@ export class SchoolOverviewService {
   private readonly classrooms: ClassroomRepository
   private readonly students: StudentRepository
   private readonly announcements: AnnouncementRepository
-  private readonly fees: SchoolFeeRepository
+  private readonly fees: StudentFeeRepository
   private readonly reportCards: ReportCardRepository
 
   async getSchoolOverview({ schoolId }: { schoolId: string }): Promise<SchoolOverview> {

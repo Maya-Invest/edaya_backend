@@ -1,4 +1,4 @@
-import { requireNonBlank } from '$lib/core/validation'
+import { requireNonBlank } from '$lib/core/utils/validation'
 
 export interface GuardianStudentLinkArgs {
   id: string
@@ -7,6 +7,7 @@ export interface GuardianStudentLinkArgs {
   studentId: string
   relationship?: string
   isPrimary?: boolean
+  isBillingContact?: boolean
   createdAt?: Date
 }
 
@@ -21,6 +22,7 @@ export class GuardianStudentLink {
   readonly studentId: string
   readonly relationship: string
   readonly isPrimary: boolean
+  readonly isBillingContact: boolean
   readonly createdAt: Date
 
   constructor({
@@ -30,6 +32,7 @@ export class GuardianStudentLink {
     studentId,
     relationship = 'parent',
     isPrimary = false,
+    isBillingContact = false,
     createdAt,
   }: GuardianStudentLinkArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -38,6 +41,7 @@ export class GuardianStudentLink {
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.relationship = requireNonBlank(relationship, 'relationship')
     this.isPrimary = isPrimary
+    this.isBillingContact = isBillingContact
     this.createdAt = createdAt ?? new Date()
   }
 }

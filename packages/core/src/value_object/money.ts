@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeInt } from '$lib/core/validation'
+import { requireNonBlank, requireNonNegativeInt } from '$lib/core/utils/validation'
 
 /**
  * Represents a monetary value in minor units for a single currency.

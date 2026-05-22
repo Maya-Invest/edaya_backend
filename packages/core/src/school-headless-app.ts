@@ -13,11 +13,11 @@ import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-stu
 import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
 import type { ReportCardRepository } from '$lib/core/ports/report-card-repository'
-import type { SchoolFeeRepository } from '$lib/core/ports/school-fee-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
 import { AnnouncementService } from '$lib/core/services/announcement'
@@ -62,7 +62,7 @@ export interface SchoolHeadlessAppArgs {
   gradeRepository: GradeRepository
   reportCardRepository: ReportCardRepository
   announcementRepository: AnnouncementRepository
-  schoolFeeRepository: SchoolFeeRepository
+  studentFeeRepository: StudentFeeRepository
   moduleRepository: ModuleRepository
   deadlineRepository: DeadlineRepository
   deadlineRecordRepository: DeadlineRecordRepository
@@ -190,7 +190,7 @@ export class SchoolHeadlessApp {
     })
     this.fees = new FeeService({
       studentRepository: args.studentRepository,
-      schoolFeeRepository: args.schoolFeeRepository,
+      studentFeeRepository: args.studentFeeRepository,
     })
     this.deadlines = new DeadlineService({
       schoolRepository: args.schoolRepository,
@@ -216,7 +216,7 @@ export class SchoolHeadlessApp {
       classroomRepository: args.classroomRepository,
       studentRepository: args.studentRepository,
       announcementRepository: args.announcementRepository,
-      schoolFeeRepository: args.schoolFeeRepository,
+      studentFeeRepository: args.studentFeeRepository,
       reportCardRepository: args.reportCardRepository,
     })
     this.studentDirectory = new StudentDirectoryService({
@@ -227,7 +227,7 @@ export class SchoolHeadlessApp {
       studentEnrollmentRepository: args.studentEnrollmentRepository,
       guardianStudentLinkRepository: args.guardianStudentLinkRepository,
       reportCardRepository: args.reportCardRepository,
-      schoolFeeRepository: args.schoolFeeRepository,
+      studentFeeRepository: args.studentFeeRepository,
     })
     this.classroomRead = new ClassroomReadService({
       academicYearRepository: args.academicYearRepository,

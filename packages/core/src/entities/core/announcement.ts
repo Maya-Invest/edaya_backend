@@ -1,4 +1,4 @@
-import { requireNonBlank } from '../../validation'
+import { requireNonBlank } from '../../utils/validation'
 
 export enum AnnouncementAudience {
   School = 'school',

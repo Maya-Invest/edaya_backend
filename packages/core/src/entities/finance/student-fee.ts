@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeInt, requireValidDate } from '../../validation'
+import { requireNonBlank, requireNonNegativeInt, requireValidDate } from '../../utils/validation'
 import { Money } from '../../value_object/money'
 
 export enum FeeStatus {
@@ -22,6 +22,7 @@ export interface StudentFeeArgs {
   feeId: string
   academicYearId: string
   expectedAmount: number
+  paidAmount?: number | null
   currency: string
   dueDate?: Date | null
   status: FeeStatus
@@ -33,7 +34,7 @@ export interface StudentFeeArgs {
 /**
  * Represents the assignment of a Fee to a specific Student.
  * Scoped to an academic year for year-based queries.
- * Tracks the expected amount (which might be discounted) and payment schedule.
+ * Tracks the expected amount (which might be discounted), paid amount, and payment schedule.
  * Note: Actual payments made are tracked in separate Payment entities.
  */
 export class StudentFee {
@@ -42,6 +43,7 @@ export class StudentFee {
   readonly feeId: string
   readonly academicYearId: string
   readonly expectedAmount: Money
+  readonly paidAmount: Money
   readonly dueDate?: Date
   readonly status: FeeStatus
   readonly expectedPayments: readonly StudentFeeInstallment[]
@@ -54,6 +56,7 @@ export class StudentFee {
     feeId,
     academicYearId,
     expectedAmount,
+    paidAmount = 0,
     currency,
     dueDate,
     status,
@@ -66,9 +69,15 @@ export class StudentFee {
     this.feeId = requireNonBlank(feeId, 'feeId')
     this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
 
+    const activeCurrency = requireNonBlank(currency, 'currency')
     this.expectedAmount = new Money({
       amount: requireNonNegativeInt(expectedAmount, 'expectedAmount'),
-      currency: requireNonBlank(currency, 'currency'),
+      currency: activeCurrency,
+    })
+
+    this.paidAmount = new Money({
+      amount: requireNonNegativeInt(paidAmount ?? 0, 'paidAmount'),
+      currency: activeCurrency,
     })
 
     this.dueDate = dueDate ? requireValidDate(dueDate, 'dueDate') : undefined
@@ -91,5 +100,53 @@ export class StudentFee {
         throw new Error('overdue fees must define a dueDate')
       }
     }
+  }
+
+  get balanceDue(): Money {
+    return new Money({
+      amount: Math.max(0, this.expectedAmount.amount - this.paidAmount.amount),
+      currency: this.expectedAmount.currency,
+    })
+  }
+
+  copyWith(changes: Partial<StudentFeeArgs>): StudentFee {
+    return new StudentFee({
+      id: this.id,
+      studentId: this.studentId,
+      feeId: this.feeId,
+      academicYearId: this.academicYearId,
+      expectedAmount: changes.expectedAmount ?? this.expectedAmount.amount,
+      paidAmount: changes.paidAmount ?? this.paidAmount.amount,
+      currency: this.expectedAmount.currency,
+      dueDate: changes.dueDate !== undefined ? changes.dueDate : this.dueDate,
+      status: changes.status ?? this.status,
+      expectedPayments: this.expectedPayments,
+      createdAt: this.createdAt,
+      updatedAt: changes.updatedAt !== undefined ? changes.updatedAt : this.updatedAt,
+    })
+  }
+}
+
+export class StudentFeeSummary {
+  readonly totalExpected: Money
+  readonly totalPaid: Money
+  readonly totalOverdue: Money
+  readonly balanceDue: Money
+  readonly itemCount: number
+
+  constructor(args: {
+    totalExpected: Money
+    totalPaid: Money
+    totalOverdue: Money
+    itemCount: number
+  }) {
+    this.totalExpected = args.totalExpected
+    this.totalPaid = args.totalPaid
+    this.totalOverdue = args.totalOverdue
+    this.balanceDue = new Money({
+      amount: Math.max(0, args.totalExpected.amount - args.totalPaid.amount),
+      currency: args.totalExpected.currency,
+    })
+    this.itemCount = args.itemCount
   }
 }

@@ -1,8 +1,8 @@
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { AttendanceRecord } from '$lib/core/entities/scheduling/attendance-record'
 import type { Classroom } from '$lib/core/entities/core/classroom'
-import type { Session } from '$lib/core/entities/scheduling/session'
 import type { Student } from '$lib/core/entities/core/student'
+import type { AttendanceRecord } from '$lib/core/entities/scheduling/attendance-record'
+import type { Session } from '$lib/core/entities/scheduling/session'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
@@ -12,7 +12,7 @@ import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enroll
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
 import { AttendanceStatus } from '$lib/core/entities/scheduling/attendance-record'
-import { isSameDate } from '$lib/core/validation'
+import { isSameDate } from '$lib/core/utils/validation'
 
 export interface AttendanceReviewServiceArgs {
   academicYearRepository: AcademicYearRepository

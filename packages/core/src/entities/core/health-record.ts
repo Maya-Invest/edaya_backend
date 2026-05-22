@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/validation'
 
 export interface HealthRecordArgs {
   id: string

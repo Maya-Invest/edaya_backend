@@ -1,5 +1,5 @@
 import { ModuleNodeKind } from '$lib/core/entities/academics/module'
-import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '$lib/core/validation'
+import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '$lib/core/utils/validation'
 
 export interface ModuleResultArgs {
   moduleId: string

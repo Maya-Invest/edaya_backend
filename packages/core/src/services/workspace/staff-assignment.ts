@@ -1,5 +1,5 @@
-import type { Classroom } from '$lib/core/entities/core/classroom'
 import type { Module } from '$lib/core/entities/academics/module'
+import type { Classroom } from '$lib/core/entities/core/classroom'
 import type { StaffMember, StaffRole } from '$lib/core/entities/core/staff-member'
 import type { ClassStaffAssignmentRepository } from '$lib/core/ports/class-staff-assignment-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'

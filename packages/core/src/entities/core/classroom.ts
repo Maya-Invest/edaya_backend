@@ -1,4 +1,9 @@
-import { requireNonBlank, requirePositiveInt } from '$lib/core/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '$lib/core/utils/validation'
+
+export enum AttendanceMode {
+  Daily = 'daily',
+  Session = 'session',
+}
 
 export interface ClassroomArgs {
   id: string
@@ -7,6 +12,8 @@ export interface ClassroomArgs {
   gradeLevelId: string
   name: string
   capacity?: number | null
+  attendanceMode?: AttendanceMode
+  homeroomTeacherId?: string | null
   createdAt?: Date
 }
 
@@ -22,9 +29,21 @@ export class Classroom {
   readonly gradeLevelId: string
   readonly name: string
   readonly capacity?: number
+  readonly attendanceMode: AttendanceMode
+  readonly homeroomTeacherId?: string
   readonly createdAt: Date
 
-  constructor({ id, schoolId, academicYearId, gradeLevelId, name, capacity, createdAt }: ClassroomArgs) {
+  constructor({
+    id,
+    schoolId,
+    academicYearId,
+    gradeLevelId,
+    name,
+    capacity,
+    attendanceMode = AttendanceMode.Session,
+    homeroomTeacherId,
+    createdAt,
+  }: ClassroomArgs) {
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
@@ -33,6 +52,8 @@ export class Classroom {
     if (capacity != null) {
       this.capacity = requirePositiveInt(capacity, 'capacity')
     }
+    this.attendanceMode = attendanceMode
+    this.homeroomTeacherId = requireOptionalNonBlank(homeroomTeacherId, 'homeroomTeacherId')
     this.createdAt = createdAt ?? new Date()
   }
 }

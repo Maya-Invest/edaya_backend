@@ -4,8 +4,8 @@ import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { Student } from '$lib/core/entities/core/student'
 import { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
+import { Student } from '$lib/core/entities/core/student'
 
 export interface StudentServiceArgs {
   schoolRepository: SchoolRepository

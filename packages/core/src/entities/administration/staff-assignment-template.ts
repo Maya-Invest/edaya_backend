@@ -1,5 +1,5 @@
 import type { StaffRole } from '$lib/core/entities/core/staff-member'
-import { requireNonBlank, requireOptionalNonBlank } from '../../validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
 
 export enum StaffAssignmentTargetKind {
   Classroom = 'classroom',

@@ -1,4 +1,4 @@
-import { requireNonBlank } from '$lib/core/validation'
+import { requireNonBlank } from '$lib/core/utils/validation'
 
 export enum DeadlineComplianceStatus {
   Met = 'met',

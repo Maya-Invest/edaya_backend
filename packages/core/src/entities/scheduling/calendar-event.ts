@@ -1,4 +1,4 @@
-import { requireNonBlank, requireValidDate } from '$lib/core/validation'
+import { requireNonBlank, requireValidDate } from '$lib/core/utils/validation'
 
 export enum CalendarEventKind {
   Holiday = 'holiday',

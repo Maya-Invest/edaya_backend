@@ -1,4 +1,4 @@
-import { requireNonBlank, requireValidDate } from '$lib/core/validation'
+import { requireNonBlank, requireValidDate } from '$lib/core/utils/validation'
 
 export interface AcademicYearArgs {
   id: string

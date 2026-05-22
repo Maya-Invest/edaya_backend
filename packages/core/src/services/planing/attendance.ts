@@ -4,7 +4,7 @@ import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import { AttendanceRecord, AttendanceStatus } from '$lib/core/entities/scheduling/attendance-record'
-import { normalizeDate } from '$lib/core/validation'
+import { normalizeDate } from '$lib/core/utils/validation'
 import { AttendanceSummary } from '$lib/core/value_object/attendance-summary'
 
 export interface AttendanceServiceArgs {

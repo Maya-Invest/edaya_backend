@@ -1,7 +1,7 @@
+import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
 import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
 import type { Classroom } from '$lib/core/entities/core/classroom'
 import type { Student } from '$lib/core/entities/core/student'
-import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'

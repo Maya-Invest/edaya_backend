@@ -1,5 +1,5 @@
-import type { Classroom } from '$lib/core/entities/core/classroom'
 import type { Module } from '$lib/core/entities/academics/module'
+import type { Classroom } from '$lib/core/entities/core/classroom'
 import type { SessionKind } from '$lib/core/entities/scheduling/session'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
 import type { ModuleRepository } from '$lib/core/ports/module-repository'

@@ -1,6 +1,6 @@
-import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
-import type { Assessment } from '$lib/core/entities/assessments/assessment'
 import type { Module } from '$lib/core/entities/academics/module'
+import type { Assessment } from '$lib/core/entities/assessments/assessment'
+import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
@@ -9,10 +9,10 @@ import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
-import { Grade } from '$lib/core/entities/assessments/grade'
 import { ModuleNodeKind } from '$lib/core/entities/academics/module'
+import { Grade } from '$lib/core/entities/assessments/grade'
 import { ModuleResult } from '$lib/core/entities/assessments/module-result'
-import { roundTo2 } from '$lib/core/validation'
+import { roundTo2 } from '$lib/core/utils/validation'
 
 export interface GradeServiceArgs {
   studentRepository: StudentRepository

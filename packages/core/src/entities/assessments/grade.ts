@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeNumber, requirePositiveNumber, roundTo2 } from '$lib/core/validation'
+import { requireNonBlank, requireNonNegativeNumber, requirePositiveNumber, roundTo2 } from '$lib/core/utils/validation'
 
 export interface GradeArgs {
   id: string

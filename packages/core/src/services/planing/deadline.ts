@@ -1,6 +1,6 @@
-import type { Classroom } from '$lib/core/entities/core/classroom'
-import type { DeadlineComplianceStatus } from '$lib/core/entities/assessments/deadline-record'
 import type { Module } from '$lib/core/entities/academics/module'
+import type { DeadlineComplianceStatus } from '$lib/core/entities/assessments/deadline-record'
+import type { Classroom } from '$lib/core/entities/core/classroom'
 import type { School } from '$lib/core/entities/core/school'
 import type { Student } from '$lib/core/entities/core/student'
 import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'

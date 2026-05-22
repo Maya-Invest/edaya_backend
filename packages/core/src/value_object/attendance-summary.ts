@@ -1,4 +1,4 @@
-import { requireNonNegativeInt } from '$lib/core/validation'
+import { requireNonNegativeInt } from '$lib/core/utils/validation'
 
 export interface AttendanceSummaryArgs {
   presentCount: number

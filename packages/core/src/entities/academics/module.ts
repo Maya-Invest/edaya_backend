@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '$lib/core/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '$lib/core/utils/validation'
 
 export enum ModuleNodeKind {
   Group = 'group',

@@ -2,7 +2,7 @@ import {
   GuardianContactMethod,
   GuardianContactMethodType,
 } from '$lib/core/entities/core/guardian-contact-method'
-import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/validation'
 
 export interface GuardianArgs {
   id: string

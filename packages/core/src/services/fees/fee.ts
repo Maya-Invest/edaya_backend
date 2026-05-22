@@ -1,54 +1,59 @@
-import type { SchoolFeeRepository } from '$lib/core/ports/school-fee-repository'
+import type { StudentFeeInstallment } from '$lib/core/entities/finance/student-fee'
+import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { FeeStatus, FeeSummary, SchoolFee } from '$lib/core/entities/finance/school-fee'
+import { FeeStatus, StudentFee, StudentFeeSummary } from '$lib/core/entities/finance/student-fee'
+import { Money } from '$lib/core/value_object/money'
 
 export interface FeeServiceArgs {
   studentRepository: StudentRepository
-  schoolFeeRepository: SchoolFeeRepository
+  studentFeeRepository: StudentFeeRepository
 }
 
 export class FeeService {
   constructor(args: FeeServiceArgs) {
     this.students = args.studentRepository
-    this.fees = args.schoolFeeRepository
+    this.fees = args.studentFeeRepository
   }
 
   private readonly students: StudentRepository
-  private readonly fees: SchoolFeeRepository
+  private readonly fees: StudentFeeRepository
 
   async registerFee({
     id,
-    schoolId,
     studentId,
-    label,
+    feeId,
+    academicYearId,
     expectedAmount,
     paidAmount = 0,
     currency,
     dueDate,
+    expectedPayments,
     createdAt,
     referenceDate,
   }: {
     id: string
-    schoolId: string
     studentId: string
-    label: string
+    feeId: string
+    academicYearId: string
     expectedAmount: number
     paidAmount?: number
     currency: string
     dueDate?: Date
+    expectedPayments?: readonly StudentFeeInstallment[]
     createdAt?: Date
     referenceDate?: Date
-  }): Promise<SchoolFee> {
+  }): Promise<StudentFee> {
     await this.requireStudent(studentId)
-    const fee = new SchoolFee({
+    const fee = new StudentFee({
       id,
-      schoolId,
       studentId,
-      label,
+      feeId,
+      academicYearId,
       expectedAmount,
       paidAmount,
       currency,
       dueDate,
+      expectedPayments,
       status: this.deriveStatus({
         expectedAmount,
         paidAmount,
@@ -71,7 +76,7 @@ export class FeeService {
     paidAmount: number
     updatedAt?: Date
     referenceDate?: Date
-  }): Promise<SchoolFee> {
+  }): Promise<StudentFee> {
     const existing = await this.fees.findById(feeId)
     if (!existing) {
       throw new Error(`Unknown fee: ${feeId}`)
@@ -80,7 +85,7 @@ export class FeeService {
     const updated = existing.copyWith({
       paidAmount,
       status: this.deriveStatus({
-        expectedAmount: existing.expectedAmount,
+        expectedAmount: existing.expectedAmount.amount,
         paidAmount,
         dueDate: existing.dueDate,
         referenceDate: referenceDate ?? new Date(),
@@ -91,17 +96,21 @@ export class FeeService {
     return updated
   }
 
-  async buildFeeSummary(studentId: string): Promise<FeeSummary> {
+  async buildFeeSummary(studentId: string): Promise<StudentFeeSummary> {
     const fees = await this.fees.listByStudent(studentId)
-    const currency = fees[0]?.currency ?? 'XAF'
-    return new FeeSummary({
-      totalExpected: fees.reduce((sum, item) => sum + item.expectedAmount, 0),
-      totalPaid: fees.reduce((sum, item) => sum + item.paidAmount, 0),
-      totalOverdue: fees
-        .filter(item => item.status === FeeStatus.Overdue)
-        .reduce((sum, item) => sum + item.balanceDue, 0),
+    const currency = fees[0]?.expectedAmount.currency ?? 'XAF'
+
+    const totalExpectedAmount = fees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
+    const totalPaidAmount = fees.reduce((sum, item) => sum + item.paidAmount.amount, 0)
+    const totalOverdueAmount = fees
+      .filter(item => item.status === FeeStatus.Overdue)
+      .reduce((sum, item) => sum + item.balanceDue.amount, 0)
+
+    return new StudentFeeSummary({
+      totalExpected: new Money({ amount: totalExpectedAmount, currency }),
+      totalPaid: new Money({ amount: totalPaidAmount, currency }),
+      totalOverdue: new Money({ amount: totalOverdueAmount, currency }),
       itemCount: fees.length,
-      currency,
     })
   }
 
