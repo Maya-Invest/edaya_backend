@@ -1,0 +1,19 @@
+{
+  "name": "maya_school_monorepo",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "check": "bun --filter=maya_school_core run check"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^9.0.0",
+    "eslint": "^10.3.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.3"
+  }
+}
