@@ -1,98 +1,98 @@
-import type { Module } from '$lib/core/entities/academics/module'
+import type { ClassSubject } from '$lib/core/entities/academics/class-subject'
 import type { Subject } from '$lib/core/entities/academics/subject'
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { StaffMember } from '$lib/core/entities/core/staff-member'
 import type { Session } from '$lib/core/entities/scheduling/session'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
-import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
+import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
+import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
 import { StaffRole } from '$lib/core/entities/core/staff-member'
 
-export interface ClassroomReadServiceArgs {
+export interface ClassGroupReadServiceArgs {
   academicYearRepository: AcademicYearRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
-  moduleRepository: ModuleRepository
-  moduleStaffAssignmentRepository: ModuleStaffAssignmentRepository
+  classSubjectRepository: ClassSubjectRepository
+  classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
   staffMemberRepository: StaffMemberRepository
   subjectRepository: SubjectRepository
   sessionRepository: SessionRepository
 }
 
-export interface ClassroomCourseAssignment {
-  module: Module
+export interface ClassGroupCourseAssignment {
+  classSubject: ClassSubject
   subject: Subject
   teacher?: StaffMember
   teacherName: string
 }
 
-export interface ClassroomTimetableEntry {
+export interface ClassGroupTimetableEntry {
   session: Session
   courseName: string
   teacherName: string
   roomName: string
 }
 
-export interface ClassroomOverviewRow {
-  classroom: Classroom
+export interface ClassGroupOverviewRow {
+  classGroup: ClassGroup
   studentCount: number
   courseCount: number
   teacherNames: string[]
 }
 
-export interface ClassroomDirectory {
+export interface ClassGroupDirectory {
   activeAcademicYear?: AcademicYear
-  rows: ClassroomOverviewRow[]
+  rows: ClassGroupOverviewRow[]
 }
 
-export class ClassroomReadService {
-  constructor(args: ClassroomReadServiceArgs) {
+export class ClassGroupReadService {
+  constructor(args: ClassGroupReadServiceArgs) {
     this.academicYears = args.academicYearRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.enrollments = args.studentEnrollmentRepository
-    this.modules = args.moduleRepository
-    this.moduleStaffAssignments = args.moduleStaffAssignmentRepository
+    this.classSubjects = args.classSubjectRepository
+    this.classSubjectStaffAssignments = args.classSubjectStaffAssignmentRepository
     this.staffMembers = args.staffMemberRepository
     this.subjects = args.subjectRepository
     this.sessions = args.sessionRepository
   }
 
   private readonly academicYears: AcademicYearRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly enrollments: StudentEnrollmentRepository
-  private readonly modules: ModuleRepository
-  private readonly moduleStaffAssignments: ModuleStaffAssignmentRepository
+  private readonly classSubjects: ClassSubjectRepository
+  private readonly classSubjectStaffAssignments: ClassSubjectStaffAssignmentRepository
   private readonly staffMembers: StaffMemberRepository
   private readonly subjects: SubjectRepository
   private readonly sessions: SessionRepository
 
-  async listClassrooms({
+  async listClassGroups({
     schoolId,
     academicYearId,
   }: {
     schoolId: string
     academicYearId?: string
-  }): Promise<ClassroomDirectory> {
+  }): Promise<ClassGroupDirectory> {
     const activeAcademicYear = await this.resolveAcademicYear({ schoolId, academicYearId })
-    const classrooms = activeAcademicYear
-      ? await this.classrooms.listByAcademicYear(activeAcademicYear.id)
+    const classGroups = activeAcademicYear
+      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
       : []
     const rows = await Promise.all(
-      classrooms.map(async (classroom) => {
+      classGroups.map(async (classGroup) => {
         const [courseAssignments, enrollments] = await Promise.all([
-          this.listClassroomCourses(classroom.id),
-          this.enrollments.listByClassroom(classroom.id),
+          this.listClassGroupCourses(classGroup.id),
+          this.enrollments.listByClassGroup(classGroup.id),
         ])
         const teacherNames = [...new Set(courseAssignments.map(row => row.teacherName).filter(name => name !== 'Unassigned'))]
 
         return {
-          classroom,
+          classGroup,
           studentCount: enrollments.length,
           courseCount: courseAssignments.length,
           teacherNames,
@@ -106,25 +106,25 @@ export class ClassroomReadService {
     }
   }
 
-  async listClassroomCourses(classroomId: string): Promise<ClassroomCourseAssignment[]> {
-    await this.requireClassroom(classroomId)
-    const modules = (await this.modules.listByClassroom(classroomId)).filter(module => module.subjectId != null)
+  async listClassGroupCourses(classGroupId: string): Promise<ClassGroupCourseAssignment[]> {
+    await this.requireClassGroup(classGroupId)
+    const classSubjects = await this.classSubjects.listByClassGroup(classGroupId)
     const rows = await Promise.all(
-      modules.map(async (module) => {
-        const subject = module.subjectId ? await this.subjects.findById(module.subjectId) : undefined
+      classSubjects.map(async (classSubject) => {
+        const subject = await this.subjects.findById(classSubject.subjectId)
         if (!subject) {
           return undefined
         }
-        const teacher = await this.resolveTeacher(module.id, module.staffId)
+        const teacher = await this.resolveTeacher(classSubject.id, classSubject.staffId)
         return {
-          module,
+          classSubject,
           subject,
           teacher,
           teacherName: teacher?.fullName ?? 'Unassigned',
         }
       }),
     )
-    const courseAssignments: ClassroomCourseAssignment[] = []
+    const courseAssignments: ClassGroupCourseAssignment[] = []
     for (const row of rows) {
       if (row) {
         courseAssignments.push(row)
@@ -133,38 +133,40 @@ export class ClassroomReadService {
     return courseAssignments
   }
 
-  async listClassroomTimetable(classroomId: string): Promise<ClassroomTimetableEntry[]> {
-    const classroom = await this.requireClassroom(classroomId)
+  async listClassGroupTimetable(classGroupId: string): Promise<ClassGroupTimetableEntry[]> {
+    const classGroup = await this.requireClassGroup(classGroupId)
     const [courseAssignments, sessions] = await Promise.all([
-      this.listClassroomCourses(classroomId),
-      this.sessions.listByClassroom(classroomId),
+      this.listClassGroupCourses(classGroupId),
+      this.sessions.listByClassGroup(classGroupId),
     ])
-    const courseByModuleId = new Map(courseAssignments.map(row => [row.module.id, row]))
+    const courseByClassSubjectId = new Map(courseAssignments.map(row => [row.classSubject.id, row]))
 
     return sessions.map((session) => {
-      const courseAssignment = session.moduleId ? courseByModuleId.get(session.moduleId) : undefined
+      const courseAssignment = session.classSubjectId
+        ? courseByClassSubjectId.get(session.classSubjectId)
+        : undefined
       return {
         session,
         courseName: courseAssignment?.subject.name ?? session.title,
         teacherName: courseAssignment?.teacherName ?? 'Unassigned',
-        roomName: classroom.name,
+        roomName: classGroup.name,
       }
     })
   }
 
-  private async resolveTeacher(moduleId: string, fallbackStaffId?: string): Promise<StaffMember | undefined> {
-    const assignments = await this.moduleStaffAssignments.listByModule(moduleId)
+  private async resolveTeacher(classSubjectId: string, fallbackStaffId?: string): Promise<StaffMember | undefined> {
+    const assignments = await this.classSubjectStaffAssignments.listByClassSubject(classSubjectId)
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     const teacherId = teacherAssignment?.staffId ?? fallbackStaffId
     return teacherId ? this.staffMembers.findById(teacherId) : undefined
   }
 
-  private async requireClassroom(classroomId: string): Promise<Classroom> {
-    const classroom = await this.classrooms.findById(classroomId)
-    if (!classroom) {
-      throw new Error(`Unknown classroom: ${classroomId}`)
+  private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      throw new Error(`Unknown classGroup: ${classGroupId}`)
     }
-    return classroom
+    return classGroup
   }
 
   private async resolveAcademicYear({

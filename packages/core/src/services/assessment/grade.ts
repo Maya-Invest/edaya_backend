@@ -1,55 +1,56 @@
-import type { Module } from '$lib/core/entities/academics/module'
 import type { Assessment } from '$lib/core/entities/assessments/assessment'
+import type { ReportCardDefinitionSection } from '$lib/core/entities/assessments/report-card-definition-section'
+import type { ReportCardResultSection } from '$lib/core/entities/assessments/report-card-result-section'
 import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
+import type { ReportCardDefinitionSectionRepository } from '$lib/core/ports/report-card-definition-section-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import type { SubjectRepository } from '$lib/core/ports/subject-repository'
-import { ModuleNodeKind } from '$lib/core/entities/academics/module'
 import { Grade } from '$lib/core/entities/assessments/grade'
-import { ModuleResult } from '$lib/core/entities/assessments/module-result'
+import { ReportCardDefinitionSectionKind } from '$lib/core/entities/assessments/report-card-definition-section'
+import { ReportCardResultSection as SectionResult } from '$lib/core/entities/assessments/report-card-result-section'
 import { roundTo2 } from '$lib/core/utils/validation'
 
 export interface GradeServiceArgs {
   studentRepository: StudentRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
-  subjectRepository: SubjectRepository
   assessmentRepository: AssessmentRepository
+  classSubjectRepository: ClassSubjectRepository
   academicPeriodRepository: AcademicPeriodRepository
   gradeRepository: GradeRepository
-  classroomRepository: ClassroomRepository
-  moduleRepository: ModuleRepository
+  classGroupRepository: ClassGroupRepository
+  reportCardDefinitionSectionRepository: ReportCardDefinitionSectionRepository
 }
 
 export class GradeService {
   constructor(args: GradeServiceArgs) {
     this.students = args.studentRepository
     this.enrollments = args.studentEnrollmentRepository
-    this.subjects = args.subjectRepository
     this.assessments = args.assessmentRepository
+    this.classSubjects = args.classSubjectRepository
     this.academicPeriods = args.academicPeriodRepository
     this.grades = args.gradeRepository
-    this.classrooms = args.classroomRepository
-    this.modules = args.moduleRepository
+    this.classGroups = args.classGroupRepository
+    this.sections = args.reportCardDefinitionSectionRepository
   }
 
   private readonly students: StudentRepository
   private readonly enrollments: StudentEnrollmentRepository
-  private readonly subjects: SubjectRepository
   private readonly assessments: AssessmentRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classSubjects: ClassSubjectRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly academicPeriods: AcademicPeriodRepository
   private readonly grades: GradeRepository
-  private readonly modules: ModuleRepository
+  private readonly sections: ReportCardDefinitionSectionRepository
 
   /**
-   * Records a grade for a student against a leaf-level Module.
-   * Validates that the module belongs to a classroom the student is enrolled in,
-   * and that the period belongs to the same academic year as that classroom.
+   * Records a grade for a student against an assessment's class subject.
+   * Validates that the assessment belongs to a classGroup the student is enrolled in,
+   * and that the period belongs to the same academic year as that classGroup.
    */
   async recordGrade({
     id,
@@ -68,13 +69,12 @@ export class GradeService {
   }): Promise<Grade> {
     await this.requireStudent(studentId)
     const assessment = await this.requireAssessment(assessmentId)
-    const module = await this.requireModule(assessment.moduleId)
     const period = await this.requirePeriod(assessment.periodId)
-    const classroom = await this.classrooms.findById(module.classroomId)
-    if (!classroom || period.academicYearId !== classroom.academicYearId || assessment.classroomId !== classroom.id) {
+    const classGroup = await this.classGroups.findById(assessment.classGroupId)
+    if (!classGroup || period.academicYearId !== classGroup.academicYearId || assessment.classGroupId !== classGroup.id) {
       throw new Error(`Assessment ${assessmentId} does not belong to academic period ${assessment.periodId}`)
     }
-    await this.requireEnrollmentForClassroom({ studentId, classroomId: module.classroomId })
+    await this.requireEnrollmentForClassGroup({ studentId, classGroupId: assessment.classGroupId })
 
     const existingGrades = await this.grades.listByAssessment(assessmentId)
     const existing = existingGrades.find(grade => grade.studentId === studentId)
@@ -82,7 +82,7 @@ export class GradeService {
       id: existing?.id ?? id,
       studentId,
       assessmentId,
-      moduleId: assessment.moduleId,
+      classSubjectId: assessment.classSubjectId,
       periodId: assessment.periodId,
       score,
       maxScore: assessment.maxScore,
@@ -95,20 +95,24 @@ export class GradeService {
   }
 
   /**
-   * Builds a hierarchical tree of ModuleResult nodes for a student's report card.
-   * Fetches all modules for the student's classroom and recursively computes
+   * Builds a hierarchical tree of section result nodes for a student's report card.
+   * Fetches all report card sections for the student's classGroup and recursively computes
    * weighted averages, producing only root-level results (each may have subResults).
    */
   async buildReportCardResults({
     studentId,
     periodId,
-    classroomId,
+    classGroupId,
+    reportCardDefinitionId,
+    examId,
   }: {
     studentId: string
     periodId: string
-    classroomId: string
+    classGroupId: string
+    reportCardDefinitionId: string
+    examId?: string
   }): Promise<{
-    moduleResults: ModuleResult[]
+    sectionResults: ReportCardResultSection[]
     overallAverage?: number
   }> {
     const student = await this.students.findById(studentId)
@@ -117,54 +121,49 @@ export class GradeService {
     }
     await this.requirePeriod(periodId)
 
-    const grades = await this.grades.listByStudentAndPeriod(studentId, periodId)
-    // Map moduleId -> grades for O(1) access during tree traversal
-    const gradesByModule = new Map<string, Grade[]>()
+    const periodGrades = await this.grades.listByStudentAndPeriod(studentId, periodId)
+    const grades = examId ? await this.filterGradesByExam(periodGrades, examId) : periodGrades
+    const gradesByClassSubject = new Map<string, Grade[]>()
     for (const grade of grades) {
-      gradesByModule.set(grade.moduleId, [...(gradesByModule.get(grade.moduleId) ?? []), grade])
+      gradesByClassSubject.set(grade.classSubjectId, [
+        ...(gradesByClassSubject.get(grade.classSubjectId) ?? []),
+        grade,
+      ])
     }
 
-    const allModules = await this.modules.listByClassroom(classroomId)
-    /**
-     * Recursively computes the ModuleResult for a given module node.
-     * Returns null if no grades exist anywhere in the subtree.
-     */
-    const computeNode = async (module: Module): Promise<ModuleResult | null> => {
-      const childModules = allModules.filter(m => m.parentModuleId === module.id)
+    const classSubjects = await this.classSubjects.listByClassGroup(classGroupId)
+    const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
+    const allSections = await this.sections.listByReportCardDefinition(reportCardDefinitionId)
+    const computeNode = async (section: ReportCardDefinitionSection): Promise<ReportCardResultSection | null> => {
+      const childSections = allSections.filter(item => item.parentSectionId === section.id)
 
-      // Leaf node: grades are recorded directly here
-      if (childModules.length === 0) {
-        const leafGrades = gradesByModule.get(module.id) ?? []
+      if (section.kind === ReportCardDefinitionSectionKind.Subject) {
+        const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
+        if (!classSubject)
+          return null
+        const leafGrades = gradesByClassSubject.get(classSubject.id) ?? []
         if (leafGrades.length === 0)
           return null
         const totalWeight = leafGrades.reduce((sum, g) => sum + g.coefficient, 0)
         const weightedPoints = leafGrades.reduce((sum, g) => sum + g.weightedPoints, 0)
         const average = totalWeight === 0 ? 0 : weightedPoints / totalWeight
-        // Resolve display name: prefer linked subject name, fallback to module name
-        let name = module.name ?? ''
-        if (module.subjectId) {
-          const subject = await this.subjects.findById(module.subjectId)
-          if (subject)
-            name = subject.name
-        }
-        return new ModuleResult({
-          moduleId: module.id,
-          nodeKind: ModuleNodeKind.Subject,
-          name: name || module.id,
+        return new SectionResult({
+          sectionId: section.id,
+          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          name: section.name,
           average,
-          weight: module.weight,
-          parentModuleId: module.parentModuleId,
-          subjectId: module.subjectId,
+          weight: section.weight,
+          parentSectionId: section.parentSectionId,
+          classSubjectId: classSubject.id,
           subResults: [],
         })
       }
 
-      // Grouping node: average is weighted average of child results
-      const childResults: ModuleResult[] = []
+      const childResults: ReportCardResultSection[] = []
       let sumWeights = 0
       let sumWeightedPoints = 0
 
-      for (const child of childModules) {
+      for (const child of childSections) {
         const childResult = await computeNode(child)
         if (childResult) {
           childResults.push(childResult)
@@ -177,29 +176,26 @@ export class GradeService {
         return null
 
       const average = sumWeights === 0 ? 0 : sumWeightedPoints / sumWeights
-      const name = module.name ?? module.id
-      return new ModuleResult({
-        moduleId: module.id,
-        nodeKind: ModuleNodeKind.Group,
-        name,
+      return new SectionResult({
+        sectionId: section.id,
+        sectionKind: ReportCardDefinitionSectionKind.Group,
+        name: section.name,
         average,
-        weight: module.weight,
-        parentModuleId: module.parentModuleId,
-        subjectId: module.subjectId,
+        weight: section.weight,
+        parentSectionId: section.parentSectionId,
         subResults: childResults,
       })
     }
 
-    // Compute only root-level modules
-    const rootModules = allModules.filter(m => !m.parentModuleId)
-    const moduleResults: ModuleResult[] = []
+    const rootSections = allSections.filter(section => !section.parentSectionId)
+    const sectionResults: ReportCardResultSection[] = []
     let rootSumWeights = 0
     let rootSumWeightedPoints = 0
 
-    for (const root of rootModules) {
+    for (const root of rootSections) {
       const result = await computeNode(root)
       if (result) {
-        moduleResults.push(result)
+        sectionResults.push(result)
         rootSumWeights += root.weight
         rootSumWeightedPoints += result.average * root.weight
       }
@@ -208,23 +204,29 @@ export class GradeService {
     const overallAverage
       = rootSumWeights > 0 ? roundTo2(rootSumWeightedPoints / rootSumWeights) : undefined
 
-    return { moduleResults, overallAverage }
+    return { sectionResults, overallAverage }
   }
 
-  async listModuleGradesForPeriod({
-    moduleId,
+  async listClassSubjectGradesForPeriod({
+    classSubjectId,
     periodId,
   }: {
-    moduleId: string
+    classSubjectId: string
     periodId: string
   }): Promise<Grade[]> {
-    const module = await this.requireModule(moduleId)
-    const period = await this.requirePeriod(periodId)
-    const classroom = await this.classrooms.findById(module.classroomId)
-    if (!classroom || classroom.academicYearId !== period.academicYearId) {
-      throw new Error(`Module ${moduleId} does not belong to academic period ${periodId}`)
+    await this.requirePeriod(periodId)
+    return this.grades.listByClassSubjectAndPeriod(classSubjectId, periodId)
+  }
+
+  private async filterGradesByExam(grades: readonly Grade[], examId: string): Promise<Grade[]> {
+    const filtered: Grade[] = []
+    for (const grade of grades) {
+      const assessment = await this.assessments.findById(grade.assessmentId)
+      if (assessment?.examId === examId) {
+        filtered.push(grade)
+      }
     }
-    return this.grades.listByModuleAndPeriod(moduleId, periodId)
+    return filtered
   }
 
   private async requireStudent(studentId: string): Promise<void> {
@@ -232,14 +234,6 @@ export class GradeService {
     if (!student) {
       throw new Error(`Unknown student: ${studentId}`)
     }
-  }
-
-  private async requireModule(moduleId: string): Promise<Module> {
-    const module = await this.modules.findById(moduleId)
-    if (!module) {
-      throw new Error(`Unknown module: ${moduleId}`)
-    }
-    return module
   }
 
   private async requirePeriod(periodId: string): Promise<AcademicPeriod> {
@@ -258,17 +252,17 @@ export class GradeService {
     return assessment
   }
 
-  private async requireEnrollmentForClassroom({
+  private async requireEnrollmentForClassGroup({
     studentId,
-    classroomId,
+    classGroupId,
   }: {
     studentId: string
-    classroomId: string
+    classGroupId: string
   }): Promise<void> {
     const enrollments = await this.enrollments.listByStudent(studentId)
-    const enrollment = enrollments.find(e => e.classroomId === classroomId)
+    const enrollment = enrollments.find(e => e.classGroupId === classGroupId)
     if (!enrollment) {
-      throw new Error(`Student ${studentId} is not enrolled in classroom ${classroomId}`)
+      throw new Error(`Student ${studentId} is not enrolled in classGroup ${classGroupId}`)
     }
   }
 }

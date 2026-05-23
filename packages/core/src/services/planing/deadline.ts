@@ -1,12 +1,10 @@
-import type { Module } from '$lib/core/entities/academics/module'
 import type { DeadlineComplianceStatus } from '$lib/core/entities/assessments/deadline-record'
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { School } from '$lib/core/entities/core/school'
 import type { Student } from '$lib/core/entities/core/student'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { DeadlineRecordRepository } from '$lib/core/ports/deadline-record-repository'
 import type { DeadlineRepository } from '$lib/core/ports/deadline-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
@@ -15,8 +13,7 @@ import { DeadlineRecord } from '$lib/core/entities/assessments/deadline-record'
 
 export interface DeadlineServiceArgs {
   schoolRepository: SchoolRepository
-  classroomRepository: ClassroomRepository
-  moduleRepository: ModuleRepository
+  classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
   deadlineRepository: DeadlineRepository
@@ -26,8 +23,7 @@ export interface DeadlineServiceArgs {
 export class DeadlineService {
   constructor(args: DeadlineServiceArgs) {
     this.schools = args.schoolRepository
-    this.classrooms = args.classroomRepository
-    this.modules = args.moduleRepository
+    this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
     this.enrollments = args.studentEnrollmentRepository
     this.deadlines = args.deadlineRepository
@@ -35,8 +31,7 @@ export class DeadlineService {
   }
 
   private readonly schools: SchoolRepository
-  private readonly classrooms: ClassroomRepository
-  private readonly modules: ModuleRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
   private readonly enrollments: StudentEnrollmentRepository
   private readonly deadlines: DeadlineRepository
@@ -47,8 +42,8 @@ export class DeadlineService {
     schoolId,
     title,
     dueAt,
-    classroomId,
-    moduleId,
+    classGroupId,
+    classSubjectId,
     metAt,
     createdAt,
   }: {
@@ -56,26 +51,19 @@ export class DeadlineService {
     schoolId: string
     title: string
     dueAt: Date
-    classroomId?: string | null
-    moduleId?: string | null
+    classGroupId?: string | null
+    classSubjectId?: string | null
     metAt?: Date
     createdAt?: Date
   }): Promise<Deadline> {
     await this.requireSchool(schoolId)
-    const classroom = classroomId ? await this.requireClassroom(classroomId) : undefined
-    const module = moduleId ? await this.requireModule(moduleId) : undefined
+    const classGroup = classGroupId ? await this.requireClassGroup(classGroupId) : undefined
 
-    if (classroom && classroom.schoolId !== schoolId) {
-      throw new Error(`Classroom ${classroomId} does not belong to school ${schoolId}`)
+    if (classGroup && classGroup.schoolId !== schoolId) {
+      throw new Error(`ClassGroup ${classGroupId} does not belong to school ${schoolId}`)
     }
-    if (module) {
-      const moduleClassroom = await this.requireClassroom(module.classroomId)
-      if (moduleClassroom.schoolId !== schoolId) {
-        throw new Error(`Module ${moduleId} does not belong to school ${schoolId}`)
-      }
-      if (classroom && module.classroomId !== classroom.id) {
-        throw new Error(`Module ${moduleId} does not belong to classroom ${classroom.id}`)
-      }
+    if (classSubjectId && !classGroupId) {
+      throw new Error('classGroupId is required when classSubjectId is provided')
     }
 
     const deadline = new Deadline({
@@ -83,8 +71,8 @@ export class DeadlineService {
       schoolId,
       title,
       dueAt,
-      classroomId,
-      moduleId,
+      classGroupId,
+      classSubjectId,
       metAt,
       createdAt,
     })
@@ -105,8 +93,8 @@ export class DeadlineService {
       schoolId: existing.schoolId,
       title: existing.title,
       dueAt: existing.dueAt,
-      classroomId: existing.classroomId,
-      moduleId: existing.moduleId,
+      classGroupId: existing.classGroupId,
+      classSubjectId: existing.classSubjectId,
       metAt: metAt ?? new Date(),
       createdAt: existing.createdAt,
     })
@@ -154,14 +142,13 @@ export class DeadlineService {
     return this.deadlines.listBySchool(schoolId)
   }
 
-  async listClassroomDeadlines(classroomId: string): Promise<Deadline[]> {
-    await this.requireClassroom(classroomId)
-    return this.deadlines.listByClassroom(classroomId)
+  async listClassGroupDeadlines(classGroupId: string): Promise<Deadline[]> {
+    await this.requireClassGroup(classGroupId)
+    return this.deadlines.listByClassGroup(classGroupId)
   }
 
-  async listModuleDeadlines(moduleId: string): Promise<Deadline[]> {
-    await this.requireModule(moduleId)
-    return this.deadlines.listByModule(moduleId)
+  async listClassSubjectDeadlines(classSubjectId: string): Promise<Deadline[]> {
+    return this.deadlines.listByClassSubject(classSubjectId)
   }
 
   async listDeadlineCompliance(deadlineId: string): Promise<DeadlineRecord[]> {
@@ -182,20 +169,12 @@ export class DeadlineService {
     return school
   }
 
-  private async requireClassroom(classroomId: string): Promise<Classroom> {
-    const classroom = await this.classrooms.findById(classroomId)
-    if (!classroom) {
-      throw new Error(`Unknown classroom: ${classroomId}`)
+  private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      throw new Error(`Unknown classGroup: ${classGroupId}`)
     }
-    return classroom
-  }
-
-  private async requireModule(moduleId: string): Promise<Module> {
-    const module = await this.modules.findById(moduleId)
-    if (!module) {
-      throw new Error(`Unknown module: ${moduleId}`)
-    }
-    return module
+    return classGroup
   }
 
   private async requireStudent(studentId: string): Promise<Student> {
@@ -222,17 +201,13 @@ export class DeadlineService {
     deadline: Deadline
   }): Promise<void> {
     const enrollments = await this.enrollments.listByStudent(studentId)
-    if (!deadline.classroomId && !deadline.moduleId) {
+    if (!deadline.classGroupId) {
       return
     }
 
-    const targetClassroomId = deadline.classroomId
-      ? deadline.classroomId
-      : deadline.moduleId
-        ? (await this.requireModule(deadline.moduleId)).classroomId
-        : undefined
+    const targetClassGroupId = deadline.classGroupId
 
-    if (targetClassroomId && !enrollments.some(enrollment => enrollment.classroomId === targetClassroomId)) {
+    if (targetClassGroupId && !enrollments.some(enrollment => enrollment.classGroupId === targetClassGroupId)) {
       throw new Error(`Student ${studentId} is not eligible for deadline ${deadline.id}`)
     }
   }

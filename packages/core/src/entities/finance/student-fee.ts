@@ -23,6 +23,8 @@ export interface StudentFeeArgs {
   academicYearId: string
   expectedAmount: number
   paidAmount?: number | null
+  adjustmentAmount?: number | null
+  adjustmentReason?: string | null
   currency: string
   dueDate?: Date | null
   status: FeeStatus
@@ -44,6 +46,8 @@ export class StudentFee {
   readonly academicYearId: string
   readonly expectedAmount: Money
   readonly paidAmount: Money
+  readonly adjustmentAmount: Money
+  readonly adjustmentReason?: string
   readonly dueDate?: Date
   readonly status: FeeStatus
   readonly expectedPayments: readonly StudentFeeInstallment[]
@@ -57,6 +61,8 @@ export class StudentFee {
     academicYearId,
     expectedAmount,
     paidAmount = 0,
+    adjustmentAmount = 0,
+    adjustmentReason,
     currency,
     dueDate,
     status,
@@ -79,6 +85,14 @@ export class StudentFee {
       amount: requireNonNegativeInt(paidAmount ?? 0, 'paidAmount'),
       currency: activeCurrency,
     })
+    this.adjustmentAmount = new Money({
+      amount: requireNonNegativeInt(adjustmentAmount ?? 0, 'adjustmentAmount'),
+      currency: activeCurrency,
+    })
+    this.adjustmentReason = requireNonBlankIfAmount(adjustmentReason, this.adjustmentAmount.amount, 'adjustmentReason')
+    if (this.adjustmentAmount.amount > this.expectedAmount.amount) {
+      throw new Error('adjustmentAmount must not exceed expectedAmount')
+    }
 
     this.dueDate = dueDate ? requireValidDate(dueDate, 'dueDate') : undefined
     this.status = status
@@ -104,7 +118,7 @@ export class StudentFee {
 
   get balanceDue(): Money {
     return new Money({
-      amount: Math.max(0, this.expectedAmount.amount - this.paidAmount.amount),
+      amount: Math.max(0, this.expectedAmount.amount - this.adjustmentAmount.amount - this.paidAmount.amount),
       currency: this.expectedAmount.currency,
     })
   }
@@ -117,6 +131,8 @@ export class StudentFee {
       academicYearId: this.academicYearId,
       expectedAmount: changes.expectedAmount ?? this.expectedAmount.amount,
       paidAmount: changes.paidAmount ?? this.paidAmount.amount,
+      adjustmentAmount: changes.adjustmentAmount ?? this.adjustmentAmount.amount,
+      adjustmentReason: changes.adjustmentReason !== undefined ? changes.adjustmentReason : this.adjustmentReason,
       currency: this.expectedAmount.currency,
       dueDate: changes.dueDate !== undefined ? changes.dueDate : this.dueDate,
       status: changes.status ?? this.status,
@@ -131,6 +147,7 @@ export class StudentFeeSummary {
   readonly totalExpected: Money
   readonly totalPaid: Money
   readonly totalOverdue: Money
+  readonly totalAdjusted: Money
   readonly balanceDue: Money
   readonly itemCount: number
 
@@ -138,15 +155,31 @@ export class StudentFeeSummary {
     totalExpected: Money
     totalPaid: Money
     totalOverdue: Money
+    totalAdjusted?: Money
     itemCount: number
   }) {
     this.totalExpected = args.totalExpected
     this.totalPaid = args.totalPaid
     this.totalOverdue = args.totalOverdue
+    this.totalAdjusted = args.totalAdjusted ?? new Money({
+      amount: 0,
+      currency: args.totalExpected.currency,
+    })
     this.balanceDue = new Money({
-      amount: Math.max(0, args.totalExpected.amount - args.totalPaid.amount),
+      amount: Math.max(0, args.totalExpected.amount - this.totalAdjusted.amount - args.totalPaid.amount),
       currency: args.totalExpected.currency,
     })
     this.itemCount = args.itemCount
   }
+}
+
+function requireNonBlankIfAmount(
+  value: string | null | undefined,
+  amount: number,
+  fieldName: string,
+): string | undefined {
+  if (amount === 0) {
+    return value == null || value.trim() === '' ? undefined : value.trim()
+  }
+  return requireNonBlank(value ?? '', fieldName)
 }

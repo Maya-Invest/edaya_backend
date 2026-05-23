@@ -1,13 +1,13 @@
 import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { School } from '$lib/core/entities/core/school'
 import type { StaffMember } from '$lib/core/entities/core/staff-member'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
-import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
+import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
+import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import { StaffRole } from '$lib/core/entities/core/staff-member'
@@ -16,10 +16,10 @@ export interface WorkspaceServiceArgs {
   schoolRepository: SchoolRepository
   academicYearRepository: AcademicYearRepository
   academicPeriodRepository: AcademicPeriodRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   staffMemberRepository: StaffMemberRepository
-  moduleRepository: ModuleRepository
-  moduleStaffAssignmentRepository: ModuleStaffAssignmentRepository
+  classSubjectRepository: ClassSubjectRepository
+  classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
 }
 
 export interface TeacherCourseLoad {
@@ -32,8 +32,8 @@ export interface WorkspaceContext {
   activeAcademicYear?: AcademicYear
   academicPeriods: AcademicPeriod[]
   selectedAcademicPeriod?: AcademicPeriod
-  classrooms: Classroom[]
-  selectedClassroom?: Classroom
+  classGroups: ClassGroup[]
+  selectedClassGroup?: ClassGroup
   teacherCourseLoads: TeacherCourseLoad[]
 }
 
@@ -42,42 +42,42 @@ export class WorkspaceService {
     this.schools = args.schoolRepository
     this.academicYears = args.academicYearRepository
     this.academicPeriods = args.academicPeriodRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.staffMembers = args.staffMemberRepository
-    this.modules = args.moduleRepository
-    this.moduleStaffAssignments = args.moduleStaffAssignmentRepository
+    this.classSubjects = args.classSubjectRepository
+    this.classSubjectStaffAssignments = args.classSubjectStaffAssignmentRepository
   }
 
   private readonly schools: SchoolRepository
   private readonly academicYears: AcademicYearRepository
   private readonly academicPeriods: AcademicPeriodRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly staffMembers: StaffMemberRepository
-  private readonly modules: ModuleRepository
-  private readonly moduleStaffAssignments: ModuleStaffAssignmentRepository
+  private readonly classSubjects: ClassSubjectRepository
+  private readonly classSubjectStaffAssignments: ClassSubjectStaffAssignmentRepository
 
   async getWorkspaceContext({
     schoolId,
-    classroomId,
+    classGroupId,
   }: {
     schoolId: string
-    classroomId?: string
+    classGroupId?: string
   }): Promise<WorkspaceContext> {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
-    const classrooms = activeAcademicYear
-      ? await this.classrooms.listByAcademicYear(activeAcademicYear.id)
+    const classGroups = activeAcademicYear
+      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
       : []
     const academicPeriods = activeAcademicYear
       ? await this.academicPeriods.listByAcademicYear(activeAcademicYear.id)
       : []
-    const selectedClassroom
-      = (classroomId ? classrooms.find(candidate => candidate.id === classroomId) : undefined)
-        ?? classrooms[0]
+    const selectedClassGroup
+      = (classGroupId ? classGroups.find(candidate => candidate.id === classGroupId) : undefined)
+        ?? classGroups[0]
     const selectedAcademicPeriod = academicPeriods[0]
     const staffMembers = await this.staffMembers.listBySchool(schoolId)
     const teacherCourseLoads = await this.buildTeacherCourseLoads({
-      classrooms,
+      classGroups,
       staffMembers,
     })
 
@@ -86,28 +86,26 @@ export class WorkspaceService {
       activeAcademicYear,
       academicPeriods,
       selectedAcademicPeriod,
-      classrooms,
-      selectedClassroom,
+      classGroups,
+      selectedClassGroup,
       teacherCourseLoads,
     }
   }
 
   private async buildTeacherCourseLoads({
-    classrooms,
+    classGroups,
     staffMembers,
   }: {
-    classrooms: readonly Classroom[]
+    classGroups: readonly ClassGroup[]
     staffMembers: readonly StaffMember[]
   }): Promise<TeacherCourseLoad[]> {
     const teacherIdsToCourseCount = new Map<string, number>()
 
-    for (const classroom of classrooms) {
-      const modules = (await this.modules.listByClassroom(classroom.id)).filter(
-        module => module.subjectId != null,
-      )
+    for (const classGroup of classGroups) {
+      const classSubjects = await this.classSubjects.listByClassGroup(classGroup.id)
 
-      for (const module of modules) {
-        const teacherId = await this.resolveTeacherId(module.id, module.staffId)
+      for (const classSubject of classSubjects) {
+        const teacherId = await this.resolveTeacherId(classSubject.id, classSubject.staffId)
         if (!teacherId) {
           continue
         }
@@ -123,8 +121,8 @@ export class WorkspaceService {
       }))
   }
 
-  private async resolveTeacherId(moduleId: string, fallbackStaffId?: string): Promise<string | undefined> {
-    const assignments = await this.moduleStaffAssignments.listByModule(moduleId)
+  private async resolveTeacherId(classSubjectId: string, fallbackStaffId?: string): Promise<string | undefined> {
+    const assignments = await this.classSubjectStaffAssignments.listByClassSubject(classSubjectId)
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     return teacherAssignment?.staffId ?? fallbackStaffId
   }

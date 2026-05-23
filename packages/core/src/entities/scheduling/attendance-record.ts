@@ -1,4 +1,4 @@
-import { normalizeDate, requireNonBlank, requireValidDate } from '$lib/core/utils/validation'
+import { normalizeDate, requireNonBlank, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
 
 export enum AttendanceStatus {
   Present = 'present',
@@ -13,8 +13,13 @@ export interface AttendanceRecordArgs {
   sessionId: string
   date: Date
   status: AttendanceStatus
+  reason?: string | null
+  notes?: string | null
+  justifiedAt?: Date | null
+  justifiedByStaffId?: string | null
   createdBy?: string
   createdAt?: Date
+  updatedAt?: Date
 }
 
 /**
@@ -27,16 +32,45 @@ export class AttendanceRecord {
   readonly sessionId: string
   readonly date: Date
   readonly status: AttendanceStatus
+  readonly reason?: string
+  readonly notes?: string
+  readonly justifiedAt?: Date
+  readonly justifiedByStaffId?: string
   readonly createdBy?: string
   readonly createdAt: Date
+  readonly updatedAt: Date
 
-  constructor({ id, studentId, sessionId, date, status, createdBy, createdAt }: AttendanceRecordArgs) {
+  constructor({
+    id,
+    studentId,
+    sessionId,
+    date,
+    status,
+    reason,
+    notes,
+    justifiedAt,
+    justifiedByStaffId,
+    createdBy,
+    createdAt,
+    updatedAt,
+  }: AttendanceRecordArgs) {
     this.id = requireNonBlank(id, 'id')
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.sessionId = requireNonBlank(sessionId, 'sessionId')
     this.date = normalizeDate(requireValidDate(date, 'date'))
     this.status = status
-    this.createdBy = createdBy
-    this.createdAt = createdAt ?? new Date()
+    this.reason = requireOptionalNonBlank(reason, 'reason')
+    this.notes = requireOptionalNonBlank(notes, 'notes')
+    this.justifiedAt = justifiedAt ? requireValidDate(justifiedAt, 'justifiedAt') : undefined
+    this.justifiedByStaffId = requireOptionalNonBlank(justifiedByStaffId, 'justifiedByStaffId')
+    this.createdBy = requireOptionalNonBlank(createdBy, 'createdBy')
+
+    const now = new Date()
+    this.createdAt = createdAt ?? now
+    this.updatedAt = updatedAt ?? now
+
+    if (this.justifiedByStaffId && !this.justifiedAt) {
+      throw new Error('justifiedAt is required when justifiedByStaffId is provided')
+    }
   }
 }

@@ -7,11 +7,21 @@ export interface FeeInstallmentTemplate {
   dueDate?: Date | null
 }
 
+export enum FeeCategory {
+  Tuition = 'tuition',
+  Exam = 'exam',
+  Uniform = 'uniform',
+  Transport = 'transport',
+  Activity = 'activity',
+  Other = 'other',
+}
+
 export interface FeeArgs {
   id: string
   schoolId: string
   academicYearId: string
   name: string
+  category?: FeeCategory
   description?: string | null
   defaultAmount: number
   currency: string
@@ -28,6 +38,7 @@ export class Fee {
   readonly schoolId: string
   readonly academicYearId: string
   readonly name: string
+  readonly category: FeeCategory
   readonly description?: string
   readonly defaultAmount: Money
   readonly installments: readonly FeeInstallmentTemplate[]
@@ -38,6 +49,7 @@ export class Fee {
     schoolId,
     academicYearId,
     name,
+    category = FeeCategory.Tuition,
     description,
     defaultAmount,
     currency,
@@ -48,6 +60,7 @@ export class Fee {
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
     this.name = requireNonBlank(name, 'name')
+    this.category = category
 
     if (description != null && description.trim() !== '') {
       this.description = description.trim()

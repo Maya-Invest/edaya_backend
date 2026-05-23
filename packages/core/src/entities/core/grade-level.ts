@@ -11,7 +11,7 @@ export interface GradeLevelArgs {
 
 /**
  * Represents a formal grade level in the school's progression ladder
- * (e.g., CP1, CE1, Grade 10). Classrooms reference a GradeLevel
+ * (e.g., CP1, CE1, Grade 10). ClassGroups reference a GradeLevel
  * to provide structured level tracking and promotion logic.
  */
 export class GradeLevel {

@@ -1,6 +1,6 @@
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { School } from '$lib/core/entities/core/school'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
@@ -9,7 +9,7 @@ import { Student } from '$lib/core/entities/core/student'
 
 export interface StudentServiceArgs {
   schoolRepository: SchoolRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
 }
@@ -17,13 +17,13 @@ export interface StudentServiceArgs {
 export class StudentService {
   constructor(args: StudentServiceArgs) {
     this.schools = args.schoolRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
     this.enrollments = args.studentEnrollmentRepository
   }
 
   private readonly schools: SchoolRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
   private readonly enrollments: StudentEnrollmentRepository
 
@@ -51,19 +51,19 @@ export class StudentService {
   async enrollStudent({
     id,
     studentId,
-    classroomId,
+    classGroupId,
     createdAt,
   }: {
     id: string
     studentId: string
-    classroomId: string
+    classGroupId: string
     createdAt?: Date
   }): Promise<StudentEnrollment> {
     await this.requireStudent(studentId)
-    const classroom = await this.requireClassroom(classroomId)
+    const classGroup = await this.requireClassGroup(classGroupId)
 
     const existingEnrollments = await this.enrollments.listByStudent(studentId)
-    const existing = existingEnrollments.find(enrollment => enrollment.classroomId === classroomId)
+    const existing = existingEnrollments.find(enrollment => enrollment.classGroupId === classGroupId)
     const nextEnrollmentIndex
       = existing?.enrollmentIndex
         ?? Math.max(0, ...existingEnrollments.map(enrollment => enrollment.enrollmentIndex)) + 1
@@ -71,8 +71,8 @@ export class StudentService {
     const enrollment = new StudentEnrollment({
       id: existing?.id ?? id,
       studentId,
-      classroomId,
-      academicYearId: classroom.academicYearId,
+      classGroupId,
+      academicYearId: classGroup.academicYearId,
       enrollmentIndex: nextEnrollmentIndex,
       createdAt: existing?.createdAt ?? createdAt,
     })
@@ -96,11 +96,11 @@ export class StudentService {
     return student
   }
 
-  private async requireClassroom(classroomId: string): Promise<Classroom> {
-    const classroom = await this.classrooms.findById(classroomId)
-    if (!classroom) {
-      throw new Error(`Unknown classroom: ${classroomId}`)
+  private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      throw new Error(`Unknown classGroup: ${classGroupId}`)
     }
-    return classroom
+    return classGroup
   }
 }

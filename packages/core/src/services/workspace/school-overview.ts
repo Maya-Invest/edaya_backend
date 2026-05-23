@@ -3,22 +3,22 @@ import type { Announcement } from '$lib/core/entities/core/announcement'
 import type { School } from '$lib/core/entities/core/school'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
-import type { ReportCardRepository } from '$lib/core/ports/report-card-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
+import type { ReportCardResultRepository } from '$lib/core/ports/report-card-result-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { ReportCardStatus } from '$lib/core/entities/assessments/report-card'
+import { ReportCardResultStatus } from '$lib/core/entities/assessments/report-card-result'
 import { FeeStatus } from '$lib/core/entities/finance/student-fee'
 
 export interface SchoolOverviewServiceArgs {
   schoolRepository: SchoolRepository
   academicYearRepository: AcademicYearRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
   announcementRepository: AnnouncementRepository
   studentFeeRepository: StudentFeeRepository
-  reportCardRepository: ReportCardRepository
+  reportCardResultRepository: ReportCardResultRepository
 }
 
 export interface SchoolOverview {
@@ -35,26 +35,26 @@ export class SchoolOverviewService {
   constructor(args: SchoolOverviewServiceArgs) {
     this.schools = args.schoolRepository
     this.academicYears = args.academicYearRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
     this.announcements = args.announcementRepository
     this.fees = args.studentFeeRepository
-    this.reportCards = args.reportCardRepository
+    this.reportCardResults = args.reportCardResultRepository
   }
 
   private readonly schools: SchoolRepository
   private readonly academicYears: AcademicYearRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
   private readonly announcements: AnnouncementRepository
   private readonly fees: StudentFeeRepository
-  private readonly reportCards: ReportCardRepository
+  private readonly reportCardResults: ReportCardResultRepository
 
   async getSchoolOverview({ schoolId }: { schoolId: string }): Promise<SchoolOverview> {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
-    const [classrooms, students, announcements] = await Promise.all([
-      activeAcademicYear ? this.classrooms.listByAcademicYear(activeAcademicYear.id) : [],
+    const [classGroups, students, announcements] = await Promise.all([
+      activeAcademicYear ? this.classGroups.listByAcademicYear(activeAcademicYear.id) : [],
       this.students.listBySchool(schoolId),
       this.announcements.listBySchool(schoolId),
     ])
@@ -63,20 +63,20 @@ export class SchoolOverviewService {
     let publishedReportCardCount = 0
 
     for (const student of students) {
-      const [fees, reportCards] = await Promise.all([
+      const [fees, reportCardResults] = await Promise.all([
         this.fees.listByStudent(student.id),
-        this.reportCards.listByStudent(student.id),
+        this.reportCardResults.listByStudent(student.id),
       ])
       overdueFeeCount += fees.filter(fee => fee.status === FeeStatus.Overdue).length
-      publishedReportCardCount += reportCards.filter(
-        reportCard => reportCard.status === ReportCardStatus.Published,
+      publishedReportCardCount += reportCardResults.filter(
+        reportCardResult => reportCardResult.status === ReportCardResultStatus.Published,
       ).length
     }
 
     return {
       school,
       activeAcademicYear,
-      classCount: classrooms.length,
+      classCount: classGroups.length,
       studentCount: students.length,
       overdueFeeCount,
       publishedReportCardCount,

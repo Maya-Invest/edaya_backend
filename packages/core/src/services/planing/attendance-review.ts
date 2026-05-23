@@ -1,28 +1,24 @@
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { Student } from '$lib/core/entities/core/student'
 import type { AttendanceRecord } from '$lib/core/entities/scheduling/attendance-record'
 import type { Session } from '$lib/core/entities/scheduling/session'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import type { SubjectRepository } from '$lib/core/ports/subject-repository'
 import { AttendanceStatus } from '$lib/core/entities/scheduling/attendance-record'
 import { isSameDate } from '$lib/core/utils/validation'
 
 export interface AttendanceReviewServiceArgs {
   academicYearRepository: AcademicYearRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   sessionRepository: SessionRepository
   attendanceRepository: AttendanceRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
   studentRepository: StudentRepository
-  moduleRepository: ModuleRepository
-  subjectRepository: SubjectRepository
 }
 
 export interface AttendanceSessionOption {
@@ -44,7 +40,7 @@ export interface AttendanceReviewSummary {
 }
 
 export interface AttendanceReview {
-  classroom?: Classroom
+  classGroup?: ClassGroup
   availableSessions: AttendanceSessionOption[]
   selectedSession?: Session
   selectedDate: Date
@@ -55,23 +51,19 @@ export interface AttendanceReview {
 export class AttendanceReviewService {
   constructor(args: AttendanceReviewServiceArgs) {
     this.academicYears = args.academicYearRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.sessions = args.sessionRepository
     this.attendance = args.attendanceRepository
     this.enrollments = args.studentEnrollmentRepository
     this.students = args.studentRepository
-    this.modules = args.moduleRepository
-    this.subjects = args.subjectRepository
   }
 
   private readonly academicYears: AcademicYearRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly sessions: SessionRepository
   private readonly attendance: AttendanceRepository
   private readonly enrollments: StudentEnrollmentRepository
   private readonly students: StudentRepository
-  private readonly modules: ModuleRepository
-  private readonly subjects: SubjectRepository
 
   async getAttendanceSessionReview({
     schoolId,
@@ -83,14 +75,14 @@ export class AttendanceReviewService {
     sessionId?: string
   }): Promise<AttendanceReview> {
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
-    const classrooms = activeAcademicYear
-      ? await this.classrooms.listByAcademicYear(activeAcademicYear.id)
+    const classGroups = activeAcademicYear
+      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
       : []
-    const classroom = classrooms[0]
+    const classGroup = classGroups[0]
 
-    if (!classroom) {
+    if (!classGroup) {
       return {
-        classroom: undefined,
+        classGroup: undefined,
         availableSessions: [],
         selectedSession: undefined,
         selectedDate: date,
@@ -99,7 +91,7 @@ export class AttendanceReviewService {
       }
     }
 
-    const allSessions = await this.sessions.listByClassroom(classroom.id)
+    const allSessions = await this.sessions.listByClassGroup(classGroup.id)
     const datedSessions = allSessions.filter(session => isSameDate(session.startsAt, date))
     const availableSessions = datedSessions.length > 0 ? datedSessions : allSessions
     const selectedSession
@@ -114,7 +106,7 @@ export class AttendanceReviewService {
 
     if (!selectedSession) {
       return {
-        classroom,
+        classGroup,
         availableSessions: sessionOptions,
         selectedSession: undefined,
         selectedDate: date,
@@ -125,7 +117,7 @@ export class AttendanceReviewService {
 
     const [records, enrollments] = await Promise.all([
       this.attendance.listBySession(selectedSession.id),
-      this.enrollments.listByClassroom(selectedSession.classroomId),
+      this.enrollments.listByClassGroup(selectedSession.classGroupId),
     ])
     const recordByStudentId = new Map(records.map(record => [record.studentId, record]))
     const rows = (
@@ -166,7 +158,7 @@ export class AttendanceReviewService {
     )
 
     return {
-      classroom,
+      classGroup,
       availableSessions: sessionOptions,
       selectedSession,
       selectedDate: date,
@@ -176,17 +168,7 @@ export class AttendanceReviewService {
   }
 
   private async resolveSessionLabel(session: Session): Promise<string> {
-    if (!session.moduleId) {
-      return session.title
-    }
-
-    const module = await this.modules.findById(session.moduleId)
-    if (!module?.subjectId) {
-      return session.title
-    }
-
-    const subject = await this.subjects.findById(module.subjectId)
-    return subject?.name ?? session.title
+    return session.title
   }
 
   private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {

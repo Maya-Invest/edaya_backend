@@ -4,15 +4,17 @@ import type { AnnouncementRepository } from '$lib/core/ports/announcement-reposi
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
 import type { ClassStaffAssignmentRepository } from '$lib/core/ports/class-staff-assignment-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
+import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { DeadlineRecordRepository } from '$lib/core/ports/deadline-record-repository'
 import type { DeadlineRepository } from '$lib/core/ports/deadline-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'
 import type { GuardianRepository } from '$lib/core/ports/guardian-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
-import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
-import type { ReportCardRepository } from '$lib/core/ports/report-card-repository'
+import type { ReportCardDefinitionRepository } from '$lib/core/ports/report-card-definition-repository'
+import type { ReportCardDefinitionSectionRepository } from '$lib/core/ports/report-card-definition-section-repository'
+import type { ReportCardResultRepository } from '$lib/core/ports/report-card-result-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
@@ -23,8 +25,8 @@ import type { SubjectRepository } from '$lib/core/ports/subject-repository'
 import { AnnouncementService } from '$lib/core/services/announcement'
 import { AssessmentService } from '$lib/core/services/assessment/assessment'
 import { GradeService } from '$lib/core/services/assessment/grade'
-import { ModuleService } from '$lib/core/services/assessment/module'
-import { ReportCardService } from '$lib/core/services/assessment/report-card'
+import { ReportCardDefinitionSectionService } from '$lib/core/services/assessment/report-card-definition-section'
+import { ReportCardResultService } from '$lib/core/services/assessment/report-card-result'
 import { FeeService } from '$lib/core/services/fees/fee'
 import { GuardianService } from '$lib/core/services/guardian'
 import { AttendanceService } from '$lib/core/services/planing/attendance'
@@ -32,8 +34,8 @@ import { AttendanceReviewService } from '$lib/core/services/planing/attendance-r
 import { DeadlineService } from '$lib/core/services/planing/deadline'
 import { SessionService } from '$lib/core/services/planing/session'
 import { AcademicCalendarService } from '$lib/core/services/workspace/academic-calendar'
-import { ClassroomService } from '$lib/core/services/workspace/classroom'
-import { ClassroomReadService } from '$lib/core/services/workspace/classroom-read'
+import { ClassGroupService } from '$lib/core/services/workspace/class-group'
+import { ClassGroupReadService } from '$lib/core/services/workspace/class-group-read'
 import { SchoolService } from '$lib/core/services/workspace/school'
 import { SchoolOverviewService } from '$lib/core/services/workspace/school-overview'
 import { StaffService } from '$lib/core/services/workspace/staff'
@@ -45,14 +47,15 @@ import { WorkspaceService } from '$lib/core/services/workspace/workspace'
 
 export interface SchoolHeadlessAppArgs {
   schoolRepository: SchoolRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
   guardianRepository: GuardianRepository
   guardianStudentLinkRepository: GuardianStudentLinkRepository
   staffMemberRepository: StaffMemberRepository
   classStaffAssignmentRepository: ClassStaffAssignmentRepository
-  moduleStaffAssignmentRepository: ModuleStaffAssignmentRepository
+  classSubjectRepository: ClassSubjectRepository
+  classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
   academicYearRepository: AcademicYearRepository
   academicPeriodRepository: AcademicPeriodRepository
   subjectRepository: SubjectRepository
@@ -60,10 +63,11 @@ export interface SchoolHeadlessAppArgs {
   assessmentRepository: AssessmentRepository
   attendanceRepository: AttendanceRepository
   gradeRepository: GradeRepository
-  reportCardRepository: ReportCardRepository
+  reportCardDefinitionRepository: ReportCardDefinitionRepository
+  reportCardResultRepository: ReportCardResultRepository
   announcementRepository: AnnouncementRepository
   studentFeeRepository: StudentFeeRepository
-  moduleRepository: ModuleRepository
+  reportCardDefinitionSectionRepository: ReportCardDefinitionSectionRepository
   deadlineRepository: DeadlineRepository
   deadlineRecordRepository: DeadlineRecordRepository
 }
@@ -71,25 +75,25 @@ export interface SchoolHeadlessAppArgs {
 export class SchoolHeadlessApp {
   readonly school: SchoolService
   readonly academicCalendar: AcademicCalendarService
-  readonly classrooms: ClassroomService
+  readonly classGroups: ClassGroupService
   readonly students: StudentService
   readonly guardians: GuardianService
   readonly staff: StaffService
   readonly staffAssignments: StaffAssignmentService
   readonly subjectCatalog: SubjectCatalogService
-  readonly modules: ModuleService
+  readonly reportCardDefinitionSections: ReportCardDefinitionSectionService
   readonly sessions: SessionService
   readonly assessments: AssessmentService
   readonly attendance: AttendanceService
   readonly grades: GradeService
-  readonly reportCards: ReportCardService
+  readonly reportCardResults: ReportCardResultService
   readonly announcements: AnnouncementService
   readonly fees: FeeService
   readonly deadlines: DeadlineService
   readonly workspace: WorkspaceService
   readonly schoolOverview: SchoolOverviewService
   readonly studentDirectory: StudentDirectoryService
-  readonly classroomRead: ClassroomReadService
+  readonly classGroupRead: ClassGroupReadService
   readonly attendanceReview: AttendanceReviewService
 
   constructor(args: SchoolHeadlessAppArgs) {
@@ -101,20 +105,20 @@ export class SchoolHeadlessApp {
       academicYearRepository: args.academicYearRepository,
       academicPeriodRepository: args.academicPeriodRepository,
     })
-    this.classrooms = new ClassroomService({
+    this.classGroups = new ClassGroupService({
       schoolRepository: args.schoolRepository,
       academicYearRepository: args.academicYearRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
     })
     this.students = new StudentService({
       schoolRepository: args.schoolRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
     })
     this.guardians = new GuardianService({
       schoolRepository: args.schoolRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
       guardianRepository: args.guardianRepository,
@@ -126,30 +130,25 @@ export class SchoolHeadlessApp {
     })
     this.staffAssignments = new StaffAssignmentService({
       staffMemberRepository: args.staffMemberRepository,
-      classroomRepository: args.classroomRepository,
-      moduleRepository: args.moduleRepository,
+      classGroupRepository: args.classGroupRepository,
+      classSubjectRepository: args.classSubjectRepository,
       classStaffAssignmentRepository: args.classStaffAssignmentRepository,
-      moduleStaffAssignmentRepository: args.moduleStaffAssignmentRepository,
+      classSubjectStaffAssignmentRepository: args.classSubjectStaffAssignmentRepository,
     })
     this.subjectCatalog = new SubjectCatalogService({
       schoolRepository: args.schoolRepository,
       subjectRepository: args.subjectRepository,
     })
-    this.modules = new ModuleService({
-      classroomRepository: args.classroomRepository,
-      subjectRepository: args.subjectRepository,
-      staffMemberRepository: args.staffMemberRepository,
-      moduleRepository: args.moduleRepository,
-      moduleStaffAssignmentRepository: args.moduleStaffAssignmentRepository,
+    this.reportCardDefinitionSections = new ReportCardDefinitionSectionService({
+      reportCardDefinitionRepository: args.reportCardDefinitionRepository,
+      reportCardDefinitionSectionRepository: args.reportCardDefinitionSectionRepository,
     })
     this.sessions = new SessionService({
-      classroomRepository: args.classroomRepository,
-      moduleRepository: args.moduleRepository,
+      classGroupRepository: args.classGroupRepository,
       sessionRepository: args.sessionRepository,
     })
     this.assessments = new AssessmentService({
-      classroomRepository: args.classroomRepository,
-      moduleRepository: args.moduleRepository,
+      classGroupRepository: args.classGroupRepository,
       academicPeriodRepository: args.academicPeriodRepository,
       sessionRepository: args.sessionRepository,
       assessmentRepository: args.assessmentRepository,
@@ -164,28 +163,30 @@ export class SchoolHeadlessApp {
     const grades = new GradeService({
       studentRepository: args.studentRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
-      subjectRepository: args.subjectRepository,
       assessmentRepository: args.assessmentRepository,
+      classSubjectRepository: args.classSubjectRepository,
       academicPeriodRepository: args.academicPeriodRepository,
       gradeRepository: args.gradeRepository,
-      classroomRepository: args.classroomRepository,
-      moduleRepository: args.moduleRepository,
+      classGroupRepository: args.classGroupRepository,
+      reportCardDefinitionSectionRepository: args.reportCardDefinitionSectionRepository,
     })
 
     this.attendance = attendance
     this.grades = grades
-    this.reportCards = new ReportCardService({
+    this.reportCardResults = new ReportCardResultService({
       studentRepository: args.studentRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
       academicPeriodRepository: args.academicPeriodRepository,
+      assessmentRepository: args.assessmentRepository,
       gradeRepository: args.gradeRepository,
-      reportCardRepository: args.reportCardRepository,
+      reportCardDefinitionRepository: args.reportCardDefinitionRepository,
+      reportCardResultRepository: args.reportCardResultRepository,
       attendanceService: attendance,
       gradeService: grades,
     })
     this.announcements = new AnnouncementService({
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       announcementRepository: args.announcementRepository,
     })
     this.fees = new FeeService({
@@ -194,8 +195,7 @@ export class SchoolHeadlessApp {
     })
     this.deadlines = new DeadlineService({
       schoolRepository: args.schoolRepository,
-      classroomRepository: args.classroomRepository,
-      moduleRepository: args.moduleRepository,
+      classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
       deadlineRepository: args.deadlineRepository,
@@ -205,49 +205,47 @@ export class SchoolHeadlessApp {
       schoolRepository: args.schoolRepository,
       academicYearRepository: args.academicYearRepository,
       academicPeriodRepository: args.academicPeriodRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       staffMemberRepository: args.staffMemberRepository,
-      moduleRepository: args.moduleRepository,
-      moduleStaffAssignmentRepository: args.moduleStaffAssignmentRepository,
+      classSubjectRepository: args.classSubjectRepository,
+      classSubjectStaffAssignmentRepository: args.classSubjectStaffAssignmentRepository,
     })
     this.schoolOverview = new SchoolOverviewService({
       schoolRepository: args.schoolRepository,
       academicYearRepository: args.academicYearRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
       announcementRepository: args.announcementRepository,
       studentFeeRepository: args.studentFeeRepository,
-      reportCardRepository: args.reportCardRepository,
+      reportCardResultRepository: args.reportCardResultRepository,
     })
     this.studentDirectory = new StudentDirectoryService({
       schoolRepository: args.schoolRepository,
       academicYearRepository: args.academicYearRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
       guardianStudentLinkRepository: args.guardianStudentLinkRepository,
-      reportCardRepository: args.reportCardRepository,
+      reportCardResultRepository: args.reportCardResultRepository,
       studentFeeRepository: args.studentFeeRepository,
     })
-    this.classroomRead = new ClassroomReadService({
+    this.classGroupRead = new ClassGroupReadService({
       academicYearRepository: args.academicYearRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
-      moduleRepository: args.moduleRepository,
-      moduleStaffAssignmentRepository: args.moduleStaffAssignmentRepository,
+      classSubjectRepository: args.classSubjectRepository,
+      classSubjectStaffAssignmentRepository: args.classSubjectStaffAssignmentRepository,
       staffMemberRepository: args.staffMemberRepository,
       subjectRepository: args.subjectRepository,
       sessionRepository: args.sessionRepository,
     })
     this.attendanceReview = new AttendanceReviewService({
       academicYearRepository: args.academicYearRepository,
-      classroomRepository: args.classroomRepository,
+      classGroupRepository: args.classGroupRepository,
       sessionRepository: args.sessionRepository,
       attendanceRepository: args.attendanceRepository,
       studentEnrollmentRepository: args.studentEnrollmentRepository,
       studentRepository: args.studentRepository,
-      moduleRepository: args.moduleRepository,
-      subjectRepository: args.subjectRepository,
     })
   }
 }

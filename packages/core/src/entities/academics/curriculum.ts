@@ -1,4 +1,4 @@
-import { ModuleNodeKind } from '$lib/core/entities/academics/module'
+import { ReportCardDefinitionSectionKind } from '$lib/core/entities/assessments/report-card-definition-section'
 import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../../utils/validation'
 
 export interface CurriculumArgs {
@@ -34,7 +34,7 @@ export class Curriculum {
 export interface CurriculumNodeArgs {
   id: string
   curriculumId: string
-  kind: ModuleNodeKind
+  kind: ReportCardDefinitionSectionKind
   name?: string | null
   weight: number
   parentCurriculumNodeId?: string | null
@@ -45,7 +45,7 @@ export interface CurriculumNodeArgs {
 export class CurriculumNode {
   readonly id: string
   readonly curriculumId: string
-  readonly kind: ModuleNodeKind
+  readonly kind: ReportCardDefinitionSectionKind
   readonly name?: string
   readonly weight: number
   readonly parentCurriculumNodeId?: string
@@ -71,7 +71,7 @@ export class CurriculumNode {
     this.subjectId = subjectId ? requireNonBlank(subjectId, 'subjectId') : undefined
     this.createdAt = createdAt ?? new Date()
 
-    if (this.kind === ModuleNodeKind.Group) {
+    if (this.kind === ReportCardDefinitionSectionKind.Group) {
       if (!this.name) {
         throw new Error('name is required for group nodes')
       }
@@ -80,7 +80,7 @@ export class CurriculumNode {
       }
     }
 
-    if (this.kind === ModuleNodeKind.Subject && !this.subjectId) {
+    if (this.kind === ReportCardDefinitionSectionKind.Subject && !this.subjectId) {
       throw new Error('subjectId is required for subject nodes')
     }
   }

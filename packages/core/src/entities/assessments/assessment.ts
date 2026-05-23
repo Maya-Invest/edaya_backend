@@ -10,9 +10,8 @@ export enum AssessmentKind {
 
 export interface AssessmentArgs {
   id: string
-  classroomId: string
+  classGroupId: string
   classSubjectId: string
-  moduleId?: string | null
   periodId: string
   title: string
   kind: AssessmentKind
@@ -27,15 +26,14 @@ export interface AssessmentArgs {
 }
 
 /**
- * Defines a graded activity for a classroom subject.
+ * Defines a graded activity for a classGroup subject.
  * Grades reference an assessment so scoring rules and grading intent stay explicit.
  * Can optionally belong to an Exam for structured exam grouping.
  */
 export class Assessment {
   readonly id: string
-  readonly classroomId: string
+  readonly classGroupId: string
   readonly classSubjectId: string
-  readonly moduleId?: string
   readonly periodId: string
   readonly title: string
   readonly kind: AssessmentKind
@@ -50,9 +48,8 @@ export class Assessment {
 
   constructor({
     id,
-    classroomId,
+    classGroupId,
     classSubjectId,
-    moduleId,
     periodId,
     title,
     kind,
@@ -66,9 +63,8 @@ export class Assessment {
     createdAt,
   }: AssessmentArgs) {
     this.id = requireNonBlank(id, 'id')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.classSubjectId = requireNonBlank(classSubjectId, 'classSubjectId')
-    this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
     this.periodId = requireNonBlank(periodId, 'periodId')
     this.title = requireNonBlank(title, 'title')
     this.kind = kind

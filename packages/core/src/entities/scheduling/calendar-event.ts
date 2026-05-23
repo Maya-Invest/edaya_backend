@@ -1,4 +1,4 @@
-import { requireNonBlank, requireValidDate } from '$lib/core/utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
 
 export enum CalendarEventKind {
   Holiday = 'holiday',
@@ -6,6 +6,12 @@ export enum CalendarEventKind {
   Break = 'break',
   Event = 'event',
   Other = 'other',
+}
+
+export enum CalendarEventScopeKind {
+  School = 'school',
+  GradeLevel = 'grade_level',
+  ClassGroup = 'class_group',
 }
 
 export interface CalendarEventArgs {
@@ -17,6 +23,8 @@ export interface CalendarEventArgs {
   endDate: Date
   kind: CalendarEventKind
   isNonSchoolDay?: boolean
+  scopeKind?: CalendarEventScopeKind
+  scopeId?: string | null
   createdAt?: Date
 }
 
@@ -34,6 +42,8 @@ export class CalendarEvent {
   readonly endDate: Date
   readonly kind: CalendarEventKind
   readonly isNonSchoolDay: boolean
+  readonly scopeKind: CalendarEventScopeKind
+  readonly scopeId?: string
   readonly createdAt: Date
 
   constructor({
@@ -45,6 +55,8 @@ export class CalendarEvent {
     endDate,
     kind,
     isNonSchoolDay = false,
+    scopeKind = CalendarEventScopeKind.School,
+    scopeId,
     createdAt,
   }: CalendarEventArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -55,10 +67,18 @@ export class CalendarEvent {
     this.endDate = requireValidDate(endDate, 'endDate')
     this.kind = kind
     this.isNonSchoolDay = isNonSchoolDay
+    this.scopeKind = scopeKind
+    this.scopeId = requireOptionalNonBlank(scopeId, 'scopeId')
     this.createdAt = createdAt ?? new Date()
 
     if (this.endDate.getTime() < this.startDate.getTime()) {
       throw new Error('endDate must not be before startDate')
+    }
+    if (this.scopeKind !== CalendarEventScopeKind.School && !this.scopeId) {
+      throw new Error('scopeId is required for scoped calendar events')
+    }
+    if (this.scopeKind === CalendarEventScopeKind.School && this.scopeId) {
+      throw new Error('school-wide calendar events must not define scopeId')
     }
   }
 

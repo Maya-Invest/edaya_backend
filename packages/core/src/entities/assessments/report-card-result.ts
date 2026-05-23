@@ -1,19 +1,21 @@
-import type { ModuleResult } from '$lib/core/entities/assessments/module-result'
+import type { ReportCardResultSection } from '$lib/core/entities/assessments/report-card-result-section'
 import type { AttendanceSummary } from '$lib/core/value_object/attendance-summary'
 import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '$lib/core/utils/validation'
 
-export enum ReportCardStatus {
+export enum ReportCardResultStatus {
   Draft = 'draft',
   Published = 'published',
 }
 
-export interface ReportCardArgs {
+export interface ReportCardResultArgs {
   id: string
+  reportCardDefinitionId: string
   studentId: string
-  classroomId: string
+  classGroupId: string
   periodId: string
-  /** Root-level module results. Each may recursively contain subResults. */
-  moduleResults: readonly ModuleResult[]
+  examId?: string | null
+  /** Root-level section results. Each may recursively contain subResults. */
+  sectionResults: readonly ReportCardResultSection[]
   attendanceSummary: AttendanceSummary
   gradeCount: number
   overallAverage?: number | null
@@ -22,22 +24,24 @@ export interface ReportCardArgs {
   passThreshold?: number | null
   teacherComment?: string | null
   principalComment?: string | null
-  status?: ReportCardStatus
+  status?: ReportCardResultStatus
   generatedAt?: Date
   publishedAt?: Date
 }
 
 /**
  * Represents a student's official report card for a specific academic period.
- * Contains a hierarchical tree of ModuleResult nodes (grouping and leaf) that
+ * Contains a hierarchical tree of section results (grouping and leaf) that
  * collectively describe the student's academic performance.
  */
-export class ReportCard {
+export class ReportCardResult {
   readonly id: string
+  readonly reportCardDefinitionId: string
   readonly studentId: string
-  readonly classroomId: string
+  readonly classGroupId: string
   readonly periodId: string
-  readonly moduleResults: readonly ModuleResult[]
+  readonly examId?: string
+  readonly sectionResults: readonly ReportCardResultSection[]
   readonly attendanceSummary: AttendanceSummary
   readonly gradeCount: number
   readonly overallAverage?: number
@@ -46,16 +50,18 @@ export class ReportCard {
   readonly passThreshold?: number
   readonly teacherComment?: string
   readonly principalComment?: string
-  readonly status: ReportCardStatus
+  readonly status: ReportCardResultStatus
   readonly generatedAt: Date
   readonly publishedAt?: Date
 
   constructor({
     id,
+    reportCardDefinitionId,
     studentId,
-    classroomId,
+    classGroupId,
     periodId,
-    moduleResults,
+    examId,
+    sectionResults,
     attendanceSummary,
     gradeCount,
     overallAverage,
@@ -64,15 +70,17 @@ export class ReportCard {
     passThreshold,
     teacherComment,
     principalComment,
-    status = ReportCardStatus.Draft,
+    status = ReportCardResultStatus.Draft,
     generatedAt,
     publishedAt,
-  }: ReportCardArgs) {
+  }: ReportCardResultArgs) {
     this.id = requireNonBlank(id, 'id')
+    this.reportCardDefinitionId = requireNonBlank(reportCardDefinitionId, 'reportCardDefinitionId')
     this.studentId = requireNonBlank(studentId, 'studentId')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.periodId = requireNonBlank(periodId, 'periodId')
-    this.moduleResults = Object.freeze([...moduleResults])
+    this.examId = requireOptionalNonBlank(examId, 'examId')
+    this.sectionResults = Object.freeze([...sectionResults])
     this.attendanceSummary = attendanceSummary
     this.gradeCount = requireNonNegativeInt(gradeCount, 'gradeCount')
     this.overallAverage
@@ -92,21 +100,23 @@ export class ReportCard {
     this.generatedAt = generatedAt ?? new Date()
     this.publishedAt = publishedAt
 
-    if (this.status === ReportCardStatus.Published && !this.publishedAt) {
+    if (this.status === ReportCardResultStatus.Published && !this.publishedAt) {
       throw new Error('publishedAt is required for published report cards')
     }
-    if (this.status === ReportCardStatus.Draft && this.publishedAt) {
+    if (this.status === ReportCardResultStatus.Draft && this.publishedAt) {
       throw new Error('draft report cards must not define publishedAt')
     }
   }
 
-  copyWith({ status, publishedAt }: { status?: ReportCardStatus, publishedAt?: Date }): ReportCard {
-    return new ReportCard({
+  copyWith({ status, publishedAt }: { status?: ReportCardResultStatus, publishedAt?: Date }): ReportCardResult {
+    return new ReportCardResult({
       id: this.id,
+      reportCardDefinitionId: this.reportCardDefinitionId,
       studentId: this.studentId,
-      classroomId: this.classroomId,
+      classGroupId: this.classGroupId,
       periodId: this.periodId,
-      moduleResults: this.moduleResults,
+      examId: this.examId,
+      sectionResults: this.sectionResults,
       attendanceSummary: this.attendanceSummary,
       gradeCount: this.gradeCount,
       overallAverage: this.overallAverage,

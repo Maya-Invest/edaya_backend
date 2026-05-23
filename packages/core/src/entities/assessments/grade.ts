@@ -4,7 +4,7 @@ export interface GradeArgs {
   id: string
   studentId: string
   assessmentId: string
-  moduleId: string
+  classSubjectId: string
   periodId: string
   score: number
   maxScore?: number
@@ -14,14 +14,14 @@ export interface GradeArgs {
 }
 
 /**
- * Represents a student's grade/score for a specific subject within a classroom program.
+ * Represents a student's grade/score for a specific subject within a classGroup program.
  * Grades are associated with an academic period and form the basis of the report card.
  */
 export class Grade {
   readonly id: string
   readonly studentId: string
   readonly assessmentId: string
-  readonly moduleId: string
+  readonly classSubjectId: string
   readonly periodId: string
   readonly score: number
   readonly maxScore: number
@@ -33,7 +33,7 @@ export class Grade {
     id,
     studentId,
     assessmentId,
-    moduleId,
+    classSubjectId,
     periodId,
     score,
     maxScore = 20,
@@ -44,7 +44,7 @@ export class Grade {
     this.id = requireNonBlank(id, 'id')
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.assessmentId = requireNonBlank(assessmentId, 'assessmentId')
-    this.moduleId = requireNonBlank(moduleId, 'moduleId')
+    this.classSubjectId = requireNonBlank(classSubjectId, 'classSubjectId')
     this.periodId = requireNonBlank(periodId, 'periodId')
     this.maxScore = roundTo2(requirePositiveNumber(maxScore, 'maxScore'))
     this.score = roundTo2(requireNonNegativeNumber(score, 'score'))

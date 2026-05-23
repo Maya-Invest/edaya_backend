@@ -1,7 +1,7 @@
 import type { GuardianContactMethod } from '$lib/core/entities/core/guardian-contact-method'
 import type { School } from '$lib/core/entities/core/school'
 import type { Student } from '$lib/core/entities/core/student'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { GuardianRepository } from '$lib/core/ports/guardian-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
@@ -12,7 +12,7 @@ import { GuardianStudentLink } from '$lib/core/entities/core/guardian-student-li
 
 export interface GuardianServiceArgs {
   schoolRepository: SchoolRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
   guardianRepository: GuardianRepository
@@ -22,7 +22,7 @@ export interface GuardianServiceArgs {
 export class GuardianService {
   constructor(args: GuardianServiceArgs) {
     this.schools = args.schoolRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
     this.enrollments = args.studentEnrollmentRepository
     this.guardians = args.guardianRepository
@@ -30,7 +30,7 @@ export class GuardianService {
   }
 
   private readonly schools: SchoolRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
   private readonly enrollments: StudentEnrollmentRepository
   private readonly guardians: GuardianRepository
@@ -97,8 +97,8 @@ export class GuardianService {
     const enrollments = await this.enrollments.listByStudent(studentId)
     const isEnrolledInSchool = await Promise.all(
       enrollments.map(async (enrollment) => {
-        const classroom = await this.classrooms.findById(enrollment.classroomId)
-        return classroom?.schoolId === guardian.schoolId
+        const classGroup = await this.classGroups.findById(enrollment.classGroupId)
+        return classGroup?.schoolId === guardian.schoolId
       }),
     ).then(results => results.some(result => result))
 

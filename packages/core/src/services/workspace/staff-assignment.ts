@@ -1,81 +1,81 @@
-import type { Module } from '$lib/core/entities/academics/module'
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassSubject } from '$lib/core/entities/academics/class-subject'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { StaffMember, StaffRole } from '$lib/core/entities/core/staff-member'
 import type { ClassStaffAssignmentRepository } from '$lib/core/ports/class-staff-assignment-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
-import type { ModuleRepository } from '$lib/core/ports/module-repository'
-import type { ModuleStaffAssignmentRepository } from '$lib/core/ports/module-staff-assignment-repository'
+import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
+import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import { ClassStaffAssignment } from '$lib/core/entities/administration/class-staff-assignment'
-import { ModuleStaffAssignment } from '$lib/core/entities/administration/module-staff-assignment'
+import { ClassSubjectStaffAssignment } from '$lib/core/entities/administration/class-subject-staff-assignment'
 
 export interface StaffAssignmentServiceArgs {
   staffMemberRepository: StaffMemberRepository
-  classroomRepository: ClassroomRepository
-  moduleRepository: ModuleRepository
+  classGroupRepository: ClassGroupRepository
+  classSubjectRepository: ClassSubjectRepository
   classStaffAssignmentRepository: ClassStaffAssignmentRepository
-  moduleStaffAssignmentRepository: ModuleStaffAssignmentRepository
+  classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
 }
 
 export class StaffAssignmentService {
   constructor(args: StaffAssignmentServiceArgs) {
     this.staffMembers = args.staffMemberRepository
-    this.classrooms = args.classroomRepository
-    this.modules = args.moduleRepository
+    this.classGroups = args.classGroupRepository
+    this.classSubjects = args.classSubjectRepository
     this.classStaffAssignments = args.classStaffAssignmentRepository
-    this.moduleStaffAssignments = args.moduleStaffAssignmentRepository
+    this.classSubjectStaffAssignments = args.classSubjectStaffAssignmentRepository
   }
 
   private readonly staffMembers: StaffMemberRepository
-  private readonly classrooms: ClassroomRepository
-  private readonly modules: ModuleRepository
+  private readonly classGroups: ClassGroupRepository
+  private readonly classSubjects: ClassSubjectRepository
   private readonly classStaffAssignments: ClassStaffAssignmentRepository
-  private readonly moduleStaffAssignments: ModuleStaffAssignmentRepository
+  private readonly classSubjectStaffAssignments: ClassSubjectStaffAssignmentRepository
 
   async assignStaffToClass({
     id,
     staffId,
-    classroomId,
+    classGroupId,
     role,
     createdAt,
   }: {
     id: string
     staffId: string
-    classroomId: string
+    classGroupId: string
     role: StaffRole
     createdAt?: Date
   }): Promise<ClassStaffAssignment> {
     const staffMember = await this.requireStaffMember(staffId)
-    const classroom = await this.requireClassroom(classroomId)
-    if (staffMember.schoolId !== classroom.schoolId) {
-      throw new Error(`Staff member ${staffId} does not belong to school ${classroom.schoolId}`)
+    const classGroup = await this.requireClassGroup(classGroupId)
+    if (staffMember.schoolId !== classGroup.schoolId) {
+      throw new Error(`Staff member ${staffId} does not belong to school ${classGroup.schoolId}`)
     }
-    const assignment = new ClassStaffAssignment({ id, classroomId, staffId, role, createdAt })
+    const assignment = new ClassStaffAssignment({ id, classGroupId, staffId, role, createdAt })
     await this.classStaffAssignments.save(assignment)
     return assignment
   }
 
-  async assignStaffToModule({
+  async assignStaffToClassSubject({
     id,
     staffId,
-    moduleId,
+    classSubjectId,
     role,
     createdAt,
   }: {
     id: string
     staffId: string
-    moduleId: string
+    classSubjectId: string
     role: StaffRole
     createdAt?: Date
-  }): Promise<ModuleStaffAssignment> {
+  }): Promise<ClassSubjectStaffAssignment> {
     const staffMember = await this.requireStaffMember(staffId)
-    const module = await this.requireModule(moduleId)
-    const classroom = await this.requireClassroom(module.classroomId)
-    if (staffMember.schoolId !== classroom.schoolId) {
-      throw new Error(`Staff member ${staffId} does not belong to school ${classroom.schoolId}`)
+    const classSubject = await this.requireClassSubject(classSubjectId)
+    const classGroup = await this.requireClassGroup(classSubject.classGroupId)
+    if (staffMember.schoolId !== classGroup.schoolId) {
+      throw new Error(`Staff member ${staffId} does not belong to school ${classGroup.schoolId}`)
     }
-    const assignment = new ModuleStaffAssignment({ id, moduleId, staffId, role, createdAt })
-    await this.moduleStaffAssignments.save(assignment)
+    const assignment = new ClassSubjectStaffAssignment({ id, classSubjectId, staffId, role, createdAt })
+    await this.classSubjectStaffAssignments.save(assignment)
     return assignment
   }
 
@@ -87,19 +87,19 @@ export class StaffAssignmentService {
     return staffMember
   }
 
-  private async requireClassroom(classroomId: string): Promise<Classroom> {
-    const classroom = await this.classrooms.findById(classroomId)
-    if (!classroom) {
-      throw new Error(`Unknown classroom: ${classroomId}`)
+  private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      throw new Error(`Unknown classGroup: ${classGroupId}`)
     }
-    return classroom
+    return classGroup
   }
 
-  private async requireModule(moduleId: string): Promise<Module> {
-    const module = await this.modules.findById(moduleId)
-    if (!module) {
-      throw new Error(`Unknown module: ${moduleId}`)
+  private async requireClassSubject(classSubjectId: string): Promise<ClassSubject> {
+    const classSubject = await this.classSubjects.findById(classSubjectId)
+    if (!classSubject) {
+      throw new Error(`Unknown class subject: ${classSubjectId}`)
     }
-    return module
+    return classSubject
   }
 }

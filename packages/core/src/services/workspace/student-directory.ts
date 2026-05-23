@@ -1,13 +1,13 @@
 import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
-import type { ReportCard } from '$lib/core/entities/assessments/report-card'
+import type { ReportCardResult } from '$lib/core/entities/assessments/report-card-result'
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { Classroom } from '$lib/core/entities/core/classroom'
+import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { School } from '$lib/core/entities/core/school'
 import type { Student } from '$lib/core/entities/core/student'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
-import type { ReportCardRepository } from '$lib/core/ports/report-card-repository'
+import type { ReportCardResultRepository } from '$lib/core/ports/report-card-result-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
@@ -16,21 +16,21 @@ import type { StudentRepository } from '$lib/core/ports/student-repository'
 export interface StudentDirectoryServiceArgs {
   schoolRepository: SchoolRepository
   academicYearRepository: AcademicYearRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
   studentEnrollmentRepository: StudentEnrollmentRepository
   guardianStudentLinkRepository: GuardianStudentLinkRepository
-  reportCardRepository: ReportCardRepository
+  reportCardResultRepository: ReportCardResultRepository
   studentFeeRepository: StudentFeeRepository
 }
 
 export interface StudentDirectoryRow {
   student: Student
   currentEnrollment?: StudentEnrollment
-  classroom?: Classroom
+  classGroup?: ClassGroup
   guardianCount: number
   balanceDue: number
-  latestReportCard?: ReportCard
+  latestReportCardResult?: ReportCardResult
 }
 
 export interface StudentDirectory {
@@ -43,21 +43,21 @@ export class StudentDirectoryService {
   constructor(args: StudentDirectoryServiceArgs) {
     this.schools = args.schoolRepository
     this.academicYears = args.academicYearRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
     this.enrollments = args.studentEnrollmentRepository
     this.guardianStudentLinks = args.guardianStudentLinkRepository
-    this.reportCards = args.reportCardRepository
+    this.reportCardResults = args.reportCardResultRepository
     this.fees = args.studentFeeRepository
   }
 
   private readonly schools: SchoolRepository
   private readonly academicYears: AcademicYearRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
   private readonly enrollments: StudentEnrollmentRepository
   private readonly guardianStudentLinks: GuardianStudentLinkRepository
-  private readonly reportCards: ReportCardRepository
+  private readonly reportCardResults: ReportCardResultRepository
   private readonly fees: StudentFeeRepository
 
   async listStudents({
@@ -69,30 +69,30 @@ export class StudentDirectoryService {
   }): Promise<StudentDirectory> {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.resolveAcademicYear({ schoolId, academicYearId })
-    const classrooms = activeAcademicYear
-      ? await this.classrooms.listByAcademicYear(activeAcademicYear.id)
+    const classGroups = activeAcademicYear
+      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
       : []
-    const classroomById = new Map(classrooms.map(classroom => [classroom.id, classroom]))
+    const classGroupById = new Map(classGroups.map(classGroup => [classGroup.id, classGroup]))
     const students = await this.students.listBySchool(schoolId)
 
     const rows = await Promise.all(
       students.map(async (student) => {
-        const [currentEnrollment, guardianLinks, reportCards, fees] = await Promise.all([
+        const [currentEnrollment, guardianLinks, reportCardResults, fees] = await Promise.all([
           this.enrollments.findCurrentByStudent(student.id).then(enrollment =>
-            enrollment && classroomById.has(enrollment.classroomId) ? enrollment : undefined,
+            enrollment && classGroupById.has(enrollment.classGroupId) ? enrollment : undefined,
           ),
           this.guardianStudentLinks.listByStudent(student.id),
-          this.reportCards.listByStudent(student.id),
+          this.reportCardResults.listByStudent(student.id),
           this.fees.listByStudent(student.id),
         ])
 
         return {
           student,
           currentEnrollment,
-          classroom: currentEnrollment ? classroomById.get(currentEnrollment.classroomId) : undefined,
+          classGroup: currentEnrollment ? classGroupById.get(currentEnrollment.classGroupId) : undefined,
           guardianCount: guardianLinks.length,
           balanceDue: fees.reduce((sum, fee) => sum + fee.balanceDue.amount, 0),
-          latestReportCard: this.pickLatestReportCard(reportCards),
+          latestReportCardResult: this.pickLatestReportCardResult(reportCardResults),
         }
       }),
     )
@@ -104,8 +104,8 @@ export class StudentDirectoryService {
     }
   }
 
-  private pickLatestReportCard(reportCards: readonly ReportCard[]): ReportCard | undefined {
-    return reportCards
+  private pickLatestReportCardResult(reportCardResults: readonly ReportCardResult[]): ReportCardResult | undefined {
+    return reportCardResults
       .slice()
       .sort((left, right) => {
         const leftDate = left.publishedAt ?? left.generatedAt

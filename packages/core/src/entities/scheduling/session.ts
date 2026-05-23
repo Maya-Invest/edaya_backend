@@ -9,13 +9,12 @@ export enum SessionKind {
 
 export interface SessionArgs {
   id: string
-  classroomId: string
+  classGroupId: string
   title: string
   kind: SessionKind
   startsAt: Date
   endsAt: Date
   classSubjectId?: string | null
-  moduleId?: string | null
   groupedSessionId?: string | null
   activityId?: string | null
   timetableSlotId?: string | null
@@ -23,19 +22,18 @@ export interface SessionArgs {
 }
 
 /**
- * Represents a concrete scheduled time slot where a classroom activity actually happens.
+ * Represents a concrete scheduled time slot where a classGroup activity actually happens.
  * Sessions may be generated from a TimetableSlot (linked via timetableSlotId) or
  * created ad-hoc for exceptional events. Attendance is recorded against sessions.
  */
 export class Session {
   readonly id: string
-  readonly classroomId: string
+  readonly classGroupId: string
   readonly title: string
   readonly kind: SessionKind
   readonly startsAt: Date
   readonly endsAt: Date
   readonly classSubjectId?: string
-  readonly moduleId?: string
   readonly groupedSessionId?: string
   readonly activityId?: string
   readonly timetableSlotId?: string
@@ -43,26 +41,24 @@ export class Session {
 
   constructor({
     id,
-    classroomId,
+    classGroupId,
     title,
     kind,
     startsAt,
     endsAt,
     classSubjectId,
-    moduleId,
     groupedSessionId,
     activityId,
     timetableSlotId,
     createdAt,
   }: SessionArgs) {
     this.id = requireNonBlank(id, 'id')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.title = requireNonBlank(title, 'title')
     this.kind = kind
     this.startsAt = requireValidDate(startsAt, 'startsAt')
     this.endsAt = requireValidDate(endsAt, 'endsAt')
     this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
-    this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
     this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
     this.activityId = requireOptionalNonBlank(activityId, 'activityId')
     this.timetableSlotId = requireOptionalNonBlank(timetableSlotId, 'timetableSlotId')

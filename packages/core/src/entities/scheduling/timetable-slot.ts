@@ -12,42 +12,42 @@ export enum DayOfWeek {
 
 export interface TimetableSlotArgs {
   id: string
-  classroomId: string
+  classGroupId: string
   periodDefinitionId: string
   dayOfWeek: DayOfWeek
-  moduleId?: string | null
+  classSubjectId?: string | null
   resourceId?: string | null
   createdAt?: Date
 }
 
 /**
- * Maps a classroom's weekly recurring schedule by assigning a module
+ * Maps a classGroup's weekly recurring schedule by assigning a module
  * and optional resource (room/lab) to a specific day + period slot.
  * Sessions can be generated from timetable slots, skipping non-school days.
  */
 export class TimetableSlot {
   readonly id: string
-  readonly classroomId: string
+  readonly classGroupId: string
   readonly periodDefinitionId: string
   readonly dayOfWeek: DayOfWeek
-  readonly moduleId?: string
+  readonly classSubjectId?: string
   readonly resourceId?: string
   readonly createdAt: Date
 
   constructor({
     id,
-    classroomId,
+    classGroupId,
     periodDefinitionId,
     dayOfWeek,
-    moduleId,
+    classSubjectId,
     resourceId,
     createdAt,
   }: TimetableSlotArgs) {
     this.id = requireNonBlank(id, 'id')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.periodDefinitionId = requireNonBlank(periodDefinitionId, 'periodDefinitionId')
     this.dayOfWeek = dayOfWeek
-    this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
+    this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
     this.resourceId = requireOptionalNonBlank(resourceId, 'resourceId')
     this.createdAt = createdAt ?? new Date()
   }

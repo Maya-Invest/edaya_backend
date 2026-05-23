@@ -44,7 +44,7 @@ export class AttendanceService {
   }): Promise<AttendanceRecord> {
     await this.requireStudent(studentId)
     const session = await this.requireSession(sessionId)
-    await this.requireEnrollmentForClassroom({ studentId, classroomId: session.classroomId })
+    await this.requireEnrollmentForClassGroup({ studentId, classGroupId: session.classGroupId })
 
     const existing = await this.attendance.findByStudentAndSession(studentId, sessionId)
     const record = new AttendanceRecord({
@@ -143,17 +143,17 @@ export class AttendanceService {
     return session
   }
 
-  private async requireEnrollmentForClassroom({
+  private async requireEnrollmentForClassGroup({
     studentId,
-    classroomId,
+    classGroupId,
   }: {
     studentId: string
-    classroomId: string
+    classGroupId: string
   }): Promise<void> {
     const enrollments = await this.enrollments.listByStudent(studentId)
-    const enrollment = enrollments.find(e => e.classroomId === classroomId)
+    const enrollment = enrollments.find(e => e.classGroupId === classGroupId)
     if (!enrollment) {
-      throw new Error(`Student ${studentId} is not enrolled in classroom ${classroomId}`)
+      throw new Error(`Student ${studentId} is not enrolled in classGroup ${classGroupId}`)
     }
   }
 }

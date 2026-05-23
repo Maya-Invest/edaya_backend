@@ -1,28 +1,28 @@
 import type { AcademicYear } from '$lib/core/entities/core/academic-year'
 import type { School } from '$lib/core/entities/core/school'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import { Classroom } from '$lib/core/entities/core/classroom'
+import { ClassGroup } from '$lib/core/entities/core/class-group'
 
-export interface ClassroomServiceArgs {
+export interface ClassGroupServiceArgs {
   schoolRepository: SchoolRepository
   academicYearRepository: AcademicYearRepository
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
 }
 
-export class ClassroomService {
-  constructor(args: ClassroomServiceArgs) {
+export class ClassGroupService {
+  constructor(args: ClassGroupServiceArgs) {
     this.schools = args.schoolRepository
     this.academicYears = args.academicYearRepository
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
   }
 
   private readonly schools: SchoolRepository
   private readonly academicYears: AcademicYearRepository
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
 
-  async createClassroom({
+  async createClassGroup({
     id,
     schoolId,
     academicYearId,
@@ -36,13 +36,13 @@ export class ClassroomService {
     name: string
     level?: string
     createdAt?: Date
-  }): Promise<Classroom> {
+  }): Promise<ClassGroup> {
     await this.requireSchool(schoolId)
     const academicYear = await this.requireAcademicYear(academicYearId)
     if (academicYear.schoolId !== schoolId) {
       throw new Error(`Academic year ${academicYearId} does not belong to school ${schoolId}`)
     }
-    const classroom = new Classroom({
+    const classGroup = new ClassGroup({
       id,
       schoolId,
       academicYearId,
@@ -50,8 +50,8 @@ export class ClassroomService {
       name,
       createdAt,
     })
-    await this.classrooms.save(classroom)
-    return classroom
+    await this.classGroups.save(classGroup)
+    return classGroup
   }
 
   private async requireSchool(schoolId: string): Promise<School> {

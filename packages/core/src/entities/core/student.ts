@@ -2,9 +2,9 @@ import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../.
 
 export enum StudentStatus {
   Active = 'active',
-  Suspended = 'suspended',
-  Withdrawn = 'withdrawn',
+  Inactive = 'inactive',
   Graduated = 'graduated',
+  Archived = 'archived',
 }
 
 export interface StudentArgs {

@@ -2,37 +2,37 @@ import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from 
 
 export interface ClassSubjectArgs {
   id: string
-  classroomId: string
+  classGroupId: string
   subjectId: string
   staffId?: string | null
-  moduleId?: string | null
   coefficient?: number | null
   createdAt?: Date
 }
 
+/**
+ * Represents a concrete subject offering inside a classGroup for an academic year.
+ * This is the teachable unit used by assessments, attendance planning, and staff assignment.
+ */
 export class ClassSubject {
   readonly id: string
-  readonly classroomId: string
+  readonly classGroupId: string
   readonly subjectId: string
   readonly staffId?: string
-  readonly moduleId?: string
   readonly coefficient?: number
   readonly createdAt: Date
 
   constructor({
     id,
-    classroomId,
+    classGroupId,
     subjectId,
     staffId,
-    moduleId,
     coefficient,
     createdAt,
   }: ClassSubjectArgs) {
     this.id = requireNonBlank(id, 'id')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.subjectId = requireNonBlank(subjectId, 'subjectId')
     this.staffId = requireOptionalNonBlank(staffId, 'staffId')
-    this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
     if (coefficient != null) {
       this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
     }

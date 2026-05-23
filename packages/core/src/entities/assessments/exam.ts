@@ -8,31 +8,31 @@ export enum ExamKind {
 export interface ExamArgs {
   id: string
   schoolId: string
-  periodId: string
-  classroomId?: string | null
+  academicYearId: string
   name: string
   kind: ExamKind
   order: number
   weight: number
+  reportCardDefinitionId?: string | null
   startDate?: Date | null
   endDate?: Date | null
   createdAt?: Date
 }
 
 /**
- * Groups assessments within an academic period into distinct exam rounds
- * (e.g., "Séquence 1", "Composition du 1er Trimestre").
- * Each exam has a weight that determines its contribution to the period average.
+ * Defines an exam event for an academic year, such as "Bac Blanc 2027".
+ * Assessments can optionally link to an exam, and an exam can optionally use
+ * a dedicated report-card definition for generated results.
  */
 export class Exam {
   readonly id: string
   readonly schoolId: string
-  readonly periodId: string
-  readonly classroomId?: string
+  readonly academicYearId: string
   readonly name: string
   readonly kind: ExamKind
   readonly order: number
   readonly weight: number
+  readonly reportCardDefinitionId?: string
   readonly startDate?: Date
   readonly endDate?: Date
   readonly createdAt: Date
@@ -40,24 +40,24 @@ export class Exam {
   constructor({
     id,
     schoolId,
-    periodId,
-    classroomId,
+    academicYearId,
     name,
     kind,
     order,
     weight,
+    reportCardDefinitionId,
     startDate,
     endDate,
     createdAt,
   }: ExamArgs) {
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.periodId = requireNonBlank(periodId, 'periodId')
-    this.classroomId = requireOptionalNonBlank(classroomId, 'classroomId')
+    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
     this.name = requireNonBlank(name, 'name')
     this.kind = kind
     this.order = requirePositiveInt(order, 'order')
     this.weight = requirePositiveNumber(weight, 'weight')
+    this.reportCardDefinitionId = requireOptionalNonBlank(reportCardDefinitionId, 'reportCardDefinitionId')
 
     if (startDate != null) {
       this.startDate = requireValidDate(startDate, 'startDate')

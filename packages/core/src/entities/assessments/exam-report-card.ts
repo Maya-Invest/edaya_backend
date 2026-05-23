@@ -14,6 +14,7 @@ export enum ExamReportCardStatus {
 }
 
 export interface ExamSubjectResult {
+  examSubjectId?: string
   subjectId: string
   subjectName: string
   score: number
@@ -24,8 +25,9 @@ export interface ExamSubjectResult {
 export interface ExamReportCardArgs {
   id: string
   studentId: string
-  classroomId: string
+  classGroupId: string
   examId: string
+  classExamId?: string | null
   periodId: string
   subjectResults: readonly ExamSubjectResult[]
   attendanceSummary: AttendanceSummary
@@ -42,15 +44,16 @@ export interface ExamReportCardArgs {
 
 /**
  * Represents an exam-specific report card for a student.
- * Unlike the periodic ReportCard which follows the module hierarchy,
+ * Unlike the periodic ReportCardResult which follows the module hierarchy,
  * the ExamReportCard uses a flat list of subject results with their own
  * exam-specific coefficients and weights that may differ from the module structure.
  */
 export class ExamReportCard {
   readonly id: string
   readonly studentId: string
-  readonly classroomId: string
+  readonly classGroupId: string
   readonly examId: string
+  readonly classExamId?: string
   readonly periodId: string
   readonly subjectResults: readonly ExamSubjectResult[]
   readonly attendanceSummary: AttendanceSummary
@@ -67,8 +70,9 @@ export class ExamReportCard {
   constructor({
     id,
     studentId,
-    classroomId,
+    classGroupId,
     examId,
+    classExamId,
     periodId,
     subjectResults,
     attendanceSummary,
@@ -84,12 +88,14 @@ export class ExamReportCard {
   }: ExamReportCardArgs) {
     this.id = requireNonBlank(id, 'id')
     this.studentId = requireNonBlank(studentId, 'studentId')
-    this.classroomId = requireNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.examId = requireNonBlank(examId, 'examId')
+    this.classExamId = requireOptionalNonBlank(classExamId, 'classExamId')
     this.periodId = requireNonBlank(periodId, 'periodId')
 
     this.subjectResults = Object.freeze(
       subjectResults.map(result => ({
+        examSubjectId: result.examSubjectId ? requireNonBlank(result.examSubjectId, 'subjectResult.examSubjectId') : undefined,
         subjectId: requireNonBlank(result.subjectId, 'subjectResult.subjectId'),
         subjectName: requireNonBlank(result.subjectName, 'subjectResult.subjectName'),
         score: roundTo2(requireNonNegativeNumber(result.score, 'subjectResult.score')),

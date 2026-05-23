@@ -4,7 +4,13 @@ export enum AttachmentOwnerKind {
   HealthRecord = 'health_record',
   Incident = 'incident',
   Student = 'student',
+  Guardian = 'guardian',
   ReportCard = 'report_card',
+  Payment = 'payment',
+  AttendanceRecord = 'attendance_record',
+  DeadlineRecord = 'deadline_record',
+  StudentEnrollment = 'student_enrollment',
+  AppliedDisciplinaryAction = 'applied_disciplinary_action',
   Other = 'other',
 }
 

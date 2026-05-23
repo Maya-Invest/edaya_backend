@@ -11,7 +11,7 @@ export interface SubjectArgs {
 
 /**
  * Represents a learning subject (e.g., Mathematics, History) in the global school catalog.
- * Subjects are linked to classrooms and assigned staff via the hierarchical Module tree.
+ * Subjects are linked to classGroups and assigned staff through ClassSubject.
  */
 export class Subject {
   readonly id: string

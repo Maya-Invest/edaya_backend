@@ -16,7 +16,7 @@ const TIME_PATTERN = /^\d{2}:\d{2}$/
 
 /**
  * Defines one slot in the school's daily period grid (e.g., "Period 1: 08:00–08:45").
- * All classrooms share the same grid for a given academic year.
+ * All classGroups share the same grid for a given academic year.
  * Break periods (recess, lunch) are flagged and excluded from teaching slots.
  */
 export class PeriodDefinition {

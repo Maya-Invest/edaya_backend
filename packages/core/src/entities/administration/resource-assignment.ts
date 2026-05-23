@@ -5,19 +5,19 @@ export interface ResourceAssignmentArgs {
   resourceId: string
   sessionId?: string | null
   groupedSessionId?: string | null
-  classroomId?: string | null
+  classGroupId?: string | null
   createdAt?: Date
 }
 
 /**
- * Assigns a specific Resource (like a room or equipment) to a Session, GroupedSession, or Classroom.
+ * Assigns a specific Resource (like a room or equipment) to a Session, GroupedSession, or ClassGroup.
  */
 export class ResourceAssignment {
   readonly id: string
   readonly resourceId: string
   readonly sessionId?: string
   readonly groupedSessionId?: string
-  readonly classroomId?: string
+  readonly classGroupId?: string
   readonly createdAt: Date
 
   constructor({
@@ -25,7 +25,7 @@ export class ResourceAssignment {
     resourceId,
     sessionId,
     groupedSessionId,
-    classroomId,
+    classGroupId,
     createdAt,
   }: ResourceAssignmentArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -33,11 +33,11 @@ export class ResourceAssignment {
 
     this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
     this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
-    this.classroomId = requireOptionalNonBlank(classroomId, 'classroomId')
+    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
 
-    const targets = [this.sessionId, this.groupedSessionId, this.classroomId].filter(Boolean)
+    const targets = [this.sessionId, this.groupedSessionId, this.classGroupId].filter(Boolean)
     if (targets.length !== 1) {
-      throw new Error('A ResourceAssignment must target exactly one of: sessionId, groupedSessionId, or classroomId')
+      throw new Error('A ResourceAssignment must target exactly one of: sessionId, groupedSessionId, or classGroupId')
     }
 
     this.createdAt = createdAt ?? new Date()

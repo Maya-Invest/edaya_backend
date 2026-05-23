@@ -11,8 +11,7 @@ export interface StudentIncidentInvolvementArgs {
   incidentId: string
   studentId: string
   role: IncidentInvolvementRole
-  disciplinaryActionId?: string | null
-  actionNotes?: string | null
+  notes?: string | null
   createdAt?: Date
 }
 
@@ -25,8 +24,7 @@ export class StudentIncidentInvolvement {
   readonly incidentId: string
   readonly studentId: string
   readonly role: IncidentInvolvementRole
-  readonly disciplinaryActionId?: string
-  readonly actionNotes?: string
+  readonly notes?: string
   readonly createdAt: Date
 
   constructor({
@@ -34,16 +32,14 @@ export class StudentIncidentInvolvement {
     incidentId,
     studentId,
     role,
-    disciplinaryActionId,
-    actionNotes,
+    notes,
     createdAt,
   }: StudentIncidentInvolvementArgs) {
     this.id = requireNonBlank(id, 'id')
     this.incidentId = requireNonBlank(incidentId, 'incidentId')
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.role = role
-    this.disciplinaryActionId = requireOptionalNonBlank(disciplinaryActionId, 'disciplinaryActionId')
-    this.actionNotes = requireOptionalNonBlank(actionNotes, 'actionNotes')
+    this.notes = requireOptionalNonBlank(notes, 'notes')
     this.createdAt = createdAt ?? new Date()
   }
 }

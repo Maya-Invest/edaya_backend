@@ -5,8 +5,8 @@ export interface DeadlineArgs {
   schoolId: string
   title: string
   dueAt: Date
-  classroomId?: string | null
-  moduleId?: string | null
+  classGroupId?: string | null
+  classSubjectId?: string | null
   metAt?: Date
   createdAt?: Date
 }
@@ -19,18 +19,18 @@ export class Deadline {
   readonly schoolId: string
   readonly title: string
   readonly dueAt: Date
-  readonly classroomId?: string
-  readonly moduleId?: string
+  readonly classGroupId?: string
+  readonly classSubjectId?: string
   readonly metAt?: Date
   readonly createdAt: Date
 
-  constructor({ id, schoolId, title, dueAt, classroomId, moduleId, metAt, createdAt }: DeadlineArgs) {
+  constructor({ id, schoolId, title, dueAt, classGroupId, classSubjectId, metAt, createdAt }: DeadlineArgs) {
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.title = requireNonBlank(title, 'title')
     this.dueAt = requireValidDate(dueAt, 'dueAt')
-    this.classroomId = requireOptionalNonBlank(classroomId, 'classroomId')
-    this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
+    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
+    this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
     this.metAt = metAt ? requireValidDate(metAt, 'metAt') : undefined
     this.createdAt = createdAt ?? new Date()
   }

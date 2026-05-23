@@ -1,19 +1,19 @@
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
-import type { ClassroomRepository } from '$lib/core/ports/classroom-repository'
+import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import { Announcement, AnnouncementAudience } from '$lib/core/entities/core/announcement'
 
 export interface AnnouncementServiceArgs {
-  classroomRepository: ClassroomRepository
+  classGroupRepository: ClassGroupRepository
   announcementRepository: AnnouncementRepository
 }
 
 export class AnnouncementService {
   constructor(args: AnnouncementServiceArgs) {
-    this.classrooms = args.classroomRepository
+    this.classGroups = args.classGroupRepository
     this.announcements = args.announcementRepository
   }
 
-  private readonly classrooms: ClassroomRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly announcements: AnnouncementRepository
 
   async publishAnnouncement({
@@ -22,7 +22,7 @@ export class AnnouncementService {
     title,
     content,
     audience,
-    classroomId,
+    classGroupId,
     createdBy,
     premiumNotification = false,
     publishedAt,
@@ -32,18 +32,18 @@ export class AnnouncementService {
     title: string
     content: string
     audience: AnnouncementAudience
-    classroomId?: string
+    classGroupId?: string
     createdBy?: string
     premiumNotification?: boolean
     publishedAt?: Date
   }): Promise<Announcement> {
-    if (audience === AnnouncementAudience.Classroom) {
-      const classroom = classroomId ? await this.classrooms.findById(classroomId) : undefined
-      if (!classroom) {
-        throw new Error(`Unknown classroom: ${classroomId}`)
+    if (audience === AnnouncementAudience.ClassGroup) {
+      const classGroup = classGroupId ? await this.classGroups.findById(classGroupId) : undefined
+      if (!classGroup) {
+        throw new Error(`Unknown classGroup: ${classGroupId}`)
       }
-      if (classroom.schoolId !== schoolId) {
-        throw new Error(`Classroom ${classroomId} does not belong to school ${schoolId}`)
+      if (classGroup.schoolId !== schoolId) {
+        throw new Error(`ClassGroup ${classGroupId} does not belong to school ${schoolId}`)
       }
     }
 
@@ -53,7 +53,7 @@ export class AnnouncementService {
       title,
       content,
       audience,
-      classroomId,
+      classGroupId,
       createdBy,
       premiumNotification,
       publishedAt: publishedAt ?? new Date(),
@@ -64,15 +64,15 @@ export class AnnouncementService {
 
   async listAnnouncementsForStudent({
     schoolId,
-    classroomId,
+    classGroupId,
   }: {
     schoolId: string
-    classroomId: string
+    classGroupId: string
   }): Promise<Announcement[]> {
     const announcements = await this.announcements.listBySchool(schoolId)
     return announcements
       .filter(announcement => announcement.isPublished)
-      .filter(announcement => announcement.isVisibleForClassroom(classroomId))
+      .filter(announcement => announcement.isVisibleForClassGroup(classGroupId))
       .sort((left, right) => {
         const leftDate = left.publishedAt ?? left.createdAt
         const rightDate = right.publishedAt ?? right.createdAt

@@ -5,22 +5,22 @@ export interface StaffAssignmentArgs {
   id: string
   staffId: string
   role: StaffRole
-  classroomId?: string | null
-  moduleId?: string | null
+  classGroupId?: string | null
+  classSubjectId?: string | null
   sessionId?: string | null
   groupedSessionId?: string | null
   createdAt?: Date
 }
 
 /**
- * Assigns a staff member (with a specific role) to a Classroom, Module, Session, or GroupedSession.
+ * Assigns a staff member (with a specific role) to a ClassGroup, ClassSubject, Session, or GroupedSession.
  */
 export class StaffAssignment {
   readonly id: string
   readonly staffId: string
   readonly role: StaffRole
-  readonly classroomId?: string
-  readonly moduleId?: string
+  readonly classGroupId?: string
+  readonly classSubjectId?: string
   readonly sessionId?: string
   readonly groupedSessionId?: string
   readonly createdAt: Date
@@ -29,8 +29,8 @@ export class StaffAssignment {
     id,
     staffId,
     role,
-    classroomId,
-    moduleId,
+    classGroupId,
+    classSubjectId,
     sessionId,
     groupedSessionId,
     createdAt,
@@ -39,14 +39,14 @@ export class StaffAssignment {
     this.staffId = requireNonBlank(staffId, 'staffId')
     this.role = role
 
-    this.classroomId = requireOptionalNonBlank(classroomId, 'classroomId')
-    this.moduleId = requireOptionalNonBlank(moduleId, 'moduleId')
+    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
+    this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
     this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
     this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
 
-    const targets = [this.classroomId, this.moduleId, this.sessionId, this.groupedSessionId].filter(Boolean)
+    const targets = [this.classGroupId, this.classSubjectId, this.sessionId, this.groupedSessionId].filter(Boolean)
     if (targets.length !== 1) {
-      throw new Error('A StaffAssignment must target exactly one of: classroomId, moduleId, sessionId, or groupedSessionId')
+      throw new Error('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, sessionId, or groupedSessionId')
     }
 
     this.createdAt = createdAt ?? new Date()

@@ -5,7 +5,7 @@ export enum AttendanceMode {
   Session = 'session',
 }
 
-export interface ClassroomArgs {
+export interface ClassGroupArgs {
   id: string
   schoolId: string
   academicYearId: string
@@ -13,16 +13,16 @@ export interface ClassroomArgs {
   name: string
   capacity?: number | null
   attendanceMode?: AttendanceMode
-  homeroomTeacherId?: string | null
+  homeroomStaffId?: string | null
   createdAt?: Date
 }
 
 /**
- * Represents a physical or logical classroom where students are enrolled.
+ * Represents an academic class group where students are enrolled.
  * Examples include "Grade 10A" or "Form 4 Science".
  * References a GradeLevel for structured level tracking.
  */
-export class Classroom {
+export class ClassGroup {
   readonly id: string
   readonly schoolId: string
   readonly academicYearId: string
@@ -30,7 +30,7 @@ export class Classroom {
   readonly name: string
   readonly capacity?: number
   readonly attendanceMode: AttendanceMode
-  readonly homeroomTeacherId?: string
+  readonly homeroomStaffId?: string
   readonly createdAt: Date
 
   constructor({
@@ -41,9 +41,9 @@ export class Classroom {
     name,
     capacity,
     attendanceMode = AttendanceMode.Session,
-    homeroomTeacherId,
+    homeroomStaffId,
     createdAt,
-  }: ClassroomArgs) {
+  }: ClassGroupArgs) {
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
@@ -53,7 +53,7 @@ export class Classroom {
       this.capacity = requirePositiveInt(capacity, 'capacity')
     }
     this.attendanceMode = attendanceMode
-    this.homeroomTeacherId = requireOptionalNonBlank(homeroomTeacherId, 'homeroomTeacherId')
+    this.homeroomStaffId = requireOptionalNonBlank(homeroomStaffId, 'homeroomStaffId')
     this.createdAt = createdAt ?? new Date()
   }
 }
