@@ -7,8 +7,8 @@ import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-r
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
-import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
+import type { StaffAssignmentRepository } from '$lib/core/ports/staff-assignment-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import { StaffRole } from '$lib/core/entities/school/staff-member'
 
@@ -19,7 +19,7 @@ export interface WorkspaceServiceArgs {
   classGroupRepository: ClassGroupRepository
   staffMemberRepository: StaffMemberRepository
   classSubjectRepository: ClassSubjectRepository
-  classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
+  staffAssignmentRepository: StaffAssignmentRepository
 }
 
 export interface TeacherCourseLoad {
@@ -45,7 +45,7 @@ export class WorkspaceService {
     this.classGroups = args.classGroupRepository
     this.staffMembers = args.staffMemberRepository
     this.classSubjects = args.classSubjectRepository
-    this.classSubjectStaffAssignments = args.classSubjectStaffAssignmentRepository
+    this.staffAssignments = args.staffAssignmentRepository
   }
 
   private readonly schools: SchoolRepository
@@ -54,7 +54,7 @@ export class WorkspaceService {
   private readonly classGroups: ClassGroupRepository
   private readonly staffMembers: StaffMemberRepository
   private readonly classSubjects: ClassSubjectRepository
-  private readonly classSubjectStaffAssignments: ClassSubjectStaffAssignmentRepository
+  private readonly staffAssignments: StaffAssignmentRepository
 
   async getWorkspaceContext({
     schoolId,
@@ -122,7 +122,7 @@ export class WorkspaceService {
   }
 
   private async resolveTeacherId(classSubjectId: string, fallbackStaffId?: string): Promise<string | undefined> {
-    const assignments = await this.classSubjectStaffAssignments.listByClassSubject(classSubjectId)
+    const assignments = await this.staffAssignments.listByClassSubject(classSubjectId)
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     return teacherAssignment?.staffId ?? fallbackStaffId
   }

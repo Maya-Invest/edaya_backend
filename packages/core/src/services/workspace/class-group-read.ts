@@ -7,8 +7,8 @@ import type { StaffMember } from '$lib/core/entities/school/staff-member'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
-import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
+import type { StaffAssignmentRepository } from '$lib/core/ports/staff-assignment-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
 import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
@@ -19,7 +19,7 @@ export interface ClassGroupReadServiceArgs {
   classGroupRepository: ClassGroupRepository
   StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   classSubjectRepository: ClassSubjectRepository
-  classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
+  staffAssignmentRepository: StaffAssignmentRepository
   staffMemberRepository: StaffMemberRepository
   subjectRepository: SubjectRepository
   sessionRepository: SessionRepository
@@ -57,7 +57,7 @@ export class ClassGroupReadService {
     this.classGroups = args.classGroupRepository
     this.enrollments = args.StudentClassEnrollmentRepository
     this.classSubjects = args.classSubjectRepository
-    this.classSubjectStaffAssignments = args.classSubjectStaffAssignmentRepository
+    this.staffAssignments = args.staffAssignmentRepository
     this.staffMembers = args.staffMemberRepository
     this.subjects = args.subjectRepository
     this.sessions = args.sessionRepository
@@ -67,7 +67,7 @@ export class ClassGroupReadService {
   private readonly classGroups: ClassGroupRepository
   private readonly enrollments: StudentClassEnrollmentRepository
   private readonly classSubjects: ClassSubjectRepository
-  private readonly classSubjectStaffAssignments: ClassSubjectStaffAssignmentRepository
+  private readonly staffAssignments: StaffAssignmentRepository
   private readonly staffMembers: StaffMemberRepository
   private readonly subjects: SubjectRepository
   private readonly sessions: SessionRepository
@@ -155,7 +155,7 @@ export class ClassGroupReadService {
   }
 
   private async resolveTeacher(classSubjectId: string, fallbackStaffId?: string): Promise<StaffMember | undefined> {
-    const assignments = await this.classSubjectStaffAssignments.listByClassSubject(classSubjectId)
+    const assignments = await this.staffAssignments.listByClassSubject(classSubjectId)
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     const teacherId = teacherAssignment?.staffId ?? fallbackStaffId
     return teacherId ? this.staffMembers.findById(teacherId) : undefined

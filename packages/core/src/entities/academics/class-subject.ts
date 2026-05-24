@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requirePositiveNumber } from '../../utils/validation'
 
 export interface ClassSubjectArgs {
   id: string
@@ -40,6 +40,9 @@ export class ClassSubject {
       this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
     }
     this.createdAt = createdAt ?? new Date()
-    this.completedPercentage = completedPercentage ?? 0
+    this.completedPercentage = requireNonNegativeNumber(completedPercentage ?? 0, 'completedPercentage')
+    if (this.completedPercentage > 100) {
+      throw new Error('completedPercentage must be between 0 and 100')
+    }
   }
 }
