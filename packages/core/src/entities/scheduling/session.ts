@@ -17,14 +17,13 @@ export interface SessionArgs {
   classSubjectId?: string | null
   groupedSessionId?: string | null
   activityId?: string | null
-  timetableSlotId?: string | null
+  scheduleId?: string | null
   createdAt?: Date
 }
 
 /**
  * Represents a concrete scheduled time slot where a classGroup activity actually happens.
- * Sessions may be generated from a TimetableSlot (linked via timetableSlotId) or
- * created ad-hoc for exceptional events. Attendance is recorded against sessions.
+ * Attendance is recorded against sessions.
  */
 export class Session {
   readonly id: string
@@ -36,7 +35,7 @@ export class Session {
   readonly classSubjectId?: string
   readonly groupedSessionId?: string
   readonly activityId?: string
-  readonly timetableSlotId?: string
+  readonly scheduleId?: string
   readonly createdAt: Date
 
   constructor({
@@ -49,7 +48,7 @@ export class Session {
     classSubjectId,
     groupedSessionId,
     activityId,
-    timetableSlotId,
+    scheduleId,
     createdAt,
   }: SessionArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -61,7 +60,7 @@ export class Session {
     this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
     this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
     this.activityId = requireOptionalNonBlank(activityId, 'activityId')
-    this.timetableSlotId = requireOptionalNonBlank(timetableSlotId, 'timetableSlotId')
+    this.scheduleId = requireOptionalNonBlank(scheduleId, 'scheduleId')
     this.createdAt = createdAt ?? new Date()
 
     if (this.endsAt.getTime() <= this.startsAt.getTime()) {

@@ -3,18 +3,18 @@ import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repos
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
+import type { CalendarEventRepository } from '$lib/core/ports/calendar-event-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ClassStaffAssignmentRepository } from '$lib/core/ports/class-staff-assignment-repository'
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
 import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
-import type { DeadlineRecordRepository } from '$lib/core/ports/deadline-record-repository'
-import type { DeadlineRepository } from '$lib/core/ports/deadline-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'
 import type { GuardianRepository } from '$lib/core/ports/guardian-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
 import type { ReportCardDefinitionRepository } from '$lib/core/ports/report-card-definition-repository'
 import type { ReportCardDefinitionSectionRepository } from '$lib/core/ports/report-card-definition-section-repository'
 import type { ReportCardResultRepository } from '$lib/core/ports/report-card-result-repository'
+import type { ScheduleRepository } from '$lib/core/ports/schedule-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
@@ -31,7 +31,7 @@ import { FeeService } from '$lib/core/services/fees/fee'
 import { GuardianService } from '$lib/core/services/guardian'
 import { AttendanceService } from '$lib/core/services/planing/attendance'
 import { AttendanceReviewService } from '$lib/core/services/planing/attendance-review'
-import { DeadlineService } from '$lib/core/services/planing/deadline'
+import { ScheduleService } from '$lib/core/services/planing/schedule'
 import { SessionService } from '$lib/core/services/planing/session'
 import { AcademicCalendarService } from '$lib/core/services/workspace/academic-calendar'
 import { ClassGroupService } from '$lib/core/services/workspace/class-group'
@@ -68,8 +68,8 @@ export interface SchoolHeadlessAppArgs {
   announcementRepository: AnnouncementRepository
   studentFeeRepository: StudentFeeRepository
   reportCardDefinitionSectionRepository: ReportCardDefinitionSectionRepository
-  deadlineRepository: DeadlineRepository
-  deadlineRecordRepository: DeadlineRecordRepository
+  scheduleRepository: ScheduleRepository
+  calendarEventRepository: CalendarEventRepository
 }
 
 export class SchoolHeadlessApp {
@@ -89,7 +89,7 @@ export class SchoolHeadlessApp {
   readonly reportCardResults: ReportCardResultService
   readonly announcements: AnnouncementService
   readonly fees: FeeService
-  readonly deadlines: DeadlineService
+  readonly schedules: ScheduleService
   readonly workspace: WorkspaceService
   readonly schoolOverview: SchoolOverviewService
   readonly studentDirectory: StudentDirectoryService
@@ -152,7 +152,6 @@ export class SchoolHeadlessApp {
       academicPeriodRepository: args.academicPeriodRepository,
       sessionRepository: args.sessionRepository,
       assessmentRepository: args.assessmentRepository,
-      deadlineRepository: args.deadlineRepository,
     })
     const attendance = new AttendanceService({
       studentRepository: args.studentRepository,
@@ -193,13 +192,11 @@ export class SchoolHeadlessApp {
       studentRepository: args.studentRepository,
       studentFeeRepository: args.studentFeeRepository,
     })
-    this.deadlines = new DeadlineService({
-      schoolRepository: args.schoolRepository,
+    this.schedules = new ScheduleService({
       classGroupRepository: args.classGroupRepository,
-      studentRepository: args.studentRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
-      deadlineRepository: args.deadlineRepository,
-      deadlineRecordRepository: args.deadlineRecordRepository,
+      scheduleRepository: args.scheduleRepository,
+      calendarEventRepository: args.calendarEventRepository,
+      sessionRepository: args.sessionRepository,
     })
     this.workspace = new WorkspaceService({
       schoolRepository: args.schoolRepository,

@@ -6,8 +6,7 @@ import type { ClassStaffAssignmentRepository } from '$lib/core/ports/class-staff
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
 import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
-import { ClassStaffAssignment } from '$lib/core/entities/administration/class-staff-assignment'
-import { ClassSubjectStaffAssignment } from '$lib/core/entities/administration/class-subject-staff-assignment'
+import { StaffAssignment } from '$lib/core/entities/administration/staff-assignment'
 
 export interface StaffAssignmentServiceArgs {
   staffMemberRepository: StaffMemberRepository
@@ -44,13 +43,13 @@ export class StaffAssignmentService {
     classGroupId: string
     role: StaffRole
     createdAt?: Date
-  }): Promise<ClassStaffAssignment> {
+  }): Promise<StaffAssignment> {
     const staffMember = await this.requireStaffMember(staffId)
     const classGroup = await this.requireClassGroup(classGroupId)
     if (staffMember.schoolId !== classGroup.schoolId) {
       throw new Error(`Staff member ${staffId} does not belong to school ${classGroup.schoolId}`)
     }
-    const assignment = new ClassStaffAssignment({ id, classGroupId, staffId, role, createdAt })
+    const assignment = new StaffAssignment({ id, classGroupId, staffId, role, createdAt })
     await this.classStaffAssignments.save(assignment)
     return assignment
   }
@@ -67,14 +66,14 @@ export class StaffAssignmentService {
     classSubjectId: string
     role: StaffRole
     createdAt?: Date
-  }): Promise<ClassSubjectStaffAssignment> {
+  }): Promise<StaffAssignment> {
     const staffMember = await this.requireStaffMember(staffId)
     const classSubject = await this.requireClassSubject(classSubjectId)
     const classGroup = await this.requireClassGroup(classSubject.classGroupId)
     if (staffMember.schoolId !== classGroup.schoolId) {
       throw new Error(`Staff member ${staffId} does not belong to school ${classGroup.schoolId}`)
     }
-    const assignment = new ClassSubjectStaffAssignment({ id, classSubjectId, staffId, role, createdAt })
+    const assignment = new StaffAssignment({ id, classSubjectId, staffId, role, createdAt })
     await this.classSubjectStaffAssignments.save(assignment)
     return assignment
   }

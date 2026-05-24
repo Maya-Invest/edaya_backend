@@ -8,7 +8,7 @@ export enum AttachmentOwnerKind {
   ReportCard = 'report_card',
   Payment = 'payment',
   AttendanceRecord = 'attendance_record',
-  DeadlineRecord = 'deadline_record',
+  Grade = 'grade',
   StudentEnrollment = 'student_enrollment',
   AppliedDisciplinaryAction = 'applied_disciplinary_action',
   Other = 'other',

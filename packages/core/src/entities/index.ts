@@ -1,28 +1,25 @@
+// academics
 export * from './academics/class-subject'
 export * from './academics/class-subject-matter'
-// academics
 export * from './academics/subject'
 export * from './academics/subject-matter'
 
 // administration
+export * from './administration/activity'
 export * from './administration/activity-enrollment'
 export * from './administration/applied-disciplinary-action'
 export * from './administration/disciplinary-action'
 export * from './administration/incident'
 export * from './administration/resource-assignment'
 export * from './administration/staff-assignment'
-
-// export * from './administration/staff-assignment-template'
 export * from './administration/student-enrollment'
 export * from './administration/student-incident-involvement'
+export * from './administration/student-note'
 
 // assessments
 export * from './assessments/assessment'
 export * from './assessments/class-exam'
-export * from './assessments/deadline'
-export * from './assessments/deadline-record'
 export * from './assessments/exam'
-// export * from './assessments/exam-report-card'
 export * from './assessments/exam-subject'
 export * from './assessments/grade'
 export * from './assessments/grade-scale'
@@ -48,17 +45,16 @@ export * from './core/resource'
 export * from './core/school'
 export * from './core/staff-member'
 export * from './core/student'
-export * from './core/student-note'
 
 // finance
 export * from './finance/fee'
 export * from './finance/payment'
 export * from './finance/student-fee'
+export * from './scheduling/attendance-record'
 
 // scheduling
-export * from './scheduling/activity'
 export * from './scheduling/attendance-record'
 export * from './scheduling/calendar-event'
 export * from './scheduling/grouped-session'
+export * from './scheduling/schedule'
 export * from './scheduling/session'
-export * from './scheduling/timetable-slot'

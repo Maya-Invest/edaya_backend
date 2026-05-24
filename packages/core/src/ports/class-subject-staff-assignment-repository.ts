@@ -1,7 +1,7 @@
-import type { ClassSubjectStaffAssignment } from '$lib/core/entities/administration/class-subject-staff-assignment'
+import type { StaffAssignment } from '$lib/core/entities/administration/staff-assignment'
 import type { BaseRepositoryInterface } from './_base-repository'
 
-export interface ClassSubjectStaffAssignmentRepository extends BaseRepositoryInterface<ClassSubjectStaffAssignment> {
-  listByStaff: (staffId: string) => Promise<ClassSubjectStaffAssignment[]>
-  listByClassSubject: (classSubjectId: string) => Promise<ClassSubjectStaffAssignment[]>
+export interface ClassSubjectStaffAssignmentRepository extends BaseRepositoryInterface<StaffAssignment> {
+  listByStaff: (staffId: string) => Promise<StaffAssignment[]>
+  listByClassSubject: (classSubjectId: string) => Promise<StaffAssignment[]>
 }

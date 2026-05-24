@@ -19,8 +19,8 @@ export interface AssessmentArgs {
   coefficient?: number
   examId?: string | null
   sessionId?: string | null
-  timetableSlotId?: string | null
-  deadlineId?: string | null
+  dueAt?: Date | null
+  metAt?: Date | null
   date?: Date | null
   createdAt?: Date
 }
@@ -40,10 +40,9 @@ export class Assessment {
   readonly maxScore: number
   readonly coefficient: number
   readonly examId?: string
-  readonly groupedSessionId?: string
   readonly sessionId?: string
-  readonly timetableSlotId?: string
-  readonly deadlineId?: string
+  readonly dueAt?: Date
+  readonly metAt?: Date
   readonly date?: Date
   readonly createdAt: Date
 
@@ -58,8 +57,8 @@ export class Assessment {
     coefficient = 1,
     examId,
     sessionId,
-    timetableSlotId,
-    deadlineId,
+    dueAt,
+    metAt,
     date,
     createdAt,
   }: AssessmentArgs) {
@@ -73,13 +72,13 @@ export class Assessment {
     this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
     this.examId = requireOptionalNonBlank(examId, 'examId')
     this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
-    this.timetableSlotId = requireOptionalNonBlank(timetableSlotId, 'timetableSlotId')
-    this.deadlineId = requireOptionalNonBlank(deadlineId, 'deadlineId')
+    this.dueAt = dueAt ? requireValidDate(dueAt, 'dueAt') : undefined
+    this.metAt = metAt ? requireValidDate(metAt, 'metAt') : undefined
     this.date = date ? requireValidDate(date, 'date') : undefined
     this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : new Date()
 
-    if (!this.sessionId && !this.deadlineId && !this.timetableSlotId && !this.date) {
-      throw new Error('assessment must be linked to a session, deadline, timetableSlot, or have a date')
+    if (!this.sessionId && !this.dueAt && !this.date) {
+      throw new Error('assessment must be linked to a session, have a due date, or have a date')
     }
   }
 }

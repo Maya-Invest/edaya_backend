@@ -1,4 +1,5 @@
 import type { Assessment } from '$lib/core/entities/assessments/assessment'
+import type { DeadlineComplianceStatus } from '$lib/core/entities/assessments/grade'
 import type { ReportCardDefinitionSection } from '$lib/core/entities/assessments/report-card-definition-section'
 import type { ReportCardResultSection } from '$lib/core/entities/assessments/report-card-result-section'
 import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
@@ -57,13 +58,17 @@ export class GradeService {
     studentId,
     assessmentId,
     score,
+    status,
+    notes,
     createdBy,
     createdAt,
   }: {
     id: string
     studentId: string
     assessmentId: string
-    score: number
+    score?: number
+    status?: DeadlineComplianceStatus
+    notes?: string | null
     createdBy?: string
     createdAt?: Date
   }): Promise<Grade> {
@@ -84,10 +89,58 @@ export class GradeService {
       assessmentId,
       classSubjectId: assessment.classSubjectId,
       periodId: assessment.periodId,
-      score,
+      score: score !== undefined ? score : existing?.score,
       maxScore: assessment.maxScore,
       coefficient: assessment.coefficient,
+      status: status !== undefined ? status : existing?.status,
+      notes: notes !== undefined ? notes : existing?.notes,
       createdBy,
+      createdAt: existing?.createdAt ?? createdAt,
+    })
+    await this.grades.save(grade)
+    return grade
+  }
+
+  /**
+   * Records a student's compliance with an assessment's deadline.
+   * Replaces old recordDeadlineCompliance functionality.
+   */
+  async recordGradeCompliance({
+    id,
+    studentId,
+    assessmentId,
+    status,
+    notes,
+    createdBy,
+    createdAt,
+  }: {
+    id: string
+    studentId: string
+    assessmentId: string
+    status: DeadlineComplianceStatus
+    notes?: string | null
+    createdBy?: string
+    createdAt?: Date
+  }): Promise<Grade> {
+    await this.requireStudent(studentId)
+    const assessment = await this.requireAssessment(assessmentId)
+    await this.requireStudentEligibilityForAssessment({ studentId, assessment })
+
+    const existingGrades = await this.grades.listByAssessment(assessmentId)
+    const existing = existingGrades.find(grade => grade.studentId === studentId)
+
+    const grade = new Grade({
+      id: existing?.id ?? id,
+      studentId,
+      assessmentId,
+      classSubjectId: assessment.classSubjectId,
+      periodId: assessment.periodId,
+      score: existing?.score,
+      maxScore: assessment.maxScore,
+      coefficient: assessment.coefficient,
+      status,
+      notes,
+      createdBy: createdBy ?? existing?.createdBy,
       createdAt: existing?.createdAt ?? createdAt,
     })
     await this.grades.save(grade)
@@ -141,11 +194,13 @@ export class GradeService {
         const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
         if (!classSubject)
           return null
-        const leafGrades = gradesByClassSubject.get(classSubject.id) ?? []
+        const allLeafGrades = gradesByClassSubject.get(classSubject.id) ?? []
+        // Filter out ungraded / only compliance-tracked assessments so they don't break average calculations
+        const leafGrades = allLeafGrades.filter(g => g.score !== undefined)
         if (leafGrades.length === 0)
           return null
-        const totalWeight = leafGrades.reduce((sum, g) => sum + g.coefficient, 0)
-        const weightedPoints = leafGrades.reduce((sum, g) => sum + g.weightedPoints, 0)
+        const totalWeight = leafGrades.reduce((sum, g) => sum + (g.coefficient ?? 1), 0)
+        const weightedPoints = leafGrades.reduce((sum, g) => sum + (g.weightedPoints ?? 0), 0)
         const average = totalWeight === 0 ? 0 : weightedPoints / totalWeight
         return new SectionResult({
           sectionId: section.id,
@@ -263,6 +318,20 @@ export class GradeService {
     const enrollment = enrollments.find(e => e.classGroupId === classGroupId)
     if (!enrollment) {
       throw new Error(`Student ${studentId} is not enrolled in classGroup ${classGroupId}`)
+    }
+  }
+
+  private async requireStudentEligibilityForAssessment({
+    studentId,
+    assessment,
+  }: {
+    studentId: string
+    assessment: Assessment
+  }): Promise<void> {
+    const enrollments = await this.enrollments.listByStudent(studentId)
+    const targetClassGroupId = assessment.classGroupId
+    if (!enrollments.some(enrollment => enrollment.classGroupId === targetClassGroupId)) {
+      throw new Error(`Student ${studentId} is not eligible for assessment ${assessment.id}`)
     }
   }
 }

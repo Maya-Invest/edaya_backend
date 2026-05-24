@@ -1,12 +1,10 @@
 import type { AssessmentKind } from '$lib/core/entities/assessments/assessment'
-import type { Deadline } from '$lib/core/entities/assessments/deadline'
 import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
 import type { ClassGroup } from '$lib/core/entities/core/class-group'
 import type { Session } from '$lib/core/entities/scheduling/session'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { DeadlineRepository } from '$lib/core/ports/deadline-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import { Assessment } from '$lib/core/entities/assessments/assessment'
 
@@ -15,7 +13,6 @@ export interface AssessmentServiceArgs {
   academicPeriodRepository: AcademicPeriodRepository
   sessionRepository: SessionRepository
   assessmentRepository: AssessmentRepository
-  deadlineRepository: DeadlineRepository
 }
 
 export class AssessmentService {
@@ -24,14 +21,12 @@ export class AssessmentService {
     this.academicPeriods = args.academicPeriodRepository
     this.sessions = args.sessionRepository
     this.assessments = args.assessmentRepository
-    this.deadlines = args.deadlineRepository
   }
 
   private readonly classGroups: ClassGroupRepository
   private readonly academicPeriods: AcademicPeriodRepository
   private readonly sessions: SessionRepository
   private readonly assessments: AssessmentRepository
-  private readonly deadlines: DeadlineRepository
 
   async createAssessment({
     id,
@@ -42,12 +37,11 @@ export class AssessmentService {
     kind,
     maxScore,
     sessionId,
-    deadlineId,
+    dueAt,
     createdAt,
     coefficient = 1,
   }: {
     id: string
-    schoolId: string
     classGroupId: string
     classSubjectId: string
     periodId: string
@@ -56,7 +50,7 @@ export class AssessmentService {
     maxScore: number
     coefficient?: number
     sessionId?: string
-    deadlineId?: string
+    dueAt?: Date
     createdAt?: Date
   }): Promise<Assessment> {
     const classGroup = await this.requireClassGroup(classGroupId)
@@ -73,18 +67,6 @@ export class AssessmentService {
         throw new Error(`Session ${sessionId} is not linked to class subject ${classSubjectId}`)
       }
     }
-    if (deadlineId) {
-      const deadline = await this.requireDeadline(deadlineId)
-      if (deadline.schoolId !== classGroup.schoolId) {
-        throw new Error(`Deadline ${deadlineId} does not belong to school ${classGroup.schoolId}`)
-      }
-      if (deadline.classGroupId && deadline.classGroupId !== classGroupId) {
-        throw new Error(`Deadline ${deadlineId} is not valid for classGroup ${classGroupId}`)
-      }
-      if (deadline.classSubjectId && deadline.classSubjectId !== classSubjectId) {
-        throw new Error(`Deadline ${deadlineId} is not linked to class subject ${classSubjectId}`)
-      }
-    }
 
     const assessment = new Assessment({
       id,
@@ -96,10 +78,46 @@ export class AssessmentService {
       maxScore,
       coefficient,
       sessionId,
-      deadlineId,
+      dueAt,
       createdAt,
     })
     await this.assessments.save(assessment)
+    return assessment
+  }
+
+  async completeAssessment({
+    assessmentId,
+    metAt,
+  }: {
+    assessmentId: string
+    metAt?: Date
+  }): Promise<Assessment> {
+    const existing = await this.requireAssessment(assessmentId)
+    const completed = new Assessment({
+      id: existing.id,
+      classGroupId: existing.classGroupId,
+      classSubjectId: existing.classSubjectId,
+      periodId: existing.periodId,
+      title: existing.title,
+      kind: existing.kind,
+      maxScore: existing.maxScore,
+      coefficient: existing.coefficient,
+      examId: existing.examId,
+      sessionId: existing.sessionId,
+      dueAt: existing.dueAt,
+      metAt: metAt ?? new Date(),
+      date: existing.date,
+      createdAt: existing.createdAt,
+    })
+    await this.assessments.save(completed)
+    return completed
+  }
+
+  private async requireAssessment(assessmentId: string): Promise<Assessment> {
+    const assessment = await this.assessments.findById(assessmentId)
+    if (!assessment) {
+      throw new Error(`Unknown assessment: ${assessmentId}`)
+    }
     return assessment
   }
 
@@ -125,13 +143,5 @@ export class AssessmentService {
       throw new Error(`Unknown session: ${sessionId}`)
     }
     return session
-  }
-
-  private async requireDeadline(deadlineId: string): Promise<Deadline> {
-    const deadline = await this.deadlines.findById(deadlineId)
-    if (!deadline) {
-      throw new Error(`Unknown deadline: ${deadlineId}`)
-    }
-    return deadline
   }
 }
