@@ -6,7 +6,7 @@ import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/valida
 
 export interface GuardianArgs {
   id: string
-  schoolId: string
+  schoolId: string // !
   firstName: string
   lastName: string
   phone?: string | null

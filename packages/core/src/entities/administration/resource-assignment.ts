@@ -15,9 +15,9 @@ export interface ResourceAssignmentArgs {
 export class ResourceAssignment {
   readonly id: string
   readonly resourceId: string
+  readonly classGroupId?: string
   readonly sessionId?: string
   readonly groupedSessionId?: string
-  readonly classGroupId?: string
   readonly createdAt: Date
 
   constructor({

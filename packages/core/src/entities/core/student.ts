@@ -20,6 +20,10 @@ export interface StudentArgs {
   photoUrl?: string | null
   status?: StudentStatus
   enrollmentDate?: Date | null
+  allergies?: string | null
+  medicalConditions?: string | null
+  emergencyProtocols?: string | null
+  bloodType?: string | null
   createdAt?: Date
 }
 
@@ -41,6 +45,10 @@ export class Student {
   readonly photoUrl?: string
   readonly status: StudentStatus
   readonly enrollmentDate?: Date
+  readonly allergies?: string
+  readonly medicalConditions?: string
+  readonly emergencyProtocols?: string
+  readonly bloodType?: string
   readonly createdAt: Date
 
   constructor({
@@ -56,6 +64,10 @@ export class Student {
     photoUrl,
     status = StudentStatus.Active,
     enrollmentDate,
+    allergies,
+    medicalConditions,
+    emergencyProtocols,
+    bloodType,
     createdAt,
   }: StudentArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -70,6 +82,10 @@ export class Student {
     this.photoUrl = requireOptionalNonBlank(photoUrl, 'photoUrl')
     this.status = status
     this.enrollmentDate = enrollmentDate ? requireValidDate(enrollmentDate, 'enrollmentDate') : undefined
+    this.allergies = requireOptionalNonBlank(allergies, 'allergies')
+    this.medicalConditions = requireOptionalNonBlank(medicalConditions, 'medicalConditions')
+    this.emergencyProtocols = requireOptionalNonBlank(emergencyProtocols, 'emergencyProtocols')
+    this.bloodType = requireOptionalNonBlank(bloodType, 'bloodType')
     this.createdAt = createdAt ?? new Date()
   }
 

@@ -40,6 +40,7 @@ export class Assessment {
   readonly maxScore: number
   readonly coefficient: number
   readonly examId?: string
+  readonly groupedSessionId?: string
   readonly sessionId?: string
   readonly timetableSlotId?: string
   readonly deadlineId?: string
