@@ -1,7 +1,7 @@
-import type { StudentFeeInstallment } from '$lib/core/entities/finance/student-fee'
+import type { StudentFeeInstallment } from '$lib/core/entities/finances/student-fee'
 import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { FeeStatus, StudentFee, StudentFeeSummary } from '$lib/core/entities/finance/student-fee'
+import { FeeStatus, StudentFee, StudentFeeSummary } from '$lib/core/entities/finances/student-fee'
 import { Money } from '$lib/core/value_object/money'
 
 export interface FeeServiceArgs {

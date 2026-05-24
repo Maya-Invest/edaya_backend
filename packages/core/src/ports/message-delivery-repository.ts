@@ -1,4 +1,4 @@
-import type { MessageDelivery } from '$lib/core/entities/core/message-delivery'
+import type { MessageDelivery } from '$lib/core/entities/messaging/message-delivery'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface MessageDeliveryRepository extends BaseRepositoryInterface<MessageDelivery> {

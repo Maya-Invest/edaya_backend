@@ -1,8 +1,8 @@
-import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
+import type { StudentClassEnrollment } from '$lib/core/entities/students/student-class-enrollment'
 import type { BaseRepositoryInterface } from './_base-repository'
 
-export interface StudentEnrollmentRepository extends BaseRepositoryInterface<StudentEnrollment> {
-  findCurrentByStudent: (studentId: string) => Promise<StudentEnrollment | undefined>
-  listByStudent: (studentId: string) => Promise<StudentEnrollment[]>
-  listByClassGroup: (classGroupId: string) => Promise<StudentEnrollment[]>
+export interface StudentClassEnrollmentRepository extends BaseRepositoryInterface<StudentClassEnrollment> {
+  findCurrentByStudent: (studentId: string) => Promise<StudentClassEnrollment | undefined>
+  listByStudent: (studentId: string) => Promise<StudentClassEnrollment[]>
+  listByClassGroup: (classGroupId: string) => Promise<StudentClassEnrollment[]>
 }

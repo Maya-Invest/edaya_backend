@@ -1,14 +1,14 @@
-import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
-import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
-import type { Student } from '$lib/core/entities/core/student'
+import type { AcademicPeriod } from '$lib/core/entities/school/academic-period'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { Student } from '$lib/core/entities/students/student'
+import type { StudentClassEnrollment } from '$lib/core/entities/students/student-class-enrollment'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'
 import type { ReportCardDefinitionRepository } from '$lib/core/ports/report-card-definition-repository'
 import type { ReportCardResultRepository } from '$lib/core/ports/report-card-result-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import type { GradeService } from '$lib/core/services/assessment/grade'
 import type { AttendanceService } from '$lib/core/services/planing/attendance'
@@ -17,7 +17,7 @@ import { ReportCardResult, ReportCardResultStatus } from '$lib/core/entities/ass
 export interface ReportCardResultServiceArgs {
   studentRepository: StudentRepository
   classGroupRepository: ClassGroupRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   academicPeriodRepository: AcademicPeriodRepository
   assessmentRepository: AssessmentRepository
   gradeRepository: GradeRepository
@@ -31,7 +31,7 @@ export class ReportCardResultService {
   constructor(args: ReportCardResultServiceArgs) {
     this.students = args.studentRepository
     this.classGroups = args.classGroupRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
     this.academicPeriods = args.academicPeriodRepository
     this.assessments = args.assessmentRepository
     this.grades = args.gradeRepository
@@ -43,7 +43,7 @@ export class ReportCardResultService {
 
   private readonly students: StudentRepository
   private readonly classGroups: ClassGroupRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
   private readonly academicPeriods: AcademicPeriodRepository
   private readonly assessments: AssessmentRepository
   private readonly grades: GradeRepository
@@ -164,7 +164,7 @@ export class ReportCardResultService {
   }: {
     studentId: string
     academicYearId: string
-  }): Promise<StudentEnrollment> {
+  }): Promise<StudentClassEnrollment> {
     const enrollments = await this.enrollments.listByStudent(studentId)
     for (const enrollment of enrollments) {
       const classGroup = await this.classGroups.findById(enrollment.classGroupId)

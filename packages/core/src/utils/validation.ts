@@ -59,6 +59,13 @@ export function requireValidDate(value: Date, fieldName: string): Date {
   return value
 }
 
+export function requireTimeOfDay(value: string, fieldName: string): string {
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new DomainValidationError(`${fieldName} must be a valid time in HH:mm format`)
+  }
+  return value
+}
+
 export function normalizeDate(value: Date): Date {
   return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()))
 }

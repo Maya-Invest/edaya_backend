@@ -1,6 +1,6 @@
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import { Announcement, AnnouncementAudience } from '$lib/core/entities/core/announcement'
+import { Announcement, AnnouncementAudience } from '$lib/core/entities/messaging/announcement'
 
 export interface AnnouncementServiceArgs {
   classGroupRepository: ClassGroupRepository

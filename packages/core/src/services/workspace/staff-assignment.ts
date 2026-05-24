@@ -1,12 +1,12 @@
 import type { ClassSubject } from '$lib/core/entities/academics/class-subject'
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
-import type { StaffMember, StaffRole } from '$lib/core/entities/core/staff-member'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { StaffMember, StaffRole } from '$lib/core/entities/school/staff-member'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ClassStaffAssignmentRepository } from '$lib/core/ports/class-staff-assignment-repository'
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
 import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
-import { StaffAssignment } from '$lib/core/entities/administration/staff-assignment'
+import { StaffAssignment } from '$lib/core/entities/school/staff-assignment'
 
 export interface StaffAssignmentServiceArgs {
   staffMemberRepository: StaffMemberRepository

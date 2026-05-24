@@ -9,7 +9,7 @@ export enum EnrollmentOutcome {
   Completed = 'completed',
 }
 
-export enum StudentEnrollmentStatus {
+export enum StudentClassEnrollmentStatus {
   Enrolled = 'enrolled',
   Completed = 'completed',
   Promoted = 'promoted',
@@ -18,13 +18,13 @@ export enum StudentEnrollmentStatus {
   Withdrawn = 'withdrawn',
 }
 
-export interface StudentEnrollmentArgs {
+export interface StudentClassEnrollmentArgs {
   id: string
   studentId: string
   classGroupId: string
   academicYearId: string
   enrollmentIndex: number
-  status?: StudentEnrollmentStatus
+  status?: StudentClassEnrollmentStatus
   enrolledAt?: Date | null
   leftAt?: Date | null
   exitReason?: string | null
@@ -40,13 +40,13 @@ export interface StudentEnrollmentArgs {
  * Represents the enrollment of a student in a specific classGroup for a given academic year.
  * Facilitates historical tracking of a student's class progression and year-end promotion decisions.
  */
-export class StudentEnrollment {
+export class StudentClassEnrollment {
   readonly id: string
   readonly studentId: string
   readonly classGroupId: string
   readonly academicYearId: string
   readonly enrollmentIndex: number
-  readonly status: StudentEnrollmentStatus
+  readonly status: StudentClassEnrollmentStatus
   readonly enrolledAt?: Date
   readonly leftAt?: Date
   readonly exitReason?: string
@@ -63,17 +63,17 @@ export class StudentEnrollment {
     classGroupId,
     academicYearId,
     enrollmentIndex,
-    status = StudentEnrollmentStatus.Enrolled,
+    status = StudentClassEnrollmentStatus.Enrolled,
     enrolledAt,
     leftAt,
     exitReason,
-    isCurrent = status === StudentEnrollmentStatus.Enrolled,
+    isCurrent = status === StudentClassEnrollmentStatus.Enrolled,
     outcome = EnrollmentOutcome.Pending,
     previousEnrollmentId,
     outcomeDecidedAt,
     outcomeNotes,
     createdAt,
-  }: StudentEnrollmentArgs) {
+  }: StudentClassEnrollmentArgs) {
     this.id = requireNonBlank(id, 'id')
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
@@ -99,11 +99,14 @@ export class StudentEnrollment {
     if (this.leftAt && this.enrolledAt && this.leftAt.getTime() < this.enrolledAt.getTime()) {
       throw new Error('leftAt must not be before enrolledAt')
     }
-    if (this.status !== StudentEnrollmentStatus.Enrolled && !this.leftAt) {
+    if (this.status !== StudentClassEnrollmentStatus.Enrolled && !this.leftAt) {
       throw new Error('leftAt is required when enrollment is no longer enrolled')
     }
-    if (this.status === StudentEnrollmentStatus.Enrolled && this.leftAt) {
+    if (this.status === StudentClassEnrollmentStatus.Enrolled && this.leftAt) {
       throw new Error('active enrollments must not define leftAt')
+    }
+    if (this.isCurrent !== (this.status === StudentClassEnrollmentStatus.Enrolled)) {
+      throw new Error('isCurrent must be true only when status is enrolled')
     }
   }
 }

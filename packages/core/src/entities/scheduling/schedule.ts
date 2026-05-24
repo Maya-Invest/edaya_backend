@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requireTimeOfDay, requireValidDate } from '$lib/core/utils/validation'
 
 export enum DayOfWeek {
   Monday = 'monday',
@@ -22,8 +22,6 @@ export interface ScheduleArgs {
   specificDate?: Date | null
   createdAt?: Date
 }
-
-const TIME_PATTERN = /^\d{2}:\d{2}$/
 
 /**
  * Defines a recurring (weekly template) or non-recurring (one-off) schedule slot for a ClassGroup.
@@ -60,25 +58,22 @@ export class Schedule {
     this.title = requireNonBlank(title, 'title')
     this.isRecurring = isRecurring
 
-    if (!TIME_PATTERN.test(startTime)) {
-      throw new Error('startTime must be in HH:mm format')
-    }
-    if (!TIME_PATTERN.test(endTime)) {
-      throw new Error('endTime must be in HH:mm format')
-    }
-    if (startTime >= endTime) {
+    const normalizedStartTime = requireTimeOfDay(startTime, 'startTime')
+    const normalizedEndTime = requireTimeOfDay(endTime, 'endTime')
+    if (normalizedStartTime >= normalizedEndTime) {
       throw new Error('endTime must be after startTime')
     }
 
-    this.startTime = startTime
-    this.endTime = endTime
+    this.startTime = normalizedStartTime
+    this.endTime = normalizedEndTime
 
     if (this.isRecurring) {
       if (!dayOfWeek) {
         throw new Error('dayOfWeek is required for recurring schedules')
       }
       this.dayOfWeek = dayOfWeek
-    } else {
+    }
+    else {
       if (!specificDate) {
         throw new Error('specificDate is required for non-recurring schedules')
       }

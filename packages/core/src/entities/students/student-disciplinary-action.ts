@@ -1,12 +1,12 @@
 import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
 
-export enum AppliedDisciplinaryActionStatus {
+export enum StudentDisciplinaryActionStatus {
   Active = 'active',
   Completed = 'completed',
   Cancelled = 'cancelled',
 }
 
-export interface AppliedDisciplinaryActionArgs {
+export interface StudentDisciplinaryActionArgs {
   id: string
   schoolId: string
   incidentId: string
@@ -15,7 +15,7 @@ export interface AppliedDisciplinaryActionArgs {
   assignedByStaffId: string
   startsAt?: Date | null
   endsAt?: Date | null
-  status?: AppliedDisciplinaryActionStatus
+  status?: StudentDisciplinaryActionStatus
   notes?: string | null
   createdAt?: Date
   updatedAt?: Date
@@ -24,7 +24,7 @@ export interface AppliedDisciplinaryActionArgs {
 /**
  * Represents a disciplinary catalog action actually applied to a student.
  */
-export class AppliedDisciplinaryAction {
+export class StudentDisciplinaryAction {
   readonly id: string
   readonly schoolId: string
   readonly incidentId: string
@@ -33,7 +33,7 @@ export class AppliedDisciplinaryAction {
   readonly assignedByStaffId: string
   readonly startsAt?: Date
   readonly endsAt?: Date
-  readonly status: AppliedDisciplinaryActionStatus
+  readonly status: StudentDisciplinaryActionStatus
   readonly notes?: string
   readonly createdAt: Date
   readonly updatedAt: Date
@@ -47,11 +47,11 @@ export class AppliedDisciplinaryAction {
     assignedByStaffId,
     startsAt,
     endsAt,
-    status = AppliedDisciplinaryActionStatus.Active,
+    status = StudentDisciplinaryActionStatus.Active,
     notes,
     createdAt,
     updatedAt,
-  }: AppliedDisciplinaryActionArgs) {
+  }: StudentDisciplinaryActionArgs) {
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.incidentId = requireNonBlank(incidentId, 'incidentId')

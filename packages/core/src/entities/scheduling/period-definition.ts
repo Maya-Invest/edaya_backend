@@ -1,4 +1,4 @@
-import { requireNonBlank, requirePositiveInt } from '$lib/core/utils/validation'
+import { requireNonBlank, requirePositiveInt, requireTimeOfDay } from '$lib/core/utils/validation'
 
 export interface PeriodDefinitionArgs {
   id: string
@@ -11,8 +11,6 @@ export interface PeriodDefinitionArgs {
   isBreak?: boolean
   createdAt?: Date
 }
-
-const TIME_PATTERN = /^\d{2}:\d{2}$/
 
 /**
  * Defines one slot in the school's daily period grid (e.g., "Period 1: 08:00–08:45").
@@ -47,18 +45,14 @@ export class PeriodDefinition {
     this.label = requireNonBlank(label, 'label')
     this.order = requirePositiveInt(order, 'order')
 
-    if (!TIME_PATTERN.test(startTime)) {
-      throw new Error('startTime must be in HH:mm format')
-    }
-    if (!TIME_PATTERN.test(endTime)) {
-      throw new Error('endTime must be in HH:mm format')
-    }
-    if (startTime >= endTime) {
+    const normalizedStartTime = requireTimeOfDay(startTime, 'startTime')
+    const normalizedEndTime = requireTimeOfDay(endTime, 'endTime')
+    if (normalizedStartTime >= normalizedEndTime) {
       throw new Error('endTime must be after startTime')
     }
 
-    this.startTime = startTime
-    this.endTime = endTime
+    this.startTime = normalizedStartTime
+    this.endTime = normalizedEndTime
     this.isBreak = isBreak
     this.createdAt = createdAt ?? new Date()
   }

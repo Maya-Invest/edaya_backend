@@ -1,4 +1,4 @@
-import type { StaffRole } from '$lib/core/entities/core/staff-member'
+import type { StaffRole } from '$lib/core/entities/school/staff-member'
 import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/validation'
 
 export interface StaffAssignmentArgs {

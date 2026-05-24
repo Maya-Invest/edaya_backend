@@ -1,6 +1,6 @@
-import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { Announcement } from '$lib/core/entities/core/announcement'
-import type { School } from '$lib/core/entities/core/school'
+import type { Announcement } from '$lib/core/entities/messaging/announcement'
+import type { AcademicYear } from '$lib/core/entities/school/academic-year'
+import type { School } from '$lib/core/entities/school/school'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
@@ -9,7 +9,7 @@ import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import { ReportCardResultStatus } from '$lib/core/entities/assessments/report-card-result'
-import { FeeStatus } from '$lib/core/entities/finance/student-fee'
+import { FeeStatus } from '$lib/core/entities/finances/student-fee'
 
 export interface SchoolOverviewServiceArgs {
   schoolRepository: SchoolRepository

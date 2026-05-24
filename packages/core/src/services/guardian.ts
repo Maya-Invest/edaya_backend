@@ -1,20 +1,20 @@
-import type { GuardianContactMethod } from '$lib/core/entities/core/guardian-contact-method'
-import type { School } from '$lib/core/entities/core/school'
-import type { Student } from '$lib/core/entities/core/student'
+import type { School } from '$lib/core/entities/school/school'
+import type { GuardianContactMethod } from '$lib/core/entities/students/guardian-contact-method'
+import type { Student } from '$lib/core/entities/students/student'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { GuardianRepository } from '$lib/core/ports/guardian-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { Guardian } from '$lib/core/entities/core/guardian'
-import { GuardianStudentLink } from '$lib/core/entities/core/guardian-student-link'
+import { Guardian } from '$lib/core/entities/students/guardian'
+import { GuardianStudentLink } from '$lib/core/entities/students/guardian-student-link'
 
 export interface GuardianServiceArgs {
   schoolRepository: SchoolRepository
   classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   guardianRepository: GuardianRepository
   guardianStudentLinkRepository: GuardianStudentLinkRepository
 }
@@ -24,7 +24,7 @@ export class GuardianService {
     this.schools = args.schoolRepository
     this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
     this.guardians = args.guardianRepository
     this.guardianStudentLinks = args.guardianStudentLinkRepository
   }
@@ -32,7 +32,7 @@ export class GuardianService {
   private readonly schools: SchoolRepository
   private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
   private readonly guardians: GuardianRepository
   private readonly guardianStudentLinks: GuardianStudentLinkRepository
 

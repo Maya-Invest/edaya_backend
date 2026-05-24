@@ -1,4 +1,4 @@
-import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
+import type { AcademicPeriod } from '$lib/core/entities/school/academic-period'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface AcademicPeriodRepository extends BaseRepositoryInterface<AcademicPeriod> {

@@ -1,13 +1,13 @@
-import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
-import type { Student } from '$lib/core/entities/core/student'
 import type { AttendanceRecord } from '$lib/core/entities/scheduling/attendance-record'
 import type { Session } from '$lib/core/entities/scheduling/session'
+import type { AcademicYear } from '$lib/core/entities/school/academic-year'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { Student } from '$lib/core/entities/students/student'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import { AttendanceStatus } from '$lib/core/entities/scheduling/attendance-record'
 import { isSameDate } from '$lib/core/utils/validation'
@@ -17,7 +17,7 @@ export interface AttendanceReviewServiceArgs {
   classGroupRepository: ClassGroupRepository
   sessionRepository: SessionRepository
   attendanceRepository: AttendanceRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   studentRepository: StudentRepository
 }
 
@@ -54,7 +54,7 @@ export class AttendanceReviewService {
     this.classGroups = args.classGroupRepository
     this.sessions = args.sessionRepository
     this.attendance = args.attendanceRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
     this.students = args.studentRepository
   }
 
@@ -62,7 +62,7 @@ export class AttendanceReviewService {
   private readonly classGroups: ClassGroupRepository
   private readonly sessions: SessionRepository
   private readonly attendance: AttendanceRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
   private readonly students: StudentRepository
 
   async getAttendanceSessionReview({

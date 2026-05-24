@@ -6,6 +6,7 @@ export interface ClassSubjectArgs {
   subjectId: string
   staffId?: string | null
   coefficient?: number | null
+  completedPercentage?: number | null
   createdAt?: Date
 }
 
@@ -20,6 +21,7 @@ export class ClassSubject {
   readonly staffId?: string
   readonly coefficient?: number
   readonly createdAt: Date
+  readonly completedPercentage: number
 
   constructor({
     id,
@@ -28,6 +30,7 @@ export class ClassSubject {
     staffId,
     coefficient,
     createdAt,
+    completedPercentage,
   }: ClassSubjectArgs) {
     this.id = requireNonBlank(id, 'id')
     this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
@@ -37,5 +40,6 @@ export class ClassSubject {
       this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
     }
     this.createdAt = createdAt ?? new Date()
+    this.completedPercentage = completedPercentage ?? 0
   }
 }

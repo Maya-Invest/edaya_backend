@@ -1,17 +1,17 @@
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
-import type { School } from '$lib/core/entities/core/school'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { School } from '$lib/core/entities/school/school'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
-import { Student } from '$lib/core/entities/core/student'
+import { Student } from '$lib/core/entities/students/student'
+import { StudentClassEnrollment } from '$lib/core/entities/students/student-class-enrollment'
 
 export interface StudentServiceArgs {
   schoolRepository: SchoolRepository
   classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
 }
 
 export class StudentService {
@@ -19,13 +19,13 @@ export class StudentService {
     this.schools = args.schoolRepository
     this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
   }
 
   private readonly schools: SchoolRepository
   private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
 
   async registerStudent({
     id,
@@ -58,7 +58,7 @@ export class StudentService {
     studentId: string
     classGroupId: string
     createdAt?: Date
-  }): Promise<StudentEnrollment> {
+  }): Promise<StudentClassEnrollment> {
     await this.requireStudent(studentId)
     const classGroup = await this.requireClassGroup(classGroupId)
 
@@ -68,7 +68,7 @@ export class StudentService {
       = existing?.enrollmentIndex
         ?? Math.max(0, ...existingEnrollments.map(enrollment => enrollment.enrollmentIndex)) + 1
 
-    const enrollment = new StudentEnrollment({
+    const enrollment = new StudentClassEnrollment({
       id: existing?.id ?? id,
       studentId,
       classGroupId,

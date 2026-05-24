@@ -6,7 +6,7 @@ export enum ActivityRole {
   Captain = 'captain',
 }
 
-export interface ActivityEnrollmentArgs {
+export interface StudentActivityEnrollmentArgs {
   id: string
   activityId: string
   studentId: string
@@ -19,7 +19,7 @@ export interface ActivityEnrollmentArgs {
 /**
  * Represents a student's membership or participation in an extracurricular Activity.
  */
-export class ActivityEnrollment {
+export class StudentActivityEnrollment {
   readonly id: string
   readonly activityId: string
   readonly studentId: string
@@ -36,7 +36,7 @@ export class ActivityEnrollment {
     joinedAt,
     leftAt,
     createdAt,
-  }: ActivityEnrollmentArgs) {
+  }: StudentActivityEnrollmentArgs) {
     this.id = requireNonBlank(id, 'id')
     this.activityId = requireNonBlank(activityId, 'activityId')
     this.studentId = requireNonBlank(studentId, 'studentId')

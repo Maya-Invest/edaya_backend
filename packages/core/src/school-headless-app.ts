@@ -18,7 +18,7 @@ import type { ScheduleRepository } from '$lib/core/ports/schedule-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
@@ -49,7 +49,7 @@ export interface SchoolHeadlessAppArgs {
   schoolRepository: SchoolRepository
   classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   guardianRepository: GuardianRepository
   guardianStudentLinkRepository: GuardianStudentLinkRepository
   staffMemberRepository: StaffMemberRepository
@@ -114,13 +114,13 @@ export class SchoolHeadlessApp {
       schoolRepository: args.schoolRepository,
       classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
     })
     this.guardians = new GuardianService({
       schoolRepository: args.schoolRepository,
       classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       guardianRepository: args.guardianRepository,
       guardianStudentLinkRepository: args.guardianStudentLinkRepository,
     })
@@ -155,13 +155,13 @@ export class SchoolHeadlessApp {
     })
     const attendance = new AttendanceService({
       studentRepository: args.studentRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       sessionRepository: args.sessionRepository,
       attendanceRepository: args.attendanceRepository,
     })
     const grades = new GradeService({
       studentRepository: args.studentRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       assessmentRepository: args.assessmentRepository,
       classSubjectRepository: args.classSubjectRepository,
       academicPeriodRepository: args.academicPeriodRepository,
@@ -175,7 +175,7 @@ export class SchoolHeadlessApp {
     this.reportCardResults = new ReportCardResultService({
       studentRepository: args.studentRepository,
       classGroupRepository: args.classGroupRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       academicPeriodRepository: args.academicPeriodRepository,
       assessmentRepository: args.assessmentRepository,
       gradeRepository: args.gradeRepository,
@@ -221,7 +221,7 @@ export class SchoolHeadlessApp {
       academicYearRepository: args.academicYearRepository,
       classGroupRepository: args.classGroupRepository,
       studentRepository: args.studentRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       guardianStudentLinkRepository: args.guardianStudentLinkRepository,
       reportCardResultRepository: args.reportCardResultRepository,
       studentFeeRepository: args.studentFeeRepository,
@@ -229,7 +229,7 @@ export class SchoolHeadlessApp {
     this.classGroupRead = new ClassGroupReadService({
       academicYearRepository: args.academicYearRepository,
       classGroupRepository: args.classGroupRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       classSubjectRepository: args.classSubjectRepository,
       classSubjectStaffAssignmentRepository: args.classSubjectStaffAssignmentRepository,
       staffMemberRepository: args.staffMemberRepository,
@@ -241,7 +241,7 @@ export class SchoolHeadlessApp {
       classGroupRepository: args.classGroupRepository,
       sessionRepository: args.sessionRepository,
       attendanceRepository: args.attendanceRepository,
-      studentEnrollmentRepository: args.studentEnrollmentRepository,
+      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
       studentRepository: args.studentRepository,
     })
   }

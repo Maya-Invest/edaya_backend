@@ -1,4 +1,4 @@
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
 import type { CalendarEventRepository } from '$lib/core/ports/calendar-event-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ScheduleRepository } from '$lib/core/ports/schedule-repository'
@@ -117,7 +117,7 @@ export class ScheduleService {
     const generatedSessions: Session[] = []
 
     // Loop through each calendar day in the range
-    const currentDate = new Date(startDate)
+    let currentDate = new Date(startDate)
     while (currentDate <= endDate) {
       const dateString = currentDate.toDateString()
 
@@ -126,10 +126,11 @@ export class ScheduleService {
         const dayOfWeekVal = dayOfWeekMap[currentDate.getDay()]
 
         // Find all matching templates for this calendar day
-        const matchingSchedules = schedules.filter(s => {
+        const matchingSchedules = schedules.filter((s) => {
           if (s.isRecurring) {
             return s.dayOfWeek === dayOfWeekVal
-          } else {
+          }
+          else {
             return s.specificDate && s.specificDate.toDateString() === dateString
           }
         })
@@ -164,7 +165,9 @@ export class ScheduleService {
         }
       }
 
-      currentDate.setDate(currentDate.getDate() + 1)
+      const nextDate = new Date(currentDate)
+      nextDate.setDate(nextDate.getDate() + 1)
+      currentDate = nextDate
     }
 
     return generatedSessions

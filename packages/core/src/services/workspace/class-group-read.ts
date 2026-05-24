@@ -1,23 +1,23 @@
 import type { ClassSubject } from '$lib/core/entities/academics/class-subject'
 import type { Subject } from '$lib/core/entities/academics/subject'
-import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
-import type { StaffMember } from '$lib/core/entities/core/staff-member'
 import type { Session } from '$lib/core/entities/scheduling/session'
+import type { AcademicYear } from '$lib/core/entities/school/academic-year'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { StaffMember } from '$lib/core/entities/school/staff-member'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
 import type { ClassSubjectStaffAssignmentRepository } from '$lib/core/ports/class-subject-staff-assignment-repository'
 import type { SessionRepository } from '$lib/core/ports/session-repository'
 import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { SubjectRepository } from '$lib/core/ports/subject-repository'
-import { StaffRole } from '$lib/core/entities/core/staff-member'
+import { StaffRole } from '$lib/core/entities/school/staff-member'
 
 export interface ClassGroupReadServiceArgs {
   academicYearRepository: AcademicYearRepository
   classGroupRepository: ClassGroupRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   classSubjectRepository: ClassSubjectRepository
   classSubjectStaffAssignmentRepository: ClassSubjectStaffAssignmentRepository
   staffMemberRepository: StaffMemberRepository
@@ -55,7 +55,7 @@ export class ClassGroupReadService {
   constructor(args: ClassGroupReadServiceArgs) {
     this.academicYears = args.academicYearRepository
     this.classGroups = args.classGroupRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
     this.classSubjects = args.classSubjectRepository
     this.classSubjectStaffAssignments = args.classSubjectStaffAssignmentRepository
     this.staffMembers = args.staffMemberRepository
@@ -65,7 +65,7 @@ export class ClassGroupReadService {
 
   private readonly academicYears: AcademicYearRepository
   private readonly classGroups: ClassGroupRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
   private readonly classSubjects: ClassSubjectRepository
   private readonly classSubjectStaffAssignments: ClassSubjectStaffAssignmentRepository
   private readonly staffMembers: StaffMemberRepository

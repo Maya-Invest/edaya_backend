@@ -1,15 +1,15 @@
-import type { StudentEnrollment } from '$lib/core/entities/administration/student-enrollment'
 import type { ReportCardResult } from '$lib/core/entities/assessments/report-card-result'
-import type { AcademicYear } from '$lib/core/entities/core/academic-year'
-import type { ClassGroup } from '$lib/core/entities/core/class-group'
-import type { School } from '$lib/core/entities/core/school'
-import type { Student } from '$lib/core/entities/core/student'
+import type { AcademicYear } from '$lib/core/entities/school/academic-year'
+import type { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { School } from '$lib/core/entities/school/school'
+import type { Student } from '$lib/core/entities/students/student'
+import type { StudentClassEnrollment } from '$lib/core/entities/students/student-class-enrollment'
 import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
 import type { ReportCardResultRepository } from '$lib/core/ports/report-card-result-repository'
 import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 
@@ -18,7 +18,7 @@ export interface StudentDirectoryServiceArgs {
   academicYearRepository: AcademicYearRepository
   classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   guardianStudentLinkRepository: GuardianStudentLinkRepository
   reportCardResultRepository: ReportCardResultRepository
   studentFeeRepository: StudentFeeRepository
@@ -26,7 +26,7 @@ export interface StudentDirectoryServiceArgs {
 
 export interface StudentDirectoryRow {
   student: Student
-  currentEnrollment?: StudentEnrollment
+  currentEnrollment?: StudentClassEnrollment
   classGroup?: ClassGroup
   guardianCount: number
   balanceDue: number
@@ -45,7 +45,7 @@ export class StudentDirectoryService {
     this.academicYears = args.academicYearRepository
     this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
     this.guardianStudentLinks = args.guardianStudentLinkRepository
     this.reportCardResults = args.reportCardResultRepository
     this.fees = args.studentFeeRepository
@@ -55,7 +55,7 @@ export class StudentDirectoryService {
   private readonly academicYears: AcademicYearRepository
   private readonly classGroups: ClassGroupRepository
   private readonly students: StudentRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
   private readonly guardianStudentLinks: GuardianStudentLinkRepository
   private readonly reportCardResults: ReportCardResultRepository
   private readonly fees: StudentFeeRepository

@@ -2,14 +2,14 @@ import type { Assessment } from '$lib/core/entities/assessments/assessment'
 import type { DeadlineComplianceStatus } from '$lib/core/entities/assessments/grade'
 import type { ReportCardDefinitionSection } from '$lib/core/entities/assessments/report-card-definition-section'
 import type { ReportCardResultSection } from '$lib/core/entities/assessments/report-card-result-section'
-import type { AcademicPeriod } from '$lib/core/entities/core/academic-period'
+import type { AcademicPeriod } from '$lib/core/entities/school/academic-period'
 import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
 import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
 import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
 import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
 import type { GradeRepository } from '$lib/core/ports/grade-repository'
 import type { ReportCardDefinitionSectionRepository } from '$lib/core/ports/report-card-definition-section-repository'
-import type { StudentEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
+import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
 import type { StudentRepository } from '$lib/core/ports/student-repository'
 import { Grade } from '$lib/core/entities/assessments/grade'
 import { ReportCardDefinitionSectionKind } from '$lib/core/entities/assessments/report-card-definition-section'
@@ -18,7 +18,7 @@ import { roundTo2 } from '$lib/core/utils/validation'
 
 export interface GradeServiceArgs {
   studentRepository: StudentRepository
-  studentEnrollmentRepository: StudentEnrollmentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   assessmentRepository: AssessmentRepository
   classSubjectRepository: ClassSubjectRepository
   academicPeriodRepository: AcademicPeriodRepository
@@ -30,7 +30,7 @@ export interface GradeServiceArgs {
 export class GradeService {
   constructor(args: GradeServiceArgs) {
     this.students = args.studentRepository
-    this.enrollments = args.studentEnrollmentRepository
+    this.enrollments = args.StudentClassEnrollmentRepository
     this.assessments = args.assessmentRepository
     this.classSubjects = args.classSubjectRepository
     this.academicPeriods = args.academicPeriodRepository
@@ -40,7 +40,7 @@ export class GradeService {
   }
 
   private readonly students: StudentRepository
-  private readonly enrollments: StudentEnrollmentRepository
+  private readonly enrollments: StudentClassEnrollmentRepository
   private readonly assessments: AssessmentRepository
   private readonly classSubjects: ClassSubjectRepository
   private readonly classGroups: ClassGroupRepository
