@@ -1,4 +1,5 @@
 import type { ClassGroup } from '../../entities/school/class-group'
+import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { CalendarEventRepository } from '../../ports/calendar-event-repository'
 import type { ClassGroupRepository } from '../../ports/class-group-repository'
 import type { ScheduleRepository } from '../../ports/schedule-repository'
@@ -11,6 +12,7 @@ function generateUniqueId(): string {
 }
 
 export interface ScheduleServiceArgs {
+  atomicExecution: AtomicExecutionPort
   classGroupRepository: ClassGroupRepository
   scheduleRepository: ScheduleRepository
   calendarEventRepository: CalendarEventRepository
@@ -29,12 +31,14 @@ const dayOfWeekMap: Record<number, DayOfWeek> = {
 
 export class ScheduleService {
   constructor(args: ScheduleServiceArgs) {
+    this.atomicExecution = args.atomicExecution
     this.classGroups = args.classGroupRepository
     this.schedules = args.scheduleRepository
     this.calendarEvents = args.calendarEventRepository
     this.sessions = args.sessionRepository
   }
 
+  private readonly atomicExecution: AtomicExecutionPort
   private readonly classGroups: ClassGroupRepository
   private readonly schedules: ScheduleRepository
   private readonly calendarEvents: CalendarEventRepository
@@ -98,79 +102,77 @@ export class ScheduleService {
     startDate: Date
     endDate: Date
   }): Promise<Session[]> {
-    const classGroup = await this.requireClassGroup(classGroupId)
-    const schedules = await this.schedules.listByClassGroup(classGroupId)
-    const calendarEvents = await this.calendarEvents.listByAcademicYear(classGroup.academicYearId)
+    return this.atomicExecution.execute(async () => {
+      const classGroup = await this.requireClassGroup(classGroupId)
+      const schedules = await this.schedules.listByClassGroup(classGroupId)
+      const calendarEvents = await this.calendarEvents.listByAcademicYear(classGroup.academicYearId)
 
-    // Build set of dates that are non-school days (holidays/breaks)
-    const nonSchoolDates = new Set<string>()
-    for (const event of calendarEvents) {
-      if (event.isNonSchoolDay) {
-        const current = new Date(event.startDate)
-        while (current <= event.endDate) {
-          nonSchoolDates.add(current.toDateString())
-          current.setDate(current.getDate() + 1)
+      const nonSchoolDates = new Set<string>()
+      for (const event of calendarEvents) {
+        if (event.isNonSchoolDay) {
+          const current = new Date(event.startDate)
+          while (current <= event.endDate) {
+            nonSchoolDates.add(current.toDateString())
+            current.setDate(current.getDate() + 1)
+          }
         }
       }
-    }
 
-    const generatedSessions: Session[] = []
+      const generatedSessions: Session[] = []
 
-    // Loop through each calendar day in the range
-    let currentDate = new Date(startDate)
-    while (currentDate <= endDate) {
-      const dateString = currentDate.toDateString()
+      let currentDate = new Date(startDate)
+      while (currentDate <= endDate) {
+        const dateString = currentDate.toDateString()
 
-      // Skip holidays and breaks
-      if (!nonSchoolDates.has(dateString)) {
-        const dayOfWeekVal = dayOfWeekMap[currentDate.getDay()]
+        if (!nonSchoolDates.has(dateString)) {
+          const dayOfWeekVal = dayOfWeekMap[currentDate.getDay()]
 
-        // Find all matching templates for this calendar day
-        const matchingSchedules = schedules.filter((s) => {
-          if (s.isRecurring) {
-            return s.dayOfWeek === dayOfWeekVal
-          }
-          else {
-            return s.specificDate && s.specificDate.toDateString() === dateString
-          }
-        })
-
-        for (const schedule of matchingSchedules) {
-          const startParts = schedule.startTime.split(':').map(Number)
-          const endParts = schedule.endTime.split(':').map(Number)
-          const startH = startParts[0] ?? 0
-          const startM = startParts[1] ?? 0
-          const endH = endParts[0] ?? 0
-          const endM = endParts[1] ?? 0
-
-          const sessionStartsAt = new Date(currentDate)
-          sessionStartsAt.setHours(startH, startM, 0, 0)
-
-          const sessionEndsAt = new Date(currentDate)
-          sessionEndsAt.setHours(endH, endM, 0, 0)
-
-          const session = new Session({
-            id: generateUniqueId(),
-            classGroupId: classGroup.id,
-            title: schedule.title,
-            kind: SessionKind.Course,
-            startsAt: sessionStartsAt,
-            endsAt: sessionEndsAt,
-            classSubjectId: schedule.classSubjectId,
-            scheduleId: schedule.id,
+          const matchingSchedules = schedules.filter((s) => {
+            if (s.isRecurring) {
+              return s.dayOfWeek === dayOfWeekVal
+            }
+            else {
+              return s.specificDate && s.specificDate.toDateString() === dateString
+            }
           })
 
-          await this.sessions.save(session)
-          generatedSessions.push(session)
+          for (const schedule of matchingSchedules) {
+            const startParts = schedule.startTime.split(':').map(Number)
+            const endParts = schedule.endTime.split(':').map(Number)
+            const startH = startParts[0] ?? 0
+            const startM = startParts[1] ?? 0
+            const endH = endParts[0] ?? 0
+            const endM = endParts[1] ?? 0
+
+            const sessionStartsAt = new Date(currentDate)
+            sessionStartsAt.setHours(startH, startM, 0, 0)
+
+            const sessionEndsAt = new Date(currentDate)
+            sessionEndsAt.setHours(endH, endM, 0, 0)
+
+            const session = new Session({
+              id: generateUniqueId(),
+              classGroupId: classGroup.id,
+              title: schedule.title,
+              kind: SessionKind.Course,
+              startsAt: sessionStartsAt,
+              endsAt: sessionEndsAt,
+              classSubjectId: schedule.classSubjectId,
+              scheduleId: schedule.id,
+            })
+
+            await this.sessions.save(session)
+            generatedSessions.push(session)
+          }
         }
+
+        const nextDate = new Date(currentDate)
+        nextDate.setDate(nextDate.getDate() + 1)
+        currentDate = nextDate
       }
 
-      const nextDate = new Date(currentDate)
-      nextDate.setDate(nextDate.getDate() + 1)
-      currentDate = nextDate
-    }
-
-    return generatedSessions
+      return generatedSessions
+    })
   }
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {

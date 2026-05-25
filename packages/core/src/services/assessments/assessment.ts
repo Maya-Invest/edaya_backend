@@ -5,11 +5,13 @@ import type { ClassGroup } from '../../entities/school/class-group'
 import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
 import type { AssessmentRepository } from '../../ports/assessment-repository'
 import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
 import type { SessionRepository } from '../../ports/session-repository'
 import { Assessment } from '../../entities/assessments/assessment'
 
 export interface AssessmentServiceArgs {
   classGroupRepository: ClassGroupRepository
+  classSubjectRepository: ClassSubjectRepository
   academicPeriodRepository: AcademicPeriodRepository
   sessionRepository: SessionRepository
   assessmentRepository: AssessmentRepository
@@ -18,12 +20,14 @@ export interface AssessmentServiceArgs {
 export class AssessmentService {
   constructor(args: AssessmentServiceArgs) {
     this.classGroups = args.classGroupRepository
+    this.classSubjects = args.classSubjectRepository
     this.academicPeriods = args.academicPeriodRepository
     this.sessions = args.sessionRepository
     this.assessments = args.assessmentRepository
   }
 
   private readonly classGroups: ClassGroupRepository
+  private readonly classSubjects: ClassSubjectRepository
   private readonly academicPeriods: AcademicPeriodRepository
   private readonly sessions: SessionRepository
   private readonly assessments: AssessmentRepository
@@ -57,6 +61,10 @@ export class AssessmentService {
     const period = await this.requireAcademicPeriod(periodId)
     if (period.schoolId !== classGroup.schoolId || period.academicYearId !== classGroup.academicYearId) {
       throw new Error(`Academic period ${periodId} is not valid for classGroup ${classGroupId}`)
+    }
+    const classSubject = await this.classSubjects.findById(classSubjectId)
+    if (!classSubject || classSubject.classGroupId !== classGroupId) {
+      throw new Error(`Class subject ${classSubjectId} is not valid for classGroup ${classGroupId}`)
     }
     if (sessionId) {
       const session = await this.requireSession(sessionId)

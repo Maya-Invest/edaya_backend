@@ -16,9 +16,9 @@ in `docs/integration_test_readiness.md`.
 
 The core currently provides:
 
-- A nine-module `SchoolHeadlessApp` facade: `setup`, `academics`,
-  `scheduling`, `attendance`, `assessments`, `students`, `finance`,
-  `communications`, and `queries`.
+- An eight-module `SchoolHeadlessApp` facade: `setup`, `academics`,
+  `scheduling`, `assessments`, `students`, `finance`, `communications`, and
+  `queries`. Attendance commands are exposed by `scheduling`.
 - In-memory integration journeys covering school setup, curriculum progress,
   attendance and report cards, finance and communications, assignments, and
   cross-domain query projections.
@@ -27,8 +27,12 @@ The core currently provides:
 - A reusable base repository behavior contract for adapter testing.
 - Public authorization primitives: actor metadata variants, typed
   authorization errors, audit identity resolution, and the authorization
-  policy contract. Service-call enforcement remains the next core gate and is
-  detailed in `docs/service_call_authorization_implementation_plan.md`.
+  policy contract. The current facade invokes authorization for all existing
+  public methods with data-sensitive read actions and live actor-state checks;
+  current facade calls also normalize missing and foreign selected resource
+  identifiers to typed forbidden denials; full completion still requires
+  self-service/query expansion and adapter/server verification detailed in
+  `docs/service_call_authorization_implementation_plan.md`.
 
 The current screen query support is sufficient to start a shell, dashboard,
 student directory, class directory, and read-only timetable. Interactive
@@ -314,10 +318,11 @@ Deferred:
 
 ## Immediate Implementation Backlog
 
-1. Introduce a request-scoped `SchoolApplication.forActor(...)` construction
-   pattern using the implemented actor and authorization-policy primitives.
-2. Apply authorization policies across the nine public modules and derive
-   interactive audit fields from actor context.
+1. Preserve the implemented request-scoped `SchoolApplication.forActor(...)`
+   construction pattern in every server and adapter-backed path.
+2. Complete the remaining authorization gap gates: new actor-scoped queries,
+   exhaustive tests, facade-only import enforcement, and adapter/server
+   verification.
 3. Fix attendance class selection and session association validation.
 4. Add reference-data and detail query contracts to `SchoolQueryService`.
 5. Add typed application errors and list paging/filter conventions.

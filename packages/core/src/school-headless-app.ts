@@ -33,6 +33,7 @@ import type { StudentFeeRepository } from './ports/student-fee-repository'
 import type { StudentRepository } from './ports/student-repository'
 import type { SubjectMatterRepository } from './ports/subject-matter-repository'
 import type { SubjectRepository } from './ports/subject-repository'
+import type { ActorMetadata, AuthorizationPolicy } from './services/authorization'
 import { AcademicsService } from './services/academics'
 import { AssessmentsService } from './services/assessments'
 import { CommunicationsService } from './services/communications'
@@ -42,7 +43,7 @@ import { SchedulingService } from './services/scheduling'
 import { SetupService } from './services/setup'
 import { StudentsService } from './services/students'
 
-export interface SchoolHeadlessAppArgs {
+export interface SchoolHeadlessAppDependencies {
   atomicExecution: AtomicExecutionPort
   schoolRepository: SchoolRepository
   classGroupRepository: ClassGroupRepository
@@ -80,6 +81,27 @@ export interface SchoolHeadlessAppArgs {
   calendarEventRepository: CalendarEventRepository
 }
 
+export interface SchoolHeadlessAppArgs extends SchoolHeadlessAppDependencies {
+  actor: ActorMetadata
+  authorizationPolicy: AuthorizationPolicy
+}
+
+export interface SchoolApplicationArgs extends SchoolHeadlessAppDependencies {
+  authorizationPolicy: AuthorizationPolicy
+}
+
+export class SchoolApplication {
+  private readonly args: SchoolApplicationArgs
+
+  constructor(args: SchoolApplicationArgs) {
+    this.args = args
+  }
+
+  forActor(actor: ActorMetadata): SchoolHeadlessApp {
+    return new SchoolHeadlessApp({ ...this.args, actor })
+  }
+}
+
 export class SchoolHeadlessApp {
   readonly setup: SetupService
   readonly academics: AcademicsService
@@ -93,6 +115,8 @@ export class SchoolHeadlessApp {
   constructor(args: SchoolHeadlessAppArgs) {
     this.setup = new SetupService(args)
     this.academics = new AcademicsService({
+      actor: args.actor,
+      authorizationPolicy: args.authorizationPolicy,
       atomicExecution: args.atomicExecution,
       schoolRepository: args.schoolRepository,
       classGroupRepository: args.classGroupRepository,
@@ -105,6 +129,9 @@ export class SchoolHeadlessApp {
     })
     this.scheduling = new SchedulingService(args)
     this.assessments = new AssessmentsService({
+      actor: args.actor,
+      authorizationPolicy: args.authorizationPolicy,
+      atomicExecution: args.atomicExecution,
       schoolRepository: args.schoolRepository,
       academicYearRepository: args.academicYearRepository,
       gradeLevelRepository: args.gradeLevelRepository,
@@ -123,6 +150,8 @@ export class SchoolHeadlessApp {
       attendanceService: this.scheduling,
     })
     this.students = new StudentsService({
+      actor: args.actor,
+      authorizationPolicy: args.authorizationPolicy,
       schoolRepository: args.schoolRepository,
       studentRepository: args.studentRepository,
       classGroupRepository: args.classGroupRepository,
@@ -131,12 +160,20 @@ export class SchoolHeadlessApp {
       guardianStudentLinkRepository: args.guardianStudentLinkRepository,
     })
     this.communications = new CommunicationsService({
+      actor: args.actor,
+      authorizationPolicy: args.authorizationPolicy,
       classGroupRepository: args.classGroupRepository,
+      gradeLevelRepository: args.gradeLevelRepository,
+      staffMemberRepository: args.staffMemberRepository,
+      guardianRepository: args.guardianRepository,
+      studentRepository: args.studentRepository,
       announcementRepository: args.announcementRepository,
       announcementTargetRepository: args.announcementTargetRepository,
       messageDeliveryRepository: args.messageDeliveryRepository,
     })
     this.finance = new FinanceService({
+      actor: args.actor,
+      authorizationPolicy: args.authorizationPolicy,
       atomicExecution: args.atomicExecution,
       studentRepository: args.studentRepository,
       feeRepository: args.feeRepository,

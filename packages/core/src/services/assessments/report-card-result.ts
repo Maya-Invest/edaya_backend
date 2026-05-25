@@ -4,6 +4,7 @@ import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
 import type { AssessmentRepository } from '../../ports/assessment-repository'
+import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { ClassGroupRepository } from '../../ports/class-group-repository'
 import type { GradeRepository } from '../../ports/grade-repository'
 import type { ReportCardDefinitionRepository } from '../../ports/report-card-definition-repository'
@@ -15,6 +16,7 @@ import type { GradeService } from './grade'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 
 export interface ReportCardResultServiceArgs {
+  atomicExecution: AtomicExecutionPort
   studentRepository: StudentRepository
   classGroupRepository: ClassGroupRepository
   StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
@@ -29,6 +31,7 @@ export interface ReportCardResultServiceArgs {
 
 export class ReportCardResultService {
   constructor(args: ReportCardResultServiceArgs) {
+    this.atomicExecution = args.atomicExecution
     this.students = args.studentRepository
     this.classGroups = args.classGroupRepository
     this.enrollments = args.StudentClassEnrollmentRepository
@@ -41,6 +44,7 @@ export class ReportCardResultService {
     this.gradeService = args.gradeService
   }
 
+  private readonly atomicExecution: AtomicExecutionPort
   private readonly students: StudentRepository
   private readonly classGroups: ClassGroupRepository
   private readonly enrollments: StudentClassEnrollmentRepository
@@ -133,13 +137,15 @@ export class ReportCardResultService {
     examId?: string
     publishedAt?: Date
   }): Promise<ReportCardResult> {
-    const generated = await this.generateReportCardResult({ id, studentId, periodId, reportCardDefinitionId, examId })
-    const published = generated.copyWith({
-      status: ReportCardResultStatus.Published,
-      publishedAt: publishedAt ?? new Date(),
+    return this.atomicExecution.execute(async () => {
+      const generated = await this.generateReportCardResult({ id, studentId, periodId, reportCardDefinitionId, examId })
+      const published = generated.copyWith({
+        status: ReportCardResultStatus.Published,
+        publishedAt: publishedAt ?? new Date(),
+      })
+      await this.reportCardResults.save(published)
+      return published
     })
-    await this.reportCardResults.save(published)
-    return published
   }
 
   private async requireStudent(studentId: string): Promise<Student> {

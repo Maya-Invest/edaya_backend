@@ -7,12 +7,14 @@ import type { GuardianStudentLinkRepository } from '../../ports/guardian-student
 import type { SchoolRepository } from '../../ports/school-repository'
 import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
 import type { StudentRepository } from '../../ports/student-repository'
+import type { AuthorizedServiceArgs } from '../authorization'
 import { Guardian } from '../../entities/students/guardian'
 import { GuardianStudentLink } from '../../entities/students/guardian-student-link'
 import { Student } from '../../entities/students/student'
 import { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
+import { denyResourceAccess } from '../authorization'
 
-export interface StudentsServiceArgs {
+export interface StudentsServiceArgs extends AuthorizedServiceArgs {
   schoolRepository: SchoolRepository
   classGroupRepository: ClassGroupRepository
   studentRepository: StudentRepository
@@ -23,6 +25,8 @@ export interface StudentsServiceArgs {
 
 export class StudentsService {
   constructor(args: StudentsServiceArgs) {
+    this.actor = args.actor
+    this.authorizationPolicy = args.authorizationPolicy
     this.schools = args.schoolRepository
     this.classGroups = args.classGroupRepository
     this.students = args.studentRepository
@@ -37,6 +41,8 @@ export class StudentsService {
   private readonly enrollments: StudentClassEnrollmentRepository
   private readonly guardians: GuardianRepository
   private readonly guardianStudentLinks: GuardianStudentLinkRepository
+  private readonly actor: AuthorizedServiceArgs['actor']
+  private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
   async registerStudent({
     id,
@@ -53,6 +59,7 @@ export class StudentsService {
     birthDate?: Date
     createdAt?: Date
   }): Promise<Student> {
+    await this.authorize('students.manage_enrollment', { schoolId })
     await this.requireSchool(schoolId)
     const student = new Student({ id, schoolId, firstName, lastName, birthDate, createdAt })
     await this.students.save(student)
@@ -70,8 +77,16 @@ export class StudentsService {
     classGroupId: string
     createdAt?: Date
   }): Promise<StudentClassEnrollment> {
-    await this.requireStudent(studentId)
+    const student = await this.requireStudent(studentId)
     const classGroup = await this.requireClassGroup(classGroupId)
+    if (student.schoolId !== classGroup.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorize('students.manage_enrollment', {
+      schoolId: classGroup.schoolId,
+      classGroupId,
+      studentId: student.id,
+    })
 
     const existingEnrollments = await this.enrollments.listByStudent(studentId)
     const existing = existingEnrollments.find(enrollment => enrollment.classGroupId === classGroupId)
@@ -114,6 +129,7 @@ export class StudentsService {
     premiumNotificationsEnabled?: boolean
     createdAt?: Date
   }): Promise<Guardian> {
+    await this.authorize('students.manage_guardians', { schoolId })
     await this.requireSchool(schoolId)
     const guardian = new Guardian({
       id,
@@ -147,7 +163,15 @@ export class StudentsService {
     createdAt?: Date
   }): Promise<GuardianStudentLink> {
     const guardian = await this.requireGuardian(guardianId)
-    await this.requireStudent(studentId)
+    const student = await this.requireStudent(studentId)
+    if (guardian.schoolId !== student.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorize('students.manage_guardians', {
+      schoolId: guardian.schoolId,
+      guardianId,
+      studentId: student.id,
+    })
 
     const enrollments = await this.enrollments.listByStudent(studentId)
     const isEnrolledInSchool = await Promise.all(
@@ -158,7 +182,7 @@ export class StudentsService {
     ).then(results => results.some(result => result))
 
     if (!isEnrolledInSchool) {
-      throw new Error(`Student ${studentId} is not enrolled in school ${guardian.schoolId}`)
+      denyResourceAccess()
     }
 
     const existing = await this.guardianStudentLinks.findByGuardianAndStudent(guardianId, studentId)
@@ -186,7 +210,7 @@ export class StudentsService {
   private async requireStudent(studentId: string): Promise<Student> {
     const student = await this.students.findById(studentId)
     if (!student) {
-      throw new Error(`Unknown student: ${studentId}`)
+      denyResourceAccess()
     }
     return student
   }
@@ -194,7 +218,7 @@ export class StudentsService {
   private async requireGuardian(guardianId: string): Promise<Guardian> {
     const guardian = await this.guardians.findById(guardianId)
     if (!guardian) {
-      throw new Error(`Unknown guardian: ${guardianId}`)
+      denyResourceAccess()
     }
     return guardian
   }
@@ -202,8 +226,15 @@ export class StudentsService {
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
     const classGroup = await this.classGroups.findById(classGroupId)
     if (!classGroup) {
-      throw new Error(`Unknown classGroup: ${classGroupId}`)
+      denyResourceAccess()
     }
     return classGroup
+  }
+
+  private async authorize(
+    action: 'students.manage_enrollment' | 'students.manage_guardians',
+    resource: { schoolId: string, classGroupId?: string, studentId?: string, guardianId?: string },
+  ): Promise<void> {
+    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
   }
 }

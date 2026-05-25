@@ -8,14 +8,16 @@ import type { SchoolRepository } from '../../ports/school-repository'
 import type { SessionRepository } from '../../ports/session-repository'
 import type { SubjectMatterRepository } from '../../ports/subject-matter-repository'
 import type { SubjectRepository } from '../../ports/subject-repository'
+import type { AuthorizedServiceArgs } from '../authorization'
 import { ClassSubject } from '../../entities/academics/class-subject'
 import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/academics/class-subject-matter'
 import { ClassSubjectProgress } from '../../entities/academics/class-subject-progress'
 import { Subject } from '../../entities/academics/subject'
 import { SubjectMatter } from '../../entities/academics/subject-matter'
 import { roundTo2 } from '../../utils/validation'
+import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
-export interface AcademicsServiceArgs {
+export interface AcademicsServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
   schoolRepository: SchoolRepository
   classGroupRepository: ClassGroupRepository
@@ -29,6 +31,8 @@ export interface AcademicsServiceArgs {
 
 export class AcademicsService {
   constructor(args: AcademicsServiceArgs) {
+    this.actor = args.actor
+    this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
     this.schools = args.schoolRepository
     this.classGroups = args.classGroupRepository
@@ -49,6 +53,8 @@ export class AcademicsService {
   private readonly classSubjectMatters: ClassSubjectMatterRepository
   private readonly progress: ClassSubjectProgressRepository
   private readonly sessions: SessionRepository
+  private readonly actor: AuthorizedServiceArgs['actor']
+  private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
   async createSubject({
     id,
@@ -61,6 +67,7 @@ export class AcademicsService {
     name: string
     createdAt?: Date
   }): Promise<Subject> {
+    await this.authorize('academics.manage_curriculum', { schoolId })
     if (!await this.schools.findById(schoolId)) {
       throw new Error(`Unknown school: ${schoolId}`)
     }
@@ -70,9 +77,11 @@ export class AcademicsService {
   }
 
   async createSubjectMatter(input: SubjectMatterArgs): Promise<SubjectMatter> {
-    if (!await this.subjects.findById(input.subjectId)) {
-      throw new Error(`Unknown subject: ${input.subjectId}`)
+    const subject = await this.subjects.findById(input.subjectId)
+    if (!subject) {
+      denyResourceAccess()
     }
+    await this.authorize('academics.manage_curriculum', { schoolId: subject.schoolId })
     const subjectMatter = new SubjectMatter(input)
     await this.subjectMatters.save(subjectMatter)
     return subjectMatter
@@ -95,15 +104,19 @@ export class AcademicsService {
   }): Promise<ClassSubject> {
     const classGroup = await this.classGroups.findById(classGroupId)
     if (!classGroup) {
-      throw new Error(`Unknown classGroup: ${classGroupId}`)
+      denyResourceAccess()
     }
     const subject = await this.subjects.findById(subjectId)
     if (!subject) {
-      throw new Error(`Unknown subject: ${subjectId}`)
+      denyResourceAccess()
     }
     if (subject.schoolId !== classGroup.schoolId) {
-      throw new Error(`Subject ${subjectId} does not belong to school ${classGroup.schoolId}`)
+      denyResourceAccess()
     }
+    await this.authorize('academics.manage_curriculum', {
+      schoolId: classGroup.schoolId,
+      classGroupId,
+    })
     const existing = (await this.classSubjects.listByClassGroup(classGroupId))
       .find(classSubject => classSubject.subjectId === subjectId)
     if (existing) {
@@ -118,22 +131,26 @@ export class AcademicsService {
     id,
     classSubjectId,
     subjectMatterId,
-    updatedByStaffId,
     notes,
     updatedAt,
   }: {
     id: string
     classSubjectId: string
     subjectMatterId: string
-    updatedByStaffId?: string
     notes?: string
     updatedAt?: Date
   }): Promise<ClassSubjectMatter> {
     const classSubject = await this.requireClassSubject(classSubjectId)
     const subjectMatter = await this.requireSubjectMatter(subjectMatterId)
     if (subjectMatter.subjectId !== classSubject.subjectId) {
-      throw new Error(`Subject matter ${subjectMatterId} is not valid for class subject ${classSubjectId}`)
+      denyResourceAccess()
     }
+    const classGroup = await this.requireClassGroup(classSubject.classGroupId)
+    await this.authorize('academics.manage_curriculum', {
+      schoolId: classGroup.schoolId,
+      classGroupId: classGroup.id,
+      classSubjectId,
+    })
     const existing = await this.classSubjectMatters.findByClassSubjectAndSubjectMatter(classSubjectId, subjectMatterId)
     if (existing) {
       return existing
@@ -144,7 +161,7 @@ export class AcademicsService {
       subjectMatterId,
       status: ClassSubjectMatterStatus.NotStarted,
       completedPercentage: 0,
-      updatedByStaffId,
+      updatedByStaffId: resolveAuditActorId(this.actor),
       notes,
       updatedAt,
     })
@@ -157,7 +174,6 @@ export class AcademicsService {
     classSubjectMatterId,
     sessionId,
     completedPercentage,
-    recordedByStaffId,
     notes,
     recordedAt,
   }: {
@@ -165,7 +181,6 @@ export class AcademicsService {
     classSubjectMatterId: string
     sessionId: string
     completedPercentage: number
-    recordedByStaffId?: string
     notes?: string
     recordedAt?: Date
   }): Promise<ClassSubjectProgress> {
@@ -174,11 +189,18 @@ export class AcademicsService {
       const classSubject = await this.requireClassSubject(matter.classSubjectId)
       const session = await this.sessions.findById(sessionId)
       if (!session) {
-        throw new Error(`Unknown session: ${sessionId}`)
+        denyResourceAccess()
       }
       if (session.classSubjectId !== classSubject.id) {
-        throw new Error(`Session ${sessionId} is not linked to class subject ${classSubject.id}`)
+        denyResourceAccess()
       }
+      const classGroup = await this.requireClassGroup(session.classGroupId)
+      await this.authorize('academics.record_progress', {
+        schoolId: classGroup.schoolId,
+        classGroupId: classGroup.id,
+        classSubjectId: classSubject.id,
+        sessionId,
+      })
       const existing = await this.progress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
       if (existing) {
         throw new Error(`Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
@@ -192,7 +214,7 @@ export class AcademicsService {
         classSubjectMatterId,
         sessionId,
         completedPercentage,
-        recordedByStaffId,
+        recordedByStaffId: resolveAuditActorId(this.actor),
         notes,
         recordedAt,
       })
@@ -217,7 +239,14 @@ export class AcademicsService {
   }
 
   async listMatterProgress(classSubjectMatterId: string): Promise<ClassSubjectProgress[]> {
-    await this.requireClassSubjectMatter(classSubjectMatterId)
+    const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
+    const classSubject = await this.requireClassSubject(matter.classSubjectId)
+    const classGroup = await this.requireClassGroup(classSubject.classGroupId)
+    await this.authorize('academics.read_progress', {
+      schoolId: classGroup.schoolId,
+      classGroupId: classGroup.id,
+      classSubjectId: classSubject.id,
+    })
     return this.progress.listByClassSubjectMatter(classSubjectMatterId)
   }
 
@@ -246,7 +275,7 @@ export class AcademicsService {
   private async requireSubjectMatter(subjectMatterId: string): Promise<SubjectMatter> {
     const subjectMatter = await this.subjectMatters.findById(subjectMatterId)
     if (!subjectMatter) {
-      throw new Error(`Unknown subject matter: ${subjectMatterId}`)
+      denyResourceAccess()
     }
     return subjectMatter
   }
@@ -254,7 +283,7 @@ export class AcademicsService {
   private async requireClassSubjectMatter(classSubjectMatterId: string): Promise<ClassSubjectMatter> {
     const matter = await this.classSubjectMatters.findById(classSubjectMatterId)
     if (!matter) {
-      throw new Error(`Unknown class subject matter: ${classSubjectMatterId}`)
+      denyResourceAccess()
     }
     return matter
   }
@@ -262,8 +291,23 @@ export class AcademicsService {
   private async requireClassSubject(classSubjectId: string): Promise<ClassSubject> {
     const classSubject = await this.classSubjects.findById(classSubjectId)
     if (!classSubject) {
-      throw new Error(`Unknown class subject: ${classSubjectId}`)
+      denyResourceAccess()
     }
     return classSubject
+  }
+
+  private async requireClassGroup(classGroupId: string) {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      denyResourceAccess()
+    }
+    return classGroup
+  }
+
+  private async authorize(
+    action: 'academics.manage_curriculum' | 'academics.record_progress' | 'academics.read_progress',
+    resource: { schoolId: string, classGroupId?: string, classSubjectId?: string, sessionId?: string },
+  ): Promise<void> {
+    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
   }
 }

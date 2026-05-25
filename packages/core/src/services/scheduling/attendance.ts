@@ -1,4 +1,5 @@
 import type { Session } from '../../entities/scheduling/session'
+import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { AttendanceRepository } from '../../ports/attendance-repository'
 import type { SessionRepository } from '../../ports/session-repository'
 import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
@@ -8,6 +9,7 @@ import { normalizeDate } from '../../utils/validation'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 
 export interface AttendanceServiceArgs {
+  atomicExecution: AtomicExecutionPort
   studentRepository: StudentRepository
   StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
   sessionRepository: SessionRepository
@@ -16,12 +18,14 @@ export interface AttendanceServiceArgs {
 
 export class AttendanceService {
   constructor(args: AttendanceServiceArgs) {
+    this.atomicExecution = args.atomicExecution
     this.students = args.studentRepository
     this.enrollments = args.StudentClassEnrollmentRepository
     this.sessions = args.sessionRepository
     this.attendance = args.attendanceRepository
   }
 
+  private readonly atomicExecution: AtomicExecutionPort
   private readonly students: StudentRepository
   private readonly enrollments: StudentClassEnrollmentRepository
   private readonly sessions: SessionRepository
@@ -71,20 +75,22 @@ export class AttendanceService {
     createdBy?: string
     createdAt?: Date
   }): Promise<AttendanceRecord[]> {
-    const records: AttendanceRecord[] = []
-    for (const [studentId, status] of Object.entries(attendanceByStudent)) {
-      records.push(
-        await this.recordAttendance({
-          id: `${studentId}-${sessionId}`,
-          studentId,
-          sessionId,
-          status,
-          createdBy,
-          createdAt,
-        }),
-      )
-    }
-    return records
+    return this.atomicExecution.execute(async () => {
+      const records: AttendanceRecord[] = []
+      for (const [studentId, status] of Object.entries(attendanceByStudent)) {
+        records.push(
+          await this.recordAttendance({
+            id: `${studentId}-${sessionId}`,
+            studentId,
+            sessionId,
+            status,
+            createdBy,
+            createdAt,
+          }),
+        )
+      }
+      return records
+    })
   }
 
   async buildAttendanceSummary({

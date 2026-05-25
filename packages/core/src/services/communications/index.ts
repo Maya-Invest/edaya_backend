@@ -2,19 +2,28 @@ import type { AnnouncementAudience, AnnouncementPriority } from '../../entities/
 import type { AnnouncementTargetKind } from '../../entities/messaging/announcement-target'
 import type {
   MessageDeliveryChannel,
-  MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
 } from '../../entities/messaging/message-delivery'
 import type { AnnouncementRepository } from '../../ports/announcement-repository'
 import type { AnnouncementTargetRepository } from '../../ports/announcement-target-repository'
 import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { GradeLevelRepository } from '../../ports/grade-level-repository'
+import type { GuardianRepository } from '../../ports/guardian-repository'
 import type { MessageDeliveryRepository } from '../../ports/message-delivery-repository'
+import type { StaffMemberRepository } from '../../ports/staff-member-repository'
+import type { StudentRepository } from '../../ports/student-repository'
+import type { AuthorizedServiceArgs } from '../authorization'
 import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
-import { AnnouncementTarget } from '../../entities/messaging/announcement-target'
-import { MessageDelivery } from '../../entities/messaging/message-delivery'
+import { AnnouncementTarget, AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
+import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
+import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
-export interface CommunicationsServiceArgs {
+export interface CommunicationsServiceArgs extends AuthorizedServiceArgs {
   classGroupRepository: ClassGroupRepository
+  gradeLevelRepository: GradeLevelRepository
+  staffMemberRepository: StaffMemberRepository
+  guardianRepository: GuardianRepository
+  studentRepository: StudentRepository
   announcementRepository: AnnouncementRepository
   announcementTargetRepository: AnnouncementTargetRepository
   messageDeliveryRepository: MessageDeliveryRepository
@@ -22,16 +31,28 @@ export interface CommunicationsServiceArgs {
 
 export class CommunicationsService {
   constructor(args: CommunicationsServiceArgs) {
+    this.actor = args.actor
+    this.authorizationPolicy = args.authorizationPolicy
     this.classGroups = args.classGroupRepository
+    this.gradeLevels = args.gradeLevelRepository
+    this.staffMembers = args.staffMemberRepository
+    this.guardians = args.guardianRepository
+    this.students = args.studentRepository
     this.announcements = args.announcementRepository
     this.targets = args.announcementTargetRepository
     this.deliveries = args.messageDeliveryRepository
   }
 
   private readonly classGroups: ClassGroupRepository
+  private readonly gradeLevels: GradeLevelRepository
+  private readonly staffMembers: StaffMemberRepository
+  private readonly guardians: GuardianRepository
+  private readonly students: StudentRepository
   private readonly announcements: AnnouncementRepository
   private readonly targets: AnnouncementTargetRepository
   private readonly deliveries: MessageDeliveryRepository
+  private readonly actor: AuthorizedServiceArgs['actor']
+  private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
   async createAnnouncement({
     id,
@@ -40,7 +61,6 @@ export class CommunicationsService {
     content,
     audience,
     classGroupId,
-    createdBy,
     priority,
     premiumNotification,
     createdAt,
@@ -52,12 +72,12 @@ export class CommunicationsService {
     content: string
     audience: AnnouncementAudience
     classGroupId?: string
-    createdBy?: string
     priority?: AnnouncementPriority
     premiumNotification?: boolean
     createdAt?: Date
     expiresAt?: Date
   }): Promise<Announcement> {
+    await this.authorize({ schoolId, classGroupId })
     await this.validateClassGroupAudience({ audience, classGroupId, schoolId })
     const announcement = new Announcement({
       id,
@@ -66,7 +86,7 @@ export class CommunicationsService {
       content,
       audience,
       classGroupId,
-      createdBy,
+      createdBy: resolveAuditActorId(this.actor),
       priority,
       premiumNotification,
       status: AnnouncementStatus.Draft,
@@ -90,7 +110,9 @@ export class CommunicationsService {
     targetId: string
     createdAt?: Date
   }): Promise<AnnouncementTarget> {
-    await this.requireAnnouncement(announcementId)
+    const announcement = await this.requireAnnouncement(announcementId)
+    await this.authorize({ schoolId: announcement.schoolId, announcementId })
+    await this.requireTargetInSchool(targetKind, targetId, announcement.schoolId)
     const target = new AnnouncementTarget({ id, announcementId, targetKind, targetId, createdAt })
     await this.targets.save(target)
     return target
@@ -104,6 +126,7 @@ export class CommunicationsService {
     publishedAt?: Date
   }): Promise<Announcement> {
     const existing = await this.requireAnnouncement(announcementId)
+    await this.authorize({ schoolId: existing.schoolId, announcementId })
     const announcement = new Announcement({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -151,6 +174,8 @@ export class CommunicationsService {
     updatedAt?: Date
   }): Promise<MessageDelivery> {
     const announcement = await this.requireAnnouncement(announcementId)
+    await this.authorize({ schoolId: announcement.schoolId, announcementId })
+    await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
     if (!announcement.isPublished) {
       throw new Error(`Announcement ${announcementId} must be published before recording delivery`)
     }
@@ -185,19 +210,79 @@ export class CommunicationsService {
       return
     }
     const classGroup = classGroupId ? await this.classGroups.findById(classGroupId) : undefined
-    if (!classGroup) {
-      throw new Error(`Unknown classGroup: ${classGroupId}`)
-    }
-    if (classGroup.schoolId !== schoolId) {
-      throw new Error(`ClassGroup ${classGroupId} does not belong to school ${schoolId}`)
+    if (!classGroup || classGroup.schoolId !== schoolId) {
+      denyResourceAccess()
     }
   }
 
   private async requireAnnouncement(announcementId: string): Promise<Announcement> {
     const announcement = await this.announcements.findById(announcementId)
     if (!announcement) {
-      throw new Error(`Unknown announcement: ${announcementId}`)
+      denyResourceAccess()
     }
     return announcement
+  }
+
+  private async requireTargetInSchool(
+    targetKind: AnnouncementTargetKind,
+    targetId: string,
+    schoolId: string,
+  ): Promise<void> {
+    switch (targetKind) {
+      case TargetKind.ClassGroup:
+        await this.requireOwnedResource(this.classGroups.findById(targetId), 'ClassGroup', targetId, schoolId)
+        return
+      case TargetKind.GradeLevel:
+        await this.requireOwnedResource(this.gradeLevels.findById(targetId), 'Grade level', targetId, schoolId)
+        return
+      case TargetKind.Staff:
+        await this.requireOwnedResource(this.staffMembers.findById(targetId), 'Staff member', targetId, schoolId)
+        return
+      case TargetKind.Guardian:
+        await this.requireOwnedResource(this.guardians.findById(targetId), 'Guardian', targetId, schoolId)
+        return
+      case TargetKind.Student:
+        await this.requireOwnedResource(this.students.findById(targetId), 'Student', targetId, schoolId)
+    }
+  }
+
+  private async requireRecipientInSchool(
+    recipientKind: MessageDeliveryRecipientKind,
+    recipientId: string,
+    schoolId: string,
+  ): Promise<void> {
+    switch (recipientKind) {
+      case MessageDeliveryRecipientKind.Staff:
+        await this.requireOwnedResource(this.staffMembers.findById(recipientId), 'Staff member', recipientId, schoolId)
+        return
+      case MessageDeliveryRecipientKind.Guardian:
+        await this.requireOwnedResource(this.guardians.findById(recipientId), 'Guardian', recipientId, schoolId)
+        return
+      case MessageDeliveryRecipientKind.Student:
+        await this.requireOwnedResource(this.students.findById(recipientId), 'Student', recipientId, schoolId)
+    }
+  }
+
+  private async requireOwnedResource(
+    resourcePromise: Promise<{ schoolId: string } | undefined>,
+    _resourceName: string,
+    _resourceId: string,
+    schoolId: string,
+  ): Promise<void> {
+    const resource = await resourcePromise
+    if (!resource || resource.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
+  }
+
+  private async authorize(resource: {
+    schoolId: string
+    classGroupId?: string
+    announcementId?: string
+  }): Promise<void> {
+    await this.authorizationPolicy.requirePermission(this.actor, {
+      action: 'communications.manage',
+      resource,
+    })
   }
 }

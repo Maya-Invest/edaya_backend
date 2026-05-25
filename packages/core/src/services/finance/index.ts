@@ -6,12 +6,14 @@ import type { FeeRepository } from '../../ports/fee-repository'
 import type { PaymentRepository } from '../../ports/payment-repository'
 import type { StudentFeeRepository } from '../../ports/student-fee-repository'
 import type { StudentRepository } from '../../ports/student-repository'
+import type { AuthorizedServiceArgs } from '../authorization'
 import { Fee } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { FeeStatus, StudentFee, StudentFeeSummary } from '../../entities/finances/student-fee'
 import { Money } from '../../value_object/money'
+import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
-export interface FinanceServiceArgs {
+export interface FinanceServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
   studentRepository: StudentRepository
   feeRepository: FeeRepository
@@ -21,6 +23,8 @@ export interface FinanceServiceArgs {
 
 export class FinanceService {
   constructor(args: FinanceServiceArgs) {
+    this.actor = args.actor
+    this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
     this.students = args.studentRepository
     this.feeDefinitions = args.feeRepository
@@ -33,8 +37,11 @@ export class FinanceService {
   private readonly feeDefinitions: FeeRepository
   private readonly studentFees: StudentFeeRepository
   private readonly payments: PaymentRepository
+  private readonly actor: AuthorizedServiceArgs['actor']
+  private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
   async createFee(input: FeeArgs): Promise<Fee> {
+    await this.authorize('finance.manage', { schoolId: input.schoolId })
     const fee = new Fee(input)
     await this.feeDefinitions.save(fee)
     return fee
@@ -59,8 +66,15 @@ export class FinanceService {
     createdAt?: Date
     referenceDate?: Date
   }): Promise<StudentFee> {
-    await this.requireStudent(studentId)
+    const student = await this.requireStudent(studentId)
+    await this.authorize('finance.manage', {
+      schoolId: student.schoolId,
+      studentId: student.id,
+    })
     const fee = await this.requireFee(feeId)
+    if (fee.schoolId !== student.schoolId) {
+      denyResourceAccess()
+    }
     const amount = expectedAmount ?? fee.defaultAmount.amount
     const studentFee = new StudentFee({
       id,
@@ -86,7 +100,6 @@ export class FinanceService {
     method,
     reference,
     notes,
-    recordedById,
     createdAt,
     updatedAt,
     referenceDate,
@@ -98,13 +111,18 @@ export class FinanceService {
     method: PaymentMethod
     reference?: string
     notes?: string
-    recordedById?: string
     createdAt?: Date
     updatedAt?: Date
     referenceDate?: Date
   }): Promise<Payment> {
     return this.atomicExecution.execute(async () => {
       const studentFee = await this.requireStudentFee(studentFeeId)
+      const student = await this.requireStudent(studentFee.studentId)
+      await this.authorize('finance.manage', {
+        schoolId: student.schoolId,
+        studentId: student.id,
+        studentFeeId,
+      })
       const payment = new Payment({
         id,
         studentFeeId,
@@ -114,7 +132,7 @@ export class FinanceService {
         method,
         reference,
         notes,
-        recordedById,
+        recordedById: resolveAuditActorId(this.actor),
         createdAt,
       })
       await this.payments.save(payment)
@@ -141,10 +159,16 @@ export class FinanceService {
   }): Promise<Payment> {
     return this.atomicExecution.execute(async () => {
       const payment = await this.requirePayment(paymentId)
+      const studentFee = await this.requireStudentFee(payment.studentFeeId)
+      const student = await this.requireStudent(studentFee.studentId)
+      await this.authorize('finance.manage', {
+        schoolId: student.schoolId,
+        studentId: student.id,
+        studentFeeId: studentFee.id,
+      })
       if (payment.status !== PaymentStatus.Recorded) {
         throw new Error(`Payment ${paymentId} cannot be reversed from status ${payment.status}`)
       }
-      const studentFee = await this.requireStudentFee(payment.studentFeeId)
       const reversed = new Payment({
         id: payment.id,
         studentFeeId: payment.studentFeeId,
@@ -171,6 +195,8 @@ export class FinanceService {
   }
 
   async buildFeeSummary(studentId: string): Promise<StudentFeeSummary> {
+    const student = await this.requireStudent(studentId)
+    await this.authorize('finance.read', { schoolId: student.schoolId, studentId })
     const fees = await this.studentFees.listByStudent(studentId)
     const currency = fees[0]?.expectedAmount.currency ?? 'XAF'
     const totalExpectedAmount = fees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
@@ -226,16 +252,18 @@ export class FinanceService {
     return paidAmount > 0 ? FeeStatus.Partial : FeeStatus.Pending
   }
 
-  private async requireStudent(studentId: string): Promise<void> {
-    if (!await this.students.findById(studentId)) {
-      throw new Error(`Unknown student: ${studentId}`)
+  private async requireStudent(studentId: string) {
+    const student = await this.students.findById(studentId)
+    if (!student) {
+      denyResourceAccess()
     }
+    return student
   }
 
   private async requireFee(feeId: string): Promise<Fee> {
     const fee = await this.feeDefinitions.findById(feeId)
     if (!fee) {
-      throw new Error(`Unknown fee: ${feeId}`)
+      denyResourceAccess()
     }
     return fee
   }
@@ -243,7 +271,7 @@ export class FinanceService {
   private async requireStudentFee(studentFeeId: string): Promise<StudentFee> {
     const fee = await this.studentFees.findById(studentFeeId)
     if (!fee) {
-      throw new Error(`Unknown student fee: ${studentFeeId}`)
+      denyResourceAccess()
     }
     return fee
   }
@@ -251,8 +279,15 @@ export class FinanceService {
   private async requirePayment(paymentId: string): Promise<Payment> {
     const payment = await this.payments.findById(paymentId)
     if (!payment) {
-      throw new Error(`Unknown payment: ${paymentId}`)
+      denyResourceAccess()
     }
     return payment
+  }
+
+  private async authorize(
+    action: 'finance.manage' | 'finance.read',
+    resource: { schoolId: string, studentId?: string, studentFeeId?: string },
+  ): Promise<void> {
+    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
   }
 }

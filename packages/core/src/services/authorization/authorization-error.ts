@@ -16,3 +16,7 @@ export class AuthorizationError extends Error {
     this.code = code
   }
 }
+
+export function denyResourceAccess(): never {
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+}
