@@ -4,9 +4,9 @@ import type { Session } from '../../entities/scheduling/session'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { StaffMember, StaffRole } from '../../entities/school/staff-member'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
   SchedulingRepositories,
+  SetupRepositories,
 } from '../../ports/school-repositories'
 import { StaffAssignment } from '../../entities/school/staff-assignment'
 

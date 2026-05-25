@@ -3,10 +3,10 @@ import type { Session } from '../../entities/scheduling/session'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
-  SchedulingRepositories,
   AssessmentRepositories,
+  SchedulingRepositories,
+  SetupRepositories,
 } from '../../ports/school-repositories'
 import { Assessment } from '../../entities/assessments/assessment'
 

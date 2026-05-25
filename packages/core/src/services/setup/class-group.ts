@@ -1,7 +1,7 @@
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { GradeLevel } from '../../entities/school/grade-level'
 import type { School } from '../../entities/school/school'
-import type { SetupRepositories, AcademicsRepositories } from '../../ports/school-repositories'
+import type { AcademicsRepositories, SetupRepositories } from '../../ports/school-repositories'
 import { ClassGroup } from '../../entities/school/class-group'
 
 export interface ClassGroupServiceArgs {

@@ -2,12 +2,12 @@ import type { Announcement } from '../../entities/messaging/announcement'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { School } from '../../entities/school/school'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
-  StudentRepositories,
-  FinanceRepositories,
   AssessmentRepositories,
   CommunicationRepositories,
+  FinanceRepositories,
+  SetupRepositories,
+  StudentRepositories,
 } from '../../ports/school-repositories'
 import { ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { FeeStatus } from '../../entities/finances/student-fee'

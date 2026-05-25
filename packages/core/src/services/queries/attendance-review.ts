@@ -4,9 +4,9 @@ import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { Student } from '../../entities/students/student'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
   SchedulingRepositories,
+  SetupRepositories,
   StudentRepositories,
 } from '../../ports/school-repositories'
 import { AttendanceStatus } from '../../entities/scheduling/attendance-record'

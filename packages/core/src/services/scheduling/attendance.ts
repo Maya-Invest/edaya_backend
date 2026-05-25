@@ -1,8 +1,8 @@
 import type { Session } from '../../entities/scheduling/session'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type {
-  StudentRepositories,
   SchedulingRepositories,
+  StudentRepositories,
 } from '../../ports/school-repositories'
 import { AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { normalizeDate } from '../../utils/validation'

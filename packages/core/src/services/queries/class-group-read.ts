@@ -5,10 +5,10 @@ import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { StaffMember } from '../../entities/school/staff-member'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
-  StudentRepositories,
   SchedulingRepositories,
+  SetupRepositories,
+  StudentRepositories,
 } from '../../ports/school-repositories'
 import { StaffRole } from '../../entities/school/staff-member'
 

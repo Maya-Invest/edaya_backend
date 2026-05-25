@@ -1,6 +1,6 @@
 import type { SubjectMatterArgs } from '../../entities/academics/subject-matter'
-import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import { ClassSubject } from '../../entities/academics/class-subject'
 import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/academics/class-subject-matter'

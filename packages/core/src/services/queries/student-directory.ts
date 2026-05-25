@@ -5,11 +5,11 @@ import type { School } from '../../entities/school/school'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
-  StudentRepositories,
-  FinanceRepositories,
   AssessmentRepositories,
+  FinanceRepositories,
+  SetupRepositories,
+  StudentRepositories,
 } from '../../ports/school-repositories'
 
 export interface StudentDirectoryServiceArgs {

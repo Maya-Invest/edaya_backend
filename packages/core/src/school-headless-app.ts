@@ -1,5 +1,5 @@
-import type { SchoolRepositories } from './ports/school-repositories'
 import type { AtomicExecutionPort } from './ports/atomic-execution'
+import type { SchoolRepositories } from './ports/school-repositories'
 import type { ActorMetadata, AuthorizationPolicy } from './services/authorization'
 import { AcademicsService } from './services/academics'
 import { AssessmentsService } from './services/assessments'

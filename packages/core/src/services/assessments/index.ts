@@ -1,8 +1,8 @@
 import type { GradeScaleArgs } from '../../entities/assessments/grade-scale'
 import type { ReportCardDefinitionArgs } from '../../entities/assessments/report-card-definition'
 import type { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
-import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { AttendanceService } from '../scheduling/attendance'
 import { GradeScale } from '../../entities/assessments/grade-scale'
@@ -126,7 +126,6 @@ export class AssessmentsService {
     await this.reportCardDefinitions.save(definition)
     return definition
   }
-
 
   async createAssessment(input: Parameters<AssessmentService['createAssessment']>[0]) {
     const classGroup = await this.requireClassGroup(input.classGroupId)

@@ -2,13 +2,13 @@ import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
-import type {
-  SetupRepositories,
-  AcademicsRepositories,
-  StudentRepositories,
-  AssessmentRepositories,
-} from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
+import type {
+  AcademicsRepositories,
+  AssessmentRepositories,
+  SetupRepositories,
+  StudentRepositories,
+} from '../../ports/school-repositories'
 import type { AttendanceService } from '../scheduling/attendance'
 import type { GradeService } from './grade'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'

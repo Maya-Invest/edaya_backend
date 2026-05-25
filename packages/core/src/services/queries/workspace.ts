@@ -3,7 +3,7 @@ import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { StaffMember } from '../../entities/school/staff-member'
-import type { SetupRepositories, AcademicsRepositories } from '../../ports/school-repositories'
+import type { AcademicsRepositories, SetupRepositories } from '../../ports/school-repositories'
 import { StaffRole } from '../../entities/school/staff-member'
 
 export interface WorkspaceServiceArgs {

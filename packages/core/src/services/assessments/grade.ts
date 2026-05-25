@@ -4,10 +4,10 @@ import type { ReportCardDefinitionSection } from '../../entities/assessments/rep
 import type { ReportCardResultSection } from '../../entities/assessments/report-card-result-section'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type {
-  SetupRepositories,
   AcademicsRepositories,
-  StudentRepositories,
   AssessmentRepositories,
+  SetupRepositories,
+  StudentRepositories,
 } from '../../ports/school-repositories'
 import { Grade } from '../../entities/assessments/grade'
 import { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
