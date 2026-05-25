@@ -1,5 +1,6 @@
 import type { GradeScaleArgs } from '../../entities/assessments/grade-scale'
 import type { ReportCardDefinitionArgs } from '../../entities/assessments/report-card-definition'
+import type { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
 import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
 import type { AcademicYearRepository } from '../../ports/academic-year-repository'
 import type { AssessmentRepository } from '../../ports/assessment-repository'
@@ -15,12 +16,12 @@ import type { SchoolRepository } from '../../ports/school-repository'
 import type { SessionRepository } from '../../ports/session-repository'
 import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
 import type { StudentRepository } from '../../ports/student-repository'
-import type { AttendanceService } from '../planing/attendance'
+import type { AttendanceService } from '../scheduling/attendance'
 import { GradeScale } from '../../entities/assessments/grade-scale'
 import { ReportCardDefinition } from '../../entities/assessments/report-card-definition'
+import { ReportCardDefinitionSection } from '../../entities/assessments/report-card-definition-section'
 import { AssessmentService } from './assessment'
 import { GradeService } from './grade'
-import { ReportCardDefinitionSectionService } from './report-card-definition-section'
 import { ReportCardResultService } from './report-card-result'
 
 export interface AssessmentsServiceArgs {
@@ -39,7 +40,7 @@ export interface AssessmentsServiceArgs {
   reportCardDefinitionRepository: ReportCardDefinitionRepository
   reportCardDefinitionSectionRepository: ReportCardDefinitionSectionRepository
   reportCardResultRepository: ReportCardResultRepository
-  attendanceService: AttendanceService
+  attendanceService: Pick<AttendanceService, 'buildAttendanceSummary'>
 }
 
 export class AssessmentsService {
@@ -48,9 +49,9 @@ export class AssessmentsService {
   private readonly gradeLevels: GradeLevelRepository
   private readonly gradeScales: GradeScaleRepository
   private readonly reportCardDefinitions: ReportCardDefinitionRepository
+  private readonly reportCardDefinitionSections: ReportCardDefinitionSectionRepository
   private readonly assessments: AssessmentService
   private readonly grades: GradeService
-  private readonly reportCardDefinitionSections: ReportCardDefinitionSectionService
   private readonly reportCardResults: ReportCardResultService
 
   constructor(args: AssessmentsServiceArgs) {
@@ -59,9 +60,9 @@ export class AssessmentsService {
     this.gradeLevels = args.gradeLevelRepository
     this.gradeScales = args.gradeScaleRepository
     this.reportCardDefinitions = args.reportCardDefinitionRepository
+    this.reportCardDefinitionSections = args.reportCardDefinitionSectionRepository
     this.assessments = new AssessmentService(args)
     this.grades = new GradeService(args)
-    this.reportCardDefinitionSections = new ReportCardDefinitionSectionService(args)
     this.reportCardResults = new ReportCardResultService({
       ...args,
       gradeService: this.grades,
@@ -125,10 +126,50 @@ export class AssessmentsService {
     return this.grades.listClassSubjectGradesForPeriod(input)
   }
 
-  createReportCardDefinitionSection(
-    input: Parameters<ReportCardDefinitionSectionService['createReportCardDefinitionSection']>[0],
-  ) {
-    return this.reportCardDefinitionSections.createReportCardDefinitionSection(input)
+  async createReportCardDefinitionSection({
+    id,
+    reportCardDefinitionId,
+    kind,
+    name,
+    weight,
+    parentSectionId,
+    subjectId,
+    createdAt,
+  }: {
+    id: string
+    reportCardDefinitionId: string
+    kind: ReportCardDefinitionSectionKind
+    name: string
+    weight: number
+    parentSectionId?: string
+    subjectId?: string
+    createdAt?: Date
+  }): Promise<ReportCardDefinitionSection> {
+    if (!await this.reportCardDefinitions.findById(reportCardDefinitionId)) {
+      throw new Error(`Unknown report card definition: ${reportCardDefinitionId}`)
+    }
+    if (parentSectionId) {
+      const parent = await this.reportCardDefinitionSections.findById(parentSectionId)
+      if (!parent) {
+        throw new Error(`Unknown parent report card section: ${parentSectionId}`)
+      }
+      if (parent.reportCardDefinitionId !== reportCardDefinitionId) {
+        throw new Error('Parent report card section must belong to the same report card definition')
+      }
+    }
+
+    const section = new ReportCardDefinitionSection({
+      id,
+      reportCardDefinitionId,
+      kind,
+      name,
+      weight,
+      parentSectionId,
+      subjectId,
+      createdAt,
+    })
+    await this.reportCardDefinitionSections.save(section)
+    return section
   }
 
   generateReportCardResult(input: Parameters<ReportCardResultService['generateReportCardResult']>[0]) {

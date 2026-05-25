@@ -1,8 +1,10 @@
 import type { SessionKind } from '../../entities/scheduling/session'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { AcademicYear } from '../../entities/school/academic-year'
+import type { ClassGroup } from '../../entities/school/class-group'
 import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
 import type { AcademicYearRepository } from '../../ports/academic-year-repository'
+import type { AttendanceRepository } from '../../ports/attendance-repository'
 import type { CalendarEventRepository } from '../../ports/calendar-event-repository'
 import type { ClassGroupRepository } from '../../ports/class-group-repository'
 import type { GroupedSessionRepository } from '../../ports/grouped-session-repository'
@@ -10,10 +12,13 @@ import type { PeriodDefinitionRepository } from '../../ports/period-definition-r
 import type { ScheduleRepository } from '../../ports/schedule-repository'
 import type { SchoolRepository } from '../../ports/school-repository'
 import type { SessionRepository } from '../../ports/session-repository'
+import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
+import type { StudentRepository } from '../../ports/student-repository'
 import { GroupedSession } from '../../entities/scheduling/grouped-session'
 import { PeriodDefinition } from '../../entities/scheduling/period-definition'
-import { ScheduleService } from '../planing/schedule'
-import { SessionService } from '../planing/session'
+import { Session } from '../../entities/scheduling/session'
+import { AttendanceService } from './attendance'
+import { ScheduleService } from './schedule'
 
 export interface SchedulingServiceArgs {
   schoolRepository: SchoolRepository
@@ -25,6 +30,9 @@ export interface SchedulingServiceArgs {
   scheduleRepository: ScheduleRepository
   calendarEventRepository: CalendarEventRepository
   sessionRepository: SessionRepository
+  studentRepository: StudentRepository
+  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
+  attendanceRepository: AttendanceRepository
 }
 
 export class SchedulingService {
@@ -33,8 +41,10 @@ export class SchedulingService {
   private readonly academicPeriods: AcademicPeriodRepository
   private readonly groupedSessions: GroupedSessionRepository
   private readonly periodDefinitions: PeriodDefinitionRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly schedules: ScheduleService
-  private readonly sessions: SessionService
+  private readonly sessions: SessionRepository
+  private readonly attendance: AttendanceService
 
   constructor(args: SchedulingServiceArgs) {
     this.schools = args.schoolRepository
@@ -42,11 +52,10 @@ export class SchedulingService {
     this.academicPeriods = args.academicPeriodRepository
     this.groupedSessions = args.groupedSessionRepository
     this.periodDefinitions = args.periodDefinitionRepository
+    this.classGroups = args.classGroupRepository
     this.schedules = new ScheduleService(args)
-    this.sessions = new SessionService({
-      classGroupRepository: args.classGroupRepository,
-      sessionRepository: args.sessionRepository,
-    })
+    this.sessions = args.sessionRepository
+    this.attendance = new AttendanceService(args)
   }
 
   async definePeriod({
@@ -145,8 +154,55 @@ export class SchedulingService {
     return this.schedules.generateSessions(input)
   }
 
-  createSession(input: Parameters<SessionService['createSession']>[0]) {
-    return this.sessions.createSession(input)
+  async createSession({
+    id,
+    classGroupId,
+    title,
+    kind,
+    startsAt,
+    endsAt,
+    classSubjectId,
+    createdAt,
+  }: {
+    id: string
+    schoolId: string
+    classGroupId: string
+    title: string
+    kind: SessionKind
+    startsAt: Date
+    endsAt: Date
+    classSubjectId?: string
+    createdAt?: Date
+  }): Promise<Session> {
+    await this.requireClassGroup(classGroupId)
+    const session = new Session({
+      id,
+      classGroupId,
+      title,
+      kind,
+      startsAt,
+      endsAt,
+      classSubjectId,
+      createdAt,
+    })
+    await this.sessions.save(session)
+    return session
+  }
+
+  recordAttendance(input: Parameters<AttendanceService['recordAttendance']>[0]) {
+    return this.attendance.recordAttendance(input)
+  }
+
+  recordSessionAttendance(input: Parameters<AttendanceService['recordSessionAttendance']>[0]) {
+    return this.attendance.recordSessionAttendance(input)
+  }
+
+  buildAttendanceSummary(input: Parameters<AttendanceService['buildAttendanceSummary']>[0]) {
+    return this.attendance.buildAttendanceSummary(input)
+  }
+
+  listSessionAttendance(input: Parameters<AttendanceService['listSessionAttendance']>[0]) {
+    return this.attendance.listSessionAttendance(input)
   }
 
   private async requireSchool(schoolId: string): Promise<void> {
@@ -169,5 +225,13 @@ export class SchedulingService {
       throw new Error(`Unknown academic period: ${academicPeriodId}`)
     }
     return academicPeriod
+  }
+
+  private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      throw new Error(`Unknown classGroup: ${classGroupId}`)
+    }
+    return classGroup
   }
 }

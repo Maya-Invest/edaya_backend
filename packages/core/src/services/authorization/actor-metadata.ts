@@ -1,5 +1,5 @@
-import type { StaffRole } from '../entities/school/staff-member'
-import { requireNonBlank, requireValidDate } from '../utils/validation'
+import type { StaffRole } from '../../entities/school/staff-member'
+import { requireNonBlank, requireValidDate } from '../../utils/validation'
 
 export enum ActorAssuranceLevel {
   Standard = 'standard',

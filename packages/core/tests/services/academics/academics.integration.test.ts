@@ -619,7 +619,7 @@ describe('assessment reporting journey', () => {
       startsAt: new Date('2026-09-01T08:00:00Z'),
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })
-    await app.attendance.recordAttendance({
+    await app.scheduling.recordAttendance({
       id: 'attendance',
       studentId: 'student',
       sessionId: 'lesson',
@@ -940,7 +940,7 @@ describe('assignment and query journey', () => {
       groupedSessionId: groupedSession.id,
       role: StaffRole.Teacher,
     })
-    await app.attendance.recordAttendance({
+    await app.scheduling.recordAttendance({
       id: 'attendance',
       studentId: 'student',
       sessionId: session.id,

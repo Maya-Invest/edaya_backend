@@ -15,11 +15,11 @@ import type { StudentClassEnrollmentRepository } from '../../ports/student-enrol
 import type { StudentFeeRepository } from '../../ports/student-fee-repository'
 import type { StudentRepository } from '../../ports/student-repository'
 import type { SubjectRepository } from '../../ports/subject-repository'
-import { AttendanceReviewService } from '../planing/attendance-review'
-import { ClassGroupReadService } from '../workspace/class-group-read'
-import { SchoolOverviewService } from '../workspace/school-overview'
-import { StudentDirectoryService } from '../workspace/student-directory'
-import { WorkspaceService } from '../workspace/workspace'
+import { AttendanceReviewService } from './attendance-review'
+import { ClassGroupReadService } from './class-group-read'
+import { SchoolOverviewService } from './school-overview'
+import { StudentDirectoryService } from './student-directory'
+import { WorkspaceService } from './workspace'
 
 export interface SchoolQueryServiceArgs {
   schoolRepository: SchoolRepository

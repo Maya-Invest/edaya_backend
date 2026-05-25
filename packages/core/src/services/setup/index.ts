@@ -1,3 +1,4 @@
+import type { StaffRole } from '../../entities/school/staff-member'
 import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
 import type { AcademicYearRepository } from '../../ports/academic-year-repository'
 import type { ClassGroupRepository } from '../../ports/class-group-repository'
@@ -9,11 +10,11 @@ import type { SessionRepository } from '../../ports/session-repository'
 import type { StaffAssignmentRepository } from '../../ports/staff-assignment-repository'
 import type { StaffMemberRepository } from '../../ports/staff-member-repository'
 import { GradeLevel } from '../../entities/school/grade-level'
-import { AcademicCalendarService } from '../workspace/academic-calendar'
-import { ClassGroupService } from '../workspace/class-group'
-import { SchoolService } from '../workspace/school'
-import { StaffService } from '../workspace/staff'
-import { StaffAssignmentService } from '../workspace/staff-assignment'
+import { School } from '../../entities/school/school'
+import { StaffMember } from '../../entities/school/staff-member'
+import { AcademicCalendarService } from './academic-calendar'
+import { ClassGroupService } from './class-group'
+import { StaffAssignmentService } from './staff-assignment'
 
 export interface SetupServiceArgs {
   schoolRepository: SchoolRepository
@@ -29,16 +30,14 @@ export interface SetupServiceArgs {
 }
 
 export class SetupService {
-  private readonly schools: SchoolService
   private readonly schoolRepository: SchoolRepository
   private readonly academicCalendar: AcademicCalendarService
   private readonly gradeLevels: GradeLevelRepository
   private readonly classGroups: ClassGroupService
-  private readonly staff: StaffService
+  private readonly staffMembers: StaffMemberRepository
   private readonly staffAssignments: StaffAssignmentService
 
   constructor(args: SetupServiceArgs) {
-    this.schools = new SchoolService({ schoolRepository: args.schoolRepository })
     this.schoolRepository = args.schoolRepository
     this.academicCalendar = new AcademicCalendarService({
       schoolRepository: args.schoolRepository,
@@ -52,10 +51,7 @@ export class SetupService {
       classGroupRepository: args.classGroupRepository,
     })
     this.gradeLevels = args.gradeLevelRepository
-    this.staff = new StaffService({
-      schoolRepository: args.schoolRepository,
-      staffMemberRepository: args.staffMemberRepository,
-    })
+    this.staffMembers = args.staffMemberRepository
     this.staffAssignments = new StaffAssignmentService({
       staffMemberRepository: args.staffMemberRepository,
       classGroupRepository: args.classGroupRepository,
@@ -66,8 +62,22 @@ export class SetupService {
     })
   }
 
-  registerSchool(input: Parameters<SchoolService['registerSchool']>[0]) {
-    return this.schools.registerSchool(input)
+  async registerSchool({
+    id,
+    name,
+    country,
+    city,
+    createdAt,
+  }: {
+    id: string
+    name: string
+    country?: string
+    city?: string
+    createdAt?: Date
+  }): Promise<School> {
+    const school = new School({ id, name, country, city, createdAt })
+    await this.schoolRepository.save(school)
+    return school
   }
 
   createAcademicYear(input: Parameters<AcademicCalendarService['createAcademicYear']>[0]) {
@@ -105,8 +115,43 @@ export class SetupService {
     return this.classGroups.createClassGroup(input)
   }
 
-  registerStaffMember(input: Parameters<StaffService['registerStaffMember']>[0]) {
-    return this.staff.registerStaffMember(input)
+  async registerStaffMember({
+    id,
+    schoolId,
+    firstName,
+    lastName,
+    roles,
+    email,
+    isActive = true,
+    createdAt,
+  }: {
+    id: string
+    schoolId: string
+    firstName: string
+    lastName: string
+    roles: readonly StaffRole[]
+    email?: string
+    isActive?: boolean
+    createdAt?: Date
+  }): Promise<StaffMember> {
+    if (!await this.schoolRepository.findById(schoolId)) {
+      throw new Error(`Unknown school: ${schoolId}`)
+    }
+
+    const existing = await this.staffMembers.findById(id)
+    const mergedRoles = [...new Set([...(existing?.roles ?? []), ...roles])]
+    const staffMember = new StaffMember({
+      id,
+      schoolId,
+      firstName,
+      lastName,
+      roles: mergedRoles,
+      email: email ?? existing?.email,
+      isActive,
+      createdAt: existing?.createdAt ?? createdAt,
+    })
+    await this.staffMembers.save(staffMember)
+    return staffMember
   }
 
   assignStaffToClass(input: Parameters<StaffAssignmentService['assignStaffToClass']>[0]) {

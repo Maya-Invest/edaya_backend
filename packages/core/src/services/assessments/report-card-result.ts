@@ -10,7 +10,7 @@ import type { ReportCardDefinitionRepository } from '../../ports/report-card-def
 import type { ReportCardResultRepository } from '../../ports/report-card-result-repository'
 import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
 import type { StudentRepository } from '../../ports/student-repository'
-import type { AttendanceService } from '../planing/attendance'
+import type { AttendanceService } from '../scheduling/attendance'
 import type { GradeService } from './grade'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 
@@ -23,7 +23,7 @@ export interface ReportCardResultServiceArgs {
   gradeRepository: GradeRepository
   reportCardDefinitionRepository: ReportCardDefinitionRepository
   reportCardResultRepository: ReportCardResultRepository
-  attendanceService: AttendanceService
+  attendanceService: Pick<AttendanceService, 'buildAttendanceSummary'>
   gradeService: GradeService
 }
 
@@ -49,7 +49,7 @@ export class ReportCardResultService {
   private readonly grades: GradeRepository
   private readonly reportCardDefinitions: ReportCardDefinitionRepository
   private readonly reportCardResults: ReportCardResultRepository
-  private readonly attendance: AttendanceService
+  private readonly attendance: Pick<AttendanceService, 'buildAttendanceSummary'>
   private readonly gradeService: GradeService
 
   async generateReportCardResult({

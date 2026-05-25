@@ -33,15 +33,14 @@ import type { StudentFeeRepository } from './ports/student-fee-repository'
 import type { StudentRepository } from './ports/student-repository'
 import type { SubjectMatterRepository } from './ports/subject-matter-repository'
 import type { SubjectRepository } from './ports/subject-repository'
-import { AcademicsService } from './services/academics/academics'
-import { AssessmentsService } from './services/assessment/assessments'
-import { FinanceService } from './services/fees/finance'
-import { CommunicationsService } from './services/messaging/communications'
-import { AttendanceService } from './services/planing/attendance'
-import { SchoolQueryService } from './services/queries/school-query'
-import { SchedulingService } from './services/scheduling/scheduling'
-import { SetupService } from './services/setup/setup'
-import { StudentsService } from './services/students/students'
+import { AcademicsService } from './services/academics'
+import { AssessmentsService } from './services/assessments'
+import { CommunicationsService } from './services/communications'
+import { FinanceService } from './services/finance'
+import { SchoolQueryService } from './services/queries'
+import { SchedulingService } from './services/scheduling'
+import { SetupService } from './services/setup'
+import { StudentsService } from './services/students'
 
 export interface SchoolHeadlessAppArgs {
   atomicExecution: AtomicExecutionPort
@@ -85,7 +84,6 @@ export class SchoolHeadlessApp {
   readonly setup: SetupService
   readonly academics: AcademicsService
   readonly scheduling: SchedulingService
-  readonly attendance: AttendanceService
   readonly assessments: AssessmentsService
   readonly students: StudentsService
   readonly finance: FinanceService
@@ -106,13 +104,6 @@ export class SchoolHeadlessApp {
       sessionRepository: args.sessionRepository,
     })
     this.scheduling = new SchedulingService(args)
-    const attendance = new AttendanceService({
-      studentRepository: args.studentRepository,
-      StudentClassEnrollmentRepository: args.StudentClassEnrollmentRepository,
-      sessionRepository: args.sessionRepository,
-      attendanceRepository: args.attendanceRepository,
-    })
-    this.attendance = attendance
     this.assessments = new AssessmentsService({
       schoolRepository: args.schoolRepository,
       academicYearRepository: args.academicYearRepository,
@@ -129,7 +120,7 @@ export class SchoolHeadlessApp {
       reportCardDefinitionRepository: args.reportCardDefinitionRepository,
       reportCardDefinitionSectionRepository: args.reportCardDefinitionSectionRepository,
       reportCardResultRepository: args.reportCardResultRepository,
-      attendanceService: attendance,
+      attendanceService: this.scheduling,
     })
     this.students = new StudentsService({
       schoolRepository: args.schoolRepository,
