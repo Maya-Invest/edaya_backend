@@ -4,24 +4,23 @@ import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { GuardianStudentLinkRepository } from '../../ports/guardian-student-link-repository'
-import type { ReportCardResultRepository } from '../../ports/report-card-result-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentFeeRepository } from '../../ports/student-fee-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  StudentRepositories,
+  FinanceRepositories,
+  AssessmentRepositories,
+} from '../../ports/school-repositories'
 
 export interface StudentDirectoryServiceArgs {
-  schoolRepository: SchoolRepository
-  academicYearRepository: AcademicYearRepository
-  classGroupRepository: ClassGroupRepository
-  studentRepository: StudentRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  guardianStudentLinkRepository: GuardianStudentLinkRepository
-  reportCardResultRepository: ReportCardResultRepository
-  studentFeeRepository: StudentFeeRepository
+  schoolRepository: SetupRepositories['schools']
+  academicYearRepository: SetupRepositories['academicYears']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  studentRepository: StudentRepositories['students']
+  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
+  guardianStudentLinkRepository: StudentRepositories['guardianLinks']
+  reportCardResultRepository: AssessmentRepositories['results']
+  studentFeeRepository: FinanceRepositories['studentFees']
 }
 
 export interface StudentDirectoryRow {
@@ -51,14 +50,14 @@ export class StudentDirectoryService {
     this.fees = args.studentFeeRepository
   }
 
-  private readonly schools: SchoolRepository
-  private readonly academicYears: AcademicYearRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly students: StudentRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly guardianStudentLinks: GuardianStudentLinkRepository
-  private readonly reportCardResults: ReportCardResultRepository
-  private readonly fees: StudentFeeRepository
+  private readonly schools: SetupRepositories['schools']
+  private readonly academicYears: SetupRepositories['academicYears']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly students: StudentRepositories['students']
+  private readonly enrollments: StudentRepositories['enrollments']
+  private readonly guardianStudentLinks: StudentRepositories['guardianLinks']
+  private readonly reportCardResults: AssessmentRepositories['results']
+  private readonly fees: FinanceRepositories['studentFees']
 
   async listStudents({
     schoolId,

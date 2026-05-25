@@ -4,14 +4,7 @@ import type {
   MessageDeliveryChannel,
   MessageDeliveryStatus,
 } from '../../entities/messaging/message-delivery'
-import type { AnnouncementRepository } from '../../ports/announcement-repository'
-import type { AnnouncementTargetRepository } from '../../ports/announcement-target-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { GradeLevelRepository } from '../../ports/grade-level-repository'
-import type { GuardianRepository } from '../../ports/guardian-repository'
-import type { MessageDeliveryRepository } from '../../ports/message-delivery-repository'
-import type { StaffMemberRepository } from '../../ports/staff-member-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
 import { AnnouncementTarget, AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
@@ -19,38 +12,31 @@ import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/me
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
 export interface CommunicationsServiceArgs extends AuthorizedServiceArgs {
-  classGroupRepository: ClassGroupRepository
-  gradeLevelRepository: GradeLevelRepository
-  staffMemberRepository: StaffMemberRepository
-  guardianRepository: GuardianRepository
-  studentRepository: StudentRepository
-  announcementRepository: AnnouncementRepository
-  announcementTargetRepository: AnnouncementTargetRepository
-  messageDeliveryRepository: MessageDeliveryRepository
+  repositories: SchoolRepositories
 }
 
 export class CommunicationsService {
   constructor(args: CommunicationsServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.classGroups = args.classGroupRepository
-    this.gradeLevels = args.gradeLevelRepository
-    this.staffMembers = args.staffMemberRepository
-    this.guardians = args.guardianRepository
-    this.students = args.studentRepository
-    this.announcements = args.announcementRepository
-    this.targets = args.announcementTargetRepository
-    this.deliveries = args.messageDeliveryRepository
+    this.classGroups = args.repositories.academics.classGroups
+    this.gradeLevels = args.repositories.setup.gradeLevels
+    this.staffMembers = args.repositories.setup.staffMembers
+    this.guardians = args.repositories.students.guardians
+    this.students = args.repositories.students.students
+    this.announcements = args.repositories.communications.announcements
+    this.targets = args.repositories.communications.announcementTargets
+    this.deliveries = args.repositories.communications.messageDeliveries
   }
 
-  private readonly classGroups: ClassGroupRepository
-  private readonly gradeLevels: GradeLevelRepository
-  private readonly staffMembers: StaffMemberRepository
-  private readonly guardians: GuardianRepository
-  private readonly students: StudentRepository
-  private readonly announcements: AnnouncementRepository
-  private readonly targets: AnnouncementTargetRepository
-  private readonly deliveries: MessageDeliveryRepository
+  private readonly classGroups: SchoolRepositories['academics']['classGroups']
+  private readonly gradeLevels: SchoolRepositories['setup']['gradeLevels']
+  private readonly staffMembers: SchoolRepositories['setup']['staffMembers']
+  private readonly guardians: SchoolRepositories['students']['guardians']
+  private readonly students: SchoolRepositories['students']['students']
+  private readonly announcements: SchoolRepositories['communications']['announcements']
+  private readonly targets: SchoolRepositories['communications']['announcementTargets']
+  private readonly deliveries: SchoolRepositories['communications']['messageDeliveries']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 

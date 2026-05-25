@@ -1,8 +1,4 @@
-import type { GuardianRepository } from '../../ports/guardian-repository'
-import type { GuardianStudentLinkRepository } from '../../ports/guardian-student-link-repository'
-import type { StaffAssignmentRepository } from '../../ports/staff-assignment-repository'
-import type { StaffMemberRepository } from '../../ports/staff-member-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type { SetupRepositories, StudentRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from './actor-metadata'
 import { StaffRole } from '../../entities/school/staff-member'
 import { StudentStatus } from '../../entities/students/student'
@@ -70,11 +66,11 @@ export interface AuthorizedServiceArgs {
 }
 
 export interface RepositoryAuthorizationPolicyArgs {
-  staffAssignmentRepository: StaffAssignmentRepository
-  staffMemberRepository: StaffMemberRepository
-  guardianRepository: GuardianRepository
-  guardianStudentLinkRepository: GuardianStudentLinkRepository
-  studentRepository: StudentRepository
+  staffAssignmentRepository: SetupRepositories['staffAssignments']
+  staffMemberRepository: SetupRepositories['staffMembers']
+  guardianRepository: StudentRepositories['guardians']
+  guardianStudentLinkRepository: StudentRepositories['guardianLinks']
+  studentRepository: StudentRepositories['students']
 }
 
 const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
@@ -119,11 +115,11 @@ const accountantActions = new Set<AuthorizationAction>([
  * is resolved by each service before this policy is invoked.
  */
 export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
-  private readonly staffAssignments: StaffAssignmentRepository
-  private readonly staffMembers: StaffMemberRepository
-  private readonly guardians: GuardianRepository
-  private readonly guardianStudentLinks: GuardianStudentLinkRepository
-  private readonly students: StudentRepository
+  private readonly staffAssignments: SetupRepositories['staffAssignments']
+  private readonly staffMembers: SetupRepositories['staffMembers']
+  private readonly guardians: StudentRepositories['guardians']
+  private readonly guardianStudentLinks: StudentRepositories['guardianLinks']
+  private readonly students: StudentRepositories['students']
 
   constructor(args: RepositoryAuthorizationPolicyArgs) {
     this.staffAssignments = args.staffAssignmentRepository

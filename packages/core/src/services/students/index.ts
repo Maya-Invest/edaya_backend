@@ -1,12 +1,7 @@
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { GuardianContactMethod } from '../../entities/students/guardian-contact-method'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { GuardianRepository } from '../../ports/guardian-repository'
-import type { GuardianStudentLinkRepository } from '../../ports/guardian-student-link-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import { Guardian } from '../../entities/students/guardian'
 import { GuardianStudentLink } from '../../entities/students/guardian-student-link'
@@ -15,32 +10,27 @@ import { StudentClassEnrollment } from '../../entities/students/student-class-en
 import { denyResourceAccess } from '../authorization'
 
 export interface StudentsServiceArgs extends AuthorizedServiceArgs {
-  schoolRepository: SchoolRepository
-  classGroupRepository: ClassGroupRepository
-  studentRepository: StudentRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  guardianRepository: GuardianRepository
-  guardianStudentLinkRepository: GuardianStudentLinkRepository
+  repositories: SchoolRepositories
 }
 
 export class StudentsService {
   constructor(args: StudentsServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schools = args.schoolRepository
-    this.classGroups = args.classGroupRepository
-    this.students = args.studentRepository
-    this.enrollments = args.StudentClassEnrollmentRepository
-    this.guardians = args.guardianRepository
-    this.guardianStudentLinks = args.guardianStudentLinkRepository
+    this.schools = args.repositories.setup.schools
+    this.classGroups = args.repositories.academics.classGroups
+    this.students = args.repositories.students.students
+    this.enrollments = args.repositories.students.enrollments
+    this.guardians = args.repositories.students.guardians
+    this.guardianStudentLinks = args.repositories.students.guardianLinks
   }
 
-  private readonly schools: SchoolRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly students: StudentRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly guardians: GuardianRepository
-  private readonly guardianStudentLinks: GuardianStudentLinkRepository
+  private readonly schools: SchoolRepositories['setup']['schools']
+  private readonly classGroups: SchoolRepositories['academics']['classGroups']
+  private readonly students: SchoolRepositories['students']['students']
+  private readonly enrollments: SchoolRepositories['students']['enrollments']
+  private readonly guardians: SchoolRepositories['students']['guardians']
+  private readonly guardianStudentLinks: SchoolRepositories['students']['guardianLinks']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 

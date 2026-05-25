@@ -1,24 +1,25 @@
 import type { Announcement } from '../../entities/messaging/announcement'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { School } from '../../entities/school/school'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { AnnouncementRepository } from '../../ports/announcement-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ReportCardResultRepository } from '../../ports/report-card-result-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { StudentFeeRepository } from '../../ports/student-fee-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  StudentRepositories,
+  FinanceRepositories,
+  AssessmentRepositories,
+  CommunicationRepositories,
+} from '../../ports/school-repositories'
 import { ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { FeeStatus } from '../../entities/finances/student-fee'
 
 export interface SchoolOverviewServiceArgs {
-  schoolRepository: SchoolRepository
-  academicYearRepository: AcademicYearRepository
-  classGroupRepository: ClassGroupRepository
-  studentRepository: StudentRepository
-  announcementRepository: AnnouncementRepository
-  studentFeeRepository: StudentFeeRepository
-  reportCardResultRepository: ReportCardResultRepository
+  schoolRepository: SetupRepositories['schools']
+  academicYearRepository: SetupRepositories['academicYears']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  studentRepository: StudentRepositories['students']
+  announcementRepository: CommunicationRepositories['announcements']
+  studentFeeRepository: FinanceRepositories['studentFees']
+  reportCardResultRepository: AssessmentRepositories['results']
 }
 
 export interface SchoolOverview {
@@ -42,13 +43,13 @@ export class SchoolOverviewService {
     this.reportCardResults = args.reportCardResultRepository
   }
 
-  private readonly schools: SchoolRepository
-  private readonly academicYears: AcademicYearRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly students: StudentRepository
-  private readonly announcements: AnnouncementRepository
-  private readonly fees: StudentFeeRepository
-  private readonly reportCardResults: ReportCardResultRepository
+  private readonly schools: SetupRepositories['schools']
+  private readonly academicYears: SetupRepositories['academicYears']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly students: StudentRepositories['students']
+  private readonly announcements: CommunicationRepositories['announcements']
+  private readonly fees: FinanceRepositories['studentFees']
+  private readonly reportCardResults: AssessmentRepositories['results']
 
   async getSchoolOverview({ schoolId }: { schoolId: string }): Promise<SchoolOverview> {
     const school = await this.requireSchool(schoolId)

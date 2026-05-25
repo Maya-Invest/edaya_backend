@@ -1,20 +1,4 @@
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { AnnouncementRepository } from '../../ports/announcement-repository'
-import type { AttendanceRepository } from '../../ports/attendance-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { GuardianRepository } from '../../ports/guardian-repository'
-import type { GuardianStudentLinkRepository } from '../../ports/guardian-student-link-repository'
-import type { ReportCardResultRepository } from '../../ports/report-card-result-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { StaffAssignmentRepository } from '../../ports/staff-assignment-repository'
-import type { StaffMemberRepository } from '../../ports/staff-member-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentFeeRepository } from '../../ports/student-fee-repository'
-import type { StudentRepository } from '../../ports/student-repository'
-import type { SubjectRepository } from '../../ports/subject-repository'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizationAction, AuthorizedServiceArgs } from '../authorization'
 import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../authorization'
 import { AttendanceReviewService } from './attendance-review'
@@ -24,23 +8,7 @@ import { StudentDirectoryService } from './student-directory'
 import { WorkspaceService } from './workspace'
 
 export interface SchoolQueryServiceArgs extends AuthorizedServiceArgs {
-  schoolRepository: SchoolRepository
-  academicYearRepository: AcademicYearRepository
-  academicPeriodRepository: AcademicPeriodRepository
-  classGroupRepository: ClassGroupRepository
-  studentRepository: StudentRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  guardianRepository: GuardianRepository
-  guardianStudentLinkRepository: GuardianStudentLinkRepository
-  staffMemberRepository: StaffMemberRepository
-  staffAssignmentRepository: StaffAssignmentRepository
-  subjectRepository: SubjectRepository
-  classSubjectRepository: ClassSubjectRepository
-  sessionRepository: SessionRepository
-  attendanceRepository: AttendanceRepository
-  announcementRepository: AnnouncementRepository
-  studentFeeRepository: StudentFeeRepository
-  reportCardResultRepository: ReportCardResultRepository
+  repositories: SchoolRepositories
 }
 
 export class SchoolQueryService {
@@ -49,29 +17,70 @@ export class SchoolQueryService {
   private readonly studentDirectory: StudentDirectoryService
   private readonly classGroupRead: ClassGroupReadService
   private readonly attendanceReview: AttendanceReviewService
-  private readonly guardianRepository: GuardianRepository
-  private readonly guardianStudentLinks: GuardianStudentLinkRepository
-  private readonly studentRepository: StudentRepository
+  private readonly guardianRepository: SchoolRepositories['students']['guardians']
+  private readonly guardianStudentLinks: SchoolRepositories['students']['guardianLinks']
+  private readonly studentRepository: SchoolRepositories['students']['students']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
-  private readonly classGroupRepository: ClassGroupRepository
-  private readonly sessionRepository: SessionRepository
-  private readonly academicYearRepository: AcademicYearRepository
+  private readonly classGroupRepository: SchoolRepositories['academics']['classGroups']
+  private readonly sessionRepository: SchoolRepositories['scheduling']['sessions']
+  private readonly academicYearRepository: SchoolRepositories['setup']['academicYears']
 
   constructor(args: SchoolQueryServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.workspace = new WorkspaceService(args)
-    this.schoolOverview = new SchoolOverviewService(args)
-    this.studentDirectory = new StudentDirectoryService(args)
-    this.classGroupRead = new ClassGroupReadService(args)
-    this.attendanceReview = new AttendanceReviewService(args)
-    this.guardianRepository = args.guardianRepository
-    this.guardianStudentLinks = args.guardianStudentLinkRepository
-    this.studentRepository = args.studentRepository
-    this.classGroupRepository = args.classGroupRepository
-    this.sessionRepository = args.sessionRepository
-    this.academicYearRepository = args.academicYearRepository
+    this.workspace = new WorkspaceService({
+      schoolRepository: args.repositories.setup.schools,
+      academicYearRepository: args.repositories.setup.academicYears,
+      academicPeriodRepository: args.repositories.setup.academicPeriods,
+      classGroupRepository: args.repositories.academics.classGroups,
+      staffMemberRepository: args.repositories.setup.staffMembers,
+      classSubjectRepository: args.repositories.academics.classSubjects,
+      staffAssignmentRepository: args.repositories.setup.staffAssignments,
+    })
+    this.schoolOverview = new SchoolOverviewService({
+      schoolRepository: args.repositories.setup.schools,
+      academicYearRepository: args.repositories.setup.academicYears,
+      classGroupRepository: args.repositories.academics.classGroups,
+      studentRepository: args.repositories.students.students,
+      announcementRepository: args.repositories.communications.announcements,
+      studentFeeRepository: args.repositories.finance.studentFees,
+      reportCardResultRepository: args.repositories.assessments.results,
+    })
+    this.studentDirectory = new StudentDirectoryService({
+      schoolRepository: args.repositories.setup.schools,
+      academicYearRepository: args.repositories.setup.academicYears,
+      classGroupRepository: args.repositories.academics.classGroups,
+      studentRepository: args.repositories.students.students,
+      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
+      guardianStudentLinkRepository: args.repositories.students.guardianLinks,
+      reportCardResultRepository: args.repositories.assessments.results,
+      studentFeeRepository: args.repositories.finance.studentFees,
+    })
+    this.classGroupRead = new ClassGroupReadService({
+      academicYearRepository: args.repositories.setup.academicYears,
+      classGroupRepository: args.repositories.academics.classGroups,
+      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
+      classSubjectRepository: args.repositories.academics.classSubjects,
+      staffAssignmentRepository: args.repositories.setup.staffAssignments,
+      staffMemberRepository: args.repositories.setup.staffMembers,
+      subjectRepository: args.repositories.academics.subjects,
+      sessionRepository: args.repositories.scheduling.sessions,
+    })
+    this.attendanceReview = new AttendanceReviewService({
+      academicYearRepository: args.repositories.setup.academicYears,
+      classGroupRepository: args.repositories.academics.classGroups,
+      sessionRepository: args.repositories.scheduling.sessions,
+      attendanceRepository: args.repositories.scheduling.attendance,
+      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
+      studentRepository: args.repositories.students.students,
+    })
+    this.guardianRepository = args.repositories.students.guardians
+    this.guardianStudentLinks = args.repositories.students.guardianLinks
+    this.studentRepository = args.repositories.students.students
+    this.classGroupRepository = args.repositories.academics.classGroups
+    this.sessionRepository = args.repositories.scheduling.sessions
+    this.academicYearRepository = args.repositories.setup.academicYears
   }
 
   async getWorkspaceContext(input: Parameters<WorkspaceService['getWorkspaceContext']>[0]) {

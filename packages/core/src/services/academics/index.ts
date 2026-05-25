@@ -1,13 +1,6 @@
 import type { SubjectMatterArgs } from '../../entities/academics/subject-matter'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectMatterRepository } from '../../ports/class-subject-matter-repository'
-import type { ClassSubjectProgressRepository } from '../../ports/class-subject-progress-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { SubjectMatterRepository } from '../../ports/subject-matter-repository'
-import type { SubjectRepository } from '../../ports/subject-repository'
 import type { AuthorizedServiceArgs } from '../authorization'
 import { ClassSubject } from '../../entities/academics/class-subject'
 import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/academics/class-subject-matter'
@@ -19,14 +12,7 @@ import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
 export interface AcademicsServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
-  schoolRepository: SchoolRepository
-  classGroupRepository: ClassGroupRepository
-  subjectRepository: SubjectRepository
-  subjectMatterRepository: SubjectMatterRepository
-  classSubjectRepository: ClassSubjectRepository
-  classSubjectMatterRepository: ClassSubjectMatterRepository
-  classSubjectProgressRepository: ClassSubjectProgressRepository
-  sessionRepository: SessionRepository
+  repositories: SchoolRepositories
 }
 
 export class AcademicsService {
@@ -34,25 +20,25 @@ export class AcademicsService {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
-    this.schools = args.schoolRepository
-    this.classGroups = args.classGroupRepository
-    this.subjects = args.subjectRepository
-    this.subjectMatters = args.subjectMatterRepository
-    this.classSubjects = args.classSubjectRepository
-    this.classSubjectMatters = args.classSubjectMatterRepository
-    this.progress = args.classSubjectProgressRepository
-    this.sessions = args.sessionRepository
+    this.schools = args.repositories.setup.schools
+    this.classGroups = args.repositories.academics.classGroups
+    this.subjects = args.repositories.academics.subjects
+    this.subjectMatters = args.repositories.academics.subjectMatters
+    this.classSubjects = args.repositories.academics.classSubjects
+    this.classSubjectMatters = args.repositories.academics.classSubjectMatters
+    this.progress = args.repositories.academics.classSubjectProgress
+    this.sessions = args.repositories.scheduling.sessions
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly schools: SchoolRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly subjects: SubjectRepository
-  private readonly subjectMatters: SubjectMatterRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly classSubjectMatters: ClassSubjectMatterRepository
-  private readonly progress: ClassSubjectProgressRepository
-  private readonly sessions: SessionRepository
+  private readonly schools: SchoolRepositories['setup']['schools']
+  private readonly classGroups: SchoolRepositories['academics']['classGroups']
+  private readonly subjects: SchoolRepositories['academics']['subjects']
+  private readonly subjectMatters: SchoolRepositories['academics']['subjectMatters']
+  private readonly classSubjects: SchoolRepositories['academics']['classSubjects']
+  private readonly classSubjectMatters: SchoolRepositories['academics']['classSubjectMatters']
+  private readonly progress: SchoolRepositories['academics']['classSubjectProgress']
+  private readonly sessions: SchoolRepositories['scheduling']['sessions']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 

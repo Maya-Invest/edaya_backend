@@ -4,25 +4,23 @@ import type { Session } from '../../entities/scheduling/session'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { StaffMember } from '../../entities/school/staff-member'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { StaffAssignmentRepository } from '../../ports/staff-assignment-repository'
-import type { StaffMemberRepository } from '../../ports/staff-member-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { SubjectRepository } from '../../ports/subject-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  StudentRepositories,
+  SchedulingRepositories,
+} from '../../ports/school-repositories'
 import { StaffRole } from '../../entities/school/staff-member'
 
 export interface ClassGroupReadServiceArgs {
-  academicYearRepository: AcademicYearRepository
-  classGroupRepository: ClassGroupRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  classSubjectRepository: ClassSubjectRepository
-  staffAssignmentRepository: StaffAssignmentRepository
-  staffMemberRepository: StaffMemberRepository
-  subjectRepository: SubjectRepository
-  sessionRepository: SessionRepository
+  academicYearRepository: SetupRepositories['academicYears']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
+  classSubjectRepository: AcademicsRepositories['classSubjects']
+  staffAssignmentRepository: SetupRepositories['staffAssignments']
+  staffMemberRepository: SetupRepositories['staffMembers']
+  subjectRepository: AcademicsRepositories['subjects']
+  sessionRepository: SchedulingRepositories['sessions']
 }
 
 export interface ClassGroupCourseAssignment {
@@ -63,14 +61,14 @@ export class ClassGroupReadService {
     this.sessions = args.sessionRepository
   }
 
-  private readonly academicYears: AcademicYearRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly staffAssignments: StaffAssignmentRepository
-  private readonly staffMembers: StaffMemberRepository
-  private readonly subjects: SubjectRepository
-  private readonly sessions: SessionRepository
+  private readonly academicYears: SetupRepositories['academicYears']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly enrollments: StudentRepositories['enrollments']
+  private readonly classSubjects: AcademicsRepositories['classSubjects']
+  private readonly staffAssignments: SetupRepositories['staffAssignments']
+  private readonly staffMembers: SetupRepositories['staffMembers']
+  private readonly subjects: AcademicsRepositories['subjects']
+  private readonly sessions: SchedulingRepositories['sessions']
 
   async listClassGroups({
     schoolId,

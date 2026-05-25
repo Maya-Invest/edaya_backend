@@ -3,21 +3,20 @@ import type { GroupedSession } from '../../entities/scheduling/grouped-session'
 import type { Session } from '../../entities/scheduling/session'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { StaffMember, StaffRole } from '../../entities/school/staff-member'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { GroupedSessionRepository } from '../../ports/grouped-session-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { StaffAssignmentRepository } from '../../ports/staff-assignment-repository'
-import type { StaffMemberRepository } from '../../ports/staff-member-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  SchedulingRepositories,
+} from '../../ports/school-repositories'
 import { StaffAssignment } from '../../entities/school/staff-assignment'
 
 export interface StaffAssignmentServiceArgs {
-  staffMemberRepository: StaffMemberRepository
-  classGroupRepository: ClassGroupRepository
-  classSubjectRepository: ClassSubjectRepository
-  groupedSessionRepository: GroupedSessionRepository
-  sessionRepository: SessionRepository
-  staffAssignmentRepository: StaffAssignmentRepository
+  staffMemberRepository: SetupRepositories['staffMembers']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  classSubjectRepository: AcademicsRepositories['classSubjects']
+  groupedSessionRepository: SchedulingRepositories['groupedSessions']
+  sessionRepository: SchedulingRepositories['sessions']
+  staffAssignmentRepository: SetupRepositories['staffAssignments']
 }
 
 export class StaffAssignmentService {
@@ -30,12 +29,12 @@ export class StaffAssignmentService {
     this.staffAssignments = args.staffAssignmentRepository
   }
 
-  private readonly staffMembers: StaffMemberRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly groupedSessions: GroupedSessionRepository
-  private readonly sessions: SessionRepository
-  private readonly staffAssignments: StaffAssignmentRepository
+  private readonly staffMembers: SetupRepositories['staffMembers']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly classSubjects: AcademicsRepositories['classSubjects']
+  private readonly groupedSessions: SchedulingRepositories['groupedSessions']
+  private readonly sessions: SchedulingRepositories['sessions']
+  private readonly staffAssignments: SetupRepositories['staffAssignments']
 
   async assignStaffToClass({
     id,

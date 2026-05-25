@@ -3,23 +3,17 @@ import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { StaffMember } from '../../entities/school/staff-member'
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { StaffAssignmentRepository } from '../../ports/staff-assignment-repository'
-import type { StaffMemberRepository } from '../../ports/staff-member-repository'
+import type { SetupRepositories, AcademicsRepositories } from '../../ports/school-repositories'
 import { StaffRole } from '../../entities/school/staff-member'
 
 export interface WorkspaceServiceArgs {
-  schoolRepository: SchoolRepository
-  academicYearRepository: AcademicYearRepository
-  academicPeriodRepository: AcademicPeriodRepository
-  classGroupRepository: ClassGroupRepository
-  staffMemberRepository: StaffMemberRepository
-  classSubjectRepository: ClassSubjectRepository
-  staffAssignmentRepository: StaffAssignmentRepository
+  schoolRepository: SetupRepositories['schools']
+  academicYearRepository: SetupRepositories['academicYears']
+  academicPeriodRepository: SetupRepositories['academicPeriods']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  staffMemberRepository: SetupRepositories['staffMembers']
+  classSubjectRepository: AcademicsRepositories['classSubjects']
+  staffAssignmentRepository: SetupRepositories['staffAssignments']
 }
 
 export interface TeacherCourseLoad {
@@ -48,13 +42,13 @@ export class WorkspaceService {
     this.staffAssignments = args.staffAssignmentRepository
   }
 
-  private readonly schools: SchoolRepository
-  private readonly academicYears: AcademicYearRepository
-  private readonly academicPeriods: AcademicPeriodRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly staffMembers: StaffMemberRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly staffAssignments: StaffAssignmentRepository
+  private readonly schools: SetupRepositories['schools']
+  private readonly academicYears: SetupRepositories['academicYears']
+  private readonly academicPeriods: SetupRepositories['academicPeriods']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly staffMembers: SetupRepositories['staffMembers']
+  private readonly classSubjects: AcademicsRepositories['classSubjects']
+  private readonly staffAssignments: SetupRepositories['staffAssignments']
 
   async getWorkspaceContext({
     schoolId,

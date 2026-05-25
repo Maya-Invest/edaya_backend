@@ -1,11 +1,8 @@
 import type { FeeArgs } from '../../entities/finances/fee'
 import type { PaymentMethod } from '../../entities/finances/payment'
 import type { StudentFeeInstallment } from '../../entities/finances/student-fee'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type { FeeRepository } from '../../ports/fee-repository'
-import type { PaymentRepository } from '../../ports/payment-repository'
-import type { StudentFeeRepository } from '../../ports/student-fee-repository'
-import type { StudentRepository } from '../../ports/student-repository'
 import type { AuthorizedServiceArgs } from '../authorization'
 import { Fee } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
@@ -15,10 +12,7 @@ import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
 export interface FinanceServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
-  studentRepository: StudentRepository
-  feeRepository: FeeRepository
-  studentFeeRepository: StudentFeeRepository
-  paymentRepository: PaymentRepository
+  repositories: SchoolRepositories
 }
 
 export class FinanceService {
@@ -26,17 +20,17 @@ export class FinanceService {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
-    this.students = args.studentRepository
-    this.feeDefinitions = args.feeRepository
-    this.studentFees = args.studentFeeRepository
-    this.payments = args.paymentRepository
+    this.students = args.repositories.students.students
+    this.feeDefinitions = args.repositories.finance.fees
+    this.studentFees = args.repositories.finance.studentFees
+    this.payments = args.repositories.finance.payments
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: StudentRepository
-  private readonly feeDefinitions: FeeRepository
-  private readonly studentFees: StudentFeeRepository
-  private readonly payments: PaymentRepository
+  private readonly students: SchoolRepositories['students']['students']
+  private readonly feeDefinitions: SchoolRepositories['finance']['fees']
+  private readonly studentFees: SchoolRepositories['finance']['studentFees']
+  private readonly payments: SchoolRepositories['finance']['payments']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 

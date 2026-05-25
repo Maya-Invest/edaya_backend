@@ -3,28 +3,26 @@ import type { DeadlineComplianceStatus } from '../../entities/assessments/grade'
 import type { ReportCardDefinitionSection } from '../../entities/assessments/report-card-definition-section'
 import type { ReportCardResultSection } from '../../entities/assessments/report-card-result-section'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AssessmentRepository } from '../../ports/assessment-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { GradeRepository } from '../../ports/grade-repository'
-import type { ReportCardDefinitionSectionRepository } from '../../ports/report-card-definition-section-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  StudentRepositories,
+  AssessmentRepositories,
+} from '../../ports/school-repositories'
 import { Grade } from '../../entities/assessments/grade'
 import { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
 import { ReportCardResultSection as SectionResult } from '../../entities/assessments/report-card-result-section'
 import { roundTo2 } from '../../utils/validation'
 
 export interface GradeServiceArgs {
-  studentRepository: StudentRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  assessmentRepository: AssessmentRepository
-  classSubjectRepository: ClassSubjectRepository
-  academicPeriodRepository: AcademicPeriodRepository
-  gradeRepository: GradeRepository
-  classGroupRepository: ClassGroupRepository
-  reportCardDefinitionSectionRepository: ReportCardDefinitionSectionRepository
+  studentRepository: StudentRepositories['students']
+  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
+  assessmentRepository: AssessmentRepositories['assessments']
+  classSubjectRepository: AcademicsRepositories['classSubjects']
+  academicPeriodRepository: SetupRepositories['academicPeriods']
+  gradeRepository: AssessmentRepositories['grades']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  reportCardDefinitionSectionRepository: AssessmentRepositories['sections']
 }
 
 export class GradeService {
@@ -39,14 +37,14 @@ export class GradeService {
     this.sections = args.reportCardDefinitionSectionRepository
   }
 
-  private readonly students: StudentRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly assessments: AssessmentRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly academicPeriods: AcademicPeriodRepository
-  private readonly grades: GradeRepository
-  private readonly sections: ReportCardDefinitionSectionRepository
+  private readonly students: StudentRepositories['students']
+  private readonly enrollments: StudentRepositories['enrollments']
+  private readonly assessments: AssessmentRepositories['assessments']
+  private readonly classSubjects: AcademicsRepositories['classSubjects']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly academicPeriods: SetupRepositories['academicPeriods']
+  private readonly grades: AssessmentRepositories['grades']
+  private readonly sections: AssessmentRepositories['sections']
 
   /**
    * Records a grade for a student against an assessment's class subject.

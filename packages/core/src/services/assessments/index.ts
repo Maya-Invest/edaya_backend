@@ -1,22 +1,8 @@
 import type { GradeScaleArgs } from '../../entities/assessments/grade-scale'
 import type { ReportCardDefinitionArgs } from '../../entities/assessments/report-card-definition'
 import type { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { AssessmentRepository } from '../../ports/assessment-repository'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { GradeLevelRepository } from '../../ports/grade-level-repository'
-import type { GradeRepository } from '../../ports/grade-repository'
-import type { GradeScaleRepository } from '../../ports/grade-scale-repository'
-import type { ReportCardDefinitionRepository } from '../../ports/report-card-definition-repository'
-import type { ReportCardDefinitionSectionRepository } from '../../ports/report-card-definition-section-repository'
-import type { ReportCardResultRepository } from '../../ports/report-card-result-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentRepository } from '../../ports/student-repository'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { AttendanceService } from '../scheduling/attendance'
 import { GradeScale } from '../../entities/assessments/grade-scale'
@@ -29,62 +15,72 @@ import { ReportCardResultService } from './report-card-result'
 
 export interface AssessmentsServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
-  schoolRepository: SchoolRepository
-  academicYearRepository: AcademicYearRepository
-  gradeLevelRepository: GradeLevelRepository
-  studentRepository: StudentRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  classGroupRepository: ClassGroupRepository
-  classSubjectRepository: ClassSubjectRepository
-  academicPeriodRepository: AcademicPeriodRepository
-  sessionRepository: SessionRepository
-  assessmentRepository: AssessmentRepository
-  gradeRepository: GradeRepository
-  gradeScaleRepository: GradeScaleRepository
-  reportCardDefinitionRepository: ReportCardDefinitionRepository
-  reportCardDefinitionSectionRepository: ReportCardDefinitionSectionRepository
-  reportCardResultRepository: ReportCardResultRepository
+  repositories: SchoolRepositories
   attendanceService: Pick<AttendanceService, 'buildAttendanceSummary'>
 }
 
 export class AssessmentsService {
-  private readonly schools: SchoolRepository
-  private readonly academicYears: AcademicYearRepository
-  private readonly gradeLevels: GradeLevelRepository
-  private readonly gradeScales: GradeScaleRepository
-  private readonly reportCardDefinitions: ReportCardDefinitionRepository
-  private readonly reportCardDefinitionSections: ReportCardDefinitionSectionRepository
+  private readonly schools: SchoolRepositories['setup']['schools']
+  private readonly academicYears: SchoolRepositories['setup']['academicYears']
+  private readonly gradeLevels: SchoolRepositories['setup']['gradeLevels']
+  private readonly gradeScales: SchoolRepositories['assessments']['gradeScales']
+  private readonly reportCardDefinitions: SchoolRepositories['assessments']['definitions']
+  private readonly reportCardDefinitionSections: SchoolRepositories['assessments']['sections']
   private readonly assessments: AssessmentService
   private readonly grades: GradeService
   private readonly reportCardResults: ReportCardResultService
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
-  private readonly students: StudentRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly assessmentRepository: AssessmentRepository
-  private readonly academicPeriods: AcademicPeriodRepository
-  private readonly sessions: SessionRepository
+  private readonly students: SchoolRepositories['students']['students']
+  private readonly classGroups: SchoolRepositories['academics']['classGroups']
+  private readonly classSubjects: SchoolRepositories['academics']['classSubjects']
+  private readonly assessmentRepository: SchoolRepositories['assessments']['assessments']
+  private readonly academicPeriods: SchoolRepositories['setup']['academicPeriods']
+  private readonly sessions: SchoolRepositories['scheduling']['sessions']
 
   constructor(args: AssessmentsServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schools = args.schoolRepository
-    this.academicYears = args.academicYearRepository
-    this.gradeLevels = args.gradeLevelRepository
-    this.gradeScales = args.gradeScaleRepository
-    this.reportCardDefinitions = args.reportCardDefinitionRepository
-    this.reportCardDefinitionSections = args.reportCardDefinitionSectionRepository
-    this.students = args.studentRepository
-    this.classGroups = args.classGroupRepository
-    this.classSubjects = args.classSubjectRepository
-    this.assessmentRepository = args.assessmentRepository
-    this.academicPeriods = args.academicPeriodRepository
-    this.sessions = args.sessionRepository
-    this.assessments = new AssessmentService(args)
-    this.grades = new GradeService(args)
+    this.schools = args.repositories.setup.schools
+    this.academicYears = args.repositories.setup.academicYears
+    this.gradeLevels = args.repositories.setup.gradeLevels
+    this.gradeScales = args.repositories.assessments.gradeScales
+    this.reportCardDefinitions = args.repositories.assessments.definitions
+    this.reportCardDefinitionSections = args.repositories.assessments.sections
+    this.students = args.repositories.students.students
+    this.classGroups = args.repositories.academics.classGroups
+    this.classSubjects = args.repositories.academics.classSubjects
+    this.assessmentRepository = args.repositories.assessments.assessments
+    this.academicPeriods = args.repositories.setup.academicPeriods
+    this.sessions = args.repositories.scheduling.sessions
+    this.assessments = new AssessmentService({
+      classGroupRepository: args.repositories.academics.classGroups,
+      classSubjectRepository: args.repositories.academics.classSubjects,
+      academicPeriodRepository: args.repositories.setup.academicPeriods,
+      sessionRepository: args.repositories.scheduling.sessions,
+      assessmentRepository: args.repositories.assessments.assessments,
+    })
+    this.grades = new GradeService({
+      studentRepository: args.repositories.students.students,
+      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
+      assessmentRepository: args.repositories.assessments.assessments,
+      classSubjectRepository: args.repositories.academics.classSubjects,
+      academicPeriodRepository: args.repositories.setup.academicPeriods,
+      gradeRepository: args.repositories.assessments.grades,
+      classGroupRepository: args.repositories.academics.classGroups,
+      reportCardDefinitionSectionRepository: args.repositories.assessments.sections,
+    })
     this.reportCardResults = new ReportCardResultService({
-      ...args,
+      atomicExecution: args.atomicExecution,
+      studentRepository: args.repositories.students.students,
+      classGroupRepository: args.repositories.academics.classGroups,
+      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
+      academicPeriodRepository: args.repositories.setup.academicPeriods,
+      assessmentRepository: args.repositories.assessments.assessments,
+      gradeRepository: args.repositories.assessments.grades,
+      reportCardDefinitionRepository: args.repositories.assessments.definitions,
+      reportCardResultRepository: args.repositories.assessments.results,
+      attendanceService: args.attendanceService,
       gradeService: this.grades,
     })
   }
@@ -130,6 +126,7 @@ export class AssessmentsService {
     await this.reportCardDefinitions.save(definition)
     return definition
   }
+
 
   async createAssessment(input: Parameters<AssessmentService['createAssessment']>[0]) {
     const classGroup = await this.requireClassGroup(input.classGroupId)

@@ -1,9 +1,9 @@
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type { CalendarEventRepository } from '../../ports/calendar-event-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ScheduleRepository } from '../../ports/schedule-repository'
-import type { SessionRepository } from '../../ports/session-repository'
+import type {
+  AcademicsRepositories,
+  SchedulingRepositories,
+} from '../../ports/school-repositories'
 import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
 
@@ -13,10 +13,10 @@ function generateUniqueId(): string {
 
 export interface ScheduleServiceArgs {
   atomicExecution: AtomicExecutionPort
-  classGroupRepository: ClassGroupRepository
-  scheduleRepository: ScheduleRepository
-  calendarEventRepository: CalendarEventRepository
-  sessionRepository: SessionRepository
+  classGroupRepository: AcademicsRepositories['classGroups']
+  scheduleRepository: SchedulingRepositories['schedules']
+  calendarEventRepository: SchedulingRepositories['calendarEvents']
+  sessionRepository: SchedulingRepositories['sessions']
 }
 
 const dayOfWeekMap: Record<number, DayOfWeek> = {
@@ -39,10 +39,10 @@ export class ScheduleService {
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly classGroups: ClassGroupRepository
-  private readonly schedules: ScheduleRepository
-  private readonly calendarEvents: CalendarEventRepository
-  private readonly sessions: SessionRepository
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly schedules: SchedulingRepositories['schedules']
+  private readonly calendarEvents: SchedulingRepositories['calendarEvents']
+  private readonly sessions: SchedulingRepositories['sessions']
 
   /**
    * Defines a schedule template (recurring or one-off) for a class group.

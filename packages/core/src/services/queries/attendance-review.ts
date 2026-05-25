@@ -3,22 +3,22 @@ import type { Session } from '../../entities/scheduling/session'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { Student } from '../../entities/students/student'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { AttendanceRepository } from '../../ports/attendance-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  SchedulingRepositories,
+  StudentRepositories,
+} from '../../ports/school-repositories'
 import { AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { isSameDate } from '../../utils/validation'
 
 export interface AttendanceReviewServiceArgs {
-  academicYearRepository: AcademicYearRepository
-  classGroupRepository: ClassGroupRepository
-  sessionRepository: SessionRepository
-  attendanceRepository: AttendanceRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  studentRepository: StudentRepository
+  academicYearRepository: SetupRepositories['academicYears']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  sessionRepository: SchedulingRepositories['sessions']
+  attendanceRepository: SchedulingRepositories['attendance']
+  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
+  studentRepository: StudentRepositories['students']
 }
 
 export interface AttendanceSessionOption {
@@ -58,12 +58,12 @@ export class AttendanceReviewService {
     this.students = args.studentRepository
   }
 
-  private readonly academicYears: AcademicYearRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly sessions: SessionRepository
-  private readonly attendance: AttendanceRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly students: StudentRepository
+  private readonly academicYears: SetupRepositories['academicYears']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly sessions: SchedulingRepositories['sessions']
+  private readonly attendance: SchedulingRepositories['attendance']
+  private readonly enrollments: StudentRepositories['enrollments']
+  private readonly students: StudentRepositories['students']
 
   async getAttendanceSessionReview({
     schoolId,

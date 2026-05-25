@@ -2,29 +2,27 @@ import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AssessmentRepository } from '../../ports/assessment-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  StudentRepositories,
+  AssessmentRepositories,
+} from '../../ports/school-repositories'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { GradeRepository } from '../../ports/grade-repository'
-import type { ReportCardDefinitionRepository } from '../../ports/report-card-definition-repository'
-import type { ReportCardResultRepository } from '../../ports/report-card-result-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentRepository } from '../../ports/student-repository'
 import type { AttendanceService } from '../scheduling/attendance'
 import type { GradeService } from './grade'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 
 export interface ReportCardResultServiceArgs {
   atomicExecution: AtomicExecutionPort
-  studentRepository: StudentRepository
-  classGroupRepository: ClassGroupRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  academicPeriodRepository: AcademicPeriodRepository
-  assessmentRepository: AssessmentRepository
-  gradeRepository: GradeRepository
-  reportCardDefinitionRepository: ReportCardDefinitionRepository
-  reportCardResultRepository: ReportCardResultRepository
+  studentRepository: StudentRepositories['students']
+  classGroupRepository: AcademicsRepositories['classGroups']
+  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
+  academicPeriodRepository: SetupRepositories['academicPeriods']
+  assessmentRepository: AssessmentRepositories['assessments']
+  gradeRepository: AssessmentRepositories['grades']
+  reportCardDefinitionRepository: AssessmentRepositories['definitions']
+  reportCardResultRepository: AssessmentRepositories['results']
   attendanceService: Pick<AttendanceService, 'buildAttendanceSummary'>
   gradeService: GradeService
 }
@@ -45,14 +43,14 @@ export class ReportCardResultService {
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: StudentRepository
-  private readonly classGroups: ClassGroupRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly academicPeriods: AcademicPeriodRepository
-  private readonly assessments: AssessmentRepository
-  private readonly grades: GradeRepository
-  private readonly reportCardDefinitions: ReportCardDefinitionRepository
-  private readonly reportCardResults: ReportCardResultRepository
+  private readonly students: StudentRepositories['students']
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly enrollments: StudentRepositories['enrollments']
+  private readonly academicPeriods: SetupRepositories['academicPeriods']
+  private readonly assessments: AssessmentRepositories['assessments']
+  private readonly grades: AssessmentRepositories['grades']
+  private readonly reportCardDefinitions: AssessmentRepositories['definitions']
+  private readonly reportCardResults: AssessmentRepositories['results']
   private readonly attendance: Pick<AttendanceService, 'buildAttendanceSummary'>
   private readonly gradeService: GradeService
 

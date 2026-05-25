@@ -2,19 +2,20 @@ import type { AssessmentKind } from '../../entities/assessments/assessment'
 import type { Session } from '../../entities/scheduling/session'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { ClassGroup } from '../../entities/school/class-group'
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AssessmentRepository } from '../../ports/assessment-repository'
-import type { ClassGroupRepository } from '../../ports/class-group-repository'
-import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
-import type { SessionRepository } from '../../ports/session-repository'
+import type {
+  SetupRepositories,
+  AcademicsRepositories,
+  SchedulingRepositories,
+  AssessmentRepositories,
+} from '../../ports/school-repositories'
 import { Assessment } from '../../entities/assessments/assessment'
 
 export interface AssessmentServiceArgs {
-  classGroupRepository: ClassGroupRepository
-  classSubjectRepository: ClassSubjectRepository
-  academicPeriodRepository: AcademicPeriodRepository
-  sessionRepository: SessionRepository
-  assessmentRepository: AssessmentRepository
+  classGroupRepository: AcademicsRepositories['classGroups']
+  classSubjectRepository: AcademicsRepositories['classSubjects']
+  academicPeriodRepository: SetupRepositories['academicPeriods']
+  sessionRepository: SchedulingRepositories['sessions']
+  assessmentRepository: AssessmentRepositories['assessments']
 }
 
 export class AssessmentService {
@@ -26,11 +27,11 @@ export class AssessmentService {
     this.assessments = args.assessmentRepository
   }
 
-  private readonly classGroups: ClassGroupRepository
-  private readonly classSubjects: ClassSubjectRepository
-  private readonly academicPeriods: AcademicPeriodRepository
-  private readonly sessions: SessionRepository
-  private readonly assessments: AssessmentRepository
+  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly classSubjects: AcademicsRepositories['classSubjects']
+  private readonly academicPeriods: SetupRepositories['academicPeriods']
+  private readonly sessions: SchedulingRepositories['sessions']
+  private readonly assessments: AssessmentRepositories['assessments']
 
   async createAssessment({
     id,

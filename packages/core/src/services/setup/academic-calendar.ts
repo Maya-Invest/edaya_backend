@@ -1,15 +1,13 @@
 import type { AcademicPeriodType } from '../../entities/school/academic-period'
 import type { School } from '../../entities/school/school'
-import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
-import type { AcademicYearRepository } from '../../ports/academic-year-repository'
-import type { SchoolRepository } from '../../ports/school-repository'
+import type { SetupRepositories } from '../../ports/school-repositories'
 import { AcademicPeriod } from '../../entities/school/academic-period'
 import { AcademicYear } from '../../entities/school/academic-year'
 
 export interface AcademicCalendarServiceArgs {
-  schoolRepository: SchoolRepository
-  academicYearRepository: AcademicYearRepository
-  academicPeriodRepository: AcademicPeriodRepository
+  schoolRepository: SetupRepositories['schools']
+  academicYearRepository: SetupRepositories['academicYears']
+  academicPeriodRepository: SetupRepositories['academicPeriods']
 }
 
 export class AcademicCalendarService {
@@ -19,9 +17,9 @@ export class AcademicCalendarService {
     this.academicPeriods = args.academicPeriodRepository
   }
 
-  private readonly schools: SchoolRepository
-  private readonly academicYears: AcademicYearRepository
-  private readonly academicPeriods: AcademicPeriodRepository
+  private readonly schools: SetupRepositories['schools']
+  private readonly academicYears: SetupRepositories['academicYears']
+  private readonly academicPeriods: SetupRepositories['academicPeriods']
 
   async createAcademicYear({
     id,

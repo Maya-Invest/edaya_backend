@@ -1,19 +1,19 @@
 import type { Session } from '../../entities/scheduling/session'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type { AttendanceRepository } from '../../ports/attendance-repository'
-import type { SessionRepository } from '../../ports/session-repository'
-import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
-import type { StudentRepository } from '../../ports/student-repository'
+import type {
+  StudentRepositories,
+  SchedulingRepositories,
+} from '../../ports/school-repositories'
 import { AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { normalizeDate } from '../../utils/validation'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 
 export interface AttendanceServiceArgs {
   atomicExecution: AtomicExecutionPort
-  studentRepository: StudentRepository
-  StudentClassEnrollmentRepository: StudentClassEnrollmentRepository
-  sessionRepository: SessionRepository
-  attendanceRepository: AttendanceRepository
+  studentRepository: StudentRepositories['students']
+  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
+  sessionRepository: SchedulingRepositories['sessions']
+  attendanceRepository: SchedulingRepositories['attendance']
 }
 
 export class AttendanceService {
@@ -26,10 +26,10 @@ export class AttendanceService {
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: StudentRepository
-  private readonly enrollments: StudentClassEnrollmentRepository
-  private readonly sessions: SessionRepository
-  private readonly attendance: AttendanceRepository
+  private readonly students: StudentRepositories['students']
+  private readonly enrollments: StudentRepositories['enrollments']
+  private readonly sessions: SchedulingRepositories['sessions']
+  private readonly attendance: SchedulingRepositories['attendance']
 
   async recordAttendance({
     id,
