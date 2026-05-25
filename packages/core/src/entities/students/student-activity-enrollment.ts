@@ -1,4 +1,4 @@
-import { requireNonBlank, requireValidDate } from '$lib/core/utils/validation'
+import { requireNonBlank, requireValidDate } from '../../utils/validation'
 
 export enum ActivityRole {
   Member = 'member',

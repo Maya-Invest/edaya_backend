@@ -1,4 +1,4 @@
-import type { ClassExam } from '$lib/core/entities/assessments/class-exam'
+import type { ClassExam } from '../entities/assessments/class-exam'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ClassExamRepository extends BaseRepositoryInterface<ClassExam> {

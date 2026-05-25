@@ -1,8 +1,8 @@
-import type { ReportCardDefinition } from '$lib/core/entities/assessments/report-card-definition'
-import type { ReportCardDefinitionSectionKind } from '$lib/core/entities/assessments/report-card-definition-section'
-import type { ReportCardDefinitionRepository } from '$lib/core/ports/report-card-definition-repository'
-import type { ReportCardDefinitionSectionRepository } from '$lib/core/ports/report-card-definition-section-repository'
-import { ReportCardDefinitionSection } from '$lib/core/entities/assessments/report-card-definition-section'
+import type { ReportCardDefinition } from '../../entities/assessments/report-card-definition'
+import type { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
+import type { ReportCardDefinitionRepository } from '../../ports/report-card-definition-repository'
+import type { ReportCardDefinitionSectionRepository } from '../../ports/report-card-definition-section-repository'
+import { ReportCardDefinitionSection } from '../../entities/assessments/report-card-definition-section'
 
 export interface ReportCardDefinitionSectionServiceArgs {
   reportCardDefinitionRepository: ReportCardDefinitionRepository

@@ -1,4 +1,4 @@
-import type { AnnouncementTarget, AnnouncementTargetKind } from '$lib/core/entities/messaging/announcement-target'
+import type { AnnouncementTarget, AnnouncementTargetKind } from '../entities/messaging/announcement-target'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface AnnouncementTargetRepository extends BaseRepositoryInterface<AnnouncementTarget> {

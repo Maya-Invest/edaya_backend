@@ -1,11 +1,11 @@
-import type { Session } from '$lib/core/entities/scheduling/session'
-import type { AttendanceRepository } from '$lib/core/ports/attendance-repository'
-import type { SessionRepository } from '$lib/core/ports/session-repository'
-import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
-import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { AttendanceRecord, AttendanceStatus } from '$lib/core/entities/scheduling/attendance-record'
-import { normalizeDate } from '$lib/core/utils/validation'
-import { AttendanceSummary } from '$lib/core/value_object/attendance-summary'
+import type { Session } from '../../entities/scheduling/session'
+import type { AttendanceRepository } from '../../ports/attendance-repository'
+import type { SessionRepository } from '../../ports/session-repository'
+import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
+import type { StudentRepository } from '../../ports/student-repository'
+import { AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import { normalizeDate } from '../../utils/validation'
+import { AttendanceSummary } from '../../value_object/attendance-summary'
 
 export interface AttendanceServiceArgs {
   studentRepository: StudentRepository

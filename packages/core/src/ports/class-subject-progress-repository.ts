@@ -1,4 +1,4 @@
-import type { ClassSubjectProgress } from '$lib/core/entities/academics/class-subject-progress'
+import type { ClassSubjectProgress } from '../entities/academics/class-subject-progress'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ClassSubjectProgressRepository extends BaseRepositoryInterface<ClassSubjectProgress> {

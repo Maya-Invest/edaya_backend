@@ -1,17 +1,24 @@
-import type { SubjectMatterArgs } from '$lib/core/entities/academics/subject-matter'
-import type { ClassSubjectMatterRepository } from '$lib/core/ports/class-subject-matter-repository'
-import type { ClassSubjectProgressRepository } from '$lib/core/ports/class-subject-progress-repository'
-import type { ClassSubjectRepository } from '$lib/core/ports/class-subject-repository'
-import type { SessionRepository } from '$lib/core/ports/session-repository'
-import type { SubjectMatterRepository } from '$lib/core/ports/subject-matter-repository'
-import type { SubjectRepository } from '$lib/core/ports/subject-repository'
-import { ClassSubject } from '$lib/core/entities/academics/class-subject'
-import { ClassSubjectMatter, ClassSubjectMatterStatus } from '$lib/core/entities/academics/class-subject-matter'
-import { ClassSubjectProgress } from '$lib/core/entities/academics/class-subject-progress'
-import { SubjectMatter } from '$lib/core/entities/academics/subject-matter'
-import { roundTo2 } from '$lib/core/utils/validation'
+import type { SubjectMatterArgs } from '../../entities/academics/subject-matter'
+import type { AtomicExecutionPort } from '../../ports/atomic-execution'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { ClassSubjectMatterRepository } from '../../ports/class-subject-matter-repository'
+import type { ClassSubjectProgressRepository } from '../../ports/class-subject-progress-repository'
+import type { ClassSubjectRepository } from '../../ports/class-subject-repository'
+import type { SchoolRepository } from '../../ports/school-repository'
+import type { SessionRepository } from '../../ports/session-repository'
+import type { SubjectMatterRepository } from '../../ports/subject-matter-repository'
+import type { SubjectRepository } from '../../ports/subject-repository'
+import { ClassSubject } from '../../entities/academics/class-subject'
+import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/academics/class-subject-matter'
+import { ClassSubjectProgress } from '../../entities/academics/class-subject-progress'
+import { Subject } from '../../entities/academics/subject'
+import { SubjectMatter } from '../../entities/academics/subject-matter'
+import { roundTo2 } from '../../utils/validation'
 
 export interface AcademicsServiceArgs {
+  atomicExecution: AtomicExecutionPort
+  schoolRepository: SchoolRepository
+  classGroupRepository: ClassGroupRepository
   subjectRepository: SubjectRepository
   subjectMatterRepository: SubjectMatterRepository
   classSubjectRepository: ClassSubjectRepository
@@ -22,6 +29,9 @@ export interface AcademicsServiceArgs {
 
 export class AcademicsService {
   constructor(args: AcademicsServiceArgs) {
+    this.atomicExecution = args.atomicExecution
+    this.schools = args.schoolRepository
+    this.classGroups = args.classGroupRepository
     this.subjects = args.subjectRepository
     this.subjectMatters = args.subjectMatterRepository
     this.classSubjects = args.classSubjectRepository
@@ -30,12 +40,34 @@ export class AcademicsService {
     this.sessions = args.sessionRepository
   }
 
+  private readonly atomicExecution: AtomicExecutionPort
+  private readonly schools: SchoolRepository
+  private readonly classGroups: ClassGroupRepository
   private readonly subjects: SubjectRepository
   private readonly subjectMatters: SubjectMatterRepository
   private readonly classSubjects: ClassSubjectRepository
   private readonly classSubjectMatters: ClassSubjectMatterRepository
   private readonly progress: ClassSubjectProgressRepository
   private readonly sessions: SessionRepository
+
+  async createSubject({
+    id,
+    schoolId,
+    name,
+    createdAt,
+  }: {
+    id: string
+    schoolId: string
+    name: string
+    createdAt?: Date
+  }): Promise<Subject> {
+    if (!await this.schools.findById(schoolId)) {
+      throw new Error(`Unknown school: ${schoolId}`)
+    }
+    const subject = new Subject({ id, schoolId, name, createdAt })
+    await this.subjects.save(subject)
+    return subject
+  }
 
   async createSubjectMatter(input: SubjectMatterArgs): Promise<SubjectMatter> {
     if (!await this.subjects.findById(input.subjectId)) {
@@ -44,6 +76,42 @@ export class AcademicsService {
     const subjectMatter = new SubjectMatter(input)
     await this.subjectMatters.save(subjectMatter)
     return subjectMatter
+  }
+
+  async offerSubjectToClass({
+    id,
+    classGroupId,
+    subjectId,
+    staffId,
+    coefficient,
+    createdAt,
+  }: {
+    id: string
+    classGroupId: string
+    subjectId: string
+    staffId?: string
+    coefficient?: number
+    createdAt?: Date
+  }): Promise<ClassSubject> {
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup) {
+      throw new Error(`Unknown classGroup: ${classGroupId}`)
+    }
+    const subject = await this.subjects.findById(subjectId)
+    if (!subject) {
+      throw new Error(`Unknown subject: ${subjectId}`)
+    }
+    if (subject.schoolId !== classGroup.schoolId) {
+      throw new Error(`Subject ${subjectId} does not belong to school ${classGroup.schoolId}`)
+    }
+    const existing = (await this.classSubjects.listByClassGroup(classGroupId))
+      .find(classSubject => classSubject.subjectId === subjectId)
+    if (existing) {
+      return existing
+    }
+    const classSubject = new ClassSubject({ id, classGroupId, subjectId, staffId, coefficient, createdAt })
+    await this.classSubjects.save(classSubject)
+    return classSubject
   }
 
   async assignMatterToClassSubject({
@@ -101,46 +169,51 @@ export class AcademicsService {
     notes?: string
     recordedAt?: Date
   }): Promise<ClassSubjectProgress> {
-    const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
-    const classSubject = await this.requireClassSubject(matter.classSubjectId)
-    const session = await this.sessions.findById(sessionId)
-    if (!session) {
-      throw new Error(`Unknown session: ${sessionId}`)
-    }
-    if (session.classSubjectId !== classSubject.id) {
-      throw new Error(`Session ${sessionId} is not linked to class subject ${classSubject.id}`)
-    }
-    const existing = await this.progress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
-    if (existing) {
-      throw new Error(`Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
-    }
+    return this.atomicExecution.execute(async () => {
+      const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
+      const classSubject = await this.requireClassSubject(matter.classSubjectId)
+      const session = await this.sessions.findById(sessionId)
+      if (!session) {
+        throw new Error(`Unknown session: ${sessionId}`)
+      }
+      if (session.classSubjectId !== classSubject.id) {
+        throw new Error(`Session ${sessionId} is not linked to class subject ${classSubject.id}`)
+      }
+      const existing = await this.progress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
+      if (existing) {
+        throw new Error(`Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
+      }
+      if (completedPercentage < matter.completedPercentage) {
+        throw new Error('completedPercentage must not decrease cumulative class subject matter progress')
+      }
 
-    const snapshot = new ClassSubjectProgress({
-      id,
-      classSubjectMatterId,
-      sessionId,
-      completedPercentage,
-      recordedByStaffId,
-      notes,
-      recordedAt,
-    })
-    const updatedMatter = new ClassSubjectMatter({
-      id: matter.id,
-      classSubjectId: matter.classSubjectId,
-      subjectMatterId: matter.subjectMatterId,
-      status: snapshot.status,
-      completedPercentage: snapshot.completedPercentage,
-      updatedByStaffId: snapshot.recordedByStaffId,
-      startedAt: matter.startedAt ?? (snapshot.completedPercentage > 0 ? snapshot.recordedAt : undefined),
-      completedAt: snapshot.status === ClassSubjectMatterStatus.Completed ? snapshot.recordedAt : undefined,
-      notes: snapshot.notes ?? matter.notes,
-      updatedAt: snapshot.recordedAt,
-    })
+      const snapshot = new ClassSubjectProgress({
+        id,
+        classSubjectMatterId,
+        sessionId,
+        completedPercentage,
+        recordedByStaffId,
+        notes,
+        recordedAt,
+      })
+      const updatedMatter = new ClassSubjectMatter({
+        id: matter.id,
+        classSubjectId: matter.classSubjectId,
+        subjectMatterId: matter.subjectMatterId,
+        status: snapshot.status,
+        completedPercentage: snapshot.completedPercentage,
+        updatedByStaffId: snapshot.recordedByStaffId,
+        startedAt: matter.startedAt ?? (snapshot.completedPercentage > 0 ? snapshot.recordedAt : undefined),
+        completedAt: snapshot.status === ClassSubjectMatterStatus.Completed ? snapshot.recordedAt : undefined,
+        notes: snapshot.notes ?? matter.notes,
+        updatedAt: snapshot.recordedAt,
+      })
 
-    await this.progress.save(snapshot)
-    await this.classSubjectMatters.save(updatedMatter)
-    await this.updateClassSubjectAggregate(classSubject, updatedMatter)
-    return snapshot
+      await this.progress.save(snapshot)
+      await this.classSubjectMatters.save(updatedMatter)
+      await this.updateClassSubjectAggregate(classSubject, updatedMatter)
+      return snapshot
+    })
   }
 
   async listMatterProgress(classSubjectMatterId: string): Promise<ClassSubjectProgress[]> {

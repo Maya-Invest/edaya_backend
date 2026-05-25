@@ -1,4 +1,4 @@
-import type { SubjectMatter } from '$lib/core/entities/academics/subject-matter'
+import type { SubjectMatter } from '../entities/academics/subject-matter'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface SubjectMatterRepository extends BaseRepositoryInterface<SubjectMatter> {

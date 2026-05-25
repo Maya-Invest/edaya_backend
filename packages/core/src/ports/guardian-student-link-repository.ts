@@ -1,4 +1,4 @@
-import type { GuardianStudentLink } from '$lib/core/entities/students/guardian-student-link'
+import type { GuardianStudentLink } from '../entities/students/guardian-student-link'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface GuardianStudentLinkRepository extends BaseRepositoryInterface<GuardianStudentLink> {

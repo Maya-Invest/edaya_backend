@@ -1,4 +1,4 @@
-import type { StudentDisciplinaryAction } from '$lib/core/entities/students/student-disciplinary-action'
+import type { StudentDisciplinaryAction } from '../entities/students/student-disciplinary-action'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface StudentDisciplinaryActionRepository extends BaseRepositoryInterface<StudentDisciplinaryAction> {

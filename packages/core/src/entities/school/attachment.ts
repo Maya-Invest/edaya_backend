@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '$lib/core/utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../../utils/validation'
 
 export enum AttachmentOwnerKind {
   HealthRecord = 'health_record',

@@ -1,4 +1,4 @@
-import type { StudentIncidentInvolvement } from '$lib/core/entities/students/student-incident-involvement'
+import type { StudentIncidentInvolvement } from '../entities/students/student-incident-involvement'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface StudentIncidentInvolvementRepository extends BaseRepositoryInterface<StudentIncidentInvolvement> {

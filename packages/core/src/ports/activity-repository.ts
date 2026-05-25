@@ -1,4 +1,4 @@
-import type { Activity } from '$lib/core/entities/students/activity'
+import type { Activity } from '../entities/students/activity'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ActivityRepository extends BaseRepositoryInterface<Activity> {

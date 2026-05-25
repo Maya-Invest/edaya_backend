@@ -1,5 +1,5 @@
-import { ClassSubjectMatterStatus } from '$lib/core/entities/academics/class-subject-matter'
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { ClassSubjectMatterStatus } from './class-subject-matter'
 
 export interface ClassSubjectProgressArgs {
   id: string

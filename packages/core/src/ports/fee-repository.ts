@@ -1,4 +1,4 @@
-import type { Fee } from '$lib/core/entities/finances/fee'
+import type { Fee } from '../entities/finances/fee'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface FeeRepository extends BaseRepositoryInterface<Fee> {

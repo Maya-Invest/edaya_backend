@@ -1,11 +1,11 @@
-import type { ClassGroup } from '$lib/core/entities/school/class-group'
-import type { School } from '$lib/core/entities/school/school'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
-import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { Student } from '$lib/core/entities/students/student'
-import { StudentClassEnrollment } from '$lib/core/entities/students/student-class-enrollment'
+import type { ClassGroup } from '../../entities/school/class-group'
+import type { School } from '../../entities/school/school'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { SchoolRepository } from '../../ports/school-repository'
+import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
+import type { StudentRepository } from '../../ports/student-repository'
+import { Student } from '../../entities/students/student'
+import { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 
 export interface StudentServiceArgs {
   schoolRepository: SchoolRepository

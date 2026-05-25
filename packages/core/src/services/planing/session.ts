@@ -1,8 +1,8 @@
-import type { SessionKind } from '$lib/core/entities/scheduling/session'
-import type { ClassGroup } from '$lib/core/entities/school/class-group'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { SessionRepository } from '$lib/core/ports/session-repository'
-import { Session } from '$lib/core/entities/scheduling/session'
+import type { SessionKind } from '../../entities/scheduling/session'
+import type { ClassGroup } from '../../entities/school/class-group'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { SessionRepository } from '../../ports/session-repository'
+import { Session } from '../../entities/scheduling/session'
 
 export interface SessionServiceArgs {
   classGroupRepository: ClassGroupRepository

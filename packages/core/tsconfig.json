@@ -1,12 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "paths": {
-      "$lib/core/*": [
-        "./src/*"
-      ]
-    },
+    "rootDir": ".",
+    "types": [
+      "bun-types"
+    ],
     "outDir": "./dist"
   },
   "include": [

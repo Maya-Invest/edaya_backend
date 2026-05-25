@@ -1,17 +1,17 @@
-import type { AnnouncementAudience, AnnouncementPriority } from '$lib/core/entities/messaging/announcement'
-import type { AnnouncementTargetKind } from '$lib/core/entities/messaging/announcement-target'
+import type { AnnouncementAudience, AnnouncementPriority } from '../../entities/messaging/announcement'
+import type { AnnouncementTargetKind } from '../../entities/messaging/announcement-target'
 import type {
   MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
-} from '$lib/core/entities/messaging/message-delivery'
-import type { AnnouncementRepository } from '$lib/core/ports/announcement-repository'
-import type { AnnouncementTargetRepository } from '$lib/core/ports/announcement-target-repository'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { MessageDeliveryRepository } from '$lib/core/ports/message-delivery-repository'
-import { Announcement, AnnouncementStatus } from '$lib/core/entities/messaging/announcement'
-import { AnnouncementTarget } from '$lib/core/entities/messaging/announcement-target'
-import { MessageDelivery } from '$lib/core/entities/messaging/message-delivery'
+} from '../../entities/messaging/message-delivery'
+import type { AnnouncementRepository } from '../../ports/announcement-repository'
+import type { AnnouncementTargetRepository } from '../../ports/announcement-target-repository'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { MessageDeliveryRepository } from '../../ports/message-delivery-repository'
+import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
+import { AnnouncementTarget } from '../../entities/messaging/announcement-target'
+import { MessageDelivery } from '../../entities/messaging/message-delivery'
 
 export interface CommunicationsServiceArgs {
   classGroupRepository: ClassGroupRepository

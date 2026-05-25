@@ -1,5 +1,5 @@
-import { requireNonBlank, requireNonNegativeInt, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
-import { Money } from '$lib/core/value_object/money'
+import { requireNonBlank, requireNonNegativeInt, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { Money } from '../../value_object/money'
 
 export enum PaymentMethod {
   Cash = 'cash',

@@ -1,13 +1,16 @@
-import type { AcademicYear } from '$lib/core/entities/school/academic-year'
-import type { School } from '$lib/core/entities/school/school'
-import type { AcademicYearRepository } from '$lib/core/ports/academic-year-repository'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import { ClassGroup } from '$lib/core/entities/school/class-group'
+import type { AcademicYear } from '../../entities/school/academic-year'
+import type { GradeLevel } from '../../entities/school/grade-level'
+import type { School } from '../../entities/school/school'
+import type { AcademicYearRepository } from '../../ports/academic-year-repository'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { GradeLevelRepository } from '../../ports/grade-level-repository'
+import type { SchoolRepository } from '../../ports/school-repository'
+import { ClassGroup } from '../../entities/school/class-group'
 
 export interface ClassGroupServiceArgs {
   schoolRepository: SchoolRepository
   academicYearRepository: AcademicYearRepository
+  gradeLevelRepository: GradeLevelRepository
   classGroupRepository: ClassGroupRepository
 }
 
@@ -15,26 +18,28 @@ export class ClassGroupService {
   constructor(args: ClassGroupServiceArgs) {
     this.schools = args.schoolRepository
     this.academicYears = args.academicYearRepository
+    this.gradeLevels = args.gradeLevelRepository
     this.classGroups = args.classGroupRepository
   }
 
   private readonly schools: SchoolRepository
   private readonly academicYears: AcademicYearRepository
+  private readonly gradeLevels: GradeLevelRepository
   private readonly classGroups: ClassGroupRepository
 
   async createClassGroup({
     id,
     schoolId,
     academicYearId,
+    gradeLevelId,
     name,
-    level,
     createdAt,
   }: {
     id: string
     schoolId: string
     academicYearId: string
+    gradeLevelId: string
     name: string
-    level?: string
     createdAt?: Date
   }): Promise<ClassGroup> {
     await this.requireSchool(schoolId)
@@ -42,11 +47,15 @@ export class ClassGroupService {
     if (academicYear.schoolId !== schoolId) {
       throw new Error(`Academic year ${academicYearId} does not belong to school ${schoolId}`)
     }
+    const gradeLevel = await this.requireGradeLevel(gradeLevelId)
+    if (gradeLevel.schoolId !== schoolId) {
+      throw new Error(`Grade level ${gradeLevelId} does not belong to school ${schoolId}`)
+    }
     const classGroup = new ClassGroup({
       id,
       schoolId,
       academicYearId,
-      gradeLevelId: level ?? 'unknown',
+      gradeLevelId,
       name,
       createdAt,
     })
@@ -68,5 +77,13 @@ export class ClassGroupService {
       throw new Error(`Unknown academic year: ${academicYearId}`)
     }
     return academicYear
+  }
+
+  private async requireGradeLevel(gradeLevelId: string): Promise<GradeLevel> {
+    const gradeLevel = await this.gradeLevels.findById(gradeLevelId)
+    if (!gradeLevel) {
+      throw new Error(`Unknown grade level: ${gradeLevelId}`)
+    }
+    return gradeLevel
   }
 }

@@ -1,4 +1,4 @@
-import { requireNonBlank, requirePositiveInt } from '$lib/core/utils/validation'
+import { requireNonBlank, requirePositiveInt } from '../../utils/validation'
 
 export enum ResourceKind {
   Location = 'location',

@@ -1,4 +1,4 @@
-import type { CalendarEvent } from '$lib/core/entities/scheduling/calendar-event'
+import type { CalendarEvent } from '../entities/scheduling/calendar-event'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface CalendarEventRepository extends BaseRepositoryInterface<CalendarEvent> {

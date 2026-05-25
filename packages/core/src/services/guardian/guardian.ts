@@ -1,14 +1,14 @@
-import type { School } from '$lib/core/entities/school/school'
-import type { GuardianContactMethod } from '$lib/core/entities/students/guardian-contact-method'
-import type { Student } from '$lib/core/entities/students/student'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { GuardianRepository } from '$lib/core/ports/guardian-repository'
-import type { GuardianStudentLinkRepository } from '$lib/core/ports/guardian-student-link-repository'
-import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import type { StudentClassEnrollmentRepository } from '$lib/core/ports/student-enrollment-repository'
-import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { Guardian } from '$lib/core/entities/students/guardian'
-import { GuardianStudentLink } from '$lib/core/entities/students/guardian-student-link'
+import type { School } from '../../entities/school/school'
+import type { GuardianContactMethod } from '../../entities/students/guardian-contact-method'
+import type { Student } from '../../entities/students/student'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { GuardianRepository } from '../../ports/guardian-repository'
+import type { GuardianStudentLinkRepository } from '../../ports/guardian-student-link-repository'
+import type { SchoolRepository } from '../../ports/school-repository'
+import type { StudentClassEnrollmentRepository } from '../../ports/student-enrollment-repository'
+import type { StudentRepository } from '../../ports/student-repository'
+import { Guardian } from '../../entities/students/guardian'
+import { GuardianStudentLink } from '../../entities/students/guardian-student-link'
 
 export interface GuardianServiceArgs {
   schoolRepository: SchoolRepository
@@ -118,19 +118,6 @@ export class GuardianService {
     })
     await this.guardianStudentLinks.save(link)
     return link
-  }
-
-  async listStudentsForGuardian(guardianId: string): Promise<Student[]> {
-    await this.requireGuardian(guardianId)
-    const links = await this.guardianStudentLinks.listByGuardian(guardianId)
-    const students: Student[] = []
-    for (const link of links) {
-      const student = await this.students.findById(link.studentId)
-      if (student) {
-        students.push(student)
-      }
-    }
-    return students
   }
 
   private async requireSchool(schoolId: string): Promise<School> {

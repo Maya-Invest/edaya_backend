@@ -1,4 +1,4 @@
-import type { StaffMember } from '$lib/core/entities/school/staff-member'
+import type { StaffMember } from '../entities/school/staff-member'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface StaffMemberRepository extends BaseRepositoryInterface<StaffMember> {

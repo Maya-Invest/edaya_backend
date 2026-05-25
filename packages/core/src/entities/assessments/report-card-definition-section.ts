@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '$lib/core/utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../../utils/validation'
 
 export enum ReportCardDefinitionSectionKind {
   Group = 'group',

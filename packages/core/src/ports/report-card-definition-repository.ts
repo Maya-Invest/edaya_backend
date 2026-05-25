@@ -1,4 +1,4 @@
-import type { ReportCardDefinition } from '$lib/core/entities/assessments/report-card-definition'
+import type { ReportCardDefinition } from '../entities/assessments/report-card-definition'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ReportCardDefinitionRepository extends BaseRepositoryInterface<ReportCardDefinition> {

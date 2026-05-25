@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
 
 export enum SchoolType {
   Primary = 'primary',

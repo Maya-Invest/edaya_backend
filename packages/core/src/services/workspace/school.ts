@@ -1,5 +1,5 @@
-import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import { School } from '$lib/core/entities/school/school'
+import type { SchoolRepository } from '../../ports/school-repository'
+import { School } from '../../entities/school/school'
 
 export interface SchoolServiceArgs {
   schoolRepository: SchoolRepository

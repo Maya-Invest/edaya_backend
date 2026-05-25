@@ -1,4 +1,4 @@
-import type { ResourceAssignment } from '$lib/core/entities/school/resource-assignment'
+import type { ResourceAssignment } from '../entities/school/resource-assignment'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface ResourceAssignmentRepository extends BaseRepositoryInterface<ResourceAssignment> {

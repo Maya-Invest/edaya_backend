@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '$lib/core/utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
 
 export enum SessionKind {
   Course = 'course',

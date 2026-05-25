@@ -1,4 +1,4 @@
-import { requireNonBlank, requirePositiveInt, requireTimeOfDay } from '$lib/core/utils/validation'
+import { requireNonBlank, requirePositiveInt, requireTimeOfDay } from '../../utils/validation'
 
 export interface PeriodDefinitionArgs {
   id: string

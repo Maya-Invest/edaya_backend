@@ -1,5 +1,5 @@
-import { ReportCardDefinitionSectionKind } from '$lib/core/entities/assessments/report-card-definition-section'
-import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '$lib/core/utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '../../utils/validation'
+import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
 
 export interface ReportCardResultSectionArgs {
   sectionId: string

@@ -1,6 +1,6 @@
-import type { ReportCardResultSection } from '$lib/core/entities/assessments/report-card-result-section'
-import type { AttendanceSummary } from '$lib/core/value_object/attendance-summary'
-import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '$lib/core/utils/validation'
+import type { AttendanceSummary } from '../../value_object/attendance-summary'
+import type { ReportCardResultSection } from './report-card-result-section'
+import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '../../utils/validation'
 
 export enum ReportCardResultStatus {
   Draft = 'draft',

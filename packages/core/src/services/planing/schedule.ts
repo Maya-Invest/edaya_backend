@@ -1,10 +1,10 @@
-import type { ClassGroup } from '$lib/core/entities/school/class-group'
-import type { CalendarEventRepository } from '$lib/core/ports/calendar-event-repository'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { ScheduleRepository } from '$lib/core/ports/schedule-repository'
-import type { SessionRepository } from '$lib/core/ports/session-repository'
-import { DayOfWeek, Schedule } from '$lib/core/entities/scheduling/schedule'
-import { Session, SessionKind } from '$lib/core/entities/scheduling/session'
+import type { ClassGroup } from '../../entities/school/class-group'
+import type { CalendarEventRepository } from '../../ports/calendar-event-repository'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { ScheduleRepository } from '../../ports/schedule-repository'
+import type { SessionRepository } from '../../ports/session-repository'
+import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
+import { Session, SessionKind } from '../../entities/scheduling/session'
 
 function generateUniqueId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`

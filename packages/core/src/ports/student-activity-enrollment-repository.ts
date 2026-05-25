@@ -1,4 +1,4 @@
-import type { StudentActivityEnrollment } from '$lib/core/entities/students/student-activity-enrollment'
+import type { StudentActivityEnrollment } from '../entities/students/student-activity-enrollment'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface StudentActivityEnrollmentRepository extends BaseRepositoryInterface<StudentActivityEnrollment> {

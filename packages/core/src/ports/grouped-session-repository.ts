@@ -1,4 +1,4 @@
-import type { GroupedSession } from '$lib/core/entities/scheduling/grouped-session'
+import type { GroupedSession } from '../entities/scheduling/grouped-session'
 import type { BaseRepositoryInterface } from './_base-repository'
 
 export interface GroupedSessionRepository extends BaseRepositoryInterface<GroupedSession> {

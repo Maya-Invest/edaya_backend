@@ -1,5 +1,5 @@
-import type { ReportCardDefinitionSection } from '$lib/core/entities/assessments/report-card-definition-section'
-import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/validation'
+import type { ReportCardDefinitionSection } from './report-card-definition-section'
+import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
 
 export enum ReportCardDefinitionKind {
   Default = 'default',

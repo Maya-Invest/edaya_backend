@@ -1,8 +1,8 @@
+import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
 import {
   GuardianContactMethod,
   GuardianContactMethodType,
-} from '$lib/core/entities/students/guardian-contact-method'
-import { requireNonBlank, requireOptionalNonBlank } from '$lib/core/utils/validation'
+} from './guardian-contact-method'
 
 export interface GuardianArgs {
   id: string

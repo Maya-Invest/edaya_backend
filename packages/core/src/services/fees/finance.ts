@@ -1,16 +1,18 @@
-import type { FeeArgs } from '$lib/core/entities/finances/fee'
-import type { PaymentMethod } from '$lib/core/entities/finances/payment'
-import type { StudentFeeInstallment } from '$lib/core/entities/finances/student-fee'
-import type { FeeRepository } from '$lib/core/ports/fee-repository'
-import type { PaymentRepository } from '$lib/core/ports/payment-repository'
-import type { StudentFeeRepository } from '$lib/core/ports/student-fee-repository'
-import type { StudentRepository } from '$lib/core/ports/student-repository'
-import { Fee } from '$lib/core/entities/finances/fee'
-import { Payment, PaymentStatus } from '$lib/core/entities/finances/payment'
-import { FeeStatus, StudentFee, StudentFeeSummary } from '$lib/core/entities/finances/student-fee'
-import { Money } from '$lib/core/value_object/money'
+import type { FeeArgs } from '../../entities/finances/fee'
+import type { PaymentMethod } from '../../entities/finances/payment'
+import type { StudentFeeInstallment } from '../../entities/finances/student-fee'
+import type { AtomicExecutionPort } from '../../ports/atomic-execution'
+import type { FeeRepository } from '../../ports/fee-repository'
+import type { PaymentRepository } from '../../ports/payment-repository'
+import type { StudentFeeRepository } from '../../ports/student-fee-repository'
+import type { StudentRepository } from '../../ports/student-repository'
+import { Fee } from '../../entities/finances/fee'
+import { Payment, PaymentStatus } from '../../entities/finances/payment'
+import { FeeStatus, StudentFee, StudentFeeSummary } from '../../entities/finances/student-fee'
+import { Money } from '../../value_object/money'
 
 export interface FinanceServiceArgs {
+  atomicExecution: AtomicExecutionPort
   studentRepository: StudentRepository
   feeRepository: FeeRepository
   studentFeeRepository: StudentFeeRepository
@@ -19,12 +21,14 @@ export interface FinanceServiceArgs {
 
 export class FinanceService {
   constructor(args: FinanceServiceArgs) {
+    this.atomicExecution = args.atomicExecution
     this.students = args.studentRepository
     this.feeDefinitions = args.feeRepository
     this.studentFees = args.studentFeeRepository
     this.payments = args.paymentRepository
   }
 
+  private readonly atomicExecution: AtomicExecutionPort
   private readonly students: StudentRepository
   private readonly feeDefinitions: FeeRepository
   private readonly studentFees: StudentFeeRepository
@@ -99,27 +103,29 @@ export class FinanceService {
     updatedAt?: Date
     referenceDate?: Date
   }): Promise<Payment> {
-    const studentFee = await this.requireStudentFee(studentFeeId)
-    const payment = new Payment({
-      id,
-      studentFeeId,
-      amount,
-      currency: studentFee.expectedAmount.currency,
-      paymentDate,
-      method,
-      reference,
-      notes,
-      recordedById,
-      createdAt,
+    return this.atomicExecution.execute(async () => {
+      const studentFee = await this.requireStudentFee(studentFeeId)
+      const payment = new Payment({
+        id,
+        studentFeeId,
+        amount,
+        currency: studentFee.expectedAmount.currency,
+        paymentDate,
+        method,
+        reference,
+        notes,
+        recordedById,
+        createdAt,
+      })
+      await this.payments.save(payment)
+      await this.savePaidAmount(
+        studentFee,
+        studentFee.paidAmount.amount + payment.amount.amount,
+        updatedAt,
+        referenceDate,
+      )
+      return payment
     })
-    await this.payments.save(payment)
-    await this.savePaidAmount(
-      studentFee,
-      studentFee.paidAmount.amount + payment.amount.amount,
-      updatedAt,
-      referenceDate,
-    )
-    return payment
   }
 
   async reversePayment({
@@ -133,33 +139,35 @@ export class FinanceService {
     updatedAt?: Date
     referenceDate?: Date
   }): Promise<Payment> {
-    const payment = await this.requirePayment(paymentId)
-    if (payment.status !== PaymentStatus.Recorded) {
-      throw new Error(`Payment ${paymentId} cannot be reversed from status ${payment.status}`)
-    }
-    const studentFee = await this.requireStudentFee(payment.studentFeeId)
-    const reversed = new Payment({
-      id: payment.id,
-      studentFeeId: payment.studentFeeId,
-      amount: payment.amount.amount,
-      currency: payment.amount.currency,
-      paymentDate: payment.paymentDate,
-      method: payment.method,
-      status: PaymentStatus.Reversed,
-      reference: payment.reference,
-      notes: payment.notes,
-      recordedById: payment.recordedById,
-      reversedAt: reversedAt ?? new Date(),
-      createdAt: payment.createdAt,
+    return this.atomicExecution.execute(async () => {
+      const payment = await this.requirePayment(paymentId)
+      if (payment.status !== PaymentStatus.Recorded) {
+        throw new Error(`Payment ${paymentId} cannot be reversed from status ${payment.status}`)
+      }
+      const studentFee = await this.requireStudentFee(payment.studentFeeId)
+      const reversed = new Payment({
+        id: payment.id,
+        studentFeeId: payment.studentFeeId,
+        amount: payment.amount.amount,
+        currency: payment.amount.currency,
+        paymentDate: payment.paymentDate,
+        method: payment.method,
+        status: PaymentStatus.Reversed,
+        reference: payment.reference,
+        notes: payment.notes,
+        recordedById: payment.recordedById,
+        reversedAt: reversedAt ?? new Date(),
+        createdAt: payment.createdAt,
+      })
+      await this.payments.save(reversed)
+      await this.savePaidAmount(
+        studentFee,
+        Math.max(0, studentFee.paidAmount.amount - payment.amount.amount),
+        updatedAt,
+        referenceDate,
+      )
+      return reversed
     })
-    await this.payments.save(reversed)
-    await this.savePaidAmount(
-      studentFee,
-      Math.max(0, studentFee.paidAmount.amount - payment.amount.amount),
-      updatedAt,
-      referenceDate,
-    )
-    return reversed
   }
 
   async buildFeeSummary(studentId: string): Promise<StudentFeeSummary> {

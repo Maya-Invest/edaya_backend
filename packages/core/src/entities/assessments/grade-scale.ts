@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '$lib/core/utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '../../utils/validation'
 
 export interface GradeScaleRange {
   letter: string // e.g. "A" or "Assez Bien"

@@ -1,12 +1,12 @@
-import type { AssessmentKind } from '$lib/core/entities/assessments/assessment'
-import type { Session } from '$lib/core/entities/scheduling/session'
-import type { AcademicPeriod } from '$lib/core/entities/school/academic-period'
-import type { ClassGroup } from '$lib/core/entities/school/class-group'
-import type { AcademicPeriodRepository } from '$lib/core/ports/academic-period-repository'
-import type { AssessmentRepository } from '$lib/core/ports/assessment-repository'
-import type { ClassGroupRepository } from '$lib/core/ports/class-group-repository'
-import type { SessionRepository } from '$lib/core/ports/session-repository'
-import { Assessment } from '$lib/core/entities/assessments/assessment'
+import type { AssessmentKind } from '../../entities/assessments/assessment'
+import type { Session } from '../../entities/scheduling/session'
+import type { AcademicPeriod } from '../../entities/school/academic-period'
+import type { ClassGroup } from '../../entities/school/class-group'
+import type { AcademicPeriodRepository } from '../../ports/academic-period-repository'
+import type { AssessmentRepository } from '../../ports/assessment-repository'
+import type { ClassGroupRepository } from '../../ports/class-group-repository'
+import type { SessionRepository } from '../../ports/session-repository'
+import { Assessment } from '../../entities/assessments/assessment'
 
 export interface AssessmentServiceArgs {
   classGroupRepository: ClassGroupRepository

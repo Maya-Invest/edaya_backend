@@ -1,8 +1,8 @@
-import type { School } from '$lib/core/entities/school/school'
-import type { StaffRole } from '$lib/core/entities/school/staff-member'
-import type { SchoolRepository } from '$lib/core/ports/school-repository'
-import type { StaffMemberRepository } from '$lib/core/ports/staff-member-repository'
-import { StaffMember } from '$lib/core/entities/school/staff-member'
+import type { School } from '../../entities/school/school'
+import type { StaffRole } from '../../entities/school/staff-member'
+import type { SchoolRepository } from '../../ports/school-repository'
+import type { StaffMemberRepository } from '../../ports/staff-member-repository'
+import { StaffMember } from '../../entities/school/staff-member'
 
 export interface StaffServiceArgs {
   schoolRepository: SchoolRepository
