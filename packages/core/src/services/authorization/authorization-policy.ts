@@ -1,4 +1,4 @@
-import type { SetupRepositories, StudentRepositories } from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from './actor-metadata'
 import { StaffRole } from '../../entities/school/staff-member'
 import { StudentStatus } from '../../entities/students/student'
@@ -66,11 +66,11 @@ export interface AuthorizedServiceArgs {
 }
 
 export interface RepositoryAuthorizationPolicyArgs {
-  staffAssignmentRepository: SetupRepositories['staffAssignments']
-  staffMemberRepository: SetupRepositories['staffMembers']
-  guardianRepository: StudentRepositories['guardians']
-  guardianStudentLinkRepository: StudentRepositories['guardianLinks']
-  studentRepository: StudentRepositories['students']
+  staffAssignmentRepository: SchoolRepositories['staffAssignments']
+  staffMemberRepository: SchoolRepositories['staffMembers']
+  guardianRepository: SchoolRepositories['guardians']
+  guardianStudentLinkRepository: SchoolRepositories['guardianLinks']
+  studentRepository: SchoolRepositories['students']
 }
 
 const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
@@ -115,11 +115,11 @@ const accountantActions = new Set<AuthorizationAction>([
  * is resolved by each service before this policy is invoked.
  */
 export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
-  private readonly staffAssignments: SetupRepositories['staffAssignments']
-  private readonly staffMembers: SetupRepositories['staffMembers']
-  private readonly guardians: StudentRepositories['guardians']
-  private readonly guardianStudentLinks: StudentRepositories['guardianLinks']
-  private readonly students: StudentRepositories['students']
+  private readonly staffAssignments: SchoolRepositories['staffAssignments']
+  private readonly staffMembers: SchoolRepositories['staffMembers']
+  private readonly guardians: SchoolRepositories['guardians']
+  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
+  private readonly students: SchoolRepositories['students']
 
   constructor(args: RepositoryAuthorizationPolicyArgs) {
     this.staffAssignments = args.staffAssignmentRepository
@@ -217,19 +217,19 @@ export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
     resource: AuthorizationResourceContext,
   ): Promise<boolean> {
     if (resource.sessionId) {
-      const assignments = await this.staffAssignments.listBySession(resource.sessionId)
+      const assignments = await this.staffAssignments.list({ sessionId: resource.sessionId })
       if (assignments.some(assignment => assignment.staffId === staffMemberId)) {
         return true
       }
     }
     if (resource.classSubjectId) {
-      const assignments = await this.staffAssignments.listByClassSubject(resource.classSubjectId)
+      const assignments = await this.staffAssignments.list({ classSubjectId: resource.classSubjectId })
       if (assignments.some(assignment => assignment.staffId === staffMemberId)) {
         return true
       }
     }
     if (resource.classGroupId) {
-      const assignments = await this.staffAssignments.listByClassGroup(resource.classGroupId)
+      const assignments = await this.staffAssignments.list({ classGroupId: resource.classGroupId })
       return assignments.some(assignment => assignment.staffId === staffMemberId)
     }
     return false

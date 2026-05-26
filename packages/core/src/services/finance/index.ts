@@ -20,17 +20,17 @@ export class FinanceService {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
-    this.students = args.repositories.students.students
-    this.feeDefinitions = args.repositories.finance.fees
-    this.studentFees = args.repositories.finance.studentFees
-    this.payments = args.repositories.finance.payments
+    this.students = args.repositories.students
+    this.feeDefinitions = args.repositories.fees
+    this.studentFees = args.repositories.studentFees
+    this.payments = args.repositories.payments
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: SchoolRepositories['students']['students']
-  private readonly feeDefinitions: SchoolRepositories['finance']['fees']
-  private readonly studentFees: SchoolRepositories['finance']['studentFees']
-  private readonly payments: SchoolRepositories['finance']['payments']
+  private readonly students: SchoolRepositories['students']
+  private readonly feeDefinitions: SchoolRepositories['fees']
+  private readonly studentFees: SchoolRepositories['studentFees']
+  private readonly payments: SchoolRepositories['payments']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
@@ -191,7 +191,7 @@ export class FinanceService {
   async buildFeeSummary(studentId: string): Promise<StudentFeeSummary> {
     const student = await this.requireStudent(studentId)
     await this.authorize('finance.read', { schoolId: student.schoolId, studentId })
-    const fees = await this.studentFees.listByStudent(studentId)
+    const fees = await this.studentFees.list({ studentId })
     const currency = fees[0]?.expectedAmount.currency ?? 'XAF'
     const totalExpectedAmount = fees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
     const totalPaidAmount = fees.reduce((sum, item) => sum + item.paidAmount.amount, 0)

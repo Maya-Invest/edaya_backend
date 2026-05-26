@@ -1,9 +1,6 @@
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type {
-  AcademicsRepositories,
-  SchedulingRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
 
@@ -13,10 +10,10 @@ function generateUniqueId(): string {
 
 export interface ScheduleServiceArgs {
   atomicExecution: AtomicExecutionPort
-  classGroupRepository: AcademicsRepositories['classGroups']
-  scheduleRepository: SchedulingRepositories['schedules']
-  calendarEventRepository: SchedulingRepositories['calendarEvents']
-  sessionRepository: SchedulingRepositories['sessions']
+  classGroupRepository: SchoolRepositories['classGroups']
+  scheduleRepository: SchoolRepositories['schedules']
+  calendarEventRepository: SchoolRepositories['calendarEvents']
+  sessionRepository: SchoolRepositories['sessions']
 }
 
 const dayOfWeekMap: Record<number, DayOfWeek> = {
@@ -39,10 +36,10 @@ export class ScheduleService {
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly schedules: SchedulingRepositories['schedules']
-  private readonly calendarEvents: SchedulingRepositories['calendarEvents']
-  private readonly sessions: SchedulingRepositories['sessions']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly schedules: SchoolRepositories['schedules']
+  private readonly calendarEvents: SchoolRepositories['calendarEvents']
+  private readonly sessions: SchoolRepositories['sessions']
 
   /**
    * Defines a schedule template (recurring or one-off) for a class group.
@@ -104,8 +101,8 @@ export class ScheduleService {
   }): Promise<Session[]> {
     return this.atomicExecution.execute(async () => {
       const classGroup = await this.requireClassGroup(classGroupId)
-      const schedules = await this.schedules.listByClassGroup(classGroupId)
-      const calendarEvents = await this.calendarEvents.listByAcademicYear(classGroup.academicYearId)
+      const schedules = await this.schedules.list({ classGroupId })
+      const calendarEvents = await this.calendarEvents.list({ academicYearId: classGroup.academicYearId })
 
       const nonSchoolDates = new Set<string>()
       for (const event of calendarEvents) {

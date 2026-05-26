@@ -4,23 +4,17 @@ import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
-import type {
-  AcademicsRepositories,
-  AssessmentRepositories,
-  FinanceRepositories,
-  SetupRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 
 export interface StudentDirectoryServiceArgs {
-  schoolRepository: SetupRepositories['schools']
-  academicYearRepository: SetupRepositories['academicYears']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  studentRepository: StudentRepositories['students']
-  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
-  guardianStudentLinkRepository: StudentRepositories['guardianLinks']
-  reportCardResultRepository: AssessmentRepositories['results']
-  studentFeeRepository: FinanceRepositories['studentFees']
+  schoolRepository: SchoolRepositories['schools']
+  academicYearRepository: SchoolRepositories['academicYears']
+  classGroupRepository: SchoolRepositories['classGroups']
+  studentRepository: SchoolRepositories['students']
+  StudentClassEnrollmentRepository: SchoolRepositories['enrollments']
+  guardianStudentLinkRepository: SchoolRepositories['guardianLinks']
+  reportCardResultRepository: SchoolRepositories['results']
+  studentFeeRepository: SchoolRepositories['studentFees']
 }
 
 export interface StudentDirectoryRow {
@@ -50,14 +44,14 @@ export class StudentDirectoryService {
     this.fees = args.studentFeeRepository
   }
 
-  private readonly schools: SetupRepositories['schools']
-  private readonly academicYears: SetupRepositories['academicYears']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly students: StudentRepositories['students']
-  private readonly enrollments: StudentRepositories['enrollments']
-  private readonly guardianStudentLinks: StudentRepositories['guardianLinks']
-  private readonly reportCardResults: AssessmentRepositories['results']
-  private readonly fees: FinanceRepositories['studentFees']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly students: SchoolRepositories['students']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
+  private readonly reportCardResults: SchoolRepositories['results']
+  private readonly fees: SchoolRepositories['studentFees']
 
   async listStudents({
     schoolId,
@@ -69,10 +63,10 @@ export class StudentDirectoryService {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.resolveAcademicYear({ schoolId, academicYearId })
     const classGroups = activeAcademicYear
-      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
+      ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
       : []
     const classGroupById = new Map(classGroups.map(classGroup => [classGroup.id, classGroup]))
-    const students = await this.students.listBySchool(schoolId)
+    const students = await this.students.list({ schoolId })
 
     const rows = await Promise.all(
       students.map(async (student) => {
@@ -80,9 +74,9 @@ export class StudentDirectoryService {
           this.enrollments.findCurrentByStudent(student.id).then(enrollment =>
             enrollment && classGroupById.has(enrollment.classGroupId) ? enrollment : undefined,
           ),
-          this.guardianStudentLinks.listByStudent(student.id),
-          this.reportCardResults.listByStudent(student.id),
-          this.fees.listByStudent(student.id),
+          this.guardianStudentLinks.list({ studentId: student.id }),
+          this.reportCardResults.list({ studentId: student.id }),
+          this.fees.list({ studentId: student.id }),
         ])
 
         return {
@@ -129,7 +123,7 @@ export class StudentDirectoryService {
     academicYearId?: string
   }): Promise<AcademicYear | undefined> {
     if (!academicYearId) {
-      const academicYears = await this.academicYears.listBySchool(schoolId)
+      const academicYears = await this.academicYears.list({ schoolId })
       return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
     }
 

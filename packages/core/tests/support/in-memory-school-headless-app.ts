@@ -46,7 +46,7 @@ import type {
   Subject,
   SubjectMatter,
 } from '../../src/entities'
-import type { BaseRepositoryInterface, SchoolRepositories } from '../../src/ports'
+import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import type { ActorMetadata } from '../../src/services/authorization'
 import { StaffMember, StaffRole } from '../../src/entities'
 import { SchoolApplication } from '../../src/school-headless-app'
@@ -54,6 +54,7 @@ import {
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
 } from '../../src/services/authorization'
+import { matchesFilter } from '../../src/utils'
 
 interface EntityWithId {
   readonly id: string
@@ -85,14 +86,24 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   })
   return {
     findById: async (id: string) => entries.get(id),
-    list: async () => [...entries.values()],
+    list: async (filter?: Filter<T>) => {
+      const all = [...entries.values()]
+      if (!filter)
+        return all
+      return all.filter(entity => matchesFilter(entity, filter))
+    },
     save: async (entity: T) => {
       entries.set(entity.id, entity)
     },
     delete: async (entity: T) => {
       entries.delete(entity.id)
     },
-    count: async () => entries.size,
+    count: async (filter?: Filter<T>) => {
+      const all = [...entries.values()]
+      if (!filter)
+        return all.length
+      return all.filter(entity => matchesFilter(entity, filter)).length
+    },
   }
 }
 
@@ -197,321 +208,171 @@ export function createTestApp(actor?: ActorMetadata) {
   const examSubjects = createStore<ExamSubject>(transactionParticipants)
 
   const schoolRepositories: SchoolRepositories = {
-    setup: {
-      schools,
-      academicYears: {
-        ...academicYears,
-        listBySchool: async schoolId => (await academicYears.list()).filter(item => item.schoolId === schoolId),
-      },
-      academicPeriods: {
-        ...academicPeriods,
-        listByAcademicYear: async academicYearId =>
-          (await academicPeriods.list()).filter(item => item.academicYearId === academicYearId),
-        listBySchool: async schoolId => (await academicPeriods.list()).filter(item => item.schoolId === schoolId),
-      },
-      periodDefinitions: {
-        ...periodDefinitions,
-        listByAcademicYear: async academicYearId =>
-          (await periodDefinitions.list()).filter(item => item.academicYearId === academicYearId),
-      },
-      gradeLevels: {
-        ...gradeLevels,
-        listBySchool: async schoolId => (await gradeLevels.list()).filter(item => item.schoolId === schoolId),
-      },
-      staffMembers: {
-        ...staffMembers,
-        listBySchool: async schoolId => (await staffMembers.list()).filter(item => item.schoolId === schoolId),
-      },
-      staffAssignments: {
-        ...staffAssignments,
-        listByStaff: async staffId => (await staffAssignments.list()).filter(item => item.staffId === staffId),
-        listByClassGroup: async classGroupId =>
-          (await staffAssignments.list()).filter(item => item.classGroupId === classGroupId),
-        listByClassSubject: async classSubjectId =>
-          (await staffAssignments.list()).filter(item => item.classSubjectId === classSubjectId),
-        listBySession: async sessionId => (await staffAssignments.list()).filter(item => item.sessionId === sessionId),
-        listByGroupedSession: async groupedSessionId =>
-          (await staffAssignments.list()).filter(item => item.groupedSessionId === groupedSessionId),
-      },
-      attachments: {
-        ...attachments,
-        listByOwner: async (ownerKind, ownerId) =>
-          (await attachments.list()).filter(item => item.ownerKind === ownerKind && item.ownerId === ownerId),
-      },
-      resources,
-      resourceAssignments,
+    // setup
+    schools,
+    academicYears,
+    academicPeriods,
+    periodDefinitions,
+    gradeLevels,
+    staffMembers,
+    staffAssignments,
+    attachments,
+    resources,
+    resourceAssignments,
+
+    // finances
+    fees,
+    studentFees: {
+      ...studentFees,
+      save: entity => saveWithFailure('studentFeeRepository', studentFees, entity),
     },
-    academics: {
-      subjects: {
-        ...subjects,
-        listBySchool: async schoolId => (await subjects.list()).filter(item => item.schoolId === schoolId),
-      },
-      subjectMatters: {
-        ...subjectMatters,
-        listBySubject: async subjectId => (await subjectMatters.list()).filter(item => item.subjectId === subjectId),
-      },
-      classGroups: {
-        ...classGroups,
-        listByAcademicYear: async academicYearId =>
-          (await classGroups.list()).filter(item => item.academicYearId === academicYearId),
-      },
-      classSubjects: {
-        ...classSubjects,
-        listByClassGroup: async classGroupId =>
-          (await classSubjects.list()).filter(item => item.classGroupId === classGroupId),
-        listBySubject: async subjectId => (await classSubjects.list()).filter(item => item.subjectId === subjectId),
-      },
-      classSubjectMatters: {
-        ...classSubjectMatters,
-        save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
-        findByClassSubjectAndSubjectMatter: async (classSubjectId, subjectMatterId) =>
-          (await classSubjectMatters.list()).find(item =>
-            item.classSubjectId === classSubjectId && item.subjectMatterId === subjectMatterId,
-          ),
-        listByClassSubject: async classSubjectId =>
-          (await classSubjectMatters.list()).filter(item => item.classSubjectId === classSubjectId),
-      },
-      classSubjectProgress: {
-        ...classSubjectProgress,
-        findByClassSubjectMatterAndSession: async (matterId, sessionId) =>
-          (await classSubjectProgress.list()).find(item =>
-            item.classSubjectMatterId === matterId && item.sessionId === sessionId,
-          ),
-        listByClassSubjectMatter: async matterId =>
-          (await classSubjectProgress.list()).filter(item => item.classSubjectMatterId === matterId),
-        listBySession: async sessionId =>
-          (await classSubjectProgress.list()).filter(item => item.sessionId === sessionId),
-      },
-      activities,
-      studentActivityEnrollments,
+    payments,
+
+    // scheduling
+    schedules,
+    sessions: {
+      ...sessions,
+      save: entity => saveWithFailure('sessionRepository', sessions, entity),
     },
-    scheduling: {
-      schedules: {
-        ...schedules,
-        listByClassGroup: async classGroupId => (await schedules.list()).filter(item => item.classGroupId === classGroupId),
-      },
-      sessions: {
-        ...sessions,
-        save: entity => saveWithFailure('sessionRepository', sessions, entity),
-        listByClassGroup: async classGroupId => (await sessions.list()).filter(item => item.classGroupId === classGroupId),
-        listBetween: async (startDate, endDate) =>
-          (await sessions.list()).filter(item => item.startsAt >= startDate && item.endsAt <= endDate),
-      },
-      groupedSessions: {
-        ...groupedSessions,
-        listByAcademicYear: async academicYearId =>
-          (await groupedSessions.list()).filter(item => item.academicYearId === academicYearId),
-        listBetween: async (startDate, endDate) =>
-          (await groupedSessions.list()).filter(item => item.startsAt >= startDate && item.endsAt <= endDate),
-      },
-      attendance: {
-        ...attendance,
-        findByStudentAndSession: async (studentId, sessionId) =>
-          (await attendance.list()).find(item => item.studentId === studentId && item.sessionId === sessionId),
-        listBySession: async sessionId => (await attendance.list()).filter(item => item.sessionId === sessionId),
-        listByStudentBetween: async (studentId, startDate, endDate) =>
-          (await attendance.list()).filter(item =>
-            item.studentId === studentId && item.date >= startDate && item.date <= endDate,
-          ),
-      },
-      calendarEvents: {
-        ...calendarEvents,
-        listBySchool: async schoolId => (await calendarEvents.list()).filter(item => item.schoolId === schoolId),
-        listByAcademicYear: async academicYearId =>
-          (await calendarEvents.list()).filter(item => item.academicYearId === academicYearId),
-      },
+    groupedSessions,
+    attendance: {
+      ...attendance,
+      findByStudentAndSession: async (studentId, sessionId) =>
+        (await attendance.list({ studentId, sessionId }))[0],
     },
-    assessments: {
-      assessments: {
-        ...assessments,
-        listByClassSubjectAndPeriod: async (classSubjectId, periodId) =>
-          (await assessments.list()).filter(item =>
-            item.classSubjectId === classSubjectId && item.periodId === periodId,
-          ),
-        listByPeriod: async periodId => (await assessments.list()).filter(item => item.periodId === periodId),
-      },
-      grades: {
-        ...grades,
-        listByStudentAndPeriod: async (studentId, periodId) =>
-          (await grades.list()).filter(item => item.studentId === studentId && item.periodId === periodId),
-        listByClassSubjectAndPeriod: async (classSubjectId, periodId) =>
-          (await grades.list()).filter(item => item.classSubjectId === classSubjectId && item.periodId === periodId),
-        listByAssessment: async assessmentId => (await grades.list()).filter(item => item.assessmentId === assessmentId),
-      },
-      gradeScales: {
-        ...gradeScales,
-        findDefaultBySchool: async schoolId =>
-          (await gradeScales.list()).find(item => item.schoolId === schoolId && item.isDefault),
-        listBySchool: async schoolId => (await gradeScales.list()).filter(item => item.schoolId === schoolId),
-      },
-      definitions: {
-        ...definitions,
-        findDefaultByGradeLevel: async (gradeLevelId, academicYearId) =>
-          (await definitions.list()).find(item =>
-            item.gradeLevelId === gradeLevelId && item.academicYearId === academicYearId && item.isDefault,
-          ),
-        listByGradeLevel: async (gradeLevelId, academicYearId) =>
-          (await definitions.list()).filter(item =>
-            item.gradeLevelId === gradeLevelId && item.academicYearId === academicYearId,
-          ),
-      },
-      sections: {
-        ...sections,
-        listByReportCardDefinition: async definitionId =>
-          (await sections.list()).filter(item => item.reportCardDefinitionId === definitionId),
-      },
-      results: {
-        ...results,
-        save: entity => saveWithFailure('reportCardResultRepository', results, entity),
-        findByStudentAndPeriod: async (studentId, periodId) =>
-          (await results.list()).find(item => item.studentId === studentId && item.periodId === periodId),
-        findByStudentAndExam: async (studentId, examId) =>
-          (await results.list()).find(item => item.studentId === studentId && item.examId === examId),
-        listByStudent: async studentId => (await results.list()).filter(item => item.studentId === studentId),
-      },
-      classExams: {
-        ...classExams,
-        findByExamAndClassGroupAndPeriod: async (examId, classGroupId, periodId) =>
-          (await classExams.list()).find(item =>
-            item.examId === examId && item.classGroupId === classGroupId && item.periodId === periodId,
-          ),
-        listByExam: async examId => (await classExams.list()).filter(item => item.examId === examId),
-        listByClassGroupAndPeriod: async (classGroupId, periodId) =>
-          (await classExams.list()).filter(item =>
-            item.classGroupId === classGroupId && item.periodId === periodId,
-          ),
-      },
-      exams,
-      examSubjects,
+    calendarEvents,
+
+    // academics
+    subjects,
+    subjectMatters,
+    classGroups,
+    classSubjects,
+    classSubjectMatters: {
+      ...classSubjectMatters,
+      save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
+      findByClassSubjectAndSubjectMatter: async (classSubjectId, subjectMatterId) =>
+        (await classSubjectMatters.list({ classSubjectId, subjectMatterId }))[0],
     },
-    students: {
-      students: {
-        ...students,
-        listBySchool: async schoolId => (await students.list()).filter(item => item.schoolId === schoolId),
-      },
-      enrollments: {
-        ...enrollments,
-        findCurrentByStudent: async studentId =>
-          (await enrollments.list()).find(item => item.studentId === studentId && item.isCurrent),
-        listByStudent: async studentId => (await enrollments.list()).filter(item => item.studentId === studentId),
-        listByClassGroup: async classGroupId =>
-          (await enrollments.list()).filter(item => item.classGroupId === classGroupId),
-      },
-      guardians: {
-        ...guardians,
-        listBySchool: async schoolId => (await guardians.list()).filter(item => item.schoolId === schoolId),
-      },
-      guardianLinks: {
-        ...guardianLinks,
-        findByGuardianAndStudent: async (guardianId, studentId) =>
-          (await guardianLinks.list()).find(item => item.guardianId === guardianId && item.studentId === studentId),
-        listByGuardian: async guardianId => (await guardianLinks.list()).filter(item => item.guardianId === guardianId),
-        listByStudent: async studentId => (await guardianLinks.list()).filter(item => item.studentId === studentId),
-      },
-      studentNotes,
-      studentDisciplinaryActions,
-      disciplinaryActions,
-      studentIncidentInvolvements,
-      incidents,
+    classSubjectProgress: {
+      ...classSubjectProgress,
+      findByClassSubjectMatterAndSession: async (matterId, sessionId) =>
+        (await classSubjectProgress.list({ classSubjectMatterId: matterId, sessionId }))[0],
     },
-    finance: {
-      fees: {
-        ...fees,
-        listBySchool: async schoolId => (await fees.list()).filter(item => item.schoolId === schoolId),
-        listByAcademicYear: async academicYearId =>
-          (await fees.list()).filter(item => item.academicYearId === academicYearId),
-      },
-      studentFees: {
-        ...studentFees,
-        save: entity => saveWithFailure('studentFeeRepository', studentFees, entity),
-        listByStudent: async studentId => (await studentFees.list()).filter(item => item.studentId === studentId),
-      },
-      payments: {
-        ...payments,
-        listByStudentFee: async studentFeeId =>
-          (await payments.list()).filter(item => item.studentFeeId === studentFeeId),
-      },
+    activities,
+    studentActivityEnrollments,
+
+    // assessments
+    assessments,
+    grades,
+    gradeScales: {
+      ...gradeScales,
+      findDefaultBySchool: async schoolId =>
+        (await gradeScales.list({ schoolId, isDefault: true }))[0],
     },
-    communications: {
-      announcements: {
-        ...announcements,
-        listBySchool: async schoolId => (await announcements.list()).filter(item => item.schoolId === schoolId),
-      },
-      announcementTargets: {
-        ...announcementTargets,
-        listByAnnouncement: async announcementId =>
-          (await announcementTargets.list()).filter(item => item.announcementId === announcementId),
-        listByTarget: async (targetKind, targetId) =>
-          (await announcementTargets.list()).filter(item =>
-            item.targetKind === targetKind && item.targetId === targetId,
-          ),
-      },
-      messageDeliveries: {
-        ...messageDeliveries,
-        listByAnnouncement: async announcementId =>
-          (await messageDeliveries.list()).filter(item => item.announcementId === announcementId),
-        listByRecipient: async recipientId =>
-          (await messageDeliveries.list()).filter(item => item.recipientId === recipientId),
-      },
+    definitions: {
+      ...definitions,
+      findDefaultByGradeLevel: async (gradeLevelId, academicYearId) =>
+        (await definitions.list({ gradeLevelId, academicYearId, isDefault: true }))[0],
     },
+    sections,
+    results: {
+      ...results,
+      save: entity => saveWithFailure('reportCardResultRepository', results, entity),
+      findByStudentAndPeriod: async (studentId, periodId) =>
+        (await results.list({ studentId, periodId }))[0],
+      findByStudentAndExam: async (studentId, examId) =>
+        (await results.list({ studentId, examId }))[0],
+    },
+    classExams: {
+      ...classExams,
+      findByExamAndClassGroupAndPeriod: async (examId, classGroupId, periodId) =>
+        (await classExams.list({ examId, classGroupId, periodId }))[0],
+    },
+    exams,
+    examSubjects,
+
+    // students
+    students,
+    enrollments: {
+      ...enrollments,
+      findCurrentByStudent: async studentId =>
+        (await enrollments.list({ studentId, isCurrent: true }))[0],
+    },
+    guardians,
+    guardianLinks: {
+      ...guardianLinks,
+      findByGuardianAndStudent: async (guardianId, studentId) =>
+        (await guardianLinks.list({ guardianId, studentId }))[0],
+    },
+    studentNotes,
+    studentDisciplinaryActions,
+    disciplinaryActions,
+    studentIncidentInvolvements,
+    incidents,
+
+    // communications
+    announcements,
+    announcementTargets,
+    messageDeliveries,
+
   }
 
   const testRepositories = {
     // Nested structure (implements SchoolRepositories)
-    setup: schoolRepositories.setup,
-    academics: schoolRepositories.academics,
-    scheduling: schoolRepositories.scheduling,
-    assessments: schoolRepositories.assessments,
-    students: schoolRepositories.students,
-    finance: schoolRepositories.finance,
-    communications: schoolRepositories.communications,
+    // setup: schoolRepositories.setup,
+    // finance: schoolRepositories.finance,
+    // scheduling: schoolRepositories.scheduling,
+    // communications: schoolRepositories.communications,
+    // academics: schoolRepositories.academics,
+    // assessments: schoolRepositories.assessments,
+    // students: schoolRepositories.students,
 
     // Flat structure (for backward compatibility in existing tests)
-    schoolRepository: schoolRepositories.setup.schools,
-    academicYearRepository: schoolRepositories.setup.academicYears,
-    academicPeriodRepository: schoolRepositories.setup.academicPeriods,
-    periodDefinitionRepository: schoolRepositories.setup.periodDefinitions,
-    gradeLevelRepository: schoolRepositories.setup.gradeLevels,
-    classGroupRepository: schoolRepositories.academics.classGroups,
-    studentRepository: schoolRepositories.students.students,
-    StudentClassEnrollmentRepository: schoolRepositories.students.enrollments,
-    guardianRepository: schoolRepositories.students.guardians,
-    guardianStudentLinkRepository: schoolRepositories.students.guardianLinks,
-    staffMemberRepository: schoolRepositories.setup.staffMembers,
-    staffAssignmentRepository: schoolRepositories.setup.staffAssignments,
-    subjectRepository: schoolRepositories.academics.subjects,
-    subjectMatterRepository: schoolRepositories.academics.subjectMatters,
-    classSubjectRepository: schoolRepositories.academics.classSubjects,
-    classSubjectMatterRepository: schoolRepositories.academics.classSubjectMatters,
-    classSubjectProgressRepository: schoolRepositories.academics.classSubjectProgress,
-    sessionRepository: schoolRepositories.scheduling.sessions,
-    groupedSessionRepository: schoolRepositories.scheduling.groupedSessions,
-    assessmentRepository: schoolRepositories.assessments.assessments,
-    attendanceRepository: schoolRepositories.scheduling.attendance,
-    gradeRepository: schoolRepositories.assessments.grades,
-    gradeScaleRepository: schoolRepositories.assessments.gradeScales,
-    reportCardDefinitionRepository: schoolRepositories.assessments.definitions,
-    reportCardDefinitionSectionRepository: schoolRepositories.assessments.sections,
-    reportCardResultRepository: schoolRepositories.assessments.results,
-    announcementRepository: schoolRepositories.communications.announcements,
-    announcementTargetRepository: schoolRepositories.communications.announcementTargets,
-    messageDeliveryRepository: schoolRepositories.communications.messageDeliveries,
-    feeRepository: schoolRepositories.finance.fees,
-    studentFeeRepository: schoolRepositories.finance.studentFees,
-    paymentRepository: schoolRepositories.finance.payments,
-    scheduleRepository: schoolRepositories.scheduling.schedules,
-    calendarEventRepository: schoolRepositories.scheduling.calendarEvents,
+    schoolRepository: schoolRepositories.schools,
+    academicYearRepository: schoolRepositories.academicYears,
+    academicPeriodRepository: schoolRepositories.academicPeriods,
+    periodDefinitionRepository: schoolRepositories.periodDefinitions,
+    gradeLevelRepository: schoolRepositories.gradeLevels,
+    classGroupRepository: schoolRepositories.classGroups,
+    studentRepository: schoolRepositories.students,
+    StudentClassEnrollmentRepository: schoolRepositories.enrollments,
+    guardianRepository: schoolRepositories.guardians,
+    guardianStudentLinkRepository: schoolRepositories.guardianLinks,
+    staffMemberRepository: schoolRepositories.staffMembers,
+    staffAssignmentRepository: schoolRepositories.staffAssignments,
+    subjectRepository: schoolRepositories.subjects,
+    subjectMatterRepository: schoolRepositories.subjectMatters,
+    classSubjectRepository: schoolRepositories.classSubjects,
+    classSubjectMatterRepository: schoolRepositories.classSubjectMatters,
+    classSubjectProgressRepository: schoolRepositories.classSubjectProgress,
+    sessionRepository: schoolRepositories.sessions,
+    groupedSessionRepository: schoolRepositories.groupedSessions,
+    assessmentRepository: schoolRepositories.assessments,
+    attendanceRepository: schoolRepositories.attendance,
+    gradeRepository: schoolRepositories.grades,
+    gradeScaleRepository: schoolRepositories.gradeScales,
+    reportCardDefinitionRepository: schoolRepositories.definitions,
+    reportCardDefinitionSectionRepository: schoolRepositories.sections,
+    reportCardResultRepository: schoolRepositories.results,
+    announcementRepository: schoolRepositories.announcements,
+    announcementTargetRepository: schoolRepositories.announcementTargets,
+    messageDeliveryRepository: schoolRepositories.messageDeliveries,
+    feeRepository: schoolRepositories.fees,
+    studentFeeRepository: schoolRepositories.studentFees,
+    paymentRepository: schoolRepositories.payments,
+    scheduleRepository: schoolRepositories.schedules,
+    calendarEventRepository: schoolRepositories.calendarEvents,
   }
 
   const application = new SchoolApplication({
     atomicExecution: createAtomicExecution(transactionParticipants),
     repositories: schoolRepositories,
     authorizationPolicy: new RepositoryAuthorizationPolicy({
-      staffAssignmentRepository: schoolRepositories.setup.staffAssignments,
-      staffMemberRepository: schoolRepositories.setup.staffMembers,
-      guardianRepository: schoolRepositories.students.guardians,
-      guardianStudentLinkRepository: schoolRepositories.students.guardianLinks,
-      studentRepository: schoolRepositories.students.students,
+      staffAssignmentRepository: schoolRepositories.staffAssignments,
+      staffMemberRepository: schoolRepositories.staffMembers,
+      guardianRepository: schoolRepositories.guardians,
+      guardianStudentLinkRepository: schoolRepositories.guardianLinks,
+      studentRepository: schoolRepositories.students,
     }),
   })
 
@@ -525,7 +386,7 @@ export function createTestApp(actor?: ActorMetadata) {
   })
 
   if (defaultActor.kind === 'staff') {
-    void schoolRepositories.setup.staffMembers.save(new StaffMember({
+    void schoolRepositories.staffMembers.save(new StaffMember({
       id: defaultActor.staffMemberId,
       schoolId: defaultActor.schoolId,
       firstName: 'Fixture',

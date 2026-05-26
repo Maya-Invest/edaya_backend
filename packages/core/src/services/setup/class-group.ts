@@ -1,14 +1,14 @@
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { GradeLevel } from '../../entities/school/grade-level'
 import type { School } from '../../entities/school/school'
-import type { AcademicsRepositories, SetupRepositories } from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { ClassGroup } from '../../entities/school/class-group'
 
 export interface ClassGroupServiceArgs {
-  schoolRepository: SetupRepositories['schools']
-  academicYearRepository: SetupRepositories['academicYears']
-  gradeLevelRepository: SetupRepositories['gradeLevels']
-  classGroupRepository: AcademicsRepositories['classGroups']
+  schoolRepository: SchoolRepositories['schools']
+  academicYearRepository: SchoolRepositories['academicYears']
+  gradeLevelRepository: SchoolRepositories['gradeLevels']
+  classGroupRepository: SchoolRepositories['classGroups']
 }
 
 export class ClassGroupService {
@@ -19,10 +19,10 @@ export class ClassGroupService {
     this.classGroups = args.classGroupRepository
   }
 
-  private readonly schools: SetupRepositories['schools']
-  private readonly academicYears: SetupRepositories['academicYears']
-  private readonly gradeLevels: SetupRepositories['gradeLevels']
-  private readonly classGroups: AcademicsRepositories['classGroups']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly gradeLevels: SchoolRepositories['gradeLevels']
+  private readonly classGroups: SchoolRepositories['classGroups']
 
   async createClassGroup({
     id,

@@ -2,20 +2,15 @@ import type { AssessmentKind } from '../../entities/assessments/assessment'
 import type { Session } from '../../entities/scheduling/session'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { ClassGroup } from '../../entities/school/class-group'
-import type {
-  AcademicsRepositories,
-  AssessmentRepositories,
-  SchedulingRepositories,
-  SetupRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { Assessment } from '../../entities/assessments/assessment'
 
 export interface AssessmentServiceArgs {
-  classGroupRepository: AcademicsRepositories['classGroups']
-  classSubjectRepository: AcademicsRepositories['classSubjects']
-  academicPeriodRepository: SetupRepositories['academicPeriods']
-  sessionRepository: SchedulingRepositories['sessions']
-  assessmentRepository: AssessmentRepositories['assessments']
+  classGroupRepository: SchoolRepositories['classGroups']
+  classSubjectRepository: SchoolRepositories['classSubjects']
+  academicPeriodRepository: SchoolRepositories['academicPeriods']
+  sessionRepository: SchoolRepositories['sessions']
+  assessmentRepository: SchoolRepositories['assessments']
 }
 
 export class AssessmentService {
@@ -27,11 +22,11 @@ export class AssessmentService {
     this.assessments = args.assessmentRepository
   }
 
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly classSubjects: AcademicsRepositories['classSubjects']
-  private readonly academicPeriods: SetupRepositories['academicPeriods']
-  private readonly sessions: SchedulingRepositories['sessions']
-  private readonly assessments: AssessmentRepositories['assessments']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly sessions: SchoolRepositories['sessions']
+  private readonly assessments: SchoolRepositories['assessments']
 
   async createAssessment({
     id,

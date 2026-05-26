@@ -3,20 +3,16 @@ import type { GroupedSession } from '../../entities/scheduling/grouped-session'
 import type { Session } from '../../entities/scheduling/session'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { StaffMember, StaffRole } from '../../entities/school/staff-member'
-import type {
-  AcademicsRepositories,
-  SchedulingRepositories,
-  SetupRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { StaffAssignment } from '../../entities/school/staff-assignment'
 
 export interface StaffAssignmentServiceArgs {
-  staffMemberRepository: SetupRepositories['staffMembers']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  classSubjectRepository: AcademicsRepositories['classSubjects']
-  groupedSessionRepository: SchedulingRepositories['groupedSessions']
-  sessionRepository: SchedulingRepositories['sessions']
-  staffAssignmentRepository: SetupRepositories['staffAssignments']
+  staffMemberRepository: SchoolRepositories['staffMembers']
+  classGroupRepository: SchoolRepositories['classGroups']
+  classSubjectRepository: SchoolRepositories['classSubjects']
+  groupedSessionRepository: SchoolRepositories['groupedSessions']
+  sessionRepository: SchoolRepositories['sessions']
+  staffAssignmentRepository: SchoolRepositories['staffAssignments']
 }
 
 export class StaffAssignmentService {
@@ -29,12 +25,12 @@ export class StaffAssignmentService {
     this.staffAssignments = args.staffAssignmentRepository
   }
 
-  private readonly staffMembers: SetupRepositories['staffMembers']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly classSubjects: AcademicsRepositories['classSubjects']
-  private readonly groupedSessions: SchedulingRepositories['groupedSessions']
-  private readonly sessions: SchedulingRepositories['sessions']
-  private readonly staffAssignments: SetupRepositories['staffAssignments']
+  private readonly staffMembers: SchoolRepositories['staffMembers']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly groupedSessions: SchoolRepositories['groupedSessions']
+  private readonly sessions: SchoolRepositories['sessions']
+  private readonly staffAssignments: SchoolRepositories['staffAssignments']
 
   async assignStaffToClass({
     id,

@@ -20,66 +20,66 @@ export interface AssessmentsServiceArgs extends AuthorizedServiceArgs {
 }
 
 export class AssessmentsService {
-  private readonly schools: SchoolRepositories['setup']['schools']
-  private readonly academicYears: SchoolRepositories['setup']['academicYears']
-  private readonly gradeLevels: SchoolRepositories['setup']['gradeLevels']
-  private readonly gradeScales: SchoolRepositories['assessments']['gradeScales']
-  private readonly reportCardDefinitions: SchoolRepositories['assessments']['definitions']
-  private readonly reportCardDefinitionSections: SchoolRepositories['assessments']['sections']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly gradeLevels: SchoolRepositories['gradeLevels']
+  private readonly gradeScales: SchoolRepositories['gradeScales']
+  private readonly reportCardDefinitions: SchoolRepositories['definitions']
+  private readonly reportCardDefinitionSections: SchoolRepositories['sections']
   private readonly assessments: AssessmentService
   private readonly grades: GradeService
   private readonly reportCardResults: ReportCardResultService
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
-  private readonly students: SchoolRepositories['students']['students']
-  private readonly classGroups: SchoolRepositories['academics']['classGroups']
-  private readonly classSubjects: SchoolRepositories['academics']['classSubjects']
-  private readonly assessmentRepository: SchoolRepositories['assessments']['assessments']
-  private readonly academicPeriods: SchoolRepositories['setup']['academicPeriods']
-  private readonly sessions: SchoolRepositories['scheduling']['sessions']
+  private readonly students: SchoolRepositories['students']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly assessmentRepository: SchoolRepositories['assessments']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly sessions: SchoolRepositories['sessions']
 
   constructor(args: AssessmentsServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schools = args.repositories.setup.schools
-    this.academicYears = args.repositories.setup.academicYears
-    this.gradeLevels = args.repositories.setup.gradeLevels
-    this.gradeScales = args.repositories.assessments.gradeScales
-    this.reportCardDefinitions = args.repositories.assessments.definitions
-    this.reportCardDefinitionSections = args.repositories.assessments.sections
-    this.students = args.repositories.students.students
-    this.classGroups = args.repositories.academics.classGroups
-    this.classSubjects = args.repositories.academics.classSubjects
-    this.assessmentRepository = args.repositories.assessments.assessments
-    this.academicPeriods = args.repositories.setup.academicPeriods
-    this.sessions = args.repositories.scheduling.sessions
+    this.schools = args.repositories.schools
+    this.academicYears = args.repositories.academicYears
+    this.gradeLevels = args.repositories.gradeLevels
+    this.gradeScales = args.repositories.gradeScales
+    this.reportCardDefinitions = args.repositories.definitions
+    this.reportCardDefinitionSections = args.repositories.sections
+    this.students = args.repositories.students
+    this.classGroups = args.repositories.classGroups
+    this.classSubjects = args.repositories.classSubjects
+    this.assessmentRepository = args.repositories.assessments
+    this.academicPeriods = args.repositories.academicPeriods
+    this.sessions = args.repositories.sessions
     this.assessments = new AssessmentService({
-      classGroupRepository: args.repositories.academics.classGroups,
-      classSubjectRepository: args.repositories.academics.classSubjects,
-      academicPeriodRepository: args.repositories.setup.academicPeriods,
-      sessionRepository: args.repositories.scheduling.sessions,
-      assessmentRepository: args.repositories.assessments.assessments,
+      classGroupRepository: args.repositories.classGroups,
+      classSubjectRepository: args.repositories.classSubjects,
+      academicPeriodRepository: args.repositories.academicPeriods,
+      sessionRepository: args.repositories.sessions,
+      assessmentRepository: args.repositories.assessments,
     })
     this.grades = new GradeService({
-      studentRepository: args.repositories.students.students,
-      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
-      assessmentRepository: args.repositories.assessments.assessments,
-      classSubjectRepository: args.repositories.academics.classSubjects,
-      academicPeriodRepository: args.repositories.setup.academicPeriods,
-      gradeRepository: args.repositories.assessments.grades,
-      classGroupRepository: args.repositories.academics.classGroups,
-      reportCardDefinitionSectionRepository: args.repositories.assessments.sections,
+      studentRepository: args.repositories.students,
+      StudentClassEnrollmentRepository: args.repositories.enrollments,
+      assessmentRepository: args.repositories.assessments,
+      classSubjectRepository: args.repositories.classSubjects,
+      academicPeriodRepository: args.repositories.academicPeriods,
+      gradeRepository: args.repositories.grades,
+      classGroupRepository: args.repositories.classGroups,
+      reportCardDefinitionSectionRepository: args.repositories.sections,
     })
     this.reportCardResults = new ReportCardResultService({
       atomicExecution: args.atomicExecution,
-      studentRepository: args.repositories.students.students,
-      classGroupRepository: args.repositories.academics.classGroups,
-      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
-      academicPeriodRepository: args.repositories.setup.academicPeriods,
-      assessmentRepository: args.repositories.assessments.assessments,
-      gradeRepository: args.repositories.assessments.grades,
-      reportCardDefinitionRepository: args.repositories.assessments.definitions,
-      reportCardResultRepository: args.repositories.assessments.results,
+      studentRepository: args.repositories.students,
+      classGroupRepository: args.repositories.classGroups,
+      StudentClassEnrollmentRepository: args.repositories.enrollments,
+      academicPeriodRepository: args.repositories.academicPeriods,
+      assessmentRepository: args.repositories.assessments,
+      gradeRepository: args.repositories.grades,
+      reportCardDefinitionRepository: args.repositories.definitions,
+      reportCardResultRepository: args.repositories.results,
       attendanceService: args.attendanceService,
       gradeService: this.grades,
     })

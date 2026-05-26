@@ -20,25 +20,25 @@ export class AcademicsService {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
-    this.schools = args.repositories.setup.schools
-    this.classGroups = args.repositories.academics.classGroups
-    this.subjects = args.repositories.academics.subjects
-    this.subjectMatters = args.repositories.academics.subjectMatters
-    this.classSubjects = args.repositories.academics.classSubjects
-    this.classSubjectMatters = args.repositories.academics.classSubjectMatters
-    this.progress = args.repositories.academics.classSubjectProgress
-    this.sessions = args.repositories.scheduling.sessions
+    this.schools = args.repositories.schools
+    this.classGroups = args.repositories.classGroups
+    this.subjects = args.repositories.subjects
+    this.subjectMatters = args.repositories.subjectMatters
+    this.classSubjects = args.repositories.classSubjects
+    this.classSubjectMatters = args.repositories.classSubjectMatters
+    this.progress = args.repositories.classSubjectProgress
+    this.sessions = args.repositories.sessions
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly schools: SchoolRepositories['setup']['schools']
-  private readonly classGroups: SchoolRepositories['academics']['classGroups']
-  private readonly subjects: SchoolRepositories['academics']['subjects']
-  private readonly subjectMatters: SchoolRepositories['academics']['subjectMatters']
-  private readonly classSubjects: SchoolRepositories['academics']['classSubjects']
-  private readonly classSubjectMatters: SchoolRepositories['academics']['classSubjectMatters']
-  private readonly progress: SchoolRepositories['academics']['classSubjectProgress']
-  private readonly sessions: SchoolRepositories['scheduling']['sessions']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly subjects: SchoolRepositories['subjects']
+  private readonly subjectMatters: SchoolRepositories['subjectMatters']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly classSubjectMatters: SchoolRepositories['classSubjectMatters']
+  private readonly progress: SchoolRepositories['classSubjectProgress']
+  private readonly sessions: SchoolRepositories['sessions']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
@@ -103,7 +103,7 @@ export class AcademicsService {
       schoolId: classGroup.schoolId,
       classGroupId,
     })
-    const existing = (await this.classSubjects.listByClassGroup(classGroupId))
+    const existing = (await this.classSubjects.list({ classGroupId }))
       .find(classSubject => classSubject.subjectId === subjectId)
     if (existing) {
       return existing
@@ -233,14 +233,14 @@ export class AcademicsService {
       classGroupId: classGroup.id,
       classSubjectId: classSubject.id,
     })
-    return this.progress.listByClassSubjectMatter(classSubjectMatterId)
+    return this.progress.list({ classSubjectMatterId })
   }
 
   private async updateClassSubjectAggregate(
     classSubject: ClassSubject,
     updatedMatter: ClassSubjectMatter,
   ): Promise<void> {
-    const matters = await this.classSubjectMatters.listByClassSubject(classSubject.id)
+    const matters = await this.classSubjectMatters.list({ classSubjectId: classSubject.id })
     const normalizedMatters = matters.map(matter => matter.id === updatedMatter.id ? updatedMatter : matter)
     if (!normalizedMatters.some(matter => matter.id === updatedMatter.id)) {
       normalizedMatters.push(updatedMatter)

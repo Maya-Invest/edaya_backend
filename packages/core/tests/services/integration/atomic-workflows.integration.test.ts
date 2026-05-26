@@ -179,7 +179,7 @@ describe('atomic workflow safeguards', () => {
       sessionId: 'lesson',
       attendanceByStudent: { student: AttendanceStatus.Present, missing: AttendanceStatus.Absent },
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    expect(await repositories.attendanceRepository.listBySession('lesson')).toHaveLength(0)
+    expect(await repositories.attendanceRepository.list({ sessionId: 'lesson' })).toHaveLength(0)
   })
 
   it('rolls back generated sessions when materializing a later schedule fails', async () => {
@@ -221,6 +221,6 @@ describe('atomic workflow safeguards', () => {
       startDate: sessionDate,
       endDate: sessionDate,
     })).rejects.toThrow('Simulated sessionRepository save failure')
-    expect(await repositories.sessionRepository.listByClassGroup('class')).toHaveLength(0)
+    expect(await repositories.sessionRepository.list({ classGroupId: 'class' })).toHaveLength(0)
   })
 })

@@ -3,26 +3,21 @@ import type { ClassGroup } from '../../entities/school/class-group'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type {
-  AcademicsRepositories,
-  AssessmentRepositories,
-  SetupRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AttendanceService } from '../scheduling/attendance'
 import type { GradeService } from './grade'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 
 export interface ReportCardResultServiceArgs {
   atomicExecution: AtomicExecutionPort
-  studentRepository: StudentRepositories['students']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
-  academicPeriodRepository: SetupRepositories['academicPeriods']
-  assessmentRepository: AssessmentRepositories['assessments']
-  gradeRepository: AssessmentRepositories['grades']
-  reportCardDefinitionRepository: AssessmentRepositories['definitions']
-  reportCardResultRepository: AssessmentRepositories['results']
+  studentRepository: SchoolRepositories['students']
+  classGroupRepository: SchoolRepositories['classGroups']
+  StudentClassEnrollmentRepository: SchoolRepositories['enrollments']
+  academicPeriodRepository: SchoolRepositories['academicPeriods']
+  assessmentRepository: SchoolRepositories['assessments']
+  gradeRepository: SchoolRepositories['grades']
+  reportCardDefinitionRepository: SchoolRepositories['definitions']
+  reportCardResultRepository: SchoolRepositories['results']
   attendanceService: Pick<AttendanceService, 'buildAttendanceSummary'>
   gradeService: GradeService
 }
@@ -43,14 +38,14 @@ export class ReportCardResultService {
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: StudentRepositories['students']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly enrollments: StudentRepositories['enrollments']
-  private readonly academicPeriods: SetupRepositories['academicPeriods']
-  private readonly assessments: AssessmentRepositories['assessments']
-  private readonly grades: AssessmentRepositories['grades']
-  private readonly reportCardDefinitions: AssessmentRepositories['definitions']
-  private readonly reportCardResults: AssessmentRepositories['results']
+  private readonly students: SchoolRepositories['students']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly assessments: SchoolRepositories['assessments']
+  private readonly grades: SchoolRepositories['grades']
+  private readonly reportCardDefinitions: SchoolRepositories['definitions']
+  private readonly reportCardResults: SchoolRepositories['results']
   private readonly attendance: Pick<AttendanceService, 'buildAttendanceSummary'>
   private readonly gradeService: GradeService
 
@@ -90,7 +85,7 @@ export class ReportCardResultService {
       reportCardDefinitionId: definition.id,
       examId,
     })
-    const periodGrades = await this.grades.listByStudentAndPeriod(studentId, periodId)
+    const periodGrades = await this.grades.list({ studentId, periodId })
     const grades = examId ? await this.filterGradesByExam(periodGrades, examId) : periodGrades
     const attendanceSummary = await this.attendance.buildAttendanceSummary({
       studentId,
@@ -169,7 +164,7 @@ export class ReportCardResultService {
     studentId: string
     academicYearId: string
   }): Promise<StudentClassEnrollment> {
-    const enrollments = await this.enrollments.listByStudent(studentId)
+    const enrollments = await this.enrollments.list({ studentId })
     for (const enrollment of enrollments) {
       const classGroup = await this.classGroups.findById(enrollment.classGroupId)
       if (classGroup?.academicYearId === academicYearId) {

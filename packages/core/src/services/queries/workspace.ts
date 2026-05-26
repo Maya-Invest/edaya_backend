@@ -3,17 +3,17 @@ import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { StaffMember } from '../../entities/school/staff-member'
-import type { AcademicsRepositories, SetupRepositories } from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { StaffRole } from '../../entities/school/staff-member'
 
 export interface WorkspaceServiceArgs {
-  schoolRepository: SetupRepositories['schools']
-  academicYearRepository: SetupRepositories['academicYears']
-  academicPeriodRepository: SetupRepositories['academicPeriods']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  staffMemberRepository: SetupRepositories['staffMembers']
-  classSubjectRepository: AcademicsRepositories['classSubjects']
-  staffAssignmentRepository: SetupRepositories['staffAssignments']
+  schoolRepository: SchoolRepositories['schools']
+  academicYearRepository: SchoolRepositories['academicYears']
+  academicPeriodRepository: SchoolRepositories['academicPeriods']
+  classGroupRepository: SchoolRepositories['classGroups']
+  staffMemberRepository: SchoolRepositories['staffMembers']
+  classSubjectRepository: SchoolRepositories['classSubjects']
+  staffAssignmentRepository: SchoolRepositories['staffAssignments']
 }
 
 export interface TeacherCourseLoad {
@@ -42,13 +42,13 @@ export class WorkspaceService {
     this.staffAssignments = args.staffAssignmentRepository
   }
 
-  private readonly schools: SetupRepositories['schools']
-  private readonly academicYears: SetupRepositories['academicYears']
-  private readonly academicPeriods: SetupRepositories['academicPeriods']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly staffMembers: SetupRepositories['staffMembers']
-  private readonly classSubjects: AcademicsRepositories['classSubjects']
-  private readonly staffAssignments: SetupRepositories['staffAssignments']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly staffMembers: SchoolRepositories['staffMembers']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly staffAssignments: SchoolRepositories['staffAssignments']
 
   async getWorkspaceContext({
     schoolId,
@@ -60,16 +60,16 @@ export class WorkspaceService {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
     const classGroups = activeAcademicYear
-      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
+      ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
       : []
     const academicPeriods = activeAcademicYear
-      ? await this.academicPeriods.listByAcademicYear(activeAcademicYear.id)
+      ? await this.academicPeriods.list({ academicYearId: activeAcademicYear.id })
       : []
     const selectedClassGroup
       = (classGroupId ? classGroups.find(candidate => candidate.id === classGroupId) : undefined)
         ?? classGroups[0]
     const selectedAcademicPeriod = academicPeriods[0]
-    const staffMembers = await this.staffMembers.listBySchool(schoolId)
+    const staffMembers = await this.staffMembers.list({ schoolId })
     const teacherCourseLoads = await this.buildTeacherCourseLoads({
       classGroups,
       staffMembers,
@@ -96,7 +96,7 @@ export class WorkspaceService {
     const teacherIdsToCourseCount = new Map<string, number>()
 
     for (const classGroup of classGroups) {
-      const classSubjects = await this.classSubjects.listByClassGroup(classGroup.id)
+      const classSubjects = await this.classSubjects.list({ classGroupId: classGroup.id })
 
       for (const classSubject of classSubjects) {
         const teacherId = await this.resolveTeacherId(classSubject.id, classSubject.staffId)
@@ -116,7 +116,7 @@ export class WorkspaceService {
   }
 
   private async resolveTeacherId(classSubjectId: string, fallbackStaffId?: string): Promise<string | undefined> {
-    const assignments = await this.staffAssignments.listByClassSubject(classSubjectId)
+    const assignments = await this.staffAssignments.list({ classSubjectId })
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     return teacherAssignment?.staffId ?? fallbackStaffId
   }
@@ -130,7 +130,7 @@ export class WorkspaceService {
   }
 
   private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {
-    const academicYears = await this.academicYears.listBySchool(schoolId)
+    const academicYears = await this.academicYears.list({ schoolId })
     return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
   }
 }

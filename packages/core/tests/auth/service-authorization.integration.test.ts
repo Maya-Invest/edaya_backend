@@ -169,7 +169,7 @@ describe('actor-bound service authorization', () => {
     expect(attendance.createdBy).toBe('teacher')
     expect(progress.recordedByStaffId).toBe('teacher')
     expect(grade.createdBy).toBe('teacher')
-    expect(await repositories.attendanceRepository.listBySession(session.id)).toHaveLength(1)
+    expect(await repositories.attendanceRepository.list({ sessionId: session.id })).toHaveLength(1)
   })
 
   it('restricts financial mutations to permitted staff and derives payment attribution', async () => {

@@ -3,26 +3,21 @@ import type { DeadlineComplianceStatus } from '../../entities/assessments/grade'
 import type { ReportCardDefinitionSection } from '../../entities/assessments/report-card-definition-section'
 import type { ReportCardResultSection } from '../../entities/assessments/report-card-result-section'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
-import type {
-  AcademicsRepositories,
-  AssessmentRepositories,
-  SetupRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { Grade } from '../../entities/assessments/grade'
 import { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
 import { ReportCardResultSection as SectionResult } from '../../entities/assessments/report-card-result-section'
 import { roundTo2 } from '../../utils/validation'
 
 export interface GradeServiceArgs {
-  studentRepository: StudentRepositories['students']
-  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
-  assessmentRepository: AssessmentRepositories['assessments']
-  classSubjectRepository: AcademicsRepositories['classSubjects']
-  academicPeriodRepository: SetupRepositories['academicPeriods']
-  gradeRepository: AssessmentRepositories['grades']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  reportCardDefinitionSectionRepository: AssessmentRepositories['sections']
+  studentRepository: SchoolRepositories['students']
+  StudentClassEnrollmentRepository: SchoolRepositories['enrollments']
+  assessmentRepository: SchoolRepositories['assessments']
+  classSubjectRepository: SchoolRepositories['classSubjects']
+  academicPeriodRepository: SchoolRepositories['academicPeriods']
+  gradeRepository: SchoolRepositories['grades']
+  classGroupRepository: SchoolRepositories['classGroups']
+  reportCardDefinitionSectionRepository: SchoolRepositories['sections']
 }
 
 export class GradeService {
@@ -37,14 +32,14 @@ export class GradeService {
     this.sections = args.reportCardDefinitionSectionRepository
   }
 
-  private readonly students: StudentRepositories['students']
-  private readonly enrollments: StudentRepositories['enrollments']
-  private readonly assessments: AssessmentRepositories['assessments']
-  private readonly classSubjects: AcademicsRepositories['classSubjects']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly academicPeriods: SetupRepositories['academicPeriods']
-  private readonly grades: AssessmentRepositories['grades']
-  private readonly sections: AssessmentRepositories['sections']
+  private readonly students: SchoolRepositories['students']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly assessments: SchoolRepositories['assessments']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly grades: SchoolRepositories['grades']
+  private readonly sections: SchoolRepositories['sections']
 
   /**
    * Records a grade for a student against an assessment's class subject.
@@ -79,7 +74,7 @@ export class GradeService {
     }
     await this.requireEnrollmentForClassGroup({ studentId, classGroupId: assessment.classGroupId })
 
-    const existingGrades = await this.grades.listByAssessment(assessmentId)
+    const existingGrades = await this.grades.list({ assessmentId })
     const existing = existingGrades.find(grade => grade.studentId === studentId)
     const grade = new Grade({
       id: existing?.id ?? id,
@@ -124,7 +119,7 @@ export class GradeService {
     const assessment = await this.requireAssessment(assessmentId)
     await this.requireStudentEligibilityForAssessment({ studentId, assessment })
 
-    const existingGrades = await this.grades.listByAssessment(assessmentId)
+    const existingGrades = await this.grades.list({ assessmentId })
     const existing = existingGrades.find(grade => grade.studentId === studentId)
 
     const grade = new Grade({
@@ -172,7 +167,7 @@ export class GradeService {
     }
     await this.requirePeriod(periodId)
 
-    const periodGrades = await this.grades.listByStudentAndPeriod(studentId, periodId)
+    const periodGrades = await this.grades.list({ studentId, periodId })
     const grades = examId ? await this.filterGradesByExam(periodGrades, examId) : periodGrades
     const gradesByClassSubject = new Map<string, Grade[]>()
     for (const grade of grades) {
@@ -182,9 +177,9 @@ export class GradeService {
       ])
     }
 
-    const classSubjects = await this.classSubjects.listByClassGroup(classGroupId)
+    const classSubjects = await this.classSubjects.list({ classGroupId })
     const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
-    const allSections = await this.sections.listByReportCardDefinition(reportCardDefinitionId)
+    const allSections = await this.sections.list({ reportCardDefinitionId })
     const computeNode = async (section: ReportCardDefinitionSection): Promise<ReportCardResultSection | null> => {
       const childSections = allSections.filter(item => item.parentSectionId === section.id)
 
@@ -268,7 +263,7 @@ export class GradeService {
     periodId: string
   }): Promise<Grade[]> {
     await this.requirePeriod(periodId)
-    return this.grades.listByClassSubjectAndPeriod(classSubjectId, periodId)
+    return this.grades.list({ classSubjectId, periodId })
   }
 
   private async filterGradesByExam(grades: readonly Grade[], examId: string): Promise<Grade[]> {
@@ -312,7 +307,7 @@ export class GradeService {
     studentId: string
     classGroupId: string
   }): Promise<void> {
-    const enrollments = await this.enrollments.listByStudent(studentId)
+    const enrollments = await this.enrollments.list({ studentId })
     const enrollment = enrollments.find(e => e.classGroupId === classGroupId)
     if (!enrollment) {
       throw new Error(`Student ${studentId} is not enrolled in classGroup ${classGroupId}`)
@@ -326,7 +321,7 @@ export class GradeService {
     studentId: string
     assessment: Assessment
   }): Promise<void> {
-    const enrollments = await this.enrollments.listByStudent(studentId)
+    const enrollments = await this.enrollments.list({ studentId })
     const targetClassGroupId = assessment.classGroupId
     if (!enrollments.some(enrollment => enrollment.classGroupId === targetClassGroupId)) {
       throw new Error(`Student ${studentId} is not eligible for assessment ${assessment.id}`)

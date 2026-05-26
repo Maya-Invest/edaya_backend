@@ -17,20 +17,20 @@ export class StudentsService {
   constructor(args: StudentsServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schools = args.repositories.setup.schools
-    this.classGroups = args.repositories.academics.classGroups
-    this.students = args.repositories.students.students
-    this.enrollments = args.repositories.students.enrollments
-    this.guardians = args.repositories.students.guardians
-    this.guardianStudentLinks = args.repositories.students.guardianLinks
+    this.schools = args.repositories.schools
+    this.classGroups = args.repositories.classGroups
+    this.students = args.repositories.students
+    this.enrollments = args.repositories.enrollments
+    this.guardians = args.repositories.guardians
+    this.guardianStudentLinks = args.repositories.guardianLinks
   }
 
-  private readonly schools: SchoolRepositories['setup']['schools']
-  private readonly classGroups: SchoolRepositories['academics']['classGroups']
-  private readonly students: SchoolRepositories['students']['students']
-  private readonly enrollments: SchoolRepositories['students']['enrollments']
-  private readonly guardians: SchoolRepositories['students']['guardians']
-  private readonly guardianStudentLinks: SchoolRepositories['students']['guardianLinks']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly students: SchoolRepositories['students']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly guardians: SchoolRepositories['guardians']
+  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
@@ -78,7 +78,7 @@ export class StudentsService {
       studentId: student.id,
     })
 
-    const existingEnrollments = await this.enrollments.listByStudent(studentId)
+    const existingEnrollments = await this.enrollments.list({ studentId })
     const existing = existingEnrollments.find(enrollment => enrollment.classGroupId === classGroupId)
     const nextEnrollmentIndex
       = existing?.enrollmentIndex
@@ -163,7 +163,7 @@ export class StudentsService {
       studentId: student.id,
     })
 
-    const enrollments = await this.enrollments.listByStudent(studentId)
+    const enrollments = await this.enrollments.list({ studentId })
     const isEnrolledInSchool = await Promise.all(
       enrollments.map(async (enrollment) => {
         const classGroup = await this.classGroups.findById(enrollment.classGroupId)

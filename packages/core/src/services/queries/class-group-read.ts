@@ -4,23 +4,18 @@ import type { Session } from '../../entities/scheduling/session'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { StaffMember } from '../../entities/school/staff-member'
-import type {
-  AcademicsRepositories,
-  SchedulingRepositories,
-  SetupRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { StaffRole } from '../../entities/school/staff-member'
 
 export interface ClassGroupReadServiceArgs {
-  academicYearRepository: SetupRepositories['academicYears']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
-  classSubjectRepository: AcademicsRepositories['classSubjects']
-  staffAssignmentRepository: SetupRepositories['staffAssignments']
-  staffMemberRepository: SetupRepositories['staffMembers']
-  subjectRepository: AcademicsRepositories['subjects']
-  sessionRepository: SchedulingRepositories['sessions']
+  academicYearRepository: SchoolRepositories['academicYears']
+  classGroupRepository: SchoolRepositories['classGroups']
+  StudentClassEnrollmentRepository: SchoolRepositories['enrollments']
+  classSubjectRepository: SchoolRepositories['classSubjects']
+  staffAssignmentRepository: SchoolRepositories['staffAssignments']
+  staffMemberRepository: SchoolRepositories['staffMembers']
+  subjectRepository: SchoolRepositories['subjects']
+  sessionRepository: SchoolRepositories['sessions']
 }
 
 export interface ClassGroupCourseAssignment {
@@ -61,14 +56,14 @@ export class ClassGroupReadService {
     this.sessions = args.sessionRepository
   }
 
-  private readonly academicYears: SetupRepositories['academicYears']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly enrollments: StudentRepositories['enrollments']
-  private readonly classSubjects: AcademicsRepositories['classSubjects']
-  private readonly staffAssignments: SetupRepositories['staffAssignments']
-  private readonly staffMembers: SetupRepositories['staffMembers']
-  private readonly subjects: AcademicsRepositories['subjects']
-  private readonly sessions: SchedulingRepositories['sessions']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly staffAssignments: SchoolRepositories['staffAssignments']
+  private readonly staffMembers: SchoolRepositories['staffMembers']
+  private readonly subjects: SchoolRepositories['subjects']
+  private readonly sessions: SchoolRepositories['sessions']
 
   async listClassGroups({
     schoolId,
@@ -79,13 +74,13 @@ export class ClassGroupReadService {
   }): Promise<ClassGroupDirectory> {
     const activeAcademicYear = await this.resolveAcademicYear({ schoolId, academicYearId })
     const classGroups = activeAcademicYear
-      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
+      ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
       : []
     const rows = await Promise.all(
       classGroups.map(async (classGroup) => {
         const [courseAssignments, enrollments] = await Promise.all([
           this.listClassGroupCourses(classGroup.id),
-          this.enrollments.listByClassGroup(classGroup.id),
+          this.enrollments.list({ classGroupId: classGroup.id }),
         ])
         const teacherNames = [...new Set(courseAssignments.map(row => row.teacherName).filter(name => name !== 'Unassigned'))]
 
@@ -106,7 +101,7 @@ export class ClassGroupReadService {
 
   async listClassGroupCourses(classGroupId: string): Promise<ClassGroupCourseAssignment[]> {
     await this.requireClassGroup(classGroupId)
-    const classSubjects = await this.classSubjects.listByClassGroup(classGroupId)
+    const classSubjects = await this.classSubjects.list({ classGroupId })
     const rows = await Promise.all(
       classSubjects.map(async (classSubject) => {
         const subject = await this.subjects.findById(classSubject.subjectId)
@@ -135,7 +130,7 @@ export class ClassGroupReadService {
     const classGroup = await this.requireClassGroup(classGroupId)
     const [courseAssignments, sessions] = await Promise.all([
       this.listClassGroupCourses(classGroupId),
-      this.sessions.listByClassGroup(classGroupId),
+      this.sessions.list({ classGroupId }),
     ])
     const courseByClassSubjectId = new Map(courseAssignments.map(row => [row.classSubject.id, row]))
 
@@ -153,7 +148,7 @@ export class ClassGroupReadService {
   }
 
   private async resolveTeacher(classSubjectId: string, fallbackStaffId?: string): Promise<StaffMember | undefined> {
-    const assignments = await this.staffAssignments.listByClassSubject(classSubjectId)
+    const assignments = await this.staffAssignments.list({ classSubjectId })
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     const teacherId = teacherAssignment?.staffId ?? fallbackStaffId
     return teacherId ? this.staffMembers.findById(teacherId) : undefined
@@ -175,7 +170,7 @@ export class ClassGroupReadService {
     academicYearId?: string
   }): Promise<AcademicYear | undefined> {
     if (!academicYearId) {
-      const academicYears = await this.academicYears.listBySchool(schoolId)
+      const academicYears = await this.academicYears.list({ schoolId })
       return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
     }
 

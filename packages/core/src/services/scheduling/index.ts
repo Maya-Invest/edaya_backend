@@ -18,16 +18,16 @@ export interface SchedulingServiceArgs extends AuthorizedServiceArgs {
 }
 
 export class SchedulingService {
-  private readonly schools: SchoolRepositories['setup']['schools']
-  private readonly academicYears: SchoolRepositories['setup']['academicYears']
-  private readonly academicPeriods: SchoolRepositories['setup']['academicPeriods']
-  private readonly groupedSessions: SchoolRepositories['scheduling']['groupedSessions']
-  private readonly periodDefinitions: SchoolRepositories['setup']['periodDefinitions']
-  private readonly classGroups: SchoolRepositories['academics']['classGroups']
-  private readonly classSubjects: SchoolRepositories['academics']['classSubjects']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly groupedSessions: SchoolRepositories['groupedSessions']
+  private readonly periodDefinitions: SchoolRepositories['periodDefinitions']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
   private readonly schedules: ScheduleService
-  private readonly sessions: SchoolRepositories['scheduling']['sessions']
-  private readonly students: SchoolRepositories['students']['students']
+  private readonly sessions: SchoolRepositories['sessions']
+  private readonly students: SchoolRepositories['students']
   private readonly attendance: AttendanceService
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
@@ -35,28 +35,28 @@ export class SchedulingService {
   constructor(args: SchedulingServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schools = args.repositories.setup.schools
-    this.academicYears = args.repositories.setup.academicYears
-    this.academicPeriods = args.repositories.setup.academicPeriods
-    this.groupedSessions = args.repositories.scheduling.groupedSessions
-    this.periodDefinitions = args.repositories.setup.periodDefinitions
-    this.classGroups = args.repositories.academics.classGroups
-    this.classSubjects = args.repositories.academics.classSubjects
+    this.schools = args.repositories.schools
+    this.academicYears = args.repositories.academicYears
+    this.academicPeriods = args.repositories.academicPeriods
+    this.groupedSessions = args.repositories.groupedSessions
+    this.periodDefinitions = args.repositories.periodDefinitions
+    this.classGroups = args.repositories.classGroups
+    this.classSubjects = args.repositories.classSubjects
     this.schedules = new ScheduleService({
       atomicExecution: args.atomicExecution,
-      classGroupRepository: args.repositories.academics.classGroups,
-      scheduleRepository: args.repositories.scheduling.schedules,
-      calendarEventRepository: args.repositories.scheduling.calendarEvents,
-      sessionRepository: args.repositories.scheduling.sessions,
+      classGroupRepository: args.repositories.classGroups,
+      scheduleRepository: args.repositories.schedules,
+      calendarEventRepository: args.repositories.calendarEvents,
+      sessionRepository: args.repositories.sessions,
     })
-    this.sessions = args.repositories.scheduling.sessions
-    this.students = args.repositories.students.students
+    this.sessions = args.repositories.sessions
+    this.students = args.repositories.students
     this.attendance = new AttendanceService({
       atomicExecution: args.atomicExecution,
-      studentRepository: args.repositories.students.students,
-      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
-      sessionRepository: args.repositories.scheduling.sessions,
-      attendanceRepository: args.repositories.scheduling.attendance,
+      studentRepository: args.repositories.students,
+      StudentClassEnrollmentRepository: args.repositories.enrollments,
+      sessionRepository: args.repositories.sessions,
+      attendanceRepository: args.repositories.attendance,
     })
   }
 

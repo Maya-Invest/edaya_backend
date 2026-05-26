@@ -1,25 +1,18 @@
 import type { Announcement } from '../../entities/messaging/announcement'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { School } from '../../entities/school/school'
-import type {
-  AcademicsRepositories,
-  AssessmentRepositories,
-  CommunicationRepositories,
-  FinanceRepositories,
-  SetupRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { FeeStatus } from '../../entities/finances/student-fee'
 
 export interface SchoolOverviewServiceArgs {
-  schoolRepository: SetupRepositories['schools']
-  academicYearRepository: SetupRepositories['academicYears']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  studentRepository: StudentRepositories['students']
-  announcementRepository: CommunicationRepositories['announcements']
-  studentFeeRepository: FinanceRepositories['studentFees']
-  reportCardResultRepository: AssessmentRepositories['results']
+  schoolRepository: SchoolRepositories['schools']
+  academicYearRepository: SchoolRepositories['academicYears']
+  classGroupRepository: SchoolRepositories['classGroups']
+  studentRepository: SchoolRepositories['students']
+  announcementRepository: SchoolRepositories['announcements']
+  studentFeeRepository: SchoolRepositories['studentFees']
+  reportCardResultRepository: SchoolRepositories['results']
 }
 
 export interface SchoolOverview {
@@ -43,21 +36,21 @@ export class SchoolOverviewService {
     this.reportCardResults = args.reportCardResultRepository
   }
 
-  private readonly schools: SetupRepositories['schools']
-  private readonly academicYears: SetupRepositories['academicYears']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly students: StudentRepositories['students']
-  private readonly announcements: CommunicationRepositories['announcements']
-  private readonly fees: FinanceRepositories['studentFees']
-  private readonly reportCardResults: AssessmentRepositories['results']
+  private readonly schools: SchoolRepositories['schools']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly students: SchoolRepositories['students']
+  private readonly announcements: SchoolRepositories['announcements']
+  private readonly fees: SchoolRepositories['studentFees']
+  private readonly reportCardResults: SchoolRepositories['results']
 
   async getSchoolOverview({ schoolId }: { schoolId: string }): Promise<SchoolOverview> {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
     const [classGroups, students, announcements] = await Promise.all([
-      activeAcademicYear ? this.classGroups.listByAcademicYear(activeAcademicYear.id) : [],
-      this.students.listBySchool(schoolId),
-      this.announcements.listBySchool(schoolId),
+      activeAcademicYear ? this.classGroups.list({ academicYearId: activeAcademicYear.id }) : [],
+      this.students.list({ schoolId }),
+      this.announcements.list({ schoolId }),
     ])
 
     let overdueFeeCount = 0
@@ -65,8 +58,8 @@ export class SchoolOverviewService {
 
     for (const student of students) {
       const [fees, reportCardResults] = await Promise.all([
-        this.fees.listByStudent(student.id),
-        this.reportCardResults.listByStudent(student.id),
+        this.fees.list({ studentId: student.id }),
+        this.reportCardResults.list({ studentId: student.id }),
       ])
       overdueFeeCount += fees.filter(fee => fee.status === FeeStatus.Overdue).length
       publishedReportCardCount += reportCardResults.filter(
@@ -101,7 +94,7 @@ export class SchoolOverviewService {
   }
 
   private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {
-    const academicYears = await this.academicYears.listBySchool(schoolId)
+    const academicYears = await this.academicYears.list({ schoolId })
     return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
   }
 }

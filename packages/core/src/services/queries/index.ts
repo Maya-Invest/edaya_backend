@@ -17,70 +17,70 @@ export class SchoolQueryService {
   private readonly studentDirectory: StudentDirectoryService
   private readonly classGroupRead: ClassGroupReadService
   private readonly attendanceReview: AttendanceReviewService
-  private readonly guardianRepository: SchoolRepositories['students']['guardians']
-  private readonly guardianStudentLinks: SchoolRepositories['students']['guardianLinks']
-  private readonly studentRepository: SchoolRepositories['students']['students']
+  private readonly guardianRepository: SchoolRepositories['guardians']
+  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
+  private readonly studentRepository: SchoolRepositories['students']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
-  private readonly classGroupRepository: SchoolRepositories['academics']['classGroups']
-  private readonly sessionRepository: SchoolRepositories['scheduling']['sessions']
-  private readonly academicYearRepository: SchoolRepositories['setup']['academicYears']
+  private readonly classGroupRepository: SchoolRepositories['classGroups']
+  private readonly sessionRepository: SchoolRepositories['sessions']
+  private readonly academicYearRepository: SchoolRepositories['academicYears']
 
   constructor(args: SchoolQueryServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.workspace = new WorkspaceService({
-      schoolRepository: args.repositories.setup.schools,
-      academicYearRepository: args.repositories.setup.academicYears,
-      academicPeriodRepository: args.repositories.setup.academicPeriods,
-      classGroupRepository: args.repositories.academics.classGroups,
-      staffMemberRepository: args.repositories.setup.staffMembers,
-      classSubjectRepository: args.repositories.academics.classSubjects,
-      staffAssignmentRepository: args.repositories.setup.staffAssignments,
+      schoolRepository: args.repositories.schools,
+      academicYearRepository: args.repositories.academicYears,
+      academicPeriodRepository: args.repositories.academicPeriods,
+      classGroupRepository: args.repositories.classGroups,
+      staffMemberRepository: args.repositories.staffMembers,
+      classSubjectRepository: args.repositories.classSubjects,
+      staffAssignmentRepository: args.repositories.staffAssignments,
     })
     this.schoolOverview = new SchoolOverviewService({
-      schoolRepository: args.repositories.setup.schools,
-      academicYearRepository: args.repositories.setup.academicYears,
-      classGroupRepository: args.repositories.academics.classGroups,
-      studentRepository: args.repositories.students.students,
-      announcementRepository: args.repositories.communications.announcements,
-      studentFeeRepository: args.repositories.finance.studentFees,
-      reportCardResultRepository: args.repositories.assessments.results,
+      schoolRepository: args.repositories.schools,
+      academicYearRepository: args.repositories.academicYears,
+      classGroupRepository: args.repositories.classGroups,
+      studentRepository: args.repositories.students,
+      announcementRepository: args.repositories.announcements,
+      studentFeeRepository: args.repositories.studentFees,
+      reportCardResultRepository: args.repositories.results,
     })
     this.studentDirectory = new StudentDirectoryService({
-      schoolRepository: args.repositories.setup.schools,
-      academicYearRepository: args.repositories.setup.academicYears,
-      classGroupRepository: args.repositories.academics.classGroups,
-      studentRepository: args.repositories.students.students,
-      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
-      guardianStudentLinkRepository: args.repositories.students.guardianLinks,
-      reportCardResultRepository: args.repositories.assessments.results,
-      studentFeeRepository: args.repositories.finance.studentFees,
+      schoolRepository: args.repositories.schools,
+      academicYearRepository: args.repositories.academicYears,
+      classGroupRepository: args.repositories.classGroups,
+      studentRepository: args.repositories.students,
+      StudentClassEnrollmentRepository: args.repositories.enrollments,
+      guardianStudentLinkRepository: args.repositories.guardianLinks,
+      reportCardResultRepository: args.repositories.results,
+      studentFeeRepository: args.repositories.studentFees,
     })
     this.classGroupRead = new ClassGroupReadService({
-      academicYearRepository: args.repositories.setup.academicYears,
-      classGroupRepository: args.repositories.academics.classGroups,
-      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
-      classSubjectRepository: args.repositories.academics.classSubjects,
-      staffAssignmentRepository: args.repositories.setup.staffAssignments,
-      staffMemberRepository: args.repositories.setup.staffMembers,
-      subjectRepository: args.repositories.academics.subjects,
-      sessionRepository: args.repositories.scheduling.sessions,
+      academicYearRepository: args.repositories.academicYears,
+      classGroupRepository: args.repositories.classGroups,
+      StudentClassEnrollmentRepository: args.repositories.enrollments,
+      classSubjectRepository: args.repositories.classSubjects,
+      staffAssignmentRepository: args.repositories.staffAssignments,
+      staffMemberRepository: args.repositories.staffMembers,
+      subjectRepository: args.repositories.subjects,
+      sessionRepository: args.repositories.sessions,
     })
     this.attendanceReview = new AttendanceReviewService({
-      academicYearRepository: args.repositories.setup.academicYears,
-      classGroupRepository: args.repositories.academics.classGroups,
-      sessionRepository: args.repositories.scheduling.sessions,
-      attendanceRepository: args.repositories.scheduling.attendance,
-      StudentClassEnrollmentRepository: args.repositories.students.enrollments,
-      studentRepository: args.repositories.students.students,
+      academicYearRepository: args.repositories.academicYears,
+      classGroupRepository: args.repositories.classGroups,
+      sessionRepository: args.repositories.sessions,
+      attendanceRepository: args.repositories.attendance,
+      StudentClassEnrollmentRepository: args.repositories.enrollments,
+      studentRepository: args.repositories.students,
     })
-    this.guardianRepository = args.repositories.students.guardians
-    this.guardianStudentLinks = args.repositories.students.guardianLinks
-    this.studentRepository = args.repositories.students.students
-    this.classGroupRepository = args.repositories.academics.classGroups
-    this.sessionRepository = args.repositories.scheduling.sessions
-    this.academicYearRepository = args.repositories.setup.academicYears
+    this.guardianRepository = args.repositories.guardians
+    this.guardianStudentLinks = args.repositories.guardianLinks
+    this.studentRepository = args.repositories.students
+    this.classGroupRepository = args.repositories.classGroups
+    this.sessionRepository = args.repositories.sessions
+    this.academicYearRepository = args.repositories.academicYears
   }
 
   async getWorkspaceContext(input: Parameters<WorkspaceService['getWorkspaceContext']>[0]) {
@@ -139,7 +139,7 @@ export class SchoolQueryService {
       action: this.actor.kind === 'guardian' ? 'queries.read_guardian_self' : 'queries.read_guardian_students_admin',
       resource: { schoolId: guardian.schoolId, guardianId },
     })
-    const links = await this.guardianStudentLinks.listByGuardian(guardianId)
+    const links = await this.guardianStudentLinks.list({ guardianId })
     const students = await Promise.all(links.map(link => this.studentRepository.findById(link.studentId)))
     return students.filter(student => student !== undefined)
   }

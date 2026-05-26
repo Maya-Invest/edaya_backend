@@ -14,49 +14,49 @@ export interface SetupServiceArgs extends AuthorizedServiceArgs {
 }
 
 export class SetupService {
-  private readonly schoolRepository: SchoolRepositories['setup']['schools']
+  private readonly schoolRepository: SchoolRepositories['schools']
   private readonly academicCalendar: AcademicCalendarService
-  private readonly academicYears: SchoolRepositories['setup']['academicYears']
-  private readonly gradeLevels: SchoolRepositories['setup']['gradeLevels']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly gradeLevels: SchoolRepositories['gradeLevels']
   private readonly classGroups: ClassGroupService
-  private readonly staffMembers: SchoolRepositories['setup']['staffMembers']
+  private readonly staffMembers: SchoolRepositories['staffMembers']
   private readonly staffAssignments: StaffAssignmentService
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
-  private readonly classGroupRepository: SchoolRepositories['academics']['classGroups']
-  private readonly classSubjectRepository: SchoolRepositories['academics']['classSubjects']
-  private readonly groupedSessionRepository: SchoolRepositories['scheduling']['groupedSessions']
-  private readonly sessionRepository: SchoolRepositories['scheduling']['sessions']
+  private readonly classGroupRepository: SchoolRepositories['classGroups']
+  private readonly classSubjectRepository: SchoolRepositories['classSubjects']
+  private readonly groupedSessionRepository: SchoolRepositories['groupedSessions']
+  private readonly sessionRepository: SchoolRepositories['sessions']
 
   constructor(args: SetupServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schoolRepository = args.repositories.setup.schools
-    this.classGroupRepository = args.repositories.academics.classGroups
-    this.classSubjectRepository = args.repositories.academics.classSubjects
-    this.groupedSessionRepository = args.repositories.scheduling.groupedSessions
-    this.sessionRepository = args.repositories.scheduling.sessions
-    this.academicYears = args.repositories.setup.academicYears
+    this.schoolRepository = args.repositories.schools
+    this.classGroupRepository = args.repositories.classGroups
+    this.classSubjectRepository = args.repositories.classSubjects
+    this.groupedSessionRepository = args.repositories.groupedSessions
+    this.sessionRepository = args.repositories.sessions
+    this.academicYears = args.repositories.academicYears
     this.academicCalendar = new AcademicCalendarService({
-      schoolRepository: args.repositories.setup.schools,
-      academicYearRepository: args.repositories.setup.academicYears,
-      academicPeriodRepository: args.repositories.setup.academicPeriods,
+      schoolRepository: args.repositories.schools,
+      academicYearRepository: args.repositories.academicYears,
+      academicPeriodRepository: args.repositories.academicPeriods,
     })
     this.classGroups = new ClassGroupService({
-      schoolRepository: args.repositories.setup.schools,
-      academicYearRepository: args.repositories.setup.academicYears,
-      gradeLevelRepository: args.repositories.setup.gradeLevels,
-      classGroupRepository: args.repositories.academics.classGroups,
+      schoolRepository: args.repositories.schools,
+      academicYearRepository: args.repositories.academicYears,
+      gradeLevelRepository: args.repositories.gradeLevels,
+      classGroupRepository: args.repositories.classGroups,
     })
-    this.gradeLevels = args.repositories.setup.gradeLevels
-    this.staffMembers = args.repositories.setup.staffMembers
+    this.gradeLevels = args.repositories.gradeLevels
+    this.staffMembers = args.repositories.staffMembers
     this.staffAssignments = new StaffAssignmentService({
-      staffMemberRepository: args.repositories.setup.staffMembers,
-      classGroupRepository: args.repositories.academics.classGroups,
-      classSubjectRepository: args.repositories.academics.classSubjects,
-      groupedSessionRepository: args.repositories.scheduling.groupedSessions,
-      sessionRepository: args.repositories.scheduling.sessions,
-      staffAssignmentRepository: args.repositories.setup.staffAssignments,
+      staffMemberRepository: args.repositories.staffMembers,
+      classGroupRepository: args.repositories.classGroups,
+      classSubjectRepository: args.repositories.classSubjects,
+      groupedSessionRepository: args.repositories.groupedSessions,
+      sessionRepository: args.repositories.sessions,
+      staffAssignmentRepository: args.repositories.staffAssignments,
     })
   }
 

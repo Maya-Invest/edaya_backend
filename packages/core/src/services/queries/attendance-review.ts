@@ -3,22 +3,17 @@ import type { Session } from '../../entities/scheduling/session'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { Student } from '../../entities/students/student'
-import type {
-  AcademicsRepositories,
-  SchedulingRepositories,
-  SetupRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { isSameDate } from '../../utils/validation'
 
 export interface AttendanceReviewServiceArgs {
-  academicYearRepository: SetupRepositories['academicYears']
-  classGroupRepository: AcademicsRepositories['classGroups']
-  sessionRepository: SchedulingRepositories['sessions']
-  attendanceRepository: SchedulingRepositories['attendance']
-  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
-  studentRepository: StudentRepositories['students']
+  academicYearRepository: SchoolRepositories['academicYears']
+  classGroupRepository: SchoolRepositories['classGroups']
+  sessionRepository: SchoolRepositories['sessions']
+  attendanceRepository: SchoolRepositories['attendance']
+  StudentClassEnrollmentRepository: SchoolRepositories['enrollments']
+  studentRepository: SchoolRepositories['students']
 }
 
 export interface AttendanceSessionOption {
@@ -58,12 +53,12 @@ export class AttendanceReviewService {
     this.students = args.studentRepository
   }
 
-  private readonly academicYears: SetupRepositories['academicYears']
-  private readonly classGroups: AcademicsRepositories['classGroups']
-  private readonly sessions: SchedulingRepositories['sessions']
-  private readonly attendance: SchedulingRepositories['attendance']
-  private readonly enrollments: StudentRepositories['enrollments']
-  private readonly students: StudentRepositories['students']
+  private readonly academicYears: SchoolRepositories['academicYears']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly sessions: SchoolRepositories['sessions']
+  private readonly attendance: SchoolRepositories['attendance']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly students: SchoolRepositories['students']
 
   async getAttendanceSessionReview({
     schoolId,
@@ -76,7 +71,7 @@ export class AttendanceReviewService {
   }): Promise<AttendanceReview> {
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
     const classGroups = activeAcademicYear
-      ? await this.classGroups.listByAcademicYear(activeAcademicYear.id)
+      ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
       : []
     const classGroup = classGroups[0]
 
@@ -91,7 +86,7 @@ export class AttendanceReviewService {
       }
     }
 
-    const allSessions = await this.sessions.listByClassGroup(classGroup.id)
+    const allSessions = await this.sessions.list({ classGroupId: classGroup.id })
     const datedSessions = allSessions.filter(session => isSameDate(session.startsAt, date))
     const availableSessions = datedSessions.length > 0 ? datedSessions : allSessions
     const selectedSession
@@ -116,8 +111,8 @@ export class AttendanceReviewService {
     }
 
     const [records, enrollments] = await Promise.all([
-      this.attendance.listBySession(selectedSession.id),
-      this.enrollments.listByClassGroup(selectedSession.classGroupId),
+      this.attendance.list({ sessionId: selectedSession.id }),
+      this.enrollments.list({ classGroupId: selectedSession.classGroupId }),
     ])
     const recordByStudentId = new Map(records.map(record => [record.studentId, record]))
     const rows = (
@@ -172,7 +167,7 @@ export class AttendanceReviewService {
   }
 
   private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {
-    const academicYears = await this.academicYears.listBySchool(schoolId)
+    const academicYears = await this.academicYears.list({ schoolId })
     return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
   }
 }

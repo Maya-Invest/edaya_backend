@@ -19,24 +19,24 @@ export class CommunicationsService {
   constructor(args: CommunicationsServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.classGroups = args.repositories.academics.classGroups
-    this.gradeLevels = args.repositories.setup.gradeLevels
-    this.staffMembers = args.repositories.setup.staffMembers
-    this.guardians = args.repositories.students.guardians
-    this.students = args.repositories.students.students
-    this.announcements = args.repositories.communications.announcements
-    this.targets = args.repositories.communications.announcementTargets
-    this.deliveries = args.repositories.communications.messageDeliveries
+    this.classGroups = args.repositories.classGroups
+    this.gradeLevels = args.repositories.gradeLevels
+    this.staffMembers = args.repositories.staffMembers
+    this.guardians = args.repositories.guardians
+    this.students = args.repositories.students
+    this.announcements = args.repositories.announcements
+    this.targets = args.repositories.announcementTargets
+    this.deliveries = args.repositories.messageDeliveries
   }
 
-  private readonly classGroups: SchoolRepositories['academics']['classGroups']
-  private readonly gradeLevels: SchoolRepositories['setup']['gradeLevels']
-  private readonly staffMembers: SchoolRepositories['setup']['staffMembers']
-  private readonly guardians: SchoolRepositories['students']['guardians']
-  private readonly students: SchoolRepositories['students']['students']
-  private readonly announcements: SchoolRepositories['communications']['announcements']
-  private readonly targets: SchoolRepositories['communications']['announcementTargets']
-  private readonly deliveries: SchoolRepositories['communications']['messageDeliveries']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly gradeLevels: SchoolRepositories['gradeLevels']
+  private readonly staffMembers: SchoolRepositories['staffMembers']
+  private readonly guardians: SchoolRepositories['guardians']
+  private readonly students: SchoolRepositories['students']
+  private readonly announcements: SchoolRepositories['announcements']
+  private readonly targets: SchoolRepositories['announcementTargets']
+  private readonly deliveries: SchoolRepositories['messageDeliveries']
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 

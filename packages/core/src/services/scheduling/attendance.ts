@@ -1,19 +1,16 @@
 import type { Session } from '../../entities/scheduling/session'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
-import type {
-  SchedulingRepositories,
-  StudentRepositories,
-} from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { normalizeDate } from '../../utils/validation'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 
 export interface AttendanceServiceArgs {
   atomicExecution: AtomicExecutionPort
-  studentRepository: StudentRepositories['students']
-  StudentClassEnrollmentRepository: StudentRepositories['enrollments']
-  sessionRepository: SchedulingRepositories['sessions']
-  attendanceRepository: SchedulingRepositories['attendance']
+  studentRepository: SchoolRepositories['students']
+  StudentClassEnrollmentRepository: SchoolRepositories['enrollments']
+  sessionRepository: SchoolRepositories['sessions']
+  attendanceRepository: SchoolRepositories['attendance']
 }
 
 export class AttendanceService {
@@ -26,10 +23,10 @@ export class AttendanceService {
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: StudentRepositories['students']
-  private readonly enrollments: StudentRepositories['enrollments']
-  private readonly sessions: SchedulingRepositories['sessions']
-  private readonly attendance: SchedulingRepositories['attendance']
+  private readonly students: SchoolRepositories['students']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly sessions: SchoolRepositories['sessions']
+  private readonly attendance: SchoolRepositories['attendance']
 
   async recordAttendance({
     id,
@@ -103,11 +100,10 @@ export class AttendanceService {
     endDate: Date
   }): Promise<AttendanceSummary> {
     await this.requireStudent(studentId)
-    const records = await this.attendance.listByStudentBetween(
+    const records = await this.attendance.list({
       studentId,
-      normalizeDate(startDate),
-      normalizeDate(endDate),
-    )
+      date: { $gte: normalizeDate(startDate), $lte: normalizeDate(endDate) },
+    })
     let presentCount = 0
     let absenceCount = 0
     let lateCount = 0
@@ -131,7 +127,7 @@ export class AttendanceService {
 
   async listSessionAttendance(sessionId: string): Promise<AttendanceRecord[]> {
     await this.requireSession(sessionId)
-    return this.attendance.listBySession(sessionId)
+    return this.attendance.list({ sessionId })
   }
 
   private async requireStudent(studentId: string): Promise<void> {
@@ -156,7 +152,7 @@ export class AttendanceService {
     studentId: string
     classGroupId: string
   }): Promise<void> {
-    const enrollments = await this.enrollments.listByStudent(studentId)
+    const enrollments = await this.enrollments.list({ studentId })
     const enrollment = enrollments.find(e => e.classGroupId === classGroupId)
     if (!enrollment) {
       throw new Error(`Student ${studentId} is not enrolled in classGroup ${classGroupId}`)
