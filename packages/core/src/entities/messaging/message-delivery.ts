@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
 
 export enum MessageDeliveryChannel {
   App = 'app',

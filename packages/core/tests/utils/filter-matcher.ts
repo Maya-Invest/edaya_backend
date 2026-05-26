@@ -1,4 +1,4 @@
-import type { Filter } from '../ports/base-repository'
+import type { Filter } from '../../src/ports/base-repository'
 
 function areEqual(a: any, b: any): boolean {
   if (a instanceof Date && b instanceof Date) {

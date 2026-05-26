@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber, requireValidDate } from '../utils'
 
 export enum AssessmentKind {
   Quiz = 'quiz',

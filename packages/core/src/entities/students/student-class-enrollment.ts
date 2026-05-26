@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requireValidDate } from '../utils'
 
 export enum EnrollmentOutcome {
   Pending = 'pending',

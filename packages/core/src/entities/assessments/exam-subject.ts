@@ -1,4 +1,4 @@
-import { requireNonBlank, requirePositiveInt, requirePositiveNumber } from '../../utils/validation'
+import { requireNonBlank, requirePositiveInt, requirePositiveNumber } from '../utils'
 
 export interface ExamSubjectArgs {
   id: string

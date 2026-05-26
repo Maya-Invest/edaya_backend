@@ -1,6 +1,6 @@
 import type { AttendanceSummary } from '../../value_object/attendance-summary'
 import type { ReportCardResultSection } from './report-card-result-section'
-import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '../utils'
 
 export enum ReportCardResultStatus {
   Draft = 'draft',

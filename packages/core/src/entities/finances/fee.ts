@@ -1,5 +1,5 @@
-import { requireNonBlank, requireNonNegativeInt, requireValidDate } from '../../utils/validation'
 import { Money } from '../../value_object/money'
+import { requireNonBlank, requireNonNegativeInt, requireValidDate } from '../utils'
 
 export interface FeeInstallmentTemplate {
   label: string

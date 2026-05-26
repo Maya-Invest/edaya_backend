@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../utils'
 
 export interface GuardianStudentLinkArgs {
   id: string

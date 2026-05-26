@@ -1,46 +1,28 @@
 import type { SubjectMatterArgs } from '../../entities/academics/subject-matter'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { AuthorizedServiceArgs } from '../authorization'
+import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
+import type { ServiceArgs } from '../school-headless-app'
 import { ClassSubject } from '../../entities/academics/class-subject'
 import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/academics/class-subject-matter'
 import { ClassSubjectProgress } from '../../entities/academics/class-subject-progress'
 import { Subject } from '../../entities/academics/subject'
 import { SubjectMatter } from '../../entities/academics/subject-matter'
-import { roundTo2 } from '../../utils/validation'
+import { roundTo2 } from '../../entities/utils'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
-export interface AcademicsServiceArgs extends AuthorizedServiceArgs {
-  atomicExecution: AtomicExecutionPort
-  repositories: SchoolRepositories
-}
-
 export class AcademicsService {
-  constructor(args: AcademicsServiceArgs) {
+  constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
-    this.schools = args.repositories.schools
-    this.classGroups = args.repositories.classGroups
-    this.subjects = args.repositories.subjects
-    this.subjectMatters = args.repositories.subjectMatters
-    this.classSubjects = args.repositories.classSubjects
-    this.classSubjectMatters = args.repositories.classSubjectMatters
-    this.progress = args.repositories.classSubjectProgress
-    this.sessions = args.repositories.sessions
+    this.repositories = args.repositories
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly schools: SchoolRepositories['schools']
-  private readonly classGroups: SchoolRepositories['classGroups']
-  private readonly subjects: SchoolRepositories['subjects']
-  private readonly subjectMatters: SchoolRepositories['subjectMatters']
-  private readonly classSubjects: SchoolRepositories['classSubjects']
-  private readonly classSubjectMatters: SchoolRepositories['classSubjectMatters']
-  private readonly progress: SchoolRepositories['classSubjectProgress']
-  private readonly sessions: SchoolRepositories['sessions']
-  private readonly actor: AuthorizedServiceArgs['actor']
-  private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
+  private readonly actor: ActorMetadata
+  private readonly authorizationPolicy: AuthorizationPolicy
+  private readonly repositories: SchoolRepositories
 
   async createSubject({
     id,
@@ -54,22 +36,22 @@ export class AcademicsService {
     createdAt?: Date
   }): Promise<Subject> {
     await this.authorize('academics.manage_curriculum', { schoolId })
-    if (!await this.schools.findById(schoolId)) {
+    if (!await this.repositories.schools.findById(schoolId)) {
       throw new Error(`Unknown school: ${schoolId}`)
     }
     const subject = new Subject({ id, schoolId, name, createdAt })
-    await this.subjects.save(subject)
+    await this.repositories.subjects.save(subject)
     return subject
   }
 
   async createSubjectMatter(input: SubjectMatterArgs): Promise<SubjectMatter> {
-    const subject = await this.subjects.findById(input.subjectId)
+    const subject = await this.repositories.subjects.findById(input.subjectId)
     if (!subject) {
       denyResourceAccess()
     }
     await this.authorize('academics.manage_curriculum', { schoolId: subject.schoolId })
     const subjectMatter = new SubjectMatter(input)
-    await this.subjectMatters.save(subjectMatter)
+    await this.repositories.subjectMatters.save(subjectMatter)
     return subjectMatter
   }
 
@@ -88,11 +70,11 @@ export class AcademicsService {
     coefficient?: number
     createdAt?: Date
   }): Promise<ClassSubject> {
-    const classGroup = await this.classGroups.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup) {
       denyResourceAccess()
     }
-    const subject = await this.subjects.findById(subjectId)
+    const subject = await this.repositories.subjects.findById(subjectId)
     if (!subject) {
       denyResourceAccess()
     }
@@ -103,13 +85,13 @@ export class AcademicsService {
       schoolId: classGroup.schoolId,
       classGroupId,
     })
-    const existing = (await this.classSubjects.list({ classGroupId }))
+    const existing = (await this.repositories.classSubjects.list({ classGroupId }))
       .find(classSubject => classSubject.subjectId === subjectId)
     if (existing) {
       return existing
     }
     const classSubject = new ClassSubject({ id, classGroupId, subjectId, staffId, coefficient, createdAt })
-    await this.classSubjects.save(classSubject)
+    await this.repositories.classSubjects.save(classSubject)
     return classSubject
   }
 
@@ -137,7 +119,7 @@ export class AcademicsService {
       classGroupId: classGroup.id,
       classSubjectId,
     })
-    const existing = await this.classSubjectMatters.findByClassSubjectAndSubjectMatter(classSubjectId, subjectMatterId)
+    const existing = await this.repositories.classSubjectMatters.findByClassSubjectAndSubjectMatter(classSubjectId, subjectMatterId)
     if (existing) {
       return existing
     }
@@ -151,7 +133,7 @@ export class AcademicsService {
       notes,
       updatedAt,
     })
-    await this.classSubjectMatters.save(assigned)
+    await this.repositories.classSubjectMatters.save(assigned)
     return assigned
   }
 
@@ -173,7 +155,7 @@ export class AcademicsService {
     return this.atomicExecution.execute(async () => {
       const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
       const classSubject = await this.requireClassSubject(matter.classSubjectId)
-      const session = await this.sessions.findById(sessionId)
+      const session = await this.repositories.sessions.findById(sessionId)
       if (!session) {
         denyResourceAccess()
       }
@@ -187,7 +169,7 @@ export class AcademicsService {
         classSubjectId: classSubject.id,
         sessionId,
       })
-      const existing = await this.progress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
+      const existing = await this.repositories.classSubjectProgress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
       if (existing) {
         throw new Error(`Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
       }
@@ -217,8 +199,8 @@ export class AcademicsService {
         updatedAt: snapshot.recordedAt,
       })
 
-      await this.progress.save(snapshot)
-      await this.classSubjectMatters.save(updatedMatter)
+      await this.repositories.classSubjectProgress.save(snapshot)
+      await this.repositories.classSubjectMatters.save(updatedMatter)
       await this.updateClassSubjectAggregate(classSubject, updatedMatter)
       return snapshot
     })
@@ -233,21 +215,21 @@ export class AcademicsService {
       classGroupId: classGroup.id,
       classSubjectId: classSubject.id,
     })
-    return this.progress.list({ classSubjectMatterId })
+    return this.repositories.classSubjectProgress.list({ classSubjectMatterId })
   }
 
   private async updateClassSubjectAggregate(
     classSubject: ClassSubject,
     updatedMatter: ClassSubjectMatter,
   ): Promise<void> {
-    const matters = await this.classSubjectMatters.list({ classSubjectId: classSubject.id })
+    const matters = await this.repositories.classSubjectMatters.list({ classSubjectId: classSubject.id })
     const normalizedMatters = matters.map(matter => matter.id === updatedMatter.id ? updatedMatter : matter)
     if (!normalizedMatters.some(matter => matter.id === updatedMatter.id)) {
       normalizedMatters.push(updatedMatter)
     }
     const total = normalizedMatters.reduce((sum, matter) => sum + matter.completedPercentage, 0)
     const completedPercentage = roundTo2(total / normalizedMatters.length)
-    await this.classSubjects.save(new ClassSubject({
+    await this.repositories.classSubjects.save(new ClassSubject({
       id: classSubject.id,
       classGroupId: classSubject.classGroupId,
       subjectId: classSubject.subjectId,
@@ -259,7 +241,7 @@ export class AcademicsService {
   }
 
   private async requireSubjectMatter(subjectMatterId: string): Promise<SubjectMatter> {
-    const subjectMatter = await this.subjectMatters.findById(subjectMatterId)
+    const subjectMatter = await this.repositories.subjectMatters.findById(subjectMatterId)
     if (!subjectMatter) {
       denyResourceAccess()
     }
@@ -267,7 +249,7 @@ export class AcademicsService {
   }
 
   private async requireClassSubjectMatter(classSubjectMatterId: string): Promise<ClassSubjectMatter> {
-    const matter = await this.classSubjectMatters.findById(classSubjectMatterId)
+    const matter = await this.repositories.classSubjectMatters.findById(classSubjectMatterId)
     if (!matter) {
       denyResourceAccess()
     }
@@ -275,7 +257,7 @@ export class AcademicsService {
   }
 
   private async requireClassSubject(classSubjectId: string): Promise<ClassSubject> {
-    const classSubject = await this.classSubjects.findById(classSubjectId)
+    const classSubject = await this.repositories.classSubjects.findById(classSubjectId)
     if (!classSubject) {
       denyResourceAccess()
     }
@@ -283,7 +265,7 @@ export class AcademicsService {
   }
 
   private async requireClassGroup(classGroupId: string) {
-    const classGroup = await this.classGroups.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup) {
       denyResourceAccess()
     }

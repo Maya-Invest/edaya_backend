@@ -49,12 +49,12 @@ import type {
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import type { ActorMetadata } from '../../src/services/authorization'
 import { StaffMember, StaffRole } from '../../src/entities'
-import { SchoolApplication } from '../../src/school-headless-app'
 import {
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
 } from '../../src/services/authorization'
-import { matchesFilter } from '../../src/utils'
+import { SchoolApplication } from '../../src/services/school-headless-app'
+import { matchesFilter } from '../utils/filter-matcher'
 
 interface EntityWithId {
   readonly id: string
@@ -364,6 +364,15 @@ export function createTestApp(actor?: ActorMetadata) {
     calendarEventRepository: schoolRepositories.calendarEvents,
   }
 
+  const defaultActor = actor ?? createStaffActorMetadata({
+    subjectId: 'admin-user',
+    staffMemberId: 'admin',
+    schoolId: 'school',
+    roles: [StaffRole.Admin],
+    requestId: 'integration-test',
+    authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+  })
+
   const application = new SchoolApplication({
     atomicExecution: createAtomicExecution(transactionParticipants),
     repositories: schoolRepositories,
@@ -374,15 +383,7 @@ export function createTestApp(actor?: ActorMetadata) {
       guardianStudentLinkRepository: schoolRepositories.guardianLinks,
       studentRepository: schoolRepositories.students,
     }),
-  })
-
-  const defaultActor = actor ?? createStaffActorMetadata({
-    subjectId: 'admin-user',
-    staffMemberId: 'admin',
-    schoolId: 'school',
-    roles: [StaffRole.Admin],
-    requestId: 'integration-test',
-    authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+    actor: defaultActor,
   })
 
   if (defaultActor.kind === 'staff') {

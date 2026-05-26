@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export interface ResourceAssignmentArgs {
   id: string

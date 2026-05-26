@@ -1,4 +1,4 @@
-import { requireNonBlank } from '../../utils/validation'
+import { requireNonBlank } from '../utils'
 
 export enum AnnouncementTargetKind {
   ClassGroup = 'class_group',

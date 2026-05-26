@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requireTimeOfDay, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requireTimeOfDay, requireValidDate } from '../utils'
 
 export enum DayOfWeek {
   Monday = 'monday',

@@ -6,17 +6,14 @@ import type {
 } from '../../entities/messaging/message-delivery'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
+import type { ServiceArgs } from '../school-headless-app'
 import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
 import { AnnouncementTarget, AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
 import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
-export interface CommunicationsServiceArgs extends AuthorizedServiceArgs {
-  repositories: SchoolRepositories
-}
-
 export class CommunicationsService {
-  constructor(args: CommunicationsServiceArgs) {
+  constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.classGroups = args.repositories.classGroups

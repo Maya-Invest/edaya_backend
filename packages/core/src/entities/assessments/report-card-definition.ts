@@ -1,5 +1,5 @@
 import type { ReportCardDefinitionSection } from './report-card-definition-section'
-import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export enum ReportCardDefinitionKind {
   Default = 'default',

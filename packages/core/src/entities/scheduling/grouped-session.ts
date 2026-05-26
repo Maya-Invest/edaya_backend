@@ -1,5 +1,5 @@
 import type { SessionKind } from './session'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
 
 export interface GroupedSessionArgs {
   id: string

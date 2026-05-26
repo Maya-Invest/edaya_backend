@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '../utils'
 import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
 
 export interface ReportCardResultSectionArgs {

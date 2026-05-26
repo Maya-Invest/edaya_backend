@@ -1,5 +1,5 @@
 import type { StaffRole } from './staff-member'
-import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export interface StaffAssignmentArgs {
   id: string

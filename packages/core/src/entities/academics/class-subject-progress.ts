@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../utils'
 import { ClassSubjectMatterStatus } from './class-subject-matter'
 
 export interface ClassSubjectProgressArgs {

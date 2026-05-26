@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requirePositiveNumber, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requirePositiveNumber, requireValidDate } from '../utils'
 
 export enum ExamKind {
   Sequence = 'sequence',

@@ -4,40 +4,30 @@ import type { StudentFeeInstallment } from '../../entities/finances/student-fee'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
+import type { ServiceArgs } from '../school-headless-app'
 import { Fee } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { FeeStatus, StudentFee, StudentFeeSummary } from '../../entities/finances/student-fee'
 import { Money } from '../../value_object/money'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
-export interface FinanceServiceArgs extends AuthorizedServiceArgs {
-  atomicExecution: AtomicExecutionPort
-  repositories: SchoolRepositories
-}
-
 export class FinanceService {
-  constructor(args: FinanceServiceArgs) {
+  constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
-    this.students = args.repositories.students
-    this.feeDefinitions = args.repositories.fees
-    this.studentFees = args.repositories.studentFees
-    this.payments = args.repositories.payments
+    this.repositories = args.repositories
   }
 
   private readonly atomicExecution: AtomicExecutionPort
-  private readonly students: SchoolRepositories['students']
-  private readonly feeDefinitions: SchoolRepositories['fees']
-  private readonly studentFees: SchoolRepositories['studentFees']
-  private readonly payments: SchoolRepositories['payments']
+  private readonly repositories: SchoolRepositories
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
   async createFee(input: FeeArgs): Promise<Fee> {
     await this.authorize('finance.manage', { schoolId: input.schoolId })
     const fee = new Fee(input)
-    await this.feeDefinitions.save(fee)
+    await this.repositories.fees.save(fee)
     return fee
   }
 
@@ -82,7 +72,7 @@ export class FinanceService {
       status: this.deriveStatus({ expectedAmount: amount, paidAmount: 0, dueDate, referenceDate: referenceDate ?? new Date() }),
       createdAt,
     })
-    await this.studentFees.save(studentFee)
+    await this.repositories.studentFees.save(studentFee)
     return studentFee
   }
 
@@ -129,7 +119,7 @@ export class FinanceService {
         recordedById: resolveAuditActorId(this.actor),
         createdAt,
       })
-      await this.payments.save(payment)
+      await this.repositories.payments.save(payment)
       await this.savePaidAmount(
         studentFee,
         studentFee.paidAmount.amount + payment.amount.amount,
@@ -177,7 +167,7 @@ export class FinanceService {
         reversedAt: reversedAt ?? new Date(),
         createdAt: payment.createdAt,
       })
-      await this.payments.save(reversed)
+      await this.repositories.payments.save(reversed)
       await this.savePaidAmount(
         studentFee,
         Math.max(0, studentFee.paidAmount.amount - payment.amount.amount),
@@ -191,7 +181,7 @@ export class FinanceService {
   async buildFeeSummary(studentId: string): Promise<StudentFeeSummary> {
     const student = await this.requireStudent(studentId)
     await this.authorize('finance.read', { schoolId: student.schoolId, studentId })
-    const fees = await this.studentFees.list({ studentId })
+    const fees = await this.repositories.studentFees.list({ studentId })
     const currency = fees[0]?.expectedAmount.currency ?? 'XAF'
     const totalExpectedAmount = fees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
     const totalPaidAmount = fees.reduce((sum, item) => sum + item.paidAmount.amount, 0)
@@ -214,7 +204,7 @@ export class FinanceService {
     updatedAt?: Date,
     referenceDate?: Date,
   ): Promise<void> {
-    await this.studentFees.save(studentFee.copyWith({
+    await this.repositories.studentFees.save(studentFee.copyWith({
       paidAmount,
       status: this.deriveStatus({
         expectedAmount: studentFee.expectedAmount.amount - studentFee.adjustmentAmount.amount,
@@ -247,7 +237,7 @@ export class FinanceService {
   }
 
   private async requireStudent(studentId: string) {
-    const student = await this.students.findById(studentId)
+    const student = await this.repositories.students.findById(studentId)
     if (!student) {
       denyResourceAccess()
     }
@@ -255,7 +245,7 @@ export class FinanceService {
   }
 
   private async requireFee(feeId: string): Promise<Fee> {
-    const fee = await this.feeDefinitions.findById(feeId)
+    const fee = await this.repositories.fees.findById(feeId)
     if (!fee) {
       denyResourceAccess()
     }
@@ -263,7 +253,7 @@ export class FinanceService {
   }
 
   private async requireStudentFee(studentFeeId: string): Promise<StudentFee> {
-    const fee = await this.studentFees.findById(studentFeeId)
+    const fee = await this.repositories.studentFees.findById(studentFeeId)
     if (!fee) {
       denyResourceAccess()
     }
@@ -271,7 +261,7 @@ export class FinanceService {
   }
 
   private async requirePayment(paymentId: string): Promise<Payment> {
-    const payment = await this.payments.findById(paymentId)
+    const payment = await this.repositories.payments.findById(paymentId)
     if (!payment) {
       denyResourceAccess()
     }

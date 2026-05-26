@@ -1,4 +1,4 @@
-import { normalizeDate, requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { normalizeDate, requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
 
 export enum AttendanceStatus {
   Present = 'present',

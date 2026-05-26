@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../utils'
 
 export interface GradeLevelArgs {
   id: string

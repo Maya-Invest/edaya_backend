@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../utils'
 
 export enum ClassSubjectMatterStatus {
   NotStarted = 'not_started',

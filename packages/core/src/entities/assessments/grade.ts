@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeNumber, requirePositiveNumber, roundTo2 } from '../../utils/validation'
+import { requireNonBlank, requireNonNegativeNumber, requirePositiveNumber, roundTo2 } from '../utils'
 
 export enum DeadlineComplianceStatus {
   Met = 'met',

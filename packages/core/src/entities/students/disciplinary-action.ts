@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requirePositiveNumber } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requirePositiveNumber } from '../utils'
 
 export enum DisciplinaryActionKind {
   Sanction = 'sanction',

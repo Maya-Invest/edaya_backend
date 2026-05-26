@@ -1,4 +1,4 @@
-import { requireNonBlank, requireValidDate } from '../../utils/validation'
+import { requireNonBlank, requireValidDate } from '../utils'
 
 export enum IncidentKind {
   Positive = 'positive',

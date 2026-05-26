@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank } from '../../utils/validation'
+import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export enum StaffRole {
   Admin = 'admin',

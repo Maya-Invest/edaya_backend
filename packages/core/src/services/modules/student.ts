@@ -2,37 +2,24 @@ import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { GuardianContactMethod } from '../../entities/students/guardian-contact-method'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { AuthorizedServiceArgs } from '../authorization'
+import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
+import type { ServiceArgs } from '../school-headless-app'
 import { Guardian } from '../../entities/students/guardian'
 import { GuardianStudentLink } from '../../entities/students/guardian-student-link'
 import { Student } from '../../entities/students/student'
 import { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import { denyResourceAccess } from '../authorization'
 
-export interface StudentsServiceArgs extends AuthorizedServiceArgs {
-  repositories: SchoolRepositories
-}
-
 export class StudentsService {
-  constructor(args: StudentsServiceArgs) {
+  constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
-    this.schools = args.repositories.schools
-    this.classGroups = args.repositories.classGroups
-    this.students = args.repositories.students
-    this.enrollments = args.repositories.enrollments
-    this.guardians = args.repositories.guardians
-    this.guardianStudentLinks = args.repositories.guardianLinks
+    this.repositories = args.repositories
   }
 
-  private readonly schools: SchoolRepositories['schools']
-  private readonly classGroups: SchoolRepositories['classGroups']
-  private readonly students: SchoolRepositories['students']
-  private readonly enrollments: SchoolRepositories['enrollments']
-  private readonly guardians: SchoolRepositories['guardians']
-  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
-  private readonly actor: AuthorizedServiceArgs['actor']
-  private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
+  private readonly actor: ActorMetadata
+  private readonly authorizationPolicy: AuthorizationPolicy
+  private readonly repositories: SchoolRepositories
 
   async registerStudent({
     id,
@@ -52,7 +39,7 @@ export class StudentsService {
     await this.authorize('students.manage_enrollment', { schoolId })
     await this.requireSchool(schoolId)
     const student = new Student({ id, schoolId, firstName, lastName, birthDate, createdAt })
-    await this.students.save(student)
+    await this.repositories.students.save(student)
     return student
   }
 
@@ -78,7 +65,7 @@ export class StudentsService {
       studentId: student.id,
     })
 
-    const existingEnrollments = await this.enrollments.list({ studentId })
+    const existingEnrollments = await this.repositories.enrollments.list({ studentId })
     const existing = existingEnrollments.find(enrollment => enrollment.classGroupId === classGroupId)
     const nextEnrollmentIndex
       = existing?.enrollmentIndex
@@ -92,7 +79,7 @@ export class StudentsService {
       enrollmentIndex: nextEnrollmentIndex,
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.enrollments.save(enrollment)
+    await this.repositories.enrollments.save(enrollment)
     return enrollment
   }
 
@@ -133,7 +120,7 @@ export class StudentsService {
       premiumNotificationsEnabled,
       createdAt,
     })
-    await this.guardians.save(guardian)
+    await this.repositories.guardians.save(guardian)
     return guardian
   }
 
@@ -163,10 +150,10 @@ export class StudentsService {
       studentId: student.id,
     })
 
-    const enrollments = await this.enrollments.list({ studentId })
+    const enrollments = await this.repositories.enrollments.list({ studentId })
     const isEnrolledInSchool = await Promise.all(
       enrollments.map(async (enrollment) => {
-        const classGroup = await this.classGroups.findById(enrollment.classGroupId)
+        const classGroup = await this.repositories.classGroups.findById(enrollment.classGroupId)
         return classGroup?.schoolId === guardian.schoolId
       }),
     ).then(results => results.some(result => result))
@@ -175,7 +162,7 @@ export class StudentsService {
       denyResourceAccess()
     }
 
-    const existing = await this.guardianStudentLinks.findByGuardianAndStudent(guardianId, studentId)
+    const existing = await this.repositories.guardianLinks.findByGuardianAndStudent(guardianId, studentId)
     const link = new GuardianStudentLink({
       id: existing?.id ?? id,
       schoolId: guardian.schoolId,
@@ -185,12 +172,12 @@ export class StudentsService {
       isPrimary,
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.guardianStudentLinks.save(link)
+    await this.repositories.guardianLinks.save(link)
     return link
   }
 
   private async requireSchool(schoolId: string): Promise<School> {
-    const school = await this.schools.findById(schoolId)
+    const school = await this.repositories.schools.findById(schoolId)
     if (!school) {
       throw new Error(`Unknown school: ${schoolId}`)
     }
@@ -198,7 +185,7 @@ export class StudentsService {
   }
 
   private async requireStudent(studentId: string): Promise<Student> {
-    const student = await this.students.findById(studentId)
+    const student = await this.repositories.students.findById(studentId)
     if (!student) {
       denyResourceAccess()
     }
@@ -206,7 +193,7 @@ export class StudentsService {
   }
 
   private async requireGuardian(guardianId: string): Promise<Guardian> {
-    const guardian = await this.guardians.findById(guardianId)
+    const guardian = await this.repositories.guardians.findById(guardianId)
     if (!guardian) {
       denyResourceAccess()
     }
@@ -214,7 +201,7 @@ export class StudentsService {
   }
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
-    const classGroup = await this.classGroups.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup) {
       denyResourceAccess()
     }
