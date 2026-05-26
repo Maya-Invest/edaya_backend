@@ -552,25 +552,19 @@ export class AttendanceReviewService {
 
   async getAttendanceSessionReview({
     schoolId,
+    classGroupId,
     date,
     sessionId,
   }: {
     schoolId: string
+    classGroupId: string
+    academicYearId?: string
     date: Date
     sessionId?: string
   }): Promise<AttendanceReview> {
-    const classGroups = await this.classGroups.list({ schoolId })
-    const classGroup = classGroups[0]
-
-    if (!classGroup) {
-      return {
-        classGroup: undefined,
-        availableSessions: [],
-        selectedSession: undefined,
-        selectedDate: date,
-        rows: [],
-        summary: { present: 0, absent: 0, late: 0, total: 0 },
-      }
+    const classGroup = await this.classGroups.findById(classGroupId)
+    if (!classGroup || classGroup.schoolId !== schoolId) {
+      denyResourceAccess()
     }
 
     const allSessions = await this.sessions.list({ classGroupId: classGroup.id })
@@ -718,15 +712,23 @@ export class SchoolQueryService {
   }
 
   async getAttendanceSessionReview(input: Parameters<AttendanceReviewService['getAttendanceSessionReview']>[0]) {
+    const classGroup = await this.requireClassGroupInSchool(
+      input.classGroupId,
+      input.schoolId,
+      input.academicYearId,
+    )
     const session = input.sessionId
       ? await this.requireSessionInSchool(input.sessionId, input.schoolId)
       : undefined
+    if (session && session.classGroupId !== classGroup.id) {
+      denyResourceAccess()
+    }
     await this.authorizationPolicy.requirePermission(this.actor, {
       action: 'queries.read_attendance',
       resource: {
         schoolId: input.schoolId,
         sessionId: session?.id,
-        classGroupId: session?.classGroupId,
+        classGroupId: classGroup.id,
       },
     })
     return this.attendanceReview.getAttendanceSessionReview(input)
@@ -782,6 +784,23 @@ export class SchoolQueryService {
       denyResourceAccess()
     }
     return session
+  }
+
+  private async requireClassGroupInSchool(
+    classGroupId: string,
+    schoolId: string,
+    academicYearId?: string,
+  ): Promise<ClassGroup> {
+    const classGroup = await this.classGroupRepository.findById(classGroupId)
+    if (
+      !classGroup
+      || classGroup.schoolId !== schoolId
+      || (academicYearId !== undefined && classGroup.academicYearId !== academicYearId)
+    ) {
+      denyResourceAccess()
+    }
+    await this.requireAcademicYearInSchool(academicYearId, schoolId)
+    return classGroup
   }
 
   private async requireAcademicYearInSchool(academicYearId: string | undefined, schoolId: string): Promise<void> {

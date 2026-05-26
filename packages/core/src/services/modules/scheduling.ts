@@ -248,6 +248,7 @@ export class SchedulingService {
 
   async createSession({
     id,
+    schoolId,
     classGroupId,
     title,
     kind,
@@ -267,8 +268,11 @@ export class SchedulingService {
     createdAt?: Date
   }): Promise<Session> {
     const classGroup = await this.requireClassGroup(classGroupId)
+    if (classGroup.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
     await this.authorize('scheduling.manage', {
-      schoolId: classGroup.schoolId,
+      schoolId,
       classGroupId,
       classSubjectId,
     })

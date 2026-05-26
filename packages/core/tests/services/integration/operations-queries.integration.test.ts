@@ -14,6 +14,7 @@ import {
   SessionKind,
   StaffRole,
 } from '../../../src/entities'
+import { AuthorizationErrorCode } from '../../../src/services/authorization'
 import { createTestApp } from '../../support/in-memory-school-headless-app'
 
 describe('operations query journey', () => {
@@ -266,6 +267,7 @@ describe('assignment and query journey', () => {
     const timetable = await app.queries.listClassGroupTimetable('class')
     const attendanceReview = await app.queries.getAttendanceSessionReview({
       schoolId: 'school',
+      classGroupId: 'class',
       date: new Date('2026-09-01T00:00:00Z'),
       sessionId: session.id,
     })
@@ -277,5 +279,89 @@ describe('assignment and query journey', () => {
     expect(await repositories.staffAssignmentRepository.list({ classGroupId: 'class' })).toHaveLength(1)
     expect(await repositories.staffAssignmentRepository.list({ sessionId: session.id })).toHaveLength(1)
     expect(await repositories.staffAssignmentRepository.list({ groupedSessionId: groupedSession.id })).toHaveLength(1)
+  })
+
+  it('loads attendance for the selected class and rejects a session from another class', async () => {
+    const { app } = createTestApp()
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.createAcademicYear({
+      id: 'year',
+      schoolId: 'school',
+      name: '2026-2027',
+      startDate: new Date('2026-09-01T00:00:00Z'),
+      endDate: new Date('2027-06-30T23:59:59Z'),
+    })
+    await app.setup.createAcademicYear({
+      id: 'other-year',
+      schoolId: 'school',
+      name: '2027-2028',
+      startDate: new Date('2027-09-01T00:00:00Z'),
+      endDate: new Date('2028-06-30T23:59:59Z'),
+    })
+    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.setup.createClassGroup({
+      id: 'first-class',
+      schoolId: 'school',
+      academicYearId: 'year',
+      gradeLevelId: 'level',
+      name: 'Grade 6 A',
+    })
+    await app.setup.createClassGroup({
+      id: 'selected-class',
+      schoolId: 'school',
+      academicYearId: 'year',
+      gradeLevelId: 'level',
+      name: 'Grade 6 B',
+    })
+    await app.students.registerStudent({
+      id: 'selected-student',
+      schoolId: 'school',
+      firstName: 'Omar',
+      lastName: 'Diallo',
+    })
+    await app.students.enrollStudent({
+      id: 'selected-enrollment',
+      studentId: 'selected-student',
+      classGroupId: 'selected-class',
+    })
+    const selectedSession = await app.scheduling.createSession({
+      id: 'selected-session',
+      schoolId: 'school',
+      classGroupId: 'selected-class',
+      title: 'Selected class session',
+      kind: SessionKind.Course,
+      startsAt: new Date('2026-09-01T08:00:00Z'),
+      endsAt: new Date('2026-09-01T09:00:00Z'),
+    })
+    await app.scheduling.recordAttendance({
+      id: 'selected-attendance',
+      studentId: 'selected-student',
+      sessionId: selectedSession.id,
+      status: AttendanceStatus.Absent,
+    })
+
+    const review = await app.queries.getAttendanceSessionReview({
+      schoolId: 'school',
+      academicYearId: 'year',
+      classGroupId: 'selected-class',
+      date: new Date('2026-09-01T00:00:00Z'),
+      sessionId: selectedSession.id,
+    })
+    expect(review.classGroup?.id).toBe('selected-class')
+    expect(review.rows[0]?.student.id).toBe('selected-student')
+    expect(review.summary).toEqual({ present: 0, absent: 1, late: 0, total: 1 })
+
+    await expect(app.queries.getAttendanceSessionReview({
+      schoolId: 'school',
+      classGroupId: 'first-class',
+      date: new Date('2026-09-01T00:00:00Z'),
+      sessionId: selectedSession.id,
+    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(app.queries.getAttendanceSessionReview({
+      schoolId: 'school',
+      academicYearId: 'other-year',
+      classGroupId: 'selected-class',
+      date: new Date('2026-09-01T00:00:00Z'),
+    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })
 })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AcademicPeriodType, AnnouncementAudience, AnnouncementTargetKind, StaffMember, StaffRole } from '../../../src/entities'
+import { AcademicPeriodType, AnnouncementAudience, AnnouncementTargetKind, SessionKind, StaffMember, StaffRole } from '../../../src/entities'
 import { AuthorizationErrorCode, createStaffActorMetadata } from '../../../src/services/authorization'
 import { createTestApp } from '../../support/in-memory-school-headless-app'
 
@@ -84,6 +84,15 @@ describe('tenant boundary safeguards', () => {
       classGroupId: 'class-a',
       subjectId: 'subject-a',
     })
+    await expect(app.scheduling.createSession({
+      id: 'invalid-school-session',
+      schoolId: 'school-b',
+      classGroupId: 'class-a',
+      title: 'Cross-school session',
+      kind: SessionKind.Course,
+      startsAt: new Date('2026-09-01T08:00:00Z'),
+      endsAt: new Date('2026-09-01T09:00:00Z'),
+    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.setup.createClassGroup({
       id: 'class-b',
       schoolId: 'school-b',
@@ -161,6 +170,13 @@ describe('tenant boundary safeguards', () => {
     }
     for (const classGroupId of ['missing-class', 'class-b']) {
       await expect(app.queries.listClassGroupTimetable(classGroupId))
+        .rejects
+        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+      await expect(app.queries.getAttendanceSessionReview({
+        schoolId: 'school-a',
+        classGroupId,
+        date: new Date('2026-09-01T00:00:00Z'),
+      }))
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
