@@ -35,6 +35,7 @@ import type {
   StudentClassEnrollment,
   StudentDisciplinaryAction,
   StudentFee,
+  StudentHealthProfile,
   StudentIncidentInvolvement,
   StudentNote,
   Subject,
@@ -42,7 +43,7 @@ import type {
 } from '../../src/entities'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import type { ActorMetadata } from '../../src/services/authorization'
-import { StaffMember, StaffRole } from '../../src/entities'
+import { StaffMember, StaffRole, StudentClassEnrollmentStatus } from '../../src/entities'
 import {
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
@@ -128,6 +129,7 @@ export type FailableRepository
   = | 'classSubjectMatterRepository'
     | 'reportCardResultRepository'
     | 'sessionRepository'
+    | 'studentClassEnrollmentRepository'
     | 'studentFeeRepository'
 
 export function createTestApp(actor?: ActorMetadata) {
@@ -190,6 +192,7 @@ export function createTestApp(actor?: ActorMetadata) {
   const resources = createStore<Resource>(transactionParticipants)
   const resourceAssignments = createStore<ResourceAssignment>(transactionParticipants)
   const studentNotes = createStore<StudentNote>(transactionParticipants)
+  const studentHealthProfiles = createStore<StudentHealthProfile>(transactionParticipants)
   const studentDisciplinaryActions = createStore<StudentDisciplinaryAction>(transactionParticipants)
   const disciplinaryActions = createStore<DisciplinaryAction>(transactionParticipants)
   const studentIncidentInvolvements = createStore<StudentIncidentInvolvement>(transactionParticipants)
@@ -271,8 +274,9 @@ export function createTestApp(actor?: ActorMetadata) {
     students,
     enrollments: {
       ...enrollments,
-      findCurrentByStudent: async studentId =>
-        (await enrollments.list({ studentId, isCurrent: true }))[0],
+      save: entity => saveWithFailure('studentClassEnrollmentRepository', enrollments, entity),
+      findActiveByStudent: async studentId =>
+        (await enrollments.list({ studentId, status: StudentClassEnrollmentStatus.Active }))[0],
     },
     guardians,
     guardianLinks: {
@@ -281,6 +285,7 @@ export function createTestApp(actor?: ActorMetadata) {
         (await guardianLinks.list({ guardianId, studentId }))[0],
     },
     studentNotes,
+    studentHealthProfiles,
     studentDisciplinaryActions,
     disciplinaryActions,
     studentIncidentInvolvements,
@@ -337,6 +342,7 @@ export function createTestApp(actor?: ActorMetadata) {
     paymentRepository: schoolRepositories.payments,
     scheduleRepository: schoolRepositories.schedules,
     calendarEventRepository: schoolRepositories.calendarEvents,
+    studentHealthProfileRepository: schoolRepositories.studentHealthProfiles,
   }
 
   const defaultActor = actor ?? createStaffActorMetadata({

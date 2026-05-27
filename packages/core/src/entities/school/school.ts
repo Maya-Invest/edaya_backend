@@ -11,6 +11,7 @@ export enum SchoolType {
 export interface SchoolArgs {
   id: string
   name: string
+  timeZone: string
   type?: SchoolType | null
   country?: string | null
   city?: string | null
@@ -24,14 +25,16 @@ export interface SchoolArgs {
 export class School {
   readonly id: string
   readonly name: string
+  readonly timeZone: string
   readonly type?: SchoolType
   readonly country?: string
   readonly city?: string
   readonly createdAt: Date
 
-  constructor({ id, name, type, country, city, createdAt }: SchoolArgs) {
+  constructor({ id, name, timeZone, type, country, city, createdAt }: SchoolArgs) {
     this.id = requireNonBlank(id, 'id')
     this.name = requireNonBlank(name, 'name')
+    this.timeZone = requireTimeZone(timeZone)
     this.type = type ?? undefined
     this.country = requireOptionalNonBlank(country, 'country')
     this.city = requireOptionalNonBlank(city, 'city')
@@ -42,4 +45,15 @@ export class School {
     const parts = [this.city, this.country].filter((value): value is string => Boolean(value))
     return parts.length > 0 ? parts.join(', ') : undefined
   }
+}
+
+function requireTimeZone(value: string): string {
+  const timeZone = requireNonBlank(value, 'timeZone')
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone }).format()
+  }
+  catch {
+    throw new Error(`Invalid IANA time zone: ${timeZone}`)
+  }
+  return timeZone
 }

@@ -59,14 +59,12 @@ export class AcademicsService {
     id,
     classGroupId,
     subjectId,
-    staffId,
     coefficient,
     createdAt,
   }: {
     id: string
     classGroupId: string
     subjectId: string
-    staffId?: string
     coefficient?: number
     createdAt?: Date
   }): Promise<ClassSubject> {
@@ -90,7 +88,7 @@ export class AcademicsService {
     if (existing) {
       return existing
     }
-    const classSubject = new ClassSubject({ id, classGroupId, subjectId, staffId, coefficient, createdAt })
+    const classSubject = new ClassSubject({ id, classGroupId, subjectId, coefficient, createdAt })
     await this.repositories.classSubjects.save(classSubject)
     return classSubject
   }
@@ -233,7 +231,6 @@ export class AcademicsService {
       id: classSubject.id,
       classGroupId: classSubject.classGroupId,
       subjectId: classSubject.subjectId,
-      staffId: classSubject.staffId,
       coefficient: classSubject.coefficient,
       completedPercentage,
       createdAt: classSubject.createdAt,

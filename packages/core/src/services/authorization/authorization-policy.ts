@@ -26,6 +26,8 @@ export type AuthorizationAction
     | 'queries.read_workspace'
     | 'queries.read_overview'
     | 'queries.read_student_directory'
+    | 'queries.read_enrollment_history'
+    | 'queries.read_report_card_detail'
     | 'queries.read_class_directory'
     | 'queries.read_class_curriculum'
     | 'queries.read_timetable'
@@ -89,6 +91,8 @@ const coordinatorActions = new Set<AuthorizationAction>([
   'students.manage_guardians',
   'communications.manage',
   'queries.read_workspace',
+  'queries.read_enrollment_history',
+  'queries.read_report_card_detail',
   'queries.read_class_directory',
   'queries.read_class_curriculum',
   'queries.read_timetable',

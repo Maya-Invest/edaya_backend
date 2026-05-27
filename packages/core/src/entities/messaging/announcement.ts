@@ -1,14 +1,5 @@
 import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
 
-export enum AnnouncementAudience {
-  School = 'school',
-  Staff = 'staff',
-  Guardians = 'guardians',
-  Students = 'students',
-  ClassGroup = 'class_group',
-  Custom = 'custom',
-}
-
 export enum AnnouncementStatus {
   Draft = 'draft',
   Published = 'published',
@@ -26,8 +17,6 @@ export interface AnnouncementArgs {
   schoolId: string
   title: string
   content: string
-  audience: AnnouncementAudience
-  classGroupId?: string
   createdBy?: string
   status?: AnnouncementStatus
   priority?: AnnouncementPriority
@@ -38,7 +27,7 @@ export interface AnnouncementArgs {
 }
 
 /**
- * Represents a communication or notice broadcasted to the school or a specific class group.
+ * Represents publishable communication content; target records define its audience.
  * Can trigger standard or premium notifications for guardians and staff.
  */
 export class Announcement {
@@ -46,8 +35,6 @@ export class Announcement {
   readonly schoolId: string
   readonly title: string
   readonly content: string
-  readonly audience: AnnouncementAudience
-  readonly classGroupId?: string
   readonly createdBy?: string
   readonly status: AnnouncementStatus
   readonly priority: AnnouncementPriority
@@ -61,8 +48,6 @@ export class Announcement {
     schoolId,
     title,
     content,
-    audience,
-    classGroupId,
     createdBy,
     status,
     priority = AnnouncementPriority.Normal,
@@ -71,16 +56,10 @@ export class Announcement {
     publishedAt,
     expiresAt,
   }: AnnouncementArgs) {
-    if (audience === AnnouncementAudience.ClassGroup && !classGroupId) {
-      throw new Error('classGroupId is required for class group announcements')
-    }
-
     this.id = requireNonBlank(id, 'id')
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.title = requireNonBlank(title, 'title')
     this.content = requireNonBlank(content, 'content')
-    this.audience = audience
-    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
     this.createdBy = requireOptionalNonBlank(createdBy, 'createdBy')
     this.status = status ?? (publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
     this.priority = priority
@@ -102,9 +81,5 @@ export class Announcement {
 
   get isPublished(): boolean {
     return this.status === AnnouncementStatus.Published
-  }
-
-  isVisibleForClassGroup(currentClassGroupId: string): boolean {
-    return this.audience === AnnouncementAudience.School || this.classGroupId === currentClassGroupId
   }
 }

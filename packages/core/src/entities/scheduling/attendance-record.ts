@@ -4,7 +4,13 @@ export enum AttendanceStatus {
   Present = 'present',
   Absent = 'absent',
   Late = 'late',
+}
+
+export enum AttendanceJustificationStatus {
+  None = 'none',
+  Pending = 'pending',
   Excused = 'excused',
+  Rejected = 'rejected',
 }
 
 export interface AttendanceRecordArgs {
@@ -13,6 +19,7 @@ export interface AttendanceRecordArgs {
   sessionId: string
   date: Date
   status: AttendanceStatus
+  justificationStatus?: AttendanceJustificationStatus
   reason?: string | null
   notes?: string | null
   justifiedAt?: Date | null
@@ -32,6 +39,7 @@ export class AttendanceRecord {
   readonly sessionId: string
   readonly date: Date
   readonly status: AttendanceStatus
+  readonly justificationStatus: AttendanceJustificationStatus
   readonly reason?: string
   readonly notes?: string
   readonly justifiedAt?: Date
@@ -46,6 +54,7 @@ export class AttendanceRecord {
     sessionId,
     date,
     status,
+    justificationStatus = AttendanceJustificationStatus.None,
     reason,
     notes,
     justifiedAt,
@@ -59,6 +68,7 @@ export class AttendanceRecord {
     this.sessionId = requireNonBlank(sessionId, 'sessionId')
     this.date = normalizeDate(requireValidDate(date, 'date'))
     this.status = status
+    this.justificationStatus = justificationStatus
     this.reason = requireOptionalNonBlank(reason, 'reason')
     this.notes = requireOptionalNonBlank(notes, 'notes')
     this.justifiedAt = justifiedAt ? requireValidDate(justifiedAt, 'justifiedAt') : undefined
@@ -71,6 +81,19 @@ export class AttendanceRecord {
 
     if (this.justifiedByStaffId && !this.justifiedAt) {
       throw new Error('justifiedAt is required when justifiedByStaffId is provided')
+    }
+    if (
+      this.justificationStatus !== AttendanceJustificationStatus.None
+      && this.status === AttendanceStatus.Present
+    ) {
+      throw new Error('present attendance must not carry an absence justification')
+    }
+    if (
+      (this.justificationStatus === AttendanceJustificationStatus.Excused
+        || this.justificationStatus === AttendanceJustificationStatus.Rejected)
+      && (!this.justifiedAt || !this.justifiedByStaffId)
+    ) {
+      throw new Error('reviewed justifications must identify the reviewing staff member and time')
     }
   }
 }

@@ -17,8 +17,9 @@ import { ReportCardDefinition } from '../../entities/assessments/report-card-def
 import { ReportCardDefinitionSection, ReportCardDefinitionSectionKind as SectionKind } from '../../entities/assessments/report-card-definition-section'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { ReportCardResultSection as SectionResult } from '../../entities/assessments/report-card-result-section'
-import { AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import { AttendanceJustificationStatus, AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { GradeScale } from '../../entities/school/grade-scale'
+import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { normalizeDate, roundTo2 } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
@@ -138,6 +139,9 @@ export class AssessmentsService {
       classGroupId: classGroup.id,
       classSubjectId: existing.classSubjectId,
     })
+    if ((await this.repositories.assessmentResults.list({ assessmentId })).length > 0) {
+      throw new Error(`Assessment ${assessmentId} cannot be changed after results have been recorded`)
+    }
     const completed = new Assessment({
       id: existing.id,
       classGroupId: existing.classGroupId,
@@ -184,6 +188,7 @@ export class AssessmentsService {
       throw new Error(`Assessment ${assessmentId} does not belong to academic period ${assessment.periodId}`)
     }
     await this.requireStudentEligibilityForAssessment({ studentId, classGroupId: classGroup.id })
+    await this.requireReportCardNotPublished(studentId, assessment.periodId)
 
     const existingResults = await this.repositories.assessmentResults.list({ assessmentId })
     const existing = existingResults.find(res => res.studentId === studentId)
@@ -191,14 +196,15 @@ export class AssessmentsService {
       id: existing?.id ?? id,
       studentId,
       assessmentId,
-      classSubjectId: assessment.classSubjectId,
-      periodId: assessment.periodId,
       score,
-      maxScore: assessment.maxScore,
-      coefficient: assessment.coefficient,
+      status: existing?.status,
+      notes: existing?.notes,
       createdBy: resolveAuditActorId(this.actor),
       createdAt: existing?.createdAt ?? createdAt,
     })
+    if (assessmentResult.score !== undefined && assessmentResult.score > assessment.maxScore) {
+      throw new Error('score must not exceed assessment maxScore')
+    }
     await this.repositories.assessmentResults.save(assessmentResult)
     return assessmentResult
   }
@@ -228,17 +234,14 @@ export class AssessmentsService {
     })
     await this.requireStudentInSchool(studentId, classGroup.schoolId)
     await this.requireStudentEligibilityForAssessment({ studentId, assessment })
+    await this.requireReportCardNotPublished(studentId, assessment.periodId)
     const existingResults = await this.repositories.assessmentResults.list({ assessmentId })
     const existing = existingResults.find(res => res.studentId === studentId)
     const assessmentResult = new AssessmentResult({
       id: existing?.id ?? id,
       studentId,
       assessmentId,
-      classSubjectId: assessment.classSubjectId,
-      periodId: assessment.periodId,
       score: existing?.score,
-      maxScore: assessment.maxScore,
-      coefficient: assessment.coefficient,
       status,
       notes,
       createdBy: resolveAuditActorId(this.actor),
@@ -266,7 +269,9 @@ export class AssessmentsService {
     if (!period || period.schoolId !== classGroup.schoolId || period.academicYearId !== classGroup.academicYearId) {
       denyResourceAccess()
     }
-    return this.repositories.assessmentResults.list({ classSubjectId, periodId })
+    const assessments = await this.repositories.assessments.list({ classSubjectId, periodId })
+    const assessmentIds = new Set(assessments.map(assessment => assessment.id))
+    return (await this.repositories.assessmentResults.list()).filter(result => assessmentIds.has(result.assessmentId))
   }
 
   async createReportCardDefinitionSection({
@@ -274,6 +279,7 @@ export class AssessmentsService {
     reportCardDefinitionId,
     kind,
     name,
+    order,
     weight,
     parentSectionId,
     subjectId,
@@ -283,6 +289,7 @@ export class AssessmentsService {
     reportCardDefinitionId: string
     kind: ReportCardDefinitionSectionKind
     name: string
+    order: number
     weight: number
     parentSectionId?: string
     subjectId?: string
@@ -296,17 +303,25 @@ export class AssessmentsService {
       schoolId: definition.schoolId,
       academicYearId: definition.academicYearId,
     })
+    if (parentSectionId === id) {
+      throw new Error('report card sections must not parent themselves')
+    }
     if (parentSectionId) {
       const parent = await this.repositories.sections.findById(parentSectionId)
       if (!parent || parent.reportCardDefinitionId !== reportCardDefinitionId) {
         denyResourceAccess()
       }
+      if (parent.kind !== SectionKind.Group) {
+        throw new Error('subject report card sections must not contain child sections')
+      }
+      await this.requireAcyclicSectionParent(id, parent)
     }
     const section = new ReportCardDefinitionSection({
       id,
       reportCardDefinitionId,
       kind,
       name,
+      order,
       weight,
       parentSectionId,
       subjectId,
@@ -323,6 +338,7 @@ export class AssessmentsService {
       studentId: student.id,
     })
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+    await this.requireReportCardNotPublished(input.studentId, input.periodId)
     return this.buildReportCardResult(input)
   }
 
@@ -335,6 +351,7 @@ export class AssessmentsService {
     })
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     return this.atomicExecution.execute(async () => {
+      await this.requireReportCardNotPublished(input.studentId, input.periodId)
       const generated = await this.buildReportCardResult(input)
       const published = generated.copyWith({
         status: ReportCardResultStatus.Published,
@@ -370,7 +387,7 @@ export class AssessmentsService {
       classGroupId: classGroup.id,
       reportCardDefinitionId: definition.id,
     })
-    const periodAssessmentResults = await this.repositories.assessmentResults.list({ studentId, periodId })
+    const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
     const attendanceSummary = await this.buildAttendanceSummary({
       studentId,
       startDate: period.startDate,
@@ -407,28 +424,40 @@ export class AssessmentsService {
     reportCardDefinitionId: string
   }): Promise<{ sectionResults: SectionResult[], overallAverage?: number }> {
     await this.requirePeriod(periodId)
-    const periodAssessmentResults = await this.repositories.assessmentResults.list({ studentId, periodId })
-    const assessmentResultsByClassSubject = new Map<string, AssessmentResult[]>()
-    for (const res of periodAssessmentResults) {
-      assessmentResultsByClassSubject.set(res.classSubjectId, [
-        ...(assessmentResultsByClassSubject.get(res.classSubjectId) ?? []),
-        res,
+    const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
+    const assessmentResultsByClassSubject = new Map<string, Array<{ result: AssessmentResult, assessment: Assessment }>>()
+    for (const { result, assessment } of periodAssessmentResults) {
+      assessmentResultsByClassSubject.set(assessment.classSubjectId, [
+        ...(assessmentResultsByClassSubject.get(assessment.classSubjectId) ?? []),
+        { result, assessment },
       ])
     }
     const classSubjects = await this.repositories.classSubjects.list({ classGroupId })
     const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
-    const allSections = await this.repositories.sections.list({ reportCardDefinitionId })
-    const computeNode = async (section: ReportCardDefinitionSection): Promise<SectionResult | null> => {
+    const allSections = (await this.repositories.sections.list({ reportCardDefinitionId }))
+      .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+    const computeNode = async (
+      section: ReportCardDefinitionSection,
+      visited = new Set<string>(),
+    ): Promise<SectionResult | null> => {
+      if (visited.has(section.id)) {
+        throw new Error('report card definition sections must not contain cycles')
+      }
+      const nextVisited = new Set(visited).add(section.id)
       const childSections = allSections.filter(item => item.parentSectionId === section.id)
       if (section.kind === SectionKind.Subject) {
         const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
         if (!classSubject)
           return null
-        const leafResults = (assessmentResultsByClassSubject.get(classSubject.id) ?? []).filter(res => res.score !== undefined)
+        const leafResults = (assessmentResultsByClassSubject.get(classSubject.id) ?? [])
+          .filter(({ result }) => result.score !== undefined)
         if (leafResults.length === 0)
           return null
-        const totalWeight = leafResults.reduce((sum, res) => sum + (res.coefficient ?? 1), 0)
-        const weightedPoints = leafResults.reduce((sum, res) => sum + (res.weightedPoints ?? 0), 0)
+        const totalWeight = leafResults.reduce((sum, { assessment }) => sum + assessment.coefficient, 0)
+        const weightedPoints = leafResults.reduce((sum, { result, assessment }) => {
+          const normalizedScore = ((result.score ?? 0) / assessment.maxScore) * 20
+          return sum + normalizedScore * assessment.coefficient
+        }, 0)
         return new SectionResult({
           sectionId: section.id,
           sectionKind: SectionKind.Subject,
@@ -444,7 +473,7 @@ export class AssessmentsService {
       let sumWeights = 0
       let sumWeightedPoints = 0
       for (const child of childSections) {
-        const childResult = await computeNode(child)
+        const childResult = await computeNode(child, nextVisited)
         if (childResult) {
           childResults.push(childResult)
           sumWeights += child.weight
@@ -493,6 +522,7 @@ export class AssessmentsService {
     })
     let presentCount = 0
     let absenceCount = 0
+    let excusedAbsenceCount = 0
     let lateCount = 0
     for (const record of records) {
       switch (record.status) {
@@ -501,13 +531,46 @@ export class AssessmentsService {
           break
         case AttendanceStatus.Absent:
           absenceCount += 1
+          if (record.justificationStatus === AttendanceJustificationStatus.Excused) {
+            excusedAbsenceCount += 1
+          }
           break
         case AttendanceStatus.Late:
           lateCount += 1
           break
       }
     }
-    return new AttendanceSummary({ presentCount, absenceCount, lateCount })
+    return new AttendanceSummary({ presentCount, absenceCount, excusedAbsenceCount, lateCount })
+  }
+
+  private async listResultsForStudentAndPeriod(
+    studentId: string,
+    periodId: string,
+  ): Promise<Array<{ result: AssessmentResult, assessment: Assessment }>> {
+    const results = await this.repositories.assessmentResults.list({ studentId })
+    const resolved: Array<{ result: AssessmentResult, assessment: Assessment }> = []
+    for (const result of results) {
+      const assessment = await this.repositories.assessments.findById(result.assessmentId)
+      if (assessment?.periodId === periodId) {
+        resolved.push({ result, assessment })
+      }
+    }
+    return resolved
+  }
+
+  private async requireAcyclicSectionParent(
+    sectionId: string,
+    parent: ReportCardDefinitionSection,
+  ): Promise<void> {
+    let candidate: ReportCardDefinitionSection | undefined = parent
+    while (candidate) {
+      if (candidate.id === sectionId) {
+        throw new Error('report card definition sections must not contain cycles')
+      }
+      candidate = candidate.parentSectionId
+        ? await this.repositories.sections.findById(candidate.parentSectionId)
+        : undefined
+    }
   }
 
   private async requireSchool(schoolId: string): Promise<void> {
@@ -572,10 +635,16 @@ export class AssessmentsService {
     classGroupId?: string
     assessment?: Assessment
   }): Promise<void> {
-    const enrollments = await this.repositories.enrollments.list({ studentId })
     const targetClassGroupId = classGroupId ?? assessment?.classGroupId
-    if (!targetClassGroupId || !enrollments.some(enrollment => enrollment.classGroupId === targetClassGroupId)) {
-      throw new Error(`Student ${studentId} is not enrolled in classGroup ${targetClassGroupId}`)
+    const enrollments = targetClassGroupId
+      ? await this.repositories.enrollments.list({
+          studentId,
+          classGroupId: targetClassGroupId,
+          status: StudentClassEnrollmentStatus.Active,
+        })
+      : []
+    if (!targetClassGroupId || enrollments.length === 0) {
+      throw new Error(`Student ${studentId} does not have an active enrollment in classGroup ${targetClassGroupId}`)
     }
   }
 
@@ -659,6 +728,13 @@ export class AssessmentsService {
     }
     if (definition && definition.schoolId !== schoolId) {
       denyResourceAccess()
+    }
+  }
+
+  private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
+    const reportCard = await this.repositories.results.findByStudentAndPeriod(studentId, periodId)
+    if (reportCard?.status === ReportCardResultStatus.Published) {
+      throw new Error(`Published report card for student ${studentId} and period ${periodId} is immutable`)
     }
   }
 

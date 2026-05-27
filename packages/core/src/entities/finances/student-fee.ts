@@ -28,7 +28,7 @@ export interface StudentFeeArgs {
   currency: string
   dueDate?: Date | null
   status: FeeStatus
-  expectedPayments?: readonly StudentFeeInstallment[]
+  installments?: readonly StudentFeeInstallment[]
   createdAt?: Date
   updatedAt?: Date
 }
@@ -50,7 +50,7 @@ export class StudentFee {
   readonly adjustmentReason?: string
   readonly dueDate?: Date
   readonly status: FeeStatus
-  readonly expectedPayments: readonly StudentFeeInstallment[]
+  readonly installments: readonly StudentFeeInstallment[]
   readonly createdAt: Date
   readonly updatedAt?: Date
 
@@ -66,7 +66,7 @@ export class StudentFee {
     currency,
     dueDate,
     status,
-    expectedPayments = [],
+    installments = [],
     createdAt,
     updatedAt,
   }: StudentFeeArgs) {
@@ -97,14 +97,21 @@ export class StudentFee {
     this.dueDate = dueDate ? requireValidDate(dueDate, 'dueDate') : undefined
     this.status = status
 
-    this.expectedPayments = Object.freeze(
-      expectedPayments.map(inst => ({
+    this.installments = Object.freeze(
+      installments.map(inst => ({
         id: requireNonBlank(inst.id, 'installment.id'),
         label: requireNonBlank(inst.label, 'installment.label'),
         expectedAmount: requireNonNegativeInt(inst.expectedAmount, 'installment.expectedAmount'),
         dueDate: inst.dueDate ? requireValidDate(inst.dueDate, 'installment.dueDate') : undefined,
       })),
     )
+    if (
+      this.installments.length > 0
+      && this.installments.reduce((sum, installment) => sum + installment.expectedAmount, 0)
+      !== this.expectedAmount.amount
+    ) {
+      throw new Error('installment expected amounts must total expectedAmount')
+    }
 
     this.createdAt = createdAt ?? new Date()
     this.updatedAt = updatedAt ? requireValidDate(updatedAt, 'updatedAt') : undefined
@@ -136,7 +143,7 @@ export class StudentFee {
       currency: this.expectedAmount.currency,
       dueDate: changes.dueDate !== undefined ? changes.dueDate : this.dueDate,
       status: changes.status ?? this.status,
-      expectedPayments: this.expectedPayments,
+      installments: this.installments,
       createdAt: this.createdAt,
       updatedAt: changes.updatedAt !== undefined ? changes.updatedAt : this.updatedAt,
     })

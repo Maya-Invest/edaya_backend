@@ -1,5 +1,5 @@
 import { Money } from '../../value_object/money'
-import { requireNonBlank, requireNonNegativeInt, requireValidDate } from '../utils'
+import { requireNonBlank, requireNonNegativeInt, requirePositiveNumber, requireValidDate, roundTo2 } from '../utils'
 
 export interface FeeInstallmentTemplate {
   label: string
@@ -72,7 +72,7 @@ export class Fee {
     this.installments = Object.freeze(
       installments.map((inst) => {
         requireNonBlank(inst.label, 'installment.label')
-        requireNonNegativeInt(inst.percentage, 'installment.percentage')
+        requirePositiveNumber(inst.percentage, 'installment.percentage')
         return {
           label: inst.label,
           percentage: inst.percentage,
@@ -80,6 +80,12 @@ export class Fee {
         }
       }),
     )
+    if (this.installments.length > 0) {
+      const percentageTotal = roundTo2(this.installments.reduce((sum, installment) => sum + installment.percentage, 0))
+      if (percentageTotal !== 100) {
+        throw new Error('installment percentages must total 100')
+      }
+    }
 
     this.createdAt = createdAt ?? new Date()
   }

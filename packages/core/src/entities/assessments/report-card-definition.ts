@@ -1,4 +1,3 @@
-import type { ReportCardDefinitionSection } from './report-card-definition-section'
 import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export enum ReportCardDefinitionKind {
@@ -15,7 +14,6 @@ export interface ReportCardDefinitionArgs {
   kind?: ReportCardDefinitionKind
   isDefault?: boolean
   description?: string | null
-  sections?: readonly ReportCardDefinitionSection[]
   createdAt?: Date
 }
 
@@ -33,7 +31,6 @@ export class ReportCardDefinition {
   readonly kind: ReportCardDefinitionKind
   readonly isDefault: boolean
   readonly description?: string
-  readonly sections: readonly ReportCardDefinitionSection[]
   readonly createdAt: Date
 
   constructor({
@@ -45,7 +42,6 @@ export class ReportCardDefinition {
     kind = ReportCardDefinitionKind.Custom,
     isDefault = false,
     description,
-    sections,
     createdAt,
   }: ReportCardDefinitionArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -56,7 +52,6 @@ export class ReportCardDefinition {
     this.kind = kind
     this.isDefault = isDefault
     this.description = requireOptionalNonBlank(description, 'description')
-    this.sections = Object.freeze(sections ? [...sections] : [])
     this.createdAt = createdAt ?? new Date()
   }
 }

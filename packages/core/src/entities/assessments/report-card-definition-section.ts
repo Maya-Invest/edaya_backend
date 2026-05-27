@@ -1,4 +1,4 @@
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../utils'
+import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requirePositiveNumber } from '../utils'
 
 export enum ReportCardDefinitionSectionKind {
   Group = 'group',
@@ -10,6 +10,7 @@ export interface ReportCardDefinitionSectionArgs {
   reportCardDefinitionId: string
   name: string
   kind?: ReportCardDefinitionSectionKind
+  order: number
   weight: number
   parentSectionId?: string | null
   subjectId?: string | null
@@ -26,6 +27,7 @@ export class ReportCardDefinitionSection {
   readonly reportCardDefinitionId: string
   readonly kind: ReportCardDefinitionSectionKind
   readonly name: string
+  readonly order: number
   readonly weight: number
   readonly parentSectionId?: string
   readonly subjectId?: string
@@ -36,6 +38,7 @@ export class ReportCardDefinitionSection {
     reportCardDefinitionId,
     name,
     kind = ReportCardDefinitionSectionKind.Group,
+    order,
     weight,
     parentSectionId,
     subjectId,
@@ -45,6 +48,7 @@ export class ReportCardDefinitionSection {
     this.reportCardDefinitionId = requireNonBlank(reportCardDefinitionId, 'reportCardDefinitionId')
     this.kind = kind
     this.name = requireNonBlank(name, 'name')
+    this.order = requirePositiveInt(order, 'order')
     this.weight = requirePositiveNumber(weight, 'weight')
     this.parentSectionId = requireOptionalNonBlank(parentSectionId, 'parentSectionId')
     this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
@@ -61,12 +65,14 @@ export class ReportCardDefinitionSection {
   copyWith({
     name,
     kind,
+    order,
     weight,
     parentSectionId,
     subjectId,
   }: {
     name?: string
     kind?: ReportCardDefinitionSectionKind
+    order?: number
     weight?: number
     parentSectionId?: string | null
     subjectId?: string | null
@@ -76,6 +82,7 @@ export class ReportCardDefinitionSection {
       reportCardDefinitionId: this.reportCardDefinitionId,
       name: name ?? this.name,
       kind: kind ?? this.kind,
+      order: order ?? this.order,
       weight: weight ?? this.weight,
       parentSectionId: parentSectionId !== undefined ? parentSectionId : this.parentSectionId,
       subjectId: subjectId !== undefined ? subjectId : this.subjectId,

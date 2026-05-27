@@ -4,10 +4,12 @@ import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
-import { AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import { AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import { CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
 import { PeriodDefinition } from '../../entities/scheduling/period-definition'
 import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
+import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { normalizeDate } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
@@ -146,7 +148,10 @@ export class SchedulingService {
       const nonSchoolDates = new Set<string>()
 
       for (const event of calendarEvents) {
-        if (event.isNonSchoolDay) {
+        const appliesToClass = event.scopeKind === CalendarEventScopeKind.School
+          || (event.scopeKind === CalendarEventScopeKind.ClassGroup && event.scopeId === classGroup.id)
+          || (event.scopeKind === CalendarEventScopeKind.GradeLevel && event.scopeId === classGroup.gradeLevelId)
+        if (event.isNonSchoolDay && appliesToClass) {
           const current = new Date(event.startDate)
           while (current <= event.endDate) {
             nonSchoolDates.add(current.toDateString())
@@ -315,6 +320,7 @@ export class SchedulingService {
     })
     let presentCount = 0
     let absenceCount = 0
+    let excusedAbsenceCount = 0
     let lateCount = 0
     for (const record of records) {
       switch (record.status) {
@@ -323,13 +329,16 @@ export class SchedulingService {
           break
         case AttendanceStatus.Absent:
           absenceCount += 1
+          if (record.justificationStatus === AttendanceJustificationStatus.Excused) {
+            excusedAbsenceCount += 1
+          }
           break
         case AttendanceStatus.Late:
           lateCount += 1
           break
       }
     }
-    return new AttendanceSummary({ presentCount, absenceCount, lateCount })
+    return new AttendanceSummary({ presentCount, absenceCount, excusedAbsenceCount, lateCount })
   }
 
   async listSessionAttendance(sessionId: string): Promise<AttendanceRecord[]> {
@@ -428,9 +437,13 @@ export class SchedulingService {
     studentId: string
     classGroupId: string
   }): Promise<void> {
-    const enrollments = await this.repositories.enrollments.list({ studentId })
-    if (!enrollments.some(enrollment => enrollment.classGroupId === classGroupId)) {
-      throw new Error(`Student ${studentId} is not enrolled in classGroup ${classGroupId}`)
+    const enrollments = await this.repositories.enrollments.list({
+      studentId,
+      classGroupId,
+      status: StudentClassEnrollmentStatus.Active,
+    })
+    if (enrollments.length === 0) {
+      throw new Error(`Student ${studentId} does not have an active enrollment in classGroup ${classGroupId}`)
     }
   }
 

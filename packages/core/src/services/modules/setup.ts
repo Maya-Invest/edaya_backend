@@ -26,18 +26,20 @@ export class SetupService {
   async registerSchool({
     id,
     name,
+    timeZone,
     country,
     city,
     createdAt,
   }: {
     id: string
     name: string
+    timeZone: string
     country?: string
     city?: string
     createdAt?: Date
   }): Promise<School> {
     await this.authorize('setup.register_school', id)
-    const school = new School({ id, name, country, city, createdAt })
+    const school = new School({ id, name, timeZone, country, city, createdAt })
     await this.repositories.schools.save(school)
     return school
   }
@@ -139,6 +141,7 @@ export class SetupService {
     academicYearId,
     gradeLevelId,
     name,
+    capacity,
     createdAt,
   }: {
     id: string
@@ -146,6 +149,7 @@ export class SetupService {
     academicYearId: string
     gradeLevelId: string
     name: string
+    capacity?: number
     createdAt?: Date
   }): Promise<ClassGroup> {
     await this.authorize('setup.manage', schoolId)
@@ -154,7 +158,7 @@ export class SetupService {
       this.requireResourceInSchool(this.repositories.academicYears.findById(academicYearId), schoolId),
       this.requireResourceInSchool(this.repositories.gradeLevels.findById(gradeLevelId), schoolId),
     ])
-    const classGroup = new ClassGroup({ id, schoolId, academicYearId, gradeLevelId, name, createdAt })
+    const classGroup = new ClassGroup({ id, schoolId, academicYearId, gradeLevelId, name, capacity, createdAt })
     await this.repositories.classGroups.save(classGroup)
     return classGroup
   }

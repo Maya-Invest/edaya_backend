@@ -4,6 +4,7 @@ import {
   AssessmentKind,
   AttendanceStatus,
   DeadlineComplianceStatus,
+  EnrollmentEndReason,
   ReportCardDefinitionSectionKind,
   ReportCardResultStatus,
   SessionKind,
@@ -13,7 +14,7 @@ import { createTestApp } from '../../support/in-memory-school-headless-app'
 describe('assessment reporting journey', () => {
   it('publishes a report card from scheduled instruction, attendance, and a recorded assessment result', async () => {
     const { app } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -97,6 +98,7 @@ describe('assessment reporting journey', () => {
       reportCardDefinitionId: 'definition',
       kind: ReportCardDefinitionSectionKind.Subject,
       name: 'Mathematics',
+      order: 1,
       weight: 1,
       subjectId: 'math',
     })
@@ -112,6 +114,18 @@ describe('assessment reporting journey', () => {
     })
     await app.assessments.recordAssessmentResult({ id: 'grade', studentId: 'student', assessmentId: 'quiz', score: 16 })
 
+    const openEntryReview = await app.queries.getAssessmentEntryReview({
+      schoolId: 'school',
+      assessmentId: 'quiz',
+    })
+    expect(openEntryReview.assessment.id).toBe('quiz')
+    expect(openEntryReview.classSubject.id).toBe(classSubject.id)
+    expect(openEntryReview.subject.id).toBe('math')
+    expect(openEntryReview.period.id).toBe('term')
+    expect(openEntryReview.rows.map(row => row.student.id)).toEqual(['student'])
+    expect(openEntryReview.rows[0]?.result?.score).toBe(16)
+    expect(openEntryReview.rows[0]?.isLockedByPublishedReportCard).toBe(false)
+
     const reportCard = await app.assessments.publishReportCardResult({
       id: 'report-card',
       studentId: 'student',
@@ -122,15 +136,79 @@ describe('assessment reporting journey', () => {
     expect(reportCard.overallAverage).toBe(16)
     expect(reportCard.attendanceSummary.presentCount).toBe(1)
     expect(reportCard.sectionResults).toHaveLength(1)
+    const detail = await app.queries.getReportCardDetail({
+      schoolId: 'school',
+      reportCardResultId: reportCard.id,
+    })
+    expect(detail.reportCard).toEqual(reportCard)
+    expect(detail.student.id).toBe('student')
+    expect(detail.classGroup.id).toBe('class')
+    expect(detail.period.id).toBe('term')
+    expect(detail.definition.id).toBe('definition')
+    expect(detail.assessmentResults.map(item => item.result.score)).toEqual([16])
+    const lockedEntryReview = await app.queries.getAssessmentEntryReview({
+      schoolId: 'school',
+      assessmentId: 'quiz',
+    })
+    expect(lockedEntryReview.rows[0]?.isLockedByPublishedReportCard).toBe(true)
     const directory = await app.queries.listStudents({ schoolId: 'school' })
     expect(directory.rows[0]?.latestReportCardResult?.status).toBe(ReportCardResultStatus.Published)
+
+    await expect(app.assessments.recordAssessmentResult({
+      id: 'post-publication-score',
+      studentId: 'student',
+      assessmentId: 'quiz',
+      score: 18,
+    })).rejects.toThrow('Published report card for student student and period term is immutable')
+    await expect(app.assessments.recordAssessmentResultCompliance({
+      id: 'post-publication-compliance',
+      studentId: 'student',
+      assessmentId: 'quiz',
+      status: DeadlineComplianceStatus.Met,
+    })).rejects.toThrow('Published report card for student student and period term is immutable')
+    await expect(app.assessments.generateReportCardResult({
+      id: 'regenerated-report-card',
+      studentId: 'student',
+      periodId: 'term',
+    })).rejects.toThrow('Published report card for student student and period term is immutable')
+    await expect(app.assessments.publishReportCardResult({
+      id: 'republished-report-card',
+      studentId: 'student',
+      periodId: 'term',
+    })).rejects.toThrow('Published report card for student student and period term is immutable')
+
+    await app.students.closeEnrollment({
+      enrollmentId: 'enrollment',
+      endReason: EnrollmentEndReason.Withdrawn,
+      endedAt: new Date('2027-01-01T00:00:00Z'),
+    })
+    await expect(app.assessments.recordAssessmentResult({
+      id: 'post-withdrawal-score',
+      studentId: 'student',
+      assessmentId: 'quiz',
+      score: 18,
+    })).rejects.toThrow('does not have an active enrollment')
+    await expect(app.assessments.recordAssessmentResultCompliance({
+      id: 'post-withdrawal-compliance',
+      studentId: 'student',
+      assessmentId: 'quiz',
+      status: DeadlineComplianceStatus.Met,
+    })).rejects.toThrow('does not have an active enrollment')
+    const historicalDetail = await app.queries.getReportCardDetail({
+      schoolId: 'school',
+      reportCardResultId: reportCard.id,
+    })
+    expect(historicalDetail.reportCard.overallAverage).toBe(16)
+    expect(historicalDetail.reportCard.assessmentResultCount).toBe(1)
+    expect((await app.queries.getAssessmentEntryReview({ schoolId: 'school', assessmentId: 'quiz' })).rows)
+      .toEqual([])
   })
 })
 
 describe('assessment lifecycle journey', () => {
   it('completes assessments, tracks deadline compliance, and computes weighted report sections', async () => {
     const { app } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -178,11 +256,12 @@ describe('assessment lifecycle journey', () => {
       reportCardDefinitionId: 'definition',
       kind: ReportCardDefinitionSectionKind.Group,
       name: 'Core Subjects',
+      order: 1,
       weight: 1,
     })
-    for (const [id, name, subjectId, weight] of [
-      ['math-section', 'Mathematics', 'math', 2],
-      ['language-section', 'Language', 'language', 1],
+    for (const [id, name, subjectId, order, weight] of [
+      ['math-section', 'Mathematics', 'math', 1, 2],
+      ['language-section', 'Language', 'language', 2, 1],
     ] as const) {
       await app.assessments.createReportCardDefinitionSection({
         id,
@@ -191,6 +270,7 @@ describe('assessment lifecycle journey', () => {
         kind: ReportCardDefinitionSectionKind.Subject,
         name,
         subjectId,
+        order,
         weight,
       })
     }
@@ -219,7 +299,17 @@ describe('assessment lifecycle journey', () => {
       studentId: 'student',
       assessmentId: 'math-task',
       status: DeadlineComplianceStatus.Late,
+      notes: 'Submitted after deadline',
     })
+    const rescoredMath = await app.assessments.recordAssessmentResult({
+      id: 'ignored-replacement-id',
+      studentId: 'student',
+      assessmentId: 'math-task',
+      score: 18,
+    })
+    await expect(app.assessments.completeAssessment({
+      assessmentId: 'math-task',
+    })).rejects.toThrow('cannot be changed after results have been recorded')
     await app.assessments.recordAssessmentResult({
       id: 'language-grade',
       studentId: 'student',
@@ -238,6 +328,8 @@ describe('assessment lifecycle journey', () => {
     expect(completed.metAt).toEqual(new Date('2026-09-15T20:00:00Z'))
     expect(compliance.score).toBe(18)
     expect(compliance.status).toBe(DeadlineComplianceStatus.Late)
+    expect(rescoredMath.status).toBe(DeadlineComplianceStatus.Late)
+    expect(rescoredMath.notes).toBe('Submitted after deadline')
     expect(mathResults).toHaveLength(1)
     expect(reportCard.status).toBe(ReportCardResultStatus.Draft)
     expect(reportCard.overallAverage).toBe(16)

@@ -4,7 +4,7 @@ import { createTestApp } from '../../support/in-memory-school-headless-app'
 
 async function prepareCurriculum() {
   const { app, repositories } = createTestApp()
-  await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+  await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
   await app.setup.createAcademicYear({
     id: 'year',
     schoolId: 'school',

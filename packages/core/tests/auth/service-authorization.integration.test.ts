@@ -21,7 +21,7 @@ import { createTestApp } from '../support/in-memory-school-headless-app'
 
 async function createAuthorizedFixture() {
   const { app, repositories, forActor } = createTestApp()
-  await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+  await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
   await app.setup.createAcademicYear({
     id: 'year',
     schoolId: 'school',
@@ -46,6 +46,14 @@ async function createAuthorizedFixture() {
     gradeLevelId: 'level',
     name: 'Grade 6 A',
   })
+  await app.assessments.createReportCardDefinition({
+    id: 'definition',
+    schoolId: 'school',
+    academicYearId: 'year',
+    gradeLevelId: 'level',
+    name: 'Grade 6 Standard',
+    isDefault: true,
+  })
   await app.setup.registerStaffMember({
     id: 'teacher',
     schoolId: 'school',
@@ -59,6 +67,13 @@ async function createAuthorizedFixture() {
     firstName: 'Mariama',
     lastName: 'Ba',
     roles: [StaffRole.Accountant],
+  })
+  await app.setup.registerStaffMember({
+    id: 'coordinator',
+    schoolId: 'school',
+    firstName: 'Aminata',
+    lastName: 'Sy',
+    roles: [StaffRole.Coordinator],
   })
   await app.students.registerStudent({ id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
   await app.students.registerStudent({ id: 'other-student', schoolId: 'school', firstName: 'Moussa', lastName: 'Diallo' })
@@ -209,7 +224,8 @@ describe('actor-bound service authorization', () => {
   })
 
   it('limits guardian and student reads to their own linked records', async () => {
-    const { forActor } = await createAuthorizedFixture()
+    const { app, forActor } = await createAuthorizedFixture()
+    await app.assessments.publishReportCardResult({ id: 'report-card', studentId: 'student', periodId: 'term' })
     const guardian = forActor(createGuardianActorMetadata({
       subjectId: 'guardian-user',
       guardianId: 'guardian',
@@ -235,6 +251,15 @@ describe('actor-bound service authorization', () => {
     expect((await guardian.queries.listMyStudents())[0]?.id).toBe('student')
     expect((await guardian.finance.buildFeeSummary('student')).itemCount).toBe(1)
     expect((await guardian.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' })).items).toHaveLength(1)
+    await expect(guardian.queries.getStudentEnrollmentHistory({ schoolId: 'school', studentId: 'student' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(guardian.queries.getReportCardDetail({ schoolId: 'school', reportCardResultId: 'report-card' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(guardian.queries.getAssessmentEntryReview({ schoolId: 'school', assessmentId: 'quiz' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(
       otherGuardian.finance.buildFeeSummary('student'),
     ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -249,6 +274,15 @@ describe('actor-bound service authorization', () => {
     ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     expect((await student.finance.buildFeeSummary('student')).itemCount).toBe(1)
     expect((await student.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' })).items).toHaveLength(1)
+    await expect(student.queries.getStudentEnrollmentHistory({ schoolId: 'school', studentId: 'student' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(student.queries.getReportCardDetail({ schoolId: 'school', reportCardResultId: 'report-card' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(student.queries.getAssessmentEntryReview({ schoolId: 'school', assessmentId: 'quiz' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(
       student.finance.buildFeeSummary('other-student'),
     ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -265,6 +299,7 @@ describe('actor-bound service authorization', () => {
 
   it('separates sensitive school projections from assignment-scoped reads', async () => {
     const { app, forActor, classSubject, session } = await createAuthorizedFixture()
+    await app.assessments.publishReportCardResult({ id: 'report-card', studentId: 'student', periodId: 'term' })
     const teacher = forActor(createStaffActorMetadata({
       subjectId: 'teacher-user',
       staffMemberId: 'teacher',
@@ -279,6 +314,14 @@ describe('actor-bound service authorization', () => {
       schoolId: 'school',
       roles: [StaffRole.Accountant],
       requestId: 'accountant-queries',
+      authenticatedAt: new Date('2026-09-01T08:00:00Z'),
+    }))
+    const coordinator = forActor(createStaffActorMetadata({
+      subjectId: 'coordinator-user',
+      staffMemberId: 'coordinator',
+      schoolId: 'school',
+      roles: [StaffRole.Coordinator],
+      requestId: 'coordinator-queries',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
     }))
     await app.setup.assignStaffToClass({
@@ -305,12 +348,35 @@ describe('actor-bound service authorization', () => {
       classSubjectId: classSubject.id,
       periodId: 'term',
     })).toEqual([])
+    expect((await teacher.queries.getAssessmentEntryReview({ schoolId: 'school', assessmentId: 'quiz' })).rows)
+      .toHaveLength(2)
     await expect(teacher.queries.getSchoolOverview({ schoolId: 'school' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(accountant.queries.listStudents({ schoolId: 'school' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(teacher.queries.getStudentEnrollmentHistory({ schoolId: 'school', studentId: 'student' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(accountant.queries.getStudentEnrollmentHistory({ schoolId: 'school', studentId: 'student' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    expect((await coordinator.queries.getStudentEnrollmentHistory({ schoolId: 'school', studentId: 'student' })).history)
+      .toHaveLength(1)
+    await expect(teacher.queries.getReportCardDetail({ schoolId: 'school', reportCardResultId: 'report-card' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(accountant.queries.getReportCardDetail({ schoolId: 'school', reportCardResultId: 'report-card' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(accountant.queries.getAssessmentEntryReview({ schoolId: 'school', assessmentId: 'quiz' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    expect((await coordinator.queries.getReportCardDetail({ schoolId: 'school', reportCardResultId: 'report-card' })).reportCard.id)
+      .toBe('report-card')
+    expect((await coordinator.queries.getAssessmentEntryReview({ schoolId: 'school', assessmentId: 'quiz' })).assessment.id)
+      .toBe('quiz')
     await expect(teacher.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })

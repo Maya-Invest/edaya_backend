@@ -1,10 +1,9 @@
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requirePositiveNumber } from '../utils'
+import { requireNonBlank, requireNonNegativeNumber, requirePositiveNumber } from '../utils'
 
 export interface ClassSubjectArgs {
   id: string
   classGroupId: string
   subjectId: string
-  staffId?: string | null
   coefficient?: number | null
   completedPercentage?: number | null
   createdAt?: Date
@@ -18,7 +17,6 @@ export class ClassSubject {
   readonly id: string
   readonly classGroupId: string
   readonly subjectId: string
-  readonly staffId?: string
   readonly coefficient?: number
   readonly createdAt: Date
   readonly completedPercentage: number
@@ -27,7 +25,6 @@ export class ClassSubject {
     id,
     classGroupId,
     subjectId,
-    staffId,
     coefficient,
     createdAt,
     completedPercentage,
@@ -35,7 +32,6 @@ export class ClassSubject {
     this.id = requireNonBlank(id, 'id')
     this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.subjectId = requireNonBlank(subjectId, 'subjectId')
-    this.staffId = requireOptionalNonBlank(staffId, 'staffId')
     if (coefficient != null) {
       this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
     }

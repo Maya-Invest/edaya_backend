@@ -1,7 +1,7 @@
 import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../utils'
 
 export enum AttachmentOwnerKind {
-  HealthRecord = 'health_record',
+  StudentHealthProfile = 'student_health_profile',
   Incident = 'incident',
   Student = 'student',
   Guardian = 'guardian',

@@ -3,6 +3,7 @@ import { requireNonNegativeInt } from '../entities/utils'
 export interface AttendanceSummaryArgs {
   presentCount: number
   absenceCount: number
+  excusedAbsenceCount?: number
   lateCount: number
 }
 
@@ -13,12 +14,17 @@ export interface AttendanceSummaryArgs {
 export class AttendanceSummary {
   readonly presentCount: number
   readonly absenceCount: number
+  readonly excusedAbsenceCount: number
   readonly lateCount: number
 
-  constructor({ presentCount, absenceCount, lateCount }: AttendanceSummaryArgs) {
+  constructor({ presentCount, absenceCount, excusedAbsenceCount = 0, lateCount }: AttendanceSummaryArgs) {
     this.presentCount = requireNonNegativeInt(presentCount, 'presentCount')
     this.absenceCount = requireNonNegativeInt(absenceCount, 'absenceCount')
+    this.excusedAbsenceCount = requireNonNegativeInt(excusedAbsenceCount, 'excusedAbsenceCount')
     this.lateCount = requireNonNegativeInt(lateCount, 'lateCount')
+    if (this.excusedAbsenceCount > this.absenceCount) {
+      throw new Error('excusedAbsenceCount must not exceed absenceCount')
+    }
   }
 
   get total(): number {

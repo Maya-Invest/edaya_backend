@@ -1,21 +1,20 @@
 import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requireValidDate } from '../utils'
 
-export enum EnrollmentOutcome {
-  Pending = 'pending',
-  Promoted = 'promoted',
-  Retained = 'retained',
-  Transferred = 'transferred',
-  Withdrawn = 'withdrawn',
-  Completed = 'completed',
+export enum StudentClassEnrollmentStatus {
+  Active = 'active',
+  Closed = 'closed',
 }
 
-export enum StudentClassEnrollmentStatus {
-  Enrolled = 'enrolled',
+export enum EnrollmentEndReason {
   Completed = 'completed',
-  Promoted = 'promoted',
-  Retained = 'retained',
   Transferred = 'transferred',
   Withdrawn = 'withdrawn',
+}
+
+export enum ProgressionDecision {
+  Promoted = 'promoted',
+  Retained = 'retained',
+  Graduated = 'graduated',
 }
 
 export interface StudentClassEnrollmentArgs {
@@ -25,20 +24,21 @@ export interface StudentClassEnrollmentArgs {
   academicYearId: string
   enrollmentIndex: number
   status?: StudentClassEnrollmentStatus
-  enrolledAt?: Date | null
-  leftAt?: Date | null
-  exitReason?: string | null
-  isCurrent?: boolean
-  outcome?: EnrollmentOutcome
+  enrolledAt?: Date
+  endedAt?: Date | null
+  endReason?: EnrollmentEndReason | null
+  progressionDecision?: ProgressionDecision | null
   previousEnrollmentId?: string | null
-  outcomeDecidedAt?: Date | null
-  outcomeNotes?: string | null
+  closedBy?: string | null
+  progressionDecidedAt?: Date | null
+  progressionDecidedBy?: string | null
+  progressionNotes?: string | null
   createdAt?: Date
 }
 
 /**
- * Represents the enrollment of a student in a specific classGroup for a given academic year.
- * Facilitates historical tracking of a student's class progression and year-end promotion decisions.
+ * Records one placement in a class. Closing a placement and deciding the
+ * student's next progression are separate facts.
  */
 export class StudentClassEnrollment {
   readonly id: string
@@ -47,14 +47,15 @@ export class StudentClassEnrollment {
   readonly academicYearId: string
   readonly enrollmentIndex: number
   readonly status: StudentClassEnrollmentStatus
-  readonly enrolledAt?: Date
-  readonly leftAt?: Date
-  readonly exitReason?: string
-  readonly isCurrent: boolean
-  readonly outcome: EnrollmentOutcome
+  readonly enrolledAt: Date
+  readonly endedAt?: Date
+  readonly endReason?: EnrollmentEndReason
+  readonly progressionDecision?: ProgressionDecision
   readonly previousEnrollmentId?: string
-  readonly outcomeDecidedAt?: Date
-  readonly outcomeNotes?: string
+  readonly closedBy?: string
+  readonly progressionDecidedAt?: Date
+  readonly progressionDecidedBy?: string
+  readonly progressionNotes?: string
   readonly createdAt: Date
 
   constructor({
@@ -63,50 +64,117 @@ export class StudentClassEnrollment {
     classGroupId,
     academicYearId,
     enrollmentIndex,
-    status = StudentClassEnrollmentStatus.Enrolled,
+    status = StudentClassEnrollmentStatus.Active,
     enrolledAt,
-    leftAt,
-    exitReason,
-    isCurrent = status === StudentClassEnrollmentStatus.Enrolled,
-    outcome = EnrollmentOutcome.Pending,
+    endedAt,
+    endReason,
+    progressionDecision,
     previousEnrollmentId,
-    outcomeDecidedAt,
-    outcomeNotes,
+    closedBy,
+    progressionDecidedAt,
+    progressionDecidedBy,
+    progressionNotes,
     createdAt,
   }: StudentClassEnrollmentArgs) {
+    const now = new Date()
     this.id = requireNonBlank(id, 'id')
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
     this.enrollmentIndex = requirePositiveInt(enrollmentIndex, 'enrollmentIndex')
     this.status = status
-    this.enrolledAt = enrolledAt ? requireValidDate(enrolledAt, 'enrolledAt') : undefined
-    this.leftAt = leftAt ? requireValidDate(leftAt, 'leftAt') : undefined
-    this.exitReason = requireOptionalNonBlank(exitReason, 'exitReason')
-    this.isCurrent = isCurrent
-    this.outcome = outcome
+    this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : now
+    this.enrolledAt = enrolledAt ? requireValidDate(enrolledAt, 'enrolledAt') : this.createdAt
+    this.endedAt = endedAt ? requireValidDate(endedAt, 'endedAt') : undefined
+    this.endReason = endReason ?? undefined
+    this.progressionDecision = progressionDecision ?? undefined
     this.previousEnrollmentId = requireOptionalNonBlank(previousEnrollmentId, 'previousEnrollmentId')
-    this.outcomeDecidedAt = outcomeDecidedAt ? requireValidDate(outcomeDecidedAt, 'outcomeDecidedAt') : undefined
-    this.outcomeNotes = requireOptionalNonBlank(outcomeNotes, 'outcomeNotes')
-    this.createdAt = createdAt ?? new Date()
+    this.closedBy = requireOptionalNonBlank(closedBy, 'closedBy')
+    this.progressionDecidedAt = progressionDecidedAt
+      ? requireValidDate(progressionDecidedAt, 'progressionDecidedAt')
+      : undefined
+    this.progressionDecidedBy = requireOptionalNonBlank(progressionDecidedBy, 'progressionDecidedBy')
+    this.progressionNotes = requireOptionalNonBlank(progressionNotes, 'progressionNotes')
 
-    if (this.outcome !== EnrollmentOutcome.Pending && !this.outcomeDecidedAt) {
-      throw new Error('outcomeDecidedAt is required when outcome is not pending')
+    if (this.status === StudentClassEnrollmentStatus.Active && (this.endedAt || this.endReason || this.closedBy)) {
+      throw new Error('active enrollments must not define closure information')
     }
-    if (this.outcome === EnrollmentOutcome.Pending && this.outcomeDecidedAt) {
-      throw new Error('pending enrollments must not define outcomeDecidedAt')
+    if (this.status === StudentClassEnrollmentStatus.Closed && (!this.endedAt || !this.endReason || !this.closedBy)) {
+      throw new Error('closed enrollments must define endedAt, endReason, and closedBy')
     }
-    if (this.leftAt && this.enrolledAt && this.leftAt.getTime() < this.enrolledAt.getTime()) {
-      throw new Error('leftAt must not be before enrolledAt')
+    if (this.endedAt && this.endedAt.getTime() < this.enrolledAt.getTime()) {
+      throw new Error('endedAt must not be before enrolledAt')
     }
-    if (this.status !== StudentClassEnrollmentStatus.Enrolled && !this.leftAt) {
-      throw new Error('leftAt is required when enrollment is no longer enrolled')
+    if (this.progressionDecision && (!this.progressionDecidedAt || !this.progressionDecidedBy)) {
+      throw new Error('progressionDecidedAt and progressionDecidedBy are required when a progression decision is recorded')
     }
-    if (this.status === StudentClassEnrollmentStatus.Enrolled && this.leftAt) {
-      throw new Error('active enrollments must not define leftAt')
+    if (!this.progressionDecision && (this.progressionDecidedAt || this.progressionDecidedBy || this.progressionNotes)) {
+      throw new Error('progression metadata requires a progression decision')
     }
-    if (this.isCurrent !== (this.status === StudentClassEnrollmentStatus.Enrolled)) {
-      throw new Error('isCurrent must be true only when status is enrolled')
+    if (this.progressionDecision && this.endReason !== EnrollmentEndReason.Completed) {
+      throw new Error('a progression decision requires a completed enrollment')
     }
+  }
+
+  close({
+    endedAt,
+    endReason,
+    closedBy,
+  }: {
+    endedAt: Date
+    endReason: EnrollmentEndReason
+    closedBy: string
+  }): StudentClassEnrollment {
+    if (this.status !== StudentClassEnrollmentStatus.Active) {
+      throw new Error(`Enrollment ${this.id} is already closed`)
+    }
+    return new StudentClassEnrollment({
+      id: this.id,
+      studentId: this.studentId,
+      classGroupId: this.classGroupId,
+      academicYearId: this.academicYearId,
+      enrollmentIndex: this.enrollmentIndex,
+      status: StudentClassEnrollmentStatus.Closed,
+      enrolledAt: this.enrolledAt,
+      endedAt,
+      endReason,
+      previousEnrollmentId: this.previousEnrollmentId,
+      closedBy,
+      createdAt: this.createdAt,
+    })
+  }
+
+  recordProgressionDecision({
+    decision,
+    decidedAt,
+    decidedBy,
+    notes,
+  }: {
+    decision: ProgressionDecision
+    decidedAt: Date
+    decidedBy: string
+    notes?: string
+  }): StudentClassEnrollment {
+    if (this.progressionDecision) {
+      throw new Error(`Enrollment ${this.id} already has a progression decision`)
+    }
+    return new StudentClassEnrollment({
+      id: this.id,
+      studentId: this.studentId,
+      classGroupId: this.classGroupId,
+      academicYearId: this.academicYearId,
+      enrollmentIndex: this.enrollmentIndex,
+      status: this.status,
+      enrolledAt: this.enrolledAt,
+      endedAt: this.endedAt,
+      endReason: this.endReason,
+      previousEnrollmentId: this.previousEnrollmentId,
+      closedBy: this.closedBy,
+      progressionDecision: decision,
+      progressionDecidedAt: decidedAt,
+      progressionDecidedBy: decidedBy,
+      progressionNotes: notes,
+      createdAt: this.createdAt,
+    })
   }
 }

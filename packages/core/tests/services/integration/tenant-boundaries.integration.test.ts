@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AcademicPeriodType, AnnouncementAudience, AnnouncementTargetKind, SessionKind, StaffMember, StaffRole } from '../../../src/entities'
+import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, SessionKind, StaffMember, StaffRole } from '../../../src/entities'
 import { AuthorizationErrorCode, createStaffActorMetadata } from '../../../src/services/authorization'
 import { createTestApp } from '../../support/in-memory-school-headless-app'
 
@@ -28,8 +28,8 @@ describe('tenant boundary safeguards', () => {
       lastName: 'Administrator',
       roles: [StaffRole.Admin],
     }))
-    await app.setup.registerSchool({ id: 'school-a', name: 'School A' })
-    await schoolBApp.setup.registerSchool({ id: 'school-b', name: 'School B' })
+    await app.setup.registerSchool({ id: 'school-a', name: 'School A', timeZone: 'UTC' })
+    await schoolBApp.setup.registerSchool({ id: 'school-b', name: 'School B', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year-a',
       schoolId: 'school-a',
@@ -100,6 +100,30 @@ describe('tenant boundary safeguards', () => {
       gradeLevelId: 'level-b',
       name: 'Grade 6 B',
     })
+    await schoolBApp.students.registerStudent({
+      id: 'student-b',
+      schoolId: 'school-b',
+      firstName: 'Outside',
+      lastName: 'Student',
+    })
+    await schoolBApp.students.enrollStudent({
+      id: 'enrollment-b',
+      studentId: 'student-b',
+      classGroupId: 'class-b',
+    })
+    await schoolBApp.assessments.createReportCardDefinition({
+      id: 'definition-b',
+      schoolId: 'school-b',
+      academicYearId: 'year-b',
+      gradeLevelId: 'level-b',
+      name: 'School B Report Card',
+      isDefault: true,
+    })
+    await schoolBApp.assessments.publishReportCardResult({
+      id: 'report-card-b',
+      studentId: 'student-b',
+      periodId: 'term-b',
+    })
     await schoolBApp.setup.registerStaffMember({
       id: 'staff-b',
       schoolId: 'school-b',
@@ -126,15 +150,29 @@ describe('tenant boundary safeguards', () => {
       schoolId: 'school-a',
       title: 'School A announcement',
       content: 'Visible within School A only.',
-      audience: AnnouncementAudience.Custom,
     })
     await expect(app.communications.addTarget({
       id: 'invalid-target',
       announcementId: 'school-a-announcement',
-      targetKind: AnnouncementTargetKind.Staff,
+      targetKind: AnnouncementTargetKind.StaffMember,
       targetId: 'staff-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.academics.createSubject({ id: 'subject-b', schoolId: 'school-b', name: 'Outside subject' })
+    const classSubjectB = await schoolBApp.academics.offerSubjectToClass({
+      id: 'class-subject-b',
+      classGroupId: 'class-b',
+      subjectId: 'subject-b',
+    })
+    await schoolBApp.assessments.createAssessment({
+      id: 'assessment-b',
+      classGroupId: 'class-b',
+      classSubjectId: classSubjectB.id,
+      periodId: 'term-b',
+      title: 'Outside assessment',
+      kind: AssessmentKind.Quiz,
+      maxScore: 20,
+      dueAt: new Date('2026-09-15T00:00:00Z'),
+    })
     await expect(app.academics.offerSubjectToClass({
       id: 'invalid-course',
       classGroupId: 'class-a',
@@ -148,20 +186,16 @@ describe('tenant boundary safeguards', () => {
         sequenceOrder: 1,
       })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
-    await expect(app.communications.createAnnouncement({
-      id: 'invalid-announcement',
-      schoolId: 'school-b',
-      title: 'Invalid audience',
-      content: 'Not visible in another school.',
-      audience: AnnouncementAudience.ClassGroup,
-      classGroupId: 'class-a',
-    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.communications.createAnnouncement({
       id: 'school-b-announcement',
       schoolId: 'school-b',
       title: 'School B announcement',
       content: 'Not visible within School A.',
-      audience: AnnouncementAudience.Custom,
+    })
+    await schoolBApp.communications.addTarget({
+      id: 'school-b-target',
+      announcementId: 'school-b-announcement',
+      targetKind: AnnouncementTargetKind.School,
     })
     for (const announcementId of ['missing-announcement', 'school-b-announcement']) {
       await expect(app.communications.publishAnnouncement({ announcementId }))
@@ -182,6 +216,16 @@ describe('tenant boundary safeguards', () => {
     }
     for (const academicYearId of ['missing-year', 'year-b']) {
       await expect(app.queries.listClassGroups({ schoolId: 'school-a', academicYearId }))
+        .rejects
+        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    }
+    for (const reportCardResultId of ['missing-report-card', 'report-card-b']) {
+      await expect(app.queries.getReportCardDetail({ schoolId: 'school-a', reportCardResultId }))
+        .rejects
+        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    }
+    for (const assessmentId of ['missing-assessment', 'assessment-b']) {
+      await expect(app.queries.getAssessmentEntryReview({ schoolId: 'school-a', assessmentId }))
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }

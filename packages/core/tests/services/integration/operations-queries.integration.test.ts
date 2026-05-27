@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
 import {
   AcademicPeriodType,
-  AnnouncementAudience,
   AnnouncementStatus,
   AnnouncementTargetKind,
   AttendanceStatus,
+  EnrollmentEndReason,
   FeeStatus,
   MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
@@ -20,7 +20,7 @@ import { createTestApp } from '../../support/in-memory-school-headless-app'
 describe('operations query journey', () => {
   it('projects finance and communications state through the screen query facade', async () => {
     const { app, repositories } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -58,6 +58,10 @@ describe('operations query journey', () => {
       name: 'Tuition',
       defaultAmount: 90000,
       currency: 'XAF',
+      installments: [
+        { label: 'Registration', percentage: 30, dueDate: new Date('2026-09-15T00:00:00Z') },
+        { label: 'Balance', percentage: 70, dueDate: new Date('2026-10-15T00:00:00Z') },
+      ],
     })
     const studentFee = await app.finance.assignFeeToStudent({
       id: 'student-tuition',
@@ -66,6 +70,7 @@ describe('operations query journey', () => {
       dueDate: new Date('2026-09-15T00:00:00Z'),
       referenceDate: new Date('2026-09-01T00:00:00Z'),
     })
+    expect(studentFee.installments.map(installment => installment.expectedAmount)).toEqual([27000, 63000])
     await app.finance.recordPayment({
       id: 'tuition-payment',
       studentFeeId: studentFee.id,
@@ -102,8 +107,6 @@ describe('operations query journey', () => {
       schoolId: 'school',
       title: 'Fee reminder',
       content: 'Please review the remaining tuition balance.',
-      audience: AnnouncementAudience.ClassGroup,
-      classGroupId: 'class',
       createdAt: new Date('2026-09-20T09:00:00Z'),
     })
     await expect(app.communications.recordDelivery({
@@ -114,6 +117,12 @@ describe('operations query journey', () => {
       channel: MessageDeliveryChannel.Email,
       status: MessageDeliveryStatus.Sent,
     })).rejects.toThrow('must be published before recording delivery')
+    await app.communications.addTarget({
+      id: 'class-target',
+      announcementId: 'fee-reminder',
+      targetKind: AnnouncementTargetKind.ClassGroup,
+      targetId: 'class',
+    })
     await app.communications.addTarget({
       id: 'guardian-target',
       announcementId: 'fee-reminder',
@@ -179,11 +188,56 @@ describe('operations query journey', () => {
     ])
     expect(financeLedger.summary.balanceDue.amount).toBe(60000)
     expect(guardianStudents[0]?.id).toBe('student')
+
+    await app.communications.createAnnouncement({
+      id: 'class-only-update',
+      schoolId: 'school',
+      title: 'Class update',
+      content: 'Current class members only.',
+    })
+    await app.communications.addTarget({
+      id: 'class-only-target',
+      announcementId: 'class-only-update',
+      targetKind: AnnouncementTargetKind.ClassGroup,
+      targetId: 'class',
+    })
+    await app.communications.publishAnnouncement({ announcementId: 'class-only-update' })
+    expect((await app.communications.recordDelivery({
+      id: 'current-student-delivery',
+      announcementId: 'class-only-update',
+      recipientKind: MessageDeliveryRecipientKind.Student,
+      recipientId: 'student',
+      channel: MessageDeliveryChannel.App,
+    })).recipientId).toBe('student')
+    await app.students.closeEnrollment({
+      enrollmentId: 'enrollment',
+      endReason: EnrollmentEndReason.Withdrawn,
+      endedAt: new Date('2026-09-23T00:00:00Z'),
+    })
+    await expect(app.communications.recordDelivery({
+      id: 'withdrawn-student-delivery',
+      announcementId: 'class-only-update',
+      recipientKind: MessageDeliveryRecipientKind.Student,
+      recipientId: 'student',
+      channel: MessageDeliveryChannel.App,
+    })).rejects.toThrow('is not eligible for announcement')
+    await expect(app.communications.recordDelivery({
+      id: 'withdrawn-guardian-delivery',
+      announcementId: 'class-only-update',
+      recipientKind: MessageDeliveryRecipientKind.Guardian,
+      recipientId: 'guardian',
+      channel: MessageDeliveryChannel.App,
+    })).rejects.toThrow('is not eligible for announcement')
+    expect((await app.queries.getFinanceLedger({
+      schoolId: 'school',
+      studentId: 'student',
+      academicYearId: 'year',
+    })).items).toHaveLength(1)
   })
 
   it('orders student and class directories independently of creation order', async () => {
     const { app } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -224,6 +278,12 @@ describe('operations query journey', () => {
       firstName: 'Amira',
       lastName: 'Alpha',
     })
+    await app.students.enrollStudent({ id: 'active-enrollment', studentId: 'student-a', classGroupId: 'class-a' })
+    await expect(app.students.enrollStudent({
+      id: 'conflicting-enrollment',
+      studentId: 'student-a',
+      classGroupId: 'class-b',
+    })).rejects.toThrow('already has an active class enrollment')
 
     const studentDirectory = await app.queries.listStudents({ schoolId: 'school' })
     const classDirectory = await app.queries.listClassGroups({ schoolId: 'school' })
@@ -236,7 +296,7 @@ describe('operations query journey', () => {
 describe('assignment and query journey', () => {
   it('resolves staff assignments into timetable and attendance screen queries', async () => {
     const { app, repositories } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -351,7 +411,7 @@ describe('assignment and query journey', () => {
 
   it('loads attendance for the selected class and rejects a session from another class', async () => {
     const { app } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',

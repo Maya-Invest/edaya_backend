@@ -1,5 +1,8 @@
 import type { ClassSubject } from '../../entities/academics/class-subject'
 import type { Subject } from '../../entities/academics/subject'
+import type { Assessment } from '../../entities/assessments/assessment'
+import type { AssessmentResult } from '../../entities/assessments/assessment-result'
+import type { ReportCardDefinition } from '../../entities/assessments/report-card-definition'
 import type { ReportCardResult } from '../../entities/assessments/report-card-result'
 import type { Fee } from '../../entities/finances/fee'
 import type { Payment } from '../../entities/finances/payment'
@@ -23,6 +26,7 @@ import { ReportCardResultStatus } from '../../entities/assessments/report-card-r
 import { buildStudentFeeSummary, FeeStatus } from '../../entities/finances/student-fee'
 import { AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { StaffRole } from '../../entities/school/staff-member'
+import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { isSameDate } from '../../entities/utils'
 import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../authorization'
 
@@ -68,6 +72,48 @@ export interface StudentDirectory {
   school: School
   activeAcademicYear?: AcademicYear
   rows: StudentDirectoryRow[]
+}
+
+export interface StudentEnrollmentHistoryRow {
+  enrollment: StudentClassEnrollment
+  classGroup: ClassGroup
+  gradeLevel: GradeLevel
+  academicYear: AcademicYear
+}
+
+export interface StudentEnrollmentHistory {
+  student: Student
+  currentEnrollment?: StudentEnrollmentHistoryRow
+  history: StudentEnrollmentHistoryRow[]
+}
+
+export interface ReportCardDetailAssessmentResult {
+  assessment: Assessment
+  result: AssessmentResult
+}
+
+export interface ReportCardDetail {
+  reportCard: ReportCardResult
+  student: Student
+  classGroup: ClassGroup
+  period: AcademicPeriod
+  definition: ReportCardDefinition
+  assessmentResults: ReportCardDetailAssessmentResult[]
+}
+
+export interface AssessmentEntryReviewRow {
+  student: Student
+  result?: AssessmentResult
+  isLockedByPublishedReportCard: boolean
+}
+
+export interface AssessmentEntryReview {
+  assessment: Assessment
+  classGroup: ClassGroup
+  classSubject: ClassSubject
+  subject: Subject
+  period: AcademicPeriod
+  rows: AssessmentEntryReviewRow[]
 }
 
 export interface FinanceLedgerItem {
@@ -223,7 +269,7 @@ export class WorkspaceService {
       const classSubjects = await this.classSubjects.list({ classGroupId: classGroup.id })
 
       for (const classSubject of classSubjects) {
-        const teacherId = await this.resolveTeacherId(classSubject.id, classSubject.staffId)
+        const teacherId = await this.resolveTeacherId(classSubject.id)
         if (!teacherId) {
           continue
         }
@@ -239,10 +285,10 @@ export class WorkspaceService {
       }))
   }
 
-  private async resolveTeacherId(classSubjectId: string, fallbackStaffId?: string): Promise<string | undefined> {
+  private async resolveTeacherId(classSubjectId: string): Promise<string | undefined> {
     const assignments = await this.staffAssignments.list({ classSubjectId })
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
-    return teacherAssignment?.staffId ?? fallbackStaffId
+    return teacherAssignment?.staffId
   }
 
   private async requireSchool(schoolId: string): Promise<School> {
@@ -376,7 +422,7 @@ export class StudentDirectoryService {
     const rows = await Promise.all(
       students.map(async (student) => {
         const [currentEnrollment, guardianLinks, reportCardResults, fees] = await Promise.all([
-          this.enrollments.findCurrentByStudent(student.id).then(enrollment =>
+          this.enrollments.findActiveByStudent(student.id).then(enrollment =>
             enrollment && classGroupById.has(enrollment.classGroupId) ? enrollment : undefined,
           ),
           this.guardianStudentLinks.list({ studentId: student.id }),
@@ -494,6 +540,213 @@ export class FinanceLedgerService {
   }
 }
 
+export class StudentEnrollmentHistoryService {
+  constructor(args: ServiceArgs) {
+    this.students = args.repositories.students
+    this.enrollments = args.repositories.enrollments
+    this.classGroups = args.repositories.classGroups
+    this.gradeLevels = args.repositories.gradeLevels
+    this.academicYears = args.repositories.academicYears
+  }
+
+  private readonly students: SchoolRepositories['students']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly gradeLevels: SchoolRepositories['gradeLevels']
+  private readonly academicYears: SchoolRepositories['academicYears']
+
+  async getStudentEnrollmentHistory({
+    schoolId,
+    studentId,
+  }: {
+    schoolId: string
+    studentId: string
+  }): Promise<StudentEnrollmentHistory> {
+    const student = await this.students.findById(studentId)
+    if (!student || student.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
+    const enrollments = (await this.enrollments.list({ studentId }))
+      .sort((left, right) =>
+        left.enrollmentIndex - right.enrollmentIndex
+        || left.enrolledAt.getTime() - right.enrolledAt.getTime()
+        || left.id.localeCompare(right.id))
+    const history = await Promise.all(enrollments.map(enrollment => this.resolveEnrollment(enrollment, schoolId)))
+
+    return {
+      student,
+      currentEnrollment: history.find(row => row.enrollment.status === StudentClassEnrollmentStatus.Active),
+      history,
+    }
+  }
+
+  private async resolveEnrollment(enrollment: StudentClassEnrollment, schoolId: string): Promise<StudentEnrollmentHistoryRow> {
+    const [classGroup, academicYear] = await Promise.all([
+      this.classGroups.findById(enrollment.classGroupId),
+      this.academicYears.findById(enrollment.academicYearId),
+    ])
+    const gradeLevel = classGroup ? await this.gradeLevels.findById(classGroup.gradeLevelId) : undefined
+    if (
+      !classGroup
+      || !gradeLevel
+      || !academicYear
+      || classGroup.schoolId !== schoolId
+      || gradeLevel.schoolId !== schoolId
+      || academicYear.schoolId !== schoolId
+      || classGroup.academicYearId !== academicYear.id
+    ) {
+      denyResourceAccess()
+    }
+    return { enrollment, classGroup, gradeLevel, academicYear }
+  }
+}
+
+export class ReportCardDetailService {
+  constructor(args: ServiceArgs) {
+    this.students = args.repositories.students
+    this.classGroups = args.repositories.classGroups
+    this.academicPeriods = args.repositories.academicPeriods
+    this.definitions = args.repositories.definitions
+    this.reportCardResults = args.repositories.results
+    this.assessments = args.repositories.assessments
+    this.assessmentResults = args.repositories.assessmentResults
+  }
+
+  private readonly students: SchoolRepositories['students']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly definitions: SchoolRepositories['definitions']
+  private readonly reportCardResults: SchoolRepositories['results']
+  private readonly assessments: SchoolRepositories['assessments']
+  private readonly assessmentResults: SchoolRepositories['assessmentResults']
+
+  async getReportCardDetail({
+    schoolId,
+    reportCardResultId,
+  }: {
+    schoolId: string
+    reportCardResultId: string
+  }): Promise<ReportCardDetail> {
+    const reportCard = await this.reportCardResults.findById(reportCardResultId)
+    if (!reportCard) {
+      denyResourceAccess()
+    }
+    const [student, classGroup, period, definition] = await Promise.all([
+      this.students.findById(reportCard.studentId),
+      this.classGroups.findById(reportCard.classGroupId),
+      this.academicPeriods.findById(reportCard.periodId),
+      this.definitions.findById(reportCard.reportCardDefinitionId),
+    ])
+    if (
+      !student
+      || !classGroup
+      || !period
+      || !definition
+      || student.schoolId !== schoolId
+      || classGroup.schoolId !== schoolId
+      || period.schoolId !== schoolId
+      || definition.schoolId !== schoolId
+      || classGroup.academicYearId !== period.academicYearId
+      || definition.academicYearId !== period.academicYearId
+    ) {
+      denyResourceAccess()
+    }
+    const results = await this.assessmentResults.list({ studentId: student.id })
+    const assessmentResults: ReportCardDetailAssessmentResult[] = []
+    for (const result of results) {
+      const assessment = await this.assessments.findById(result.assessmentId)
+      if (assessment?.periodId === period.id && assessment.classGroupId === classGroup.id) {
+        assessmentResults.push({ assessment, result })
+      }
+    }
+    assessmentResults.sort((left, right) =>
+      left.assessment.createdAt.getTime() - right.assessment.createdAt.getTime()
+      || left.assessment.id.localeCompare(right.assessment.id))
+    return { reportCard, student, classGroup, period, definition, assessmentResults }
+  }
+}
+
+export class AssessmentEntryReviewService {
+  constructor(args: ServiceArgs) {
+    this.assessments = args.repositories.assessments
+    this.assessmentResults = args.repositories.assessmentResults
+    this.classGroups = args.repositories.classGroups
+    this.classSubjects = args.repositories.classSubjects
+    this.subjects = args.repositories.subjects
+    this.academicPeriods = args.repositories.academicPeriods
+    this.enrollments = args.repositories.enrollments
+    this.students = args.repositories.students
+    this.reportCardResults = args.repositories.results
+  }
+
+  private readonly assessments: SchoolRepositories['assessments']
+  private readonly assessmentResults: SchoolRepositories['assessmentResults']
+  private readonly classGroups: SchoolRepositories['classGroups']
+  private readonly classSubjects: SchoolRepositories['classSubjects']
+  private readonly subjects: SchoolRepositories['subjects']
+  private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly enrollments: SchoolRepositories['enrollments']
+  private readonly students: SchoolRepositories['students']
+  private readonly reportCardResults: SchoolRepositories['results']
+
+  async getAssessmentEntryReview({
+    schoolId,
+    assessmentId,
+  }: {
+    schoolId: string
+    assessmentId: string
+  }): Promise<AssessmentEntryReview> {
+    const assessment = await this.assessments.findById(assessmentId)
+    if (!assessment) {
+      denyResourceAccess()
+    }
+    const [classGroup, classSubject, period] = await Promise.all([
+      this.classGroups.findById(assessment.classGroupId),
+      this.classSubjects.findById(assessment.classSubjectId),
+      this.academicPeriods.findById(assessment.periodId),
+    ])
+    const subject = classSubject ? await this.subjects.findById(classSubject.subjectId) : undefined
+    if (
+      !classGroup
+      || !classSubject
+      || !subject
+      || !period
+      || classGroup.schoolId !== schoolId
+      || subject.schoolId !== schoolId
+      || period.schoolId !== schoolId
+      || classSubject.classGroupId !== classGroup.id
+      || period.academicYearId !== classGroup.academicYearId
+    ) {
+      denyResourceAccess()
+    }
+    const enrollments = await this.enrollments.list({
+      classGroupId: classGroup.id,
+      status: StudentClassEnrollmentStatus.Active,
+    })
+    const rows: AssessmentEntryReviewRow[] = []
+    for (const enrollment of enrollments) {
+      const student = await this.students.findById(enrollment.studentId)
+      if (!student || student.schoolId !== schoolId) {
+        denyResourceAccess()
+      }
+      const [results, reportCard] = await Promise.all([
+        this.assessmentResults.list({ assessmentId: assessment.id, studentId: student.id }),
+        this.reportCardResults.findByStudentAndPeriod(student.id, period.id),
+      ])
+      rows.push({
+        student,
+        result: results[0],
+        isLockedByPublishedReportCard: reportCard?.status === ReportCardResultStatus.Published,
+      })
+    }
+    rows.sort((left, right) =>
+      left.student.lastName.localeCompare(right.student.lastName)
+      || left.student.firstName.localeCompare(right.student.firstName)
+      || left.student.id.localeCompare(right.student.id))
+    return { assessment, classGroup, classSubject, subject, period, rows }
+  }
+}
+
 export class ClassGroupReadService {
   constructor(args: ServiceArgs) {
     this.academicYears = args.repositories.academicYears
@@ -530,7 +783,7 @@ export class ClassGroupReadService {
       classGroups.map(async (classGroup) => {
         const [courseAssignments, enrollments] = await Promise.all([
           this.listClassGroupCourses(classGroup.id),
-          this.enrollments.list({ classGroupId: classGroup.id }),
+          this.enrollments.list({ classGroupId: classGroup.id, status: StudentClassEnrollmentStatus.Active }),
         ])
         const teacherNames = [...new Set(courseAssignments.map(row => row.teacherName).filter(name => name !== 'Unassigned'))]
 
@@ -561,7 +814,7 @@ export class ClassGroupReadService {
         if (!subject) {
           return undefined
         }
-        const teacher = await this.resolveTeacher(classSubject.id, classSubject.staffId)
+        const teacher = await this.resolveTeacher(classSubject.id)
         return {
           classSubject,
           subject,
@@ -600,10 +853,10 @@ export class ClassGroupReadService {
     })
   }
 
-  private async resolveTeacher(classSubjectId: string, fallbackStaffId?: string): Promise<StaffMember | undefined> {
+  private async resolveTeacher(classSubjectId: string): Promise<StaffMember | undefined> {
     const assignments = await this.staffAssignments.list({ classSubjectId })
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
-    const teacherId = teacherAssignment?.staffId ?? fallbackStaffId
+    const teacherId = teacherAssignment?.staffId
     return teacherId ? this.staffMembers.findById(teacherId) : undefined
   }
 
@@ -693,7 +946,7 @@ export class AttendanceReviewService {
 
     const [records, enrollments] = await Promise.all([
       this.attendance.list({ sessionId: selectedSession.id }),
-      this.enrollments.list({ classGroupId: selectedSession.classGroupId }),
+      this.enrollments.list({ classGroupId: selectedSession.classGroupId, status: StudentClassEnrollmentStatus.Active }),
     ])
     const recordByStudentId = new Map(records.map(record => [record.studentId, record]))
     const rows = (
@@ -752,6 +1005,9 @@ export class SchoolQueryService {
   private readonly workspace: WorkspaceService
   private readonly schoolOverview: SchoolOverviewService
   private readonly studentDirectory: StudentDirectoryService
+  private readonly studentEnrollmentHistory: StudentEnrollmentHistoryService
+  private readonly reportCardDetail: ReportCardDetailService
+  private readonly assessmentEntryReview: AssessmentEntryReviewService
   private readonly financeLedger: FinanceLedgerService
   private readonly classGroupRead: ClassGroupReadService
   private readonly attendanceReview: AttendanceReviewService
@@ -763,6 +1019,9 @@ export class SchoolQueryService {
   private readonly classGroupRepository: SchoolRepositories['classGroups']
   private readonly sessionRepository: SchoolRepositories['sessions']
   private readonly academicYearRepository: SchoolRepositories['academicYears']
+  private readonly reportCardResultRepository: SchoolRepositories['results']
+  private readonly assessmentRepository: SchoolRepositories['assessments']
+  private readonly classSubjectRepository: SchoolRepositories['classSubjects']
 
   constructor(args: ServiceArgs) {
     this.actor = args.actor
@@ -770,6 +1029,9 @@ export class SchoolQueryService {
     this.workspace = new WorkspaceService(args)
     this.schoolOverview = new SchoolOverviewService(args)
     this.studentDirectory = new StudentDirectoryService(args)
+    this.studentEnrollmentHistory = new StudentEnrollmentHistoryService(args)
+    this.reportCardDetail = new ReportCardDetailService(args)
+    this.assessmentEntryReview = new AssessmentEntryReviewService(args)
     this.financeLedger = new FinanceLedgerService(args)
     this.classGroupRead = new ClassGroupReadService(args)
     this.attendanceReview = new AttendanceReviewService(args)
@@ -779,6 +1041,9 @@ export class SchoolQueryService {
     this.classGroupRepository = args.repositories.classGroups
     this.sessionRepository = args.repositories.sessions
     this.academicYearRepository = args.repositories.academicYears
+    this.reportCardResultRepository = args.repositories.results
+    this.assessmentRepository = args.repositories.assessments
+    this.classSubjectRepository = args.repositories.classSubjects
   }
 
   async getWorkspaceContext(input: Parameters<WorkspaceService['getWorkspaceContext']>[0]) {
@@ -808,6 +1073,64 @@ export class SchoolQueryService {
       },
     })
     return this.financeLedger.getFinanceLedger(input)
+  }
+
+  async getStudentEnrollmentHistory(input: Parameters<StudentEnrollmentHistoryService['getStudentEnrollmentHistory']>[0]) {
+    await this.requireStudentInSchool(input.studentId, input.schoolId)
+    await this.authorizationPolicy.requirePermission(this.actor, {
+      action: 'queries.read_enrollment_history',
+      resource: {
+        schoolId: input.schoolId,
+        studentId: input.studentId,
+      },
+    })
+    return this.studentEnrollmentHistory.getStudentEnrollmentHistory(input)
+  }
+
+  async getReportCardDetail(input: Parameters<ReportCardDetailService['getReportCardDetail']>[0]) {
+    const reportCard = await this.reportCardResultRepository.findById(input.reportCardResultId)
+    const classGroup = reportCard ? await this.classGroupRepository.findById(reportCard.classGroupId) : undefined
+    if (!reportCard || !classGroup || classGroup.schoolId !== input.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorizationPolicy.requirePermission(this.actor, {
+      action: 'queries.read_report_card_detail',
+      resource: {
+        schoolId: input.schoolId,
+        classGroupId: classGroup.id,
+        studentId: reportCard.studentId,
+        reportCardResultId: reportCard.id,
+      },
+    })
+    return this.reportCardDetail.getReportCardDetail(input)
+  }
+
+  async getAssessmentEntryReview(input: Parameters<AssessmentEntryReviewService['getAssessmentEntryReview']>[0]) {
+    const assessment = await this.assessmentRepository.findById(input.assessmentId)
+    const [classGroup, classSubject] = assessment
+      ? await Promise.all([
+          this.classGroupRepository.findById(assessment.classGroupId),
+          this.classSubjectRepository.findById(assessment.classSubjectId),
+        ])
+      : []
+    if (
+      !assessment
+      || !classGroup
+      || !classSubject
+      || classGroup.schoolId !== input.schoolId
+      || classSubject.classGroupId !== classGroup.id
+    ) {
+      denyResourceAccess()
+    }
+    await this.authorizationPolicy.requirePermission(this.actor, {
+      action: 'assessments.read_results',
+      resource: {
+        schoolId: input.schoolId,
+        classGroupId: classGroup.id,
+        classSubjectId: classSubject.id,
+      },
+    })
+    return this.assessmentEntryReview.getAssessmentEntryReview(input)
   }
 
   async listClassGroups(input: Parameters<ClassGroupReadService['listClassGroups']>[0]) {

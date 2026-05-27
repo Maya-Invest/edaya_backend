@@ -36,6 +36,7 @@ import type {
   StudentClassEnrollment,
   StudentDisciplinaryAction,
   StudentFee,
+  StudentHealthProfile,
   StudentIncidentInvolvement,
   StudentNote,
   Subject,
@@ -109,13 +110,14 @@ export interface SchoolRepositories {
   // StudentRepositories
   readonly students: BaseRepositoryInterface<Student>
   readonly enrollments: BaseRepositoryInterface<StudentClassEnrollment> & {
-    findCurrentByStudent: (studentId: string) => Promise<StudentClassEnrollment | undefined>
+    findActiveByStudent: (studentId: string) => Promise<StudentClassEnrollment | undefined>
   }
   readonly guardians: BaseRepositoryInterface<Guardian>
   readonly guardianLinks: BaseRepositoryInterface<GuardianStudentLink> & {
     findByGuardianAndStudent: (guardianId: string, studentId: string) => Promise<GuardianStudentLink | undefined>
   }
   readonly studentNotes: BaseRepositoryInterface<StudentNote>
+  readonly studentHealthProfiles: BaseRepositoryInterface<StudentHealthProfile>
   readonly studentDisciplinaryActions: BaseRepositoryInterface<StudentDisciplinaryAction>
   readonly disciplinaryActions: BaseRepositoryInterface<DisciplinaryAction>
   readonly studentIncidentInvolvements: BaseRepositoryInterface<StudentIncidentInvolvement>

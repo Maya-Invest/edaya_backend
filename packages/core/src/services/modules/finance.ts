@@ -25,6 +25,13 @@ export class FinanceService {
 
   async createFee(input: FeeArgs): Promise<Fee> {
     await this.authorize('finance.manage', { schoolId: input.schoolId })
+    const [school, academicYear] = await Promise.all([
+      this.repositories.schools.findById(input.schoolId),
+      this.repositories.academicYears.findById(input.academicYearId),
+    ])
+    if (!school || !academicYear || academicYear.schoolId !== input.schoolId) {
+      denyResourceAccess()
+    }
     const fee = new Fee(input)
     await this.repositories.fees.save(fee)
     return fee
@@ -36,7 +43,6 @@ export class FinanceService {
     feeId,
     expectedAmount,
     dueDate,
-    expectedPayments,
     createdAt,
     referenceDate,
   }: {
@@ -45,7 +51,6 @@ export class FinanceService {
     feeId: string
     expectedAmount?: number
     dueDate?: Date
-    expectedPayments?: readonly StudentFeeInstallment[]
     createdAt?: Date
     referenceDate?: Date
   }): Promise<StudentFee> {
@@ -59,6 +64,8 @@ export class FinanceService {
       denyResourceAccess()
     }
     const amount = expectedAmount ?? fee.defaultAmount.amount
+    const installments = this.materializeInstallments(id, amount, fee)
+    const effectiveDueDate = dueDate ?? installments.at(-1)?.dueDate ?? undefined
     const studentFee = new StudentFee({
       id,
       studentId,
@@ -66,9 +73,9 @@ export class FinanceService {
       academicYearId: fee.academicYearId,
       expectedAmount: amount,
       currency: fee.defaultAmount.currency,
-      dueDate,
-      expectedPayments,
-      status: this.deriveStatus({ expectedAmount: amount, paidAmount: 0, dueDate, referenceDate: referenceDate ?? new Date() }),
+      dueDate: effectiveDueDate,
+      installments,
+      status: this.deriveStatus({ expectedAmount: amount, paidAmount: 0, dueDate: effectiveDueDate, referenceDate: referenceDate ?? new Date() }),
       createdAt,
     })
     await this.repositories.studentFees.save(studentFee)
@@ -182,6 +189,23 @@ export class FinanceService {
     await this.authorize('finance.read', { schoolId: student.schoolId, studentId })
     const fees = await this.repositories.studentFees.list({ studentId })
     return buildStudentFeeSummary(fees)
+  }
+
+  private materializeInstallments(id: string, amount: number, fee: Fee): StudentFeeInstallment[] {
+    let assignedAmount = 0
+    return fee.installments.map((template, index) => {
+      const isLast = index === fee.installments.length - 1
+      const expectedAmount = isLast
+        ? amount - assignedAmount
+        : Math.round((amount * template.percentage) / 100)
+      assignedAmount += expectedAmount
+      return {
+        id: `${id}-installment-${index + 1}`,
+        label: template.label,
+        expectedAmount,
+        dueDate: template.dueDate,
+      }
+    })
   }
 
   private async savePaidAmount(

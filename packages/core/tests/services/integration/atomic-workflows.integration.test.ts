@@ -6,7 +6,7 @@ import { createTestApp } from '../../support/in-memory-school-headless-app'
 describe('atomic workflow safeguards', () => {
   it('rolls back curriculum progress when a later aggregate write fails', async () => {
     const { app, repositories, failSaveOnAttempt } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -58,7 +58,14 @@ describe('atomic workflow safeguards', () => {
 
   it('rolls back payment recording and reversal when balance updates fail', async () => {
     const { app, repositories, failSaveOnAttempt } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
+    await app.setup.createAcademicYear({
+      id: 'year',
+      schoolId: 'school',
+      name: '2026-2027',
+      startDate: new Date('2026-09-01T00:00:00Z'),
+      endDate: new Date('2027-06-30T23:59:59Z'),
+    })
     await app.students.registerStudent({ id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.finance.createFee({
       id: 'tuition',
@@ -102,7 +109,7 @@ describe('atomic workflow safeguards', () => {
 
   it('rolls back report-card publication when the published result cannot be saved', async () => {
     const { app, repositories, failSaveOnAttempt } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -148,7 +155,7 @@ describe('atomic workflow safeguards', () => {
 
   it('rolls back bulk attendance capture when a later roster entry is invalid', async () => {
     const { app, repositories } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -184,7 +191,7 @@ describe('atomic workflow safeguards', () => {
 
   it('rolls back generated sessions when materializing a later schedule fails', async () => {
     const { app, repositories, failSaveOnAttempt } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
       id: 'year',
       schoolId: 'school',
