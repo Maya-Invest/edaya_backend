@@ -1,14 +1,13 @@
 import type { FeeArgs } from '../../entities/finances/fee'
 import type { PaymentMethod } from '../../entities/finances/payment'
-import type { StudentFeeInstallment } from '../../entities/finances/student-fee'
+import type { StudentFeeInstallment, StudentFeeSummary } from '../../entities/finances/student-fee'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
 import { Fee } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
-import { FeeStatus, StudentFee, StudentFeeSummary } from '../../entities/finances/student-fee'
-import { Money } from '../../value_object/money'
+import { buildStudentFeeSummary, FeeStatus, StudentFee } from '../../entities/finances/student-fee'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
 export class FinanceService {
@@ -182,20 +181,7 @@ export class FinanceService {
     const student = await this.requireStudent(studentId)
     await this.authorize('finance.read', { schoolId: student.schoolId, studentId })
     const fees = await this.repositories.studentFees.list({ studentId })
-    const currency = fees[0]?.expectedAmount.currency ?? 'XAF'
-    const totalExpectedAmount = fees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
-    const totalPaidAmount = fees.reduce((sum, item) => sum + item.paidAmount.amount, 0)
-    const totalOverdueAmount = fees
-      .filter(item => item.status === FeeStatus.Overdue)
-      .reduce((sum, item) => sum + item.balanceDue.amount, 0)
-    const totalAdjustedAmount = fees.reduce((sum, item) => sum + item.adjustmentAmount.amount, 0)
-    return new StudentFeeSummary({
-      totalExpected: new Money({ amount: totalExpectedAmount, currency }),
-      totalPaid: new Money({ amount: totalPaidAmount, currency }),
-      totalAdjusted: new Money({ amount: totalAdjustedAmount, currency }),
-      totalOverdue: new Money({ amount: totalOverdueAmount, currency }),
-      itemCount: fees.length,
-    })
+    return buildStudentFeeSummary(fees)
   }
 
   private async savePaidAmount(

@@ -173,6 +173,23 @@ export class StudentFeeSummary {
   }
 }
 
+export function buildStudentFeeSummary(studentFees: readonly StudentFee[], fallbackCurrency = 'XAF'): StudentFeeSummary {
+  const currency = studentFees[0]?.expectedAmount.currency ?? fallbackCurrency
+  const totalExpectedAmount = studentFees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
+  const totalPaidAmount = studentFees.reduce((sum, item) => sum + item.paidAmount.amount, 0)
+  const totalOverdueAmount = studentFees
+    .filter(item => item.status === FeeStatus.Overdue)
+    .reduce((sum, item) => sum + item.balanceDue.amount, 0)
+  const totalAdjustedAmount = studentFees.reduce((sum, item) => sum + item.adjustmentAmount.amount, 0)
+  return new StudentFeeSummary({
+    totalExpected: new Money({ amount: totalExpectedAmount, currency }),
+    totalPaid: new Money({ amount: totalPaidAmount, currency }),
+    totalAdjusted: new Money({ amount: totalAdjustedAmount, currency }),
+    totalOverdue: new Money({ amount: totalOverdueAmount, currency }),
+    itemCount: studentFees.length,
+  })
+}
+
 function requireNonBlankIfAmount(
   value: string | null | undefined,
   amount: number,

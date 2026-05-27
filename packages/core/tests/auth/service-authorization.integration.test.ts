@@ -234,15 +234,29 @@ describe('actor-bound service authorization', () => {
 
     expect((await guardian.queries.listMyStudents())[0]?.id).toBe('student')
     expect((await guardian.finance.buildFeeSummary('student')).itemCount).toBe(1)
+    expect((await guardian.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' })).items).toHaveLength(1)
     await expect(
       otherGuardian.finance.buildFeeSummary('student'),
+    ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(
+      otherGuardian.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' }),
+    ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(
+      otherGuardian.queries.getFinanceLedger({ schoolId: 'school', studentId: 'missing-student' }),
     ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(
       otherGuardian.finance.buildFeeSummary('missing-student'),
     ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     expect((await student.finance.buildFeeSummary('student')).itemCount).toBe(1)
+    expect((await student.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' })).items).toHaveLength(1)
     await expect(
       student.finance.buildFeeSummary('other-student'),
+    ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(
+      student.queries.getFinanceLedger({ schoolId: 'school', studentId: 'other-student' }),
+    ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(
+      student.queries.getFinanceLedger({ schoolId: 'school', studentId: 'missing-student' }),
     ).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(
       student.finance.buildFeeSummary('missing-student'),
@@ -297,7 +311,11 @@ describe('actor-bound service authorization', () => {
     await expect(accountant.queries.listStudents({ schoolId: 'school' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(teacher.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' }))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     expect((await accountant.finance.buildFeeSummary('student')).itemCount).toBe(1)
+    expect((await accountant.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' })).items).toHaveLength(1)
   })
 
   it('evaluates current staff, guardian, and student access state on each call', async () => {

@@ -1,12 +1,17 @@
 import type { ClassSubject } from '../../entities/academics/class-subject'
 import type { Subject } from '../../entities/academics/subject'
+import type { GradeScale } from '../../entities/assessments/grade-scale'
 import type { ReportCardResult } from '../../entities/assessments/report-card-result'
+import type { Fee } from '../../entities/finances/fee'
+import type { Payment } from '../../entities/finances/payment'
+import type { StudentFee, StudentFeeSummary } from '../../entities/finances/student-fee'
 import type { Announcement } from '../../entities/messaging/announcement'
 import type { AttendanceRecord } from '../../entities/scheduling/attendance-record'
 import type { Session } from '../../entities/scheduling/session'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
+import type { GradeLevel } from '../../entities/school/grade-level'
 import type { School } from '../../entities/school/school'
 import type { StaffMember } from '../../entities/school/staff-member'
 import type { Student } from '../../entities/students/student'
@@ -15,7 +20,7 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizationAction, AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
 import { ReportCardResultStatus } from '../../entities/assessments/report-card-result'
-import { FeeStatus } from '../../entities/finances/student-fee'
+import { buildStudentFeeSummary, FeeStatus } from '../../entities/finances/student-fee'
 import { AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { StaffRole } from '../../entities/school/staff-member'
 import { isSameDate } from '../../entities/utils'
@@ -31,8 +36,12 @@ export interface WorkspaceContext {
   activeAcademicYear?: AcademicYear
   academicPeriods: AcademicPeriod[]
   selectedAcademicPeriod?: AcademicPeriod
+  gradeLevels: GradeLevel[]
   classGroups: ClassGroup[]
   selectedClassGroup?: ClassGroup
+  staffMembers: StaffMember[]
+  subjects: Subject[]
+  gradeScales: GradeScale[]
   teacherCourseLoads: TeacherCourseLoad[]
 }
 
@@ -59,6 +68,19 @@ export interface StudentDirectory {
   school: School
   activeAcademicYear?: AcademicYear
   rows: StudentDirectoryRow[]
+}
+
+export interface FinanceLedgerItem {
+  studentFee: StudentFee
+  fee: Fee
+  payments: Payment[]
+}
+
+export interface FinanceLedger {
+  student: Student
+  academicYearId?: string
+  items: FinanceLedgerItem[]
+  summary: StudentFeeSummary
 }
 
 export interface ClassGroupCourseAssignment {
@@ -121,8 +143,11 @@ export class WorkspaceService {
     this.schools = args.repositories.schools
     this.academicYears = args.repositories.academicYears
     this.academicPeriods = args.repositories.academicPeriods
+    this.gradeLevels = args.repositories.gradeLevels
     this.classGroups = args.repositories.classGroups
     this.staffMembers = args.repositories.staffMembers
+    this.subjects = args.repositories.subjects
+    this.gradeScales = args.repositories.gradeScales
     this.classSubjects = args.repositories.classSubjects
     this.staffAssignments = args.repositories.staffAssignments
   }
@@ -130,8 +155,11 @@ export class WorkspaceService {
   private readonly schools: SchoolRepositories['schools']
   private readonly academicYears: SchoolRepositories['academicYears']
   private readonly academicPeriods: SchoolRepositories['academicPeriods']
+  private readonly gradeLevels: SchoolRepositories['gradeLevels']
   private readonly classGroups: SchoolRepositories['classGroups']
   private readonly staffMembers: SchoolRepositories['staffMembers']
+  private readonly subjects: SchoolRepositories['subjects']
+  private readonly gradeScales: SchoolRepositories['gradeScales']
   private readonly classSubjects: SchoolRepositories['classSubjects']
   private readonly staffAssignments: SchoolRepositories['staffAssignments']
 
@@ -144,17 +172,24 @@ export class WorkspaceService {
   }): Promise<WorkspaceContext> {
     const school = await this.requireSchool(schoolId)
     const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
-    const classGroups = activeAcademicYear
-      ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
-      : []
-    const academicPeriods = activeAcademicYear
-      ? await this.academicPeriods.list({ academicYearId: activeAcademicYear.id })
-      : []
+    const [classGroups, academicPeriods, gradeLevels, staffMembers, subjects, gradeScales] = await Promise.all([
+      activeAcademicYear ? this.classGroups.list({ academicYearId: activeAcademicYear.id }) : [],
+      activeAcademicYear ? this.academicPeriods.list({ academicYearId: activeAcademicYear.id }) : [],
+      this.gradeLevels.list({ schoolId }),
+      this.staffMembers.list({ schoolId }),
+      this.subjects.list({ schoolId }),
+      this.gradeScales.list({ schoolId }),
+    ])
+    classGroups.sort((left, right) => left.name.localeCompare(right.name))
+    academicPeriods.sort((left, right) => left.startDate.getTime() - right.startDate.getTime())
+    gradeLevels.sort((left, right) => left.order - right.order || left.name.localeCompare(right.name))
+    staffMembers.sort((left, right) => left.fullName.localeCompare(right.fullName))
+    subjects.sort((left, right) => left.name.localeCompare(right.name))
+    gradeScales.sort((left, right) => Number(right.isDefault) - Number(left.isDefault) || left.name.localeCompare(right.name))
     const selectedClassGroup
       = (classGroupId ? classGroups.find(candidate => candidate.id === classGroupId) : undefined)
         ?? classGroups[0]
     const selectedAcademicPeriod = academicPeriods[0]
-    const staffMembers = await this.staffMembers.list({ schoolId })
     const teacherCourseLoads = await this.buildTeacherCourseLoads({
       classGroups,
       staffMembers,
@@ -165,8 +200,12 @@ export class WorkspaceService {
       activeAcademicYear,
       academicPeriods,
       selectedAcademicPeriod,
+      gradeLevels,
       classGroups,
       selectedClassGroup,
+      staffMembers,
+      subjects,
+      gradeScales,
       teacherCourseLoads,
     }
   }
@@ -328,7 +367,11 @@ export class StudentDirectoryService {
       ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
       : []
     const classGroupById = new Map(classGroups.map(classGroup => [classGroup.id, classGroup]))
-    const students = await this.students.list({ schoolId })
+    const students = (await this.students.list({ schoolId }))
+      .sort((left, right) =>
+        left.lastName.localeCompare(right.lastName)
+        || left.firstName.localeCompare(right.firstName)
+        || left.id.localeCompare(right.id))
 
     const rows = await Promise.all(
       students.map(async (student) => {
@@ -397,6 +440,60 @@ export class StudentDirectoryService {
   }
 }
 
+export class FinanceLedgerService {
+  constructor(args: ServiceArgs) {
+    this.students = args.repositories.students
+    this.fees = args.repositories.fees
+    this.studentFees = args.repositories.studentFees
+    this.payments = args.repositories.payments
+  }
+
+  private readonly students: SchoolRepositories['students']
+  private readonly fees: SchoolRepositories['fees']
+  private readonly studentFees: SchoolRepositories['studentFees']
+  private readonly payments: SchoolRepositories['payments']
+
+  async getFinanceLedger({
+    schoolId,
+    studentId,
+    academicYearId,
+  }: {
+    schoolId: string
+    studentId: string
+    academicYearId?: string
+  }): Promise<FinanceLedger> {
+    const student = await this.students.findById(studentId)
+    if (!student || student.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
+
+    const studentFees = (await this.studentFees.list({ studentId }))
+      .filter(studentFee => !academicYearId || studentFee.academicYearId === academicYearId)
+      .sort((left, right) => {
+        const leftDueDate = left.dueDate?.getTime() ?? Number.MAX_SAFE_INTEGER
+        const rightDueDate = right.dueDate?.getTime() ?? Number.MAX_SAFE_INTEGER
+        return leftDueDate - rightDueDate || left.id.localeCompare(right.id)
+      })
+
+    const items = await Promise.all(studentFees.map(async (studentFee) => {
+      const fee = await this.fees.findById(studentFee.feeId)
+      if (!fee || fee.schoolId !== schoolId || fee.academicYearId !== studentFee.academicYearId) {
+        denyResourceAccess()
+      }
+      const payments = (await this.payments.list({ studentFeeId: studentFee.id }))
+        .sort((left, right) => right.paymentDate.getTime() - left.paymentDate.getTime() || left.id.localeCompare(right.id))
+      return { studentFee, fee, payments }
+    }))
+
+    return {
+      student,
+      academicYearId,
+      items,
+      summary: buildStudentFeeSummary(studentFees),
+    }
+  }
+}
+
 export class ClassGroupReadService {
   constructor(args: ServiceArgs) {
     this.academicYears = args.repositories.academicYears
@@ -445,6 +542,9 @@ export class ClassGroupReadService {
         }
       }),
     )
+    rows.sort((left, right) =>
+      left.classGroup.name.localeCompare(right.classGroup.name)
+      || left.classGroup.id.localeCompare(right.classGroup.id))
 
     return {
       activeAcademicYear,
@@ -652,6 +752,7 @@ export class SchoolQueryService {
   private readonly workspace: WorkspaceService
   private readonly schoolOverview: SchoolOverviewService
   private readonly studentDirectory: StudentDirectoryService
+  private readonly financeLedger: FinanceLedgerService
   private readonly classGroupRead: ClassGroupReadService
   private readonly attendanceReview: AttendanceReviewService
   private readonly guardianRepository: SchoolRepositories['guardians']
@@ -669,6 +770,7 @@ export class SchoolQueryService {
     this.workspace = new WorkspaceService(args)
     this.schoolOverview = new SchoolOverviewService(args)
     this.studentDirectory = new StudentDirectoryService(args)
+    this.financeLedger = new FinanceLedgerService(args)
     this.classGroupRead = new ClassGroupReadService(args)
     this.attendanceReview = new AttendanceReviewService(args)
     this.guardianRepository = args.repositories.guardians
@@ -693,6 +795,19 @@ export class SchoolQueryService {
     await this.authorizeSchool('queries.read_student_directory', input.schoolId)
     await this.requireAcademicYearInSchool(input.academicYearId, input.schoolId)
     return this.studentDirectory.listStudents(input)
+  }
+
+  async getFinanceLedger(input: Parameters<FinanceLedgerService['getFinanceLedger']>[0]) {
+    await this.requireStudentInSchool(input.studentId, input.schoolId)
+    await this.requireAcademicYearInSchool(input.academicYearId, input.schoolId)
+    await this.authorizationPolicy.requirePermission(this.actor, {
+      action: 'finance.read',
+      resource: {
+        schoolId: input.schoolId,
+        studentId: input.studentId,
+      },
+    })
+    return this.financeLedger.getFinanceLedger(input)
   }
 
   async listClassGroups(input: Parameters<ClassGroupReadService['listClassGroups']>[0]) {
@@ -801,6 +916,14 @@ export class SchoolQueryService {
     }
     await this.requireAcademicYearInSchool(academicYearId, schoolId)
     return classGroup
+  }
+
+  private async requireStudentInSchool(studentId: string, schoolId: string): Promise<Student> {
+    const student = await this.studentRepository.findById(studentId)
+    if (!student || student.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
+    return student
   }
 
   private async requireAcademicYearInSchool(academicYearId: string | undefined, schoolId: string): Promise<void> {

@@ -159,13 +159,77 @@ describe('operations query journey', () => {
     const studentDirectory = await app.queries.listStudents({ schoolId: 'school' })
     const schoolOverview = await app.queries.getSchoolOverview({ schoolId: 'school' })
     const classGroups = await app.queries.listClassGroups({ schoolId: 'school' })
+    const financeLedger = await app.queries.getFinanceLedger({
+      schoolId: 'school',
+      studentId: 'student',
+      academicYearId: 'year',
+    })
     const guardianStudents = await app.queries.listStudentsForGuardian('guardian')
     expect(studentDirectory.rows[0]?.balanceDue).toBe(60000)
     expect(studentDirectory.rows[0]?.guardianCount).toBe(1)
     expect(schoolOverview.overdueFeeCount).toBe(1)
     expect(schoolOverview.recentAnnouncements[0]?.id).toBe('fee-reminder')
     expect(classGroups.rows[0]?.studentCount).toBe(1)
+    expect(financeLedger.student.id).toBe('student')
+    expect(financeLedger.items[0]?.fee.id).toBe('tuition')
+    expect(financeLedger.items[0]?.studentFee.status).toBe(FeeStatus.Overdue)
+    expect(financeLedger.items[0]?.payments.map(payment => payment.status)).toEqual([
+      PaymentStatus.Reversed,
+      PaymentStatus.Recorded,
+    ])
+    expect(financeLedger.summary.balanceDue.amount).toBe(60000)
     expect(guardianStudents[0]?.id).toBe('student')
+  })
+
+  it('orders student and class directories independently of creation order', async () => {
+    const { app } = createTestApp()
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
+    await app.setup.createAcademicYear({
+      id: 'year',
+      schoolId: 'school',
+      name: '2026-2027',
+      startDate: new Date('2026-09-01T00:00:00Z'),
+      endDate: new Date('2027-06-30T23:59:59Z'),
+    })
+    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.setup.createClassGroup({
+      id: 'class-b',
+      schoolId: 'school',
+      academicYearId: 'year',
+      gradeLevelId: 'level',
+      name: 'Grade 6 B',
+    })
+    await app.setup.createClassGroup({
+      id: 'class-a',
+      schoolId: 'school',
+      academicYearId: 'year',
+      gradeLevelId: 'level',
+      name: 'Grade 6 A',
+    })
+    await app.students.registerStudent({
+      id: 'student-z',
+      schoolId: 'school',
+      firstName: 'Zara',
+      lastName: 'Barry',
+    })
+    await app.students.registerStudent({
+      id: 'student-b',
+      schoolId: 'school',
+      firstName: 'Binta',
+      lastName: 'Alpha',
+    })
+    await app.students.registerStudent({
+      id: 'student-a',
+      schoolId: 'school',
+      firstName: 'Amira',
+      lastName: 'Alpha',
+    })
+
+    const studentDirectory = await app.queries.listStudents({ schoolId: 'school' })
+    const classDirectory = await app.queries.listClassGroups({ schoolId: 'school' })
+
+    expect(studentDirectory.rows.map(row => row.student.id)).toEqual(['student-a', 'student-b', 'student-z'])
+    expect(classDirectory.rows.map(row => row.classGroup.id)).toEqual(['class-a', 'class-b'])
   })
 })
 
@@ -207,6 +271,18 @@ describe('assignment and query journey', () => {
     await app.students.registerStudent({ id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.students.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
     await app.academics.createSubject({ id: 'math', schoolId: 'school', name: 'Mathematics' })
+    await app.assessments.createGradeScale({
+      id: 'percentage',
+      schoolId: 'school',
+      name: 'Percentage',
+      minScore: 0,
+      maxScore: 100,
+      isDefault: true,
+      ranges: [
+        { letter: 'F', minScore: 0, maxScore: 49, isPassing: false },
+        { letter: 'P', minScore: 50, maxScore: 100, isPassing: true },
+      ],
+    })
     const classSubject = await app.academics.offerSubjectToClass({
       id: 'class-math',
       classGroupId: 'class',
@@ -271,6 +347,13 @@ describe('assignment and query journey', () => {
       date: new Date('2026-09-01T00:00:00Z'),
       sessionId: session.id,
     })
+    expect(workspace.activeAcademicYear?.id).toBe('year')
+    expect(workspace.academicPeriods.map(period => period.id)).toEqual(['term'])
+    expect(workspace.gradeLevels.map(gradeLevel => gradeLevel.id)).toEqual(['level'])
+    expect(workspace.classGroups.map(classGroup => classGroup.id)).toEqual(['class'])
+    expect(workspace.staffMembers.map(staffMember => staffMember.id)).toEqual(['teacher', 'admin'])
+    expect(workspace.subjects.map(subject => subject.id)).toEqual(['math'])
+    expect(workspace.gradeScales.map(gradeScale => gradeScale.id)).toEqual(['percentage'])
     expect(workspace.teacherCourseLoads[0]?.assignedCourseCount).toBe(1)
     expect(classGroups.rows[0]?.teacherNames).toEqual(['Binta Sow'])
     expect(timetable[0]?.courseName).toBe('Mathematics')
