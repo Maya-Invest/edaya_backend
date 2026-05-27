@@ -2,7 +2,6 @@ import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../u
 
 export enum CalendarEventKind {
   Holiday = 'holiday',
-  ExamPeriod = 'exam_period',
   Break = 'break',
   Event = 'event',
   Other = 'other',
@@ -29,7 +28,7 @@ export interface CalendarEventArgs {
 }
 
 /**
- * Represents a school-wide calendar event such as a holiday, exam period, break, or special event.
+ * Represents a school-wide calendar event such as a holiday, break, or special event.
  * Non-school days are used to skip session generation from the timetable grid and
  * to calculate effective school days for attendance reporting.
  */

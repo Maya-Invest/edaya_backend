@@ -274,30 +274,6 @@ export class SetupService {
     return assignment
   }
 
-  async assignStaffToGroupedSession({
-    id,
-    staffId,
-    groupedSessionId,
-    role,
-    createdAt,
-  }: {
-    id: string
-    staffId: string
-    groupedSessionId: string
-    role: StaffRole
-    createdAt?: Date
-  }): Promise<StaffAssignment> {
-    const groupedSession = await this.repositories.groupedSessions.findById(groupedSessionId)
-    if (!groupedSession) {
-      denyResourceAccess()
-    }
-    await this.authorize('setup.assign_staff', groupedSession.schoolId)
-    await this.requireStaffMemberInSchool(staffId, groupedSession.schoolId)
-    const assignment = new StaffAssignment({ id, groupedSessionId, staffId, role, createdAt })
-    await this.repositories.staffAssignments.save(assignment)
-    return assignment
-  }
-
   private async authorize(
     action: 'setup.register_school' | 'setup.manage' | 'setup.assign_staff',
     schoolId: string,

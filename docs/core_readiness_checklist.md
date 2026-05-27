@@ -23,6 +23,8 @@ tests. `[ ]` is required to consider the selected core contract ready.
 - [x] In-memory workflow baseline established for the current public facade.
 - [x] Service construction, current actor-bound authorization, atomic compound
   writes, and known session/attendance integrity fixes are implemented.
+- [x] The simplified assessment/scheduling model removes exam, activity, and
+  grouped-session aggregates and uses `AssessmentResult` for recorded scores.
 - [ ] Remaining blockers are stable UI-facing query/error contracts, all
   selected domain workflow contracts, authorization closure for the selected
   UI surface, and final core evidence tests.
@@ -44,9 +46,8 @@ These rules govern all work that follows this checklist:
   trusted `ActorMetadata`.
 - Persistence adapters stay actor-agnostic and implement atomicity through
   `AtomicExecutionPort`.
-- `GroupedSession` is the cross-class scheduling anchor for selected exam and
-  activity workflows; class attendance continues to operate through linked
-  class-specific `Session` records.
+- Sessions are class-specific scheduling and attendance anchors. There is no
+  selected cross-class grouped-session contract.
 - New UI workflows do not expand the selected domain contract without an
   explicit update in this checklist.
 
@@ -59,10 +60,7 @@ First-release core workflow scope:
 - Student profile and status management, guardian association/contact
   preferences, student notes, and class enrollment.
 - Timetable, attendance capture/justification, and curriculum progress.
-- Assessments, exam-specific workflows, grade entry, and report-card
-  publication.
-- Activities and activity enrollment, including activities involving multiple
-  classes.
+- Assessments, assessment-result entry, and report-card publication.
 - Incidents, disciplinary actions, and applied student discipline.
 - Attachments and resource catalog/assignment for selected domain workflows.
 - Student class-enrollment lifecycle, including completion, promotion,
@@ -74,8 +72,15 @@ First-release core workflow scope:
 - Workspace, overview, directory, timetable, attendance-review, and necessary
   detail/query projections for those screens.
 
-No currently identified core domain workflow is deferred from this readiness
-gate. Future domain additions still require an explicit scope decision.
+Explicitly excluded from this readiness gate:
+
+- Exam aggregate/configuration/class-exam workflows.
+- Activity catalog, activity enrollment, and activity attendance workflows.
+- Grouped-session and other cross-class session workflows.
+
+`GradeLevel` and `GradeScale` remain selected school/reporting concepts;
+recorded student outcomes are `AssessmentResult`, not `Grade`. Reintroducing
+any excluded workflow requires an explicit scope and contract update.
 
 ## Verified Foundation
 
@@ -132,6 +137,10 @@ gate. Future domain additions still require an explicit scope decision.
   projection denial, and actor revocation.
 - [x] Tenant-boundary tests cover selected missing/foreign identifier paths
   and the completed session/attendance integrity fixes.
+- [x] Assessment integration and authorization journeys use
+  `AssessmentResult` operations and report-card result counts.
+- [x] Type checking and the current `35`-test in-memory suite pass after
+  removing the exam, activity, and grouped-session contracts.
 
 ## Core Readiness Gates
 
@@ -156,17 +165,14 @@ considered stable:
   and summary through `getFinanceLedger(...)`.
 - [ ] Add a report-card detail projection with sections, attendance summary,
   and publication state.
-- [ ] Add exam workflow projections for exam configuration, participating
-  classes, subject assessments, result/publication state, and associated
-  grouped sessions.
-- [ ] Add activity projections for activity details, scheduled grouped/class
-  sessions, participant enrollments, and attendance where selected.
+- [ ] Add assessment and assessment-result projections needed for result entry
+  and review screens.
 - [ ] Add a communications projection for announcements, targets, and
   deliveries.
 - [ ] Add incident and discipline projections for incident detail, student
   involvement, applied actions, and current resolution state.
 - [ ] Add attachment and resource projections for selected owners and for
-  class/session/grouped-session assignments.
+  class/session assignments.
 - [ ] Add enrollment lifecycle/history projections including current status,
   outcome, previous enrollment, and transition audit state.
 - [ ] Add actor-scoped teacher, guardian, and student projections required by
@@ -187,11 +193,8 @@ Exit condition:
   newest-first, and finance ledger entries/payments use date/id ordering.
 - [ ] Replace UI-visible raw domain `Error` failures with documented typed
   application failures or discriminated results for selected workflows.
-- [ ] Define and implement the `GroupedSession` contract for selected
-  multi-class exam and activity workflows, including the creation and query
-  shape of linked class-specific `Session` records.
-- [ ] Define how activity/exam grouped sessions participate in attendance,
-  staff assignment, and assessment linkage where applicable.
+- [x] Use assessment-result terminology for the authorization actions:
+  `assessments.record_result` and `assessments.read_results`.
 - [ ] Define stable recipient expansion, deduplication, and delivery
   materialization rules for announcements with overlapping targets.
 - [ ] Define allowed attachment owners and resource-assignment targets,
@@ -225,45 +228,28 @@ Exit condition:
 - [ ] Input, output, sorting/paging, and expected failure contracts are stable
   enough for UI and adapter implementations to rely on them.
 
-### Gate 3: Implement Exam And Activity Workflows
+### Gate 3: Confirm The Simplified Assessment And Session Contract
 
-Available domain building blocks:
-
-- [x] Entities and repository ports exist for `Exam`, `ExamSubject`,
-  `ClassExam`, `Activity`, `StudentActivityEnrollment`, and `GroupedSession`.
-- [x] A grouped session can be created and staffed through the public facade.
-- [x] Report-card calculation can filter already-linked assessments by
-  `examId`.
-- [x] `Session` supports `groupedSessionId` and `activityId` references.
-
-Required exam workflows:
-
-- [ ] Add public exam configuration commands to create an exam and its
-  selected subjects with school/year/subject validation.
-- [ ] Add public class-exam lifecycle commands for the participating classes,
-  periods, and statuses.
-- [ ] Link exam assessments and class-specific sessions to the selected
-  exam/grouped-session model without requiring direct repository writes.
-- [ ] Complete the exam result/publication flow through public commands and
-  exam-specific query contracts.
-
-Required activity workflows:
-
-- [ ] Select and expose the public activity command owner: extend an
-  existing module deliberately or add an `activities` facade module.
-- [ ] Add public activity setup and scheduling commands, including
-  multi-class grouped activity sessions where applicable.
-- [ ] Add activity enrollment and withdrawal commands with selected
-  eligibility and lifecycle validation.
-- [ ] Connect activity participation to linked class sessions and attendance
-  recording where the activity requires attendance.
-- [ ] Expose activity catalog, participation, enrollment, and selected
-  attendance state through public query contracts.
+- [x] `AssessmentResult` replaces the recorded `Grade` entity in exports,
+  repository ports, assessment services, and in-memory support.
+- [x] Assessment and report-card services operate on assessment results and
+  no longer accept or resolve `examId`.
+- [x] `Exam`, `ExamSubject`, `ClassExam`, `Activity`,
+  `StudentActivityEnrollment`, and `GroupedSession` are removed from the
+  selected entity and repository surface.
+- [x] `Session`, `StaffAssignment`, and `ResourceAssignment` expose no
+  grouped-session or activity linkage.
+- [x] `FeeCategory` no longer includes exam or activity fee categories.
+- [x] The selected public enums contain no exam-specific category values:
+  `AssessmentKind.Exam`, `ReportCardDefinitionKind.Exam`, and
+  `CalendarEventKind.ExamPeriod` are removed; the already simplified
+  `ReportCardDefinitionSectionKind` exposes only group and subject sections.
 
 Exit condition:
 
-- [ ] Exam and activity journeys can be implemented by the UI solely through
-  public application contracts, including cross-class scheduling behavior.
+- [x] The selected assessment/result and class-session surface contains no
+  unintended dependency on excluded workflow concepts or legacy public
+  naming.
 
 ### Gate 4: Implement Remaining Selected Workflows
 
@@ -330,9 +316,9 @@ Required attachment and resource workflows:
   selected-domain owners; keep file storage transport outside core.
 - [ ] Align `AttachmentOwnerKind.HealthRecord` with the selected student
   health model or remove that unsupported owner kind from the public
-  contract.
-- [ ] Add public resource catalog and assignment commands for classes,
-  sessions, and grouped exam/activity sessions.
+  contract; it remains present in the current entity.
+- [ ] Add public resource catalog and assignment commands for classes and
+  sessions.
 - [ ] Add resource-conflict validation required for scheduling rooms,
   equipment, or vehicles.
 
@@ -350,8 +336,6 @@ Required academic calendar completion:
   calendar events.
 - [ ] Correct session generation to apply scoped non-school events only to
   affected class groups, while school-wide non-school events apply globally.
-- [ ] Define how exam periods, activities, and manually scheduled grouped
-  sessions use or coexist with calendar events.
 
 Required attendance completion:
 
@@ -385,7 +369,7 @@ Required class-enrollment lifecycle:
 - [ ] Enforce class capacity consistently for initial enrollment, promotion,
   retention, and transfer when a class defines capacity.
 - [ ] Define downstream behavior for attendance, assessment/report-card, fee,
-  activity, and communications access after a class-enrollment transition.
+  and communications access after a class-enrollment transition.
 
 Exit condition:
 
@@ -407,9 +391,6 @@ Required closure:
 
 - [ ] Maintain an explicit method/action/role manifest for every API selected
   by the first-release UI, including newly added projections.
-- [ ] Define action/resource-context rules for exam configuration,
-  class-exam/result lifecycle, activity setup/enrollment, and cross-class
-  grouped-session operations.
 - [ ] Define action/resource-context and visibility rules for incidents and
   discipline, attachments/resources, recipient expansion, and class-enrollment
   lifecycle transitions.
@@ -456,8 +437,6 @@ surface stable enough to implement one.
   persistence-specific behavior in command services.
 - [ ] Add in-memory workflow tests for each newly selected query or error
   contract introduced while closing Gates 1 through 4.
-- [ ] Add in-memory multi-class exam and activity-enrollment journeys,
-  including grouped-session linkage and applicable attendance behavior.
 - [ ] Add in-memory journeys for incident/discipline handling,
   attachment/resource assignment, automatic recipient resolution, and each
   selected class-enrollment transition.
@@ -490,24 +469,21 @@ Current method-to-action groupings that new APIs must preserve or extend:
 | `scheduling` | attendance write/read | `attendance.record`, `attendance.read` |
 | `scheduling` | attendance correction/justification and detailed visibility | `[ ]` Define action split and visibility rules |
 | `assessments` | definition setup | `assessments.manage_configuration` |
-| `assessments` | grade write/read | `assessments.record_grade`, `assessments.read_grades` |
+| `assessments` | assessment result write/read | `assessments.record_result`, `assessments.read_results` |
 | `assessments` | report-card publication | `assessments.publish_report_card` |
-| `assessments` | exam configuration, class-exam lifecycle, and exam results | `[ ]` Define selected action split |
 | `students` | enrollment/guardian management | `students.manage_enrollment`, `students.manage_guardians` |
 | `students` | profile/status and confidential health/emergency data | `[ ]` Define selected write/read action split |
 | `students` | student notes with actor-visible filtering | `[ ]` Define visibility-scoped actions |
 | `students` | guardian contact and relationship preferences | `[ ]` Extend guardian action/resource rules |
-| `students` / activities | activity setup and student activity enrollment | `[ ]` Define selected action split |
 | `students` | class-enrollment lifecycle transitions | `[ ]` Define selected action split |
 | `students` / behavior | incidents, involvement, and disciplinary actions | `[ ]` Define selected action split and visibility rules |
-| `setup` / scheduling | resource catalog and class/session/grouped-session assignments | `[ ]` Define selected action split |
+| `setup` / scheduling | resource catalog and class/session assignments | `[ ]` Define selected action split |
 | selected owner modules | attachment registration/removal/read access | `[ ]` Define owner-scoped actions |
 | `finance` | fee/payment write/read and student-ledger projection | `finance.manage`, `finance.read` |
 | `finance` | student-fee adjustment/cancellation and payment cancellation | `[ ]` Define audited transition actions |
 | `communications` | announcement/delivery mutation | `communications.manage` |
 | `communications` | recipient resolution and delivery materialization | `[ ]` Extend action/resource/idempotency rules |
 | `queries` | current operational projections | distinct `queries.read_*` actions |
-| `scheduling` | cross-class exam/activity grouped sessions | `[ ]` Extend `scheduling.manage` context or define dedicated action |
 | `scheduling` | scoped calendar events and non-school-day effects | `[ ]` Define manage/read scope checks |
 
 Current role baseline:
@@ -516,7 +492,7 @@ Current role baseline:
 | --- | --- |
 | Admin/principal staff | Selected-school setup and school-wide operations |
 | Coordinator staff | Selected academic/scheduling operations granted by policy |
-| Teacher staff | Assigned instructional, grade, and attendance scope only |
+| Teacher staff | Assigned instructional, assessment result, and attendance scope only |
 | Accountant staff | Selected-school fee/payment scope |
 | Guardian | Existing linked-student permitted reads only |
 | Student | Existing self-scoped permitted reads only |

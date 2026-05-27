@@ -7,7 +7,7 @@ export enum DeadlineComplianceStatus {
   Excused = 'excused',
 }
 
-export interface GradeArgs {
+export interface AssessmentResultArgs {
   id: string
   studentId: string
   assessmentId: string
@@ -23,11 +23,11 @@ export interface GradeArgs {
 }
 
 /**
- * Represents a student's grade/score for a specific subject within a classGroup program.
- * Grades are associated with an academic period and form the basis of the report card.
+ * Represents a student's assessment result/score for a specific subject within a classGroup program.
+ * Assessment results are associated with an academic period and form the basis of the report card.
  * Also tracks student submission compliance status (e.g. met, late, missed, excused) for the assessment.
  */
-export class Grade {
+export class AssessmentResult {
   readonly id: string
   readonly studentId: string
   readonly assessmentId: string
@@ -54,7 +54,7 @@ export class Grade {
     notes,
     createdBy,
     createdAt,
-  }: GradeArgs) {
+  }: AssessmentResultArgs) {
     this.id = requireNonBlank(id, 'id')
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.assessmentId = requireNonBlank(assessmentId, 'assessmentId')

@@ -3,7 +3,6 @@ import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export enum ReportCardDefinitionKind {
   Default = 'default',
-  Exam = 'exam',
   Custom = 'custom',
 }
 

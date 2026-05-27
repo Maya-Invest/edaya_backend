@@ -14,7 +14,7 @@ export interface ReportCardResultSectionArgs {
 
 /**
  * Represents the computed result for one report-card section.
- * Group sections derive their average from child results; subject sections derive it from grades.
+ * Group sections derive their average from child results; subject sections derive it from assessment results.
  */
 export class ReportCardResultSection {
   readonly sectionId: string

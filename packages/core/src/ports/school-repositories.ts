@@ -1,26 +1,21 @@
 import type {
   AcademicPeriod,
   AcademicYear,
-  Activity,
   Announcement,
   AnnouncementTarget,
   Assessment,
+  AssessmentResult,
   Attachment,
   AttendanceRecord,
   CalendarEvent,
-  ClassExam,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
-  Exam,
-  ExamSubject,
   Fee,
-  Grade,
   GradeLevel,
   GradeScale,
-  GroupedSession,
   Guardian,
   GuardianStudentLink,
   Incident,
@@ -38,7 +33,6 @@ import type {
   StaffAssignment,
   StaffMember,
   Student,
-  StudentActivityEnrollment,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
   StudentFee,
@@ -70,7 +64,6 @@ export interface SchoolRepositories {
   // SchedulingRepositories {
   readonly schedules: BaseRepositoryInterface<Schedule>
   readonly sessions: BaseRepositoryInterface<Session>
-  readonly groupedSessions: BaseRepositoryInterface<GroupedSession>
   readonly calendarEvents: BaseRepositoryInterface<CalendarEvent>
   readonly attendance: BaseRepositoryInterface<AttendanceRecord> & {
     findByStudentAndSession: (studentId: string, sessionId: string) => Promise<AttendanceRecord | undefined>
@@ -98,12 +91,10 @@ export interface SchoolRepositories {
       sessionId: string,
     ) => Promise<ClassSubjectProgress | undefined>
   }
-  readonly activities: BaseRepositoryInterface<Activity>
-  readonly studentActivityEnrollments: BaseRepositoryInterface<StudentActivityEnrollment>
 
   // AssessmentRepositories
   readonly assessments: BaseRepositoryInterface<Assessment>
-  readonly grades: BaseRepositoryInterface<Grade>
+  readonly assessmentResults: BaseRepositoryInterface<AssessmentResult>
   readonly gradeScales: BaseRepositoryInterface<GradeScale> & {
     findDefaultBySchool: (schoolId: string) => Promise<GradeScale | undefined>
   }
@@ -113,17 +104,7 @@ export interface SchoolRepositories {
   readonly sections: BaseRepositoryInterface<ReportCardDefinitionSection>
   readonly results: BaseRepositoryInterface<ReportCardResult> & {
     findByStudentAndPeriod: (studentId: string, periodId: string) => Promise<ReportCardResult | undefined>
-    findByStudentAndExam: (studentId: string, examId: string) => Promise<ReportCardResult | undefined>
   }
-  readonly classExams: BaseRepositoryInterface<ClassExam> & {
-    findByExamAndClassGroupAndPeriod: (
-      examId: string,
-      classGroupId: string,
-      periodId: string,
-    ) => Promise<ClassExam | undefined>
-  }
-  readonly exams: BaseRepositoryInterface<Exam>
-  readonly examSubjects: BaseRepositoryInterface<ExamSubject>
 
   // StudentRepositories
   readonly students: BaseRepositoryInterface<Student>

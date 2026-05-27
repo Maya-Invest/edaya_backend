@@ -1,10 +1,10 @@
 import type { AssessmentKind } from '../../entities/assessments/assessment'
-import type { DeadlineComplianceStatus } from '../../entities/assessments/grade'
-import type { GradeScaleArgs } from '../../entities/assessments/grade-scale'
+import type { DeadlineComplianceStatus } from '../../entities/assessments/assessment-result'
 import type { ReportCardDefinitionArgs } from '../../entities/assessments/report-card-definition'
 import type { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
 import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { ClassGroup } from '../../entities/school/class-group'
+import type { GradeScaleArgs } from '../../entities/school/grade-scale'
 import type { Student } from '../../entities/students/student'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
@@ -12,13 +12,13 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
 import { Assessment } from '../../entities/assessments/assessment'
-import { Grade } from '../../entities/assessments/grade'
-import { GradeScale } from '../../entities/assessments/grade-scale'
+import { AssessmentResult } from '../../entities/assessments/assessment-result'
 import { ReportCardDefinition } from '../../entities/assessments/report-card-definition'
 import { ReportCardDefinitionSection, ReportCardDefinitionSectionKind as SectionKind } from '../../entities/assessments/report-card-definition-section'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { ReportCardResultSection as SectionResult } from '../../entities/assessments/report-card-result-section'
 import { AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import { GradeScale } from '../../entities/school/grade-scale'
 import { normalizeDate, roundTo2 } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
@@ -42,7 +42,6 @@ interface GenerateReportCardResultInput {
   studentId: string
   periodId: string
   reportCardDefinitionId?: string
-  examId?: string
   generatedAt?: Date
 }
 
@@ -51,7 +50,6 @@ interface PublishReportCardResultInput {
   studentId: string
   periodId: string
   reportCardDefinitionId?: string
-  examId?: string
   publishedAt?: Date
 }
 
@@ -112,7 +110,7 @@ export class AssessmentsService {
 
   async createAssessment(input: CreateAssessmentInput): Promise<Assessment> {
     const classGroup = await this.requireClassGroup(input.classGroupId)
-    await this.authorize('assessments.record_grade', {
+    await this.authorize('assessments.record_result', {
       schoolId: classGroup.schoolId,
       classGroupId: classGroup.id,
       classSubjectId: input.classSubjectId,
@@ -135,7 +133,7 @@ export class AssessmentsService {
   }): Promise<Assessment> {
     const existing = await this.requireAssessment(assessmentId)
     const classGroup = await this.requireClassGroup(existing.classGroupId)
-    await this.authorize('assessments.record_grade', {
+    await this.authorize('assessments.record_result', {
       schoolId: classGroup.schoolId,
       classGroupId: classGroup.id,
       classSubjectId: existing.classSubjectId,
@@ -149,7 +147,6 @@ export class AssessmentsService {
       kind: existing.kind,
       maxScore: existing.maxScore,
       coefficient: existing.coefficient,
-      examId: existing.examId,
       sessionId: existing.sessionId,
       dueAt: existing.dueAt,
       metAt: metAt ?? new Date(),
@@ -160,7 +157,7 @@ export class AssessmentsService {
     return completed
   }
 
-  async recordGrade({
+  async recordAssessmentResult({
     id,
     studentId,
     assessmentId,
@@ -172,10 +169,10 @@ export class AssessmentsService {
     assessmentId: string
     score: number
     createdAt?: Date
-  }): Promise<Grade> {
+  }): Promise<AssessmentResult> {
     const assessment = await this.requireAssessment(assessmentId)
     const classGroup = await this.requireClassGroup(assessment.classGroupId)
-    await this.authorize('assessments.record_grade', {
+    await this.authorize('assessments.record_result', {
       schoolId: classGroup.schoolId,
       classGroupId: classGroup.id,
       classSubjectId: assessment.classSubjectId,
@@ -188,9 +185,9 @@ export class AssessmentsService {
     }
     await this.requireStudentEligibilityForAssessment({ studentId, classGroupId: classGroup.id })
 
-    const existingGrades = await this.repositories.grades.list({ assessmentId })
-    const existing = existingGrades.find(grade => grade.studentId === studentId)
-    const grade = new Grade({
+    const existingResults = await this.repositories.assessmentResults.list({ assessmentId })
+    const existing = existingResults.find(res => res.studentId === studentId)
+    const assessmentResult = new AssessmentResult({
       id: existing?.id ?? id,
       studentId,
       assessmentId,
@@ -202,11 +199,11 @@ export class AssessmentsService {
       createdBy: resolveAuditActorId(this.actor),
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.repositories.grades.save(grade)
-    return grade
+    await this.repositories.assessmentResults.save(assessmentResult)
+    return assessmentResult
   }
 
-  async recordGradeCompliance({
+  async recordAssessmentResultCompliance({
     id,
     studentId,
     assessmentId,
@@ -220,10 +217,10 @@ export class AssessmentsService {
     status: DeadlineComplianceStatus
     notes?: string | null
     createdAt?: Date
-  }): Promise<Grade> {
+  }): Promise<AssessmentResult> {
     const assessment = await this.requireAssessment(assessmentId)
     const classGroup = await this.requireClassGroup(assessment.classGroupId)
-    await this.authorize('assessments.record_grade', {
+    await this.authorize('assessments.record_result', {
       schoolId: classGroup.schoolId,
       classGroupId: classGroup.id,
       classSubjectId: assessment.classSubjectId,
@@ -231,9 +228,9 @@ export class AssessmentsService {
     })
     await this.requireStudentInSchool(studentId, classGroup.schoolId)
     await this.requireStudentEligibilityForAssessment({ studentId, assessment })
-    const existingGrades = await this.repositories.grades.list({ assessmentId })
-    const existing = existingGrades.find(grade => grade.studentId === studentId)
-    const grade = new Grade({
+    const existingResults = await this.repositories.assessmentResults.list({ assessmentId })
+    const existing = existingResults.find(res => res.studentId === studentId)
+    const assessmentResult = new AssessmentResult({
       id: existing?.id ?? id,
       studentId,
       assessmentId,
@@ -247,20 +244,20 @@ export class AssessmentsService {
       createdBy: resolveAuditActorId(this.actor),
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.repositories.grades.save(grade)
-    return grade
+    await this.repositories.assessmentResults.save(assessmentResult)
+    return assessmentResult
   }
 
-  async listClassSubjectGradesForPeriod({
+  async listClassSubjectAssessmentResultsForPeriod({
     classSubjectId,
     periodId,
   }: {
     classSubjectId: string
     periodId: string
-  }): Promise<Grade[]> {
+  }): Promise<AssessmentResult[]> {
     const classSubject = await this.requireClassSubject(classSubjectId)
     const classGroup = await this.requireClassGroup(classSubject.classGroupId)
-    await this.authorize('assessments.read_grades', {
+    await this.authorize('assessments.read_results', {
       schoolId: classGroup.schoolId,
       classGroupId: classGroup.id,
       classSubjectId: classSubject.id,
@@ -269,7 +266,7 @@ export class AssessmentsService {
     if (!period || period.schoolId !== classGroup.schoolId || period.academicYearId !== classGroup.academicYearId) {
       denyResourceAccess()
     }
-    return this.repositories.grades.list({ classSubjectId, periodId })
+    return this.repositories.assessmentResults.list({ classSubjectId, periodId })
   }
 
   async createReportCardDefinitionSection({
@@ -353,7 +350,6 @@ export class AssessmentsService {
     studentId,
     periodId,
     reportCardDefinitionId,
-    examId,
     generatedAt,
   }: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const period = await this.requirePeriod(periodId)
@@ -373,28 +369,23 @@ export class AssessmentsService {
       periodId,
       classGroupId: classGroup.id,
       reportCardDefinitionId: definition.id,
-      examId,
     })
-    const periodGrades = await this.repositories.grades.list({ studentId, periodId })
-    const grades = examId ? await this.filterGradesByExam(periodGrades, examId) : periodGrades
+    const periodAssessmentResults = await this.repositories.assessmentResults.list({ studentId, periodId })
     const attendanceSummary = await this.buildAttendanceSummary({
       studentId,
       startDate: period.startDate,
       endDate: period.endDate,
     })
-    const existing = examId
-      ? await this.repositories.results.findByStudentAndExam(studentId, examId)
-      : await this.repositories.results.findByStudentAndPeriod(studentId, periodId)
+    const existing = await this.repositories.results.findByStudentAndPeriod(studentId, periodId)
     const reportCard = new ReportCardResult({
       id: existing?.id ?? id,
       reportCardDefinitionId: definition.id,
       studentId,
       classGroupId: classGroup.id,
       periodId,
-      examId,
       sectionResults,
       attendanceSummary,
-      gradeCount: grades.length,
+      assessmentResultCount: periodAssessmentResults.length,
       overallAverage,
       status: existing?.status ?? ReportCardResultStatus.Draft,
       generatedAt: existing?.generatedAt ?? generatedAt,
@@ -409,22 +400,19 @@ export class AssessmentsService {
     periodId,
     classGroupId,
     reportCardDefinitionId,
-    examId,
   }: {
     studentId: string
     periodId: string
     classGroupId: string
     reportCardDefinitionId: string
-    examId?: string
   }): Promise<{ sectionResults: SectionResult[], overallAverage?: number }> {
     await this.requirePeriod(periodId)
-    const periodGrades = await this.repositories.grades.list({ studentId, periodId })
-    const grades = examId ? await this.filterGradesByExam(periodGrades, examId) : periodGrades
-    const gradesByClassSubject = new Map<string, Grade[]>()
-    for (const grade of grades) {
-      gradesByClassSubject.set(grade.classSubjectId, [
-        ...(gradesByClassSubject.get(grade.classSubjectId) ?? []),
-        grade,
+    const periodAssessmentResults = await this.repositories.assessmentResults.list({ studentId, periodId })
+    const assessmentResultsByClassSubject = new Map<string, AssessmentResult[]>()
+    for (const res of periodAssessmentResults) {
+      assessmentResultsByClassSubject.set(res.classSubjectId, [
+        ...(assessmentResultsByClassSubject.get(res.classSubjectId) ?? []),
+        res,
       ])
     }
     const classSubjects = await this.repositories.classSubjects.list({ classGroupId })
@@ -436,11 +424,11 @@ export class AssessmentsService {
         const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
         if (!classSubject)
           return null
-        const leafGrades = (gradesByClassSubject.get(classSubject.id) ?? []).filter(grade => grade.score !== undefined)
-        if (leafGrades.length === 0)
+        const leafResults = (assessmentResultsByClassSubject.get(classSubject.id) ?? []).filter(res => res.score !== undefined)
+        if (leafResults.length === 0)
           return null
-        const totalWeight = leafGrades.reduce((sum, grade) => sum + (grade.coefficient ?? 1), 0)
-        const weightedPoints = leafGrades.reduce((sum, grade) => sum + (grade.weightedPoints ?? 0), 0)
+        const totalWeight = leafResults.reduce((sum, res) => sum + (res.coefficient ?? 1), 0)
+        const weightedPoints = leafResults.reduce((sum, res) => sum + (res.weightedPoints ?? 0), 0)
         return new SectionResult({
           sectionId: section.id,
           sectionKind: SectionKind.Subject,
@@ -520,17 +508,6 @@ export class AssessmentsService {
       }
     }
     return new AttendanceSummary({ presentCount, absenceCount, lateCount })
-  }
-
-  private async filterGradesByExam(grades: readonly Grade[], examId: string): Promise<Grade[]> {
-    const filtered: Grade[] = []
-    for (const grade of grades) {
-      const assessment = await this.repositories.assessments.findById(grade.assessmentId)
-      if (assessment?.examId === examId) {
-        filtered.push(grade)
-      }
-    }
-    return filtered
   }
 
   private async requireSchool(schoolId: string): Promise<void> {
@@ -686,7 +663,7 @@ export class AssessmentsService {
   }
 
   private async authorize(
-    action: 'assessments.manage_configuration' | 'assessments.record_grade' | 'assessments.read_grades' | 'assessments.publish_report_card',
+    action: 'assessments.manage_configuration' | 'assessments.record_result' | 'assessments.read_results' | 'assessments.publish_report_card',
     resource: {
       schoolId: string
       academicYearId?: string

@@ -9,10 +9,8 @@ export interface FeeInstallmentTemplate {
 
 export enum FeeCategory {
   Tuition = 'tuition',
-  Exam = 'exam',
   Uniform = 'uniform',
   Transport = 'transport',
-  Activity = 'activity',
   Other = 'other',
 }
 

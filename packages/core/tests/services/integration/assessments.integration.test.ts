@@ -11,7 +11,7 @@ import {
 import { createTestApp } from '../../support/in-memory-school-headless-app'
 
 describe('assessment reporting journey', () => {
-  it('publishes a report card from scheduled instruction, attendance, and a recorded grade', async () => {
+  it('publishes a report card from scheduled instruction, attendance, and a recorded assessment result', async () => {
     const { app } = createTestApp()
     await app.setup.registerSchool({ id: 'school', name: 'Maya School' })
     await app.setup.createAcademicYear({
@@ -47,18 +47,7 @@ describe('assessment reporting journey', () => {
       startTime: '08:00',
       endTime: '09:00',
     })
-    const groupedSession = await app.scheduling.createGroupedSession({
-      id: 'assembly',
-      schoolId: 'school',
-      academicYearId: 'year',
-      academicPeriodId: 'term',
-      title: 'Term opening',
-      kind: SessionKind.Course,
-      startsAt: new Date('2026-09-01T07:30:00Z'),
-      endsAt: new Date('2026-09-01T08:00:00Z'),
-    })
     expect(periodDefinition.durationMinutes).toBe(60)
-    expect(groupedSession.academicPeriodId).toBe('term')
     await app.students.registerStudent({ id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.students.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
     await app.academics.createSubject({ id: 'math', schoolId: 'school', name: 'Mathematics' })
@@ -121,7 +110,7 @@ describe('assessment reporting journey', () => {
       maxScore: 20,
       sessionId: 'lesson',
     })
-    await app.assessments.recordGrade({ id: 'grade', studentId: 'student', assessmentId: 'quiz', score: 16 })
+    await app.assessments.recordAssessmentResult({ id: 'grade', studentId: 'student', assessmentId: 'quiz', score: 16 })
 
     const reportCard = await app.assessments.publishReportCardResult({
       id: 'report-card',
@@ -129,7 +118,7 @@ describe('assessment reporting journey', () => {
       periodId: 'term',
     })
     expect(reportCard.status).toBe(ReportCardResultStatus.Published)
-    expect(reportCard.gradeCount).toBe(1)
+    expect(reportCard.assessmentResultCount).toBe(1)
     expect(reportCard.overallAverage).toBe(16)
     expect(reportCard.attendanceSummary.presentCount).toBe(1)
     expect(reportCard.sectionResults).toHaveLength(1)
@@ -224,20 +213,20 @@ describe('assessment lifecycle journey', () => {
       assessmentId: 'math-task',
       metAt: new Date('2026-09-15T20:00:00Z'),
     })
-    await app.assessments.recordGrade({ id: 'math-grade', studentId: 'student', assessmentId: 'math-task', score: 18 })
-    const compliance = await app.assessments.recordGradeCompliance({
+    await app.assessments.recordAssessmentResult({ id: 'math-grade', studentId: 'student', assessmentId: 'math-task', score: 18 })
+    const compliance = await app.assessments.recordAssessmentResultCompliance({
       id: 'math-grade-compliance',
       studentId: 'student',
       assessmentId: 'math-task',
       status: DeadlineComplianceStatus.Late,
     })
-    await app.assessments.recordGrade({
+    await app.assessments.recordAssessmentResult({
       id: 'language-grade',
       studentId: 'student',
       assessmentId: 'language-task',
       score: 12,
     })
-    const mathGrades = await app.assessments.listClassSubjectGradesForPeriod({
+    const mathResults = await app.assessments.listClassSubjectAssessmentResultsForPeriod({
       classSubjectId: math.id,
       periodId: 'term',
     })
@@ -249,7 +238,7 @@ describe('assessment lifecycle journey', () => {
     expect(completed.metAt).toEqual(new Date('2026-09-15T20:00:00Z'))
     expect(compliance.score).toBe(18)
     expect(compliance.status).toBe(DeadlineComplianceStatus.Late)
-    expect(mathGrades).toHaveLength(1)
+    expect(mathResults).toHaveLength(1)
     expect(reportCard.status).toBe(ReportCardResultStatus.Draft)
     expect(reportCard.overallAverage).toBe(16)
     expect(reportCard.sectionResults[0]?.subResults).toHaveLength(2)

@@ -288,16 +288,7 @@ describe('assignment and query journey', () => {
       classGroupId: 'class',
       subjectId: 'math',
     })
-    const groupedSession = await app.scheduling.createGroupedSession({
-      id: 'assembly',
-      schoolId: 'school',
-      academicYearId: 'year',
-      academicPeriodId: 'term',
-      title: 'Assembly',
-      kind: SessionKind.Event,
-      startsAt: new Date('2026-09-01T07:30:00Z'),
-      endsAt: new Date('2026-09-01T08:00:00Z'),
-    })
+
     const session = await app.scheduling.createSession({
       id: 'lesson',
       schoolId: 'school',
@@ -326,12 +317,7 @@ describe('assignment and query journey', () => {
       sessionId: session.id,
       role: StaffRole.Teacher,
     })
-    await app.setup.assignStaffToGroupedSession({
-      id: 'assembly-teacher',
-      staffId: 'teacher',
-      groupedSessionId: groupedSession.id,
-      role: StaffRole.Teacher,
-    })
+
     await app.scheduling.recordAttendance({
       id: 'attendance',
       studentId: 'student',
@@ -361,7 +347,6 @@ describe('assignment and query journey', () => {
     expect(attendanceReview.summary).toEqual({ present: 0, absent: 0, late: 1, total: 1 })
     expect(await repositories.staffAssignmentRepository.list({ classGroupId: 'class' })).toHaveLength(1)
     expect(await repositories.staffAssignmentRepository.list({ sessionId: session.id })).toHaveLength(1)
-    expect(await repositories.staffAssignmentRepository.list({ groupedSessionId: groupedSession.id })).toHaveLength(1)
   })
 
   it('loads attendance for the selected class and rejects a session from another class', async () => {

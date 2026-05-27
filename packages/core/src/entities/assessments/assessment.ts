@@ -2,7 +2,6 @@ import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber, requir
 
 export enum AssessmentKind {
   Quiz = 'quiz',
-  Exam = 'exam',
   Homework = 'homework',
   Project = 'project',
   Other = 'other',
@@ -17,7 +16,6 @@ export interface AssessmentArgs {
   kind: AssessmentKind
   maxScore: number
   coefficient?: number
-  examId?: string | null
   sessionId?: string | null
   dueAt?: Date | null
   metAt?: Date | null
@@ -27,8 +25,7 @@ export interface AssessmentArgs {
 
 /**
  * Defines a graded activity for a classGroup subject.
- * Grades reference an assessment so scoring rules and grading intent stay explicit.
- * Can optionally belong to an Exam for structured exam grouping.
+ * Assessment results reference an assessment so scoring rules and grading intent stay explicit.
  */
 export class Assessment {
   readonly id: string
@@ -39,7 +36,6 @@ export class Assessment {
   readonly kind: AssessmentKind
   readonly maxScore: number
   readonly coefficient: number
-  readonly examId?: string
   readonly sessionId?: string
   readonly dueAt?: Date
   readonly metAt?: Date
@@ -55,7 +51,6 @@ export class Assessment {
     kind,
     maxScore,
     coefficient = 1,
-    examId,
     sessionId,
     dueAt,
     metAt,
@@ -70,7 +65,6 @@ export class Assessment {
     this.kind = kind
     this.maxScore = requirePositiveNumber(maxScore, 'maxScore')
     this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
-    this.examId = requireOptionalNonBlank(examId, 'examId')
     this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
     this.dueAt = dueAt ? requireValidDate(dueAt, 'dueAt') : undefined
     this.metAt = metAt ? requireValidDate(metAt, 'metAt') : undefined

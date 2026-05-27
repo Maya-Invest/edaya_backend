@@ -159,7 +159,7 @@ describe('actor-bound service authorization', () => {
       sessionId: session.id,
       completedPercentage: 25,
     })
-    const grade = await teacher.assessments.recordGrade({
+    const assessmentResult = await teacher.assessments.recordAssessmentResult({
       id: 'grade',
       studentId: 'student',
       assessmentId: 'quiz',
@@ -168,7 +168,7 @@ describe('actor-bound service authorization', () => {
 
     expect(attendance.createdBy).toBe('teacher')
     expect(progress.recordedByStaffId).toBe('teacher')
-    expect(grade.createdBy).toBe('teacher')
+    expect(assessmentResult.createdBy).toBe('teacher')
     expect(await repositories.attendanceRepository.list({ sessionId: session.id })).toHaveLength(1)
   })
 
@@ -301,7 +301,7 @@ describe('actor-bound service authorization', () => {
     })
 
     expect(await teacher.queries.listClassGroupTimetable('class')).toHaveLength(1)
-    expect(await teacher.assessments.listClassSubjectGradesForPeriod({
+    expect(await teacher.assessments.listClassSubjectAssessmentResultsForPeriod({
       classSubjectId: classSubject.id,
       periodId: 'term',
     })).toEqual([])

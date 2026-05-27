@@ -186,7 +186,7 @@ describe('tenant boundary safeguards', () => {
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
     for (const periodId of ['missing-term', 'term-b']) {
-      await expect(app.assessments.listClassSubjectGradesForPeriod({
+      await expect(app.assessments.listClassSubjectAssessmentResultsForPeriod({
         classSubjectId: classSubject.id,
         periodId,
       }))

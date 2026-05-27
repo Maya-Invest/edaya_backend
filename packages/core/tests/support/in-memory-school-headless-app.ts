@@ -1,26 +1,21 @@
 import type {
   AcademicPeriod,
   AcademicYear,
-  Activity,
   Announcement,
   AnnouncementTarget,
   Assessment,
+  AssessmentResult,
   Attachment,
   AttendanceRecord,
   CalendarEvent,
-  ClassExam,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
-  Exam,
-  ExamSubject,
   Fee,
-  Grade,
   GradeLevel,
   GradeScale,
-  GroupedSession,
   Guardian,
   GuardianStudentLink,
   Incident,
@@ -37,7 +32,6 @@ import type {
   Session,
   StaffAssignment,
   Student,
-  StudentActivityEnrollment,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
   StudentFee,
@@ -175,10 +169,9 @@ export function createTestApp(actor?: ActorMetadata) {
   const classSubjectMatters = createStore<ClassSubjectMatter>(transactionParticipants)
   const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
   const sessions = createStore<Session>(transactionParticipants)
-  const groupedSessions = createStore<GroupedSession>(transactionParticipants)
   const assessments = createStore<Assessment>(transactionParticipants)
   const attendance = createStore<AttendanceRecord>(transactionParticipants)
-  const grades = createStore<Grade>(transactionParticipants)
+  const assessmentResults = createStore<AssessmentResult>(transactionParticipants)
   const gradeScales = createStore<GradeScale>(transactionParticipants)
   const definitions = createStore<ReportCardDefinition>(transactionParticipants)
   const sections = createStore<ReportCardDefinitionSection>(transactionParticipants)
@@ -201,11 +194,6 @@ export function createTestApp(actor?: ActorMetadata) {
   const disciplinaryActions = createStore<DisciplinaryAction>(transactionParticipants)
   const studentIncidentInvolvements = createStore<StudentIncidentInvolvement>(transactionParticipants)
   const incidents = createStore<Incident>(transactionParticipants)
-  const activities = createStore<Activity>(transactionParticipants)
-  const studentActivityEnrollments = createStore<StudentActivityEnrollment>(transactionParticipants)
-  const classExams = createStore<ClassExam>(transactionParticipants)
-  const exams = createStore<Exam>(transactionParticipants)
-  const examSubjects = createStore<ExamSubject>(transactionParticipants)
 
   const schoolRepositories: SchoolRepositories = {
     // setup
@@ -234,7 +222,6 @@ export function createTestApp(actor?: ActorMetadata) {
       ...sessions,
       save: entity => saveWithFailure('sessionRepository', sessions, entity),
     },
-    groupedSessions,
     attendance: {
       ...attendance,
       findByStudentAndSession: async (studentId, sessionId) =>
@@ -258,12 +245,10 @@ export function createTestApp(actor?: ActorMetadata) {
       findByClassSubjectMatterAndSession: async (matterId, sessionId) =>
         (await classSubjectProgress.list({ classSubjectMatterId: matterId, sessionId }))[0],
     },
-    activities,
-    studentActivityEnrollments,
 
     // assessments
     assessments,
-    grades,
+    assessmentResults,
     gradeScales: {
       ...gradeScales,
       findDefaultBySchool: async schoolId =>
@@ -280,16 +265,7 @@ export function createTestApp(actor?: ActorMetadata) {
       save: entity => saveWithFailure('reportCardResultRepository', results, entity),
       findByStudentAndPeriod: async (studentId, periodId) =>
         (await results.list({ studentId, periodId }))[0],
-      findByStudentAndExam: async (studentId, examId) =>
-        (await results.list({ studentId, examId }))[0],
     },
-    classExams: {
-      ...classExams,
-      findByExamAndClassGroupAndPeriod: async (examId, classGroupId, periodId) =>
-        (await classExams.list({ examId, classGroupId, periodId }))[0],
-    },
-    exams,
-    examSubjects,
 
     // students
     students,
@@ -346,10 +322,9 @@ export function createTestApp(actor?: ActorMetadata) {
     classSubjectMatterRepository: schoolRepositories.classSubjectMatters,
     classSubjectProgressRepository: schoolRepositories.classSubjectProgress,
     sessionRepository: schoolRepositories.sessions,
-    groupedSessionRepository: schoolRepositories.groupedSessions,
     assessmentRepository: schoolRepositories.assessments,
     attendanceRepository: schoolRepositories.attendance,
-    gradeRepository: schoolRepositories.grades,
+    assessmentResultRepository: schoolRepositories.assessmentResults,
     gradeScaleRepository: schoolRepositories.gradeScales,
     reportCardDefinitionRepository: schoolRepositories.definitions,
     reportCardDefinitionSectionRepository: schoolRepositories.sections,

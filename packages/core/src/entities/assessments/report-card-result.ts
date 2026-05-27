@@ -13,11 +13,10 @@ export interface ReportCardResultArgs {
   studentId: string
   classGroupId: string
   periodId: string
-  examId?: string | null
   /** Root-level section results. Each may recursively contain subResults. */
   sectionResults: readonly ReportCardResultSection[]
   attendanceSummary: AttendanceSummary
-  gradeCount: number
+  assessmentResultCount: number
   overallAverage?: number | null
   rank?: number | null
   classSize?: number | null
@@ -40,10 +39,9 @@ export class ReportCardResult {
   readonly studentId: string
   readonly classGroupId: string
   readonly periodId: string
-  readonly examId?: string
   readonly sectionResults: readonly ReportCardResultSection[]
   readonly attendanceSummary: AttendanceSummary
-  readonly gradeCount: number
+  readonly assessmentResultCount: number
   readonly overallAverage?: number
   readonly rank?: number
   readonly classSize?: number
@@ -60,10 +58,9 @@ export class ReportCardResult {
     studentId,
     classGroupId,
     periodId,
-    examId,
     sectionResults,
     attendanceSummary,
-    gradeCount,
+    assessmentResultCount,
     overallAverage,
     rank,
     classSize,
@@ -79,10 +76,9 @@ export class ReportCardResult {
     this.studentId = requireNonBlank(studentId, 'studentId')
     this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
     this.periodId = requireNonBlank(periodId, 'periodId')
-    this.examId = requireOptionalNonBlank(examId, 'examId')
     this.sectionResults = Object.freeze([...sectionResults])
     this.attendanceSummary = attendanceSummary
-    this.gradeCount = requireNonNegativeInt(gradeCount, 'gradeCount')
+    this.assessmentResultCount = requireNonNegativeInt(assessmentResultCount, 'assessmentResultCount')
     this.overallAverage
       = overallAverage == null ? undefined : roundTo2(requireNonNegativeNumber(overallAverage, 'overallAverage'))
     if (rank != null) {
@@ -115,10 +111,9 @@ export class ReportCardResult {
       studentId: this.studentId,
       classGroupId: this.classGroupId,
       periodId: this.periodId,
-      examId: this.examId,
       sectionResults: this.sectionResults,
       attendanceSummary: this.attendanceSummary,
-      gradeCount: this.gradeCount,
+      assessmentResultCount: this.assessmentResultCount,
       overallAverage: this.overallAverage,
       rank: this.rank,
       classSize: this.classSize,

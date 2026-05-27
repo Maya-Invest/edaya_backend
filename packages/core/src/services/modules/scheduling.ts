@@ -1,4 +1,3 @@
-import type { AcademicPeriod } from '../../entities/school/academic-period'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
@@ -6,7 +5,6 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
 import { AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
-import { GroupedSession } from '../../entities/scheduling/grouped-session'
 import { PeriodDefinition } from '../../entities/scheduling/period-definition'
 import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
@@ -81,54 +79,6 @@ export class SchedulingService {
     })
     await this.repositories.periodDefinitions.save(period)
     return period
-  }
-
-  async createGroupedSession({
-    id,
-    schoolId,
-    academicYearId,
-    academicPeriodId,
-    title,
-    kind,
-    startsAt,
-    endsAt,
-    createdAt,
-  }: {
-    id: string
-    schoolId: string
-    academicYearId: string
-    academicPeriodId?: string
-    title: string
-    kind: SessionKind
-    startsAt: Date
-    endsAt: Date
-    createdAt?: Date
-  }): Promise<GroupedSession> {
-    await this.authorize('scheduling.manage', { schoolId, academicYearId })
-    await this.requireSchool(schoolId)
-    const academicYear = await this.requireAcademicYear(academicYearId)
-    if (academicYear.schoolId !== schoolId) {
-      denyResourceAccess()
-    }
-    if (academicPeriodId) {
-      const academicPeriod = await this.requireAcademicPeriod(academicPeriodId)
-      if (academicPeriod.schoolId !== schoolId || academicPeriod.academicYearId !== academicYearId) {
-        denyResourceAccess()
-      }
-    }
-    const groupedSession = new GroupedSession({
-      id,
-      schoolId,
-      academicYearId,
-      academicPeriodId,
-      title,
-      kind,
-      startsAt,
-      endsAt,
-      createdAt,
-    })
-    await this.repositories.groupedSessions.save(groupedSession)
-    return groupedSession
   }
 
   async createSchedule({
@@ -438,14 +388,6 @@ export class SchedulingService {
       denyResourceAccess()
     }
     return academicYear
-  }
-
-  private async requireAcademicPeriod(academicPeriodId: string): Promise<AcademicPeriod> {
-    const academicPeriod = await this.repositories.academicPeriods.findById(academicPeriodId)
-    if (!academicPeriod) {
-      denyResourceAccess()
-    }
-    return academicPeriod
   }
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {

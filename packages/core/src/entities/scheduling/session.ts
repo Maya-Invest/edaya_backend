@@ -15,8 +15,6 @@ export interface SessionArgs {
   startsAt: Date
   endsAt: Date
   classSubjectId?: string | null
-  groupedSessionId?: string | null
-  activityId?: string | null
   scheduleId?: string | null
   createdAt?: Date
 }
@@ -33,8 +31,6 @@ export class Session {
   readonly startsAt: Date
   readonly endsAt: Date
   readonly classSubjectId?: string
-  readonly groupedSessionId?: string
-  readonly activityId?: string
   readonly scheduleId?: string
   readonly createdAt: Date
 
@@ -46,8 +42,6 @@ export class Session {
     startsAt,
     endsAt,
     classSubjectId,
-    groupedSessionId,
-    activityId,
     scheduleId,
     createdAt,
   }: SessionArgs) {
@@ -58,8 +52,6 @@ export class Session {
     this.startsAt = requireValidDate(startsAt, 'startsAt')
     this.endsAt = requireValidDate(endsAt, 'endsAt')
     this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
-    this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
-    this.activityId = requireOptionalNonBlank(activityId, 'activityId')
     this.scheduleId = requireOptionalNonBlank(scheduleId, 'scheduleId')
     this.createdAt = createdAt ?? new Date()
 

@@ -15,8 +15,8 @@ export type AuthorizationAction
     | 'attendance.record'
     | 'attendance.read'
     | 'assessments.manage_configuration'
-    | 'assessments.record_grade'
-    | 'assessments.read_grades'
+    | 'assessments.record_result'
+    | 'assessments.read_results'
     | 'assessments.publish_report_card'
     | 'students.manage_enrollment'
     | 'students.manage_guardians'
@@ -82,8 +82,8 @@ const coordinatorActions = new Set<AuthorizationAction>([
   'attendance.record',
   'attendance.read',
   'assessments.manage_configuration',
-  'assessments.record_grade',
-  'assessments.read_grades',
+  'assessments.record_result',
+  'assessments.read_results',
   'assessments.publish_report_card',
   'students.manage_enrollment',
   'students.manage_guardians',
@@ -99,8 +99,8 @@ const teacherAssignmentActions = new Set<AuthorizationAction>([
   'academics.read_progress',
   'attendance.record',
   'attendance.read',
-  'assessments.record_grade',
-  'assessments.read_grades',
+  'assessments.record_result',
+  'assessments.read_results',
   'queries.read_class_curriculum',
   'queries.read_timetable',
   'queries.read_attendance',

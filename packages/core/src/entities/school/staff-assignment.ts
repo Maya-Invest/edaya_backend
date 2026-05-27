@@ -8,12 +8,11 @@ export interface StaffAssignmentArgs {
   classGroupId?: string | null
   classSubjectId?: string | null
   sessionId?: string | null
-  groupedSessionId?: string | null
   createdAt?: Date
 }
 
 /**
- * Assigns a staff member (with a specific role) to a ClassGroup, ClassSubject, Session, or GroupedSession.
+ * Assigns a staff member (with a specific role) to a ClassGroup, ClassSubject, or Session.
  */
 export class StaffAssignment {
   readonly id: string
@@ -22,7 +21,6 @@ export class StaffAssignment {
   readonly classGroupId?: string
   readonly classSubjectId?: string
   readonly sessionId?: string
-  readonly groupedSessionId?: string
   readonly createdAt: Date
 
   constructor({
@@ -32,7 +30,6 @@ export class StaffAssignment {
     classGroupId,
     classSubjectId,
     sessionId,
-    groupedSessionId,
     createdAt,
   }: StaffAssignmentArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -42,11 +39,10 @@ export class StaffAssignment {
     this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
     this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
     this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
-    this.groupedSessionId = requireOptionalNonBlank(groupedSessionId, 'groupedSessionId')
 
-    const targets = [this.classGroupId, this.classSubjectId, this.sessionId, this.groupedSessionId].filter(Boolean)
+    const targets = [this.classGroupId, this.classSubjectId, this.sessionId].filter(Boolean)
     if (targets.length !== 1) {
-      throw new Error('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, sessionId, or groupedSessionId')
+      throw new Error('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId')
     }
 
     this.createdAt = createdAt ?? new Date()
