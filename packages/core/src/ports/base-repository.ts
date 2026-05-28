@@ -23,9 +23,20 @@ export type Filter<T> = {
   $not?: Filter<T>
 }
 
+export interface SortOption<T> {
+  field: keyof T
+  direction: 'asc' | 'desc'
+}
+
+export interface ListOptions<T> {
+  limit?: number
+  offset?: number
+  orderBy?: SortOption<T>[]
+}
+
 export interface BaseRepositoryInterface<T> {
   findById: (id: string) => Promise<T | undefined>
-  list: (filter?: Filter<T>) => Promise<T[]>
+  list: (filter?: Filter<T>, options?: ListOptions<T>) => Promise<T[]>
   save: (entity: T) => Promise<void>
   delete: (entity: T) => Promise<void>
   count: (filter?: Filter<T>) => Promise<number>

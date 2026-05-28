@@ -81,11 +81,27 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   })
   return {
     findById: async (id: string) => entries.get(id),
-    list: async (filter?: Filter<T>) => {
-      const all = [...entries.values()]
-      if (!filter)
-        return all
-      return all.filter(entity => matchesFilter(entity, filter))
+    list: async (filter?: Filter<T>, options?: import('../../src/ports').ListOptions<T>) => {
+      let result = [...entries.values()]
+      if (filter) {
+        result = result.filter(entity => matchesFilter(entity, filter))
+      }
+      if (options?.orderBy) {
+        result.sort((a, b) => {
+          for (const { field, direction } of options.orderBy!) {
+            const valA = a[field]
+            const valB = b[field]
+            if (valA < valB) return direction === 'asc' ? -1 : 1
+            if (valA > valB) return direction === 'asc' ? 1 : -1
+          }
+          return 0
+        })
+      }
+      if (options?.offset !== undefined || options?.limit !== undefined) {
+        const offset = options.offset ?? 0
+        result = result.slice(offset, options.limit !== undefined ? offset + options.limit : undefined)
+      }
+      return result
     },
     save: async (entity: T) => {
       entries.set(entity.id, entity)

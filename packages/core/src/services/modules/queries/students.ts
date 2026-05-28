@@ -24,7 +24,6 @@ import { StudentNoteVisibility } from '../../../entities/students/student-note'
 import { AttendanceSummary as AttendanceSummaryValue } from '../../../value_object/attendance-summary'
 import { denyResourceAccess } from '../../authorization'
 import { findActiveAcademicYear } from '../../shared/academic-year'
-import { paginateSlice } from '../../shared/pagination'
 import { requireSchool } from '../../shared/require-school'
 
 export interface StudentDirectoryRow {
@@ -162,13 +161,18 @@ export class StudentDirectoryService {
       ? await this.classGroups.list({ academicYearId: activeAcademicYear.id })
       : []
     const classGroupById = new Map(classGroups.map(classGroup => [classGroup.id, classGroup]))
-    const students = (await this.students.list({ schoolId }))
-      .sort((left, right) =>
-        left.lastName.localeCompare(right.lastName)
-        || left.firstName.localeCompare(right.firstName)
-        || left.id.localeCompare(right.id))
-
-    const paginatedStudents = paginateSlice(students, pagination)
+    const paginatedStudents = await this.students.list(
+      { schoolId },
+      {
+        limit: pagination?.limit,
+        offset: pagination?.offset,
+        orderBy: [
+          { field: 'lastName', direction: 'asc' },
+          { field: 'firstName', direction: 'asc' },
+          { field: 'id', direction: 'asc' },
+        ],
+      },
+    )
 
     const rows = await Promise.all(
       paginatedStudents.map(async (student) => {
