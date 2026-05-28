@@ -3,8 +3,10 @@ import type { AnnouncementTarget } from '../../../entities/messaging/announcemen
 import type { MessageDelivery } from '../../../entities/messaging/message-delivery'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ServiceArgs } from '../../school-headless-app'
+import type { PaginationParams } from '../../shared/pagination'
 import { MessageDeliveryStatus } from '../../../entities/messaging/message-delivery'
 import { denyResourceAccess } from '../../authorization'
+import { paginateSlice } from '../../shared/pagination'
 
 export interface AnnouncementDeliverySummary {
   total: number
@@ -37,14 +39,21 @@ export class CommunicationsReadService {
   private readonly targets: SchoolRepositories['announcementTargets']
   private readonly deliveries: SchoolRepositories['messageDeliveries']
 
-  async listAnnouncements({ schoolId }: { schoolId: string }): Promise<AnnouncementDirectory> {
+  async listAnnouncements({
+    schoolId,
+    pagination,
+  }: {
+    schoolId: string
+    pagination?: PaginationParams
+  }): Promise<AnnouncementDirectory> {
     const announcements = (await this.announcements.list({ schoolId }))
       .sort((left, right) => {
         const leftDate = left.publishedAt ?? left.createdAt
         const rightDate = right.publishedAt ?? right.createdAt
         return rightDate.getTime() - leftDate.getTime() || left.id.localeCompare(right.id)
       })
-    return { rows: await Promise.all(announcements.map(announcement => this.buildDetail(announcement))) }
+    const paginated = paginateSlice(announcements, pagination)
+    return { rows: await Promise.all(paginated.map(announcement => this.buildDetail(announcement))) }
   }
 
   async getAnnouncementDetail({

@@ -3,6 +3,7 @@ import type { Student } from '../../../entities/students/student'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { AuthorizationAction, AuthorizedServiceArgs } from '../../authorization'
 import type { ServiceArgs } from '../../school-headless-app'
+import type { PaginationParams } from '../../shared/pagination'
 import type { AssessmentEntryReview, ReportCardDetail } from './assessments'
 import type { AttendanceReview } from './attendance'
 import type { AcademicCalendar } from './calendar'
@@ -39,6 +40,7 @@ import {
 import { WorkspaceService } from './workspace'
 
 // Re-export all public response types so consumers can import from a single location.
+export type { PaginationParams }
 export type { AcademicCalendar }
 export type { AnnouncementDetail, AnnouncementDirectory }
 export type { AssessmentEntryReview, ReportCardDetail }

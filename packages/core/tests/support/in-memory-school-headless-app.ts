@@ -133,7 +133,7 @@ export type FailableRepository
     | 'studentClassEnrollmentRepository'
     | 'studentFeeRepository'
 
-export function createTestApp(actor?: ActorMetadata) {
+export function createInMemoryTestApp(actor?: ActorMetadata) {
   const transactionParticipants: TransactionParticipant[] = []
   let saveFailure: { repository: FailableRepository, remainingAttempts: number } | undefined
   const failSaveOnAttempt = (repository: FailableRepository, attempt = 1) => {
@@ -399,4 +399,20 @@ export function createTestApp(actor?: ActorMetadata) {
     forActor: (boundActor: ActorMetadata) => application.forActor(boundActor),
     failSaveOnAttempt,
   }
+}
+
+export interface IntegrationTestAdapter {
+  createApp: (actor?: ActorMetadata) => ReturnType<typeof createInMemoryTestApp>
+}
+
+let activeAdapter: IntegrationTestAdapter = {
+  createApp: actor => createInMemoryTestApp(actor),
+}
+
+export function setIntegrationTestAdapter(adapter: IntegrationTestAdapter) {
+  activeAdapter = adapter
+}
+
+export function createTestApp(actor?: ActorMetadata): ReturnType<typeof createInMemoryTestApp> {
+  return activeAdapter.createApp(actor)
 }

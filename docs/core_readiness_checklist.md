@@ -417,7 +417,7 @@ Required class-enrollment lifecycle:
 
 Exit condition:
 
-- [ ] Each selected setup, student record, calendar, attendance, finance,
+- [x] Each selected setup, student record, calendar, attendance, finance,
   incident, attachment/resource, communications-recipient, and
   enrollment-lifecycle journey can be executed through public application
   contracts without UI or adapters implementing domain decisions.
@@ -437,7 +437,7 @@ Required closure:
   by the first-release UI, including newly added projections.
 - [x] Define action/resource-context and visibility rules for incidents and
   discipline.
-- [ ] Define action/resource-context and visibility rules for
+- [x] Define action/resource-context and visibility rules for
   attachments/resources, recipient expansion, and class-enrollment lifecycle
   transitions.
 - [x] Define action/resource-context and visibility rules for student
@@ -492,7 +492,7 @@ surface stable enough to implement one.
   student-fee adjustment/cancellation, and payment cancellation/reversal
   semantics.
 - [x] Add in-memory journeys for setup lifecycle/configuration.
-- [ ] Add atomic rollback and tenant/authorization evidence for any new
+- [x] Add atomic rollback and tenant/authorization evidence for any new
   compound-write selected-domain command.
 
 Exit condition:

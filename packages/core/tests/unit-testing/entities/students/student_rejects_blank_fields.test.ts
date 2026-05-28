@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { Student, StudentStatus } from '../../../src/entities/students/student'
-import { DomainValidationError } from '../../../src/entities/utils'
+import { Student, StudentStatus } from '../../../../src/entities/students/student'
+import { DomainValidationError } from '../../../../src/entities/utils'
 
 describe('Student biographical fields validation', () => {
   it('instantiates successfully with valid inputs', () => {

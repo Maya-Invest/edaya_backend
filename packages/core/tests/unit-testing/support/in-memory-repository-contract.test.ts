@@ -1,5 +1,5 @@
-import { runBaseRepositoryContract } from './base-repository-contract'
-import { createStore } from './in-memory-school-headless-app'
+import { runBaseRepositoryContract } from '../../support/base-repository-contract'
+import { createStore } from '../../support/in-memory-school-headless-app'
 
 runBaseRepositoryContract(
   'in-memory repository base contract',

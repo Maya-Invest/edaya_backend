@@ -3,7 +3,7 @@ import {
   AttendanceJustificationStatus,
   AttendanceRecord,
   AttendanceStatus,
-} from '../../../src/entities/scheduling/attendance-record'
+} from '../../../../src/entities/scheduling/attendance-record'
 
 describe('Attendance record status transitions and validation', () => {
   const baseArgs = {

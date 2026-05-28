@@ -14,6 +14,7 @@ import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { AttendanceSummary } from '../../../value_object/attendance-summary'
 import type { AuthorizedServiceArgs } from '../../authorization'
 import type { ServiceArgs } from '../../school-headless-app'
+import type { PaginationParams } from '../../shared/pagination'
 import { ReportCardResultStatus } from '../../../entities/assessments/report-card-result'
 import { buildStudentFeeSummary, FeeStatus } from '../../../entities/finances/student-fee'
 import { AttendanceJustificationStatus, AttendanceStatus } from '../../../entities/scheduling/attendance-record'
@@ -22,6 +23,7 @@ import { StudentClassEnrollmentStatus } from '../../../entities/students/student
 import { StudentNoteVisibility } from '../../../entities/students/student-note'
 import { AttendanceSummary as AttendanceSummaryValue } from '../../../value_object/attendance-summary'
 import { denyResourceAccess } from '../../authorization'
+import { paginateSlice } from '../../shared/pagination'
 import { requireSchool } from '../../shared/require-school'
 
 export interface StudentDirectoryRow {
@@ -107,9 +109,11 @@ export class StudentDirectoryService {
   async listStudents({
     schoolId,
     academicYearId,
+    pagination,
   }: {
     schoolId: string
     academicYearId?: string
+    pagination?: PaginationParams
   }): Promise<StudentDirectory> {
     const school = await requireSchool(this.schools, schoolId)
     const activeAcademicYear = await this.resolveAcademicYear({ schoolId, academicYearId })
@@ -123,8 +127,10 @@ export class StudentDirectoryService {
         || left.firstName.localeCompare(right.firstName)
         || left.id.localeCompare(right.id))
 
+    const paginatedStudents = paginateSlice(students, pagination)
+
     const rows = await Promise.all(
-      students.map(async (student) => {
+      paginatedStudents.map(async (student) => {
         const [currentEnrollment, guardianLinks, reportCardResults, fees] = await Promise.all([
           this.enrollments.findActiveByStudent(student.id).then(enrollment =>
             enrollment && classGroupById.has(enrollment.classGroupId) ? enrollment : undefined,

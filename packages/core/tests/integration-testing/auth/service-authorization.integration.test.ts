@@ -23,14 +23,14 @@ import {
   StudentNote,
   StudentNoteVisibility,
   StudentStatus,
-} from '../../src/entities'
+} from '../../../src/entities'
 import {
   AuthorizationErrorCode,
   createGuardianActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
-} from '../../src/services/authorization'
-import { createTestApp } from '../support/in-memory-school-headless-app'
+} from '../../../src/services/authorization'
+import { createTestApp } from '../../support/in-memory-school-headless-app'
 
 async function createAuthorizedFixture() {
   const { app, repositories, forActor } = createTestApp()

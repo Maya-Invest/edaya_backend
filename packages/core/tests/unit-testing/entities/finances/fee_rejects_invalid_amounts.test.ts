@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { Fee, FeeCategory } from '../../../src/entities/finances/fee'
-import { DomainValidationError } from '../../../src/entities/utils'
+import { Fee, FeeCategory } from '../../../../src/entities/finances/fee'
+import { DomainValidationError } from '../../../../src/entities/utils'
 
 describe('Fee amount and installment validations', () => {
   const baseArgs = {

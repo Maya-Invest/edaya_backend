@@ -8,7 +8,9 @@ import type { StudentDisciplinaryAction } from '../../../entities/students/stude
 import type { StudentIncidentInvolvement } from '../../../entities/students/student-incident-involvement'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ServiceArgs } from '../../school-headless-app'
+import type { PaginationParams } from '../../shared/pagination'
 import { denyResourceAccess } from '../../authorization'
+import { paginateSlice } from '../../shared/pagination'
 
 export interface IncidentDisciplinaryActionDetail {
   studentDisciplinaryAction: StudentDisciplinaryAction
@@ -91,9 +93,11 @@ export class IncidentReadService {
   async listStudentIncidents({
     schoolId,
     studentId,
+    pagination,
   }: {
     schoolId: string
     studentId: string
+    pagination?: PaginationParams
   }): Promise<StudentIncidentDirectory> {
     const student = await this.students.findById(studentId)
     if (!student || student.schoolId !== schoolId) {
@@ -119,7 +123,8 @@ export class IncidentReadService {
     rows.sort((left, right) =>
       right.incident.date.getTime() - left.incident.date.getTime()
       || left.incident.id.localeCompare(right.incident.id))
-    return { student, rows }
+    const paginated = paginateSlice(rows, pagination)
+    return { student, rows: paginated }
   }
 
   private async resolveInvolvements(incident: Incident, schoolId: string): Promise<IncidentInvolvementDetail[]> {
