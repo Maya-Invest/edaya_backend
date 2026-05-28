@@ -19,6 +19,7 @@ import { StaffAssignment } from '../../entities/school/staff-assignment'
 import { StaffMember } from '../../entities/school/staff-member'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { requireSchool } from '../shared/require-school'
 
 export class SetupService {
   constructor(args: ServiceArgs) {
@@ -69,7 +70,7 @@ export class SetupService {
     country?: string | null
     city?: string | null
   }): Promise<School> {
-    const existing = await this.requireSchool(schoolId)
+    const existing = await requireSchool(this.repositories.schools, schoolId)
     await this.authorize('setup.manage_lifecycle', schoolId)
     const school = new School({
       id: existing.id,
@@ -102,7 +103,7 @@ export class SetupService {
     createdAt?: Date
   }): Promise<AcademicYear> {
     await this.authorize('setup.manage', schoolId)
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     return this.atomicCreateAcademicYear({ id, schoolId, name, startDate, endDate, isActive, createdAt })
   }
 
@@ -203,7 +204,7 @@ export class SetupService {
     createdAt?: Date
   }): Promise<AcademicPeriod> {
     await this.authorize('setup.manage', schoolId)
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const academicYear = await this.requireResourceInSchool(
       this.repositories.academicYears.findById(academicYearId),
       schoolId,
@@ -242,7 +243,7 @@ export class SetupService {
     createdAt?: Date
   }): Promise<GradeLevel> {
     await this.authorize('setup.manage', schoolId)
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const gradeLevel = new GradeLevel({ id, schoolId, name, order, cycle, createdAt })
     await this.repositories.gradeLevels.save(gradeLevel)
     return gradeLevel
@@ -270,7 +271,7 @@ export class SetupService {
     createdAt?: Date
   }): Promise<ClassGroup> {
     await this.authorize('setup.manage', schoolId)
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     await Promise.all([
       this.requireResourceInSchool(this.repositories.academicYears.findById(academicYearId), schoolId),
       this.requireResourceInSchool(this.repositories.gradeLevels.findById(gradeLevelId), schoolId),
@@ -349,7 +350,7 @@ export class SetupService {
     createdAt?: Date
   }): Promise<StaffMember> {
     await this.authorize('setup.manage', schoolId)
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
 
     const existing = await this.repositories.staffMembers.findById(id)
     const mergedRoles = [...new Set([...(existing?.roles ?? []), ...roles])]
@@ -491,7 +492,7 @@ export class SetupService {
     createdAt?: Date
   }): Promise<Resource> {
     await this.authorize('resources.manage', schoolId)
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const resource = new Resource({ id, schoolId, name, description, kind, capacity, createdAt })
     await this.repositories.resources.save(resource)
     return resource
@@ -625,14 +626,6 @@ export class SetupService {
       action,
       resource: { schoolId, ...resource },
     })
-  }
-
-  private async requireSchool(schoolId: string): Promise<School> {
-    const school = await this.repositories.schools.findById(schoolId)
-    if (!school) {
-      throw new Error(`Unknown school: ${schoolId}`)
-    }
-    return school
   }
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {

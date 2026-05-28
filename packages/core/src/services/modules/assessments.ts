@@ -23,6 +23,7 @@ import { StudentClassEnrollmentStatus } from '../../entities/students/student-cl
 import { normalizeDate, roundTo2 } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { requireSchool } from '../shared/require-school'
 
 interface CreateAssessmentInput {
   id: string
@@ -69,7 +70,7 @@ export class AssessmentsService {
 
   async createGradeScale(input: GradeScaleArgs): Promise<GradeScale> {
     await this.authorize('assessments.manage_configuration', { schoolId: input.schoolId })
-    await this.requireSchool(input.schoolId)
+    await requireSchool(this.repositories.schools, input.schoolId)
     if (input.isDefault) {
       const existingDefault = await this.repositories.gradeScales.findDefaultBySchool(input.schoolId)
       if (existingDefault && existingDefault.id !== input.id) {
@@ -86,7 +87,7 @@ export class AssessmentsService {
       schoolId: input.schoolId,
       academicYearId: input.academicYearId,
     })
-    await this.requireSchool(input.schoolId)
+    await requireSchool(this.repositories.schools, input.schoolId)
     const academicYear = await this.repositories.academicYears.findById(input.academicYearId)
     if (!academicYear || academicYear.schoolId !== input.schoolId) {
       denyResourceAccess()
@@ -570,12 +571,6 @@ export class AssessmentsService {
       candidate = candidate.parentSectionId
         ? await this.repositories.sections.findById(candidate.parentSectionId)
         : undefined
-    }
-  }
-
-  private async requireSchool(schoolId: string): Promise<void> {
-    if (!await this.repositories.schools.findById(schoolId)) {
-      throw new Error(`Unknown school: ${schoolId}`)
     }
   }
 

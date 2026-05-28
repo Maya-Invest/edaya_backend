@@ -9,6 +9,7 @@ import {
 } from '../../entities/students/student-disciplinary-action'
 import { IncidentInvolvementRole, StudentIncidentInvolvement } from '../../entities/students/student-incident-involvement'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { requireSchool } from '../shared/require-school'
 
 export class BehaviorService {
   constructor(args: ServiceArgs) {
@@ -40,7 +41,7 @@ export class BehaviorService {
     description?: string
     createdAt?: Date
   }): Promise<DisciplinaryAction> {
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     await this.authorize('behavior.manage_discipline', { schoolId })
     const action = new DisciplinaryAction({
       id,
@@ -77,7 +78,7 @@ export class BehaviorService {
     sessionId?: string
     createdAt?: Date
   }): Promise<Incident> {
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const context = await this.resolveIncidentContext({ schoolId, classGroupId, sessionId })
     await this.authorize('behavior.report_incident', {
       schoolId,
@@ -258,12 +259,6 @@ export class BehaviorService {
     })
     await this.repositories.incidents.save(resolved)
     return resolved
-  }
-
-  private async requireSchool(schoolId: string): Promise<void> {
-    if (!await this.repositories.schools.findById(schoolId)) {
-      throw new Error(`Unknown school: ${schoolId}`)
-    }
   }
 
   private async requireIncident(incidentId: string): Promise<Incident> {

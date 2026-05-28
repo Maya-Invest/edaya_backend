@@ -15,6 +15,7 @@ import { StudentClassEnrollmentStatus } from '../../entities/students/student-cl
 import { normalizeDate } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { requireSchool } from '../shared/require-school'
 
 function generateUniqueId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
@@ -65,7 +66,7 @@ export class SchedulingService {
     createdAt?: Date
   }): Promise<PeriodDefinition> {
     await this.authorize('scheduling.manage', { schoolId, academicYearId })
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const academicYear = await this.requireAcademicYear(academicYearId)
     if (academicYear.schoolId !== schoolId) {
       denyResourceAccess()
@@ -156,7 +157,7 @@ export class SchedulingService {
     createdAt?: Date
   }): Promise<CalendarEvent> {
     await this.authorize('scheduling.manage', { schoolId, academicYearId })
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const academicYear = await this.requireAcademicYear(academicYearId)
     if (academicYear.schoolId !== schoolId) {
       denyResourceAccess()
@@ -650,12 +651,6 @@ export class SchedulingService {
     return session.kind === SessionKind.Other
       && session.title === 'Daily attendance'
       && normalizeDate(session.startsAt).getTime() === date.getTime()
-  }
-
-  private async requireSchool(schoolId: string): Promise<void> {
-    if (!await this.repositories.schools.findById(schoolId)) {
-      throw new Error(`Unknown school: ${schoolId}`)
-    }
   }
 
   private async requireAcademicYear(academicYearId: string): Promise<AcademicYear> {

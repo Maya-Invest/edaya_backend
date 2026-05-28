@@ -1,5 +1,4 @@
 import type { ClassGroup } from '../../entities/school/class-group'
-import type { School } from '../../entities/school/school'
 import type { GuardianContactMethod } from '../../entities/students/guardian-contact-method'
 import type { StudentNoteVisibility } from '../../entities/students/student-note'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
@@ -19,6 +18,7 @@ import {
 import { StudentHealthProfile } from '../../entities/students/student-health-profile'
 import { StudentNoteVisibility as NoteVisibility, StudentNote } from '../../entities/students/student-note'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { requireSchool } from '../shared/require-school'
 
 export class StudentsService {
   constructor(args: ServiceArgs) {
@@ -49,7 +49,7 @@ export class StudentsService {
     createdAt?: Date
   }): Promise<Student> {
     await this.authorize('students.manage_enrollment', { schoolId })
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const student = new Student({ id, schoolId, firstName, lastName, birthDate, createdAt })
     await this.repositories.students.save(student)
     return student
@@ -302,7 +302,7 @@ export class StudentsService {
     createdAt?: Date
   }): Promise<Guardian> {
     await this.authorize('students.manage_guardians', { schoolId })
-    await this.requireSchool(schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
     const guardian = new Guardian({
       id,
       schoolId,
@@ -705,14 +705,6 @@ export class StudentsService {
     })
     await this.repositories.guardianLinks.save(updated)
     return updated
-  }
-
-  private async requireSchool(schoolId: string): Promise<School> {
-    const school = await this.repositories.schools.findById(schoolId)
-    if (!school) {
-      throw new Error(`Unknown school: ${schoolId}`)
-    }
-    return school
   }
 
   private async requireStudent(studentId: string): Promise<Student> {
