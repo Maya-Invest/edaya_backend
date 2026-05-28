@@ -56,4 +56,19 @@ export class ClassGroup {
     this.homeroomStaffId = requireOptionalNonBlank(homeroomStaffId, 'homeroomStaffId')
     this.createdAt = createdAt ?? new Date()
   }
+
+  copyWith(changes: Partial<ClassGroupArgs>): ClassGroup {
+    return new ClassGroup({
+      id: this.id,
+      schoolId: this.schoolId,
+      academicYearId: this.academicYearId,
+      gradeLevelId: this.gradeLevelId,
+      name: this.name,
+      capacity: this.capacity,
+      attendanceMode: this.attendanceMode,
+      homeroomStaffId: this.homeroomStaffId,
+      createdAt: this.createdAt,
+      ...changes,
+    })
+  }
 }

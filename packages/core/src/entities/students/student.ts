@@ -76,4 +76,23 @@ export class Student {
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`
   }
+
+  copyWith(changes: Partial<StudentArgs>): Student {
+    return new Student({
+      id: this.id,
+      schoolId: this.schoolId,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      gender: this.gender,
+      birthDate: this.birthDate,
+      placeOfBirth: this.placeOfBirth,
+      nationality: this.nationality,
+      matricule: this.matricule,
+      photoUrl: this.photoUrl,
+      status: this.status,
+      enrollmentDate: this.enrollmentDate,
+      createdAt: this.createdAt,
+      ...changes,
+    })
+  }
 }

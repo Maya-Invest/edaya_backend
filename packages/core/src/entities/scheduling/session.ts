@@ -63,4 +63,19 @@ export class Session {
   get durationMinutes(): number {
     return Math.round((this.endsAt.getTime() - this.startsAt.getTime()) / 60000)
   }
+
+  copyWith(changes: Partial<SessionArgs>): Session {
+    return new Session({
+      id: this.id,
+      classGroupId: this.classGroupId,
+      title: this.title,
+      kind: this.kind,
+      startsAt: this.startsAt,
+      endsAt: this.endsAt,
+      classSubjectId: this.classSubjectId,
+      scheduleId: this.scheduleId,
+      createdAt: this.createdAt,
+      ...changes,
+    })
+  }
 }

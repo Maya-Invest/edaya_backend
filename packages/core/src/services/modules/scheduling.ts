@@ -15,6 +15,7 @@ import { StudentClassEnrollmentStatus } from '../../entities/students/student-cl
 import { normalizeDate } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
 function generateUniqueId(): string {
@@ -163,7 +164,7 @@ export class SchedulingService {
       denyResourceAccess()
     }
     if (startDate.getTime() < academicYear.startDate.getTime() || endDate.getTime() > academicYear.endDate.getTime()) {
-      throw new Error(`Calendar event ${id} must fit within academic year ${academicYearId}`)
+      throw new BusinessRuleViolationError('CALENDAR_EVENT_OUT_OF_YEAR', `Calendar event ${id} must fit within academic year ${academicYearId}`)
     }
     if (scopeKind === CalendarEventScopeKind.ClassGroup) {
       const classGroup = await this.requireClassGroup(scopeId ?? '')
@@ -397,16 +398,16 @@ export class SchedulingService {
       denyResourceAccess()
     }
     if (record.status !== AttendanceStatus.Absent) {
-      throw new Error('Only an absent attendance record may receive a justification decision')
+      throw new BusinessRuleViolationError('JUSTIFICATION_ABSENCE_REQUIRED', 'Only an absent attendance record may receive a justification decision')
     }
     if (
       record.justificationStatus === AttendanceJustificationStatus.Excused
       || record.justificationStatus === AttendanceJustificationStatus.Rejected
     ) {
-      throw new Error('Attendance justification has already been reviewed')
+      throw new BusinessRuleViolationError('JUSTIFICATION_ALREADY_REVIEWED', 'Attendance justification has already been reviewed')
     }
     if (reason.trim().length === 0) {
-      throw new Error('reason is required for an attendance justification decision')
+      throw new BusinessRuleViolationError('JUSTIFICATION_REASON_REQUIRED', 'reason is required for an attendance justification decision')
     }
     const decisionTime = reviewedAt ?? new Date()
     const reviewedRecord = new AttendanceRecord({
@@ -584,7 +585,7 @@ export class SchedulingService {
       && (existing.justificationStatus === AttendanceJustificationStatus.Excused
         || existing.justificationStatus === AttendanceJustificationStatus.Rejected)
     ) {
-      throw new Error('Reviewed attendance must not be corrected without a reopen workflow')
+      throw new BusinessRuleViolationError('CORRECT_REVIEWED_ATTENDANCE_BLOCKED', 'Reviewed attendance must not be corrected without a reopen workflow')
     }
     const updatedAt = isCorrection ? (createdAt ?? new Date()) : existing?.updatedAt ?? createdAt
     const record = new AttendanceRecord({
@@ -610,7 +611,7 @@ export class SchedulingService {
 
   private requireDailyAttendanceMode(classGroup: ClassGroup): void {
     if (classGroup.attendanceMode !== AttendanceMode.Daily) {
-      throw new Error(`Class group ${classGroup.id} is not configured for daily attendance`)
+      throw new BusinessRuleViolationError('DAILY_ATTENDANCE_MODE_REQUIRED', `Class group ${classGroup.id} is not configured for daily attendance`)
     }
   }
 
@@ -705,7 +706,7 @@ export class SchedulingService {
       status: StudentClassEnrollmentStatus.Active,
     })
     if (enrollments.length === 0) {
-      throw new Error(`Student ${studentId} does not have an active enrollment in classGroup ${classGroupId}`)
+      throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${studentId} does not have an active enrollment in classGroup ${classGroupId}`)
     }
   }
 

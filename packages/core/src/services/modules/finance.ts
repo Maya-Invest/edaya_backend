@@ -9,6 +9,7 @@ import { Fee } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { buildStudentFeeSummary, FeeStatus, StudentFee } from '../../entities/finances/student-fee'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 
 export class FinanceService {
   constructor(args: ServiceArgs) {
@@ -114,7 +115,7 @@ export class FinanceService {
         studentFeeId,
       })
       if (studentFee.status === FeeStatus.Cancelled) {
-        throw new Error(`Student fee ${studentFeeId} cannot receive payments after cancellation`)
+        throw new BusinessRuleViolationError('CANCELLED_FEE_PAYMENT', `Student fee ${studentFeeId} cannot receive payments after cancellation`)
       }
       const payment = new Payment({
         id,
@@ -160,7 +161,7 @@ export class FinanceService {
         studentFeeId: studentFee.id,
       })
       if (payment.status !== PaymentStatus.Recorded) {
-        throw new Error(`Payment ${paymentId} cannot be reversed from status ${payment.status}`)
+        throw new BusinessRuleViolationError('INVALID_PAYMENT_REVERSAL', `Payment ${paymentId} cannot be reversed from status ${payment.status}`)
       }
       const reversed = new Payment({
         id: payment.id,
@@ -209,7 +210,7 @@ export class FinanceService {
         studentFeeId: studentFee.id,
       })
       if (payment.status !== PaymentStatus.Recorded) {
-        throw new Error(`Payment ${paymentId} cannot be cancelled from status ${payment.status}`)
+        throw new BusinessRuleViolationError('INVALID_PAYMENT_CANCELLATION', `Payment ${paymentId} cannot be cancelled from status ${payment.status}`)
       }
       const cancelled = new Payment({
         id: payment.id,
@@ -260,16 +261,16 @@ export class FinanceService {
       studentFeeId: studentFee.id,
     })
     if (studentFee.status === FeeStatus.Cancelled) {
-      throw new Error(`Student fee ${studentFeeId} cannot be adjusted after cancellation`)
+      throw new BusinessRuleViolationError('CANCELLED_FEE_ADJUSTMENT', `Student fee ${studentFeeId} cannot be adjusted after cancellation`)
     }
     if (studentFee.adjustmentAmount.amount > 0) {
-      throw new Error(`Student fee ${studentFeeId} has already been adjusted`)
+      throw new BusinessRuleViolationError('ALREADY_ADJUSTED_FEE', `Student fee ${studentFeeId} has already been adjusted`)
     }
     if (adjustmentAmount <= 0) {
-      throw new Error('adjustmentAmount must be strictly positive')
+      throw new BusinessRuleViolationError('INVALID_ADJUSTMENT_AMOUNT', 'adjustmentAmount must be strictly positive')
     }
     if (adjustmentAmount > studentFee.expectedAmount.amount - studentFee.paidAmount.amount) {
-      throw new Error('adjustmentAmount must not reduce a fee below its paid amount')
+      throw new BusinessRuleViolationError('ADJUSTMENT_EXCEEDS_OUTSTANDING', 'adjustmentAmount must not reduce a fee below its paid amount')
     }
     const adjusted = studentFee.copyWith({
       adjustmentAmount,
@@ -307,10 +308,10 @@ export class FinanceService {
       studentFeeId: studentFee.id,
     })
     if (studentFee.status === FeeStatus.Cancelled) {
-      throw new Error(`Student fee ${studentFeeId} has already been cancelled`)
+      throw new BusinessRuleViolationError('ALREADY_CANCELLED_FEE', `Student fee ${studentFeeId} has already been cancelled`)
     }
     if (studentFee.paidAmount.amount > 0) {
-      throw new Error(`Student fee ${studentFeeId} cannot be cancelled while recorded payments remain`)
+      throw new BusinessRuleViolationError('CANCEL_PAID_FEE', `Student fee ${studentFeeId} cannot be cancelled while recorded payments remain`)
     }
     const cancelled = studentFee.copyWith({
       status: FeeStatus.Cancelled,

@@ -79,7 +79,12 @@ export interface SchoolRepositories {
   readonly subjects: BaseRepositoryInterface<Subject>
   readonly subjectMatters: BaseRepositoryInterface<SubjectMatter>
   readonly classGroups: BaseRepositoryInterface<ClassGroup>
-  readonly classSubjects: BaseRepositoryInterface<ClassSubject>
+  readonly classSubjects: BaseRepositoryInterface<ClassSubject> & {
+    findByClassAndSubject: (
+      classGroupId: string,
+      subjectId: string,
+    ) => Promise<ClassSubject | undefined>
+  }
   readonly classSubjectMatters: BaseRepositoryInterface<ClassSubjectMatter> & {
     findByClassSubjectAndSubjectMatter: (
       classSubjectId: string,

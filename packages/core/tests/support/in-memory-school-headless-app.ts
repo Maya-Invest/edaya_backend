@@ -237,7 +237,11 @@ export function createTestApp(actor?: ActorMetadata) {
     subjects,
     subjectMatters,
     classGroups,
-    classSubjects,
+    classSubjects: {
+      ...classSubjects,
+      findByClassAndSubject: async (classGroupId, subjectId) =>
+        (await classSubjects.list({ classGroupId, subjectId }))[0],
+    },
     classSubjectMatters: {
       ...classSubjectMatters,
       save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),

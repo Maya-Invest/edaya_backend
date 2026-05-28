@@ -107,4 +107,25 @@ export class AttendanceRecord {
       throw new Error('reviewed justifications must identify the reviewing staff member and time')
     }
   }
+
+  copyWith(changes: Partial<AttendanceRecordArgs>): AttendanceRecord {
+    return new AttendanceRecord({
+      id: this.id,
+      studentId: this.studentId,
+      sessionId: this.sessionId,
+      date: this.date,
+      status: this.status,
+      justificationStatus: this.justificationStatus,
+      reason: this.reason,
+      notes: this.notes,
+      justifiedAt: this.justifiedAt,
+      justifiedByStaffId: this.justifiedByStaffId,
+      correctedAt: this.correctedAt,
+      correctedByStaffId: this.correctedByStaffId,
+      createdBy: this.createdBy,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      ...changes,
+    })
+  }
 }

@@ -10,6 +10,7 @@ import { Subject } from '../../entities/academics/subject'
 import { SubjectMatter } from '../../entities/academics/subject-matter'
 import { roundTo2 } from '../../entities/utils'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 
 export class AcademicsService {
   constructor(args: ServiceArgs) {
@@ -37,7 +38,7 @@ export class AcademicsService {
   }): Promise<Subject> {
     await this.authorize('academics.manage_curriculum', { schoolId })
     if (!await this.repositories.schools.findById(schoolId)) {
-      throw new Error(`Unknown school: ${schoolId}`)
+      throw new BusinessRuleViolationError('UNKNOWN_SCHOOL', `Unknown school: ${schoolId}`)
     }
     const subject = new Subject({ id, schoolId, name, createdAt })
     await this.repositories.subjects.save(subject)
@@ -83,8 +84,7 @@ export class AcademicsService {
       schoolId: classGroup.schoolId,
       classGroupId,
     })
-    const existing = (await this.repositories.classSubjects.list({ classGroupId }))
-      .find(classSubject => classSubject.subjectId === subjectId)
+    const existing = await this.repositories.classSubjects.findByClassAndSubject(classGroupId, subjectId)
     if (existing) {
       return existing
     }
@@ -169,10 +169,10 @@ export class AcademicsService {
       })
       const existing = await this.repositories.classSubjectProgress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
       if (existing) {
-        throw new Error(`Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
+        throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
       }
       if (completedPercentage < matter.completedPercentage) {
-        throw new Error('completedPercentage must not decrease cumulative class subject matter progress')
+        throw new BusinessRuleViolationError('PROGRESS_PERCENTAGE_DECREASED', 'completedPercentage must not decrease cumulative class subject matter progress')
       }
 
       const snapshot = new ClassSubjectProgress({
