@@ -178,7 +178,7 @@ describe('Shared-repository multi-actor concurrency safeguards', () => {
 
     // Verify results are accurate and not mixed or leaked
     expect(studentDetailResult.student.id).toBe('student')
-    expect(studentDetailResult.visibility.includesFinance).toBe(true) // Guardian/Student visibility includes finance
+    expect(studentDetailResult.visibility.includesFinance).toBe(false) // Student visibility excludes finance
     expect(feeSummaryResult.totalExpected.amount).toBe(90000)
 
     // Verify repository persisted states

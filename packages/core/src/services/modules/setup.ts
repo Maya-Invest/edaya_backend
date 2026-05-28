@@ -19,6 +19,7 @@ import { StaffAssignment } from '../../entities/school/staff-assignment'
 import { StaffMember } from '../../entities/school/staff-member'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
 export class SetupService {
@@ -165,7 +166,7 @@ export class SetupService {
       period.schoolId,
     )
     if (period.startDate.getTime() < academicYear.startDate.getTime() || period.endDate.getTime() > academicYear.endDate.getTime()) {
-      throw new Error(`Academic period ${period.id} must fit within academic year ${academicYear.id}`)
+      throw new BusinessRuleViolationError('ACADEMIC_PERIOD_OUTSIDE_YEAR', `Academic period ${period.id} must fit within academic year ${academicYear.id}`)
     }
     const published = new AcademicPeriod({
       id: period.id,
@@ -210,7 +211,7 @@ export class SetupService {
       schoolId,
     )
     if (startDate.getTime() < academicYear.startDate.getTime() || endDate.getTime() > academicYear.endDate.getTime()) {
-      throw new Error(`Academic period ${id} must fit within academic year ${academicYearId}`)
+      throw new BusinessRuleViolationError('ACADEMIC_PERIOD_OUTSIDE_YEAR', `Academic period ${id} must fit within academic year ${academicYearId}`)
     }
     const period = new AcademicPeriod({
       id,
@@ -381,7 +382,7 @@ export class SetupService {
     }
     await this.authorize('setup.manage_lifecycle', staffMember.schoolId)
     if (!isActive && this.actor.kind === 'staff' && staffMember.id === this.actor.staffMemberId) {
-      throw new Error('Staff members cannot deactivate their own account')
+      throw new BusinessRuleViolationError('SELF_DEACTIVATION_BLOCKED', 'Staff members cannot deactivate their own account')
     }
     const updated = new StaffMember({
       id: staffMember.id,
@@ -642,7 +643,7 @@ export class SetupService {
       status: StudentClassEnrollmentStatus.Active,
     })
     if (capacity < activeEnrollmentCount) {
-      throw new Error(`Class group ${classGroupId} capacity cannot be below current active enrollment count`)
+      throw new BusinessRuleViolationError('CLASS_GROUP_CAPACITY_BELOW_ENROLLMENTS', `Class group ${classGroupId} capacity cannot be below current active enrollment count`)
     }
   }
 
@@ -721,11 +722,11 @@ export class SetupService {
     })
     const duplicate = classAssignments.find(assignment => assignment.classGroupId === classGroupId)
     if (duplicate) {
-      throw new Error(`Resource ${resourceId} is already assigned to class ${classGroupId}`)
+      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${resourceId} is already assigned to class ${classGroupId}`)
     }
     const conflicting = classAssignments.find(assignment => assignment.classGroupId !== classGroupId)
     if (conflicting) {
-      throw new Error(`Resource ${resourceId} is already assigned to class ${conflicting.classGroupId}`)
+      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${resourceId} is already assigned to class ${conflicting.classGroupId}`)
     }
   }
 
@@ -737,10 +738,10 @@ export class SetupService {
     const assignments = await this.repositories.resourceAssignments.list({ resourceId })
     for (const assignment of assignments) {
       if (assignment.sessionId === sessionId) {
-        throw new Error(`Resource ${resourceId} is already assigned to session ${sessionId}`)
+        throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_SESSION', `Resource ${resourceId} is already assigned to session ${sessionId}`)
       }
       if (assignment.classGroupId && assignment.classGroupId !== session.classGroupId) {
-        throw new Error(`Resource ${resourceId} is already assigned to class ${assignment.classGroupId}`)
+        throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${resourceId} is already assigned to class ${assignment.classGroupId}`)
       }
       if (!assignment.sessionId) {
         continue
@@ -750,7 +751,7 @@ export class SetupService {
         denyResourceAccess()
       }
       if (this.sessionsOverlap(session, existingSession)) {
-        throw new Error(`Resource ${resourceId} is already assigned to overlapping session ${existingSession.id}`)
+        throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_OVERLAPPING', `Resource ${resourceId} is already assigned to overlapping session ${existingSession.id}`)
       }
     }
   }
@@ -881,7 +882,7 @@ export class SetupService {
         return this.resolveStudentOwner(studentFee.studentId)
       }
       case OwnerKind.Other:
-        throw new Error('Attachment owner kind other is not supported by the selected public contract')
+        throw new BusinessRuleViolationError('UNSUPPORTED_ATTACHMENT_OWNER', 'Attachment owner kind other is not supported by the selected public contract')
     }
   }
 

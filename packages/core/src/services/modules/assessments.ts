@@ -23,6 +23,7 @@ import { StudentClassEnrollmentStatus } from '../../entities/students/student-cl
 import { normalizeDate, roundTo2 } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
 interface CreateAssessmentInput {
@@ -74,7 +75,7 @@ export class AssessmentsService {
     if (input.isDefault) {
       const existingDefault = await this.repositories.gradeScales.findDefaultBySchool(input.schoolId)
       if (existingDefault && existingDefault.id !== input.id) {
-        throw new Error(`School ${input.schoolId} already has a default grade scale`)
+        throw new BusinessRuleViolationError('DEFAULT_GRADE_SCALE_ALREADY_EXISTS', `School ${input.schoolId} already has a default grade scale`)
       }
     }
     const gradeScale = new GradeScale(input)
@@ -102,7 +103,7 @@ export class AssessmentsService {
         input.academicYearId,
       )
       if (existingDefault && existingDefault.id !== input.id) {
-        throw new Error(`Grade level ${input.gradeLevelId} already has a default report card definition`)
+        throw new BusinessRuleViolationError('DEFAULT_REPORT_CARD_DEFINITION_ALREADY_EXISTS', `Grade level ${input.gradeLevelId} already has a default report card definition`)
       }
     }
     const definition = new ReportCardDefinition(input)
@@ -141,7 +142,7 @@ export class AssessmentsService {
       classSubjectId: existing.classSubjectId,
     })
     if ((await this.repositories.assessmentResults.list({ assessmentId })).length > 0) {
-      throw new Error(`Assessment ${assessmentId} cannot be changed after results have been recorded`)
+      throw new BusinessRuleViolationError('ASSESSMENT_RESULTS_ALREADY_RECORDED', `Assessment ${assessmentId} cannot be changed after results have been recorded`)
     }
     const completed = new Assessment({
       id: existing.id,
@@ -186,7 +187,7 @@ export class AssessmentsService {
     await this.requireStudentInSchool(studentId, classGroup.schoolId)
     const period = await this.requirePeriod(assessment.periodId)
     if (period.academicYearId !== classGroup.academicYearId) {
-      throw new Error(`Assessment ${assessmentId} does not belong to academic period ${assessment.periodId}`)
+      throw new BusinessRuleViolationError('ASSESSMENT_PERIOD_MISMATCH', `Assessment ${assessmentId} does not belong to academic period ${assessment.periodId}`)
     }
     await this.requireStudentEligibilityForAssessment({ studentId, classGroupId: classGroup.id })
     await this.requireReportCardNotPublished(studentId, assessment.periodId)
@@ -204,7 +205,7 @@ export class AssessmentsService {
       createdAt: existing?.createdAt ?? createdAt,
     })
     if (assessmentResult.score !== undefined && assessmentResult.score > assessment.maxScore) {
-      throw new Error('score must not exceed assessment maxScore')
+      throw new BusinessRuleViolationError('SCORE_EXCEEDS_MAX_SCORE', 'score must not exceed assessment maxScore')
     }
     await this.repositories.assessmentResults.save(assessmentResult)
     return assessmentResult
@@ -305,7 +306,7 @@ export class AssessmentsService {
       academicYearId: definition.academicYearId,
     })
     if (parentSectionId === id) {
-      throw new Error('report card sections must not parent themselves')
+      throw new BusinessRuleViolationError('REPORT_CARD_SECTION_SELF_PARENT', 'report card sections must not parent themselves')
     }
     if (parentSectionId) {
       const parent = await this.repositories.sections.findById(parentSectionId)
@@ -313,7 +314,7 @@ export class AssessmentsService {
         denyResourceAccess()
       }
       if (parent.kind !== SectionKind.Group) {
-        throw new Error('subject report card sections must not contain child sections')
+        throw new BusinessRuleViolationError('SUBJECT_SECTION_HAS_CHILDREN', 'subject report card sections must not contain child sections')
       }
       await this.requireAcyclicSectionParent(id, parent)
     }
@@ -442,7 +443,7 @@ export class AssessmentsService {
       visited = new Set<string>(),
     ): Promise<SectionResult | null> => {
       if (visited.has(section.id)) {
-        throw new Error('report card definition sections must not contain cycles')
+        throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
       }
       const nextVisited = new Set(visited).add(section.id)
       const childSections = allSections.filter(item => item.parentSectionId === section.id)
@@ -566,7 +567,7 @@ export class AssessmentsService {
     let candidate: ReportCardDefinitionSection | undefined = parent
     while (candidate) {
       if (candidate.id === sectionId) {
-        throw new Error('report card definition sections must not contain cycles')
+        throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
       }
       candidate = candidate.parentSectionId
         ? await this.repositories.sections.findById(candidate.parentSectionId)
@@ -585,7 +586,7 @@ export class AssessmentsService {
   private async requirePeriod(periodId: string): Promise<AcademicPeriod> {
     const period = await this.repositories.academicPeriods.findById(periodId)
     if (!period) {
-      throw new Error(`Unknown period: ${periodId}`)
+      throw new BusinessRuleViolationError('UNKNOWN_PERIOD', `Unknown period: ${periodId}`)
     }
     return period
   }
@@ -639,7 +640,7 @@ export class AssessmentsService {
         })
       : []
     if (!targetClassGroupId || enrollments.length === 0) {
-      throw new Error(`Student ${studentId} does not have an active enrollment in classGroup ${targetClassGroupId}`)
+      throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${studentId} does not have an active enrollment in classGroup ${targetClassGroupId}`)
     }
   }
 
@@ -657,13 +658,13 @@ export class AssessmentsService {
         return enrollment
       }
     }
-    throw new Error(`Student ${studentId} is not enrolled in academic year ${academicYearId}`)
+    throw new BusinessRuleViolationError('STUDENT_NOT_ENROLLED_IN_YEAR', `Student ${studentId} is not enrolled in academic year ${academicYearId}`)
   }
 
   private async requireReportCardDefinition(reportCardDefinitionId: string) {
     const definition = await this.repositories.definitions.findById(reportCardDefinitionId)
     if (!definition) {
-      throw new Error(`Unknown report card definition: ${reportCardDefinitionId}`)
+      throw new BusinessRuleViolationError('UNKNOWN_REPORT_CARD_DEFINITION', `Unknown report card definition: ${reportCardDefinitionId}`)
     }
     return definition
   }
@@ -677,7 +678,7 @@ export class AssessmentsService {
   }) {
     const definition = await this.repositories.definitions.findDefaultByGradeLevel(gradeLevelId, academicYearId)
     if (!definition) {
-      throw new Error(`No default report card definition for grade level ${gradeLevelId}`)
+      throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
     }
     return definition
   }
@@ -729,7 +730,7 @@ export class AssessmentsService {
   private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
     const reportCard = await this.repositories.results.findByStudentAndPeriod(studentId, periodId)
     if (reportCard?.status === ReportCardResultStatus.Published) {
-      throw new Error(`Published report card for student ${studentId} and period ${periodId} is immutable`)
+      throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
     }
   }
 

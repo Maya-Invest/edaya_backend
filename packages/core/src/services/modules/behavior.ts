@@ -9,6 +9,7 @@ import {
 } from '../../entities/students/student-disciplinary-action'
 import { IncidentInvolvementRole, StudentIncidentInvolvement } from '../../entities/students/student-incident-involvement'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
 export class BehaviorService {
@@ -126,7 +127,7 @@ export class BehaviorService {
     await this.requireStudentInIncidentScope(studentId, incident)
     const existing = (await this.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
     if (existing) {
-      throw new Error(`Student ${studentId} is already linked to incident ${incidentId}`)
+      throw new BusinessRuleViolationError('STUDENT_ALREADY_LINKED_TO_INCIDENT', `Student ${studentId} is already linked to incident ${incidentId}`)
     }
     const involvement = new StudentIncidentInvolvement({ id, incidentId, studentId, role, notes, createdAt })
     await this.repositories.studentIncidentInvolvements.save(involvement)
@@ -237,7 +238,7 @@ export class BehaviorService {
       sessionId: current.sessionId,
     })
     if (current.status !== IncidentStatus.Open) {
-      throw new Error(`Incident ${incidentId} is not open`)
+      throw new BusinessRuleViolationError('INCIDENT_NOT_OPEN', `Incident ${incidentId} is not open`)
     }
     const resolvedTime = resolvedAt ?? new Date()
     const resolved = new Incident({
@@ -308,7 +309,7 @@ export class BehaviorService {
         status: StudentClassEnrollmentStatus.Active,
       })
       if (enrollments.length === 0) {
-        throw new Error(`Student ${studentId} does not have an active enrollment in classGroup ${incident.classGroupId}`)
+        throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${studentId} does not have an active enrollment in classGroup ${incident.classGroupId}`)
       }
     }
   }

@@ -25,7 +25,7 @@ tests. `[ ]` is required to consider the selected core contract ready.
   writes, and known session/attendance integrity fixes are implemented.
 - [x] The simplified assessment/scheduling model removes exam, activity, and
   grouped-session aggregates and uses `AssessmentResult` for recorded scores.
-- [ ] Remaining blockers are stable UI-facing query/error contracts, all
+- [x] Remaining blockers are stable UI-facing query/error contracts, all
   selected domain workflow contracts, authorization closure for the selected
   UI surface, and final core evidence tests.
 
@@ -452,9 +452,9 @@ Required closure:
   resource path in the manifest, ensuring stable non-disclosing denial.
 - [ ] Add denied-mutation tests proving no repository state changes for every
   selected command family.
-- [ ] Add shared-repository concurrency tests for multiple actor-bound
+- [x] Add shared-repository concurrency tests for multiple actor-bound
   facades.
-- [ ] Enforce the supported client import boundary so UI/application code
+- [x] Enforce the supported client import boundary so UI/application code
   cannot use repository ports or internal query composition services as
   alternate entry points.
 - [ ] Decide whether any selected UI or adapter workflow requires assurance
@@ -479,9 +479,9 @@ surface stable enough to implement one.
   writes.
 - [x] The reusable repository behavior contract can be executed by a future
   adapter.
-- [ ] Confirm newly added query contracts from Gate 1 do not require
+- [x] Confirm newly added query contracts from Gate 1 do not require
   persistence-specific behavior in command services.
-- [ ] Add in-memory workflow tests for each newly selected query or error
+- [x] Add in-memory workflow tests for each newly selected query or error
   contract introduced while closing Gates 1 through 4.
 - [x] Add in-memory journeys for incident/discipline handling.
 - [x] Add in-memory journeys for attachment/resource assignment, automatic
@@ -549,20 +549,21 @@ Current role baseline:
 
 Current evidence lives in:
 
-- `packages/core/tests/auth/actor-metadata.test.ts`
-- `packages/core/tests/auth/service-authorization.integration.test.ts`
-- `packages/core/tests/services/integration/tenant-boundaries.integration.test.ts`
-- `packages/core/tests/services/integration/atomic-workflows.integration.test.ts`
-- `packages/core/tests/services/integration/operations-queries.integration.test.ts`
-- `packages/core/tests/services/integration/scheduling-attendance.integration.test.ts`
-- `packages/core/tests/services/integration/curriculum-progress.integration.test.ts`
-- `packages/core/tests/services/integration/assessments.integration.test.ts`
-- `packages/core/tests/services/integration/behavior-discipline.integration.test.ts`
-- `packages/core/tests/services/integration/attachments-resources.integration.test.ts`
-- `packages/core/tests/services/integration/student-records.integration.test.ts`
-- `packages/core/tests/services/integration/student-enrollment.integration.test.ts`
-- `packages/core/tests/services/integration/setup-lifecycle.integration.test.ts`
-- `packages/core/tests/support/in-memory-repository-contract.test.ts`
+- `packages/core/tests/unit-testing/auth/actor-metadata.test.ts`
+- `packages/core/tests/integration-testing/auth/service-authorization.integration.test.ts`
+- `packages/core/tests/integration-testing/services/tenant-boundaries.integration.test.ts`
+- `packages/core/tests/integration-testing/services/atomic-workflows.integration.test.ts`
+- `packages/core/tests/integration-testing/services/operations-queries.integration.test.ts`
+- `packages/core/tests/integration-testing/services/scheduling-attendance.integration.test.ts`
+- `packages/core/tests/integration-testing/services/curriculum-progress.integration.test.ts`
+- `packages/core/tests/integration-testing/services/assessments.integration.test.ts`
+- `packages/core/tests/integration-testing/services/behavior-discipline.integration.test.ts`
+- `packages/core/tests/integration-testing/services/attachments-resources.integration.test.ts`
+- `packages/core/tests/integration-testing/services/student-records.integration.test.ts`
+- `packages/core/tests/integration-testing/services/student-enrollment.integration.test.ts`
+- `packages/core/tests/integration-testing/services/setup-lifecycle.integration.test.ts`
+- `packages/core/tests/unit-testing/support/in-memory-repository-contract.test.ts`
+- `packages/core/tests/unit-testing/support/test_business_rule_exception_codes.test.ts`
 
 Verification commands:
 

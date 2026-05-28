@@ -18,6 +18,7 @@ import {
 import { StudentHealthProfile } from '../../entities/students/student-health-profile'
 import { StudentNoteVisibility as NoteVisibility, StudentNote } from '../../entities/students/student-note'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
 export class StudentsService {
@@ -69,7 +70,7 @@ export class StudentsService {
     const student = await this.requireStudent(studentId)
     const classGroup = await this.requireClassGroup(classGroupId)
     if (student.status !== StudentStatus.Active) {
-      throw new Error(`Student ${studentId} is not active and cannot be enrolled`)
+      throw new BusinessRuleViolationError('STUDENT_NOT_ACTIVE', `Student ${studentId} is not active and cannot be enrolled`)
     }
     if (student.schoolId !== classGroup.schoolId) {
       denyResourceAccess()
@@ -85,7 +86,7 @@ export class StudentsService {
       enrollment => enrollment.status === StudentClassEnrollmentStatus.Active,
     )
     if (activeEnrollment && activeEnrollment.classGroupId !== classGroupId) {
-      throw new Error(`Student ${studentId} already has an active class enrollment`)
+      throw new BusinessRuleViolationError('STUDENT_ALREADY_ENROLLED', `Student ${studentId} already has an active class enrollment`)
     }
     if (activeEnrollment) {
       return activeEnrollment
@@ -176,7 +177,7 @@ export class StudentsService {
         this.repositories.gradeLevels.findById(nextClassGroup.gradeLevelId),
       ])
       if (!sourceGradeLevel || !nextGradeLevel || nextGradeLevel.order <= sourceGradeLevel.order) {
-        throw new Error('Promotion target must belong to a higher grade level')
+        throw new BusinessRuleViolationError('INVALID_PROMOTION_TARGET', 'Promotion target must belong to a higher grade level')
       }
       const completed = enrollment.close({
         endedAt: effectiveAt,
@@ -381,7 +382,7 @@ export class StudentsService {
       studentId: student.id,
     })
     if (student.status === StudentStatus.Graduated && status !== StudentStatus.Graduated) {
-      throw new Error(`Student ${studentId} cannot leave graduated status through profile update`)
+      throw new BusinessRuleViolationError('GRADUATED_STUDENT_STATUS_RESTRICTED', `Student ${studentId} cannot leave graduated status through profile update`)
     }
     const updated = new Student({
       id: student.id,
@@ -754,7 +755,7 @@ export class StudentsService {
   private async requireCurrentActiveEnrollment(enrollment: StudentClassEnrollment): Promise<void> {
     const activeEnrollment = await this.repositories.enrollments.findActiveByStudent(enrollment.studentId)
     if (enrollment.status !== StudentClassEnrollmentStatus.Active || activeEnrollment?.id !== enrollment.id) {
-      throw new Error(`Enrollment ${enrollment.id} is not the student's active enrollment`)
+      throw new BusinessRuleViolationError('ENROLLMENT_NOT_ACTIVE', `Enrollment ${enrollment.id} is not the student's active enrollment`)
     }
   }
 
@@ -765,7 +766,7 @@ export class StudentsService {
     const sourceClassGroup = await this.requireClassGroup(enrollment.classGroupId)
     const nextClassGroup = await this.requireClassGroup(nextClassGroupId)
     if (nextClassGroup.id === sourceClassGroup.id) {
-      throw new Error('A successor enrollment must target a different class group')
+      throw new BusinessRuleViolationError('SUCCESSOR_ENROLLMENT_SAME_CLASS_GROUP', 'A successor enrollment must target a different class group')
     }
     if (nextClassGroup.schoolId !== sourceClassGroup.schoolId) {
       denyResourceAccess()
@@ -789,7 +790,7 @@ export class StudentsService {
       this.repositories.enrollments.list({ studentId: previousEnrollment.studentId }),
     ])
     if (existingEnrollment) {
-      throw new Error(`Enrollment id ${id} already exists`)
+      throw new BusinessRuleViolationError('ENROLLMENT_ID_ALREADY_EXISTS', `Enrollment id ${id} already exists`)
     }
     await this.requireAvailableCapacity(classGroup)
     const nextEnrollmentIndex = Math.max(0, ...enrollments.map(enrollment => enrollment.enrollmentIndex)) + 1
@@ -813,7 +814,7 @@ export class StudentsService {
       status: StudentClassEnrollmentStatus.Active,
     })
     if (activeEnrollments.length >= classGroup.capacity) {
-      throw new Error(`Class group ${classGroup.id} has reached capacity`)
+      throw new BusinessRuleViolationError('CLASS_GROUP_CAPACITY_EXCEEDED', `Class group ${classGroup.id} has reached capacity`)
     }
   }
 

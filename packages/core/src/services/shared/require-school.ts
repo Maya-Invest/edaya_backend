@@ -1,5 +1,6 @@
 import type { School } from '../../entities/school/school'
 import type { SchoolRepositories } from '../../ports/school-repositories'
+import { BusinessRuleViolationError } from './business-rule-error'
 
 /**
  * Fetches a school by ID and throws a descriptive error if it doesn't exist.
@@ -11,7 +12,7 @@ export async function requireSchool(
 ): Promise<School> {
   const school = await schools.findById(schoolId)
   if (!school) {
-    throw new Error(`Unknown school: ${schoolId}`)
+    throw new BusinessRuleViolationError('UNKNOWN_SCHOOL', `Unknown school: ${schoolId}`)
   }
   return school
 }

@@ -13,6 +13,7 @@ import { AnnouncementTarget, AnnouncementTargetKind as TargetKind } from '../../
 import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 
 export class CommunicationsService {
   constructor(args: ServiceArgs) {
@@ -112,7 +113,7 @@ export class CommunicationsService {
     const existing = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: existing.schoolId, announcementId })
     if ((await this.targets.list({ announcementId })).length === 0) {
-      throw new Error(`Announcement ${announcementId} must define at least one target before publishing`)
+      throw new BusinessRuleViolationError('PUBLISH_WITHOUT_TARGETS', `Announcement ${announcementId} must define at least one target before publishing`)
     }
     const announcement = new Announcement({
       id: existing.id,
@@ -162,7 +163,7 @@ export class CommunicationsService {
     await this.authorize({ schoolId: announcement.schoolId, announcementId })
     await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
     if (!announcement.isPublished) {
-      throw new Error(`Announcement ${announcementId} must be published before recording delivery`)
+      throw new BusinessRuleViolationError('RECORD_DELIVERY_UNPUBLISHED', `Announcement ${announcementId} must be published before recording delivery`)
     }
     await this.requireRecipientMatchesTarget(announcementId, recipientKind, recipientId)
     const delivery = new MessageDelivery({
@@ -197,7 +198,7 @@ export class CommunicationsService {
     return this.atomicExecution.execute(async () => {
       const current = await this.requireAnnouncement(announcementId)
       if (!current.isPublished) {
-        throw new Error(`Announcement ${announcementId} must be published before materializing deliveries`)
+        throw new BusinessRuleViolationError('MATERIALIZE_DELIVERIES_UNPUBLISHED', `Announcement ${announcementId} must be published before materializing deliveries`)
       }
       const recipients = await this.resolveRecipients(current)
       const deliveries: MessageDelivery[] = []
@@ -295,7 +296,7 @@ export class CommunicationsService {
         return
       }
     }
-    throw new Error(`Recipient ${recipientId} is not eligible for announcement ${announcementId}`)
+    throw new BusinessRuleViolationError('RECIPIENT_NOT_ELIGIBLE', `Recipient ${recipientId} is not eligible for announcement ${announcementId}`)
   }
 
   private async targetIncludesRecipient(

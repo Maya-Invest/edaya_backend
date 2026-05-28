@@ -509,11 +509,31 @@ export class StudentDetailService {
         includesEnrollmentHistory: false,
       }
     }
+    if (this.actor.kind === 'guardian') {
+      return {
+        includesFinance: true,
+        includesGuardianPreferences: true,
+        includesHealthProfile: false,
+        includesNotes: true,
+        includesPublishedReportCards: true,
+        includesEnrollmentHistory: true,
+      }
+    }
+    if (this.actor.kind === 'student') {
+      return {
+        includesFinance: false,
+        includesGuardianPreferences: false,
+        includesHealthProfile: false,
+        includesNotes: false,
+        includesPublishedReportCards: true,
+        includesEnrollmentHistory: false,
+      }
+    }
     return {
-      includesFinance: true,
-      includesGuardianPreferences: true,
+      includesFinance: false,
+      includesGuardianPreferences: false,
       includesHealthProfile: false,
-      includesNotes: true,
+      includesNotes: false,
       includesPublishedReportCards: true,
       includesEnrollmentHistory: false,
     }

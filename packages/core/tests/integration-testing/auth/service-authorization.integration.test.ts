@@ -408,8 +408,8 @@ describe('actor-bound service authorization', () => {
     expect((await student.finance.buildFeeSummary('student')).itemCount).toBe(1)
     const studentDetail = await student.queries.getStudentDetail({ schoolId: 'school', studentId: 'student' })
     expect(studentDetail.healthProfile).toBeUndefined()
-    expect(studentDetail.notes.map(note => note.id)).toEqual(['guardian-note'])
-    expect(studentDetail.financeSummary?.itemCount).toBe(1)
+    expect(studentDetail.notes.map(note => note.id)).toEqual([])
+    expect(studentDetail.financeSummary).toBeUndefined()
     expect((await student.queries.getFinanceLedger({ schoolId: 'school', studentId: 'student' })).items).toHaveLength(1)
     await expect(student.queries.getStudentEnrollmentHistory({ schoolId: 'school', studentId: 'student' }))
       .rejects
