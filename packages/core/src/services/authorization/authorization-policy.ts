@@ -94,6 +94,7 @@ export interface RepositoryAuthorizationPolicyArgs {
 }
 
 const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
+
 const coordinatorActions = new Set<AuthorizationAction>([
   'academics.manage_curriculum',
   'setup.manage_lifecycle',
@@ -132,6 +133,7 @@ const coordinatorActions = new Set<AuthorizationAction>([
   'queries.read_timetable',
   'queries.read_attendance',
 ])
+
 const teacherAssignmentActions = new Set<AuthorizationAction>([
   'academics.record_progress',
   'academics.read_progress',
@@ -150,6 +152,7 @@ const teacherAssignmentActions = new Set<AuthorizationAction>([
   'queries.read_timetable',
   'queries.read_attendance',
 ])
+
 const accountantActions = new Set<AuthorizationAction>([
   'finance.manage',
   'finance.read',

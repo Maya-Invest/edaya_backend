@@ -5,6 +5,7 @@ import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ServiceArgs } from '../../school-headless-app'
 import { ReportCardResultStatus } from '../../../entities/assessments/report-card-result'
 import { FeeStatus } from '../../../entities/finances/student-fee'
+import { findActiveAcademicYear } from '../../shared/academic-year'
 import { requireSchool } from '../../shared/require-school'
 
 export interface SchoolOverview {
@@ -38,7 +39,7 @@ export class SchoolOverviewService {
 
   async getSchoolOverview({ schoolId }: { schoolId: string }): Promise<SchoolOverview> {
     const school = await requireSchool(this.schools, schoolId)
-    const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
+    const activeAcademicYear = await findActiveAcademicYear(this.academicYears, schoolId)
     const [classGroups, students, announcements] = await Promise.all([
       activeAcademicYear ? this.classGroups.list({ academicYearId: activeAcademicYear.id }) : [],
       this.students.list({ schoolId }),
@@ -75,10 +76,5 @@ export class SchoolOverviewService {
         })
         .slice(0, 4),
     }
-  }
-
-  private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {
-    const academicYears = await this.academicYears.list({ schoolId })
-    return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
   }
 }

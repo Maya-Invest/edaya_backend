@@ -12,26 +12,26 @@ export * from './assessments/report-card-definition'
 export * from './assessments/report-card-definition-section'
 export * from './assessments/report-card-result'
 export * from './assessments/report-card-result-section'
+
 // finances
 export * from './finances/fee'
-
 export * from './finances/payment'
 export * from './finances/student-fee'
+
 // messaging
 export * from './messaging/announcement'
-
 export * from './messaging/announcement-target'
 export * from './messaging/message-delivery'
+
 // scheduling
 export * from './scheduling/attendance-record'
-
 export * from './scheduling/calendar-event'
 export * from './scheduling/period-definition'
 export * from './scheduling/schedule'
 export * from './scheduling/session'
+
 // school
 export * from './school/academic-period'
-
 export * from './school/academic-year'
 export * from './school/attachment'
 export * from './school/class-group'

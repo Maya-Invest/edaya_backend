@@ -9,6 +9,7 @@ import type { StaffMember } from '../../../entities/school/staff-member'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ServiceArgs } from '../../school-headless-app'
 import { StaffRole } from '../../../entities/school/staff-member'
+import { findActiveAcademicYear } from '../../shared/academic-year'
 import { requireSchool } from '../../shared/require-school'
 
 export interface TeacherCourseLoad {
@@ -63,7 +64,7 @@ export class WorkspaceService {
     classGroupId?: string
   }): Promise<WorkspaceContext> {
     const school = await requireSchool(this.schools, schoolId)
-    const activeAcademicYear = await this.findActiveAcademicYear(schoolId)
+    const activeAcademicYear = await findActiveAcademicYear(this.academicYears, schoolId)
     const [classGroups, academicPeriods, gradeLevels, staffMembers, subjects, gradeScales] = await Promise.all([
       activeAcademicYear ? this.classGroups.list({ academicYearId: activeAcademicYear.id }) : [],
       activeAcademicYear ? this.academicPeriods.list({ academicYearId: activeAcademicYear.id }) : [],
@@ -128,10 +129,5 @@ export class WorkspaceService {
     const assignments = await this.staffAssignments.list({ classSubjectId })
     const teacherAssignment = assignments.find(assignment => assignment.role === StaffRole.Teacher)
     return teacherAssignment?.staffId
-  }
-
-  private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {
-    const academicYears = await this.academicYears.list({ schoolId })
-    return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
   }
 }

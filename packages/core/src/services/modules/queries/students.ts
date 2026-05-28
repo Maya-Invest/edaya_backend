@@ -23,6 +23,7 @@ import { StudentClassEnrollmentStatus } from '../../../entities/students/student
 import { StudentNoteVisibility } from '../../../entities/students/student-note'
 import { AttendanceSummary as AttendanceSummaryValue } from '../../../value_object/attendance-summary'
 import { denyResourceAccess } from '../../authorization'
+import { findActiveAcademicYear } from '../../shared/academic-year'
 import { paginateSlice } from '../../shared/pagination'
 import { requireSchool } from '../../shared/require-school'
 
@@ -79,6 +80,46 @@ export interface StudentDetail {
   healthProfile?: StudentHealthProfile
   notes: StudentNote[]
   visibility: StudentDetailVisibility
+}
+
+/**
+ * Shared helper function to resolve student enrollment history and validate boundaries.
+ */
+export async function resolveEnrollmentHistory(
+  enrollmentsRepository: SchoolRepositories['enrollments'],
+  classGroupsRepository: SchoolRepositories['classGroups'],
+  academicYearsRepository: SchoolRepositories['academicYears'],
+  gradeLevelsRepository: SchoolRepositories['gradeLevels'],
+  studentId: string,
+  schoolId: string,
+): Promise<StudentEnrollmentHistoryRow[]> {
+  const enrollments = (await enrollmentsRepository.list({ studentId }))
+    .sort((left, right) =>
+      left.enrollmentIndex - right.enrollmentIndex
+      || left.enrolledAt.getTime() - right.enrolledAt.getTime()
+      || left.id.localeCompare(right.id))
+
+  return Promise.all(
+    enrollments.map(async (enrollment) => {
+      const [classGroup, academicYear] = await Promise.all([
+        classGroupsRepository.findById(enrollment.classGroupId),
+        academicYearsRepository.findById(enrollment.academicYearId),
+      ])
+      const gradeLevel = classGroup ? await gradeLevelsRepository.findById(classGroup.gradeLevelId) : undefined
+      if (
+        !classGroup
+        || !gradeLevel
+        || !academicYear
+        || classGroup.schoolId !== schoolId
+        || gradeLevel.schoolId !== schoolId
+        || academicYear.schoolId !== schoolId
+        || classGroup.academicYearId !== academicYear.id
+      ) {
+        denyResourceAccess()
+      }
+      return { enrollment, classGroup, gradeLevel, academicYear }
+    }),
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -178,8 +219,7 @@ export class StudentDirectoryService {
     academicYearId?: string
   }): Promise<AcademicYear | undefined> {
     if (!academicYearId) {
-      const academicYears = await this.academicYears.list({ schoolId })
-      return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
+      return findActiveAcademicYear(this.academicYears, schoolId)
     }
 
     const academicYear = await this.academicYears.findById(academicYearId)
@@ -220,38 +260,20 @@ export class StudentEnrollmentHistoryService {
     if (!student || student.schoolId !== schoolId) {
       denyResourceAccess()
     }
-    const enrollments = (await this.enrollments.list({ studentId }))
-      .sort((left, right) =>
-        left.enrollmentIndex - right.enrollmentIndex
-        || left.enrolledAt.getTime() - right.enrolledAt.getTime()
-        || left.id.localeCompare(right.id))
-    const history = await Promise.all(enrollments.map(enrollment => this.resolveEnrollment(enrollment, schoolId)))
+    const history = await resolveEnrollmentHistory(
+      this.enrollments,
+      this.classGroups,
+      this.academicYears,
+      this.gradeLevels,
+      studentId,
+      schoolId,
+    )
 
     return {
       student,
       currentEnrollment: history.find(row => row.enrollment.status === StudentClassEnrollmentStatus.Active),
       history,
     }
-  }
-
-  private async resolveEnrollment(enrollment: StudentClassEnrollment, schoolId: string): Promise<StudentEnrollmentHistoryRow> {
-    const [classGroup, academicYear] = await Promise.all([
-      this.classGroups.findById(enrollment.classGroupId),
-      this.academicYears.findById(enrollment.academicYearId),
-    ])
-    const gradeLevel = classGroup ? await this.gradeLevels.findById(classGroup.gradeLevelId) : undefined
-    if (
-      !classGroup
-      || !gradeLevel
-      || !academicYear
-      || classGroup.schoolId !== schoolId
-      || gradeLevel.schoolId !== schoolId
-      || academicYear.schoolId !== schoolId
-      || classGroup.academicYearId !== academicYear.id
-    ) {
-      denyResourceAccess()
-    }
-    return { enrollment, classGroup, gradeLevel, academicYear }
   }
 }
 
@@ -303,7 +325,14 @@ export class StudentDetailService {
     if (!student || student.schoolId !== schoolId) {
       denyResourceAccess()
     }
-    const enrollmentHistory = await this.resolveEnrollmentHistory(studentId, schoolId)
+    const enrollmentHistory = await resolveEnrollmentHistory(
+      this.enrollments,
+      this.classGroups,
+      this.academicYears,
+      this.gradeLevels,
+      studentId,
+      schoolId,
+    )
     const currentEnrollment = enrollmentHistory.find(row => row.enrollment.status === StudentClassEnrollmentStatus.Active)
     const visibility = await this.resolveVisibility()
     const [guardians, attendanceSummary, studentFees, reportCards, healthProfile, notes] = await Promise.all([
@@ -327,35 +356,6 @@ export class StudentDetailService {
       notes,
       visibility,
     }
-  }
-
-  private async resolveEnrollmentHistory(studentId: string, schoolId: string): Promise<StudentEnrollmentHistoryRow[]> {
-    const enrollments = (await this.enrollments.list({ studentId }))
-      .sort((left, right) =>
-        left.enrollmentIndex - right.enrollmentIndex
-        || left.enrolledAt.getTime() - right.enrolledAt.getTime()
-        || left.id.localeCompare(right.id))
-    const rows: StudentEnrollmentHistoryRow[] = []
-    for (const enrollment of enrollments) {
-      const [classGroup, academicYear] = await Promise.all([
-        this.classGroups.findById(enrollment.classGroupId),
-        this.academicYears.findById(enrollment.academicYearId),
-      ])
-      const gradeLevel = classGroup ? await this.gradeLevels.findById(classGroup.gradeLevelId) : undefined
-      if (
-        !classGroup
-        || !academicYear
-        || !gradeLevel
-        || classGroup.schoolId !== schoolId
-        || academicYear.schoolId !== schoolId
-        || gradeLevel.schoolId !== schoolId
-        || classGroup.academicYearId !== academicYear.id
-      ) {
-        denyResourceAccess()
-      }
-      rows.push({ enrollment, classGroup, gradeLevel, academicYear })
-    }
-    return rows
   }
 
   private async resolveGuardians(
@@ -392,7 +392,7 @@ export class StudentDetailService {
     schoolId: string,
     currentAcademicYear?: AcademicYear,
   ): Promise<AttendanceSummary> {
-    const academicYear = currentAcademicYear ?? await this.findActiveAcademicYear(schoolId)
+    const academicYear = currentAcademicYear ?? await findActiveAcademicYear(this.academicYears, schoolId)
     const records = await this.attendance.list(academicYear
       ? {
           studentId,
@@ -467,11 +467,6 @@ export class StudentDetailService {
       return note.visibility !== StudentNoteVisibility.AdminOnly
     }
     return note.visibility === StudentNoteVisibility.GuardianVisible
-  }
-
-  private async findActiveAcademicYear(schoolId: string): Promise<AcademicYear | undefined> {
-    const academicYears = await this.academicYears.list({ schoolId })
-    return academicYears.find(academicYear => academicYear.isActive) ?? academicYears[0]
   }
 
   private async resolveVisibility(): Promise<StudentDetailVisibility> {

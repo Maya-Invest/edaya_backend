@@ -20,9 +20,9 @@ import type {
   StudentEnrollmentHistory,
 } from './students'
 import type { WorkspaceContext } from './workspace'
-import { AttachmentOwnerKind } from '../../../entities/school/attachment'
 import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../../authorization'
 import { AssessmentEntryReviewService, ReportCardDetailService } from './assessments'
+import { resolveAttachmentOwnerContext } from './attachment-resolver'
 import { AttendanceReviewService } from './attendance'
 import { CalendarReadService } from './calendar'
 import { ClassGroupReadService } from './class-groups'
@@ -104,24 +104,7 @@ export class SchoolQueryService {
   private readonly attendanceReview: AttendanceReviewService
   private readonly incidentRead: IncidentReadService
 
-  private readonly guardianRepository: SchoolRepositories['guardians']
-  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
-  private readonly studentRepository: SchoolRepositories['students']
-  private readonly enrollmentRepository: SchoolRepositories['enrollments']
-  private readonly classGroupRepository: SchoolRepositories['classGroups']
-  private readonly sessionRepository: SchoolRepositories['sessions']
-  private readonly academicYearRepository: SchoolRepositories['academicYears']
-  private readonly reportCardResultRepository: SchoolRepositories['results']
-  private readonly assessmentRepository: SchoolRepositories['assessments']
-  private readonly classSubjectRepository: SchoolRepositories['classSubjects']
-  private readonly announcementRepository: SchoolRepositories['announcements']
-  private readonly incidentRepository: SchoolRepositories['incidents']
-  private readonly attendanceRepository: SchoolRepositories['attendance']
-  private readonly paymentRepository: SchoolRepositories['payments']
-  private readonly studentFeeRepository: SchoolRepositories['studentFees']
-  private readonly studentHealthProfileRepository: SchoolRepositories['studentHealthProfiles']
-  private readonly studentDisciplinaryActionRepository: SchoolRepositories['studentDisciplinaryActions']
-  private readonly assessmentResultRepository: SchoolRepositories['assessmentResults']
+  private readonly repositories: SchoolRepositories
 
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
@@ -145,24 +128,7 @@ export class SchoolQueryService {
     this.classGroupRead = new ClassGroupReadService(args)
     this.attendanceReview = new AttendanceReviewService(args)
     this.incidentRead = new IncidentReadService(args)
-    this.guardianRepository = args.repositories.guardians
-    this.guardianStudentLinks = args.repositories.guardianLinks
-    this.studentRepository = args.repositories.students
-    this.enrollmentRepository = args.repositories.enrollments
-    this.classGroupRepository = args.repositories.classGroups
-    this.sessionRepository = args.repositories.sessions
-    this.academicYearRepository = args.repositories.academicYears
-    this.reportCardResultRepository = args.repositories.results
-    this.assessmentRepository = args.repositories.assessments
-    this.classSubjectRepository = args.repositories.classSubjects
-    this.announcementRepository = args.repositories.announcements
-    this.incidentRepository = args.repositories.incidents
-    this.attendanceRepository = args.repositories.attendance
-    this.paymentRepository = args.repositories.payments
-    this.studentFeeRepository = args.repositories.studentFees
-    this.studentHealthProfileRepository = args.repositories.studentHealthProfiles
-    this.studentDisciplinaryActionRepository = args.repositories.studentDisciplinaryActions
-    this.assessmentResultRepository = args.repositories.assessmentResults
+    this.repositories = args.repositories
   }
 
   async getWorkspaceContext(input: Parameters<WorkspaceService['getWorkspaceContext']>[0]): Promise<WorkspaceContext> {
@@ -183,8 +149,8 @@ export class SchoolQueryService {
 
   async getStudentDetail(input: Parameters<StudentDetailService['getStudentDetail']>[0]): Promise<StudentDetail> {
     await this.requireStudentInSchool(input.studentId, input.schoolId)
-    const currentEnrollment = await this.enrollmentRepository.findActiveByStudent(input.studentId)
-    const classGroup = currentEnrollment ? await this.classGroupRepository.findById(currentEnrollment.classGroupId) : undefined
+    const currentEnrollment = await this.repositories.enrollments.findActiveByStudent(input.studentId)
+    const classGroup = currentEnrollment ? await this.repositories.classGroups.findById(currentEnrollment.classGroupId) : undefined
     if (currentEnrollment && (!classGroup || classGroup.schoolId !== input.schoolId)) {
       denyResourceAccess()
     }
@@ -229,8 +195,8 @@ export class SchoolQueryService {
   async getReportCardDetail(
     input: Parameters<ReportCardDetailService['getReportCardDetail']>[0],
   ): Promise<ReportCardDetail> {
-    const reportCard = await this.reportCardResultRepository.findById(input.reportCardResultId)
-    const classGroup = reportCard ? await this.classGroupRepository.findById(reportCard.classGroupId) : undefined
+    const reportCard = await this.repositories.results.findById(input.reportCardResultId)
+    const classGroup = reportCard ? await this.repositories.classGroups.findById(reportCard.classGroupId) : undefined
     if (!reportCard || !classGroup || classGroup.schoolId !== input.schoolId) {
       denyResourceAccess()
     }
@@ -249,11 +215,11 @@ export class SchoolQueryService {
   async getAssessmentEntryReview(
     input: Parameters<AssessmentEntryReviewService['getAssessmentEntryReview']>[0],
   ): Promise<AssessmentEntryReview> {
-    const assessment = await this.assessmentRepository.findById(input.assessmentId)
+    const assessment = await this.repositories.assessments.findById(input.assessmentId)
     const [classGroup, classSubject] = assessment
       ? await Promise.all([
-          this.classGroupRepository.findById(assessment.classGroupId),
-          this.classSubjectRepository.findById(assessment.classSubjectId),
+          this.repositories.classGroups.findById(assessment.classGroupId),
+          this.repositories.classSubjects.findById(assessment.classSubjectId),
         ])
       : []
     if (
@@ -284,7 +250,7 @@ export class SchoolQueryService {
   async getAnnouncementDetail(
     input: Parameters<CommunicationsReadService['getAnnouncementDetail']>[0],
   ): Promise<AnnouncementDetail> {
-    const announcement = await this.announcementRepository.findById(input.announcementId)
+    const announcement = await this.repositories.announcements.findById(input.announcementId)
     if (!announcement || announcement.schoolId !== input.schoolId) {
       denyResourceAccess()
     }
@@ -323,7 +289,7 @@ export class SchoolQueryService {
   }
 
   async listAttachments(input: Parameters<AttachmentReadService['listAttachments']>[0]): Promise<AttachmentDirectory> {
-    const context = await this.resolveAttachmentOwnerResource(input.ownerKind, input.ownerId, input.schoolId)
+    const context = await resolveAttachmentOwnerContext(this.repositories, input.ownerKind, input.ownerId, input.schoolId)
     await this.authorizationPolicy.requirePermission(this.actor, {
       action: 'attachments.read',
       resource: {
@@ -339,8 +305,8 @@ export class SchoolQueryService {
   async getClassSubjectProgressDetail(
     input: Parameters<CurriculumProgressReadService['getClassSubjectProgressDetail']>[0],
   ): Promise<ClassSubjectProgressDetail> {
-    const classSubject = await this.classSubjectRepository.findById(input.classSubjectId)
-    const classGroup = classSubject ? await this.classGroupRepository.findById(classSubject.classGroupId) : undefined
+    const classSubject = await this.repositories.classSubjects.findById(input.classSubjectId)
+    const classGroup = classSubject ? await this.repositories.classGroups.findById(classSubject.classGroupId) : undefined
     if (!classSubject || !classGroup || classGroup.schoolId !== input.schoolId) {
       denyResourceAccess()
     }
@@ -401,7 +367,7 @@ export class SchoolQueryService {
   }
 
   async getIncidentDetail(input: Parameters<IncidentReadService['getIncidentDetail']>[0]): Promise<IncidentDetail> {
-    const incident = await this.incidentRepository.findById(input.incidentId)
+    const incident = await this.repositories.incidents.findById(input.incidentId)
     if (!incident || incident.schoolId !== input.schoolId) {
       denyResourceAccess()
     }
@@ -420,8 +386,8 @@ export class SchoolQueryService {
     input: Parameters<IncidentReadService['listStudentIncidents']>[0],
   ): Promise<StudentIncidentDirectory> {
     await this.requireStudentInSchool(input.studentId, input.schoolId)
-    const currentEnrollment = await this.enrollmentRepository.findActiveByStudent(input.studentId)
-    const classGroup = currentEnrollment ? await this.classGroupRepository.findById(currentEnrollment.classGroupId) : undefined
+    const currentEnrollment = await this.repositories.enrollments.findActiveByStudent(input.studentId)
+    const classGroup = currentEnrollment ? await this.repositories.classGroups.findById(currentEnrollment.classGroupId) : undefined
     if (currentEnrollment && (!classGroup || classGroup.schoolId !== input.schoolId)) {
       denyResourceAccess()
     }
@@ -437,7 +403,7 @@ export class SchoolQueryService {
   }
 
   async listStudentsForGuardian(guardianId: string): Promise<Student[]> {
-    const guardian = await this.guardianRepository.findById(guardianId)
+    const guardian = await this.repositories.guardians.findById(guardianId)
     if (!guardian) {
       denyResourceAccess()
     }
@@ -445,8 +411,8 @@ export class SchoolQueryService {
       action: this.actor.kind === 'guardian' ? 'queries.read_guardian_self' : 'queries.read_guardian_students_admin',
       resource: { schoolId: guardian.schoolId, guardianId },
     })
-    const links = await this.guardianStudentLinks.list({ guardianId })
-    const students = await Promise.all(links.map(link => this.studentRepository.findById(link.studentId)))
+    const links = await this.repositories.guardianLinks.list({ guardianId })
+    const students = await Promise.all(links.map(link => this.repositories.students.findById(link.studentId)))
     return students.filter(student => student !== undefined)
   }
 
@@ -476,7 +442,7 @@ export class SchoolQueryService {
     action: Extract<AuthorizationAction, `queries.${string}`>,
     classGroupId: string,
   ): Promise<void> {
-    const classGroup = await this.classGroupRepository.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup) {
       denyResourceAccess()
     }
@@ -484,8 +450,8 @@ export class SchoolQueryService {
   }
 
   private async requireSessionInSchool(sessionId: string, schoolId: string) {
-    const session = await this.sessionRepository.findById(sessionId)
-    const classGroup = session ? await this.classGroupRepository.findById(session.classGroupId) : undefined
+    const session = await this.repositories.sessions.findById(sessionId)
+    const classGroup = session ? await this.repositories.classGroups.findById(session.classGroupId) : undefined
     if (!session || !classGroup || classGroup.schoolId !== schoolId) {
       denyResourceAccess()
     }
@@ -497,7 +463,7 @@ export class SchoolQueryService {
     schoolId: string,
     academicYearId?: string,
   ): Promise<ClassGroup> {
-    const classGroup = await this.classGroupRepository.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (
       !classGroup
       || classGroup.schoolId !== schoolId
@@ -510,7 +476,7 @@ export class SchoolQueryService {
   }
 
   private async requireStudentInSchool(studentId: string, schoolId: string): Promise<Student> {
-    const student = await this.studentRepository.findById(studentId)
+    const student = await this.repositories.students.findById(studentId)
     if (!student || student.schoolId !== schoolId) {
       denyResourceAccess()
     }
@@ -521,102 +487,9 @@ export class SchoolQueryService {
     if (!academicYearId) {
       return
     }
-    const academicYear = await this.academicYearRepository.findById(academicYearId)
+    const academicYear = await this.repositories.academicYears.findById(academicYearId)
     if (!academicYear || academicYear.schoolId !== schoolId) {
       denyResourceAccess()
     }
-  }
-
-  private async resolveAttachmentOwnerResource(
-    ownerKind: AttachmentOwnerKind,
-    ownerId: string,
-    schoolId: string,
-  ): Promise<{ classGroupId?: string, sessionId?: string, studentId?: string }> {
-    switch (ownerKind) {
-      case AttachmentOwnerKind.Student:
-        return this.resolveStudentAttachmentResource(ownerId, schoolId)
-      case AttachmentOwnerKind.Guardian: {
-        const guardian = await this.guardianRepository.findById(ownerId)
-        if (!guardian || guardian.schoolId !== schoolId) {
-          denyResourceAccess()
-        }
-        return {}
-      }
-      case AttachmentOwnerKind.StudentHealthProfile: {
-        const profile = await this.studentHealthProfileRepository.findById(ownerId)
-        if (!profile || profile.schoolId !== schoolId) {
-          denyResourceAccess()
-        }
-        return this.resolveStudentAttachmentResource(profile.studentId, schoolId)
-      }
-      case AttachmentOwnerKind.StudentClassEnrollment: {
-        const enrollment = await this.enrollmentRepository.findById(ownerId)
-        if (!enrollment) {
-          denyResourceAccess()
-        }
-        await this.requireStudentInSchool(enrollment.studentId, schoolId)
-        const classGroup = await this.requireClassGroupInSchool(enrollment.classGroupId, schoolId, enrollment.academicYearId)
-        return { classGroupId: classGroup.id, studentId: enrollment.studentId }
-      }
-      case AttachmentOwnerKind.AttendanceRecord: {
-        const record = await this.attendanceRepository.findById(ownerId)
-        if (!record) {
-          denyResourceAccess()
-        }
-        await this.requireStudentInSchool(record.studentId, schoolId)
-        const session = await this.requireSessionInSchool(record.sessionId, schoolId)
-        return { classGroupId: session.classGroupId, sessionId: session.id, studentId: record.studentId }
-      }
-      case AttachmentOwnerKind.Incident: {
-        const incident = await this.incidentRepository.findById(ownerId)
-        if (!incident || incident.schoolId !== schoolId) {
-          denyResourceAccess()
-        }
-        return { classGroupId: incident.classGroupId, sessionId: incident.sessionId }
-      }
-      case AttachmentOwnerKind.StudentDisciplinaryAction: {
-        const action = await this.studentDisciplinaryActionRepository.findById(ownerId)
-        if (!action || action.schoolId !== schoolId) {
-          denyResourceAccess()
-        }
-        return this.resolveStudentAttachmentResource(action.studentId, schoolId)
-      }
-      case AttachmentOwnerKind.AssessmentResult: {
-        const result = await this.assessmentResultRepository.findById(ownerId)
-        if (!result) {
-          denyResourceAccess()
-        }
-        return this.resolveStudentAttachmentResource(result.studentId, schoolId)
-      }
-      case AttachmentOwnerKind.ReportCard: {
-        const result = await this.reportCardResultRepository.findById(ownerId)
-        if (!result) {
-          denyResourceAccess()
-        }
-        return this.resolveStudentAttachmentResource(result.studentId, schoolId)
-      }
-      case AttachmentOwnerKind.Payment: {
-        const payment = await this.paymentRepository.findById(ownerId)
-        if (!payment) {
-          denyResourceAccess()
-        }
-        const studentFee = await this.studentFeeRepository.findById(payment.studentFeeId)
-        if (!studentFee) {
-          denyResourceAccess()
-        }
-        return this.resolveStudentAttachmentResource(studentFee.studentId, schoolId)
-      }
-      case AttachmentOwnerKind.Other:
-        throw new Error('Attachment owner kind other is not supported by the selected public contract')
-    }
-  }
-
-  private async resolveStudentAttachmentResource(
-    studentId: string,
-    schoolId: string,
-  ): Promise<{ classGroupId?: string, studentId: string }> {
-    await this.requireStudentInSchool(studentId, schoolId)
-    const activeEnrollment = await this.enrollmentRepository.findActiveByStudent(studentId)
-    return { classGroupId: activeEnrollment?.classGroupId, studentId }
   }
 }
