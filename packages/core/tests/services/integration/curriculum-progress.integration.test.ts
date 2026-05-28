@@ -26,6 +26,12 @@ async function prepareCurriculum() {
     classGroupId: 'class',
     subjectId: 'math',
   })
+  await app.academics.createSubjectMatter({ id: 'decimals', subjectId: 'math', name: 'Decimals', sequenceOrder: 2 })
+  await app.academics.assignMatterToClassSubject({
+    id: 'class-decimals',
+    classSubjectId: classSubject.id,
+    subjectMatterId: 'decimals',
+  })
   await app.academics.createSubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 })
   const classMatter = await app.academics.assignMatterToClassSubject({
     id: 'class-fractions',
@@ -61,15 +67,41 @@ describe('curriculum progress journey', () => {
     expect((await repositories.classSubjectMatterRepository.findById(classMatter.id))?.completedPercentage).toBe(40)
     expect((await repositories.classSubjectMatterRepository.findById(classMatter.id))?.status)
       .toBe(ClassSubjectMatterStatus.InProgress)
-    expect((await repositories.classSubjectRepository.findById(classSubject.id))?.completedPercentage).toBe(40)
+    expect((await repositories.classSubjectRepository.findById(classSubject.id))?.completedPercentage).toBe(20)
     expect(await app.academics.listMatterProgress(classMatter.id)).toHaveLength(1)
+    const secondEndsAt = new Date('2026-09-02T09:00:00Z')
+    await app.scheduling.createSession({
+      id: 'lesson-2',
+      schoolId: 'school',
+      classGroupId: 'class',
+      classSubjectId: classSubject.id,
+      title: 'Fractions continuation',
+      kind: SessionKind.Course,
+      startsAt: new Date('2026-09-02T08:00:00Z'),
+      endsAt: secondEndsAt,
+    })
+    await app.academics.recordSessionProgress({
+      id: 'progress-2',
+      classSubjectMatterId: classMatter.id,
+      sessionId: 'lesson-2',
+      completedPercentage: 65,
+      recordedAt: secondEndsAt,
+    })
+    const detail = await app.queries.getClassSubjectProgressDetail({ schoolId: 'school', classSubjectId: classSubject.id })
+    expect(detail.classGroup.id).toBe('class')
+    expect(detail.subject.id).toBe('math')
+    expect(detail.matters.map(row => row.subjectMatter.id)).toEqual(['fractions', 'decimals'])
+    expect(detail.matters[0]?.classSubjectMatter.completedPercentage).toBe(65)
+    expect(detail.matters[0]?.history.map(row => row.progress.id)).toEqual(['progress-1', 'progress-2'])
+    expect(detail.matters[0]?.history[0]?.session.id).toBe('lesson-1')
+    expect(detail.matters[1]?.history).toEqual([])
     await expect(app.academics.recordSessionProgress({
       id: 'progress-duplicate',
       classSubjectMatterId: classMatter.id,
       sessionId: 'lesson-1',
       completedPercentage: 50,
     })).rejects.toThrow('Progress has already been recorded')
-    expect(await app.academics.listMatterProgress(classMatter.id)).toHaveLength(1)
+    expect(await app.academics.listMatterProgress(classMatter.id)).toHaveLength(2)
   })
 
   it('rejects progress that decreases the current cumulative completion', async () => {

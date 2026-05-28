@@ -113,6 +113,9 @@ export class FinanceService {
         studentId: student.id,
         studentFeeId,
       })
+      if (studentFee.status === FeeStatus.Cancelled) {
+        throw new Error(`Student fee ${studentFeeId} cannot receive payments after cancellation`)
+      }
       const payment = new Payment({
         id,
         studentFeeId,
@@ -171,6 +174,7 @@ export class FinanceService {
         notes: payment.notes,
         recordedById: payment.recordedById,
         reversedAt: reversedAt ?? new Date(),
+        reversedById: resolveAuditActorId(this.actor),
         createdAt: payment.createdAt,
       })
       await this.repositories.payments.save(reversed)
@@ -182,6 +186,141 @@ export class FinanceService {
       )
       return reversed
     })
+  }
+
+  async cancelPayment({
+    paymentId,
+    cancelledAt,
+    updatedAt,
+    referenceDate,
+  }: {
+    paymentId: string
+    cancelledAt?: Date
+    updatedAt?: Date
+    referenceDate?: Date
+  }): Promise<Payment> {
+    return this.atomicExecution.execute(async () => {
+      const payment = await this.requirePayment(paymentId)
+      const studentFee = await this.requireStudentFee(payment.studentFeeId)
+      const student = await this.requireStudent(studentFee.studentId)
+      await this.authorize('finance.manage', {
+        schoolId: student.schoolId,
+        studentId: student.id,
+        studentFeeId: studentFee.id,
+      })
+      if (payment.status !== PaymentStatus.Recorded) {
+        throw new Error(`Payment ${paymentId} cannot be cancelled from status ${payment.status}`)
+      }
+      const cancelled = new Payment({
+        id: payment.id,
+        studentFeeId: payment.studentFeeId,
+        amount: payment.amount.amount,
+        currency: payment.amount.currency,
+        paymentDate: payment.paymentDate,
+        method: payment.method,
+        status: PaymentStatus.Cancelled,
+        reference: payment.reference,
+        notes: payment.notes,
+        recordedById: payment.recordedById,
+        cancelledAt: cancelledAt ?? new Date(),
+        cancelledById: resolveAuditActorId(this.actor),
+        createdAt: payment.createdAt,
+      })
+      await this.repositories.payments.save(cancelled)
+      await this.savePaidAmount(
+        studentFee,
+        Math.max(0, studentFee.paidAmount.amount - payment.amount.amount),
+        updatedAt,
+        referenceDate,
+      )
+      return cancelled
+    })
+  }
+
+  async adjustStudentFee({
+    studentFeeId,
+    adjustmentAmount,
+    reason,
+    adjustedAt,
+    updatedAt,
+    referenceDate,
+  }: {
+    studentFeeId: string
+    adjustmentAmount: number
+    reason: string
+    adjustedAt?: Date
+    updatedAt?: Date
+    referenceDate?: Date
+  }): Promise<StudentFee> {
+    const studentFee = await this.requireStudentFee(studentFeeId)
+    const student = await this.requireStudent(studentFee.studentId)
+    await this.authorize('finance.manage', {
+      schoolId: student.schoolId,
+      studentId: student.id,
+      studentFeeId: studentFee.id,
+    })
+    if (studentFee.status === FeeStatus.Cancelled) {
+      throw new Error(`Student fee ${studentFeeId} cannot be adjusted after cancellation`)
+    }
+    if (studentFee.adjustmentAmount.amount > 0) {
+      throw new Error(`Student fee ${studentFeeId} has already been adjusted`)
+    }
+    if (adjustmentAmount <= 0) {
+      throw new Error('adjustmentAmount must be strictly positive')
+    }
+    if (adjustmentAmount > studentFee.expectedAmount.amount - studentFee.paidAmount.amount) {
+      throw new Error('adjustmentAmount must not reduce a fee below its paid amount')
+    }
+    const adjusted = studentFee.copyWith({
+      adjustmentAmount,
+      adjustmentReason: reason,
+      adjustedById: resolveAuditActorId(this.actor),
+      adjustedAt: adjustedAt ?? new Date(),
+      status: this.deriveStatus({
+        expectedAmount: studentFee.expectedAmount.amount - adjustmentAmount,
+        paidAmount: studentFee.paidAmount.amount,
+        dueDate: studentFee.dueDate,
+        referenceDate: referenceDate ?? new Date(),
+      }),
+      updatedAt: updatedAt ?? new Date(),
+    })
+    await this.repositories.studentFees.save(adjusted)
+    return adjusted
+  }
+
+  async cancelStudentFee({
+    studentFeeId,
+    reason,
+    cancelledAt,
+    updatedAt,
+  }: {
+    studentFeeId: string
+    reason: string
+    cancelledAt?: Date
+    updatedAt?: Date
+  }): Promise<StudentFee> {
+    const studentFee = await this.requireStudentFee(studentFeeId)
+    const student = await this.requireStudent(studentFee.studentId)
+    await this.authorize('finance.manage', {
+      schoolId: student.schoolId,
+      studentId: student.id,
+      studentFeeId: studentFee.id,
+    })
+    if (studentFee.status === FeeStatus.Cancelled) {
+      throw new Error(`Student fee ${studentFeeId} has already been cancelled`)
+    }
+    if (studentFee.paidAmount.amount > 0) {
+      throw new Error(`Student fee ${studentFeeId} cannot be cancelled while recorded payments remain`)
+    }
+    const cancelled = studentFee.copyWith({
+      status: FeeStatus.Cancelled,
+      cancellationReason: reason,
+      cancelledById: resolveAuditActorId(this.actor),
+      cancelledAt: cancelledAt ?? new Date(),
+      updatedAt: updatedAt ?? new Date(),
+    })
+    await this.repositories.studentFees.save(cancelled)
+    return cancelled
   }
 
   async buildFeeSummary(studentId: string): Promise<StudentFeeSummary> {

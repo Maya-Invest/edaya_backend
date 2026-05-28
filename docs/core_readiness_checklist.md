@@ -143,7 +143,7 @@ any excluded workflow requires an explicit scope and contract update.
 - [x] Enrollment lifecycle journeys cover promotion, transfer rollback,
   graduation, valid/invalid progression decisions, ordered history reads,
   destination capacity, and post-transition current-operation boundaries.
-- [x] Type checking and the current `46`-test in-memory suite pass after
+- [x] Type checking and the current `52`-test in-memory suite pass after
   removing the exam, activity, and grouped-session contracts.
 
 ## Core Readiness Gates
@@ -156,15 +156,18 @@ considered stable:
 - [x] Add a reference-data projection for active academic year, periods, grade
   levels, class groups, staff, subjects, and grade scales through
   `getWorkspaceContext(...)`.
-- [ ] Add a student detail projection including enrollment, guardians,
+- [x] Add a student detail projection including enrollment, guardians,
   guardian contact/relationship preferences, authorized student notes,
   student status and health/emergency fields, attendance summary, current
-  balance, and published report cards.
-- [ ] Add calendar projections for school, grade-level, and class-scoped
-  events consumed by timetable/session screens.
-- [ ] Add attendance detail projections including reason, notes,
-  justification attribution/state, and permitted actor visibility.
-- [ ] Add a curriculum progress detail/history projection.
+  balance, and published report cards through `getStudentDetail(...)`.
+- [x] Add a calendar projection for school, grade-level, and class-scoped
+  events consumed by timetable/session screens through
+  `getCalendarEvents(...)`.
+- [x] Expose attendance reason, notes, justification attribution/state, and
+  excused-absence summary state through staff-scoped
+  `getAttendanceSessionReview(...)`.
+- [x] Add a curriculum progress detail/history projection through
+  `getClassSubjectProgressDetail(...)`.
 - [x] Add a finance ledger projection with fee assignments, payments, status,
   and summary through `getFinanceLedger(...)`.
 - [x] Add an administrative report-card detail projection with stored
@@ -174,11 +177,13 @@ considered stable:
 - [x] Add an assessment and assessment-result projection for result entry and
   review screens through `getAssessmentEntryReview(...)`, with active roster
   rows and per-student published-report-card lock state.
-- [ ] Add a communications projection for announcements, targets, and
-  deliveries.
-- [ ] Add incident and discipline projections for incident detail, student
-  involvement, applied actions, and current resolution state.
-- [ ] Add attachment and resource projections for selected owners and for
+- [x] Add administrative communications projections for announcements,
+  targets, and deliveries through `listAnnouncements(...)` and
+  `getAnnouncementDetail(...)`, including delivery status summaries.
+- [x] Add incident and discipline projections for incident detail, student
+  involvement, applied actions, and current resolution state through
+  `getIncidentDetail(...)` and `listStudentIncidents(...)`.
+- [x] Add attachment and resource projections for selected owners and for
   class/session assignments.
 - [x] Add an administrative enrollment lifecycle/history projection including
   current status, resolved academic context, closure reason, progression
@@ -207,32 +212,39 @@ Exit condition:
 - [x] Treat published report-card results as immutable snapshots: publication
   blocks result/compliance edits, regeneration, and re-publication for the
   student-period unless a future explicit reopen workflow is added.
-- [ ] Define stable recipient expansion, deduplication, and delivery
-  materialization rules for announcements with overlapping targets.
-- [ ] Define allowed attachment owners and resource-assignment targets,
+- [x] Define stable recipient expansion, deduplication, and delivery
+  materialization rules for announcements with overlapping targets:
+  `materializeDeliveries(...)` resolves concrete recipients, deduplicates by
+  recipient kind/id, and reuses existing announcement/channel deliveries.
+- [x] Define allowed attachment owners and resource-assignment targets,
   lifecycle rules, and ordering for selected screens.
-- [ ] Define student-note visibility enforcement and confidential
-  health/emergency-field visibility for all selected actor roles.
-- [ ] Define guardian contact method and relationship-preference rules used
-  for reports, alerts, pickup/emergency contact, billing, and recipient
-  resolution.
+- [x] Define student-detail read visibility for student notes and
+  confidential health/emergency fields across staff, guardian, and student
+  actors.
+- [x] Define guardian contact method and relationship-preference visibility
+  for the student-detail read projection.
 - [x] Separate active/closed class-enrollment lifecycle state from completion
   reasons and progression decisions in the entity contract.
 - [x] Define valid student class-enrollment transitions: active enrollments
   may close, completed enrollments may receive one progression decision,
   promotion/transfer atomically create one linked active successor, and
   graduation closes the placement and graduates the student profile.
-- [ ] Define fee adjustment/cancellation and payment cancellation rules,
-  including recalculated balances, summaries, and immutable financial audit
-  history.
-- [ ] Define attendance correction/justification rules and visibility for
-  reason and note fields.
+- [x] Define fee adjustment/cancellation and payment cancellation rules:
+  a student fee accepts one attributed reduction while preserving its original
+  assigned amount, cancellation requires no recorded paid balance, cancelled
+  obligations are excluded from payable summaries, and payment
+  cancellation/reversal preserve amount and actor/date audit state.
+- [x] Define attendance correction/justification rules and visibility:
+  attendance corrections preserve capture attribution and store correction
+  attribution, reviewed decisions are immutable without a future reopen
+  workflow, and detailed reason/note reads remain staff-scoped.
 - [x] Model excusal as attendance justification state, separately from
   present/absent/late facts, and include excused absences in summaries.
-- [ ] Define setup lifecycle semantics for school/class configuration, active
+- [x] Define setup lifecycle semantics for school/class configuration, active
   academic years, published academic periods, and inactive staff records.
-- [ ] Decide and implement `AttendanceMode.Daily` behavior or remove it from
-  the selected class contract; current attendance capture is session-based.
+- [x] Implement `AttendanceMode.Daily` behavior: daily classes record against
+  a deterministic class/date attendance session while session-mode classes
+  retain explicit session attendance.
 - [x] Enforce class capacity when initial enrollment, promotion, or transfer
   creates an active placement; re-enrollment after a retained decision uses
   the same initial-enrollment capacity rule.
@@ -291,96 +303,103 @@ Available domain building blocks:
   and billing preferences.
 - [x] `CalendarEvent` has a repository port and session generation consumes
   school, grade-level, and class-scoped non-school days.
-- [x] `AttendanceRecord` models reasons, notes, and justification metadata;
-  current services record attendance status only.
+- [x] `AttendanceRecord` models reasons, notes, justification metadata, and
+  correction audit; services expose attendance capture/correction and
+  `reviewAttendanceJustification(...)`.
 - [x] Finance entities model materialized installments, student-fee
   adjustments/cancellation, and payment cancellation; current services expose
   assignment, payment, and reversal.
 - [x] Setup entities model school type, class capacity/attendance mode/
   homeroom assignment, active academic years, published periods, and active
   staff records.
-- [x] Communications can create targets, publish announcements, and record a
-  delivery for an eligible explicitly supplied recipient; class/grade target
+- [x] Communications can create targets, publish announcements, record a
+  delivery for an eligible explicitly supplied recipient, and atomically
+  materialize deduplicated recipient/channel deliveries; class/grade target
   eligibility is resolved from active enrollments.
 
 Required setup configuration completion:
 
-- [ ] Expose and validate selected school/class configuration fields,
+- [x] Expose and validate selected school/class configuration fields,
   including school type, class capacity, attendance mode, and homeroom
   assignment.
-- [ ] Add explicit active academic-year, period publication, and staff
+- [x] Add explicit active academic-year, period publication, and staff
   activation/deactivation contracts rather than requiring UI code to
   reconstruct entities.
-- [ ] Ensure active academic-year selection is deterministic and constrained
+- [x] Ensure active academic-year selection is deterministic and constrained
   according to the selected setup rules.
 
 Required student profile, note, and guardian-contact workflows:
 
-- [ ] Add public commands to update student profile/status and selected
+- [x] Add public commands to update student profile/status and selected
   health/emergency information with confidential-field access rules.
-- [ ] Add public student-note creation/update/read contracts enforcing
+- [x] Add public student-note creation/update/read contracts enforcing
   `Staff`, `AdminOnly`, and `GuardianVisible` visibility.
-- [ ] Extend guardian/contact/link commands to maintain contact methods,
+- [x] Extend guardian/contact/link commands to maintain contact methods,
   notification opt-ins, billing/legal/pickup/emergency/report/attendance
   preferences, and restrictions.
 
 Required incident and discipline workflows:
 
-- [ ] Select and expose the public command owner for incident and discipline
-  operations.
-- [ ] Add public commands for disciplinary-action catalog setup, incident
-  recording, student involvement, applying actions, and action state changes.
-- [ ] Add public incident/discipline reads appropriate to administrative,
-  staff, guardian, and student visibility rules.
+- [x] Select and expose `behavior` as the public command owner for incident
+  and discipline operations.
+- [x] Add public commands for disciplinary-action catalog setup, incident
+  recording, student involvement, applying actions, action state changes, and
+  incident resolution.
+- [x] Add incident/discipline reads for administrative/coordinator and
+  assignment-scoped staff visibility; guardian/student visibility remains
+  withheld until explicitly selected.
 
 Required attachment and resource workflows:
 
-- [ ] Select and expose the public command owner for attachment and resource
+- [x] Select and expose `setup` as the public command owner for attachment and resource
   operations.
-- [ ] Add public attachment registration/removal contracts for allowed
+- [x] Add public attachment registration/removal contracts for allowed
   selected-domain owners; keep file storage transport outside core.
 - [x] Align attachment health ownership with `StudentHealthProfile`.
-- [ ] Add public resource catalog and assignment commands for classes and
+- [x] Add public resource catalog and assignment commands for classes and
   sessions.
-- [ ] Add resource-conflict validation required for scheduling rooms,
+- [x] Add resource-conflict validation required for scheduling rooms,
   equipment, or vehicles.
 
 Required communications completion:
 
-- [ ] Add a public operation that resolves published announcement targets to
-  concrete recipients and materializes delivery records without duplicate
-  recipients.
-- [ ] Define channel selection, retry/idempotency, and atomicity boundaries
-  for generated deliveries.
+- [x] Add `materializeDeliveries(...)` to resolve published announcement
+  targets to concrete recipients and materialize delivery records without
+  duplicate recipients.
+- [x] Define generated-delivery channel, retry/idempotency, and atomicity
+  boundaries: callers select one channel per materialization request;
+  retries reuse recipient/channel delivery records; all new records for the
+  request save atomically.
 
 Required academic calendar completion:
 
-- [ ] Add public commands and reads for school, grade-level, and class-scoped
-  calendar events.
+- [x] Add public `createCalendarEvent(...)` and `getCalendarEvents(...)`
+  contracts for school, grade-level, and class-scoped calendar events.
 - [x] Correct session generation to apply scoped non-school events only to
   affected class groups, while school-wide non-school events apply globally.
 
 Required attendance completion:
 
-- [ ] Implement daily attendance behavior for classes configured with
-  `AttendanceMode.Daily`, or formally restrict first-release classes to
-  session attendance.
-- [ ] Add public attendance correction/justification commands that preserve
-  actor-derived attribution for recording and justifying staff.
-- [ ] Expose reason, note, and justification details only to permitted actors,
-  while keeping guardian/student attendance reads appropriately scoped.
+- [x] Implement daily attendance behavior for classes configured with
+  `AttendanceMode.Daily`.
+- [x] Preserve actor-derived attribution when `recordAttendance(...)`
+  corrects status, and add coordinator/administrative
+  `reviewAttendanceJustification(...)` for excused/rejected decisions.
+- [x] Expose reason, note, and justification details through assigned-staff/
+  coordinator/administrative review queries only, while guardian/student
+  attendance reads remain aggregate and scoped.
 - [x] Preserve absent attendance facts separately from excusal and expose
   excused-absence counts in attendance/report-card summaries.
 
 Required finance completion:
 
 - [x] Materialize configured fee-installment templates on student assignment.
-- [ ] Add public student-fee adjustment and cancellation commands with
-  balance/status recalculation.
-- [ ] Add public payment cancellation behavior or deliberately consolidate it
-  with reversal while aligning the entity contract.
-- [ ] Preserve auditable prior payment/fee state and cover ledger summary
-  changes for adjustments and cancellations.
+- [x] Add public `adjustStudentFee(...)` and `cancelStudentFee(...)` commands
+  with balance/status recalculation.
+- [x] Add distinct public `cancelPayment(...)` behavior alongside reversal.
+- [x] Preserve the original assigned/payment amount plus attributed
+  adjustment/cancellation/reversal state and cover ledger summary changes for
+  adjustments and cancellations.
 
 Required class-enrollment lifecycle:
 
@@ -416,15 +435,17 @@ Required closure:
 
 - [ ] Maintain an explicit method/action/role manifest for every API selected
   by the first-release UI, including newly added projections.
-- [ ] Define action/resource-context and visibility rules for incidents and
-  discipline, attachments/resources, recipient expansion, and class-enrollment
-  lifecycle transitions.
-- [ ] Define action/resource-context and visibility rules for student
+- [x] Define action/resource-context and visibility rules for incidents and
+  discipline.
+- [ ] Define action/resource-context and visibility rules for
+  attachments/resources, recipient expansion, and class-enrollment lifecycle
+  transitions.
+- [x] Define action/resource-context and visibility rules for student
   status/health data, notes, guardian contact preferences, and scoped calendar
   operations.
-- [ ] Define action/resource-context and visibility rules for attendance
-  justification, setup lifecycle changes, and fee/payment adjustment or
-  cancellation.
+- [x] Define action/resource-context and visibility rules for attendance
+  justification and fee/payment adjustment or cancellation.
+- [x] Define action/resource-context rules for setup lifecycle changes.
 - [ ] Add allow/deny tests for every method and supported actor category in
   that selected manifest.
 - [ ] Add paired missing/foreign identifier tests for every caller-selected
@@ -462,14 +483,15 @@ surface stable enough to implement one.
   persistence-specific behavior in command services.
 - [ ] Add in-memory workflow tests for each newly selected query or error
   contract introduced while closing Gates 1 through 4.
-- [ ] Add in-memory journeys for incident/discipline handling,
-  attachment/resource assignment, automatic recipient resolution, and each
-  selected class-enrollment transition.
-- [ ] Add in-memory journeys for student notes/confidential profile access,
+- [x] Add in-memory journeys for incident/discipline handling.
+- [x] Add in-memory journeys for attachment/resource assignment, automatic
+  recipient resolution, and each selected class-enrollment transition.
+- [x] Add in-memory journeys for student notes/confidential profile access,
   guardian contact preferences, and scoped calendar-event session generation.
-- [ ] Add in-memory journeys for setup lifecycle/configuration, attendance
-  justification, student-fee adjustment/cancellation, and payment
-  cancellation/reversal semantics.
+- [x] Add in-memory journeys for attendance justification,
+  student-fee adjustment/cancellation, and payment cancellation/reversal
+  semantics.
+- [x] Add in-memory journeys for setup lifecycle/configuration.
 - [ ] Add atomic rollback and tenant/authorization evidence for any new
   compound-write selected-domain command.
 
@@ -486,30 +508,30 @@ Current method-to-action groupings that new APIs must preserve or extend:
 | --- | --- | --- |
 | `setup` | school registration | `setup.register_school` |
 | `setup` | calendar, level, class, and staff setup | `setup.manage` |
-| `setup` | setup lifecycle/configuration state changes | `[ ]` Define update/activation/publication rules |
+| `setup` | setup lifecycle/configuration state changes | `setup.manage_lifecycle`; coordinators/admins may update school/class configuration, select the active academic year, publish periods, and activate/deactivate staff |
 | `setup` | staff assignments | `setup.assign_staff` |
 | `academics` | curriculum setup | `academics.manage_curriculum` |
 | `academics` | progress write/read | `academics.record_progress`, `academics.read_progress` |
 | `scheduling` | schedule/session setup | `scheduling.manage` |
 | `scheduling` | attendance write/read | `attendance.record`, `attendance.read` |
-| `scheduling` | attendance correction/justification and detailed visibility | `[ ]` Define action split and visibility rules |
+| `scheduling` / `queries` | attendance correction/justification and detailed visibility | `attendance.record`, `attendance.review_justification`, `queries.read_attendance`; justification review is coordinator/administrative and detailed reads include assigned staff |
 | `assessments` | definition setup | `assessments.manage_configuration` |
 | `assessments` | assessment result write/read | `assessments.record_result`, `assessments.read_results` |
 | `assessments` | report-card publication | `assessments.publish_report_card` |
 | `students` | enrollment/guardian management | `students.manage_enrollment`, `students.manage_guardians` |
-| `students` | profile/status and confidential health/emergency data | `[ ]` Define selected write/read action split |
-| `students` | student notes with actor-visible filtering | `[ ]` Define visibility-scoped actions |
-| `students` | guardian contact and relationship preferences | `[ ]` Extend guardian action/resource rules |
+| `students` / `queries` | profile/status and confidential health/emergency data | `students.manage_profile`, `students.manage_health`, `queries.read_student_detail`; health writes are coordinator/admin and reads remain visibility-filtered |
+| `students` / `queries` | student notes with actor-visible filtering | `students.manage_notes`, `queries.read_student_detail`; assigned teachers may write non-admin notes, coordinator/admin may write all selected note visibility levels |
+| `students` / `queries` | guardian contact and relationship preferences | `students.manage_guardians`, `queries.read_student_detail`; coordinator/admin maintain contact methods, notification preferences, and link restrictions |
 | `students` | class-enrollment lifecycle transitions | `students.manage_enrollment` |
-| `students` / behavior | incidents, involvement, and disciplinary actions | `[ ]` Define selected action split and visibility rules |
-| `setup` / scheduling | resource catalog and class/session assignments | `[ ]` Define selected action split |
-| selected owner modules | attachment registration/removal/read access | `[ ]` Define owner-scoped actions |
+| `behavior` / `queries` | incidents, involvement, and disciplinary actions | `behavior.report_incident`, `behavior.manage_discipline`, `behavior.read_incidents`; assigned staff may report/read scoped incidents, coordinators/admins manage discipline |
+| `setup` / `queries` | resource catalog and class/session assignments | `resources.manage`, `resources.read`; coordinators/admins manage, resources are read through the query facade |
+| `setup` / `queries` | attachment registration/removal/read access | `attachments.manage`, `attachments.read`; `setup` validates selected owner references and keeps file storage transport outside core |
 | `finance` | fee/payment write/read and student-ledger projection | `finance.manage`, `finance.read` |
-| `finance` | student-fee adjustment/cancellation and payment cancellation | `[ ]` Define audited transition actions |
+| `finance` | student-fee adjustment/cancellation and payment cancellation | `finance.manage`; attributed audited transitions |
 | `communications` | announcement/delivery mutation | `communications.manage` |
-| `communications` | recipient resolution and delivery materialization | `[ ]` Extend action/resource/idempotency rules |
-| `queries` | current operational projections, enrollment history, and report-card detail | distinct `queries.read_*` actions |
-| `scheduling` | scoped calendar events and non-school-day effects | `[ ]` Define manage/read scope checks |
+| `communications` | recipient resolution and delivery materialization | `communications.manage`; deterministic recipient/channel idempotency |
+| `queries` | current operational projections, enrollment history, report-card, communications, and curriculum-progress detail | distinct `queries.read_*` actions including `queries.read_communications`, `queries.read_curriculum_progress` |
+| `scheduling` / `queries` | scoped calendar events and non-school-day effects | `scheduling.manage`, `queries.read_calendar`; administrative/coordinator scope |
 
 Current role baseline:
 
@@ -535,7 +557,11 @@ Current evidence lives in:
 - `packages/core/tests/services/integration/scheduling-attendance.integration.test.ts`
 - `packages/core/tests/services/integration/curriculum-progress.integration.test.ts`
 - `packages/core/tests/services/integration/assessments.integration.test.ts`
+- `packages/core/tests/services/integration/behavior-discipline.integration.test.ts`
+- `packages/core/tests/services/integration/attachments-resources.integration.test.ts`
+- `packages/core/tests/services/integration/student-records.integration.test.ts`
 - `packages/core/tests/services/integration/student-enrollment.integration.test.ts`
+- `packages/core/tests/services/integration/setup-lifecycle.integration.test.ts`
 - `packages/core/tests/support/in-memory-repository-contract.test.ts`
 
 Verification commands:

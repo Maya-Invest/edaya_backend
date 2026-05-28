@@ -7,27 +7,43 @@ import { AuthorizationError, AuthorizationErrorCode } from './authorization-erro
 export type AuthorizationAction
   = 'setup.register_school'
     | 'setup.manage'
+    | 'setup.manage_lifecycle'
     | 'setup.assign_staff'
     | 'academics.manage_curriculum'
     | 'academics.record_progress'
     | 'academics.read_progress'
     | 'scheduling.manage'
     | 'attendance.record'
+    | 'attendance.review_justification'
     | 'attendance.read'
+    | 'behavior.report_incident'
+    | 'behavior.manage_discipline'
+    | 'behavior.read_incidents'
+    | 'resources.manage'
+    | 'resources.read'
+    | 'attachments.manage'
+    | 'attachments.read'
     | 'assessments.manage_configuration'
     | 'assessments.record_result'
     | 'assessments.read_results'
     | 'assessments.publish_report_card'
     | 'students.manage_enrollment'
     | 'students.manage_guardians'
+    | 'students.manage_profile'
+    | 'students.manage_health'
+    | 'students.manage_notes'
     | 'finance.manage'
     | 'finance.read'
     | 'communications.manage'
     | 'queries.read_workspace'
     | 'queries.read_overview'
     | 'queries.read_student_directory'
+    | 'queries.read_student_detail'
     | 'queries.read_enrollment_history'
     | 'queries.read_report_card_detail'
+    | 'queries.read_communications'
+    | 'queries.read_calendar'
+    | 'queries.read_curriculum_progress'
     | 'queries.read_class_directory'
     | 'queries.read_class_curriculum'
     | 'queries.read_timetable'
@@ -46,6 +62,8 @@ export interface AuthorizationResourceContext {
   readonly reportCardResultId?: string
   readonly studentFeeId?: string
   readonly announcementId?: string
+  readonly resourceId?: string
+  readonly attachmentId?: string
 }
 
 export interface AuthorizationRequest {
@@ -78,21 +96,37 @@ export interface RepositoryAuthorizationPolicyArgs {
 const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
 const coordinatorActions = new Set<AuthorizationAction>([
   'academics.manage_curriculum',
+  'setup.manage_lifecycle',
   'academics.record_progress',
   'academics.read_progress',
   'scheduling.manage',
   'attendance.record',
+  'attendance.review_justification',
   'attendance.read',
+  'behavior.report_incident',
+  'behavior.manage_discipline',
+  'behavior.read_incidents',
+  'resources.manage',
+  'resources.read',
+  'attachments.manage',
+  'attachments.read',
   'assessments.manage_configuration',
   'assessments.record_result',
   'assessments.read_results',
   'assessments.publish_report_card',
   'students.manage_enrollment',
   'students.manage_guardians',
+  'students.manage_profile',
+  'students.manage_health',
+  'students.manage_notes',
   'communications.manage',
   'queries.read_workspace',
+  'queries.read_student_detail',
   'queries.read_enrollment_history',
   'queries.read_report_card_detail',
+  'queries.read_communications',
+  'queries.read_calendar',
+  'queries.read_curriculum_progress',
   'queries.read_class_directory',
   'queries.read_class_curriculum',
   'queries.read_timetable',
@@ -103,15 +137,23 @@ const teacherAssignmentActions = new Set<AuthorizationAction>([
   'academics.read_progress',
   'attendance.record',
   'attendance.read',
+  'behavior.report_incident',
+  'behavior.read_incidents',
+  'resources.read',
+  'attachments.read',
   'assessments.record_result',
   'assessments.read_results',
+  'students.manage_notes',
+  'queries.read_student_detail',
   'queries.read_class_curriculum',
+  'queries.read_curriculum_progress',
   'queries.read_timetable',
   'queries.read_attendance',
 ])
 const accountantActions = new Set<AuthorizationAction>([
   'finance.manage',
   'finance.read',
+  'queries.read_student_detail',
 ])
 
 /**
@@ -192,6 +234,14 @@ export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
       return
     }
     if (
+      request.action === 'queries.read_student_detail'
+      && request.resource.studentId
+      && (await this.guardianStudentLinks.findByGuardianAndStudent(guardianId, request.resource.studentId))?.schoolId
+      === request.resource.schoolId
+    ) {
+      return
+    }
+    if (
       (request.action === 'attendance.read' || request.action === 'finance.read')
       && request.resource.studentId
       && (await this.guardianStudentLinks.findByGuardianAndStudent(guardianId, request.resource.studentId))?.schoolId
@@ -206,6 +256,12 @@ export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
     const student = await this.students.findById(studentId)
     if (!student || student.status !== StudentStatus.Active || student.schoolId !== request.resource.schoolId) {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+    if (
+      request.action === 'queries.read_student_detail'
+      && request.resource.studentId === studentId
+    ) {
+      return
     }
     if (
       (request.action === 'attendance.read' || request.action === 'finance.read')

@@ -4,6 +4,7 @@ import type {
   MessageDeliveryChannel,
   MessageDeliveryStatus,
 } from '../../entities/messaging/message-delivery'
+import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
@@ -27,6 +28,7 @@ export class CommunicationsService {
     this.announcements = args.repositories.announcements
     this.targets = args.repositories.announcementTargets
     this.deliveries = args.repositories.messageDeliveries
+    this.atomicExecution = args.atomicExecution
   }
 
   private readonly classGroups: SchoolRepositories['classGroups']
@@ -39,6 +41,7 @@ export class CommunicationsService {
   private readonly announcements: SchoolRepositories['announcements']
   private readonly targets: SchoolRepositories['announcementTargets']
   private readonly deliveries: SchoolRepositories['messageDeliveries']
+  private readonly atomicExecution: AtomicExecutionPort
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
 
@@ -180,6 +183,51 @@ export class CommunicationsService {
     return delivery
   }
 
+  async materializeDeliveries({
+    announcementId,
+    channel,
+    createdAt,
+  }: {
+    announcementId: string
+    channel: MessageDeliveryChannel
+    createdAt?: Date
+  }): Promise<MessageDelivery[]> {
+    const announcement = await this.requireAnnouncement(announcementId)
+    await this.authorize({ schoolId: announcement.schoolId, announcementId })
+    return this.atomicExecution.execute(async () => {
+      const current = await this.requireAnnouncement(announcementId)
+      if (!current.isPublished) {
+        throw new Error(`Announcement ${announcementId} must be published before materializing deliveries`)
+      }
+      const recipients = await this.resolveRecipients(current)
+      const deliveries: MessageDelivery[] = []
+      for (const recipient of recipients) {
+        const existing = (await this.deliveries.list({
+          announcementId,
+          recipientKind: recipient.recipientKind,
+          recipientId: recipient.recipientId,
+          channel,
+        }))[0]
+        if (existing) {
+          deliveries.push(existing)
+          continue
+        }
+        const delivery = new MessageDelivery({
+          id: `generated:${announcementId}:${channel}:${recipient.recipientKind}:${recipient.recipientId}`,
+          announcementId,
+          recipientKind: recipient.recipientKind,
+          recipientId: recipient.recipientId,
+          channel,
+          createdAt,
+          updatedAt: createdAt,
+        })
+        await this.deliveries.save(delivery)
+        deliveries.push(delivery)
+      }
+      return deliveries
+    })
+  }
+
   private async requireAnnouncement(announcementId: string): Promise<Announcement> {
     const announcement = await this.announcements.findById(announcementId)
     if (!announcement) {
@@ -286,6 +334,93 @@ export class CommunicationsService {
         return false
       }
     }
+  }
+
+  private async resolveRecipients(
+    announcement: Announcement,
+  ): Promise<Array<{ recipientKind: MessageDeliveryRecipientKind, recipientId: string }>> {
+    const recipients = new Map<string, { recipientKind: MessageDeliveryRecipientKind, recipientId: string }>()
+    const add = (recipientKind: MessageDeliveryRecipientKind, recipientId: string) => {
+      recipients.set(`${recipientKind}:${recipientId}`, { recipientKind, recipientId })
+    }
+    const addSchoolRecipients = async () => {
+      const [staffMembers, guardians, students] = await Promise.all([
+        this.staffMembers.list({ schoolId: announcement.schoolId }),
+        this.guardians.list({ schoolId: announcement.schoolId }),
+        this.students.list({ schoolId: announcement.schoolId }),
+      ])
+      staffMembers.forEach(staff => add(MessageDeliveryRecipientKind.Staff, staff.id))
+      guardians.forEach(guardian => add(MessageDeliveryRecipientKind.Guardian, guardian.id))
+      students.forEach(student => add(MessageDeliveryRecipientKind.Student, student.id))
+    }
+    const addEnrollmentRecipients = async (classGroupId: string) => {
+      const enrollments = await this.enrollments.list({
+        classGroupId,
+        status: StudentClassEnrollmentStatus.Active,
+      })
+      for (const enrollment of enrollments) {
+        const student = await this.students.findById(enrollment.studentId)
+        if (!student || student.schoolId !== announcement.schoolId) {
+          denyResourceAccess()
+        }
+        add(MessageDeliveryRecipientKind.Student, student.id)
+        const links = await this.guardianLinks.list({ studentId: student.id })
+        for (const link of links) {
+          const guardian = await this.guardians.findById(link.guardianId)
+          if (!guardian || guardian.schoolId !== announcement.schoolId) {
+            denyResourceAccess()
+          }
+          add(MessageDeliveryRecipientKind.Guardian, guardian.id)
+        }
+      }
+    }
+
+    const targets = await this.targets.list({ announcementId: announcement.id })
+    for (const target of targets) {
+      await this.requireTargetInSchool(target, announcement.schoolId)
+      switch (target.targetKind) {
+        case TargetKind.School:
+          await addSchoolRecipients()
+          break
+        case TargetKind.AllStaff:
+          (await this.staffMembers.list({ schoolId: announcement.schoolId }))
+            .forEach(staff => add(MessageDeliveryRecipientKind.Staff, staff.id))
+          break
+        case TargetKind.AllGuardians:
+          (await this.guardians.list({ schoolId: announcement.schoolId }))
+            .forEach(guardian => add(MessageDeliveryRecipientKind.Guardian, guardian.id))
+          break
+        case TargetKind.AllStudents:
+          (await this.students.list({ schoolId: announcement.schoolId }))
+            .forEach(student => add(MessageDeliveryRecipientKind.Student, student.id))
+          break
+        case TargetKind.StaffMember:
+          add(MessageDeliveryRecipientKind.Staff, target.targetId!)
+          break
+        case TargetKind.Guardian:
+          add(MessageDeliveryRecipientKind.Guardian, target.targetId!)
+          break
+        case TargetKind.Student:
+          add(MessageDeliveryRecipientKind.Student, target.targetId!)
+          break
+        case TargetKind.ClassGroup:
+          await addEnrollmentRecipients(target.targetId!)
+          break
+        case TargetKind.GradeLevel: {
+          const classGroups = await this.classGroups.list({ gradeLevelId: target.targetId! })
+          for (const classGroup of classGroups) {
+            if (classGroup.schoolId !== announcement.schoolId) {
+              continue
+            }
+            await addEnrollmentRecipients(classGroup.id)
+          }
+          break
+        }
+      }
+    }
+    return [...recipients.values()].sort((left, right) =>
+      left.recipientKind.localeCompare(right.recipientKind)
+      || left.recipientId.localeCompare(right.recipientId))
   }
 
   private async studentHasActiveTargetEnrollment(

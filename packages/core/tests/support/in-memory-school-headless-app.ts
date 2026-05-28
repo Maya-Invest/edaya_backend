@@ -127,6 +127,7 @@ function createAtomicExecution(participants: readonly TransactionParticipant[]) 
 
 export type FailableRepository
   = | 'classSubjectMatterRepository'
+    | 'messageDeliveryRepository'
     | 'reportCardResultRepository'
     | 'sessionRepository'
     | 'studentClassEnrollmentRepository'
@@ -294,7 +295,10 @@ export function createTestApp(actor?: ActorMetadata) {
     // communications
     announcements,
     announcementTargets,
-    messageDeliveries,
+    messageDeliveries: {
+      ...messageDeliveries,
+      save: entity => saveWithFailure('messageDeliveryRepository', messageDeliveries, entity),
+    },
 
   }
 
@@ -342,7 +346,15 @@ export function createTestApp(actor?: ActorMetadata) {
     paymentRepository: schoolRepositories.payments,
     scheduleRepository: schoolRepositories.schedules,
     calendarEventRepository: schoolRepositories.calendarEvents,
+    attachmentRepository: schoolRepositories.attachments,
+    resourceRepository: schoolRepositories.resources,
+    resourceAssignmentRepository: schoolRepositories.resourceAssignments,
+    studentNoteRepository: schoolRepositories.studentNotes,
     studentHealthProfileRepository: schoolRepositories.studentHealthProfiles,
+    studentDisciplinaryActionRepository: schoolRepositories.studentDisciplinaryActions,
+    disciplinaryActionRepository: schoolRepositories.disciplinaryActions,
+    studentIncidentInvolvementRepository: schoolRepositories.studentIncidentInvolvements,
+    incidentRepository: schoolRepositories.incidents,
   }
 
   const defaultActor = actor ?? createStaffActorMetadata({

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'bun:test'
-import { AcademicPeriodType, AttendanceStatus, PaymentMethod, PaymentStatus, SessionKind } from '../../../src/entities'
+import {
+  AcademicPeriodType,
+  AnnouncementTargetKind,
+  AttendanceStatus,
+  FeeStatus,
+  MessageDeliveryChannel,
+  PaymentMethod,
+  PaymentStatus,
+  SessionKind,
+} from '../../../src/entities'
 import { AuthorizationErrorCode } from '../../../src/services/authorization'
 import { createTestApp } from '../../support/in-memory-school-headless-app'
 
@@ -56,7 +65,7 @@ describe('atomic workflow safeguards', () => {
     expect((await repositories.classSubjectRepository.findById(classSubject.id))?.completedPercentage).toBe(0)
   })
 
-  it('rolls back payment recording and reversal when balance updates fail', async () => {
+  it('rolls back payment and fee lifecycle changes when balance writes fail', async () => {
     const { app, repositories, failSaveOnAttempt } = createTestApp()
     await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
     await app.setup.createAcademicYear({
@@ -105,6 +114,25 @@ describe('atomic workflow safeguards', () => {
     ).rejects.toThrow('Simulated studentFeeRepository save failure')
     expect((await repositories.paymentRepository.findById('payment'))?.status).toBe(PaymentStatus.Recorded)
     expect((await repositories.studentFeeRepository.findById(studentFee.id))?.paidAmount.amount).toBe(30000)
+    failSaveOnAttempt('studentFeeRepository')
+    await expect(app.finance.cancelPayment({ paymentId: 'payment' }))
+      .rejects
+      .toThrow('Simulated studentFeeRepository save failure')
+    expect((await repositories.paymentRepository.findById('payment'))?.status).toBe(PaymentStatus.Recorded)
+    failSaveOnAttempt('studentFeeRepository')
+    await expect(app.finance.adjustStudentFee({
+      studentFeeId: studentFee.id,
+      adjustmentAmount: 10000,
+      reason: 'Adjustment',
+    })).rejects.toThrow('Simulated studentFeeRepository save failure')
+    expect((await repositories.studentFeeRepository.findById(studentFee.id))?.adjustmentAmount.amount).toBe(0)
+    await app.finance.cancelPayment({ paymentId: 'payment' })
+    failSaveOnAttempt('studentFeeRepository')
+    await expect(app.finance.cancelStudentFee({
+      studentFeeId: studentFee.id,
+      reason: 'Cancellation',
+    })).rejects.toThrow('Simulated studentFeeRepository save failure')
+    expect((await repositories.studentFeeRepository.findById(studentFee.id))?.status).not.toBe(FeeStatus.Cancelled)
   })
 
   it('rolls back report-card publication when the published result cannot be saved', async () => {
@@ -229,5 +257,30 @@ describe('atomic workflow safeguards', () => {
       endDate: sessionDate,
     })).rejects.toThrow('Simulated sessionRepository save failure')
     expect(await repositories.sessionRepository.list({ classGroupId: 'class' })).toHaveLength(0)
+  })
+
+  it('rolls back generated communications deliveries when a later recipient save fails', async () => {
+    const { app, repositories, failSaveOnAttempt } = createTestApp()
+    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
+    await app.students.registerGuardian({ id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba' })
+    await app.students.registerGuardian({ id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba' })
+    await app.communications.createAnnouncement({
+      id: 'announcement',
+      schoolId: 'school',
+      title: 'Reminder',
+      content: 'Administrative reminder.',
+    })
+    await app.communications.addTarget({
+      id: 'all-guardians',
+      announcementId: 'announcement',
+      targetKind: AnnouncementTargetKind.AllGuardians,
+    })
+    await app.communications.publishAnnouncement({ announcementId: 'announcement' })
+    failSaveOnAttempt('messageDeliveryRepository', 2)
+    await expect(app.communications.materializeDeliveries({
+      announcementId: 'announcement',
+      channel: MessageDeliveryChannel.App,
+    })).rejects.toThrow('Simulated messageDeliveryRepository save failure')
+    expect(await repositories.messageDeliveryRepository.list({ announcementId: 'announcement' })).toHaveLength(0)
   })
 })

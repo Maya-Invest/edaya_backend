@@ -1,5 +1,5 @@
 import { Money } from '../../value_object/money'
-import { requireNonBlank, requireNonNegativeInt, requireValidDate } from '../utils'
+import { requireNonBlank, requireNonNegativeInt, requireOptionalNonBlank, requireValidDate } from '../utils'
 
 export enum FeeStatus {
   Pending = 'pending',
@@ -25,9 +25,14 @@ export interface StudentFeeArgs {
   paidAmount?: number | null
   adjustmentAmount?: number | null
   adjustmentReason?: string | null
+  adjustedById?: string | null
+  adjustedAt?: Date | null
   currency: string
   dueDate?: Date | null
   status: FeeStatus
+  cancellationReason?: string | null
+  cancelledById?: string | null
+  cancelledAt?: Date | null
   installments?: readonly StudentFeeInstallment[]
   createdAt?: Date
   updatedAt?: Date
@@ -48,8 +53,13 @@ export class StudentFee {
   readonly paidAmount: Money
   readonly adjustmentAmount: Money
   readonly adjustmentReason?: string
+  readonly adjustedById?: string
+  readonly adjustedAt?: Date
   readonly dueDate?: Date
   readonly status: FeeStatus
+  readonly cancellationReason?: string
+  readonly cancelledById?: string
+  readonly cancelledAt?: Date
   readonly installments: readonly StudentFeeInstallment[]
   readonly createdAt: Date
   readonly updatedAt?: Date
@@ -63,9 +73,14 @@ export class StudentFee {
     paidAmount = 0,
     adjustmentAmount = 0,
     adjustmentReason,
+    adjustedById,
+    adjustedAt,
     currency,
     dueDate,
     status,
+    cancellationReason,
+    cancelledById,
+    cancelledAt,
     installments = [],
     createdAt,
     updatedAt,
@@ -90,12 +105,23 @@ export class StudentFee {
       currency: activeCurrency,
     })
     this.adjustmentReason = requireNonBlankIfAmount(adjustmentReason, this.adjustmentAmount.amount, 'adjustmentReason')
+    this.adjustedById = requireOptionalNonBlank(adjustedById, 'adjustedById')
+    this.adjustedAt = adjustedAt ? requireValidDate(adjustedAt, 'adjustedAt') : undefined
     if (this.adjustmentAmount.amount > this.expectedAmount.amount) {
       throw new Error('adjustmentAmount must not exceed expectedAmount')
+    }
+    if (this.adjustmentAmount.amount > 0 && (!this.adjustedById || !this.adjustedAt)) {
+      throw new Error('adjustedById and adjustedAt are required for adjusted student fees')
+    }
+    if (this.adjustmentAmount.amount === 0 && (this.adjustedById || this.adjustedAt)) {
+      throw new Error('unadjusted student fees must not define adjustment audit fields')
     }
 
     this.dueDate = dueDate ? requireValidDate(dueDate, 'dueDate') : undefined
     this.status = status
+    this.cancellationReason = requireOptionalNonBlank(cancellationReason, 'cancellationReason')
+    this.cancelledById = requireOptionalNonBlank(cancelledById, 'cancelledById')
+    this.cancelledAt = cancelledAt ? requireValidDate(cancelledAt, 'cancelledAt') : undefined
 
     this.installments = Object.freeze(
       installments.map(inst => ({
@@ -121,11 +147,19 @@ export class StudentFee {
         throw new Error('overdue fees must define a dueDate')
       }
     }
+    if (this.status === FeeStatus.Cancelled && (!this.cancellationReason || !this.cancelledById || !this.cancelledAt)) {
+      throw new Error('cancellation reason, actor, and date are required for cancelled student fees')
+    }
+    if (this.status !== FeeStatus.Cancelled && (this.cancellationReason || this.cancelledById || this.cancelledAt)) {
+      throw new Error('active student fees must not define cancellation audit fields')
+    }
   }
 
   get balanceDue(): Money {
     return new Money({
-      amount: Math.max(0, this.expectedAmount.amount - this.adjustmentAmount.amount - this.paidAmount.amount),
+      amount: this.status === FeeStatus.Cancelled
+        ? 0
+        : Math.max(0, this.expectedAmount.amount - this.adjustmentAmount.amount - this.paidAmount.amount),
       currency: this.expectedAmount.currency,
     })
   }
@@ -140,9 +174,14 @@ export class StudentFee {
       paidAmount: changes.paidAmount ?? this.paidAmount.amount,
       adjustmentAmount: changes.adjustmentAmount ?? this.adjustmentAmount.amount,
       adjustmentReason: changes.adjustmentReason !== undefined ? changes.adjustmentReason : this.adjustmentReason,
+      adjustedById: changes.adjustedById !== undefined ? changes.adjustedById : this.adjustedById,
+      adjustedAt: changes.adjustedAt !== undefined ? changes.adjustedAt : this.adjustedAt,
       currency: this.expectedAmount.currency,
       dueDate: changes.dueDate !== undefined ? changes.dueDate : this.dueDate,
       status: changes.status ?? this.status,
+      cancellationReason: changes.cancellationReason !== undefined ? changes.cancellationReason : this.cancellationReason,
+      cancelledById: changes.cancelledById !== undefined ? changes.cancelledById : this.cancelledById,
+      cancelledAt: changes.cancelledAt !== undefined ? changes.cancelledAt : this.cancelledAt,
       installments: this.installments,
       createdAt: this.createdAt,
       updatedAt: changes.updatedAt !== undefined ? changes.updatedAt : this.updatedAt,
@@ -182,12 +221,13 @@ export class StudentFeeSummary {
 
 export function buildStudentFeeSummary(studentFees: readonly StudentFee[], fallbackCurrency = 'XAF'): StudentFeeSummary {
   const currency = studentFees[0]?.expectedAmount.currency ?? fallbackCurrency
-  const totalExpectedAmount = studentFees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
-  const totalPaidAmount = studentFees.reduce((sum, item) => sum + item.paidAmount.amount, 0)
-  const totalOverdueAmount = studentFees
+  const activeFees = studentFees.filter(item => item.status !== FeeStatus.Cancelled)
+  const totalExpectedAmount = activeFees.reduce((sum, item) => sum + item.expectedAmount.amount, 0)
+  const totalPaidAmount = activeFees.reduce((sum, item) => sum + item.paidAmount.amount, 0)
+  const totalOverdueAmount = activeFees
     .filter(item => item.status === FeeStatus.Overdue)
     .reduce((sum, item) => sum + item.balanceDue.amount, 0)
-  const totalAdjustedAmount = studentFees.reduce((sum, item) => sum + item.adjustmentAmount.amount, 0)
+  const totalAdjustedAmount = activeFees.reduce((sum, item) => sum + item.adjustmentAmount.amount, 0)
   return new StudentFeeSummary({
     totalExpected: new Money({ amount: totalExpectedAmount, currency }),
     totalPaid: new Money({ amount: totalPaidAmount, currency }),

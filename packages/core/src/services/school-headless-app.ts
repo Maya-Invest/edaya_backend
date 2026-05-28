@@ -2,6 +2,7 @@ import type { AtomicExecutionPort, SchoolRepositories } from '../ports'
 import type { ActorMetadata, AuthorizedServiceArgs } from './authorization'
 import { AcademicsService } from './modules/academics'
 import { AssessmentsService } from './modules/assessments'
+import { BehaviorService } from './modules/behavior'
 import { CommunicationsService } from './modules/communications'
 import { FinanceService } from './modules/finance'
 import { SchoolQueryService } from './modules/queries'
@@ -19,6 +20,7 @@ export class SchoolHeadlessApp {
   readonly academics: AcademicsService
   readonly scheduling: SchedulingService
   readonly assessments: AssessmentsService
+  readonly behavior: BehaviorService
   readonly students: StudentsService
   readonly finance: FinanceService
   readonly communications: CommunicationsService
@@ -28,6 +30,7 @@ export class SchoolHeadlessApp {
     this.setup = new SetupService(args)
     this.students = new StudentsService(args)
     this.academics = new AcademicsService(args)
+    this.behavior = new BehaviorService(args)
     this.scheduling = new SchedulingService(args)
     this.assessments = new AssessmentsService(args)
     this.communications = new CommunicationsService(args)

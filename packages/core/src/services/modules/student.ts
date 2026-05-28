@@ -1,10 +1,12 @@
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { School } from '../../entities/school/school'
 import type { GuardianContactMethod } from '../../entities/students/guardian-contact-method'
+import type { StudentNoteVisibility } from '../../entities/students/student-note'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
+import type { ActorMetadata, AuthorizationAction, AuthorizationPolicy } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
+import { StaffRole } from '../../entities/school/staff-member'
 import { Guardian } from '../../entities/students/guardian'
 import { GuardianStudentLink } from '../../entities/students/guardian-student-link'
 import { Student, StudentStatus } from '../../entities/students/student'
@@ -14,6 +16,8 @@ import {
   StudentClassEnrollment,
   StudentClassEnrollmentStatus,
 } from '../../entities/students/student-class-enrollment'
+import { StudentHealthProfile } from '../../entities/students/student-health-profile'
+import { StudentNoteVisibility as NoteVisibility, StudentNote } from '../../entities/students/student-note'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 
 export class StudentsService {
@@ -315,12 +319,268 @@ export class StudentsService {
     return guardian
   }
 
+  async updateStudentProfile({
+    studentId,
+    firstName,
+    lastName,
+    gender,
+    birthDate,
+    placeOfBirth,
+    nationality,
+    matricule,
+    photoUrl,
+    enrollmentDate,
+  }: {
+    studentId: string
+    firstName?: string
+    lastName?: string
+    gender?: string | null
+    birthDate?: Date
+    placeOfBirth?: string | null
+    nationality?: string | null
+    matricule?: string | null
+    photoUrl?: string | null
+    enrollmentDate?: Date | null
+  }): Promise<Student> {
+    const { student, classGroupId } = await this.requireStudentManagementContext(studentId)
+    await this.authorize('students.manage_profile', {
+      schoolId: student.schoolId,
+      classGroupId,
+      studentId: student.id,
+    })
+    const updated = new Student({
+      id: student.id,
+      schoolId: student.schoolId,
+      firstName: firstName ?? student.firstName,
+      lastName: lastName ?? student.lastName,
+      gender: gender === undefined ? student.gender : gender,
+      birthDate: birthDate ?? student.birthDate,
+      placeOfBirth: placeOfBirth === undefined ? student.placeOfBirth : placeOfBirth,
+      nationality: nationality === undefined ? student.nationality : nationality,
+      matricule: matricule === undefined ? student.matricule : matricule,
+      photoUrl: photoUrl === undefined ? student.photoUrl : photoUrl,
+      status: student.status,
+      enrollmentDate: enrollmentDate === undefined ? student.enrollmentDate : enrollmentDate,
+      createdAt: student.createdAt,
+    })
+    await this.repositories.students.save(updated)
+    return updated
+  }
+
+  async updateStudentStatus({
+    studentId,
+    status,
+  }: {
+    studentId: string
+    status: StudentStatus
+  }): Promise<Student> {
+    const { student, classGroupId } = await this.requireStudentManagementContext(studentId)
+    await this.authorize('students.manage_profile', {
+      schoolId: student.schoolId,
+      classGroupId,
+      studentId: student.id,
+    })
+    if (student.status === StudentStatus.Graduated && status !== StudentStatus.Graduated) {
+      throw new Error(`Student ${studentId} cannot leave graduated status through profile update`)
+    }
+    const updated = new Student({
+      id: student.id,
+      schoolId: student.schoolId,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      gender: student.gender,
+      birthDate: student.birthDate,
+      placeOfBirth: student.placeOfBirth,
+      nationality: student.nationality,
+      matricule: student.matricule,
+      photoUrl: student.photoUrl,
+      status,
+      enrollmentDate: student.enrollmentDate,
+      createdAt: student.createdAt,
+    })
+    await this.repositories.students.save(updated)
+    return updated
+  }
+
+  async upsertStudentHealthProfile({
+    id,
+    studentId,
+    allergies,
+    medicalConditions,
+    emergencyProtocols,
+    bloodType,
+    updatedAt,
+  }: {
+    id: string
+    studentId: string
+    allergies?: string | null
+    medicalConditions?: string | null
+    emergencyProtocols?: string | null
+    bloodType?: string | null
+    updatedAt?: Date
+  }): Promise<StudentHealthProfile> {
+    const { student, classGroupId } = await this.requireStudentManagementContext(studentId)
+    await this.authorize('students.manage_health', {
+      schoolId: student.schoolId,
+      classGroupId,
+      studentId: student.id,
+    })
+    const existingById = await this.repositories.studentHealthProfiles.findById(id)
+    if (existingById && (existingById.schoolId !== student.schoolId || existingById.studentId !== student.id)) {
+      denyResourceAccess()
+    }
+    const existing = existingById ?? (await this.repositories.studentHealthProfiles.list({
+      schoolId: student.schoolId,
+      studentId: student.id,
+    })).sort((left, right) =>
+      right.updatedAt.getTime() - left.updatedAt.getTime()
+      || left.id.localeCompare(right.id))[0]
+    const profile = new StudentHealthProfile({
+      id: existing?.id ?? id,
+      schoolId: student.schoolId,
+      studentId: student.id,
+      allergies: allergies === undefined ? existing?.allergies : allergies,
+      medicalConditions: medicalConditions === undefined ? existing?.medicalConditions : medicalConditions,
+      emergencyProtocols: emergencyProtocols === undefined ? existing?.emergencyProtocols : emergencyProtocols,
+      bloodType: bloodType === undefined ? existing?.bloodType : bloodType,
+      createdAt: existing?.createdAt,
+      updatedAt,
+    })
+    await this.repositories.studentHealthProfiles.save(profile)
+    return profile
+  }
+
+  async createStudentNote({
+    id,
+    studentId,
+    title,
+    body,
+    visibility = NoteVisibility.Staff,
+    createdAt,
+  }: {
+    id: string
+    studentId: string
+    title?: string
+    body: string
+    visibility?: StudentNoteVisibility
+    createdAt?: Date
+  }): Promise<StudentNote> {
+    const { student, classGroupId } = await this.requireStudentManagementContext(studentId)
+    await this.authorize('students.manage_notes', {
+      schoolId: student.schoolId,
+      classGroupId,
+      studentId: student.id,
+    })
+    await this.requireCanWriteNote(visibility)
+    const note = new StudentNote({
+      id,
+      schoolId: student.schoolId,
+      studentId: student.id,
+      authorStaffId: this.requireStaffActorId(),
+      title,
+      body,
+      visibility,
+      createdAt,
+      updatedAt: createdAt,
+    })
+    await this.repositories.studentNotes.save(note)
+    return note
+  }
+
+  async updateStudentNote({
+    noteId,
+    title,
+    body,
+    visibility,
+    updatedAt,
+  }: {
+    noteId: string
+    title?: string | null
+    body?: string
+    visibility?: StudentNoteVisibility
+    updatedAt?: Date
+  }): Promise<StudentNote> {
+    const existing = await this.repositories.studentNotes.findById(noteId)
+    if (!existing) {
+      denyResourceAccess()
+    }
+    const { student, classGroupId } = await this.requireStudentManagementContext(existing.studentId)
+    if (existing.schoolId !== student.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorize('students.manage_notes', {
+      schoolId: student.schoolId,
+      classGroupId,
+      studentId: student.id,
+    })
+    const noteVisibility = visibility ?? existing.visibility
+    await this.requireCanWriteNote(noteVisibility)
+    if (existing.authorStaffId !== this.requireStaffActorId() && !await this.hasFullStudentRecordAccess()) {
+      denyResourceAccess()
+    }
+    const note = new StudentNote({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      studentId: existing.studentId,
+      authorStaffId: existing.authorStaffId,
+      title: title === undefined ? existing.title : title,
+      body: body ?? existing.body,
+      visibility: noteVisibility,
+      createdAt: existing.createdAt,
+      updatedAt,
+    })
+    await this.repositories.studentNotes.save(note)
+    return note
+  }
+
+  async updateGuardianContactMethods({
+    guardianId,
+    firstName,
+    lastName,
+    contactMethods,
+    hasAccess,
+    premiumNotificationsEnabled,
+  }: {
+    guardianId: string
+    firstName?: string
+    lastName?: string
+    contactMethods?: readonly GuardianContactMethod[]
+    hasAccess?: boolean
+    premiumNotificationsEnabled?: boolean
+  }): Promise<Guardian> {
+    const guardian = await this.requireGuardian(guardianId)
+    await this.authorize('students.manage_guardians', {
+      schoolId: guardian.schoolId,
+      guardianId: guardian.id,
+    })
+    const updated = new Guardian({
+      id: guardian.id,
+      schoolId: guardian.schoolId,
+      firstName: firstName ?? guardian.firstName,
+      lastName: lastName ?? guardian.lastName,
+      contactMethods: contactMethods ?? guardian.contactMethods,
+      hasAccess: hasAccess ?? guardian.hasAccess,
+      premiumNotificationsEnabled: premiumNotificationsEnabled ?? guardian.premiumNotificationsEnabled,
+      createdAt: guardian.createdAt,
+    })
+    await this.repositories.guardians.save(updated)
+    return updated
+  }
+
   async linkGuardianToStudent({
     id,
     guardianId,
     studentId,
     relationship = 'parent',
     isPrimary = false,
+    isBillingContact = false,
+    legalGuardian = false,
+    canPickup = false,
+    emergencyContactPriority,
+    receivesAcademicReports = true,
+    receivesAttendanceAlerts = true,
+    contactRestrictions,
+    notes,
     createdAt,
   }: {
     id: string
@@ -328,6 +588,14 @@ export class StudentsService {
     studentId: string
     relationship?: string
     isPrimary?: boolean
+    isBillingContact?: boolean
+    legalGuardian?: boolean
+    canPickup?: boolean
+    emergencyContactPriority?: number | null
+    receivesAcademicReports?: boolean
+    receivesAttendanceAlerts?: boolean
+    contactRestrictions?: string | null
+    notes?: string | null
     createdAt?: Date
   }): Promise<GuardianStudentLink> {
     const guardian = await this.requireGuardian(guardianId)
@@ -361,10 +629,82 @@ export class StudentsService {
       studentId,
       relationship,
       isPrimary,
+      isBillingContact,
+      legalGuardian,
+      canPickup,
+      emergencyContactPriority,
+      receivesAcademicReports,
+      receivesAttendanceAlerts,
+      contactRestrictions,
+      notes,
       createdAt: existing?.createdAt ?? createdAt,
     })
     await this.repositories.guardianLinks.save(link)
     return link
+  }
+
+  async updateGuardianStudentLink({
+    guardianId,
+    studentId,
+    relationship,
+    isPrimary,
+    isBillingContact,
+    legalGuardian,
+    canPickup,
+    emergencyContactPriority,
+    receivesAcademicReports,
+    receivesAttendanceAlerts,
+    contactRestrictions,
+    notes,
+  }: {
+    guardianId: string
+    studentId: string
+    relationship?: string
+    isPrimary?: boolean
+    isBillingContact?: boolean
+    legalGuardian?: boolean
+    canPickup?: boolean
+    emergencyContactPriority?: number | null
+    receivesAcademicReports?: boolean
+    receivesAttendanceAlerts?: boolean
+    contactRestrictions?: string | null
+    notes?: string | null
+  }): Promise<GuardianStudentLink> {
+    const existing = await this.repositories.guardianLinks.findByGuardianAndStudent(guardianId, studentId)
+    if (!existing) {
+      denyResourceAccess()
+    }
+    const guardian = await this.requireGuardian(guardianId)
+    const student = await this.requireStudent(studentId)
+    if (guardian.schoolId !== existing.schoolId || student.schoolId !== existing.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorize('students.manage_guardians', {
+      schoolId: existing.schoolId,
+      guardianId,
+      studentId,
+    })
+    const updated = new GuardianStudentLink({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      guardianId,
+      studentId,
+      relationship: relationship ?? existing.relationship,
+      isPrimary: isPrimary ?? existing.isPrimary,
+      isBillingContact: isBillingContact ?? existing.isBillingContact,
+      legalGuardian: legalGuardian ?? existing.legalGuardian,
+      canPickup: canPickup ?? existing.canPickup,
+      emergencyContactPriority: emergencyContactPriority === undefined
+        ? existing.emergencyContactPriority
+        : emergencyContactPriority,
+      receivesAcademicReports: receivesAcademicReports ?? existing.receivesAcademicReports,
+      receivesAttendanceAlerts: receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
+      contactRestrictions: contactRestrictions === undefined ? existing.contactRestrictions : contactRestrictions,
+      notes: notes === undefined ? existing.notes : notes,
+      createdAt: existing.createdAt,
+    })
+    await this.repositories.guardianLinks.save(updated)
+    return updated
   }
 
   private async requireSchool(schoolId: string): Promise<School> {
@@ -485,8 +825,48 @@ export class StudentsService {
     }
   }
 
+  private async requireStudentManagementContext(
+    studentId: string,
+  ): Promise<{ student: Student, classGroupId?: string }> {
+    const student = await this.requireStudent(studentId)
+    const activeEnrollment = await this.repositories.enrollments.findActiveByStudent(student.id)
+    if (!activeEnrollment) {
+      return { student }
+    }
+    const classGroup = await this.requireClassGroup(activeEnrollment.classGroupId)
+    if (classGroup.schoolId !== student.schoolId) {
+      denyResourceAccess()
+    }
+    return { student, classGroupId: classGroup.id }
+  }
+
+  private requireStaffActorId(): string {
+    if (this.actor.kind !== 'staff') {
+      denyResourceAccess()
+    }
+    return this.actor.staffMemberId
+  }
+
+  private async requireCanWriteNote(visibility: StudentNoteVisibility): Promise<void> {
+    this.requireStaffActorId()
+    if (visibility === NoteVisibility.AdminOnly && !await this.hasFullStudentRecordAccess()) {
+      denyResourceAccess()
+    }
+  }
+
+  private async hasFullStudentRecordAccess(): Promise<boolean> {
+    if (this.actor.kind !== 'staff') {
+      return false
+    }
+    const staffMember = await this.repositories.staffMembers.findById(this.actor.staffMemberId)
+    return staffMember?.roles.some(role =>
+      role === StaffRole.Admin
+      || role === StaffRole.Principal
+      || role === StaffRole.Coordinator) ?? false
+  }
+
   private async authorize(
-    action: 'students.manage_enrollment' | 'students.manage_guardians',
+    action: Extract<AuthorizationAction, `students.${string}`>,
     resource: { schoolId: string, classGroupId?: string, studentId?: string, guardianId?: string },
   ): Promise<void> {
     await this.authorizationPolicy.requirePermission(this.actor, { action, resource })

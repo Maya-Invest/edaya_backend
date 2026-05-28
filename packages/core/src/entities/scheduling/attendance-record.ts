@@ -24,6 +24,8 @@ export interface AttendanceRecordArgs {
   notes?: string | null
   justifiedAt?: Date | null
   justifiedByStaffId?: string | null
+  correctedAt?: Date | null
+  correctedByStaffId?: string | null
   createdBy?: string
   createdAt?: Date
   updatedAt?: Date
@@ -44,6 +46,8 @@ export class AttendanceRecord {
   readonly notes?: string
   readonly justifiedAt?: Date
   readonly justifiedByStaffId?: string
+  readonly correctedAt?: Date
+  readonly correctedByStaffId?: string
   readonly createdBy?: string
   readonly createdAt: Date
   readonly updatedAt: Date
@@ -59,6 +63,8 @@ export class AttendanceRecord {
     notes,
     justifiedAt,
     justifiedByStaffId,
+    correctedAt,
+    correctedByStaffId,
     createdBy,
     createdAt,
     updatedAt,
@@ -73,6 +79,8 @@ export class AttendanceRecord {
     this.notes = requireOptionalNonBlank(notes, 'notes')
     this.justifiedAt = justifiedAt ? requireValidDate(justifiedAt, 'justifiedAt') : undefined
     this.justifiedByStaffId = requireOptionalNonBlank(justifiedByStaffId, 'justifiedByStaffId')
+    this.correctedAt = correctedAt ? requireValidDate(correctedAt, 'correctedAt') : undefined
+    this.correctedByStaffId = requireOptionalNonBlank(correctedByStaffId, 'correctedByStaffId')
     this.createdBy = requireOptionalNonBlank(createdBy, 'createdBy')
 
     const now = new Date()
@@ -81,6 +89,9 @@ export class AttendanceRecord {
 
     if (this.justifiedByStaffId && !this.justifiedAt) {
       throw new Error('justifiedAt is required when justifiedByStaffId is provided')
+    }
+    if ((this.correctedAt && !this.correctedByStaffId) || (!this.correctedAt && this.correctedByStaffId)) {
+      throw new Error('correctedAt and correctedByStaffId must be provided together')
     }
     if (
       this.justificationStatus !== AttendanceJustificationStatus.None

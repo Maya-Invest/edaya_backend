@@ -1,3 +1,4 @@
+import type { CalendarEventKind } from '../../entities/scheduling/calendar-event'
 import type { AcademicYear } from '../../entities/school/academic-year'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
@@ -5,10 +6,11 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../school-headless-app'
 import { AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
-import { CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
+import { CalendarEvent, CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
 import { PeriodDefinition } from '../../entities/scheduling/period-definition'
 import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
+import { AttendanceMode } from '../../entities/school/class-group'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { normalizeDate } from '../../entities/utils'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
@@ -126,6 +128,69 @@ export class SchedulingService {
     })
     await this.repositories.schedules.save(schedule)
     return schedule
+  }
+
+  async createCalendarEvent({
+    id,
+    schoolId,
+    academicYearId,
+    title,
+    startDate,
+    endDate,
+    kind,
+    isNonSchoolDay,
+    scopeKind = CalendarEventScopeKind.School,
+    scopeId,
+    createdAt,
+  }: {
+    id: string
+    schoolId: string
+    academicYearId: string
+    title: string
+    startDate: Date
+    endDate: Date
+    kind: CalendarEventKind
+    isNonSchoolDay?: boolean
+    scopeKind?: CalendarEventScopeKind
+    scopeId?: string
+    createdAt?: Date
+  }): Promise<CalendarEvent> {
+    await this.authorize('scheduling.manage', { schoolId, academicYearId })
+    await this.requireSchool(schoolId)
+    const academicYear = await this.requireAcademicYear(academicYearId)
+    if (academicYear.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
+    if (startDate.getTime() < academicYear.startDate.getTime() || endDate.getTime() > academicYear.endDate.getTime()) {
+      throw new Error(`Calendar event ${id} must fit within academic year ${academicYearId}`)
+    }
+    if (scopeKind === CalendarEventScopeKind.ClassGroup) {
+      const classGroup = await this.requireClassGroup(scopeId ?? '')
+      if (classGroup.schoolId !== schoolId || classGroup.academicYearId !== academicYearId) {
+        denyResourceAccess()
+      }
+    }
+    if (scopeKind === CalendarEventScopeKind.GradeLevel) {
+      const gradeLevel = scopeId ? await this.repositories.gradeLevels.findById(scopeId) : undefined
+      if (!gradeLevel || gradeLevel.schoolId !== schoolId) {
+        denyResourceAccess()
+      }
+    }
+    const event = new CalendarEvent({
+      id,
+      schoolId,
+      academicYearId,
+      title,
+      startDate,
+      endDate,
+      kind,
+      isNonSchoolDay,
+      scopeKind,
+      scopeId,
+      createdAt,
+    })
+    await this.repositories.calendarEvents.save(event)
+    return event
   }
 
   async generateSessions({
@@ -263,6 +328,107 @@ export class SchedulingService {
     return this.saveAttendanceRecord({ id, studentId, sessionId, status, createdBy: resolveAuditActorId(this.actor), createdAt })
   }
 
+  async recordDailyAttendance({
+    id,
+    classGroupId,
+    studentId,
+    date,
+    status,
+    createdAt,
+  }: {
+    id: string
+    classGroupId: string
+    studentId: string
+    date: Date
+    status: AttendanceStatus
+    createdAt?: Date
+  }): Promise<AttendanceRecord> {
+    const classGroup = await this.requireClassGroup(classGroupId)
+    this.requireDailyAttendanceMode(classGroup)
+    await this.authorize('attendance.record', {
+      schoolId: classGroup.schoolId,
+      classGroupId: classGroup.id,
+      studentId,
+    })
+    await this.requireStudentInSchool(studentId, classGroup.schoolId)
+    await this.requireEnrollmentForClassGroup({ studentId, classGroupId: classGroup.id })
+    const createdBy = resolveAuditActorId(this.actor)
+    return this.atomicExecution.execute(async () => {
+      const session = await this.getOrCreateDailyAttendanceSession(classGroup, date, createdAt)
+      return this.saveAttendanceRecord({
+        id,
+        studentId,
+        sessionId: session.id,
+        status,
+        createdBy,
+        createdAt,
+      })
+    })
+  }
+
+  async reviewAttendanceJustification({
+    studentId,
+    sessionId,
+    decision,
+    reason,
+    notes,
+    reviewedAt,
+  }: {
+    studentId: string
+    sessionId: string
+    decision: AttendanceJustificationStatus.Excused | AttendanceJustificationStatus.Rejected
+    reason: string
+    notes?: string
+    reviewedAt?: Date
+  }): Promise<AttendanceRecord> {
+    const session = await this.requireSession(sessionId)
+    const classGroup = await this.requireClassGroup(session.classGroupId)
+    await this.authorize('attendance.review_justification', {
+      schoolId: classGroup.schoolId,
+      classGroupId: classGroup.id,
+      classSubjectId: session.classSubjectId,
+      sessionId: session.id,
+      studentId,
+    })
+    await this.requireStudentInSchool(studentId, classGroup.schoolId)
+    const record = await this.repositories.attendance.findByStudentAndSession(studentId, sessionId)
+    if (!record) {
+      denyResourceAccess()
+    }
+    if (record.status !== AttendanceStatus.Absent) {
+      throw new Error('Only an absent attendance record may receive a justification decision')
+    }
+    if (
+      record.justificationStatus === AttendanceJustificationStatus.Excused
+      || record.justificationStatus === AttendanceJustificationStatus.Rejected
+    ) {
+      throw new Error('Attendance justification has already been reviewed')
+    }
+    if (reason.trim().length === 0) {
+      throw new Error('reason is required for an attendance justification decision')
+    }
+    const decisionTime = reviewedAt ?? new Date()
+    const reviewedRecord = new AttendanceRecord({
+      id: record.id,
+      studentId: record.studentId,
+      sessionId: record.sessionId,
+      date: record.date,
+      status: record.status,
+      justificationStatus: decision,
+      reason,
+      notes,
+      justifiedAt: decisionTime,
+      justifiedByStaffId: resolveAuditActorId(this.actor),
+      correctedAt: record.correctedAt,
+      correctedByStaffId: record.correctedByStaffId,
+      createdBy: record.createdBy,
+      createdAt: record.createdAt,
+      updatedAt: decisionTime,
+    })
+    await this.repositories.attendance.save(reviewedRecord)
+    return reviewedRecord
+  }
+
   async recordSessionAttendance({
     sessionId,
     attendanceByStudent,
@@ -291,6 +457,45 @@ export class SchedulingService {
           id: `${studentId}-${sessionId}`,
           studentId,
           sessionId,
+          status,
+          createdBy,
+          createdAt,
+        }))
+      }
+      return records
+    })
+  }
+
+  async recordClassDailyAttendance({
+    classGroupId,
+    date,
+    attendanceByStudent,
+    createdAt,
+  }: {
+    classGroupId: string
+    date: Date
+    attendanceByStudent: Record<string, AttendanceStatus>
+    createdAt?: Date
+  }): Promise<AttendanceRecord[]> {
+    const classGroup = await this.requireClassGroup(classGroupId)
+    this.requireDailyAttendanceMode(classGroup)
+    await this.authorize('attendance.record', {
+      schoolId: classGroup.schoolId,
+      classGroupId: classGroup.id,
+    })
+    for (const studentId of Object.keys(attendanceByStudent)) {
+      await this.requireStudentInSchool(studentId, classGroup.schoolId)
+      await this.requireEnrollmentForClassGroup({ studentId, classGroupId: classGroup.id })
+    }
+    const createdBy = resolveAuditActorId(this.actor)
+    return this.atomicExecution.execute(async () => {
+      const session = await this.getOrCreateDailyAttendanceSession(classGroup, date, createdAt)
+      const records: AttendanceRecord[] = []
+      for (const [studentId, status] of Object.entries(attendanceByStudent)) {
+        records.push(await this.saveAttendanceRecord({
+          id: `${studentId}-${session.id}`,
+          studentId,
+          sessionId: session.id,
           status,
           createdBy,
           createdAt,
@@ -372,17 +577,79 @@ export class SchedulingService {
     const session = await this.requireSession(sessionId)
     await this.requireEnrollmentForClassGroup({ studentId, classGroupId: session.classGroupId })
     const existing = await this.repositories.attendance.findByStudentAndSession(studentId, sessionId)
+    const isCorrection = existing !== undefined && existing.status !== status
+    if (
+      isCorrection
+      && (existing.justificationStatus === AttendanceJustificationStatus.Excused
+        || existing.justificationStatus === AttendanceJustificationStatus.Rejected)
+    ) {
+      throw new Error('Reviewed attendance must not be corrected without a reopen workflow')
+    }
+    const updatedAt = isCorrection ? (createdAt ?? new Date()) : existing?.updatedAt ?? createdAt
     const record = new AttendanceRecord({
       id: existing?.id ?? id,
       studentId,
       sessionId,
       date: session.startsAt,
       status,
-      createdBy: createdBy ?? existing?.createdBy,
+      justificationStatus: isCorrection ? AttendanceJustificationStatus.None : existing?.justificationStatus,
+      reason: isCorrection ? undefined : existing?.reason,
+      notes: isCorrection ? undefined : existing?.notes,
+      justifiedAt: isCorrection ? undefined : existing?.justifiedAt,
+      justifiedByStaffId: isCorrection ? undefined : existing?.justifiedByStaffId,
+      correctedAt: isCorrection ? updatedAt : existing?.correctedAt,
+      correctedByStaffId: isCorrection ? createdBy : existing?.correctedByStaffId,
+      createdBy: existing?.createdBy ?? createdBy,
       createdAt: existing?.createdAt ?? createdAt,
+      updatedAt,
     })
     await this.repositories.attendance.save(record)
     return record
+  }
+
+  private requireDailyAttendanceMode(classGroup: ClassGroup): void {
+    if (classGroup.attendanceMode !== AttendanceMode.Daily) {
+      throw new Error(`Class group ${classGroup.id} is not configured for daily attendance`)
+    }
+  }
+
+  private async getOrCreateDailyAttendanceSession(
+    classGroup: ClassGroup,
+    date: Date,
+    createdAt?: Date,
+  ): Promise<Session> {
+    const normalizedDate = normalizeDate(date)
+    const sessionId = this.buildDailyAttendanceSessionId(classGroup.id, normalizedDate)
+    const existing = await this.repositories.sessions.findById(sessionId)
+    if (existing) {
+      if (existing.classGroupId !== classGroup.id || !this.isDailyAttendanceSession(existing, normalizedDate)) {
+        denyResourceAccess()
+      }
+      return existing
+    }
+    const endsAt = new Date(normalizedDate)
+    endsAt.setUTCDate(endsAt.getUTCDate() + 1)
+    const session = new Session({
+      id: sessionId,
+      classGroupId: classGroup.id,
+      title: 'Daily attendance',
+      kind: SessionKind.Other,
+      startsAt: normalizedDate,
+      endsAt,
+      createdAt,
+    })
+    await this.repositories.sessions.save(session)
+    return session
+  }
+
+  private buildDailyAttendanceSessionId(classGroupId: string, date: Date): string {
+    return `daily:${classGroupId}:${date.toISOString().slice(0, 10)}`
+  }
+
+  private isDailyAttendanceSession(session: Session, date: Date): boolean {
+    return session.kind === SessionKind.Other
+      && session.title === 'Daily attendance'
+      && normalizeDate(session.startsAt).getTime() === date.getTime()
   }
 
   private async requireSchool(schoolId: string): Promise<void> {
@@ -458,7 +725,7 @@ export class SchedulingService {
   }
 
   private async authorize(
-    action: 'scheduling.manage' | 'attendance.record' | 'attendance.read',
+    action: 'scheduling.manage' | 'attendance.record' | 'attendance.review_justification' | 'attendance.read',
     resource: {
       schoolId: string
       academicYearId?: string

@@ -27,7 +27,9 @@ export interface PaymentArgs {
   notes?: string | null
   recordedById?: string | null
   reversedAt?: Date | null
+  reversedById?: string | null
   cancelledAt?: Date | null
+  cancelledById?: string | null
   createdAt?: Date
 }
 
@@ -45,7 +47,9 @@ export class Payment {
   readonly notes?: string
   readonly recordedById?: string
   readonly reversedAt?: Date
+  readonly reversedById?: string
   readonly cancelledAt?: Date
+  readonly cancelledById?: string
   readonly createdAt: Date
 
   constructor({
@@ -60,7 +64,9 @@ export class Payment {
     notes,
     recordedById,
     reversedAt,
+    reversedById,
     cancelledAt,
+    cancelledById,
     createdAt,
   }: PaymentArgs) {
     this.id = requireNonBlank(id, 'id')
@@ -78,17 +84,19 @@ export class Payment {
     this.notes = requireOptionalNonBlank(notes, 'notes')
     this.recordedById = requireOptionalNonBlank(recordedById, 'recordedById')
     this.reversedAt = reversedAt ? requireValidDate(reversedAt, 'reversedAt') : undefined
+    this.reversedById = requireOptionalNonBlank(reversedById, 'reversedById')
     this.cancelledAt = cancelledAt ? requireValidDate(cancelledAt, 'cancelledAt') : undefined
+    this.cancelledById = requireOptionalNonBlank(cancelledById, 'cancelledById')
     this.createdAt = createdAt ?? new Date()
 
-    if (this.status === PaymentStatus.Reversed && !this.reversedAt) {
-      throw new Error('reversedAt is required for reversed payments')
+    if (this.status === PaymentStatus.Reversed && (!this.reversedAt || !this.reversedById)) {
+      throw new Error('reversedAt and reversedById are required for reversed payments')
     }
-    if (this.status === PaymentStatus.Cancelled && !this.cancelledAt) {
-      throw new Error('cancelledAt is required for cancelled payments')
+    if (this.status === PaymentStatus.Cancelled && (!this.cancelledAt || !this.cancelledById)) {
+      throw new Error('cancelledAt and cancelledById are required for cancelled payments')
     }
-    if (this.status === PaymentStatus.Recorded && (this.reversedAt || this.cancelledAt)) {
-      throw new Error('recorded payments must not define reversedAt or cancelledAt')
+    if (this.status === PaymentStatus.Recorded && (this.reversedAt || this.reversedById || this.cancelledAt || this.cancelledById)) {
+      throw new Error('recorded payments must not define reversal or cancellation audit fields')
     }
   }
 }
