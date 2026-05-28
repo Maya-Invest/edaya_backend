@@ -82,4 +82,8 @@ export class Announcement {
   get isPublished(): boolean {
     return this.status === AnnouncementStatus.Published
   }
+
+  get effectiveDate(): Date {
+    return this.publishedAt ?? this.createdAt
+  }
 }

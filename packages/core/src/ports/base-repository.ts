@@ -21,6 +21,8 @@ export type Filter<T> = {
   $and?: Filter<T>[]
   $or?: Filter<T>[]
   $not?: Filter<T>
+  $limit?: number
+  $offset?: number
 }
 
 export interface SortOption<T> {
@@ -28,16 +30,16 @@ export interface SortOption<T> {
   direction: 'asc' | 'desc'
 }
 
-export interface ListOptions<T> {
-  limit?: number
-  offset?: number
-  orderBy?: SortOption<T>[]
+export type QueryOptions<T> = Filter<T> & {
+  $orderBy?: SortOption<T>[]
 }
 
 export interface BaseRepositoryInterface<T> {
   findById: (id: string) => Promise<T | undefined>
-  list: (filter?: Filter<T>, options?: ListOptions<T>) => Promise<T[]>
+  list: (options?: QueryOptions<T>) => Promise<T[]>
   save: (entity: T) => Promise<void>
-  delete: (entity: T) => Promise<void>
+  delete: (id: string) => Promise<void>
   count: (filter?: Filter<T>) => Promise<number>
+  batchSave: (entities: T[]) => Promise<string[]>
+  batchDelete: (ids: string[]) => Promise<void>
 }

@@ -5,10 +5,10 @@ import { AssessmentsService } from './modules/assessments'
 import { BehaviorService } from './modules/behavior'
 import { CommunicationsService } from './modules/communications'
 import { FinanceService } from './modules/finance'
-import { SchoolQueryService } from './modules/queries'
 import { SchedulingService } from './modules/scheduling'
 import { SetupService } from './modules/setup'
 import { StudentsService } from './modules/student'
+import { SchoolQueryService } from './query-services'
 
 export interface ServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort

@@ -81,39 +81,62 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   })
   return {
     findById: async (id: string) => entries.get(id),
-    list: async (filter?: Filter<T>, options?: import('../../src/ports').ListOptions<T>) => {
+    list: async (options?: import('../../src/ports').QueryOptions<T>) => {
       let result = [...entries.values()]
-      if (filter) {
-        result = result.filter(entity => matchesFilter(entity, filter))
-      }
-      if (options?.orderBy) {
-        result.sort((a, b) => {
-          for (const { field, direction } of options.orderBy!) {
-            const valA = a[field]
-            const valB = b[field]
-            if (valA < valB) return direction === 'asc' ? -1 : 1
-            if (valA > valB) return direction === 'asc' ? 1 : -1
+      if (options) {
+        // Extract filter by omitting $ prefixed keys
+        const filter: any = {}
+        for (const key of Object.keys(options)) {
+          if (!key.startsWith('$')) {
+            filter[key] = (options as any)[key]
           }
-          return 0
-        })
-      }
-      if (options?.offset !== undefined || options?.limit !== undefined) {
-        const offset = options.offset ?? 0
-        result = result.slice(offset, options.limit !== undefined ? offset + options.limit : undefined)
+        }
+        if (Object.keys(filter).length > 0) {
+          result = result.filter(entity => matchesFilter(entity, filter))
+        }
+
+        if (options.$orderBy) {
+          result.sort((a, b) => {
+            for (const { field, direction } of options.$orderBy!) {
+              const valA = a[field]
+              const valB = b[field]
+              if (valA < valB)
+                return direction === 'asc' ? -1 : 1
+              if (valA > valB)
+                return direction === 'asc' ? 1 : -1
+            }
+            return 0
+          })
+        }
+        if (options.$offset !== undefined || options.$limit !== undefined) {
+          const offset = options.$offset ?? 0
+          result = result.slice(offset, options.$limit !== undefined ? offset + options.$limit : undefined)
+        }
       }
       return result
     },
     save: async (entity: T) => {
       entries.set(entity.id, entity)
     },
-    delete: async (entity: T) => {
-      entries.delete(entity.id)
+    delete: async (id: string) => {
+      entries.delete(id)
     },
     count: async (filter?: Filter<T>) => {
       const all = [...entries.values()]
       if (!filter)
         return all.length
       return all.filter(entity => matchesFilter(entity, filter)).length
+    },
+    batchSave: async (entitiesToSave: T[]) => {
+      for (const entity of entitiesToSave) {
+        entries.set(entity.id, entity)
+      }
+      return entitiesToSave.map(e => e.id)
+    },
+    batchDelete: async (ids: string[]) => {
+      for (const id of ids) {
+        entries.delete(id)
+      }
     },
   }
 }
@@ -217,7 +240,21 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
 
   const schoolRepositories: SchoolRepositories = {
     // setup
-    schools,
+    schools: {
+      ...schools,
+      getOverdueFeeCount: async (schoolId: string) => {
+        const allStudents = await students.list({ schoolId })
+        const studentIds = new Set(allStudents.map(s => s.id))
+        const allFees = await studentFees.list()
+        return allFees.filter(f => studentIds.has(f.studentId) && f.status === 'overdue').length
+      },
+      getPublishedReportCardCount: async (schoolId: string) => {
+        const allStudents = await students.list({ schoolId })
+        const studentIds = new Set(allStudents.map(s => s.id))
+        const rcs = await results.list()
+        return rcs.filter(rc => studentIds.has(rc.studentId) && rc.status === 'published').length
+      },
+    },
     academicYears,
     academicPeriods,
     periodDefinitions,

@@ -126,3 +126,13 @@ export class ReportCardResult {
     })
   }
 }
+
+export function getLatestReportCard(results: ReportCardResult[]): ReportCardResult | undefined {
+  if (results.length === 0)
+    return undefined
+  return [...results].sort((left, right) => {
+    const leftDate = left.publishedAt ?? left.generatedAt
+    const rightDate = right.publishedAt ?? right.generatedAt
+    return rightDate.getTime() - leftDate.getTime() || left.id.localeCompare(right.id)
+  })[0]
+}

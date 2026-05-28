@@ -50,6 +50,7 @@ export type AuthorizationAction
     | 'queries.read_attendance'
     | 'queries.read_guardian_students_admin'
     | 'queries.read_guardian_self'
+    | 'query.get_overdue_fees'
 
 export interface AuthorizationResourceContext {
   readonly schoolId: string

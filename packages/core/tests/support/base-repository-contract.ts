@@ -31,7 +31,7 @@ export function runBaseRepositoryContract<T extends EntityWithId>(
       await repository.save(replacement)
       expect(await repository.findById('one')).toEqual(replacement)
 
-      await repository.delete(replacement)
+      await repository.delete(replacement.id)
       expect(await repository.findById('one')).toBeUndefined()
       expect(await repository.count()).toBe(0)
     })

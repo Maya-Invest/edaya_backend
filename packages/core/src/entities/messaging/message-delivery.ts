@@ -97,3 +97,36 @@ export class MessageDelivery {
     }
   }
 }
+
+export interface AnnouncementDeliverySummary {
+  total: number
+  pending: number
+  sent: number
+  failed: number
+  read: number
+  cancelled: number
+}
+
+export function buildDeliverySummary(deliveries: MessageDelivery[]): AnnouncementDeliverySummary {
+  return deliveries.reduce<AnnouncementDeliverySummary>((summary, delivery) => {
+    summary.total += 1
+    switch (delivery.status) {
+      case MessageDeliveryStatus.Pending:
+        summary.pending += 1
+        break
+      case MessageDeliveryStatus.Sent:
+        summary.sent += 1
+        break
+      case MessageDeliveryStatus.Failed:
+        summary.failed += 1
+        break
+      case MessageDeliveryStatus.Read:
+        summary.read += 1
+        break
+      case MessageDeliveryStatus.Cancelled:
+        summary.cancelled += 1
+        break
+    }
+    return summary
+  }, { total: 0, pending: 0, sent: 0, failed: 0, read: 0, cancelled: 0 })
+}

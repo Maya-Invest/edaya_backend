@@ -46,7 +46,10 @@ import type { BaseRepositoryInterface } from './base-repository'
 
 export interface SchoolRepositories {
   // SetupRepositories
-  readonly schools: BaseRepositoryInterface<School>
+  readonly schools: BaseRepositoryInterface<School> & {
+    getOverdueFeeCount: (schoolId: string) => Promise<number>
+    getPublishedReportCardCount: (schoolId: string) => Promise<number>
+  }
   readonly academicYears: BaseRepositoryInterface<AcademicYear>
   readonly academicPeriods: BaseRepositoryInterface<AcademicPeriod>
   readonly periodDefinitions: BaseRepositoryInterface<PeriodDefinition>

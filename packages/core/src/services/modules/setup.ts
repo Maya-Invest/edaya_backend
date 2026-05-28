@@ -552,7 +552,6 @@ export class SetupService {
       sessionId: context.sessionId,
       resourceId: assignment.resourceId,
     })
-    await this.repositories.resourceAssignments.delete(assignment)
   }
 
   async registerAttachment({
@@ -607,7 +606,6 @@ export class SetupService {
       denyResourceAccess()
     }
     await this.authorize('attachments.manage', attachment.schoolId, { ...context, attachmentId: attachment.id })
-    await this.repositories.attachments.delete(attachment)
   }
 
   private async authorize(

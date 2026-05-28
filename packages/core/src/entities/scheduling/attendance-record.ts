@@ -129,3 +129,38 @@ export class AttendanceRecord {
     })
   }
 }
+
+export interface SessionAttendanceSummary {
+  present: number
+  absent: number
+  excusedAbsent: number
+  late: number
+  total: number
+}
+
+export function buildSessionAttendanceSummary(records: AttendanceRecord[], expectedTotal: number): SessionAttendanceSummary {
+  const summary: SessionAttendanceSummary = {
+    present: 0,
+    absent: 0,
+    excusedAbsent: 0,
+    late: 0,
+    total: expectedTotal,
+  }
+
+  for (const record of records) {
+    if (record.status === AttendanceStatus.Present)
+      summary.present += 1
+    if (record.status === AttendanceStatus.Absent)
+      summary.absent += 1
+    if (
+      record.status === AttendanceStatus.Absent
+      && record.justificationStatus === AttendanceJustificationStatus.Excused
+    ) {
+      summary.excusedAbsent += 1
+    }
+    if (record.status === AttendanceStatus.Late)
+      summary.late += 1
+  }
+
+  return summary
+}

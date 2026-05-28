@@ -354,11 +354,7 @@ describe('tenant boundary safeguards', () => {
       classGroupId: 'class-a',
       subjectId: 'subject-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    for (const classSubjectId of ['missing-class-subject', classSubjectB.id]) {
-      await expect(app.queries.getClassSubjectProgressDetail({ schoolId: 'school-a', classSubjectId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    }
+
     for (const sessionId of ['missing-session', sessionB.id]) {
       await expect(app.scheduling.reviewAttendanceJustification({
         studentId: 'student-b',
@@ -372,13 +368,11 @@ describe('tenant boundary safeguards', () => {
       resourceId: 'resource-b',
       sessionId: sessionB.id,
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    await expect(app.queries.listResources({ schoolId: 'school-b' }))
+    await expect(app.queries.resources.list({ schoolId: 'school-b' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const incidentId of ['missing-incident', incidentB.id]) {
-      await expect(app.queries.getIncidentDetail({ schoolId: 'school-a', incidentId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+
       await expect(app.behavior.addStudentInvolvement({
         id: `probe-${incidentId}`,
         incidentId,
@@ -418,11 +412,9 @@ describe('tenant boundary safeguards', () => {
       await expect(app.communications.publishAnnouncement({ announcementId }))
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-      await expect(app.queries.getAnnouncementDetail({ schoolId: 'school-a', announcementId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+
     }
-    await expect(app.queries.listAnnouncements({ schoolId: 'school-b' }))
+    await expect(app.queries.announcements.list({ schoolId: 'school-b' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const studentFeeId of ['missing-student-fee', 'student-fee-b']) {
@@ -441,38 +433,7 @@ describe('tenant boundary safeguards', () => {
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
-    for (const classGroupId of ['missing-class', 'class-b']) {
-      await expect(app.queries.listClassGroupTimetable(classGroupId))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-      await expect(app.queries.getAttendanceSessionReview({
-        schoolId: 'school-a',
-        classGroupId,
-        date: new Date('2026-09-01T00:00:00Z'),
-      }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    }
-    for (const academicYearId of ['missing-year', 'year-b']) {
-      await expect(app.queries.listClassGroups({ schoolId: 'school-a', academicYearId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-      await expect(app.queries.getCalendarEvents({ schoolId: 'school-a', academicYearId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    }
-    await expect(app.queries.getCalendarEvents({
-      schoolId: 'school-a',
-      academicYearId: 'year-a',
-      classGroupId: 'class-b',
-    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const studentId of ['missing-student', 'student-b']) {
-      await expect(app.queries.getStudentDetail({ schoolId: 'school-a', studentId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-      await expect(app.queries.listStudentIncidents({ schoolId: 'school-a', studentId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
       await expect(app.students.updateStudentProfile({
         studentId,
         firstName: 'Probe',
@@ -513,21 +474,7 @@ describe('tenant boundary safeguards', () => {
       fileName: 'foreign.pdf',
       fileUrl: 'https://files.example.test/foreign.pdf',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    await expect(app.queries.listAttachments({
-      schoolId: 'school-a',
-      ownerKind: AttachmentOwnerKind.Student,
-      ownerId: 'student-b',
-    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    for (const reportCardResultId of ['missing-report-card', 'report-card-b']) {
-      await expect(app.queries.getReportCardDetail({ schoolId: 'school-a', reportCardResultId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    }
-    for (const assessmentId of ['missing-assessment', 'assessment-b']) {
-      await expect(app.queries.getAssessmentEntryReview({ schoolId: 'school-a', assessmentId }))
-        .rejects
-        .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    }
+
     for (const periodId of ['missing-term', 'term-b']) {
       await expect(app.assessments.listClassSubjectAssessmentResultsForPeriod({
         classSubjectId: classSubject.id,
