@@ -550,18 +550,11 @@ Current role baseline:
 Current evidence lives in:
 
 - `packages/core/tests/unit-testing/auth/actor-metadata.test.ts`
-- `packages/core/tests/integration-testing/auth/service-authorization.integration.test.ts`
-- `packages/core/tests/integration-testing/services/tenant-boundaries.integration.test.ts`
-- `packages/core/tests/integration-testing/services/atomic-workflows.integration.test.ts`
-- `packages/core/tests/integration-testing/services/operations-queries.integration.test.ts`
-- `packages/core/tests/integration-testing/services/scheduling-attendance.integration.test.ts`
-- `packages/core/tests/integration-testing/services/curriculum-progress.integration.test.ts`
-- `packages/core/tests/integration-testing/services/assessments.integration.test.ts`
-- `packages/core/tests/integration-testing/services/behavior-discipline.integration.test.ts`
-- `packages/core/tests/integration-testing/services/attachments-resources.integration.test.ts`
-- `packages/core/tests/integration-testing/services/student-records.integration.test.ts`
-- `packages/core/tests/integration-testing/services/student-enrollment.integration.test.ts`
-- `packages/core/tests/integration-testing/services/setup-lifecycle.integration.test.ts`
+- `packages/integration-tests/src/auth/test_actor_role_and_assurance_permission_policies.integration.test.ts`
+- `packages/integration-tests/src/services/tenant-boundaries.integration.test.ts`
+- `packages/integration-tests/src/services/atomic-workflows.integration.test.ts`
+- `packages/integration-tests/src/services/setup-lifecycle.integration.test.ts`
+- `packages/integration-tests/src/auth/concurrency.integration.test.ts`
 - `packages/core/tests/unit-testing/support/in-memory-repository-contract.test.ts`
 - `packages/core/tests/unit-testing/support/test_business_rule_exception_codes.test.ts`
 
@@ -570,6 +563,7 @@ Verification commands:
 ```bash
 bun run check
 bun --filter=@edaya/core test
+bun --filter=@edaya/integration-tests test
 npx eslint packages/core/src packages/core/tests
 ```
 

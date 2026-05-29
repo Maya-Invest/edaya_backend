@@ -4,13 +4,11 @@ import {
   PaymentMethod,
   SessionKind,
   StaffRole,
-} from '../../../src/entities'
-import {
   createGuardianActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
-} from '../../../src/services/authorization'
-import { createTestApp } from '../../support/in-memory-school-headless-app'
+} from '@edaya/core'
+import { createTestApp } from '../support/in-memory-school-headless-app'
 
 async function createConcurrencyFixture() {
   const { app, repositories, forActor } = createTestApp()

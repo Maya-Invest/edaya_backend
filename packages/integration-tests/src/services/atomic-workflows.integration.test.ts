@@ -8,9 +8,9 @@ import {
   PaymentMethod,
   PaymentStatus,
   SessionKind,
-} from '../../../src/entities'
-import { AuthorizationErrorCode } from '../../../src/services/authorization'
-import { createTestApp } from '../../support/in-memory-school-headless-app'
+  AuthorizationErrorCode,
+} from '@edaya/core'
+import { createTestApp } from '../support/in-memory-school-headless-app'
 
 describe('atomic workflow safeguards', () => {
   it('rolls back curriculum progress when a later aggregate write fails', async () => {

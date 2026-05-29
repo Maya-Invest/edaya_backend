@@ -18,9 +18,11 @@ import {
   StaffRole,
   StudentNoteVisibility,
   StudentStatus,
-} from '../../../src/entities'
-import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '../../../src/services/authorization'
-import { createTestApp } from '../../support/in-memory-school-headless-app'
+  ActorAssuranceLevel,
+  AuthorizationErrorCode,
+  createStaffActorMetadata,
+} from '@edaya/core'
+import { createTestApp } from '../support/in-memory-school-headless-app'
 
 describe('tenant boundary safeguards', () => {
   it('rejects cross-school setup, staffing, curriculum, and communications references', async () => {

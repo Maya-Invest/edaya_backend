@@ -4,8 +4,8 @@ import {
   AttendanceMode,
   SchoolType,
   StaffRole,
-} from '../../../src/entities'
-import { createTestApp } from '../../support/in-memory-school-headless-app'
+} from '@edaya/core'
+import { createTestApp } from '../support/in-memory-school-headless-app'
 
 describe('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {

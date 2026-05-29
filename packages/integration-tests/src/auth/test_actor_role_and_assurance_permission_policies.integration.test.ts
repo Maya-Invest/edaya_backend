@@ -5,13 +5,11 @@ import {
   SessionKind,
   StaffMember,
   StaffRole,
-} from '../../../src/entities'
-import {
   ActorAssuranceLevel,
   AuthorizationErrorCode,
   createStaffActorMetadata,
-} from '../../../src/services/authorization'
-import { createTestApp } from '../../support/in-memory-school-headless-app'
+} from '@edaya/core'
+import { createTestApp } from '../support/in-memory-school-headless-app'
 
 async function setupBaselineFixture() {
   const { app, repositories, forActor } = createTestApp()
