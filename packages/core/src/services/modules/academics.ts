@@ -84,7 +84,7 @@ export class AcademicsService {
       schoolId: classGroup.schoolId,
       classGroupId,
     })
-    const existing = await this.repositories.classSubjects.findByClassAndSubject(classGroupId, subjectId)
+    const existing = await this.repositories.classSubjects.findOne({ classGroupId, subjectId })
     if (existing) {
       return existing
     }
@@ -117,7 +117,7 @@ export class AcademicsService {
       classGroupId: classGroup.id,
       classSubjectId,
     })
-    const existing = await this.repositories.classSubjectMatters.findByClassSubjectAndSubjectMatter(classSubjectId, subjectMatterId)
+    const existing = await this.repositories.classSubjectMatters.findOne({ classSubjectId, subjectMatterId })
     if (existing) {
       return existing
     }
@@ -167,7 +167,7 @@ export class AcademicsService {
         classSubjectId: classSubject.id,
         sessionId,
       })
-      const existing = await this.repositories.classSubjectProgress.findByClassSubjectMatterAndSession(classSubjectMatterId, sessionId)
+      const existing = await this.repositories.classSubjectProgress.findOne({ classSubjectMatterId, sessionId })
       if (existing) {
         throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
       }

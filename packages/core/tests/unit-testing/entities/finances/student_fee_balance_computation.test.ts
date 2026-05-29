@@ -140,4 +140,29 @@ describe('Student fee balance computation and state transitions', () => {
     expect(summary.balanceDue.amount).toBe(110000) // 150000 - 40000
     expect(summary.itemCount).toBe(3)
   })
+
+  it('validates installments correctly', () => {
+    const fee = new StudentFee({
+      ...baseArgs,
+      expectedAmount: 100000,
+      installments: [
+        { id: 'inst-1', label: 'Term 1', expectedAmount: 50000, dueDate: new Date() },
+        { id: 'inst-2', label: 'Term 2', expectedAmount: 50000, dueDate: new Date() },
+      ],
+    })
+    expect(fee.installments.length).toBe(2)
+  })
+
+  it('throws error when installment expected amounts do not total expectedAmount', () => {
+    expect(() => {
+      new StudentFee({
+        ...baseArgs,
+        expectedAmount: 100000,
+        installments: [
+          { id: 'inst-1', label: 'Term 1', expectedAmount: 50000 },
+          { id: 'inst-2', label: 'Term 2', expectedAmount: 40000 },
+        ],
+      })
+    }).toThrow('installment expected amounts must total expectedAmount')
+  })
 })

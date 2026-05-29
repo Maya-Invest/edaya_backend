@@ -889,7 +889,7 @@ export class SetupService {
     if (!student) {
       denyResourceAccess()
     }
-    const activeEnrollment = await this.repositories.enrollments.findActiveByStudent(student.id)
+    const activeEnrollment = await this.repositories.enrollments.findOne({ studentId, status: StudentClassEnrollmentStatus.Active })
     return { schoolId: student.schoolId, classGroupId: activeEnrollment?.classGroupId, studentId: student.id }
   }
 }

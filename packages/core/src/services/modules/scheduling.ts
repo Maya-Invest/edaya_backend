@@ -393,7 +393,7 @@ export class SchedulingService {
       studentId,
     })
     await this.requireStudentInSchool(studentId, classGroup.schoolId)
-    const record = await this.repositories.attendance.findByStudentAndSession(studentId, sessionId)
+    const record = await this.repositories.attendance.findOne({ studentId, sessionId })
     if (!record) {
       denyResourceAccess()
     }
@@ -578,7 +578,7 @@ export class SchedulingService {
     await this.requireStudent(studentId)
     const session = await this.requireSession(sessionId)
     await this.requireEnrollmentForClassGroup({ studentId, classGroupId: session.classGroupId })
-    const existing = await this.repositories.attendance.findByStudentAndSession(studentId, sessionId)
+    const existing = await this.repositories.attendance.findOne({ studentId, sessionId })
     const isCorrection = existing !== undefined && existing.status !== status
     if (
       isCorrection

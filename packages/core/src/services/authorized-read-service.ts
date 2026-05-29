@@ -15,6 +15,11 @@ export class AuthorizedReadService<T> {
     return this.repository.findById(id)
   }
 
+  async findOne(context: AuthorizationResourceContext, options?: QueryOptions<T>): Promise<T | undefined> {
+    await this.authorizationPolicy.requirePermission(this.actor, { action: this.action, resource: context })
+    return this.repository.findOne(options)
+  }
+
   async list(context: AuthorizationResourceContext, options?: QueryOptions<T>): Promise<T[]> {
     await this.authorizationPolicy.requirePermission(this.actor, { action: this.action, resource: context })
     return this.repository.list(options)

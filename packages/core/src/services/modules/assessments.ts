@@ -73,7 +73,7 @@ export class AssessmentsService {
     await this.authorize('assessments.manage_configuration', { schoolId: input.schoolId })
     await requireSchool(this.repositories.schools, input.schoolId)
     if (input.isDefault) {
-      const existingDefault = await this.repositories.gradeScales.findDefaultBySchool(input.schoolId)
+      const existingDefault = await this.repositories.gradeScales.findOne({ schoolId: input.schoolId, isDefault: true })
       if (existingDefault && existingDefault.id !== input.id) {
         throw new BusinessRuleViolationError('DEFAULT_GRADE_SCALE_ALREADY_EXISTS', `School ${input.schoolId} already has a default grade scale`)
       }
@@ -98,10 +98,11 @@ export class AssessmentsService {
       denyResourceAccess()
     }
     if (input.isDefault) {
-      const existingDefault = await this.repositories.definitions.findDefaultByGradeLevel(
-        input.gradeLevelId,
-        input.academicYearId,
-      )
+      const existingDefault = await this.repositories.definitions.findOne({
+        gradeLevelId: input.gradeLevelId,
+        academicYearId: input.academicYearId,
+        isDefault: true,
+      })
       if (existingDefault && existingDefault.id !== input.id) {
         throw new BusinessRuleViolationError('DEFAULT_REPORT_CARD_DEFINITION_ALREADY_EXISTS', `Grade level ${input.gradeLevelId} already has a default report card definition`)
       }
@@ -395,7 +396,7 @@ export class AssessmentsService {
       startDate: period.startDate,
       endDate: period.endDate,
     })
-    const existing = await this.repositories.results.findByStudentAndPeriod(studentId, periodId)
+    const existing = await this.repositories.results.findOne({ studentId, periodId })
     const reportCard = new ReportCardResult({
       id: existing?.id ?? id,
       reportCardDefinitionId: definition.id,
@@ -676,7 +677,7 @@ export class AssessmentsService {
     gradeLevelId: string
     academicYearId: string
   }) {
-    const definition = await this.repositories.definitions.findDefaultByGradeLevel(gradeLevelId, academicYearId)
+    const definition = await this.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
     if (!definition) {
       throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
     }
@@ -728,7 +729,7 @@ export class AssessmentsService {
   }
 
   private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
-    const reportCard = await this.repositories.results.findByStudentAndPeriod(studentId, periodId)
+    const reportCard = await this.repositories.results.findOne({ studentId, periodId })
     if (reportCard?.status === ReportCardResultStatus.Published) {
       throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
     }

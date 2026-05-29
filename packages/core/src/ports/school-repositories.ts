@@ -65,65 +65,38 @@ export interface SchoolRepositories {
   readonly studentFees: BaseRepositoryInterface<StudentFee>
   readonly payments: BaseRepositoryInterface<Payment>
 
-  // SchedulingRepositories {
+  // SchedulingRepositories
   readonly schedules: BaseRepositoryInterface<Schedule>
   readonly sessions: BaseRepositoryInterface<Session>
   readonly calendarEvents: BaseRepositoryInterface<CalendarEvent>
-  readonly attendance: BaseRepositoryInterface<AttendanceRecord> & {
-    findByStudentAndSession: (studentId: string, sessionId: string) => Promise<AttendanceRecord | undefined>
-  }
+  readonly attendance: BaseRepositoryInterface<AttendanceRecord>
 
-  // CommunicationRepositories {
+  // CommunicationRepositories
   readonly announcements: BaseRepositoryInterface<Announcement>
   readonly announcementTargets: BaseRepositoryInterface<AnnouncementTarget>
   readonly messageDeliveries: BaseRepositoryInterface<MessageDelivery>
 
-  // AcademicsRepositories {
+  // AcademicsRepositories
   readonly subjects: BaseRepositoryInterface<Subject>
   readonly subjectMatters: BaseRepositoryInterface<SubjectMatter>
   readonly classGroups: BaseRepositoryInterface<ClassGroup>
-  readonly classSubjects: BaseRepositoryInterface<ClassSubject> & {
-    findByClassAndSubject: (
-      classGroupId: string,
-      subjectId: string,
-    ) => Promise<ClassSubject | undefined>
-  }
-  readonly classSubjectMatters: BaseRepositoryInterface<ClassSubjectMatter> & {
-    findByClassSubjectAndSubjectMatter: (
-      classSubjectId: string,
-      subjectMatterId: string,
-    ) => Promise<ClassSubjectMatter | undefined>
-  }
-  readonly classSubjectProgress: BaseRepositoryInterface<ClassSubjectProgress> & {
-    findByClassSubjectMatterAndSession: (
-      matterId: string,
-      sessionId: string,
-    ) => Promise<ClassSubjectProgress | undefined>
-  }
+  readonly classSubjects: BaseRepositoryInterface<ClassSubject>
+  readonly classSubjectMatters: BaseRepositoryInterface<ClassSubjectMatter>
+  readonly classSubjectProgress: BaseRepositoryInterface<ClassSubjectProgress>
 
   // AssessmentRepositories
   readonly assessments: BaseRepositoryInterface<Assessment>
   readonly assessmentResults: BaseRepositoryInterface<AssessmentResult>
-  readonly gradeScales: BaseRepositoryInterface<GradeScale> & {
-    findDefaultBySchool: (schoolId: string) => Promise<GradeScale | undefined>
-  }
-  readonly definitions: BaseRepositoryInterface<ReportCardDefinition> & {
-    findDefaultByGradeLevel: (gradeLevelId: string, academicYearId: string) => Promise<ReportCardDefinition | undefined>
-  }
+  readonly gradeScales: BaseRepositoryInterface<GradeScale>
+  readonly definitions: BaseRepositoryInterface<ReportCardDefinition>
   readonly sections: BaseRepositoryInterface<ReportCardDefinitionSection>
-  readonly results: BaseRepositoryInterface<ReportCardResult> & {
-    findByStudentAndPeriod: (studentId: string, periodId: string) => Promise<ReportCardResult | undefined>
-  }
+  readonly results: BaseRepositoryInterface<ReportCardResult>
 
   // StudentRepositories
   readonly students: BaseRepositoryInterface<Student>
-  readonly enrollments: BaseRepositoryInterface<StudentClassEnrollment> & {
-    findActiveByStudent: (studentId: string) => Promise<StudentClassEnrollment | undefined>
-  }
+  readonly enrollments: BaseRepositoryInterface<StudentClassEnrollment>
   readonly guardians: BaseRepositoryInterface<Guardian>
-  readonly guardianLinks: BaseRepositoryInterface<GuardianStudentLink> & {
-    findByGuardianAndStudent: (guardianId: string, studentId: string) => Promise<GuardianStudentLink | undefined>
-  }
+  readonly guardianLinks: BaseRepositoryInterface<GuardianStudentLink>
   readonly studentNotes: BaseRepositoryInterface<StudentNote>
   readonly studentHealthProfiles: BaseRepositoryInterface<StudentHealthProfile>
   readonly studentDisciplinaryActions: BaseRepositoryInterface<StudentDisciplinaryAction>

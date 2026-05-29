@@ -622,7 +622,7 @@ export class StudentsService {
       denyResourceAccess()
     }
 
-    const existing = await this.repositories.guardianLinks.findByGuardianAndStudent(guardianId, studentId)
+    const existing = await this.repositories.guardianLinks.findOne({ guardianId, studentId })
     const link = new GuardianStudentLink({
       id: existing?.id ?? id,
       schoolId: guardian.schoolId,
@@ -671,7 +671,7 @@ export class StudentsService {
     contactRestrictions?: string | null
     notes?: string | null
   }): Promise<GuardianStudentLink> {
-    const existing = await this.repositories.guardianLinks.findByGuardianAndStudent(guardianId, studentId)
+    const existing = await this.repositories.guardianLinks.findOne({ guardianId, studentId })
     if (!existing) {
       denyResourceAccess()
     }
@@ -753,7 +753,7 @@ export class StudentsService {
   }
 
   private async requireCurrentActiveEnrollment(enrollment: StudentClassEnrollment): Promise<void> {
-    const activeEnrollment = await this.repositories.enrollments.findActiveByStudent(enrollment.studentId)
+    const activeEnrollment = await this.repositories.enrollments.findOne({ studentId: enrollment.studentId, status: StudentClassEnrollmentStatus.Active })
     if (enrollment.status !== StudentClassEnrollmentStatus.Active || activeEnrollment?.id !== enrollment.id) {
       throw new BusinessRuleViolationError('ENROLLMENT_NOT_ACTIVE', `Enrollment ${enrollment.id} is not the student's active enrollment`)
     }
@@ -822,7 +822,7 @@ export class StudentsService {
     studentId: string,
   ): Promise<{ student: Student, classGroupId?: string }> {
     const student = await this.requireStudent(studentId)
-    const activeEnrollment = await this.repositories.enrollments.findActiveByStudent(student.id)
+    const activeEnrollment = await this.repositories.enrollments.findOne({ studentId, status: StudentClassEnrollmentStatus.Active })
     if (!activeEnrollment) {
       return { student }
     }

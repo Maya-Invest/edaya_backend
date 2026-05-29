@@ -171,49 +171,4 @@ export class SchoolQueryService extends BaseSchoolQueryService {
     await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_report_card_detail', resource: context })
     return this.repositories.schools.getPublishedReportCardCount(schoolId)
   }
-
-  async findAttendanceByStudentAndSession(studentId: string, sessionId: string, context: AuthorizationResourceContext): Promise<AttendanceRecord | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'attendance.read', resource: context })
-    return this.repositories.attendance.findByStudentAndSession(studentId, sessionId)
-  }
-
-  async findClassSubjectByClassAndSubject(classGroupId: string, subjectId: string, context: AuthorizationResourceContext): Promise<ClassSubject | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_class_curriculum', resource: context })
-    return this.repositories.classSubjects.findByClassAndSubject(classGroupId, subjectId)
-  }
-
-  async findClassSubjectMatterByClassSubjectAndSubjectMatter(classSubjectId: string, subjectMatterId: string, context: AuthorizationResourceContext): Promise<ClassSubjectMatter | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_class_curriculum', resource: context })
-    return this.repositories.classSubjectMatters.findByClassSubjectAndSubjectMatter(classSubjectId, subjectMatterId)
-  }
-
-  async findClassSubjectProgressByClassSubjectMatterAndSession(matterId: string, sessionId: string, context: AuthorizationResourceContext): Promise<ClassSubjectProgress | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'academics.read_progress', resource: context })
-    return this.repositories.classSubjectProgress.findByClassSubjectMatterAndSession(matterId, sessionId)
-  }
-
-  async findDefaultGradeScaleBySchool(schoolId: string, context: AuthorizationResourceContext): Promise<GradeScale | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'assessments.read_results', resource: context })
-    return this.repositories.gradeScales.findDefaultBySchool(schoolId)
-  }
-
-  async findDefaultReportCardDefinitionByGradeLevel(gradeLevelId: string, academicYearId: string, context: AuthorizationResourceContext): Promise<ReportCardDefinition | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_report_card_detail', resource: context })
-    return this.repositories.definitions.findDefaultByGradeLevel(gradeLevelId, academicYearId)
-  }
-
-  async findReportCardResultByStudentAndPeriod(studentId: string, periodId: string, context: AuthorizationResourceContext): Promise<ReportCardResult | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_report_card_detail', resource: context })
-    return this.repositories.results.findByStudentAndPeriod(studentId, periodId)
-  }
-
-  async findActiveEnrollmentByStudent(studentId: string, context: AuthorizationResourceContext): Promise<StudentClassEnrollment | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_enrollment_history', resource: context })
-    return this.repositories.enrollments.findActiveByStudent(studentId)
-  }
-
-  async findGuardianLinkByGuardianAndStudent(guardianId: string, studentId: string, context: AuthorizationResourceContext): Promise<GuardianStudentLink | undefined> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action: 'queries.read_guardian_students_admin', resource: context })
-    return this.repositories.guardianLinks.findByGuardianAndStudent(guardianId, studentId)
-  }
 }

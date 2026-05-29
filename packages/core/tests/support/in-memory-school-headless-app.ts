@@ -43,7 +43,7 @@ import type {
 } from '../../src/entities'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import type { ActorMetadata } from '../../src/services/authorization'
-import { StaffMember, StaffRole, StudentClassEnrollmentStatus } from '../../src/entities'
+import { StaffMember, StaffRole } from '../../src/entities'
 import {
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
@@ -79,8 +79,12 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
       snapshot = undefined
     },
   })
-  return {
+  const store = {
     findById: async (id: string) => entries.get(id),
+    findOne: async (options?: Filter<T>) => {
+      const results = await store.list(options)
+      return results[0]
+    },
     list: async (options?: import('../../src/ports').QueryOptions<T>) => {
       let result = [...entries.values()]
       if (options) {
@@ -139,6 +143,7 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
       }
     },
   }
+  return store
 }
 
 function createAtomicExecution(participants: readonly TransactionParticipant[]) {
@@ -281,8 +286,6 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     },
     attendance: {
       ...attendance,
-      findByStudentAndSession: async (studentId, sessionId) =>
-        (await attendance.list({ studentId, sessionId }))[0],
     },
     calendarEvents,
 
@@ -290,42 +293,22 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     subjects,
     subjectMatters,
     classGroups,
-    classSubjects: {
-      ...classSubjects,
-      findByClassAndSubject: async (classGroupId, subjectId) =>
-        (await classSubjects.list({ classGroupId, subjectId }))[0],
-    },
+    classSubjects,
     classSubjectMatters: {
       ...classSubjectMatters,
       save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
-      findByClassSubjectAndSubjectMatter: async (classSubjectId, subjectMatterId) =>
-        (await classSubjectMatters.list({ classSubjectId, subjectMatterId }))[0],
     },
-    classSubjectProgress: {
-      ...classSubjectProgress,
-      findByClassSubjectMatterAndSession: async (matterId, sessionId) =>
-        (await classSubjectProgress.list({ classSubjectMatterId: matterId, sessionId }))[0],
-    },
+    classSubjectProgress,
 
     // assessments
     assessments,
     assessmentResults,
-    gradeScales: {
-      ...gradeScales,
-      findDefaultBySchool: async schoolId =>
-        (await gradeScales.list({ schoolId, isDefault: true }))[0],
-    },
-    definitions: {
-      ...definitions,
-      findDefaultByGradeLevel: async (gradeLevelId, academicYearId) =>
-        (await definitions.list({ gradeLevelId, academicYearId, isDefault: true }))[0],
-    },
+    gradeScales,
+    definitions,
     sections,
     results: {
       ...results,
       save: entity => saveWithFailure('reportCardResultRepository', results, entity),
-      findByStudentAndPeriod: async (studentId, periodId) =>
-        (await results.list({ studentId, periodId }))[0],
     },
 
     // students
@@ -333,15 +316,9 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     enrollments: {
       ...enrollments,
       save: entity => saveWithFailure('studentClassEnrollmentRepository', enrollments, entity),
-      findActiveByStudent: async studentId =>
-        (await enrollments.list({ studentId, status: StudentClassEnrollmentStatus.Active }))[0],
     },
     guardians,
-    guardianLinks: {
-      ...guardianLinks,
-      findByGuardianAndStudent: async (guardianId, studentId) =>
-        (await guardianLinks.list({ guardianId, studentId }))[0],
-    },
+    guardianLinks,
     studentNotes,
     studentHealthProfiles,
     studentDisciplinaryActions,

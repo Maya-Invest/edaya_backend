@@ -1,0 +1,6 @@
+[test]
+coverageThreshold = 0
+coverageReporters = [
+  "text",
+  "lcov"
+]

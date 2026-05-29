@@ -9,7 +9,8 @@
   "scripts": {
     "build": "bun build",
     "check": "npx tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "test:coverage": "bun test --coverage"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14"

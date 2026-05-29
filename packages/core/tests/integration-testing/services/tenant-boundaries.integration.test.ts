@@ -372,7 +372,6 @@ describe('tenant boundary safeguards', () => {
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const incidentId of ['missing-incident', incidentB.id]) {
-
       await expect(app.behavior.addStudentInvolvement({
         id: `probe-${incidentId}`,
         incidentId,
@@ -412,7 +411,6 @@ describe('tenant boundary safeguards', () => {
       await expect(app.communications.publishAnnouncement({ announcementId }))
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-
     }
     await expect(app.queries.announcements.list({ schoolId: 'school-b' }))
       .rejects

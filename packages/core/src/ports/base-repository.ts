@@ -21,8 +21,6 @@ export type Filter<T> = {
   $and?: Filter<T>[]
   $or?: Filter<T>[]
   $not?: Filter<T>
-  $limit?: number
-  $offset?: number
 }
 
 export interface SortOption<T> {
@@ -32,10 +30,13 @@ export interface SortOption<T> {
 
 export type QueryOptions<T> = Filter<T> & {
   $orderBy?: SortOption<T>[]
+  $limit?: number
+  $offset?: number
 }
 
 export interface BaseRepositoryInterface<T> {
   findById: (id: string) => Promise<T | undefined>
+  findOne: (options?: QueryOptions<T>) => Promise<T | undefined>
   list: (options?: QueryOptions<T>) => Promise<T[]>
   save: (entity: T) => Promise<void>
   delete: (id: string) => Promise<void>

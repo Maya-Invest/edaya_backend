@@ -1,0 +1,43 @@
+import { describe, expect, test } from 'bun:test'
+import { School, SchoolType } from '../../../../src/entities/school/school'
+
+describe('School entity', () => {
+  const baseArgs = {
+    id: 'sch1',
+    name: 'Maya High School',
+    timeZone: 'Africa/Douala',
+  }
+
+  test('instantiates successfully with valid inputs', () => {
+    const school = new School({
+      ...baseArgs,
+      type: SchoolType.Secondary,
+      country: 'Cameroon',
+      city: 'Douala',
+    })
+
+    expect(school.id).toBe('sch1')
+    expect(school.name).toBe('Maya High School')
+    expect(school.timeZone).toBe('Africa/Douala')
+    expect(school.type).toBe(SchoolType.Secondary)
+    expect(school.location).toBe('Douala, Cameroon')
+    expect(school.createdAt).toBeInstanceOf(Date)
+  })
+
+  test('location formatting omits undefined fields', () => {
+    const school1 = new School({ ...baseArgs, city: 'Douala' })
+    expect(school1.location).toBe('Douala')
+
+    const school2 = new School({ ...baseArgs, country: 'Cameroon' })
+    expect(school2.location).toBe('Cameroon')
+
+    const school3 = new School(baseArgs)
+    expect(school3.location).toBeUndefined()
+  })
+
+  test('throws error for invalid time zone', () => {
+    expect(() => {
+      new School({ ...baseArgs, timeZone: 'Invalid/Zone' })
+    }).toThrow('Invalid IANA time zone: Invalid/Zone')
+  })
+})

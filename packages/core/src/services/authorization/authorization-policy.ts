@@ -240,7 +240,7 @@ export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
     if (
       request.action === 'queries.read_student_detail'
       && request.resource.studentId
-      && (await this.guardianStudentLinks.findByGuardianAndStudent(guardianId, request.resource.studentId))?.schoolId
+      && (await this.guardianStudentLinks.findOne({ guardianId, studentId: request.resource.studentId }))?.schoolId
       === request.resource.schoolId
     ) {
       return
@@ -248,7 +248,7 @@ export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
     if (
       (request.action === 'attendance.read' || request.action === 'finance.read')
       && request.resource.studentId
-      && (await this.guardianStudentLinks.findByGuardianAndStudent(guardianId, request.resource.studentId))?.schoolId
+      && (await this.guardianStudentLinks.findOne({ guardianId, studentId: request.resource.studentId }))?.schoolId
       === request.resource.schoolId
     ) {
       return
