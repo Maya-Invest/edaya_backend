@@ -231,7 +231,7 @@ export class CommunicationsService {
 
   private async requireAnnouncement(announcementId: string): Promise<Announcement> {
     const announcement = await this.announcements.findById(announcementId)
-    if (!announcement) {
+    if (!announcement || announcement.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return announcement
@@ -461,9 +461,9 @@ export class CommunicationsService {
     schoolId: string
     announcementId?: string
   }): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, {
-      action: 'communications.manage',
-      resource,
-    })
+    if (resource.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorizationPolicy.checkGlobalAction(this.actor, 'communications.manage')
   }
 }

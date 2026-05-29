@@ -30,7 +30,22 @@ describe('FinanceService', () => {
     students: { findById: mock(async () => ({ id: 'stu1', schoolId: 'sch1' })) },
   } as unknown as SchoolRepositories
 
-  const mockPolicy = { requirePermission: mock(async () => {}) } as unknown as AuthorizationPolicy
+  const mockPolicy = {
+    requirePermission: mock(async () => {}),
+    checkStudentAccess: mock(async () => {}),
+    checkGuardianAccess: mock(async () => {}),
+    checkStudentNoteAccess: mock(async () => {}),
+    checkStudentHealthAccess: mock(async () => {}),
+    checkClassGroupAccess: mock(async () => {}),
+    checkAssessmentAccess: mock(async () => {}),
+    checkReportCardResultAccess: mock(async () => {}),
+    checkFeeAccess: mock(async () => {}),
+    checkStudentFeeAccess: mock(async () => {}),
+    checkSessionAccess: mock(async () => {}),
+    checkAttendanceAccess: mock(async () => {}),
+    checkGlobalAction: mock(async () => {}),
+    checkModuleAccess: mock(async () => {}),
+  } as unknown as AuthorizationPolicy
   const mockAtomic: AtomicExecutionPort = { execute: mock(async (op: () => Promise<any>) => op()) }
   const actor: ActorMetadata = {
     kind: 'system',

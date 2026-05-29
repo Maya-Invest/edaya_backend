@@ -36,7 +36,10 @@ export class AcademicsService {
     name: string
     createdAt?: Date
   }): Promise<Subject> {
-    await this.authorize('academics.manage_curriculum', { schoolId })
+    if (schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    await this.authorizationPolicy.checkGlobalAction(this.actor, 'academics.manage_curriculum')
     if (!await this.repositories.schools.findById(schoolId)) {
       throw new BusinessRuleViolationError('UNKNOWN_SCHOOL', `Unknown school: ${schoolId}`)
     }
@@ -47,10 +50,10 @@ export class AcademicsService {
 
   async createSubjectMatter(input: SubjectMatterArgs): Promise<SubjectMatter> {
     const subject = await this.repositories.subjects.findById(input.subjectId)
-    if (!subject) {
+    if (!subject || subject.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
-    await this.authorize('academics.manage_curriculum', { schoolId: subject.schoolId })
+    await this.authorizationPolicy.checkGlobalAction(this.actor, 'academics.manage_curriculum')
     const subjectMatter = new SubjectMatter(input)
     await this.repositories.subjectMatters.save(subjectMatter)
     return subjectMatter
@@ -60,7 +63,6 @@ export class AcademicsService {
     id,
     classGroupId,
     subjectId,
-    coefficient,
     createdAt,
   }: {
     id: string
@@ -70,25 +72,22 @@ export class AcademicsService {
     createdAt?: Date
   }): Promise<ClassSubject> {
     const classGroup = await this.repositories.classGroups.findById(classGroupId)
-    if (!classGroup) {
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     const subject = await this.repositories.subjects.findById(subjectId)
-    if (!subject) {
+    if (!subject || subject.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     if (subject.schoolId !== classGroup.schoolId) {
       denyResourceAccess()
     }
-    await this.authorize('academics.manage_curriculum', {
-      schoolId: classGroup.schoolId,
-      classGroupId,
-    })
+    await this.authorizationPolicy.checkClassGroupAccess(this.actor, [classGroupId])
     const existing = await this.repositories.classSubjects.findOne({ classGroupId, subjectId })
     if (existing) {
       return existing
     }
-    const classSubject = new ClassSubject({ id, classGroupId, subjectId, coefficient, createdAt })
+    const classSubject = new ClassSubject({ id, classGroupId, subjectId, coefficient: 1, createdAt })
     await this.repositories.classSubjects.save(classSubject)
     return classSubject
   }
@@ -112,11 +111,7 @@ export class AcademicsService {
       denyResourceAccess()
     }
     const classGroup = await this.requireClassGroup(classSubject.classGroupId)
-    await this.authorize('academics.manage_curriculum', {
-      schoolId: classGroup.schoolId,
-      classGroupId: classGroup.id,
-      classSubjectId,
-    })
+    await this.authorizationPolicy.checkClassGroupAccess(this.actor, [classGroup.id])
     const existing = await this.repositories.classSubjectMatters.findOne({ classSubjectId, subjectMatterId })
     if (existing) {
       return existing
@@ -157,16 +152,14 @@ export class AcademicsService {
       if (!session) {
         denyResourceAccess()
       }
+      const classGroup = await this.repositories.classGroups.findById(session.classGroupId)
+      if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
+        denyResourceAccess()
+      }
       if (session.classSubjectId !== classSubject.id) {
         denyResourceAccess()
       }
-      const classGroup = await this.requireClassGroup(session.classGroupId)
-      await this.authorize('academics.record_progress', {
-        schoolId: classGroup.schoolId,
-        classGroupId: classGroup.id,
-        classSubjectId: classSubject.id,
-        sessionId,
-      })
+      await this.authorizationPolicy.checkSessionAccess(this.actor, [sessionId])
       const existing = await this.repositories.classSubjectProgress.findOne({ classSubjectMatterId, sessionId })
       if (existing) {
         throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
@@ -208,11 +201,7 @@ export class AcademicsService {
     const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
     const classSubject = await this.requireClassSubject(matter.classSubjectId)
     const classGroup = await this.requireClassGroup(classSubject.classGroupId)
-    await this.authorize('academics.read_progress', {
-      schoolId: classGroup.schoolId,
-      classGroupId: classGroup.id,
-      classSubjectId: classSubject.id,
-    })
+    await this.authorizationPolicy.checkClassGroupAccess(this.actor, [classGroup.id])
     return this.repositories.classSubjectProgress.list({ classSubjectMatterId })
   }
 
@@ -242,12 +231,24 @@ export class AcademicsService {
     if (!subjectMatter) {
       denyResourceAccess()
     }
+    const subject = await this.repositories.subjects.findById(subjectMatter.subjectId)
+    if (!subject || subject.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
     return subjectMatter
   }
 
   private async requireClassSubjectMatter(classSubjectMatterId: string): Promise<ClassSubjectMatter> {
     const matter = await this.repositories.classSubjectMatters.findById(classSubjectMatterId)
     if (!matter) {
+      denyResourceAccess()
+    }
+    const classSubject = await this.repositories.classSubjects.findById(matter.classSubjectId)
+    if (!classSubject) {
+      denyResourceAccess()
+    }
+    const classGroup = await this.repositories.classGroups.findById(classSubject.classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return matter
@@ -258,21 +259,18 @@ export class AcademicsService {
     if (!classSubject) {
       denyResourceAccess()
     }
+    const classGroup = await this.repositories.classGroups.findById(classSubject.classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
     return classSubject
   }
 
   private async requireClassGroup(classGroupId: string) {
     const classGroup = await this.repositories.classGroups.findById(classGroupId)
-    if (!classGroup) {
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return classGroup
-  }
-
-  private async authorize(
-    action: 'academics.manage_curriculum' | 'academics.record_progress' | 'academics.read_progress',
-    resource: { schoolId: string, classGroupId?: string, classSubjectId?: string, sessionId?: string },
-  ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
   }
 }

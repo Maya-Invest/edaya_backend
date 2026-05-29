@@ -656,7 +656,7 @@ export class SchedulingService {
 
   private async requireAcademicYear(academicYearId: string): Promise<AcademicYear> {
     const academicYear = await this.repositories.academicYears.findById(academicYearId)
-    if (!academicYear) {
+    if (!academicYear || academicYear.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return academicYear
@@ -664,7 +664,7 @@ export class SchedulingService {
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
     const classGroup = await this.repositories.classGroups.findById(classGroupId)
-    if (!classGroup) {
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return classGroup
@@ -675,12 +675,16 @@ export class SchedulingService {
     if (!session) {
       denyResourceAccess()
     }
+    const classGroup = await this.repositories.classGroups.findById(session.classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
     return session
   }
 
   private async requireStudent(studentId: string) {
     const student = await this.repositories.students.findById(studentId)
-    if (!student) {
+    if (!student || student.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return student
@@ -731,6 +735,51 @@ export class SchedulingService {
       studentId?: string
     },
   ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
+    if (resource.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    switch (action) {
+      case 'scheduling.manage':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        else {
+          await this.authorizationPolicy.checkGlobalAction(this.actor, 'scheduling.manage')
+        }
+        if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        break
+      case 'attendance.record':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'attendance.review_justification':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'attendance.read':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        break
+    }
   }
 }

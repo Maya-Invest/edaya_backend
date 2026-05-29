@@ -194,7 +194,7 @@ export class BehaviorService {
     updatedAt?: Date
   }): Promise<StudentDisciplinaryAction> {
     const current = await this.repositories.studentDisciplinaryActions.findById(studentDisciplinaryActionId)
-    if (!current) {
+    if (!current || current.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     const incident = await this.requireIncident(current.incidentId)
@@ -264,7 +264,7 @@ export class BehaviorService {
 
   private async requireIncident(incidentId: string): Promise<Incident> {
     const incident = await this.repositories.incidents.findById(incidentId)
-    if (!incident) {
+    if (!incident || incident.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return incident
@@ -323,7 +323,39 @@ export class BehaviorService {
       studentId?: string
     },
   ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
+    if (resource.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    switch (action) {
+      case 'behavior.report_incident':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        else if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        else {
+          await this.authorizationPolicy.checkGlobalAction(this.actor, 'behavior.report_incident')
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'behavior.manage_discipline':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        else if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        else {
+          await this.authorizationPolicy.checkGlobalAction(this.actor, 'behavior.manage_discipline')
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+    }
   }
 }
 

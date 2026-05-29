@@ -19,7 +19,7 @@ import {
   StudentNoteVisibility,
   StudentStatus,
 } from '../../../src/entities'
-import { AuthorizationErrorCode, createStaffActorMetadata } from '../../../src/services/authorization'
+import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '../../../src/services/authorization'
 import { createTestApp } from '../../support/in-memory-school-headless-app'
 
 describe('tenant boundary safeguards', () => {
@@ -31,6 +31,7 @@ describe('tenant boundary safeguards', () => {
       roles: [StaffRole.Admin],
       requestId: 'school-a-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Strong,
     }))
     const schoolBApp = forActor(createStaffActorMetadata({
       subjectId: 'school-b-admin-user',
@@ -39,6 +40,7 @@ describe('tenant boundary safeguards', () => {
       roles: [StaffRole.Admin],
       requestId: 'school-b-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Strong,
     }))
     await repositories.staffMemberRepository.save(new StaffMember({
       id: 'school-b-admin',

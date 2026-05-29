@@ -710,7 +710,7 @@ export class StudentsService {
 
   private async requireStudent(studentId: string): Promise<Student> {
     const student = await this.repositories.students.findById(studentId)
-    if (!student) {
+    if (!student || student.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return student
@@ -718,7 +718,7 @@ export class StudentsService {
 
   private async requireGuardian(guardianId: string): Promise<Guardian> {
     const guardian = await this.repositories.guardians.findById(guardianId)
-    if (!guardian) {
+    if (!guardian || guardian.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return guardian
@@ -726,7 +726,7 @@ export class StudentsService {
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
     const classGroup = await this.repositories.classGroups.findById(classGroupId)
-    if (!classGroup) {
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return classGroup
@@ -862,6 +862,43 @@ export class StudentsService {
     action: Extract<AuthorizationAction, `students.${string}`>,
     resource: { schoolId: string, classGroupId?: string, studentId?: string, guardianId?: string },
   ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
+    if (resource.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    switch (action) {
+      case 'students.manage_enrollment':
+        await this.authorizationPolicy.checkGlobalAction(this.actor, 'students.manage_enrollment')
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'students.manage_guardians':
+        await this.authorizationPolicy.checkGlobalAction(this.actor, 'students.manage_guardians')
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        if (resource.guardianId) {
+          await this.authorizationPolicy.checkGuardianAccess(this.actor, [resource.guardianId])
+        }
+        break
+      case 'students.manage_profile':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'students.manage_health':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'students.manage_notes':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+    }
   }
 }

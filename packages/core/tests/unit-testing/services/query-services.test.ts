@@ -19,7 +19,7 @@ describe('SchoolQueryService', () => {
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    requirePermission: mock(async () => {}),
+    checkGlobalAction: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const actor: ActorMetadata = {
@@ -29,7 +29,6 @@ describe('SchoolQueryService', () => {
     requestId: 'req1',
     reason: 'test',
   }
-  const context = { schoolId: 'school1' }
   const mockAtomic = { execute: mock(async (op: () => Promise<any>) => op()) }
 
   const service = new SchoolQueryService({
@@ -40,15 +39,15 @@ describe('SchoolQueryService', () => {
   })
 
   test('getOverdueFeeCount checks permission and delegates to repo', async () => {
-    const result = await service.getOverdueFeeCount('sch1', context)
-    expect(mockPolicy.requirePermission).toHaveBeenCalledWith(actor, { action: 'query.get_overdue_fees', resource: context })
+    const result = await service.getOverdueFeeCount('sch1')
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'query.get_overdue_fees')
     expect(mockRepos.schools.getOverdueFeeCount).toHaveBeenCalledWith('sch1')
     expect(result).toBe(5)
   })
 
   test('getPublishedReportCardCount checks permission and delegates to repo', async () => {
-    const result = await service.getPublishedReportCardCount('sch1', context)
-    expect(mockPolicy.requirePermission).toHaveBeenCalledWith(actor, { action: 'queries.read_report_card_detail', resource: context })
+    const result = await service.getPublishedReportCardCount('sch1')
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'queries.read_report_card_detail')
     expect(mockRepos.schools.getPublishedReportCardCount).toHaveBeenCalledWith('sch1')
     expect(result).toBe(10)
   })

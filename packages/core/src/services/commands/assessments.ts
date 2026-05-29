@@ -746,6 +746,34 @@ export class AssessmentsService {
       reportCardResultId?: string
     },
   ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
+    if (resource.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    switch (action) {
+      case 'assessments.manage_configuration':
+        await this.authorizationPolicy.checkGlobalAction(this.actor, 'assessments.manage_configuration')
+        break
+      case 'assessments.record_result':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      case 'assessments.read_results':
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        break
+      case 'assessments.publish_report_card':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        if (resource.reportCardResultId) {
+          await this.authorizationPolicy.checkReportCardResultAccess(this.actor, [resource.reportCardResultId])
+        }
+        break
+    }
   }
 }

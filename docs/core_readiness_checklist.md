@@ -19,7 +19,7 @@ tests. `[ ]` is required to consider the selected core contract ready.
 
 ## Current Status
 
-- [ ] Core ready for adapters and the full selected UI workflow scope.
+- [x] Core ready for adapters and the full selected UI workflow scope.
 - [x] In-memory workflow baseline established for the current public facade.
 - [x] Service construction, current actor-bound authorization, atomic compound
   writes, and known session/attendance integrity fixes are implemented.
@@ -189,23 +189,23 @@ considered stable:
   current status, resolved academic context, closure reason, progression
   decision, previous enrollment, and transition audit state through
   `getStudentEnrollmentHistory(...)`.
-- [ ] Add actor-scoped teacher, guardian, and student projections required by
+- [x] Add actor-scoped teacher, guardian, and student projections required by
   selected UI journeys; do not expose arbitrary owner identifiers to
   self-service callers.
 
 Exit condition:
 
-- [ ] Every selected first-release screen obtains its required data through
+- [x] Every selected first-release screen obtains its required data through
   public application query contracts only.
 
 ### Gate 2: Stabilize Query And Failure Shapes
 
-- [ ] Define pagination and filtering inputs for directory/list projections
+- [x] Define pagination and filtering inputs for directory/list projections
   that will be used against persisted datasets.
 - [x] Define stable ordering for student, class, announcement, and finance
   list projections: directories are name/id ordered, announcements are
   newest-first, and finance ledger entries/payments use date/id ordering.
-- [ ] Replace UI-visible raw domain `Error` failures with documented typed
+- [x] Replace UI-visible raw domain `Error` failures with documented typed
   application failures or discriminated results for selected workflows.
 - [x] Use assessment-result terminology for the authorization actions:
   `assessments.record_result` and `assessments.read_results`.
@@ -253,7 +253,7 @@ Exit condition:
 
 Exit condition:
 
-- [ ] Input, output, sorting/paging, and expected failure contracts are stable
+- [x] Input, output, sorting/paging, and expected failure contracts are stable
   enough for UI and adapter implementations to rely on them.
 
 ### Gate 3: Confirm The Simplified Assessment And Session Contract
@@ -433,7 +433,7 @@ Already established for current APIs:
 
 Required closure:
 
-- [ ] Maintain an explicit method/action/role manifest for every API selected
+- [x] Maintain an explicit method/action/role manifest for every API selected
   by the first-release UI, including newly added projections.
 - [x] Define action/resource-context and visibility rules for incidents and
   discipline.
@@ -446,27 +446,27 @@ Required closure:
 - [x] Define action/resource-context and visibility rules for attendance
   justification and fee/payment adjustment or cancellation.
 - [x] Define action/resource-context rules for setup lifecycle changes.
-- [ ] Add allow/deny tests for every method and supported actor category in
+- [x] Add allow/deny tests for every method and supported actor category in
   that selected manifest.
-- [ ] Add paired missing/foreign identifier tests for every caller-selected
+- [x] Add paired missing/foreign identifier tests for every caller-selected
   resource path in the manifest, ensuring stable non-disclosing denial.
-- [ ] Add denied-mutation tests proving no repository state changes for every
+- [x] Add denied-mutation tests proving no repository state changes for every
   selected command family.
 - [x] Add shared-repository concurrency tests for multiple actor-bound
   facades.
 - [x] Enforce the supported client import boundary so UI/application code
   cannot use repository ports or internal query composition services as
   alternate entry points.
-- [ ] Decide whether any selected UI or adapter workflow requires assurance
+- [x] Decide whether any selected UI or adapter workflow requires assurance
   enforcement; implement policy use of `ActorAssuranceLevel` or explicitly
   remove it from the selected contract.
-- [ ] Define allowlisted `SystemActorMetadata` permissions only for selected
+- [x] Define allowlisted `SystemActorMetadata` permissions only for selected
   imports/jobs/workers; no system capability is required until such a workflow
   is selected.
 
 Exit condition:
 
-- [ ] The selected UI/API manifest has executable permission, tenant,
+- [x] The selected UI/API manifest has executable permission, tenant,
   mutation-denial, and concurrency evidence without a facade bypass.
 
 ### Gate 6: Confirm The In-Memory Adapter Surface
@@ -497,7 +497,7 @@ surface stable enough to implement one.
 
 Exit condition:
 
-- [ ] The in-memory suite and core ports define the behavior adapters must
+- [x] The in-memory suite and core ports define the behavior adapters must
   reproduce, without unresolved selected-screen contract gaps.
 
 ## Authorization Contract Reference

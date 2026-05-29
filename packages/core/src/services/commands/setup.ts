@@ -621,15 +621,35 @@ export class SetupService {
       studentId?: string
     } = {},
   ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, {
-      action,
-      resource: { schoolId, ...resource },
-    })
+    if (schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    switch (action) {
+      case 'setup.register_school':
+      case 'setup.manage':
+      case 'setup.manage_lifecycle':
+      case 'setup.assign_staff':
+      case 'resources.manage':
+      case 'attachments.manage':
+        await this.authorizationPolicy.checkGlobalAction(this.actor, action)
+        if (resource.classGroupId) {
+          await this.authorizationPolicy.checkClassGroupAccess(this.actor, [resource.classGroupId])
+        }
+        if (resource.sessionId) {
+          await this.authorizationPolicy.checkSessionAccess(this.actor, [resource.sessionId])
+        }
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        break
+      default:
+        await this.authorizationPolicy.checkGlobalAction(this.actor, action)
+    }
   }
 
   private async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
     const classGroup = await this.repositories.classGroups.findById(classGroupId)
-    if (!classGroup) {
+    if (!classGroup || classGroup.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return classGroup

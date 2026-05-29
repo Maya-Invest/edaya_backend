@@ -388,7 +388,7 @@ export class FinanceService {
 
   private async requireStudent(studentId: string) {
     const student = await this.repositories.students.findById(studentId)
-    if (!student) {
+    if (!student || student.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return student
@@ -396,7 +396,7 @@ export class FinanceService {
 
   private async requireFee(feeId: string): Promise<Fee> {
     const fee = await this.repositories.fees.findById(feeId)
-    if (!fee) {
+    if (!fee || fee.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return fee
@@ -407,12 +407,24 @@ export class FinanceService {
     if (!fee) {
       denyResourceAccess()
     }
+    const student = await this.repositories.students.findById(fee.studentId)
+    if (!student || student.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
     return fee
   }
 
   private async requirePayment(paymentId: string): Promise<Payment> {
     const payment = await this.repositories.payments.findById(paymentId)
     if (!payment) {
+      denyResourceAccess()
+    }
+    const studentFee = await this.repositories.studentFees.findById(payment.studentFeeId)
+    if (!studentFee) {
+      denyResourceAccess()
+    }
+    const student = await this.repositories.students.findById(studentFee.studentId)
+    if (!student || student.schoolId !== this.actor.schoolId) {
       denyResourceAccess()
     }
     return payment
@@ -422,6 +434,32 @@ export class FinanceService {
     action: 'finance.manage' | 'finance.read',
     resource: { schoolId: string, studentId?: string, studentFeeId?: string },
   ): Promise<void> {
-    await this.authorizationPolicy.requirePermission(this.actor, { action, resource })
+    if (resource.schoolId !== this.actor.schoolId) {
+      denyResourceAccess()
+    }
+    switch (action) {
+      case 'finance.manage':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        else {
+          await this.authorizationPolicy.checkGlobalAction(this.actor, 'finance.manage')
+        }
+        if (resource.studentFeeId) {
+          await this.authorizationPolicy.checkStudentFeeAccess(this.actor, [resource.studentFeeId])
+        }
+        break
+      case 'finance.read':
+        if (resource.studentId) {
+          await this.authorizationPolicy.checkStudentAccess(this.actor, [resource.studentId])
+        }
+        else {
+          await this.authorizationPolicy.checkGlobalAction(this.actor, 'finance.read')
+        }
+        if (resource.studentFeeId) {
+          await this.authorizationPolicy.checkStudentFeeAccess(this.actor, [resource.studentFeeId])
+        }
+        break
+    }
   }
 }

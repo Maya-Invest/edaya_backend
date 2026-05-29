@@ -165,7 +165,7 @@ describe('Shared-repository multi-actor concurrency safeguards', () => {
         paymentDate: new Date(),
         method: PaymentMethod.Cash,
       }),
-      studentApp.queries.attendance.list({ schoolId: 'school', studentId: 'student' }),
+      studentApp.queries.attendance.list({ studentId: 'student' }),
       guardianApp.finance.buildFeeSummary('student'),
     ])
 

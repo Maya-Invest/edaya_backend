@@ -45,6 +45,7 @@ import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../
 import type { ActorMetadata } from '../../src/services/authorization'
 import { StaffMember, StaffRole } from '../../src/entities'
 import {
+  ActorAssuranceLevel,
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
 } from '../../src/services/authorization'
@@ -81,6 +82,7 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   })
   const store = {
     findById: async (id: string) => entries.get(id),
+    findByIds: async (ids: string[]) => ids.map(id => entries.get(id)).filter((entity): entity is T => entity !== undefined),
     findOne: async (options?: Filter<T>) => {
       const results = await store.list(options)
       return results[0]
@@ -398,12 +400,14 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     roles: [StaffRole.Admin],
     requestId: 'integration-test',
     authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+    assuranceLevel: ActorAssuranceLevel.Strong,
   })
 
   const application = new SchoolApplication({
     atomicExecution: createAtomicExecution(transactionParticipants),
     repositories: schoolRepositories,
     authorizationPolicy: new RepositoryAuthorizationPolicy({
+      repositories: schoolRepositories,
       staffAssignmentRepository: schoolRepositories.staffAssignments,
       staffMemberRepository: schoolRepositories.staffMembers,
       guardianRepository: schoolRepositories.guardians,

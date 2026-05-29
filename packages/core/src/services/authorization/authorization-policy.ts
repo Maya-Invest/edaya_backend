@@ -1,8 +1,11 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from './actor-metadata'
-import { StaffRole } from '../../entities/school/staff-member'
-import { StudentStatus } from '../../entities/students/student'
-import { AuthorizationError, AuthorizationErrorCode } from './authorization-error'
+
+import { checkAssessmentAccess, checkClassGroupAccess, checkReportCardResultAccess } from './access-resolvers/academic-resolver'
+import { checkFeeAccess, checkStudentFeeAccess } from './access-resolvers/finance-resolver'
+import { checkGlobalAction, checkModuleAccess } from './access-resolvers/global-resolver'
+import { checkAttendanceAccess, checkSessionAccess } from './access-resolvers/scheduling-resolver'
+import { checkGuardianAccess, checkStudentAccess, checkStudentHealthAccess, checkStudentNoteAccess } from './access-resolvers/student-resolver'
 
 export type AuthorizationAction
   = 'setup.register_school'
@@ -52,33 +55,25 @@ export type AuthorizationAction
     | 'queries.read_guardian_self'
     | 'query.get_overdue_fees'
 
-export interface AuthorizationResourceContext {
-  readonly schoolId: string
-  readonly academicYearId?: string
-  readonly classGroupId?: string
-  readonly classSubjectId?: string
-  readonly sessionId?: string
-  readonly studentId?: string
-  readonly guardianId?: string
-  readonly reportCardResultId?: string
-  readonly studentFeeId?: string
-  readonly announcementId?: string
-  readonly resourceId?: string
-  readonly attachmentId?: string
-}
-
-export interface AuthorizationRequest {
-  readonly action: AuthorizationAction
-  readonly resource: AuthorizationResourceContext
-}
-
 /**
  * Evaluates actor access after a service has resolved the resource context
  * required by its use case. Implementations may consult current repository
  * relationships such as staff assignments or guardian/student links.
  */
 export interface AuthorizationPolicy {
-  requirePermission: (actor: ActorMetadata, request: AuthorizationRequest) => Promise<void>
+  checkStudentAccess: (actor: ActorMetadata, studentIds: readonly string[]) => Promise<void>
+  checkGuardianAccess: (actor: ActorMetadata, guardianIds: readonly string[]) => Promise<void>
+  checkStudentNoteAccess: (actor: ActorMetadata, noteIds: readonly string[]) => Promise<void>
+  checkStudentHealthAccess: (actor: ActorMetadata, profileIds: readonly string[]) => Promise<void>
+  checkClassGroupAccess: (actor: ActorMetadata, classGroupIds: readonly string[]) => Promise<void>
+  checkAssessmentAccess: (actor: ActorMetadata, assessmentIds: readonly string[]) => Promise<void>
+  checkReportCardResultAccess: (actor: ActorMetadata, reportCardResultIds: readonly string[]) => Promise<void>
+  checkFeeAccess: (actor: ActorMetadata, feeIds: readonly string[]) => Promise<void>
+  checkStudentFeeAccess: (actor: ActorMetadata, studentFeeIds: readonly string[]) => Promise<void>
+  checkSessionAccess: (actor: ActorMetadata, sessionIds: readonly string[]) => Promise<void>
+  checkAttendanceAccess: (actor: ActorMetadata, studentIds: readonly string[], sessionIds: readonly string[]) => Promise<void>
+  checkGlobalAction: (actor: ActorMetadata, action: string) => Promise<void>
+  checkModuleAccess: (actor: ActorMetadata, schoolId: string, module: string) => Promise<void>
 }
 
 export interface AuthorizedServiceArgs {
@@ -87,215 +82,76 @@ export interface AuthorizedServiceArgs {
 }
 
 export interface RepositoryAuthorizationPolicyArgs {
-  staffAssignmentRepository: SchoolRepositories['staffAssignments']
-  staffMemberRepository: SchoolRepositories['staffMembers']
-  guardianRepository: SchoolRepositories['guardians']
-  guardianStudentLinkRepository: SchoolRepositories['guardianLinks']
-  studentRepository: SchoolRepositories['students']
+  repositories?: SchoolRepositories
+  staffAssignmentRepository?: SchoolRepositories['staffAssignments']
+  staffMemberRepository?: SchoolRepositories['staffMembers']
+  guardianRepository?: SchoolRepositories['guardians']
+  guardianStudentLinkRepository?: SchoolRepositories['guardianLinks']
+  studentRepository?: SchoolRepositories['students']
 }
 
-const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
-
-const coordinatorActions = new Set<AuthorizationAction>([
-  'academics.manage_curriculum',
-  'setup.manage_lifecycle',
-  'academics.record_progress',
-  'academics.read_progress',
-  'scheduling.manage',
-  'attendance.record',
-  'attendance.review_justification',
-  'attendance.read',
-  'behavior.report_incident',
-  'behavior.manage_discipline',
-  'behavior.read_incidents',
-  'resources.manage',
-  'resources.read',
-  'attachments.manage',
-  'attachments.read',
-  'assessments.manage_configuration',
-  'assessments.record_result',
-  'assessments.read_results',
-  'assessments.publish_report_card',
-  'students.manage_enrollment',
-  'students.manage_guardians',
-  'students.manage_profile',
-  'students.manage_health',
-  'students.manage_notes',
-  'communications.manage',
-  'queries.read_workspace',
-  'queries.read_student_detail',
-  'queries.read_enrollment_history',
-  'queries.read_report_card_detail',
-  'queries.read_communications',
-  'queries.read_calendar',
-  'queries.read_curriculum_progress',
-  'queries.read_class_directory',
-  'queries.read_class_curriculum',
-  'queries.read_timetable',
-  'queries.read_attendance',
-])
-
-const teacherAssignmentActions = new Set<AuthorizationAction>([
-  'academics.record_progress',
-  'academics.read_progress',
-  'attendance.record',
-  'attendance.read',
-  'behavior.report_incident',
-  'behavior.read_incidents',
-  'resources.read',
-  'attachments.read',
-  'assessments.record_result',
-  'assessments.read_results',
-  'students.manage_notes',
-  'queries.read_student_detail',
-  'queries.read_class_curriculum',
-  'queries.read_curriculum_progress',
-  'queries.read_timetable',
-  'queries.read_attendance',
-])
-
-const accountantActions = new Set<AuthorizationAction>([
-  'finance.manage',
-  'finance.read',
-  'queries.read_student_detail',
-])
-
-/**
- * Initial application policy for the eight-module facade. Resource ownership
- * is resolved by each service before this policy is invoked.
- */
 export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
-  private readonly staffAssignments: SchoolRepositories['staffAssignments']
-  private readonly staffMembers: SchoolRepositories['staffMembers']
-  private readonly guardians: SchoolRepositories['guardians']
-  private readonly guardianStudentLinks: SchoolRepositories['guardianLinks']
-  private readonly students: SchoolRepositories['students']
+  private readonly repositories: SchoolRepositories
 
   constructor(args: RepositoryAuthorizationPolicyArgs) {
-    this.staffAssignments = args.staffAssignmentRepository
-    this.staffMembers = args.staffMemberRepository
-    this.guardians = args.guardianRepository
-    this.guardianStudentLinks = args.guardianStudentLinkRepository
-    this.students = args.studentRepository
+    this.repositories = args.repositories ?? {
+      staffAssignments: args.staffAssignmentRepository,
+      staffMembers: args.staffMemberRepository,
+      guardians: args.guardianRepository,
+      guardianLinks: args.guardianStudentLinkRepository,
+      students: args.studentRepository,
+    } as unknown as SchoolRepositories
   }
 
-  async requirePermission(actor: ActorMetadata, request: AuthorizationRequest): Promise<void> {
-    if (actor.schoolId !== request.resource.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    switch (actor.kind) {
-      case 'staff':
-        if (request.action === 'setup.register_school' && actor.roles.some(role => elevatedRoles.has(role))) {
-          return
-        }
-        await this.requireStaffPermission(actor.staffMemberId, request)
-        return
-      case 'guardian':
-        await this.requireGuardianPermission(actor.guardianId, request)
-        return
-      case 'student':
-        await this.requireStudentPermission(actor.studentId, request)
-        return
-      case 'system':
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
+  async checkStudentAccess(actor: ActorMetadata, studentIds: readonly string[]): Promise<void> {
+    await checkStudentAccess(actor, studentIds, this.repositories)
   }
 
-  private async requireStaffPermission(
-    staffMemberId: string,
-    request: AuthorizationRequest,
-  ): Promise<void> {
-    const staffMember = await this.staffMembers.findById(staffMemberId)
-    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== request.resource.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    const roles = staffMember.roles
-    if (roles.some(role => elevatedRoles.has(role))) {
-      return
-    }
-    if (roles.includes(StaffRole.Coordinator) && coordinatorActions.has(request.action)) {
-      return
-    }
-    if (roles.includes(StaffRole.Accountant) && accountantActions.has(request.action)) {
-      return
-    }
-    if (
-      roles.includes(StaffRole.Teacher)
-      && teacherAssignmentActions.has(request.action)
-      && await this.isAssigned(staffMemberId, request.resource)
-    ) {
-      return
-    }
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  async checkGuardianAccess(actor: ActorMetadata, guardianIds: readonly string[]): Promise<void> {
+    await checkGuardianAccess(actor, guardianIds, this.repositories)
   }
 
-  private async requireGuardianPermission(guardianId: string, request: AuthorizationRequest): Promise<void> {
-    const guardian = await this.guardians.findById(guardianId)
-    if (!guardian || !guardian.hasAccess || guardian.schoolId !== request.resource.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    if (request.action === 'queries.read_guardian_self' && request.resource.guardianId === guardianId) {
-      return
-    }
-    if (
-      request.action === 'queries.read_student_detail'
-      && request.resource.studentId
-      && (await this.guardianStudentLinks.findOne({ guardianId, studentId: request.resource.studentId }))?.schoolId
-      === request.resource.schoolId
-    ) {
-      return
-    }
-    if (
-      (request.action === 'attendance.read' || request.action === 'finance.read')
-      && request.resource.studentId
-      && (await this.guardianStudentLinks.findOne({ guardianId, studentId: request.resource.studentId }))?.schoolId
-      === request.resource.schoolId
-    ) {
-      return
-    }
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  async checkStudentNoteAccess(actor: ActorMetadata, noteIds: readonly string[]): Promise<void> {
+    await checkStudentNoteAccess(actor, noteIds, this.repositories)
   }
 
-  private async requireStudentPermission(studentId: string, request: AuthorizationRequest): Promise<void> {
-    const student = await this.students.findById(studentId)
-    if (!student || student.status !== StudentStatus.Active || student.schoolId !== request.resource.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    if (
-      request.action === 'queries.read_student_detail'
-      && request.resource.studentId === studentId
-    ) {
-      return
-    }
-    if (
-      (request.action === 'attendance.read' || request.action === 'finance.read')
-      && request.resource.studentId === studentId
-    ) {
-      return
-    }
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  async checkStudentHealthAccess(actor: ActorMetadata, profileIds: readonly string[]): Promise<void> {
+    await checkStudentHealthAccess(actor, profileIds, this.repositories)
   }
 
-  private async isAssigned(
-    staffMemberId: string,
-    resource: AuthorizationResourceContext,
-  ): Promise<boolean> {
-    if (resource.sessionId) {
-      const assignments = await this.staffAssignments.list({ sessionId: resource.sessionId })
-      if (assignments.some(assignment => assignment.staffId === staffMemberId)) {
-        return true
-      }
-    }
-    if (resource.classSubjectId) {
-      const assignments = await this.staffAssignments.list({ classSubjectId: resource.classSubjectId })
-      if (assignments.some(assignment => assignment.staffId === staffMemberId)) {
-        return true
-      }
-    }
-    if (resource.classGroupId) {
-      const assignments = await this.staffAssignments.list({ classGroupId: resource.classGroupId })
-      return assignments.some(assignment => assignment.staffId === staffMemberId)
-    }
-    return false
+  async checkClassGroupAccess(actor: ActorMetadata, classGroupIds: readonly string[]): Promise<void> {
+    await checkClassGroupAccess(actor, classGroupIds, this.repositories)
+  }
+
+  async checkAssessmentAccess(actor: ActorMetadata, assessmentIds: readonly string[]): Promise<void> {
+    await checkAssessmentAccess(actor, assessmentIds, this.repositories)
+  }
+
+  async checkReportCardResultAccess(actor: ActorMetadata, reportCardResultIds: readonly string[]): Promise<void> {
+    await checkReportCardResultAccess(actor, reportCardResultIds, this.repositories)
+  }
+
+  async checkFeeAccess(actor: ActorMetadata, feeIds: readonly string[]): Promise<void> {
+    await checkFeeAccess(actor, feeIds, this.repositories)
+  }
+
+  async checkStudentFeeAccess(actor: ActorMetadata, studentFeeIds: readonly string[]): Promise<void> {
+    await checkStudentFeeAccess(actor, studentFeeIds, this.repositories)
+  }
+
+  async checkSessionAccess(actor: ActorMetadata, sessionIds: readonly string[]): Promise<void> {
+    await checkSessionAccess(actor, sessionIds, this.repositories)
+  }
+
+  async checkAttendanceAccess(actor: ActorMetadata, studentIds: readonly string[], sessionIds: readonly string[]): Promise<void> {
+    await checkAttendanceAccess(actor, studentIds, sessionIds, this.repositories)
+  }
+
+  async checkGlobalAction(actor: ActorMetadata, action: string): Promise<void> {
+    await checkGlobalAction(actor, action, this.repositories)
+  }
+
+  async checkModuleAccess(actor: ActorMetadata, schoolId: string, module: string): Promise<void> {
+    await checkModuleAccess(actor, schoolId, module, this.repositories)
   }
 }

@@ -36,11 +36,14 @@ export type QueryOptions<T> = Filter<T> & {
 
 export interface BaseRepositoryInterface<T> {
   findById: (id: string) => Promise<T | undefined>
-  findOne: (options?: QueryOptions<T>) => Promise<T | undefined>
+  findOne: (options?: QueryOptions<T>, last?: boolean) => Promise<T | undefined>
+  findByIds: (ids: string[]) => Promise<T[]>
   list: (options?: QueryOptions<T>) => Promise<T[]>
+
+  count: (filter?: Filter<T>) => Promise<number>
+
   save: (entity: T) => Promise<void>
   delete: (id: string) => Promise<void>
-  count: (filter?: Filter<T>) => Promise<number>
   batchSave: (entities: T[]) => Promise<string[]>
   batchDelete: (ids: string[]) => Promise<void>
 }

@@ -31,6 +31,9 @@ describe('AcademicsService uncovered methods', () => {
 
   const mockPolicy = {
     requirePermission: mock(async () => {}),
+    checkGlobalAction: mock(async () => {}),
+    checkClassGroupAccess: mock(async () => {}),
+    checkSessionAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const mockAtomic: AtomicExecutionPort = {
