@@ -569,7 +569,7 @@ Verification commands:
 
 ```bash
 bun run check
-bun --filter=maya_school_core test
+bun --filter=@edaya/core test
 npx eslint packages/core/src packages/core/tests
 ```
 

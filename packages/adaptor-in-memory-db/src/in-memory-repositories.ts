@@ -43,7 +43,7 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from 'maya_school_core'
+} from '@edaya/core'
 import type { TransactionParticipant } from './in-memory-store'
 import { InMemoryStore } from './in-memory-store'
 

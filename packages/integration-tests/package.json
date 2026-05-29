@@ -1,0 +1,12 @@
+{
+  "name": "@edaya/integration-tests",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@edaya/core": "workspace:*",
+    "@types/bun": "^1.3.14"
+  }
+}

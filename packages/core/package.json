@@ -1,5 +1,5 @@
 {
-  "name": "maya_school_core",
+  "name": "@edaya/core",
   "type": "module",
   "version": "0.0.1",
   "private": true,

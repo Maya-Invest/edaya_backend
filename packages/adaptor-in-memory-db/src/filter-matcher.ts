@@ -1,4 +1,4 @@
-import type { Filter } from 'maya_school_core'
+import type { Filter } from '@edaya/core'
 
 function areEqual(a: any, b: any): boolean {
   if (a instanceof Date && b instanceof Date) {

@@ -1,11 +1,10 @@
 {
-  "name": "maya_school_monorepo",
+  "name": "maya_school_core",
   "type": "module",
   "private": true,
   "packageManager": "bun@1.2.13",
   "workspaces": [
-    "packages/*",
-    "packages/adaptors/*"
+    "packages/*"
   ],
   "scripts": {
     "build": "turbo run build",

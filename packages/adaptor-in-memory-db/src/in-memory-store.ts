@@ -1,4 +1,4 @@
-import type { BaseRepositoryInterface, Filter, QueryOptions } from 'maya_school_core'
+import type { BaseRepositoryInterface, Filter, QueryOptions } from '@edaya/core'
 import { matchesFilter } from './filter-matcher'
 
 export interface EntityWithId {
