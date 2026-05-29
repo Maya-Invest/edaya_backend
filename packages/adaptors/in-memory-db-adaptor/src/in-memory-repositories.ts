@@ -5,9 +5,9 @@ import type {
   AnnouncementTarget,
   Assessment,
   AssessmentResult,
+  AtomicExecutionPort,
   Attachment,
   AttendanceRecord,
-  AtomicExecutionPort,
   CalendarEvent,
   ClassGroup,
   ClassSubject,
@@ -44,7 +44,8 @@ import type {
   Subject,
   SubjectMatter,
 } from 'maya_school_core'
-import { InMemoryStore, type TransactionParticipant } from './in-memory-store'
+import type { TransactionParticipant } from './in-memory-store'
+import { InMemoryStore } from './in-memory-store'
 
 export class InMemoryAtomicExecution implements AtomicExecutionPort {
   constructor(private readonly participants: readonly TransactionParticipant[]) {}
@@ -188,8 +189,8 @@ export class InMemorySchoolRepositories implements SchoolRepositories {
       findById: (id: string) => this.schoolsStore.findById(id),
       findOne: (options, last) => this.schoolsStore.findOne(options, last),
       findByIds: (ids: string[]) => this.schoolsStore.findByIds(ids),
-      list: (options) => this.schoolsStore.list(options),
-      count: (filter) => this.schoolsStore.count(filter),
+      list: options => this.schoolsStore.list(options),
+      count: filter => this.schoolsStore.count(filter),
       save: (entity: School) => this.schoolsStore.save(entity),
       delete: (id: string) => this.schoolsStore.delete(id),
       batchSave: (entities: School[]) => this.schoolsStore.batchSave(entities),

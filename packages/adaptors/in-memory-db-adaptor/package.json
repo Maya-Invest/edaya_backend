@@ -3,12 +3,19 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
     "check": "npx tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "eslint src tests"
   },
   "dependencies": {
     "maya_school_core": "workspace:*"

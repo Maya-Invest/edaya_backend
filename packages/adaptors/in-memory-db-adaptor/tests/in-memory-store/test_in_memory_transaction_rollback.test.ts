@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { InMemoryStore } from '../../src/in-memory-store'
 import { InMemoryAtomicExecution } from '../../src/in-memory-repositories'
+import { InMemoryStore } from '../../src/in-memory-store'
 
 interface SampleEntity {
   readonly id: string

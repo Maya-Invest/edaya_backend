@@ -5,7 +5,8 @@
     "types": [
       "bun-types"
     ],
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*",
