@@ -4,7 +4,7 @@ import type { ActorMetadata } from '../../../../src/services/authorization/actor
 import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
 import { Fee, FeeCategory } from '../../../../src/entities/finances/fee'
-import { FinanceService } from '../../../../src/services/modules/finance'
+import { FinanceService } from '../../../../src/services/commands/finance'
 
 describe('FinanceService', () => {
   const mockRepos = {

@@ -1,14 +1,14 @@
 import type { AtomicExecutionPort, SchoolRepositories } from '../ports'
 import type { ActorMetadata, AuthorizedServiceArgs } from './authorization'
-import { AcademicsService } from './modules/academics'
-import { AssessmentsService } from './modules/assessments'
-import { BehaviorService } from './modules/behavior'
-import { CommunicationsService } from './modules/communications'
-import { FinanceService } from './modules/finance'
-import { SchedulingService } from './modules/scheduling'
-import { SetupService } from './modules/setup'
-import { StudentsService } from './modules/student'
-import { SchoolQueryService } from './query-services'
+import { AcademicsService } from './commands/academics'
+import { AssessmentsService } from './commands/assessments'
+import { BehaviorService } from './commands/behavior'
+import { CommunicationsService } from './commands/communications'
+import { FinanceService } from './commands/finance'
+import { SchedulingService } from './commands/scheduling'
+import { SetupService } from './commands/setup'
+import { StudentsService } from './commands/student'
+import { SchoolQueryService } from './queries/query-services'
 
 export interface ServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort

@@ -6,7 +6,7 @@ import { describe, expect, mock, test } from 'bun:test'
 import { Announcement, AnnouncementStatus } from '../../../../src/entities/messaging/announcement'
 import { AnnouncementTargetKind as TargetKind } from '../../../../src/entities/messaging/announcement-target'
 import { MessageDeliveryChannel, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '../../../../src/entities/messaging/message-delivery'
-import { CommunicationsService } from '../../../../src/services/modules/communications'
+import { CommunicationsService } from '../../../../src/services/commands/communications'
 
 describe('CommunicationsService', () => {
   const mockRepos = {

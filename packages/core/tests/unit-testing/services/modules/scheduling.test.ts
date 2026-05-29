@@ -7,7 +7,7 @@ import { AttendanceStatus } from '../../../../src/entities/scheduling/attendance
 import { SessionKind } from '../../../../src/entities/scheduling/session'
 import { AttendanceMode } from '../../../../src/entities/school/class-group'
 import { StudentClassEnrollmentStatus } from '../../../../src/entities/students/student-class-enrollment'
-import { SchedulingService } from '../../../../src/services/modules/scheduling'
+import { SchedulingService } from '../../../../src/services/commands/scheduling'
 
 describe('SchedulingService', () => {
   const mockRepos = {

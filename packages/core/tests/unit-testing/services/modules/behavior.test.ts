@@ -3,7 +3,7 @@ import type { ActorMetadata } from '../../../../src/services/authorization/actor
 import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
 import { StudentDisciplinaryActionStatus } from '../../../../src/entities/students/student-disciplinary-action'
-import { BehaviorService } from '../../../../src/services/modules/behavior'
+import { BehaviorService } from '../../../../src/services/commands/behavior'
 
 describe('BehaviorService', () => {
   const mockRepos = {

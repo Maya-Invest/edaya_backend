@@ -41,10 +41,10 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../entities'
-import type { SchoolRepositories } from '../ports'
-import type { ActorMetadata, AuthorizationPolicy, AuthorizationResourceContext } from './authorization'
-import type { ServiceArgs } from './school-headless-app'
+} from '../../entities'
+import type { SchoolRepositories } from '../../ports'
+import type { ActorMetadata, AuthorizationPolicy, AuthorizationResourceContext } from '../authorization'
+import type { ServiceArgs } from '../school-headless-app'
 import { AuthorizedReadService } from './authorized-read-service'
 
 export class BaseSchoolQueryService {

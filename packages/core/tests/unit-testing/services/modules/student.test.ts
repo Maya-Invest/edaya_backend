@@ -6,7 +6,7 @@ import { Guardian } from '../../../../src/entities/students/guardian'
 import { Student } from '../../../../src/entities/students/student'
 import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollmentStatus } from '../../../../src/entities/students/student-class-enrollment'
 import { StudentNoteVisibility } from '../../../../src/entities/students/student-note'
-import { StudentsService } from '../../../../src/services/modules/student'
+import { StudentsService } from '../../../../src/services/commands/student'
 
 describe('StudentsService', () => {
   const mockRepos = {

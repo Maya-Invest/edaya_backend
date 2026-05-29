@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../../../src/ports/school-repositori
 import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
 import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
-import { SetupService } from '../../../../src/services/modules/setup'
+import { SetupService } from '../../../../src/services/commands/setup'
 
 describe('SetupService', () => {
   const mockRepos = {

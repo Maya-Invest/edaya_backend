@@ -1,6 +1,6 @@
-import type { BaseRepositoryInterface, Filter, QueryOptions } from '../ports/base-repository'
-import type { ActorMetadata } from './authorization/actor-metadata'
-import type { AuthorizationAction, AuthorizationPolicy, AuthorizationResourceContext } from './authorization/authorization-policy'
+import type { BaseRepositoryInterface, Filter, QueryOptions } from '../../ports/base-repository'
+import type { ActorMetadata } from '../authorization/actor-metadata'
+import type { AuthorizationAction, AuthorizationPolicy, AuthorizationResourceContext } from '../authorization/authorization-policy'
 
 export class AuthorizedReadService<T> {
   constructor(

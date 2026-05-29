@@ -3,7 +3,7 @@ import type { SchoolRepositories } from '../../../../src/ports/school-repositori
 import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
 import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
-import { AcademicsService } from '../../../../src/services/modules/academics'
+import { AcademicsService } from '../../../../src/services/commands/academics'
 
 describe('AcademicsService uncovered methods', () => {
   const mockRepos = {
