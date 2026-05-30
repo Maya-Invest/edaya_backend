@@ -2,17 +2,17 @@ import type {
   ActorMetadata,
 } from '@edaya/core'
 import {
-  StaffMember,
-  StaffRole,
+  InMemoryAtomicExecution,
+  InMemorySchoolRepositories,
+} from '@edaya/adaptor-in-memory-db'
+import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
   SchoolApplication,
+  StaffMember,
+  StaffRole,
 } from '@edaya/core'
-import {
-  InMemorySchoolRepositories,
-  InMemoryAtomicExecution,
-} from '@edaya/adaptor-in-memory-db'
 
 export type FailableRepository
   = | 'classSubjectMatterRepository'

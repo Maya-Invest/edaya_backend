@@ -1,13 +1,14 @@
-import { describe, expect, it } from 'bun:test'
 import {
   AcademicPeriodType,
   AttendanceMode,
   SchoolType,
   StaffRole,
 } from '@edaya/core'
+import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
+import { describeIntegration } from '../support/suite-runner'
 
-describe('setup lifecycle journey', () => {
+describeIntegration('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {
     const { app, repositories } = createTestApp()
     await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })

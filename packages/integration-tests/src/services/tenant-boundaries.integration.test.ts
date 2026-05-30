@@ -1,13 +1,15 @@
-import { describe, expect, it } from 'bun:test'
 import {
   AcademicPeriodType,
+  ActorAssuranceLevel,
   AnnouncementTargetKind,
   AssessmentKind,
   AttachmentOwnerKind,
   AttendanceJustificationStatus,
   AttendanceStatus,
+  AuthorizationErrorCode,
   CalendarEventKind,
   CalendarEventScopeKind,
+  createStaffActorMetadata,
   DisciplinaryActionKind,
   IncidentInvolvementRole,
   IncidentKind,
@@ -18,13 +20,12 @@ import {
   StaffRole,
   StudentNoteVisibility,
   StudentStatus,
-  ActorAssuranceLevel,
-  AuthorizationErrorCode,
-  createStaffActorMetadata,
 } from '@edaya/core'
+import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
+import { describeIntegration } from '../support/suite-runner'
 
-describe('tenant boundary safeguards', () => {
+describeIntegration('tenant boundary safeguards', () => {
   it('rejects cross-school setup, staffing, curriculum, and communications references', async () => {
     const { app, forActor, repositories } = createTestApp(createStaffActorMetadata({
       subjectId: 'school-a-admin-user',

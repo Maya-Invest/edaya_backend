@@ -1,15 +1,16 @@
-import { describe, expect, it } from 'bun:test'
 import {
   AcademicPeriodType,
+  ActorAssuranceLevel,
   AttendanceStatus,
+  AuthorizationErrorCode,
+  createStaffActorMetadata,
   SessionKind,
   StaffMember,
   StaffRole,
-  ActorAssuranceLevel,
-  AuthorizationErrorCode,
-  createStaffActorMetadata,
 } from '@edaya/core'
+import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
+import { describeIntegration } from '../support/suite-runner'
 
 async function setupBaselineFixture() {
   const { app, repositories, forActor } = createTestApp()
@@ -106,7 +107,7 @@ async function setupBaselineFixture() {
   return { app, repositories, forActor, classSubject, session }
 }
 
-describe('Actor Role and Assurance Permission Policies', () => {
+describeIntegration('Actor Role and Assurance Permission Policies', () => {
   it('enforces explicit allow and deny actions per staff role', async () => {
     const { app, forActor } = await setupBaselineFixture()
 

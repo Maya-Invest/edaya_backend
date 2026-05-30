@@ -1,18 +1,19 @@
-import { describe, expect, it } from 'bun:test'
 import {
   AcademicPeriodType,
   AnnouncementTargetKind,
   AttendanceStatus,
+  AuthorizationErrorCode,
   FeeStatus,
   MessageDeliveryChannel,
   PaymentMethod,
   PaymentStatus,
   SessionKind,
-  AuthorizationErrorCode,
 } from '@edaya/core'
+import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
+import { describeIntegration } from '../support/suite-runner'
 
-describe('atomic workflow safeguards', () => {
+describeIntegration('atomic workflow safeguards', () => {
   it('rolls back curriculum progress when a later aggregate write fails', async () => {
     const { app, repositories, failSaveOnAttempt } = createTestApp()
     await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })

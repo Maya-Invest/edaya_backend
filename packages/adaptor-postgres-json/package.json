@@ -13,13 +13,16 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
-    "check": "npx tsc --noEmit"
+    "check": "npx tsc --noEmit",
+    "test": "bun test",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
-    "@edaya/core": "workspace:*",
     "@edaya/adaptor-in-memory-db": "workspace:*",
-    "drizzle-orm": "^0.39.0",
-    "pglite": "^0.2.0"
+    "@edaya/core": "workspace:*",
+    "@electric-sql/pglite": "^0.2.0",
+    "drizzle-orm": "^0.39.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14"

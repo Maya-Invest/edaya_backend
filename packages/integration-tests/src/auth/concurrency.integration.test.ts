@@ -1,14 +1,15 @@
-import { describe, expect, it } from 'bun:test'
 import {
   AttendanceStatus,
-  PaymentMethod,
-  SessionKind,
-  StaffRole,
   createGuardianActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
+  PaymentMethod,
+  SessionKind,
+  StaffRole,
 } from '@edaya/core'
+import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
+import { describeIntegration } from '../support/suite-runner'
 
 async function createConcurrencyFixture() {
   const { app, repositories, forActor } = createTestApp()
@@ -109,7 +110,7 @@ async function createConcurrencyFixture() {
   return { app, repositories, forActor, session, studentFee }
 }
 
-describe('Shared-repository multi-actor concurrency safeguards', () => {
+describeIntegration('Shared-repository multi-actor concurrency safeguards', () => {
   it('correctly isolates attributions and validates permissions for overlapping concurrent operations', async () => {
     const { repositories, forActor, session, studentFee } = await createConcurrencyFixture()
 
