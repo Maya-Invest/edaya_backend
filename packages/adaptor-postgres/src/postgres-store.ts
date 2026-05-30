@@ -8,8 +8,8 @@ export function deserializeJsonb(value: any): any {
   }
   return JSON.parse(JSON.stringify(value), (_key, val) => {
     if (
-      typeof val === 'string' &&
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(val)
+      typeof val === 'string'
+      && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(val)
     ) {
       const date = new Date(val)
       if (!Number.isNaN(date.getTime())) {
@@ -21,7 +21,8 @@ export function deserializeJsonb(value: any): any {
 }
 
 export function buildWhereClause(table: any, filter: any): any {
-  if (!filter) return undefined
+  if (!filter)
+    return undefined
 
   const conditions: any[] = []
 
@@ -29,28 +30,32 @@ export function buildWhereClause(table: any, filter: any): any {
     if (key.startsWith('$')) {
       if (key === '$and' && Array.isArray(filter.$and)) {
         const sub = filter.$and.map((f: any) => buildWhereClause(table, f)).filter(Boolean)
-        if (sub.length > 0) conditions.push(and(...sub))
+        if (sub.length > 0)
+          conditions.push(and(...sub))
       }
       else if (key === '$or' && Array.isArray(filter.$or)) {
         const sub = filter.$or.map((f: any) => buildWhereClause(table, f)).filter(Boolean)
-        if (sub.length > 0) conditions.push(or(...sub))
+        if (sub.length > 0)
+          conditions.push(or(...sub))
       }
       else if (key === '$not' && filter.$not) {
         const sub = buildWhereClause(table, filter.$not)
-        if (sub) conditions.push(not(sub))
+        if (sub)
+          conditions.push(not(sub))
       }
       continue
     }
 
     const column = table[key]
-    if (!column) continue
+    if (!column)
+      continue
 
     const fieldFilter = filter[key]
     if (
-      fieldFilter &&
-      typeof fieldFilter === 'object' &&
-      !(fieldFilter instanceof Date) &&
-      !Array.isArray(fieldFilter)
+      fieldFilter
+      && typeof fieldFilter === 'object'
+      && !(fieldFilter instanceof Date)
+      && !Array.isArray(fieldFilter)
     ) {
       for (const op of Object.keys(fieldFilter)) {
         const val = fieldFilter[op]
@@ -77,7 +82,8 @@ export function buildWhereClause(table: any, filter: any): any {
             if (Array.isArray(val)) {
               if (val.length === 0) {
                 conditions.push(sql`false`)
-              } else {
+              }
+              else {
                 conditions.push(inArray(column, val))
               }
             }
@@ -92,7 +98,8 @@ export function buildWhereClause(table: any, filter: any): any {
           case '$exists':
             if (val === true) {
               conditions.push(isNotNull(column))
-            } else if (val === false) {
+            }
+            else if (val === false) {
               conditions.push(isNull(column))
             }
             break
@@ -100,19 +107,21 @@ export function buildWhereClause(table: any, filter: any): any {
             break
         }
       }
-    } else {
+    }
+    else {
       conditions.push(eq(column, fieldFilter))
     }
   }
 
-  if (conditions.length === 0) return undefined
-  if (conditions.length === 1) return conditions[0]
+  if (conditions.length === 0)
+    return undefined
+  if (conditions.length === 1)
+    return conditions[0]
   return and(...conditions)
 }
 
 export class PostgresStore<T extends { readonly id: string }>
-  implements BaseRepositoryInterface<T>
-{
+implements BaseRepositoryInterface<T> {
   constructor(
     private readonly db: any,
     private readonly table: any,
@@ -131,12 +140,14 @@ export class PostgresStore<T extends { readonly id: string }>
       .from(this.table)
       .where(eq(this.table.id, id))
 
-    if (rows.length === 0) return undefined
+    if (rows.length === 0)
+      return undefined
     return this.toDomain(rows[0])
   }
 
   async findByIds(ids: string[]): Promise<T[]> {
-    if (ids.length === 0) return []
+    if (ids.length === 0)
+      return []
     const rows = await this.getClient()
       .select()
       .from(this.table)
@@ -147,7 +158,8 @@ export class PostgresStore<T extends { readonly id: string }>
 
   async findOne(options?: QueryOptions<T>, last?: boolean): Promise<T | undefined> {
     const results = await this.list(options)
-    if (results.length === 0) return undefined
+    if (results.length === 0)
+      return undefined
     return last ? results[results.length - 1] : results[0]
   }
 
@@ -213,7 +225,8 @@ export class PostgresStore<T extends { readonly id: string }>
   }
 
   async batchSave(entities: T[]): Promise<string[]> {
-    if (entities.length === 0) return []
+    if (entities.length === 0)
+      return []
     const client = this.getClient()
     for (const entity of entities) {
       const row = this.toRow(entity)
@@ -225,11 +238,12 @@ export class PostgresStore<T extends { readonly id: string }>
           set: row,
         })
     }
-    return entities.map((e) => e.id)
+    return entities.map(e => e.id)
   }
 
   async batchDelete(ids: string[]): Promise<void> {
-    if (ids.length === 0) return
+    if (ids.length === 0)
+      return
     await this.getClient()
       .delete(this.table)
       .where(inArray(this.table.id, ids))
