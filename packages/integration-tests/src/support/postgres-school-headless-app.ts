@@ -1,12 +1,6 @@
 import type {
-  PostgresSchoolRepositories,
-} from '@edaya/adaptor-postgres-json'
-import type {
   ActorMetadata,
 } from '@edaya/core'
-import {
-  PostgresAtomicExecution,
-} from '@edaya/adaptor-postgres-json'
 import {
   ActorAssuranceLevel,
   RepositoryAuthorizationPolicy,
@@ -23,7 +17,7 @@ export type FailableRepository
     | 'studentClassEnrollmentRepository'
     | 'studentFeeRepository'
 
-export function createPostgresAppBuilder(db: any, repos: PostgresSchoolRepositories) {
+export function createPostgresAppBuilder(db: any, repos: any, AtomicExecutionCtor: any) {
   return (actor?: ActorMetadata) => {
     let saveFailure: { repository: FailableRepository, remainingAttempts: number } | undefined
     const failSaveOnAttempt = (repository: FailableRepository, attempt = 1) => {
@@ -66,7 +60,7 @@ export function createPostgresAppBuilder(db: any, repos: PostgresSchoolRepositor
     }
 
     const application = new SchoolApplication({
-      atomicExecution: new PostgresAtomicExecution(db),
+      atomicExecution: new AtomicExecutionCtor(db),
       repositories: repos,
       authorizationPolicy: new RepositoryAuthorizationPolicy({
         repositories: repos,
