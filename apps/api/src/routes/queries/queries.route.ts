@@ -4,6 +4,7 @@ import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { queryableEntities } from "./queries.config";
 import type { AppRouteHandler } from "@/lib/types";
+import { badRequestResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/lib/http-responses";
 import { arraySchema } from "@/validation/utils/schema-fields";
 import { countResponseSchema, entityIdParamSchema } from "@/validation/route.schemas";
 
@@ -53,7 +54,7 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
   const listHandler: AppRouteHandler<typeof listRoute> = async (c) => {
     const actor = c.get("actor");
     if (!actor) {
-      return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+      return unauthorizedResponse(c);
     }
 
     const body = c.req.valid("json");
@@ -61,18 +62,15 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
     const readService = (headlessApp.queries as any)[name];
 
     if (!readService || typeof readService.list !== "function") {
-      return c.json({ message: `Entity ${name} is not queryable` }, HttpStatusCodes.BAD_REQUEST);
+      return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
     try {
       const results = await readService.list(body);
       return c.json(results, HttpStatusCodes.OK);
     }
-    catch (err: any) {
-      if (err.name === "AuthorizationError") {
-        return c.json({ message: err.message }, HttpStatusCodes.FORBIDDEN);
-      }
-      return c.json({ message: err.message }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    catch (err) {
+      return routeErrorResponse(c, err);
     }
   };
 
@@ -119,7 +117,7 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
   const findOneHandler: AppRouteHandler<typeof findOneRoute> = async (c) => {
     const actor = c.get("actor");
     if (!actor) {
-      return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+      return unauthorizedResponse(c);
     }
 
     const body = c.req.valid("json");
@@ -127,21 +125,18 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
     const readService = (headlessApp.queries as any)[name];
 
     if (!readService || typeof readService.findOne !== "function") {
-      return c.json({ message: `Entity ${name} is not queryable` }, HttpStatusCodes.BAD_REQUEST);
+      return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
     try {
       const result = await readService.findOne(body);
       if (!result) {
-        return c.json({ message: `${displayName} not found` }, HttpStatusCodes.NOT_FOUND);
+        return notFoundResponse(c, `${displayName} not found`);
       }
       return c.json(result, HttpStatusCodes.OK);
     }
-    catch (err: any) {
-      if (err.name === "AuthorizationError") {
-        return c.json({ message: err.message }, HttpStatusCodes.FORBIDDEN);
-      }
-      return c.json({ message: err.message }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    catch (err) {
+      return routeErrorResponse(c, err);
     }
   };
 
@@ -184,7 +179,7 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
   const countHandler: AppRouteHandler<typeof countRoute> = async (c) => {
     const actor = c.get("actor");
     if (!actor) {
-      return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+      return unauthorizedResponse(c);
     }
 
     const filter = { ...(c.req.valid("json") as Record<string, unknown>) };
@@ -195,18 +190,15 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
     const readService = (headlessApp.queries as any)[name];
 
     if (!readService || typeof readService.count !== "function") {
-      return c.json({ message: `Entity ${name} is not queryable` }, HttpStatusCodes.BAD_REQUEST);
+      return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
     try {
       const count = await readService.count(filter);
       return c.json({ count }, HttpStatusCodes.OK);
     }
-    catch (err: any) {
-      if (err.name === "AuthorizationError") {
-        return c.json({ message: err.message }, HttpStatusCodes.FORBIDDEN);
-      }
-      return c.json({ message: err.message }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    catch (err) {
+      return routeErrorResponse(c, err);
     }
   };
 
@@ -253,7 +245,7 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
   const getHandler: AppRouteHandler<typeof getRoute> = async (c) => {
     const actor = c.get("actor");
     if (!actor) {
-      return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+      return unauthorizedResponse(c);
     }
 
     const { id } = c.req.valid("param");
@@ -261,21 +253,18 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
     const readService = (headlessApp.queries as any)[name];
 
     if (!readService || typeof readService.findById !== "function") {
-      return c.json({ message: `Entity ${name} is not queryable` }, HttpStatusCodes.BAD_REQUEST);
+      return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
     try {
       const result = await readService.findById(id);
       if (!result) {
-        return c.json({ message: `${displayName} not found` }, HttpStatusCodes.NOT_FOUND);
+        return notFoundResponse(c, `${displayName} not found`);
       }
       return c.json(result, HttpStatusCodes.OK);
     }
-    catch (err: any) {
-      if (err.name === "AuthorizationError") {
-        return c.json({ message: err.message }, HttpStatusCodes.FORBIDDEN);
-      }
-      return c.json({ message: err.message }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    catch (err) {
+      return routeErrorResponse(c, err);
     }
   };
 

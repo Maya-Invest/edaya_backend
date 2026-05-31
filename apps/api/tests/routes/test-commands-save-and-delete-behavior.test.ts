@@ -57,7 +57,6 @@ describe("config command route pairs", () => {
       body: JSON.stringify(payload),
     });
 
-    const body = (await res.json()) as any;
     expect(res.status).toBe(201);
     expect(mockSave).toHaveBeenCalled();
     const passedEntity = mockSave.mock.calls[0][0];
@@ -200,5 +199,27 @@ describe("config command route pairs", () => {
     const body = (await res.json()) as any;
     expect(res.status).toBe(403);
     expect(body.code).toBe("forbidden");
+  });
+
+  it("should hide unexpected command errors behind the standard 500 response", async () => {
+    const mockSave = vi.fn().mockRejectedValue(new Error("database connection details"));
+    const mockCommands = {
+      gradeLevels: {
+        save: mockSave,
+      },
+    };
+
+    const app = setupTestApp(mockCommands);
+    const res = await app.request("/api/commands/config/gradeLevels", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: "gl", name: "GL", order: 1 }),
+    });
+
+    const body = (await res.json()) as any;
+    expect(res.status).toBe(500);
+    expect(body.message).toBe("Internal server error occurred");
   });
 });

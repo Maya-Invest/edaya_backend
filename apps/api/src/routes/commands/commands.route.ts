@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import type { AppBindings, AppRouteHandler } from "@/lib/types";
+import { badRequestResponse, getErrorMessage, routeErrorResponse, unauthorizedResponse } from "@/lib/http-responses";
 import { commandIdParamSchema } from "@/validation/route.schemas";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -12,34 +13,26 @@ export interface CommandRoutePair {
   handler: any;
 }
 
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unexpected error";
-}
-
-function isAuthorizationError(error: unknown): error is Error & { code?: string } {
-  return error instanceof Error && error.name === "AuthorizationError";
-}
-
 export async function saveConfigEntity(c: Context<AppBindings>, entityName: string, body: unknown) {
   const actor = c.get("actor");
   if (!actor) {
-    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+    return unauthorizedResponse(c);
   }
 
   const entityConfig = configCommandEntitiesByName.get(entityName);
   if (!entityConfig) {
-    return c.json({ message: `Entity ${entityName} is not write-supported` }, HttpStatusCodes.BAD_REQUEST);
+    return badRequestResponse(c, `Entity ${entityName} is not write-supported`);
   }
 
   const headlessApp = c.get("schoolApp").forActor(actor);
   const writeService = (headlessApp.config as any)[entityName];
   if (!writeService || typeof writeService.save !== "function") {
-    return c.json({ message: `Entity ${entityName} is not write-supported` }, HttpStatusCodes.BAD_REQUEST);
+    return badRequestResponse(c, `Entity ${entityName} is not write-supported`);
   }
 
   const parsed = entityConfig.requestSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ message: "Invalid request body", issues: parsed.error.issues }, HttpStatusCodes.BAD_REQUEST);
+    return badRequestResponse(c, "Invalid request body", { issues: parsed.error.issues });
   }
 
   let entityInstance: unknown;
@@ -47,7 +40,7 @@ export async function saveConfigEntity(c: Context<AppBindings>, entityName: stri
     entityInstance = entityConfig.createEntity(parsed.data, actor.schoolId);
   }
   catch (error) {
-    return c.json({ message: getErrorMessage(error) }, HttpStatusCodes.BAD_REQUEST);
+    return badRequestResponse(c, getErrorMessage(error));
   }
 
   try {
@@ -55,27 +48,24 @@ export async function saveConfigEntity(c: Context<AppBindings>, entityName: stri
     return c.json(entityInstance as any, HttpStatusCodes.CREATED);
   }
   catch (error) {
-    if (isAuthorizationError(error)) {
-      return c.json({ message: error.message, code: error.code }, HttpStatusCodes.FORBIDDEN);
-    }
-    return c.json({ message: getErrorMessage(error) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    return routeErrorResponse(c, error);
   }
 }
 
 export async function deleteConfigEntity(c: Context<AppBindings>, entityName: string, id: string) {
   const actor = c.get("actor");
   if (!actor) {
-    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+    return unauthorizedResponse(c);
   }
 
   if (!configCommandEntitiesByName.has(entityName)) {
-    return c.json({ message: `Entity ${entityName} is not delete-supported` }, HttpStatusCodes.BAD_REQUEST);
+    return badRequestResponse(c, `Entity ${entityName} is not delete-supported`);
   }
 
   const headlessApp = c.get("schoolApp").forActor(actor);
   const writeService = (headlessApp.config as any)[entityName];
   if (!writeService || typeof writeService.delete !== "function") {
-    return c.json({ message: `Entity ${entityName} is not delete-supported` }, HttpStatusCodes.BAD_REQUEST);
+    return badRequestResponse(c, `Entity ${entityName} is not delete-supported`);
   }
 
   try {
@@ -83,10 +73,7 @@ export async function deleteConfigEntity(c: Context<AppBindings>, entityName: st
     return c.json({ message: `${entityName} with ID ${id} deleted` }, HttpStatusCodes.OK);
   }
   catch (error) {
-    if (isAuthorizationError(error)) {
-      return c.json({ message: error.message, code: error.code }, HttpStatusCodes.FORBIDDEN);
-    }
-    return c.json({ message: getErrorMessage(error) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    return routeErrorResponse(c, error);
   }
 }
 

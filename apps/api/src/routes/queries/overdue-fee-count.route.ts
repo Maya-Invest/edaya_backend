@@ -1,4 +1,5 @@
 import type { AppRouteHandler } from "@/lib/types";
+import { routeErrorResponse, unauthorizedResponse } from "@/lib/http-responses";
 import { countResponseSchema, schoolIdBodySchema } from "@/validation/route.schemas";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -36,7 +37,7 @@ export const overdueFeeCountRoute = createRoute({
 export const overdueFeeCountHandler: AppRouteHandler<typeof overdueFeeCountRoute> = async (c) => {
   const actor = c.get("actor");
   if (!actor) {
-    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+    return unauthorizedResponse(c);
   }
 
   const { schoolId } = c.req.valid("json");
@@ -46,10 +47,7 @@ export const overdueFeeCountHandler: AppRouteHandler<typeof overdueFeeCountRoute
     const count = await headlessApp.queries.getOverdueFeeCount(schoolId);
     return c.json({ count }, HttpStatusCodes.OK);
   }
-  catch (err: any) {
-    if (err.name === "AuthorizationError") {
-      return c.json({ message: err.message }, HttpStatusCodes.FORBIDDEN);
-    }
-    return c.json({ message: err.message }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  catch (err) {
+    return routeErrorResponse(c, err);
   }
 };
