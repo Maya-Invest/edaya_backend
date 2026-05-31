@@ -1,5 +1,5 @@
-import type { AnySchema, ObjectSchema } from "@/validation/utils/schema-fields";
 import type { ConfigCommandEntityName } from "@/lib/service-accessors";
+import type { AnySchema, ObjectSchema } from "@/validation/utils/schema-fields";
 import {
   disciplinaryActionConfigCommandSchema,
   gradeLevelConfigCommandSchema,

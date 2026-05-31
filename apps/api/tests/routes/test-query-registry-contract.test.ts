@@ -1,9 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { commandRoutePairs } from "@/routes/commands/commands.route";
-import { configCommandEntities } from "@/routes/commands/commands.config";
-import { queryableEntities } from "@/routes/queries/queries.config";
-import { queryRoutePairs } from "@/routes/queries/queries.route";
+import { commandRoutePairs } from "@/routes/generic-commands/commands.route";
+import { configCommandEntities } from "@/routes/generic-commands/commands.config";
+import { queryableEntities } from "@/routes/generic-queries/queries.config";
+import { queryRoutePairs } from "@/routes/generic-queries/queries.route";
+import { actionCommandRoutePairs } from "@/routes/school-commands/action-routes";
 import { getQueryOptionFields } from "@/validation/utils/query-options";
 
 function fieldsFor(entityName: string): readonly string[] {
@@ -21,15 +22,17 @@ describe("generated route registry contracts", () => {
   });
 
   it("should generate create and delete command endpoints for every config command entity", () => {
-    expect(commandRoutePairs).toHaveLength(configCommandEntities.length * 2);
+    expect(commandRoutePairs).toHaveLength(actionCommandRoutePairs.length + configCommandEntities.length * 2);
   });
 
   it("should not register duplicate query or command entity names", () => {
     const queryNames = queryableEntities.map(entity => entity.name);
     const commandNames = configCommandEntities.map(entity => entity.name);
+    const commandActionPaths = actionCommandRoutePairs.map(({ route }) => route.path);
 
     expect(new Set(queryNames).size).toBe(queryNames.length);
     expect(new Set(commandNames).size).toBe(commandNames.length);
+    expect(new Set(commandActionPaths).size).toBe(commandActionPaths.length);
   });
 
   it("should expose current domain field names for known drift-prone query filters", () => {

@@ -16,7 +16,7 @@ describe("config command route pairs", () => {
     assuranceLevel: ActorAssuranceLevel.Strong,
   };
 
-  const setupTestApp = (mockConfig: any) => {
+  const setupTestApp = (mockConfig: any, modules: Record<string, unknown> = {}) => {
     const app = new Hono<AppBindings>();
 
     // Set custom Hono context variables
@@ -25,6 +25,7 @@ describe("config command route pairs", () => {
       c.set("schoolApp", {
         forActor: () => ({
           config: mockConfig,
+          ...modules,
         }),
       } as any);
       await next();
@@ -227,5 +228,69 @@ describe("config command route pairs", () => {
     const body = (await res.json()) as any;
     expect(res.status).toBe(500);
     expect(body.message).toBe("Internal server error occurred");
+  });
+
+  it("should expose generated core command action endpoints under /api/commands/{module}", async () => {
+    const mockCreateAcademicYear = mock().mockResolvedValue({
+      id: "academic-year-1",
+      schoolId: "school-1",
+      name: "2026",
+      startDate: new Date("2026-09-01T00:00:00.000Z"),
+      endDate: new Date("2027-06-30T00:00:00.000Z"),
+      isActive: true,
+      createdAt: new Date("2026-05-31T00:00:00.000Z"),
+    });
+    const app = setupTestApp({}, {
+      setup: {
+        createAcademicYear: mockCreateAcademicYear,
+      },
+    });
+
+    const res = await app.request("/api/commands/setup/createAcademicYear", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: "academic-year-1",
+        schoolId: "school-1",
+        name: "2026",
+        startDate: "2026-09-01",
+        endDate: "2027-06-30",
+      }),
+    });
+
+    const body = (await res.json()) as any;
+    expect(res.status).toBe(200);
+    expect(mockCreateAcademicYear).toHaveBeenCalled();
+    const commandInput = mockCreateAcademicYear.mock.calls[0][0];
+    expect(commandInput.startDate).toBeInstanceOf(Date);
+    expect(commandInput.endDate).toBeInstanceOf(Date);
+    expect(body.id).toBe("academic-year-1");
+  });
+
+  it("should reject malformed generated core command payloads", async () => {
+    const mockCreateAcademicYear = mock().mockResolvedValue({});
+    const app = setupTestApp({}, {
+      setup: {
+        createAcademicYear: mockCreateAcademicYear,
+      },
+    });
+
+    const res = await app.request("/api/commands/setup/createAcademicYear", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: "academic-year-1",
+        schoolId: "school-1",
+        startDate: "2026-09-01",
+        endDate: "2027-06-30",
+      }),
+    });
+
+    expect(res.status).toBe(422);
+    expect(mockCreateAcademicYear).not.toHaveBeenCalled();
   });
 });

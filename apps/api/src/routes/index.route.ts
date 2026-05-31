@@ -4,10 +4,10 @@ import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { createRouter } from "@/lib/create-app";
 import { authRouteHandler, getAuthRoute, postAuthRoute } from "./auth/auth.route";
-import { commandRoutePairs } from "./commands/commands.route";
-import { queryRoutePairs } from "./queries/queries.route";
-import { overdueFeeCountHandler, overdueFeeCountRoute } from "./queries/overdue-fee-count.route";
-import { publishedReportCardCountHandler, publishedReportCardCountRoute } from "./queries/published-report-card-count.route";
+import { commandRoutePairs } from "./generic-commands/commands.route";
+import { queryRoutePairs } from "./generic-queries/queries.route";
+import { overdueFeeCountHandler, overdueFeeCountRoute } from "./school-queries/overdue-fee-count.route";
+import { publishedReportCardCountHandler, publishedReportCardCountRoute } from "./school-queries/published-report-card-count.route";
 
 const router = createRouter()
   .openapi(
