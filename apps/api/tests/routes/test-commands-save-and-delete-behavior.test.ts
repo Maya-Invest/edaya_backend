@@ -34,12 +34,18 @@ describe("config command route pairs", () => {
     return app;
   };
 
+  const mockWriteService = (overrides: Record<string, unknown>) => ({
+    save: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  });
+
   it("should successfully save a GradeLevel entity and return 201", async () => {
     const mockSave = vi.fn().mockResolvedValue(undefined);
     const mockCommands = {
-      gradeLevels: {
+      gradeLevels: mockWriteService({
         save: mockSave,
-      },
+      }),
     };
 
     const app = setupTestApp(mockCommands);
@@ -70,9 +76,9 @@ describe("config command route pairs", () => {
   it("should expose generated config command endpoints under /api/commands/config", async () => {
     const mockSave = vi.fn().mockResolvedValue(undefined);
     const mockCommands = {
-      resources: {
+      resources: mockWriteService({
         save: mockSave,
-      },
+      }),
     };
 
     const app = setupTestApp(mockCommands);
@@ -104,9 +110,9 @@ describe("config command route pairs", () => {
   it("should successfully save a DisciplinaryAction entity and return 201", async () => {
     const mockSave = vi.fn().mockResolvedValue(undefined);
     const mockCommands = {
-      disciplinaryActions: {
+      disciplinaryActions: mockWriteService({
         save: mockSave,
-      },
+      }),
     };
 
     const app = setupTestApp(mockCommands);
@@ -158,9 +164,9 @@ describe("config command route pairs", () => {
   it("should successfully delete a Resource entity and return 200", async () => {
     const mockDelete = vi.fn().mockResolvedValue(undefined);
     const mockCommands = {
-      resources: {
+      resources: mockWriteService({
         delete: mockDelete,
-      },
+      }),
     };
 
     const app = setupTestApp(mockCommands);
@@ -182,9 +188,9 @@ describe("config command route pairs", () => {
 
     const mockSave = vi.fn().mockRejectedValue(authError);
     const mockCommands = {
-      gradeLevels: {
+      gradeLevels: mockWriteService({
         save: mockSave,
-      },
+      }),
     };
 
     const app = setupTestApp(mockCommands);
@@ -204,9 +210,9 @@ describe("config command route pairs", () => {
   it("should hide unexpected command errors behind the standard 500 response", async () => {
     const mockSave = vi.fn().mockRejectedValue(new Error("database connection details"));
     const mockCommands = {
-      gradeLevels: {
+      gradeLevels: mockWriteService({
         save: mockSave,
-      },
+      }),
     };
 
     const app = setupTestApp(mockCommands);

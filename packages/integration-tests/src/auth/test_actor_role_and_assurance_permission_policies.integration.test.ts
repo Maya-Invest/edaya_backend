@@ -11,8 +11,8 @@ import {
   Subject,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
-import { createTestApp } from '../utils/test-adapter'
 import { describeIntegration } from '../support/suite-runner'
+import { createTestApp } from '../utils/test-adapter'
 
 async function setupBaselineFixture() {
   const { app, repositories, forActor } = createTestApp()

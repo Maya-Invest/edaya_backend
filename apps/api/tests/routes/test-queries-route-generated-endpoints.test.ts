@@ -33,12 +33,20 @@ describe("generated query endpoints", () => {
     return app;
   };
 
+  const mockReadService = (overrides: Record<string, unknown>) => ({
+    list: vi.fn().mockResolvedValue([]),
+    findOne: vi.fn().mockResolvedValue(undefined),
+    count: vi.fn().mockResolvedValue(0),
+    findById: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  });
+
   it("should expose count for AuthorizedReadService-backed query entities", async () => {
     const mockCount = vi.fn().mockResolvedValue(2);
     const app = setupTestApp({
-      students: {
+      students: mockReadService({
         count: mockCount,
-      },
+      }),
     });
 
     const res = await app.request("/api/queries/students/count", {
@@ -69,9 +77,9 @@ describe("generated query endpoints", () => {
     };
     const mockFindOne = vi.fn().mockResolvedValue(student);
     const app = setupTestApp({
-      students: {
+      students: mockReadService({
         findOne: mockFindOne,
-      },
+      }),
     });
 
     const res = await app.request("/api/queries/students/one", {

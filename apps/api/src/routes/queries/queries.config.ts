@@ -1,8 +1,9 @@
 import type { z } from "@hono/zod-openapi";
+import type { QueryEntityName } from "@/lib/service-accessors";
 import * as schemas from "../../validation/entities.schemas";
 
 export interface EntityQueryConfig {
-  name: string;
+  name: QueryEntityName;
   displayName: string;
   querySchema: z.ZodTypeAny;
   responseSchema: z.ZodTypeAny;
@@ -261,4 +262,4 @@ export const queryableEntities: EntityQueryConfig[] = [
     querySchema: schemas.incidentQuerySchema,
     responseSchema: schemas.incidentResponseSchema,
   },
-];
+] satisfies EntityQueryConfig[];

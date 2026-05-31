@@ -1,19 +1,20 @@
 import type { Context } from "hono";
 import type { AppBindings, AppRouteHandler } from "@/lib/types";
 import { badRequestResponse, getErrorMessage, routeErrorResponse, unauthorizedResponse } from "@/lib/http-responses";
+import { type ConfigCommandEntityName, getEntityWriteService } from "@/lib/service-accessors";
 import { commandIdParamSchema } from "@/validation/route.schemas";
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, type RouteConfig } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { configCommandEntities, configCommandEntitiesByName } from "./commands.config";
 
-export interface CommandRoutePair {
-  route: any;
-  handler: any;
+export interface CommandRoutePair<R extends RouteConfig = any> {
+  route: R;
+  handler: AppRouteHandler<R>;
 }
 
-export async function saveConfigEntity(c: Context<AppBindings>, entityName: string, body: unknown) {
+export async function saveConfigEntity(c: Context<AppBindings>, entityName: ConfigCommandEntityName, body: unknown) {
   const actor = c.get("actor");
   if (!actor) {
     return unauthorizedResponse(c);
@@ -25,8 +26,8 @@ export async function saveConfigEntity(c: Context<AppBindings>, entityName: stri
   }
 
   const headlessApp = c.get("schoolApp").forActor(actor);
-  const writeService = (headlessApp.config as any)[entityName];
-  if (!writeService || typeof writeService.save !== "function") {
+  const writeService = getEntityWriteService(headlessApp.config, entityName);
+  if (!writeService) {
     return badRequestResponse(c, `Entity ${entityName} is not write-supported`);
   }
 
@@ -52,7 +53,7 @@ export async function saveConfigEntity(c: Context<AppBindings>, entityName: stri
   }
 }
 
-export async function deleteConfigEntity(c: Context<AppBindings>, entityName: string, id: string) {
+export async function deleteConfigEntity(c: Context<AppBindings>, entityName: ConfigCommandEntityName, id: string) {
   const actor = c.get("actor");
   if (!actor) {
     return unauthorizedResponse(c);
@@ -63,8 +64,8 @@ export async function deleteConfigEntity(c: Context<AppBindings>, entityName: st
   }
 
   const headlessApp = c.get("schoolApp").forActor(actor);
-  const writeService = (headlessApp.config as any)[entityName];
-  if (!writeService || typeof writeService.delete !== "function") {
+  const writeService = getEntityWriteService(headlessApp.config, entityName);
+  if (!writeService) {
     return badRequestResponse(c, `Entity ${entityName} is not delete-supported`);
   }
 

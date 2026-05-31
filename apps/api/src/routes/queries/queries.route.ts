@@ -1,16 +1,17 @@
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, type RouteConfig } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { queryableEntities } from "./queries.config";
 import type { AppRouteHandler } from "@/lib/types";
 import { badRequestResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/lib/http-responses";
+import { getEntityReadService } from "@/lib/service-accessors";
 import { arraySchema } from "@/validation/utils/schema-fields";
 import { countResponseSchema, entityIdParamSchema } from "@/validation/route.schemas";
 
-export interface QueryRoutePair {
-  route: any;
-  handler: any;
+export interface QueryRoutePair<R extends RouteConfig = any> {
+  route: R;
+  handler: AppRouteHandler<R>;
 }
 
 export const queryRoutePairs: QueryRoutePair[] = [];
@@ -59,9 +60,9 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
 
     const body = c.req.valid("json");
     const headlessApp = c.get("schoolApp").forActor(actor);
-    const readService = (headlessApp.queries as any)[name];
+    const readService = getEntityReadService(headlessApp.queries, name);
 
-    if (!readService || typeof readService.list !== "function") {
+    if (!readService) {
       return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
@@ -122,9 +123,9 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
 
     const body = c.req.valid("json");
     const headlessApp = c.get("schoolApp").forActor(actor);
-    const readService = (headlessApp.queries as any)[name];
+    const readService = getEntityReadService(headlessApp.queries, name);
 
-    if (!readService || typeof readService.findOne !== "function") {
+    if (!readService) {
       return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
@@ -187,9 +188,9 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
     delete filter.$limit;
     delete filter.$offset;
     const headlessApp = c.get("schoolApp").forActor(actor);
-    const readService = (headlessApp.queries as any)[name];
+    const readService = getEntityReadService(headlessApp.queries, name);
 
-    if (!readService || typeof readService.count !== "function") {
+    if (!readService) {
       return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 
@@ -250,9 +251,9 @@ queryableEntities.forEach(({ name, displayName, querySchema, responseSchema }) =
 
     const { id } = c.req.valid("param");
     const headlessApp = c.get("schoolApp").forActor(actor);
-    const readService = (headlessApp.queries as any)[name];
+    const readService = getEntityReadService(headlessApp.queries, name);
 
-    if (!readService || typeof readService.findById !== "function") {
+    if (!readService) {
       return badRequestResponse(c, `Entity ${name} is not queryable`);
     }
 

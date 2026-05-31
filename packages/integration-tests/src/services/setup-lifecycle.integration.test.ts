@@ -6,8 +6,8 @@ import {
   StaffRole,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
-import { createTestApp } from '../utils/test-adapter'
 import { describeIntegration } from '../support/suite-runner'
+import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {

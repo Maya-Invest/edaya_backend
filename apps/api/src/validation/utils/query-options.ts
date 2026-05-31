@@ -1,5 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
+const queryOptionFields = new WeakMap<z.ZodTypeAny, readonly string[]>();
+
+export function getQueryOptionFields(schema: z.ZodTypeAny): readonly string[] {
+  return queryOptionFields.get(schema) ?? [];
+}
+
 // Generic field filter helper schema
 function createFieldFilterSchema(valueSchema: z.ZodTypeAny) {
   return z.union([
@@ -45,11 +51,15 @@ export function createQueryOptionsSchema<T extends Record<string, any>>(
     }),
   ).openapi(schemaName, { type: "object" });
 
-  return baseFilterSchema.and(
+  const queryOptionsSchema = baseFilterSchema.and(
     z.object({
       $orderBy: z.array(sortOptionSchema).optional(),
       $limit: z.number().int().positive().optional(),
       $offset: z.number().int().nonnegative().optional(),
     }),
   );
+
+  queryOptionFields.set(queryOptionsSchema, Object.keys(allowedFields));
+
+  return queryOptionsSchema;
 }

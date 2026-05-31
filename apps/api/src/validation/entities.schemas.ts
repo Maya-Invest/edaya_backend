@@ -717,16 +717,17 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
 
 export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
-  staffMemberId: field.uuid(),
+  staffId: field.uuid(),
   classGroupId: field.uuid(),
+  classSubjectId: field.uuid(),
+  sessionId: field.uuid(),
   role: field.string(),
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
   schoolId: field.uuid(),
-  name: field.string(),
+  fileName: field.string(),
   mimeType: field.string(),
 });
 
@@ -734,14 +735,14 @@ export const resourceQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
   schoolId: field.uuid(),
   name: field.string(),
-  type: field.string(),
+  kind: field.string(),
 });
 
 export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   resourceId: field.uuid(),
   sessionId: field.uuid(),
+  classGroupId: field.uuid(),
 });
 
 export const feeQuerySchema = createQueryOptionsSchema({
@@ -752,7 +753,6 @@ export const feeQuerySchema = createQueryOptionsSchema({
 
 export const studentFeeQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   studentId: field.uuid(),
   feeId: field.uuid(),
   status: field.string(),
@@ -760,25 +760,25 @@ export const studentFeeQuerySchema = createQueryOptionsSchema({
 
 export const paymentQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   studentFeeId: field.uuid(),
-  paymentMethod: field.string(),
+  method: field.string(),
+  status: field.string(),
 });
 
 export const scheduleQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   classGroupId: field.uuid(),
-  name: field.string(),
+  classSubjectId: field.uuid(),
+  title: field.string(),
 });
 
 export const sessionQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   scheduleId: field.uuid(),
   classGroupId: field.uuid(),
   classSubjectId: field.uuid(),
-  periodDefinitionId: field.uuid(),
+  title: field.string(),
+  kind: field.string(),
 });
 
 export const calendarEventQuerySchema = createQueryOptionsSchema({
@@ -789,7 +789,6 @@ export const calendarEventQuerySchema = createQueryOptionsSchema({
 
 export const attendanceQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   studentId: field.uuid(),
   sessionId: field.uuid(),
   status: field.string(),
@@ -804,17 +803,17 @@ export const announcementQuerySchema = createQueryOptionsSchema({
 
 export const announcementTargetQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   announcementId: field.uuid(),
-  targetType: field.string(),
+  targetKind: field.string(),
   targetId: field.uuid(),
 });
 
 export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
-  messageId: field.uuid(),
+  announcementId: field.uuid(),
+  recipientKind: field.string(),
   recipientId: field.uuid(),
+  channel: field.string(),
   status: field.string(),
 });
 
@@ -827,7 +826,6 @@ export const subjectQuerySchema = createQueryOptionsSchema({
 
 export const subjectMatterQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   subjectId: field.uuid(),
   name: field.string(),
 });
@@ -861,24 +859,25 @@ export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
 
 export const assessmentQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   classSubjectId: field.uuid(),
-  name: field.string(),
+  classGroupId: field.uuid(),
+  periodId: field.uuid(),
+  title: field.string(),
+  kind: field.string(),
 });
 
 export const assessmentResultQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   assessmentId: field.uuid(),
   studentId: field.uuid(),
-  grade: field.string(),
+  status: field.string(),
 });
 
 export const gradeScaleQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
   schoolId: field.uuid(),
   name: field.string(),
-  grade: field.string(),
+  isDefault: field.boolean(),
 });
 
 export const definitionQuerySchema = createQueryOptionsSchema({
@@ -890,17 +889,17 @@ export const definitionQuerySchema = createQueryOptionsSchema({
 
 export const sectionQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   reportCardDefinitionId: field.uuid(),
   name: field.string(),
 });
 
 export const resultQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   studentId: field.uuid(),
   reportCardDefinitionId: field.uuid(),
-  grade: field.string(),
+  classGroupId: field.uuid(),
+  periodId: field.uuid(),
+  status: field.string(),
 });
 
 export const studentQuerySchema = createQueryOptionsSchema({
@@ -914,9 +913,10 @@ export const studentQuerySchema = createQueryOptionsSchema({
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   studentId: field.uuid(),
   classGroupId: field.uuid(),
+  academicYearId: field.uuid(),
+  status: field.string(),
 });
 
 export const guardianQuerySchema = createQueryOptionsSchema({
@@ -963,7 +963,6 @@ export const disciplinaryActionQuerySchema = createQueryOptionsSchema({
 
 export const studentIncidentInvolvementQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
-  schoolId: field.uuid(),
   studentId: field.uuid(),
   incidentId: field.uuid(),
   role: field.string(),

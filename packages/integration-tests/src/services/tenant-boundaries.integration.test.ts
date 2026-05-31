@@ -27,8 +27,8 @@ import {
   SubjectMatter,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
-import { createTestApp } from '../utils/test-adapter'
 import { describeIntegration } from '../support/suite-runner'
+import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('tenant boundary safeguards', () => {
   it('rejects cross-school setup, staffing, curriculum, and communications references', async () => {
