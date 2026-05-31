@@ -1,4 +1,4 @@
-import type { SubjectMatterArgs } from '../../entities/academics/subject-matter'
+import type { SubjectMatter } from '../../entities/academics/subject-matter'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
@@ -6,8 +6,6 @@ import type { ServiceArgs } from '../shared/service-args'
 import { ClassSubject } from '../../entities/academics/class-subject'
 import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/academics/class-subject-matter'
 import { ClassSubjectProgress } from '../../entities/academics/class-subject-progress'
-import { Subject } from '../../entities/academics/subject'
-import { SubjectMatter } from '../../entities/academics/subject-matter'
 import { roundTo2 } from '../../entities/utils'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
@@ -24,40 +22,6 @@ export class AcademicsService {
   private readonly actor: ActorMetadata
   private readonly authorizationPolicy: AuthorizationPolicy
   private readonly repositories: SchoolRepositories
-
-  async createSubject({
-    id,
-    schoolId,
-    name,
-    createdAt,
-  }: {
-    id: string
-    schoolId: string
-    name: string
-    createdAt?: Date
-  }): Promise<Subject> {
-    if (schoolId !== this.actor.schoolId) {
-      denyResourceAccess()
-    }
-    await this.authorizationPolicy.checkGlobalAction(this.actor, 'academics.manage_curriculum')
-    if (!await this.repositories.schools.findById(schoolId)) {
-      throw new BusinessRuleViolationError('UNKNOWN_SCHOOL', `Unknown school: ${schoolId}`)
-    }
-    const subject = new Subject({ id, schoolId, name, createdAt })
-    await this.repositories.subjects.save(subject)
-    return subject
-  }
-
-  async createSubjectMatter(input: SubjectMatterArgs): Promise<SubjectMatter> {
-    const subject = await this.repositories.subjects.findById(input.subjectId)
-    if (!subject || subject.schoolId !== this.actor.schoolId) {
-      denyResourceAccess()
-    }
-    await this.authorizationPolicy.checkGlobalAction(this.actor, 'academics.manage_curriculum')
-    const subjectMatter = new SubjectMatter(input)
-    await this.repositories.subjectMatters.save(subjectMatter)
-    return subjectMatter
-  }
 
   async offerSubjectToClass({
     id,

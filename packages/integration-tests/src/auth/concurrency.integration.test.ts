@@ -7,6 +7,7 @@ import {
   PaymentMethod,
   SessionKind,
   StaffRole,
+  Subject,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
@@ -24,7 +25,7 @@ async function createConcurrencyFixture() {
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.commands.gradeLevels.save(
+  await app.config.gradeLevels.save(
     new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
   await app.setup.createClassGroup({
@@ -58,7 +59,9 @@ async function createConcurrencyFixture() {
   await app.students.linkGuardianToStudent({ id: 'guardian-link', guardianId: 'guardian', studentId: 'student' })
 
   // Offer subject and class details
-  await app.academics.createSubject({ id: 'math', schoolId: 'school', name: 'Mathematics' })
+  await app.config.subjects.save(
+    new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
+  )
   const classSubject = await app.academics.offerSubjectToClass({
     id: 'class-math',
     classGroupId: 'class',

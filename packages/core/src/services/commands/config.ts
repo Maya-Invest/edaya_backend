@@ -1,4 +1,5 @@
 import type {
+  DisciplinaryAction,
   GradeLevel,
   PeriodDefinition,
   Resource,
@@ -25,11 +26,15 @@ export class AuthorizedWriteService<T> {
     private readonly actor: ActorMetadata,
     private readonly checkModule: (actor: ActorMetadata) => Promise<void>,
     private readonly checkAccess: (actor: ActorMetadata, ids: string[]) => Promise<void>,
+    private readonly validate?: (entity: T) => Promise<void>,
   ) {}
 
   async save(entity: T): Promise<void> {
     await this.checkModule(this.actor)
     checkEntityTenant(this.actor, entity)
+    if (this.validate) {
+      await this.validate(entity)
+    }
 
     if ((entity as any).id) {
       await this.checkAccess(this.actor, [(entity as any).id])
@@ -48,7 +53,7 @@ export class AuthorizedWriteService<T> {
   }
 }
 
-export class BaseSchoolUpdateService {
+export class ConfigService {
   protected readonly repositories: SchoolRepositories
   protected readonly actor: ActorMetadata
   protected readonly authorizationPolicy: AuthorizationPolicy
@@ -58,6 +63,7 @@ export class BaseSchoolUpdateService {
   public readonly resources: AuthorizedWriteService<Resource>
   public readonly subjects: AuthorizedWriteService<Subject>
   public readonly subjectMatters: AuthorizedWriteService<SubjectMatter>
+  public readonly disciplinaryActions: AuthorizedWriteService<DisciplinaryAction>
 
   constructor(args: ServiceArgs) {
     this.repositories = args.repositories
@@ -97,6 +103,19 @@ export class BaseSchoolUpdateService {
       this.repositories.subjectMatters,
       this.actor,
       async actor => this.authorizationPolicy.checkGlobalAction(actor, 'academics.manage_curriculum'),
+      async () => {},
+      async (entity) => {
+        const subject = await this.repositories.subjects.findById(entity.subjectId)
+        if (!subject || subject.schoolId !== this.actor.schoolId) {
+          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+        }
+      },
+    )
+
+    this.disciplinaryActions = new AuthorizedWriteService(
+      this.repositories.disciplinaryActions,
+      this.actor,
+      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'behavior.manage_discipline'),
       async () => {},
     )
   }

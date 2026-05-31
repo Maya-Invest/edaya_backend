@@ -1,5 +1,5 @@
 import { createRouter } from "@/lib/create-app";
-import { GradeLevel, PeriodDefinition, Resource, Subject, SubjectMatter } from "@edaya/core";
+import { DisciplinaryAction, GradeLevel, PeriodDefinition, Resource, Subject, SubjectMatter } from "@edaya/core";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 const commandsRouter = createRouter()
@@ -10,14 +10,14 @@ const commandsRouter = createRouter()
       return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
     }
     const headlessApp = c.get("schoolApp").forActor(actor);
-    const commands = headlessApp.commands;
+    const config = headlessApp.config;
 
-    if (!(entityName in commands)) {
+    if (!(entityName in config)) {
       return c.json({ message: `Entity ${entityName} is not write-supported` }, HttpStatusCodes.BAD_REQUEST);
     }
 
     const body = await c.req.json();
-    const service = (commands as any)[entityName];
+    const service = (config as any)[entityName];
 
     let entityInstance: any;
     const args = { ...body, schoolId: actor.schoolId };
@@ -38,6 +38,9 @@ const commandsRouter = createRouter()
         break;
       case "subjectMatters":
         entityInstance = new SubjectMatter(args);
+        break;
+      case "disciplinaryActions":
+        entityInstance = new DisciplinaryAction(args);
         break;
       default:
         return c.json({ message: `Entity ${entityName} is not instantiable` }, HttpStatusCodes.BAD_REQUEST);
@@ -62,13 +65,13 @@ const commandsRouter = createRouter()
       return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
     }
     const headlessApp = c.get("schoolApp").forActor(actor);
-    const commands = headlessApp.commands;
+    const config = headlessApp.config;
 
-    if (!(entityName in commands)) {
+    if (!(entityName in config)) {
       return c.json({ message: `Entity ${entityName} is not delete-supported` }, HttpStatusCodes.BAD_REQUEST);
     }
 
-    const service = (commands as any)[entityName];
+    const service = (config as any)[entityName];
 
     try {
       await service.delete(id);

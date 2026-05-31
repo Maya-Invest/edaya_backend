@@ -1,7 +1,7 @@
 import type { BaseRepositoryInterface } from '../../../src/ports/base-repository'
 import type { ActorMetadata } from '../../../src/services/authorization/actor-metadata'
 import { describe, expect, mock, test } from 'bun:test'
-import { AuthorizedReadService } from '../../../src/services/queries/query-services'
+import { AuthorizedReadService } from '../../../src/services/queries'
 
 describe('AuthorizedReadService', () => {
   const mockRepo = {

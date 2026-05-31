@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../../../src/ports/school-repositori
 import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
 import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
-import { SetupService } from '../../../../src/services/commands/setup'
+import { SchoolSetupService } from '../../../../src/services/commands/setup'
 
 describe('SetupService', () => {
   const mockRepos = {
@@ -61,7 +61,7 @@ describe('SetupService', () => {
     reason: 'test',
   }
 
-  const service = new SetupService({ repositories: mockRepos, authorizationPolicy: mockPolicy, actor } as any)
+  const service = new SchoolSetupService({ repositories: mockRepos, authorizationPolicy: mockPolicy, actor } as any)
 
   test('assignResourceToClass succeeds', async () => {
     const res = await service.assignResourceToClass({

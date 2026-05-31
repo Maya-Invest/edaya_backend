@@ -73,19 +73,6 @@ describe('SchedulingService', () => {
 
   const service = new SchedulingService({ repositories: mockRepos, authorizationPolicy: mockPolicy, actor, atomicExecution: mockAtomic } as any)
 
-  test('definePeriod succeeds', async () => {
-    const res = await service.definePeriod({
-      id: 'pd1',
-      schoolId: 'sch1',
-      academicYearId: 'ay1',
-      label: 'Morning',
-      order: 1,
-      startTime: '08:00',
-      endTime: '12:00',
-    })
-    expect(res.id).toBe('pd1')
-  })
-
   test('recordDailyAttendance creates session if missing', async () => {
     const res = await service.recordDailyAttendance({
       id: 'ar1',

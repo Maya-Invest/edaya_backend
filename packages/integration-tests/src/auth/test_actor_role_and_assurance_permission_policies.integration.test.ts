@@ -8,6 +8,7 @@ import {
   SessionKind,
   StaffMember,
   StaffRole,
+  Subject,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
@@ -25,7 +26,7 @@ async function setupBaselineFixture() {
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.commands.gradeLevels.save(
+  await app.config.gradeLevels.save(
     new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
   await app.setup.createClassGroup({
@@ -66,7 +67,9 @@ async function setupBaselineFixture() {
   await app.students.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
-  await app.academics.createSubject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' })
+  await app.config.subjects.save(
+    new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
+  )
   const classSubject = await app.academics.offerSubjectToClass({
     id: 'class-subject-english',
     classGroupId: 'class-7a',

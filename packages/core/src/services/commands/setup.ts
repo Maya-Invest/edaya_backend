@@ -20,7 +20,7 @@ import { denyResourceAccess, resolveAuditActorId } from '../authorization'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
-export class SetupService {
+export class SchoolSetupService {
   constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy

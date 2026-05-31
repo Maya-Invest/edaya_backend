@@ -7,7 +7,6 @@ import type { AuthorizedServiceArgs } from '../authorization'
 import type { ServiceArgs } from '../shared/service-args'
 import { AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { CalendarEvent, CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
-import { PeriodDefinition } from '../../entities/scheduling/period-definition'
 import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
 import { AttendanceMode } from '../../entities/school/class-group'
@@ -44,48 +43,6 @@ export class SchedulingService {
   private readonly repositories: SchoolRepositories
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
-
-  async definePeriod({
-    id,
-    schoolId,
-    academicYearId,
-    label,
-    order,
-    startTime,
-    endTime,
-    isBreak,
-    createdAt,
-  }: {
-    id: string
-    schoolId: string
-    academicYearId: string
-    label: string
-    order: number
-    startTime: string
-    endTime: string
-    isBreak?: boolean
-    createdAt?: Date
-  }): Promise<PeriodDefinition> {
-    await this.authorize('scheduling.manage', { schoolId, academicYearId })
-    await requireSchool(this.repositories.schools, schoolId)
-    const academicYear = await this.requireAcademicYear(academicYearId)
-    if (academicYear.schoolId !== schoolId) {
-      denyResourceAccess()
-    }
-    const period = new PeriodDefinition({
-      id,
-      schoolId,
-      academicYearId,
-      label,
-      order,
-      startTime,
-      endTime,
-      isBreak,
-      createdAt,
-    })
-    await this.repositories.periodDefinitions.save(period)
-    return period
-  }
 
   async createSchedule({
     id,

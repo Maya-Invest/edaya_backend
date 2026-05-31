@@ -41,11 +41,11 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../../entities'
-import type { BaseRepositoryInterface, Filter, QueryOptions, SchoolRepositories } from '../../ports'
-import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
-import type { ServiceArgs } from '../shared/service-args'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization'
+} from '../entities'
+import type { BaseRepositoryInterface, Filter, QueryOptions, SchoolRepositories } from '../ports'
+import type { ActorMetadata, AuthorizationPolicy } from './authorization'
+import type { ServiceArgs } from './shared/service-args'
+import { AuthorizationError, AuthorizationErrorCode } from './authorization'
 
 function checkTenantBoundary(actor: ActorMetadata, optionsOrFilter: any) {
   if (!optionsOrFilter)

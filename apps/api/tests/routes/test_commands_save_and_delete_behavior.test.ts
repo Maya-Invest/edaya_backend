@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import commandsRouter from "@/routes/commands.route";
-import { GradeLevel, Resource, StaffRole, ActorAssuranceLevel } from "@edaya/core";
+import { ActorAssuranceLevel, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, Resource, StaffRole } from "@edaya/core";
 import type { AppBindings } from "@/lib/types";
 
-describe("Commands Route POST and DELETE Mutation Actions", () => {
+describe("commands Route POST and DELETE Mutation Actions", () => {
   const mockActor = {
     kind: "staff" as const,
     subjectId: "admin-user",
@@ -16,7 +16,7 @@ describe("Commands Route POST and DELETE Mutation Actions", () => {
     assuranceLevel: ActorAssuranceLevel.Strong,
   };
 
-  const setupTestApp = (mockCommands: any) => {
+  const setupTestApp = (mockConfig: any) => {
     const app = new Hono<AppBindings>();
 
     // Set custom Hono context variables
@@ -24,7 +24,7 @@ describe("Commands Route POST and DELETE Mutation Actions", () => {
       c.set("actor", mockActor);
       c.set("schoolApp", {
         forActor: () => ({
-          commands: mockCommands,
+          config: mockConfig,
         }),
       } as any);
       await next();
@@ -66,6 +66,39 @@ describe("Commands Route POST and DELETE Mutation Actions", () => {
     expect(passedEntity.schoolId).toBe("school-1");
     expect(passedEntity.name).toBe("Grade 6");
     expect(passedEntity.order).toBe(6);
+  });
+
+  it("should successfully save a DisciplinaryAction entity and return 201", async () => {
+    const mockSave = vi.fn().mockResolvedValue(undefined);
+    const mockCommands = {
+      disciplinaryActions: {
+        save: mockSave,
+      },
+    };
+
+    const app = setupTestApp(mockCommands);
+    const payload = {
+      id: "da-123",
+      name: "Suspension",
+      kind: DisciplinaryActionKind.Sanction,
+    };
+
+    const res = await app.request("/disciplinaryActions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockSave).toHaveBeenCalled();
+    const passedEntity = mockSave.mock.calls[0][0];
+    expect(passedEntity).toBeInstanceOf(DisciplinaryAction);
+    expect(passedEntity.id).toBe("da-123");
+    expect(passedEntity.schoolId).toBe("school-1");
+    expect(passedEntity.name).toBe("Suspension");
+    expect(passedEntity.kind).toBe(DisciplinaryActionKind.Sanction);
   });
 
   it("should return 400 Bad Request for unsupported write entity", async () => {

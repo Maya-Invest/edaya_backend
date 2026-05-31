@@ -1,6 +1,6 @@
 import type { IncidentKind } from '../../entities/students/incident'
 import type { ServiceArgs } from '../shared/service-args'
-import { DisciplinaryAction, DisciplinaryActionKind } from '../../entities/students/disciplinary-action'
+import { DisciplinaryActionKind } from '../../entities/students/disciplinary-action'
 import { Incident, IncidentStatus } from '../../entities/students/incident'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import {
@@ -22,41 +22,6 @@ export class BehaviorService {
   private readonly actor: ServiceArgs['actor']
   private readonly authorizationPolicy: ServiceArgs['authorizationPolicy']
   private readonly repositories: ServiceArgs['repositories']
-
-  async createDisciplinaryAction({
-    id,
-    schoolId,
-    name,
-    kind,
-    severity,
-    defaultDurationDays,
-    description,
-    createdAt,
-  }: {
-    id: string
-    schoolId: string
-    name: string
-    kind: DisciplinaryActionKind
-    severity?: number
-    defaultDurationDays?: number
-    description?: string
-    createdAt?: Date
-  }): Promise<DisciplinaryAction> {
-    await requireSchool(this.repositories.schools, schoolId)
-    await this.authorize('behavior.manage_discipline', { schoolId })
-    const action = new DisciplinaryAction({
-      id,
-      schoolId,
-      name,
-      kind,
-      severity,
-      defaultDurationDays,
-      description,
-      createdAt,
-    })
-    await this.repositories.disciplinaryActions.save(action)
-    return action
-  }
 
   async recordIncident({
     id,

@@ -1,40 +1,40 @@
 import type { SchoolRepositories } from '../ports'
 import type { ActorMetadata } from './authorization'
 import type { ServiceArgs } from './shared/service-args'
-import { AcademicsService } from './commands/academics'
-import { AssessmentsService } from './commands/assessments'
-import { BehaviorService } from './commands/behavior'
-import { CommunicationsService } from './commands/communications'
-import { FinanceService } from './commands/finance'
-import { SchedulingService } from './commands/scheduling'
-import { SetupService } from './commands/setup'
-import { StudentsService } from './commands/student'
-import { SchoolQueryService } from './queries/query-services'
-import { BaseSchoolUpdateService } from './queries/update-services'
+import { AcademicsService as SchoolAcademicsService } from './commands/academics'
+import { AssessmentsService as SchoolAssessmentsService } from './commands/assessments'
+import { BehaviorService as SchoolBehaviorService } from './commands/behavior'
+import { CommunicationsService as SchoolCommunicationsService } from './commands/communications'
+import { ConfigService as SchoolConfigService } from './commands/config'
+import { FinanceService as SchoolFinanceService } from './commands/finance'
+import { SchedulingService as SchoolSchedulingService } from './commands/scheduling'
+import { SchoolSetupService } from './commands/setup'
+import { StudentsService as SchoolStudentsService } from './commands/student'
+import { SchoolQueryService } from './queries'
 
 export class SchoolHeadlessApp {
-  readonly setup: SetupService
-  readonly academics: AcademicsService
-  readonly scheduling: SchedulingService
-  readonly assessments: AssessmentsService
-  readonly behavior: BehaviorService
-  readonly students: StudentsService
-  readonly finance: FinanceService
-  readonly communications: CommunicationsService
+  readonly setup: SchoolSetupService
+  readonly academics: SchoolAcademicsService
+  readonly scheduling: SchoolSchedulingService
+  readonly assessments: SchoolAssessmentsService
+  readonly behavior: SchoolBehaviorService
+  readonly students: SchoolStudentsService
+  readonly finance: SchoolFinanceService
+  readonly communications: SchoolCommunicationsService
+  readonly config: SchoolConfigService
   readonly queries: SchoolQueryService
-  readonly commands: BaseSchoolUpdateService
 
   constructor(args: ServiceArgs) {
-    this.setup = new SetupService(args)
-    this.students = new StudentsService(args)
-    this.academics = new AcademicsService(args)
-    this.behavior = new BehaviorService(args)
-    this.scheduling = new SchedulingService(args)
-    this.assessments = new AssessmentsService(args)
-    this.communications = new CommunicationsService(args)
-    this.finance = new FinanceService(args)
+    this.setup = new SchoolSetupService(args)
+    this.students = new SchoolStudentsService(args)
+    this.academics = new SchoolAcademicsService(args)
+    this.behavior = new SchoolBehaviorService(args)
+    this.scheduling = new SchoolSchedulingService(args)
+    this.assessments = new SchoolAssessmentsService(args)
+    this.communications = new SchoolCommunicationsService(args)
+    this.finance = new SchoolFinanceService(args)
+    this.config = new SchoolConfigService(args)
     this.queries = new SchoolQueryService(args)
-    this.commands = new BaseSchoolUpdateService(args)
   }
 }
 

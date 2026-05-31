@@ -9,6 +9,8 @@ import {
   PaymentMethod,
   PaymentStatus,
   SessionKind,
+  Subject,
+  SubjectMatter,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { createTestApp } from '../support/in-memory-school-headless-app'
@@ -25,7 +27,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.commands.gradeLevels.save(
+    await app.config.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await app.setup.createClassGroup({
@@ -35,13 +37,17 @@ describeIntegration('atomic workflow safeguards', () => {
       gradeLevelId: 'level',
       name: 'Grade 6 A',
     })
-    await app.academics.createSubject({ id: 'math', schoolId: 'school', name: 'Mathematics' })
+    await app.config.subjects.save(
+      new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
+    )
     const classSubject = await app.academics.offerSubjectToClass({
       id: 'class-math',
       classGroupId: 'class',
       subjectId: 'math',
     })
-    await app.academics.createSubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 })
+    await app.config.subjectMatters.save(
+      new SubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }),
+    )
     const classMatter = await app.academics.assignMatterToClassSubject({
       id: 'class-fractions',
       classSubjectId: classSubject.id,
@@ -158,7 +164,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    await app.commands.gradeLevels.save(
+    await app.config.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await app.setup.createClassGroup({
@@ -197,7 +203,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.commands.gradeLevels.save(
+    await app.config.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await app.setup.createClassGroup({
@@ -235,7 +241,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.commands.gradeLevels.save(
+    await app.config.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await app.setup.createClassGroup({
