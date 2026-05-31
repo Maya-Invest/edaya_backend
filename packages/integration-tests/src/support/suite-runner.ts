@@ -1,6 +1,6 @@
 import { PostgresAtomicExecution as RelationalPostgresAtomicExecution, PostgresSchoolRepositories as RelationalPostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { PGlite } from '@electric-sql/pglite'
-import { beforeEach, describe } from 'bun:test'
+import { afterEach, beforeEach, describe } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
 import { createInMemoryTestApp, setIntegrationTestAdapter } from './in-memory-school-headless-app'
 import { createPostgresAppBuilder } from './postgres-school-headless-app'
@@ -32,6 +32,12 @@ export function describeIntegration(name: string, suite: () => void) {
       setIntegrationTestAdapter({
         createApp: actor => postgresBuilder(actor),
       })
+    })
+
+    afterEach(async () => {
+      if (pglite) {
+        await pglite.close()
+      }
     })
 
     suite()

@@ -8,12 +8,9 @@ const app = createApp();
 
 configureOpenAPI(app);
 
-app.route("/api/auth", auth);
-app.route("/api/commands", commands);
+const routes = [index] as const;
 
-const routes = [index, commands] as const;
-
-routes.forEach((route) => {
+[auth, commands, ...routes].forEach((route) => {
   app.route("/", route);
 });
 
