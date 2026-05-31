@@ -20,7 +20,7 @@ export default function createApp() {
 
   app.use(cors({
     origin: "*",
-    allowMethods: ["GET", "POST"],
+    allowMethods: ["GET", "POST", "DELETE"],
     allowHeaders: ["Content-Type"],
   }));
 

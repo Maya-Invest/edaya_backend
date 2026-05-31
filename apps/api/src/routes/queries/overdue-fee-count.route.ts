@@ -1,12 +1,9 @@
 import type { AppRouteHandler } from "@/lib/types";
-import { createRoute, z } from "@hono/zod-openapi";
+import { countResponseSchema, schoolIdBodySchema } from "@/validation/route.schemas";
+import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-
-const schoolIdParamSchema = z.object({
-  schoolId: z.string().uuid(),
-});
 
 export const overdueFeeCountRoute = createRoute({
   method: "post",
@@ -14,13 +11,11 @@ export const overdueFeeCountRoute = createRoute({
   tags: ["Custom Queries"],
   summary: "Get count of overdue fees",
   request: {
-    body: jsonContent(schoolIdParamSchema, "School ID parameter"),
+    body: jsonContent(schoolIdBodySchema, "School ID parameter"),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      z.object({
-        count: z.number().int().nonnegative(),
-      }),
+      countResponseSchema,
       "Successfully retrieved count of overdue fees",
     ),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(

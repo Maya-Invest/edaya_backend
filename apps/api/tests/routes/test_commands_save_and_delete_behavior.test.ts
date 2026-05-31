@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
-import commandsRouter from "@/routes/commands.route";
+import indexRouter from "@/routes/index.route";
 import { ActorAssuranceLevel, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, Resource, StaffRole } from "@edaya/core";
 import type { AppBindings } from "@/lib/types";
 
-describe("commands Route POST and DELETE Mutation Actions", () => {
+describe("config command route pairs", () => {
   const mockActor = {
     kind: "staff" as const,
     subjectId: "admin-user",
@@ -30,7 +30,7 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
       await next();
     });
 
-    app.route("/", commandsRouter);
+    app.route("/", indexRouter);
     return app;
   };
 
@@ -49,7 +49,7 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
       order: 6,
     };
 
-    const res = await app.request("/gradeLevels", {
+    const res = await app.request("/api/commands/config/gradeLevels", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -68,6 +68,40 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
     expect(passedEntity.order).toBe(6);
   });
 
+  it("should expose generated config command endpoints under /api/commands/config", async () => {
+    const mockSave = vi.fn().mockResolvedValue(undefined);
+    const mockCommands = {
+      resources: {
+        save: mockSave,
+      },
+    };
+
+    const app = setupTestApp(mockCommands);
+    const payload = {
+      id: "resource-1",
+      name: "Lab 1",
+      kind: "location",
+      capacity: 30,
+    };
+
+    const res = await app.request("/api/commands/config/resources", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockSave).toHaveBeenCalled();
+    const passedEntity = mockSave.mock.calls[0][0];
+    expect(passedEntity).toBeInstanceOf(Resource);
+    expect(passedEntity.id).toBe("resource-1");
+    expect(passedEntity.schoolId).toBe("school-1");
+    expect(passedEntity.name).toBe("Lab 1");
+    expect(passedEntity.capacity).toBe(30);
+  });
+
   it("should successfully save a DisciplinaryAction entity and return 201", async () => {
     const mockSave = vi.fn().mockResolvedValue(undefined);
     const mockCommands = {
@@ -83,7 +117,7 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
       kind: DisciplinaryActionKind.Sanction,
     };
 
-    const res = await app.request("/disciplinaryActions", {
+    const res = await app.request("/api/commands/config/disciplinaryActions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -101,21 +135,25 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
     expect(passedEntity.kind).toBe(DisciplinaryActionKind.Sanction);
   });
 
-  it("should return 400 Bad Request for unsupported write entity", async () => {
+  it("should return 400 Bad Request for unsupported write service", async () => {
     const mockCommands = {};
     const app = setupTestApp(mockCommands);
 
-    const res = await app.request("/invalidEntity", {
+    const res = await app.request("/api/commands/config/resources", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        id: "resource-1",
+        name: "Lab 1",
+        kind: "location",
+      }),
     });
 
     expect(res.status).toBe(400);
     const body = (await res.json()) as any;
-    expect(body.message).toContain("not write-supported");
+    expect(body.message).toBe("Entity resources is not write-supported");
   });
 
   it("should successfully delete a Resource entity and return 200", async () => {
@@ -128,7 +166,7 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
 
     const app = setupTestApp(mockCommands);
 
-    const res = await app.request("/resources/res-123", {
+    const res = await app.request("/api/commands/config/resources/res-123", {
       method: "DELETE",
     });
 
@@ -151,7 +189,7 @@ describe("commands Route POST and DELETE Mutation Actions", () => {
     };
 
     const app = setupTestApp(mockCommands);
-    const res = await app.request("/gradeLevels", {
+    const res = await app.request("/api/commands/config/gradeLevels", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -87,887 +87,890 @@ import type {
   SubjectArgs,
   SubjectMatterArgs,
 } from "@edaya/core";
-import { createQueryOptionsSchema } from "./query-options";
+import { createQueryOptionsSchema } from "./utils/query-options";
+import { field, responseSchema, valueSchema } from "./utils/schema-fields";
 
 // ==========================================================
 // 1. All 42 Domain Entities Response OpenAPI Schemas
 // ==========================================================
 
-export const schoolResponseSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  timeZone: z.string(),
-  createdAt: z.coerce.date(),
-}).openapi("School") satisfies z.ZodType<SchoolArgs>;
+export const schoolResponseSchema = responseSchema<SchoolArgs>("School", {
+  id: field.uuid(),
+  name: field.string(),
+  timeZone: field.string(),
+  createdAt: field.date(),
+});
 
-export const academicYearResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-  createdAt: z.coerce.date(),
-}).openapi("AcademicYear") satisfies z.ZodType<AcademicYearArgs>;
+export const academicYearResponseSchema = responseSchema<AcademicYearArgs>("AcademicYear", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  startDate: field.date(),
+  endDate: field.date(),
+  createdAt: field.date(),
+});
 
-export const academicPeriodResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  name: z.string(),
+export const academicPeriodResponseSchema = responseSchema<AcademicPeriodArgs>("AcademicPeriod", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  name: field.string(),
   type: z.nativeEnum(AcademicPeriodType),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-  isPublished: z.boolean().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("AcademicPeriod") satisfies z.ZodType<AcademicPeriodArgs>;
+  startDate: field.date(),
+  endDate: field.date(),
+  isPublished: field.optionalBoolean(),
+  createdAt: field.optionalDate(),
+});
 
-export const periodDefinitionResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  label: z.string(),
-  order: z.number().int().positive(),
-  startTime: z.string(),
-  endTime: z.string(),
-  isBreak: z.boolean().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("PeriodDefinition") satisfies z.ZodType<PeriodDefinitionArgs>;
+export const periodDefinitionResponseSchema = responseSchema<PeriodDefinitionArgs>("PeriodDefinition", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  label: field.string(),
+  order: field.positiveInt(),
+  startTime: field.string(),
+  endTime: field.string(),
+  isBreak: field.optionalBoolean(),
+  createdAt: field.optionalDate(),
+});
 
-export const gradeLevelResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  order: z.number().int().positive(),
-  cycle: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("GradeLevel") satisfies z.ZodType<GradeLevelArgs>;
+export const gradeLevelResponseSchema = responseSchema<GradeLevelArgs>("GradeLevel", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  order: field.positiveInt(),
+  cycle: field.nullableText(),
+  createdAt: field.optionalDate(),
+});
 
-export const staffMemberResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
+export const staffMemberResponseSchema = responseSchema<StaffMemberArgs>("StaffMember", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  firstName: field.string(),
+  lastName: field.string(),
   roles: z.array(z.nativeEnum(StaffRole)),
-  email: z.string().email().nullable().optional(),
-  subjectId: z.string().uuid().nullable().optional(),
-  isActive: z.boolean().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("StaffMember") satisfies z.ZodType<StaffMemberArgs>;
+  email: field.nullableEmail(),
+  subjectId: field.nullableUuid(),
+  isActive: field.optionalBoolean(),
+  createdAt: field.optionalDate(),
+});
 
-export const staffAssignmentResponseSchema = z.object({
-  id: z.string().uuid(),
-  staffId: z.string().uuid(),
+export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentArgs>("StaffAssignment", {
+  id: field.uuid(),
+  staffId: field.uuid(),
   role: z.nativeEnum(StaffRole),
-  classGroupId: z.string().uuid().nullable().optional(),
-  classSubjectId: z.string().uuid().nullable().optional(),
-  sessionId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("StaffAssignment") satisfies z.ZodType<StaffAssignmentArgs>;
+  classGroupId: field.nullableUuid(),
+  classSubjectId: field.nullableUuid(),
+  sessionId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const attachmentResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
+export const attachmentResponseSchema = responseSchema<AttachmentArgs>("Attachment", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
   ownerKind: z.nativeEnum(AttachmentOwnerKind),
-  ownerId: z.string().uuid(),
-  fileName: z.string(),
-  fileUrl: z.string(),
-  mimeType: z.string().nullable().optional(),
-  sizeBytes: z.number().int().nonnegative().nullable().optional(),
-  uploadedById: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Attachment") satisfies z.ZodType<AttachmentArgs>;
+  ownerId: field.uuid(),
+  fileName: field.string(),
+  fileUrl: field.string(),
+  mimeType: field.nullableText(),
+  sizeBytes: field.nullableNonNegativeInt(),
+  uploadedById: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const resourceResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  description: z.string().nullable().optional(),
+export const resourceResponseSchema = responseSchema<ResourceArgs>("Resource", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  description: field.nullableText(),
   kind: z.nativeEnum(ResourceKind),
-  capacity: z.number().int().nonnegative().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Resource") satisfies z.ZodType<ResourceArgs>;
+  capacity: field.nullableNonNegativeInt(),
+  createdAt: field.optionalDate(),
+});
 
-export const resourceAssignmentResponseSchema = z.object({
-  id: z.string().uuid(),
-  resourceId: z.string().uuid(),
-  sessionId: z.string().uuid().nullable().optional(),
-  classGroupId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("ResourceAssignment") satisfies z.ZodType<ResourceAssignmentArgs>;
+export const resourceAssignmentResponseSchema = responseSchema<ResourceAssignmentArgs>("ResourceAssignment", {
+  id: field.uuid(),
+  resourceId: field.uuid(),
+  sessionId: field.nullableUuid(),
+  classGroupId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const feeInstallmentTemplateSchema = z.object({
-  label: z.string(),
-  percentage: z.number(),
-  dueDate: z.coerce.date().nullable().optional(),
-}) satisfies z.ZodType<FeeInstallmentTemplate>;
+export const feeInstallmentTemplateSchema = valueSchema<FeeInstallmentTemplate>({
+  label: field.string(),
+  percentage: field.number(),
+  dueDate: field.nullableDate(),
+});
 
-export const feeResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  name: z.string(),
+export const feeResponseSchema = responseSchema<FeeArgs>("Fee", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  name: field.string(),
   category: z.nativeEnum(FeeCategory).optional(),
-  description: z.string().nullable().optional(),
-  defaultAmount: z.number(),
-  currency: z.string(),
+  description: field.nullableText(),
+  defaultAmount: field.number(),
+  currency: field.string(),
   installments: z.array(feeInstallmentTemplateSchema).optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Fee") satisfies z.ZodType<FeeArgs>;
+  createdAt: field.optionalDate(),
+});
 
-export const studentFeeInstallmentSchema = z.object({
-  id: z.string().uuid(),
-  label: z.string(),
-  expectedAmount: z.number(),
-  dueDate: z.coerce.date().nullable().optional(),
-}) satisfies z.ZodType<StudentFeeInstallment>;
+export const studentFeeInstallmentSchema = valueSchema<StudentFeeInstallment>({
+  id: field.uuid(),
+  label: field.string(),
+  expectedAmount: field.number(),
+  dueDate: field.nullableDate(),
+});
 
-export const studentFeeResponseSchema = z.object({
-  id: z.string().uuid(),
-  studentId: z.string().uuid(),
-  feeId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  expectedAmount: z.number(),
-  paidAmount: z.number().nullable().optional(),
-  adjustmentAmount: z.number().nullable().optional(),
-  adjustmentReason: z.string().nullable().optional(),
-  adjustedById: z.string().uuid().nullable().optional(),
-  adjustedAt: z.coerce.date().nullable().optional(),
-  currency: z.string(),
-  dueDate: z.coerce.date().nullable().optional(),
+export const studentFeeResponseSchema = responseSchema<StudentFeeArgs>("StudentFee", {
+  id: field.uuid(),
+  studentId: field.uuid(),
+  feeId: field.uuid(),
+  academicYearId: field.uuid(),
+  expectedAmount: field.number(),
+  paidAmount: field.nullableNumber(),
+  adjustmentAmount: field.nullableNumber(),
+  adjustmentReason: field.nullableText(),
+  adjustedById: field.nullableUuid(),
+  adjustedAt: field.nullableDate(),
+  currency: field.string(),
+  dueDate: field.nullableDate(),
   status: z.nativeEnum(FeeStatus),
-  cancellationReason: z.string().nullable().optional(),
-  cancelledById: z.string().uuid().nullable().optional(),
-  cancelledAt: z.coerce.date().nullable().optional(),
+  cancellationReason: field.nullableText(),
+  cancelledById: field.nullableUuid(),
+  cancelledAt: field.nullableDate(),
   installments: z.array(studentFeeInstallmentSchema).optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("StudentFee") satisfies z.ZodType<StudentFeeArgs>;
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
-export const paymentResponseSchema = z.object({
-  id: z.string().uuid(),
-  studentFeeId: z.string().uuid(),
-  amount: z.number(),
-  currency: z.string(),
-  paymentDate: z.coerce.date(),
+export const paymentResponseSchema = responseSchema<PaymentArgs>("Payment", {
+  id: field.uuid(),
+  studentFeeId: field.uuid(),
+  amount: field.number(),
+  currency: field.string(),
+  paymentDate: field.date(),
   method: z.nativeEnum(PaymentMethod),
   status: z.nativeEnum(PaymentStatus).optional(),
-  reference: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  recordedById: z.string().uuid().nullable().optional(),
-  reversedAt: z.coerce.date().nullable().optional(),
-  reversedById: z.string().uuid().nullable().optional(),
-  cancelledAt: z.coerce.date().nullable().optional(),
-  cancelledById: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Payment") satisfies z.ZodType<PaymentArgs>;
+  reference: field.nullableText(),
+  notes: field.nullableText(),
+  recordedById: field.nullableUuid(),
+  reversedAt: field.nullableDate(),
+  reversedById: field.nullableUuid(),
+  cancelledAt: field.nullableDate(),
+  cancelledById: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const scheduleResponseSchema = z.object({
-  id: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  classSubjectId: z.string().uuid().nullable().optional(),
-  title: z.string(),
-  isRecurring: z.boolean(),
+export const scheduleResponseSchema = responseSchema<ScheduleArgs>("Schedule", {
+  id: field.uuid(),
+  classGroupId: field.uuid(),
+  classSubjectId: field.nullableUuid(),
+  title: field.string(),
+  isRecurring: field.boolean(),
   dayOfWeek: z.nativeEnum(DayOfWeek).nullable().optional(),
-  startTime: z.string(),
-  endTime: z.string(),
-  specificDate: z.coerce.date().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Schedule") satisfies z.ZodType<ScheduleArgs>;
+  startTime: field.string(),
+  endTime: field.string(),
+  specificDate: field.nullableDate(),
+  createdAt: field.optionalDate(),
+});
 
-export const sessionResponseSchema = z.object({
-  id: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  title: z.string(),
+export const sessionResponseSchema = responseSchema<SessionArgs>("Session", {
+  id: field.uuid(),
+  classGroupId: field.uuid(),
+  title: field.string(),
   kind: z.nativeEnum(SessionKind),
-  startsAt: z.coerce.date(),
-  endsAt: z.coerce.date(),
-  classSubjectId: z.string().uuid().nullable().optional(),
-  scheduleId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Session") satisfies z.ZodType<SessionArgs>;
+  startsAt: field.date(),
+  endsAt: field.date(),
+  classSubjectId: field.nullableUuid(),
+  scheduleId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const calendarEventResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  title: z.string(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+export const calendarEventResponseSchema = responseSchema<CalendarEventArgs>("CalendarEvent", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  title: field.string(),
+  startDate: field.date(),
+  endDate: field.date(),
   kind: z.nativeEnum(CalendarEventKind),
-  isNonSchoolDay: z.boolean().optional(),
+  isNonSchoolDay: field.optionalBoolean(),
   scopeKind: z.nativeEnum(CalendarEventScopeKind).optional(),
-  scopeId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("CalendarEvent") satisfies z.ZodType<CalendarEventArgs>;
+  scopeId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const attendanceResponseSchema = z.object({
-  id: z.string().uuid(),
-  studentId: z.string().uuid(),
-  sessionId: z.string().uuid(),
-  date: z.coerce.date(),
+export const attendanceResponseSchema = responseSchema<AttendanceRecordArgs>("Attendance", {
+  id: field.uuid(),
+  studentId: field.uuid(),
+  sessionId: field.uuid(),
+  date: field.date(),
   status: z.nativeEnum(AttendanceStatus),
   justificationStatus: z.nativeEnum(AttendanceJustificationStatus).optional(),
-  reason: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  justifiedAt: z.coerce.date().nullable().optional(),
-  justifiedByStaffId: z.string().uuid().nullable().optional(),
-  correctedAt: z.coerce.date().nullable().optional(),
-  correctedByStaffId: z.string().uuid().nullable().optional(),
-  createdBy: z.string().optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("Attendance") satisfies z.ZodType<AttendanceRecordArgs>;
+  reason: field.nullableText(),
+  notes: field.nullableText(),
+  justifiedAt: field.nullableDate(),
+  justifiedByStaffId: field.nullableUuid(),
+  correctedAt: field.nullableDate(),
+  correctedByStaffId: field.nullableUuid(),
+  createdBy: field.optionalString(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
-export const announcementResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  title: z.string(),
-  content: z.string(),
-  createdBy: z.string().optional(),
+export const announcementResponseSchema = responseSchema<AnnouncementArgs>("Announcement", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  title: field.string(),
+  content: field.string(),
+  createdBy: field.optionalString(),
   status: z.nativeEnum(AnnouncementStatus).optional(),
   priority: z.nativeEnum(AnnouncementPriority).optional(),
-  premiumNotification: z.boolean().optional(),
-  createdAt: z.coerce.date().optional(),
-  publishedAt: z.coerce.date().optional(),
-  expiresAt: z.coerce.date().nullable().optional(),
-}).openapi("Announcement") satisfies z.ZodType<AnnouncementArgs>;
+  premiumNotification: field.optionalBoolean(),
+  createdAt: field.optionalDate(),
+  publishedAt: field.optionalDate(),
+  expiresAt: field.nullableDate(),
+});
 
-export const announcementTargetResponseSchema = z.object({
-  id: z.string().uuid(),
-  announcementId: z.string().uuid(),
+export const announcementTargetResponseSchema = responseSchema<AnnouncementTargetArgs>("AnnouncementTarget", {
+  id: field.uuid(),
+  announcementId: field.uuid(),
   targetKind: z.nativeEnum(AnnouncementTargetKind),
-  targetId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("AnnouncementTarget") satisfies z.ZodType<AnnouncementTargetArgs>;
+  targetId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const messageDeliveryResponseSchema = z.object({
-  id: z.string().uuid(),
-  announcementId: z.string().uuid(),
+export const messageDeliveryResponseSchema = responseSchema<MessageDeliveryArgs>("MessageDelivery", {
+  id: field.uuid(),
+  announcementId: field.uuid(),
   recipientKind: z.nativeEnum(MessageDeliveryRecipientKind),
-  recipientId: z.string().uuid(),
+  recipientId: field.uuid(),
   channel: z.nativeEnum(MessageDeliveryChannel),
   status: z.nativeEnum(MessageDeliveryStatus).optional(),
-  providerMessageId: z.string().nullable().optional(),
-  failureReason: z.string().nullable().optional(),
-  sentAt: z.coerce.date().nullable().optional(),
-  readAt: z.coerce.date().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("MessageDelivery") satisfies z.ZodType<MessageDeliveryArgs>;
+  providerMessageId: field.nullableText(),
+  failureReason: field.nullableText(),
+  sentAt: field.nullableDate(),
+  readAt: field.nullableDate(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
-export const subjectResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  code: z.string().nullable().optional(),
-  defaultCoefficient: z.number().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Subject") satisfies z.ZodType<SubjectArgs>;
+export const subjectResponseSchema = responseSchema<SubjectArgs>("Subject", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  code: field.nullableText(),
+  defaultCoefficient: field.nullableNumber(),
+  createdAt: field.optionalDate(),
+});
 
-export const subjectMatterResponseSchema = z.object({
-  id: z.string().uuid(),
-  subjectId: z.string().uuid(),
-  name: z.string(),
-  description: z.string().nullable().optional(),
-  sequenceOrder: z.number(),
-  estimatedHours: z.number().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("SubjectMatter") satisfies z.ZodType<SubjectMatterArgs>;
+export const subjectMatterResponseSchema = responseSchema<SubjectMatterArgs>("SubjectMatter", {
+  id: field.uuid(),
+  subjectId: field.uuid(),
+  name: field.string(),
+  description: field.nullableText(),
+  sequenceOrder: field.number(),
+  estimatedHours: field.nullableNumber(),
+  createdAt: field.optionalDate(),
+});
 
-export const classGroupResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  gradeLevelId: z.string().uuid(),
-  name: z.string(),
-  capacity: z.number().int().positive().nullable().optional(),
+export const classGroupResponseSchema = responseSchema<ClassGroupArgs>("ClassGroup", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  gradeLevelId: field.uuid(),
+  name: field.string(),
+  capacity: field.nullablePositiveInt(),
   attendanceMode: z.nativeEnum(AttendanceMode).optional(),
-  homeroomStaffId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("ClassGroup") satisfies z.ZodType<ClassGroupArgs>;
+  homeroomStaffId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
-export const classSubjectResponseSchema = z.object({
-  id: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  subjectId: z.string().uuid(),
-  coefficient: z.number().nullable().optional(),
-  completedPercentage: z.number().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("ClassSubject") satisfies z.ZodType<ClassSubjectArgs>;
+export const classSubjectResponseSchema = responseSchema<ClassSubjectArgs>("ClassSubject", {
+  id: field.uuid(),
+  classGroupId: field.uuid(),
+  subjectId: field.uuid(),
+  coefficient: field.nullableNumber(),
+  completedPercentage: field.nullableNumber(),
+  createdAt: field.optionalDate(),
+});
 
-export const classSubjectMatterResponseSchema = z.object({
-  id: z.string().uuid(),
-  classSubjectId: z.string().uuid(),
-  subjectMatterId: z.string().uuid(),
+export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterArgs>("ClassSubjectMatter", {
+  id: field.uuid(),
+  classSubjectId: field.uuid(),
+  subjectMatterId: field.uuid(),
   status: z.nativeEnum(ClassSubjectMatterStatus),
-  completedPercentage: z.number(),
-  updatedByStaffId: z.string().uuid().nullable().optional(),
-  startedAt: z.coerce.date().nullable().optional(),
-  completedAt: z.coerce.date().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("ClassSubjectMatter") satisfies z.ZodType<ClassSubjectMatterArgs>;
+  completedPercentage: field.number(),
+  updatedByStaffId: field.nullableUuid(),
+  startedAt: field.nullableDate(),
+  completedAt: field.nullableDate(),
+  notes: field.nullableText(),
+  updatedAt: field.optionalDate(),
+});
 
-export const classSubjectProgressResponseSchema = z.object({
-  id: z.string().uuid(),
-  classSubjectMatterId: z.string().uuid(),
-  sessionId: z.string().uuid(),
-  completedPercentage: z.number(),
-  recordedByStaffId: z.string().uuid().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  recordedAt: z.coerce.date().optional(),
-}).openapi("ClassSubjectProgress") satisfies z.ZodType<ClassSubjectProgressArgs>;
+export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressArgs>("ClassSubjectProgress", {
+  id: field.uuid(),
+  classSubjectMatterId: field.uuid(),
+  sessionId: field.uuid(),
+  completedPercentage: field.number(),
+  recordedByStaffId: field.nullableUuid(),
+  notes: field.nullableText(),
+  recordedAt: field.optionalDate(),
+});
 
-export const assessmentResponseSchema = z.object({
-  id: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  classSubjectId: z.string().uuid(),
-  periodId: z.string().uuid(),
-  title: z.string(),
+export const assessmentResponseSchema = responseSchema<AssessmentArgs>("Assessment", {
+  id: field.uuid(),
+  classGroupId: field.uuid(),
+  classSubjectId: field.uuid(),
+  periodId: field.uuid(),
+  title: field.string(),
   kind: z.nativeEnum(AssessmentKind),
-  maxScore: z.number(),
-  coefficient: z.number().optional(),
-  sessionId: z.string().uuid().nullable().optional(),
-  dueAt: z.coerce.date().nullable().optional(),
-  metAt: z.coerce.date().nullable().optional(),
-  date: z.coerce.date().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Assessment") satisfies z.ZodType<AssessmentArgs>;
+  maxScore: field.number(),
+  coefficient: field.optionalNumber(),
+  sessionId: field.nullableUuid(),
+  dueAt: field.nullableDate(),
+  metAt: field.nullableDate(),
+  date: field.nullableDate(),
+  createdAt: field.optionalDate(),
+});
 
-export const assessmentResultResponseSchema = z.object({
-  id: z.string().uuid(),
-  studentId: z.string().uuid(),
-  assessmentId: z.string().uuid(),
-  score: z.number().nullable().optional(),
+export const assessmentResultResponseSchema = responseSchema<AssessmentResultArgs>("AssessmentResult", {
+  id: field.uuid(),
+  studentId: field.uuid(),
+  assessmentId: field.uuid(),
+  score: field.nullableNumber(),
   status: z.nativeEnum(DeadlineComplianceStatus).nullable().optional(),
-  notes: z.string().nullable().optional(),
-  createdBy: z.string().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("AssessmentResult") satisfies z.ZodType<AssessmentResultArgs>;
+  notes: field.nullableText(),
+  createdBy: field.optionalString(),
+  createdAt: field.optionalDate(),
+});
 
-export const gradeScaleRangeSchema = z.object({
-  letter: z.string(),
-  minScore: z.number(),
-  maxScore: z.number(),
-  gpaValue: z.number().nullable().optional(),
-  interpretation: z.string().nullable().optional(),
-  isPassing: z.boolean(),
-}) satisfies z.ZodType<GradeScaleRange>;
+export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>({
+  letter: field.string(),
+  minScore: field.number(),
+  maxScore: field.number(),
+  gpaValue: field.nullableNumber(),
+  interpretation: field.nullableText(),
+  isPassing: field.boolean(),
+});
 
-export const gradeScaleResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  minScore: z.number(),
-  maxScore: z.number(),
+export const gradeScaleResponseSchema = responseSchema<GradeScaleArgs>("GradeScale", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  minScore: field.number(),
+  maxScore: field.number(),
   ranges: z.array(gradeScaleRangeSchema),
-  isDefault: z.boolean().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("GradeScale") satisfies z.ZodType<GradeScaleArgs>;
+  isDefault: field.optionalBoolean(),
+  createdAt: field.optionalDate(),
+});
 
-export const definitionResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  gradeLevelId: z.string().uuid(),
-  name: z.string(),
+export const definitionResponseSchema = responseSchema<ReportCardDefinitionArgs>("ReportCardDefinition", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  gradeLevelId: field.uuid(),
+  name: field.string(),
   kind: z.nativeEnum(ReportCardDefinitionKind).optional(),
-  isDefault: z.boolean().optional(),
-  description: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("ReportCardDefinition") satisfies z.ZodType<ReportCardDefinitionArgs>;
+  isDefault: field.optionalBoolean(),
+  description: field.nullableText(),
+  createdAt: field.optionalDate(),
+});
 
-export const sectionResponseSchema = z.object({
-  id: z.string().uuid(),
-  reportCardDefinitionId: z.string().uuid(),
-  name: z.string(),
+export const sectionResponseSchema = responseSchema<ReportCardDefinitionSectionArgs>("ReportCardDefinitionSection", {
+  id: field.uuid(),
+  reportCardDefinitionId: field.uuid(),
+  name: field.string(),
   kind: z.nativeEnum(ReportCardDefinitionSectionKind).optional(),
-  order: z.number().int().positive(),
-  weight: z.number(),
-  parentSectionId: z.string().uuid().nullable().optional(),
-  subjectId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("ReportCardDefinitionSection") satisfies z.ZodType<ReportCardDefinitionSectionArgs>;
+  order: field.positiveInt(),
+  weight: field.number(),
+  parentSectionId: field.nullableUuid(),
+  subjectId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+});
 
 export const reportCardResultSectionSchema: z.ZodType<ReportCardResultSection> = z.lazy(() => z.object({
-  sectionId: z.string().uuid(),
+  sectionId: field.uuid(),
   sectionKind: z.nativeEnum(ReportCardDefinitionSectionKind),
-  name: z.string(),
-  average: z.number(),
-  weight: z.number(),
-  parentSectionId: z.string().uuid().optional(),
-  classSubjectId: z.string().uuid().optional(),
-  subResults: z.array(reportCardResultSectionSchema).optional(),
+  name: field.string(),
+  average: field.number(),
+  weight: field.number(),
+  parentSectionId: field.optionalUuid(),
+  classSubjectId: field.optionalUuid(),
+  subResults: z.array(reportCardResultSectionSchema),
 }));
 
-export const resultResponseSchema = z.object({
-  id: z.string().uuid(),
-  reportCardDefinitionId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  periodId: z.string().uuid(),
+export const resultResponseSchema = responseSchema<ReportCardResultArgs>("ReportCardResult", {
+  id: field.uuid(),
+  reportCardDefinitionId: field.uuid(),
+  studentId: field.uuid(),
+  classGroupId: field.uuid(),
+  periodId: field.uuid(),
   sectionResults: z.array(reportCardResultSectionSchema),
 
-  attendanceSummary: z.object({
-    presentCount: z.number(),
-    absenceCount: z.number(),
-    excusedAbsenceCount: z.number(),
-    lateCount: z.number(),
-  }) satisfies z.ZodType<AttendanceSummary>,
+  attendanceSummary: valueSchema<AttendanceSummary>({
+    presentCount: field.number(),
+    absenceCount: field.number(),
+    excusedAbsenceCount: field.number(),
+    lateCount: field.number(),
+    total: field.number(),
+    attendanceRate: field.number(),
+  }),
 
-  assessmentResultCount: z.number(),
-  overallAverage: z.number().nullable().optional(),
-  rank: z.number().nullable().optional(),
-  classSize: z.number().nullable().optional(),
-  passThreshold: z.number().nullable().optional(),
-  teacherComment: z.string().nullable().optional(),
-  principalComment: z.string().nullable().optional(),
+  assessmentResultCount: field.number(),
+  overallAverage: field.nullableNumber(),
+  rank: field.nullableNumber(),
+  classSize: field.nullableNumber(),
+  passThreshold: field.nullableNumber(),
+  teacherComment: field.nullableText(),
+  principalComment: field.nullableText(),
   status: z.nativeEnum(ReportCardResultStatus).optional(),
-  generatedAt: z.coerce.date().optional(),
-  publishedAt: z.coerce.date().optional(),
-}).openapi("ReportCardResult") satisfies z.ZodType<ReportCardResultArgs>;
+  generatedAt: field.optionalDate(),
+  publishedAt: field.optionalDate(),
+});
 
-export const studentResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
-  gender: z.string().nullable().optional(),
-  birthDate: z.coerce.date().optional(),
-  placeOfBirth: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  matricule: z.string().nullable().optional(),
-  photoUrl: z.string().nullable().optional(),
-  subjectId: z.string().uuid().nullable().optional(),
+export const studentResponseSchema = responseSchema<StudentArgs>("Student", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  firstName: field.string(),
+  lastName: field.string(),
+  gender: field.nullableText(),
+  birthDate: field.optionalDate(),
+  placeOfBirth: field.nullableText(),
+  nationality: field.nullableText(),
+  matricule: field.nullableText(),
+  photoUrl: field.nullableText(),
+  subjectId: field.nullableUuid(),
   status: z.nativeEnum(StudentStatus).optional(),
-  enrollmentDate: z.coerce.date().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Student") satisfies z.ZodType<StudentArgs>;
+  enrollmentDate: field.nullableDate(),
+  createdAt: field.optionalDate(),
+});
 
-export const enrollmentResponseSchema = z.object({
-  id: z.string().uuid(),
-  studentId: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  enrollmentIndex: z.number().int().positive(),
+export const enrollmentResponseSchema = responseSchema<StudentClassEnrollmentArgs>("StudentClassEnrollment", {
+  id: field.uuid(),
+  studentId: field.uuid(),
+  classGroupId: field.uuid(),
+  academicYearId: field.uuid(),
+  enrollmentIndex: field.positiveInt(),
   status: z.nativeEnum(StudentClassEnrollmentStatus).optional(),
-  enrolledAt: z.coerce.date().optional(),
-  endedAt: z.coerce.date().nullable().optional(),
+  enrolledAt: field.optionalDate(),
+  endedAt: field.nullableDate(),
   endReason: z.nativeEnum(EnrollmentEndReason).nullable().optional(),
   progressionDecision: z.nativeEnum(ProgressionDecision).nullable().optional(),
-  previousEnrollmentId: z.string().uuid().nullable().optional(),
-  closedBy: z.string().nullable().optional(),
-  progressionDecidedAt: z.coerce.date().nullable().optional(),
-  progressionDecidedBy: z.string().nullable().optional(),
-  progressionNotes: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("StudentClassEnrollment") satisfies z.ZodType<StudentClassEnrollmentArgs>;
+  previousEnrollmentId: field.nullableUuid(),
+  closedBy: field.nullableText(),
+  progressionDecidedAt: field.nullableDate(),
+  progressionDecidedBy: field.nullableText(),
+  progressionNotes: field.nullableText(),
+  createdAt: field.optionalDate(),
+});
 
-export const guardianResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
-  phone: z.string().nullable().optional(),
-  email: z.string().email().nullable().optional(),
-  subjectId: z.string().uuid().nullable().optional(),
-  hasAccess: z.boolean().optional(),
-  premiumNotificationsEnabled: z.boolean().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("Guardian") satisfies z.ZodType<GuardianArgs>;
+export const guardianResponseSchema = responseSchema<GuardianArgs>("Guardian", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  firstName: field.string(),
+  lastName: field.string(),
+  phone: field.nullableText(),
+  email: field.nullableEmail(),
+  subjectId: field.nullableUuid(),
+  hasAccess: field.optionalBoolean(),
+  premiumNotificationsEnabled: field.optionalBoolean(),
+  createdAt: field.optionalDate(),
+});
 
-export const guardianLinkResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  guardianId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  relationship: z.string().optional(),
-  isPrimary: z.boolean().optional(),
-  isBillingContact: z.boolean().optional(),
-  legalGuardian: z.boolean().optional(),
-  canPickup: z.boolean().optional(),
-  emergencyContactPriority: z.number().int().positive().nullable().optional(),
-  receivesAcademicReports: z.boolean().optional(),
-  receivesAttendanceAlerts: z.boolean().optional(),
-  contactRestrictions: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("GuardianStudentLink") satisfies z.ZodType<GuardianStudentLinkArgs>;
+export const guardianLinkResponseSchema = responseSchema<GuardianStudentLinkArgs>("GuardianStudentLink", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  guardianId: field.uuid(),
+  studentId: field.uuid(),
+  relationship: field.optionalString(),
+  isPrimary: field.optionalBoolean(),
+  isBillingContact: field.optionalBoolean(),
+  legalGuardian: field.optionalBoolean(),
+  canPickup: field.optionalBoolean(),
+  emergencyContactPriority: field.nullablePositiveInt(),
+  receivesAcademicReports: field.optionalBoolean(),
+  receivesAttendanceAlerts: field.optionalBoolean(),
+  contactRestrictions: field.nullableText(),
+  notes: field.nullableText(),
+  createdAt: field.optionalDate(),
+});
 
-export const studentNoteResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  authorStaffId: z.string().uuid(),
-  body: z.string(),
-  title: z.string().nullable().optional(),
+export const studentNoteResponseSchema = responseSchema<StudentNoteArgs>("StudentNote", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  authorStaffId: field.uuid(),
+  body: field.string(),
+  title: field.nullableText(),
   visibility: z.nativeEnum(StudentNoteVisibility).optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("StudentNote") satisfies z.ZodType<StudentNoteArgs>;
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
-export const studentHealthProfileResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  allergies: z.string().nullable().optional(),
-  medicalConditions: z.string().nullable().optional(),
-  emergencyProtocols: z.string().nullable().optional(),
-  bloodType: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("StudentHealthProfile") satisfies z.ZodType<StudentHealthProfileArgs>;
+export const studentHealthProfileResponseSchema = responseSchema<StudentHealthProfileArgs>("StudentHealthProfile", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  allergies: field.nullableText(),
+  medicalConditions: field.nullableText(),
+  emergencyProtocols: field.nullableText(),
+  bloodType: field.nullableText(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
-export const studentDisciplinaryActionResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  incidentId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  disciplinaryActionId: z.string().uuid(),
-  assignedByStaffId: z.string().uuid(),
-  startsAt: z.coerce.date().nullable().optional(),
-  endsAt: z.coerce.date().nullable().optional(),
+export const studentDisciplinaryActionResponseSchema = responseSchema<StudentDisciplinaryActionArgs>("StudentDisciplinaryAction", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  incidentId: field.uuid(),
+  studentId: field.uuid(),
+  disciplinaryActionId: field.uuid(),
+  assignedByStaffId: field.uuid(),
+  startsAt: field.nullableDate(),
+  endsAt: field.nullableDate(),
   status: z.nativeEnum(StudentDisciplinaryActionStatus).optional(),
-  notes: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("StudentDisciplinaryAction") satisfies z.ZodType<StudentDisciplinaryActionArgs>;
+  notes: field.nullableText(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
-export const disciplinaryActionResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
+export const disciplinaryActionResponseSchema = responseSchema<DisciplinaryActionArgs>("DisciplinaryAction", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
   kind: z.nativeEnum(DisciplinaryActionKind),
-  severity: z.number().nullable().optional(),
-  defaultDurationDays: z.number().int().positive().nullable().optional(),
-  description: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("DisciplinaryAction") satisfies z.ZodType<DisciplinaryActionArgs>;
+  severity: field.nullableNumber(),
+  defaultDurationDays: field.nullablePositiveInt(),
+  description: field.nullableText(),
+  createdAt: field.optionalDate(),
+});
 
-export const studentIncidentInvolvementResponseSchema = z.object({
-  id: z.string().uuid(),
-  incidentId: z.string().uuid(),
-  studentId: z.string().uuid(),
+export const studentIncidentInvolvementResponseSchema = responseSchema<StudentIncidentInvolvementArgs>("StudentIncidentInvolvement", {
+  id: field.uuid(),
+  incidentId: field.uuid(),
+  studentId: field.uuid(),
   role: z.nativeEnum(IncidentInvolvementRole),
-  notes: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-}).openapi("StudentIncidentInvolvement") satisfies z.ZodType<StudentIncidentInvolvementArgs>;
+  notes: field.nullableText(),
+  createdAt: field.optionalDate(),
+});
 
-export const incidentResponseSchema = z.object({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  title: z.string(),
-  description: z.string(),
-  date: z.coerce.date(),
+export const incidentResponseSchema = responseSchema<IncidentArgs>("Incident", {
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  title: field.string(),
+  description: field.string(),
+  date: field.date(),
   kind: z.nativeEnum(IncidentKind),
-  reporterId: z.string().uuid(),
-  classGroupId: z.string().uuid().nullable().optional(),
-  sessionId: z.string().uuid().nullable().optional(),
+  reporterId: field.uuid(),
+  classGroupId: field.nullableUuid(),
+  sessionId: field.nullableUuid(),
   status: z.nativeEnum(IncidentStatus).optional(),
-  resolutionNotes: z.string().nullable().optional(),
-  resolvedAt: z.coerce.date().nullable().optional(),
-  resolvedByStaffId: z.string().uuid().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-}).openapi("Incident") satisfies z.ZodType<IncidentArgs>;
+  resolutionNotes: field.nullableText(),
+  resolvedAt: field.nullableDate(),
+  resolvedByStaffId: field.nullableUuid(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
 
 // ==========================================================
 // 2. All 42 Query Filter (QueryOptions) OpenAPI Schemas
 // ==========================================================
 
 export const schoolQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  name: field.string(),
 });
 
 export const academicYearQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
 });
 
 export const academicPeriodQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  academicYearId: field.uuid(),
+  name: field.string(),
 });
 
 export const periodDefinitionQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
 });
 
 export const gradeLevelQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
 });
 
 export const staffMemberQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
-  isActive: z.boolean(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  firstName: field.string(),
+  lastName: field.string(),
+  isActive: field.boolean(),
 });
 
 export const staffAssignmentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  staffMemberId: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  role: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  staffMemberId: field.uuid(),
+  classGroupId: field.uuid(),
+  role: field.string(),
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  mimeType: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  mimeType: field.string(),
 });
 
 export const resourceQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  type: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  type: field.string(),
 });
 
 export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  resourceId: z.string().uuid(),
-  sessionId: z.string().uuid(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  resourceId: field.uuid(),
+  sessionId: field.uuid(),
 });
 
 export const feeQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
 });
 
 export const studentFeeQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  feeId: z.string().uuid(),
-  status: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  feeId: field.uuid(),
+  status: field.string(),
 });
 
 export const paymentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentFeeId: z.string().uuid(),
-  paymentMethod: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentFeeId: field.uuid(),
+  paymentMethod: field.string(),
 });
 
 export const scheduleQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  classGroupId: field.uuid(),
+  name: field.string(),
 });
 
 export const sessionQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  scheduleId: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  classSubjectId: z.string().uuid(),
-  periodDefinitionId: z.string().uuid(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  scheduleId: field.uuid(),
+  classGroupId: field.uuid(),
+  classSubjectId: field.uuid(),
+  periodDefinitionId: field.uuid(),
 });
 
 export const calendarEventQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  title: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  title: field.string(),
 });
 
 export const attendanceQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  sessionId: z.string().uuid(),
-  status: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  sessionId: field.uuid(),
+  status: field.string(),
 });
 
 export const announcementQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  title: z.string(),
-  status: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  title: field.string(),
+  status: field.string(),
 });
 
 export const announcementTargetQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  announcementId: z.string().uuid(),
-  targetType: z.string(),
-  targetId: z.string().uuid(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  announcementId: field.uuid(),
+  targetType: field.string(),
+  targetId: field.uuid(),
 });
 
 export const messageDeliveryQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  messageId: z.string().uuid(),
-  recipientId: z.string().uuid(),
-  status: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  messageId: field.uuid(),
+  recipientId: field.uuid(),
+  status: field.string(),
 });
 
 export const subjectQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  code: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  code: field.string(),
 });
 
 export const subjectMatterQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  subjectId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  subjectId: field.uuid(),
+  name: field.string(),
 });
 
 export const classGroupQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  gradeLevelId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  gradeLevelId: field.uuid(),
+  academicYearId: field.uuid(),
+  name: field.string(),
 });
 
 export const classSubjectQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  classGroupId: z.string().uuid(),
-  subjectId: z.string().uuid(),
+  id: field.uuid(),
+  classGroupId: field.uuid(),
+  subjectId: field.uuid(),
 });
 
 export const classSubjectMatterQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  classSubjectId: z.string().uuid(),
-  subjectMatterId: z.string().uuid(),
-  status: z.string(),
+  id: field.uuid(),
+  classSubjectId: field.uuid(),
+  subjectMatterId: field.uuid(),
+  status: field.string(),
 });
 
 export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  classSubjectMatterId: z.string().uuid(),
-  sessionId: z.string().uuid(),
+  id: field.uuid(),
+  classSubjectMatterId: field.uuid(),
+  sessionId: field.uuid(),
 });
 
 export const assessmentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  classSubjectId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  classSubjectId: field.uuid(),
+  name: field.string(),
 });
 
 export const assessmentResultQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  assessmentId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  grade: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  assessmentId: field.uuid(),
+  studentId: field.uuid(),
+  grade: field.string(),
 });
 
 export const gradeScaleQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
-  grade: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  grade: field.string(),
 });
 
 export const definitionQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  academicYearId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  academicYearId: field.uuid(),
+  name: field.string(),
 });
 
 export const sectionQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  reportCardDefinitionId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  reportCardDefinitionId: field.uuid(),
+  name: field.string(),
 });
 
 export const resultQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  reportCardDefinitionId: z.string().uuid(),
-  grade: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  reportCardDefinitionId: field.uuid(),
+  grade: field.string(),
 });
 
 export const studentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
-  status: z.string(),
-  matricule: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  firstName: field.string(),
+  lastName: field.string(),
+  status: field.string(),
+  matricule: field.string(),
 });
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  classGroupId: z.string().uuid(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  classGroupId: field.uuid(),
 });
 
 export const guardianQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  firstName: field.string(),
+  lastName: field.string(),
+  email: field.string(),
 });
 
 export const guardianLinkQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  guardianId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  relationship: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  guardianId: field.uuid(),
+  studentId: field.uuid(),
+  relationship: field.string(),
 });
 
 export const studentNoteQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  title: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  title: field.string(),
 });
 
 export const studentHealthProfileQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
 });
 
 export const studentDisciplinaryActionQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  disciplinaryActionId: z.string().uuid(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  disciplinaryActionId: field.uuid(),
 });
 
 export const disciplinaryActionQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  name: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
 });
 
 export const studentIncidentInvolvementQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  incidentId: z.string().uuid(),
-  role: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  studentId: field.uuid(),
+  incidentId: field.uuid(),
+  role: field.string(),
 });
 
 export const incidentQuerySchema = createQueryOptionsSchema({
-  id: z.string().uuid(),
-  schoolId: z.string().uuid(),
-  title: z.string(),
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  title: field.string(),
 });
