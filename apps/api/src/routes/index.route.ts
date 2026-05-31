@@ -3,6 +3,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { createRouter } from "@/lib/create-app";
+import { authRoutePairs } from "./auth/auth.route";
 import { commandRoutePairs } from "./commands/commands.route";
 import { queryRoutePairs } from "./queries/queries.route";
 import { overdueFeeCountHandler, overdueFeeCountRoute } from "./queries/overdue-fee-count.route";
@@ -33,6 +34,9 @@ queryRoutePairs.forEach(({ route, handler }) => {
   router.openapi(route, handler);
 });
 commandRoutePairs.forEach(({ route, handler }) => {
+  router.openapi(route, handler);
+});
+authRoutePairs.forEach(({ route, handler }) => {
   router.openapi(route, handler);
 });
 router.openapi(overdueFeeCountRoute, overdueFeeCountHandler);

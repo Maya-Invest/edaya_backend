@@ -1,19 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
-import { auth } from "@/auth";
 import type { AppBindings } from "@/lib/types";
-import { dependenciesInjection } from "@/middlewares/dependencies-injection";
-
-// Mock the auth module
-vi.mock("@/auth", () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
-}));
+import { createDependenciesInjection } from "@/middlewares/dependencies-injection";
+import { createSessionActorDependency } from "@/middlewares/dependencies/actor";
 
 describe("session Middleware ActorMetadata Construction", () => {
+  const getSession = vi.fn();
+
+  beforeEach(() => {
+    getSession.mockReset();
+  });
+
   const mockInteractiveContext = (userId: string, createdAt: string) => ({
     subjectId: userId,
     schoolId: "school-default",
@@ -30,7 +27,13 @@ describe("session Middleware ActorMetadata Construction", () => {
       } as any);
       await next();
     });
-    app.use(dependenciesInjection);
+    app.use(createDependenciesInjection([
+      createSessionActorDependency(() => ({
+        api: {
+          getSession,
+        },
+      })),
+    ]));
     app.get("/test-protected", (c) => {
       const actor = c.get("actor");
       return c.json({ actor });
@@ -39,7 +42,7 @@ describe("session Middleware ActorMetadata Construction", () => {
   };
 
   it("should construct null actor when no session exists", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValueOnce(null);
+    getSession.mockResolvedValueOnce(null);
 
     const mockRepos = {
       staffMembers: { findOne: vi.fn() },
@@ -74,7 +77,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       roles: ["admin", "teacher"],
     };
 
-    vi.mocked(auth.api.getSession).mockResolvedValueOnce(mockSession as any);
+    getSession.mockResolvedValueOnce(mockSession as any);
 
     const findStaffMock = vi.fn().mockResolvedValueOnce(mockStaff);
     const mockRepos = {
@@ -116,7 +119,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       schoolId: "school-1",
     };
 
-    vi.mocked(auth.api.getSession).mockResolvedValueOnce(mockSession as any);
+    getSession.mockResolvedValueOnce(mockSession as any);
 
     const findStaffMock = vi.fn().mockResolvedValueOnce(null);
     const findGuardianMock = vi.fn().mockResolvedValueOnce(mockGuardian);
@@ -159,7 +162,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       schoolId: "school-1",
     };
 
-    vi.mocked(auth.api.getSession).mockResolvedValueOnce(mockSession as any);
+    getSession.mockResolvedValueOnce(mockSession as any);
 
     const findStaffMock = vi.fn().mockResolvedValueOnce(null);
     const findGuardianMock = vi.fn().mockResolvedValueOnce(null);
