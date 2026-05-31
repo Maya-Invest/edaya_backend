@@ -10,7 +10,7 @@ import {
   Subject,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
-import { createTestApp } from '../support/in-memory-school-headless-app'
+import { createTestApp } from '../utils/test-adapter'
 import { describeIntegration } from '../support/suite-runner'
 
 async function createConcurrencyFixture() {

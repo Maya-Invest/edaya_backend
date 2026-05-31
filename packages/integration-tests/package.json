@@ -9,7 +9,6 @@
     "lint:fix": "eslint src --fix"
   },
   "devDependencies": {
-    "@edaya/adaptor-in-memory-db": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/core": "workspace:*",
     "@types/bun": "^1.3.14"
