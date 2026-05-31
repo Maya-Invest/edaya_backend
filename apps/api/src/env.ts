@@ -2,7 +2,7 @@
 import { config } from "dotenv";
 import { expand } from "dotenv-expand";
 import path from "node:path";
-import { EnvSchema, type Environment } from "@/validation/env.schemas";
+import { type Environment, EnvSchema } from "@/validation/env.schemas";
 
 expand(config({
   path: path.resolve(

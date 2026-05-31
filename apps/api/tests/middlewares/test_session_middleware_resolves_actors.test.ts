@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
-import { resolveSessionActor } from "@/middlewares/session";
 import { auth } from "@/auth";
 import type { AppBindings } from "@/lib/types";
+import { dependenciesInjection } from "@/middlewares/dependencies-injection";
 
 // Mock the auth module
 vi.mock("@/auth", () => ({
@@ -30,7 +30,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       } as any);
       await next();
     });
-    app.use(resolveSessionActor);
+    app.use(dependenciesInjection);
     app.get("/test-protected", (c) => {
       const actor = c.get("actor");
       return c.json({ actor });

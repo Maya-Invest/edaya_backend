@@ -1,52 +1,26 @@
-import type { Context, MiddlewareHandler, Next } from "hono";
-import { parseEnv } from "@/env";
 import type { AppBindings } from "@/lib/types";
-import { RepositoryAuthorizationPolicy, SchoolApplication } from "@edaya/core";
-import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
-import { db } from "@/db";
+import type { Context, MiddlewareHandler } from "hono";
+import { sessionActorDependency } from "./dependencies/actor";
+import { envDependency } from "./dependencies/env";
+import { createSchoolAppDependency } from "./dependencies/school-app";
 
-let schoolAppInstance: SchoolApplication | null = null;
+export interface DependencyModule {
+  name: string;
+  resolve: (c: Context<AppBindings>) => Promise<void> | void;
+}
 
-export const dependenciesInjection: MiddlewareHandler<AppBindings> = async (c: Context<AppBindings>, next: Next) => {
-  // Inject env
-  // eslint-disable-next-line node/no-process-env
-  const env = Object.assign(c.env || {}, process.env);
-  c.env = parseEnv(env);
+export function createDependenciesInjection(dependencies: readonly DependencyModule[]): MiddlewareHandler<AppBindings> {
+  return async (c, next) => {
+    for (const dependency of dependencies) {
+      await dependency.resolve(c);
+    }
 
-  if (!schoolAppInstance) {
-    const repos = new PostgresSchoolRepositories(db);
+    await next();
+  };
+}
 
-    // Bootstrap DB schema if not already initialized
-    await repos.init();
-
-    const atomicExecution = new PostgresAtomicExecution(db);
-
-    // Initial system or placeholder actor configuration
-    const systemActor = {
-      kind: "system" as const,
-      systemId: "api-server-bootstrap",
-      schoolId: "system-bootstrap",
-      requestId: "bootstrap-init",
-      reason: "API Gateway Initialization",
-    };
-
-    schoolAppInstance = new SchoolApplication({
-      atomicExecution,
-      repositories: repos,
-      authorizationPolicy: new RepositoryAuthorizationPolicy({
-        repositories: repos,
-        staffAssignmentRepository: repos.staffAssignments,
-        staffMemberRepository: repos.staffMembers,
-        guardianRepository: repos.guardians,
-        guardianStudentLinkRepository: repos.guardianLinks,
-        studentRepository: repos.students,
-      }),
-      actor: systemActor,
-    });
-  }
-
-  c.set("schoolApp", schoolAppInstance);
-
-  // Run next
-  await next();
-};
+export const dependenciesInjection = createDependenciesInjection([
+  envDependency,
+  createSchoolAppDependency(),
+  sessionActorDependency,
+]);
