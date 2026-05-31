@@ -1,4 +1,7 @@
 [test]
+pathIgnorePatterns = [
+  "**/dist/**"
+]
 coverageThreshold = 0
 coverageReporters = [
   "text",

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/routes/index.route";
 import { ActorAssuranceLevel, StaffRole } from "@edaya/core";
@@ -34,15 +34,15 @@ describe("generated query endpoints", () => {
   };
 
   const mockReadService = (overrides: Record<string, unknown>) => ({
-    list: vi.fn().mockResolvedValue([]),
-    findOne: vi.fn().mockResolvedValue(undefined),
-    count: vi.fn().mockResolvedValue(0),
-    findById: vi.fn().mockResolvedValue(undefined),
+    list: mock().mockResolvedValue([]),
+    findOne: mock().mockResolvedValue(undefined),
+    count: mock().mockResolvedValue(0),
+    findById: mock().mockResolvedValue(undefined),
     ...overrides,
   });
 
   it("should expose count for AuthorizedReadService-backed query entities", async () => {
-    const mockCount = vi.fn().mockResolvedValue(2);
+    const mockCount = mock().mockResolvedValue(2);
     const app = setupTestApp({
       students: mockReadService({
         count: mockCount,
@@ -75,7 +75,7 @@ describe("generated query endpoints", () => {
       firstName: "Maya",
       lastName: "Diallo",
     };
-    const mockFindOne = vi.fn().mockResolvedValue(student);
+    const mockFindOne = mock().mockResolvedValue(student);
     const app = setupTestApp({
       students: mockReadService({
         findOne: mockFindOne,

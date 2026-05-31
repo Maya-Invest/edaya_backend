@@ -1,20 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import type { AppBindings } from "@/lib/types";
 import { createDependenciesInjection } from "@/middlewares/dependencies-injection";
 import { createSessionActorDependency } from "@/middlewares/dependencies/actor";
 
 describe("session Middleware ActorMetadata Construction", () => {
-  const getSession = vi.fn();
+  const getSession = mock();
 
   beforeEach(() => {
     getSession.mockReset();
   });
 
-  const mockInteractiveContext = (userId: string, createdAt: string) => ({
+  const mockInteractiveContext = (userId: string, createdAt: string, requestId = expect.any(String)) => ({
     subjectId: userId,
-    schoolId: "school-default",
-    requestId: expect.any(String),
+    requestId,
     authenticatedAt: createdAt,
     assuranceLevel: "standard",
   });
@@ -44,11 +43,7 @@ describe("session Middleware ActorMetadata Construction", () => {
   it("should construct null actor when no session exists", async () => {
     getSession.mockResolvedValueOnce(null);
 
-    const mockRepos = {
-      staffMembers: { findOne: vi.fn() },
-      guardians: { findOne: vi.fn() },
-      students: { findOne: vi.fn() },
-    };
+    const mockRepos = createMockRepos();
 
     const app = setupMockApp(mockRepos);
     const res = await app.request("/test-protected");
@@ -56,6 +51,65 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     expect(res.status).toBe(200);
     expect(body.actor).toBeNull();
+    expect(mockRepos.staffMembers.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.guardians.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.students.findOne).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["missing user", { session: { createdAt: new Date().toISOString() } }],
+    ["missing user id", { user: {}, session: { createdAt: new Date().toISOString() } }],
+    ["blank user id", { user: { id: " " }, session: { createdAt: new Date().toISOString() } }],
+    ["missing session", { user: { id: "auth-user" } }],
+  ])("should construct null actor for malformed sessions: %s", async (_caseName, malformedSession) => {
+    getSession.mockResolvedValueOnce(malformedSession as any);
+
+    const mockRepos = createMockRepos();
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected");
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor).toBeNull();
+    expect(mockRepos.staffMembers.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.guardians.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.students.findOne).not.toHaveBeenCalled();
+  });
+
+  it("should construct null actor when session.createdAt is missing", async () => {
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-missing-date" },
+      session: {},
+    } as any);
+
+    const mockRepos = createMockRepos();
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected");
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor).toBeNull();
+    expect(mockRepos.staffMembers.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.guardians.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.students.findOne).not.toHaveBeenCalled();
+  });
+
+  it("should construct null actor when session.createdAt is invalid", async () => {
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-invalid-date" },
+      session: { createdAt: "not-a-date" },
+    } as any);
+
+    const mockRepos = createMockRepos();
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected");
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor).toBeNull();
+    expect(mockRepos.staffMembers.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.guardians.findOne).not.toHaveBeenCalled();
+    expect(mockRepos.students.findOne).not.toHaveBeenCalled();
   });
 
   it("should construct StaffActorMetadata when user matches a staff member record", async () => {
@@ -67,6 +121,7 @@ describe("session Middleware ActorMetadata Construction", () => {
         name: "Staff User",
       },
       session: {
+        id: "session-999",
         createdAt,
       },
     };
@@ -79,23 +134,30 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     getSession.mockResolvedValueOnce(mockSession as any);
 
-    const findStaffMock = vi.fn().mockResolvedValueOnce(mockStaff);
+    const findStaffMock = mock().mockResolvedValueOnce(mockStaff);
     const mockRepos = {
       staffMembers: { findOne: findStaffMock },
-      guardians: { findOne: vi.fn() },
-      students: { findOne: vi.fn() },
+      guardians: { findOne: mock().mockResolvedValueOnce(null) },
+      students: { findOne: mock().mockResolvedValueOnce(null) },
     };
 
     const app = setupMockApp(mockRepos);
-    const res = await app.request("/test-protected");
+    const res = await app.request("/test-protected", {
+      headers: {
+        "x-request-id": "req-fixed",
+      },
+    });
     const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
     expect(findStaffMock).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
+    expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
+    expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(body.actor).toEqual({
-      ...mockInteractiveContext("auth-user-999", createdAt),
+      ...mockInteractiveContext("auth-user-999", createdAt, "req-fixed"),
       kind: "staff",
       schoolId: "school-1",
+      sessionId: "session-999",
       staffMemberId: "staff-1",
       roles: ["admin", "teacher"],
     });
@@ -121,12 +183,12 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     getSession.mockResolvedValueOnce(mockSession as any);
 
-    const findStaffMock = vi.fn().mockResolvedValueOnce(null);
-    const findGuardianMock = vi.fn().mockResolvedValueOnce(mockGuardian);
+    const findStaffMock = mock().mockResolvedValueOnce(null);
+    const findGuardianMock = mock().mockResolvedValueOnce(mockGuardian);
     const mockRepos = {
       staffMembers: { findOne: findStaffMock },
       guardians: { findOne: findGuardianMock },
-      students: { findOne: vi.fn() },
+      students: { findOne: mock().mockResolvedValueOnce(null) },
     };
 
     const app = setupMockApp(mockRepos);
@@ -136,6 +198,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(res.status).toBe(200);
     expect(findStaffMock).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
     expect(findGuardianMock).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
+    expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
     expect(body.actor).toEqual({
       ...mockInteractiveContext("auth-user-888", createdAt),
       kind: "guardian",
@@ -164,9 +227,9 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     getSession.mockResolvedValueOnce(mockSession as any);
 
-    const findStaffMock = vi.fn().mockResolvedValueOnce(null);
-    const findGuardianMock = vi.fn().mockResolvedValueOnce(null);
-    const findStudentMock = vi.fn().mockResolvedValueOnce(mockStudent);
+    const findStaffMock = mock().mockResolvedValueOnce(null);
+    const findGuardianMock = mock().mockResolvedValueOnce(null);
+    const findStudentMock = mock().mockResolvedValueOnce(mockStudent);
     const mockRepos = {
       staffMembers: { findOne: findStaffMock },
       guardians: { findOne: findGuardianMock },
@@ -188,4 +251,53 @@ describe("session Middleware ActorMetadata Construction", () => {
       studentId: "student-1",
     });
   });
+
+  it("should construct null actor when identity resolution is ambiguous", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: {
+        id: "auth-user-ambiguous",
+      },
+      session: {
+        createdAt,
+      },
+    });
+
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValueOnce({
+          id: "staff-1",
+          schoolId: "school-1",
+          roles: ["admin"],
+        }),
+      },
+      guardians: {
+        findOne: mock().mockResolvedValueOnce({
+          id: "guardian-1",
+          schoolId: "school-1",
+        }),
+      },
+      students: {
+        findOne: mock().mockResolvedValueOnce(null),
+      },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected");
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(mockRepos.staffMembers.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
+    expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
+    expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
+    expect(body.actor).toBeNull();
+  });
 });
+
+function createMockRepos() {
+  return {
+    staffMembers: { findOne: mock() },
+    guardians: { findOne: mock() },
+    students: { findOne: mock() },
+  };
+}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { commandRoutePairs } from "@/routes/commands/commands.route";
 import { configCommandEntities } from "@/routes/commands/commands.config";

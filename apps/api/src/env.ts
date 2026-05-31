@@ -1,12 +1,15 @@
 /* eslint-disable node/no-process-env */
 import { config } from "dotenv";
 import { expand } from "dotenv-expand";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { type Environment, EnvSchema } from "@/validation/env.schemas";
 
+const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 expand(config({
   path: path.resolve(
-    process.cwd(),
+    apiRoot,
     process.env.NODE_ENV === "test" ? ".env.test" : ".env",
   ),
 }));
