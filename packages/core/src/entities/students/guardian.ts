@@ -11,6 +11,7 @@ export interface GuardianArgs {
   lastName: string
   phone?: string | null
   email?: string | null
+  subjectId?: string | null
   contactMethods?: readonly GuardianContactMethod[]
   hasAccess?: boolean
   premiumNotificationsEnabled?: boolean
@@ -27,6 +28,7 @@ export class Guardian {
   readonly firstName: string
   readonly lastName: string
   readonly contactMethods: readonly GuardianContactMethod[]
+  readonly subjectId?: string
   readonly hasAccess: boolean
   readonly premiumNotificationsEnabled: boolean
   readonly createdAt: Date
@@ -38,6 +40,7 @@ export class Guardian {
     lastName,
     phone,
     email,
+    subjectId,
     contactMethods,
     hasAccess = true,
     premiumNotificationsEnabled = false,
@@ -47,6 +50,7 @@ export class Guardian {
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.firstName = requireNonBlank(firstName, 'firstName')
     this.lastName = requireNonBlank(lastName, 'lastName')
+    this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
     const normalizedPhone = requireOptionalNonBlank(phone, 'phone')
     const normalizedEmail = requireOptionalNonBlank(email, 'email')
     const builtContactMethods = contactMethods ? [...contactMethods] : []

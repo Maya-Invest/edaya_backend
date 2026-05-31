@@ -3,6 +3,7 @@ import {
   createGuardianActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
+  GradeLevel,
   PaymentMethod,
   SessionKind,
   StaffRole,
@@ -23,7 +24,9 @@ async function createConcurrencyFixture() {
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 7', order: 7 })
+  await app.commands.gradeLevels.save(
+    new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 7', order: 7 }),
+  )
   await app.setup.createClassGroup({
     id: 'class',
     schoolId: 'school',

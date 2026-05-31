@@ -9,15 +9,16 @@
     "check": "tsc --noEmit",
     "lint": "eslint src --fix",
     "lint:fix": "eslint src --fix",
-    "test": "cross-env NODE_ENV=test vitest",
+    "test": "cross-env NODE_ENV=test vitest --run",
     "build": "tsc && tsc-alias"
   },
   "dependencies": {
-    "@edaya/core": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
+    "@edaya/core": "workspace:*",
     "@hono/node-server": "^1.14.1",
     "@hono/zod-openapi": "^0.16.4",
     "@scalar/hono-api-reference": "^0.8.8",
+    "better-auth": "^1.1.21",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7",
     "drizzle-orm": "^0.39.0",

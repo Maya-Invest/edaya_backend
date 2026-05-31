@@ -11,9 +11,11 @@ import {
   CalendarEventScopeKind,
   createStaffActorMetadata,
   DisciplinaryActionKind,
+  GradeLevel,
   IncidentInvolvementRole,
   IncidentKind,
   PaymentMethod,
+  Resource,
   ResourceKind,
   SessionKind,
   StaffMember,
@@ -61,7 +63,9 @@ describeIntegration('tenant boundary safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.setup.createGradeLevel({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', order: 6 })
+    await app.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', order: 6 }),
+    )
     await schoolBApp.setup.createAcademicYear({
       id: 'year-b',
       schoolId: 'school-b',
@@ -78,7 +82,9 @@ describeIntegration('tenant boundary safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    await schoolBApp.setup.createGradeLevel({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', order: 6 })
+    await schoolBApp.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', order: 6 }),
+    )
     await expect(app.setup.updateSchoolConfiguration({
       schoolId: 'school-b',
       name: 'Foreign school update',
@@ -270,12 +276,14 @@ describeIntegration('tenant boundary safeguards', () => {
       paymentDate: new Date('2026-09-01T00:00:00Z'),
       method: PaymentMethod.Cash,
     })
-    await schoolBApp.setup.createResource({
-      id: 'resource-b',
-      schoolId: 'school-b',
-      name: 'Outside room',
-      kind: ResourceKind.Location,
-    })
+    await schoolBApp.commands.resources.save(
+      new Resource({
+        id: 'resource-b',
+        schoolId: 'school-b',
+        name: 'Outside room',
+        kind: ResourceKind.Location,
+      }),
+    )
     await schoolBApp.setup.assignResourceToSession({
       id: 'resource-session-b',
       resourceId: 'resource-b',

@@ -1,5 +1,6 @@
-import type { AtomicExecutionPort, SchoolRepositories } from '../ports'
-import type { ActorMetadata, AuthorizedServiceArgs } from './authorization'
+import type { SchoolRepositories } from '../ports'
+import type { ActorMetadata } from './authorization'
+import type { ServiceArgs } from './shared/service-args'
 import { AcademicsService } from './commands/academics'
 import { AssessmentsService } from './commands/assessments'
 import { BehaviorService } from './commands/behavior'
@@ -9,11 +10,7 @@ import { SchedulingService } from './commands/scheduling'
 import { SetupService } from './commands/setup'
 import { StudentsService } from './commands/student'
 import { SchoolQueryService } from './queries/query-services'
-
-export interface ServiceArgs extends AuthorizedServiceArgs {
-  atomicExecution: AtomicExecutionPort
-  repositories: SchoolRepositories
-}
+import { BaseSchoolUpdateService } from './queries/update-services'
 
 export class SchoolHeadlessApp {
   readonly setup: SetupService
@@ -25,6 +22,7 @@ export class SchoolHeadlessApp {
   readonly finance: FinanceService
   readonly communications: CommunicationsService
   readonly queries: SchoolQueryService
+  readonly commands: BaseSchoolUpdateService
 
   constructor(args: ServiceArgs) {
     this.setup = new SetupService(args)
@@ -36,6 +34,7 @@ export class SchoolHeadlessApp {
     this.communications = new CommunicationsService(args)
     this.finance = new FinanceService(args)
     this.queries = new SchoolQueryService(args)
+    this.commands = new BaseSchoolUpdateService(args)
   }
 }
 
@@ -44,6 +43,10 @@ export class SchoolApplication {
 
   constructor(args: ServiceArgs) {
     this.args = args
+  }
+
+  get repositories(): SchoolRepositories {
+    return this.args.repositories
   }
 
   forActor(actor: ActorMetadata): SchoolHeadlessApp {

@@ -4,7 +4,7 @@ import type { StudentNoteVisibility } from '../../entities/students/student-note
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata, AuthorizationAction, AuthorizationPolicy } from '../authorization'
-import type { ServiceArgs } from '../school-headless-app'
+import type { ServiceArgs } from '../shared/service-args'
 import { StaffRole } from '../../entities/school/staff-member'
 import { Guardian } from '../../entities/students/guardian'
 import { GuardianStudentLink } from '../../entities/students/guardian-student-link'

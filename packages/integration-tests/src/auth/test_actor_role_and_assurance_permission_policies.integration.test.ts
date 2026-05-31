@@ -4,6 +4,7 @@ import {
   AttendanceStatus,
   AuthorizationErrorCode,
   createStaffActorMetadata,
+  GradeLevel,
   SessionKind,
   StaffMember,
   StaffRole,
@@ -24,7 +25,9 @@ async function setupBaselineFixture() {
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.setup.createGradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 })
+  await app.commands.gradeLevels.save(
+    new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
+  )
   await app.setup.createClassGroup({
     id: 'class-7a',
     schoolId: 'school',

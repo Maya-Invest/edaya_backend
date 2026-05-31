@@ -1,6 +1,7 @@
 import {
   AcademicPeriodType,
   AttendanceMode,
+  GradeLevel,
   SchoolType,
   StaffRole,
 } from '@edaya/core'
@@ -54,7 +55,9 @@ describeIntegration('setup lifecycle journey', () => {
     expect(period.isPublished).toBe(false)
     expect((await app.setup.publishAcademicPeriod({ academicPeriodId: 'term' })).isPublished).toBe(true)
 
-    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+    )
     await app.setup.registerStaffMember({
       id: 'teacher',
       schoolId: 'school',

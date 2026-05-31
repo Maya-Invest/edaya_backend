@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 
 import type { AppBindings, AppOpenAPI } from "@/lib/types";
 import { dependenciesInjection } from "@/middlewares/dependencies-injection";
+import { resolveSessionActor } from "@/middlewares/session";
 import { pinoLogger } from "@/middlewares/pino-logger";
 
 export function createRouter() {
@@ -24,6 +25,7 @@ export default function createApp() {
   }));
 
   app.use(dependenciesInjection);
+  app.use(resolveSessionActor);
 
   app.use(serveEmojiFavicon("📝"));
   app.use(pinoLogger());

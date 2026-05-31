@@ -18,6 +18,7 @@ export interface StudentArgs {
   nationality?: string | null
   matricule?: string | null
   photoUrl?: string | null
+  subjectId?: string | null
   status?: StudentStatus
   enrollmentDate?: Date | null
   createdAt?: Date
@@ -39,6 +40,7 @@ export class Student {
   readonly nationality?: string
   readonly matricule?: string
   readonly photoUrl?: string
+  readonly subjectId?: string
   readonly status: StudentStatus
   readonly enrollmentDate?: Date
   readonly createdAt: Date
@@ -54,6 +56,7 @@ export class Student {
     nationality,
     matricule,
     photoUrl,
+    subjectId,
     status = StudentStatus.Active,
     enrollmentDate,
     createdAt,
@@ -68,6 +71,7 @@ export class Student {
     this.nationality = requireOptionalNonBlank(nationality, 'nationality')
     this.matricule = requireOptionalNonBlank(matricule, 'matricule')
     this.photoUrl = requireOptionalNonBlank(photoUrl, 'photoUrl')
+    this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
     this.status = status
     this.enrollmentDate = enrollmentDate ? requireValidDate(enrollmentDate, 'enrollmentDate') : undefined
     this.createdAt = createdAt ?? new Date()
@@ -89,6 +93,7 @@ export class Student {
       nationality: this.nationality,
       matricule: this.matricule,
       photoUrl: this.photoUrl,
+      subjectId: this.subjectId,
       status: this.status,
       enrollmentDate: this.enrollmentDate,
       createdAt: this.createdAt,

@@ -4,7 +4,7 @@ import type { StudentFeeInstallment, StudentFeeSummary } from '../../entities/fi
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
-import type { ServiceArgs } from '../school-headless-app'
+import type { ServiceArgs } from '../shared/service-args'
 import { Fee } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { buildStudentFeeSummary, FeeStatus, StudentFee } from '../../entities/finances/student-fee'

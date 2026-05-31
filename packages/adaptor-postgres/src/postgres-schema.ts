@@ -60,6 +60,7 @@ export const staffMembers = pgTable('staff_members', {
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   email: text('email'),
+  subjectId: text('subject_id'),
   roles: jsonb('roles').notNull(),
   isActive: boolean('is_active').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
@@ -427,6 +428,7 @@ export const students = pgTable('students', {
   nationality: text('nationality'),
   matricule: text('matricule'),
   photoUrl: text('photo_url'),
+  subjectId: text('subject_id'),
   status: text('status').notNull(),
   enrollmentDate: timestamp('enrollment_date', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
@@ -460,6 +462,7 @@ export const guardians = pgTable('guardians', {
   lastName: text('last_name').notNull(),
   email: text('email'),
   phone: text('phone'),
+  subjectId: text('subject_id'),
   contactMethods: jsonb('contact_methods').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })

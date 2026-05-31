@@ -17,6 +17,7 @@ export interface StaffMemberArgs {
   lastName: string
   roles: readonly StaffRole[]
   email?: string | null
+  subjectId?: string | null
   isActive?: boolean
   createdAt?: Date
 }
@@ -32,6 +33,7 @@ export class StaffMember {
   readonly lastName: string
   readonly roles: readonly StaffRole[]
   readonly email?: string
+  readonly subjectId?: string
   readonly isActive: boolean
   readonly createdAt: Date
 
@@ -42,6 +44,7 @@ export class StaffMember {
     lastName,
     roles,
     email,
+    subjectId,
     isActive = true,
     createdAt,
   }: StaffMemberArgs) {
@@ -55,6 +58,7 @@ export class StaffMember {
     }
     this.roles = Object.freeze(uniqueRoles)
     this.email = requireOptionalNonBlank(email, 'email')
+    this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
     this.isActive = isActive
     this.createdAt = createdAt ?? new Date()
   }

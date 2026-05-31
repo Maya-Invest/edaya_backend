@@ -1,18 +1,16 @@
 import type { AcademicPeriodType } from '../../entities/school/academic-period'
 import type { AttachmentOwnerKind } from '../../entities/school/attachment'
 import type { AttendanceMode } from '../../entities/school/class-group'
-import type { ResourceKind } from '../../entities/school/resource'
+import type { Resource } from '../../entities/school/resource'
 import type { SchoolType } from '../../entities/school/school'
 import type { StaffRole } from '../../entities/school/staff-member'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizationAction, AuthorizedServiceArgs } from '../authorization'
-import type { ServiceArgs } from '../school-headless-app'
+import type { ServiceArgs } from '../shared/service-args'
 import { AcademicPeriod } from '../../entities/school/academic-period'
 import { AcademicYear } from '../../entities/school/academic-year'
 import { Attachment, AttachmentOwnerKind as OwnerKind } from '../../entities/school/attachment'
 import { ClassGroup } from '../../entities/school/class-group'
-import { GradeLevel } from '../../entities/school/grade-level'
-import { Resource } from '../../entities/school/resource'
 import { ResourceAssignment } from '../../entities/school/resource-assignment'
 import { School } from '../../entities/school/school'
 import { StaffAssignment } from '../../entities/school/staff-assignment'
@@ -226,28 +224,6 @@ export class SetupService {
     })
     await this.repositories.academicPeriods.save(period)
     return period
-  }
-
-  async createGradeLevel({
-    id,
-    schoolId,
-    name,
-    order,
-    cycle,
-    createdAt,
-  }: {
-    id: string
-    schoolId: string
-    name: string
-    order: number
-    cycle?: string
-    createdAt?: Date
-  }): Promise<GradeLevel> {
-    await this.authorize('setup.manage', schoolId)
-    await requireSchool(this.repositories.schools, schoolId)
-    const gradeLevel = new GradeLevel({ id, schoolId, name, order, cycle, createdAt })
-    await this.repositories.gradeLevels.save(gradeLevel)
-    return gradeLevel
   }
 
   async createClassGroup({
@@ -473,30 +449,6 @@ export class SetupService {
     const assignment = new StaffAssignment({ id, sessionId, staffId, role, createdAt })
     await this.repositories.staffAssignments.save(assignment)
     return assignment
-  }
-
-  async createResource({
-    id,
-    schoolId,
-    name,
-    description,
-    kind,
-    capacity,
-    createdAt,
-  }: {
-    id: string
-    schoolId: string
-    name: string
-    description?: string
-    kind: ResourceKind
-    capacity?: number
-    createdAt?: Date
-  }): Promise<Resource> {
-    await this.authorize('resources.manage', schoolId)
-    await requireSchool(this.repositories.schools, schoolId)
-    const resource = new Resource({ id, schoolId, name, description, kind, capacity, createdAt })
-    await this.repositories.resources.save(resource)
-    return resource
   }
 
   async assignResourceToClass({

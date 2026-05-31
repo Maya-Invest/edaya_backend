@@ -4,6 +4,7 @@ import {
   AttendanceStatus,
   AuthorizationErrorCode,
   FeeStatus,
+  GradeLevel,
   MessageDeliveryChannel,
   PaymentMethod,
   PaymentStatus,
@@ -24,7 +25,9 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+    )
     await app.setup.createClassGroup({
       id: 'class',
       schoolId: 'school',
@@ -155,7 +158,9 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+    )
     await app.setup.createClassGroup({
       id: 'class',
       schoolId: 'school',
@@ -192,7 +197,9 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+    )
     await app.setup.createClassGroup({
       id: 'class',
       schoolId: 'school',
@@ -228,7 +235,9 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.setup.createGradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 })
+    await app.commands.gradeLevels.save(
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+    )
     await app.setup.createClassGroup({
       id: 'class',
       schoolId: 'school',

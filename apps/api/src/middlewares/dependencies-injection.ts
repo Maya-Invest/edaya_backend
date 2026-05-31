@@ -3,11 +3,9 @@ import { parseEnv } from "@/env";
 import type { AppBindings } from "@/lib/types";
 import { RepositoryAuthorizationPolicy, SchoolApplication } from "@edaya/core";
 import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { db } from "@/db";
 
 let schoolAppInstance: SchoolApplication | null = null;
-let sqlClient: any = null;
 
 export const dependenciesInjection: MiddlewareHandler<AppBindings> = async (c: Context<AppBindings>, next: Next) => {
   // Inject env
@@ -16,8 +14,6 @@ export const dependenciesInjection: MiddlewareHandler<AppBindings> = async (c: C
   c.env = parseEnv(env);
 
   if (!schoolAppInstance) {
-    sqlClient = postgres(c.env.DATABASE_URL);
-    const db = drizzle(sqlClient);
     const repos = new PostgresSchoolRepositories(db);
 
     // Bootstrap DB schema if not already initialized

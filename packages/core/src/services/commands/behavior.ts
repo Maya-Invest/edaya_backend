@@ -1,5 +1,5 @@
 import type { IncidentKind } from '../../entities/students/incident'
-import type { ServiceArgs } from '../school-headless-app'
+import type { ServiceArgs } from '../shared/service-args'
 import { DisciplinaryAction, DisciplinaryActionKind } from '../../entities/students/disciplinary-action'
 import { Incident, IncidentStatus } from '../../entities/students/incident'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'

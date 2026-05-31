@@ -186,6 +186,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         firstName: entity.firstName,
         lastName: entity.lastName,
         email: entity.email ?? null,
+        subjectId: entity.subjectId ?? null,
         roles: entity.roles,
         isActive: entity.isActive,
         createdAt: entity.createdAt,
@@ -196,6 +197,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         firstName: row.firstName,
         lastName: row.lastName,
         email: row.email,
+        subjectId: row.subjectId,
         roles: deserializeJsonb(row.roles),
         isActive: row.isActive,
         createdAt: row.createdAt,
@@ -978,6 +980,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         email TEXT,
+        subject_id TEXT,
         roles JSONB NOT NULL,
         is_active BOOLEAN NOT NULL,
         created_at TIMESTAMP NOT NULL
@@ -1296,6 +1299,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         nationality TEXT,
         matricule TEXT,
         photo_url TEXT,
+        subject_id TEXT,
         status TEXT NOT NULL,
         enrollment_date TIMESTAMP,
         created_at TIMESTAMP NOT NULL
@@ -1325,6 +1329,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         last_name TEXT NOT NULL,
         email TEXT,
         phone TEXT,
+        subject_id TEXT,
         contact_methods JSONB NOT NULL,
         created_at TIMESTAMP NOT NULL
       )`,

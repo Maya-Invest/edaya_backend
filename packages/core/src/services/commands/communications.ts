@@ -7,7 +7,7 @@ import type {
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { AuthorizedServiceArgs } from '../authorization'
-import type { ServiceArgs } from '../school-headless-app'
+import type { ServiceArgs } from '../shared/service-args'
 import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
 import { AnnouncementTarget, AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
 import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
