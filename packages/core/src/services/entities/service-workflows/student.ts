@@ -1,5 +1,6 @@
 import type { ClassGroup } from '../../../entities'
 import type { BaseSchoolService } from '../base-school-service'
+import { Student, StudentStatus } from '../../../entities/students/student'
 import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollment, StudentClassEnrollmentStatus } from '../../../entities/students/student-class-enrollment'
 import { resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
@@ -22,9 +23,66 @@ export interface TransferStudentInput {
   effectiveAt: Date
 }
 
+export interface CloseEnrollmentInput {
+  enrollmentId: string
+  endReason: EnrollmentEndReason
+  endedAt?: Date
+}
+
+export interface RecordProgressionDecisionInput {
+  enrollmentId: string
+  decision: ProgressionDecision
+  decidedAt?: Date
+  notes?: string
+}
+
+export interface GraduateStudentInput {
+  enrollmentId: string
+  effectiveAt: Date
+  decidedAt?: Date
+  notes?: string
+}
+
 export class StudentServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async closeEnrollment({
+    enrollmentId,
+    endReason,
+    endedAt = new Date(),
+  }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
+    return this.base.atomicExecution.execute(async () => {
+      const enrollment = await this.requireManagedEnrollment(enrollmentId)
+      await this.requireCurrentActiveEnrollment(enrollment)
+      const closed = enrollment.close({
+        endedAt,
+        endReason,
+        closedBy: resolveAuditActorId(this.base.actor),
+      })
+      await this.base.enrollments.save(closed, { moduleChecked: true })
+      return closed
+    })
+  }
+
+  async recordProgressionDecision({
+    enrollmentId,
+    decision,
+    decidedAt = new Date(),
+    notes,
+  }: RecordProgressionDecisionInput): Promise<StudentClassEnrollment> {
+    return this.base.atomicExecution.execute(async () => {
+      const enrollment = await this.requireManagedEnrollment(enrollmentId)
+      const decided = enrollment.recordProgressionDecision({
+        decision,
+        decidedAt,
+        decidedBy: resolveAuditActorId(this.base.actor),
+        notes,
+      })
+      await this.base.enrollments.save(decided, { moduleChecked: true })
+      return decided
+    })
   }
 
   async promoteStudent({
@@ -94,6 +152,48 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       await this.base.enrollments.save(transferred, { moduleChecked: true })
       await this.base.enrollments.save(successor, { moduleChecked: true })
       return successor
+    })
+  }
+
+  async graduateStudent({
+    enrollmentId,
+    effectiveAt,
+    decidedAt = effectiveAt,
+    notes,
+  }: GraduateStudentInput): Promise<StudentClassEnrollment> {
+    return this.base.atomicExecution.execute(async () => {
+      const enrollment = await this.requireManagedEnrollment(enrollmentId)
+      await this.requireCurrentActiveEnrollment(enrollment)
+      const student = await this.requireStudent(enrollment.studentId)
+      const graduatedEnrollment = enrollment.close({
+        endedAt: effectiveAt,
+        endReason: EnrollmentEndReason.Completed,
+        closedBy: resolveAuditActorId(this.base.actor),
+      }).recordProgressionDecision({
+        decision: ProgressionDecision.Graduated,
+        decidedAt,
+        decidedBy: resolveAuditActorId(this.base.actor),
+        notes,
+      })
+      const graduatedStudent = new Student({
+        id: student.id,
+        schoolId: student.schoolId,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        gender: student.gender,
+        birthDate: student.birthDate,
+        placeOfBirth: student.placeOfBirth,
+        nationality: student.nationality,
+        matricule: student.matricule,
+        photoUrl: student.photoUrl,
+        subjectId: student.subjectId,
+        status: StudentStatus.Graduated,
+        enrollmentDate: student.enrollmentDate,
+        createdAt: student.createdAt,
+      })
+      await this.base.enrollments.save(graduatedEnrollment, { moduleChecked: true })
+      await this.base.students.save(graduatedStudent, { moduleChecked: true })
+      return graduatedEnrollment
     })
   }
 

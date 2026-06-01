@@ -40,7 +40,7 @@ export class SchoolHeadlessApp {
     this.config = new SchoolConfigService(args)
     this.queries = new SchoolQueryService(args)
     this.service = new SchoolService(args)
-    this.base = this.service
+    this.base = this.service.base
   }
 }
 

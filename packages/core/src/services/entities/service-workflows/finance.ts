@@ -40,6 +40,22 @@ export interface UpdatePaymentStatusInput {
   referenceDate?: Date
 }
 
+export interface AdjustStudentFeeInput {
+  studentFeeId: string
+  adjustmentAmount: number
+  reason: string
+  adjustedAt?: Date
+  updatedAt?: Date
+  referenceDate?: Date
+}
+
+export interface CancelStudentFeeInput {
+  studentFeeId: string
+  reason: string
+  cancelledAt?: Date
+  updatedAt?: Date
+}
+
 export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
@@ -209,6 +225,76 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       )
       return changedPayment
     })
+  }
+
+  async adjustStudentFee({
+    studentFeeId,
+    adjustmentAmount,
+    reason,
+    adjustedAt,
+    updatedAt,
+    referenceDate,
+  }: AdjustStudentFeeInput): Promise<StudentFee> {
+    const studentFee = await this.requireStudentFee(studentFeeId)
+    const student = await this.requireStudent(studentFee.studentId)
+    this.checkActorSchool(student.schoolId)
+    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.base.authorizationPolicy.checkStudentFeeAccess(this.base.actor, [studentFee.id])
+    if (studentFee.status === FeeStatus.Cancelled) {
+      throw new BusinessRuleViolationError('CANCELLED_FEE_ADJUSTMENT', `Student fee ${studentFeeId} cannot be adjusted after cancellation`)
+    }
+    if (studentFee.adjustmentAmount.amount > 0) {
+      throw new BusinessRuleViolationError('ALREADY_ADJUSTED_FEE', `Student fee ${studentFeeId} has already been adjusted`)
+    }
+    if (adjustmentAmount <= 0) {
+      throw new BusinessRuleViolationError('INVALID_ADJUSTMENT_AMOUNT', 'adjustmentAmount must be strictly positive')
+    }
+    if (adjustmentAmount > studentFee.expectedAmount.amount - studentFee.paidAmount.amount) {
+      throw new BusinessRuleViolationError('ADJUSTMENT_EXCEEDS_OUTSTANDING', 'adjustmentAmount must not reduce a fee below its paid amount')
+    }
+    const adjusted = studentFee.copyWith({
+      adjustmentAmount,
+      adjustmentReason: reason,
+      adjustedById: resolveAuditActorId(this.base.actor),
+      adjustedAt: adjustedAt ?? new Date(),
+      status: this.deriveFeeStatus({
+        expectedAmount: studentFee.expectedAmount.amount - adjustmentAmount,
+        paidAmount: studentFee.paidAmount.amount,
+        dueDate: studentFee.dueDate,
+        referenceDate: referenceDate ?? new Date(),
+      }),
+      updatedAt: updatedAt ?? new Date(),
+    })
+    await this.base.studentFees.save(adjusted, { moduleChecked: true })
+    return adjusted
+  }
+
+  async cancelStudentFee({
+    studentFeeId,
+    reason,
+    cancelledAt,
+    updatedAt,
+  }: CancelStudentFeeInput): Promise<StudentFee> {
+    const studentFee = await this.requireStudentFee(studentFeeId)
+    const student = await this.requireStudent(studentFee.studentId)
+    this.checkActorSchool(student.schoolId)
+    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.base.authorizationPolicy.checkStudentFeeAccess(this.base.actor, [studentFee.id])
+    if (studentFee.status === FeeStatus.Cancelled) {
+      throw new BusinessRuleViolationError('ALREADY_CANCELLED_FEE', `Student fee ${studentFeeId} has already been cancelled`)
+    }
+    if (studentFee.paidAmount.amount > 0) {
+      throw new BusinessRuleViolationError('CANCEL_PAID_FEE', `Student fee ${studentFeeId} cannot be cancelled while recorded payments remain`)
+    }
+    const cancelled = studentFee.copyWith({
+      status: FeeStatus.Cancelled,
+      cancellationReason: reason,
+      cancelledById: resolveAuditActorId(this.base.actor),
+      cancelledAt: cancelledAt ?? new Date(),
+      updatedAt: updatedAt ?? new Date(),
+    })
+    await this.base.studentFees.save(cancelled, { moduleChecked: true })
+    return cancelled
   }
 
   private materializeInstallments(id: string, amount: number, fee: Fee): StudentFeeInstallment[] {

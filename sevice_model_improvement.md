@@ -443,7 +443,14 @@ Completed core-package work so far:
 - [x] Added `SchoolService.recordSessionProgress(...)` as the first direct complex workflow, including duplicate prevention, monotonic progress validation, atomic writes, managed persistence, and class-subject aggregate update.
 - [x] Added `SchoolService.publishReportCardResult(...)`, including report-card generation, attendance summary aggregation, published-card immutability, atomic publishing, and managed `results.save(entity)` persistence.
 - [x] Added `SchoolService` finance workflows: `assignFeeToStudent`, `recordPayment`, `reversePayment`, and `cancelPayment`, including installment materialization, fee status derivation, payment lifecycle validation, atomic paid-amount updates, and managed `studentFees`/`payments` persistence.
+- [x] Added `SchoolService` finance fee lifecycle workflows: `adjustStudentFee` and `cancelStudentFee`, including one-time adjustment validation, outstanding-balance validation, cancelled-fee guards, paid-fee cancellation guards, audit metadata assignment, status derivation, and managed `studentFees.save(entity)` persistence.
 - [x] Added `SchoolService` student transition workflows: `promoteStudent` and `transferStudent`, including active-enrollment validation, successor target validation, promotion grade-order validation, target capacity checks, atomic close-and-successor creation, and managed `enrollments.save(entity)` persistence.
+- [x] Added `SchoolService` student lifecycle workflows: `closeEnrollment`, `recordProgressionDecision`, and `graduateStudent`, including active-enrollment validation, progression decision audit metadata, atomic graduation status update, and managed `enrollments.save(entity)` / `students.save(entity)` persistence.
+- [x] Refactored `SchoolService` workflow implementations into helper classes under `packages/core/src/services/entities/service-workflows`, with `SchoolService` delegating to the relevant domain workflow helper.
+- [x] Added `SchoolService` scheduling attendance workflows: `recordAttendance`, `recordDailyAttendance`, `recordSessionAttendance`, `recordClassDailyAttendance`, and `reviewAttendanceJustification`, including daily-session materialization, active-enrollment validation, correction guards, justification lifecycle validation, atomic batch attendance recording, and managed `sessions.save(entity)` / `attendance.save(entity)` persistence.
+- [x] Added `SchoolService.generateSessions(...)`, including timetable expansion, recurring and one-off schedule matching, non-school-day calendar exclusions by school/class/grade scope, atomic session generation, and managed `sessions.save(entity)` persistence.
+- [x] Added `SchoolService` communications workflows: `publishAnnouncement`, `recordDelivery`, and `materializeDeliveries`, including target precondition validation, publication-state validation, recipient eligibility checks, target expansion, delivery deduplication, atomic materialization, and managed `announcements.save(entity)` / `messageDeliveries.save(entity)` persistence.
+- [x] Added `SchoolService` behavior workflows: `recordIncident`, `addStudentInvolvement`, `applyDisciplinaryAction`, `updateStudentDisciplinaryActionStatus`, and `resolveIncident`, including contextual incident scope resolution, duplicate involvement prevention, active enrollment validation, discipline catalog validation, open-incident resolution guards, and managed `incidents.save(entity)` / `studentIncidentInvolvements.save(entity)` / `studentDisciplinaryActions.save(entity)` persistence.
 - [x] Added managed write options so domain workflows can mark module authorization as already checked while still using managed tenant, entity authorization, gate, and repository handling.
 - [x] Aligned managed staff-assignment write authorization with the workflow action `setup.assign_staff`.
 - [x] Added managed class-subject staff-assignment authorization that resolves the class subject back to class-group access.
@@ -461,7 +468,13 @@ Completed core-package work so far:
 - [x] Added direct `SchoolService` workflow coverage for `recordSessionProgress`, including duplicate progress and decreasing progress rejection.
 - [x] Added direct `SchoolService` workflow coverage for `publishReportCardResult`, including generated averages, attendance summary counts, managed persistence, and already-published rejection.
 - [x] Added direct `SchoolService` workflow coverage for finance assignment, payment recording, reversal, cancellation, cancelled-fee payment rejection, and non-recorded payment reversal rejection.
+- [x] Added direct `SchoolService` workflow coverage for finance fee adjustment and cancellation, including managed persistence, cancelled-fee adjustment rejection, already-adjusted rejection, over-adjustment rejection, already-cancelled rejection, and paid-fee cancellation rejection.
 - [x] Added direct `SchoolService` workflow coverage for student promotion and transfer, including managed persistence, inactive enrollment rejection, same-class target rejection, invalid promotion target rejection, and full target class-group rejection.
+- [x] Added direct `SchoolService` workflow coverage for student lifecycle transitions, including enrollment closure, inactive closure rejection, progression decision recording, graduation persistence, and inactive graduation rejection.
+- [x] Added direct `SchoolService` workflow coverage for scheduling attendance, including daily session creation/reuse, managed attendance persistence, non-daily class rejection, session and class daily attendance recording, and justification review validation.
+- [x] Added direct `SchoolService` workflow coverage for scheduling session generation, including recurring and one-off schedule expansion, managed session persistence, class-group authorization, and scoped non-school-day exclusion.
+- [x] Added direct `SchoolService` workflow coverage for communications publishing, delivery recording, recipient eligibility rejection, materialized delivery deduplication, and unpublished materialization rejection.
+- [x] Added direct `SchoolService` workflow coverage for behavior incident lifecycle operations, including scoped incident creation, involvement persistence, duplicate involvement rejection, disciplinary action prerequisites, disciplinary status update, incident resolution, and non-open incident rejection.
 - [x] Added regression coverage proving lifecycle-only setup operations do not accidentally require the generic `setup.manage` action after delegating to managed saves.
 - [x] Added `findByIds`, `batchSave`, and `batchDelete` to `ManagedEntityService<T>`.
 - [x] Added focused tests for managed bulk read, bulk save, and bulk delete behavior.
@@ -470,7 +483,7 @@ Current validation status:
 
 - [x] `bun run --cwd packages/core check`
 - [x] `bun run --cwd packages/core lint`
-- [x] `bun run --cwd packages/core test` passes with 324 tests.
+- [x] `bun run --cwd packages/core test` passes with 356 tests.
 
 Compatibility still intentionally present:
 
@@ -481,8 +494,8 @@ Compatibility still intentionally present:
 
 Recommended next slice:
 
-- Continue implementing direct `SchoolService` complex workflows in `packages/core/src/services/entities`.
-- Good candidates: scheduling attendance workflows, student graduation/withdrawal workflows, and remaining tightly coupled student lifecycle transitions.
+- Audit remaining old command services against the new `SchoolService` workflow surface and identify any final complex workflow gaps before downstream migration.
+- If no core workflow gaps remain, start downstream migration away from old command/query services using the completed `packages/core/src/services/entities` API as the target.
 - Avoid migrating more old command service internals unless needed as a compatibility adapter after the new entities service surface is complete.
 
 ### Phase 1: Design Lock
