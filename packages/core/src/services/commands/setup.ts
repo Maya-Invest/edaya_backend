@@ -17,6 +17,7 @@ import { StaffAssignment } from '../../entities/school/staff-assignment'
 import { StaffMember } from '../../entities/school/staff-member'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BaseSchoolService } from '../entities'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { requireSchool } from '../shared/require-school'
 
@@ -25,11 +26,13 @@ export class SchoolSetupService {
     this.actor = args.actor
     this.authorizationPolicy = args.authorizationPolicy
     this.repositories = args.repositories
+    this.base = new BaseSchoolService(args)
   }
 
   private readonly actor: AuthorizedServiceArgs['actor']
   private readonly authorizationPolicy: AuthorizedServiceArgs['authorizationPolicy']
   private readonly repositories: SchoolRepositories
+  private readonly base: BaseSchoolService
 
   async registerSchool({
     id,
@@ -50,7 +53,7 @@ export class SchoolSetupService {
   }): Promise<School> {
     await this.authorize('setup.register_school', id)
     const school = new School({ id, name, timeZone, type, country, city, createdAt })
-    await this.repositories.schools.save(school)
+    await this.base.schools.save(school, { moduleChecked: true })
     return school
   }
 
@@ -80,7 +83,7 @@ export class SchoolSetupService {
       city: city === undefined ? existing.city : city,
       createdAt: existing.createdAt,
     })
-    await this.repositories.schools.save(school)
+    await this.base.schools.save(school, { moduleChecked: true })
     return school
   }
 
@@ -125,11 +128,11 @@ export class SchoolSetupService {
   }): Promise<AcademicYear> {
     const academicYear = new AcademicYear({ id, schoolId, name, startDate, endDate, isActive, createdAt })
     if (!academicYear.isActive) {
-      await this.repositories.academicYears.save(academicYear)
+      await this.base.academicYears.save(academicYear, { moduleChecked: true })
       return academicYear
     }
     await this.deactivateOtherAcademicYears(schoolId, academicYear.id)
-    await this.repositories.academicYears.save(academicYear)
+    await this.base.academicYears.save(academicYear, { moduleChecked: true })
     return academicYear
   }
 
@@ -149,7 +152,7 @@ export class SchoolSetupService {
       isActive: true,
       createdAt: academicYear.createdAt,
     })
-    await this.repositories.academicYears.save(activated)
+    await this.base.academicYears.save(activated, { moduleChecked: true })
     return activated
   }
 
@@ -177,7 +180,7 @@ export class SchoolSetupService {
       isPublished: true,
       createdAt: period.createdAt,
     })
-    await this.repositories.academicPeriods.save(published)
+    await this.base.academicPeriods.save(published, { moduleChecked: true })
     return published
   }
 
@@ -222,7 +225,7 @@ export class SchoolSetupService {
       isPublished,
       createdAt,
     })
-    await this.repositories.academicPeriods.save(period)
+    await this.base.academicPeriods.save(period, { moduleChecked: true })
     return period
   }
 
@@ -267,7 +270,7 @@ export class SchoolSetupService {
       homeroomStaffId,
       createdAt,
     })
-    await this.repositories.classGroups.save(classGroup)
+    await this.base.classGroups.save(classGroup, { moduleChecked: true })
     return classGroup
   }
 
@@ -303,7 +306,7 @@ export class SchoolSetupService {
       homeroomStaffId: homeroomStaffId === undefined ? existing.homeroomStaffId : homeroomStaffId,
       createdAt: existing.createdAt,
     })
-    await this.repositories.classGroups.save(classGroup)
+    await this.base.classGroups.save(classGroup, { moduleChecked: true })
     return classGroup
   }
 
@@ -341,7 +344,7 @@ export class SchoolSetupService {
       isActive,
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.repositories.staffMembers.save(staffMember)
+    await this.base.staffMembers.save(staffMember, { moduleChecked: true })
     return staffMember
   }
 
@@ -370,7 +373,7 @@ export class SchoolSetupService {
       isActive,
       createdAt: staffMember.createdAt,
     })
-    await this.repositories.staffMembers.save(updated)
+    await this.base.staffMembers.save(updated, { moduleChecked: true })
     return updated
   }
 
@@ -391,7 +394,7 @@ export class SchoolSetupService {
     await this.authorize('setup.assign_staff', classGroup.schoolId, { classGroupId: classGroup.id })
     await this.requireStaffMemberInSchool(staffId, classGroup.schoolId)
     const assignment = new StaffAssignment({ id, classGroupId, staffId, role, createdAt })
-    await this.repositories.staffAssignments.save(assignment)
+    await this.base.staffAssignments.save(assignment, { moduleChecked: true })
     return assignment
   }
 
@@ -419,7 +422,7 @@ export class SchoolSetupService {
     })
     await this.requireStaffMemberInSchool(staffId, classGroup.schoolId)
     const assignment = new StaffAssignment({ id, classSubjectId, staffId, role, createdAt })
-    await this.repositories.staffAssignments.save(assignment)
+    await this.base.staffAssignments.save(assignment, { moduleChecked: true })
     return assignment
   }
 
@@ -447,7 +450,7 @@ export class SchoolSetupService {
     })
     await this.requireStaffMemberInSchool(staffId, classGroup.schoolId)
     const assignment = new StaffAssignment({ id, sessionId, staffId, role, createdAt })
-    await this.repositories.staffAssignments.save(assignment)
+    await this.base.staffAssignments.save(assignment, { moduleChecked: true })
     return assignment
   }
 
@@ -466,7 +469,7 @@ export class SchoolSetupService {
     await this.authorize('resources.manage', resource.schoolId, { classGroupId: classGroup.id, resourceId: resource.id })
     await this.ensureResourceCanBeAssignedToClass(resource.id, classGroup.id)
     const assignment = new ResourceAssignment({ id, resourceId: resource.id, classGroupId: classGroup.id, createdAt })
-    await this.repositories.resourceAssignments.save(assignment)
+    await this.base.resourceAssignments.save(assignment, { moduleChecked: true })
     return assignment
   }
 
@@ -489,7 +492,7 @@ export class SchoolSetupService {
     })
     await this.ensureResourceCanBeAssignedToSession(resource.id, session.id)
     const assignment = new ResourceAssignment({ id, resourceId: resource.id, sessionId: session.id, createdAt })
-    await this.repositories.resourceAssignments.save(assignment)
+    await this.base.resourceAssignments.save(assignment, { moduleChecked: true })
     return assignment
   }
 
@@ -498,12 +501,7 @@ export class SchoolSetupService {
     if (!assignment) {
       denyResourceAccess()
     }
-    const context = await this.resolveResourceAssignmentContext(assignment)
-    await this.authorize('resources.manage', context.schoolId, {
-      classGroupId: context.classGroupId,
-      sessionId: context.sessionId,
-      resourceId: assignment.resourceId,
-    })
+    await this.base.resourceAssignments.delete(assignment.id)
   }
 
   async registerAttachment({
@@ -544,7 +542,7 @@ export class SchoolSetupService {
       uploadedById: resolveAuditActorId(this.actor),
       createdAt,
     })
-    await this.repositories.attachments.save(attachment)
+    await this.base.attachments.save(attachment, { moduleChecked: true })
     return attachment
   }
 
@@ -558,6 +556,7 @@ export class SchoolSetupService {
       denyResourceAccess()
     }
     await this.authorize('attachments.manage', attachment.schoolId, { ...context, attachmentId: attachment.id })
+    await this.base.attachments.delete(attachment.id, { moduleChecked: true })
   }
 
   private async authorize(
@@ -623,7 +622,7 @@ export class SchoolSetupService {
       if (academicYear.id === activeAcademicYearId) {
         continue
       }
-      await this.repositories.academicYears.save(new AcademicYear({
+      await this.base.academicYears.save(new AcademicYear({
         id: academicYear.id,
         schoolId: academicYear.schoolId,
         name: academicYear.name,
@@ -631,7 +630,7 @@ export class SchoolSetupService {
         endDate: academicYear.endDate,
         isActive: false,
         createdAt: academicYear.createdAt,
-      }))
+      }), { moduleChecked: true })
     }
   }
 
@@ -732,31 +731,6 @@ export class SchoolSetupService {
   ): boolean {
     return left.startsAt.getTime() < right.endsAt.getTime()
       && right.startsAt.getTime() < left.endsAt.getTime()
-  }
-
-  private async resolveResourceAssignmentContext(
-    assignment: ResourceAssignment,
-  ): Promise<{ schoolId: string, classGroupId?: string, sessionId?: string }> {
-    const resource = await this.repositories.resources.findById(assignment.resourceId)
-    if (!resource) {
-      denyResourceAccess()
-    }
-    if (assignment.classGroupId) {
-      const classGroup = await this.requireClassGroup(assignment.classGroupId)
-      if (classGroup.schoolId !== resource.schoolId) {
-        denyResourceAccess()
-      }
-      return { schoolId: resource.schoolId, classGroupId: classGroup.id }
-    }
-    const session = await this.repositories.sessions.findById(assignment.sessionId!)
-    if (!session) {
-      denyResourceAccess()
-    }
-    const classGroup = await this.requireClassGroup(session.classGroupId)
-    if (classGroup.schoolId !== resource.schoolId) {
-      denyResourceAccess()
-    }
-    return { schoolId: resource.schoolId, classGroupId: classGroup.id, sessionId: session.id }
   }
 
   private async resolveAttachmentOwnerContext(

@@ -8,6 +8,7 @@ import { ClassSubjectMatter, ClassSubjectMatterStatus } from '../../entities/aca
 import { ClassSubjectProgress } from '../../entities/academics/class-subject-progress'
 import { roundTo2 } from '../../entities/utils'
 import { denyResourceAccess, resolveAuditActorId } from '../authorization'
+import { BaseSchoolService } from '../entities'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
 
 export class AcademicsService {
@@ -16,11 +17,13 @@ export class AcademicsService {
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
     this.repositories = args.repositories
+    this.base = new BaseSchoolService(args)
   }
 
   private readonly atomicExecution: AtomicExecutionPort
   private readonly actor: ActorMetadata
   private readonly authorizationPolicy: AuthorizationPolicy
+  private readonly base: BaseSchoolService
   private readonly repositories: SchoolRepositories
 
   async offerSubjectToClass({
@@ -52,7 +55,7 @@ export class AcademicsService {
       return existing
     }
     const classSubject = new ClassSubject({ id, classGroupId, subjectId, coefficient: 1, createdAt })
-    await this.repositories.classSubjects.save(classSubject)
+    await this.base.classSubjects.save(classSubject, { moduleChecked: true })
     return classSubject
   }
 
@@ -90,7 +93,7 @@ export class AcademicsService {
       notes,
       updatedAt,
     })
-    await this.repositories.classSubjectMatters.save(assigned)
+    await this.base.classSubjectMatters.save(assigned, { moduleChecked: true })
     return assigned
   }
 
@@ -154,8 +157,8 @@ export class AcademicsService {
         updatedAt: snapshot.recordedAt,
       })
 
-      await this.repositories.classSubjectProgress.save(snapshot)
-      await this.repositories.classSubjectMatters.save(updatedMatter)
+      await this.base.classSubjectProgress.save(snapshot, { moduleChecked: true })
+      await this.base.classSubjectMatters.save(updatedMatter, { moduleChecked: true })
       await this.updateClassSubjectAggregate(classSubject, updatedMatter)
       return snapshot
     })
@@ -180,14 +183,14 @@ export class AcademicsService {
     }
     const total = normalizedMatters.reduce((sum, matter) => sum + matter.completedPercentage, 0)
     const completedPercentage = roundTo2(total / normalizedMatters.length)
-    await this.repositories.classSubjects.save(new ClassSubject({
+    await this.base.classSubjects.save(new ClassSubject({
       id: classSubject.id,
       classGroupId: classSubject.classGroupId,
       subjectId: classSubject.subjectId,
       coefficient: classSubject.coefficient,
       completedPercentage,
       createdAt: classSubject.createdAt,
-    }))
+    }), { moduleChecked: true })
   }
 
   private async requireSubjectMatter(subjectMatterId: string): Promise<SubjectMatter> {

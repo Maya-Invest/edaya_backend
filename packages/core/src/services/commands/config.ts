@@ -6,10 +6,12 @@ import type {
   Subject,
   SubjectMatter,
 } from '../../entities'
-import type { BaseRepositoryInterface, SchoolRepositories } from '../../ports'
-import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
+import type { BaseRepositoryInterface } from '../../ports'
+import type { ActorMetadata } from '../authorization'
+import type { ManagedEntityService } from '../entities'
 import type { ServiceArgs } from '../shared/service-args'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization'
+import { BaseSchoolService } from '../entities'
 
 function checkEntityTenant(actor: ActorMetadata, entity: any) {
   if (!entity)
@@ -54,69 +56,20 @@ export class AuthorizedWriteService<T> {
 }
 
 export class ConfigService {
-  protected readonly repositories: SchoolRepositories
-  protected readonly actor: ActorMetadata
-  protected readonly authorizationPolicy: AuthorizationPolicy
-
-  public readonly gradeLevels: AuthorizedWriteService<GradeLevel>
-  public readonly periodDefinitions: AuthorizedWriteService<PeriodDefinition>
-  public readonly resources: AuthorizedWriteService<Resource>
-  public readonly subjects: AuthorizedWriteService<Subject>
-  public readonly subjectMatters: AuthorizedWriteService<SubjectMatter>
-  public readonly disciplinaryActions: AuthorizedWriteService<DisciplinaryAction>
+  public readonly gradeLevels: ManagedEntityService<GradeLevel>
+  public readonly periodDefinitions: ManagedEntityService<PeriodDefinition>
+  public readonly resources: ManagedEntityService<Resource>
+  public readonly subjects: ManagedEntityService<Subject>
+  public readonly subjectMatters: ManagedEntityService<SubjectMatter>
+  public readonly disciplinaryActions: ManagedEntityService<DisciplinaryAction>
 
   constructor(args: ServiceArgs) {
-    this.repositories = args.repositories
-    this.actor = args.actor
-    this.authorizationPolicy = args.authorizationPolicy
-
-    // Expose write actions mapped to corresponding policies
-    this.gradeLevels = new AuthorizedWriteService(
-      this.repositories.gradeLevels,
-      this.actor,
-      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'setup.manage'),
-      async (actor, ids) => this.authorizationPolicy.checkClassGroupAccess(actor, ids),
-    )
-
-    this.periodDefinitions = new AuthorizedWriteService(
-      this.repositories.periodDefinitions,
-      this.actor,
-      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'setup.manage'),
-      async () => {}, // Global configuration
-    )
-
-    this.resources = new AuthorizedWriteService(
-      this.repositories.resources,
-      this.actor,
-      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'resources.manage'),
-      async () => {},
-    )
-
-    this.subjects = new AuthorizedWriteService(
-      this.repositories.subjects,
-      this.actor,
-      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'academics.manage_curriculum'),
-      async () => {},
-    )
-
-    this.subjectMatters = new AuthorizedWriteService(
-      this.repositories.subjectMatters,
-      this.actor,
-      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'academics.manage_curriculum'),
-      async () => {},
-      async (entity) => {
-        const subject = await this.repositories.subjects.findById(entity.subjectId)
-        if (!subject || subject.schoolId !== this.actor.schoolId) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
-      },
-    )
-
-    this.disciplinaryActions = new AuthorizedWriteService(
-      this.repositories.disciplinaryActions,
-      this.actor,
-      async actor => this.authorizationPolicy.checkGlobalAction(actor, 'behavior.manage_discipline'),
-      async () => {},
-    )
+    const base = new BaseSchoolService(args)
+    this.gradeLevels = base.gradeLevels
+    this.periodDefinitions = base.periodDefinitions
+    this.resources = base.resources
+    this.subjects = base.subjects
+    this.subjectMatters = base.subjectMatters
+    this.disciplinaryActions = base.disciplinaryActions
   }
 }

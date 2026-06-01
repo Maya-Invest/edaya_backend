@@ -1,5 +1,6 @@
 import type { SchoolRepositories } from '../ports'
 import type { ActorMetadata } from './authorization'
+import type { BaseSchoolService } from './entities/base-school-service'
 import type { ServiceArgs } from './shared/service-args'
 import { AcademicsService as SchoolAcademicsService } from './commands/academics'
 import { AssessmentsService as SchoolAssessmentsService } from './commands/assessments'
@@ -10,6 +11,7 @@ import { FinanceService as SchoolFinanceService } from './commands/finance'
 import { SchedulingService as SchoolSchedulingService } from './commands/scheduling'
 import { SchoolSetupService } from './commands/setup'
 import { StudentsService as SchoolStudentsService } from './commands/student'
+import { SchoolService } from './entities/school-service'
 import { SchoolQueryService } from './queries'
 
 export class SchoolHeadlessApp {
@@ -23,6 +25,8 @@ export class SchoolHeadlessApp {
   readonly communications: SchoolCommunicationsService
   readonly config: SchoolConfigService
   readonly queries: SchoolQueryService
+  readonly base: BaseSchoolService
+  readonly service: SchoolService
 
   constructor(args: ServiceArgs) {
     this.setup = new SchoolSetupService(args)
@@ -35,6 +39,8 @@ export class SchoolHeadlessApp {
     this.finance = new SchoolFinanceService(args)
     this.config = new SchoolConfigService(args)
     this.queries = new SchoolQueryService(args)
+    this.service = new SchoolService(args)
+    this.base = this.service
   }
 }
 
