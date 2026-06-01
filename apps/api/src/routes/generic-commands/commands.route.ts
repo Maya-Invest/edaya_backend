@@ -1,6 +1,5 @@
 import type { Context } from "hono";
 import type { AppBindings, AppRouteHandler } from "@/lib/types";
-import type { CommandRoutePair } from "./types";
 import { badRequestResponse, getErrorMessage, routeErrorResponse, unauthorizedResponse } from "@/lib/http-responses";
 import { type ConfigCommandEntityName, getEntityWriteService } from "@/lib/service-accessors";
 import { commandIdParamSchema } from "@/validation/route.schemas";
@@ -10,6 +9,12 @@ import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { configCommandEntities, configCommandEntitiesByName } from "./commands.config";
 import { actionCommandRoutePairs } from "../school-commands/action-routes";
+import type { RouteConfig } from "@hono/zod-openapi";
+
+export interface CommandRoutePair<R extends RouteConfig = any> {
+  route: R;
+  handler: AppRouteHandler<R>;
+}
 
 export async function saveConfigEntity(c: Context<AppBindings>, entityName: ConfigCommandEntityName, body: unknown) {
   const actor = c.get("actor");
