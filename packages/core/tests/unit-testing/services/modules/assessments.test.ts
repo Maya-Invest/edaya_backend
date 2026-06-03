@@ -1,13 +1,13 @@
+import type { ActorMetadata } from '../../../../src/authorization/actor-metadata'
+import type { AuthorizationPolicy } from '../../../../src/authorization/authorization-policy'
 import type { AtomicExecutionPort } from '../../../../src/ports/atomic-execution'
 import type { SchoolRepositories } from '../../../../src/ports/school-repositories'
-import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
-import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
 import { AssessmentKind } from '../../../../src/entities/assessments/assessment'
 import { DeadlineComplianceStatus } from '../../../../src/entities/assessments/assessment-result'
 import { ReportCardDefinitionSectionKind } from '../../../../src/entities/assessments/report-card-definition-section'
 import { ReportCardResultStatus } from '../../../../src/entities/assessments/report-card-result'
-import { AssessmentsService } from '../../../../src/services/commands/assessments'
+import { AssessmentsService } from '../../../../src/legacy_services/commands/assessments'
 
 describe('AssessmentsService', () => {
   const mockRepos = {

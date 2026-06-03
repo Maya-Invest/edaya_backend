@@ -1,3 +1,4 @@
+import type { ActorMetadata } from '../../src/authorization'
 import type {
   AcademicPeriod,
   AcademicYear,
@@ -42,14 +43,13 @@ import type {
   SubjectMatter,
 } from '../../src/entities'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
-import type { ActorMetadata } from '../../src/services/authorization'
-import { StaffMember, StaffRole } from '../../src/entities'
 import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
-} from '../../src/services/authorization'
-import { SchoolApplication } from '../../src/services/school-headless-app'
+} from '../../src/authorization'
+import { StaffMember, StaffRole } from '../../src/entities'
+import { SchoolApplication } from '../../src/legacy_services/school-headless-app'
 import { matchesFilter } from '../utils/filter-matcher'
 
 interface EntityWithId {

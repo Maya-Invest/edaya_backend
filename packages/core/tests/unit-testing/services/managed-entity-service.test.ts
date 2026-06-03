@@ -1,6 +1,8 @@
+import type { ActorMetadata } from '../../../src/authorization'
 import type { BaseRepositoryInterface, SchoolRepositories } from '../../../src/ports'
-import type { ActorMetadata } from '../../../src/services/authorization'
 import { describe, expect, mock, test } from 'bun:test'
+import { ManagedEntityService } from '../../../src'
+import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '../../../src/authorization'
 import {
   AcademicPeriod,
   AcademicPeriodType,
@@ -49,9 +51,7 @@ import {
   Subject,
   SubjectMatter,
 } from '../../../src/entities'
-import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '../../../src/services/authorization'
-import { ManagedEntityService } from '../../../src/services/entities'
-import { BusinessRuleViolationError } from '../../../src/services/shared/business-rule-error'
+import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { AttendanceSummary } from '../../../src/value_object/attendance-summary'
 import { createStore, createTestApp } from '../../support/in-memory-school-headless-app'
 

@@ -1,9 +1,9 @@
+import type { ActorMetadata } from '../../../../src/authorization/actor-metadata'
+import type { AuthorizationPolicy } from '../../../../src/authorization/authorization-policy'
 import type { SchoolRepositories } from '../../../../src/ports/school-repositories'
-import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
-import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
 import { StudentDisciplinaryActionStatus } from '../../../../src/entities/students/student-disciplinary-action'
-import { BehaviorService } from '../../../../src/services/commands/behavior'
+import { BehaviorService } from '../../../../src/legacy_services/commands/behavior'
 
 describe('BehaviorService', () => {
   const mockRepos = {

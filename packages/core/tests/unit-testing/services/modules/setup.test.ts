@@ -1,10 +1,10 @@
+import type { ActorMetadata } from '../../../../src/authorization/actor-metadata'
+import type { AuthorizationPolicy } from '../../../../src/authorization/authorization-policy'
 import type { SchoolRepositories } from '../../../../src/ports/school-repositories'
-import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
-import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
 import { AcademicPeriodType, AttachmentOwnerKind, AttendanceMode, SchoolType, StaffRole } from '../../../../src'
-import { SchoolSetupService } from '../../../../src/services/commands/setup'
-import { BusinessRuleViolationError } from '../../../../src/services/shared/business-rule-error'
+import { SchoolSetupService } from '../../../../src/legacy_services/commands/setup'
+import { BusinessRuleViolationError } from '../../../../src/shared/business-rule-error'
 
 describe('SetupService', () => {
   const mockRepos = {

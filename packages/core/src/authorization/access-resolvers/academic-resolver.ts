@@ -1,0 +1,182 @@
+import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { ActorMetadata } from '../actor-metadata'
+import { StaffRole } from '../../entities/school/staff-member'
+import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
+import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
+
+const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
+
+export async function checkClassGroupAccess(
+  actor: ActorMetadata,
+  classGroupIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  if (classGroupIds.length === 0)
+    return
+  if (actor.kind === 'system')
+    return
+
+  if (actor.kind === 'student') {
+    const enrollments = await repos.enrollments.list({ studentId: actor.studentId, status: StudentClassEnrollmentStatus.Active })
+    const activeClassGroupIds = new Set(enrollments.map(e => e.classGroupId))
+    const isEnrolled = classGroupIds.every(id => activeClassGroupIds.has(id))
+    if (!isEnrolled)
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    return
+  }
+
+  if (actor.kind === 'guardian') {
+    const links = await repos.guardianLinks.list({ guardianId: actor.guardianId })
+    const studentIds = links.map(link => link.studentId)
+    const activeClassGroups = new Set<string>()
+    for (const studentId of studentIds) {
+      const enrollments = await repos.enrollments.list({ studentId, status: StudentClassEnrollmentStatus.Active })
+      enrollments.forEach(e => activeClassGroups.add(e.classGroupId))
+    }
+    const allLinked = classGroupIds.every(id => activeClassGroups.has(id))
+    if (!allLinked)
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    return
+  }
+
+  if (actor.kind === 'staff') {
+    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
+    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
+    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator)) {
+      return
+    }
+
+    if (staffMember.roles.includes(StaffRole.Teacher)) {
+      for (const classGroupId of classGroupIds) {
+        const assignments = await repos.staffAssignments.list({ classGroupId, staffId: actor.staffMemberId })
+        if (assignments.length === 0) {
+          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+        }
+      }
+      return
+    }
+  }
+
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+}
+
+export async function checkAssessmentAccess(
+  actor: ActorMetadata,
+  assessmentIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  if (assessmentIds.length === 0)
+    return
+  if (actor.kind === 'system')
+    return
+
+  if (actor.kind === 'student' || actor.kind === 'guardian') {
+    const classGroupIds = new Set<string>()
+    for (const assessmentId of assessmentIds) {
+      const assessment = await repos.assessments.findById(assessmentId)
+      if (!assessment)
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      classGroupIds.add(assessment.classGroupId)
+    }
+    await checkClassGroupAccess(actor, Array.from(classGroupIds), repos)
+    return
+  }
+
+  if (actor.kind === 'staff') {
+    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
+    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
+    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator)) {
+      return
+    }
+
+    if (staffMember.roles.includes(StaffRole.Teacher)) {
+      const assessments = await repos.assessments.findByIds(Array.from(assessmentIds))
+      if (assessments.length !== assessmentIds.length) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+      const classGroupIds = [...new Set(assessments.map(a => a.classGroupId))]
+      await checkClassGroupAccess(actor, classGroupIds, repos)
+      return
+    }
+  }
+
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+}
+
+export async function checkReportCardResultAccess(
+  actor: ActorMetadata,
+  reportCardResultIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  if (reportCardResultIds.length === 0)
+    return
+  if (actor.kind === 'system')
+    return
+
+  for (const resultId of reportCardResultIds) {
+    const result = await repos.results.findById(resultId)
+    if (!result)
+      continue
+    // Resolves permission by checking access to the linked student
+    await checkStudentAccess(actor, [result.studentId], repos)
+  }
+}
+
+// Fallback helper to allow imports from student-resolver without circular deps
+async function checkStudentAccess(
+  actor: ActorMetadata,
+  studentIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  if (actor.kind === 'student') {
+    const isSelf = studentIds.every(id => id === actor.studentId)
+    if (!isSelf)
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    return
+  }
+
+  if (actor.kind === 'guardian') {
+    for (const id of studentIds) {
+      const link = await repos.guardianLinks.findOne({ guardianId: actor.guardianId, studentId: id })
+      if (!link || link.schoolId !== actor.schoolId) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
+    return
+  }
+
+  if (actor.kind === 'staff') {
+    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
+    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
+    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator)) {
+      return
+    }
+
+    if (staffMember.roles.includes(StaffRole.Teacher)) {
+      for (const studentId of studentIds) {
+        const enrollments = await repos.enrollments.list({ studentId })
+        const activeEnrollment = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
+        if (!activeEnrollment) {
+          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+        }
+        const assignments = await repos.staffAssignments.list({ classGroupId: activeEnrollment.classGroupId })
+        const isAssigned = assignments.some(a => a.staffId === actor.staffMemberId)
+        if (!isAssigned) {
+          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+        }
+      }
+      return
+    }
+  }
+
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+}

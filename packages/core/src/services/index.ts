@@ -1,3 +1,3 @@
-export * from './authorization'
-export * from './entities'
-export * from './school-headless-app'
+export * from './base-school-service'
+export * from './managed-entity-service'
+export * from './school-service'

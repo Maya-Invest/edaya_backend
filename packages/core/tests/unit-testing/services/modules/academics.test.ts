@@ -1,9 +1,9 @@
+import type { ActorMetadata } from '../../../../src/authorization/actor-metadata'
+import type { AuthorizationPolicy } from '../../../../src/authorization/authorization-policy'
 import type { AtomicExecutionPort } from '../../../../src/ports/atomic-execution'
 import type { SchoolRepositories } from '../../../../src/ports/school-repositories'
-import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
-import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
-import { AcademicsService } from '../../../../src/services/commands/academics'
+import { AcademicsService } from '../../../../src/legacy_services/commands/academics'
 
 describe('AcademicsService uncovered methods', () => {
   const mockRepos = {

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'bun:test'
-import { StaffRole } from '../../../src/entities'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
@@ -10,7 +9,8 @@ import {
   createSystemActorMetadata,
   isInteractiveActor,
   resolveAuditActorId,
-} from '../../../src/services/authorization'
+} from '../../../src/authorization'
+import { StaffRole } from '../../../src/entities'
 
 describe('actor metadata', () => {
   it('creates immutable staff context with normalized roles and audit identity', () => {

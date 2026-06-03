@@ -1,12 +1,12 @@
+import type { ActorMetadata } from '../../../../src/authorization/actor-metadata'
+import type { AuthorizationPolicy } from '../../../../src/authorization/authorization-policy'
 import type { AtomicExecutionPort } from '../../../../src/ports/atomic-execution'
 import type { SchoolRepositories } from '../../../../src/ports/school-repositories'
-import type { ActorMetadata } from '../../../../src/services/authorization/actor-metadata'
-import type { AuthorizationPolicy } from '../../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
 import { Announcement, AnnouncementStatus } from '../../../../src/entities/messaging/announcement'
 import { AnnouncementTargetKind as TargetKind } from '../../../../src/entities/messaging/announcement-target'
 import { MessageDeliveryChannel, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '../../../../src/entities/messaging/message-delivery'
-import { CommunicationsService } from '../../../../src/services/commands/communications'
+import { CommunicationsService } from '../../../../src/legacy_services/commands/communications'
 
 describe('CommunicationsService', () => {
   const mockRepos = {

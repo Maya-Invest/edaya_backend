@@ -1,10 +1,9 @@
+import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
-import type { ActorMetadata } from '../../../src/services/authorization/actor-metadata'
-import type { AuthorizationPolicy } from '../../../src/services/authorization/authorization-policy'
 import { describe, expect, mock, test } from 'bun:test'
-import { AuthorizationError } from '../../../src/services/authorization'
-import { SchoolService } from '../../../src/services/entities'
-import { SchoolQueryService } from '../../../src/services/queries'
+import { SchoolService } from '../../../src'
+import { AuthorizationError } from '../../../src/authorization'
+import { SchoolQueryService } from '../../../src/legacy_services/queries'
 
 describe('SchoolQueryService', () => {
   const mockRepos = {

@@ -1,6 +1,6 @@
+import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorization'
 import type { AttendanceRecord } from '../../../src/entities'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
-import type { ActorMetadata, AuthorizationPolicy } from '../../../src/services/authorization'
 import { describe, expect, mock, test } from 'bun:test'
 import {
   AcademicYear,
@@ -39,8 +39,8 @@ import {
   StudentStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/entities'
-import { SchoolService } from '../../../src/services/entities'
-import { BusinessRuleViolationError } from '../../../src/services/shared/business-rule-error'
+import { SchoolService } from '../../../src/services'
+import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 
 describe('SchoolService complex workflows', () => {
   const actor: ActorMetadata = {

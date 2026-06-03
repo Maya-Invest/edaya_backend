@@ -59,6 +59,11 @@ export class PostgresAtomicExecution implements AtomicExecutionPort {
   constructor(private readonly db: any) {}
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {
+    const activeTransaction = transactionContext.getStore()
+    if (activeTransaction) {
+      return await operation()
+    }
+
     return await this.db.transaction(async (tx: any) => {
       return await transactionContext.run(tx, async () => {
         return await operation()
