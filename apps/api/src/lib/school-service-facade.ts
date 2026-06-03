@@ -57,7 +57,7 @@ export class ApiSchoolApplication {
 
 export class ApiSchoolServiceFacade {
   readonly service: SchoolService;
-  readonly base: SchoolService["base"];
+  readonly baseService: SchoolService["baseService"];
   readonly queries: any;
   readonly config: any;
   readonly setup: any;
@@ -71,9 +71,9 @@ export class ApiSchoolServiceFacade {
 
   constructor(service: SchoolService) {
     this.service = service;
-    this.base = service.base;
+    this.baseService = service.baseService;
     this.queries = createQueryFacade(service);
-    this.config = service.base;
+    this.config = service.baseService;
     this.setup = createSetupFacade(service);
     this.students = createStudentsFacade(service);
     this.academics = createAcademicsFacade(service);
@@ -94,7 +94,7 @@ function createQueryFacade(service: SchoolService): any {
       if (property === "getPublishedReportCardCount") {
         return (schoolId: string) => service.getPublishedReportCardCount(schoolId);
       }
-      return (service.base as any)[property as string];
+      return (service.baseService as any)[property as string];
     },
   });
 }
@@ -102,14 +102,14 @@ function createQueryFacade(service: SchoolService): any {
 function createSetupFacade(service: SchoolService): any {
   return {
     registerSchool: async (input: any) => {
-      await service.base.authorizationPolicy.checkGlobalAction(service.base.actor, "setup.register_school");
+      await service.baseService.authorizationPolicy.checkGlobalAction(service.baseService.actor, "setup.register_school");
       const school = new School(input);
-      await service.base.schools.save(school, { moduleChecked: true });
+      await service.baseService.schools.save(school, { moduleChecked: true });
       return school;
     },
     updateSchoolConfiguration: async ({ schoolId, ...changes }: any) => {
-      const existing = await requireEntity(service.base.schools, schoolId);
-      await service.base.authorizationPolicy.checkGlobalAction(service.base.actor, "setup.manage_lifecycle");
+      const existing = await requireEntity(service.baseService.schools, schoolId);
+      await service.baseService.authorizationPolicy.checkGlobalAction(service.baseService.actor, "setup.manage_lifecycle");
       const school = new School({
         id: existing.id,
         name: changes.name ?? existing.name,
@@ -119,19 +119,19 @@ function createSetupFacade(service: SchoolService): any {
         city: changes.city === undefined ? existing.city : changes.city,
         createdAt: existing.createdAt,
       });
-      await service.base.schools.save(school, { moduleChecked: true });
+      await service.baseService.schools.save(school, { moduleChecked: true });
       return school;
     },
     createAcademicYear: (input: any) => service.createAcademicYear(input),
     activateAcademicYear: (input: any) => service.activateAcademicYear(input),
     createAcademicPeriod: async (input: any) => {
       const period = new AcademicPeriod(input);
-      await service.base.academicPeriods.save(period);
+      await service.baseService.academicPeriods.save(period);
       return period;
     },
     publishAcademicPeriod: async ({ academicPeriodId }: any) => {
-      const existing = await requireEntity(service.base.academicPeriods, academicPeriodId);
-      await service.base.authorizationPolicy.checkGlobalAction(service.base.actor, "setup.manage_lifecycle");
+      const existing = await requireEntity(service.baseService.academicPeriods, academicPeriodId);
+      await service.baseService.authorizationPolicy.checkGlobalAction(service.baseService.actor, "setup.manage_lifecycle");
       const period = new AcademicPeriod({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -143,20 +143,20 @@ function createSetupFacade(service: SchoolService): any {
         isPublished: true,
         createdAt: existing.createdAt,
       });
-      await service.base.academicPeriods.save(period, { moduleChecked: true });
+      await service.baseService.academicPeriods.save(period, { moduleChecked: true });
       return period;
     },
-    createClassGroup: async (input: any) => saveConstructed(service.base.classGroups, new ClassGroup(input)),
+    createClassGroup: async (input: any) => saveConstructed(service.baseService.classGroups, new ClassGroup(input)),
     updateClassGroupConfiguration: async ({ classGroupId, ...changes }: any) => {
-      const existing = await requireEntity(service.base.classGroups, classGroupId);
+      const existing = await requireEntity(service.baseService.classGroups, classGroupId);
       const classGroup = existing.copyWith(changes);
-      await service.base.classGroups.save(classGroup);
+      await service.baseService.classGroups.save(classGroup);
       return classGroup;
     },
-    registerStaffMember: async (input: any) => saveConstructed(service.base.staffMembers, new StaffMember(input)),
+    registerStaffMember: async (input: any) => saveConstructed(service.baseService.staffMembers, new StaffMember(input)),
     updateStaffMemberStatus: async ({ staffId, isActive }: any) => {
-      const existing = await requireEntity(service.base.staffMembers, staffId);
-      return saveConstructed(service.base.staffMembers, new StaffMember({
+      const existing = await requireEntity(service.baseService.staffMembers, staffId);
+      return saveConstructed(service.baseService.staffMembers, new StaffMember({
         id: existing.id,
         schoolId: existing.schoolId,
         firstName: existing.firstName,
@@ -168,73 +168,73 @@ function createSetupFacade(service: SchoolService): any {
         createdAt: existing.createdAt,
       }));
     },
-    assignStaffToClass: (input: any) => saveConstructed(service.base.staffAssignments, new StaffAssignment(input)),
-    assignStaffToClassSubject: (input: any) => saveConstructed(service.base.staffAssignments, new StaffAssignment(input)),
-    assignStaffToSession: (input: any) => saveConstructed(service.base.staffAssignments, new StaffAssignment(input)),
-    assignResourceToClass: (input: any) => saveConstructed(service.base.resourceAssignments, new ResourceAssignment(input)),
-    assignResourceToSession: (input: any) => saveConstructed(service.base.resourceAssignments, new ResourceAssignment(input)),
-    removeResourceAssignment: ({ resourceAssignmentId, id }: any) => service.base.resourceAssignments.delete(resourceAssignmentId ?? id),
-    registerAttachment: (input: any) => saveConstructed(service.base.attachments, new Attachment(input)),
-    removeAttachment: ({ attachmentId, id }: any) => service.base.attachments.delete(attachmentId ?? id),
+    assignStaffToClass: (input: any) => saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input)),
+    assignStaffToClassSubject: (input: any) => saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input)),
+    assignStaffToSession: (input: any) => saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input)),
+    assignResourceToClass: (input: any) => saveConstructed(service.baseService.resourceAssignments, new ResourceAssignment(input)),
+    assignResourceToSession: (input: any) => saveConstructed(service.baseService.resourceAssignments, new ResourceAssignment(input)),
+    removeResourceAssignment: ({ resourceAssignmentId, id }: any) => service.baseService.resourceAssignments.delete(resourceAssignmentId ?? id),
+    registerAttachment: (input: any) => saveConstructed(service.baseService.attachments, new Attachment(input)),
+    removeAttachment: ({ attachmentId, id }: any) => service.baseService.attachments.delete(attachmentId ?? id),
   };
 }
 
 function createStudentsFacade(service: SchoolService): any {
   return {
-    registerStudent: (input: any) => saveConstructed(service.base.students, new Student(input)),
+    registerStudent: (input: any) => saveConstructed(service.baseService.students, new Student(input)),
     enrollStudent: (input: any) => service.enrollStudent(input),
     linkGuardianToStudent: (input: any) => service.linkGuardianToStudent(input),
-    registerGuardian: (input: any) => saveConstructed(service.base.guardians, new Guardian(input)),
+    registerGuardian: (input: any) => saveConstructed(service.baseService.guardians, new Guardian(input)),
     promoteStudent: (input: any) => service.promoteStudent(input),
     transferStudent: (input: any) => service.transferStudent(input),
     graduateStudent: (input: any) => service.graduateStudent(input),
     closeEnrollment: async ({ enrollmentId, endReason, endedAt }: any) => {
-      const existing = await requireEntity(service.base.enrollments, enrollmentId);
-      const closed = existing.close({ endedAt: endedAt ?? new Date(), endReason, closedBy: resolveAuditActorId(service.base.actor) });
-      await service.base.enrollments.save(closed);
+      const existing = await requireEntity(service.baseService.enrollments, enrollmentId);
+      const closed = existing.close({ endedAt: endedAt ?? new Date(), endReason, closedBy: resolveAuditActorId(service.baseService.actor) });
+      await service.baseService.enrollments.save(closed);
       return closed;
     },
     recordProgressionDecision: async ({ enrollmentId, decision, decidedAt, notes }: any) => {
-      const existing = await requireEntity(service.base.enrollments, enrollmentId);
+      const existing = await requireEntity(service.baseService.enrollments, enrollmentId);
       const decided = existing.recordProgressionDecision({
         decision,
         decidedAt: decidedAt ?? new Date(),
-        decidedBy: resolveAuditActorId(service.base.actor),
+        decidedBy: resolveAuditActorId(service.baseService.actor),
         notes,
       });
-      await service.base.enrollments.save(decided);
+      await service.baseService.enrollments.save(decided);
       return decided;
     },
     updateStudentProfile: async ({ studentId, ...changes }: any) => {
-      const existing = await requireEntity(service.base.students, studentId);
+      const existing = await requireEntity(service.baseService.students, studentId);
       const student = existing.copyWith(changes);
-      await service.base.students.save(student);
+      await service.baseService.students.save(student);
       return student;
     },
     updateStudentStatus: async ({ studentId, status }: any) => {
-      const existing = await requireEntity(service.base.students, studentId);
+      const existing = await requireEntity(service.baseService.students, studentId);
       const student = existing.copyWith({ status });
-      await service.base.students.save(student);
+      await service.baseService.students.save(student);
       return student;
     },
     upsertStudentHealthProfile: async (input: any) => {
-      const student = await requireEntity(service.base.students, input.studentId);
-      return saveConstructed(service.base.studentHealthProfiles, new StudentHealthProfile({
+      const student = await requireEntity(service.baseService.students, input.studentId);
+      return saveConstructed(service.baseService.studentHealthProfiles, new StudentHealthProfile({
         ...input,
         schoolId: input.schoolId ?? student.schoolId,
       }));
     },
     createStudentNote: async (input: any) => {
-      const student = await requireEntity(service.base.students, input.studentId);
-      return saveConstructed(service.base.studentNotes, new StudentNote({
+      const student = await requireEntity(service.baseService.students, input.studentId);
+      return saveConstructed(service.baseService.studentNotes, new StudentNote({
         ...input,
         schoolId: input.schoolId ?? student.schoolId,
-        authorStaffId: input.authorStaffId ?? resolveAuditActorId(service.base.actor),
+        authorStaffId: input.authorStaffId ?? resolveAuditActorId(service.baseService.actor),
       }));
     },
     updateStudentNote: async ({ noteId, ...changes }: any) => {
-      const existing = await requireEntity(service.base.studentNotes, noteId);
-      return saveConstructed(service.base.studentNotes, new StudentNote({
+      const existing = await requireEntity(service.baseService.studentNotes, noteId);
+      return saveConstructed(service.baseService.studentNotes, new StudentNote({
         id: existing.id,
         schoolId: existing.schoolId,
         studentId: existing.studentId,
@@ -247,8 +247,8 @@ function createStudentsFacade(service: SchoolService): any {
       }));
     },
     updateGuardianContactMethods: async ({ guardianId, ...changes }: any) => {
-      const existing = await requireEntity(service.base.guardians, guardianId);
-      return saveConstructed(service.base.guardians, new Guardian({
+      const existing = await requireEntity(service.baseService.guardians, guardianId);
+      return saveConstructed(service.baseService.guardians, new Guardian({
         id: existing.id,
         schoolId: existing.schoolId,
         firstName: changes.firstName ?? existing.firstName,
@@ -261,8 +261,8 @@ function createStudentsFacade(service: SchoolService): any {
       }));
     },
     updateGuardianStudentLink: async ({ guardianId, studentId, ...changes }: any) => {
-      const existing = await requireOne(service.base.guardianLinks, { guardianId, studentId });
-      return saveConstructed(service.base.guardianLinks, new GuardianStudentLink({
+      const existing = await requireOne(service.baseService.guardianLinks, { guardianId, studentId });
+      return saveConstructed(service.baseService.guardianLinks, new GuardianStudentLink({
         id: existing.id,
         schoolId: existing.schoolId,
         guardianId: existing.guardianId,
@@ -285,36 +285,36 @@ function createStudentsFacade(service: SchoolService): any {
 
 function createAcademicsFacade(service: SchoolService): any {
   return {
-    offerSubjectToClass: (input: any) => saveConstructed(service.base.classSubjects, new ClassSubject(input)),
-    assignMatterToClassSubject: (input: any) => saveConstructed(service.base.classSubjectMatters, new ClassSubjectMatter({
+    offerSubjectToClass: (input: any) => saveConstructed(service.baseService.classSubjects, new ClassSubject(input)),
+    assignMatterToClassSubject: (input: any) => saveConstructed(service.baseService.classSubjectMatters, new ClassSubjectMatter({
       ...input,
       status: input.status ?? ClassSubjectMatterStatus.NotStarted,
       completedPercentage: input.completedPercentage ?? 0,
     })),
-    listMatterProgress: (classSubjectMatterId: string) => service.base.classSubjectProgress.list({ classSubjectMatterId }),
+    listMatterProgress: (classSubjectMatterId: string) => service.baseService.classSubjectProgress.list({ classSubjectMatterId }),
     recordSessionProgress: (input: any) => service.recordSessionProgress(input),
   };
 }
 
 function createAssessmentsFacade(service: SchoolService): any {
   return {
-    createGradeScale: (input: any) => saveConstructed(service.base.gradeScales, new GradeScale(input)),
-    createReportCardDefinition: (input: any) => saveConstructed(service.base.definitions, new ReportCardDefinition(input)),
-    createReportCardDefinitionSection: (input: any) => saveConstructed(service.base.sections, new ReportCardDefinitionSection(input)),
-    createAssessment: (input: any) => saveConstructed(service.base.assessments, new Assessment(input)),
+    createGradeScale: (input: any) => saveConstructed(service.baseService.gradeScales, new GradeScale(input)),
+    createReportCardDefinition: (input: any) => saveConstructed(service.baseService.definitions, new ReportCardDefinition(input)),
+    createReportCardDefinitionSection: (input: any) => saveConstructed(service.baseService.sections, new ReportCardDefinitionSection(input)),
+    createAssessment: (input: any) => saveConstructed(service.baseService.assessments, new Assessment(input)),
     completeAssessment: async ({ assessmentId, metAt }: any) => {
-      const existing = await requireEntity(service.base.assessments, assessmentId);
-      return saveConstructed(service.base.assessments, new Assessment({ ...existing, metAt: metAt ?? new Date() }));
+      const existing = await requireEntity(service.baseService.assessments, assessmentId);
+      return saveConstructed(service.baseService.assessments, new Assessment({ ...existing, metAt: metAt ?? new Date() }));
     },
-    recordAssessmentResult: (input: any) => saveConstructed(service.base.assessmentResults, new AssessmentResult(input)),
-    recordAssessmentResultCompliance: (input: any) => saveConstructed(service.base.assessmentResults, new AssessmentResult(input)),
+    recordAssessmentResult: (input: any) => saveConstructed(service.baseService.assessmentResults, new AssessmentResult(input)),
+    recordAssessmentResultCompliance: (input: any) => saveConstructed(service.baseService.assessmentResults, new AssessmentResult(input)),
     listClassSubjectAssessmentResultsForPeriod: async ({ classSubjectId, periodId }: any) => {
-      await requireEntity(service.base.classSubjects, classSubjectId);
-      await requireEntity(service.base.academicPeriods, periodId);
-      const assessments = await service.base.assessments.list({ classSubjectId, periodId });
+      await requireEntity(service.baseService.classSubjects, classSubjectId);
+      await requireEntity(service.baseService.academicPeriods, periodId);
+      const assessments = await service.baseService.assessments.list({ classSubjectId, periodId });
       const results = [];
       for (const assessment of assessments) {
-        results.push(...await service.base.assessmentResults.list({ assessmentId: assessment.id }));
+        results.push(...await service.baseService.assessmentResults.list({ assessmentId: assessment.id }));
       }
       return results;
     },
@@ -325,15 +325,15 @@ function createAssessmentsFacade(service: SchoolService): any {
 
 function createBehaviorFacade(service: SchoolService): any {
   return {
-    recordIncident: (input: any) => saveConstructed(service.base.incidents, new Incident({
+    recordIncident: (input: any) => saveConstructed(service.baseService.incidents, new Incident({
       ...input,
-      reporterId: input.reporterId ?? resolveAuditActorId(service.base.actor),
+      reporterId: input.reporterId ?? resolveAuditActorId(service.baseService.actor),
     })),
     addStudentInvolvement: (input: any) => service.addStudentInvolvement(input),
     applyDisciplinaryAction: (input: any) => service.applyDisciplinaryAction(input),
     updateStudentDisciplinaryActionStatus: async ({ studentDisciplinaryActionId, actionId, status }: any) => {
-      const existing = await requireEntity(service.base.studentDisciplinaryActions, studentDisciplinaryActionId ?? actionId);
-      return saveConstructed(service.base.studentDisciplinaryActions, new StudentDisciplinaryAction({
+      const existing = await requireEntity(service.baseService.studentDisciplinaryActions, studentDisciplinaryActionId ?? actionId);
+      return saveConstructed(service.baseService.studentDisciplinaryActions, new StudentDisciplinaryAction({
         id: existing.id,
         schoolId: existing.schoolId,
         incidentId: existing.incidentId,
@@ -349,8 +349,8 @@ function createBehaviorFacade(service: SchoolService): any {
       }));
     },
     resolveIncident: async ({ incidentId, resolutionNotes }: any) => {
-      const existing = await requireEntity(service.base.incidents, incidentId);
-      return saveConstructed(service.base.incidents, new Incident({
+      const existing = await requireEntity(service.baseService.incidents, incidentId);
+      return saveConstructed(service.baseService.incidents, new Incident({
         id: existing.id,
         schoolId: existing.schoolId,
         title: existing.title,
@@ -363,7 +363,7 @@ function createBehaviorFacade(service: SchoolService): any {
         status: IncidentStatus.Resolved,
         resolutionNotes: resolutionNotes ?? "Resolved",
         resolvedAt: new Date(),
-        resolvedByStaffId: resolveAuditActorId(service.base.actor),
+        resolvedByStaffId: resolveAuditActorId(service.baseService.actor),
         createdAt: existing.createdAt,
         updatedAt: new Date(),
       }));
@@ -373,66 +373,66 @@ function createBehaviorFacade(service: SchoolService): any {
 
 function createFinanceFacade(service: SchoolService): any {
   return {
-    createFee: (input: any) => saveConstructed(service.base.fees, new Fee(input)),
+    createFee: (input: any) => saveConstructed(service.baseService.fees, new Fee(input)),
     assignFeeToStudent: (input: any) => service.assignFeeToStudent(input),
     recordPayment: (input: any) => service.recordPayment(input),
     reversePayment: (input: any) => service.reversePayment(input),
     cancelPayment: (input: any) => service.cancelPayment(input),
     adjustStudentFee: async ({ studentFeeId, adjustmentAmount, reason }: any) => {
-      const existing = await requireEntity(service.base.studentFees, studentFeeId);
-      return saveConstructed(service.base.studentFees, existing.copyWith({
+      const existing = await requireEntity(service.baseService.studentFees, studentFeeId);
+      return saveConstructed(service.baseService.studentFees, existing.copyWith({
         adjustmentAmount,
         adjustmentReason: reason,
-        adjustedById: resolveAuditActorId(service.base.actor),
+        adjustedById: resolveAuditActorId(service.baseService.actor),
         adjustedAt: new Date(),
         updatedAt: new Date(),
       }));
     },
     cancelStudentFee: async ({ studentFeeId, reason }: any) => {
-      const existing = await requireEntity(service.base.studentFees, studentFeeId);
-      return saveConstructed(service.base.studentFees, existing.copyWith({
+      const existing = await requireEntity(service.baseService.studentFees, studentFeeId);
+      return saveConstructed(service.baseService.studentFees, existing.copyWith({
         status: FeeStatus.Cancelled,
         cancellationReason: reason,
-        cancelledById: resolveAuditActorId(service.base.actor),
+        cancelledById: resolveAuditActorId(service.baseService.actor),
         cancelledAt: new Date(),
         updatedAt: new Date(),
       }));
     },
-    buildFeeSummary: async (studentId: string) => buildStudentFeeSummary(await service.base.studentFees.list({ studentId })),
+    buildFeeSummary: async (studentId: string) => buildStudentFeeSummary(await service.baseService.studentFees.list({ studentId })),
   };
 }
 
 function createSchedulingFacade(service: SchoolService): any {
   return {
-    createSchedule: (input: any) => saveConstructed(service.base.schedules, new Schedule(input)),
-    createCalendarEvent: (input: any) => saveConstructed(service.base.calendarEvents, new CalendarEvent(input)),
-    createSession: (input: any) => saveConstructed(service.base.sessions, new Session(input)),
+    createSchedule: (input: any) => saveConstructed(service.baseService.schedules, new Schedule(input)),
+    createCalendarEvent: (input: any) => saveConstructed(service.baseService.calendarEvents, new CalendarEvent(input)),
+    createSession: (input: any) => saveConstructed(service.baseService.sessions, new Session(input)),
     generateSessions: (input: any) => service.generateSessions(input),
     recordAttendance: (input: any) => service.recordAttendance(input),
     recordDailyAttendance: (input: any) => service.recordDailyAttendance(input),
     recordSessionAttendance: (input: any) => service.recordSessionAttendance(input),
     recordClassDailyAttendance: (input: any) => service.recordClassDailyAttendance(input),
     reviewAttendanceJustification: async ({ studentId, sessionId, decision, reason }: any) => {
-      const existing = await requireOne(service.base.attendance, { studentId, sessionId });
-      return saveConstructed(service.base.attendance, existing.copyWith({
+      const existing = await requireOne(service.baseService.attendance, { studentId, sessionId });
+      return saveConstructed(service.baseService.attendance, existing.copyWith({
         justificationStatus: decision ?? AttendanceJustificationStatus.Excused,
         reason,
         justifiedAt: new Date(),
-        justifiedByStaffId: resolveAuditActorId(service.base.actor),
+        justifiedByStaffId: resolveAuditActorId(service.baseService.actor),
       }));
     },
     buildAttendanceSummary: async ({ sessionId, expectedTotal }: any) => {
-      const records = await service.base.attendance.list({ sessionId });
+      const records = await service.baseService.attendance.list({ sessionId });
       return buildSessionAttendanceSummary(records, expectedTotal ?? records.length);
     },
-    listSessionAttendance: (sessionId: string) => service.base.attendance.list({ sessionId }),
+    listSessionAttendance: (sessionId: string) => service.baseService.attendance.list({ sessionId }),
   };
 }
 
 function createCommunicationsFacade(service: SchoolService): any {
   return {
-    createAnnouncement: (input: any) => saveConstructed(service.base.announcements, new Announcement(input)),
-    addTarget: (input: any) => saveConstructed(service.base.announcementTargets, new AnnouncementTarget(input)),
+    createAnnouncement: (input: any) => saveConstructed(service.baseService.announcements, new Announcement(input)),
+    addTarget: (input: any) => saveConstructed(service.baseService.announcementTargets, new AnnouncementTarget(input)),
     publishAnnouncement: (input: any) => service.publishAnnouncement(input),
     recordDelivery: (input: any) => service.recordDelivery(input),
     materializeDeliveries: (input: any) => service.materializeDeliveries(input),

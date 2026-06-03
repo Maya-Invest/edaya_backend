@@ -5,16 +5,16 @@ import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 
 export class BaseServiceWorkflow {
   constructor(
-    readonly base: BaseSchoolService,
+    readonly baseService: BaseSchoolService,
   ) {}
 
   protected checkActorSchool(schoolId: string): void {
-    if (schoolId !== this.base.actor.schoolId)
+    if (schoolId !== this.baseService.actor.schoolId)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
   protected async requireStudent(studentId: string): Promise<Student> {
-    const student = await this.base.repositories.students.findById(studentId)
+    const student = await this.baseService.repositories.students.findById(studentId)
     if (!student) {
       denyResourceAccess()
     }
@@ -22,7 +22,7 @@ export class BaseServiceWorkflow {
   }
 
   protected async requirePeriod(periodId: string): Promise<AcademicPeriod> {
-    const period = await this.base.repositories.academicPeriods.findById(periodId)
+    const period = await this.baseService.repositories.academicPeriods.findById(periodId)
     if (!period) {
       throw new BusinessRuleViolationError('UNKNOWN_PERIOD', `Unknown period: ${periodId}`)
     }
@@ -30,7 +30,7 @@ export class BaseServiceWorkflow {
   }
 
   protected async requireClassGroup(classGroupId: string): Promise<ClassGroup> {
-    const classGroup = await this.base.repositories.classGroups.findById(classGroupId)
+    const classGroup = await this.baseService.repositories.classGroups.findById(classGroupId)
     if (!classGroup) {
       denyResourceAccess()
     }

@@ -66,7 +66,7 @@ describeIntegration('setup lifecycle journey', () => {
     expect(period.isPublished).toBe(false)
     expect((await publishAcademicPeriod(app, 'term')).isPublished).toBe(true)
 
-    await app.base.gradeLevels.save(
+    await app.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await saveStaffMember(app, {

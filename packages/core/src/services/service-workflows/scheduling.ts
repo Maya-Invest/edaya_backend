@@ -74,9 +74,9 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }: GenerateSessionsInput): Promise<Session[]> {
     const classGroup = await this.requireClassGroup(classGroupId)
     await this.authorizeSchedulingManage(classGroup)
-    return this.base.atomicExecution.execute(async () => {
-      const schedules = await this.base.repositories.schedules.list({ classGroupId })
-      const calendarEvents = await this.base.repositories.calendarEvents.list({ academicYearId: classGroup.academicYearId })
+    return this.baseService.atomicExecution.execute(async () => {
+      const schedules = await this.baseService.repositories.schedules.list({ classGroupId })
+      const calendarEvents = await this.baseService.repositories.calendarEvents.list({ academicYearId: classGroup.academicYearId })
       const nonSchoolDates = new Set<string>()
 
       for (const event of calendarEvents) {
@@ -121,7 +121,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
               classSubjectId: schedule.classSubjectId,
               scheduleId: schedule.id,
             })
-            await this.base.sessions.save(session, { moduleChecked: true })
+            await this.baseService.sessions.save(session, { moduleChecked: true })
             generatedSessions.push(session)
           }
         }
@@ -153,7 +153,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       studentId,
       sessionId,
       status,
-      createdBy: resolveAuditActorId(this.base.actor),
+      createdBy: resolveAuditActorId(this.baseService.actor),
       createdAt,
     })
   }
@@ -171,8 +171,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     await this.authorizeAttendanceRecord({ classGroup, studentId })
     await this.requireStudentInSchool(studentId, classGroup.schoolId)
     await this.requireEnrollmentForClassGroup({ studentId, classGroupId: classGroup.id })
-    const createdBy = resolveAuditActorId(this.base.actor)
-    return this.base.atomicExecution.execute(async () => {
+    const createdBy = resolveAuditActorId(this.baseService.actor)
+    return this.baseService.atomicExecution.execute(async () => {
       const session = await this.getOrCreateDailyAttendanceSession(classGroup, date, createdAt)
       return this.saveAttendanceRecord({
         id,
@@ -196,8 +196,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     for (const studentId of Object.keys(attendanceByStudent)) {
       await this.requireStudentInSchool(studentId, classGroup.schoolId)
     }
-    const createdBy = resolveAuditActorId(this.base.actor)
-    return this.base.atomicExecution.execute(async () => {
+    const createdBy = resolveAuditActorId(this.baseService.actor)
+    return this.baseService.atomicExecution.execute(async () => {
       const records: AttendanceRecord[] = []
       for (const [studentId, status] of Object.entries(attendanceByStudent)) {
         records.push(await this.saveAttendanceRecord({
@@ -226,8 +226,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       await this.requireStudentInSchool(studentId, classGroup.schoolId)
       await this.requireEnrollmentForClassGroup({ studentId, classGroupId: classGroup.id })
     }
-    const createdBy = resolveAuditActorId(this.base.actor)
-    return this.base.atomicExecution.execute(async () => {
+    const createdBy = resolveAuditActorId(this.baseService.actor)
+    return this.baseService.atomicExecution.execute(async () => {
       const session = await this.getOrCreateDailyAttendanceSession(classGroup, date, createdAt)
       const records: AttendanceRecord[] = []
       for (const [studentId, status] of Object.entries(attendanceByStudent)) {
@@ -262,7 +262,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     await this.requireStudent(studentId)
     const session = await this.requireSession(sessionId)
     await this.requireEnrollmentForClassGroup({ studentId, classGroupId: session.classGroupId })
-    const existing = await this.base.repositories.attendance.findOne({ studentId, sessionId })
+    const existing = await this.baseService.repositories.attendance.findOne({ studentId, sessionId })
     const isCorrection = existing !== undefined && existing.status !== status
     const updatedAt = isCorrection ? (createdAt ?? new Date()) : existing?.updatedAt ?? createdAt
     const record = new AttendanceRecord({
@@ -282,7 +282,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing?.createdAt ?? createdAt,
       updatedAt,
     })
-    await this.base.attendance.save(record, { moduleChecked: true })
+    await this.baseService.attendance.save(record, { moduleChecked: true })
     return record
   }
 
@@ -299,7 +299,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   ): Promise<Session> {
     const normalizedDate = normalizeDate(date)
     const sessionId = this.buildDailyAttendanceSessionId(classGroup.id, normalizedDate)
-    const existing = await this.base.repositories.sessions.findById(sessionId)
+    const existing = await this.baseService.repositories.sessions.findById(sessionId)
     if (existing) {
       if (existing.classGroupId !== classGroup.id || !this.isDailyAttendanceSession(existing, normalizedDate)) {
         denyResourceAccess()
@@ -317,7 +317,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       endsAt,
       createdAt,
     })
-    await this.base.sessions.save(session, { moduleChecked: true })
+    await this.baseService.sessions.save(session, { moduleChecked: true })
     return session
   }
 
@@ -332,19 +332,19 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireSession(sessionId: string): Promise<Session> {
-    const session = await this.base.repositories.sessions.findById(sessionId)
+    const session = await this.baseService.repositories.sessions.findById(sessionId)
     if (!session) {
       denyResourceAccess()
     }
-    const classGroup = await this.base.repositories.classGroups.findById(session.classGroupId)
-    if (!classGroup || classGroup.schoolId !== this.base.actor.schoolId) {
+    const classGroup = await this.baseService.repositories.classGroups.findById(session.classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return session
   }
 
   private async requireStudentInSchool(studentId: string, schoolId: string): Promise<void> {
-    const student = await this.base.repositories.students.findById(studentId)
+    const student = await this.baseService.repositories.students.findById(studentId)
     if (!student || student.schoolId !== schoolId) {
       denyResourceAccess()
     }
@@ -357,7 +357,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId: string
     classGroupId: string
   }): Promise<void> {
-    const enrollments = await this.base.repositories.enrollments.list({
+    const enrollments = await this.baseService.repositories.enrollments.list({
       studentId,
       classGroupId,
       status: StudentClassEnrollmentStatus.Active,
@@ -377,21 +377,21 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'attendance.record')
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'attendance.record')
     if (classGroup.id) {
-      await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+      await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     }
     if (session) {
-      await this.base.authorizationPolicy.checkSessionAccess(this.base.actor, [session.id])
+      await this.baseService.authorizationPolicy.checkSessionAccess(this.baseService.actor, [session.id])
     }
     if (studentId) {
-      await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [studentId])
+      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [studentId])
     }
   }
 
   private async authorizeSchedulingManage(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'scheduling.manage')
-    await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'scheduling.manage')
+    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
   }
 }

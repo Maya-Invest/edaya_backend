@@ -32,10 +32,10 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
   }: CreateAcademicYearInput): Promise<AcademicYear> {
     this.checkActorSchool(schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'setup.manage')
-    await requireSchool(this.base.repositories.schools, schoolId)
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'setup.manage')
+    await requireSchool(this.baseService.repositories.schools, schoolId)
 
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const academicYear = new AcademicYearEntity({
         id,
         schoolId,
@@ -46,20 +46,20 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         createdAt,
       })
       await this.deactivateOtherAcademicYears(schoolId, academicYear.id)
-      await this.base.academicYears.save(academicYear, { moduleChecked: true })
+      await this.baseService.academicYears.save(academicYear, { moduleChecked: true })
       return academicYear
     })
   }
 
   async activateAcademicYear({ academicYearId }: ActivateAcademicYearInput): Promise<AcademicYear> {
-    const academicYear = await this.base.repositories.academicYears.findById(academicYearId)
+    const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
     if (!academicYear) {
       denyResourceAccess()
     }
     this.checkActorSchool(academicYear.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'setup.manage_lifecycle')
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'setup.manage_lifecycle')
 
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       await this.deactivateOtherAcademicYears(academicYear.schoolId, academicYear.id)
       const activated = new AcademicYearEntity({
         id: academicYear.id,
@@ -70,18 +70,18 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         isActive: true,
         createdAt: academicYear.createdAt,
       })
-      await this.base.academicYears.save(activated, { moduleChecked: true })
+      await this.baseService.academicYears.save(activated, { moduleChecked: true })
       return activated
     })
   }
 
   private async deactivateOtherAcademicYears(schoolId: string, activeAcademicYearId: string): Promise<void> {
-    const activeAcademicYears = await this.base.repositories.academicYears.list({ schoolId, isActive: true })
+    const activeAcademicYears = await this.baseService.repositories.academicYears.list({ schoolId, isActive: true })
     for (const academicYear of activeAcademicYears) {
       if (academicYear.id === activeAcademicYearId) {
         continue
       }
-      await this.base.academicYears.save(new AcademicYearEntity({
+      await this.baseService.academicYears.save(new AcademicYearEntity({
         id: academicYear.id,
         schoolId: academicYear.schoolId,
         name: academicYear.name,

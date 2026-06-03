@@ -61,7 +61,7 @@ While direct `BaseSchoolService` saves now correctly enforce actions, the servic
 Add explicit module action checks inside the workflows before saving:
 ```typescript
 // Example fix in recordPayment (finance.ts)
-await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
+await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
 ```
 
 ### 2. P3 Action Items: API Surface Decisions & Linter Harness

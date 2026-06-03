@@ -50,12 +50,12 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       studentId,
     })
     await this.requireStudentInIncidentScope(studentId, incident)
-    const existing = (await this.base.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
+    const existing = (await this.baseService.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
     if (existing) {
       throw new BusinessRuleViolationError('STUDENT_ALREADY_LINKED_TO_INCIDENT', `Student ${studentId} is already linked to incident ${incidentId}`)
     }
     const involvement = new StudentIncidentInvolvement({ id, incidentId, studentId, role, notes, createdAt })
-    await this.base.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
+    await this.baseService.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
     return involvement
   }
 
@@ -78,8 +78,8 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     })
     await this.requireStudentInIncidentScope(studentId, incident)
     const [catalogAction, involvement] = await Promise.all([
-      this.base.repositories.disciplinaryActions.findById(disciplinaryActionId),
-      this.base.repositories.studentIncidentInvolvements.list({ incidentId, studentId }),
+      this.baseService.repositories.disciplinaryActions.findById(disciplinaryActionId),
+      this.baseService.repositories.studentIncidentInvolvements.list({ incidentId, studentId }),
     ])
     if (!catalogAction || catalogAction.schoolId !== incident.schoolId || involvement.length === 0) {
       denyResourceAccess()
@@ -90,31 +90,31 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       incidentId,
       studentId,
       disciplinaryActionId,
-      assignedByStaffId: resolveAuditActorId(this.base.actor),
+      assignedByStaffId: resolveAuditActorId(this.baseService.actor),
       startsAt,
       endsAt,
       notes,
       createdAt,
     })
-    await this.base.studentDisciplinaryActions.save(applied, { moduleChecked: true })
+    await this.baseService.studentDisciplinaryActions.save(applied, { moduleChecked: true })
     return applied
   }
 
   private async requireIncident(incidentId: string): Promise<Incident> {
-    const incident = await this.base.repositories.incidents.findById(incidentId)
-    if (!incident || incident.schoolId !== this.base.actor.schoolId) {
+    const incident = await this.baseService.repositories.incidents.findById(incidentId)
+    if (!incident || incident.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return incident
   }
 
   private async requireStudentInIncidentScope(studentId: string, incident: Incident): Promise<void> {
-    const student = await this.base.repositories.students.findById(studentId)
+    const student = await this.baseService.repositories.students.findById(studentId)
     if (!student || student.schoolId !== incident.schoolId) {
       denyResourceAccess()
     }
     if (incident.classGroupId) {
-      const enrollments = await this.base.repositories.enrollments.list({
+      const enrollments = await this.baseService.repositories.enrollments.list({
         studentId,
         classGroupId: incident.classGroupId,
         status: StudentClassEnrollmentStatus.Active,
@@ -134,36 +134,36 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       studentId?: string
     },
   ): Promise<void> {
-    if (resource.schoolId !== this.base.actor.schoolId) {
+    if (resource.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     switch (action) {
       case 'behavior.report_incident':
         if (resource.classGroupId) {
-          await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [resource.classGroupId])
+          await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [resource.classGroupId])
         }
         else if (resource.sessionId) {
-          await this.base.authorizationPolicy.checkSessionAccess(this.base.actor, [resource.sessionId])
+          await this.baseService.authorizationPolicy.checkSessionAccess(this.baseService.actor, [resource.sessionId])
         }
         else {
-          await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'behavior.report_incident')
+          await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'behavior.report_incident')
         }
         if (resource.studentId) {
-          await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [resource.studentId])
+          await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [resource.studentId])
         }
         break
       case 'behavior.manage_discipline':
         if (resource.classGroupId) {
-          await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [resource.classGroupId])
+          await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [resource.classGroupId])
         }
         else if (resource.sessionId) {
-          await this.base.authorizationPolicy.checkSessionAccess(this.base.actor, [resource.sessionId])
+          await this.baseService.authorizationPolicy.checkSessionAccess(this.baseService.actor, [resource.sessionId])
         }
         else {
-          await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'behavior.manage_discipline')
+          await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'behavior.manage_discipline')
         }
         if (resource.studentId) {
-          await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [resource.studentId])
+          await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [resource.studentId])
         }
         break
     }

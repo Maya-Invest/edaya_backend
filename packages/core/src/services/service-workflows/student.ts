@@ -77,11 +77,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'students.manage_enrollment')
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
-    await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'students.manage_enrollment')
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
 
-    const existingEnrollments = await this.base.repositories.enrollments.list({ studentId })
+    const existingEnrollments = await this.baseService.repositories.enrollments.list({ studentId })
     const activeEnrollment = existingEnrollments.find(
       enrollment => enrollment.status === StudentClassEnrollmentStatus.Active,
     )
@@ -102,7 +102,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       enrollmentIndex: nextEnrollmentIndex,
       createdAt,
     })
-    await this.base.enrollments.save(enrollment, { moduleChecked: true })
+    await this.baseService.enrollments.save(enrollment, { moduleChecked: true })
     return enrollment
   }
 
@@ -130,13 +130,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(guardian.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'students.manage_guardians')
-    await this.base.authorizationPolicy.checkGuardianAccess(this.base.actor, [guardian.id])
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'students.manage_guardians')
+    await this.baseService.authorizationPolicy.checkGuardianAccess(this.baseService.actor, [guardian.id])
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
 
     await this.requireStudentEnrolledInSchool(student.id, guardian.schoolId)
 
-    const existing = await this.base.repositories.guardianLinks.findOne({ guardianId, studentId })
+    const existing = await this.baseService.repositories.guardianLinks.findOne({ guardianId, studentId })
     const link = new GuardianStudentLink({
       id: existing?.id ?? id,
       schoolId: guardian.schoolId,
@@ -154,7 +154,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       notes,
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.base.guardianLinks.save(link, { moduleChecked: true })
+    await this.baseService.guardianLinks.save(link, { moduleChecked: true })
     return link
   }
 
@@ -166,14 +166,14 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     decidedAt = effectiveAt,
     notes,
   }: PromoteStudentInput): Promise<StudentClassEnrollment> {
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
       const sourceClassGroup = await this.requireClassGroup(enrollment.classGroupId)
       const nextClassGroup = await this.requireTransitionTarget(enrollment, nextClassGroupId)
       const [sourceGradeLevel, nextGradeLevel] = await Promise.all([
-        this.base.repositories.gradeLevels.findById(sourceClassGroup.gradeLevelId),
-        this.base.repositories.gradeLevels.findById(nextClassGroup.gradeLevelId),
+        this.baseService.repositories.gradeLevels.findById(sourceClassGroup.gradeLevelId),
+        this.baseService.repositories.gradeLevels.findById(nextClassGroup.gradeLevelId),
       ])
       if (!sourceGradeLevel || !nextGradeLevel || nextGradeLevel.order <= sourceGradeLevel.order) {
         throw new BusinessRuleViolationError('INVALID_PROMOTION_TARGET', 'Promotion target must belong to a higher grade level')
@@ -182,11 +182,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       const completed = enrollment.close({
         endedAt: effectiveAt,
         endReason: EnrollmentEndReason.Completed,
-        closedBy: resolveAuditActorId(this.base.actor),
+        closedBy: resolveAuditActorId(this.baseService.actor),
       }).recordProgressionDecision({
         decision: ProgressionDecision.Promoted,
         decidedAt,
-        decidedBy: resolveAuditActorId(this.base.actor),
+        decidedBy: resolveAuditActorId(this.baseService.actor),
         notes,
       })
       const successor = await this.createSuccessorEnrollment({
@@ -195,8 +195,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.base.enrollments.save(completed, { moduleChecked: true })
-      await this.base.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.enrollments.save(completed, { moduleChecked: true })
+      await this.baseService.enrollments.save(successor, { moduleChecked: true })
       return successor
     })
   }
@@ -207,14 +207,14 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     nextClassGroupId,
     effectiveAt,
   }: TransferStudentInput): Promise<StudentClassEnrollment> {
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
       const nextClassGroup = await this.requireTransitionTarget(enrollment, nextClassGroupId)
       const transferred = enrollment.close({
         endedAt: effectiveAt,
         endReason: EnrollmentEndReason.Transferred,
-        closedBy: resolveAuditActorId(this.base.actor),
+        closedBy: resolveAuditActorId(this.baseService.actor),
       })
       const successor = await this.createSuccessorEnrollment({
         id: nextEnrollmentId,
@@ -222,8 +222,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.base.enrollments.save(transferred, { moduleChecked: true })
-      await this.base.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.enrollments.save(transferred, { moduleChecked: true })
+      await this.baseService.enrollments.save(successor, { moduleChecked: true })
       return successor
     })
   }
@@ -234,18 +234,18 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     decidedAt = effectiveAt,
     notes,
   }: GraduateStudentInput): Promise<StudentClassEnrollment> {
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
       const student = await this.requireStudent(enrollment.studentId)
       const graduatedEnrollment = enrollment.close({
         endedAt: effectiveAt,
         endReason: EnrollmentEndReason.Completed,
-        closedBy: resolveAuditActorId(this.base.actor),
+        closedBy: resolveAuditActorId(this.baseService.actor),
       }).recordProgressionDecision({
         decision: ProgressionDecision.Graduated,
         decidedAt,
-        decidedBy: resolveAuditActorId(this.base.actor),
+        decidedBy: resolveAuditActorId(this.baseService.actor),
         notes,
       })
       const graduatedStudent = new Student({
@@ -264,14 +264,14 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         enrollmentDate: student.enrollmentDate,
         createdAt: student.createdAt,
       })
-      await this.base.enrollments.save(graduatedEnrollment, { moduleChecked: true })
-      await this.base.students.save(graduatedStudent, { moduleChecked: true })
+      await this.baseService.enrollments.save(graduatedEnrollment, { moduleChecked: true })
+      await this.baseService.students.save(graduatedStudent, { moduleChecked: true })
       return graduatedEnrollment
     })
   }
 
   private async requireManagedEnrollment(enrollmentId: string): Promise<StudentClassEnrollment> {
-    const enrollment = await this.base.repositories.enrollments.findById(enrollmentId)
+    const enrollment = await this.baseService.repositories.enrollments.findById(enrollmentId)
     if (!enrollment) {
       denyResourceAccess()
     }
@@ -283,14 +283,14 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'students.manage_enrollment')
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
-    await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'students.manage_enrollment')
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     return enrollment
   }
 
   private async requireCurrentActiveEnrollment(enrollment: StudentClassEnrollment): Promise<void> {
-    const activeEnrollment = await this.base.repositories.enrollments.findOne({
+    const activeEnrollment = await this.baseService.repositories.enrollments.findOne({
       studentId: enrollment.studentId,
       status: StudentClassEnrollmentStatus.Active,
     })
@@ -311,7 +311,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (nextClassGroup.schoolId !== sourceClassGroup.schoolId) {
       denyResourceAccess()
     }
-    await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [nextClassGroup.id])
+    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [nextClassGroup.id])
     return nextClassGroup
   }
 
@@ -327,8 +327,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     enrolledAt: Date
   }): Promise<StudentClassEnrollment> {
     const [existingEnrollment, enrollments] = await Promise.all([
-      this.base.repositories.enrollments.findById(id),
-      this.base.repositories.enrollments.list({ studentId: previousEnrollment.studentId }),
+      this.baseService.repositories.enrollments.findById(id),
+      this.baseService.repositories.enrollments.list({ studentId: previousEnrollment.studentId }),
     ])
     if (existingEnrollment) {
       throw new BusinessRuleViolationError('ENROLLMENT_ID_ALREADY_EXISTS', `Enrollment id ${id} already exists`)
@@ -350,7 +350,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (classGroup.capacity === undefined) {
       return
     }
-    const activeEnrollments = await this.base.repositories.enrollments.list({
+    const activeEnrollments = await this.baseService.repositories.enrollments.list({
       classGroupId: classGroup.id,
       status: StudentClassEnrollmentStatus.Active,
     })
@@ -360,19 +360,19 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireGuardian(guardianId: string): Promise<Guardian> {
-    const guardian = await this.base.repositories.guardians.findById(guardianId)
-    if (!guardian || guardian.schoolId !== this.base.actor.schoolId) {
+    const guardian = await this.baseService.repositories.guardians.findById(guardianId)
+    if (!guardian || guardian.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return guardian
   }
 
   private async requireStudentEnrolledInSchool(studentId: string, schoolId: string): Promise<void> {
-    const enrollments = await this.base.repositories.enrollments.list({ studentId })
+    const enrollments = await this.baseService.repositories.enrollments.list({ studentId })
     for (const enrollment of enrollments) {
-      const classGroup = await this.base.repositories.classGroups.findById(enrollment.classGroupId)
+      const classGroup = await this.baseService.repositories.classGroups.findById(enrollment.classGroupId)
       if (classGroup?.schoolId === schoolId) {
-        await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+        await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
         return
       }
     }

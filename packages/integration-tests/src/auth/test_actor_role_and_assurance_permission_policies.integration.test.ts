@@ -40,7 +40,7 @@ async function setupBaselineFixture() {
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.base.gradeLevels.save(
+  await app.baseService.gradeLevels.save(
     new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
   await createClassGroup(app, {
@@ -81,7 +81,7 @@ async function setupBaselineFixture() {
   await app.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
-  await app.base.subjects.save(
+  await app.baseService.subjects.save(
     new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
   )
   const classSubject = await saveClassSubject(app, {
@@ -360,11 +360,11 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Foreign actor attempting to query local school data gets Forbidden
-    await expect(foreignAdminApp.base.students.findById('active-student'))
+    await expect(foreignAdminApp.baseService.students.findById('active-student'))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
-    await expect(foreignAdminApp.base.classGroups.list({ schoolId: 'school' }))
+    await expect(foreignAdminApp.baseService.classGroups.list({ schoolId: 'school' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })

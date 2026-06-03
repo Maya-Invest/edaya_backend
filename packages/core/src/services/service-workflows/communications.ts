@@ -46,7 +46,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   }: PublishAnnouncementInput): Promise<Announcement> {
     const existing = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: existing.schoolId, announcementId })
-    if ((await this.base.repositories.announcementTargets.list({ announcementId })).length === 0) {
+    if ((await this.baseService.repositories.announcementTargets.list({ announcementId })).length === 0) {
       throw new BusinessRuleViolationError('PUBLISH_WITHOUT_TARGETS', `Announcement ${announcementId} must define at least one target before publishing`)
     }
     const announcement = new Announcement({
@@ -62,7 +62,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       publishedAt: publishedAt ?? new Date(),
       expiresAt: existing.expiresAt,
     })
-    await this.base.announcements.save(announcement, { moduleChecked: true })
+    await this.baseService.announcements.save(announcement, { moduleChecked: true })
     return announcement
   }
 
@@ -101,7 +101,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       createdAt,
       updatedAt,
     })
-    await this.base.messageDeliveries.save(delivery, { moduleChecked: true })
+    await this.baseService.messageDeliveries.save(delivery, { moduleChecked: true })
     return delivery
   }
 
@@ -112,7 +112,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   }: MaterializeDeliveriesInput): Promise<MessageDelivery[]> {
     const announcement = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: announcement.schoolId, announcementId })
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const current = await this.requireAnnouncement(announcementId)
       if (!current.isPublished) {
         throw new BusinessRuleViolationError('MATERIALIZE_DELIVERIES_UNPUBLISHED', `Announcement ${announcementId} must be published before materializing deliveries`)
@@ -120,7 +120,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       const recipients = await this.resolveRecipients(current)
       const deliveries: MessageDelivery[] = []
       for (const recipient of recipients) {
-        const existing = (await this.base.repositories.messageDeliveries.list({
+        const existing = (await this.baseService.repositories.messageDeliveries.list({
           announcementId,
           recipientKind: recipient.recipientKind,
           recipientId: recipient.recipientId,
@@ -139,7 +139,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
           createdAt,
           updatedAt: createdAt,
         })
-        await this.base.messageDeliveries.save(delivery, { moduleChecked: true })
+        await this.baseService.messageDeliveries.save(delivery, { moduleChecked: true })
         deliveries.push(delivery)
       }
       return deliveries
@@ -147,8 +147,8 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireAnnouncement(announcementId: string): Promise<Announcement> {
-    const announcement = await this.base.repositories.announcements.findById(announcementId)
-    if (!announcement || announcement.schoolId !== this.base.actor.schoolId) {
+    const announcement = await this.baseService.repositories.announcements.findById(announcementId)
+    if (!announcement || announcement.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return announcement
@@ -163,19 +163,19 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     }
     switch (target.targetKind) {
       case TargetKind.ClassGroup:
-        await this.requireOwnedResource(this.base.repositories.classGroups.findById(target.targetId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.classGroups.findById(target.targetId), schoolId)
         return
       case TargetKind.GradeLevel:
-        await this.requireOwnedResource(this.base.repositories.gradeLevels.findById(target.targetId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.gradeLevels.findById(target.targetId), schoolId)
         return
       case TargetKind.StaffMember:
-        await this.requireOwnedResource(this.base.repositories.staffMembers.findById(target.targetId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.staffMembers.findById(target.targetId), schoolId)
         return
       case TargetKind.Guardian:
-        await this.requireOwnedResource(this.base.repositories.guardians.findById(target.targetId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.guardians.findById(target.targetId), schoolId)
         return
       case TargetKind.Student:
-        await this.requireOwnedResource(this.base.repositories.students.findById(target.targetId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.students.findById(target.targetId), schoolId)
         break
       case TargetKind.School:
       case TargetKind.AllStaff:
@@ -192,13 +192,13 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   ): Promise<void> {
     switch (recipientKind) {
       case MessageDeliveryRecipientKind.Staff:
-        await this.requireOwnedResource(this.base.repositories.staffMembers.findById(recipientId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.staffMembers.findById(recipientId), schoolId)
         return
       case MessageDeliveryRecipientKind.Guardian:
-        await this.requireOwnedResource(this.base.repositories.guardians.findById(recipientId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.guardians.findById(recipientId), schoolId)
         return
       case MessageDeliveryRecipientKind.Student:
-        await this.requireOwnedResource(this.base.repositories.students.findById(recipientId), schoolId)
+        await this.requireOwnedResource(this.baseService.repositories.students.findById(recipientId), schoolId)
     }
   }
 
@@ -207,7 +207,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     recipientKind: MessageDeliveryRecipientKind,
     recipientId: string,
   ): Promise<void> {
-    const targets = await this.base.repositories.announcementTargets.list({ announcementId })
+    const targets = await this.baseService.repositories.announcementTargets.list({ announcementId })
     for (const target of targets) {
       if (await this.targetIncludesRecipient(target, recipientKind, recipientId)) {
         return
@@ -243,7 +243,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         ) {
           return true
         }
-        const links = await this.base.repositories.guardianLinks.list({ guardianId: recipientId })
+        const links = await this.baseService.repositories.guardianLinks.list({ guardianId: recipientId })
         for (const link of links) {
           if (await this.studentHasActiveTargetEnrollment(link.studentId, target)) {
             return true
@@ -263,28 +263,28 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     }
     const addSchoolRecipients = async () => {
       const [staffMembers, guardians, students] = await Promise.all([
-        this.base.repositories.staffMembers.list({ schoolId: announcement.schoolId }),
-        this.base.repositories.guardians.list({ schoolId: announcement.schoolId }),
-        this.base.repositories.students.list({ schoolId: announcement.schoolId }),
+        this.baseService.repositories.staffMembers.list({ schoolId: announcement.schoolId }),
+        this.baseService.repositories.guardians.list({ schoolId: announcement.schoolId }),
+        this.baseService.repositories.students.list({ schoolId: announcement.schoolId }),
       ])
       staffMembers.forEach(staff => add(MessageDeliveryRecipientKind.Staff, staff.id))
       guardians.forEach(guardian => add(MessageDeliveryRecipientKind.Guardian, guardian.id))
       students.forEach(student => add(MessageDeliveryRecipientKind.Student, student.id))
     }
     const addEnrollmentRecipients = async (classGroupId: string) => {
-      const enrollments = await this.base.repositories.enrollments.list({
+      const enrollments = await this.baseService.repositories.enrollments.list({
         classGroupId,
         status: StudentClassEnrollmentStatus.Active,
       })
       for (const enrollment of enrollments) {
-        const student = await this.base.repositories.students.findById(enrollment.studentId)
+        const student = await this.baseService.repositories.students.findById(enrollment.studentId)
         if (!student || student.schoolId !== announcement.schoolId) {
           denyResourceAccess()
         }
         add(MessageDeliveryRecipientKind.Student, student.id)
-        const links = await this.base.repositories.guardianLinks.list({ studentId: student.id })
+        const links = await this.baseService.repositories.guardianLinks.list({ studentId: student.id })
         for (const link of links) {
-          const guardian = await this.base.repositories.guardians.findById(link.guardianId)
+          const guardian = await this.baseService.repositories.guardians.findById(link.guardianId)
           if (!guardian || guardian.schoolId !== announcement.schoolId) {
             denyResourceAccess()
           }
@@ -293,7 +293,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
     }
 
-    const targets = await this.base.repositories.announcementTargets.list({ announcementId: announcement.id })
+    const targets = await this.baseService.repositories.announcementTargets.list({ announcementId: announcement.id })
     for (const target of targets) {
       await this.requireTargetInSchool(target, announcement.schoolId)
       switch (target.targetKind) {
@@ -301,15 +301,15 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
           await addSchoolRecipients()
           break
         case TargetKind.AllStaff:
-          (await this.base.repositories.staffMembers.list({ schoolId: announcement.schoolId }))
+          (await this.baseService.repositories.staffMembers.list({ schoolId: announcement.schoolId }))
             .forEach(staff => add(MessageDeliveryRecipientKind.Staff, staff.id))
           break
         case TargetKind.AllGuardians:
-          (await this.base.repositories.guardians.list({ schoolId: announcement.schoolId }))
+          (await this.baseService.repositories.guardians.list({ schoolId: announcement.schoolId }))
             .forEach(guardian => add(MessageDeliveryRecipientKind.Guardian, guardian.id))
           break
         case TargetKind.AllStudents:
-          (await this.base.repositories.students.list({ schoolId: announcement.schoolId }))
+          (await this.baseService.repositories.students.list({ schoolId: announcement.schoolId }))
             .forEach(student => add(MessageDeliveryRecipientKind.Student, student.id))
           break
         case TargetKind.StaffMember:
@@ -325,7 +325,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
           await addEnrollmentRecipients(target.targetId!)
           break
         case TargetKind.GradeLevel: {
-          const classGroups = await this.base.repositories.classGroups.list({ gradeLevelId: target.targetId! })
+          const classGroups = await this.baseService.repositories.classGroups.list({ gradeLevelId: target.targetId! })
           for (const classGroup of classGroups) {
             if (classGroup.schoolId !== announcement.schoolId) {
               continue
@@ -348,12 +348,12 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     if (target.targetKind !== TargetKind.ClassGroup && target.targetKind !== TargetKind.GradeLevel) {
       return false
     }
-    const enrollments = await this.base.repositories.enrollments.list({
+    const enrollments = await this.baseService.repositories.enrollments.list({
       studentId,
       status: StudentClassEnrollmentStatus.Active,
     })
     for (const enrollment of enrollments) {
-      const classGroup = await this.base.repositories.classGroups.findById(enrollment.classGroupId)
+      const classGroup = await this.baseService.repositories.classGroups.findById(enrollment.classGroupId)
       if (
         classGroup
         && (
@@ -382,6 +382,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     announcementId?: string
   }): Promise<void> {
     this.checkActorSchool(resource.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'communications.manage')
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'communications.manage')
   }
 }

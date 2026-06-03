@@ -37,30 +37,30 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'assessments.publish_report_card')
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'assessments.publish_report_card')
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     await this.requireReportCardNotPublished(input.studentId, input.periodId)
     const reportCard = await this.buildReportCardResult(input)
-    await this.base.results.save(reportCard, { moduleChecked: true })
+    await this.baseService.results.save(reportCard, { moduleChecked: true })
     return reportCard
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'assessments.publish_report_card')
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
-    await this.base.authorizationPolicy.checkReportCardResultAccess(this.base.actor, [input.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'assessments.publish_report_card')
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [input.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       await this.requireReportCardNotPublished(input.studentId, input.periodId)
       const generated = await this.buildReportCardResult(input)
       const published = generated.copyWith({
         status: ReportCardResultStatus.Published,
         publishedAt: input.publishedAt ?? new Date(),
       })
-      await this.base.results.save(published, { moduleChecked: true })
+      await this.baseService.results.save(published, { moduleChecked: true })
       return published
     })
   }
@@ -70,9 +70,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     reportCardDefinitionId: string | undefined,
     schoolId: string,
   ): Promise<void> {
-    const period = await this.base.repositories.academicPeriods.findById(periodId)
+    const period = await this.baseService.repositories.academicPeriods.findById(periodId)
     const definition = reportCardDefinitionId
-      ? await this.base.repositories.definitions.findById(reportCardDefinitionId)
+      ? await this.baseService.repositories.definitions.findById(reportCardDefinitionId)
       : undefined
     if (!period || period.schoolId !== schoolId || (reportCardDefinitionId && !definition)) {
       denyResourceAccess()
@@ -83,7 +83,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
-    const reportCard = await this.base.repositories.results.findOne({ studentId, periodId })
+    const reportCard = await this.baseService.repositories.results.findOne({ studentId, periodId })
     if (reportCard?.status === ReportCardResultStatus.Published) {
       throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
     }
@@ -120,7 +120,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       startDate: period.startDate,
       endDate: period.endDate,
     })
-    const existing = await this.base.repositories.results.findOne({ studentId, periodId })
+    const existing = await this.baseService.repositories.results.findOne({ studentId, periodId })
     return new ReportCardResult({
       id: existing?.id ?? id,
       reportCardDefinitionId: definition.id,
@@ -157,9 +157,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         { result, assessment },
       ])
     }
-    const classSubjects = await this.base.repositories.classSubjects.list({ classGroupId })
+    const classSubjects = await this.baseService.repositories.classSubjects.list({ classGroupId })
     const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
-    const allSections = (await this.base.repositories.sections.list({ reportCardDefinitionId }))
+    const allSections = (await this.baseService.repositories.sections.list({ reportCardDefinitionId }))
       .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
 
     const computeNode = async (
@@ -242,9 +242,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     studentId: string
     academicYearId: string
   }): Promise<StudentClassEnrollment> {
-    const enrollments = await this.base.repositories.enrollments.list({ studentId })
+    const enrollments = await this.baseService.repositories.enrollments.list({ studentId })
     for (const enrollment of enrollments) {
-      const classGroup = await this.base.repositories.classGroups.findById(enrollment.classGroupId)
+      const classGroup = await this.baseService.repositories.classGroups.findById(enrollment.classGroupId)
       if (classGroup?.academicYearId === academicYearId) {
         return enrollment
       }
@@ -253,7 +253,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireReportCardDefinition(reportCardDefinitionId: string) {
-    const definition = await this.base.repositories.definitions.findById(reportCardDefinitionId)
+    const definition = await this.baseService.repositories.definitions.findById(reportCardDefinitionId)
     if (!definition) {
       throw new BusinessRuleViolationError('UNKNOWN_REPORT_CARD_DEFINITION', `Unknown report card definition: ${reportCardDefinitionId}`)
     }
@@ -267,7 +267,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     gradeLevelId: string
     academicYearId: string
   }) {
-    const definition = await this.base.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
+    const definition = await this.baseService.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
     if (!definition) {
       throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
     }
@@ -283,7 +283,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     startDate: Date
     endDate: Date
   }): Promise<AttendanceSummary> {
-    const records = await this.base.repositories.attendance.list({
+    const records = await this.baseService.repositories.attendance.list({
       studentId,
       date: { $gte: normalizeDate(startDate), $lte: normalizeDate(endDate) },
     })
@@ -314,10 +314,10 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     studentId: string,
     periodId: string,
   ): Promise<Array<{ result: AssessmentResult, assessment: Assessment }>> {
-    const results = await this.base.repositories.assessmentResults.list({ studentId })
+    const results = await this.baseService.repositories.assessmentResults.list({ studentId })
     const resolved: Array<{ result: AssessmentResult, assessment: Assessment }> = []
     for (const result of results) {
-      const assessment = await this.base.repositories.assessments.findById(result.assessmentId)
+      const assessment = await this.baseService.repositories.assessments.findById(result.assessmentId)
       if (assessment?.periodId === periodId) {
         resolved.push({ result, assessment })
       }

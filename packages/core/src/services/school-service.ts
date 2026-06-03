@@ -66,7 +66,7 @@ import { SetupServiceWorkflow } from './service-workflows/setup'
 import { StudentServiceWorkflow } from './service-workflows/student'
 
 export class SchoolService {
-  readonly base: BaseSchoolService
+  readonly baseService: BaseSchoolService
   readonly academicsWorkflow: AcademicsServiceWorkflow
   readonly financeWorkflow: FinanceServiceWorkflow
   readonly assessmentsWorkflow: AssessmentsServiceWorkflow
@@ -77,29 +77,29 @@ export class SchoolService {
   readonly behaviorWorkflow: BehaviorServiceWorkflow
 
   constructor(args: ServiceArgs) {
-    this.base = new BaseSchoolService(args)
-    this.academicsWorkflow = new AcademicsServiceWorkflow(this.base)
-    this.financeWorkflow = new FinanceServiceWorkflow(this.base)
-    this.assessmentsWorkflow = new AssessmentsServiceWorkflow(this.base)
-    this.studentWorkflow = new StudentServiceWorkflow(this.base)
-    this.schedulingWorkflow = new SchedulingServiceWorkflow(this.base)
-    this.setupWorkflow = new SetupServiceWorkflow(this.base)
-    this.communicationsWorkflow = new CommunicationsServiceWorkflow(this.base)
-    this.behaviorWorkflow = new BehaviorServiceWorkflow(this.base)
+    this.baseService = new BaseSchoolService(args)
+    this.academicsWorkflow = new AcademicsServiceWorkflow(this.baseService)
+    this.financeWorkflow = new FinanceServiceWorkflow(this.baseService)
+    this.assessmentsWorkflow = new AssessmentsServiceWorkflow(this.baseService)
+    this.studentWorkflow = new StudentServiceWorkflow(this.baseService)
+    this.schedulingWorkflow = new SchedulingServiceWorkflow(this.baseService)
+    this.setupWorkflow = new SetupServiceWorkflow(this.baseService)
+    this.communicationsWorkflow = new CommunicationsServiceWorkflow(this.baseService)
+    this.behaviorWorkflow = new BehaviorServiceWorkflow(this.baseService)
   }
 
   // REPORTS AND DASHBOARD ENDPOINTS
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'query.get_overdue_fees')
-    return this.base.repositories.schools.getOverdueFeeCount(schoolId)
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'query.get_overdue_fees')
+    return this.baseService.repositories.schools.getOverdueFeeCount(schoolId)
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'queries.read_report_card_detail')
-    return this.base.repositories.schools.getPublishedReportCardCount(schoolId)
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'queries.read_report_card_detail')
+    return this.baseService.repositories.schools.getPublishedReportCardCount(schoolId)
   }
 
   // SETUP ENDPOINTS
@@ -223,7 +223,7 @@ export class SchoolService {
   // Private utilities
 
   private checkActorSchool(schoolId: string): void {
-    if (schoolId !== this.base.actor.schoolId)
+    if (schoolId !== this.baseService.actor.schoolId)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }

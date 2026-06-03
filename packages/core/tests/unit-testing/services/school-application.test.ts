@@ -29,10 +29,10 @@ describe('SchoolApplication', () => {
 
     expect(application.repositories).toBe(repositories)
     expect(service).toBeInstanceOf(SchoolService)
-    expect(service.base.actor).toBe(actor)
-    expect(service.base.authorizationPolicy).toBe(authorizationPolicy)
-    expect(service.base.repositories).toBe(repositories)
-    expect(service.base.atomicExecution).toBe(atomicExecution)
+    expect(service.baseService.actor).toBe(actor)
+    expect(service.baseService.authorizationPolicy).toBe(authorizationPolicy)
+    expect(service.baseService.repositories).toBe(repositories)
+    expect(service.baseService.atomicExecution).toBe(atomicExecution)
   })
 
   test('does not expose legacy grouped services', () => {

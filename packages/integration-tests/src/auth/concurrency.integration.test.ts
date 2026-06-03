@@ -38,7 +38,7 @@ async function createConcurrencyFixture() {
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.base.gradeLevels.save(
+  await app.baseService.gradeLevels.save(
     new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
   await createClassGroup(app, {
@@ -72,7 +72,7 @@ async function createConcurrencyFixture() {
   await app.linkGuardianToStudent({ id: 'guardian-link', guardianId: 'guardian', studentId: 'student' })
 
   // Offer subject and class details
-  await app.base.subjects.save(
+  await app.baseService.subjects.save(
     new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
   )
   const classSubject = await saveClassSubject(app, {
@@ -185,7 +185,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
         paymentDate: new Date(),
         method: PaymentMethod.Cash,
       }),
-      studentApp.base.attendance.list({ studentId: 'student' }),
+      studentApp.baseService.attendance.list({ studentId: 'student' }),
       buildFeeSummary(guardianApp, 'student'),
     ])
 

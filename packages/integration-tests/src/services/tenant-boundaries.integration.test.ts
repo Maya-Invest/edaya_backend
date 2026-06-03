@@ -101,7 +101,7 @@ describeIntegration('tenant boundary safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.base.gradeLevels.save(
+    await app.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', order: 6 }),
     )
     await schoolBApp.createAcademicYear({
@@ -120,7 +120,7 @@ describeIntegration('tenant boundary safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    await schoolBApp.base.gradeLevels.save(
+    await schoolBApp.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', order: 6 }),
     )
     await expect(updateSchool(app, {
@@ -156,7 +156,7 @@ describeIntegration('tenant boundary safeguards', () => {
       gradeLevelId: 'level-a',
       name: 'Grade 6 A',
     })
-    await app.base.subjects.save(
+    await app.baseService.subjects.save(
       new Subject({ id: 'subject-a', schoolId: 'school-a', name: 'Local subject' }),
     )
     const classSubject = await saveClassSubject(app, {
@@ -273,7 +273,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Outside action',
       kind: DisciplinaryActionKind.Sanction,
     })
-    await schoolBApp.base.disciplinaryActions.save(actionB)
+    await schoolBApp.baseService.disciplinaryActions.save(actionB)
     const incidentB = await saveIncident(schoolBApp, {
       id: 'incident-b',
       schoolId: 'school-b',
@@ -316,7 +316,7 @@ describeIntegration('tenant boundary safeguards', () => {
       paymentDate: new Date('2026-09-01T00:00:00Z'),
       method: PaymentMethod.Cash,
     })
-    await schoolBApp.base.resources.save(
+    await schoolBApp.baseService.resources.save(
       new Resource({
         id: 'resource-b',
         schoolId: 'school-b',
@@ -386,7 +386,7 @@ describeIntegration('tenant boundary safeguards', () => {
       targetKind: AnnouncementTargetKind.StaffMember,
       targetId: 'staff-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    await schoolBApp.base.subjects.save(
+    await schoolBApp.baseService.subjects.save(
       new Subject({ id: 'subject-b', schoolId: 'school-b', name: 'Outside subject' }),
     )
     const classSubjectB = await saveClassSubject(schoolBApp, {
@@ -423,7 +423,7 @@ describeIntegration('tenant boundary safeguards', () => {
       resourceId: 'resource-b',
       sessionId: sessionB.id,
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    await expect(app.base.resources.list({ schoolId: 'school-b' }))
+    await expect(app.baseService.resources.list({ schoolId: 'school-b' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const incidentId of ['missing-incident', incidentB.id]) {
@@ -444,7 +444,7 @@ describeIntegration('tenant boundary safeguards', () => {
       disciplinaryActionId: actionB.id,
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const subjectId of ['missing-subject', 'subject-b']) {
-      await expect(app.base.subjectMatters.save(
+      await expect(app.baseService.subjectMatters.save(
         new SubjectMatter({
           id: `probe-${subjectId}`,
           subjectId,
@@ -469,7 +469,7 @@ describeIntegration('tenant boundary safeguards', () => {
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
-    await expect(app.base.announcements.list({ schoolId: 'school-b' }))
+    await expect(app.baseService.announcements.list({ schoolId: 'school-b' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const studentFeeId of ['missing-student-fee', 'student-fee-b']) {

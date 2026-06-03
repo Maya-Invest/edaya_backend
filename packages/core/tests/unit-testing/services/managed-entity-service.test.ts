@@ -337,7 +337,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       name: 'Grade 1',
     }))
 
-    await expect(app.base.academicYears.delete('year-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.academicYears.delete('year-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('uses indirect tenant resolution for resource assignments', async () => {
@@ -349,7 +349,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       kind: ResourceKind.Location,
     }))
 
-    await expect(app.base.resourceAssignments.save(new ResourceAssignment({
+    await expect(app.baseService.resourceAssignments.save(new ResourceAssignment({
       id: 'assignment-1',
       resourceId: 'resource-1',
       classGroupId: 'class-1',
@@ -359,7 +359,7 @@ describe('BaseSchoolService managed entity wiring', () => {
   test('rejects orphan class subject progress before save', async () => {
     const { app } = createTestApp(actor)
 
-    await expect(app.base.classSubjectProgress.save(new ClassSubjectProgress({
+    await expect(app.baseService.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-orphan',
       classSubjectMatterId: 'missing-matter',
       sessionId: 'missing-session',
@@ -418,7 +418,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       endsAt: new Date('2026-05-01T09:00:00Z'),
     }))
 
-    await expect(app.base.classSubjectProgress.save(new ClassSubjectProgress({
+    await expect(app.baseService.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-1',
       classSubjectMatterId: 'class-subject-matter-1',
       sessionId: 'session-1',
@@ -458,7 +458,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       enrollmentIndex: 1,
     }))
 
-    await expect(app.base.studentNotes.save(new StudentNote({
+    await expect(app.baseService.studentNotes.save(new StudentNote({
       id: 'note-1',
       schoolId: 'school',
       studentId: 'student-unassigned',
@@ -484,7 +484,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       isDefault: true,
     }))
 
-    await expect(app.base.gradeScales.save(new GradeScale({
+    await expect(app.baseService.gradeScales.save(new GradeScale({
       id: 'scale-new',
       schoolId: 'school',
       name: 'Other default',
@@ -524,7 +524,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       isDefault: true,
     }))
 
-    await expect(app.base.definitions.save(new ReportCardDefinition({
+    await expect(app.baseService.definitions.save(new ReportCardDefinition({
       id: 'definition-missing-year',
       schoolId: 'school',
       academicYearId: 'missing-year',
@@ -532,7 +532,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       name: 'Invalid',
     }))).rejects.toBeInstanceOf(AuthorizationError)
 
-    await expect(app.base.definitions.save(new ReportCardDefinition({
+    await expect(app.baseService.definitions.save(new ReportCardDefinition({
       id: 'definition-new',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -557,7 +557,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       name: 'Definition',
     }))
 
-    await expect(app.base.sections.save(new ReportCardDefinitionSection({
+    await expect(app.baseService.sections.save(new ReportCardDefinitionSection({
       id: 'section-self',
       reportCardDefinitionId: 'definition-1',
       name: 'Self',
@@ -575,7 +575,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       weight: 1,
       subjectId: 'subject-1',
     }))
-    await expect(app.base.sections.save(new ReportCardDefinitionSection({
+    await expect(app.baseService.sections.save(new ReportCardDefinitionSection({
       id: 'section-child',
       reportCardDefinitionId: 'definition-1',
       name: 'Child',
@@ -600,7 +600,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       weight: 1,
       parentSectionId: child.id,
     }))
-    await expect(app.base.sections.save(child.copyWith({
+    await expect(app.baseService.sections.save(child.copyWith({
       parentSectionId: 'section-cycle-parent',
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
@@ -638,7 +638,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       classSubjectId: 'other-class-subject',
     }))
 
-    await expect(app.base.assessments.save(new Assessment({
+    await expect(app.baseService.assessments.save(new Assessment({
       id: 'assessment-bad-period',
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
@@ -659,7 +659,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       endDate: new Date('2026-03-31T00:00:00Z'),
     }))
 
-    await expect(app.base.assessments.save(new Assessment({
+    await expect(app.baseService.assessments.save(new Assessment({
       id: 'assessment-bad-session',
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
@@ -712,7 +712,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       score: 18,
     }))
 
-    await expect(app.base.assessments.save(new Assessment({
+    await expect(app.baseService.assessments.save(new Assessment({
       id: assessment.id,
       classGroupId: assessment.classGroupId,
       classSubjectId: assessment.classSubjectId,
@@ -758,7 +758,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.StudentClassEnrollmentRepository.save(staleEnrollment)
 
-    await expect(app.base.enrollments.save(new StudentClassEnrollment({
+    await expect(app.baseService.enrollments.save(new StudentClassEnrollment({
       id: staleEnrollment.id,
       studentId: staleEnrollment.studentId,
       classGroupId: staleEnrollment.classGroupId,
@@ -804,7 +804,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.StudentClassEnrollmentRepository.save(existingEnrollment)
 
-    await expect(app.base.enrollments.save(new StudentClassEnrollment({
+    await expect(app.baseService.enrollments.save(new StudentClassEnrollment({
       id: 'enrollment-new',
       studentId: 'student-new',
       classGroupId: 'class-capacity',
@@ -812,7 +812,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       enrollmentIndex: 1,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    await expect(app.base.enrollments.delete(existingEnrollment.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.enrollments.delete(existingEnrollment.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('attendance preSave rejects reviewing non-absent attendance', async () => {
@@ -847,7 +847,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.attendanceRepository.save(attendance)
 
-    await expect(app.base.attendance.save(attendance.copyWith({
+    await expect(app.baseService.attendance.save(attendance.copyWith({
       justificationStatus: AttendanceJustificationStatus.Excused,
       reason: 'Medical',
       justifiedAt: new Date('2026-05-02T08:00:00Z'),
@@ -875,14 +875,14 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.studentFeeRepository.save(studentFee)
 
-    await expect(app.base.studentFees.save(studentFee.copyWith({
+    await expect(app.baseService.studentFees.save(studentFee.copyWith({
       adjustmentAmount: 30,
       adjustmentReason: 'Discount',
       adjustedById: 'staff-1',
       adjustedAt: new Date('2026-05-01T00:00:00Z'),
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    await expect(app.base.studentFees.save(studentFee.copyWith({
+    await expect(app.baseService.studentFees.save(studentFee.copyWith({
       status: FeeStatus.Cancelled,
       cancellationReason: 'Cancelled',
       cancelledById: 'staff-1',
@@ -892,7 +892,7 @@ describe('BaseSchoolService managed entity wiring', () => {
 
   test('incident preSave rejects invalid scope and non-open resolution', async () => {
     const { app, repositories } = createTestApp(actor)
-    await expect(app.base.incidents.save(new Incident({
+    await expect(app.baseService.incidents.save(new Incident({
       id: 'incident-invalid-scope',
       schoolId: 'school',
       title: 'Incident',
@@ -915,7 +915,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.incidentRepository.save(cancelledIncident)
 
-    await expect(app.base.incidents.save(new Incident({
+    await expect(app.baseService.incidents.save(new Incident({
       id: cancelledIncident.id,
       schoolId: cancelledIncident.schoolId,
       title: cancelledIncident.title,
@@ -943,7 +943,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.studentDisciplinaryActionRepository.save(completedAction)
 
-    await expect(app.base.studentDisciplinaryActions.save(new StudentDisciplinaryAction({
+    await expect(app.baseService.studentDisciplinaryActions.save(new StudentDisciplinaryAction({
       id: completedAction.id,
       schoolId: completedAction.schoolId,
       incidentId: completedAction.incidentId,
@@ -975,7 +975,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.staffMemberRepository.save(staffMember)
 
-    await expect(app.base.staffMembers.save(new StaffMember({
+    await expect(app.baseService.staffMembers.save(new StaffMember({
       id: staffMember.id,
       schoolId: staffMember.schoolId,
       firstName: staffMember.firstName,
@@ -1023,7 +1023,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       sessionId: 'session-1',
     }))
 
-    await expect(app.base.resourceAssignments.save(new ResourceAssignment({
+    await expect(app.baseService.resourceAssignments.save(new ResourceAssignment({
       id: 'assignment-new',
       resourceId: 'resource-1',
       sessionId: 'session-2',
@@ -1089,7 +1089,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       publishedAt: new Date('2026-03-31T00:00:00Z'),
     }))
 
-    await expect(app.base.assessmentResults.save(new AssessmentResult({
+    await expect(app.baseService.assessmentResults.save(new AssessmentResult({
       id: 'assessment-result-1',
       studentId: 'student-1',
       assessmentId: 'assessment-1',
@@ -1166,8 +1166,8 @@ describe('BaseSchoolService managed entity wiring', () => {
       score: 18,
     }))
 
-    await expect(app.base.results.delete('report-card-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
-    await expect(app.base.assessmentResults.delete('assessment-result-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.results.delete('report-card-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.assessmentResults.delete('assessment-result-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('announcement target preSave rejects targets outside announcement school', async () => {
@@ -1186,7 +1186,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       order: 1,
     }))
 
-    await expect(app.base.announcementTargets.save(new AnnouncementTarget({
+    await expect(app.baseService.announcementTargets.save(new AnnouncementTarget({
       id: 'target-1',
       announcementId: 'announcement-1',
       targetKind: AnnouncementTargetKind.GradeLevel,
@@ -1217,7 +1217,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       dueAt: new Date('2026-02-01T00:00:00Z'),
     }))
 
-    await expect(app.base.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('fee preSave rejects academic years outside the fee school', async () => {
@@ -1235,7 +1235,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       endDate: new Date('2026-12-31T00:00:00Z'),
     }))
 
-    await expect(app.base.fees.save(new Fee({
+    await expect(app.baseService.fees.save(new Fee({
       id: 'fee-1',
       schoolId: 'school',
       academicYearId: 'year-other',
@@ -1266,7 +1266,7 @@ describe('BaseSchoolService managed entity wiring', () => {
       cancelledAt: new Date('2026-02-01T00:00:00Z'),
     }))
 
-    await expect(app.base.payments.save(new Payment({
+    await expect(app.baseService.payments.save(new Payment({
       id: 'payment-new',
       studentFeeId: 'student-fee-cancelled',
       amount: 100,
@@ -1297,7 +1297,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.paymentRepository.save(reversed)
 
-    await expect(app.base.payments.save(new Payment({
+    await expect(app.baseService.payments.save(new Payment({
       id: reversed.id,
       studentFeeId: reversed.studentFeeId,
       amount: reversed.amount.amount,
@@ -1356,7 +1356,7 @@ describe('BaseSchoolService managed entity wiring', () => {
     })
     await repositories.reportCardResultRepository.save(published)
 
-    await expect(app.base.results.save(new ReportCardResult({
+    await expect(app.baseService.results.save(new ReportCardResult({
       id: published.id,
       reportCardDefinitionId: published.reportCardDefinitionId,
       studentId: published.studentId,
@@ -1376,7 +1376,7 @@ describe('SchoolService managed config entity access', () => {
   test('uses managed proposed-state authorization for subject matters', async () => {
     const { app, repositories } = createTestApp(actor)
 
-    await expect(app.base.subjectMatters.save(new SubjectMatter({
+    await expect(app.baseService.subjectMatters.save(new SubjectMatter({
       id: 'matter-1',
       subjectId: 'missing-subject',
       name: 'Algebra',
@@ -1395,7 +1395,7 @@ describe('SchoolService managed config entity access', () => {
       sequenceOrder: 1,
     })
 
-    await app.base.subjectMatters.save(subjectMatter)
+    await app.baseService.subjectMatters.save(subjectMatter)
 
     await expect(repositories.subjectMatterRepository.findById('matter-1')).resolves.toEqual(subjectMatter)
   })

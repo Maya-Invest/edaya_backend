@@ -45,7 +45,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.base.gradeLevels.save(
+    await app.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -55,7 +55,7 @@ describeIntegration('atomic workflow safeguards', () => {
       gradeLevelId: 'level',
       name: 'Grade 6 A',
     })
-    await app.base.subjects.save(
+    await app.baseService.subjects.save(
       new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
     )
     const classSubject = await saveClassSubject(app, {
@@ -63,7 +63,7 @@ describeIntegration('atomic workflow safeguards', () => {
       classGroupId: 'class',
       subjectId: 'math',
     })
-    await app.base.subjectMatters.save(
+    await app.baseService.subjectMatters.save(
       new SubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }),
     )
     const classMatter = await saveClassSubjectMatter(app, {
@@ -182,7 +182,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    await app.base.gradeLevels.save(
+    await app.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -221,7 +221,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.base.gradeLevels.save(
+    await app.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -259,7 +259,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.base.gradeLevels.save(
+    await app.baseService.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {

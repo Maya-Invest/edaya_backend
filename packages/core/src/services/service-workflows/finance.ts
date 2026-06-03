@@ -55,8 +55,8 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }: AssignFeeToStudentInput): Promise<StudentFee> {
     const student = await this.requireStudent(studentId)
     this.checkActorSchool(student.schoolId)
-    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     const fee = await this.requireFee(feeId)
     if (fee.schoolId !== student.schoolId) {
       denyResourceAccess()
@@ -81,7 +81,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       }),
       createdAt,
     })
-    await this.base.studentFees.save(studentFee, { moduleChecked: true })
+    await this.baseService.studentFees.save(studentFee, { moduleChecked: true })
     return studentFee
   }
 
@@ -97,13 +97,13 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: RecordPaymentInput): Promise<Payment> {
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const studentFee = await this.requireStudentFee(studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
-      await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
-      await this.base.authorizationPolicy.checkStudentFeeAccess(this.base.actor, [studentFeeId])
+      await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+      await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFeeId])
       const payment = new Payment({
         id,
         studentFeeId,
@@ -113,10 +113,10 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         method,
         reference,
         notes,
-        recordedById: resolveAuditActorId(this.base.actor),
+        recordedById: resolveAuditActorId(this.baseService.actor),
         createdAt,
       })
-      await this.base.payments.save(payment, { moduleChecked: true })
+      await this.baseService.payments.save(payment, { moduleChecked: true })
       await this.savePaidAmount(
         studentFee,
         studentFee.paidAmount.amount + payment.amount.amount,
@@ -170,14 +170,14 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt?: Date
     referenceDate?: Date
   }): Promise<Payment> {
-    return this.base.atomicExecution.execute(async () => {
+    return this.baseService.atomicExecution.execute(async () => {
       const payment = await this.requirePayment(paymentId)
       const studentFee = await this.requireStudentFee(payment.studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
-      await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
-      await this.base.authorizationPolicy.checkStudentFeeAccess(this.base.actor, [studentFee.id])
+      await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+      await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFee.id])
       const changedPayment = new Payment({
         id: payment.id,
         studentFeeId: payment.studentFeeId,
@@ -190,12 +190,12 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         notes: payment.notes,
         recordedById: payment.recordedById,
         reversedAt: status === PaymentStatus.Reversed ? changedAt ?? new Date() : undefined,
-        reversedById: status === PaymentStatus.Reversed ? resolveAuditActorId(this.base.actor) : undefined,
+        reversedById: status === PaymentStatus.Reversed ? resolveAuditActorId(this.baseService.actor) : undefined,
         cancelledAt: status === PaymentStatus.Cancelled ? changedAt ?? new Date() : undefined,
-        cancelledById: status === PaymentStatus.Cancelled ? resolveAuditActorId(this.base.actor) : undefined,
+        cancelledById: status === PaymentStatus.Cancelled ? resolveAuditActorId(this.baseService.actor) : undefined,
         createdAt: payment.createdAt,
       })
-      await this.base.payments.save(changedPayment, { moduleChecked: true })
+      await this.baseService.payments.save(changedPayment, { moduleChecked: true })
       await this.savePaidAmount(
         studentFee,
         Math.max(0, studentFee.paidAmount.amount - payment.amount.amount),
@@ -229,7 +229,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt?: Date,
     referenceDate?: Date,
   ): Promise<void> {
-    await this.base.studentFees.save(studentFee.copyWith({
+    await this.baseService.studentFees.save(studentFee.copyWith({
       paidAmount,
       status: this.deriveFeeStatus({
         expectedAmount: studentFee.expectedAmount.amount - studentFee.adjustmentAmount.amount,
@@ -262,36 +262,36 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireFee(feeId: string): Promise<Fee> {
-    const fee = await this.base.repositories.fees.findById(feeId)
-    if (!fee || fee.schoolId !== this.base.actor.schoolId) {
+    const fee = await this.baseService.repositories.fees.findById(feeId)
+    if (!fee || fee.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return fee
   }
 
   private async requireStudentFee(studentFeeId: string): Promise<StudentFee> {
-    const studentFee = await this.base.repositories.studentFees.findById(studentFeeId)
+    const studentFee = await this.baseService.repositories.studentFees.findById(studentFeeId)
     if (!studentFee) {
       denyResourceAccess()
     }
-    const student = await this.base.repositories.students.findById(studentFee.studentId)
-    if (!student || student.schoolId !== this.base.actor.schoolId) {
+    const student = await this.baseService.repositories.students.findById(studentFee.studentId)
+    if (!student || student.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return studentFee
   }
 
   private async requirePayment(paymentId: string): Promise<Payment> {
-    const payment = await this.base.repositories.payments.findById(paymentId)
+    const payment = await this.baseService.repositories.payments.findById(paymentId)
     if (!payment) {
       denyResourceAccess()
     }
-    const studentFee = await this.base.repositories.studentFees.findById(payment.studentFeeId)
+    const studentFee = await this.baseService.repositories.studentFees.findById(payment.studentFeeId)
     if (!studentFee) {
       denyResourceAccess()
     }
-    const student = await this.base.repositories.students.findById(studentFee.studentId)
-    if (!student || student.schoolId !== this.base.actor.schoolId) {
+    const student = await this.baseService.repositories.students.findById(studentFee.studentId)
+    if (!student || student.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
     return payment
