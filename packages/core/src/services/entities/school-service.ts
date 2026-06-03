@@ -1,8 +1,9 @@
 import type {
+  AcademicYear,
   Announcement,
   AttendanceRecord,
   ClassSubjectProgress,
-  Incident,
+  GuardianStudentLink,
   MessageDelivery,
   Payment,
   ReportCardResult,
@@ -14,13 +15,13 @@ import type {
 } from '../../entities'
 import type { ServiceArgs } from '../shared/service-args'
 import type { RecordSessionProgressInput } from './service-workflows/accademics'
-import type { PublishReportCardResultInput } from './service-workflows/assessments'
+import type {
+  GenerateReportCardResultInput,
+  PublishReportCardResultInput,
+} from './service-workflows/assessments'
 import type {
   AddStudentInvolvementInput,
   ApplyDisciplinaryActionInput,
-  RecordIncidentInput,
-  ResolveIncidentInput,
-  UpdateStudentDisciplinaryActionStatusInput,
 } from './service-workflows/behavior'
 import type {
   MaterializeDeliveriesInput,
@@ -28,9 +29,7 @@ import type {
   RecordDeliveryInput,
 } from './service-workflows/communications'
 import type {
-  AdjustStudentFeeInput,
   AssignFeeToStudentInput,
-  CancelStudentFeeInput,
   RecordPaymentInput,
   UpdatePaymentStatusInput,
 } from './service-workflows/finance'
@@ -40,13 +39,16 @@ import type {
   RecordClassDailyAttendanceInput,
   RecordDailyAttendanceInput,
   RecordSessionAttendanceInput,
-  ReviewAttendanceJustificationInput,
 } from './service-workflows/scheduling'
 import type {
-  CloseEnrollmentInput,
+  ActivateAcademicYearInput,
+  CreateAcademicYearInput,
+} from './service-workflows/setup'
+import type {
+  EnrollStudentInput,
   GraduateStudentInput,
+  LinkGuardianToStudentInput,
   PromoteStudentInput,
-  RecordProgressionDecisionInput,
   TransferStudentInput,
 } from './service-workflows/student'
 import {
@@ -60,6 +62,7 @@ import { BehaviorServiceWorkflow } from './service-workflows/behavior'
 import { CommunicationsServiceWorkflow } from './service-workflows/communications'
 import { FinanceServiceWorkflow } from './service-workflows/finance'
 import { SchedulingServiceWorkflow } from './service-workflows/scheduling'
+import { SetupServiceWorkflow } from './service-workflows/setup'
 import { StudentServiceWorkflow } from './service-workflows/student'
 
 export class SchoolService {
@@ -69,6 +72,7 @@ export class SchoolService {
   readonly assessmentsWorkflow: AssessmentsServiceWorkflow
   readonly studentWorkflow: StudentServiceWorkflow
   readonly schedulingWorkflow: SchedulingServiceWorkflow
+  readonly setupWorkflow: SetupServiceWorkflow
   readonly communicationsWorkflow: CommunicationsServiceWorkflow
   readonly behaviorWorkflow: BehaviorServiceWorkflow
 
@@ -79,6 +83,7 @@ export class SchoolService {
     this.assessmentsWorkflow = new AssessmentsServiceWorkflow(this.base)
     this.studentWorkflow = new StudentServiceWorkflow(this.base)
     this.schedulingWorkflow = new SchedulingServiceWorkflow(this.base)
+    this.setupWorkflow = new SetupServiceWorkflow(this.base)
     this.communicationsWorkflow = new CommunicationsServiceWorkflow(this.base)
     this.behaviorWorkflow = new BehaviorServiceWorkflow(this.base)
   }
@@ -97,6 +102,16 @@ export class SchoolService {
     return this.base.repositories.schools.getPublishedReportCardCount(schoolId)
   }
 
+  // SETUP ENDPOINTS
+
+  async createAcademicYear(input: CreateAcademicYearInput): Promise<AcademicYear> {
+    return this.setupWorkflow.createAcademicYear(input)
+  }
+
+  async activateAcademicYear(input: ActivateAcademicYearInput): Promise<AcademicYear> {
+    return this.setupWorkflow.activateAcademicYear(input)
+  }
+
   // ACADEMICS ENDPOINTS
 
   async recordSessionProgress(args: RecordSessionProgressInput): Promise<ClassSubjectProgress> {
@@ -105,18 +120,22 @@ export class SchoolService {
 
   // ASSESSMENTS ENDPOINTS
 
+  async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
+    return this.assessmentsWorkflow.generateReportCardResult(input)
+  }
+
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
     return this.assessmentsWorkflow.publishReportCardResult(input)
   }
 
   // STUDENTS ENDPOINTS
 
-  async closeEnrollment(input: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
-    return this.studentWorkflow.closeEnrollment(input)
+  async enrollStudent(input: EnrollStudentInput): Promise<StudentClassEnrollment> {
+    return this.studentWorkflow.enrollStudent(input)
   }
 
-  async recordProgressionDecision(input: RecordProgressionDecisionInput): Promise<StudentClassEnrollment> {
-    return this.studentWorkflow.recordProgressionDecision(input)
+  async linkGuardianToStudent(input: LinkGuardianToStudentInput): Promise<GuardianStudentLink> {
+    return this.studentWorkflow.linkGuardianToStudent(input)
   }
 
   async promoteStudent(input: PromoteStudentInput): Promise<StudentClassEnrollment> {
@@ -145,10 +164,6 @@ export class SchoolService {
     return this.schedulingWorkflow.recordDailyAttendance(input)
   }
 
-  async reviewAttendanceJustification(input: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
-    return this.schedulingWorkflow.reviewAttendanceJustification(input)
-  }
-
   async recordSessionAttendance(input: RecordSessionAttendanceInput): Promise<AttendanceRecord[]> {
     return this.schedulingWorkflow.recordSessionAttendance(input)
   }
@@ -173,24 +188,12 @@ export class SchoolService {
 
   // BEHAVIOR ENDPOINTS
 
-  async recordIncident(input: RecordIncidentInput): Promise<Incident> {
-    return this.behaviorWorkflow.recordIncident(input)
-  }
-
   async addStudentInvolvement(input: AddStudentInvolvementInput): Promise<StudentIncidentInvolvement> {
     return this.behaviorWorkflow.addStudentInvolvement(input)
   }
 
   async applyDisciplinaryAction(input: ApplyDisciplinaryActionInput): Promise<StudentDisciplinaryAction> {
     return this.behaviorWorkflow.applyDisciplinaryAction(input)
-  }
-
-  async updateStudentDisciplinaryActionStatus(input: UpdateStudentDisciplinaryActionStatusInput): Promise<StudentDisciplinaryAction> {
-    return this.behaviorWorkflow.updateStudentDisciplinaryActionStatus(input)
-  }
-
-  async resolveIncident(input: ResolveIncidentInput): Promise<Incident> {
-    return this.behaviorWorkflow.resolveIncident(input)
   }
 
   // FINANCE ENDPOINTS
@@ -215,14 +218,6 @@ export class SchoolService {
       ...input,
       status: PaymentStatus.Cancelled,
     })
-  }
-
-  async adjustStudentFee(input: AdjustStudentFeeInput): Promise<StudentFee> {
-    return this.financeWorkflow.adjustStudentFee(input)
-  }
-
-  async cancelStudentFee(input: CancelStudentFeeInput): Promise<StudentFee> {
-    return this.financeWorkflow.cancelStudentFee(input)
   }
 
   // Private utilities

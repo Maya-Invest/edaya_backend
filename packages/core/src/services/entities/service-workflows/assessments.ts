@@ -21,9 +21,29 @@ export interface PublishReportCardResultInput {
   publishedAt?: Date
 }
 
+export interface GenerateReportCardResultInput {
+  id: string
+  studentId: string
+  periodId: string
+  reportCardDefinitionId?: string
+  generatedAt?: Date
+}
+
 export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
+    const student = await this.requireStudent(input.studentId)
+    this.checkActorSchool(student.schoolId)
+    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'assessments.publish_report_card')
+    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+    await this.requireReportCardNotPublished(input.studentId, input.periodId)
+    const reportCard = await this.buildReportCardResult(input)
+    await this.base.results.save(reportCard, { moduleChecked: true })
+    return reportCard
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
@@ -74,7 +94,8 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     periodId,
     reportCardDefinitionId,
-  }: PublishReportCardResultInput): Promise<ReportCardResult> {
+    generatedAt,
+  }: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const period = await this.requirePeriod(periodId)
     const enrollment = await this.requireEnrollmentForPeriod({
       studentId,
@@ -111,7 +132,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       assessmentResultCount: periodAssessmentResults.length,
       overallAverage,
       status: existing?.status ?? ReportCardResultStatus.Draft,
-      generatedAt: existing?.generatedAt,
+      generatedAt: existing?.generatedAt ?? generatedAt,
       publishedAt: existing?.publishedAt,
     })
   }

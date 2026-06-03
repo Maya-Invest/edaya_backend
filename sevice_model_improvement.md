@@ -441,17 +441,23 @@ Completed core-package work so far:
 - [x] Migrated `AcademicsService` curriculum writes to delegate persistence to `classSubjects.save(entity)`, `classSubjectMatters.save(entity)`, and `classSubjectProgress.save(entity)` while preserving existing class-group and session access checks.
 - [x] Started implementing complex workflows directly in the new `SchoolService` under `packages/core/src/services/entities`.
 - [x] Added `SchoolService.recordSessionProgress(...)` as the first direct complex workflow, including duplicate prevention, monotonic progress validation, atomic writes, managed persistence, and class-subject aggregate update.
-- [x] Added `SchoolService.publishReportCardResult(...)`, including report-card generation, attendance summary aggregation, published-card immutability, atomic publishing, and managed `results.save(entity)` persistence.
+- [x] Added `SchoolService` setup active-year workflows: `createAcademicYear` for active-year creation and `activateAcademicYear`, including active-year deactivation, atomic execution, setup authorization split, and managed `academicYears.save(entity)` persistence.
+- [x] Added `SchoolService.generateReportCardResult(...)` and `publishReportCardResult(...)`, including report-card generation, attendance summary aggregation, published-card immutability, atomic publishing for publication, and managed `results.save(entity)` persistence.
 - [x] Added `SchoolService` finance workflows: `assignFeeToStudent`, `recordPayment`, `reversePayment`, and `cancelPayment`, including installment materialization, fee status derivation, payment lifecycle validation, atomic paid-amount updates, and managed `studentFees`/`payments` persistence.
-- [x] Added `SchoolService` finance fee lifecycle workflows: `adjustStudentFee` and `cancelStudentFee`, including one-time adjustment validation, outstanding-balance validation, cancelled-fee guards, paid-fee cancellation guards, audit metadata assignment, status derivation, and managed `studentFees.save(entity)` persistence.
+- [x] Initially ported `SchoolService` finance fee lifecycle wrappers, then demoted `adjustStudentFee` and `cancelStudentFee` after moving their single-entity rules to `studentFees.preSave`.
+- [x] Added `SchoolService.enrollStudent(...)`, including active-student validation, student/class school consistency, same-class idempotency, active-enrollment conflict rejection, capacity checks, authorization, and managed `enrollments.save(entity)` persistence.
+- [x] Added `SchoolService.linkGuardianToStudent(...)`, including guardian/student school consistency, enrolled-in-school context validation, duplicate-link replacement, relationship state persistence, authorization, and managed `guardianLinks.save(entity)` persistence.
 - [x] Added `SchoolService` student transition workflows: `promoteStudent` and `transferStudent`, including active-enrollment validation, successor target validation, promotion grade-order validation, target capacity checks, atomic close-and-successor creation, and managed `enrollments.save(entity)` persistence.
-- [x] Added `SchoolService` student lifecycle workflows: `closeEnrollment`, `recordProgressionDecision`, and `graduateStudent`, including active-enrollment validation, progression decision audit metadata, atomic graduation status update, and managed `enrollments.save(entity)` / `students.save(entity)` persistence.
+- [x] Added `SchoolService.graduateStudent(...)` as the retained student lifecycle workflow; demoted `closeEnrollment` and `recordProgressionDecision` after moving their single-entity rules to `enrollments.preSave`.
 - [x] Refactored `SchoolService` workflow implementations into helper classes under `packages/core/src/services/entities/service-workflows`, with `SchoolService` delegating to the relevant domain workflow helper.
-- [x] Added `SchoolService` scheduling attendance workflows: `recordAttendance`, `recordDailyAttendance`, `recordSessionAttendance`, `recordClassDailyAttendance`, and `reviewAttendanceJustification`, including daily-session materialization, active-enrollment validation, correction guards, justification lifecycle validation, atomic batch attendance recording, and managed `sessions.save(entity)` / `attendance.save(entity)` persistence.
+- [x] Added retained `SchoolService` scheduling attendance workflows: `recordAttendance`, `recordDailyAttendance`, `recordSessionAttendance`, and `recordClassDailyAttendance`; demoted `reviewAttendanceJustification` after moving its single-entity rules to `attendance.preSave`.
 - [x] Added `SchoolService.generateSessions(...)`, including timetable expansion, recurring and one-off schedule matching, non-school-day calendar exclusions by school/class/grade scope, atomic session generation, and managed `sessions.save(entity)` persistence.
 - [x] Added `SchoolService` communications workflows: `publishAnnouncement`, `recordDelivery`, and `materializeDeliveries`, including target precondition validation, publication-state validation, recipient eligibility checks, target expansion, delivery deduplication, atomic materialization, and managed `announcements.save(entity)` / `messageDeliveries.save(entity)` persistence.
-- [x] Added `SchoolService` behavior workflows: `recordIncident`, `addStudentInvolvement`, `applyDisciplinaryAction`, `updateStudentDisciplinaryActionStatus`, and `resolveIncident`, including contextual incident scope resolution, duplicate involvement prevention, active enrollment validation, discipline catalog validation, open-incident resolution guards, and managed `incidents.save(entity)` / `studentIncidentInvolvements.save(entity)` / `studentDisciplinaryActions.save(entity)` persistence.
+- [x] Added retained `SchoolService` behavior workflows: `addStudentInvolvement` and `applyDisciplinaryAction`; demoted `recordIncident`, `updateStudentDisciplinaryActionStatus`, and `resolveIncident` after moving their single-entity rules to managed `preSave` gates.
 - [x] Added managed write options so domain workflows can mark module authorization as already checked while still using managed tenant, entity authorization, gate, and repository handling.
+- [x] Moved single-entity update business rules into managed `preSave` gates for enrollments, attendance, student fees, incidents, and student disciplinary actions.
+- [x] Moved assessment configuration rules into managed `preSave` gates for grade scales, report-card definitions, and report-card definition sections: school/resource consistency, default uniqueness, parent group validation, and section cycle rejection.
+- [x] Moved assessment save rules into managed `assessments.preSave`: class-subject/class-group/period/session consistency and completion-after-results rejection.
 - [x] Aligned managed staff-assignment write authorization with the workflow action `setup.assign_staff`.
 - [x] Added managed class-subject staff-assignment authorization that resolves the class subject back to class-group access.
 - [x] Added focused tests for create-state gates, tenant rejection, idempotent delete, academic-year delete gate, indirect resource assignment tenant checks, `SchoolService` aggregate queries, and the managed `ConfigService` facade.
@@ -466,15 +472,22 @@ Completed core-package work so far:
 - [x] Added regression coverage proving staff member registration, staff status updates, and staff assignment creation persist through the managed path while preserving assignment authorization.
 - [x] Added regression coverage proving subject offering, subject-matter assignment, and session progress recording persist through the managed academics path.
 - [x] Added direct `SchoolService` workflow coverage for `recordSessionProgress`, including duplicate progress and decreasing progress rejection.
-- [x] Added direct `SchoolService` workflow coverage for `publishReportCardResult`, including generated averages, attendance summary counts, managed persistence, and already-published rejection.
+- [x] Added direct `SchoolService` workflow coverage for active academic-year creation and activation, including deactivation of existing active years through managed saves.
+- [x] Added direct `SchoolService` workflow coverage for `generateReportCardResult` and `publishReportCardResult`, including generated averages, attendance summary counts, draft id/generated-at preservation, managed persistence, and already-published rejection.
 - [x] Added direct `SchoolService` workflow coverage for finance assignment, payment recording, reversal, cancellation, cancelled-fee payment rejection, and non-recorded payment reversal rejection.
-- [x] Added direct `SchoolService` workflow coverage for finance fee adjustment and cancellation, including managed persistence, cancelled-fee adjustment rejection, already-adjusted rejection, over-adjustment rejection, already-cancelled rejection, and paid-fee cancellation rejection.
+- [x] Replaced direct `SchoolService` workflow coverage for finance fee adjustment/cancellation with managed `studentFees.preSave` coverage.
+- [x] Added direct `SchoolService` workflow coverage for initial student enrollment, including first enrollment creation, same-class idempotency, active-enrollment conflict rejection, inactive-student rejection, and full-class rejection.
+- [x] Added direct `SchoolService` workflow coverage for guardian-student linking, including managed persistence, existing-link id/created-at preservation, enrolled-in-school context rejection, and guardian/student school mismatch rejection.
 - [x] Added direct `SchoolService` workflow coverage for student promotion and transfer, including managed persistence, inactive enrollment rejection, same-class target rejection, invalid promotion target rejection, and full target class-group rejection.
-- [x] Added direct `SchoolService` workflow coverage for student lifecycle transitions, including enrollment closure, inactive closure rejection, progression decision recording, graduation persistence, and inactive graduation rejection.
-- [x] Added direct `SchoolService` workflow coverage for scheduling attendance, including daily session creation/reuse, managed attendance persistence, non-daily class rejection, session and class daily attendance recording, and justification review validation.
+- [x] Kept direct `SchoolService` workflow coverage for graduation and moved enrollment closure/progression decision coverage to managed `enrollments.preSave` tests.
+- [x] Kept direct `SchoolService` workflow coverage for attendance recording and moved justification review validation to managed `attendance.preSave` tests.
 - [x] Added direct `SchoolService` workflow coverage for scheduling session generation, including recurring and one-off schedule expansion, managed session persistence, class-group authorization, and scoped non-school-day exclusion.
 - [x] Added direct `SchoolService` workflow coverage for communications publishing, delivery recording, recipient eligibility rejection, materialized delivery deduplication, and unpublished materialization rejection.
-- [x] Added direct `SchoolService` workflow coverage for behavior incident lifecycle operations, including scoped incident creation, involvement persistence, duplicate involvement rejection, disciplinary action prerequisites, disciplinary status update, incident resolution, and non-open incident rejection.
+- [x] Kept direct `SchoolService` workflow coverage for behavior involvement/action operations and moved incident creation/resolution plus disciplinary status transition coverage to managed `preSave` tests.
+- [x] Added direct managed-service coverage proving `preSave` rejects invalid single-entity updates for enrollment closure, attendance justification, student-fee adjustment/cancellation, incident scope/resolution, and terminal disciplinary-action status changes.
+- [x] Added direct managed-service coverage proving assessment configuration `preSave` gates reject duplicate default grade scales, invalid report-card definition resources/defaults, invalid section parents, and section cycles.
+- [x] Added direct managed-service coverage proving `assessments.preSave` rejects inconsistent assessment resources and completion after results are recorded.
+- [x] Demoted single-entity lifecycle wrappers from the new `SchoolService` surface and `service-workflows` helpers after moving their rules to managed `preSave` gates: `closeEnrollment`, `recordProgressionDecision`, `reviewAttendanceJustification`, `adjustStudentFee`, `cancelStudentFee`, `recordIncident`, `updateStudentDisciplinaryActionStatus`, and `resolveIncident`.
 - [x] Added regression coverage proving lifecycle-only setup operations do not accidentally require the generic `setup.manage` action after delegating to managed saves.
 - [x] Added `findByIds`, `batchSave`, and `batchDelete` to `ManagedEntityService<T>`.
 - [x] Added focused tests for managed bulk read, bulk save, and bulk delete behavior.
@@ -483,7 +496,7 @@ Current validation status:
 
 - [x] `bun run --cwd packages/core check`
 - [x] `bun run --cwd packages/core lint`
-- [x] `bun run --cwd packages/core test` passes with 356 tests.
+- [x] `bun run --cwd packages/core test` passes with 365 tests.
 
 Compatibility still intentionally present:
 
@@ -492,10 +505,140 @@ Compatibility still intentionally present:
 - Existing domain command services still exist.
 - Existing `SchoolQueryService` still exists while callers migrate to `SchoolService`.
 
+## Old Service Audit
+
+Refreshed audit after moving single-entity update rules into managed `preSave` gates.
+
+The new managed surface is usable, but downstream migration should still wait until the old command-service behavior has an explicit destination in `packages/core/src/services/entities`: either a retained `SchoolService` workflow, managed entity config/gates, direct `BaseSchoolService` CRUD, or an intentional compatibility facade.
+
+Covered by the new surface and valid long-term:
+
+- Query CRUD: `SchoolQueryService` entity reads map to `BaseSchoolService.<entity>.findById/findByIds/findOne/list/count`.
+- Query aggregates: `getOverdueFeeCount` and `getPublishedReportCardCount` are on `SchoolService`.
+- Setup: active academic-year creation and activation are on `SchoolService`.
+- Academics: `recordSessionProgress` is on `SchoolService`.
+- Assessments: `generateReportCardResult` and `publishReportCardResult` are on `SchoolService`.
+- Students: `enrollStudent`, `linkGuardianToStudent`, `promoteStudent`, `transferStudent`, and `graduateStudent` are on `SchoolService`.
+- Scheduling: `generateSessions`, attendance recording, and class/session daily attendance are on `SchoolService`.
+- Communications: announcement publishing, delivery recording, and delivery materialization are on `SchoolService`.
+- Behavior: student involvement and disciplinary action application are on `SchoolService`.
+- Finance: fee assignment and payment recording/reversal/cancellation are on `SchoolService`.
+- Assessment configuration gates: grade-scale default uniqueness, report-card definition resource/default validation, and report-card section parent/cycle validation are enforced by managed `preSave` gates.
+- Assessment save gates: assessment class-subject/period/session consistency and completion-after-results restrictions are enforced by managed `preSave` gates.
+- Simple entity CRUD/config writes can use `BaseSchoolService` managed entity services directly when no extra workflow invariant is needed.
+
+Demoted from the new `SchoolService` surface before downstream migration:
+
+- `closeEnrollment`: the current-active enrollment rule is now an `enrollments.preSave` rule. The old command service still provides the compatibility facade.
+- `recordProgressionDecision`: progression-decision transition restrictions are now an `enrollments.preSave` rule.
+- `reviewAttendanceJustification`: justification-review restrictions are now an `attendance.preSave` rule.
+- `adjustStudentFee`: adjustment restrictions are now a `studentFees.preSave` rule.
+- `cancelStudentFee`: cancellation restrictions are now a `studentFees.preSave` rule.
+- `recordIncident`: scoped incident creation validation is now an `incidents.preSave` rule. Keep only if we intentionally want a convenience constructor for reporter metadata.
+- `updateStudentDisciplinaryActionStatus`: terminal-status transition restrictions are now a `studentDisciplinaryActions.preSave` rule.
+- `resolveIncident`: resolution transition restrictions are now an `incidents.preSave` rule.
+
+Old command methods that should still be ported as `SchoolService` workflows:
+
+- None currently identified from the latest audit. Remaining old command methods should move to managed entity gates/config, direct `BaseSchoolService` CRUD, read helpers, or compatibility facades.
+
+Old command methods that should move to managed entity gates/config instead of `SchoolService` workflows:
+
+- Setup:
+  - `createAcademicPeriod` / `publishAcademicPeriod`: enforce academic-year containment in `academicPeriods.preSave`.
+  - `createClassGroup` / `updateClassGroupConfiguration`: enforce academic-year, grade-level, homeroom staff, and capacity rules in `classGroups.preSave`.
+  - `registerStaffMember` / `updateStaffMemberStatus`: direct managed save plus a managed rule for self-deactivation. This may require actor-aware write gates or write authorization because the rule depends on the current actor.
+  - `assignStaffToClass`, `assignStaffToClassSubject`, and `assignStaffToSession`: enforce staff/target school consistency in `staffAssignments.preSave` while keeping target-specific authorization in config.
+  - `assignResourceToClass` and `assignResourceToSession`: enforce resource/target school consistency and overlap rules in `resourceAssignments.preSave`.
+  - `registerAttachment` / `removeAttachment`: enforce owner-context validation and owner-scoped authorization in `attachments` config/gates.
+- Academics:
+  - `offerSubjectToClass`: enforce class-group/subject consistency in `classSubjects.preSave`.
+  - `assignMatterToClassSubject`: enforce class-subject/subject-matter consistency in `classSubjectMatters.preSave`.
+- Assessments:
+  - `recordAssessmentResult` / `recordAssessmentResultCompliance`: enforce assessment max score, student eligibility, and published-report-card immutability in `assessmentResults.preSave`; keep a compatibility helper only if callers need upsert-by-assessment/student semantics.
+- Students:
+  - `updateStudentStatus`: enforce graduated-status restrictions in `students.preSave`.
+  - `updateGuardianStudentLink`: enforce guardian/student link consistency in `guardianStudentLinks.preSave`.
+  - `upsertStudentHealthProfile`: prefer managed save plus a uniqueness/latest-profile gate; keep a compatibility helper only if callers need upsert-by-student semantics.
+  - `createStudentNote` / `updateStudentNote`: enforce note author/visibility rules in managed authorization or actor-aware gates.
+- Scheduling:
+  - `createSchedule`: enforce class-group/class-subject consistency in `schedules.preSave`.
+  - `createCalendarEvent`: enforce academic-year date bounds and event scope consistency in `calendarEvents.preSave`.
+  - `createSession`: enforce class-group/class-subject consistency in `sessions.preSave`.
+- Communications:
+  - `addTarget`: enforce announcement target ownership and scope consistency in `announcementTargets.preSave`.
+
+Old command methods that can migrate to direct `BaseSchoolService` managed CRUD with no new workflow:
+
+- Setup: `registerSchool`, `updateSchoolConfiguration`, inactive `createAcademicYear`, `removeResourceAssignment`, and simple `removeAttachment` once attachment delete authorization is in config.
+- Students: `registerStudent`, `registerGuardian`, `updateStudentProfile`, and `updateGuardianContactMethods`.
+- Communications: `createAnnouncement`.
+- Finance: `createFee`.
+
+Old command read helpers to port only if the new public API should keep named aggregate/query methods:
+
+- Academics: `listMatterProgress`.
+- Assessments: `listClassSubjectAssessmentResultsForPeriod`.
+- Scheduling: `buildAttendanceSummary` and `listSessionAttendance`.
+- Finance: `buildFeeSummary`.
+
+Downstream migration is therefore premature. The next work should complete the managed-gate destinations in `packages/core/src/services/entities`, then switch package callers/tests away from the old module facades.
+
+## Strict Workflow Audit
+
+Use this stricter rule for `SchoolService` workflow methods:
+
+- A workflow belongs on `SchoolService` only when its business rules coordinate more than one domain entity.
+- Private helpers may load/validate related entities, but helper existence alone does not make a public method complex.
+- Authorization or tenant-context lookup alone does not make a public method complex.
+- Single-entity lifecycle mutations should be expressed through `BaseSchoolService.<entity>.save(entity)` plus entity invariants and `ManagedEntityService` `preSave` gates.
+- All single-entity update business rules must be enforced with `preSave` checks in the managed entity config.
+
+Current workflow methods that fit the stricter rule:
+
+- `createAcademicYear` / `activateAcademicYear`: coordinate the target active academic year with deactivation of other active academic years.
+- `recordSessionProgress`: coordinates session progress, class-subject matter state, and class-subject aggregate progress.
+- `generateReportCardResult` / `publishReportCardResult`: coordinate student enrollment, class group, period, report-card definition/sections, assessment results, attendance summary, draft report-card state, and report-card publishing.
+- `assignFeeToStudent`: coordinates student, fee template, generated installments, and student fee state.
+- `recordPayment`: coordinates payment creation with student-fee paid amount and status update.
+- `reversePayment` / `cancelPayment`: coordinate payment lifecycle with student-fee paid amount and status update.
+- `enrollStudent`: coordinates student status, class group, existing enrollment state, same-class idempotency, and class capacity.
+- `linkGuardianToStudent`: coordinates guardian, student, enrollment/class context, duplicate-link replacement, and guardian-student link state.
+- `promoteStudent` / `transferStudent`: coordinate current enrollment, successor enrollment, class-group target, capacity, and grade progression rules.
+- `graduateStudent`: coordinates enrollment closure/progression decision with student status update.
+- `generateSessions`: coordinates class-group schedules, calendar events, and generated sessions.
+- `recordAttendance`: coordinates session, class group, student, active enrollment, existing attendance correction rules, and attendance record persistence.
+- `recordDailyAttendance`: coordinates class-group attendance mode, active enrollment, daily-session creation/reuse, and attendance record persistence.
+- `recordSessionAttendance` / `recordClassDailyAttendance`: coordinate batch attendance with session/class daily session, students, active enrollments, and correction rules.
+- `publishAnnouncement`: coordinates announcement publication with required announcement targets.
+- `recordDelivery`: coordinates announcement status, recipient ownership, target eligibility, and message delivery.
+- `materializeDeliveries`: coordinates announcement targets, resolved staff/student/guardian recipients, existing deliveries, and new delivery creation.
+- `addStudentInvolvement`: coordinates incident, student, active enrollment in scoped incidents, duplicate involvement prevention, and involvement persistence.
+- `applyDisciplinaryAction`: coordinates incident, student, active enrollment, existing involvement, disciplinary-action catalog entry, and applied action persistence.
+
+Workflow methods already removed from the new `SchoolService` surface after classification as compatibility/demotion candidates:
+
+- `closeEnrollment`: current-active enrollment rule is now in `enrollments.preSave`; prefer direct managed save/entity method.
+- `recordProgressionDecision`: progression transition restrictions are now in `enrollments.preSave`; prefer direct managed save/entity method.
+- `reviewAttendanceJustification`: justification transition restrictions are now in `attendance.preSave`; prefer direct managed save/entity method.
+- `adjustStudentFee`: adjustment restrictions are now in `studentFees.preSave`; prefer direct managed save/entity method unless future logic reads payments or adjustment history.
+- `cancelStudentFee`: cancellation restrictions are now in `studentFees.preSave`; prefer direct managed save/entity method unless cancellation must inspect related payments.
+- `recordIncident`: incident scope validation is now in `incidents.preSave`; keep only if we intentionally want a convenience constructor for reporter metadata.
+- `updateStudentDisciplinaryActionStatus`: status transition restrictions are now in `studentDisciplinaryActions.preSave`; prefer direct managed save/entity method.
+- `resolveIncident`: incident resolution restrictions are now in `incidents.preSave`; prefer direct managed save/entity method.
+
+Guidance for future ports:
+
+- Do not port old command-service methods merely because they are named commands.
+- Put single-entity update rules in managed `preSave` gates, even when the old command service exposed a named method.
+- For setup, keep only active academic-year switching as a `SchoolService` workflow. Move academic-period containment, class-group capacity/configuration checks, staff assignment target validation, resource assignment overlap checks, and attachment owner-context validation into managed entity gates/config.
+- Prefer direct `BaseSchoolService` managed CRUD for simple school registration/configuration, fee creation, draft announcement creation, and similar single-entity operations unless there is an explicit cross-entity invariant.
+- Before removing old services, either demote the questionable `SchoolService` methods or explicitly accept them as compatibility/convenience APIs.
+
 Recommended next slice:
 
-- Audit remaining old command services against the new `SchoolService` workflow surface and identify any final complex workflow gaps before downstream migration.
-- If no core workflow gaps remain, start downstream migration away from old command/query services using the completed `packages/core/src/services/entities` API as the target.
+- Continue with assessment managed gates/config rather than adding public `SchoolService` methods.
+- Completed target: managed gates now cover `assessmentResults.preSave`, report-card result immutability, finance lifecycle rules, setup dependencies, and remaining managed write invariants.
 - Avoid migrating more old command service internals unless needed as a compatibility adapter after the new entities service surface is complete.
 
 ### Phase 1: Design Lock
@@ -504,7 +647,7 @@ Recommended next slice:
 - [ ] Confirm final removal timing for current `SchoolQueryService`, `ConfigService`, and individual command service exports.
 - [x] List every repository in `SchoolRepositories` and assign it to managed entity service config.
 - [x] Classify every entity as direct tenant or indirect tenant.
-- [ ] Define required write gates for every entity before exposing `save` and `delete`.
+- [x] Define required write gates for every entity before exposing `save` and `delete`.
 
 ### Phase 2: Shared Core
 
@@ -567,15 +710,15 @@ Recommended next slice:
 
 ### Phase 6: Business Gate Coverage
 
-- [ ] Add delete gate for academic years with class groups.
-- [ ] Add delete gate for academic periods with dependent records.
-- [ ] Add class group capacity gate.
-- [ ] Add staff self-deactivation gate.
-- [ ] Add resource assignment duplicate and overlap gates.
-- [ ] Add report-card immutability gates.
-- [ ] Add finance lifecycle gates for fees, student fees, and payments.
-- [ ] Add student profile status transition gates.
-- [ ] Audit remaining existing `BusinessRuleViolationError` usage and decide whether each rule belongs in a gate or a complex workflow.
+- [x] Add delete gate for academic years with class groups.
+- [x] Add delete gate for academic periods with dependent records.
+- [x] Add class group capacity gate.
+- [x] Add staff self-deactivation gate.
+- [x] Add resource assignment duplicate and overlap gates.
+- [x] Add report-card immutability gates.
+- [x] Add finance lifecycle gates for fees, student fees, and payments.
+- [x] Add student profile status transition gates.
+- [x] Audit remaining existing `BusinessRuleViolationError` usage and decide whether each rule belongs in a gate or a complex workflow.
 
 ### Phase 7: Test and Cleanup
 

@@ -1,11 +1,36 @@
-import type { ClassGroup } from '../../../entities'
+import type { ClassGroup, Guardian, GuardianStudentLink as GuardianStudentLinkType } from '../../../entities'
 import type { BaseSchoolService } from '../base-school-service'
+import { GuardianStudentLink } from '../../../entities'
 import { Student, StudentStatus } from '../../../entities/students/student'
 import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollment, StudentClassEnrollmentStatus } from '../../../entities/students/student-class-enrollment'
 import { resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
+
+export interface EnrollStudentInput {
+  id: string
+  studentId: string
+  classGroupId: string
+  createdAt?: Date
+}
+
+export interface LinkGuardianToStudentInput {
+  id: string
+  guardianId: string
+  studentId: string
+  relationship?: string
+  isPrimary?: boolean
+  isBillingContact?: boolean
+  legalGuardian?: boolean
+  canPickup?: boolean
+  emergencyContactPriority?: number | null
+  receivesAcademicReports?: boolean
+  receivesAttendanceAlerts?: boolean
+  contactRestrictions?: string | null
+  notes?: string | null
+  createdAt?: Date
+}
 
 export interface PromoteStudentInput {
   enrollmentId: string
@@ -23,19 +48,6 @@ export interface TransferStudentInput {
   effectiveAt: Date
 }
 
-export interface CloseEnrollmentInput {
-  enrollmentId: string
-  endReason: EnrollmentEndReason
-  endedAt?: Date
-}
-
-export interface RecordProgressionDecisionInput {
-  enrollmentId: string
-  decision: ProgressionDecision
-  decidedAt?: Date
-  notes?: string
-}
-
 export interface GraduateStudentInput {
   enrollmentId: string
   effectiveAt: Date
@@ -48,41 +60,102 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     super(base)
   }
 
-  async closeEnrollment({
-    enrollmentId,
-    endReason,
-    endedAt = new Date(),
-  }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
-    return this.base.atomicExecution.execute(async () => {
-      const enrollment = await this.requireManagedEnrollment(enrollmentId)
-      await this.requireCurrentActiveEnrollment(enrollment)
-      const closed = enrollment.close({
-        endedAt,
-        endReason,
-        closedBy: resolveAuditActorId(this.base.actor),
-      })
-      await this.base.enrollments.save(closed, { moduleChecked: true })
-      return closed
+  async enrollStudent({
+    id,
+    studentId,
+    classGroupId,
+    createdAt,
+  }: EnrollStudentInput): Promise<StudentClassEnrollment> {
+    const [student, classGroup] = await Promise.all([
+      this.requireStudent(studentId),
+      this.requireClassGroup(classGroupId),
+    ])
+    if (student.status !== StudentStatus.Active) {
+      throw new BusinessRuleViolationError('STUDENT_NOT_ACTIVE', `Student ${studentId} is not active and cannot be enrolled`)
+    }
+    if (student.schoolId !== classGroup.schoolId) {
+      denyResourceAccess()
+    }
+    this.checkActorSchool(classGroup.schoolId)
+    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'students.manage_enrollment')
+    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+    await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+
+    const existingEnrollments = await this.base.repositories.enrollments.list({ studentId })
+    const activeEnrollment = existingEnrollments.find(
+      enrollment => enrollment.status === StudentClassEnrollmentStatus.Active,
+    )
+    if (activeEnrollment && activeEnrollment.classGroupId !== classGroupId) {
+      throw new BusinessRuleViolationError('STUDENT_ALREADY_ENROLLED', `Student ${studentId} already has an active class enrollment`)
+    }
+    if (activeEnrollment) {
+      return activeEnrollment
+    }
+
+    await this.requireAvailableCapacity(classGroup)
+    const nextEnrollmentIndex = Math.max(0, ...existingEnrollments.map(enrollment => enrollment.enrollmentIndex)) + 1
+    const enrollment = new StudentClassEnrollment({
+      id,
+      studentId,
+      classGroupId,
+      academicYearId: classGroup.academicYearId,
+      enrollmentIndex: nextEnrollmentIndex,
+      createdAt,
     })
+    await this.base.enrollments.save(enrollment, { moduleChecked: true })
+    return enrollment
   }
 
-  async recordProgressionDecision({
-    enrollmentId,
-    decision,
-    decidedAt = new Date(),
+  async linkGuardianToStudent({
+    id,
+    guardianId,
+    studentId,
+    relationship = 'parent',
+    isPrimary = false,
+    isBillingContact = false,
+    legalGuardian = false,
+    canPickup = false,
+    emergencyContactPriority,
+    receivesAcademicReports = true,
+    receivesAttendanceAlerts = true,
+    contactRestrictions,
     notes,
-  }: RecordProgressionDecisionInput): Promise<StudentClassEnrollment> {
-    return this.base.atomicExecution.execute(async () => {
-      const enrollment = await this.requireManagedEnrollment(enrollmentId)
-      const decided = enrollment.recordProgressionDecision({
-        decision,
-        decidedAt,
-        decidedBy: resolveAuditActorId(this.base.actor),
-        notes,
-      })
-      await this.base.enrollments.save(decided, { moduleChecked: true })
-      return decided
+    createdAt,
+  }: LinkGuardianToStudentInput): Promise<GuardianStudentLinkType> {
+    const [guardian, student] = await Promise.all([
+      this.requireGuardian(guardianId),
+      this.requireStudent(studentId),
+    ])
+    if (guardian.schoolId !== student.schoolId) {
+      denyResourceAccess()
+    }
+    this.checkActorSchool(guardian.schoolId)
+    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'students.manage_guardians')
+    await this.base.authorizationPolicy.checkGuardianAccess(this.base.actor, [guardian.id])
+    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
+
+    await this.requireStudentEnrolledInSchool(student.id, guardian.schoolId)
+
+    const existing = await this.base.repositories.guardianLinks.findOne({ guardianId, studentId })
+    const link = new GuardianStudentLink({
+      id: existing?.id ?? id,
+      schoolId: guardian.schoolId,
+      guardianId,
+      studentId,
+      relationship,
+      isPrimary,
+      isBillingContact,
+      legalGuardian,
+      canPickup,
+      emergencyContactPriority,
+      receivesAcademicReports,
+      receivesAttendanceAlerts,
+      contactRestrictions,
+      notes,
+      createdAt: existing?.createdAt ?? createdAt,
     })
+    await this.base.guardianLinks.save(link, { moduleChecked: true })
+    return link
   }
 
   async promoteStudent({
@@ -284,5 +357,25 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (activeEnrollments.length >= classGroup.capacity) {
       throw new BusinessRuleViolationError('CLASS_GROUP_CAPACITY_EXCEEDED', `Class group ${classGroup.id} has reached capacity`)
     }
+  }
+
+  private async requireGuardian(guardianId: string): Promise<Guardian> {
+    const guardian = await this.base.repositories.guardians.findById(guardianId)
+    if (!guardian || guardian.schoolId !== this.base.actor.schoolId) {
+      denyResourceAccess()
+    }
+    return guardian
+  }
+
+  private async requireStudentEnrolledInSchool(studentId: string, schoolId: string): Promise<void> {
+    const enrollments = await this.base.repositories.enrollments.list({ studentId })
+    for (const enrollment of enrollments) {
+      const classGroup = await this.base.repositories.classGroups.findById(enrollment.classGroupId)
+      if (classGroup?.schoolId === schoolId) {
+        await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
+        return
+      }
+    }
+    denyResourceAccess()
   }
 }

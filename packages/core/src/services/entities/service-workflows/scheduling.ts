@@ -1,6 +1,7 @@
+import type { AttendanceStatus } from '../../../entities/scheduling/attendance-record'
 import type { ClassGroup } from '../../../entities/school/class-group'
 import type { BaseSchoolService } from '../base-school-service'
-import { AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus } from '../../../entities/scheduling/attendance-record'
+import { AttendanceJustificationStatus, AttendanceRecord } from '../../../entities/scheduling/attendance-record'
 import { CalendarEventScopeKind } from '../../../entities/scheduling/calendar-event'
 import { DayOfWeek } from '../../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../../entities/scheduling/session'
@@ -46,15 +47,6 @@ export interface RecordDailyAttendanceInput {
   date: Date
   status: AttendanceStatus
   createdAt?: Date
-}
-
-export interface ReviewAttendanceJustificationInput {
-  studentId: string
-  sessionId: string
-  decision: AttendanceJustificationStatus.Excused | AttendanceJustificationStatus.Rejected
-  reason: string
-  notes?: string
-  reviewedAt?: Date
 }
 
 export interface RecordSessionAttendanceInput {
@@ -191,60 +183,6 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
         createdAt,
       })
     })
-  }
-
-  async reviewAttendanceJustification({
-    studentId,
-    sessionId,
-    decision,
-    reason,
-    notes,
-    reviewedAt,
-  }: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
-    const session = await this.requireSession(sessionId)
-    const classGroup = await this.requireClassGroup(session.classGroupId)
-    await this.authorizeAttendanceReview({
-      classGroup,
-      session,
-      studentId,
-    })
-    await this.requireStudentInSchool(studentId, classGroup.schoolId)
-    const record = await this.base.repositories.attendance.findOne({ studentId, sessionId })
-    if (!record) {
-      denyResourceAccess()
-    }
-    if (record.status !== AttendanceStatus.Absent) {
-      throw new BusinessRuleViolationError('JUSTIFICATION_ABSENCE_REQUIRED', 'Only an absent attendance record may receive a justification decision')
-    }
-    if (
-      record.justificationStatus === AttendanceJustificationStatus.Excused
-      || record.justificationStatus === AttendanceJustificationStatus.Rejected
-    ) {
-      throw new BusinessRuleViolationError('JUSTIFICATION_ALREADY_REVIEWED', 'Attendance justification has already been reviewed')
-    }
-    if (reason.trim().length === 0) {
-      throw new BusinessRuleViolationError('JUSTIFICATION_REASON_REQUIRED', 'reason is required for an attendance justification decision')
-    }
-    const decisionTime = reviewedAt ?? new Date()
-    const reviewedRecord = new AttendanceRecord({
-      id: record.id,
-      studentId: record.studentId,
-      sessionId: record.sessionId,
-      date: record.date,
-      status: record.status,
-      justificationStatus: decision,
-      reason,
-      notes,
-      justifiedAt: decisionTime,
-      justifiedByStaffId: resolveAuditActorId(this.base.actor),
-      correctedAt: record.correctedAt,
-      correctedByStaffId: record.correctedByStaffId,
-      createdBy: record.createdBy,
-      createdAt: record.createdAt,
-      updatedAt: decisionTime,
-    })
-    await this.base.attendance.save(reviewedRecord, { moduleChecked: true })
-    return reviewedRecord
   }
 
   async recordSessionAttendance({
@@ -460,20 +398,5 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   private async authorizeSchedulingManage(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
     await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
-  }
-
-  private async authorizeAttendanceReview({
-    classGroup,
-    session,
-    studentId,
-  }: {
-    classGroup: ClassGroup
-    session: Session
-    studentId: string
-  }): Promise<void> {
-    this.checkActorSchool(classGroup.schoolId)
-    await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
-    await this.base.authorizationPolicy.checkSessionAccess(this.base.actor, [session.id])
-    await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [studentId])
   }
 }

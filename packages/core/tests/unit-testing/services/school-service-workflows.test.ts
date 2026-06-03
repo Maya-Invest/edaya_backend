@@ -1,13 +1,14 @@
+import type { AttendanceRecord } from '../../../src/entities'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
 import type { ActorMetadata, AuthorizationPolicy } from '../../../src/services/authorization'
 import { describe, expect, mock, test } from 'bun:test'
 import {
+  AcademicYear,
   Announcement,
   AnnouncementStatus,
   AssessmentKind,
   AttendanceJustificationStatus,
   AttendanceMode,
-  AttendanceRecord,
   AttendanceStatus,
   CalendarEventKind,
   CalendarEventScopeKind,
@@ -16,6 +17,7 @@ import {
   Fee,
   FeeCategory,
   FeeStatus,
+  GuardianStudentLink,
   IncidentInvolvementRole,
   IncidentKind,
   IncidentStatus,
@@ -113,13 +115,69 @@ describe('SchoolService complex workflows', () => {
     return { mockAtomic, mockPolicy, mockRepos, service }
   }
 
+  function createSetupContext() {
+    const academicYears = new Map<string, AcademicYear>([
+      ['ay-current', new AcademicYear({
+        id: 'ay-current',
+        schoolId: 'sch1',
+        name: '2025-2026',
+        startDate: new Date('2025-09-01T00:00:00Z'),
+        endDate: new Date('2026-06-30T00:00:00Z'),
+        isActive: true,
+        createdAt: new Date('2025-01-01T00:00:00Z'),
+      })],
+      ['ay-next', new AcademicYear({
+        id: 'ay-next',
+        schoolId: 'sch1',
+        name: '2026-2027',
+        startDate: new Date('2026-09-01T00:00:00Z'),
+        endDate: new Date('2027-06-30T00:00:00Z'),
+        isActive: false,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+      })],
+    ])
+    const mockRepos = {
+      academicYears: {
+        findById: mock(async id => academicYears.get(id)),
+        list: mock(async (filter: any = {}) => [...academicYears.values()].filter(year =>
+          (!filter.schoolId || year.schoolId === filter.schoolId)
+          && (filter.isActive === undefined || year.isActive === filter.isActive))),
+        save: mock(async year => academicYears.set(year.id, year)),
+      },
+      schools: {
+        findById: mock(async id => id === 'sch1' ? { id, name: 'School' } : undefined),
+      },
+    } as unknown as SchoolRepositories
+
+    const mockPolicy = {
+      checkGlobalAction: mock(async () => {}),
+    } as unknown as AuthorizationPolicy
+
+    const mockAtomic: AtomicExecutionPort = {
+      execute: mock(async (operation: () => Promise<any>) => operation()),
+    }
+
+    const service = new SchoolService({
+      repositories: mockRepos,
+      authorizationPolicy: mockPolicy,
+      actor,
+      atomicExecution: mockAtomic,
+    })
+
+    return { academicYears, mockAtomic, mockPolicy, mockRepos, service }
+  }
+
   function createReportCardContext({
     existingReportCard,
   }: {
-    existingReportCard?: unknown
+    existingReportCard?: any
   } = {}) {
     const periodStart = new Date('2026-01-01T00:00:00Z')
     const periodEnd = new Date('2026-03-31T00:00:00Z')
+    const savedReportCards = new Map<string, any>()
+    if (existingReportCard) {
+      savedReportCards.set(existingReportCard.id, existingReportCard)
+    }
     const mockRepos = {
       academicPeriods: {
         findById: mock(async () => ({
@@ -177,9 +235,10 @@ describe('SchoolService complex workflows', () => {
         list: mock(async () => [{ id: 'enr1', studentId: 'stu1', classGroupId: 'cg1' }]),
       },
       results: {
-        findById: mock(async () => undefined),
-        findOne: mock(async () => existingReportCard),
-        save: mock(async () => {}),
+        findById: mock(async id => savedReportCards.get(id)),
+        findOne: mock(async ({ studentId, periodId }: any = {}) => [...savedReportCards.values()].find(reportCard =>
+          reportCard.studentId === studentId && reportCard.periodId === periodId)),
+        save: mock(async reportCard => savedReportCards.set(reportCard.id, reportCard)),
       },
       sections: {
         list: mock(async () => [
@@ -233,7 +292,7 @@ describe('SchoolService complex workflows', () => {
       atomicExecution: mockAtomic,
     })
 
-    return { mockAtomic, mockPolicy, mockRepos, service }
+    return { mockAtomic, mockPolicy, mockRepos, savedReportCards, service }
   }
 
   function createFinanceContext({
@@ -337,6 +396,8 @@ describe('SchoolService complex workflows', () => {
 
   function createStudentTransitionContext({
     activeEnrollmentId = 'enr1',
+    existingEnrollmentClassGroupId = 'cg1',
+    studentStatus = StudentStatus.Active,
     sourceStatus = StudentClassEnrollmentStatus.Active,
     nextClassGroupId = 'cg2',
     sourceGradeOrder = 1,
@@ -346,6 +407,8 @@ describe('SchoolService complex workflows', () => {
     existingSuccessor = false,
   }: {
     activeEnrollmentId?: string
+    existingEnrollmentClassGroupId?: string
+    studentStatus?: StudentStatus
     sourceStatus?: StudentClassEnrollmentStatus
     nextClassGroupId?: string
     sourceGradeOrder?: number
@@ -374,6 +437,7 @@ describe('SchoolService complex workflows', () => {
       enrollmentIndex: 2,
       previousEnrollmentId: 'enr1',
     })
+    const savedEnrollments = new Map<string, StudentClassEnrollment>()
     const classGroups = new Map([
       ['cg1', {
         id: 'cg1',
@@ -405,9 +469,21 @@ describe('SchoolService complex workflows', () => {
           return undefined
         }),
         findOne: mock(async () => activeEnrollmentId
-          ? { id: activeEnrollmentId, studentId: 'stu1', classGroupId: 'cg1', status: StudentClassEnrollmentStatus.Active }
+          ? { id: activeEnrollmentId, studentId: 'stu1', classGroupId: existingEnrollmentClassGroupId, status: StudentClassEnrollmentStatus.Active }
           : undefined),
         list: mock(async (filter) => {
+          if (filter?.studentId === 'stu1') {
+            return activeEnrollmentId
+              ? [{
+                  id: activeEnrollmentId,
+                  studentId: 'stu1',
+                  classGroupId: existingEnrollmentClassGroupId,
+                  academicYearId: existingEnrollmentClassGroupId === 'cg2' ? 'ay2' : 'ay1',
+                  status: StudentClassEnrollmentStatus.Active,
+                  enrollmentIndex: 1,
+                }]
+              : []
+          }
           if (filter?.classGroupId === 'cg2') {
             return Array.from({ length: targetActiveEnrollmentCount }, (_, index) => ({
               id: `target-active-${index + 1}`,
@@ -419,7 +495,7 @@ describe('SchoolService complex workflows', () => {
           }
           return [sourceEnrollment]
         }),
-        save: mock(async () => {}),
+        save: mock(async enrollment => savedEnrollments.set(enrollment.id, enrollment)),
       },
       gradeLevels: {
         findById: mock(async id => ({
@@ -435,7 +511,7 @@ describe('SchoolService complex workflows', () => {
           schoolId: 'sch1',
           firstName: 'Ada',
           lastName: 'Lovelace',
-          status: StudentStatus.Active,
+          status: studentStatus,
           createdAt: new Date('2025-09-01T00:00:00Z'),
         })),
         save: mock(async () => {}),
@@ -459,7 +535,74 @@ describe('SchoolService complex workflows', () => {
       atomicExecution: mockAtomic,
     })
 
-    return { mockAtomic, mockPolicy, mockRepos, service }
+    return { mockAtomic, mockPolicy, mockRepos, savedEnrollments, service }
+  }
+
+  function createGuardianLinkContext({
+    existingLink = false,
+    enrolledInSchool = true,
+    guardianSchoolId = 'sch1',
+    studentSchoolId = 'sch1',
+  }: {
+    existingLink?: boolean
+    enrolledInSchool?: boolean
+    guardianSchoolId?: string
+    studentSchoolId?: string
+  } = {}) {
+    const existingCreatedAt = new Date('2026-01-01T00:00:00Z')
+    const savedLinks = new Map<string, GuardianStudentLink>()
+    if (existingLink) {
+      savedLinks.set('link-existing', new GuardianStudentLink({
+        id: 'link-existing',
+        schoolId: guardianSchoolId,
+        guardianId: 'gua1',
+        studentId: 'stu1',
+        relationship: 'parent',
+        createdAt: existingCreatedAt,
+      }))
+    }
+    const mockRepos = {
+      classGroups: {
+        findById: mock(async id => ({ id, schoolId: enrolledInSchool ? guardianSchoolId : 'other-school' })),
+      },
+      enrollments: {
+        list: mock(async () => enrolledInSchool
+          ? [{ id: 'enr1', studentId: 'stu1', classGroupId: 'cg1', status: StudentClassEnrollmentStatus.Active }]
+          : []),
+      },
+      guardians: {
+        findById: mock(async id => ({ id, schoolId: guardianSchoolId })),
+      },
+      guardianLinks: {
+        findById: mock(async id => savedLinks.get(id)),
+        findOne: mock(async ({ guardianId, studentId }: any = {}) => [...savedLinks.values()].find(link =>
+          link.guardianId === guardianId && link.studentId === studentId)),
+        save: mock(async link => savedLinks.set(link.id, link)),
+      },
+      students: {
+        findById: mock(async id => ({ id, schoolId: studentSchoolId })),
+      },
+    } as unknown as SchoolRepositories
+
+    const mockPolicy = {
+      checkClassGroupAccess: mock(async () => {}),
+      checkGlobalAction: mock(async () => {}),
+      checkGuardianAccess: mock(async () => {}),
+      checkStudentAccess: mock(async () => {}),
+    } as unknown as AuthorizationPolicy
+
+    const mockAtomic: AtomicExecutionPort = {
+      execute: mock(async (operation: () => Promise<any>) => operation()),
+    }
+
+    const service = new SchoolService({
+      repositories: mockRepos,
+      authorizationPolicy: mockPolicy,
+      actor,
+      atomicExecution: mockAtomic,
+    })
+
+    return { existingCreatedAt, mockPolicy, mockRepos, savedLinks, service }
   }
 
   function createSchedulingContext({
@@ -789,6 +932,51 @@ describe('SchoolService complex workflows', () => {
     return { disciplinaryActions, incidents, involvements, mockAtomic, mockPolicy, mockRepos, service }
   }
 
+  test('createAcademicYear creates an active year and deactivates existing active years through managed service', async () => {
+    const { academicYears, mockAtomic, mockPolicy, mockRepos, service } = createSetupContext()
+
+    const result = await service.createAcademicYear({
+      id: 'ay-new',
+      schoolId: 'sch1',
+      name: '2027-2028',
+      startDate: new Date('2027-09-01T00:00:00Z'),
+      endDate: new Date('2028-06-30T00:00:00Z'),
+      createdAt: new Date('2027-01-01T00:00:00Z'),
+    })
+
+    expect(result.id).toBe('ay-new')
+    expect(result.isActive).toBe(true)
+    expect(academicYears.get('ay-current')?.isActive).toBe(false)
+    expect(academicYears.get('ay-new')?.isActive).toBe(true)
+    expect(mockAtomic.execute).toHaveBeenCalled()
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'setup.manage')
+    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'ay-current',
+      isActive: false,
+    }))
+    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+  })
+
+  test('activateAcademicYear activates an existing year and deactivates other active years through managed service', async () => {
+    const { academicYears, mockAtomic, mockPolicy, mockRepos, service } = createSetupContext()
+
+    const result = await service.activateAcademicYear({
+      academicYearId: 'ay-next',
+    })
+
+    expect(result.id).toBe('ay-next')
+    expect(result.isActive).toBe(true)
+    expect(academicYears.get('ay-current')?.isActive).toBe(false)
+    expect(academicYears.get('ay-next')?.isActive).toBe(true)
+    expect(mockAtomic.execute).toHaveBeenCalled()
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'setup.manage_lifecycle')
+    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'ay-current',
+      isActive: false,
+    }))
+    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+  })
+
   test('recordSessionProgress records progress and updates aggregates through managed services', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createContext()
 
@@ -837,6 +1025,80 @@ describe('SchoolService complex workflows', () => {
       classSubjectMatterId: 'csm1',
       sessionId: 'sess1',
       completedPercentage: 60,
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('generateReportCardResult creates a draft report card through managed service', async () => {
+    const { mockPolicy, mockRepos, savedReportCards, service } = createReportCardContext()
+    const generatedAt = new Date('2026-04-01T00:00:00Z')
+
+    const result = await service.generateReportCardResult({
+      id: 'rc1',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+      generatedAt,
+    })
+
+    expect(result.id).toBe('rc1')
+    expect(result.status).toBe(ReportCardResultStatus.Draft)
+    expect(result.generatedAt).toBe(generatedAt)
+    expect(result.overallAverage).toBe(16)
+    expect(result.assessmentResultCount).toBe(1)
+    expect(result.attendanceSummary.presentCount).toBe(1)
+    expect(result.attendanceSummary.absenceCount).toBe(1)
+    expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
+    expect(result.attendanceSummary.lateCount).toBe(1)
+    expect(savedReportCards.get('rc1')).toBe(result)
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'assessments.publish_report_card')
+    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
+    expect(mockRepos.results.save).toHaveBeenCalledWith(result)
+  })
+
+  test('generateReportCardResult reuses existing draft id and generatedAt', async () => {
+    const existingGeneratedAt = new Date('2026-03-25T00:00:00Z')
+    const { mockPolicy, mockRepos, service } = createReportCardContext({
+      existingReportCard: {
+        id: 'rc-existing',
+        reportCardDefinitionId: 'def1',
+        studentId: 'stu1',
+        classGroupId: 'cg1',
+        periodId: 'per1',
+        status: ReportCardResultStatus.Draft,
+        generatedAt: existingGeneratedAt,
+      },
+    })
+
+    const result = await service.generateReportCardResult({
+      id: 'rc-new',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+      generatedAt: new Date('2026-04-01T00:00:00Z'),
+    })
+
+    expect(result.id).toBe('rc-existing')
+    expect(result.status).toBe(ReportCardResultStatus.Draft)
+    expect(result.generatedAt).toBe(existingGeneratedAt)
+    expect(mockPolicy.checkReportCardResultAccess).toHaveBeenCalledWith(actor, ['rc-existing'])
+    expect(mockRepos.results.save).toHaveBeenCalledWith(result)
+  })
+
+  test('generateReportCardResult rejects already published report cards', async () => {
+    const { service } = createReportCardContext({
+      existingReportCard: {
+        id: 'rc-existing',
+        studentId: 'stu1',
+        periodId: 'per1',
+        status: ReportCardResultStatus.Published,
+      },
+    })
+
+    await expect(service.generateReportCardResult({
+      id: 'rc1',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
@@ -981,119 +1243,145 @@ describe('SchoolService complex workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('adjustStudentFee applies a one-time adjustment through managed service', async () => {
-    const { mockPolicy, mockRepos, service } = createFinanceContext()
-
-    const result = await service.adjustStudentFee({
-      studentFeeId: 'sf1',
-      adjustmentAmount: 200,
-      reason: 'Scholarship',
-      adjustedAt: new Date('2026-03-04T00:00:00Z'),
-      referenceDate: new Date('2026-03-04T00:00:00Z'),
+  test('enrollStudent creates the first enrollment through managed service', async () => {
+    const { mockPolicy, mockRepos, savedEnrollments, service } = createStudentTransitionContext({
+      activeEnrollmentId: '',
     })
 
-    expect(result.id).toBe('sf1')
-    expect(result.adjustmentAmount.amount).toBe(200)
-    expect(result.adjustmentReason).toBe('Scholarship')
-    expect(result.adjustedById).toBe('user1')
-    expect(result.status).toBe(FeeStatus.Partial)
+    const result = await service.enrollStudent({
+      id: 'enr-new',
+      studentId: 'stu1',
+      classGroupId: 'cg1',
+      createdAt: new Date('2026-01-10T00:00:00Z'),
+    })
+
+    expect(result.id).toBe('enr-new')
+    expect(result.studentId).toBe('stu1')
+    expect(result.classGroupId).toBe('cg1')
+    expect(result.academicYearId).toBe('ay1')
+    expect(result.enrollmentIndex).toBe(1)
+    expect(savedEnrollments.get('enr-new')).toBe(result)
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'students.manage_enrollment')
     expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockPolicy.checkStudentFeeAccess).toHaveBeenCalledWith(actor, ['sf1'])
-    expect(mockRepos.studentFees.save).toHaveBeenCalledWith(result)
-  })
-
-  test('adjustStudentFee rejects cancelled, already adjusted, and overpaid adjustments', async () => {
-    await expect(createFinanceContext({ studentFeeStatus: FeeStatus.Cancelled }).service.adjustStudentFee({
-      studentFeeId: 'sf1',
-      adjustmentAmount: 100,
-      reason: 'Scholarship',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    await expect(createFinanceContext({ adjustmentAmount: 100 }).service.adjustStudentFee({
-      studentFeeId: 'sf1',
-      adjustmentAmount: 100,
-      reason: 'Scholarship',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    await expect(createFinanceContext().service.adjustStudentFee({
-      studentFeeId: 'sf1',
-      adjustmentAmount: 700,
-      reason: 'Scholarship',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
-  test('cancelStudentFee cancels unpaid fees through managed service', async () => {
-    const { mockRepos, service } = createFinanceContext({
-      paidAmount: 0,
-      studentFeeStatus: FeeStatus.Pending,
-    })
-
-    const result = await service.cancelStudentFee({
-      studentFeeId: 'sf1',
-      reason: 'Waived',
-      cancelledAt: new Date('2026-03-04T00:00:00Z'),
-    })
-
-    expect(result.status).toBe(FeeStatus.Cancelled)
-    expect(result.cancellationReason).toBe('Waived')
-    expect(result.cancelledById).toBe('user1')
-    expect(mockRepos.studentFees.save).toHaveBeenCalledWith(result)
-  })
-
-  test('cancelStudentFee rejects cancelled and paid fees', async () => {
-    await expect(createFinanceContext({ studentFeeStatus: FeeStatus.Cancelled }).service.cancelStudentFee({
-      studentFeeId: 'sf1',
-      reason: 'Waived',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    await expect(createFinanceContext().service.cancelStudentFee({
-      studentFeeId: 'sf1',
-      reason: 'Waived',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
-  test('closeEnrollment closes the active enrollment through managed service', async () => {
-    const { mockAtomic, mockRepos, service } = createStudentTransitionContext()
-
-    const result = await service.closeEnrollment({
-      enrollmentId: 'enr1',
-      endReason: EnrollmentEndReason.Withdrawn,
-      endedAt: new Date('2026-05-30T00:00:00Z'),
-    })
-
-    expect(result.id).toBe('enr1')
-    expect(result.status).toBe(StudentClassEnrollmentStatus.Closed)
-    expect(result.endReason).toBe(EnrollmentEndReason.Withdrawn)
-    expect(result.closedBy).toBe('user1')
-    expect(mockAtomic.execute).toHaveBeenCalled()
+    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
     expect(mockRepos.enrollments.save).toHaveBeenCalledWith(result)
   })
 
-  test('closeEnrollment rejects inactive current enrollments', async () => {
-    const { service } = createStudentTransitionContext({ activeEnrollmentId: 'other-enrollment' })
-
-    await expect(service.closeEnrollment({
-      enrollmentId: 'enr1',
-      endReason: EnrollmentEndReason.Withdrawn,
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
-  test('recordProgressionDecision records a decision through managed service', async () => {
+  test('enrollStudent returns existing active enrollment for the same class group', async () => {
     const { mockRepos, service } = createStudentTransitionContext({
-      sourceStatus: StudentClassEnrollmentStatus.Closed,
+      activeEnrollmentId: 'enr-existing',
+      existingEnrollmentClassGroupId: 'cg1',
     })
 
-    const result = await service.recordProgressionDecision({
-      enrollmentId: 'enr1',
-      decision: ProgressionDecision.Retained,
-      decidedAt: new Date('2026-06-01T00:00:00Z'),
-      notes: 'Repeat grade',
+    const result = await service.enrollStudent({
+      id: 'enr-new',
+      studentId: 'stu1',
+      classGroupId: 'cg1',
     })
 
-    expect(result.progressionDecision).toBe(ProgressionDecision.Retained)
-    expect(result.progressionDecidedBy).toBe('user1')
-    expect(result.progressionNotes).toBe('Repeat grade')
-    expect(mockRepos.enrollments.save).toHaveBeenCalledWith(result)
+    expect(result.id).toBe('enr-existing')
+    expect(result.classGroupId).toBe('cg1')
+    expect(mockRepos.enrollments.save).not.toHaveBeenCalled()
+  })
+
+  test('enrollStudent rejects active enrollment in another class group', async () => {
+    const { service } = createStudentTransitionContext({
+      activeEnrollmentId: 'enr-existing',
+      existingEnrollmentClassGroupId: 'cg2',
+    })
+
+    await expect(service.enrollStudent({
+      id: 'enr-new',
+      studentId: 'stu1',
+      classGroupId: 'cg1',
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('enrollStudent rejects inactive students and full class groups', async () => {
+    await expect(createStudentTransitionContext({
+      activeEnrollmentId: '',
+      studentStatus: StudentStatus.Inactive,
+    }).service.enrollStudent({
+      id: 'enr-new',
+      studentId: 'stu1',
+      classGroupId: 'cg1',
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+
+    await expect(createStudentTransitionContext({
+      activeEnrollmentId: '',
+      targetCapacity: 1,
+      targetActiveEnrollmentCount: 1,
+    }).service.enrollStudent({
+      id: 'enr-new',
+      studentId: 'stu1',
+      classGroupId: 'cg2',
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('linkGuardianToStudent creates a guardian link through managed service', async () => {
+    const { mockPolicy, mockRepos, savedLinks, service } = createGuardianLinkContext()
+
+    const result = await service.linkGuardianToStudent({
+      id: 'link-new',
+      guardianId: 'gua1',
+      studentId: 'stu1',
+      relationship: 'mother',
+      isPrimary: true,
+      canPickup: true,
+      createdAt: new Date('2026-02-01T00:00:00Z'),
+    })
+
+    expect(result.id).toBe('link-new')
+    expect(result.schoolId).toBe('sch1')
+    expect(result.guardianId).toBe('gua1')
+    expect(result.studentId).toBe('stu1')
+    expect(result.relationship).toBe('mother')
+    expect(result.isPrimary).toBe(true)
+    expect(result.canPickup).toBe(true)
+    expect(savedLinks.get('link-new')).toBe(result)
+    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'students.manage_guardians')
+    expect(mockPolicy.checkGuardianAccess).toHaveBeenCalledWith(actor, ['gua1'])
+    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
+    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
+    expect(mockRepos.guardianLinks.save).toHaveBeenCalledWith(result)
+  })
+
+  test('linkGuardianToStudent reuses existing link id and createdAt', async () => {
+    const { existingCreatedAt, mockRepos, service } = createGuardianLinkContext({ existingLink: true })
+
+    const result = await service.linkGuardianToStudent({
+      id: 'link-new',
+      guardianId: 'gua1',
+      studentId: 'stu1',
+      relationship: 'father',
+      isBillingContact: true,
+      createdAt: new Date('2026-02-01T00:00:00Z'),
+    })
+
+    expect(result.id).toBe('link-existing')
+    expect(result.relationship).toBe('father')
+    expect(result.isBillingContact).toBe(true)
+    expect(result.createdAt).toBe(existingCreatedAt)
+    expect(mockRepos.guardianLinks.save).toHaveBeenCalledWith(result)
+  })
+
+  test('linkGuardianToStudent rejects missing school enrollment context and school mismatch', async () => {
+    await expect(createGuardianLinkContext({
+      enrolledInSchool: false,
+    }).service.linkGuardianToStudent({
+      id: 'link-new',
+      guardianId: 'gua1',
+      studentId: 'stu1',
+    })).rejects.toThrow()
+
+    await expect(createGuardianLinkContext({
+      guardianSchoolId: 'sch1',
+      studentSchoolId: 'other-school',
+    }).service.linkGuardianToStudent({
+      id: 'link-new',
+      guardianId: 'gua1',
+      studentId: 'stu1',
+    })).rejects.toThrow()
   })
 
   test('graduateStudent closes enrollment and graduates the student through managed services', async () => {
@@ -1222,28 +1510,6 @@ describe('SchoolService complex workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('recordIncident resolves session scope and saves through managed service', async () => {
-    const { mockPolicy, mockRepos, service } = createBehaviorContext()
-
-    const result = await service.recordIncident({
-      id: 'inc-new',
-      schoolId: 'sch1',
-      title: 'New incident',
-      description: 'New incident description',
-      date: new Date('2026-05-02T10:00:00Z'),
-      kind: IncidentKind.MinorInfraction,
-      sessionId: 'sess1',
-      createdAt: new Date('2026-05-02T10:00:00Z'),
-    })
-
-    expect(result.id).toBe('inc-new')
-    expect(result.classGroupId).toBe('cg1')
-    expect(result.sessionId).toBe('sess1')
-    expect(result.reporterId).toBe('user1')
-    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
-    expect(mockRepos.incidents.save).toHaveBeenCalledWith(result)
-  })
-
   test('addStudentInvolvement persists eligible students through managed service', async () => {
     const { mockPolicy, mockRepos, service } = createBehaviorContext()
 
@@ -1301,41 +1567,6 @@ describe('SchoolService complex workflows', () => {
       studentId: 'stu1',
       disciplinaryActionId: 'da1',
     })).rejects.toThrow()
-  })
-
-  test('updateStudentDisciplinaryActionStatus updates status through managed service', async () => {
-    const { mockRepos, service } = createBehaviorContext({ existingInvolvement: true })
-
-    const result = await service.updateStudentDisciplinaryActionStatus({
-      studentDisciplinaryActionId: 'sda-existing',
-      status: StudentDisciplinaryActionStatus.Completed,
-      updatedAt: new Date('2026-05-04T10:00:00Z'),
-    })
-
-    expect(result.status).toBe(StudentDisciplinaryActionStatus.Completed)
-    expect(mockRepos.studentDisciplinaryActions.save).toHaveBeenCalledWith(result)
-  })
-
-  test('resolveIncident resolves open incidents through managed service', async () => {
-    const { mockRepos, service } = createBehaviorContext()
-
-    const result = await service.resolveIncident({
-      incidentId: 'inc1',
-      resolutionNotes: 'Resolved after review',
-      resolvedAt: new Date('2026-05-04T10:00:00Z'),
-    })
-
-    expect(result.status).toBe(IncidentStatus.Resolved)
-    expect(result.resolvedByStaffId).toBe('user1')
-    expect(mockRepos.incidents.save).toHaveBeenCalledWith(result)
-  })
-
-  test('resolveIncident rejects incidents that are not open', async () => {
-    const { service } = createBehaviorContext({ incidentStatus: IncidentStatus.Resolved })
-
-    await expect(service.resolveIncident({
-      incidentId: 'inc1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('generateSessions expands schedules and saves sessions through managed service', async () => {
@@ -1512,54 +1743,6 @@ describe('SchoolService complex workflows', () => {
       id: 'daily:cg_daily:2026-05-28',
     }))
     expect(mockRepos.attendance.save).toHaveBeenCalledWith(result[0])
-  })
-
-  test('reviewAttendanceJustification records a justification decision through managed attendance', async () => {
-    const existing = new AttendanceRecord({
-      id: 'att-existing',
-      studentId: 'stu1',
-      sessionId: 'ses1',
-      date: new Date('2026-05-28T08:00:00Z'),
-      status: AttendanceStatus.Absent,
-      justificationStatus: AttendanceJustificationStatus.Pending,
-      reason: 'Sick',
-      createdBy: 'user1',
-    })
-    const { mockPolicy, mockRepos, service } = createSchedulingContext({ existingAttendance: existing })
-
-    const result = await service.reviewAttendanceJustification({
-      studentId: 'stu1',
-      sessionId: 'ses1',
-      decision: AttendanceJustificationStatus.Excused,
-      reason: 'Medical note',
-      reviewedAt: new Date('2026-05-29T08:00:00Z'),
-    })
-
-    expect(result.id).toBe('att-existing')
-    expect(result.justificationStatus).toBe(AttendanceJustificationStatus.Excused)
-    expect(result.justifiedByStaffId).toBe('user1')
-    expect(mockPolicy.checkSessionAccess).toHaveBeenCalledWith(actor, ['ses1'])
-    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockRepos.attendance.save).toHaveBeenCalledWith(result)
-  })
-
-  test('reviewAttendanceJustification rejects non-absent records', async () => {
-    const existing = new AttendanceRecord({
-      id: 'att-existing',
-      studentId: 'stu1',
-      sessionId: 'ses1',
-      date: new Date('2026-05-28T08:00:00Z'),
-      status: AttendanceStatus.Present,
-      createdBy: 'user1',
-    })
-    const { service } = createSchedulingContext({ existingAttendance: existing })
-
-    await expect(service.reviewAttendanceJustification({
-      studentId: 'stu1',
-      sessionId: 'ses1',
-      decision: AttendanceJustificationStatus.Excused,
-      reason: 'Medical note',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('publishAnnouncement publishes only announcements with targets through managed service', async () => {

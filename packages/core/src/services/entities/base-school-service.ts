@@ -44,8 +44,50 @@ import type {
 } from '../../entities'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../ports'
 import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
+import type { EntityConfigFactoryInput } from '../shared/common'
 import type { ServiceArgs } from '../shared/service-args'
-import { createSchoolEntityServiceConfigs } from './entity-service-config'
+import { classSubjectConfig } from './entity-configs/academics/class-subject'
+import { classSubjectMatterConfig } from './entity-configs/academics/class-subject-matter'
+import { classSubjectProgressConfig } from './entity-configs/academics/class-subject-progress'
+import { subjectConfig } from './entity-configs/academics/subject'
+import { subjectMatterConfig } from './entity-configs/academics/subject-matter'
+import { assessmentConfig } from './entity-configs/assessments/assessment'
+import { assessmentResultConfig } from './entity-configs/assessments/assessment-result'
+import { reportCardDefinitionConfig } from './entity-configs/assessments/report-card-definition'
+import { reportCardDefinitionSectionConfig } from './entity-configs/assessments/report-card-definition-section'
+import { reportCardResultConfig } from './entity-configs/assessments/report-card-result'
+import { feeConfig } from './entity-configs/finances/fee'
+import { paymentConfig } from './entity-configs/finances/payment'
+import { studentFeeConfig } from './entity-configs/finances/student-fee'
+import { announcementConfig } from './entity-configs/messaging/announcement'
+import { announcementTargetConfig } from './entity-configs/messaging/announcement-target'
+import { messageDeliveryConfig } from './entity-configs/messaging/message-delivery'
+import { attendanceRecordConfig } from './entity-configs/scheduling/attendance-record'
+import { calendarEventConfig } from './entity-configs/scheduling/calendar-event'
+import { periodDefinitionConfig } from './entity-configs/scheduling/period-definition'
+import { scheduleConfig } from './entity-configs/scheduling/schedule'
+import { sessionConfig } from './entity-configs/scheduling/session'
+import { academicPeriodConfig } from './entity-configs/school/academic-period'
+import { academicYearConfig } from './entity-configs/school/academic-year'
+import { attachmentConfig } from './entity-configs/school/attachment'
+import { classGroupConfig } from './entity-configs/school/class-group'
+import { gradeLevelConfig } from './entity-configs/school/grade-level'
+import { gradeScaleConfig } from './entity-configs/school/grade-scale'
+import { resourceConfig } from './entity-configs/school/resource'
+import { resourceAssignmentConfig } from './entity-configs/school/resource-assignment'
+import { schoolConfig } from './entity-configs/school/school'
+import { staffAssignmentConfig } from './entity-configs/school/staff-assignment'
+import { staffMemberConfig } from './entity-configs/school/staff-member'
+import { disciplinaryActionConfig } from './entity-configs/students/disciplinary-action'
+import { guardianConfig } from './entity-configs/students/guardian'
+import { guardianStudentLinkConfig } from './entity-configs/students/guardian-student-link'
+import { incidentConfig } from './entity-configs/students/incident'
+import { studentConfig } from './entity-configs/students/student'
+import { studentClassEnrollmentConfig } from './entity-configs/students/student-class-enrollment'
+import { studentDisciplinaryActionConfig } from './entity-configs/students/student-disciplinary-action'
+import { studentHealthProfileConfig } from './entity-configs/students/student-health-profile'
+import { studentIncidentInvolvementConfig } from './entity-configs/students/student-incident-involvement'
+import { studentNoteConfig } from './entity-configs/students/student-note'
 import { ManagedEntityService } from './managed-entity-service'
 
 export class BaseSchoolService {
@@ -109,59 +151,112 @@ export class BaseSchoolService {
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
 
-    const configs = createSchoolEntityServiceConfigs(args)
     const serviceArgs = {
       actor: args.actor,
       repositories: args.repositories,
     }
 
-    this.schools = new ManagedEntityService({ ...serviceArgs, config: configs.schools })
-    this.academicYears = new ManagedEntityService({ ...serviceArgs, config: configs.academicYears })
-    this.academicPeriods = new ManagedEntityService({ ...serviceArgs, config: configs.academicPeriods })
-    this.periodDefinitions = new ManagedEntityService({ ...serviceArgs, config: configs.periodDefinitions })
-    this.gradeLevels = new ManagedEntityService({ ...serviceArgs, config: configs.gradeLevels })
-    this.staffMembers = new ManagedEntityService({ ...serviceArgs, config: configs.staffMembers })
-    this.staffAssignments = new ManagedEntityService({ ...serviceArgs, config: configs.staffAssignments })
-    this.attachments = new ManagedEntityService({ ...serviceArgs, config: configs.attachments })
-    this.resources = new ManagedEntityService({ ...serviceArgs, config: configs.resources })
-    this.resourceAssignments = new ManagedEntityService({ ...serviceArgs, config: configs.resourceAssignments })
+    const input: EntityConfigFactoryInput = {
+      policy: args.authorizationPolicy,
+      atomicExecution: args.atomicExecution,
+      repositories: args.repositories,
+    }
 
-    this.fees = new ManagedEntityService({ ...serviceArgs, config: configs.fees })
-    this.studentFees = new ManagedEntityService({ ...serviceArgs, config: configs.studentFees })
-    this.payments = new ManagedEntityService({ ...serviceArgs, config: configs.payments })
+    // academicYears: academicYearConfig(input),
+    // academicPeriods: ,
+    // periodDefinitions: ,
+    // gradeLevels: gradeLevelConfig(input),
+    // staffMembers: staffMemberConfig(input),
+    // staffAssignments: staffAssignmentConfig(input),
+    // attachments: attachmentConfig(input),
+    // resources: resourceConfig(input),
+    // resourceAssignments: resourceAssignmentConfig(input),
 
-    this.schedules = new ManagedEntityService({ ...serviceArgs, config: configs.schedules })
-    this.sessions = new ManagedEntityService({ ...serviceArgs, config: configs.sessions })
-    this.calendarEvents = new ManagedEntityService({ ...serviceArgs, config: configs.calendarEvents })
-    this.attendance = new ManagedEntityService({ ...serviceArgs, config: configs.attendance })
+    // fees: feeConfig(input),
+    // studentFees: studentFeeConfig(input),
+    // payments: paymentConfig(input),
 
-    this.announcements = new ManagedEntityService({ ...serviceArgs, config: configs.announcements })
-    this.announcementTargets = new ManagedEntityService({ ...serviceArgs, config: configs.announcementTargets })
-    this.messageDeliveries = new ManagedEntityService({ ...serviceArgs, config: configs.messageDeliveries })
+    // schedules: scheduleConfig(input),
+    // sessions: sessionConfig(input),
+    // calendarEvents: calendarEventConfig(input),
+    // attendance: attendanceRecordConfig(input),
 
-    this.subjects = new ManagedEntityService({ ...serviceArgs, config: configs.subjects })
-    this.subjectMatters = new ManagedEntityService({ ...serviceArgs, config: configs.subjectMatters })
-    this.classGroups = new ManagedEntityService({ ...serviceArgs, config: configs.classGroups })
-    this.classSubjects = new ManagedEntityService({ ...serviceArgs, config: configs.classSubjects })
-    this.classSubjectMatters = new ManagedEntityService({ ...serviceArgs, config: configs.classSubjectMatters })
-    this.classSubjectProgress = new ManagedEntityService({ ...serviceArgs, config: configs.classSubjectProgress })
+    // announcements: announcementConfig(input),
+    // announcementTargets: announcementTargetConfig(input),
+    // messageDeliveries: messageDeliveryConfig(input),
 
-    this.assessments = new ManagedEntityService({ ...serviceArgs, config: configs.assessments })
-    this.assessmentResults = new ManagedEntityService({ ...serviceArgs, config: configs.assessmentResults })
-    this.gradeScales = new ManagedEntityService({ ...serviceArgs, config: configs.gradeScales })
-    this.definitions = new ManagedEntityService({ ...serviceArgs, config: configs.definitions })
-    this.sections = new ManagedEntityService({ ...serviceArgs, config: configs.sections })
-    this.results = new ManagedEntityService({ ...serviceArgs, config: configs.results })
+    // subjects: subjectConfig(input),
+    // subjectMatters: subjectMatterConfig(input),
+    // classGroups: classGroupConfig(input),
+    // classSubjects: classSubjectConfig(input),
+    // classSubjectMatters: classSubjectMatterConfig(input),
+    // classSubjectProgress: classSubjectProgressConfig(input),
 
-    this.students = new ManagedEntityService({ ...serviceArgs, config: configs.students })
-    this.enrollments = new ManagedEntityService({ ...serviceArgs, config: configs.enrollments })
-    this.guardians = new ManagedEntityService({ ...serviceArgs, config: configs.guardians })
-    this.guardianLinks = new ManagedEntityService({ ...serviceArgs, config: configs.guardianLinks })
-    this.studentNotes = new ManagedEntityService({ ...serviceArgs, config: configs.studentNotes })
-    this.studentHealthProfiles = new ManagedEntityService({ ...serviceArgs, config: configs.studentHealthProfiles })
-    this.studentDisciplinaryActions = new ManagedEntityService({ ...serviceArgs, config: configs.studentDisciplinaryActions })
-    this.disciplinaryActions = new ManagedEntityService({ ...serviceArgs, config: configs.disciplinaryActions })
-    this.studentIncidentInvolvements = new ManagedEntityService({ ...serviceArgs, config: configs.studentIncidentInvolvements })
-    this.incidents = new ManagedEntityService({ ...serviceArgs, config: configs.incidents })
+    // assessments: assessmentConfig(input),
+    // assessmentResults: assessmentResultConfig(input),
+    // gradeScales: gradeScaleConfig(input),
+    // definitions: reportCardDefinitionConfig(input),
+    // sections: reportCardDefinitionSectionConfig(input),
+    // results: reportCardResultConfig(input),
+
+    // students: studentConfig(input),
+    // enrollments: studentClassEnrollmentConfig(input),
+    // guardians: guardianConfig(input),
+    // guardianLinks: guardianStudentLinkConfig(input),
+    // studentNotes: studentNoteConfig(input),
+    // studentHealthProfiles: studentHealthProfileConfig(input),
+    // studentDisciplinaryActions: studentDisciplinaryActionConfig(input),
+    // disciplinaryActions: disciplinaryActionConfig(input),
+    // studentIncidentInvolvements: studentIncidentInvolvementConfig(input),
+    // incidents: incidentConfig(input),
+
+    this.schools = new ManagedEntityService({ ...serviceArgs, config: schoolConfig(input) })
+    this.academicYears = new ManagedEntityService({ ...serviceArgs, config: academicYearConfig(input) })
+    this.academicPeriods = new ManagedEntityService({ ...serviceArgs, config: academicPeriodConfig(input) })
+    this.periodDefinitions = new ManagedEntityService({ ...serviceArgs, config: periodDefinitionConfig(input) })
+    this.gradeLevels = new ManagedEntityService({ ...serviceArgs, config: gradeLevelConfig(input) })
+    this.staffMembers = new ManagedEntityService({ ...serviceArgs, config: staffMemberConfig(input) })
+    this.staffAssignments = new ManagedEntityService({ ...serviceArgs, config: staffAssignmentConfig(input) })
+    this.attachments = new ManagedEntityService({ ...serviceArgs, config: attachmentConfig(input) })
+    this.resources = new ManagedEntityService({ ...serviceArgs, config: resourceConfig(input) })
+    this.resourceAssignments = new ManagedEntityService({ ...serviceArgs, config: resourceAssignmentConfig(input) })
+
+    this.fees = new ManagedEntityService({ ...serviceArgs, config: feeConfig(input) })
+    this.studentFees = new ManagedEntityService({ ...serviceArgs, config: studentFeeConfig(input) })
+    this.payments = new ManagedEntityService({ ...serviceArgs, config: paymentConfig(input) })
+
+    this.schedules = new ManagedEntityService({ ...serviceArgs, config: scheduleConfig(input) })
+    this.sessions = new ManagedEntityService({ ...serviceArgs, config: sessionConfig(input) })
+    this.calendarEvents = new ManagedEntityService({ ...serviceArgs, config: calendarEventConfig(input) })
+    this.attendance = new ManagedEntityService({ ...serviceArgs, config: attendanceRecordConfig(input) })
+
+    this.announcements = new ManagedEntityService({ ...serviceArgs, config: announcementConfig(input) })
+    this.announcementTargets = new ManagedEntityService({ ...serviceArgs, config: announcementTargetConfig(input) })
+    this.messageDeliveries = new ManagedEntityService({ ...serviceArgs, config: messageDeliveryConfig(input) })
+
+    this.subjects = new ManagedEntityService({ ...serviceArgs, config: subjectConfig(input) })
+    this.subjectMatters = new ManagedEntityService({ ...serviceArgs, config: subjectMatterConfig(input) })
+    this.classGroups = new ManagedEntityService({ ...serviceArgs, config: classGroupConfig(input) })
+    this.classSubjects = new ManagedEntityService({ ...serviceArgs, config: classSubjectConfig(input) })
+    this.classSubjectMatters = new ManagedEntityService({ ...serviceArgs, config: classSubjectMatterConfig(input) })
+    this.classSubjectProgress = new ManagedEntityService({ ...serviceArgs, config: classSubjectProgressConfig(input) })
+
+    this.assessments = new ManagedEntityService({ ...serviceArgs, config: assessmentConfig(input) })
+    this.assessmentResults = new ManagedEntityService({ ...serviceArgs, config: assessmentResultConfig(input) })
+    this.gradeScales = new ManagedEntityService({ ...serviceArgs, config: gradeScaleConfig(input) })
+    this.definitions = new ManagedEntityService({ ...serviceArgs, config: reportCardDefinitionConfig(input) })
+    this.sections = new ManagedEntityService({ ...serviceArgs, config: reportCardDefinitionSectionConfig(input) })
+    this.results = new ManagedEntityService({ ...serviceArgs, config: reportCardResultConfig(input) })
+
+    this.students = new ManagedEntityService({ ...serviceArgs, config: studentConfig(input) })
+    this.enrollments = new ManagedEntityService({ ...serviceArgs, config: studentClassEnrollmentConfig(input) })
+    this.guardians = new ManagedEntityService({ ...serviceArgs, config: guardianConfig(input) })
+    this.guardianLinks = new ManagedEntityService({ ...serviceArgs, config: guardianStudentLinkConfig(input) })
+    this.studentNotes = new ManagedEntityService({ ...serviceArgs, config: studentNoteConfig(input) })
+    this.studentHealthProfiles = new ManagedEntityService({ ...serviceArgs, config: studentHealthProfileConfig(input) })
+    this.studentDisciplinaryActions = new ManagedEntityService({ ...serviceArgs, config: studentDisciplinaryActionConfig(input) })
+    this.disciplinaryActions = new ManagedEntityService({ ...serviceArgs, config: disciplinaryActionConfig(input) })
+    this.studentIncidentInvolvements = new ManagedEntityService({ ...serviceArgs, config: studentIncidentInvolvementConfig(input) })
+    this.incidents = new ManagedEntityService({ ...serviceArgs, config: incidentConfig(input) })
   }
 }

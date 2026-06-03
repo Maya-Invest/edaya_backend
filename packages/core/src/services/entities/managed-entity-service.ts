@@ -36,6 +36,7 @@ export interface EntityBusinessGates<T> {
     entity: T,
     existing: T | undefined,
     repositories: SchoolRepositories,
+    actor: ActorMetadata,
   ) => Promise<void>
   preDelete?: (
     entity: T,
@@ -129,7 +130,7 @@ export class ManagedEntityService<T> {
         await this.ensureEntityTenant(existing)
 
       await this.config.write.authorizeSave(this.actor, entity, existing, this.repositories)
-      await this.config.gates?.preSave?.(entity, existing, this.repositories)
+      await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
       await this.config.repository.save(entity)
     })
   }
@@ -149,7 +150,7 @@ export class ManagedEntityService<T> {
         const id = getEntityId(entity)
         const existing = id ? existingById.get(id) : undefined
         await this.config.write.authorizeSave(this.actor, entity, existing, this.repositories)
-        await this.config.gates?.preSave?.(entity, existing, this.repositories)
+        await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
       }
 
       return this.config.repository.batchSave(entities)
