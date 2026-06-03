@@ -44,7 +44,7 @@ import type {
   SubjectMatter,
 } from '../entities'
 import type { AtomicExecutionPort, SchoolRepositories } from '../ports'
-import type { EntityConfigFactoryInput } from '../shared/common'
+import type { EntityConfigFactoryInput } from '../shared'
 import type { ServiceArgs } from '../shared/service-args'
 import { classSubjectConfig } from './entity-configs/academics/class-subject'
 import { classSubjectMatterConfig } from './entity-configs/academics/class-subject-matter'
@@ -161,54 +161,6 @@ export class BaseSchoolService {
       atomicExecution: args.atomicExecution,
       repositories: args.repositories,
     }
-
-    // academicYears: academicYearConfig(input),
-    // academicPeriods: ,
-    // periodDefinitions: ,
-    // gradeLevels: gradeLevelConfig(input),
-    // staffMembers: staffMemberConfig(input),
-    // staffAssignments: staffAssignmentConfig(input),
-    // attachments: attachmentConfig(input),
-    // resources: resourceConfig(input),
-    // resourceAssignments: resourceAssignmentConfig(input),
-
-    // fees: feeConfig(input),
-    // studentFees: studentFeeConfig(input),
-    // payments: paymentConfig(input),
-
-    // schedules: scheduleConfig(input),
-    // sessions: sessionConfig(input),
-    // calendarEvents: calendarEventConfig(input),
-    // attendance: attendanceRecordConfig(input),
-
-    // announcements: announcementConfig(input),
-    // announcementTargets: announcementTargetConfig(input),
-    // messageDeliveries: messageDeliveryConfig(input),
-
-    // subjects: subjectConfig(input),
-    // subjectMatters: subjectMatterConfig(input),
-    // classGroups: classGroupConfig(input),
-    // classSubjects: classSubjectConfig(input),
-    // classSubjectMatters: classSubjectMatterConfig(input),
-    // classSubjectProgress: classSubjectProgressConfig(input),
-
-    // assessments: assessmentConfig(input),
-    // assessmentResults: assessmentResultConfig(input),
-    // gradeScales: gradeScaleConfig(input),
-    // definitions: reportCardDefinitionConfig(input),
-    // sections: reportCardDefinitionSectionConfig(input),
-    // results: reportCardResultConfig(input),
-
-    // students: studentConfig(input),
-    // enrollments: studentClassEnrollmentConfig(input),
-    // guardians: guardianConfig(input),
-    // guardianLinks: guardianStudentLinkConfig(input),
-    // studentNotes: studentNoteConfig(input),
-    // studentHealthProfiles: studentHealthProfileConfig(input),
-    // studentDisciplinaryActions: studentDisciplinaryActionConfig(input),
-    // disciplinaryActions: disciplinaryActionConfig(input),
-    // studentIncidentInvolvements: studentIncidentInvolvementConfig(input),
-    // incidents: incidentConfig(input),
 
     this.schools = new ManagedEntityService({ ...serviceArgs, config: schoolConfig(input) })
     this.academicYears = new ManagedEntityService({ ...serviceArgs, config: academicYearConfig(input) })

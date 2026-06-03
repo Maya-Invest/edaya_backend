@@ -1,8 +1,8 @@
 import type { StudentDisciplinaryAction } from '../../../entities/students/student-disciplinary-action'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { StudentDisciplinaryActionStatus } from '../../../entities/students/student-disciplinary-action'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared/common'
+import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
 
 export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDisciplinaryAction> = ({ repositories, policy, atomicExecution }) =>
   config({

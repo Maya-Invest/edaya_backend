@@ -1,8 +1,8 @@
 import type { GuardianStudentLink } from '../../../entities/students/guardian-student-link'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { directEntityConfig, unique } from '../../../shared/common'
+import { directEntityConfig, unique } from '../../../shared'
 
 export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = (input) => {
   const config = directEntityConfig(

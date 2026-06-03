@@ -2,11 +2,11 @@ import type { ActorMetadata } from '../../../authorization'
 import type { StudentClassEnrollment } from '../../../entities'
 import type { StudentNote } from '../../../entities/students/student-note'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
 import { StaffRole } from '../../../entities'
 import { StudentNoteVisibility } from '../../../entities/students/student-note'
-import { dateTime, directEntityConfig, readByIds } from '../../../shared/common'
+import { dateTime, directEntityConfig, readByIds } from '../../../shared'
 
 export const studentNoteConfig: EntityConfigFactory<StudentNote> = (input) => {
   const config = directEntityConfig(

@@ -1,9 +1,9 @@
 import type { ReportCardDefinition } from '../../../entities/assessments/report-card-definition'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared/common'
+import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
 import { requireSchool } from '../../../shared/require-school'
 
 export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinition> = ({ repositories, policy, atomicExecution }) =>

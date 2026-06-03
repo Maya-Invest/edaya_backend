@@ -1,10 +1,10 @@
 import type { AuthorizationPolicy } from '../../../authorization/authorization-policy'
 import type { StudentFee } from '../../../entities/finances/student-fee'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { FeeStatus } from '../../../entities/finances/student-fee'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, dateTime, indirectTenant, read, readByIds, write } from '../../../shared/common'
+import { action, config, dateTime, indirectTenant, read, readByIds, write } from '../../../shared'
 
 export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories, policy, atomicExecution }) =>
   config({

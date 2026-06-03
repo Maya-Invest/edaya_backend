@@ -1,8 +1,8 @@
 import type { AuthorizationPolicy } from '../../../authorization/authorization-policy'
 import type { ClassSubjectProgress } from '../../../entities/academics/class-subject-progress'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, resolveClassSubjectSchoolId, write } from '../../../shared/common'
+import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, resolveClassSubjectSchoolId, write } from '../../../shared'
 
 export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgress> = ({ repositories, policy, atomicExecution }) =>
   config({

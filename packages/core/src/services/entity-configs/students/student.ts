@@ -1,8 +1,8 @@
 import type { Student } from '../../../entities/students/student'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { StudentStatus } from '../../../entities/students/student'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { directEntityConfig, readByIds } from '../../../shared/common'
+import { directEntityConfig, readByIds } from '../../../shared'
 
 export const studentConfig: EntityConfigFactory<Student> = (input) => {
   const config = directEntityConfig(

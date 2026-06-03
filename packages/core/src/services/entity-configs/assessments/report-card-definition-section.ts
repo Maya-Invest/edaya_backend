@@ -1,12 +1,12 @@
 import type { AuthorizationPolicy } from '../../../authorization'
 import type { ReportCardDefinitionSection } from '../../../entities/assessments/report-card-definition-section'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { ReportCardDefinitionSectionKind } from '../../../entities/assessments/report-card-definition-section'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared/common'
+import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
 
 export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDefinitionSection> = ({ repositories, policy, atomicExecution }) =>
   config({

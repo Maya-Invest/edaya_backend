@@ -1,8 +1,8 @@
 import type { GradeScale } from '../../../entities/school/grade-scale'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared/common'
+import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
 import { requireSchool } from '../../../shared/require-school'
 
 export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories, policy, atomicExecution }) =>

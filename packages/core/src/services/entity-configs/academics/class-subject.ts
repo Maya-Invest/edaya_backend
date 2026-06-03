@@ -1,8 +1,8 @@
 import type { ClassSubject } from '../../../entities/academics/class-subject'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, read, write } from '../../../shared/common'
+import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, read, write } from '../../../shared'
 
 export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, policy, atomicExecution }) =>
   config({

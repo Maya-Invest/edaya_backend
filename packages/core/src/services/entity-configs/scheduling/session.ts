@@ -1,8 +1,8 @@
 import type { Session } from '../../../entities/scheduling/session'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, read, readByIds, write } from '../../../shared/common'
+import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, read, readByIds, write } from '../../../shared'
 
 export const sessionConfig: EntityConfigFactory<Session> = ({ repositories, policy, atomicExecution }) =>
   config({

@@ -1,9 +1,9 @@
 import type { AuthorizationPolicy } from '../../../authorization/authorization-policy'
 import type { SubjectMatter } from '../../../entities/academics/subject-matter'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../authorization/authorization-error'
-import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, read, write } from '../../../shared/common'
+import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, read, write } from '../../../shared'
 
 export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ repositories, policy, atomicExecution }) =>
   config({

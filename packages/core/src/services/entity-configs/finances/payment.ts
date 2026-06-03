@@ -1,13 +1,13 @@
 import type { AuthorizationPolicy } from '../../../authorization'
 import type { Payment } from '../../../entities/finances/payment'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { FeeStatus } from '../../../entities'
 import { PaymentStatus } from '../../../entities/finances/payment'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, dateTime, indirectTenant, noopReadAccess, read, write } from '../../../shared/common'
+import { action, config, dateTime, indirectTenant, noopReadAccess, read, write } from '../../../shared'
 
 export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, policy, atomicExecution }) =>
   config({

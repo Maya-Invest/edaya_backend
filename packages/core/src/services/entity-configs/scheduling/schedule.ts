@@ -1,9 +1,9 @@
 import type { Schedule } from '../../../entities/scheduling/schedule'
 import type { Session } from '../../../entities/scheduling/session'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, read, write } from '../../../shared/common'
+import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, read, write } from '../../../shared'
 
 export const scheduleConfig: EntityConfigFactory<Schedule> = ({ repositories, policy, atomicExecution }) =>
   config({

@@ -1,8 +1,8 @@
 import type { Fee } from '../../../entities/finances/fee'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
-import { directEntityConfig, readByIds } from '../../../shared/common'
+import { directEntityConfig, readByIds } from '../../../shared'
 
 export const feeConfig: EntityConfigFactory<Fee> = (input) => {
   const config = directEntityConfig(

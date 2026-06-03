@@ -1,9 +1,9 @@
 import type { StudentHealthProfile } from '../../../entities/students/student-health-profile'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { directEntityConfig, readByIds } from '../../../shared/common'
+import { directEntityConfig, readByIds } from '../../../shared'
 
 export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = (input) => {
   const config = directEntityConfig(

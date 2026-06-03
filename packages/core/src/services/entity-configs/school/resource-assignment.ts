@@ -1,11 +1,11 @@
 import type { AuthorizationPolicy } from '../../../authorization'
 import type { ResourceAssignment } from '../../../entities/school/resource-assignment'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, indirectTenant, noopReadAccess, read, write } from '../../../shared/common'
+import { action, config, indirectTenant, noopReadAccess, read, write } from '../../../shared'
 
 export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, policy, atomicExecution }) =>
   config({

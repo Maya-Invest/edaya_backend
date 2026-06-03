@@ -1,9 +1,9 @@
 import type { AnnouncementTarget } from '../../../entities/messaging/announcement-target'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
 import { AnnouncementTargetKind } from '../../../entities/messaging/announcement-target'
-import { action, announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, read, write } from '../../../shared/common'
+import { action, announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, read, write } from '../../../shared'
 
 export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> = ({ repositories, policy, atomicExecution }) =>
   config({

@@ -1,8 +1,8 @@
 import type { School } from '../../../entities/school/school'
 import type { BaseRepositoryInterface } from '../../../ports/base-repository'
-import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../../shared/common'
+import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../../shared'
 import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../managed-entity-service'
-import { action, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, resolveIdFromFilter, write } from '../../../shared/common'
+import { action, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, resolveIdFromFilter, write } from '../../../shared'
 
 export const schoolConfig: EntityConfigFactory<School> = input =>
   schoolEntityConfig(input, input.repositories.schools, 'queries.read_workspace', 'setup.manage_lifecycle')

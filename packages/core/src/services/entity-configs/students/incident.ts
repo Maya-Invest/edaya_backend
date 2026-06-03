@@ -1,10 +1,10 @@
 import type { Incident } from '../../../entities/students/incident'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../authorization'
 import { IncidentStatus } from '../../../entities/students/incident'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, dateTime, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared/common'
+import { action, config, dateTime, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
 
 export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, policy, atomicExecution }) =>
   config({

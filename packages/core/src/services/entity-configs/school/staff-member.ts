@@ -1,9 +1,9 @@
 import type { ActorMetadata } from '../../../authorization'
 import type { StaffMember } from '../../../entities/school/staff-member'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { directEntityConfig } from '../../../shared/common'
+import { directEntityConfig } from '../../../shared'
 
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
   const config = directEntityConfig(input, input.repositories.staffMembers, 'setup.manage', 'setup.manage')

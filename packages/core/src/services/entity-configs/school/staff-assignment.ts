@@ -1,10 +1,10 @@
 import type { AuthorizationPolicy } from '../../../authorization'
 import type { StaffAssignment } from '../../../entities/school/staff-assignment'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
-import { action, config, indirectTenant, noopReadAccess, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../../shared/common'
+import { action, config, indirectTenant, noopReadAccess, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../../shared'
 
 export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ repositories, policy, atomicExecution }) =>
   config({

@@ -1,6 +1,6 @@
 import type { Guardian } from '../../../entities/students/guardian'
-import type { EntityConfigFactory } from '../../../shared/common'
-import { directEntityConfig, readByIds } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
+import { directEntityConfig, readByIds } from '../../../shared'
 
 export const guardianConfig: EntityConfigFactory<Guardian> = input =>
   directEntityConfig(

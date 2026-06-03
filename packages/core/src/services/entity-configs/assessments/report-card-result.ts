@@ -1,12 +1,12 @@
 import type { AuthorizationPolicy } from '../../../authorization'
 import type { ReportCardResult } from '../../../entities/assessments/report-card-result'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { ReportCardResultStatus } from '../../../entities/assessments/report-card-result'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, indirectTenant, read, readByIds, write } from '../../../shared/common'
+import { action, config, indirectTenant, read, readByIds, write } from '../../../shared'
 
 export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, policy, atomicExecution }) =>
   config({

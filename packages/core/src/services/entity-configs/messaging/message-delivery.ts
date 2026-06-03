@@ -1,6 +1,6 @@
 import type { MessageDelivery } from '../../../entities/messaging/message-delivery'
-import type { EntityConfigFactory } from '../../../shared/common'
-import { action, announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, read, write } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
+import { action, announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, read, write } from '../../../shared'
 
 export const messageDeliveryConfig: EntityConfigFactory<MessageDelivery> = ({ repositories, policy, atomicExecution }) =>
   config({

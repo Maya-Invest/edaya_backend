@@ -1,10 +1,10 @@
 import type { Attachment } from '../../../entities/school/attachment'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
 import { AttachmentOwnerKind } from '../../../entities/school/attachment'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { directEntityConfig } from '../../../shared/common'
+import { directEntityConfig } from '../../../shared'
 
 export const attachmentConfig: EntityConfigFactory<Attachment> = (input) => {
   const config = directEntityConfig(input, input.repositories.attachments, 'attachments.read', 'attachments.manage')

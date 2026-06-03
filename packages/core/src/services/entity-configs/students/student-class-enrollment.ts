@@ -1,11 +1,11 @@
 import type { AuthorizationPolicy } from '../../../authorization'
 import type { StudentClassEnrollment } from '../../../entities/students/student-class-enrollment'
 import type { SchoolRepositories } from '../../../ports'
-import type { EntityConfigFactory } from '../../../shared/common'
+import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { StudentClassEnrollmentStatus } from '../../../entities/students/student-class-enrollment'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, indirectTenant, read, unique, write } from '../../../shared/common'
+import { action, config, indirectTenant, read, unique, write } from '../../../shared'
 import { progressionDecisionChanged } from './student-note'
 
 export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrollment> = ({ repositories, policy, atomicExecution }) =>
