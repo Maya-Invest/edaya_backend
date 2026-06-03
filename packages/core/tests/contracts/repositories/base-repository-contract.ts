@@ -1,4 +1,4 @@
-import type { BaseRepositoryInterface } from '../../src/ports'
+import type { BaseRepositoryInterface } from '../../../src/ports'
 import { describe, expect, it } from 'bun:test'
 
 interface EntityWithId {

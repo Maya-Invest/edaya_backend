@@ -50,7 +50,7 @@ import {
 } from '../../src/authorization'
 import { StaffMember, StaffRole } from '../../src/entities'
 import { SchoolApplication } from '../../src/services'
-import { matchesFilter } from '../utils/filter-matcher'
+import { matchesFilter } from './filter-matcher'
 
 interface EntityWithId {
   readonly id: string

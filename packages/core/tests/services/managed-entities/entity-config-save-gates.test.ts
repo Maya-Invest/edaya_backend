@@ -1,8 +1,13 @@
-import type { ActorMetadata } from '../../../src/authorization'
-import type { BaseRepositoryInterface, SchoolRepositories } from '../../../src/ports'
-import { describe, expect, mock, test } from 'bun:test'
-import { ManagedEntityService } from '../../../src'
-import { ActorAssuranceLevel, AuthorizationError, AuthorizationErrorCode, createStaffActorMetadata } from '../../../src/authorization'
+import {
+  describe,
+  expect,
+  test,
+} from 'bun:test'
+import {
+  ActorAssuranceLevel,
+  AuthorizationError,
+  createStaffActorMetadata,
+} from '../../../src/authorization'
 import {
   AcademicPeriod,
   AcademicPeriodType,
@@ -18,8 +23,6 @@ import {
   AttendanceStatus,
   ClassGroup,
   ClassSubject,
-  ClassSubjectMatter,
-  ClassSubjectMatterStatus,
   ClassSubjectProgress,
   EnrollmentEndReason,
   Fee,
@@ -51,311 +54,13 @@ import {
   StudentDisciplinaryAction,
   StudentDisciplinaryActionStatus,
   StudentFee,
-  StudentNote,
-  Subject,
-  SubjectMatter,
 } from '../../../src/entities'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { AttendanceSummary } from '../../../src/value_object/attendance-summary'
-import { createStore, createTestApp } from '../../support/in-memory-school-headless-app'
+import { createTestApp } from '../../support/create-test-app'
+import { actor } from './managed-entity-test-context'
 
-interface TestEntity {
-  id: string
-  schoolId: string
-  parentId?: string
-}
-
-const actor: ActorMetadata = {
-  kind: 'system',
-  systemId: 'system',
-  schoolId: 'school',
-  requestId: 'request',
-  reason: 'test',
-}
-
-function createRepository<T extends { id: string }>(): BaseRepositoryInterface<T> {
-  return createStore<T>() as BaseRepositoryInterface<T>
-}
-
-describe('ManagedEntityService', () => {
-  test('findByIds checks module, tenant, and entity access', async () => {
-    const repository = createRepository<TestEntity>()
-    const first = { id: 'entity-1', schoolId: 'school' }
-    const second = { id: 'entity-2', schoolId: 'school' }
-    await repository.batchSave([first, second])
-    const checkModule = mock(async () => {})
-    const checkAccess = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule,
-          checkAccess,
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    const result = await service.findByIds(['entity-1', 'entity-2'])
-
-    expect(result).toEqual([first, second])
-    expect(checkModule).toHaveBeenCalledWith(actor)
-    expect(checkAccess).toHaveBeenCalledWith(actor, [first, second], {})
-  })
-
-  test('passes undefined existing state to save gates for creates', async () => {
-    const repository = createRepository<TestEntity>()
-    const authorizeSave = mock(async () => {})
-    const preSave = mock(async () => {})
-    const entity = { id: 'entity-1', schoolId: 'school', parentId: 'parent-1' }
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave,
-          authorizeDelete: mock(async () => {}),
-        },
-        gates: { preSave },
-      },
-    })
-
-    await service.save(entity)
-
-    expect(authorizeSave).toHaveBeenCalledWith(actor, entity, undefined, {})
-    expect(preSave).toHaveBeenCalledWith(entity, undefined, {}, actor)
-    await expect(repository.findById(entity.id)).resolves.toEqual(entity)
-  })
-
-  test('batchSave authorizes and gates each proposed entity with existing state', async () => {
-    const repository = createRepository<TestEntity>()
-    const existing = { id: 'entity-1', schoolId: 'school', parentId: 'old-parent' }
-    const updated = { id: 'entity-1', schoolId: 'school', parentId: 'new-parent' }
-    const created = { id: 'entity-2', schoolId: 'school' }
-    await repository.save(existing)
-    const authorizeSave = mock(async () => {})
-    const preSave = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave,
-          authorizeDelete: mock(async () => {}),
-        },
-        gates: { preSave },
-      },
-    })
-
-    const result = await service.batchSave([updated, created])
-
-    expect(result).toEqual(['entity-1', 'entity-2'])
-    expect(authorizeSave).toHaveBeenCalledWith(actor, updated, existing, {})
-    expect(authorizeSave).toHaveBeenCalledWith(actor, created, undefined, {})
-    expect(preSave).toHaveBeenCalledWith(updated, existing, {}, actor)
-    expect(preSave).toHaveBeenCalledWith(created, undefined, {}, actor)
-    await expect(repository.findById('entity-1')).resolves.toEqual(updated)
-    await expect(repository.findById('entity-2')).resolves.toEqual(created)
-  })
-
-  test('rejects proposed entities outside the actor tenant', async () => {
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository: createRepository<TestEntity>(),
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.save({ id: 'entity-1', schoolId: 'other-school' })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('delete is idempotent when the entity does not exist', async () => {
-    const deleteEntity = mock(async () => {})
-    const repository = {
-      ...createRepository<TestEntity>(),
-      delete: deleteEntity,
-    }
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await service.delete('missing')
-
-    expect(deleteEntity).not.toHaveBeenCalled()
-  })
-
-  test('batchDelete authorizes and gates existing entities only', async () => {
-    const repository = createRepository<TestEntity>()
-    const entity = { id: 'entity-1', schoolId: 'school' }
-    await repository.save(entity)
-    const authorizeDelete = mock(async () => {})
-    const preDelete = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete,
-        },
-        gates: { preDelete },
-      },
-    })
-
-    await service.batchDelete(['entity-1', 'missing'])
-
-    expect(authorizeDelete).toHaveBeenCalledWith(actor, entity, {})
-    expect(authorizeDelete).toHaveBeenCalledTimes(1)
-    expect(preDelete).toHaveBeenCalledWith(entity, {})
-    expect(preDelete).toHaveBeenCalledTimes(1)
-    await expect(repository.findById('entity-1')).resolves.toBeUndefined()
-  })
-
-  test('count applies tenant and row access checks', async () => {
-    const repository = createRepository<TestEntity>()
-    const allowed = { id: 'entity-1', schoolId: 'school' }
-    const denied = { id: 'entity-2', schoolId: 'school' }
-    await repository.batchSave([allowed, denied])
-    const checkAccess = mock(async (_actor: ActorMetadata, entities: readonly TestEntity[]) => {
-      if (entities.some(entity => entity.id === denied.id))
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    })
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess,
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.count()).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(service.count({ id: allowed.id })).resolves.toBe(1)
-    expect(checkAccess).toHaveBeenCalled()
-  })
-
-  test('rejects entities whose tenant cannot be resolved', async () => {
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository: createRepository<TestEntity>(),
-        tenant: { resolve: () => undefined },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.save({ id: 'entity-1', schoolId: 'school' })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-})
-
-describe('BaseSchoolService managed entity wiring', () => {
-  test('blocks deleting an academic year with class groups', async () => {
-    const { app, repositories } = createTestApp(actor)
-    await repositories.academicYearRepository.save(new AcademicYear({
-      id: 'year-1',
-      schoolId: 'school',
-      name: '2026',
-      startDate: new Date('2026-01-01T00:00:00Z'),
-      endDate: new Date('2026-12-31T00:00:00Z'),
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-    }))
-
-    await expect(app.baseService.academicYears.delete('year-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
-  test('uses indirect tenant resolution for resource assignments', async () => {
-    const { app, repositories } = createTestApp(actor)
-    await repositories.resourceRepository.save(new Resource({
-      id: 'resource-1',
-      schoolId: 'other-school',
-      name: 'Room A',
-      kind: ResourceKind.Location,
-    }))
-
-    await expect(app.baseService.resourceAssignments.save(new ResourceAssignment({
-      id: 'assignment-1',
-      resourceId: 'resource-1',
-      classGroupId: 'class-1',
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
+describe('Entity config save gates', () => {
   test('rejects orphan class subject progress before save', async () => {
     const { app } = createTestApp(actor)
 
@@ -364,106 +69,6 @@ describe('BaseSchoolService managed entity wiring', () => {
       classSubjectMatterId: 'missing-matter',
       sessionId: 'missing-session',
       completedPercentage: 10,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('class subject progress direct save requires session access', async () => {
-    const teacherActor = createStaffActorMetadata({
-      subjectId: 'teacher-user',
-      staffMemberId: 'teacher-1',
-      schoolId: 'school',
-      roles: [StaffRole.Teacher],
-      requestId: 'request',
-      authenticatedAt: new Date('2026-05-01T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Standard,
-    })
-    const { app, repositories } = createTestApp(teacherActor)
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-    }))
-    await repositories.subjectRepository.save(new Subject({
-      id: 'subject-1',
-      schoolId: 'school',
-      name: 'Math',
-    }))
-    await repositories.subjectMatterRepository.save(new SubjectMatter({
-      id: 'subject-matter-1',
-      subjectId: 'subject-1',
-      name: 'Numbers',
-      sequenceOrder: 1,
-    }))
-    await repositories.classSubjectRepository.save(new ClassSubject({
-      id: 'class-subject-1',
-      classGroupId: 'class-1',
-      subjectId: 'subject-1',
-    }))
-    await repositories.classSubjectMatterRepository.save(new ClassSubjectMatter({
-      id: 'class-subject-matter-1',
-      classSubjectId: 'class-subject-1',
-      subjectMatterId: 'subject-matter-1',
-      status: ClassSubjectMatterStatus.NotStarted,
-      completedPercentage: 0,
-    }))
-    await repositories.sessionRepository.save(new Session({
-      id: 'session-1',
-      classGroupId: 'class-1',
-      classSubjectId: 'class-subject-1',
-      title: 'Math',
-      kind: SessionKind.Course,
-      startsAt: new Date('2026-05-01T08:00:00Z'),
-      endsAt: new Date('2026-05-01T09:00:00Z'),
-    }))
-
-    await expect(app.baseService.classSubjectProgress.save(new ClassSubjectProgress({
-      id: 'progress-1',
-      classSubjectMatterId: 'class-subject-matter-1',
-      sessionId: 'session-1',
-      completedPercentage: 10,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('student note direct save requires proposed student access', async () => {
-    const teacherActor = createStaffActorMetadata({
-      subjectId: 'teacher-user',
-      staffMemberId: 'teacher-1',
-      schoolId: 'school',
-      roles: [StaffRole.Teacher],
-      requestId: 'request',
-      authenticatedAt: new Date('2026-05-01T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Standard,
-    })
-    const { app, repositories } = createTestApp(teacherActor)
-    await repositories.studentRepository.save(new Student({
-      id: 'student-unassigned',
-      schoolId: 'school',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-unassigned',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-    }))
-    await repositories.StudentClassEnrollmentRepository.save(new StudentClassEnrollment({
-      id: 'enrollment-unassigned',
-      studentId: 'student-unassigned',
-      classGroupId: 'class-unassigned',
-      academicYearId: 'year-1',
-      enrollmentIndex: 1,
-    }))
-
-    await expect(app.baseService.studentNotes.save(new StudentNote({
-      id: 'note-1',
-      schoolId: 'school',
-      studentId: 'student-unassigned',
-      authorStaffId: 'teacher-1',
-      body: 'Needs support',
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
@@ -773,48 +378,6 @@ describe('BaseSchoolService managed entity wiring', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('enrollment direct save rejects capacity bypass and active deletes', async () => {
-    const { app, repositories } = createTestApp(actor)
-    await repositories.studentRepository.save(new Student({
-      id: 'student-existing',
-      schoolId: 'school',
-      firstName: 'Existing',
-      lastName: 'Student',
-    }))
-    await repositories.studentRepository.save(new Student({
-      id: 'student-new',
-      schoolId: 'school',
-      firstName: 'New',
-      lastName: 'Student',
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-capacity',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-      capacity: 1,
-    }))
-    const existingEnrollment = new StudentClassEnrollment({
-      id: 'enrollment-existing',
-      studentId: 'student-existing',
-      classGroupId: 'class-capacity',
-      academicYearId: 'year-1',
-      enrollmentIndex: 1,
-    })
-    await repositories.StudentClassEnrollmentRepository.save(existingEnrollment)
-
-    await expect(app.baseService.enrollments.save(new StudentClassEnrollment({
-      id: 'enrollment-new',
-      studentId: 'student-new',
-      classGroupId: 'class-capacity',
-      academicYearId: 'year-1',
-      enrollmentIndex: 1,
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    await expect(app.baseService.enrollments.delete(existingEnrollment.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
   test('attendance preSave rejects reviewing non-absent attendance', async () => {
     const { app, repositories } = createTestApp(actor)
     await repositories.studentRepository.save(new Student({
@@ -1097,79 +660,6 @@ describe('BaseSchoolService managed entity wiring', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('published report cards and linked assessment results cannot be deleted directly', async () => {
-    const { app, repositories } = createTestApp(actor)
-    await repositories.studentRepository.save(new Student({
-      id: 'student-1',
-      schoolId: 'school',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-    }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
-      id: 'period-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      name: 'Term 1',
-      type: AcademicPeriodType.Trimester,
-      startDate: new Date('2026-01-01T00:00:00Z'),
-      endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
-    await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
-      id: 'definition-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Definition',
-    }))
-    await repositories.reportCardResultRepository.save(new ReportCardResult({
-      id: 'report-card-1',
-      reportCardDefinitionId: 'definition-1',
-      studentId: 'student-1',
-      classGroupId: 'class-1',
-      periodId: 'period-1',
-      sectionResults: [],
-      attendanceSummary: new AttendanceSummary({
-        presentCount: 0,
-        absenceCount: 0,
-        lateCount: 0,
-      }),
-      assessmentResultCount: 1,
-      status: ReportCardResultStatus.Published,
-      publishedAt: new Date('2026-04-01T00:00:00Z'),
-    }))
-    await repositories.classSubjectRepository.save(new ClassSubject({
-      id: 'class-subject-1',
-      classGroupId: 'class-1',
-      subjectId: 'subject-1',
-    }))
-    await repositories.assessmentRepository.save(new Assessment({
-      id: 'assessment-1',
-      classGroupId: 'class-1',
-      classSubjectId: 'class-subject-1',
-      periodId: 'period-1',
-      title: 'Quiz',
-      kind: AssessmentKind.Quiz,
-      maxScore: 20,
-      dueAt: new Date('2026-02-01T00:00:00Z'),
-    }))
-    await repositories.assessmentResultRepository.save(new AssessmentResult({
-      id: 'assessment-result-1',
-      studentId: 'student-1',
-      assessmentId: 'assessment-1',
-      score: 18,
-    }))
-
-    await expect(app.baseService.results.delete('report-card-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
-    await expect(app.baseService.assessmentResults.delete('assessment-result-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
   test('announcement target preSave rejects targets outside announcement school', async () => {
     const { app, repositories } = createTestApp(actor)
     await repositories.announcementRepository.save(new Announcement({
@@ -1192,32 +682,6 @@ describe('BaseSchoolService managed entity wiring', () => {
       targetKind: AnnouncementTargetKind.GradeLevel,
       targetId: 'grade-other',
     }))).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('academic period preDelete rejects dependent assessments and report cards', async () => {
-    const { app, repositories } = createTestApp(actor)
-    const period = new AcademicPeriod({
-      id: 'period-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      name: 'Term 1',
-      type: AcademicPeriodType.Trimester,
-      startDate: new Date('2026-01-01T00:00:00Z'),
-      endDate: new Date('2026-03-31T00:00:00Z'),
-    })
-    await repositories.academicPeriodRepository.save(period)
-    await repositories.assessmentRepository.save(new Assessment({
-      id: 'assessment-1',
-      classGroupId: 'class-1',
-      classSubjectId: 'class-subject-1',
-      periodId: period.id,
-      title: 'Quiz',
-      kind: AssessmentKind.Quiz,
-      maxScore: 20,
-      dueAt: new Date('2026-02-01T00:00:00Z'),
-    }))
-
-    await expect(app.baseService.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('fee preSave rejects academic years outside the fee school', async () => {
@@ -1373,30 +837,4 @@ describe('BaseSchoolService managed entity wiring', () => {
 })
 
 describe('SchoolService managed config entity access', () => {
-  test('uses managed proposed-state authorization for subject matters', async () => {
-    const { app, repositories } = createTestApp(actor)
-
-    await expect(app.baseService.subjectMatters.save(new SubjectMatter({
-      id: 'matter-1',
-      subjectId: 'missing-subject',
-      name: 'Algebra',
-      sequenceOrder: 1,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-
-    await repositories.subjectRepository.save(new Subject({
-      id: 'subject-1',
-      schoolId: 'school',
-      name: 'Math',
-    }))
-    const subjectMatter = new SubjectMatter({
-      id: 'matter-1',
-      subjectId: 'subject-1',
-      name: 'Algebra',
-      sequenceOrder: 1,
-    })
-
-    await app.baseService.subjectMatters.save(subjectMatter)
-
-    await expect(repositories.subjectMatterRepository.findById('matter-1')).resolves.toEqual(subjectMatter)
-  })
 })

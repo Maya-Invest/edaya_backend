@@ -1,0 +1,306 @@
+import type { ActorMetadata } from '../../../src/authorization'
+import type { SchoolRepositories } from '../../../src/ports'
+import { describe, expect, mock, test } from 'bun:test'
+import {
+  ActorAssuranceLevel,
+  AuthorizationError,
+  RepositoryAuthorizationPolicy,
+  createGuardianActorMetadata,
+  createStaffActorMetadata,
+  createStudentActorMetadata,
+  createSystemActorMetadata,
+} from '../../../src/authorization'
+import {
+  checkAssessmentAccess as checkAcademicAssessmentAccess,
+  checkClassGroupAccess as checkAcademicClassGroupAccess,
+  checkReportCardResultAccess,
+} from '../../../src/authorization/access-resolvers/academic-resolver'
+import {
+  checkAttendanceAccess as checkSchedulingAttendanceAccess,
+  checkSessionAccess as checkSchedulingSessionAccess,
+} from '../../../src/authorization/access-resolvers/scheduling-resolver'
+import { StaffRole } from '../../../src/entities'
+import { StudentClassEnrollmentStatus } from '../../../src/entities/students/student-class-enrollment'
+
+const now = new Date('2026-01-01T00:00:00Z')
+
+function staffActor(roles: StaffRole[], assuranceLevel = ActorAssuranceLevel.Strong): ActorMetadata {
+  return createStaffActorMetadata({
+    subjectId: 'subject-staff',
+    staffMemberId: 'staff-1',
+    schoolId: 'school-1',
+    requestId: 'request-1',
+    authenticatedAt: now,
+    assuranceLevel,
+    roles,
+  })
+}
+
+function studentActor(studentId = 'student-1'): ActorMetadata {
+  return createStudentActorMetadata({
+    subjectId: 'subject-student',
+    studentId,
+    schoolId: 'school-1',
+    requestId: 'request-1',
+    authenticatedAt: now,
+  })
+}
+
+function guardianActor(guardianId = 'guardian-1'): ActorMetadata {
+  return createGuardianActorMetadata({
+    subjectId: 'subject-guardian',
+    guardianId,
+    schoolId: 'school-1',
+    requestId: 'request-1',
+    authenticatedAt: now,
+  })
+}
+
+function systemActor(): ActorMetadata {
+  return createSystemActorMetadata({
+    systemId: 'system-1',
+    schoolId: 'school-1',
+    requestId: 'request-1',
+    reason: 'test',
+  })
+}
+
+function createRepos(
+  overrides: Partial<SchoolRepositories> = {},
+  staffRoles: StaffRole[] = [StaffRole.Teacher],
+): SchoolRepositories {
+  const staff = { id: 'staff-1', schoolId: 'school-1', isActive: true, roles: staffRoles }
+  const repos = {
+    assessments: {
+      findById: mock(async id => id === 'assessment-1' ? { id, classGroupId: 'class-1' } : undefined),
+      findByIds: mock(async (ids: string[]) => ids
+        .filter(id => id === 'assessment-1')
+        .map(id => ({ id, classGroupId: 'class-1' }))),
+    },
+    enrollments: {
+      list: mock(async ({ studentId }: any = {}) => studentId
+        ? [{ id: `enrollment-${studentId}`, studentId, classGroupId: 'class-1', status: StudentClassEnrollmentStatus.Active }]
+        : []),
+    },
+    guardianLinks: {
+      findOne: mock(async ({ guardianId, studentId }: any = {}) =>
+        guardianId === 'guardian-1' && studentId === 'student-1'
+          ? { id: 'link-1', guardianId, studentId, schoolId: 'school-1' }
+          : undefined),
+      list: mock(async ({ guardianId }: any = {}) =>
+        guardianId === 'guardian-1'
+          ? [{ id: 'link-1', guardianId, studentId: 'student-1', schoolId: 'school-1' }]
+          : []),
+    },
+    results: {
+      findById: mock(async id => id === 'result-1' ? { id, studentId: 'student-1' } : undefined),
+    },
+    sessions: {
+      findById: mock(async id => id === 'session-1' ? { id, classGroupId: 'class-1' } : undefined),
+    },
+    staffAssignments: {
+      list: mock(async ({ classGroupId, staffId }: any = {}) =>
+        classGroupId === 'class-1' && (!staffId || staffId === 'staff-1')
+          ? [{ id: 'assignment-1', staffId: 'staff-1', classGroupId: 'class-1' }]
+          : []),
+    },
+    staffMembers: {
+      findById: mock(async id => id === 'staff-1' ? staff : undefined),
+    },
+    studentFees: {
+      findByIds: mock(async (ids: string[]) => ids.map(id => ({ id, studentId: 'student-1' }))),
+    },
+    studentNotes: {
+      findById: mock(async (id: string) => id === 'note-1' ? { id, studentId: 'student-1' } : undefined),
+    },
+  } as unknown as SchoolRepositories
+
+  return { ...repos, ...overrides } as SchoolRepositories
+}
+
+async function expectForbidden(operation: Promise<void>): Promise<void> {
+  await expect(operation).rejects.toBeInstanceOf(AuthorizationError)
+}
+
+describe('RepositoryAuthorizationPolicy', () => {
+  test('allows system actors and empty resource checks without repository access', async () => {
+    const repos = createRepos()
+    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+
+    await policy.checkStudentAccess(systemActor(), ['student-1'])
+    await policy.checkClassGroupAccess(studentActor(), [])
+    await policy.checkSessionAccess(systemActor(), ['missing-session'])
+    await policy.checkFeeAccess(systemActor(), ['fee-1'])
+
+    expect(repos.staffMembers.findById).not.toHaveBeenCalled()
+  })
+
+  test('enforces global action roles, assurance levels, and module school boundaries', async () => {
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Admin]) })
+      .checkGlobalAction(staffActor([StaffRole.Admin], ActorAssuranceLevel.Verified), 'finance.manage')
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Coordinator]) })
+      .checkGlobalAction(staffActor([StaffRole.Coordinator]), 'attendance.record')
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Accountant]) })
+      .checkGlobalAction(staffActor([StaffRole.Accountant]), 'finance.read')
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Teacher]) })
+      .checkGlobalAction(staffActor([StaffRole.Teacher]), 'students.manage_notes')
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos() })
+      .checkGlobalAction(guardianActor(), 'queries.read_student_detail')
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos() })
+      .checkModuleAccess(studentActor(), 'school-1', 'attendance')
+
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Admin]) })
+      .checkGlobalAction(staffActor([StaffRole.Admin], ActorAssuranceLevel.Standard), 'finance.manage'))
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Teacher]) })
+      .checkGlobalAction(staffActor([StaffRole.Teacher]), 'finance.manage'))
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos() })
+      .checkModuleAccess(studentActor(), 'other-school', 'attendance'))
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos() })
+      .checkModuleAccess(guardianActor(), 'school-1', 'setup'))
+  })
+
+  test('resolves student, guardian, note, and health access by actor kind', async () => {
+    const repos = createRepos()
+    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+
+    await policy.checkStudentAccess(studentActor('student-1'), ['student-1'])
+    await policy.checkStudentAccess(guardianActor(), ['student-1'])
+    await policy.checkStudentAccess(staffActor([StaffRole.Teacher]), ['student-1'])
+    await policy.checkGuardianAccess(guardianActor(), ['guardian-1'])
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Principal]) })
+      .checkGuardianAccess(staffActor([StaffRole.Principal]), ['guardian-1'])
+    await policy.checkStudentNoteAccess(staffActor([StaffRole.Teacher]), ['note-1'])
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Coordinator]) })
+      .checkStudentHealthAccess(staffActor([StaffRole.Coordinator]), ['profile-1'])
+
+    await expectForbidden(policy.checkStudentAccess(studentActor('student-1'), ['student-2']))
+    await expectForbidden(policy.checkStudentAccess(guardianActor('guardian-2'), ['student-1']))
+    await expectForbidden(policy.checkGuardianAccess(guardianActor(), ['guardian-2']))
+    await expectForbidden(policy.checkStudentNoteAccess(staffActor([StaffRole.Teacher]), ['missing-note']))
+    await expectForbidden(policy.checkStudentHealthAccess(staffActor([StaffRole.Teacher]), ['profile-1']))
+  })
+
+  test('resolves academic assessment and report-card access through class and student relationships', async () => {
+    const repos = createRepos()
+    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+
+    await policy.checkClassGroupAccess(studentActor(), ['class-1'])
+    await policy.checkClassGroupAccess(guardianActor(), ['class-1'])
+    await policy.checkClassGroupAccess(staffActor([StaffRole.Teacher]), ['class-1'])
+    await policy.checkAssessmentAccess(studentActor(), ['assessment-1'])
+    await policy.checkAssessmentAccess(staffActor([StaffRole.Teacher]), ['assessment-1'])
+    await policy.checkReportCardResultAccess(guardianActor(), ['result-1'])
+    await policy.checkReportCardResultAccess(studentActor(), ['missing-result'])
+
+    await expectForbidden(policy.checkClassGroupAccess(studentActor(), ['class-2']))
+    await expectForbidden(policy.checkAssessmentAccess(studentActor(), ['missing-assessment']))
+    await expectForbidden(policy.checkAssessmentAccess(staffActor([StaffRole.Teacher]), ['assessment-1', 'missing-assessment']))
+  })
+
+  test('resolves scheduling and attendance access through sessions and roster access', async () => {
+    const repos = createRepos()
+    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+
+    await policy.checkSessionAccess(studentActor(), ['session-1'])
+    await policy.checkSessionAccess(guardianActor(), ['session-1'])
+    await policy.checkSessionAccess(staffActor([StaffRole.Teacher]), ['session-1'])
+    await policy.checkAttendanceAccess(staffActor([StaffRole.Teacher]), ['student-1'], ['session-1'])
+
+    await expectForbidden(policy.checkSessionAccess(studentActor(), ['missing-session']))
+    await expectForbidden(policy.checkSessionAccess(staffActor([StaffRole.Teacher]), ['missing-session']))
+  })
+
+  test('resolves finance access for staff, students, and guardians', async () => {
+    const repos = createRepos()
+    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Accountant]) })
+      .checkFeeAccess(staffActor([StaffRole.Accountant]), ['fee-1'])
+    await policy.checkStudentFeeAccess(studentActor(), ['student-fee-1'])
+    await policy.checkStudentFeeAccess(guardianActor(), ['student-fee-1'])
+    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Coordinator]) })
+      .checkStudentFeeAccess(staffActor([StaffRole.Coordinator]), ['student-fee-1'])
+
+    await expectForbidden(policy.checkFeeAccess(studentActor(), ['fee-1']))
+    await expectForbidden(policy.checkStudentFeeAccess(studentActor('student-2'), ['student-fee-1']))
+    await expectForbidden(policy.checkStudentFeeAccess(guardianActor('guardian-2'), ['student-fee-1']))
+  })
+
+  test('rejects inactive or cross-school staff before role checks', async () => {
+    const inactiveRepos = createRepos({
+      staffMembers: {
+        findById: mock(async () => ({ id: 'staff-1', schoolId: 'school-1', isActive: false, roles: [StaffRole.Admin] })),
+      } as any,
+    })
+    const crossSchoolRepos = createRepos({
+      staffMembers: {
+        findById: mock(async () => ({ id: 'staff-1', schoolId: 'other-school', isActive: true, roles: [StaffRole.Admin] })),
+      } as any,
+    })
+
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: inactiveRepos }).checkGlobalAction(staffActor([StaffRole.Admin]), 'finance.read'))
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: crossSchoolRepos }).checkStudentAccess(staffActor([StaffRole.Admin]), ['student-1']))
+  })
+
+  test('covers academic resolver elevated paths and teacher relationship denials', async () => {
+    await checkAcademicClassGroupAccess(systemActor(), ['missing-class'], createRepos())
+    await checkAcademicClassGroupAccess(staffActor([StaffRole.Coordinator]), ['unassigned-class'], createRepos({}, [StaffRole.Coordinator]))
+    await checkAcademicAssessmentAccess(staffActor([StaffRole.Admin]), ['missing-assessment'], createRepos({}, [StaffRole.Admin]))
+    await checkReportCardResultAccess(staffActor([StaffRole.Teacher]), ['result-1'], createRepos())
+
+    await expectForbidden(checkAcademicClassGroupAccess(staffActor([StaffRole.Accountant]), ['class-1'], createRepos({}, [StaffRole.Accountant])))
+    await expectForbidden(checkAcademicClassGroupAccess(guardianActor(), ['class-1'], createRepos({
+      enrollments: {
+        list: mock(async () => []),
+      } as any,
+    })))
+    await expectForbidden(checkAcademicAssessmentAccess(staffActor([StaffRole.Teacher]), ['assessment-1'], createRepos({
+      staffAssignments: {
+        list: mock(async () => []),
+      } as any,
+    })))
+    await expectForbidden(checkReportCardResultAccess(guardianActor(), ['result-1'], createRepos({
+      guardianLinks: {
+        findOne: mock(async () => ({ id: 'link-1', guardianId: 'guardian-1', studentId: 'student-1', schoolId: 'other-school' })),
+        list: mock(async () => []),
+      } as any,
+    })))
+    await expectForbidden(checkReportCardResultAccess(staffActor([StaffRole.Teacher]), ['result-1'], createRepos({
+      enrollments: {
+        list: mock(async () => []),
+      } as any,
+    })))
+    await expectForbidden(checkReportCardResultAccess(staffActor([StaffRole.Teacher]), ['result-1'], createRepos({
+      staffAssignments: {
+        list: mock(async () => []),
+      } as any,
+    })))
+  })
+
+  test('covers scheduling resolver empty, elevated, and denied relationship paths', async () => {
+    await checkSchedulingSessionAccess(systemActor(), ['missing-session'], createRepos())
+    await checkSchedulingAttendanceAccess(systemActor(), [], ['session-1'], createRepos())
+    await checkSchedulingSessionAccess(staffActor([StaffRole.Principal]), ['missing-session'], createRepos({}, [StaffRole.Principal]))
+
+    await expectForbidden(checkSchedulingSessionAccess(guardianActor(), ['session-1'], createRepos({
+      enrollments: {
+        list: mock(async () => []),
+      } as any,
+    })))
+    await expectForbidden(checkSchedulingSessionAccess(staffActor([StaffRole.Accountant]), ['session-1'], createRepos({}, [StaffRole.Accountant])))
+    await expectForbidden(checkSchedulingSessionAccess(staffActor([StaffRole.Teacher]), ['session-1'], createRepos({
+      staffAssignments: {
+        list: mock(async () => []),
+      } as any,
+    })))
+    await expectForbidden(checkSchedulingAttendanceAccess(studentActor('student-2'), ['student-1'], ['session-1'], createRepos()))
+    await expectForbidden(checkSchedulingAttendanceAccess(staffActor([StaffRole.Teacher]), ['student-1'], ['session-1'], createRepos({
+      staffAssignments: {
+        list: mock(async ({ classGroupId, staffId }: any = {}) =>
+          classGroupId === 'class-1' && staffId === 'staff-1'
+            ? []
+            : [{ id: 'assignment-other', staffId: 'other-staff', classGroupId: 'class-1' }]),
+      } as any,
+    })))
+  })
+})

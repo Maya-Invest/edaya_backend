@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { matchesFilter } from '../../utils/filter-matcher'
+import { matchesFilter } from '../../support/filter-matcher'
 
 interface TestEntity {
   id: string
