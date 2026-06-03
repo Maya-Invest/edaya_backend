@@ -1372,11 +1372,11 @@ describe('BaseSchoolService managed entity wiring', () => {
   })
 })
 
-describe('ConfigService managed entity facade', () => {
+describe('SchoolService managed config entity access', () => {
   test('uses managed proposed-state authorization for subject matters', async () => {
     const { app, repositories } = createTestApp(actor)
 
-    await expect(app.config.subjectMatters.save(new SubjectMatter({
+    await expect(app.base.subjectMatters.save(new SubjectMatter({
       id: 'matter-1',
       subjectId: 'missing-subject',
       name: 'Algebra',
@@ -1395,7 +1395,7 @@ describe('ConfigService managed entity facade', () => {
       sequenceOrder: 1,
     })
 
-    await app.config.subjectMatters.save(subjectMatter)
+    await app.base.subjectMatters.save(subjectMatter)
 
     await expect(repositories.subjectMatterRepository.findById('matter-1')).resolves.toEqual(subjectMatter)
   })

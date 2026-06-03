@@ -1,4 +1,4 @@
-import type { SchoolHeadlessApp } from "@edaya/core";
+import type { ApiSchoolServiceFacade } from "@/lib/school-service-facade";
 
 export interface EntityReadService {
   list: (...args: any[]) => Promise<unknown[]>;
@@ -12,16 +12,8 @@ export interface EntityWriteService {
   delete: (id: string) => Promise<void>;
 }
 
-type EntityReadServiceKeys<T> = {
-  [K in keyof T]: T[K] extends EntityReadService ? K : never;
-}[keyof T];
-
-type EntityWriteServiceKeys<T> = {
-  [K in keyof T]: T[K] extends EntityWriteService ? K : never;
-}[keyof T];
-
-export type QueryEntityName = Extract<EntityReadServiceKeys<SchoolHeadlessApp["queries"]>, string>;
-export type ConfigCommandEntityName = Extract<EntityWriteServiceKeys<SchoolHeadlessApp["config"]>, string>;
+export type QueryEntityName = string;
+export type ConfigCommandEntityName = string;
 
 function hasFunction(value: unknown, key: string): boolean {
   return typeof value === "object"
@@ -41,12 +33,12 @@ function isEntityWriteService(value: unknown): value is EntityWriteService {
   return hasFunction(value, "save") && hasFunction(value, "delete");
 }
 
-export function getEntityReadService(queries: SchoolHeadlessApp["queries"], name: QueryEntityName): EntityReadService | null {
+export function getEntityReadService(queries: ApiSchoolServiceFacade["queries"], name: QueryEntityName): EntityReadService | null {
   const candidate = queries[name];
   return isEntityReadService(candidate) ? candidate : null;
 }
 
-export function getEntityWriteService(config: SchoolHeadlessApp["config"], name: ConfigCommandEntityName): EntityWriteService | null {
+export function getEntityWriteService(config: ApiSchoolServiceFacade["config"], name: ConfigCommandEntityName): EntityWriteService | null {
   const candidate = config[name];
   return isEntityWriteService(candidate) ? candidate : null;
 }

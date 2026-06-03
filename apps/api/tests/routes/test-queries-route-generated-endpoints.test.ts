@@ -41,7 +41,7 @@ describe("generated query endpoints", () => {
     ...overrides,
   });
 
-  it("should expose count for AuthorizedReadService-backed query entities", async () => {
+  it("should expose count for generated query entities", async () => {
     const mockCount = mock().mockResolvedValue(2);
     const app = setupTestApp({
       students: mockReadService({
@@ -68,7 +68,7 @@ describe("generated query endpoints", () => {
     });
   });
 
-  it("should expose findOne for AuthorizedReadService-backed query entities", async () => {
+  it("should expose findOne for generated query entities", async () => {
     const student = {
       id: "student-1",
       schoolId: "school-1",

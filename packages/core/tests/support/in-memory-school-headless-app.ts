@@ -49,7 +49,7 @@ import {
   RepositoryAuthorizationPolicy,
 } from '../../src/authorization'
 import { StaffMember, StaffRole } from '../../src/entities'
-import { SchoolApplication } from '../../src/legacy_services/school-headless-app'
+import { SchoolApplication } from '../../src/services'
 import { matchesFilter } from '../utils/filter-matcher'
 
 interface EntityWithId {
@@ -414,7 +414,6 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       guardianStudentLinkRepository: schoolRepositories.guardianLinks,
       studentRepository: schoolRepositories.students,
     }),
-    actor: defaultActor,
   })
 
   if (defaultActor.kind === 'staff') {

@@ -1,13 +1,13 @@
 import { db } from "@/db";
+import { ApiSchoolApplication } from "@/lib/school-service-facade";
 import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
 import {
   RepositoryAuthorizationPolicy,
-  SchoolApplication,
 } from "@edaya/core";
 import type { DependencyModule } from "../dependencies-injection";
 
 export function createSchoolAppDependency(): DependencyModule {
-  let schoolAppInstance: SchoolApplication | null = null;
+  let schoolAppInstance: ApiSchoolApplication | null = null;
 
   return {
     name: "schoolApp",
@@ -17,15 +17,7 @@ export function createSchoolAppDependency(): DependencyModule {
         await repos.init();
 
         const atomicExecution = new PostgresAtomicExecution(db);
-        const systemActor = {
-          kind: "system" as const,
-          systemId: "api-server-bootstrap",
-          schoolId: "system-bootstrap",
-          requestId: "bootstrap-init",
-          reason: "API Gateway Initialization",
-        };
-
-        schoolAppInstance = new SchoolApplication({
+        schoolAppInstance = new ApiSchoolApplication({
           atomicExecution,
           repositories: repos,
           authorizationPolicy: new RepositoryAuthorizationPolicy({
@@ -36,7 +28,6 @@ export function createSchoolAppDependency(): DependencyModule {
             guardianStudentLinkRepository: repos.guardianLinks,
             studentRepository: repos.students,
           }),
-          actor: systemActor,
         });
       }
 

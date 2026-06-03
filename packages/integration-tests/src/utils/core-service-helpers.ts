@@ -1,11 +1,10 @@
-import type { SchoolService } from '@edaya/core'
+import type { AttendanceJustificationStatus, SchoolService, StudentFee } from '@edaya/core'
 import {
   AcademicPeriod,
   Announcement,
   AnnouncementTarget,
   Assessment,
   Attachment,
-  AttendanceJustificationStatus,
   AuthorizationError,
   AuthorizationErrorCode,
   buildStudentFeeSummary,
@@ -21,15 +20,14 @@ import {
   Incident,
   IncidentStatus,
   ReportCardDefinition,
-  ResourceAssignment,
   resolveAuditActorId,
+  ResourceAssignment,
   Schedule,
   School,
   Session,
   StaffAssignment,
   StaffMember,
   Student,
-  StudentFee,
   StudentHealthProfile,
   StudentNote,
 } from '@edaya/core'

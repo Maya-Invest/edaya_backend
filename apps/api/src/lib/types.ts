@@ -2,13 +2,14 @@ import type { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 import type { PinoLogger } from "hono-pino";
 
 import type { Environment } from "@/env";
-import type { ActorMetadata, SchoolApplication } from "@edaya/core";
+import type { ApiSchoolApplication } from "@/lib/school-service-facade";
+import type { ActorMetadata } from "@edaya/core";
 
 export interface AppBindings {
   Bindings: Environment;
   Variables: {
     logger: PinoLogger;
-    schoolApp: SchoolApplication;
+    schoolApp: ApiSchoolApplication;
     actor: ActorMetadata | null;
   };
 };
