@@ -1,10 +1,11 @@
 import type { AuthorizationPolicy } from '../../../authorization/authorization-policy'
 import type { StudentFee } from '../../../entities/finances/student-fee'
+import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { FeeStatus } from '../../../entities/finances/student-fee'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, dateTime, indirectTenant, read, readByIds, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories, policy, atomicExecution }) =>
   config({
@@ -14,6 +15,7 @@ export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories
     write: write(action(policy, 'finance.manage'), authorizeStudentFee(policy), authorizeStudentFeeDelete(policy)),
     gates: {
       preSave: validateStudentFeeSave,
+      preDelete: validateStudentFeeDelete,
     },
     atomicExecution,
   })
@@ -79,5 +81,15 @@ export function authorizeStudentFee(policy: AuthorizationPolicy): EntityWriteAut
 export function authorizeStudentFeeDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentFee>['authorizeDelete'] {
   return async (actor, entity) => {
     await policy.checkStudentFeeAccess(actor, [entity.id])
+  }
+}
+
+async function validateStudentFeeDelete(
+  studentFee: StudentFee,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const payments = await repositories.payments.list({ studentFeeId: studentFee.id })
+  if (payments.length > 0) {
+    throw new BusinessRuleViolationError('STUDENT_FEE_HAS_DEPENDENCIES', `Cannot delete student fee ${studentFee.id}: dependent records still exist`)
   }
 }

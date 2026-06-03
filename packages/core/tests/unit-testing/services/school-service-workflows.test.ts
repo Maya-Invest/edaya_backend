@@ -1,7 +1,7 @@
 import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorization'
-import type { AttendanceRecord } from '../../../src/entities'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
+import { AuthorizationError, AuthorizationErrorCode } from '../../../src/authorization'
 import {
   AcademicYear,
   Announcement,
@@ -9,6 +9,7 @@ import {
   AssessmentKind,
   AttendanceJustificationStatus,
   AttendanceMode,
+  AttendanceRecord,
   AttendanceStatus,
   CalendarEventKind,
   CalendarEventScopeKind,
@@ -376,6 +377,7 @@ describe('SchoolService complex workflows', () => {
     } as unknown as SchoolRepositories
 
     const mockPolicy = {
+      checkGlobalAction: mock(async () => {}),
       checkStudentAccess: mock(async () => {}),
       checkStudentFeeAccess: mock(async () => {}),
     } as unknown as AuthorizationPolicy
@@ -438,6 +440,21 @@ describe('SchoolService complex workflows', () => {
       previousEnrollmentId: 'enr1',
     })
     const savedEnrollments = new Map<string, StudentClassEnrollment>()
+    const seededActiveEnrollment = () => activeEnrollmentId
+      ? {
+          id: activeEnrollmentId,
+          studentId: 'stu1',
+          classGroupId: existingEnrollmentClassGroupId,
+          academicYearId: existingEnrollmentClassGroupId === 'cg2' ? 'ay2' : 'ay1',
+          status: StudentClassEnrollmentStatus.Active,
+          enrollmentIndex: 1,
+        }
+      : undefined
+    const currentEnrollments = () => {
+      const seeded = seededActiveEnrollment()
+      const persisted = [...savedEnrollments.values()]
+      return seeded && !savedEnrollments.has(seeded.id) ? [...persisted, seeded] : persisted
+    }
     const classGroups = new Map([
       ['cg1', {
         id: 'cg1',
@@ -462,36 +479,44 @@ describe('SchoolService complex workflows', () => {
       },
       enrollments: {
         findById: mock(async (id) => {
+          const saved = savedEnrollments.get(id)
+          if (saved)
+            return saved
           if (id === 'enr1')
             return sourceEnrollment
           if (id === 'enr2' && existingSuccessor)
             return successorEnrollment
           return undefined
         }),
-        findOne: mock(async () => activeEnrollmentId
-          ? { id: activeEnrollmentId, studentId: 'stu1', classGroupId: existingEnrollmentClassGroupId, status: StudentClassEnrollmentStatus.Active }
-          : undefined),
+        findOne: mock(async (filter = {}) => {
+          const enrollments = currentEnrollments()
+          return enrollments.find(enrollment =>
+            (!filter.studentId || enrollment.studentId === filter.studentId)
+            && (!filter.classGroupId || enrollment.classGroupId === filter.classGroupId)
+            && (!filter.status || enrollment.status === filter.status))
+        }),
         list: mock(async (filter) => {
+          const enrollments = currentEnrollments()
           if (filter?.studentId === 'stu1') {
-            return activeEnrollmentId
-              ? [{
-                  id: activeEnrollmentId,
-                  studentId: 'stu1',
-                  classGroupId: existingEnrollmentClassGroupId,
-                  academicYearId: existingEnrollmentClassGroupId === 'cg2' ? 'ay2' : 'ay1',
-                  status: StudentClassEnrollmentStatus.Active,
-                  enrollmentIndex: 1,
-                }]
-              : []
+            return enrollments.filter(enrollment =>
+              enrollment.studentId === 'stu1'
+              && (!filter.classGroupId || enrollment.classGroupId === filter.classGroupId)
+              && (!filter.status || enrollment.status === filter.status))
           }
           if (filter?.classGroupId === 'cg2') {
-            return Array.from({ length: targetActiveEnrollmentCount }, (_, index) => ({
+            const targetEnrollments = Array.from({ length: targetActiveEnrollmentCount }, (_, index) => ({
               id: `target-active-${index + 1}`,
               studentId: `student-${index + 1}`,
               classGroupId: 'cg2',
               status: StudentClassEnrollmentStatus.Active,
               enrollmentIndex: 1,
             }))
+            return [
+              ...targetEnrollments,
+              ...enrollments.filter(enrollment =>
+                enrollment.classGroupId === 'cg2'
+                && (!filter.status || enrollment.status === filter.status)),
+            ]
           }
           return [sourceEnrollment]
         }),
@@ -698,6 +723,7 @@ describe('SchoolService complex workflows', () => {
     const mockPolicy = {
       checkAttendanceAccess: mock(async () => {}),
       checkClassGroupAccess: mock(async () => {}),
+      checkGlobalAction: mock(async () => {}),
       checkSessionAccess: mock(async () => {}),
       checkStudentAccess: mock(async () => {}),
     } as unknown as AuthorizationPolicy
@@ -1243,6 +1269,58 @@ describe('SchoolService complex workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
+  test('assignFeeToStudent checks finance.manage permission', async () => {
+    const context = createFinanceContext()
+    const mockPolicy = context.mockPolicy as any
+    const service = context.service
+    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
+      if (action === 'finance.manage') {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    })
+
+    await expect(service.assignFeeToStudent({
+      id: 'sf-new',
+      studentId: 'stu1',
+      feeId: 'fee1',
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('recordPayment checks finance.manage permission', async () => {
+    const context = createFinanceContext()
+    const mockPolicy = context.mockPolicy as any
+    const service = context.service
+    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
+      if (action === 'finance.manage') {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    })
+
+    await expect(service.recordPayment({
+      id: 'pay-new',
+      studentFeeId: 'sf1',
+      amount: 100,
+      paymentDate: new Date('2026-03-02T00:00:00Z'),
+      method: PaymentMethod.Cash,
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('updatePaymentStatus checks finance.manage permission', async () => {
+    const context = createFinanceContext()
+    const mockPolicy = context.mockPolicy as any
+    const service = context.service
+    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
+      if (action === 'finance.manage') {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    })
+
+    await expect(service.reversePayment({
+      paymentId: 'pay1',
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+
   test('enrollStudent creates the first enrollment through managed service', async () => {
     const { mockPolicy, mockRepos, savedEnrollments, service } = createStudentTransitionContext({
       activeEnrollmentId: '',
@@ -1712,6 +1790,64 @@ describe('SchoolService complex workflows', () => {
       status: AttendanceStatus.Present,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
+
+  test('recordAttendance rejects correcting reviewed attendance', async () => {
+    const { service } = createSchedulingContext({
+      existingAttendance: new AttendanceRecord({
+        id: 'stu1-ses1',
+        studentId: 'stu1',
+        sessionId: 'ses1',
+        date: new Date('2026-05-28T08:00:00Z'),
+        status: AttendanceStatus.Absent,
+        justificationStatus: AttendanceJustificationStatus.Excused,
+        justifiedAt: new Date('2026-05-28T08:00:00Z'),
+        justifiedByStaffId: 'staff1',
+      }),
+    })
+
+    await expect(service.recordAttendance({
+      id: 'stu1-ses1',
+      studentId: 'stu1',
+      sessionId: 'ses1',
+      status: AttendanceStatus.Present,
+    })).rejects.toThrow('Reviewed attendance must not be corrected without a reopen workflow')
+  })
+
+  test('generateSessions checks scheduling.manage permission', async () => {
+    const context = createSchedulingContext()
+    const mockPolicy = context.mockPolicy as any
+    const service = context.service
+    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
+      if (action === 'scheduling.manage') {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    })
+
+    await expect(service.generateSessions({
+      classGroupId: 'cg1',
+      startDate: new Date('2026-05-28T00:00:00Z'),
+      endDate: new Date('2026-05-28T00:00:00Z'),
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('recordAttendance checks attendance.record permission', async () => {
+    const context = createSchedulingContext()
+    const mockPolicy = context.mockPolicy as any
+    const service = context.service
+    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
+      if (action === 'attendance.record') {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    })
+
+    await expect(service.recordAttendance({
+      id: 'att1',
+      studentId: 'stu1',
+      sessionId: 'ses1',
+      status: AttendanceStatus.Present,
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
 
   test('recordSessionAttendance records each student through managed attendance', async () => {
     const { mockRepos, service } = createSchedulingContext()

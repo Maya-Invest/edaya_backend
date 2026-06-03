@@ -12,24 +12,38 @@ import {
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
+import {
+  createAcademicPeriod,
+  createClassGroup,
+  publishAcademicPeriod,
+  saveClassSubject,
+  saveFee,
+  saveGuardian,
+  saveSchool,
+  saveSession,
+  saveStaffAssignment,
+  saveStaffMember,
+  saveStudent,
+  updateSchool,
+} from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 async function setupBaselineFixture() {
   const { app, repositories, forActor } = createTestApp()
 
   // Standard Admin setup of tenant school
-  await app.setup.registerSchool({ id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
-  await app.setup.createAcademicYear({
+  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
+  await app.createAcademicYear({
     id: 'acad-year',
     schoolId: 'school',
     name: '2026-2027',
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.config.gradeLevels.save(
+  await app.base.gradeLevels.save(
     new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
-  await app.setup.createClassGroup({
+  await createClassGroup(app, {
     id: 'class-7a',
     schoolId: 'school',
     academicYearId: 'acad-year',
@@ -38,21 +52,21 @@ async function setupBaselineFixture() {
   })
 
   // Create staff members
-  await app.setup.registerStaffMember({
+  await saveStaffMember(app, {
     id: 'coordinator-staff',
     schoolId: 'school',
     firstName: 'Alice',
     lastName: 'Smith',
     roles: [StaffRole.Coordinator],
   })
-  await app.setup.registerStaffMember({
+  await saveStaffMember(app, {
     id: 'teacher-staff',
     schoolId: 'school',
     firstName: 'Bob',
     lastName: 'Jones',
     roles: [StaffRole.Teacher],
   })
-  await app.setup.registerStaffMember({
+  await saveStaffMember(app, {
     id: 'accountant-staff',
     schoolId: 'school',
     firstName: 'Charlie',
@@ -61,29 +75,29 @@ async function setupBaselineFixture() {
   })
 
   // Create students & guardians
-  await app.students.registerStudent({ id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
-  await app.students.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
-  await app.students.registerGuardian({ id: 'active-guardian', schoolId: 'school', firstName: 'Eva', lastName: 'Craig' })
-  await app.students.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
+  await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
+  await app.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
+  await saveGuardian(app, { id: 'active-guardian', schoolId: 'school', firstName: 'Eva', lastName: 'Craig' })
+  await app.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
-  await app.config.subjects.save(
+  await app.base.subjects.save(
     new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
   )
-  const classSubject = await app.academics.offerSubjectToClass({
+  const classSubject = await saveClassSubject(app, {
     id: 'class-subject-english',
     classGroupId: 'class-7a',
     subjectId: 'english-lit',
   })
 
-  await app.setup.assignStaffToClassSubject({
+  await saveStaffAssignment(app, {
     id: 'assignment-1',
     staffId: 'teacher-staff',
     classSubjectId: classSubject.id,
     role: StaffRole.Teacher,
   })
 
-  await app.setup.assignStaffToClass({
+  await saveStaffAssignment(app, {
     id: 'teacher-class-assign',
     staffId: 'teacher-staff',
     classGroupId: 'class-7a',
@@ -91,7 +105,7 @@ async function setupBaselineFixture() {
   })
 
   // Create session
-  const session = await app.scheduling.createSession({
+  const session = await saveSession(app, {
     id: 'active-session',
     schoolId: 'school',
     classGroupId: 'class-7a',
@@ -103,7 +117,7 @@ async function setupBaselineFixture() {
   })
 
   // Assign teacher to session
-  await app.setup.assignStaffToSession({
+  await saveStaffAssignment(app, {
     id: 'staff-session-1',
     staffId: 'teacher-staff',
     sessionId: session.id,
@@ -129,7 +143,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Create an unpublished period using admin app
-    const unpub = await app.setup.createAcademicPeriod({
+    const unpub = await createAcademicPeriod(app, {
       id: 'coord-term',
       schoolId: 'school',
       academicYearId: 'acad-year',
@@ -140,20 +154,18 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     })
 
     // Coordinators can publish academic periods
-    const period = await coordApp.setup.publishAcademicPeriod({
-      academicPeriodId: unpub.id,
-    })
+    const period = await publishAcademicPeriod(coordApp, unpub.id)
     expect(period.isPublished).toBe(true)
 
     // Coordinators are denied registering another school
-    await expect(coordApp.setup.registerSchool({
+    await expect(saveSchool(coordApp, {
       id: 'second-school',
       name: 'Second Academy',
       timeZone: 'UTC',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
     // Coordinators are denied financial mutations
-    await expect(coordApp.finance.createFee({
+    await expect(saveFee(coordApp, {
       id: 'tuition-fee',
       schoolId: 'school',
       academicYearId: 'acad-year',
@@ -174,7 +186,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Accountants can create fees
-    const fee = await accountantApp.finance.createFee({
+    const fee = await saveFee(accountantApp, {
       id: 'tuition-fee',
       schoolId: 'school',
       academicYearId: 'acad-year',
@@ -185,7 +197,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     expect(fee.id).toBe('tuition-fee')
 
     // Accountants are denied schedule or class creations
-    await expect(accountantApp.setup.createClassGroup({
+    await expect(createClassGroup(accountantApp, {
       id: 'another-class',
       schoolId: 'school',
       academicYearId: 'acad-year',
@@ -205,7 +217,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Teachers can record attendance for their sessions
-    const attendance = await teacherApp.scheduling.recordAttendance({
+    const attendance = await teacherApp.recordAttendance({
       id: 'attendance-1',
       studentId: 'active-student',
       sessionId: 'active-session',
@@ -214,7 +226,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     expect(attendance.id).toBe('attendance-1')
 
     // Teachers are denied managing the academic setup configuration
-    await expect(teacherApp.setup.updateSchoolConfiguration({
+    await expect(updateSchool(teacherApp, {
       schoolId: 'school',
       name: 'Malicious Rename',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -273,7 +285,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Create an unpublished period first
-    const unpublishedPeriod = await app.setup.createAcademicPeriod({
+    const unpublishedPeriod = await createAcademicPeriod(app, {
       id: 'elevated-term',
       schoolId: 'school',
       academicYearId: 'acad-year',
@@ -284,23 +296,21 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     })
 
     // elevated lifecycle setups require Verified or Strong
-    await expect(standardAdminApp.setup.publishAcademicPeriod({
-      academicPeriodId: unpublishedPeriod.id,
-    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await expect(publishAcademicPeriod(standardAdminApp, unpublishedPeriod.id))
+      .rejects
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
-    const verifiedPeriod = await verifiedAdminApp.setup.publishAcademicPeriod({
-      academicPeriodId: unpublishedPeriod.id,
-    })
+    const verifiedPeriod = await publishAcademicPeriod(verifiedAdminApp, unpublishedPeriod.id)
     expect(verifiedPeriod.isPublished).toBe(true)
 
     // school registration requires Strong assurance
-    await expect(verifiedForeignAdminApp.setup.registerSchool({
+    await expect(saveSchool(verifiedForeignAdminApp, {
       id: 'strong-school',
       name: 'Strong school',
       timeZone: 'UTC',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
-    const strongSchool = await strongForeignAdminApp.setup.registerSchool({
+    const strongSchool = await saveSchool(strongForeignAdminApp, {
       id: 'strong-school',
       name: 'Strong school',
       timeZone: 'UTC',
@@ -324,7 +334,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
 
     const initialAcademicYearCount = await repositories.academicYearRepository.count()
 
-    await expect(unauthorizedTeacherApp.setup.createAcademicYear({
+    await expect(unauthorizedTeacherApp.createAcademicYear({
       id: 'illegal-year',
       schoolId: 'school',
       name: '2028-2029',
@@ -350,11 +360,11 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Foreign actor attempting to query local school data gets Forbidden
-    await expect(foreignAdminApp.queries.students.findById('active-student'))
+    await expect(foreignAdminApp.base.students.findById('active-student'))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
-    await expect(foreignAdminApp.queries.classGroups.list({ schoolId: 'school' }))
+    await expect(foreignAdminApp.base.classGroups.list({ schoolId: 'school' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })

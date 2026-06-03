@@ -5,8 +5,8 @@ import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { ReportCardDefinitionSectionKind } from '../../../entities/assessments/report-card-definition-section'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDefinitionSection> = ({ repositories, policy, atomicExecution }) =>
   config({
@@ -16,6 +16,7 @@ export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDe
     write: write(action(policy, 'assessments.manage_configuration'), authorizeReportCardSection(policy), authorizeReportCardSectionDelete(policy)),
     gates: {
       preSave: validateReportCardSectionSave,
+      preDelete: validateReportCardSectionDelete,
     },
     atomicExecution,
   })
@@ -83,4 +84,14 @@ async function requireAcyclicSectionParent(
 
 export function authorizeReportCardSectionDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardDefinitionSection>['authorizeDelete'] {
   return noopDeleteAccess
+}
+
+async function validateReportCardSectionDelete(
+  section: ReportCardDefinitionSection,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const children = await repositories.sections.list({ parentSectionId: section.id })
+  if (children.length > 0) {
+    throw new BusinessRuleViolationError('REPORT_CARD_SECTION_HAS_CHILDREN', `Cannot delete report card section ${section.id}: child sections still exist`)
+  }
 }

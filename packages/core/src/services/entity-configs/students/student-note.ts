@@ -1,8 +1,9 @@
-import type { ActorMetadata } from '../../../authorization'
+import type { ActorMetadata, AuthorizationPolicy } from '../../../authorization'
 import type { StudentClassEnrollment } from '../../../entities'
 import type { StudentNote } from '../../../entities/students/student-note'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
+import type { EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { StaffRole } from '../../../entities'
 import { StudentNoteVisibility } from '../../../entities/students/student-note'
@@ -18,9 +19,21 @@ export const studentNoteConfig: EntityConfigFactory<StudentNote> = (input) => {
   )
   return {
     ...config,
+    write: {
+      ...config.write,
+      authorizeSave: authorizeStudentNote(input.policy),
+    },
     gates: {
       preSave: validateStudentNoteSave,
     },
+  }
+}
+
+function authorizeStudentNote(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentNote>['authorizeSave'] {
+  return async (actor, entity, existing) => {
+    await policy.checkStudentAccess(actor, [entity.studentId])
+    if (existing)
+      await policy.checkStudentNoteAccess(actor, [existing.id])
   }
 }
 

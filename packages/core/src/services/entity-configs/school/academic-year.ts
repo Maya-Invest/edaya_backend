@@ -1,7 +1,7 @@
 import type { AcademicYear } from '../../../entities/school/academic-year'
 import type { EntityConfigFactory } from '../../../shared'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ repositories, policy, atomicExecution }) =>
   config({

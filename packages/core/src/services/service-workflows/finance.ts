@@ -6,7 +6,6 @@ import { resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { FeeStatus, StudentFee } from '../../entities/finances/student-fee'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AssignFeeToStudentInput {
@@ -56,6 +55,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }: AssignFeeToStudentInput): Promise<StudentFee> {
     const student = await this.requireStudent(studentId)
     this.checkActorSchool(student.schoolId)
+    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
     await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
     const fee = await this.requireFee(feeId)
     if (fee.schoolId !== student.schoolId) {
@@ -101,11 +101,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
+      await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
       await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
       await this.base.authorizationPolicy.checkStudentFeeAccess(this.base.actor, [studentFeeId])
-      if (studentFee.status === FeeStatus.Cancelled) {
-        throw new BusinessRuleViolationError('CANCELLED_FEE_PAYMENT', `Student fee ${studentFeeId} cannot receive payments after cancellation`)
-      }
       const payment = new Payment({
         id,
         studentFeeId,
@@ -177,12 +175,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(payment.studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
+      await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'finance.manage')
       await this.base.authorizationPolicy.checkStudentAccess(this.base.actor, [student.id])
       await this.base.authorizationPolicy.checkStudentFeeAccess(this.base.actor, [studentFee.id])
-      if (payment.status !== PaymentStatus.Recorded) {
-        const code = status === PaymentStatus.Reversed ? 'INVALID_PAYMENT_REVERSAL' : 'INVALID_PAYMENT_CANCELLATION'
-        throw new BusinessRuleViolationError(code, `Payment ${paymentId} cannot be ${status} from status ${payment.status}`)
-      }
       const changedPayment = new Payment({
         id: payment.id,
         studentFeeId: payment.studentFeeId,

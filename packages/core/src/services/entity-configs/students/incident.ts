@@ -1,22 +1,44 @@
+import type { AuthorizationPolicy } from '../../../authorization'
 import type { Incident } from '../../../entities/students/incident'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import type { EntityWriteAuthorization } from '../../managed-entity-service'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../authorization'
+import { AttachmentOwnerKind } from '../../../entities/school/attachment'
 import { IncidentStatus } from '../../../entities/students/incident'
+import { action, config, dateTime, directSchoolTenant, noopReadAccess, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
-import { action, config, dateTime, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
 
 export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
     read: read(action(policy, 'behavior.read_incidents'), noopReadAccess),
-    write: write(action(policy, 'behavior.report_incident'), noopSaveAccess, noopDeleteAccess),
+    write: write(action(policy, 'behavior.report_incident'), authorizeIncident(policy), authorizeIncidentDelete(policy)),
     gates: {
       preSave: validateIncidentSave,
+      preDelete: validateIncidentDelete,
     },
     atomicExecution,
   })
+
+function authorizeIncident(policy: AuthorizationPolicy): EntityWriteAuthorization<Incident>['authorizeSave'] {
+  return async (actor, entity) => {
+    if (entity.classGroupId)
+      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
+    if (entity.sessionId)
+      await policy.checkSessionAccess(actor, [entity.sessionId])
+  }
+}
+
+function authorizeIncidentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Incident>['authorizeDelete'] {
+  return async (actor, entity) => {
+    if (entity.classGroupId)
+      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
+    if (entity.sessionId)
+      await policy.checkSessionAccess(actor, [entity.sessionId])
+  }
+}
 
 export async function validateIncidentSave(
   entity: Incident,
@@ -67,4 +89,18 @@ function incidentResolutionChanged(entity: Incident, existing: Incident): boolea
   return entity.resolutionNotes !== existing.resolutionNotes
     || dateTime(entity.resolvedAt) !== dateTime(existing.resolvedAt)
     || entity.resolvedByStaffId !== existing.resolvedByStaffId
+}
+
+async function validateIncidentDelete(
+  incident: Incident,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const [involvements, actions, attachments] = await Promise.all([
+    repositories.studentIncidentInvolvements.list({ incidentId: incident.id }),
+    repositories.studentDisciplinaryActions.list({ incidentId: incident.id }),
+    repositories.attachments.list({ ownerKind: AttachmentOwnerKind.Incident, ownerId: incident.id }),
+  ])
+  if (involvements.length > 0 || actions.length > 0 || attachments.length > 0) {
+    throw new BusinessRuleViolationError('INCIDENT_HAS_DEPENDENCIES', `Cannot delete incident ${incident.id}: dependent records still exist`)
+  }
 }

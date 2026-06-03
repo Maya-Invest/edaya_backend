@@ -37,10 +37,9 @@ export function authorizeExistingById<T extends { id: string }>(
   readAccess: EntityReadAuthorization<T>['checkAccess'],
 ): EntityWriteAuthorization<T>['authorizeSave'] {
   return async (actor, entity, existing, repositories) => {
+    await readAccess(actor, [entity], repositories)
     if (existing)
       await readAccess(actor, [existing], repositories)
-    else if (entity.id)
-      await noopReadAccess()
   }
 }
 

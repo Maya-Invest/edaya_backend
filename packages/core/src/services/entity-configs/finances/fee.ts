@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization'
 import { directEntityConfig, readByIds } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const feeConfig: EntityConfigFactory<Fee> = (input) => {
   const config = directEntityConfig(
@@ -16,6 +17,7 @@ export const feeConfig: EntityConfigFactory<Fee> = (input) => {
     ...config,
     gates: {
       preSave: validateFeeSave,
+      preDelete: validateFeeDelete,
     },
   }
 }
@@ -31,5 +33,15 @@ export async function validateFeeSave(
   ])
   if (!school || !academicYear || academicYear.schoolId !== fee.schoolId) {
     denyResourceAccess()
+  }
+}
+
+async function validateFeeDelete(
+  fee: Fee,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const studentFees = await repositories.studentFees.list({ feeId: fee.id })
+  if (studentFees.length > 0) {
+    throw new BusinessRuleViolationError('FEE_HAS_DEPENDENCIES', `Cannot delete fee ${fee.id}: dependent records still exist`)
   }
 }

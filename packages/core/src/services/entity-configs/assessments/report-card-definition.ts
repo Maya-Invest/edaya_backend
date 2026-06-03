@@ -2,8 +2,8 @@ import type { ReportCardDefinition } from '../../../entities/assessments/report-
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { requireSchool } from '../../../shared/require-school'
 
 export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinition> = ({ repositories, policy, atomicExecution }) =>
@@ -14,6 +14,7 @@ export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinitio
     write: write(action(policy, 'assessments.manage_configuration'), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateReportCardDefinitionSave,
+      preDelete: validateReportCardDefinitionDelete,
     },
     atomicExecution,
   })
@@ -47,5 +48,18 @@ async function validateReportCardDefinitionSave(
       'DEFAULT_REPORT_CARD_DEFINITION_ALREADY_EXISTS',
       `Grade level ${definition.gradeLevelId} already has a default report card definition`,
     )
+  }
+}
+
+async function validateReportCardDefinitionDelete(
+  definition: ReportCardDefinition,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const [sections, results] = await Promise.all([
+    repositories.sections.list({ reportCardDefinitionId: definition.id }),
+    repositories.results.list({ reportCardDefinitionId: definition.id }),
+  ])
+  if (sections.length > 0 || results.length > 0) {
+    throw new BusinessRuleViolationError('REPORT_CARD_DEFINITION_HAS_DEPENDENCIES', `Cannot delete report card definition ${definition.id}: dependent records still exist`)
   }
 }

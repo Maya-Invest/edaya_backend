@@ -7,13 +7,24 @@ import {
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
+import {
+  createAcademicPeriod,
+  createClassGroup,
+  publishAcademicPeriod,
+  saveSchool,
+  saveStaffMember,
+  saveStudent,
+  updateClassGroup,
+  updateSchool,
+  updateStaffStatus,
+} from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {
     const { app, repositories } = createTestApp()
-    await app.setup.registerSchool({ id: 'school', name: 'Maya School', timeZone: 'UTC' })
-    const school = await app.setup.updateSchoolConfiguration({
+    await saveSchool(app, { id: 'school', name: 'Maya School', timeZone: 'UTC' })
+    const school = await updateSchool(app, {
       schoolId: 'school',
       name: 'Maya International School',
       type: SchoolType.K12,
@@ -23,14 +34,14 @@ describeIntegration('setup lifecycle journey', () => {
     expect(school.name).toBe('Maya International School')
     expect(school.type).toBe(SchoolType.K12)
 
-    await app.setup.createAcademicYear({
+    await app.createAcademicYear({
       id: 'year-1',
       schoolId: 'school',
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    const activeYear = await app.setup.createAcademicYear({
+    const activeYear = await app.createAcademicYear({
       id: 'year-2',
       schoolId: 'school',
       name: '2027-2028',
@@ -39,11 +50,11 @@ describeIntegration('setup lifecycle journey', () => {
     })
     expect(activeYear.isActive).toBe(true)
     expect((await repositories.academicYearRepository.findById('year-1'))?.isActive).toBe(false)
-    const reactivatedYear = await app.setup.activateAcademicYear({ academicYearId: 'year-1' })
+    const reactivatedYear = await app.activateAcademicYear({ academicYearId: 'year-1' })
     expect(reactivatedYear.isActive).toBe(true)
     expect((await repositories.academicYearRepository.findById('year-2'))?.isActive).toBe(false)
 
-    const period = await app.setup.createAcademicPeriod({
+    const period = await createAcademicPeriod(app, {
       id: 'term',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -53,19 +64,19 @@ describeIntegration('setup lifecycle journey', () => {
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
     expect(period.isPublished).toBe(false)
-    expect((await app.setup.publishAcademicPeriod({ academicPeriodId: 'term' })).isPublished).toBe(true)
+    expect((await publishAcademicPeriod(app, 'term')).isPublished).toBe(true)
 
-    await app.config.gradeLevels.save(
+    await app.base.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
-    await app.setup.registerStaffMember({
+    await saveStaffMember(app, {
       id: 'teacher',
       schoolId: 'school',
       firstName: 'Binta',
       lastName: 'Sow',
       roles: [StaffRole.Teacher],
     })
-    await app.setup.createClassGroup({
+    await createClassGroup(app, {
       id: 'class',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -73,13 +84,13 @@ describeIntegration('setup lifecycle journey', () => {
       name: 'Grade 6 A',
       capacity: 2,
     })
-    await app.students.registerStudent({ id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
-    await app.students.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
-    await expect(app.setup.updateClassGroupConfiguration({
+    await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
+    await app.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
+    await expect(updateClassGroup(app, {
       classGroupId: 'class',
       capacity: 0,
-    })).rejects.toThrow('capacity cannot be below current active enrollment count')
-    const classGroup = await app.setup.updateClassGroupConfiguration({
+    })).rejects.toThrow('capacity must be a strictly positive integer')
+    const classGroup = await updateClassGroup(app, {
       classGroupId: 'class',
       name: 'Grade 6 Alpha',
       capacity: 3,
@@ -90,9 +101,9 @@ describeIntegration('setup lifecycle journey', () => {
     expect(classGroup.capacity).toBe(3)
     expect(classGroup.homeroomStaffId).toBe('teacher')
 
-    expect((await app.setup.updateStaffMemberStatus({ staffId: 'teacher', isActive: false })).isActive).toBe(false)
-    expect((await app.setup.updateStaffMemberStatus({ staffId: 'teacher', isActive: true })).isActive).toBe(true)
-    await expect(app.setup.updateStaffMemberStatus({ staffId: 'admin', isActive: false }))
+    expect((await updateStaffStatus(app, 'teacher', false)).isActive).toBe(false)
+    expect((await updateStaffStatus(app, 'teacher', true)).isActive).toBe(true)
+    await expect(updateStaffStatus(app, 'admin', false))
       .rejects
       .toThrow('cannot deactivate their own account')
   })

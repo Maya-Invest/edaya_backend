@@ -2,8 +2,8 @@ import type { Assessment } from '../../../entities/assessments/assessment'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, read, readByIds, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories, policy, atomicExecution }) =>
   config({

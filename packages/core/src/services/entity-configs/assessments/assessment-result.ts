@@ -5,8 +5,8 @@ import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../../entities'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, indirectTenant, read, unique, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ repositories, policy, atomicExecution }) =>
   config({
@@ -19,6 +19,7 @@ export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ 
     write: write(action(policy, 'assessments.record_result'), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
     gates: {
       preSave: validateAssessmentResultSave,
+      preDelete: validateAssessmentResultDelete,
     },
     atomicExecution,
   })
@@ -88,5 +89,22 @@ function authorizeAssessmentResultDelete(policy: AuthorizationPolicy): EntityWri
   return async (actor, entity) => {
     await policy.checkAssessmentAccess(actor, [entity.assessmentId])
     await policy.checkStudentAccess(actor, [entity.studentId])
+  }
+}
+
+async function validateAssessmentResultDelete(
+  result: AssessmentResult,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const assessment = await repositories.assessments.findById(result.assessmentId)
+  if (!assessment) {
+    denyResourceAccess()
+  }
+  const reportCard = await repositories.results.findOne({
+    studentId: result.studentId,
+    periodId: assessment.periodId,
+  })
+  if (reportCard?.status === ReportCardResultStatus.Published) {
+    throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${assessment.periodId} is immutable`)
   }
 }

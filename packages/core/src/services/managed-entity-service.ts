@@ -115,7 +115,10 @@ export class ManagedEntityService<T> {
   async count(filter?: Filter<T>): Promise<number> {
     this.ensureFilterTenant(filter)
     await this.config.read.checkModule(this.actor)
-    return this.config.repository.count(filter)
+    const entities = await this.config.repository.list(filter as QueryOptions<T> | undefined)
+    await this.ensureEntitiesTenant(entities)
+    await this.config.read.checkAccess(this.actor, entities, this.repositories)
+    return entities.length
   }
 
   async save(entity: T, options: ManagedEntityWriteOptions = {}): Promise<void> {
@@ -211,7 +214,7 @@ export class ManagedEntityService<T> {
 
   private async ensureEntityTenant(entity: T): Promise<void> {
     const schoolId = await this.config.tenant.resolve(entity, this.repositories)
-    if (schoolId && schoolId !== this.actor.schoolId)
+    if (!schoolId || schoolId !== this.actor.schoolId)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }

@@ -264,13 +264,6 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     await this.requireEnrollmentForClassGroup({ studentId, classGroupId: session.classGroupId })
     const existing = await this.base.repositories.attendance.findOne({ studentId, sessionId })
     const isCorrection = existing !== undefined && existing.status !== status
-    if (
-      isCorrection
-      && (existing.justificationStatus === AttendanceJustificationStatus.Excused
-        || existing.justificationStatus === AttendanceJustificationStatus.Rejected)
-    ) {
-      throw new BusinessRuleViolationError('CORRECT_REVIEWED_ATTENDANCE_BLOCKED', 'Reviewed attendance must not be corrected without a reopen workflow')
-    }
     const updatedAt = isCorrection ? (createdAt ?? new Date()) : existing?.updatedAt ?? createdAt
     const record = new AttendanceRecord({
       id: existing?.id ?? id,
@@ -384,6 +377,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
+    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'attendance.record')
     if (classGroup.id) {
       await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
     }
@@ -397,6 +391,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
 
   private async authorizeSchedulingManage(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
+    await this.base.authorizationPolicy.checkGlobalAction(this.base.actor, 'scheduling.manage')
     await this.base.authorizationPolicy.checkClassGroupAccess(this.base.actor, [classGroup.id])
   }
 }

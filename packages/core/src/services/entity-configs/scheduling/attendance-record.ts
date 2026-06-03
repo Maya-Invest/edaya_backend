@@ -3,8 +3,8 @@ import type { AttendanceRecord } from '../../../entities/scheduling/attendance-r
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { AttendanceJustificationStatus, AttendanceStatus } from '../../../entities/scheduling/attendance-record'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, dateTime, indirectTenant, read, resolveSessionSchoolId, unique, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, policy, atomicExecution }) =>
   config({

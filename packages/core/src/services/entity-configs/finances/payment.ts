@@ -6,8 +6,9 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../manag
 import { denyResourceAccess } from '../../../authorization'
 import { FeeStatus } from '../../../entities'
 import { PaymentStatus } from '../../../entities/finances/payment'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
+import { AttachmentOwnerKind } from '../../../entities/school/attachment'
 import { action, config, dateTime, indirectTenant, noopReadAccess, read, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, policy, atomicExecution }) =>
   config({
@@ -17,6 +18,7 @@ export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, poli
     write: write(action(policy, 'finance.manage'), authorizePayment(policy), authorizePaymentDelete(policy)),
     gates: {
       preSave: validatePaymentSave,
+      preDelete: validatePaymentDelete,
     },
     atomicExecution,
   })
@@ -83,5 +85,15 @@ export function authorizePayment(policy: AuthorizationPolicy): EntityWriteAuthor
 export function authorizePaymentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeDelete'] {
   return async (actor, entity) => {
     await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
+  }
+}
+
+async function validatePaymentDelete(
+  payment: Payment,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const attachments = await repositories.attachments.list({ ownerKind: AttachmentOwnerKind.Payment, ownerId: payment.id })
+  if (attachments.length > 0 || payment.status !== PaymentStatus.Recorded) {
+    throw new BusinessRuleViolationError('PAYMENT_DELETE_BLOCKED', `Cannot delete payment ${payment.id}: dependent records exist or payment is no longer recorded`)
   }
 }

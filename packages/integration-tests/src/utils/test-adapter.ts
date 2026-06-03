@@ -87,7 +87,6 @@ export function buildSchoolApplication(opts: {
       guardianStudentLinkRepository: opts.repositories.guardianLinks,
       studentRepository: opts.repositories.students,
     }),
-    actor: opts.actor,
   })
 }
 

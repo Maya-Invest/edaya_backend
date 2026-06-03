@@ -4,8 +4,8 @@ import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, indirectTenant, noopReadAccess, read, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, policy, atomicExecution }) =>
   config({

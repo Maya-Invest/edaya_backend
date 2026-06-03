@@ -5,8 +5,8 @@ import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
 import { denyResourceAccess } from '../../../authorization'
 import { ReportCardResultStatus } from '../../../entities/assessments/report-card-result'
-import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { action, config, indirectTenant, read, readByIds, write } from '../../../shared'
+import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, policy, atomicExecution }) =>
   config({
@@ -16,6 +16,7 @@ export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ 
     write: write(action(policy, 'assessments.publish_report_card'), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
     gates: {
       preSave: validateReportCardResultSave,
+      preDelete: validateReportCardResultDelete,
     },
     atomicExecution,
   })
@@ -74,5 +75,13 @@ function authorizeReportCardResult(policy: AuthorizationPolicy): EntityWriteAuth
 function authorizeReportCardResultDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardResult>['authorizeDelete'] {
   return async (actor, entity) => {
     await policy.checkReportCardResultAccess(actor, [entity.id])
+  }
+}
+
+async function validateReportCardResultDelete(
+  result: ReportCardResult,
+): Promise<void> {
+  if (result.status === ReportCardResultStatus.Published) {
+    throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${result.periodId} is immutable`)
   }
 }
