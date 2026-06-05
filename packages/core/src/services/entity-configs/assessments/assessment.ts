@@ -1,16 +1,17 @@
 import type { Assessment } from '../../../entities/assessments/assessment'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, read, readByIds, write } from '../../../shared'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.assessments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(action(policy, 'assessments.read_results'), readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids))),
-    write: write(action(policy, 'assessments.manage_configuration'), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(policy, Permission.GRADE_READ), readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids))),
+    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateAssessmentSave,
     },

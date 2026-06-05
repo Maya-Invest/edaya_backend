@@ -4,13 +4,12 @@ import {
   test,
 } from 'bun:test'
 import {
-  actor,
   createSetupContext,
 } from './workflow-test-context'
 
 describe('SchoolService setup workflows', () => {
   test('createAcademicYear creates an active year and deactivates existing active years through managed service', async () => {
-    const { academicYears, mockAtomic, mockPolicy, mockRepos, service } = createSetupContext()
+    const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
 
     const result = await service.createAcademicYear({
       id: 'ay-new',
@@ -26,7 +25,6 @@ describe('SchoolService setup workflows', () => {
     expect(academicYears.get('ay-current')?.isActive).toBe(false)
     expect(academicYears.get('ay-new')?.isActive).toBe(true)
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'setup.manage')
     expect(mockRepos.academicYears.save).toHaveBeenCalledWith(expect.objectContaining({
       id: 'ay-current',
       isActive: false,
@@ -35,7 +33,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('activateAcademicYear activates an existing year and deactivates other active years through managed service', async () => {
-    const { academicYears, mockAtomic, mockPolicy, mockRepos, service } = createSetupContext()
+    const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
 
     const result = await service.activateAcademicYear({
       academicYearId: 'ay-next',
@@ -46,12 +44,10 @@ describe('SchoolService setup workflows', () => {
     expect(academicYears.get('ay-current')?.isActive).toBe(false)
     expect(academicYears.get('ay-next')?.isActive).toBe(true)
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'setup.manage_lifecycle')
     expect(mockRepos.academicYears.save).toHaveBeenCalledWith(expect.objectContaining({
       id: 'ay-current',
       isActive: false,
     }))
     expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
   })
-
 })

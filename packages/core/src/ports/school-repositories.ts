@@ -1,6 +1,7 @@
 import type {
   AcademicPeriod,
   AcademicYear,
+  AccessRole,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -32,6 +33,7 @@ import type {
   Session,
   StaffAssignment,
   StaffMember,
+  StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -56,6 +58,8 @@ export interface SchoolRepositories {
   readonly gradeLevels: BaseRepositoryInterface<GradeLevel>
   readonly staffMembers: BaseRepositoryInterface<StaffMember>
   readonly staffAssignments: BaseRepositoryInterface<StaffAssignment>
+  readonly accessRoles: BaseRepositoryInterface<AccessRole>
+  readonly staffRoleAssignments: BaseRepositoryInterface<StaffRoleAssignment>
   readonly attachments: BaseRepositoryInterface<Attachment>
   readonly resources: BaseRepositoryInterface<Resource>
   readonly resourceAssignments: BaseRepositoryInterface<ResourceAssignment>

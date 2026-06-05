@@ -1,7 +1,8 @@
 import type { AcademicYear } from '../../entities'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess } from '../../authorization'
+import { denyResourceAccess, Permission } from '../../authorization'
 import { AcademicYear as AcademicYearEntity } from '../../entities'
+import { permissionAction } from '../../shared'
 import { requireSchool } from '../../shared/require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -32,7 +33,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
   }: CreateAcademicYearInput): Promise<AcademicYear> {
     this.checkActorSchool(schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'setup.manage')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.SCHOOL_STRUCTURE_CONFIGURE)(this.baseService.actor)
     await requireSchool(this.baseService.repositories.schools, schoolId)
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -57,7 +58,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(academicYear.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'setup.manage_lifecycle')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
 
     return this.baseService.atomicExecution.execute(async () => {
       await this.deactivateOtherAcademicYears(academicYear.schoolId, academicYear.id)

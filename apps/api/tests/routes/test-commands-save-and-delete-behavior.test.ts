@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/routes/index.route";
-import { ActorAssuranceLevel, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, Resource, StaffRole } from "@edaya/core";
+import { AccessRole, ActorAssuranceLevel, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, Permission, Resource, StaffRole } from "@edaya/core";
 import type { AppBindings } from "@/lib/types";
 
 describe("config command route pairs", () => {
@@ -139,6 +139,67 @@ describe("config command route pairs", () => {
     expect(passedEntity.schoolId).toBe("school-1");
     expect(passedEntity.name).toBe("Suspension");
     expect(passedEntity.kind).toBe(DisciplinaryActionKind.Sanction);
+  });
+
+  it("should successfully save an AccessRole entity and return 201", async () => {
+    const mockSave = mock().mockResolvedValue(undefined);
+    const mockCommands = {
+      accessRoles: mockWriteService({
+        save: mockSave,
+      }),
+    };
+
+    const app = setupTestApp(mockCommands);
+    const payload = {
+      id: "role-custom-finance",
+      name: "Finance clerk",
+      permissions: [Permission.PAYMENT_READ, Permission.PAYMENT_RECORD],
+    };
+
+    const res = await app.request("/api/commands/config/accessRoles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockSave).toHaveBeenCalled();
+    const passedEntity = mockSave.mock.calls[0][0];
+    expect(passedEntity).toBeInstanceOf(AccessRole);
+    expect(passedEntity.id).toBe("role-custom-finance");
+    expect(passedEntity.schoolId).toBe("school-1");
+    expect(passedEntity.isSystemRole).toBe(false);
+    expect(passedEntity.systemRoleKey).toBeUndefined();
+    expect(passedEntity.permissions).toEqual([Permission.PAYMENT_READ, Permission.PAYMENT_RECORD]);
+  });
+
+  it("should reject AccessRole system-role fields from command input", async () => {
+    const mockSave = mock().mockResolvedValue(undefined);
+    const mockCommands = {
+      accessRoles: mockWriteService({
+        save: mockSave,
+      }),
+    };
+
+    const app = setupTestApp(mockCommands);
+    const res = await app.request("/api/commands/config/accessRoles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: "role-system-admin-copy",
+        name: "Admin copy",
+        isSystemRole: true,
+        systemRoleKey: StaffRole.Admin,
+        permissions: [Permission.ACCESS_CONTROL_ASSIGN],
+      }),
+    });
+
+    expect(res.status).toBe(422);
+    expect(mockSave).not.toHaveBeenCalled();
   });
 
   it("should return 400 Bad Request for unsupported write service", async () => {

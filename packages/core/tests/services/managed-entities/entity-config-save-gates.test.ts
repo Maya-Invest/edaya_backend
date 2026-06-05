@@ -534,7 +534,6 @@ describe('Entity config save gates', () => {
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Admin',
-      roles: [StaffRole.Admin],
     })
     await repositories.staffMemberRepository.save(staffMember)
 
@@ -543,7 +542,6 @@ describe('Entity config save gates', () => {
       schoolId: staffMember.schoolId,
       firstName: staffMember.firstName,
       lastName: staffMember.lastName,
-      roles: staffMember.roles,
       isActive: false,
       createdAt: staffMember.createdAt,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)

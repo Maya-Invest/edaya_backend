@@ -53,6 +53,18 @@ export const queryableEntities: EntityQueryConfig[] = [
     responseSchema: schemas.staffAssignmentResponseSchema,
   },
   {
+    name: "accessRoles",
+    displayName: "Access Roles",
+    querySchema: schemas.accessRoleQuerySchema,
+    responseSchema: schemas.accessRoleResponseSchema,
+  },
+  {
+    name: "staffRoleAssignments",
+    displayName: "Staff Role Assignments",
+    querySchema: schemas.staffRoleAssignmentQuerySchema,
+    responseSchema: schemas.staffRoleAssignmentResponseSchema,
+  },
+  {
     name: "attachments",
     displayName: "Attachments",
     querySchema: schemas.attachmentQuerySchema,

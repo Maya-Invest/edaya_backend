@@ -3,16 +3,16 @@ import type { ResourceAssignment } from '../../../entities/school/resource-assig
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
-import { action, config, indirectTenant, noopReadAccess, read, write } from '../../../shared'
+import { denyResourceAccess, Permission } from '../../../authorization'
+import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.resourceAssignments,
     tenant: resourceAssignmentTenant(),
-    read: read(action(policy, 'resources.read'), noopReadAccess),
-    write: write(action(policy, 'resources.manage'), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
+    read: read(permissionAction(policy, Permission.RESOURCE_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.RESOURCE_CONFIGURE), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
     gates: {
       preSave: validateResourceAssignmentSave,
     },

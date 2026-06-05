@@ -6,6 +6,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import {
   AcademicPeriod,
   AcademicYear,
+  AccessRole,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -39,6 +40,7 @@ import {
   Session,
   StaffAssignment,
   StaffMember,
+  StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -80,6 +82,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly gradeLevels: PostgresStore<GradeLevel>
   public readonly staffMembers: PostgresStore<StaffMember>
   public readonly staffAssignments: PostgresStore<StaffAssignment>
+  public readonly accessRoles: PostgresStore<AccessRole>
+  public readonly staffRoleAssignments: PostgresStore<StaffRoleAssignment>
   public readonly attachments: PostgresStore<Attachment>
   public readonly resources: PostgresStore<Resource>
   public readonly resourceAssignments: PostgresStore<ResourceAssignment>
@@ -181,7 +185,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       createDefaultMappers(GradeLevel).toDomain,
     )
 
-    // 6. Staff Members Store (Custom roles & isActive mapping)
+    // 6. Staff Members Store
     this.staffMembers = new PostgresStore(
       db,
       schema.staffMembers,
@@ -192,7 +196,6 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         lastName: entity.lastName,
         email: entity.email ?? null,
         subjectId: entity.subjectId ?? null,
-        roles: entity.roles,
         isActive: entity.isActive,
         createdAt: entity.createdAt,
       }),
@@ -203,7 +206,6 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         lastName: row.lastName,
         email: row.email,
         subjectId: row.subjectId,
-        roles: deserializeJsonb(row.roles),
         isActive: row.isActive,
         createdAt: row.createdAt,
       }),
@@ -215,6 +217,66 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       schema.staffAssignments,
       createDefaultMappers(StaffAssignment).toRow,
       createDefaultMappers(StaffAssignment).toDomain,
+    )
+
+    this.accessRoles = new PostgresStore(
+      db,
+      schema.accessRoles,
+      (entity: AccessRole) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        name: entity.name,
+        description: entity.description ?? null,
+        isSystemRole: entity.isSystemRole,
+        systemRoleKey: entity.systemRoleKey ?? null,
+        permissions: entity.permissions,
+        status: entity.status,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+      }),
+      row => new AccessRole({
+        id: row.id,
+        schoolId: row.schoolId,
+        name: row.name,
+        description: row.description,
+        isSystemRole: row.isSystemRole,
+        systemRoleKey: row.systemRoleKey ?? undefined,
+        permissions: deserializeJsonb(row.permissions),
+        status: row.status,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    )
+
+    this.staffRoleAssignments = new PostgresStore(
+      db,
+      schema.staffRoleAssignments,
+      (entity: StaffRoleAssignment) => ({
+        id: entity.id,
+        staffId: entity.staffId,
+        schoolId: entity.schoolId,
+        academicYearId: entity.academicYearId ?? null,
+        roleIds: entity.roleIds,
+        scopeGrants: entity.scopeGrants,
+        status: entity.status,
+        startsAt: entity.startsAt ?? null,
+        endsAt: entity.endsAt ?? null,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+      }),
+      row => new StaffRoleAssignment({
+        id: row.id,
+        staffId: row.staffId,
+        schoolId: row.schoolId,
+        academicYearId: row.academicYearId,
+        roleIds: deserializeJsonb(row.roleIds),
+        scopeGrants: deserializeJsonb(row.scopeGrants),
+        status: row.status,
+        startsAt: row.startsAt,
+        endsAt: row.endsAt,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
     )
 
     // 8. Attachments Store
@@ -986,7 +1048,6 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         last_name TEXT NOT NULL,
         email TEXT,
         subject_id TEXT,
-        roles JSONB NOT NULL,
         is_active BOOLEAN NOT NULL,
         created_at TIMESTAMP NOT NULL
       )`,
@@ -998,6 +1059,31 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         class_subject_id TEXT,
         session_id TEXT,
         created_at TIMESTAMP NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS access_roles (
+        id TEXT PRIMARY KEY,
+        school_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        is_system_role BOOLEAN NOT NULL,
+        system_role_key TEXT,
+        permissions JSONB NOT NULL,
+        status TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS staff_role_assignments (
+        id TEXT PRIMARY KEY,
+        staff_id TEXT NOT NULL,
+        school_id TEXT NOT NULL,
+        academic_year_id TEXT,
+        role_ids JSONB NOT NULL,
+        scope_grants JSONB NOT NULL,
+        status TEXT NOT NULL,
+        starts_at TIMESTAMP,
+        ends_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
       )`,
       `CREATE TABLE IF NOT EXISTS attachments (
         id TEXT PRIMARY KEY,

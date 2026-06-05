@@ -3,15 +3,15 @@ import type { StaffAssignment } from '../../../entities/school/staff-assignment'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
-import { action, config, indirectTenant, noopReadAccess, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../../shared'
+import { denyResourceAccess, Permission } from '../../../authorization'
+import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../../shared'
 
 export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.staffAssignments,
     tenant: staffAssignmentTenant(),
-    read: read(action(policy, 'setup.manage'), noopReadAccess),
-    write: write(action(policy, 'setup.assign_staff'), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
+    read: read(permissionAction(policy, Permission.SCHOOL_STRUCTURE_CONFIGURE), noopReadAccess),
+    write: write(permissionAction(policy, Permission.ACCESS_CONTROL_ASSIGN), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
     gates: {
       preSave: validateStaffAssignmentSave,
     },

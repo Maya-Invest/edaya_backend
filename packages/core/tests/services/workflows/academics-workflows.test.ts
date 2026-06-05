@@ -26,7 +26,6 @@ describe('SchoolService academics workflows', () => {
     expect(result.completedPercentage).toBe(100)
     expect(result.recordedByStaffId).toBe('user1')
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'academics.record_progress')
     expect(mockPolicy.checkSessionAccess).toHaveBeenCalledWith(actor, ['sess1'])
     expect(mockRepos.classSubjectProgress.save).toHaveBeenCalledWith(result)
     expect(mockRepos.classSubjectMatters.save).toHaveBeenCalledWith(expect.objectContaining({
@@ -60,5 +59,4 @@ describe('SchoolService academics workflows', () => {
       completedPercentage: 60,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
-
 })

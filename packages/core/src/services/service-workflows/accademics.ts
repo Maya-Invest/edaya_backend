@@ -1,7 +1,8 @@
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, resolveAuditActorId } from '../../authorization'
+import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress } from '../../entities'
 import { roundTo2 } from '../../entities/utils'
+import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -42,7 +43,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         denyResourceAccess()
       }
 
-      await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'academics.record_progress')
+      await permissionAction(this.baseService.authorizationPolicy, Permission.CLASS_LOGBOOK_CREATE)(this.baseService.actor)
       await this.baseService.authorizationPolicy.checkSessionAccess(this.baseService.actor, [sessionId])
 
       const existing = await this.baseService.repositories.classSubjectProgress.findOne({ classSubjectMatterId, sessionId })

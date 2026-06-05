@@ -1,10 +1,11 @@
 import type { ClassGroup, Guardian, GuardianStudentLink as GuardianStudentLinkType } from '../../entities'
 import type { BaseSchoolService } from '../base-school-service'
-import { resolveAuditActorId } from '../../authorization'
+import { Permission, resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { GuardianStudentLink } from '../../entities'
 import { Student, StudentStatus } from '../../entities/students/student'
 import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollment, StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
+import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -77,7 +78,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'students.manage_enrollment')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.ENROLLMENT_CREATE)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
 
@@ -130,7 +131,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(guardian.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'students.manage_guardians')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.PARENT_UPDATE)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkGuardianAccess(this.baseService.actor, [guardian.id])
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
 
@@ -283,7 +284,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'students.manage_enrollment')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.ENROLLMENT_CREATE)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     return enrollment

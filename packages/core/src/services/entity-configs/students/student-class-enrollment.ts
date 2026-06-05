@@ -3,10 +3,10 @@ import type { StudentClassEnrollment } from '../../../entities/students/student-
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { StudentStatus } from '../../../entities/students/student'
 import { StudentClassEnrollmentStatus } from '../../../entities/students/student-class-enrollment'
-import { action, config, indirectTenant, read, unique, write } from '../../../shared'
+import { config, indirectTenant, permissionAction, read, unique, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { progressionDecisionChanged } from './student-note'
 
@@ -14,10 +14,10 @@ export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrol
   config({
     repository: repositories.enrollments,
     tenant: studentLinkedTenant(),
-    read: read(action(policy, 'queries.read_enrollment_history'), async (actor, entities) => {
+    read: read(permissionAction(policy, Permission.QUERY_ENROLLMENT_HISTORY_READ), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
-    write: write(action(policy, 'students.manage_enrollment'), authorizeStudentLinked(policy), authorizeStudentLinkedDelete(policy)),
+    write: write(permissionAction(policy, Permission.ENROLLMENT_CREATE), authorizeStudentLinked(policy), authorizeStudentLinkedDelete(policy)),
     gates: {
       preSave: validateEnrollmentSave,
       preDelete: validateEnrollmentDelete,

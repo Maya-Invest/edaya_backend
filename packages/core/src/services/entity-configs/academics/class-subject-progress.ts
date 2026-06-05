@@ -3,18 +3,18 @@ import type { ClassSubjectProgress } from '../../../entities/academics/class-sub
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
-import { action, config, indirectTenant, read, resolveClassSubjectSchoolId, unique, write } from '../../../shared'
+import { denyResourceAccess, Permission } from '../../../authorization'
+import { config, indirectTenant, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgress> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.classSubjectProgress,
     tenant: classSubjectProgressTenant(),
-    read: read(action(policy, 'academics.read_progress'), async (actor, entities) => {
+    read: read(permissionAction(policy, Permission.CLASS_LOGBOOK_READ), async (actor, entities) => {
       await policy.checkSessionAccess(actor, unique(entities.map(entity => entity.sessionId)))
     }),
-    write: write(action(policy, 'academics.record_progress'), authorizeClassSubjectProgress(policy), authorizeClassSubjectProgressDelete(policy)),
+    write: write(permissionAction(policy, Permission.CLASS_LOGBOOK_CREATE), authorizeClassSubjectProgress(policy), authorizeClassSubjectProgressDelete(policy)),
     gates: {
       preSave: validateClassSubjectProgressSave,
     },

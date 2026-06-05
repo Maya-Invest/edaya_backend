@@ -2,15 +2,16 @@ import type { AuthorizationPolicy } from '../../../authorization/authorization-p
 import type { SubjectMatter } from '../../../entities/academics/subject-matter'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
+import { Permission } from '../../../authorization'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../authorization/authorization-error'
-import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, read, write } from '../../../shared'
+import { config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../../shared'
 
 export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.subjectMatters,
     tenant: subjectMatterTenant(),
-    read: read(action(policy, 'queries.read_class_curriculum'), noopReadAccess),
-    write: write(action(policy, 'academics.manage_curriculum'), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.ACADEMIC_PROGRAM_UPDATE), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
     atomicExecution,
   })
 

@@ -4,17 +4,16 @@ import type { StudentNote } from '../../../entities/students/student-note'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
-import { StaffRole } from '../../../entities'
+import { AuthorizationError, denyResourceAccess, Permission, resolveEffectiveGrants, scopeGrantCovers } from '../../../authorization'
 import { StudentNoteVisibility } from '../../../entities/students/student-note'
-import { dateTime, directEntityConfig, readByIds } from '../../../shared'
+import { dateTime, directPermissionEntityConfig, readByIds } from '../../../shared'
 
 export const studentNoteConfig: EntityConfigFactory<StudentNote> = (input) => {
-  const config = directEntityConfig(
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.studentNotes,
-    'queries.read_student_detail',
-    'students.manage_notes',
+    Permission.QUERY_STUDENT_DETAIL_READ,
+    Permission.CLASS_LOGBOOK_UPDATE,
     readByIds((actor, ids) => input.policy.checkStudentNoteAccess(actor, ids)),
   )
   return {
@@ -72,11 +71,29 @@ async function hasFullStudentRecordAccess(actor: ActorMetadata, repositories: Sc
   if (actor.kind !== 'staff') {
     return false
   }
-  const staffMember = await repositories.staffMembers.findById(actor.staffMemberId)
-  return staffMember?.roles.some(role =>
-    role === StaffRole.Admin
-    || role === StaffRole.Principal
-    || role === StaffRole.Coordinator) ?? false
+
+  try {
+    const grants = actor.effectiveGrants ?? await resolveEffectiveGrants({
+      staffMemberId: actor.staffMemberId,
+      schoolId: actor.schoolId,
+      repositories,
+    })
+    const permission = Permission.QUERY_STUDENT_DETAIL_READ
+    return grants.permissions.has(permission)
+      && scopeGrantCovers(grants.scopeGrants, {
+        permission,
+        schoolId: actor.schoolId,
+        scopeType: 'school',
+        scopeEntityId: actor.schoolId,
+        isElevated: grants.isElevated,
+      })
+  }
+  catch (error) {
+    if (error instanceof AuthorizationError) {
+      return false
+    }
+    throw error
+  }
 }
 
 export function progressionDecisionChanged(

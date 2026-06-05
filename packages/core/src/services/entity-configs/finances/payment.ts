@@ -3,19 +3,23 @@ import type { Payment } from '../../../entities/finances/payment'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { FeeStatus } from '../../../entities'
 import { PaymentStatus } from '../../../entities/finances/payment'
 import { AttachmentOwnerKind } from '../../../entities/school/attachment'
-import { action, config, dateTime, indirectTenant, noopReadAccess, read, write } from '../../../shared'
+import { anyPermissionAction, config, dateTime, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.payments,
     tenant: paymentTenant(),
-    read: read(action(policy, 'finance.read'), noopReadAccess),
-    write: write(action(policy, 'finance.manage'), authorizePayment(policy), authorizePaymentDelete(policy)),
+    read: read(permissionAction(policy, Permission.PAYMENT_READ), noopReadAccess),
+    write: write(
+      anyPermissionAction(policy, [Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE]),
+      authorizePayment(policy),
+      authorizePaymentDelete(policy),
+    ),
     gates: {
       preSave: validatePaymentSave,
       preDelete: validatePaymentDelete,
@@ -77,15 +81,27 @@ function paymentStatusChanged(entity: Payment, existing: Payment): boolean {
 }
 
 export function authorizePayment(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeSave'] {
-  return async (actor, entity) => {
+  return async (actor, entity, existing) => {
+    await permissionAction(policy, paymentWritePermission(entity, existing))(actor)
     await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
   }
 }
 
 export function authorizePaymentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeDelete'] {
   return async (actor, entity) => {
+    await permissionAction(policy, Permission.PAYMENT_CANCEL)(actor)
     await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
   }
+}
+
+function paymentWritePermission(entity: Payment, existing: Payment | undefined): Permission {
+  if (entity.status === PaymentStatus.Cancelled && existing?.status !== PaymentStatus.Cancelled) {
+    return Permission.PAYMENT_CANCEL
+  }
+  if (entity.status === PaymentStatus.Reversed && existing?.status !== PaymentStatus.Reversed) {
+    return Permission.PAYMENT_REVERSE
+  }
+  return Permission.PAYMENT_RECORD
 }
 
 async function validatePaymentDelete(

@@ -11,7 +11,7 @@ Following the execution of the **Service Layer Security Action Plan**, the secur
 
 All **P0 (Central Service Guard Fixes)**, **P1 (Entity Config Parity)**, and **P2 (Lifecycle and Delete Protection)** issues—originally labeled **Findings F1 through F8**—have been **fully resolved** in the codebase. Managed entity configurations now correctly mirror workflow-level security constraints, and `ManagedEntityService` enforces strict tenant isolation and access checks across all endpoints.
 
-A remaining gap has been identified where **Finance and Scheduling workflows bypass module write checks** via `moduleChecked: true`.
+The later authorization migration also closed the Finance and Scheduling workflow bypass that had previously existed around `moduleChecked: true` writes.
 
 ---
 
@@ -47,21 +47,20 @@ A remaining gap has been identified where **Finance and Scheduling workflows byp
 
 ## Remaining Security Gaps & Action Items
 
-### 1. High Risk: Workflow Bypass of Module Write Permissions
-While direct `BaseSchoolService` saves now correctly enforce actions, the service workflows in `SchoolService` frequently invoke operations with `{ moduleChecked: true }` but forget to perform the global module-level write check themselves:
+### 1. Resolved: Workflow Bypass of Module Write Permissions
+Direct `BaseSchoolService` saves enforce permission actions, and the service workflows that invoke operations with `{ moduleChecked: true }` now perform explicit grant-backed permission checks before those writes:
 
 * **Finance Workflow** (`finance.ts`):
-  * `assignFeeToStudent` calls `studentFees.save(..., { moduleChecked: true })` but **never** checks the global action `finance.manage`. This permits scoped actors (like teachers or guardians linking students) to assign fees.
-  * `recordPayment` and `updatePaymentStatus` call `payments.save(..., { moduleChecked: true })` but **never** verify `finance.manage`, allowing unauthorized payment logging or reversals.
+  * Fee assignment, payment recording, payment reversal, and payment cancellation paths call grant-backed finance permissions before saving.
 * **Scheduling Workflow** (`scheduling.ts`):
-  * `generateSessions` calls `sessions.save(..., { moduleChecked: true })` but **never** checks `scheduling.manage`.
-  * `recordAttendance` (and bulk attendance variants) call `attendance.save(..., { moduleChecked: true })` but **never** check `attendance.record`.
+  * Session generation and attendance paths call grant-backed timetable or attendance permissions before saving.
 
-#### Recommendation:
-Add explicit module action checks inside the workflows before saving:
+Example pattern:
 ```typescript
-// Example fix in recordPayment (finance.ts)
-await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+await permissionAction(this.baseService.authorizationPolicy, Permission.ATTENDANCE_RECORD, {
+  scopeType: 'class_group',
+  scopeEntityId: classGroup.id,
+})(this.baseService.actor)
 ```
 
 ### 2. P3 Action Items: API Surface Decisions & Linter Harness

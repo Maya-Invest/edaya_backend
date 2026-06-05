@@ -3,12 +3,14 @@ import type { AssessmentResult } from '../../entities/assessments/assessment-res
 import type { ReportCardDefinitionSection } from '../../entities/assessments/report-card-definition-section'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import type { BaseSchoolService } from '../base-school-service'
+import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { ReportCardResultSection } from '../../entities/assessments/report-card-result-section'
 import { AttendanceJustificationStatus, AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import { normalizeDate, roundTo2 } from '../../entities/utils'
+import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
 import { BaseServiceWorkflow } from './base-service-workflow'
@@ -37,7 +39,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'assessments.publish_report_card')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     await this.requireReportCardNotPublished(input.studentId, input.periodId)
@@ -49,7 +51,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'assessments.publish_report_card')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [input.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)

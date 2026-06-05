@@ -1,7 +1,8 @@
 import type { GradeScale } from '../../../entities/school/grade-scale'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
-import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
+import { Permission } from '../../../authorization'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { requireSchool } from '../../../shared/require-school'
 
@@ -9,8 +10,8 @@ export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories
   config({
     repository: repositories.gradeScales,
     tenant: directSchoolTenant(),
-    read: read(action(policy, 'assessments.read_results'), noopReadAccess),
-    write: write(action(policy, 'assessments.manage_configuration'), noopSaveAccess, noopDeleteAccess),
+    read: read(permissionAction(policy, Permission.GRADE_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateGradeScaleSave,
     },

@@ -36,6 +36,9 @@ describe("generated route registry contracts", () => {
   });
 
   it("should expose current domain field names for known drift-prone query filters", () => {
+    expect(fieldsFor("accessRoles")).toEqual(expect.arrayContaining(["schoolId", "status", "systemRoleKey"]));
+    expect(fieldsFor("staffRoleAssignments")).toEqual(expect.arrayContaining(["staffId", "schoolId", "status"]));
+
     expect(fieldsFor("resources")).toContain("kind");
     expect(fieldsFor("resources")).not.toContain("type");
 

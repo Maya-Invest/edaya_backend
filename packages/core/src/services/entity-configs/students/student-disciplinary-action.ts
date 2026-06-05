@@ -3,17 +3,17 @@ import type { StudentDisciplinaryAction } from '../../../entities/students/stude
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { StudentDisciplinaryActionStatus } from '../../../entities/students/student-disciplinary-action'
-import { action, config, directSchoolTenant, noopReadAccess, read, write } from '../../../shared'
+import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDisciplinaryAction> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.studentDisciplinaryActions,
     tenant: directSchoolTenant(),
-    read: read(action(policy, 'behavior.read_incidents'), noopReadAccess),
-    write: write(action(policy, 'behavior.manage_discipline'), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
+    read: read(permissionAction(policy, Permission.DISCIPLINE_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.DISCIPLINE_VALIDATE), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
     gates: {
       preSave: validateStudentDisciplinaryActionSave,
       preDelete: validateStudentDisciplinaryActionDelete,

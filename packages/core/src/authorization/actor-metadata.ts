@@ -1,4 +1,5 @@
 import type { StaffRole } from '../entities/school/staff-member'
+import type { EffectiveGrants } from './effective-grants'
 import { requireNonBlank, requireValidDate } from '../entities/utils'
 
 export enum ActorAssuranceLevel {
@@ -19,7 +20,10 @@ export interface InteractiveActorContext {
 export interface StaffActorMetadata extends InteractiveActorContext {
   readonly kind: 'staff'
   readonly staffMemberId: string
-  readonly roles: readonly StaffRole[]
+  /** Legacy compatibility only; API actors should rely on effectiveGrants. */
+  readonly roles?: readonly StaffRole[]
+  /** Preloaded grants (e.g. from API session); avoids DB round-trip per authorize(). */
+  readonly effectiveGrants?: EffectiveGrants
 }
 
 export interface GuardianActorMetadata extends InteractiveActorContext {
@@ -54,7 +58,8 @@ interface InteractiveActorContextInput {
 
 export interface StaffActorMetadataInput extends InteractiveActorContextInput {
   staffMemberId: string
-  roles: readonly StaffRole[]
+  roles?: readonly StaffRole[]
+  effectiveGrants?: EffectiveGrants
 }
 
 export interface GuardianActorMetadataInput extends InteractiveActorContextInput {
@@ -74,15 +79,16 @@ export interface SystemActorMetadataInput {
 
 export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffActorMetadata {
   const context = normalizeInteractiveContext(input)
-  const roles = [...new Set(input.roles)]
-  if (roles.length === 0) {
+  const roles = [...new Set(input.roles ?? [])]
+  if (roles.length === 0 && !input.effectiveGrants) {
     throw new Error('roles must contain at least one role')
   }
   return Object.freeze({
     ...context,
     kind: 'staff',
     staffMemberId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
-    roles: Object.freeze(roles),
+    ...(roles.length > 0 ? { roles: Object.freeze(roles) } : {}),
+    ...(input.effectiveGrants ? { effectiveGrants: input.effectiveGrants } : {}),
   })
 }
 

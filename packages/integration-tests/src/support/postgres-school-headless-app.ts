@@ -29,6 +29,7 @@ export function createPostgresAppBuilder(db: any, repos: any, AtomicExecutionCto
     return {
       app: application.forActor(defaultActor),
       repositories: buildTestRepositoriesMap(repos),
+      schoolRepositories: repos,
       forActor: (boundActor: ActorMetadata) => application.forActor(boundActor),
       failSaveOnAttempt,
     }

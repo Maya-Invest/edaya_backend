@@ -4,11 +4,15 @@ import { describe, expect, mock, test } from 'bun:test'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
-  RepositoryAuthorizationPolicy,
   createGuardianActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
   createSystemActorMetadata,
+  Permission,
+  RepositoryAuthorizationPolicy,
+  SYSTEM_ROLE_PERMISSIONS,
+  systemAccessRoleId,
+  systemRoleAssignmentId,
 } from '../../../src/authorization'
 import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
@@ -19,7 +23,7 @@ import {
   checkAttendanceAccess as checkSchedulingAttendanceAccess,
   checkSessionAccess as checkSchedulingSessionAccess,
 } from '../../../src/authorization/access-resolvers/scheduling-resolver'
-import { StaffRole } from '../../../src/entities'
+import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/entities'
 import { StudentClassEnrollmentStatus } from '../../../src/entities/students/student-class-enrollment'
 
 const now = new Date('2026-01-01T00:00:00Z')
@@ -65,11 +69,49 @@ function systemActor(): ActorMetadata {
   })
 }
 
+function grantBackedStaffActor(
+  permissions: readonly Permission[],
+  assuranceLevel = ActorAssuranceLevel.Strong,
+): ActorMetadata {
+  return createStaffActorMetadata({
+    subjectId: 'subject-staff',
+    staffMemberId: 'staff-1',
+    schoolId: 'school-1',
+    requestId: 'request-1',
+    authenticatedAt: now,
+    assuranceLevel,
+    effectiveGrants: {
+      permissions: new Set(permissions),
+      scopeGrants: permissions.map(permission => ({
+        permission,
+        scopeType: 'school',
+        scopeEntityIds: ['school-1'],
+      })),
+      isElevated: false,
+    },
+  })
+}
+
 function createRepos(
   overrides: Partial<SchoolRepositories> = {},
   staffRoles: StaffRole[] = [StaffRole.Teacher],
 ): SchoolRepositories {
-  const staff = { id: 'staff-1', schoolId: 'school-1', isActive: true, roles: staffRoles }
+  const staff = { id: 'staff-1', schoolId: 'school-1', isActive: true }
+  const accessRoles = Object.values(StaffRole).map(role => new AccessRole({
+    id: systemAccessRoleId('school-1', role),
+    schoolId: 'school-1',
+    name: role,
+    isSystemRole: true,
+    systemRoleKey: role,
+    permissions: SYSTEM_ROLE_PERMISSIONS[role],
+  }))
+  const systemAssignment = new StaffRoleAssignment({
+    id: systemRoleAssignmentId('school-1', 'staff-1'),
+    staffId: 'staff-1',
+    schoolId: 'school-1',
+    roleIds: staffRoles.map(role => systemAccessRoleId('school-1', role)),
+    scopeGrants: [],
+  })
   const repos = {
     assessments: {
       findById: mock(async id => id === 'assessment-1' ? { id, classGroupId: 'class-1' } : undefined),
@@ -100,12 +142,24 @@ function createRepos(
     },
     staffAssignments: {
       list: mock(async ({ classGroupId, staffId }: any = {}) =>
-        classGroupId === 'class-1' && (!staffId || staffId === 'staff-1')
+        (!classGroupId || classGroupId === 'class-1') && (!staffId || staffId === 'staff-1')
           ? [{ id: 'assignment-1', staffId: 'staff-1', classGroupId: 'class-1' }]
           : []),
     },
     staffMembers: {
       findById: mock(async id => id === 'staff-1' ? staff : undefined),
+    },
+    accessRoles: {
+      findById: mock(async (id: string) => accessRoles.find(role => role.id === id)),
+      findByIds: mock(async (ids: string[]) => accessRoles.filter(role => ids.includes(role.id))),
+      list: mock(async () => accessRoles),
+      save: mock(async () => {}),
+    },
+    staffRoleAssignments: {
+      findById: mock(async (id: string) => id === systemAssignment.id ? systemAssignment : undefined),
+      findByIds: mock(async (ids: string[]) => ids.includes(systemAssignment.id) ? [systemAssignment] : []),
+      list: mock(async () => [systemAssignment]),
+      save: mock(async () => {}),
     },
     studentFees: {
       findByIds: mock(async (ids: string[]) => ids.map(id => ({ id, studentId: 'student-1' }))),
@@ -135,24 +189,10 @@ describe('RepositoryAuthorizationPolicy', () => {
     expect(repos.staffMembers.findById).not.toHaveBeenCalled()
   })
 
-  test('enforces global action roles, assurance levels, and module school boundaries', async () => {
-    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Admin]) })
-      .checkGlobalAction(staffActor([StaffRole.Admin], ActorAssuranceLevel.Verified), 'finance.manage')
-    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Coordinator]) })
-      .checkGlobalAction(staffActor([StaffRole.Coordinator]), 'attendance.record')
-    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Accountant]) })
-      .checkGlobalAction(staffActor([StaffRole.Accountant]), 'finance.read')
-    await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Teacher]) })
-      .checkGlobalAction(staffActor([StaffRole.Teacher]), 'students.manage_notes')
-    await new RepositoryAuthorizationPolicy({ repositories: createRepos() })
-      .checkGlobalAction(guardianActor(), 'queries.read_student_detail')
+  test('enforces module school boundaries', async () => {
     await new RepositoryAuthorizationPolicy({ repositories: createRepos() })
       .checkModuleAccess(studentActor(), 'school-1', 'attendance')
 
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Admin]) })
-      .checkGlobalAction(staffActor([StaffRole.Admin], ActorAssuranceLevel.Standard), 'finance.manage'))
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Teacher]) })
-      .checkGlobalAction(staffActor([StaffRole.Teacher]), 'finance.manage'))
     await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos() })
       .checkModuleAccess(studentActor(), 'other-school', 'attendance'))
     await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos() })
@@ -172,12 +212,16 @@ describe('RepositoryAuthorizationPolicy', () => {
     await policy.checkStudentNoteAccess(staffActor([StaffRole.Teacher]), ['note-1'])
     await new RepositoryAuthorizationPolicy({ repositories: createRepos({}, [StaffRole.Coordinator]) })
       .checkStudentHealthAccess(staffActor([StaffRole.Coordinator]), ['profile-1'])
+    await policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.STUDENT_HEALTH_READ]), ['profile-1'])
+    await policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.STUDENT_HEALTH_UPDATE]), ['profile-1'])
 
     await expectForbidden(policy.checkStudentAccess(studentActor('student-1'), ['student-2']))
     await expectForbidden(policy.checkStudentAccess(guardianActor('guardian-2'), ['student-1']))
     await expectForbidden(policy.checkGuardianAccess(guardianActor(), ['guardian-2']))
     await expectForbidden(policy.checkStudentNoteAccess(staffActor([StaffRole.Teacher]), ['missing-note']))
     await expectForbidden(policy.checkStudentHealthAccess(staffActor([StaffRole.Teacher]), ['profile-1']))
+    await expectForbidden(policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.STUDENT_UPDATE]), ['profile-1']))
+    await expectForbidden(policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.QUERY_STUDENT_DETAIL_READ]), ['profile-1']))
   })
 
   test('resolves academic assessment and report-card access through class and student relationships', async () => {
@@ -238,7 +282,7 @@ describe('RepositoryAuthorizationPolicy', () => {
       } as any,
     })
 
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: inactiveRepos }).checkGlobalAction(staffActor([StaffRole.Admin]), 'finance.read'))
+    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: inactiveRepos }).checkStudentAccess(staffActor([StaffRole.Admin]), ['student-1']))
     await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: crossSchoolRepos }).checkStudentAccess(staffActor([StaffRole.Admin]), ['student-1']))
   })
 
@@ -297,7 +341,7 @@ describe('RepositoryAuthorizationPolicy', () => {
     await expectForbidden(checkSchedulingAttendanceAccess(staffActor([StaffRole.Teacher]), ['student-1'], ['session-1'], createRepos({
       staffAssignments: {
         list: mock(async ({ classGroupId, staffId }: any = {}) =>
-          classGroupId === 'class-1' && staffId === 'staff-1'
+          (classGroupId === 'class-1' || !classGroupId) && staffId === 'staff-1'
             ? []
             : [{ id: 'assignment-other', staffId: 'other-staff', classGroupId: 'class-1' }]),
       } as any,

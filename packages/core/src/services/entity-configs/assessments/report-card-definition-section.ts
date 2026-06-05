@@ -3,17 +3,17 @@ import type { ReportCardDefinitionSection } from '../../../entities/assessments/
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { ReportCardDefinitionSectionKind } from '../../../entities/assessments/report-card-definition-section'
-import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
+import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDefinitionSection> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.sections,
     tenant: reportCardSectionTenant(),
-    read: read(action(policy, 'queries.read_report_card_detail'), noopReadAccess),
-    write: write(action(policy, 'assessments.manage_configuration'), authorizeReportCardSection(policy), authorizeReportCardSectionDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), authorizeReportCardSection(policy), authorizeReportCardSectionDelete(policy)),
     gates: {
       preSave: validateReportCardSectionSave,
       preDelete: validateReportCardSectionDelete,

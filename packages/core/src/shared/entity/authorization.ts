@@ -1,9 +1,61 @@
 import type { ActorMetadata, AuthorizationPolicy } from '../../authorization'
+import type { AuthorizationRequest } from '../../authorization/authorization-request'
+import type { Permission } from '../../authorization/permissions'
 import type { EntityReadAuthorization, EntityWriteAuthorization } from '../../services'
+import { authorize } from '../../authorization/authorize'
 import { unique } from '../utils/helper-utils'
 
-export function action(policy: AuthorizationPolicy, actionName: string): (actor: ActorMetadata) => Promise<void> {
-  return actor => policy.checkGlobalAction(actor, actionName)
+/** Prefer for new code once call sites pass school context on the actor. */
+export function permissionAction(
+  policy: AuthorizationPolicy,
+  permission: Permission,
+  scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId' | 'academicYearId'>,
+): (actor: ActorMetadata) => Promise<void> {
+  return async (actor) => {
+    const actorId = actor.kind === 'staff'
+      ? actor.staffMemberId
+      : actor.kind === 'guardian'
+        ? actor.guardianId
+        : actor.kind === 'student'
+          ? actor.studentId
+          : actor.systemId
+
+    await authorize({
+      actor,
+      policy,
+      repositories: policy.getRepositories?.(),
+      request: {
+        actorId,
+        schoolId: actor.schoolId,
+        permission,
+        ...scope,
+      },
+    })
+  }
+}
+
+export function anyPermissionAction(
+  policy: AuthorizationPolicy,
+  permissions: readonly Permission[],
+  scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId' | 'academicYearId'>,
+): (actor: ActorMetadata) => Promise<void> {
+  if (permissions.length === 0) {
+    throw new Error('anyPermissionAction requires at least one permission')
+  }
+
+  return async (actor) => {
+    let lastError: unknown
+    for (const permission of permissions) {
+      try {
+        await permissionAction(policy, permission, scope)(actor)
+        return
+      }
+      catch (error) {
+        lastError = error
+      }
+    }
+    throw lastError
+  }
 }
 
 export function read<T>(

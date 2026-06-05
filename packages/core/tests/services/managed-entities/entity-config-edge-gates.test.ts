@@ -370,6 +370,56 @@ describe('entity config edge gates', () => {
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
+  test('requires verified assurance for student health profile writes', async () => {
+    const standardCoordinator = createTestApp(createStaffActorMetadata({
+      subjectId: 'coordinator-user',
+      staffMemberId: 'coordinator-standard',
+      schoolId: 'school',
+      roles: [StaffRole.Coordinator],
+      requestId: 'health-standard',
+      authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Standard,
+    }))
+    await standardCoordinator.repositories.studentRepository.save(new Student({
+      id: 'student-health-standard',
+      schoolId: 'school',
+      firstName: 'Health',
+      lastName: 'Standard',
+      enrollmentDate: new Date('2026-01-01'),
+    }))
+
+    await expect(standardCoordinator.app.baseService.studentHealthProfiles.save(new StudentHealthProfile({
+      id: 'health-standard',
+      schoolId: 'school',
+      studentId: 'student-health-standard',
+      allergies: 'Peanuts',
+    }))).rejects.toBeInstanceOf(AuthorizationError)
+
+    const verifiedCoordinator = createTestApp(createStaffActorMetadata({
+      subjectId: 'coordinator-user',
+      staffMemberId: 'coordinator-verified',
+      schoolId: 'school',
+      roles: [StaffRole.Coordinator],
+      requestId: 'health-verified',
+      authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Verified,
+    }))
+    await verifiedCoordinator.repositories.studentRepository.save(new Student({
+      id: 'student-health-verified',
+      schoolId: 'school',
+      firstName: 'Health',
+      lastName: 'Verified',
+      enrollmentDate: new Date('2026-01-01'),
+    }))
+
+    await expect(verifiedCoordinator.app.baseService.studentHealthProfiles.save(new StudentHealthProfile({
+      id: 'health-verified',
+      schoolId: 'school',
+      studentId: 'student-health-verified',
+      allergies: 'Peanuts',
+    }))).resolves.toBeUndefined()
+  })
+
   test('blocks deleting announcements and resources with dependent records', async () => {
     const { app, repositories: store } = createTestApp()
 

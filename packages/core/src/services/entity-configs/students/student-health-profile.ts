@@ -1,16 +1,16 @@
 import type { StudentHealthProfile } from '../../../entities/students/student-health-profile'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { denyResourceAccess } from '../../../authorization'
-import { directEntityConfig, readByIds } from '../../../shared'
+import { denyResourceAccess, Permission } from '../../../authorization'
+import { directPermissionEntityConfig, readByIds } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = (input) => {
-  const config = directEntityConfig(
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.studentHealthProfiles,
-    'queries.read_student_detail',
-    'students.manage_health',
+    Permission.STUDENT_HEALTH_READ,
+    Permission.STUDENT_HEALTH_UPDATE,
     readByIds((actor, ids) => input.policy.checkStudentHealthAccess(actor, ids)),
   )
   return {

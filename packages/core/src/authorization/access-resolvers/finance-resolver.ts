@@ -1,9 +1,8 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
-import { StaffRole } from '../../entities/school/staff-member'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-
-const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
+import { Permission } from '../permissions'
+import { staffHasAnyPermission } from './grant-resolver'
 
 export async function checkFeeAccess(
   actor: ActorMetadata,
@@ -16,11 +15,11 @@ export async function checkFeeAccess(
     return
 
   if (actor.kind === 'staff') {
-    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
-    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator || role === StaffRole.Accountant)) {
+    if (await staffHasAnyPermission(actor, [
+      Permission.FINANCIAL_CONFIG_READ,
+      Permission.PAYMENT_READ,
+      Permission.QUERY_WORKSPACE_READ,
+    ], repos)) {
       return
     }
   }
@@ -57,11 +56,12 @@ export async function checkStudentFeeAccess(
   }
 
   if (actor.kind === 'staff') {
-    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
-    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator || role === StaffRole.Accountant)) {
+    if (await staffHasAnyPermission(actor, [
+      Permission.PAYMENT_READ,
+      Permission.PAYMENT_RECORD,
+      Permission.QUERY_STUDENT_DETAIL_READ,
+      Permission.QUERY_WORKSPACE_READ,
+    ], repos)) {
       return
     }
   }

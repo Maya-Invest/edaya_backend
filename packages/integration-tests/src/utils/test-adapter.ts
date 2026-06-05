@@ -1,5 +1,6 @@
 import type {
   ActorMetadata,
+  SchoolRepositories,
 } from '@edaya/core'
 import {
   ActorAssuranceLevel,
@@ -97,7 +98,6 @@ export function seedDefaultStaffMember(repos: any, actor: ActorMetadata) {
       schoolId: actor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
-      roles: actor.roles,
     }))
   }
 }
@@ -152,6 +152,8 @@ export function buildTestRepositoriesMap(repos: any) {
 export interface TestAppResult {
   app: ReturnType<SchoolApplication['forActor']>
   repositories: ReturnType<typeof buildTestRepositoriesMap>
+  /** Full `SchoolRepositories` (includes access-control stores). */
+  schoolRepositories: SchoolRepositories
   forActor: (actor: ActorMetadata) => ReturnType<SchoolApplication['forActor']>
   failSaveOnAttempt: (repository: FailableRepository, attempt?: number) => void
 }

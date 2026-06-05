@@ -1,15 +1,15 @@
 import type { ClassSubject } from '../../../entities/academics/class-subject'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { denyResourceAccess } from '../../../authorization'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, read, write } from '../../../shared'
+import { denyResourceAccess, Permission } from '../../../authorization'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../../shared'
 
 export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.classSubjects,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(action(policy, 'queries.read_class_curriculum'), noopReadAccess),
-    write: write(action(policy, 'academics.manage_curriculum'), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateClassSubjectSave,
     },

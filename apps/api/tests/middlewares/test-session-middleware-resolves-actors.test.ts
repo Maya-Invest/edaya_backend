@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
+import {
+  clearEffectiveGrantsCache,
+  invalidateEffectiveGrantsCacheForStaff,
+  resolveCachedEffectiveGrants,
+} from "@/lib/authorization-grants-cache";
 import type { AppBindings } from "@/lib/types";
 import { createDependenciesInjection } from "@/middlewares/dependencies-injection";
 import { createSessionActorDependency } from "@/middlewares/dependencies/actor";
@@ -9,6 +14,7 @@ describe("session Middleware ActorMetadata Construction", () => {
 
   beforeEach(() => {
     getSession.mockReset();
+    clearEffectiveGrantsCache();
   });
 
   const mockInteractiveContext = (userId: string, createdAt: string, requestId = expect.any(String)) => ({
@@ -129,14 +135,25 @@ describe("session Middleware ActorMetadata Construction", () => {
     const mockStaff = {
       id: "staff-1",
       schoolId: "school-1",
-      roles: ["admin", "teacher"],
+      roles: ["teacher"],
+      isActive: true,
     };
 
     getSession.mockResolvedValueOnce(mockSession as any);
 
     const findStaffMock = mock().mockResolvedValueOnce(mockStaff);
+    const findStaffByIdMock = mock().mockResolvedValueOnce(mockStaff);
+    const listStaffAssignmentsMock = mock().mockResolvedValueOnce([{
+      id: "assignment-1",
+      staffId: "staff-1",
+      role: "teacher",
+      classGroupId: "class-1",
+      createdAt: new Date(),
+    }]);
     const mockRepos = {
-      staffMembers: { findOne: findStaffMock },
+      staffMembers: { findOne: findStaffMock, findById: findStaffByIdMock },
+      staffAssignments: { list: listStaffAssignmentsMock },
+      ...mockAccessControlForStaff("staff-1", "school-1"),
       guardians: { findOne: mock().mockResolvedValueOnce(null) },
       students: { findOne: mock().mockResolvedValueOnce(null) },
     };
@@ -151,6 +168,8 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     expect(res.status).toBe(200);
     expect(findStaffMock).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
+    expect(findStaffByIdMock).toHaveBeenCalledWith("staff-1");
+    expect(listStaffAssignmentsMock).toHaveBeenCalledWith({ staffId: "staff-1" });
     expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(body.actor).toEqual({
@@ -159,8 +178,184 @@ describe("session Middleware ActorMetadata Construction", () => {
       schoolId: "school-1",
       sessionId: "session-999",
       staffMemberId: "staff-1",
-      roles: ["admin", "teacher"],
+      effectiveGrants: {
+        permissions: {},
+        isElevated: false,
+        scopeGrants: [
+          { permission: "GRADE_INPUT", scopeType: "class_group", scopeEntityIds: ["class-1"] },
+          { permission: "ATTENDANCE_RECORD", scopeType: "class_group", scopeEntityIds: ["class-1"] },
+          { permission: "CLASS_LOGBOOK_CREATE", scopeType: "class_group", scopeEntityIds: ["class-1"] },
+          { permission: "CLASS_LOGBOOK_UPDATE", scopeType: "class_group", scopeEntityIds: ["class-1"] },
+          { permission: "DISCIPLINE_CREATE", scopeType: "class_group", scopeEntityIds: ["class-1"] },
+        ],
+      },
     });
+  });
+
+  it("should preserve explicit session assurance level on staff actors", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-verified" },
+      session: {
+        id: "session-verified",
+        createdAt,
+        assuranceLevel: "verified",
+      },
+    } as any);
+
+    const mockStaff = {
+      id: "staff-verified",
+      schoolId: "school-1",
+      roles: ["teacher"],
+      isActive: true,
+    };
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValueOnce(mockStaff),
+        findById: mock().mockResolvedValueOnce(mockStaff),
+      },
+      staffAssignments: { list: mock().mockResolvedValueOnce([]) },
+      ...mockAccessControlForStaff("staff-verified", "school-1"),
+      guardians: { findOne: mock().mockResolvedValueOnce(null) },
+      students: { findOne: mock().mockResolvedValueOnce(null) },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected");
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor.assuranceLevel).toBe("verified");
+  });
+
+  it("should reuse cached staff effective grants for the same auth session", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValue({
+      user: { id: "auth-user-cached" },
+      session: {
+        id: "session-cached",
+        createdAt,
+      },
+    } as any);
+
+    const mockStaff = {
+      id: "staff-cached",
+      schoolId: "school-1",
+      roles: ["teacher"],
+      isActive: true,
+    };
+    const findStaffByIdMock = mock().mockResolvedValue(mockStaff);
+    const listStaffAssignmentsMock = mock().mockResolvedValue([{
+      id: "assignment-cached",
+      staffId: "staff-cached",
+      role: "teacher",
+      classGroupId: "class-1",
+      createdAt: new Date(),
+    }]);
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValue(mockStaff),
+        findById: findStaffByIdMock,
+      },
+      staffAssignments: { list: listStaffAssignmentsMock },
+      ...mockAccessControlForStaff("staff-cached", "school-1"),
+      guardians: { findOne: mock().mockResolvedValue(null) },
+      students: { findOne: mock().mockResolvedValue(null) },
+    };
+
+    const app = setupMockApp(mockRepos);
+    await app.request("/test-protected");
+    await app.request("/test-protected");
+
+    expect(mockRepos.staffMembers.findOne).toHaveBeenCalledTimes(2);
+    expect(findStaffByIdMock).toHaveBeenCalledTimes(1);
+    expect(listStaffAssignmentsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("should refresh cached staff effective grants after staff invalidation", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValue({
+      user: { id: "auth-user-invalidated" },
+      session: {
+        id: "session-invalidated",
+        createdAt,
+      },
+    } as any);
+
+    const mockStaff = {
+      id: "staff-invalidated",
+      schoolId: "school-1",
+      roles: ["teacher"],
+      isActive: true,
+    };
+    const findStaffByIdMock = mock().mockResolvedValue(mockStaff);
+    const listStaffAssignmentsMock = mock().mockResolvedValue([{
+      id: "assignment-invalidated",
+      staffId: "staff-invalidated",
+      role: "teacher",
+      classGroupId: "class-1",
+      createdAt: new Date(),
+    }]);
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValue(mockStaff),
+        findById: findStaffByIdMock,
+      },
+      staffAssignments: { list: listStaffAssignmentsMock },
+      ...mockAccessControlForStaff("staff-invalidated", "school-1"),
+      guardians: { findOne: mock().mockResolvedValue(null) },
+      students: { findOne: mock().mockResolvedValue(null) },
+    };
+
+    const app = setupMockApp(mockRepos);
+    await app.request("/test-protected");
+    invalidateEffectiveGrantsCacheForStaff("staff-invalidated", "school-1");
+    await app.request("/test-protected");
+
+    expect(findStaffByIdMock).toHaveBeenCalledTimes(2);
+    expect(listStaffAssignmentsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("should expire cached staff effective grants at assignment endsAt", async () => {
+    const mockStaff = {
+      id: "staff-temporary",
+      schoolId: "school-1",
+      roles: ["teacher"],
+      isActive: true,
+    };
+    const accessControl = mockAccessControlForStaff("staff-temporary", "school-1", {
+      endsAt: new Date("2026-01-01T00:01:00Z"),
+    });
+    const mockRepos = {
+      staffMembers: {
+        findById: mock().mockResolvedValue(mockStaff),
+      },
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...accessControl,
+    } as any;
+
+    await resolveCachedEffectiveGrants({
+      staffMemberId: "staff-temporary",
+      schoolId: "school-1",
+      subjectId: "auth-user-temporary",
+      sessionId: "session-temporary",
+      authenticatedAt: new Date("2026-01-01T00:00:00Z"),
+      repositories: mockRepos,
+      now: new Date("2026-01-01T00:00:00Z"),
+      ttlMs: 10 * 60 * 1000,
+    });
+
+    await expect(resolveCachedEffectiveGrants({
+      staffMemberId: "staff-temporary",
+      schoolId: "school-1",
+      subjectId: "auth-user-temporary",
+      sessionId: "session-temporary",
+      authenticatedAt: new Date("2026-01-01T00:00:00Z"),
+      repositories: mockRepos,
+      now: new Date("2026-01-01T00:01:00Z"),
+      ttlMs: 10 * 60 * 1000,
+    })).rejects.toThrow();
+    expect(mockRepos.staffMembers.findById).toHaveBeenCalledTimes(2);
   });
 
   it("should construct GuardianActorMetadata when user matches a guardian record", async () => {
@@ -299,5 +494,42 @@ function createMockRepos() {
     staffMembers: { findOne: mock() },
     guardians: { findOne: mock() },
     students: { findOne: mock() },
+  };
+}
+
+function mockAccessControlForStaff(staffId: string, schoolId: string, assignmentOverrides: Record<string, unknown> = {}) {
+  const roleId = `system_role:${schoolId}:teacher`;
+  const accessRole = {
+    id: roleId,
+    schoolId,
+    name: "Teacher",
+    isSystemRole: true,
+    systemRoleKey: "teacher",
+    permissions: [
+      "GRADE_INPUT",
+      "ATTENDANCE_RECORD",
+      "CLASS_LOGBOOK_CREATE",
+      "CLASS_LOGBOOK_UPDATE",
+      "DISCIPLINE_CREATE",
+    ],
+    status: "active",
+  };
+  const assignment = {
+    id: `role_assignment:${schoolId}:${staffId}`,
+    staffId,
+    schoolId,
+    roleIds: [roleId],
+    scopeGrants: [],
+    status: "active",
+    ...assignmentOverrides,
+  };
+
+  return {
+    accessRoles: {
+      findByIds: mock().mockResolvedValue([accessRole]),
+    },
+    staffRoleAssignments: {
+      list: mock().mockResolvedValue([assignment]),
+    },
   };
 }

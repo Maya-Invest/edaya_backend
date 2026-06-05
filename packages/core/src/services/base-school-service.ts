@@ -2,6 +2,7 @@ import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
 import type {
   AcademicPeriod,
   AcademicYear,
+  AccessRole,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -33,6 +34,7 @@ import type {
   Session,
   StaffAssignment,
   StaffMember,
+  StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -69,6 +71,7 @@ import { scheduleConfig } from './entity-configs/scheduling/schedule'
 import { sessionConfig } from './entity-configs/scheduling/session'
 import { academicPeriodConfig } from './entity-configs/school/academic-period'
 import { academicYearConfig } from './entity-configs/school/academic-year'
+import { accessRoleConfig } from './entity-configs/school/access-role'
 import { attachmentConfig } from './entity-configs/school/attachment'
 import { classGroupConfig } from './entity-configs/school/class-group'
 import { gradeLevelConfig } from './entity-configs/school/grade-level'
@@ -78,6 +81,7 @@ import { resourceAssignmentConfig } from './entity-configs/school/resource-assig
 import { schoolConfig } from './entity-configs/school/school'
 import { staffAssignmentConfig } from './entity-configs/school/staff-assignment'
 import { staffMemberConfig } from './entity-configs/school/staff-member'
+import { staffRoleAssignmentConfig } from './entity-configs/school/staff-role-assignment'
 import { disciplinaryActionConfig } from './entity-configs/students/disciplinary-action'
 import { guardianConfig } from './entity-configs/students/guardian'
 import { guardianStudentLinkConfig } from './entity-configs/students/guardian-student-link'
@@ -103,6 +107,8 @@ export class BaseSchoolService {
   readonly gradeLevels: ManagedEntityService<GradeLevel>
   readonly staffMembers: ManagedEntityService<StaffMember>
   readonly staffAssignments: ManagedEntityService<StaffAssignment>
+  readonly accessRoles: ManagedEntityService<AccessRole>
+  readonly staffRoleAssignments: ManagedEntityService<StaffRoleAssignment>
   readonly attachments: ManagedEntityService<Attachment>
   readonly resources: ManagedEntityService<Resource>
   readonly resourceAssignments: ManagedEntityService<ResourceAssignment>
@@ -169,6 +175,8 @@ export class BaseSchoolService {
     this.gradeLevels = new ManagedEntityService({ ...serviceArgs, config: gradeLevelConfig(input) })
     this.staffMembers = new ManagedEntityService({ ...serviceArgs, config: staffMemberConfig(input) })
     this.staffAssignments = new ManagedEntityService({ ...serviceArgs, config: staffAssignmentConfig(input) })
+    this.accessRoles = new ManagedEntityService({ ...serviceArgs, config: accessRoleConfig(input) })
+    this.staffRoleAssignments = new ManagedEntityService({ ...serviceArgs, config: staffRoleAssignmentConfig(input) })
     this.attachments = new ManagedEntityService({ ...serviceArgs, config: attachmentConfig(input) })
     this.resources = new ManagedEntityService({ ...serviceArgs, config: resourceConfig(input) })
     this.resourceAssignments = new ManagedEntityService({ ...serviceArgs, config: resourceAssignmentConfig(input) })

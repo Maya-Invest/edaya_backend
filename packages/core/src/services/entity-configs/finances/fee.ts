@@ -1,16 +1,16 @@
 import type { Fee } from '../../../entities/finances/fee'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { denyResourceAccess } from '../../../authorization'
-import { directEntityConfig, readByIds } from '../../../shared'
+import { denyResourceAccess, Permission } from '../../../authorization'
+import { directPermissionEntityConfig, readByIds } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const feeConfig: EntityConfigFactory<Fee> = (input) => {
-  const config = directEntityConfig(
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.fees,
-    'finance.read',
-    'finance.manage',
+    Permission.FINANCIAL_CONFIG_READ,
+    Permission.FINANCIAL_CONFIG_CONFIGURE,
     readByIds((actor, ids) => input.policy.checkFeeAccess(actor, ids)),
   )
   return {

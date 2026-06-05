@@ -1,4 +1,8 @@
 import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorization'
+import type {
+  AttendanceRecord,
+  MessageDelivery,
+} from '../../../src/entities'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
 import { mock } from 'bun:test'
 import {
@@ -8,7 +12,6 @@ import {
   AssessmentKind,
   AttendanceJustificationStatus,
   AttendanceMode,
-  AttendanceRecord,
   AttendanceStatus,
   EnrollmentEndReason,
   Fee,
@@ -18,7 +21,6 @@ import {
   IncidentInvolvementRole,
   IncidentKind,
   IncidentStatus,
-  MessageDelivery,
   Payment,
   PaymentMethod,
   PaymentStatus,
@@ -86,7 +88,6 @@ export function createContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
     checkClassGroupAccess: mock(async () => {}),
     checkSessionAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -140,7 +141,6 @@ export function createSetupContext() {
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const mockAtomic: AtomicExecutionPort = {
@@ -266,7 +266,6 @@ export function createReportCardContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
     checkReportCardResultAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -366,7 +365,6 @@ export function createFinanceContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
     checkStudentFeeAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -533,7 +531,6 @@ export function createStudentTransitionContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
     checkClassGroupAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -600,7 +597,6 @@ export function createGuardianLinkContext({
 
   const mockPolicy = {
     checkClassGroupAccess: mock(async () => {}),
-    checkGlobalAction: mock(async () => {}),
     checkGuardianAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -712,7 +708,6 @@ export function createSchedulingContext({
   const mockPolicy = {
     checkAttendanceAccess: mock(async () => {}),
     checkClassGroupAccess: mock(async () => {}),
-    checkGlobalAction: mock(async () => {}),
     checkSessionAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -820,7 +815,6 @@ export function createCommunicationsContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const mockAtomic: AtomicExecutionPort = {
@@ -928,7 +922,6 @@ export function createBehaviorContext({
 
   const mockPolicy = {
     checkClassGroupAccess: mock(async () => {}),
-    checkGlobalAction: mock(async () => {}),
     checkSessionAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy

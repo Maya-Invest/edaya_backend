@@ -1,15 +1,16 @@
 import type { Session } from '../../../entities/scheduling/session'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, read, readByIds, write } from '../../../shared'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../../shared'
 
 export const sessionConfig: EntityConfigFactory<Session> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.sessions,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(action(policy, 'queries.read_timetable'), readByIds((actor, ids) => policy.checkSessionAccess(actor, ids))),
-    write: write(action(policy, 'scheduling.manage'), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_TIMETABLE_READ), readByIds((actor, ids) => policy.checkSessionAccess(actor, ids))),
+    write: write(permissionAction(policy, Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateSessionSave,
     },

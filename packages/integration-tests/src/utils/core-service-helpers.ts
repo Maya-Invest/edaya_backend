@@ -1,4 +1,4 @@
-import type { AttendanceJustificationStatus, SchoolService, StudentFee } from '@edaya/core'
+import type { AttendanceJustificationStatus, SchoolService, StaffRole, StudentFee } from '@edaya/core'
 import {
   AcademicPeriod,
   Announcement,
@@ -7,18 +7,21 @@ import {
   Attachment,
   AuthorizationError,
   AuthorizationErrorCode,
+  authorize,
   buildStudentFeeSummary,
   CalendarEvent,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectMatterStatus,
+  createSystemActorMetadata,
   Fee,
   FeeStatus,
   Guardian,
   GuardianStudentLink,
   Incident,
   IncidentStatus,
+  Permission,
   ReportCardDefinition,
   resolveAuditActorId,
   ResourceAssignment,
@@ -30,6 +33,7 @@ import {
   Student,
   StudentHealthProfile,
   StudentNote,
+  syncStaffSystemRoleAssignment,
 } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
@@ -40,22 +44,43 @@ async function ensureActorStaffMember(app: SchoolService): Promise<void> {
     return
   }
   const existing = await app.baseService.repositories.staffMembers.findById(actor.staffMemberId)
-  if (existing) {
-    return
+  if (!existing) {
+    await app.baseService.repositories.staffMembers.save(new StaffMember({
+      id: actor.staffMemberId,
+      schoolId: actor.schoolId,
+      firstName: 'Fixture',
+      lastName: 'Administrator',
+    }))
   }
-  await app.baseService.repositories.staffMembers.save(new StaffMember({
-    id: actor.staffMemberId,
-    schoolId: actor.schoolId,
-    firstName: 'Fixture',
-    lastName: 'Administrator',
-    roles: actor.roles,
-  }))
+  if (actor.roles) {
+    await syncStaffSystemRoleAssignment({
+      staffMemberId: actor.staffMemberId,
+      schoolId: actor.schoolId,
+      repositories: app.baseService.repositories,
+      roleKeys: actor.roles,
+    })
+  }
 }
 
 export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School>): Promise<School> {
   await ensureActorStaffMember(app)
   const school = new School(input)
-  await app.baseService.authorizationPolicy.checkGlobalAction(app.baseService.actor, 'setup.register_school')
+  const registrationActor = createSystemActorMetadata({
+    systemId: 'integration-fixture',
+    schoolId: school.id,
+    requestId: 'integration-school-registration',
+    reason: 'Seed school fixture',
+  })
+  await authorize({
+    actor: registrationActor,
+    policy: app.baseService.authorizationPolicy,
+    repositories: app.baseService.repositories,
+    request: {
+      actorId: resolveAuditActorId(registrationActor),
+      schoolId: school.id,
+      permission: Permission.PLATFORM_REGISTER_SCHOOL,
+    },
+  })
   await app.baseService.schools.save(school, { moduleChecked: true })
   return school
 }
@@ -100,9 +125,25 @@ export async function publishAcademicPeriod(app: SchoolService, academicPeriodId
     isPublished: true,
     createdAt: existing.createdAt,
   })
-  await app.baseService.authorizationPolicy.checkGlobalAction(app.baseService.actor, 'setup.manage_lifecycle')
+  await authorizeCoreServiceHelperPermission(app, Permission.SCHOOL_LIFECYCLE_MANAGE)
   await app.baseService.academicPeriods.save(period, { moduleChecked: true })
   return period
+}
+
+async function authorizeCoreServiceHelperPermission(
+  app: SchoolService,
+  permission: Permission,
+): Promise<void> {
+  await authorize({
+    actor: app.baseService.actor,
+    policy: app.baseService.authorizationPolicy,
+    repositories: app.baseService.repositories,
+    request: {
+      actorId: resolveAuditActorId(app.baseService.actor),
+      schoolId: app.baseService.actor.schoolId,
+      permission,
+    },
+  })
 }
 
 export async function createClassGroup(app: SchoolService, input: ArgsOf<typeof ClassGroup>): Promise<ClassGroup> {
@@ -129,9 +170,21 @@ export async function updateClassGroup(app: SchoolService, input: { classGroupId
   return classGroup
 }
 
-export async function saveStaffMember(app: SchoolService, input: ArgsOf<typeof StaffMember>): Promise<StaffMember> {
-  const staffMember = new StaffMember(input)
+export async function saveStaffMember(
+  app: SchoolService,
+  input: ArgsOf<typeof StaffMember> & { roles?: readonly StaffRole[] },
+): Promise<StaffMember> {
+  const { roles, ...staffMemberInput } = input
+  const staffMember = new StaffMember(staffMemberInput)
   await app.baseService.staffMembers.save(staffMember)
+  if (roles) {
+    await syncStaffSystemRoleAssignment({
+      staffMemberId: staffMember.id,
+      schoolId: staffMember.schoolId,
+      repositories: app.baseService.repositories,
+      roleKeys: roles,
+    })
+  }
   return staffMember
 }
 
@@ -145,19 +198,31 @@ export async function updateStaffStatus(app: SchoolService, staffId: string, isA
     schoolId: existing.schoolId,
     firstName: existing.firstName,
     lastName: existing.lastName,
-    roles: existing.roles,
     email: existing.email,
     subjectId: existing.subjectId,
     isActive,
     createdAt: existing.createdAt,
   })
   await app.baseService.staffMembers.save(staffMember)
+  await syncStaffSystemRoleAssignment({
+    staffMemberId: staffMember.id,
+    schoolId: staffMember.schoolId,
+    repositories: app.baseService.repositories,
+  })
   return staffMember
 }
 
 export async function saveStaffAssignment(app: SchoolService, input: ArgsOf<typeof StaffAssignment>): Promise<StaffAssignment> {
   const assignment = new StaffAssignment(input)
   await app.baseService.staffAssignments.save(assignment)
+  const staffMember = await app.baseService.staffMembers.findById(assignment.staffId)
+  if (staffMember) {
+    await syncStaffSystemRoleAssignment({
+      staffMemberId: staffMember.id,
+      schoolId: staffMember.schoolId,
+      repositories: app.baseService.repositories,
+    })
+  }
   return assignment
 }
 

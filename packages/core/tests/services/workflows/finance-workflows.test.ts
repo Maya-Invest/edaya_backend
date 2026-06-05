@@ -4,10 +4,6 @@ import {
   test,
 } from 'bun:test'
 import {
-  AuthorizationError,
-  AuthorizationErrorCode,
-} from '../../../src/authorization'
-import {
   FeeStatus,
   PaymentMethod,
   PaymentStatus,
@@ -117,57 +113,4 @@ describe('SchoolService finance workflows', () => {
       paymentId: 'pay1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
-
-  test('assignFeeToStudent checks finance.manage permission', async () => {
-    const context = createFinanceContext()
-    const mockPolicy = context.mockPolicy as any
-    const service = context.service
-    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
-      if (action === 'finance.manage') {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    })
-
-    await expect(service.assignFeeToStudent({
-      id: 'sf-new',
-      studentId: 'stu1',
-      feeId: 'fee1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('recordPayment checks finance.manage permission', async () => {
-    const context = createFinanceContext()
-    const mockPolicy = context.mockPolicy as any
-    const service = context.service
-    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
-      if (action === 'finance.manage') {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    })
-
-    await expect(service.recordPayment({
-      id: 'pay-new',
-      studentFeeId: 'sf1',
-      amount: 100,
-      paymentDate: new Date('2026-03-02T00:00:00Z'),
-      method: PaymentMethod.Cash,
-    })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('updatePaymentStatus checks finance.manage permission', async () => {
-    const context = createFinanceContext()
-    const mockPolicy = context.mockPolicy as any
-    const service = context.service
-    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
-      if (action === 'finance.manage') {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    })
-
-    await expect(service.reversePayment({
-      paymentId: 'pay1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-
 })

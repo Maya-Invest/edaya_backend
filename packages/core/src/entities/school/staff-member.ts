@@ -15,7 +15,6 @@ export interface StaffMemberArgs {
   schoolId: string
   firstName: string
   lastName: string
-  roles: readonly StaffRole[]
   email?: string | null
   subjectId?: string | null
   isActive?: boolean
@@ -23,15 +22,13 @@ export interface StaffMemberArgs {
 }
 
 /**
- * Represents a school staff member with one or more roles.
- * This generalizes the current split between user accounts and teacher records.
+ * Represents a school staff member.
  */
 export class StaffMember {
   readonly id: string
   readonly schoolId: string
   readonly firstName: string
   readonly lastName: string
-  readonly roles: readonly StaffRole[]
   readonly email?: string
   readonly subjectId?: string
   readonly isActive: boolean
@@ -42,7 +39,6 @@ export class StaffMember {
     schoolId,
     firstName,
     lastName,
-    roles,
     email,
     subjectId,
     isActive = true,
@@ -52,11 +48,6 @@ export class StaffMember {
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.firstName = requireNonBlank(firstName, 'firstName')
     this.lastName = requireNonBlank(lastName, 'lastName')
-    const uniqueRoles = [...new Set(roles)]
-    if (uniqueRoles.length === 0) {
-      throw new Error('roles must contain at least one role')
-    }
-    this.roles = Object.freeze(uniqueRoles)
     this.email = requireOptionalNonBlank(email, 'email')
     this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
     this.isActive = isActive
@@ -65,9 +56,5 @@ export class StaffMember {
 
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`
-  }
-
-  hasRole(role: StaffRole): boolean {
-    return this.roles.includes(role)
   }
 }

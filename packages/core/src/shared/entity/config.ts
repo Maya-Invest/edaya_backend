@@ -1,9 +1,9 @@
-import type { AuthorizationPolicy } from '../../authorization'
+import type { AuthorizationPolicy, Permission } from '../../authorization'
 import type { AtomicExecutionPort } from '../../ports/atomic-execution'
 import type { BaseRepositoryInterface } from '../../ports/base-repository'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityReadAuthorization, ManagedEntityServiceConfig } from '../../services'
-import { action, authorizeDeleteByReadAccess, authorizeExistingById, noopReadAccess, read, write } from './authorization'
+import { authorizeDeleteByReadAccess, authorizeExistingById, noopReadAccess, permissionAction, read, write } from './authorization'
 import { directSchoolTenant } from './tenant'
 
 export interface EntityConfigFactoryInput {
@@ -26,11 +26,11 @@ export function config<T>(input: ManagedEntityServiceConfig<T>): ManagedEntitySe
   return input
 }
 
-export function directEntityConfig<T extends EntityWithSchoolId & EntityWithId>(
+export function directPermissionEntityConfig<T extends EntityWithSchoolId & EntityWithId>(
   input: EntityConfigFactoryInput,
   repository: BaseRepositoryInterface<T>,
-  readAction: string,
-  writeAction: string,
+  readPermission: Permission,
+  writePermission: Permission,
   readAccess: EntityReadAuthorization<T>['checkAccess'] = noopReadAccess,
 ): ManagedEntityServiceConfig<T> {
   const { policy, atomicExecution } = input
@@ -38,8 +38,8 @@ export function directEntityConfig<T extends EntityWithSchoolId & EntityWithId>(
   return config({
     repository,
     tenant: directSchoolTenant<T>(),
-    read: read(action(policy, readAction), readAccess),
-    write: write(action(policy, writeAction), authorizeExistingById(readAccess), authorizeDeleteByReadAccess(readAccess)),
+    read: read(permissionAction(policy, readPermission), readAccess),
+    write: write(permissionAction(policy, writePermission), authorizeExistingById(readAccess), authorizeDeleteByReadAccess(readAccess)),
     atomicExecution,
   })
 }

@@ -32,6 +32,25 @@ describe('actor metadata', () => {
     expect(Object.isFrozen(actor.roles)).toBe(true)
   })
 
+  it('allows grant-backed staff context without legacy roles', () => {
+    const actor = createStaffActorMetadata({
+      subjectId: 'user-1',
+      staffMemberId: 'teacher-1',
+      schoolId: 'school',
+      requestId: 'request-1',
+      authenticatedAt: new Date('2026-09-01T08:00:00Z'),
+      effectiveGrants: {
+        permissions: new Set(),
+        scopeGrants: [],
+        isElevated: false,
+      },
+    })
+
+    expect(actor.roles).toBeUndefined()
+    expect(actor.effectiveGrants).toBeDefined()
+    expect(resolveAuditActorId(actor)).toBe('teacher-1')
+  })
+
   it('separates self-service actors and system execution from authenticated account identity', () => {
     const guardian = createGuardianActorMetadata({
       subjectId: 'user-guardian',

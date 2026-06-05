@@ -2,18 +2,19 @@ import type { AuthorizationPolicy } from '../../../authorization'
 import type { AttendanceRecord } from '../../../entities/scheduling/attendance-record'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
+import { Permission } from '../../../authorization'
 import { AttendanceJustificationStatus, AttendanceStatus } from '../../../entities/scheduling/attendance-record'
-import { action, config, dateTime, indirectTenant, read, resolveSessionSchoolId, unique, write } from '../../../shared'
+import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.attendance,
     tenant: attendanceTenant(),
-    read: read(action(policy, 'attendance.read'), async (actor, entities) => {
+    read: read(permissionAction(policy, Permission.ATTENDANCE_READ), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
-    write: write(action(policy, 'attendance.record'), authorizeAttendance(policy), authorizeAttendanceDelete(policy)),
+    write: write(permissionAction(policy, Permission.ATTENDANCE_RECORD), authorizeAttendance(policy), authorizeAttendanceDelete(policy)),
     gates: {
       preSave: validateAttendanceSave,
     },

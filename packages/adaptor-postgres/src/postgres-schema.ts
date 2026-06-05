@@ -61,7 +61,6 @@ export const staffMembers = pgTable('staff_members', {
   lastName: text('last_name').notNull(),
   email: text('email'),
   subjectId: text('subject_id'),
-  roles: jsonb('roles').notNull(),
   isActive: boolean('is_active').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
@@ -74,6 +73,33 @@ export const staffAssignments = pgTable('staff_assignments', {
   classSubjectId: text('class_subject_id'),
   sessionId: text('session_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+export const accessRoles = pgTable('access_roles', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  isSystemRole: boolean('is_system_role').notNull(),
+  systemRoleKey: text('system_role_key'),
+  permissions: jsonb('permissions').notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+})
+
+export const staffRoleAssignments = pgTable('staff_role_assignments', {
+  id: text('id').primaryKey(),
+  staffId: text('staff_id').notNull(),
+  schoolId: text('school_id').notNull(),
+  academicYearId: text('academic_year_id'),
+  roleIds: jsonb('role_ids').notNull(),
+  scopeGrants: jsonb('scope_grants').notNull(),
+  status: text('status').notNull(),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
 
 // 8. Attachment Table

@@ -3,10 +3,11 @@ import {
   createGuardianActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
+  type EffectiveGrants,
   type SchoolRepositories,
-  type StaffRole,
 } from "@edaya/core";
 import { randomUUID } from "node:crypto";
+import { resolveCachedEffectiveGrants } from "@/lib/authorization-grants-cache";
 import type { DependencyModule } from "../dependencies-injection";
 
 export interface AuthSession {
@@ -16,6 +17,7 @@ export interface AuthSession {
   session: {
     id?: string;
     createdAt: string | Date;
+    assuranceLevel?: ActorAssuranceLevel | string;
   };
 }
 
@@ -40,7 +42,7 @@ type ActorIdentity =
     kind: "staff";
     schoolId: string;
     staffMemberId: string;
-    roles: readonly StaffRole[];
+    effectiveGrants?: EffectiveGrants;
   }
   | {
     kind: "guardian";
@@ -65,7 +67,15 @@ interface NormalizedAuthSession {
   session: {
     id?: string;
     createdAt: Date;
+    assuranceLevel: ActorAssuranceLevel;
   };
+}
+
+function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
+  if (input === ActorAssuranceLevel.Verified || input === ActorAssuranceLevel.Strong) {
+    return input;
+  }
+  return ActorAssuranceLevel.Standard;
 }
 
 function normalizeAuthSession(input: AuthSession | null | undefined): NormalizedAuthSession | null {
@@ -93,6 +103,7 @@ function normalizeAuthSession(input: AuthSession | null | undefined): Normalized
     session: {
       ...(input.session.id ? { id: input.session.id } : {}),
       createdAt: authenticatedAt,
+      assuranceLevel: normalizeAssuranceLevel(input.session.assuranceLevel),
     },
   };
 }
@@ -102,7 +113,11 @@ function resolveRequestId(headerValue: string | undefined): string {
   return trimmed || randomUUID();
 }
 
-async function resolveActorIdentity(repos: SchoolRepositories, subjectId: string): Promise<ActorIdentity | null> {
+async function resolveActorIdentity(
+  repos: SchoolRepositories,
+  subjectId: string,
+  session: NormalizedAuthSession["session"],
+): Promise<ActorIdentity | null> {
   const [staff, guardian, student] = await Promise.all([
     repos.staffMembers.findOne({ subjectId }),
     repos.guardians.findOne({ subjectId }),
@@ -116,7 +131,6 @@ async function resolveActorIdentity(repos: SchoolRepositories, subjectId: string
       kind: "staff",
       schoolId: staff.schoolId,
       staffMemberId: staff.id,
-      roles: staff.roles,
     });
   }
 
@@ -136,7 +150,26 @@ async function resolveActorIdentity(repos: SchoolRepositories, subjectId: string
     });
   }
 
-  return identities.length === 1 ? identities[0] : null;
+  if (identities.length !== 1) {
+    return null;
+  }
+
+  const [identity] = identities;
+  if (identity.kind !== "staff") {
+    return identity;
+  }
+
+  return {
+    ...identity,
+    effectiveGrants: await resolveCachedEffectiveGrants({
+      staffMemberId: identity.staffMemberId,
+      schoolId: identity.schoolId,
+      subjectId,
+      ...(session.id ? { sessionId: session.id } : {}),
+      authenticatedAt: session.createdAt,
+      repositories: repos,
+    }),
+  };
 }
 
 function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentityContext) {
@@ -146,7 +179,7 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
         ...context,
         schoolId: identity.schoolId,
         staffMemberId: identity.staffMemberId,
-        roles: identity.roles,
+        effectiveGrants: identity.effectiveGrants,
       });
     case "guardian":
       return createGuardianActorMetadata({
@@ -184,10 +217,10 @@ export function createSessionActorDependency(resolveAuth: ResolveAuthSessionProv
         requestId: resolveRequestId(c.req.header("x-request-id")),
         ...(session.session.id ? { sessionId: session.session.id } : {}),
         authenticatedAt: session.session.createdAt,
-        assuranceLevel: ActorAssuranceLevel.Standard,
+        assuranceLevel: session.session.assuranceLevel,
       };
 
-      const identity = await resolveActorIdentity(repos, user.id);
+      const identity = await resolveActorIdentity(repos, user.id, session.session);
       if (identity) {
         c.set("actor", createActorFromIdentity(identity, interactiveContext));
         return;

@@ -2,10 +2,11 @@ import type { Fee } from '../../entities/finances/fee'
 import type { PaymentMethod } from '../../entities/finances/payment'
 import type { StudentFeeInstallment } from '../../entities/finances/student-fee'
 import type { BaseSchoolService } from '../base-school-service'
-import { resolveAuditActorId } from '../../authorization'
+import { Permission, resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { FeeStatus, StudentFee } from '../../entities/finances/student-fee'
+import { permissionAction } from '../../shared'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AssignFeeToStudentInput {
@@ -55,7 +56,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }: AssignFeeToStudentInput): Promise<StudentFee> {
     const student = await this.requireStudent(studentId)
     this.checkActorSchool(student.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+    await this.authorizeFinance(Permission.PAYMENT_RECORD, student.schoolId)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     const fee = await this.requireFee(feeId)
     if (fee.schoolId !== student.schoolId) {
@@ -101,7 +102,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+      await this.authorizeFinance(Permission.PAYMENT_RECORD, student.schoolId)
       await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
       await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFeeId])
       const payment = new Payment({
@@ -175,7 +176,10 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(payment.studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'finance.manage')
+      await this.authorizeFinance(
+        status === PaymentStatus.Cancelled ? Permission.PAYMENT_CANCEL : Permission.PAYMENT_REVERSE,
+        student.schoolId,
+      )
       await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
       await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFee.id])
       const changedPayment = new Payment({
@@ -221,6 +225,13 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         dueDate: template.dueDate,
       }
     })
+  }
+
+  private async authorizeFinance(permission: Permission, schoolId: string): Promise<void> {
+    await permissionAction(this.baseService.authorizationPolicy, permission, {
+      scopeType: 'school',
+      scopeEntityId: schoolId,
+    })(this.baseService.actor)
   }
 
   private async savePaidAmount(

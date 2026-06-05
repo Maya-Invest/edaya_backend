@@ -1,4 +1,5 @@
 import type { ActorMetadata, SchoolRepositories, SchoolService } from "@edaya/core";
+import { clearEffectiveGrantsCache, invalidateEffectiveGrantsCacheForStaff } from "@/lib/authorization-grants-cache";
 import {
   AcademicPeriod,
   Announcement,
@@ -7,6 +8,7 @@ import {
   AssessmentResult,
   Attachment,
   AttendanceJustificationStatus,
+  authorize,
   buildSessionAttendanceSummary,
   buildStudentFeeSummary,
   CalendarEvent,
@@ -15,6 +17,7 @@ import {
   ClassSubjectMatter,
   ClassSubjectMatterStatus,
   SchoolApplication as CoreSchoolApplication,
+  ensureSystemAccessRolesForSchool,
   Fee,
   FeeStatus,
   GradeScale,
@@ -22,6 +25,7 @@ import {
   GuardianStudentLink,
   Incident,
   IncidentStatus,
+  Permission,
   ReportCardDefinition,
   ReportCardDefinitionSection,
   resolveAuditActorId,
@@ -35,6 +39,7 @@ import {
   StudentDisciplinaryAction,
   StudentHealthProfile,
   StudentNote,
+  syncStaffSystemRoleAssignment,
 } from "@edaya/core";
 
 type CoreSchoolApplicationArgs = ConstructorParameters<typeof CoreSchoolApplication>[0];
@@ -73,7 +78,7 @@ export class ApiSchoolServiceFacade {
     this.service = service;
     this.baseService = service.baseService;
     this.queries = createQueryFacade(service);
-    this.config = service.baseService;
+    this.config = createConfigFacade(service);
     this.setup = createSetupFacade(service);
     this.students = createStudentsFacade(service);
     this.academics = createAcademicsFacade(service);
@@ -99,17 +104,63 @@ function createQueryFacade(service: SchoolService): any {
   });
 }
 
+function createConfigFacade(service: SchoolService): any {
+  return new Proxy(service.baseService as any, {
+    get(target, property) {
+      if (property === "accessRoles") {
+        return wrapAccessRolesWriteService(target.accessRoles);
+      }
+      if (property === "staffRoleAssignments") {
+        return wrapStaffRoleAssignmentsWriteService(target.staffRoleAssignments);
+      }
+      return target[property as string];
+    },
+  });
+}
+
+function wrapAccessRolesWriteService(service: any) {
+  return {
+    ...service,
+    save: async (entity: any) => {
+      await service.save(entity);
+      clearEffectiveGrantsCache();
+    },
+    delete: async (id: string) => {
+      await service.delete(id);
+      clearEffectiveGrantsCache();
+    },
+  };
+}
+
+function wrapStaffRoleAssignmentsWriteService(service: any) {
+  return {
+    ...service,
+    save: async (entity: any) => {
+      await service.save(entity);
+      invalidateEffectiveGrantsCacheForStaff(entity.staffId, entity.schoolId);
+    },
+    delete: async (id: string) => {
+      const existing = await service.findById(id);
+      await service.delete(id);
+      if (existing) {
+        invalidateEffectiveGrantsCacheForStaff(existing.staffId, existing.schoolId);
+      }
+    },
+  };
+}
+
 function createSetupFacade(service: SchoolService): any {
   return {
     registerSchool: async (input: any) => {
-      await service.baseService.authorizationPolicy.checkGlobalAction(service.baseService.actor, "setup.register_school");
+      await authorizeFacadePermission(service, Permission.PLATFORM_REGISTER_SCHOOL);
       const school = new School(input);
       await service.baseService.schools.save(school, { moduleChecked: true });
+      await ensureSystemAccessRolesForSchool(school.id, service.baseService.repositories);
       return school;
     },
     updateSchoolConfiguration: async ({ schoolId, ...changes }: any) => {
       const existing = await requireEntity(service.baseService.schools, schoolId);
-      await service.baseService.authorizationPolicy.checkGlobalAction(service.baseService.actor, "setup.manage_lifecycle");
+      await authorizeFacadePermission(service, Permission.SCHOOL_LIFECYCLE_MANAGE);
       const school = new School({
         id: existing.id,
         name: changes.name ?? existing.name,
@@ -131,7 +182,7 @@ function createSetupFacade(service: SchoolService): any {
     },
     publishAcademicPeriod: async ({ academicPeriodId }: any) => {
       const existing = await requireEntity(service.baseService.academicPeriods, academicPeriodId);
-      await service.baseService.authorizationPolicy.checkGlobalAction(service.baseService.actor, "setup.manage_lifecycle");
+      await authorizeFacadePermission(service, Permission.SCHOOL_LIFECYCLE_MANAGE);
       const period = new AcademicPeriod({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -153,30 +204,61 @@ function createSetupFacade(service: SchoolService): any {
       await service.baseService.classGroups.save(classGroup);
       return classGroup;
     },
-    registerStaffMember: async (input: any) => saveConstructed(service.baseService.staffMembers, new StaffMember(input)),
+    registerStaffMember: async (input: any) => {
+      const { roles, ...staffMemberInput } = input;
+      const staffMember = await saveConstructed(service.baseService.staffMembers, new StaffMember(staffMemberInput));
+      await syncStaffSystemRoleAssignment({
+        staffMemberId: staffMember.id,
+        schoolId: staffMember.schoolId,
+        repositories: service.baseService.repositories,
+        roleKeys: roles,
+      });
+      invalidateEffectiveGrantsCacheForStaff(staffMember.id, staffMember.schoolId);
+      return staffMember;
+    },
     updateStaffMemberStatus: async ({ staffId, isActive }: any) => {
       const existing = await requireEntity(service.baseService.staffMembers, staffId);
-      return saveConstructed(service.baseService.staffMembers, new StaffMember({
+      const staffMember = await saveConstructed(service.baseService.staffMembers, new StaffMember({
         id: existing.id,
         schoolId: existing.schoolId,
         firstName: existing.firstName,
         lastName: existing.lastName,
-        roles: existing.roles,
         email: existing.email,
         subjectId: existing.subjectId,
         isActive,
         createdAt: existing.createdAt,
       }));
+      await syncStaffSystemRoleAssignment({
+        staffMemberId: staffMember.id,
+        schoolId: staffMember.schoolId,
+        repositories: service.baseService.repositories,
+      });
+      invalidateEffectiveGrantsCacheForStaff(staffMember.id, staffMember.schoolId);
+      return staffMember;
     },
-    assignStaffToClass: (input: any) => saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input)),
-    assignStaffToClassSubject: (input: any) => saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input)),
-    assignStaffToSession: (input: any) => saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input)),
+    assignStaffToClass: (input: any) => saveStaffAssignmentAndInvalidate(service, input),
+    assignStaffToClassSubject: (input: any) => saveStaffAssignmentAndInvalidate(service, input),
+    assignStaffToSession: (input: any) => saveStaffAssignmentAndInvalidate(service, input),
     assignResourceToClass: (input: any) => saveConstructed(service.baseService.resourceAssignments, new ResourceAssignment(input)),
     assignResourceToSession: (input: any) => saveConstructed(service.baseService.resourceAssignments, new ResourceAssignment(input)),
     removeResourceAssignment: ({ resourceAssignmentId, id }: any) => service.baseService.resourceAssignments.delete(resourceAssignmentId ?? id),
     registerAttachment: (input: any) => saveConstructed(service.baseService.attachments, new Attachment(input)),
     removeAttachment: ({ attachmentId, id }: any) => service.baseService.attachments.delete(attachmentId ?? id),
   };
+}
+
+async function authorizeFacadePermission(service: SchoolService, permission: Permission): Promise<void> {
+  const actor = service.baseService.actor;
+  await authorize({
+    actor,
+    policy: service.baseService.authorizationPolicy,
+    repositories: service.baseService.repositories,
+    request: {
+      actorId: resolveAuditActorId(actor),
+      schoolId: actor.schoolId,
+      permission,
+    },
+  });
 }
 
 function createStudentsFacade(service: SchoolService): any {
@@ -437,6 +519,18 @@ function createCommunicationsFacade(service: SchoolService): any {
     recordDelivery: (input: any) => service.recordDelivery(input),
     materializeDeliveries: (input: any) => service.materializeDeliveries(input),
   };
+}
+
+async function saveStaffAssignmentAndInvalidate(service: SchoolService, input: any): Promise<StaffAssignment> {
+  const assignment = await saveConstructed(service.baseService.staffAssignments, new StaffAssignment(input));
+  const staffMember = await requireEntity(service.baseService.staffMembers, assignment.staffId);
+  await syncStaffSystemRoleAssignment({
+    staffMemberId: staffMember.id,
+    schoolId: staffMember.schoolId,
+    repositories: service.baseService.repositories,
+  });
+  invalidateEffectiveGrantsCacheForStaff(assignment.staffId);
+  return assignment;
 }
 
 async function saveConstructed<T extends { id: string }>(managedService: { save: (entity: T, options?: any) => Promise<void> }, entity: T): Promise<T> {

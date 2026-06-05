@@ -22,6 +22,7 @@ import {
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
   PaymentMethod,
+  Permission,
   ProgressionDecision,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
@@ -39,6 +40,17 @@ const nullableId = () => field.id().nullable().optional();
 const optionalText = () => z.string().optional();
 const nullableOptionalText = () => z.string().nullable().optional();
 const attendanceByStudentSchema = z.record(field.id(), field.enumValue(AttendanceStatus));
+const scopeTypeSchema = z.enum([
+  "platform",
+  "school",
+  "academic_year",
+  "class_group",
+  "subject",
+  "course_assignment",
+  "session",
+  "student",
+  "student_group",
+]);
 
 export const gradeLevelConfigCommandSchema = namedObjectSchema("GradeLevelConfigCommand", {
   id: field.id(),
@@ -203,6 +215,35 @@ export const assignStaffToSessionCommandSchema = namedObjectSchema("AssignStaffT
   sessionId: field.id(),
   role: field.enumValue(StaffRole),
   createdAt: field.optionalDate(),
+});
+
+const scopeGrantCommandSchema = namedObjectSchema("ScopeGrantCommandValue", {
+  permission: field.enumValue(Permission),
+  scopeType: scopeTypeSchema,
+  scopeEntityIds: z.array(field.id()),
+});
+
+export const accessRoleConfigCommandSchema = namedObjectSchema("AccessRoleConfigCommand", {
+  id: field.id(),
+  name: field.text(),
+  description: field.nullableText(),
+  permissions: z.array(field.enumValue(Permission)),
+  status: z.enum(["active", "inactive"]).optional(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+}).strict();
+
+export const staffRoleAssignmentConfigCommandSchema = namedObjectSchema("StaffRoleAssignmentConfigCommand", {
+  id: field.id(),
+  staffId: field.id(),
+  academicYearId: field.id().nullable().optional(),
+  roleIds: z.array(field.id()).min(1),
+  scopeGrants: z.array(scopeGrantCommandSchema).optional(),
+  status: z.enum(["active", "inactive", "expired"]).optional(),
+  startsAt: field.nullableDate(),
+  endsAt: field.nullableDate(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
 });
 
 export const assignResourceToClassCommandSchema = namedObjectSchema("AssignResourceToClassCommand", {

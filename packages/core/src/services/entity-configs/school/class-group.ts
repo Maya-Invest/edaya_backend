@@ -1,18 +1,18 @@
 import type { ClassGroup } from '../../../entities/school/class-group'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { StudentClassEnrollmentStatus } from '../../../entities'
 import { CalendarEventScopeKind } from '../../../entities/scheduling/calendar-event'
-import { directEntityConfig, readByIds } from '../../../shared'
+import { directPermissionEntityConfig, readByIds } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const classGroupConfig: EntityConfigFactory<ClassGroup> = (input) => {
-  const config = directEntityConfig(
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.classGroups,
-    'queries.read_class_directory',
-    'setup.manage',
+    Permission.QUERY_CLASS_DIRECTORY_READ,
+    Permission.SCHOOL_STRUCTURE_CONFIGURE,
     readByIds((actor, ids) => input.policy.checkClassGroupAccess(actor, ids)),
   )
   return {

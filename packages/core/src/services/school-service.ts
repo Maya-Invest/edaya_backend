@@ -51,10 +51,11 @@ import type {
   PromoteStudentInput,
   TransferStudentInput,
 } from './service-workflows/student'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization'
+import { AuthorizationError, AuthorizationErrorCode, Permission } from '../authorization'
 import {
   PaymentStatus,
 } from '../entities'
+import { permissionAction } from '../shared'
 import { BaseSchoolService } from './base-school-service'
 import { AcademicsServiceWorkflow } from './service-workflows/accademics'
 import { AssessmentsServiceWorkflow } from './service-workflows/assessments'
@@ -92,13 +93,19 @@ export class SchoolService {
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'query.get_overdue_fees')
+    await permissionAction(
+      this.baseService.authorizationPolicy,
+      Permission.QUERY_OVERDUE_FEES_READ,
+    )(this.baseService.actor)
     return this.baseService.repositories.schools.getOverdueFeeCount(schoolId)
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'queries.read_report_card_detail')
+    await permissionAction(
+      this.baseService.authorizationPolicy,
+      Permission.QUERY_REPORT_CARD_DETAIL_READ,
+    )(this.baseService.actor)
     return this.baseService.repositories.schools.getPublishedReportCardCount(schoolId)
   }
 

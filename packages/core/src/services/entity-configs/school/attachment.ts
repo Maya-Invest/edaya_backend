@@ -1,13 +1,18 @@
 import type { Attachment } from '../../../entities/school/attachment'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { AttachmentOwnerKind } from '../../../entities/school/attachment'
-import { directEntityConfig } from '../../../shared'
+import { directPermissionEntityConfig } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const attachmentConfig: EntityConfigFactory<Attachment> = (input) => {
-  const config = directEntityConfig(input, input.repositories.attachments, 'attachments.read', 'attachments.manage')
+  const config = directPermissionEntityConfig(
+    input,
+    input.repositories.attachments,
+    Permission.ATTACHMENT_READ,
+    Permission.ATTACHMENT_CONFIGURE,
+  )
   return {
     ...config,
     gates: {

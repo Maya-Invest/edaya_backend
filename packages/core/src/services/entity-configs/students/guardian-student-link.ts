@@ -1,15 +1,16 @@
 import type { GuardianStudentLink } from '../../../entities/students/guardian-student-link'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { directEntityConfig, unique } from '../../../shared'
+import { directPermissionEntityConfig, unique } from '../../../shared'
 
 export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = (input) => {
-  const config = directEntityConfig(
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.guardianLinks,
-    'queries.read_guardian_students_admin',
-    'students.manage_guardians',
+    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
+    Permission.PARENT_UPDATE,
     async (actor, entities) => {
       await input.policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     },

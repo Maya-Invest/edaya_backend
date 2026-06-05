@@ -3,17 +3,17 @@ import type { ReportCardResult } from '../../../entities/assessments/report-card
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { ReportCardResultStatus } from '../../../entities/assessments/report-card-result'
-import { action, config, indirectTenant, read, readByIds, write } from '../../../shared'
+import { config, indirectTenant, permissionAction, read, readByIds, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.results,
     tenant: reportCardResultTenant(),
-    read: read(action(policy, 'queries.read_report_card_detail'), readByIds((actor, ids) => policy.checkReportCardResultAccess(actor, ids))),
-    write: write(action(policy, 'assessments.publish_report_card'), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor, ids) => policy.checkReportCardResultAccess(actor, ids))),
+    write: write(permissionAction(policy, Permission.REPORT_CARD_PUBLISH), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
     gates: {
       preSave: validateReportCardResultSave,
       preDelete: validateReportCardResultDelete,

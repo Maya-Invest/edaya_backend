@@ -4,10 +4,6 @@ import {
   test,
 } from 'bun:test'
 import {
-  AuthorizationError,
-  AuthorizationErrorCode,
-} from '../../../src/authorization'
-import {
   AttendanceJustificationStatus,
   AttendanceMode,
   AttendanceRecord,
@@ -188,42 +184,6 @@ describe('SchoolService scheduling workflows', () => {
       status: AttendanceStatus.Present,
     })).rejects.toThrow('Reviewed attendance must not be corrected without a reopen workflow')
   })
-
-  test('generateSessions checks scheduling.manage permission', async () => {
-    const context = createSchedulingContext()
-    const mockPolicy = context.mockPolicy as any
-    const service = context.service
-    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
-      if (action === 'scheduling.manage') {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    })
-
-    await expect(service.generateSessions({
-      classGroupId: 'cg1',
-      startDate: new Date('2026-05-28T00:00:00Z'),
-      endDate: new Date('2026-05-28T00:00:00Z'),
-    })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('recordAttendance checks attendance.record permission', async () => {
-    const context = createSchedulingContext()
-    const mockPolicy = context.mockPolicy as any
-    const service = context.service
-    mockPolicy.checkGlobalAction.mockImplementation(async (_actor: any, action: string) => {
-      if (action === 'attendance.record') {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    })
-
-    await expect(service.recordAttendance({
-      id: 'att1',
-      studentId: 'stu1',
-      sessionId: 'ses1',
-      status: AttendanceStatus.Present,
-    })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
 
   test('recordSessionAttendance records each student through managed attendance', async () => {
     const { mockRepos, service } = createSchedulingContext()

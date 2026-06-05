@@ -33,6 +33,7 @@ export * from './scheduling/session'
 // school
 export * from './school/academic-period'
 export * from './school/academic-year'
+export * from './school/access-role'
 export * from './school/attachment'
 export * from './school/class-group'
 export * from './school/grade-level'
@@ -42,6 +43,7 @@ export * from './school/resource-assignment'
 export * from './school/school'
 export * from './school/staff-assignment'
 export * from './school/staff-member'
+export * from './school/staff-role-assignment'
 
 // students
 export * from './students/disciplinary-action'

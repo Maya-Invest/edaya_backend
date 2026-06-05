@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { StaffMember, StaffRole } from '../../../../src/entities/school/staff-member'
+import { StaffMember } from '../../../../src/entities/school/staff-member'
 
 describe('StaffMember entity', () => {
   const baseArgs = {
@@ -7,7 +7,6 @@ describe('StaffMember entity', () => {
     schoolId: 'sch1',
     firstName: 'Jane',
     lastName: 'Doe',
-    roles: [StaffRole.Teacher],
   }
 
   test('instantiates successfully with valid inputs', () => {
@@ -21,32 +20,21 @@ describe('StaffMember entity', () => {
     expect(staff.firstName).toBe('Jane')
     expect(staff.lastName).toBe('Doe')
     expect(staff.fullName).toBe('Jane Doe')
-    expect(staff.roles).toEqual([StaffRole.Teacher])
     expect(staff.email).toBe('jane@example.com')
     expect(staff.isActive).toBe(false)
     expect(staff.createdAt).toBeInstanceOf(Date)
   })
 
-  test('deduplicates roles', () => {
+  test('defaults staff to active', () => {
     const staff = new StaffMember({
       ...baseArgs,
-      roles: [StaffRole.Teacher, StaffRole.Teacher, StaffRole.Admin],
     })
-    expect(staff.roles).toEqual([StaffRole.Teacher, StaffRole.Admin])
+    expect(staff.isActive).toBe(true)
   })
 
-  test('hasRole returns correctly', () => {
-    const staff = new StaffMember({
-      ...baseArgs,
-      roles: [StaffRole.Teacher],
-    })
-    expect(staff.hasRole(StaffRole.Teacher)).toBe(true)
-    expect(staff.hasRole(StaffRole.Admin)).toBe(false)
-  })
-
-  test('throws error if roles array is empty', () => {
+  test('throws error if required text fields are blank', () => {
     expect(() => {
-      new StaffMember({ ...baseArgs, roles: [] })
-    }).toThrow('roles must contain at least one role')
+      new StaffMember({ ...baseArgs, firstName: '' })
+    }).toThrow('firstName')
   })
 })

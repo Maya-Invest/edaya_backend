@@ -26,6 +26,7 @@ import {
   MessageDeliveryStatus,
   PaymentMethod,
   PaymentStatus,
+  Permission,
   ProgressionDecision,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
@@ -41,6 +42,7 @@ import {
 import type {
   AcademicPeriodArgs,
   AcademicYearArgs,
+  AccessRoleArgs,
   AnnouncementArgs,
   AnnouncementTargetArgs,
   AssessmentArgs,
@@ -76,6 +78,7 @@ import type {
   SessionArgs,
   StaffAssignmentArgs,
   StaffMemberArgs,
+  StaffRoleAssignmentArgs,
   StudentArgs,
   StudentClassEnrollmentArgs,
   StudentDisciplinaryActionArgs,
@@ -89,6 +92,18 @@ import type {
 } from "@edaya/core";
 import { createQueryOptionsSchema } from "./utils/query-options";
 import { field, responseSchema, valueSchema } from "./utils/schema-fields";
+
+const scopeTypeSchema = z.enum([
+  "platform",
+  "school",
+  "academic_year",
+  "class_group",
+  "subject",
+  "course_assignment",
+  "session",
+  "student",
+  "student_group",
+]);
 
 // ==========================================================
 // 1. All 42 Domain Entities Response OpenAPI Schemas
@@ -148,7 +163,6 @@ export const staffMemberResponseSchema = responseSchema<StaffMemberArgs>("StaffM
   schoolId: field.uuid(),
   firstName: field.string(),
   lastName: field.string(),
-  roles: z.array(z.nativeEnum(StaffRole)),
   email: field.nullableEmail(),
   subjectId: field.nullableUuid(),
   isActive: field.optionalBoolean(),
@@ -163,6 +177,39 @@ export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentArgs>
   classSubjectId: field.nullableUuid(),
   sessionId: field.nullableUuid(),
   createdAt: field.optionalDate(),
+});
+
+export const scopeGrantResponseSchema = valueSchema({
+  permission: z.nativeEnum(Permission),
+  scopeType: scopeTypeSchema,
+  scopeEntityIds: z.array(field.string()),
+});
+
+export const accessRoleResponseSchema = responseSchema<AccessRoleArgs>("AccessRole", {
+  id: field.string(),
+  schoolId: field.string(),
+  name: field.string(),
+  description: field.nullableText(),
+  isSystemRole: field.boolean(),
+  systemRoleKey: z.nativeEnum(StaffRole).nullable().optional(),
+  permissions: z.array(z.nativeEnum(Permission)),
+  status: z.enum(["active", "inactive"]),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
+});
+
+export const staffRoleAssignmentResponseSchema = responseSchema<StaffRoleAssignmentArgs>("StaffRoleAssignment", {
+  id: field.string(),
+  staffId: field.string(),
+  schoolId: field.string(),
+  academicYearId: field.nullableText(),
+  roleIds: z.array(field.string()),
+  scopeGrants: z.array(scopeGrantResponseSchema).optional(),
+  status: z.enum(["active", "inactive", "expired"]).optional(),
+  startsAt: field.nullableDate(),
+  endsAt: field.nullableDate(),
+  createdAt: field.optionalDate(),
+  updatedAt: field.optionalDate(),
 });
 
 export const attachmentResponseSchema = responseSchema<AttachmentArgs>("Attachment", {
@@ -722,6 +769,23 @@ export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   classSubjectId: field.uuid(),
   sessionId: field.uuid(),
   role: field.string(),
+});
+
+export const accessRoleQuerySchema = createQueryOptionsSchema({
+  id: field.string(),
+  schoolId: field.string(),
+  name: field.string(),
+  isSystemRole: field.boolean(),
+  systemRoleKey: field.string(),
+  status: field.string(),
+});
+
+export const staffRoleAssignmentQuerySchema = createQueryOptionsSchema({
+  id: field.string(),
+  staffId: field.string(),
+  schoolId: field.string(),
+  academicYearId: field.string(),
+  status: field.string(),
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({

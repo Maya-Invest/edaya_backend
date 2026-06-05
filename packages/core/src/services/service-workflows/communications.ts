@@ -1,11 +1,12 @@
 import type { AnnouncementTarget } from '../../entities/messaging/announcement-target'
 import type { MessageDeliveryChannel, MessageDeliveryStatus } from '../../entities/messaging/message-delivery'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess } from '../../authorization'
+import { denyResourceAccess, Permission } from '../../authorization'
 import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
 import { AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
 import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
+import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -382,6 +383,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     announcementId?: string
   }): Promise<void> {
     this.checkActorSchool(resource.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'communications.manage')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.COMMUNICATION_CREATE)(this.baseService.actor)
   }
 }

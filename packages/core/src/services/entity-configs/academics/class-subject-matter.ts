@@ -3,15 +3,16 @@ import type { ClassSubjectMatter } from '../../../entities/academics/class-subje
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, resolveClassSubjectSchoolId, write } from '../../../shared'
+import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../../shared'
 
 export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.classSubjectMatters,
     tenant: classSubjectMatterTenant(),
-    read: read(action(policy, 'queries.read_class_curriculum'), noopReadAccess),
-    write: write(action(policy, 'academics.manage_curriculum'), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
     gates: {
       preSave: validateClassSubjectMatterSave,
     },

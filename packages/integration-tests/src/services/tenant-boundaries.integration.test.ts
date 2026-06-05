@@ -25,6 +25,7 @@ import {
   StudentStatus,
   Subject,
   SubjectMatter,
+  syncStaffSystemRoleAssignment,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -90,8 +91,13 @@ describeIntegration('tenant boundary safeguards', () => {
       schoolId: 'school-b',
       firstName: 'School B',
       lastName: 'Administrator',
-      roles: [StaffRole.Admin],
     }))
+    await syncStaffSystemRoleAssignment({
+      staffMemberId: 'school-b-admin',
+      schoolId: 'school-b',
+      repositories: schoolBApp.baseService.repositories,
+      roleKeys: [StaffRole.Admin],
+    })
     await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC' })
     await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC' })
     await app.createAcademicYear({

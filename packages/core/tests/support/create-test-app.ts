@@ -47,8 +47,11 @@ import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
+  SYSTEM_ROLE_PERMISSIONS,
+  systemAccessRoleId,
+  systemRoleAssignmentId,
 } from '../../src/authorization'
-import { StaffMember, StaffRole } from '../../src/entities'
+import { AccessRole, StaffMember, StaffRole, StaffRoleAssignment } from '../../src/entities'
 import { SchoolApplication } from '../../src/services'
 import { matchesFilter } from './filter-matcher'
 
@@ -212,6 +215,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const guardianLinks = createStore<GuardianStudentLink>(transactionParticipants)
   const staffMembers = createStore<StaffMember>(transactionParticipants)
   const staffAssignments = createStore<StaffAssignment>(transactionParticipants)
+  const accessRoles = createStore<AccessRole>(transactionParticipants)
+  const staffRoleAssignments = createStore<StaffRoleAssignment>(transactionParticipants)
   const subjects = createStore<Subject>(transactionParticipants)
   const subjectMatters = createStore<SubjectMatter>(transactionParticipants)
   const classSubjects = createStore<ClassSubject>(transactionParticipants)
@@ -268,6 +273,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     gradeLevels,
     staffMembers,
     staffAssignments,
+    accessRoles,
+    staffRoleAssignments,
     attachments,
     resources,
     resourceAssignments,
@@ -417,12 +424,31 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   })
 
   if (defaultActor.kind === 'staff') {
+    if (!defaultActor.roles) {
+      throw new Error('createTestApp staff actors must include roles for access-control fixture seeding')
+    }
     void schoolRepositories.staffMembers.save(new StaffMember({
       id: defaultActor.staffMemberId,
       schoolId: defaultActor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
-      roles: defaultActor.roles,
+    }))
+    for (const role of Object.values(StaffRole)) {
+      void schoolRepositories.accessRoles.save(new AccessRole({
+        id: systemAccessRoleId(defaultActor.schoolId, role),
+        schoolId: defaultActor.schoolId,
+        name: role,
+        isSystemRole: true,
+        systemRoleKey: role,
+        permissions: SYSTEM_ROLE_PERMISSIONS[role],
+      }))
+    }
+    void schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
+      id: systemRoleAssignmentId(defaultActor.schoolId, defaultActor.staffMemberId),
+      staffId: defaultActor.staffMemberId,
+      schoolId: defaultActor.schoolId,
+      roleIds: defaultActor.roles.map(role => systemAccessRoleId(defaultActor.schoolId, role)),
+      scopeGrants: [],
     }))
   }
 

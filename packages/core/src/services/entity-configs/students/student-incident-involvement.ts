@@ -3,17 +3,17 @@ import type { StudentIncidentInvolvement } from '../../../entities/students/stud
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { StudentClassEnrollmentStatus } from '../../../entities/students/student-class-enrollment'
-import { action, config, indirectTenant, noopReadAccess, read, write } from '../../../shared'
+import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncidentInvolvement> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.studentIncidentInvolvements,
     tenant: incidentLinkedTenant(),
-    read: read(action(policy, 'behavior.read_incidents'), noopReadAccess),
-    write: write(action(policy, 'behavior.report_incident'), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
+    read: read(permissionAction(policy, Permission.DISCIPLINE_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.DISCIPLINE_CREATE), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
     gates: {
       preSave: validateStudentIncidentInvolvementSave,
     },

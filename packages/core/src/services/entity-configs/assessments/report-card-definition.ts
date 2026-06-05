@@ -1,8 +1,9 @@
 import type { ReportCardDefinition } from '../../../entities/assessments/report-card-definition'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, read, write } from '../../../shared'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 import { requireSchool } from '../../../shared/require-school'
 
@@ -10,8 +11,8 @@ export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinitio
   config({
     repository: repositories.definitions,
     tenant: directSchoolTenant(),
-    read: read(action(policy, 'queries.read_report_card_detail'), noopReadAccess),
-    write: write(action(policy, 'assessments.manage_configuration'), noopSaveAccess, noopDeleteAccess),
+    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateReportCardDefinitionSave,
       preDelete: validateReportCardDefinitionDelete,

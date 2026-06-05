@@ -33,7 +33,6 @@ describe('SchoolService assessment workflows', () => {
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
     expect(result.attendanceSummary.lateCount).toBe(1)
     expect(savedReportCards.get('rc1')).toBe(result)
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'assessments.publish_report_card')
     expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
     expect(mockRepos.results.save).toHaveBeenCalledWith(result)
   })
@@ -103,7 +102,6 @@ describe('SchoolService assessment workflows', () => {
     expect(result.attendanceSummary.presentCount).toBe(1)
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'assessments.publish_report_card')
     expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
     expect(mockPolicy.checkReportCardResultAccess).toHaveBeenCalledWith(actor, ['rc1'])
     expect(mockRepos.results.save).toHaveBeenCalledWith(result)
@@ -126,5 +124,4 @@ describe('SchoolService assessment workflows', () => {
       reportCardDefinitionId: 'def1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
-
 })

@@ -3,12 +3,16 @@ import {
   ActorAssuranceLevel,
   AttendanceStatus,
   AuthorizationErrorCode,
+  authorize,
   createStaffActorMetadata,
   GradeLevel,
+  Permission,
+  resolveAuditActorId,
   SessionKind,
   StaffMember,
   StaffRole,
   Subject,
+  syncStaffSystemRoleAssignment,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -261,18 +265,13 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       schoolId: 'strong-school',
       firstName: 'Strong',
       lastName: 'Admin',
-      roles: [StaffRole.Admin],
     }))
-
-    const verifiedForeignAdminApp = forActor(createStaffActorMetadata({
-      subjectId: 'strong-admin-user',
+    await syncStaffSystemRoleAssignment({
       staffMemberId: 'strong-admin',
       schoolId: 'strong-school',
-      roles: [StaffRole.Admin],
-      requestId: 'req-verified-foreign',
-      authenticatedAt: new Date(),
-      assuranceLevel: ActorAssuranceLevel.Verified,
-    }))
+      repositories: app.baseService.repositories,
+      roleKeys: [StaffRole.Admin],
+    })
 
     const strongForeignAdminApp = forActor(createStaffActorMetadata({
       subjectId: 'strong-admin-user',
@@ -303,19 +302,17 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     const verifiedPeriod = await publishAcademicPeriod(verifiedAdminApp, unpublishedPeriod.id)
     expect(verifiedPeriod.isPublished).toBe(true)
 
-    // school registration requires Strong assurance
-    await expect(saveSchool(verifiedForeignAdminApp, {
-      id: 'strong-school',
-      name: 'Strong school',
-      timeZone: 'UTC',
+    // school staff never receive platform registration authority from school role grants
+    await expect(authorize({
+      actor: strongForeignAdminApp.baseService.actor,
+      policy: strongForeignAdminApp.baseService.authorizationPolicy,
+      repositories: strongForeignAdminApp.baseService.repositories,
+      request: {
+        actorId: resolveAuditActorId(strongForeignAdminApp.baseService.actor),
+        schoolId: 'strong-school',
+        permission: Permission.PLATFORM_REGISTER_SCHOOL,
+      },
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-
-    const strongSchool = await saveSchool(strongForeignAdminApp, {
-      id: 'strong-school',
-      name: 'Strong school',
-      timeZone: 'UTC',
-    })
-    expect(strongSchool.id).toBe('strong-school')
   })
 
   it('guarantees denied-mutation rollback and holds strict tenant boundaries', async () => {

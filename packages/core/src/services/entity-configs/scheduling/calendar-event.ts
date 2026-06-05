@@ -1,13 +1,19 @@
 import type { CalendarEvent } from '../../../entities/scheduling/calendar-event'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
 import { CalendarEventScopeKind } from '../../../entities/scheduling/calendar-event'
-import { directEntityConfig } from '../../../shared'
+import { directPermissionEntityConfig } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const calendarEventConfig: EntityConfigFactory<CalendarEvent> = (input) => {
-  const config = directEntityConfig(input, input.repositories.calendarEvents, 'queries.read_calendar', 'scheduling.manage')
+  const config = directPermissionEntityConfig(
+    input,
+    input.repositories.calendarEvents,
+    Permission.QUERY_CALENDAR_READ,
+    Permission.TIMETABLE_UPDATE,
+  )
   return {
     ...config,
     gates: {

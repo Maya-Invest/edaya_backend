@@ -1,10 +1,9 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
-import { StaffRole } from '../../entities/school/staff-member'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-
-const elevatedRoles = new Set([StaffRole.Admin, StaffRole.Principal])
+import { Permission } from '../permissions'
+import { staffGrantCoversAny, staffHasAnyPermission } from './grant-resolver'
 
 export async function checkSessionAccess(
   actor: ActorMetadata,
@@ -29,27 +28,39 @@ export async function checkSessionAccess(
   }
 
   if (actor.kind === 'staff') {
-    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
-    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-
-    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator)) {
+    if (await staffHasAnyPermission(actor, [
+      Permission.QUERY_TIMETABLE_READ,
+      Permission.TIMETABLE_UPDATE,
+      Permission.TIMETABLE_CREATE,
+    ], repos)) {
       return
     }
 
-    if (staffMember.roles.includes(StaffRole.Teacher)) {
-      for (const sessionId of sessionIds) {
-        const session = await repos.sessions.findById(sessionId)
-        if (!session)
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        const assignments = await repos.staffAssignments.list({ classGroupId: session.classGroupId, staffId: actor.staffMemberId })
-        if (assignments.length === 0) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
+    for (const sessionId of sessionIds) {
+      const session = await repos.sessions.findById(sessionId)
+      if (!session)
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      const canAccessSession = (
+        await staffGrantCoversAny(actor, [
+          Permission.ATTENDANCE_RECORD,
+          Permission.GRADE_INPUT,
+          Permission.CLASS_LOGBOOK_CREATE,
+          Permission.CLASS_LOGBOOK_UPDATE,
+          Permission.DISCIPLINE_CREATE,
+        ], 'session', sessionId, repos)
+        || await staffGrantCoversAny(actor, [
+          Permission.ATTENDANCE_RECORD,
+          Permission.GRADE_INPUT,
+          Permission.CLASS_LOGBOOK_CREATE,
+          Permission.CLASS_LOGBOOK_UPDATE,
+          Permission.DISCIPLINE_CREATE,
+        ], 'class_group', session.classGroupId, repos)
+      )
+      if (!canAccessSession) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
       }
-      return
     }
+    return
   }
 
   throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
@@ -97,24 +108,28 @@ async function checkClassGroupAccess(
   }
 
   if (actor.kind === 'staff') {
-    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
-    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-
-    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator)) {
+    if (await staffHasAnyPermission(actor, [
+      Permission.QUERY_CLASS_DIRECTORY_READ,
+      Permission.ACADEMIC_PROGRAM_READ,
+      Permission.ACADEMIC_PROGRAM_UPDATE,
+      Permission.QUERY_TIMETABLE_READ,
+    ], repos)) {
       return
     }
 
-    if (staffMember.roles.includes(StaffRole.Teacher)) {
-      for (const classGroupId of classGroupIds) {
-        const assignments = await repos.staffAssignments.list({ classGroupId, staffId: actor.staffMemberId })
-        if (assignments.length === 0) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
+    for (const classGroupId of classGroupIds) {
+      const canAccessClass = await staffGrantCoversAny(actor, [
+        Permission.ATTENDANCE_RECORD,
+        Permission.GRADE_INPUT,
+        Permission.CLASS_LOGBOOK_CREATE,
+        Permission.CLASS_LOGBOOK_UPDATE,
+        Permission.DISCIPLINE_CREATE,
+      ], 'class_group', classGroupId, repos)
+      if (!canAccessClass) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
       }
-      return
     }
+    return
   }
 
   throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
@@ -148,30 +163,32 @@ async function checkStudentAccess(
   }
 
   if (actor.kind === 'staff') {
-    const staffMember = await repos.staffMembers.findById(actor.staffMemberId)
-    if (!staffMember || !staffMember.isActive || staffMember.schoolId !== actor.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-
-    if (staffMember.roles.some(role => elevatedRoles.has(role) || role === StaffRole.Coordinator)) {
+    if (await staffHasAnyPermission(actor, [
+      Permission.QUERY_STUDENT_DETAIL_READ,
+      Permission.STUDENT_READ,
+      Permission.STUDENT_UPDATE,
+    ], repos)) {
       return
     }
 
-    if (staffMember.roles.includes(StaffRole.Teacher)) {
-      for (const studentId of studentIds) {
-        const enrollments = await repos.enrollments.list({ studentId })
-        const activeEnrollment = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
-        if (!activeEnrollment) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
-        const assignments = await repos.staffAssignments.list({ classGroupId: activeEnrollment.classGroupId })
-        const isAssigned = assignments.some(a => a.staffId === actor.staffMemberId)
-        if (!isAssigned) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
+    for (const studentId of studentIds) {
+      const enrollments = await repos.enrollments.list({ studentId })
+      const activeEnrollment = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
+      if (!activeEnrollment) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
       }
-      return
+      const canAccessClass = await staffGrantCoversAny(actor, [
+        Permission.ATTENDANCE_RECORD,
+        Permission.GRADE_INPUT,
+        Permission.CLASS_LOGBOOK_CREATE,
+        Permission.CLASS_LOGBOOK_UPDATE,
+        Permission.DISCIPLINE_CREATE,
+      ], 'class_group', activeEnrollment.classGroupId, repos)
+      if (!canAccessClass) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
     }
+    return
   }
 
   throw new AuthorizationError(AuthorizationErrorCode.Forbidden)

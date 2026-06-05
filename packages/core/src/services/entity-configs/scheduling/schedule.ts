@@ -2,15 +2,16 @@ import type { Schedule } from '../../../entities/scheduling/schedule'
 import type { Session } from '../../../entities/scheduling/session'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { action, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, read, write } from '../../../shared'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../../shared'
 
 export const scheduleConfig: EntityConfigFactory<Schedule> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.schedules,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(action(policy, 'queries.read_timetable'), noopReadAccess),
-    write: write(action(policy, 'scheduling.manage'), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(policy, Permission.QUERY_TIMETABLE_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateScheduleSave,
     },

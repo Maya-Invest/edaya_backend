@@ -1,18 +1,22 @@
 import type { ConfigCommandEntityName } from "@/lib/service-accessors";
 import type { AnySchema, ObjectSchema } from "@/validation/utils/schema-fields";
 import {
+  accessRoleConfigCommandSchema,
   disciplinaryActionConfigCommandSchema,
   gradeLevelConfigCommandSchema,
   periodDefinitionConfigCommandSchema,
   resourceConfigCommandSchema,
+  staffRoleAssignmentConfigCommandSchema,
   subjectConfigCommandSchema,
   subjectMatterConfigCommandSchema,
 } from "@/validation/commands.schemas";
 import {
+  AccessRole,
   DisciplinaryAction,
   GradeLevel,
   PeriodDefinition,
   Resource,
+  StaffRoleAssignment,
   Subject,
   SubjectMatter,
 } from "@edaya/core";
@@ -75,6 +79,24 @@ export const configCommandEntities = [
     requestSchema: disciplinaryActionConfigCommandSchema,
     responseSchema: schemas.disciplinaryActionResponseSchema,
     createEntity: (body, schoolId) => new DisciplinaryAction(withSchoolId(body, schoolId) as ConstructorParameters<typeof DisciplinaryAction>[0]),
+  },
+  {
+    name: "accessRoles",
+    displayName: "Access Roles",
+    requestSchema: accessRoleConfigCommandSchema,
+    responseSchema: schemas.accessRoleResponseSchema,
+    createEntity: (body, schoolId) => new AccessRole({
+      ...withSchoolId(body, schoolId),
+      isSystemRole: false,
+      systemRoleKey: undefined,
+    } as ConstructorParameters<typeof AccessRole>[0]),
+  },
+  {
+    name: "staffRoleAssignments",
+    displayName: "Staff Role Assignments",
+    requestSchema: staffRoleAssignmentConfigCommandSchema,
+    responseSchema: schemas.staffRoleAssignmentResponseSchema,
+    createEntity: (body, schoolId) => new StaffRoleAssignment(withSchoolId(body, schoolId) as ConstructorParameters<typeof StaffRoleAssignment>[0]),
   },
 ] satisfies ConfigCommandEntity[];
 

@@ -4,6 +4,7 @@ import {
   mock,
   test,
 } from 'bun:test'
+import { AuthorizationError } from '../../../src/authorization'
 import {
   AnnouncementStatus,
   MessageDelivery,
@@ -12,16 +13,14 @@ import {
   MessageDeliveryStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/entities'
-import { AuthorizationError } from '../../../src/authorization'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
-  actor,
   createCommunicationsContext,
 } from './workflow-test-context'
 
 describe('SchoolService communications workflows', () => {
   test('publishAnnouncement publishes only announcements with targets through managed service', async () => {
-    const { mockPolicy, mockRepos, service } = createCommunicationsContext({
+    const { mockRepos, service } = createCommunicationsContext({
       announcementStatus: AnnouncementStatus.Draft,
     })
 
@@ -32,7 +31,6 @@ describe('SchoolService communications workflows', () => {
 
     expect(result.status).toBe(AnnouncementStatus.Published)
     expect(result.publishedAt?.toISOString()).toBe('2026-05-02T00:00:00.000Z')
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'communications.manage')
     expect(mockRepos.announcements.save).toHaveBeenCalledWith(result)
   })
 

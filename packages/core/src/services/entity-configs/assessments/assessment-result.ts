@@ -3,20 +3,20 @@ import type { AssessmentResult } from '../../../entities/assessments/assessment-
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../managed-entity-service'
-import { denyResourceAccess } from '../../../authorization'
+import { denyResourceAccess, Permission } from '../../../authorization'
 import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../../entities'
-import { action, config, indirectTenant, read, unique, write } from '../../../shared'
+import { config, indirectTenant, permissionAction, read, unique, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.assessmentResults,
     tenant: assessmentResultTenant(),
-    read: read(action(policy, 'assessments.read_results'), async (actor, entities, repos) => {
+    read: read(permissionAction(policy, Permission.GRADE_READ), async (actor, entities, repos) => {
       const assessments = await repos.assessments.findByIds(unique(entities.map(entity => entity.assessmentId)))
       await policy.checkAssessmentAccess(actor, unique(assessments.map(assessment => assessment.id)))
     }),
-    write: write(action(policy, 'assessments.record_result'), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
+    write: write(permissionAction(policy, Permission.GRADE_INPUT), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
     gates: {
       preSave: validateAssessmentResultSave,
       preDelete: validateAssessmentResultDelete,

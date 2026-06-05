@@ -1,17 +1,18 @@
 import type { Student } from '../../../entities/students/student'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { AttachmentOwnerKind } from '../../../entities/school/attachment'
 import { StudentStatus } from '../../../entities/students/student'
-import { directEntityConfig, readByIds } from '../../../shared'
+import { directPermissionEntityConfig, readByIds } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const studentConfig: EntityConfigFactory<Student> = (input) => {
-  const config = directEntityConfig(
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.students,
-    'queries.read_student_directory',
-    'students.manage_profile',
+    Permission.QUERY_STUDENT_DIRECTORY_READ,
+    Permission.STUDENT_UPDATE,
     readByIds((actor, ids) => input.policy.checkStudentAccess(actor, ids)),
   )
   return {

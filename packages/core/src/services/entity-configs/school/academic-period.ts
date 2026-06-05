@@ -1,12 +1,18 @@
 import type { AcademicPeriod } from '../../../entities/school/academic-period'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
+import { Permission } from '../../../authorization'
 import { denyResourceAccess } from '../../../authorization/authorization-error'
-import { directEntityConfig } from '../../../shared'
+import { directPermissionEntityConfig } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = (input) => {
-  const config = directEntityConfig(input, input.repositories.academicPeriods, 'queries.read_workspace', 'setup.manage')
+  const config = directPermissionEntityConfig(
+    input,
+    input.repositories.academicPeriods,
+    Permission.QUERY_WORKSPACE_READ,
+    Permission.SCHOOL_STRUCTURE_CONFIGURE,
+  )
   return {
     ...config,
     gates: {

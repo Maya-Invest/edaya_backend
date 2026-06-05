@@ -1,11 +1,17 @@
 import type { Announcement } from '../../../entities/messaging/announcement'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { directEntityConfig } from '../../../shared'
+import { Permission } from '../../../authorization'
+import { directPermissionEntityConfig } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const announcementConfig: EntityConfigFactory<Announcement> = (input) => {
-  const config = directEntityConfig(input, input.repositories.announcements, 'queries.read_communications', 'communications.manage')
+  const config = directPermissionEntityConfig(
+    input,
+    input.repositories.announcements,
+    Permission.QUERY_COMMUNICATIONS_READ,
+    Permission.COMMUNICATION_CREATE,
+  )
   return {
     ...config,
     gates: {

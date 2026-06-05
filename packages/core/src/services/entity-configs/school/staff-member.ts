@@ -2,11 +2,17 @@ import type { ActorMetadata } from '../../../authorization'
 import type { StaffMember } from '../../../entities/school/staff-member'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { directEntityConfig } from '../../../shared'
+import { Permission } from '../../../authorization'
+import { directPermissionEntityConfig } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
-  const config = directEntityConfig(input, input.repositories.staffMembers, 'setup.manage', 'setup.manage')
+  const config = directPermissionEntityConfig(
+    input,
+    input.repositories.staffMembers,
+    Permission.SCHOOL_STRUCTURE_CONFIGURE,
+    Permission.SCHOOL_STRUCTURE_CONFIGURE,
+  )
   return {
     ...config,
     gates: {

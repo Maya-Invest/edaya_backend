@@ -1,11 +1,17 @@
 import type { Resource } from '../../../entities/school/resource'
 import type { SchoolRepositories } from '../../../ports'
 import type { EntityConfigFactory } from '../../../shared'
-import { directEntityConfig } from '../../../shared'
+import { Permission } from '../../../authorization'
+import { directPermissionEntityConfig } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const resourceConfig: EntityConfigFactory<Resource> = (input) => {
-  const config = directEntityConfig(input, input.repositories.resources, 'resources.read', 'resources.manage')
+  const config = directPermissionEntityConfig(
+    input,
+    input.repositories.resources,
+    Permission.RESOURCE_READ,
+    Permission.RESOURCE_CONFIGURE,
+  )
   return {
     ...config,
     gates: {

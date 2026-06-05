@@ -1,7 +1,7 @@
 import type { AttendanceStatus } from '../../entities/scheduling/attendance-record'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, resolveAuditActorId } from '../../authorization'
+import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import { AttendanceJustificationStatus, AttendanceRecord } from '../../entities/scheduling/attendance-record'
 import { CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
 import { DayOfWeek } from '../../entities/scheduling/schedule'
@@ -9,6 +9,7 @@ import { Session, SessionKind } from '../../entities/scheduling/session'
 import { AttendanceMode } from '../../entities/school/class-group'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { normalizeDate } from '../../entities/utils'
+import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -73,7 +74,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     endDate,
   }: GenerateSessionsInput): Promise<Session[]> {
     const classGroup = await this.requireClassGroup(classGroupId)
-    await this.authorizeSchedulingManage(classGroup)
+    await this.authorizeTimetableCreate(classGroup)
     return this.baseService.atomicExecution.execute(async () => {
       const schedules = await this.baseService.repositories.schedules.list({ classGroupId })
       const calendarEvents = await this.baseService.repositories.calendarEvents.list({ academicYearId: classGroup.academicYearId })
@@ -377,7 +378,10 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'attendance.record')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.ATTENDANCE_RECORD, {
+      scopeType: 'class_group',
+      scopeEntityId: classGroup.id,
+    })(this.baseService.actor)
     if (classGroup.id) {
       await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     }
@@ -389,9 +393,12 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     }
   }
 
-  private async authorizeSchedulingManage(classGroup: ClassGroup): Promise<void> {
+  private async authorizeTimetableCreate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await this.baseService.authorizationPolicy.checkGlobalAction(this.baseService.actor, 'scheduling.manage')
+    await permissionAction(this.baseService.authorizationPolicy, Permission.TIMETABLE_CREATE, {
+      scopeType: 'class_group',
+      scopeEntityId: classGroup.id,
+    })(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
   }
 }

@@ -10,7 +10,6 @@ describe('SchoolService query operations', () => {
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkGlobalAction: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const actor: ActorMetadata = {
@@ -31,14 +30,12 @@ describe('SchoolService query operations', () => {
 
   test('getOverdueFeeCount checks permission and delegates to repo', async () => {
     const result = await service.getOverdueFeeCount('school1')
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'query.get_overdue_fees')
     expect(mockRepos.schools.getOverdueFeeCount).toHaveBeenCalledWith('school1')
     expect(result).toBe(5)
   })
 
   test('getPublishedReportCardCount checks permission and delegates to repo', async () => {
     const result = await service.getPublishedReportCardCount('school1')
-    expect(mockPolicy.checkGlobalAction).toHaveBeenCalledWith(actor, 'queries.read_report_card_detail')
     expect(mockRepos.schools.getPublishedReportCardCount).toHaveBeenCalledWith('school1')
     expect(result).toBe(10)
   })

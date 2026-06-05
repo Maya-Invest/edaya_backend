@@ -3,18 +3,18 @@ import type { Incident } from '../../../entities/students/incident'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../../shared'
 import type { EntityWriteAuthorization } from '../../managed-entity-service'
-import { AuthorizationError, AuthorizationErrorCode } from '../../../authorization'
+import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../../authorization'
 import { AttachmentOwnerKind } from '../../../entities/school/attachment'
 import { IncidentStatus } from '../../../entities/students/incident'
-import { action, config, dateTime, directSchoolTenant, noopReadAccess, read, write } from '../../../shared'
+import { config, dateTime, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../../shared'
 import { BusinessRuleViolationError } from '../../../shared/business-rule-error'
 
 export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
-    read: read(action(policy, 'behavior.read_incidents'), noopReadAccess),
-    write: write(action(policy, 'behavior.report_incident'), authorizeIncident(policy), authorizeIncidentDelete(policy)),
+    read: read(permissionAction(policy, Permission.DISCIPLINE_READ), noopReadAccess),
+    write: write(permissionAction(policy, Permission.DISCIPLINE_CREATE), authorizeIncident(policy), authorizeIncidentDelete(policy)),
     gates: {
       preSave: validateIncidentSave,
       preDelete: validateIncidentDelete,
