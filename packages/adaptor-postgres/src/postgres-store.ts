@@ -129,7 +129,7 @@ implements BaseRepositoryInterface<T> {
     private readonly toDomain: (row: any) => T,
   ) {}
 
-  private getClient() {
+  protected getClient() {
     const tx = transactionContext.getStore()
     return tx ?? this.db
   }

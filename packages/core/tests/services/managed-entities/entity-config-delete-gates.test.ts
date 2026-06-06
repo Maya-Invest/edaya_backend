@@ -184,5 +184,4 @@ describe('Entity config delete gates', () => {
 
     await expect(app.baseService.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
-
 })

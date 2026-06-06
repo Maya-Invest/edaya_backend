@@ -5,7 +5,6 @@ import {
   AcademicYear,
   Announcement,
   AnnouncementTarget,
-  AnnouncementTargetKind as TargetKind,
   AttachmentOwnerKind,
   CalendarEvent,
   CalendarEventKind,
@@ -22,12 +21,13 @@ import {
   StudentNote,
   StudentNoteVisibility,
   StudentStatus,
+  AnnouncementTargetKind as TargetKind,
 } from '../../../src/entities'
+import { validateCalendarEventSave } from '../../../src/services/entity-configs/scheduling/calendar-event'
+import { validateScheduleSave, validateSessionSave } from '../../../src/services/entity-configs/scheduling/schedule'
 import { validateAttachmentSave } from '../../../src/services/entity-configs/school/attachment'
 import { validateClassGroupSave } from '../../../src/services/entity-configs/school/class-group'
 import { validateStaffAssignmentSave } from '../../../src/services/entity-configs/school/staff-assignment'
-import { validateCalendarEventSave } from '../../../src/services/entity-configs/scheduling/calendar-event'
-import { validateScheduleSave, validateSessionSave } from '../../../src/services/entity-configs/scheduling/schedule'
 import { validateStudentSave } from '../../../src/services/entity-configs/students/student'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { createTestApp } from '../../support/create-test-app'
@@ -99,13 +99,16 @@ describe('entity config edge gates', () => {
 
   test('rejects unsupported or mismatched attachment owners', async () => {
     await expect(validateAttachmentSave(attachment(AttachmentOwnerKind.Other, 'owner-1'), undefined, repositories()))
-      .rejects.toBeInstanceOf(BusinessRuleViolationError)
+      .rejects
+      .toBeInstanceOf(BusinessRuleViolationError)
     await expect(validateAttachmentSave(attachment(AttachmentOwnerKind.Student, 'student-1', 'other-school'), undefined, repositories()))
-      .rejects.toBeInstanceOf(AuthorizationError)
+      .rejects
+      .toBeInstanceOf(AuthorizationError)
     await expect(validateAttachmentSave(attachment(AttachmentOwnerKind.Payment, 'payment-1'), undefined, repositories({
       studentFees: { findById: mock(async () => undefined) } as any,
     })))
-      .rejects.toBeInstanceOf(AuthorizationError)
+      .rejects
+      .toBeInstanceOf(AuthorizationError)
   })
 
   test('validates schedule and session class-subject ownership', async () => {
@@ -195,7 +198,8 @@ describe('entity config edge gates', () => {
     await validateClassGroupSave(existing, undefined, repositories())
 
     await expect(validateClassGroupSave(existing.copyWith({ capacity: 1 }), existing, repositories()))
-      .rejects.toBeInstanceOf(BusinessRuleViolationError)
+      .rejects
+      .toBeInstanceOf(BusinessRuleViolationError)
     await expect(validateClassGroupSave(existing.copyWith({ homeroomStaffId: 'staff-1' }), existing, repositories({
       staffMembers: { findById: mock(async () => ({ id: 'staff-1', schoolId: 'other-school' })) } as any,
     }))).rejects.toBeInstanceOf(AuthorizationError)
@@ -224,7 +228,8 @@ describe('entity config edge gates', () => {
       status: StudentStatus.Graduated,
     })
     await expect(validateStudentSave(graduated.copyWith({ status: StudentStatus.Active }), graduated))
-      .rejects.toBeInstanceOf(BusinessRuleViolationError)
+      .rejects
+      .toBeInstanceOf(BusinessRuleViolationError)
 
     const { app, repositories: store } = createTestApp(actor)
     const year = new AcademicYear({

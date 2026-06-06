@@ -106,7 +106,7 @@ const scopeTypeSchema = z.enum([
 ]);
 
 // ==========================================================
-// 1. All 42 Domain Entities Response OpenAPI Schemas
+// 1. All Domain Entities Response OpenAPI Schemas
 // ==========================================================
 
 export const schoolResponseSchema = responseSchema<SchoolArgs>("School", {

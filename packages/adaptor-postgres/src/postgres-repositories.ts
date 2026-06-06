@@ -1,5 +1,7 @@
 import type {
   AtomicExecutionPort,
+  Permission,
+
   SchoolRepositories,
 } from '@edaya/core'
 import { AsyncLocalStorage } from 'node:async_hooks'
@@ -51,7 +53,7 @@ import {
   Subject,
   SubjectMatter,
 } from '@edaya/core'
-import { sql } from 'drizzle-orm'
+import { eq, inArray, sql } from 'drizzle-orm'
 import * as schema from './postgres-schema'
 import { createDefaultMappers, deserializeJsonb, PostgresStore } from './postgres-store'
 
@@ -71,6 +73,408 @@ export class PostgresAtomicExecution implements AtomicExecutionPort {
         return await operation()
       })
     })
+  }
+}
+
+export class PostgresAccessRoleStore extends PostgresStore<AccessRole> {
+  constructor(db: any) {
+    super(
+      db,
+      schema.accessRoles,
+      (entity: AccessRole) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        name: entity.name,
+        description: entity.description ?? null,
+        isSystemRole: entity.isSystemRole,
+        systemRoleKey: entity.systemRoleKey ?? null,
+        status: entity.status,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+      }),
+      row => new AccessRole({
+        id: row.id,
+        schoolId: row.schoolId,
+        name: row.name,
+        description: row.description ?? undefined,
+        isSystemRole: row.isSystemRole,
+        systemRoleKey: row.systemRoleKey ?? undefined,
+        permissions: [],
+        status: row.status,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    )
+  }
+
+  override async findById(id: string): Promise<AccessRole | undefined> {
+    const role = await super.findById(id)
+    if (!role)
+      return undefined
+
+    const client = this.getClient()
+    const permissionRows = await client
+      .select({ permission: schema.accessRolePermissions.permission })
+      .from(schema.accessRolePermissions)
+      .where(eq(schema.accessRolePermissions.roleId, id))
+
+    const permissions = permissionRows.map((r: any) => r.permission as Permission)
+
+    return new AccessRole({
+      id: role.id,
+      schoolId: role.schoolId,
+      name: role.name,
+      description: role.description,
+      isSystemRole: role.isSystemRole,
+      systemRoleKey: role.systemRoleKey,
+      permissions,
+      status: role.status,
+      createdAt: role.createdAt,
+      updatedAt: role.updatedAt,
+    })
+  }
+
+  override async findByIds(ids: string[]): Promise<AccessRole[]> {
+    const roles = await super.findByIds(ids)
+    if (roles.length === 0)
+      return []
+
+    const client = this.getClient()
+    const permissionRows = await client
+      .select({
+        roleId: schema.accessRolePermissions.roleId,
+        permission: schema.accessRolePermissions.permission,
+      })
+      .from(schema.accessRolePermissions)
+      .where(inArray(schema.accessRolePermissions.roleId, ids))
+
+    const permissionsByRole = new Map<string, Permission[]>()
+    for (const row of permissionRows) {
+      const list = permissionsByRole.get(row.roleId) ?? []
+      list.push(row.permission as Permission)
+      permissionsByRole.set(row.roleId, list)
+    }
+
+    return roles.map(role => new AccessRole({
+      id: role.id,
+      schoolId: role.schoolId,
+      name: role.name,
+      description: role.description,
+      isSystemRole: role.isSystemRole,
+      systemRoleKey: role.systemRoleKey,
+      permissions: permissionsByRole.get(role.id) ?? [],
+      status: role.status,
+      createdAt: role.createdAt,
+      updatedAt: role.updatedAt,
+    }))
+  }
+
+  override async list(options?: any): Promise<AccessRole[]> {
+    const roles = await super.list(options)
+    if (roles.length === 0)
+      return []
+
+    const ids = roles.map(r => r.id)
+    const client = this.getClient()
+    const permissionRows = await client
+      .select({
+        roleId: schema.accessRolePermissions.roleId,
+        permission: schema.accessRolePermissions.permission,
+      })
+      .from(schema.accessRolePermissions)
+      .where(inArray(schema.accessRolePermissions.roleId, ids))
+
+    const permissionsByRole = new Map<string, Permission[]>()
+    for (const row of permissionRows) {
+      const list = permissionsByRole.get(row.roleId) ?? []
+      list.push(row.permission as Permission)
+      permissionsByRole.set(row.roleId, list)
+    }
+
+    return roles.map(role => new AccessRole({
+      id: role.id,
+      schoolId: role.schoolId,
+      name: role.name,
+      description: role.description,
+      isSystemRole: role.isSystemRole,
+      systemRoleKey: role.systemRoleKey,
+      permissions: permissionsByRole.get(role.id) ?? [],
+      status: role.status,
+      createdAt: role.createdAt,
+      updatedAt: role.updatedAt,
+    }))
+  }
+
+  override async save(entity: AccessRole): Promise<void> {
+    const client = this.getClient()
+    await super.save(entity)
+
+    await client
+      .delete(schema.accessRolePermissions)
+      .where(eq(schema.accessRolePermissions.roleId, entity.id))
+
+    if (entity.permissions && entity.permissions.length > 0) {
+      const values = entity.permissions.map(permission => ({
+        roleId: entity.id,
+        permission,
+      }))
+      await client
+        .insert(schema.accessRolePermissions)
+        .values(values)
+    }
+  }
+
+  override async batchSave(entities: AccessRole[]): Promise<string[]> {
+    if (entities.length === 0)
+      return []
+    const client = this.getClient()
+    const ids = await super.batchSave(entities)
+
+    await client
+      .delete(schema.accessRolePermissions)
+      .where(inArray(schema.accessRolePermissions.roleId, ids))
+
+    const values = entities.flatMap(entity =>
+      (entity.permissions || []).map(permission => ({
+        roleId: entity.id,
+        permission,
+      })),
+    )
+    if (values.length > 0) {
+      await client
+        .insert(schema.accessRolePermissions)
+        .values(values)
+    }
+    return ids
+  }
+
+  override async delete(id: string): Promise<void> {
+    const client = this.getClient()
+    await client
+      .delete(schema.accessRolePermissions)
+      .where(eq(schema.accessRolePermissions.roleId, id))
+    await super.delete(id)
+  }
+
+  override async batchDelete(ids: string[]): Promise<void> {
+    if (ids.length === 0)
+      return
+    const client = this.getClient()
+    await client
+      .delete(schema.accessRolePermissions)
+      .where(inArray(schema.accessRolePermissions.roleId, ids))
+    await super.batchDelete(ids)
+  }
+}
+
+export class PostgresStaffRoleAssignmentStore extends PostgresStore<StaffRoleAssignment> {
+  constructor(db: any) {
+    super(
+      db,
+      schema.staffRoleAssignments,
+      (entity: StaffRoleAssignment) => ({
+        id: entity.id,
+        staffId: entity.staffId,
+        schoolId: entity.schoolId,
+        academicYearId: entity.academicYearId ?? null,
+        status: entity.status,
+        startsAt: entity.startsAt ?? null,
+        endsAt: entity.endsAt ?? null,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+      }),
+      row => new StaffRoleAssignment({
+        id: row.id,
+        staffId: row.staffId,
+        schoolId: row.schoolId,
+        academicYearId: row.academicYearId ?? undefined,
+        roleIds: ['dummy'],
+        scopeGrants: [],
+        status: row.status,
+        startsAt: row.startsAt ?? undefined,
+        endsAt: row.endsAt ?? undefined,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    )
+  }
+
+  private async populateRelations(assignments: StaffRoleAssignment[]): Promise<StaffRoleAssignment[]> {
+    if (assignments.length === 0)
+      return []
+
+    const ids = assignments.map(a => a.id)
+    const client = this.getClient()
+
+    const roleRows = await client
+      .select({
+        assignmentId: schema.staffRoleAssignmentRoles.assignmentId,
+        roleId: schema.staffRoleAssignmentRoles.roleId,
+      })
+      .from(schema.staffRoleAssignmentRoles)
+      .where(inArray(schema.staffRoleAssignmentRoles.assignmentId, ids))
+
+    const rolesByAssignment = new Map<string, string[]>()
+    for (const row of roleRows) {
+      const list = rolesByAssignment.get(row.assignmentId) ?? []
+      list.push(row.roleId)
+      rolesByAssignment.set(row.assignmentId, list)
+    }
+
+    const scopeRows = await client
+      .select({
+        assignmentId: schema.staffRoleAssignmentScopeGrants.assignmentId,
+        permission: schema.staffRoleAssignmentScopeGrants.permission,
+        scopeType: schema.staffRoleAssignmentScopeGrants.scopeType,
+        scopeEntityIds: schema.staffRoleAssignmentScopeGrants.scopeEntityIds,
+      })
+      .from(schema.staffRoleAssignmentScopeGrants)
+      .where(inArray(schema.staffRoleAssignmentScopeGrants.assignmentId, ids))
+
+    const scopeGrantsByAssignment = new Map<string, any[]>()
+    for (const row of scopeRows) {
+      const list = scopeGrantsByAssignment.get(row.assignmentId) ?? []
+      list.push({
+        permission: row.permission as Permission,
+        scopeType: row.scopeType,
+        scopeEntityIds: deserializeJsonb(row.scopeEntityIds),
+      })
+      scopeGrantsByAssignment.set(row.assignmentId, list)
+    }
+
+    return assignments.map(a => new StaffRoleAssignment({
+      id: a.id,
+      staffId: a.staffId,
+      schoolId: a.schoolId,
+      academicYearId: a.academicYearId,
+      roleIds: rolesByAssignment.get(a.id) ?? [],
+      scopeGrants: scopeGrantsByAssignment.get(a.id) ?? [],
+      status: a.status,
+      startsAt: a.startsAt,
+      endsAt: a.endsAt,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+    }))
+  }
+
+  override async findById(id: string): Promise<StaffRoleAssignment | undefined> {
+    const assignment = await super.findById(id)
+    if (!assignment)
+      return undefined
+    const populated = await this.populateRelations([assignment])
+    return populated[0]
+  }
+
+  override async findByIds(ids: string[]): Promise<StaffRoleAssignment[]> {
+    const assignments = await super.findByIds(ids)
+    return this.populateRelations(assignments)
+  }
+
+  override async list(options?: any): Promise<StaffRoleAssignment[]> {
+    const assignments = await super.list(options)
+    return this.populateRelations(assignments)
+  }
+
+  override async save(entity: StaffRoleAssignment): Promise<void> {
+    const client = this.getClient()
+    await super.save(entity)
+
+    await client
+      .delete(schema.staffRoleAssignmentRoles)
+      .where(eq(schema.staffRoleAssignmentRoles.assignmentId, entity.id))
+
+    await client
+      .delete(schema.staffRoleAssignmentScopeGrants)
+      .where(eq(schema.staffRoleAssignmentScopeGrants.assignmentId, entity.id))
+
+    if (entity.roleIds && entity.roleIds.length > 0) {
+      const roleValues = entity.roleIds.map(roleId => ({
+        assignmentId: entity.id,
+        roleId,
+      }))
+      await client
+        .insert(schema.staffRoleAssignmentRoles)
+        .values(roleValues)
+    }
+
+    if (entity.scopeGrants && entity.scopeGrants.length > 0) {
+      const scopeValues = entity.scopeGrants.map(grant => ({
+        assignmentId: entity.id,
+        permission: grant.permission,
+        scopeType: grant.scopeType,
+        scopeEntityIds: grant.scopeEntityIds,
+      }))
+      await client
+        .insert(schema.staffRoleAssignmentScopeGrants)
+        .values(scopeValues)
+    }
+  }
+
+  override async batchSave(entities: StaffRoleAssignment[]): Promise<string[]> {
+    if (entities.length === 0)
+      return []
+    const client = this.getClient()
+    const ids = await super.batchSave(entities)
+
+    await client
+      .delete(schema.staffRoleAssignmentRoles)
+      .where(inArray(schema.staffRoleAssignmentRoles.assignmentId, ids))
+
+    await client
+      .delete(schema.staffRoleAssignmentScopeGrants)
+      .where(inArray(schema.staffRoleAssignmentScopeGrants.assignmentId, ids))
+
+    const roleValues = entities.flatMap(entity =>
+      (entity.roleIds || []).map(roleId => ({
+        assignmentId: entity.id,
+        roleId,
+      })),
+    )
+    if (roleValues.length > 0) {
+      await client
+        .insert(schema.staffRoleAssignmentRoles)
+        .values(roleValues)
+    }
+
+    const scopeValues = entities.flatMap(entity =>
+      (entity.scopeGrants || []).map(grant => ({
+        assignmentId: entity.id,
+        permission: grant.permission,
+        scopeType: grant.scopeType,
+        scopeEntityIds: grant.scopeEntityIds,
+      })),
+    )
+    if (scopeValues.length > 0) {
+      await client
+        .insert(schema.staffRoleAssignmentScopeGrants)
+        .values(scopeValues)
+    }
+
+    return ids
+  }
+
+  override async delete(id: string): Promise<void> {
+    const client = this.getClient()
+    await client
+      .delete(schema.staffRoleAssignmentRoles)
+      .where(eq(schema.staffRoleAssignmentRoles.assignmentId, id))
+    await client
+      .delete(schema.staffRoleAssignmentScopeGrants)
+      .where(eq(schema.staffRoleAssignmentScopeGrants.assignmentId, id))
+    await super.delete(id)
+  }
+
+  override async batchDelete(ids: string[]): Promise<void> {
+    if (ids.length === 0)
+      return
+    const client = this.getClient()
+    await client
+      .delete(schema.staffRoleAssignmentRoles)
+      .where(inArray(schema.staffRoleAssignmentRoles.assignmentId, ids))
+    await client
+      .delete(schema.staffRoleAssignmentScopeGrants)
+      .where(inArray(schema.staffRoleAssignmentScopeGrants.assignmentId, ids))
+    await super.batchDelete(ids)
   }
 }
 
@@ -219,65 +623,9 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       createDefaultMappers(StaffAssignment).toDomain,
     )
 
-    this.accessRoles = new PostgresStore(
-      db,
-      schema.accessRoles,
-      (entity: AccessRole) => ({
-        id: entity.id,
-        schoolId: entity.schoolId,
-        name: entity.name,
-        description: entity.description ?? null,
-        isSystemRole: entity.isSystemRole,
-        systemRoleKey: entity.systemRoleKey ?? null,
-        permissions: entity.permissions,
-        status: entity.status,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-      }),
-      row => new AccessRole({
-        id: row.id,
-        schoolId: row.schoolId,
-        name: row.name,
-        description: row.description,
-        isSystemRole: row.isSystemRole,
-        systemRoleKey: row.systemRoleKey ?? undefined,
-        permissions: deserializeJsonb(row.permissions),
-        status: row.status,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      }),
-    )
+    this.accessRoles = new PostgresAccessRoleStore(db)
 
-    this.staffRoleAssignments = new PostgresStore(
-      db,
-      schema.staffRoleAssignments,
-      (entity: StaffRoleAssignment) => ({
-        id: entity.id,
-        staffId: entity.staffId,
-        schoolId: entity.schoolId,
-        academicYearId: entity.academicYearId ?? null,
-        roleIds: entity.roleIds,
-        scopeGrants: entity.scopeGrants,
-        status: entity.status,
-        startsAt: entity.startsAt ?? null,
-        endsAt: entity.endsAt ?? null,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-      }),
-      row => new StaffRoleAssignment({
-        id: row.id,
-        staffId: row.staffId,
-        schoolId: row.schoolId,
-        academicYearId: row.academicYearId,
-        roleIds: deserializeJsonb(row.roleIds),
-        scopeGrants: deserializeJsonb(row.scopeGrants),
-        status: row.status,
-        startsAt: row.startsAt,
-        endsAt: row.endsAt,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      }),
-    )
+    this.staffRoleAssignments = new PostgresStaffRoleAssignmentStore(db)
 
     // 8. Attachments Store
     this.attachments = new PostgresStore(
@@ -1067,23 +1415,34 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         description TEXT,
         is_system_role BOOLEAN NOT NULL,
         system_role_key TEXT,
-        permissions JSONB NOT NULL,
         status TEXT NOT NULL,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS access_role_permissions (
+        role_id TEXT NOT NULL,
+        permission TEXT NOT NULL
       )`,
       `CREATE TABLE IF NOT EXISTS staff_role_assignments (
         id TEXT PRIMARY KEY,
         staff_id TEXT NOT NULL,
         school_id TEXT NOT NULL,
         academic_year_id TEXT,
-        role_ids JSONB NOT NULL,
-        scope_grants JSONB NOT NULL,
         status TEXT NOT NULL,
         starts_at TIMESTAMP,
         ends_at TIMESTAMP,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS staff_role_assignment_roles (
+        assignment_id TEXT NOT NULL,
+        role_id TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS staff_role_assignment_scope_grants (
+        assignment_id TEXT NOT NULL,
+        permission TEXT NOT NULL,
+        scope_type TEXT NOT NULL,
+        scope_entity_ids JSONB NOT NULL
       )`,
       `CREATE TABLE IF NOT EXISTS attachments (
         id TEXT PRIMARY KEY,

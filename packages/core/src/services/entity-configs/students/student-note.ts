@@ -77,6 +77,7 @@ async function hasFullStudentRecordAccess(actor: ActorMetadata, repositories: Sc
       staffMemberId: actor.staffMemberId,
       schoolId: actor.schoolId,
       repositories,
+      fallbackRoles: actor.roles,
     })
     const permission = Permission.QUERY_STUDENT_DETAIL_READ
     return grants.permissions.has(permission)

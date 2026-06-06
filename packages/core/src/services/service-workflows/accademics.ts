@@ -1,6 +1,14 @@
+import type { ClassSubjectArgs, ClassSubjectMatterArgs } from '../../entities'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
-import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress } from '../../entities'
+import {
+  ClassSubject,
+
+  ClassSubjectMatter,
+
+  ClassSubjectMatterStatus,
+  ClassSubjectProgress,
+} from '../../entities'
 import { roundTo2 } from '../../entities/utils'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
@@ -15,9 +23,29 @@ export interface RecordSessionProgressInput {
   recordedAt?: Date
 }
 
+export type OfferSubjectToClassInput = ClassSubjectArgs
+
+export type AssignMatterToClassSubjectInput = ClassSubjectMatterArgs
+
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async offerSubjectToClass(input: OfferSubjectToClassInput): Promise<ClassSubject> {
+    const classSubject = new ClassSubject(input)
+    await this.baseService.classSubjects.save(classSubject)
+    return classSubject
+  }
+
+  async assignMatterToClassSubject(input: AssignMatterToClassSubjectInput): Promise<ClassSubjectMatter> {
+    const matter = new ClassSubjectMatter({
+      ...input,
+      status: input.status ?? ClassSubjectMatterStatus.NotStarted,
+      completedPercentage: input.completedPercentage ?? 0,
+    })
+    await this.baseService.classSubjectMatters.save(matter)
+    return matter
   }
 
   async recordSessionProgress({

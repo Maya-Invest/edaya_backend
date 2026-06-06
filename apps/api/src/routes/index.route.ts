@@ -4,10 +4,7 @@ import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { createRouter } from "@/lib/create-app";
 import { authRouteHandler, getAuthRoute, postAuthRoute } from "./auth/auth.route";
-import { commandRoutePairs } from "./generic-commands/commands.route";
-import { queryRoutePairs } from "./generic-queries/queries.route";
-import { overdueFeeCountHandler, overdueFeeCountRoute } from "./school-queries/overdue-fee-count.route";
-import { publishedReportCardCountHandler, publishedReportCardCountRoute } from "./school-queries/published-report-card-count.route";
+import { coreRoutePairs } from "./core/core.route";
 
 const router = createRouter()
   .openapi(
@@ -31,16 +28,10 @@ const router = createRouter()
 
 router
   .openapi(getAuthRoute, authRouteHandler)
-  .openapi(postAuthRoute, authRouteHandler)
-  .openapi(overdueFeeCountRoute, overdueFeeCountHandler)
-  .openapi(publishedReportCardCountRoute, publishedReportCardCountHandler);
+  .openapi(postAuthRoute, authRouteHandler);
 
-// Programmatically mount all OpenAPI query route and handler pairs
-queryRoutePairs.forEach(({ route, handler }) => {
-  router.openapi(route, handler);
-});
-// Programmatically mount all OpenAPI command route and handler pairs
-commandRoutePairs.forEach(({ route, handler }) => {
+// Programmatically mount the core-aligned API surface.
+coreRoutePairs.forEach(({ route, handler }) => {
   router.openapi(route, handler);
 });
 

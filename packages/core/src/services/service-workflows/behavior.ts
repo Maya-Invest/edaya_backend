@@ -1,8 +1,9 @@
-import type { Incident } from '../../entities/students/incident'
+import type { Incident, IncidentArgs } from '../../entities/students/incident'
 import type { IncidentInvolvementRole } from '../../entities/students/student-incident-involvement'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import { DisciplinaryActionKind } from '../../entities/students/disciplinary-action'
+import { Incident as IncidentEntity, IncidentStatus } from '../../entities/students/incident'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { StudentDisciplinaryAction, StudentDisciplinaryActionStatus } from '../../entities/students/student-disciplinary-action'
 import { StudentIncidentInvolvement } from '../../entities/students/student-incident-involvement'
@@ -30,9 +31,33 @@ export interface ApplyDisciplinaryActionInput {
   createdAt?: Date
 }
 
+export type RecordIncidentInput = Omit<IncidentArgs, 'reporterId'> & {
+  reporterId?: string
+}
+
+export interface UpdateStudentDisciplinaryActionStatusInput {
+  studentDisciplinaryActionId?: string
+  actionId?: string
+  status: StudentDisciplinaryActionStatus
+}
+
+export interface ResolveIncidentInput {
+  incidentId: string
+  resolutionNotes?: string
+}
+
 export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async recordIncident(input: RecordIncidentInput): Promise<Incident> {
+    const incident = new IncidentEntity({
+      ...input,
+      reporterId: input.reporterId ?? resolveAuditActorId(this.baseService.actor),
+    })
+    await this.baseService.incidents.save(incident)
+    return incident
   }
 
   async addStudentInvolvement({
@@ -101,6 +126,56 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     return applied
   }
 
+  async updateStudentDisciplinaryActionStatus({
+    studentDisciplinaryActionId,
+    actionId,
+    status,
+  }: UpdateStudentDisciplinaryActionStatusInput): Promise<StudentDisciplinaryAction> {
+    const existing = await this.requireEntity(
+      this.baseService.studentDisciplinaryActions,
+      studentDisciplinaryActionId ?? actionId ?? '',
+    )
+    const action = new StudentDisciplinaryAction({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      incidentId: existing.incidentId,
+      studentId: existing.studentId,
+      disciplinaryActionId: existing.disciplinaryActionId,
+      assignedByStaffId: existing.assignedByStaffId,
+      startsAt: existing.startsAt,
+      endsAt: existing.endsAt,
+      status,
+      notes: existing.notes,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    })
+    await this.baseService.studentDisciplinaryActions.save(action)
+    return action
+  }
+
+  async resolveIncident({ incidentId, resolutionNotes }: ResolveIncidentInput): Promise<Incident> {
+    const existing = await this.requireEntity(this.baseService.incidents, incidentId)
+    const incident = new IncidentEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      title: existing.title,
+      description: existing.description,
+      date: existing.date,
+      kind: existing.kind,
+      reporterId: existing.reporterId,
+      classGroupId: existing.classGroupId,
+      sessionId: existing.sessionId,
+      status: IncidentStatus.Resolved,
+      resolutionNotes: resolutionNotes ?? 'Resolved',
+      resolvedAt: new Date(),
+      resolvedByStaffId: resolveAuditActorId(this.baseService.actor),
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    })
+    await this.baseService.incidents.save(incident)
+    return incident
+  }
+
   private async requireIncident(incidentId: string): Promise<Incident> {
     const incident = await this.baseService.repositories.incidents.findById(incidentId)
     if (!incident || incident.schoolId !== this.baseService.actor.schoolId) {
@@ -150,6 +225,17 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     if (resource.studentId) {
       await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [resource.studentId])
     }
+  }
+
+  private async requireEntity<T>(
+    managedService: { findById: (id: string) => Promise<T | undefined> },
+    id: string,
+  ): Promise<T> {
+    const entity = await managedService.findById(id)
+    if (!entity) {
+      denyResourceAccess()
+    }
+    return entity
   }
 }
 

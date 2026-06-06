@@ -125,5 +125,6 @@ async function loadEffectiveGrants(
     staffMemberId: actor.staffMemberId,
     schoolId: request.schoolId,
     repositories: args.repositories,
+    fallbackRoles: actor.roles,
   })
 }

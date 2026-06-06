@@ -1,8 +1,8 @@
 import type { AuthorizationPolicy } from '../../../src/authorization'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
 import { describe, expect, test } from 'bun:test'
-import { createSystemActorMetadata } from '../../../src/authorization'
 import { SchoolApplication, SchoolService } from '../../../src'
+import { createSystemActorMetadata } from '../../../src/authorization'
 
 describe('SchoolApplication', () => {
   const actor = createSystemActorMetadata({
@@ -42,12 +42,18 @@ describe('SchoolApplication', () => {
       atomicExecution,
     })
 
-    const serviceProperties = application.forActor(actor) as unknown as Record<string, unknown>
+    const serviceProperties = application.forActor(actor) as unknown as {
+      setup?: unknown
+      students?: unknown
+      finance?: unknown
+      queries?: unknown
+      config?: unknown
+    }
 
-    expect(serviceProperties['setup']).toBeUndefined()
-    expect(serviceProperties['students']).toBeUndefined()
-    expect(serviceProperties['finance']).toBeUndefined()
-    expect(serviceProperties['queries']).toBeUndefined()
-    expect(serviceProperties['config']).toBeUndefined()
+    expect(serviceProperties.setup).toBeUndefined()
+    expect(serviceProperties.students).toBeUndefined()
+    expect(serviceProperties.finance).toBeUndefined()
+    expect(serviceProperties.queries).toBeUndefined()
+    expect(serviceProperties.config).toBeUndefined()
   })
 })

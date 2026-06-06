@@ -1,9 +1,10 @@
-import type { Fee } from '../../entities/finances/fee'
+import type { Fee, FeeArgs } from '../../entities/finances/fee'
 import type { PaymentMethod } from '../../entities/finances/payment'
 import type { StudentFeeInstallment } from '../../entities/finances/student-fee'
 import type { BaseSchoolService } from '../base-school-service'
 import { Permission, resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
+import { Fee as FeeEntity } from '../../entities/finances/fee'
 import { Payment, PaymentStatus } from '../../entities/finances/payment'
 import { FeeStatus, StudentFee } from '../../entities/finances/student-fee'
 import { permissionAction } from '../../shared'
@@ -40,9 +41,28 @@ export interface UpdatePaymentStatusInput {
   referenceDate?: Date
 }
 
+export type CreateFeeInput = FeeArgs
+
+export interface AdjustStudentFeeInput {
+  studentFeeId: string
+  adjustmentAmount: number
+  reason?: string
+}
+
+export interface CancelStudentFeeInput {
+  studentFeeId: string
+  reason?: string
+}
+
 export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async createFee(input: CreateFeeInput): Promise<Fee> {
+    const fee = new FeeEntity(input)
+    await this.baseService.fees.save(fee)
+    return fee
   }
 
   async assignFeeToStudent({
@@ -208,6 +228,36 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       )
       return changedPayment
     })
+  }
+
+  async adjustStudentFee({
+    studentFeeId,
+    adjustmentAmount,
+    reason,
+  }: AdjustStudentFeeInput): Promise<StudentFee> {
+    const existing = await this.requireStudentFee(studentFeeId)
+    const adjusted = existing.copyWith({
+      adjustmentAmount,
+      adjustmentReason: reason,
+      adjustedById: resolveAuditActorId(this.baseService.actor),
+      adjustedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    await this.baseService.studentFees.save(adjusted)
+    return adjusted
+  }
+
+  async cancelStudentFee({ studentFeeId, reason }: CancelStudentFeeInput): Promise<StudentFee> {
+    const existing = await this.requireStudentFee(studentFeeId)
+    const cancelled = existing.copyWith({
+      status: FeeStatus.Cancelled,
+      cancellationReason: reason,
+      cancelledById: resolveAuditActorId(this.baseService.actor),
+      cancelledAt: new Date(),
+      updatedAt: new Date(),
+    })
+    await this.baseService.studentFees.save(cancelled)
+    return cancelled
   }
 
   private materializeInstallments(id: string, amount: number, fee: Fee): StudentFeeInstallment[] {

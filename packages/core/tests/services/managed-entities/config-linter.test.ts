@@ -30,7 +30,7 @@ interface ConfigSource {
 }
 
 function listConfigSources(directory = configRoot): ConfigSource[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = join(directory, entry.name)
     if (entry.isDirectory())
       return listConfigSources(entryPath)
@@ -56,8 +56,8 @@ describe('entity config linter', () => {
 
   test('requires indirect tenant configs to declare parent save gates or explicit exceptions', () => {
     const missingParentGates = listConfigSources()
-      .filter(config => /(?:indirectTenant|LinkedTenant|Tenant\()/.test(config.source))
-      .filter(config => !/(?:directSchoolTenant|schoolEntityTenant)/.test(config.source))
+      .filter(config => /indirectTenant|LinkedTenant|Tenant\(/.test(config.source))
+      .filter(config => !/directSchoolTenant|schoolEntityTenant/.test(config.source))
       .filter(config => !/preSave\s*:/.test(config.source))
       .map(config => config.path)
       .sort()
@@ -67,7 +67,7 @@ describe('entity config linter', () => {
 
   test('requires direct school tenant configs to declare delete gates or explicit exceptions', () => {
     const missingDeleteGates = listConfigSources()
-      .filter(config => /(?:directSchoolTenant|schoolEntityTenant)/.test(config.source))
+      .filter(config => /directSchoolTenant|schoolEntityTenant/.test(config.source))
       .filter(config => !/preDelete\s*:/.test(config.source))
       .map(config => config.path)
       .sort()

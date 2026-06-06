@@ -1,9 +1,10 @@
-import type { AnnouncementTarget } from '../../entities/messaging/announcement-target'
+import type { AnnouncementArgs } from '../../entities/messaging/announcement'
+import type { AnnouncementTarget, AnnouncementTargetArgs } from '../../entities/messaging/announcement-target'
 import type { MessageDeliveryChannel, MessageDeliveryStatus } from '../../entities/messaging/message-delivery'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
-import { AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
+import { AnnouncementTarget as AnnouncementTargetEntity, AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
 import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { permissionAction } from '../../shared'
@@ -36,9 +37,24 @@ export interface MaterializeDeliveriesInput {
   createdAt?: Date
 }
 
+export type CreateAnnouncementInput = AnnouncementArgs
+export type AddAnnouncementTargetInput = AnnouncementTargetArgs
+
 export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async createAnnouncement(input: CreateAnnouncementInput): Promise<Announcement> {
+    const announcement = new Announcement(input)
+    await this.baseService.announcements.save(announcement)
+    return announcement
+  }
+
+  async addTarget(input: AddAnnouncementTargetInput): Promise<AnnouncementTarget> {
+    const target = new AnnouncementTargetEntity(input)
+    await this.baseService.announcementTargets.save(target)
+    return target
   }
 
   async publishAnnouncement({

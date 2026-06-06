@@ -82,10 +82,14 @@ export const accessRoles = pgTable('access_roles', {
   description: text('description'),
   isSystemRole: boolean('is_system_role').notNull(),
   systemRoleKey: text('system_role_key'),
-  permissions: jsonb('permissions').notNull(),
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+})
+
+export const accessRolePermissions = pgTable('access_role_permissions', {
+  roleId: text('role_id').notNull(),
+  permission: text('permission').notNull(),
 })
 
 export const staffRoleAssignments = pgTable('staff_role_assignments', {
@@ -93,13 +97,23 @@ export const staffRoleAssignments = pgTable('staff_role_assignments', {
   staffId: text('staff_id').notNull(),
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id'),
-  roleIds: jsonb('role_ids').notNull(),
-  scopeGrants: jsonb('scope_grants').notNull(),
   status: text('status').notNull(),
   startsAt: timestamp('starts_at', { mode: 'date' }),
   endsAt: timestamp('ends_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+})
+
+export const staffRoleAssignmentRoles = pgTable('staff_role_assignment_roles', {
+  assignmentId: text('assignment_id').notNull(),
+  roleId: text('role_id').notNull(),
+})
+
+export const staffRoleAssignmentScopeGrants = pgTable('staff_role_assignment_scope_grants', {
+  assignmentId: text('assignment_id').notNull(),
+  permission: text('permission').notNull(),
+  scopeType: text('scope_type').notNull(),
+  scopeEntityIds: jsonb('scope_entity_ids').notNull(),
 })
 
 // 8. Attachment Table

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { ApiSchoolApplication } from "@/lib/school-service-facade";
+import { ApiSchoolApplication } from "@/lib/school-application-runtime";
 import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
 import {
   RepositoryAuthorizationPolicy,

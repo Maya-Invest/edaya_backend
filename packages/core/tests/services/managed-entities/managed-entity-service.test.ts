@@ -1,5 +1,6 @@
-import type { SchoolRepositories } from '../../../src/ports'
 import type { ActorMetadata } from '../../../src/authorization'
+import type { SchoolRepositories } from '../../../src/ports'
+import type { TestEntity } from './managed-entity-test-context'
 import {
   describe,
   expect,
@@ -14,7 +15,7 @@ import {
 import {
   actor,
   createRepository,
-  type TestEntity,
+
 } from './managed-entity-test-context'
 
 describe('ManagedEntityService', () => {

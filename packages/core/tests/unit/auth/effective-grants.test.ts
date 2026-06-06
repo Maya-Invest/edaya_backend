@@ -199,4 +199,18 @@ describe('resolveEffectiveGrants', () => {
 
     expect(grants.expiresAt?.toISOString()).toBe('2026-01-02T00:00:00.000Z')
   })
+
+  test('falls back to in-memory resolution if no database assignments exist', async () => {
+    const repositories = createRepos()
+    const grants = await resolveEffectiveGrants({
+      staffMemberId: 'staff-1',
+      schoolId: 'school-1',
+      repositories,
+      fallbackRoles: [StaffRole.Teacher],
+    })
+
+    expect(grants.isElevated).toBe(false)
+    expect(grants.permissions.has(Permission.CLASS_LOGBOOK_CREATE)).toBe(true)
+    expect(grants.permissions.has(Permission.PAYMENT_RECORD)).toBe(false)
+  })
 })

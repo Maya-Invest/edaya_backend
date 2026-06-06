@@ -1,10 +1,13 @@
 import type { AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import type { CalendarEventArgs } from '../../entities/scheduling/calendar-event'
+import type { ScheduleArgs } from '../../entities/scheduling/schedule'
+import type { SessionArgs } from '../../entities/scheduling/session'
 import type { ClassGroup } from '../../entities/school/class-group'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import { AttendanceJustificationStatus, AttendanceRecord } from '../../entities/scheduling/attendance-record'
-import { CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
-import { DayOfWeek } from '../../entities/scheduling/schedule'
+import { CalendarEvent, CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
+import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
 import { Session, SessionKind } from '../../entities/scheduling/session'
 import { AttendanceMode } from '../../entities/school/class-group'
 import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
@@ -63,9 +66,38 @@ export interface RecordClassDailyAttendanceInput {
   createdAt?: Date
 }
 
+export type CreateScheduleInput = ScheduleArgs
+export type CreateCalendarEventInput = CalendarEventArgs
+export type CreateSessionInput = SessionArgs
+
+export interface ReviewAttendanceJustificationInput {
+  studentId: string
+  sessionId: string
+  decision?: AttendanceJustificationStatus
+  reason?: string
+}
+
 export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async createSchedule(input: CreateScheduleInput): Promise<Schedule> {
+    const schedule = new Schedule(input)
+    await this.baseService.schedules.save(schedule)
+    return schedule
+  }
+
+  async createCalendarEvent(input: CreateCalendarEventInput): Promise<CalendarEvent> {
+    const event = new CalendarEvent(input)
+    await this.baseService.calendarEvents.save(event)
+    return event
+  }
+
+  async createSession(input: CreateSessionInput): Promise<Session> {
+    const session = new Session(input)
+    await this.baseService.sessions.save(session)
+    return session
   }
 
   async generateSessions({
@@ -245,6 +277,23 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
+  async reviewAttendanceJustification({
+    studentId,
+    sessionId,
+    decision,
+    reason,
+  }: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
+    const existing = await this.requireOne(this.baseService.attendance, { studentId, sessionId })
+    const record = existing.copyWith({
+      justificationStatus: decision ?? AttendanceJustificationStatus.Excused,
+      reason,
+      justifiedAt: new Date(),
+      justifiedByStaffId: resolveAuditActorId(this.baseService.actor),
+    })
+    await this.baseService.attendance.save(record)
+    return record
+  }
+
   private async saveAttendanceRecord({
     id,
     studentId,
@@ -400,5 +449,16 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       scopeEntityId: classGroup.id,
     })(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+  }
+
+  private async requireOne<T>(
+    managedService: { findOne: (filter: Record<string, unknown>) => Promise<T | undefined> },
+    filter: Record<string, unknown>,
+  ): Promise<T> {
+    const entity = await managedService.findOne(filter)
+    if (!entity) {
+      denyResourceAccess()
+    }
+    return entity
   }
 }

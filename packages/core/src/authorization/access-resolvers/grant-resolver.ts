@@ -57,6 +57,7 @@ async function loadStaffEffectiveGrants(
       staffMemberId: actor.staffMemberId,
       schoolId: actor.schoolId,
       repositories: repos,
+      fallbackRoles: actor.roles,
     })
   }
   catch (error) {

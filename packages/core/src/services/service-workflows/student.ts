@@ -1,8 +1,17 @@
-import type { ClassGroup, Guardian, GuardianStudentLink as GuardianStudentLinkType } from '../../entities'
+import type {
+  ClassGroup,
+  GuardianArgs,
+  GuardianStudentLink as GuardianStudentLinkType,
+  StudentArgs,
+  StudentHealthProfile,
+  StudentHealthProfileArgs,
+  StudentNote,
+  StudentNoteArgs,
+} from '../../entities'
 import type { BaseSchoolService } from '../base-school-service'
 import { Permission, resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
-import { GuardianStudentLink } from '../../entities'
+import { Guardian, GuardianStudentLink, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity } from '../../entities'
 import { Student, StudentStatus } from '../../entities/students/student'
 import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollment, StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
 import { permissionAction } from '../../shared'
@@ -56,9 +65,68 @@ export interface GraduateStudentInput {
   notes?: string
 }
 
+export type RegisterStudentInput = StudentArgs
+export type RegisterGuardianInput = GuardianArgs
+
+export interface CloseEnrollmentInput {
+  enrollmentId: string
+  endReason: EnrollmentEndReason
+  endedAt?: Date
+}
+
+export interface RecordProgressionDecisionInput {
+  enrollmentId: string
+  decision: ProgressionDecision
+  decidedAt?: Date
+  notes?: string
+}
+
+export interface UpdateStudentProfileInput extends Partial<StudentArgs> {
+  studentId: string
+}
+
+export interface UpdateStudentStatusInput {
+  studentId: string
+  status: StudentStatus
+}
+
+export type UpsertStudentHealthProfileInput = Omit<StudentHealthProfileArgs, 'schoolId'> & {
+  schoolId?: string
+}
+
+export type CreateStudentNoteInput = Omit<StudentNoteArgs, 'schoolId' | 'authorStaffId'> & {
+  schoolId?: string
+  authorStaffId?: string
+}
+
+export interface UpdateStudentNoteInput extends Partial<StudentNoteArgs> {
+  noteId: string
+}
+
+export interface UpdateGuardianContactMethodsInput extends Partial<GuardianArgs> {
+  guardianId: string
+}
+
+export interface UpdateGuardianStudentLinkInput extends Partial<ConstructorParameters<typeof GuardianStudentLink>[0]> {
+  guardianId: string
+  studentId: string
+}
+
 export class StudentServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async registerStudent(input: RegisterStudentInput): Promise<Student> {
+    const student = new Student(input)
+    await this.baseService.students.save(student)
+    return student
+  }
+
+  async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
+    const guardian = new Guardian(input)
+    await this.baseService.guardians.save(guardian)
+    return guardian
   }
 
   async enrollStudent({
@@ -271,6 +339,130 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
+  async closeEnrollment({ enrollmentId, endReason, endedAt }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
+    const existing = await this.requireManagedEnrollment(enrollmentId)
+    const closed = existing.close({
+      endedAt: endedAt ?? new Date(),
+      endReason,
+      closedBy: resolveAuditActorId(this.baseService.actor),
+    })
+    await this.baseService.enrollments.save(closed)
+    return closed
+  }
+
+  async recordProgressionDecision({
+    enrollmentId,
+    decision,
+    decidedAt,
+    notes,
+  }: RecordProgressionDecisionInput): Promise<StudentClassEnrollment> {
+    const existing = await this.requireManagedEnrollment(enrollmentId)
+    const decided = existing.recordProgressionDecision({
+      decision,
+      decidedAt: decidedAt ?? new Date(),
+      decidedBy: resolveAuditActorId(this.baseService.actor),
+      notes,
+    })
+    await this.baseService.enrollments.save(decided)
+    return decided
+  }
+
+  async updateStudentProfile({ studentId, ...changes }: UpdateStudentProfileInput): Promise<Student> {
+    const existing = await this.requireEntity(this.baseService.students, studentId)
+    const student = existing.copyWith(changes)
+    await this.baseService.students.save(student)
+    return student
+  }
+
+  async updateStudentStatus({ studentId, status }: UpdateStudentStatusInput): Promise<Student> {
+    const existing = await this.requireEntity(this.baseService.students, studentId)
+    const student = existing.copyWith({ status })
+    await this.baseService.students.save(student)
+    return student
+  }
+
+  async upsertStudentHealthProfile(input: UpsertStudentHealthProfileInput): Promise<StudentHealthProfile> {
+    const student = await this.requireEntity(this.baseService.students, input.studentId)
+    const healthProfile = new StudentHealthProfileEntity({
+      ...input,
+      schoolId: input.schoolId ?? student.schoolId,
+    })
+    await this.baseService.studentHealthProfiles.save(healthProfile)
+    return healthProfile
+  }
+
+  async createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote> {
+    const student = await this.requireEntity(this.baseService.students, input.studentId)
+    const note = new StudentNoteEntity({
+      ...input,
+      schoolId: input.schoolId ?? student.schoolId,
+      authorStaffId: input.authorStaffId ?? resolveAuditActorId(this.baseService.actor),
+    })
+    await this.baseService.studentNotes.save(note)
+    return note
+  }
+
+  async updateStudentNote({ noteId, ...changes }: UpdateStudentNoteInput): Promise<StudentNote> {
+    const existing = await this.requireEntity(this.baseService.studentNotes, noteId)
+    const note = new StudentNoteEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      studentId: existing.studentId,
+      authorStaffId: existing.authorStaffId,
+      title: changes.title === undefined ? existing.title : changes.title,
+      body: changes.body ?? existing.body,
+      visibility: changes.visibility ?? existing.visibility,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    })
+    await this.baseService.studentNotes.save(note)
+    return note
+  }
+
+  async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
+    const existing = await this.requireEntity(this.baseService.guardians, guardianId)
+    const guardian = new Guardian({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: changes.firstName ?? existing.firstName,
+      lastName: changes.lastName ?? existing.lastName,
+      contactMethods: changes.contactMethods ?? existing.contactMethods,
+      subjectId: existing.subjectId,
+      hasAccess: changes.hasAccess ?? existing.hasAccess,
+      premiumNotificationsEnabled: changes.premiumNotificationsEnabled ?? existing.premiumNotificationsEnabled,
+      createdAt: existing.createdAt,
+    })
+    await this.baseService.guardians.save(guardian)
+    return guardian
+  }
+
+  async updateGuardianStudentLink({
+    guardianId,
+    studentId,
+    ...changes
+  }: UpdateGuardianStudentLinkInput): Promise<GuardianStudentLinkType> {
+    const existing = await this.requireOne(this.baseService.guardianLinks, { guardianId, studentId })
+    const link = new GuardianStudentLink({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      guardianId: existing.guardianId,
+      studentId: existing.studentId,
+      relationship: changes.relationship ?? existing.relationship,
+      isPrimary: changes.isPrimary ?? existing.isPrimary,
+      isBillingContact: changes.isBillingContact ?? existing.isBillingContact,
+      legalGuardian: changes.legalGuardian ?? existing.legalGuardian,
+      canPickup: changes.canPickup ?? existing.canPickup,
+      emergencyContactPriority: changes.emergencyContactPriority ?? existing.emergencyContactPriority,
+      receivesAcademicReports: changes.receivesAcademicReports ?? existing.receivesAcademicReports,
+      receivesAttendanceAlerts: changes.receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
+      contactRestrictions: changes.contactRestrictions ?? existing.contactRestrictions,
+      notes: changes.notes ?? existing.notes,
+      createdAt: existing.createdAt,
+    })
+    await this.baseService.guardianLinks.save(link)
+    return link
+  }
+
   private async requireManagedEnrollment(enrollmentId: string): Promise<StudentClassEnrollment> {
     const enrollment = await this.baseService.repositories.enrollments.findById(enrollmentId)
     if (!enrollment) {
@@ -378,5 +570,27 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       }
     }
     denyResourceAccess()
+  }
+
+  private async requireEntity<T>(
+    managedService: { findById: (id: string) => Promise<T | undefined> },
+    id: string,
+  ): Promise<T> {
+    const entity = await managedService.findById(id)
+    if (!entity) {
+      denyResourceAccess()
+    }
+    return entity
+  }
+
+  private async requireOne<T>(
+    managedService: { findOne: (filter: Record<string, unknown>) => Promise<T | undefined> },
+    filter: Record<string, unknown>,
+  ): Promise<T> {
+    const entity = await managedService.findOne(filter)
+    if (!entity) {
+      denyResourceAccess()
+    }
+    return entity
   }
 }

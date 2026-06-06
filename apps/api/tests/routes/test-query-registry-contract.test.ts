@@ -1,14 +1,12 @@
 import { describe, expect, it } from "bun:test";
-
-import { commandRoutePairs } from "@/routes/generic-commands/commands.route";
-import { configCommandEntities } from "@/routes/generic-commands/commands.config";
-import { queryableEntities } from "@/routes/generic-queries/queries.config";
-import { queryRoutePairs } from "@/routes/generic-queries/queries.route";
-import { actionCommandRoutePairs } from "@/routes/school-commands/action-routes";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { coreCommands, coreEntities, coreQueries } from "@/routes/core/core-registries";
+import { coreRoutePairs } from "@/routes/core/core.route";
 import { getQueryOptionFields } from "@/validation/utils/query-options";
 
 function fieldsFor(entityName: string): readonly string[] {
-  const entity = queryableEntities.find(candidate => candidate.name === entityName);
+  const entity = coreEntities.find(candidate => candidate.serviceName === entityName);
   if (!entity) {
     throw new Error(`Missing queryable entity ${entityName}`);
   }
@@ -16,26 +14,52 @@ function fieldsFor(entityName: string): readonly string[] {
   return getQueryOptionFields(entity.querySchema);
 }
 
-describe("generated route registry contracts", () => {
-  it("should generate four query endpoints for every queryable entity", () => {
-    expect(queryRoutePairs).toHaveLength(queryableEntities.length * 4);
+function listSourceFiles(dir: string): string[] {
+  if (!existsSync(dir)) {
+    return [];
+  }
+  return readdirSync(dir).flatMap((entry) => {
+    const path = join(dir, entry);
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      return listSourceFiles(path);
+    }
+    return path.endsWith(".ts") ? [path] : [];
+  });
+}
+
+describe("core route registry contracts", () => {
+  it("generates command, query, and eight entity endpoints for every core registry entry", () => {
+    expect(coreRoutePairs).toHaveLength(
+      coreCommands.length + coreQueries.length + coreEntities.length * 8,
+    );
   });
 
-  it("should generate create and delete command endpoints for every config command entity", () => {
-    expect(commandRoutePairs).toHaveLength(actionCommandRoutePairs.length + configCommandEntities.length * 2);
-  });
+  it("does not register duplicate public route names", () => {
+    const commandNames = coreCommands.map(command => command.publicName);
+    const queryNames = coreQueries.map(query => query.publicName);
+    const entityNames = coreEntities.map(entity => entity.publicName);
+    const routePaths = coreRoutePairs.map(({ route }) => route.path);
 
-  it("should not register duplicate query or command entity names", () => {
-    const queryNames = queryableEntities.map(entity => entity.name);
-    const commandNames = configCommandEntities.map(entity => entity.name);
-    const commandActionPaths = actionCommandRoutePairs.map(({ route }) => route.path);
-
-    expect(new Set(queryNames).size).toBe(queryNames.length);
     expect(new Set(commandNames).size).toBe(commandNames.length);
-    expect(new Set(commandActionPaths).size).toBe(commandActionPaths.length);
+    expect(new Set(queryNames).size).toBe(queryNames.length);
+    expect(new Set(entityNames).size).toBe(entityNames.length);
+    expect(new Set(routePaths).size).toBe(routePaths.length);
   });
 
-  it("should expose current domain field names for known drift-prone query filters", () => {
+  it("uses kebab-case public names", () => {
+    const publicNames = [
+      ...coreCommands.map(command => command.publicName),
+      ...coreQueries.map(query => query.publicName),
+      ...coreEntities.map(entity => entity.publicName),
+    ];
+
+    for (const publicName of publicNames) {
+      expect(publicName).toMatch(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/);
+    }
+  });
+
+  it("exposes current domain field names for known drift-prone query filters", () => {
     expect(fieldsFor("accessRoles")).toEqual(expect.arrayContaining(["schoolId", "status", "systemRoleKey"]));
     expect(fieldsFor("staffRoleAssignments")).toEqual(expect.arrayContaining(["staffId", "schoolId", "status"]));
 
@@ -56,5 +80,14 @@ describe("generated route registry contracts", () => {
 
     expect(fieldsFor("messageDeliveries")).toContain("announcementId");
     expect(fieldsFor("messageDeliveries")).not.toContain("messageId");
+  });
+
+  it("does not import the removed API school service facade from source", () => {
+    const sourceFiles = listSourceFiles(join(process.cwd(), "src"));
+    const offenders = sourceFiles.filter(file =>
+      readFileSync(file, "utf8").includes("school-service-facade"),
+    );
+
+    expect(offenders).toEqual([]);
   });
 });

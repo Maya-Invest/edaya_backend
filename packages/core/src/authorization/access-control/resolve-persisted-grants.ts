@@ -3,7 +3,7 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EffectiveGrants } from '../effective-grants'
 import type { Permission } from '../permissions/permission'
 import { mergeScopeGrants } from '../effective-grants'
-import { ELEVATED_STAFF_ROLES } from '../system-role-permissions'
+import { ELEVATED_STAFF_ROLES, SYSTEM_ROLE_PERMISSIONS } from '../system-role-permissions'
 import { scopeGrantsFromStaffAssignments } from './scope-grants-from-assignments'
 
 export interface ResolvePersistedGrantsArgs {
@@ -12,6 +12,7 @@ export interface ResolvePersistedGrantsArgs {
   repositories: SchoolRepositories
   academicYearId?: string
   now?: Date
+  fallbackRoles?: readonly StaffRole[]
 }
 
 export async function tryResolveEffectiveGrantsFromPersistence(
@@ -33,6 +34,24 @@ export async function tryResolveEffectiveGrantsFromPersistence(
   })
 
   if (assignments.length === 0) {
+    if (args.fallbackRoles && args.fallbackRoles.length > 0) {
+      const isElevated = args.fallbackRoles.some(role => ELEVATED_STAFF_ROLES.has(role))
+      const permissions = new Set<Permission>()
+      for (const role of args.fallbackRoles) {
+        const rolePerms = SYSTEM_ROLE_PERMISSIONS[role] ?? []
+        for (const permission of rolePerms) {
+          permissions.add(permission)
+        }
+      }
+      const assignmentScopeGrants = isElevated
+        ? []
+        : scopeGrantsFromStaffAssignments(await args.repositories.staffAssignments.list({ staffId: args.staffMemberId }))
+      return {
+        permissions,
+        scopeGrants: assignmentScopeGrants,
+        isElevated,
+      }
+    }
     return undefined
   }
 

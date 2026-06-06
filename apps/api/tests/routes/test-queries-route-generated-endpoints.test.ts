@@ -4,7 +4,7 @@ import indexRouter from "@/routes/index.route";
 import { ActorAssuranceLevel, StaffRole } from "@edaya/core";
 import type { AppBindings } from "@/lib/types";
 
-describe("generated query endpoints", () => {
+describe("generated core query endpoints", () => {
   const mockActor = {
     kind: "staff" as const,
     subjectId: "admin-user",
@@ -16,15 +16,13 @@ describe("generated query endpoints", () => {
     assuranceLevel: ActorAssuranceLevel.Strong,
   };
 
-  const setupTestApp = (mockQueries: any) => {
+  const setupTestApp = (service: Record<string, unknown>) => {
     const app = new Hono<AppBindings>();
 
     app.use(async (c, next) => {
       c.set("actor", mockActor);
       c.set("schoolApp", {
-        forActor: () => ({
-          queries: mockQueries,
-        }),
+        forActor: () => service,
       } as any);
       await next();
     });
@@ -38,29 +36,32 @@ describe("generated query endpoints", () => {
     findOne: mock().mockResolvedValue(undefined),
     count: mock().mockResolvedValue(0),
     findById: mock().mockResolvedValue(undefined),
+    findByIds: mock().mockResolvedValue([]),
+    save: mock().mockResolvedValue(undefined),
+    batchSave: mock().mockResolvedValue([]),
+    delete: mock().mockResolvedValue(undefined),
+    batchDelete: mock().mockResolvedValue(undefined),
     ...overrides,
   });
 
-  it("should expose count for generated query entities", async () => {
+  it("counts generated core entities", async () => {
     const mockCount = mock().mockResolvedValue(2);
     const app = setupTestApp({
-      students: mockReadService({
-        count: mockCount,
-      }),
+      baseService: {
+        students: mockReadService({ count: mockCount }),
+      },
     });
 
-    const res = await app.request("/api/queries/students/count", {
+    const res = await app.request("/api/core/entities/students/count", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         schoolId: "550e8400-e29b-41d4-a716-446655440000",
         $limit: 10,
       }),
     });
 
-    const body = (await res.json()) as any;
+    const body = await res.json() as { count: number };
     expect(res.status).toBe(200);
     expect(body.count).toBe(2);
     expect(mockCount).toHaveBeenCalledWith({
@@ -68,7 +69,7 @@ describe("generated query endpoints", () => {
     });
   });
 
-  it("should expose findOne for generated query entities", async () => {
+  it("finds one generated core entity", async () => {
     const student = {
       id: "student-1",
       schoolId: "school-1",
@@ -77,22 +78,39 @@ describe("generated query endpoints", () => {
     };
     const mockFindOne = mock().mockResolvedValue(student);
     const app = setupTestApp({
-      students: mockReadService({
-        findOne: mockFindOne,
-      }),
+      baseService: {
+        students: mockReadService({ findOne: mockFindOne }),
+      },
     });
 
-    const res = await app.request("/api/queries/students/one", {
+    const res = await app.request("/api/core/entities/students/one", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
 
-    const body = (await res.json()) as any;
+    const body = await res.json();
     expect(res.status).toBe(200);
     expect(body).toEqual(expect.objectContaining(student));
     expect(mockFindOne).toHaveBeenCalledWith({});
+  });
+
+  it("executes aggregate core query routes", async () => {
+    const mockGetOverdueFeeCount = mock().mockResolvedValue(3);
+    const app = setupTestApp({
+      baseService: {},
+      getOverdueFeeCount: mockGetOverdueFeeCount,
+    });
+
+    const res = await app.request("/api/core/queries/get-overdue-fee-count", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schoolId: "school-1" }),
+    });
+
+    const body = await res.json() as { count: number };
+    expect(res.status).toBe(200);
+    expect(body.count).toBe(3);
+    expect(mockGetOverdueFeeCount).toHaveBeenCalledWith("school-1");
   });
 });

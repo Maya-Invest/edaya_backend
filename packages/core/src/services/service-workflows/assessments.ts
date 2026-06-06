@@ -1,14 +1,20 @@
-import type { Assessment } from '../../entities/assessments/assessment'
-import type { AssessmentResult } from '../../entities/assessments/assessment-result'
-import type { ReportCardDefinitionSection } from '../../entities/assessments/report-card-definition-section'
+import type { Assessment, AssessmentArgs } from '../../entities/assessments/assessment'
+import type { AssessmentResult, AssessmentResultArgs } from '../../entities/assessments/assessment-result'
+import type { ReportCardDefinitionArgs } from '../../entities/assessments/report-card-definition'
+import type { ReportCardDefinitionSection, ReportCardDefinitionSectionArgs } from '../../entities/assessments/report-card-definition-section'
+import type { GradeScale, GradeScaleArgs } from '../../entities/school/grade-scale'
 import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
 import type { BaseSchoolService } from '../base-school-service'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
-import { ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
+import { Assessment as AssessmentEntity } from '../../entities/assessments/assessment'
+import { AssessmentResult as AssessmentResultEntity } from '../../entities/assessments/assessment-result'
+import { ReportCardDefinition } from '../../entities/assessments/report-card-definition'
+import { ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
 import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
 import { ReportCardResultSection } from '../../entities/assessments/report-card-result-section'
 import { AttendanceJustificationStatus, AttendanceStatus } from '../../entities/scheduling/attendance-record'
+import { GradeScale as GradeScaleEntity } from '../../entities/school/grade-scale'
 import { normalizeDate, roundTo2 } from '../../entities/utils'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
@@ -31,9 +37,81 @@ export interface GenerateReportCardResultInput {
   generatedAt?: Date
 }
 
+export type CreateGradeScaleInput = GradeScaleArgs
+export type CreateReportCardDefinitionInput = ReportCardDefinitionArgs
+export type CreateReportCardDefinitionSectionInput = ReportCardDefinitionSectionArgs
+export type CreateAssessmentInput = AssessmentArgs
+
+export interface CompleteAssessmentInput {
+  assessmentId: string
+  metAt?: Date
+}
+
+export type RecordAssessmentResultInput = AssessmentResultArgs
+
+export interface ListClassSubjectAssessmentResultsForPeriodInput {
+  classSubjectId: string
+  periodId: string
+}
+
 export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
+    const gradeScale = new GradeScaleEntity(input)
+    await this.baseService.gradeScales.save(gradeScale)
+    return gradeScale
+  }
+
+  async createReportCardDefinition(input: CreateReportCardDefinitionInput): Promise<ReportCardDefinition> {
+    const definition = new ReportCardDefinition(input)
+    await this.baseService.definitions.save(definition)
+    return definition
+  }
+
+  async createReportCardDefinitionSection(input: CreateReportCardDefinitionSectionInput): Promise<ReportCardDefinitionSection> {
+    const section = new ReportCardDefinitionSectionEntity(input)
+    await this.baseService.sections.save(section)
+    return section
+  }
+
+  async createAssessment(input: CreateAssessmentInput): Promise<Assessment> {
+    const assessment = new AssessmentEntity(input)
+    await this.baseService.assessments.save(assessment)
+    return assessment
+  }
+
+  async completeAssessment({ assessmentId, metAt }: CompleteAssessmentInput): Promise<Assessment> {
+    const existing = await this.requireEntity(this.baseService.assessments, assessmentId)
+    const assessment = new AssessmentEntity({ ...existing, metAt: metAt ?? new Date() })
+    await this.baseService.assessments.save(assessment)
+    return assessment
+  }
+
+  async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
+    const result = new AssessmentResultEntity(input)
+    await this.baseService.assessmentResults.save(result)
+    return result
+  }
+
+  async recordAssessmentResultCompliance(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
+    return this.recordAssessmentResult(input)
+  }
+
+  async listClassSubjectAssessmentResultsForPeriod({
+    classSubjectId,
+    periodId,
+  }: ListClassSubjectAssessmentResultsForPeriodInput): Promise<AssessmentResult[]> {
+    await this.requireEntity(this.baseService.classSubjects, classSubjectId)
+    await this.requireEntity(this.baseService.academicPeriods, periodId)
+    const assessments = await this.baseService.assessments.list({ classSubjectId, periodId })
+    const results: AssessmentResult[] = []
+    for (const assessment of assessments) {
+      results.push(...await this.baseService.assessmentResults.list({ assessmentId: assessment.id }))
+    }
+    return results
   }
 
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
@@ -325,5 +403,16 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       }
     }
     return resolved
+  }
+
+  private async requireEntity<T>(
+    managedService: { findById: (id: string) => Promise<T | undefined> },
+    id: string,
+  ): Promise<T> {
+    const entity = await managedService.findById(id)
+    if (!entity) {
+      denyResourceAccess()
+    }
+    return entity
   }
 }
