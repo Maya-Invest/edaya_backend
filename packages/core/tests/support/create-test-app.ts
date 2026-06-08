@@ -2,6 +2,7 @@ import type { ActorMetadata } from '../../src/authorization'
 import type {
   AcademicPeriod,
   AcademicYear,
+  AccessRole,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -32,6 +33,7 @@ import type {
   School,
   Session,
   StaffAssignment,
+  StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -47,11 +49,8 @@ import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
-  SYSTEM_ROLE_PERMISSIONS,
-  systemAccessRoleId,
-  systemRoleAssignmentId,
 } from '../../src/authorization'
-import { AccessRole, StaffMember, StaffRole, StaffRoleAssignment } from '../../src/entities'
+import { StaffMember, StaffRole } from '../../src/entities'
 import { SchoolApplication } from '../../src/services'
 import { matchesFilter } from './filter-matcher'
 
@@ -424,31 +423,11 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   })
 
   if (defaultActor.kind === 'staff') {
-    if (!defaultActor.roles) {
-      throw new Error('createTestApp staff actors must include roles for access-control fixture seeding')
-    }
     void schoolRepositories.staffMembers.save(new StaffMember({
       id: defaultActor.staffMemberId,
       schoolId: defaultActor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
-    }))
-    for (const role of Object.values(StaffRole)) {
-      void schoolRepositories.accessRoles.save(new AccessRole({
-        id: systemAccessRoleId(defaultActor.schoolId, role),
-        schoolId: defaultActor.schoolId,
-        name: role,
-        isSystemRole: true,
-        systemRoleKey: role,
-        permissions: SYSTEM_ROLE_PERMISSIONS[role],
-      }))
-    }
-    void schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
-      id: systemRoleAssignmentId(defaultActor.schoolId, defaultActor.staffMemberId),
-      staffId: defaultActor.staffMemberId,
-      schoolId: defaultActor.schoolId,
-      roleIds: defaultActor.roles.map(role => systemAccessRoleId(defaultActor.schoolId, role)),
-      scopeGrants: [],
     }))
   }
 

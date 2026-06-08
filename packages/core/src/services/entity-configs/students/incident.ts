@@ -40,7 +40,7 @@ function authorizeIncidentDelete(policy: AuthorizationPolicy): EntityWriteAuthor
   }
 }
 
-export async function validateIncidentSave(
+async function validateIncidentSave(
   entity: Incident,
   existing: Incident | undefined,
   repositories: SchoolRepositories,

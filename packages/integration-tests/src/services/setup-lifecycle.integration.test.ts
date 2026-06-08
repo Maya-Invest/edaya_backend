@@ -105,6 +105,6 @@ describeIntegration('setup lifecycle journey', () => {
     expect((await updateStaffStatus(app, 'teacher', true)).isActive).toBe(true)
     await expect(updateStaffStatus(app, 'admin', false))
       .rejects
-      .toThrow('cannot deactivate their own account')
+      .toThrow('Transfer school ownership before deactivating the owner')
   })
 })

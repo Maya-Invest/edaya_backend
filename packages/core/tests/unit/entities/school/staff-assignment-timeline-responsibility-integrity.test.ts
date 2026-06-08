@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import { StaffAssignment } from '../../../../src/entities/school/staff-assignment'
-import { StaffRole } from '../../../../src/entities/school/staff-member'
 
-describe('StaffAssignment entity timeline and role integrity', () => {
+describe('StaffAssignment entity timeline and responsibility integrity', () => {
   const baseArgs = {
     id: 'assignment-1',
     staffId: 'staff-1',
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   }
 
   it('instantiates successfully when targeting exactly classGroupId', () => {
@@ -17,7 +16,7 @@ describe('StaffAssignment entity timeline and role integrity', () => {
 
     expect(assignment.id).toBe('assignment-1')
     expect(assignment.staffId).toBe('staff-1')
-    expect(assignment.role).toBe(StaffRole.Teacher)
+    expect(assignment.responsibility).toBe('teacher')
     expect(assignment.classGroupId).toBe('class-1')
     expect(assignment.classSubjectId).toBeUndefined()
     expect(assignment.sessionId).toBeUndefined()
@@ -74,5 +73,6 @@ describe('StaffAssignment entity timeline and role integrity', () => {
   it('throws error when non-blank fields are empty or invalid', () => {
     expect(() => new StaffAssignment({ ...baseArgs, id: '', classGroupId: 'class-1' })).toThrow()
     expect(() => new StaffAssignment({ ...baseArgs, staffId: ' \t ', classGroupId: 'class-1' })).toThrow()
+    expect(() => new StaffAssignment({ ...baseArgs, responsibility: '', classGroupId: 'class-1' })).toThrow()
   })
 })

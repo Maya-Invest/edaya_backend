@@ -98,14 +98,14 @@ async function setupBaselineFixture() {
     id: 'assignment-1',
     staffId: 'teacher-staff',
     classSubjectId: classSubject.id,
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   })
 
   await saveStaffAssignment(app, {
     id: 'teacher-class-assign',
     staffId: 'teacher-staff',
     classGroupId: 'class-7a',
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   })
 
   // Create session
@@ -125,7 +125,7 @@ async function setupBaselineFixture() {
     id: 'staff-session-1',
     staffId: 'teacher-staff',
     sessionId: session.id,
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   })
 
   return { app, repositories, forActor, classSubject, session }

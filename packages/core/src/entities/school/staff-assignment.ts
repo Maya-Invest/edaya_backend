@@ -1,10 +1,9 @@
-import type { StaffRole } from './staff-member'
 import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
 export interface StaffAssignmentArgs {
   id: string
   staffId: string
-  role: StaffRole
+  responsibility: string
   classGroupId?: string | null
   classSubjectId?: string | null
   sessionId?: string | null
@@ -12,12 +11,12 @@ export interface StaffAssignmentArgs {
 }
 
 /**
- * Assigns a staff member (with a specific role) to a ClassGroup, ClassSubject, or Session.
+ * Assigns a staff member (with a free-form responsibility label) to a ClassGroup, ClassSubject, or Session.
  */
 export class StaffAssignment {
   readonly id: string
   readonly staffId: string
-  readonly role: StaffRole
+  readonly responsibility: string
   readonly classGroupId?: string
   readonly classSubjectId?: string
   readonly sessionId?: string
@@ -26,7 +25,7 @@ export class StaffAssignment {
   constructor({
     id,
     staffId,
-    role,
+    responsibility,
     classGroupId,
     classSubjectId,
     sessionId,
@@ -34,7 +33,7 @@ export class StaffAssignment {
   }: StaffAssignmentArgs) {
     this.id = requireNonBlank(id, 'id')
     this.staffId = requireNonBlank(staffId, 'staffId')
-    this.role = role
+    this.responsibility = requireNonBlank(responsibility, 'responsibility')
 
     this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
     this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')

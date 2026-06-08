@@ -370,14 +370,14 @@ describeIntegration('tenant boundary safeguards', () => {
       id: 'invalid-assignment',
       staffId: 'staff-b',
       classGroupId: 'class-a',
-      role: StaffRole.Teacher,
+      responsibility: 'teacher',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const classGroupId of ['missing-class', 'class-b']) {
       await expect(saveStaffAssignment(app, {
         id: `probe-${classGroupId}`,
         staffId: 'staff-b',
         classGroupId,
-        role: StaffRole.Teacher,
+        responsibility: 'teacher',
       })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
     await saveAnnouncement(app, {

@@ -2,19 +2,28 @@ import type { StaffRoleAssignment } from '../../../src/entities/school/staff-rol
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
+  ELEVATED_STAFF_PERMISSIONS,
   Permission,
   resolveEffectiveGrants,
   scopeGrantCovers,
   syncStaffSystemRoleAssignment,
   systemAccessRoleId,
 } from '../../../src/authorization'
-import { AccessRole, StaffRole, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/entities'
+import { AccessRole, School, StaffRole, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/entities'
 
-function createRepos(assignments: unknown[] = []): SchoolRepositories {
+function createRepos(assignments: unknown[] = [], ownerStaffId?: string): SchoolRepositories {
   const roleStore = new Map<string, AccessRole>()
   const assignmentStore = new Map<string, StaffRoleAssignment>()
 
   return {
+    schools: {
+      findById: mock(async () => new School({
+        id: 'school-1',
+        name: 'School',
+        timeZone: 'UTC',
+        ownerStaffId,
+      })),
+    },
     staffMembers: {
       findById: mock(async () => ({
         id: 'staff-1',
@@ -45,6 +54,21 @@ function createRepos(assignments: unknown[] = []): SchoolRepositories {
 }
 
 describe('resolveEffectiveGrants', () => {
+  test('grants school owner full school-scoped access without role assignments', async () => {
+    const repositories = createRepos([], 'staff-1')
+
+    const grants = await resolveEffectiveGrants({
+      staffMemberId: 'staff-1',
+      schoolId: 'school-1',
+      repositories,
+    })
+
+    expect(grants.isElevated).toBe(true)
+    expect(grants.permissions.has(Permission.SCHOOL_LIFECYCLE_MANAGE)).toBe(true)
+    expect(grants.permissions.has(Permission.PLATFORM_REGISTER_SCHOOL)).toBe(false)
+    expect(grants.permissions.size).toBe(ELEVATED_STAFF_PERMISSIONS.length)
+  })
+
   test('grants elevated staff all permissions with school scope', async () => {
     const repositories = createRepos()
     await syncStaffSystemRoleAssignment({

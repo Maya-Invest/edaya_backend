@@ -11,12 +11,9 @@ import type {
   StaffAssignmentArgs,
   StaffMember,
   StaffMemberArgs,
-  StaffRole,
 } from '../../entities'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission } from '../../authorization'
-import { ensureSystemAccessRolesForSchool } from '../../authorization/access-control/ensure-system-roles'
-import { syncStaffSystemRoleAssignment } from '../../authorization/access-control/sync-staff-system-role-assignment'
 import {
   AcademicPeriod as AcademicPeriodEntity,
   AcademicYear as AcademicYearEntity,
@@ -62,9 +59,7 @@ export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupAr
   classGroupId: string
 }
 
-export interface RegisterStaffMemberInput extends StaffMemberArgs {
-  roles?: StaffRole[]
-}
+export type RegisterStaffMemberInput = StaffMemberArgs
 
 export interface UpdateStaffMemberStatusInput {
   staffId: string
@@ -94,18 +89,25 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
     await permissionAction(this.baseService.authorizationPolicy, Permission.PLATFORM_REGISTER_SCHOOL)(this.baseService.actor)
     const school = new SchoolEntity(input)
+    if (school.ownerStaffId) {
+      await this.validateOwnerCandidate(school.id, school.ownerStaffId)
+    }
     await this.baseService.schools.save(school, { moduleChecked: true })
-    await ensureSystemAccessRolesForSchool(school.id, this.baseService.repositories)
     return school
   }
 
   async updateSchoolConfiguration({ schoolId, ...changes }: UpdateSchoolConfigurationInput): Promise<School> {
     const existing = await this.requireEntity(this.baseService.schools, schoolId)
     await permissionAction(this.baseService.authorizationPolicy, Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
+    const ownerStaffId = changes.ownerStaffId === undefined ? existing.ownerStaffId : changes.ownerStaffId
+    if (ownerStaffId !== existing.ownerStaffId) {
+      await this.validateOwnerTransfer(existing, ownerStaffId)
+    }
     const school = new SchoolEntity({
       id: existing.id,
       name: changes.name ?? existing.name,
       timeZone: changes.timeZone ?? existing.timeZone,
+      ownerStaffId,
       type: changes.type === undefined ? existing.type : changes.type,
       country: changes.country === undefined ? existing.country : changes.country,
       city: changes.city === undefined ? existing.city : changes.city,
@@ -202,18 +204,61 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     return classGroup
   }
 
-  async registerStaffMember({ roles, ...staffMemberInput }: RegisterStaffMemberInput): Promise<StaffMember> {
+  async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
     const staffMember = await this.saveConstructed(
       this.baseService.staffMembers,
       new StaffMemberEntity(staffMemberInput),
     )
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: staffMember.id,
-      schoolId: staffMember.schoolId,
-      repositories: this.baseService.repositories,
-      roleKeys: roles,
-    })
+    await this.assignInitialSchoolOwner(staffMember)
     return staffMember
+  }
+
+  private async assignInitialSchoolOwner(staffMember: StaffMember): Promise<void> {
+    const school = await this.baseService.repositories.schools.findById(staffMember.schoolId)
+    if (!school) {
+      denyResourceAccess()
+    }
+    if (school.ownerStaffId) {
+      return
+    }
+    const schoolStaff = await this.baseService.repositories.staffMembers.list({ schoolId: staffMember.schoolId })
+    if (schoolStaff.length !== 1 || schoolStaff[0]?.id !== staffMember.id) {
+      return
+    }
+
+    await this.baseService.schools.save(new SchoolEntity({
+      id: school.id,
+      name: school.name,
+      timeZone: school.timeZone,
+      ownerStaffId: staffMember.id,
+      type: school.type,
+      country: school.country,
+      city: school.city,
+      createdAt: school.createdAt,
+    }), { moduleChecked: true })
+  }
+
+  private async validateOwnerTransfer(existing: School, ownerStaffId: string | null | undefined): Promise<void> {
+    if (!ownerStaffId) {
+      denyResourceAccess()
+    }
+
+    if (
+      existing.ownerStaffId
+      && this.baseService.actor.kind !== 'system'
+      && !(this.baseService.actor.kind === 'staff' && this.baseService.actor.staffMemberId === existing.ownerStaffId)
+    ) {
+      denyResourceAccess()
+    }
+
+    await this.validateOwnerCandidate(existing.id, ownerStaffId)
+  }
+
+  private async validateOwnerCandidate(schoolId: string, ownerStaffId: string): Promise<void> {
+    const owner = await this.baseService.repositories.staffMembers.findById(ownerStaffId)
+    if (!owner || !owner.isActive || owner.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
   }
 
   async updateStaffMemberStatus({ staffId, isActive }: UpdateStaffMemberStatusInput): Promise<StaffMember> {
@@ -228,11 +273,6 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       isActive,
       createdAt: existing.createdAt,
     }))
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: staffMember.id,
-      schoolId: staffMember.schoolId,
-      repositories: this.baseService.repositories,
-    })
     return staffMember
   }
 
@@ -288,12 +328,6 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   private async saveStaffAssignment(input: AssignStaffInput): Promise<StaffAssignment> {
     const assignment = await this.saveConstructed(this.baseService.staffAssignments, new StaffAssignmentEntity(input))
-    const staffMember = await this.requireEntity(this.baseService.staffMembers, assignment.staffId)
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: staffMember.id,
-      schoolId: staffMember.schoolId,
-      repositories: this.baseService.repositories,
-    })
     return assignment
   }
 

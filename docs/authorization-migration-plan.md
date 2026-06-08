@@ -123,7 +123,7 @@ flowchart TB
 | `StaffRoleAssignment.scopeGrants` | Persisted assignment grants |
 | `StaffAssignment` | Live teaching scope grants for non-elevated staff |
 
-`StaffMember.roles` is no longer part of the core entity or Postgres staff member schema. API registration still accepts role keys as command input for compatibility, but those keys are immediately written to `StaffRoleAssignment` records via `syncStaffSystemRoleAssignment`.
+`StaffMember.roles` is no longer part of the core entity or Postgres staff member schema. Staff registration no longer accepts role keys; school bootstrap assigns the first registered staff member as `School.ownerStaffId`, while non-owner access is represented through persisted access roles and staff role assignments.
 
 ### `authorize()`
 
@@ -179,7 +179,7 @@ Current system-role sync writes explicit school-id grants for elevated system ro
 
 ## Remaining Compatibility Surfaces
 
-- `StaffRole` remains as a role-key enum for system access role templates, `StaffAssignment.role`, actor metadata compatibility, and registration command input.
+- `StaffRole` remains as a role-key enum for system access role compatibility and actor metadata fallback. `StaffAssignment` now uses a free-form `responsibility` label instead of a hard-coded role. Staff registration no longer accepts role keys, and setup no longer seeds or syncs system-role assignments implicitly.
 - Historical data migration for existing deployed databases still needs an environment-specific migration/backfill step if production rows already contain `staff_members.roles`; this repository currently updates the Postgres schema but does not include a standalone migration file.
 
 ---

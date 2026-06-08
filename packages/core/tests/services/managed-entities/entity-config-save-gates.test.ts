@@ -547,6 +547,36 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
+  test('setup preSave rejects school owner deactivation and delete', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.schoolRepository.save(new School({
+      id: 'school',
+      name: 'School',
+      timeZone: 'UTC',
+      ownerStaffId: 'owner',
+    }))
+    const owner = new StaffMember({
+      id: 'owner',
+      schoolId: 'school',
+      firstName: 'Ada',
+      lastName: 'Owner',
+    })
+    await repositories.staffMemberRepository.save(owner)
+
+    await expect(app.baseService.staffMembers.save(new StaffMember({
+      id: owner.id,
+      schoolId: owner.schoolId,
+      firstName: owner.firstName,
+      lastName: owner.lastName,
+      isActive: false,
+      createdAt: owner.createdAt,
+    }))).rejects.toThrow('Transfer school ownership before deactivating the owner')
+
+    await expect(app.baseService.staffMembers.delete(owner.id))
+      .rejects
+      .toThrow('Transfer school ownership before deleting the owner')
+  })
+
   test('resource assignment preSave rejects overlapping session assignments', async () => {
     const { app, repositories } = createTestApp(actor)
     await repositories.resourceRepository.save(new Resource({

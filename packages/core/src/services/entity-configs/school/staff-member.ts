@@ -25,9 +25,14 @@ export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
 export async function validateStaffMemberSave(
   staffMember: StaffMember,
   existing: StaffMember | undefined,
-  _repositories: SchoolRepositories,
+  repositories: SchoolRepositories,
   actor: ActorMetadata,
 ): Promise<void> {
+  const school = await repositories.schools.findById(staffMember.schoolId)
+  if (existing?.isActive && !staffMember.isActive && school?.ownerStaffId === staffMember.id) {
+    throw new BusinessRuleViolationError('SCHOOL_OWNER_DEACTIVATION_BLOCKED', 'Transfer school ownership before deactivating the owner')
+  }
+
   if (
     existing?.isActive
     && !staffMember.isActive
@@ -42,6 +47,11 @@ async function validateStaffMemberDelete(
   staffMember: StaffMember,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  const school = await repositories.schools.findById(staffMember.schoolId)
+  if (school?.ownerStaffId === staffMember.id) {
+    throw new BusinessRuleViolationError('SCHOOL_OWNER_DELETE_BLOCKED', 'Transfer school ownership before deleting the owner')
+  }
+
   const [assignments, homeroomClasses, reportedIncidents, assignedActions, authoredNotes] = await Promise.all([
     repositories.staffAssignments.list({ staffId: staffMember.id }),
     repositories.classGroups.list({ homeroomStaffId: staffMember.id }),

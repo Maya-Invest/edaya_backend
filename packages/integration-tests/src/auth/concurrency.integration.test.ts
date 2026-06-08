@@ -1,4 +1,5 @@
 import {
+  AccessRole,
   ActorAssuranceLevel,
   AttendanceStatus,
   createGuardianActorMetadata,
@@ -6,7 +7,9 @@ import {
   createStudentActorMetadata,
   GradeLevel,
   PaymentMethod,
+  Permission,
   SessionKind,
+  StaffRoleAssignment,
   StaffRole,
   Subject,
 } from '@edaya/core'
@@ -55,15 +58,66 @@ async function createConcurrencyFixture() {
     schoolId: 'school',
     firstName: 'Binta',
     lastName: 'Sow',
-    roles: [StaffRole.Teacher],
   })
   await saveStaffMember(app, {
     id: 'accountant',
     schoolId: 'school',
     firstName: 'Mariama',
     lastName: 'Ba',
-    roles: [StaffRole.Accountant],
   })
+  await app.baseService.repositories.accessRoles.save(new AccessRole({
+    id: 'teacher-access',
+    schoolId: 'school',
+    name: 'Teacher access',
+    isSystemRole: false,
+    permissions: [
+      Permission.ATTENDANCE_RECORD,
+      Permission.CLASS_LOGBOOK_CREATE,
+      Permission.CLASS_LOGBOOK_UPDATE,
+      Permission.DISCIPLINE_CREATE,
+      Permission.GRADE_INPUT,
+    ],
+  }))
+  await app.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: 'teacher-access-assignment',
+    staffId: 'teacher',
+    schoolId: 'school',
+    roleIds: ['teacher-access'],
+  }))
+  await app.baseService.repositories.accessRoles.save(new AccessRole({
+    id: 'accountant-access',
+    schoolId: 'school',
+    name: 'Accountant access',
+    isSystemRole: false,
+    permissions: [
+      Permission.FINANCIAL_CONFIG_READ,
+      Permission.PAYMENT_READ,
+      Permission.PAYMENT_RECORD,
+    ],
+  }))
+  await app.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: 'accountant-access-assignment',
+    staffId: 'accountant',
+    schoolId: 'school',
+    roleIds: ['accountant-access'],
+    scopeGrants: [
+      {
+        permission: Permission.FINANCIAL_CONFIG_READ,
+        scopeType: 'school',
+        scopeEntityIds: ['school'],
+      },
+      {
+        permission: Permission.PAYMENT_READ,
+        scopeType: 'school',
+        scopeEntityIds: ['school'],
+      },
+      {
+        permission: Permission.PAYMENT_RECORD,
+        scopeType: 'school',
+        scopeEntityIds: ['school'],
+      },
+    ],
+  }))
 
   // Register student and guardian
   await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
@@ -97,19 +151,19 @@ async function createConcurrencyFixture() {
     id: 'teacher-subject',
     staffId: 'teacher',
     classSubjectId: classSubject.id,
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   })
   await saveStaffAssignment(app, {
     id: 'teacher-class',
     staffId: 'teacher',
     classGroupId: 'class',
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   })
   await saveStaffAssignment(app, {
     id: 'teacher-session',
     staffId: 'teacher',
     sessionId: session.id,
-    role: StaffRole.Teacher,
+    responsibility: 'teacher',
   })
 
   await saveFee(app, {
@@ -171,22 +225,32 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
     }))
 
     // Execute multiple overlapping read & write actions concurrently
+    const label = async <T>(name: string, operation: Promise<T>): Promise<T> => {
+      try {
+        return await operation
+      }
+      catch (error) {
+        throw new Error(`${name}: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
     const [attendanceRecord, paymentRecord, _studentDetailResult, feeSummaryResult] = await Promise.all([
+      label('teacher attendance',
       teacherApp.recordAttendance({
         id: 'concurrent-attendance',
         studentId: 'student',
         sessionId: session.id,
         status: AttendanceStatus.Present,
-      }),
+      })),
+      label('accountant payment',
       accountantApp.recordPayment({
         id: 'concurrent-payment',
         studentFeeId: studentFee.id,
         amount: 5000,
         paymentDate: new Date(),
         method: PaymentMethod.Cash,
-      }),
-      studentApp.baseService.attendance.list({ studentId: 'student' }),
-      buildFeeSummary(guardianApp, 'student'),
+      })),
+      label('student attendance list', studentApp.baseService.attendance.list({ studentId: 'student' })),
+      label('guardian fee summary', buildFeeSummary(guardianApp, 'student')),
     ])
 
     // Verify attributions are perfectly isolated to their respective actors

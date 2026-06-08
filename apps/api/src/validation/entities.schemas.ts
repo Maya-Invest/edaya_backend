@@ -113,6 +113,7 @@ export const schoolResponseSchema = responseSchema<SchoolArgs>("School", {
   id: field.uuid(),
   name: field.string(),
   timeZone: field.string(),
+  ownerStaffId: field.nullableUuid(),
   createdAt: field.date(),
 });
 
@@ -172,7 +173,7 @@ export const staffMemberResponseSchema = responseSchema<StaffMemberArgs>("StaffM
 export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentArgs>("StaffAssignment", {
   id: field.uuid(),
   staffId: field.uuid(),
-  role: z.nativeEnum(StaffRole),
+  responsibility: field.string(),
   classGroupId: field.nullableUuid(),
   classSubjectId: field.nullableUuid(),
   sessionId: field.nullableUuid(),

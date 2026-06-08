@@ -1,7 +1,5 @@
 import type {
   AtomicExecutionPort,
-  Permission,
-
   SchoolRepositories,
 } from '@edaya/core'
 import { AsyncLocalStorage } from 'node:async_hooks'
@@ -31,6 +29,7 @@ import {
   MessageDelivery,
   Payment,
   PeriodDefinition,
+  Permission,
   ReportCardDefinition,
   ReportCardDefinitionSection,
   ReportCardResult,
@@ -99,7 +98,7 @@ export class PostgresAccessRoleStore extends PostgresStore<AccessRole> {
         description: row.description ?? undefined,
         isSystemRole: row.isSystemRole,
         systemRoleKey: row.systemRoleKey ?? undefined,
-        permissions: [],
+        permissions: row.isSystemRole ? [] : [Permission.ACCESS_CONTROL_READ],
         status: row.status,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -619,8 +618,24 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.staffAssignments = new PostgresStore(
       db,
       schema.staffAssignments,
-      createDefaultMappers(StaffAssignment).toRow,
-      createDefaultMappers(StaffAssignment).toDomain,
+      (entity: StaffAssignment) => ({
+        id: entity.id,
+        staffId: entity.staffId,
+        role: entity.responsibility,
+        classGroupId: entity.classGroupId ?? null,
+        classSubjectId: entity.classSubjectId ?? null,
+        sessionId: entity.sessionId ?? null,
+        createdAt: entity.createdAt,
+      }),
+      row => new StaffAssignment({
+        id: row.id,
+        staffId: row.staffId,
+        responsibility: row.role,
+        classGroupId: row.classGroupId ?? undefined,
+        classSubjectId: row.classSubjectId ?? undefined,
+        sessionId: row.sessionId ?? undefined,
+        createdAt: row.createdAt,
+      }),
     )
 
     this.accessRoles = new PostgresAccessRoleStore(db)
@@ -1350,11 +1365,13 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         time_zone TEXT NOT NULL,
+        owner_staff_id TEXT,
         type TEXT,
         country TEXT,
         city TEXT,
         created_at TIMESTAMP NOT NULL
       )`,
+      `ALTER TABLE schools ADD COLUMN IF NOT EXISTS owner_staff_id TEXT`,
       `CREATE TABLE IF NOT EXISTS academic_years (
         id TEXT PRIMARY KEY,
         school_id TEXT NOT NULL,

@@ -304,7 +304,7 @@ describe('entity config edge gates', () => {
     await teacherContext.repositories.staffAssignmentRepository.save({
       id: 'teacher-assignment',
       staffId: 'teacher',
-      role: StaffRole.Teacher,
+      responsibility: 'teacher',
       classGroupId: 'teacher-class',
     } as any)
 

@@ -12,6 +12,7 @@ export interface SchoolArgs {
   id: string
   name: string
   timeZone: string
+  ownerStaffId?: string | null
   type?: SchoolType | null
   country?: string | null
   city?: string | null
@@ -26,15 +27,17 @@ export class School {
   readonly id: string
   readonly name: string
   readonly timeZone: string
+  readonly ownerStaffId?: string
   readonly type?: SchoolType
   readonly country?: string
   readonly city?: string
   readonly createdAt: Date
 
-  constructor({ id, name, timeZone, type, country, city, createdAt }: SchoolArgs) {
+  constructor({ id, name, timeZone, ownerStaffId, type, country, city, createdAt }: SchoolArgs) {
     this.id = requireNonBlank(id, 'id')
     this.name = requireNonBlank(name, 'name')
     this.timeZone = requireTimeZone(timeZone)
+    this.ownerStaffId = requireOptionalNonBlank(ownerStaffId, 'ownerStaffId')
     this.type = type ?? undefined
     this.country = requireOptionalNonBlank(country, 'country')
     this.city = requireOptionalNonBlank(city, 'city')

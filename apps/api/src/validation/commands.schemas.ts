@@ -29,7 +29,6 @@ import {
   ResourceKind,
   SchoolType,
   SessionKind,
-  StaffRole,
   StudentDisciplinaryActionStatus,
   StudentNoteVisibility,
   StudentStatus,
@@ -112,6 +111,7 @@ export const registerSchoolCommandSchema = namedObjectSchema("RegisterSchoolComm
   id: field.id(),
   name: field.text(),
   timeZone: field.text(),
+  ownerStaffId: nullableId(),
   type: field.enumValue(SchoolType).nullable().optional(),
   country: nullableOptionalText(),
   city: nullableOptionalText(),
@@ -122,6 +122,7 @@ export const updateSchoolConfigurationCommandSchema = namedObjectSchema("UpdateS
   schoolId: field.id(),
   name: optionalText(),
   timeZone: optionalText(),
+  ownerStaffId: nullableId(),
   type: field.enumValue(SchoolType).nullable().optional(),
   country: nullableOptionalText(),
   city: nullableOptionalText(),
@@ -182,7 +183,6 @@ export const registerStaffMemberCommandSchema = namedObjectSchema("RegisterStaff
   schoolId: field.id(),
   firstName: field.text(),
   lastName: field.text(),
-  roles: z.array(field.enumValue(StaffRole)).min(1),
   email: z.string().email().optional(),
   isActive: field.optionalBoolean(),
   createdAt: field.optionalDate(),
@@ -197,7 +197,7 @@ export const assignStaffToClassCommandSchema = namedObjectSchema("AssignStaffToC
   id: field.id(),
   staffId: field.id(),
   classGroupId: field.id(),
-  role: field.enumValue(StaffRole),
+  responsibility: field.text(),
   createdAt: field.optionalDate(),
 });
 
@@ -205,7 +205,7 @@ export const assignStaffToClassSubjectCommandSchema = namedObjectSchema("AssignS
   id: field.id(),
   staffId: field.id(),
   classSubjectId: field.id(),
-  role: field.enumValue(StaffRole),
+  responsibility: field.text(),
   createdAt: field.optionalDate(),
 });
 
@@ -213,7 +213,7 @@ export const assignStaffToSessionCommandSchema = namedObjectSchema("AssignStaffT
   id: field.id(),
   staffId: field.id(),
   sessionId: field.id(),
-  role: field.enumValue(StaffRole),
+  responsibility: field.text(),
   createdAt: field.optionalDate(),
 });
 

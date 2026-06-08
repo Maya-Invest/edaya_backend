@@ -3,7 +3,7 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EffectiveGrants } from '../effective-grants'
 import type { Permission } from '../permissions/permission'
 import { mergeScopeGrants } from '../effective-grants'
-import { ELEVATED_STAFF_ROLES, SYSTEM_ROLE_PERMISSIONS } from '../system-role-permissions'
+import { ELEVATED_STAFF_PERMISSIONS, ELEVATED_STAFF_ROLES, SYSTEM_ROLE_PERMISSIONS } from '../system-role-permissions'
 import { scopeGrantsFromStaffAssignments } from './scope-grants-from-assignments'
 
 export interface ResolvePersistedGrantsArgs {
@@ -25,6 +25,15 @@ export async function tryResolveEffectiveGrantsFromPersistence(
   const staffMember = await args.repositories.staffMembers.findById(args.staffMemberId)
   if (!staffMember || !staffMember.isActive || staffMember.schoolId !== args.schoolId) {
     return undefined
+  }
+
+  const school = await args.repositories.schools?.findById?.(args.schoolId)
+  if (school?.ownerStaffId === args.staffMemberId) {
+    return {
+      permissions: new Set(ELEVATED_STAFF_PERMISSIONS),
+      scopeGrants: [],
+      isElevated: true,
+    }
   }
 
   const assignments = await args.repositories.staffRoleAssignments.list({

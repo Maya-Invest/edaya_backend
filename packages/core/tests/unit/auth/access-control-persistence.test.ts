@@ -9,7 +9,7 @@ import {
   systemAccessRoleId,
   TEACHER_PERMISSIONS,
 } from '../../../src/authorization'
-import { AccessRole, StaffMember, StaffRole } from '../../../src/entities'
+import { AccessRole, School, StaffMember, StaffRole } from '../../../src/entities'
 import { StaffAssignment } from '../../../src/entities/school/staff-assignment'
 
 function createRepos(): SchoolRepositories {
@@ -24,6 +24,13 @@ function createRepos(): SchoolRepositories {
   const assignmentStore = new Map<string, StaffRoleAssignment>()
 
   return {
+    schools: {
+      findById: mock(async () => new School({
+        id: 'school-1',
+        name: 'School',
+        timeZone: 'UTC',
+      })),
+    },
     staffMembers: {
       findById: mock(async () => staff),
       list: mock(async () => [staff]),
@@ -33,7 +40,7 @@ function createRepos(): SchoolRepositories {
         new StaffAssignment({
           id: 'assign-1',
           staffId: 'staff-1',
-          role: StaffRole.Teacher,
+          responsibility: 'teacher',
           classGroupId: 'class-1',
         }),
       ]),

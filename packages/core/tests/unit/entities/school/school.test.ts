@@ -11,6 +11,7 @@ describe('School entity', () => {
   test('instantiates successfully with valid inputs', () => {
     const school = new School({
       ...baseArgs,
+      ownerStaffId: 'staff-owner',
       type: SchoolType.Secondary,
       country: 'Cameroon',
       city: 'Douala',
@@ -19,6 +20,7 @@ describe('School entity', () => {
     expect(school.id).toBe('sch1')
     expect(school.name).toBe('Maya High School')
     expect(school.timeZone).toBe('Africa/Douala')
+    expect(school.ownerStaffId).toBe('staff-owner')
     expect(school.type).toBe(SchoolType.Secondary)
     expect(school.location).toBe('Douala, Cameroon')
     expect(school.createdAt).toBeInstanceOf(Date)

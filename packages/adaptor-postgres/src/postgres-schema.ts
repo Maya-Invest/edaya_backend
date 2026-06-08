@@ -5,6 +5,7 @@ export const schools = pgTable('schools', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   timeZone: text('time_zone').notNull(),
+  ownerStaffId: text('owner_staff_id'),
   type: text('type'),
   country: text('country'),
   city: text('city'),

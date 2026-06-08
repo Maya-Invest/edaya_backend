@@ -1,4 +1,4 @@
-import type { AttendanceJustificationStatus, SchoolService, StaffRole, StudentFee } from '@edaya/core'
+import type { AttendanceJustificationStatus, SchoolService, StudentFee } from '@edaya/core'
 import {
   AcademicPeriod,
   Announcement,
@@ -33,7 +33,6 @@ import {
   Student,
   StudentHealthProfile,
   StudentNote,
-  syncStaffSystemRoleAssignment,
 } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
@@ -52,19 +51,15 @@ async function ensureActorStaffMember(app: SchoolService): Promise<void> {
       lastName: 'Administrator',
     }))
   }
-  if (actor.roles) {
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: actor.staffMemberId,
-      schoolId: actor.schoolId,
-      repositories: app.baseService.repositories,
-      roleKeys: actor.roles,
-    })
-  }
 }
 
 export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School>): Promise<School> {
   await ensureActorStaffMember(app)
-  const school = new School(input)
+  const actor = app.baseService.actor
+  const school = new School({
+    ...input,
+    ownerStaffId: input.ownerStaffId ?? (actor.kind === 'staff' && actor.schoolId === input.id ? actor.staffMemberId : undefined),
+  })
   const registrationActor = createSystemActorMetadata({
     systemId: 'integration-fixture',
     schoolId: school.id,
@@ -94,6 +89,7 @@ export async function updateSchool(app: SchoolService, input: { schoolId: string
     id: existing.id,
     name: input.name ?? existing.name,
     timeZone: input.timeZone ?? existing.timeZone,
+    ownerStaffId: input.ownerStaffId ?? existing.ownerStaffId,
     type: input.type ?? existing.type,
     country: input.country ?? existing.country,
     city: input.city ?? existing.city,
@@ -172,19 +168,11 @@ export async function updateClassGroup(app: SchoolService, input: { classGroupId
 
 export async function saveStaffMember(
   app: SchoolService,
-  input: ArgsOf<typeof StaffMember> & { roles?: readonly StaffRole[] },
+  input: ArgsOf<typeof StaffMember> & { roles?: readonly unknown[] },
 ): Promise<StaffMember> {
-  const { roles, ...staffMemberInput } = input
+  const { roles: _roles, ...staffMemberInput } = input
   const staffMember = new StaffMember(staffMemberInput)
   await app.baseService.staffMembers.save(staffMember)
-  if (roles) {
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: staffMember.id,
-      schoolId: staffMember.schoolId,
-      repositories: app.baseService.repositories,
-      roleKeys: roles,
-    })
-  }
   return staffMember
 }
 
@@ -204,25 +192,12 @@ export async function updateStaffStatus(app: SchoolService, staffId: string, isA
     createdAt: existing.createdAt,
   })
   await app.baseService.staffMembers.save(staffMember)
-  await syncStaffSystemRoleAssignment({
-    staffMemberId: staffMember.id,
-    schoolId: staffMember.schoolId,
-    repositories: app.baseService.repositories,
-  })
   return staffMember
 }
 
 export async function saveStaffAssignment(app: SchoolService, input: ArgsOf<typeof StaffAssignment>): Promise<StaffAssignment> {
   const assignment = new StaffAssignment(input)
   await app.baseService.staffAssignments.save(assignment)
-  const staffMember = await app.baseService.staffMembers.findById(assignment.staffId)
-  if (staffMember) {
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: staffMember.id,
-      schoolId: staffMember.schoolId,
-      repositories: app.baseService.repositories,
-    })
-  }
   return assignment
 }
 
