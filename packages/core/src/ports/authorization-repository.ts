@@ -4,7 +4,7 @@ import type { ScopeGrant } from '../authorization/role-types'
 import type { StaffAssignment } from '../domains'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization/authorization-error'
-import { ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS, ELEVATED_STAFF_ROLES } from '../authorization/system-role-permissions'
+import { ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS } from '../authorization/system-role-permissions'
 
 export interface EffectiveGrants {
   readonly permissions: ReadonlySet<Permission>
@@ -89,8 +89,7 @@ export async function tryResolveEffectiveGrantsFromPersistence(
     }
   }
 
-  const isElevated = activeRoles.some(role =>
-    role.systemRoleKey !== undefined && ELEVATED_STAFF_ROLES.has(role.systemRoleKey))
+  const isElevated = false
   const assignmentScopeGrants = isElevated
     ? []
     : scopeGrantsFromStaffAssignments(await args.repositories.staffAssignments.list({ staffId: args.staffMemberId }))

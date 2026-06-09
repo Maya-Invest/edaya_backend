@@ -60,7 +60,7 @@ describe("core route registry contracts", () => {
   });
 
   it("exposes current domain field names for known drift-prone query filters", () => {
-    expect(fieldsFor("accessRoles")).toEqual(expect.arrayContaining(["schoolId", "status", "systemRoleKey"]));
+    expect(fieldsFor("accessRoles")).toEqual(expect.arrayContaining(["schoolId", "status", "name"]));
     expect(fieldsFor("staffRoleAssignments")).toEqual(expect.arrayContaining(["staffId", "schoolId", "status"]));
 
     expect(fieldsFor("resources")).toContain("kind");

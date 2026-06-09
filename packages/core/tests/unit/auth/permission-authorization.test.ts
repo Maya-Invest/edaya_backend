@@ -8,9 +8,8 @@ import {
   Permission,
   permissionDefinitions,
 } from '../../../src/authorization'
-import { StaffRole } from '../../../src/domains'
 import { anyPermissionAction, permissionAction } from '../../../src/shared'
-import { effectiveGrantsForRoles } from '../../support/effective-grants'
+import { effectiveGrantsForRoles, type TestRole } from '../../support/effective-grants'
 
 function noopPolicy(): AuthorizationPolicy {
   return {
@@ -31,7 +30,7 @@ function noopPolicy(): AuthorizationPolicy {
 
 const now = new Date('2026-01-01T00:00:00Z')
 
-function staffActor(roles: StaffRole[]) {
+function staffActor(roles: TestRole[]) {
   return createStaffActorMetadata({
     subjectId: 'subject-staff',
     staffMemberId: 'staff-1',
@@ -53,7 +52,7 @@ describe('permission catalog', () => {
 
 describe('authorize', () => {
   test('allows teachers to record attendance through effective grants', () => {
-    const actor = staffActor([StaffRole.Teacher])
+    const actor = staffActor(['teacher'])
 
     expect(authorize({
       actor,
@@ -66,7 +65,7 @@ describe('authorize', () => {
   })
 
   test('rejects teachers for finance permissions', () => {
-    const actor = staffActor([StaffRole.Teacher])
+    const actor = staffActor(['teacher'])
 
     expect(() => authorize({
       actor,
@@ -79,7 +78,7 @@ describe('authorize', () => {
   })
 
   test('rejects scope types not allowed for the permission', () => {
-    const actor = staffActor([StaffRole.Admin])
+    const actor = staffActor(['admin'])
 
     expect(() => authorize({
       actor,
@@ -94,7 +93,7 @@ describe('authorize', () => {
   })
 
   test('rejects school mismatch', () => {
-    const actor = staffActor([StaffRole.Admin])
+    const actor = staffActor(['admin'])
 
     expect(() => authorize({
       actor,

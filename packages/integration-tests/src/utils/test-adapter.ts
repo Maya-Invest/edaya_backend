@@ -7,7 +7,6 @@ import {
   RepositoryAuthorizationPolicy,
   SchoolApplication,
   StaffMember,
-  StaffRole,
 } from '@edaya/core'
 import { effectiveGrantsForRoles } from './effective-grants'
 
@@ -66,7 +65,7 @@ export function createDefaultTestActor(actor?: ActorMetadata): ActorMetadata {
     subjectId: 'admin-user',
     staffMemberId: 'admin',
     schoolId: 'school',
-    effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+    effectiveGrants: effectiveGrantsForRoles(['admin']),
     requestId: 'integration-test',
     authenticatedAt: new Date('2026-09-01T00:00:00Z'),
     assuranceLevel: ActorAssuranceLevel.Strong,

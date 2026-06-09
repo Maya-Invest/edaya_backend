@@ -6,15 +6,7 @@ import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
-export enum StaffRole {
-  Admin = 'admin',
-  Principal = 'principal',
-  Teacher = 'teacher',
-  Accountant = 'accountant',
-  Counselor = 'counselor',
-  Coordinator = 'coordinator',
-  Supervisor = 'supervisor',
-}
+
 
 export interface StaffMemberArgs {
   id: string

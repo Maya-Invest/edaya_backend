@@ -8,12 +8,11 @@ import {
   createStaffActorMetadata,
   Permission,
 } from '../../../src/authorization'
-import { StaffRole } from '../../../src/domains'
-import { effectiveGrantsForRoles } from '../../support/effective-grants'
+import { effectiveGrantsForRoles, type TestRole } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
 
-function staffActor(roles: StaffRole[], assuranceLevel = ActorAssuranceLevel.Strong): ActorMetadata {
+function staffActor(roles: TestRole[], assuranceLevel = ActorAssuranceLevel.Strong): ActorMetadata {
   return createStaffActorMetadata({
     subjectId: 'subject-staff',
     staffMemberId: 'staff-1',
@@ -50,86 +49,86 @@ interface ParityCase {
   label: string
   actor: ActorMetadata
   permission: Permission
-  staffRoles: StaffRole[]
+  staffRoles: TestRole[]
   shouldAllow: boolean
 }
 
 const PARITY_CASES: ParityCase[] = [
   {
     label: 'admin with verified assurance can manage finance',
-    actor: staffActor([StaffRole.Admin], ActorAssuranceLevel.Verified),
+    actor: staffActor(['admin'], ActorAssuranceLevel.Verified),
     permission: Permission.PAYMENT_RECORD,
-    staffRoles: [StaffRole.Admin],
+    staffRoles: ['admin'],
     shouldAllow: true,
   },
   {
     label: 'coordinator can record attendance',
-    actor: staffActor([StaffRole.Coordinator]),
+    actor: staffActor(['coordinator']),
     permission: Permission.ATTENDANCE_RECORD,
-    staffRoles: [StaffRole.Coordinator],
+    staffRoles: ['coordinator'],
     shouldAllow: true,
   },
   {
     label: 'coordinator can read student health profiles',
-    actor: staffActor([StaffRole.Coordinator]),
+    actor: staffActor(['coordinator']),
     permission: Permission.STUDENT_HEALTH_READ,
-    staffRoles: [StaffRole.Coordinator],
+    staffRoles: ['coordinator'],
     shouldAllow: true,
   },
   {
     label: 'coordinator with verified assurance can update student health profiles',
-    actor: staffActor([StaffRole.Coordinator], ActorAssuranceLevel.Verified),
+    actor: staffActor(['coordinator'], ActorAssuranceLevel.Verified),
     permission: Permission.STUDENT_HEALTH_UPDATE,
-    staffRoles: [StaffRole.Coordinator],
+    staffRoles: ['coordinator'],
     shouldAllow: true,
   },
   {
     label: 'coordinator with standard assurance cannot update student health profiles',
-    actor: staffActor([StaffRole.Coordinator], ActorAssuranceLevel.Standard),
+    actor: staffActor(['coordinator'], ActorAssuranceLevel.Standard),
     permission: Permission.STUDENT_HEALTH_UPDATE,
-    staffRoles: [StaffRole.Coordinator],
+    staffRoles: ['coordinator'],
     shouldAllow: false,
   },
   {
     label: 'accountant can read finance',
-    actor: staffActor([StaffRole.Accountant]),
+    actor: staffActor(['accountant']),
     permission: Permission.PAYMENT_READ,
-    staffRoles: [StaffRole.Accountant],
+    staffRoles: ['accountant'],
     shouldAllow: true,
   },
   {
     label: 'teacher can manage student notes',
-    actor: staffActor([StaffRole.Teacher]),
+    actor: staffActor(['teacher']),
     permission: Permission.CLASS_LOGBOOK_UPDATE,
-    staffRoles: [StaffRole.Teacher],
+    staffRoles: ['teacher'],
     shouldAllow: true,
   },
   {
     label: 'guardian can read student detail query',
     actor: guardianActor(),
     permission: Permission.QUERY_STUDENT_DETAIL_READ,
-    staffRoles: [StaffRole.Teacher],
+    staffRoles: ['teacher'],
     shouldAllow: true,
   },
   {
     label: 'admin with standard assurance cannot manage finance',
-    actor: staffActor([StaffRole.Admin], ActorAssuranceLevel.Standard),
+    actor: staffActor(['admin'], ActorAssuranceLevel.Standard),
     permission: Permission.PAYMENT_RECORD,
-    staffRoles: [StaffRole.Admin],
+    staffRoles: ['admin'],
     shouldAllow: false,
   },
   {
     label: 'teacher cannot manage finance',
-    actor: staffActor([StaffRole.Teacher]),
+    actor: staffActor(['teacher']),
     permission: Permission.PAYMENT_RECORD,
-    staffRoles: [StaffRole.Teacher],
+    staffRoles: ['teacher'],
     shouldAllow: false,
   },
   {
     label: 'admin cannot register platform schools through school role grants',
-    actor: staffActor([StaffRole.Admin], ActorAssuranceLevel.Strong),
+    actor: staffActor(['admin'], ActorAssuranceLevel.Strong),
     permission: Permission.PLATFORM_REGISTER_SCHOOL,
-    staffRoles: [StaffRole.Admin],
+    staffRoles: ['admin'],
     shouldAllow: false,
   },
 ]

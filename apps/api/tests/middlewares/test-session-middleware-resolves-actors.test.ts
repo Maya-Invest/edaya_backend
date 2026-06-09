@@ -513,8 +513,6 @@ function mockAccessControlForStaff(staffId: string, schoolId: string, assignment
     id: roleId,
     schoolId,
     name: "Teacher",
-    isSystemRole: true,
-    systemRoleKey: "teacher",
     permissions: [
       "GRADE_INPUT",
       "ATTENDANCE_RECORD",

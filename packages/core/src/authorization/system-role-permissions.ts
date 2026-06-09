@@ -1,4 +1,3 @@
-import { StaffRole } from '../domains/school/staff-member'
 import { Permission } from './permissions/permission'
 
 /** Permissions granted to Admin / Principal (school-wide elevated staff). */
@@ -77,15 +76,4 @@ export const ASSIGNMENT_SCOPED_PERMISSIONS: readonly Permission[] = [
   Permission.DISCIPLINE_CREATE,
 ]
 
-export const ELEVATED_STAFF_ROLES = new Set<StaffRole>([StaffRole.Admin, StaffRole.Principal])
 
-/** Static template: legacy `StaffRole` → permissions (until DB-backed roles exist). */
-export const SYSTEM_ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
-  [StaffRole.Admin]: ELEVATED_STAFF_PERMISSIONS,
-  [StaffRole.Principal]: ELEVATED_STAFF_PERMISSIONS,
-  [StaffRole.Coordinator]: COORDINATOR_PERMISSIONS,
-  [StaffRole.Accountant]: ACCOUNTANT_PERMISSIONS,
-  [StaffRole.Teacher]: TEACHER_PERMISSIONS,
-  [StaffRole.Counselor]: [],
-  [StaffRole.Supervisor]: [],
-}

@@ -1,5 +1,4 @@
 export * from '../ports/authorization-repository'
-export * from './access-control'
 export * from './actor-metadata'
 export * from './authorization-error'
 export * from './authorization-policy'

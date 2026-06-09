@@ -33,7 +33,6 @@ import {
   ReportCardResultStatus,
   ResourceKind,
   SessionKind,
-  StaffRole,
   StudentClassEnrollmentStatus,
   StudentDisciplinaryActionStatus,
   StudentNoteVisibility,
@@ -191,8 +190,6 @@ export const accessRoleResponseSchema = responseSchema<AccessRoleArgs>("AccessRo
   schoolId: field.string(),
   name: field.string(),
   description: field.nullableText(),
-  isSystemRole: field.boolean(),
-  systemRoleKey: z.nativeEnum(StaffRole).nullable().optional(),
   permissions: z.array(z.nativeEnum(Permission)),
   status: z.enum(["active", "inactive"]),
   createdAt: field.optionalDate(),
@@ -776,8 +773,6 @@ export const accessRoleQuerySchema = createQueryOptionsSchema({
   id: field.string(),
   schoolId: field.string(),
   name: field.string(),
-  isSystemRole: field.boolean(),
-  systemRoleKey: field.string(),
   status: field.string(),
 });
 

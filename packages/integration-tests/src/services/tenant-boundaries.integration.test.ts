@@ -1,5 +1,6 @@
 import {
   AcademicPeriodType,
+  AccessRole,
   ActorAssuranceLevel,
   AnnouncementTargetKind,
   AssessmentKind,
@@ -16,16 +17,16 @@ import {
   IncidentInvolvementRole,
   IncidentKind,
   PaymentMethod,
+  Permission,
   Resource,
   ResourceKind,
   SessionKind,
   StaffMember,
-  StaffRole,
+  StaffRoleAssignment,
   StudentNoteVisibility,
   StudentStatus,
   Subject,
   SubjectMatter,
-  syncStaffSystemRoleAssignment,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -73,7 +74,7 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'school-a-admin-user',
       staffMemberId: 'school-a-admin',
       schoolId: 'school-a',
-      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'school-a-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -82,7 +83,7 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'school-b-admin-user',
       staffMemberId: 'school-b-admin',
       schoolId: 'school-b',
-      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'school-b-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -93,12 +94,24 @@ describeIntegration('tenant boundary safeguards', () => {
       firstName: 'School B',
       lastName: 'Administrator',
     }))
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'school-b-admin',
+    await schoolBApp.baseService.repositories.accessRoles.save(new AccessRole({
+      id: 'role-admin-b',
       schoolId: 'school-b',
-      repositories: schoolBApp.baseService.repositories,
-      roleKeys: [StaffRole.Admin],
-    })
+      name: 'Admin',
+      permissions: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
+    }))
+    await schoolBApp.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+      id: 'assignment-admin-b',
+      staffId: 'school-b-admin',
+      schoolId: 'school-b',
+      roleIds: ['role-admin-b'],
+      scopeGrants: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL).map(permission => ({
+        permission,
+        scopeType: 'school',
+        scopeEntityIds: ['school-b'],
+      })),
+      status: 'active',
+    }))
     await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC' })
     await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC' })
     await app.createAcademicYear({

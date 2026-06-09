@@ -1,8 +1,27 @@
-import type { EffectiveGrants, StaffRole } from '@edaya/core'
-import { ELEVATED_STAFF_ROLES, SYSTEM_ROLE_PERMISSIONS } from '@edaya/core'
+import type { EffectiveGrants } from '@edaya/core'
+import {
+  COORDINATOR_PERMISSIONS,
+  TEACHER_PERMISSIONS,
+  ACCOUNTANT_PERMISSIONS,
+  Permission,
+} from '@edaya/core'
 
-export function effectiveGrantsForRoles(roles: readonly StaffRole[]): EffectiveGrants {
-  const permissions = new Set(roles.flatMap(role => [...SYSTEM_ROLE_PERMISSIONS[role]]))
+export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'
+
+export const TEST_ROLE_PERMISSIONS: Record<TestRole, readonly Permission[]> = {
+  admin: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
+  principal: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
+  coordinator: COORDINATOR_PERMISSIONS,
+  accountant: ACCOUNTANT_PERMISSIONS,
+  teacher: TEACHER_PERMISSIONS,
+  counselor: [],
+  supervisor: [],
+}
+
+const TEST_ELEVATED_ROLES = new Set<TestRole>(['admin', 'principal'])
+
+export function effectiveGrantsForRoles(roles: readonly TestRole[]): EffectiveGrants {
+  const permissions = new Set(roles.flatMap(role => [...TEST_ROLE_PERMISSIONS[role]]))
   return {
     permissions,
     scopeGrants: [...permissions].map(permission => ({
@@ -10,6 +29,6 @@ export function effectiveGrantsForRoles(roles: readonly StaffRole[]): EffectiveG
       scopeType: 'school',
       scopeEntityIds: ['school'],
     })),
-    isElevated: roles.some(role => ELEVATED_STAFF_ROLES.has(role)),
+    isElevated: roles.some(role => TEST_ELEVATED_ROLES.has(role)),
   }
 }

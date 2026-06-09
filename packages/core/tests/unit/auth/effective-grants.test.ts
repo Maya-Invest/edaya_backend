@@ -7,10 +7,8 @@ import {
   Permission,
   resolveEffectiveGrants,
   scopeGrantCovers,
-  syncStaffSystemRoleAssignment,
-  systemAccessRoleId,
 } from '../../../src/authorization'
-import { AccessRole, School, StaffRole, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
+import { AccessRole, School, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
 
 function createRepos(assignments: unknown[] = [], ownerStaffId?: string): SchoolRepositories {
   const roleStore = new Map<string, AccessRole>()
@@ -70,14 +68,28 @@ describe('resolveEffectiveGrants', () => {
     expect(grants.permissions.size).toBe(ELEVATED_STAFF_PERMISSIONS.length)
   })
 
-  test('grants elevated staff all permissions with school scope', async () => {
+  test('grants staff permissions with school scope', async () => {
     const repositories = createRepos()
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'staff-1',
+    await repositories.accessRoles.save(new AccessRole({
+      id: 'role-admin',
       schoolId: 'school-1',
-      repositories,
-      roleKeys: [StaffRole.Admin],
-    })
+      name: 'Admin',
+      permissions: [Permission.PAYMENT_RECORD],
+    }))
+    await repositories.staffRoleAssignments.save(new StaffRoleAssignmentEntity({
+      id: 'assignment-admin',
+      staffId: 'staff-1',
+      schoolId: 'school-1',
+      roleIds: ['role-admin'],
+      scopeGrants: [
+        {
+          permission: Permission.PAYMENT_RECORD,
+          scopeType: 'school',
+          scopeEntityIds: ['school-1'],
+        },
+      ],
+      status: 'active',
+    }))
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-1',
@@ -85,7 +97,7 @@ describe('resolveEffectiveGrants', () => {
       repositories,
     })
 
-    expect(grants.isElevated).toBe(true)
+    expect(grants.isElevated).toBe(false)
     expect(grants.permissions.has(Permission.PAYMENT_RECORD)).toBe(true)
     expect(scopeGrantCovers(grants.scopeGrants, {
       permission: Permission.PAYMENT_RECORD,
@@ -98,12 +110,20 @@ describe('resolveEffectiveGrants', () => {
     const repositories = createRepos([
       { id: 'a-1', staffId: 'staff-1', classGroupId: 'class-1' },
     ])
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'staff-1',
+    await repositories.accessRoles.save(new AccessRole({
+      id: 'role-teacher',
       schoolId: 'school-1',
-      repositories,
-      roleKeys: [StaffRole.Teacher],
-    })
+      name: 'Teacher',
+      permissions: [Permission.ATTENDANCE_RECORD],
+    }))
+    await repositories.staffRoleAssignments.save(new StaffRoleAssignmentEntity({
+      id: 'assignment-teacher',
+      staffId: 'staff-1',
+      schoolId: 'school-1',
+      roleIds: ['role-teacher'],
+      scopeGrants: [],
+      status: 'active',
+    }))
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-1',
@@ -130,12 +150,20 @@ describe('resolveEffectiveGrants', () => {
 
   test('does not grant finance permissions to teachers', async () => {
     const repositories = createRepos()
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'staff-1',
+    await repositories.accessRoles.save(new AccessRole({
+      id: 'role-teacher',
       schoolId: 'school-1',
-      repositories,
-      roleKeys: [StaffRole.Teacher],
-    })
+      name: 'Teacher',
+      permissions: [Permission.ATTENDANCE_RECORD],
+    }))
+    await repositories.staffRoleAssignments.save(new StaffRoleAssignmentEntity({
+      id: 'assignment-teacher',
+      staffId: 'staff-1',
+      schoolId: 'school-1',
+      roleIds: ['role-teacher'],
+      scopeGrants: [],
+      status: 'active',
+    }))
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-1',
@@ -148,12 +176,27 @@ describe('resolveEffectiveGrants', () => {
 
   test('grants split payment permissions to accountants', async () => {
     const repositories = createRepos()
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'staff-1',
+    await repositories.accessRoles.save(new AccessRole({
+      id: 'role-accountant',
       schoolId: 'school-1',
-      repositories,
-      roleKeys: [StaffRole.Accountant],
-    })
+      name: 'Accountant',
+      permissions: [
+        Permission.PAYMENT_RECORD,
+        Permission.PAYMENT_CANCEL,
+        Permission.PAYMENT_REVERSE,
+        Permission.FINANCIAL_CONFIG_READ,
+        Permission.FINANCIAL_CONFIG_CONFIGURE,
+        Permission.FINANCIAL_CONFIG_UPDATE,
+      ],
+    }))
+    await repositories.staffRoleAssignments.save(new StaffRoleAssignmentEntity({
+      id: 'assignment-accountant',
+      staffId: 'staff-1',
+      schoolId: 'school-1',
+      roleIds: ['role-accountant'],
+      scopeGrants: [],
+      status: 'active',
+    }))
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-1',
@@ -172,18 +215,17 @@ describe('resolveEffectiveGrants', () => {
   test('ignores active assignments outside their validity window', async () => {
     const repositories = createRepos()
     await repositories.accessRoles.save(new AccessRole({
-      id: systemAccessRoleId('school-1', StaffRole.Accountant),
+      id: 'role-accountant',
       schoolId: 'school-1',
       name: 'Comptable',
-      isSystemRole: true,
-      systemRoleKey: StaffRole.Accountant,
       permissions: [Permission.PAYMENT_READ],
     }))
     await repositories.staffRoleAssignments.save(new StaffRoleAssignmentEntity({
       id: 'future-assignment',
       staffId: 'staff-1',
       schoolId: 'school-1',
-      roleIds: [systemAccessRoleId('school-1', StaffRole.Accountant)],
+      roleIds: ['role-accountant'],
+      scopeGrants: [],
       status: 'active',
       startsAt: new Date('2026-02-01T00:00:00Z'),
     }))
@@ -199,18 +241,17 @@ describe('resolveEffectiveGrants', () => {
   test('reports earliest assignment expiry for cache bounds', async () => {
     const repositories = createRepos()
     await repositories.accessRoles.save(new AccessRole({
-      id: systemAccessRoleId('school-1', StaffRole.Accountant),
+      id: 'role-accountant',
       schoolId: 'school-1',
       name: 'Comptable',
-      isSystemRole: true,
-      systemRoleKey: StaffRole.Accountant,
       permissions: [Permission.PAYMENT_READ],
     }))
     await repositories.staffRoleAssignments.save(new StaffRoleAssignmentEntity({
       id: 'temporary-assignment',
       staffId: 'staff-1',
       schoolId: 'school-1',
-      roleIds: [systemAccessRoleId('school-1', StaffRole.Accountant)],
+      roleIds: ['role-accountant'],
+      scopeGrants: [],
       status: 'active',
       endsAt: new Date('2026-01-02T00:00:00Z'),
     }))

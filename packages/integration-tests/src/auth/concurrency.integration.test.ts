@@ -69,7 +69,6 @@ async function createConcurrencyFixture() {
     id: 'teacher-access',
     schoolId: 'school',
     name: 'Teacher access',
-    isSystemRole: false,
     permissions: [
       Permission.ATTENDANCE_RECORD,
       Permission.CLASS_LOGBOOK_CREATE,
@@ -88,7 +87,6 @@ async function createConcurrencyFixture() {
     id: 'accountant-access',
     schoolId: 'school',
     name: 'Accountant access',
-    isSystemRole: false,
     permissions: [
       Permission.FINANCIAL_CONFIG_READ,
       Permission.PAYMENT_READ,

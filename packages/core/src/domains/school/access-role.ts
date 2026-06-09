@@ -1,5 +1,4 @@
 import type { EntityConfigFactory } from '../../shared'
-import type { StaffRole } from './staff-member'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
@@ -11,8 +10,6 @@ export interface AccessRoleArgs {
   schoolId: string
   name: string
   description?: string | null
-  isSystemRole: boolean
-  systemRoleKey?: StaffRole | null
   permissions: readonly Permission[]
   status?: AccessRoleStatus
   createdAt?: Date
@@ -25,8 +22,6 @@ export class AccessRole {
   readonly schoolId: string
   readonly name: string
   readonly description?: string
-  readonly isSystemRole: boolean
-  readonly systemRoleKey?: StaffRole
   readonly permissions: readonly Permission[]
   readonly status: AccessRoleStatus
   readonly createdAt: Date
@@ -37,8 +32,6 @@ export class AccessRole {
     schoolId,
     name,
     description,
-    isSystemRole,
-    systemRoleKey,
     permissions,
     status = 'active',
     createdAt,
@@ -48,10 +41,8 @@ export class AccessRole {
     this.schoolId = requireNonBlank(schoolId, 'schoolId')
     this.name = requireNonBlank(name, 'name')
     this.description = requireOptionalNonBlank(description, 'description')
-    this.isSystemRole = isSystemRole
-    this.systemRoleKey = systemRoleKey ?? undefined
-    if (permissions.length === 0 && !isSystemRole) {
-      throw new Error('permissions must contain at least one entry for custom roles')
+    if (permissions.length === 0) {
+      throw new Error('permissions must contain at least one entry')
     }
     this.permissions = Object.freeze([...new Set(permissions)])
     if (status !== 'active' && status !== 'inactive') {

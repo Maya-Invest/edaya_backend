@@ -51,7 +51,7 @@ import {
   DefaultAuthorizationRepository,
   RepositoryAuthorizationPolicy,
 } from '../../src/authorization'
-import { StaffMember, StaffRole } from '../../src/domains'
+import { StaffMember } from '../../src/domains'
 import { SchoolApplication } from '../../src/services'
 import { effectiveGrantsForRoles } from './effective-grants'
 import { matchesFilter } from './filter-matcher'
@@ -409,7 +409,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     subjectId: 'admin-user',
     staffMemberId: 'admin',
     schoolId: 'school',
-    effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+    effectiveGrants: effectiveGrantsForRoles(['admin']),
     requestId: 'integration-test',
     authenticatedAt: new Date('2026-09-01T00:00:00Z'),
     assuranceLevel: ActorAssuranceLevel.Strong,

@@ -1,10 +1,10 @@
 import {
+  AccessRole,
   Permission,
   resolveEffectiveGrants,
   StaffAssignment,
   StaffMember,
-  StaffRole,
-  syncStaffSystemRoleAssignment,
+  StaffRoleAssignment,
 } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -28,12 +28,21 @@ describeIntegration('access control persistence', () => {
       classGroupId: 'class-6a',
     }))
 
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'staff-teacher-1',
+    await repos.accessRoles.save(new AccessRole({
+      id: 'role-teacher-1',
       schoolId: 'school',
-      repositories: repos,
-      roleKeys: [StaffRole.Teacher],
-    })
+      name: 'Teacher',
+      permissions: [Permission.ATTENDANCE_RECORD],
+    }))
+
+    await repos.staffRoleAssignments.save(new StaffRoleAssignment({
+      id: 'assignment-teacher-1',
+      staffId: 'staff-teacher-1',
+      schoolId: 'school',
+      roleIds: ['role-teacher-1'],
+      scopeGrants: [],
+      status: 'active',
+    }))
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-teacher-1',

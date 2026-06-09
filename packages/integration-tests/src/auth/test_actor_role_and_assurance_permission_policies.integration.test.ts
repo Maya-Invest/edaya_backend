@@ -1,9 +1,11 @@
 import {
   AcademicPeriodType,
+  AccessRole,
   ActorAssuranceLevel,
   AttendanceStatus,
   AuthorizationErrorCode,
   authorize,
+  COORDINATOR_PERMISSIONS,
   createStaffActorMetadata,
   GradeLevel,
   Permission,
@@ -11,9 +13,10 @@ import {
   resolveEffectiveGrants,
   SessionKind,
   StaffMember,
-  StaffRole,
+  StaffRoleAssignment,
   Subject,
-  syncStaffSystemRoleAssignment,
+  TEACHER_PERMISSIONS,
+  ACCOUNTANT_PERMISSIONS,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -76,24 +79,48 @@ async function setupBaselineFixture() {
     firstName: 'Charlie',
     lastName: 'Brown',
   })
-  await syncStaffSystemRoleAssignment({
-    staffMemberId: 'coordinator-staff',
+  await schoolRepositories.accessRoles.save(new AccessRole({
+    id: 'role-coordinator',
     schoolId: 'school',
-    repositories: schoolRepositories,
-    roleKeys: [StaffRole.Coordinator],
-  })
-  await syncStaffSystemRoleAssignment({
-    staffMemberId: 'teacher-staff',
+    name: 'Coordinator',
+    permissions: [...COORDINATOR_PERMISSIONS],
+  }))
+  await schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: 'assignment-coordinator',
+    staffId: 'coordinator-staff',
     schoolId: 'school',
-    repositories: schoolRepositories,
-    roleKeys: [StaffRole.Teacher],
-  })
-  await syncStaffSystemRoleAssignment({
-    staffMemberId: 'accountant-staff',
+    roleIds: ['role-coordinator'],
+    scopeGrants: [],
+    status: 'active',
+  }))
+  await schoolRepositories.accessRoles.save(new AccessRole({
+    id: 'role-teacher',
     schoolId: 'school',
-    repositories: schoolRepositories,
-    roleKeys: [StaffRole.Accountant],
-  })
+    name: 'Teacher',
+    permissions: [...TEACHER_PERMISSIONS],
+  }))
+  await schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: 'assignment-teacher',
+    staffId: 'teacher-staff',
+    schoolId: 'school',
+    roleIds: ['role-teacher'],
+    scopeGrants: [],
+    status: 'active',
+  }))
+  await schoolRepositories.accessRoles.save(new AccessRole({
+    id: 'role-accountant',
+    schoolId: 'school',
+    name: 'Accountant',
+    permissions: [...ACCOUNTANT_PERMISSIONS],
+  }))
+  await schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: 'assignment-accountant',
+    staffId: 'accountant-staff',
+    schoolId: 'school',
+    roleIds: ['role-accountant'],
+    scopeGrants: [],
+    status: 'active',
+  }))
 
   // Create students & guardians
   await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
@@ -272,7 +299,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'admin-user',
       staffMemberId: 'admin',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'req-standard',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -282,7 +309,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'admin-user',
       staffMemberId: 'admin',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'req-verified',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -295,18 +322,30 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       firstName: 'Strong',
       lastName: 'Admin',
     }))
-    await syncStaffSystemRoleAssignment({
-      staffMemberId: 'strong-admin',
+    await app.baseService.repositories.accessRoles.save(new AccessRole({
+      id: 'role-admin-foreign',
       schoolId: 'strong-school',
-      repositories: app.baseService.repositories,
-      roleKeys: [StaffRole.Admin],
-    })
+      name: 'Admin',
+      permissions: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
+    }))
+    await app.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+      id: 'assignment-admin-foreign',
+      staffId: 'strong-admin',
+      schoolId: 'strong-school',
+      roleIds: ['role-admin-foreign'],
+      scopeGrants: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL).map(permission => ({
+        permission,
+        scopeType: 'school',
+        scopeEntityIds: ['strong-school'],
+      })),
+      status: 'active',
+    }))
 
     const strongForeignAdminApp = forActor(createStaffActorMetadata({
       subjectId: 'strong-admin-user',
       staffMemberId: 'strong-admin',
       schoolId: 'strong-school',
-      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'req-strong-foreign',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -381,7 +420,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'foreign-admin-user',
       staffMemberId: 'foreign-admin',
       schoolId: 'foreign-school',
-      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
+      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'req-foreign',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Strong,

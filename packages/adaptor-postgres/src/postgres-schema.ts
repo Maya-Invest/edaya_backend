@@ -81,8 +81,6 @@ export const accessRoles = pgTable('access_roles', {
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
   description: text('description'),
-  isSystemRole: boolean('is_system_role').notNull(),
-  systemRoleKey: text('system_role_key'),
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),

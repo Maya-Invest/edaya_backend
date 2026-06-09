@@ -7,7 +7,6 @@ export interface Role {
   schoolId: string
   name: string
   description?: string
-  isSystemRole: boolean
   permissions: readonly Permission[]
   status: 'active' | 'inactive'
   createdAt: string
