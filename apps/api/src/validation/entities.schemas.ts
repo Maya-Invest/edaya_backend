@@ -547,7 +547,7 @@ export const reportCardResultSectionSchema: z.ZodType<ReportCardResultSection> =
   parentSectionId: field.optionalUuid(),
   classSubjectId: field.optionalUuid(),
   subResults: z.array(reportCardResultSectionSchema),
-}));
+})).openapi("ReportCardResultSection", { type: "object" });
 
 export const resultResponseSchema = responseSchema<ReportCardResultArgs>("ReportCardResult", {
   id: field.uuid(),
