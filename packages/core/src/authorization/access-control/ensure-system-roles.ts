@@ -1,6 +1,5 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import { AccessRole } from '../../entities/school/access-role'
-import { StaffRole } from '../../entities/school/staff-member'
+import type { SchoolRepositories } from '../../ports'
+import { AccessRole, StaffRole } from '../../domains'
 import { SYSTEM_ROLE_PERMISSIONS } from '../system-role-permissions'
 import { SYSTEM_ACCESS_ROLE_LABELS, systemAccessRoleId } from './system-role-ids'
 

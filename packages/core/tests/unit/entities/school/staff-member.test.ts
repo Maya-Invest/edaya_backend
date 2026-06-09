@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { StaffMember } from '../../../../src/entities/school/staff-member'
+import { StaffMember } from '../../../../src/domains/school/staff-member'
 
 describe('StaffMember entity', () => {
   const baseArgs = {

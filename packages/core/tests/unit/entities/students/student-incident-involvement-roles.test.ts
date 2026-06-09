@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { IncidentInvolvementRole, StudentIncidentInvolvement } from '../../../../src/entities/students/student-incident-involvement'
+import { IncidentInvolvementRole, StudentIncidentInvolvement } from '../../../../src/domains/students/student-incident-involvement'
 
 describe('StudentIncidentInvolvement entity roles and validation', () => {
   const baseArgs = {

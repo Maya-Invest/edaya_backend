@@ -1,4 +1,4 @@
-import { requireNonNegativeInt } from '../entities/utils'
+import { requireNonNegativeInt } from '../domains/utils'
 
 export interface AttendanceSummaryArgs {
   presentCount: number

@@ -1,15 +1,13 @@
-import type { ClassSubjectArgs, ClassSubjectMatterArgs } from '../../entities'
+import type { ClassSubjectArgs, ClassSubjectMatterArgs } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import {
   ClassSubject,
-
   ClassSubjectMatter,
-
   ClassSubjectMatterStatus,
   ClassSubjectProgress,
-} from '../../entities'
-import { roundTo2 } from '../../entities/utils'
+} from '../../domains'
+import { roundTo2 } from '../../domains/utils'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'

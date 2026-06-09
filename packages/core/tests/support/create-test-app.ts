@@ -43,15 +43,16 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../../src/entities'
+} from '../../src/domains'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
   RepositoryAuthorizationPolicy,
 } from '../../src/authorization'
-import { StaffMember, StaffRole } from '../../src/entities'
+import { StaffMember, StaffRole } from '../../src/domains'
 import { SchoolApplication } from '../../src/services'
+import { effectiveGrantsForRoles } from './effective-grants'
 import { matchesFilter } from './filter-matcher'
 
 interface EntityWithId {
@@ -403,7 +404,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     subjectId: 'admin-user',
     staffMemberId: 'admin',
     schoolId: 'school',
-    roles: [StaffRole.Admin],
+    effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
     requestId: 'integration-test',
     authenticatedAt: new Date('2026-09-01T00:00:00Z'),
     assuranceLevel: ActorAssuranceLevel.Strong,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { Resource, ResourceKind } from '../../../../src/entities/school/resource'
+import { Resource, ResourceKind } from '../../../../src/domains/school/resource'
 
 describe('Resource allocation bounds and kind validation', () => {
   const baseArgs = {

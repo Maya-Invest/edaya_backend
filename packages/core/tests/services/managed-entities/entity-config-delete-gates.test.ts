@@ -17,7 +17,7 @@ import {
   ReportCardResultStatus,
   Student,
   StudentClassEnrollment,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { AttendanceSummary } from '../../../src/value_object/attendance-summary'
 import { createTestApp } from '../../support/create-test-app'

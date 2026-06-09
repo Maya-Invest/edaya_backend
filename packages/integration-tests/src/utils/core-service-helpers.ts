@@ -166,12 +166,8 @@ export async function updateClassGroup(app: SchoolService, input: { classGroupId
   return classGroup
 }
 
-export async function saveStaffMember(
-  app: SchoolService,
-  input: ArgsOf<typeof StaffMember> & { roles?: readonly unknown[] },
-): Promise<StaffMember> {
-  const { roles: _roles, ...staffMemberInput } = input
-  const staffMember = new StaffMember(staffMemberInput)
+export async function saveStaffMember(app: SchoolService, input: ArgsOf<typeof StaffMember>): Promise<StaffMember> {
+  const staffMember = new StaffMember(input)
   await app.baseService.staffMembers.save(staffMember)
   return staffMember
 }

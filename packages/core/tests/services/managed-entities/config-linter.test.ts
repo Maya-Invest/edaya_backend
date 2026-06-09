@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, test } from 'bun:test'
 
-const configRoot = join(import.meta.dir, '../../../src/services/entity-configs')
+const configRoot = join(import.meta.dir, '../../../src/domains')
 
 const noopAccessExceptions = new Set([
   'academics/class-subject-matter.ts',

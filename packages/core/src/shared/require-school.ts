@@ -1,4 +1,4 @@
-import type { School } from '../entities/school/school'
+import type { School } from '../domains'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import { BusinessRuleViolationError } from './business-rule-error'
 

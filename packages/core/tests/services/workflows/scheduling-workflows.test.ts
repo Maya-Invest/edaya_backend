@@ -11,7 +11,7 @@ import {
   CalendarEventKind,
   CalendarEventScopeKind,
   DayOfWeek,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
   actor,

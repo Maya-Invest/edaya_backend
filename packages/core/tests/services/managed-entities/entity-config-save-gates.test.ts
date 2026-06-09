@@ -54,10 +54,11 @@ import {
   StudentDisciplinaryAction,
   StudentDisciplinaryActionStatus,
   StudentFee,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { AttendanceSummary } from '../../../src/value_object/attendance-summary'
 import { createTestApp } from '../../support/create-test-app'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'
 
 describe('Entity config save gates', () => {
@@ -523,7 +524,7 @@ describe('Entity config save gates', () => {
       subjectId: 'staff-user',
       staffMemberId: 'staff-1',
       schoolId: 'school',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,

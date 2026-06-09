@@ -2,7 +2,7 @@ import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorizat
 import type {
   AttendanceRecord,
   MessageDelivery,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
 import { mock } from 'bun:test'
 import {
@@ -32,7 +32,7 @@ import {
   StudentFee,
   StudentStatus,
   AnnouncementTargetKind as TargetKind,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { SchoolService } from '../../../src/services'
 
 export const actor: ActorMetadata = {

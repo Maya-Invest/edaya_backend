@@ -30,10 +30,11 @@ import {
   saveStudent,
   updateSchool,
 } from '../utils/core-service-helpers'
+import { effectiveGrantsForRoles } from '../utils/effective-grants'
 import { createTestApp } from '../utils/test-adapter'
 
 async function setupBaselineFixture() {
-  const { app, repositories, forActor } = createTestApp()
+  const { app, repositories, schoolRepositories, forActor } = createTestApp()
 
   // Standard Admin setup of tenant school
   await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
@@ -61,21 +62,36 @@ async function setupBaselineFixture() {
     schoolId: 'school',
     firstName: 'Alice',
     lastName: 'Smith',
-    roles: [StaffRole.Coordinator],
   })
   await saveStaffMember(app, {
     id: 'teacher-staff',
     schoolId: 'school',
     firstName: 'Bob',
     lastName: 'Jones',
-    roles: [StaffRole.Teacher],
   })
   await saveStaffMember(app, {
     id: 'accountant-staff',
     schoolId: 'school',
     firstName: 'Charlie',
     lastName: 'Brown',
-    roles: [StaffRole.Accountant],
+  })
+  await syncStaffSystemRoleAssignment({
+    staffMemberId: 'coordinator-staff',
+    schoolId: 'school',
+    repositories: schoolRepositories,
+    roleKeys: [StaffRole.Coordinator],
+  })
+  await syncStaffSystemRoleAssignment({
+    staffMemberId: 'teacher-staff',
+    schoolId: 'school',
+    repositories: schoolRepositories,
+    roleKeys: [StaffRole.Teacher],
+  })
+  await syncStaffSystemRoleAssignment({
+    staffMemberId: 'accountant-staff',
+    schoolId: 'school',
+    repositories: schoolRepositories,
+    roleKeys: [StaffRole.Accountant],
   })
 
   // Create students & guardians
@@ -140,7 +156,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'coord-user',
       staffMemberId: 'coordinator-staff',
       schoolId: 'school',
-      roles: [StaffRole.Coordinator],
       requestId: 'req-coord',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -183,7 +198,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'acct-user',
       staffMemberId: 'accountant-staff',
       schoolId: 'school',
-      roles: [StaffRole.Accountant],
       requestId: 'req-acct',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -214,7 +228,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
-      roles: [StaffRole.Teacher],
       requestId: 'req-teacher',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -243,7 +256,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'admin-user',
       staffMemberId: 'admin',
       schoolId: 'school',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'req-standard',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -253,7 +266,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'admin-user',
       staffMemberId: 'admin',
       schoolId: 'school',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'req-verified',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -277,7 +290,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'strong-admin-user',
       staffMemberId: 'strong-admin',
       schoolId: 'strong-school',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'req-strong-foreign',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -323,7 +336,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
-      roles: [StaffRole.Teacher],
       requestId: 'req-unauth',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -350,7 +362,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'foreign-admin-user',
       staffMemberId: 'foreign-admin',
       schoolId: 'foreign-school',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'req-foreign',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Strong,

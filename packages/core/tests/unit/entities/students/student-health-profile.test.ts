@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { StudentHealthProfile } from '../../../../src/entities/students/student-health-profile'
+import { StudentHealthProfile } from '../../../../src/domains/students/student-health-profile'
 
 describe('StudentHealthProfile entity', () => {
   const baseArgs = {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { GradeLevel } from '../../../../src/entities/school/grade-level'
+import { GradeLevel } from '../../../../src/domains/school/grade-level'
 
 describe('GradeLevel entity lexical order and naming', () => {
   const baseArgs = {

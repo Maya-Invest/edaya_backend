@@ -43,7 +43,7 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../entities'
+} from '../domains'
 import type { BaseRepositoryInterface } from './base-repository'
 
 export interface SchoolRepositories {

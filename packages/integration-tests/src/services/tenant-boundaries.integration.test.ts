@@ -64,6 +64,7 @@ import {
   updateStudent,
   updateStudentNote,
 } from '../utils/core-service-helpers'
+import { effectiveGrantsForRoles } from '../utils/effective-grants'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('tenant boundary safeguards', () => {
@@ -72,7 +73,7 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'school-a-admin-user',
       staffMemberId: 'school-a-admin',
       schoolId: 'school-a',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'school-a-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -81,7 +82,7 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'school-b-admin-user',
       staffMemberId: 'school-b-admin',
       schoolId: 'school-b',
-      roles: [StaffRole.Admin],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
       requestId: 'school-b-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -361,7 +362,6 @@ describeIntegration('tenant boundary safeguards', () => {
       schoolId: 'school-b',
       firstName: 'Outside',
       lastName: 'Teacher',
-      roles: [StaffRole.Teacher],
     })
     await expect(updateStaffStatus(app, 'staff-b', false))
       .rejects

@@ -22,15 +22,17 @@ import {
   StudentNoteVisibility,
   StudentStatus,
   AnnouncementTargetKind as TargetKind,
-} from '../../../src/entities'
-import { validateCalendarEventSave } from '../../../src/services/entity-configs/scheduling/calendar-event'
-import { validateScheduleSave, validateSessionSave } from '../../../src/services/entity-configs/scheduling/schedule'
-import { validateAttachmentSave } from '../../../src/services/entity-configs/school/attachment'
-import { validateClassGroupSave } from '../../../src/services/entity-configs/school/class-group'
-import { validateStaffAssignmentSave } from '../../../src/services/entity-configs/school/staff-assignment'
-import { validateStudentSave } from '../../../src/services/entity-configs/students/student'
+  validateAttachmentSave,
+  validateCalendarEventSave,
+  validateClassGroupSave,
+  validateScheduleSave,
+  validateSessionSave,
+  validateStaffAssignmentSave,
+  validateStudentSave,
+} from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { createTestApp } from '../../support/create-test-app'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'
 
 function repositories(overrides: Partial<SchoolRepositories> = {}): SchoolRepositories {
@@ -286,7 +288,7 @@ describe('entity config edge gates', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher',
       schoolId: 'school',
-      roles: [StaffRole.Teacher],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Teacher]),
       requestId: 'teacher-note',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -380,7 +382,7 @@ describe('entity config edge gates', () => {
       subjectId: 'coordinator-user',
       staffMemberId: 'coordinator-standard',
       schoolId: 'school',
-      roles: [StaffRole.Coordinator],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Coordinator]),
       requestId: 'health-standard',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -404,7 +406,7 @@ describe('entity config edge gates', () => {
       subjectId: 'coordinator-user',
       staffMemberId: 'coordinator-verified',
       schoolId: 'school',
-      roles: [StaffRole.Coordinator],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Coordinator]),
       requestId: 'health-verified',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Verified,

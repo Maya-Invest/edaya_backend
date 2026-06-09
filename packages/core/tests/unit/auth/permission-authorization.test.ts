@@ -12,8 +12,9 @@ import {
   systemAccessRoleId,
   systemRoleAssignmentId,
 } from '../../../src/authorization'
-import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/entities'
+import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/domains'
 import { anyPermissionAction, permissionAction } from '../../../src/shared'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 function noopPolicy(): AuthorizationPolicy {
   return {
@@ -41,7 +42,7 @@ function staffActor(roles: StaffRole[]) {
     schoolId: 'school-1',
     requestId: 'request-1',
     authenticatedAt: now,
-    roles,
+    effectiveGrants: effectiveGrantsForRoles(roles),
   })
 }
 
@@ -176,7 +177,13 @@ describe('authorize', () => {
 
   test('rejects staff authorization without repositories or preloaded grants', async () => {
     const policy = noopPolicy()
-    const actor = staffActor([StaffRole.Admin])
+    const actor = createStaffActorMetadata({
+      subjectId: 'subject-staff',
+      staffMemberId: 'staff-1',
+      schoolId: 'school-1',
+      requestId: 'request-1',
+      authenticatedAt: now,
+    })
 
     await expect(authorize({
       actor,
@@ -197,7 +204,6 @@ describe('authorize', () => {
       schoolId: 'school-1',
       requestId: 'request-1',
       authenticatedAt: now,
-      roles: [StaffRole.Teacher],
       effectiveGrants: {
         permissions: new Set([Permission.ATTENDANCE_RECORD]),
         scopeGrants: [{
@@ -223,7 +229,6 @@ describe('authorize', () => {
       schoolId: 'school-1',
       requestId: 'request-1',
       authenticatedAt: now,
-      roles: [StaffRole.Accountant],
       effectiveGrants: {
         permissions: new Set([Permission.PAYMENT_READ]),
         scopeGrants: [{

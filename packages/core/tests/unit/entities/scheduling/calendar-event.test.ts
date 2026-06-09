@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind } from '../../../../src/entities/scheduling/calendar-event'
+import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind } from '../../../../src/domains/scheduling/calendar-event'
 
 describe('CalendarEvent entity', () => {
   const baseArgs = {

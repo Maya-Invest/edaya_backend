@@ -35,7 +35,7 @@ import type {
   StudentHealthProfile,
   StudentIncidentInvolvement,
   StudentNote,
-} from '../entities'
+} from '../domains'
 import type { ServiceArgs } from '../shared/service-args'
 import type {
   AssignMatterToClassSubjectInput,

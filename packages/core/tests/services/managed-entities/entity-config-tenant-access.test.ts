@@ -25,8 +25,9 @@ import {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { createTestApp } from '../../support/create-test-app'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'
 
 describe('Entity config tenant and access gates', () => {
@@ -51,7 +52,6 @@ describe('Entity config tenant and access gates', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
-      roles: [StaffRole.Teacher],
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -110,7 +110,7 @@ describe('Entity config tenant and access gates', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
-      roles: [StaffRole.Teacher],
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Teacher]),
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,

@@ -1,7 +1,8 @@
-import type { StaffRoleAssignment } from '../../../src/entities/school/staff-role-assignment'
+import type { StaffRoleAssignment } from '../../../src/domains'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
+  AuthorizationError,
   ELEVATED_STAFF_PERMISSIONS,
   Permission,
   resolveEffectiveGrants,
@@ -9,7 +10,7 @@ import {
   syncStaffSystemRoleAssignment,
   systemAccessRoleId,
 } from '../../../src/authorization'
-import { AccessRole, School, StaffRole, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/entities'
+import { AccessRole, School, StaffRole, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
 
 function createRepos(assignments: unknown[] = [], ownerStaffId?: string): SchoolRepositories {
   const roleStore = new Map<string, AccessRole>()
@@ -224,17 +225,12 @@ describe('resolveEffectiveGrants', () => {
     expect(grants.expiresAt?.toISOString()).toBe('2026-01-02T00:00:00.000Z')
   })
 
-  test('falls back to in-memory resolution if no database assignments exist', async () => {
+  test('rejects grant resolution if no database assignments exist', async () => {
     const repositories = createRepos()
-    const grants = await resolveEffectiveGrants({
+    await expect(resolveEffectiveGrants({
       staffMemberId: 'staff-1',
       schoolId: 'school-1',
       repositories,
-      fallbackRoles: [StaffRole.Teacher],
-    })
-
-    expect(grants.isElevated).toBe(false)
-    expect(grants.permissions.has(Permission.CLASS_LOGBOOK_CREATE)).toBe(true)
-    expect(grants.permissions.has(Permission.PAYMENT_RECORD)).toBe(false)
+    })).rejects.toBeInstanceOf(AuthorizationError)
   })
 })

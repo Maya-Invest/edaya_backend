@@ -12,7 +12,7 @@ import {
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
   AnnouncementTargetKind as TargetKind,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
   createCommunicationsContext,

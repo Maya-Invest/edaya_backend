@@ -1,4 +1,4 @@
-import type { AcademicPeriod, ClassGroup, Student } from '../../entities'
+import type { AcademicPeriod, ClassGroup, Student } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../../authorization/authorization-error'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'

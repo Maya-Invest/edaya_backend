@@ -23,12 +23,11 @@ import {
   checkAttendanceAccess as checkSchedulingAttendanceAccess,
   checkSessionAccess as checkSchedulingSessionAccess,
 } from '../../../src/authorization/access-resolvers/scheduling-resolver'
-import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/entities'
-import { StudentClassEnrollmentStatus } from '../../../src/entities/students/student-class-enrollment'
+import { AccessRole, StaffRole, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domains'
 
 const now = new Date('2026-01-01T00:00:00Z')
 
-function staffActor(roles: StaffRole[], assuranceLevel = ActorAssuranceLevel.Strong): ActorMetadata {
+function staffActor(_roles: StaffRole[], assuranceLevel = ActorAssuranceLevel.Strong): ActorMetadata {
   return createStaffActorMetadata({
     subjectId: 'subject-staff',
     staffMemberId: 'staff-1',
@@ -36,7 +35,6 @@ function staffActor(roles: StaffRole[], assuranceLevel = ActorAssuranceLevel.Str
     requestId: 'request-1',
     authenticatedAt: now,
     assuranceLevel,
-    roles,
   })
 }
 
@@ -273,12 +271,12 @@ describe('RepositoryAuthorizationPolicy', () => {
   test('rejects inactive or cross-school staff before role checks', async () => {
     const inactiveRepos = createRepos({
       staffMembers: {
-        findById: mock(async () => ({ id: 'staff-1', schoolId: 'school-1', isActive: false, roles: [StaffRole.Admin] })),
+        findById: mock(async () => ({ id: 'staff-1', schoolId: 'school-1', isActive: false })),
       } as any,
     })
     const crossSchoolRepos = createRepos({
       staffMembers: {
-        findById: mock(async () => ({ id: 'staff-1', schoolId: 'other-school', isActive: true, roles: [StaffRole.Admin] })),
+        findById: mock(async () => ({ id: 'staff-1', schoolId: 'other-school', isActive: true })),
       } as any,
     })
 

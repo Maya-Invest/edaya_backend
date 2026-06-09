@@ -1,4 +1,3 @@
-import type { StaffRole } from '../entities/school/staff-member'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import type { Permission } from './permissions/permission'
 import type { ScopeType } from './permissions/scope-type'
@@ -21,7 +20,6 @@ export interface ResolveEffectiveGrantsArgs {
   repositories: SchoolRepositories
   academicYearId?: string
   now?: Date
-  fallbackRoles?: readonly StaffRole[]
 }
 
 export async function resolveEffectiveGrants(

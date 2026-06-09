@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { getLatestReportCard, ReportCardResult, ReportCardResultStatus } from '../../../../src/entities/assessments/report-card-result'
+import { getLatestReportCard, ReportCardResult, ReportCardResultStatus } from '../../../../src/domains/assessments/report-card-result'
 import { AttendanceSummary } from '../../../../src/value_object/attendance-summary'
 
 describe('ReportCardResult entity', () => {

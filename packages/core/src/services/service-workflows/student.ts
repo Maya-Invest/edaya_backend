@@ -7,13 +7,22 @@ import type {
   StudentHealthProfileArgs,
   StudentNote,
   StudentNoteArgs,
-} from '../../entities'
+} from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { Permission, resolveAuditActorId } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
-import { Guardian, GuardianStudentLink, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity } from '../../entities'
-import { Student, StudentStatus } from '../../entities/students/student'
-import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollment, StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
+import {
+  EnrollmentEndReason,
+  Guardian,
+  GuardianStudentLink,
+  ProgressionDecision,
+  Student,
+  StudentClassEnrollment,
+  StudentClassEnrollmentStatus,
+  StudentHealthProfile as StudentHealthProfileEntity,
+  StudentNote as StudentNoteEntity,
+  StudentStatus,
+} from '../../domains'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'

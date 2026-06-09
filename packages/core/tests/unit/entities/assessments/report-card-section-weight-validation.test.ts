@@ -2,8 +2,8 @@ import { describe, expect, it } from 'bun:test'
 import {
   ReportCardDefinitionSection,
   ReportCardDefinitionSectionKind,
-} from '../../../../src/entities/assessments/report-card-definition-section'
-import { DomainValidationError } from '../../../../src/entities/utils'
+} from '../../../../src/domains/assessments/report-card-definition-section'
+import { DomainValidationError } from '../../../../src/domains/utils'
 
 describe('Report card definition section type validations', () => {
   const baseArgs = {

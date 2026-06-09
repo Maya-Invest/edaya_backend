@@ -1,4 +1,4 @@
-import type { AcademicYear } from '../entities/school/academic-year'
+import type { AcademicYear } from '../domains'
 import type { SchoolRepositories } from '../ports/school-repositories'
 
 /**

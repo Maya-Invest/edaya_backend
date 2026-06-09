@@ -1,12 +1,19 @@
-import type { Incident, IncidentArgs } from '../../entities/students/incident'
-import type { IncidentInvolvementRole } from '../../entities/students/student-incident-involvement'
+import type {
+  Incident,
+  IncidentArgs,
+  IncidentInvolvementRole,
+} from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
-import { DisciplinaryActionKind } from '../../entities/students/disciplinary-action'
-import { Incident as IncidentEntity, IncidentStatus } from '../../entities/students/incident'
-import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
-import { StudentDisciplinaryAction, StudentDisciplinaryActionStatus } from '../../entities/students/student-disciplinary-action'
-import { StudentIncidentInvolvement } from '../../entities/students/student-incident-involvement'
+import {
+  DisciplinaryActionKind,
+  Incident as IncidentEntity,
+  IncidentStatus,
+  StudentClassEnrollmentStatus,
+  StudentDisciplinaryAction,
+  StudentDisciplinaryActionStatus,
+  StudentIncidentInvolvement,
+} from '../../domains'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'

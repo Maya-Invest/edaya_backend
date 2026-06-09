@@ -13,7 +13,8 @@ import {
   systemAccessRoleId,
   systemRoleAssignmentId,
 } from '../../../src/authorization'
-import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/entities'
+import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/domains'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
 
@@ -25,7 +26,7 @@ function staffActor(roles: StaffRole[], assuranceLevel = ActorAssuranceLevel.Str
     requestId: 'request-1',
     authenticatedAt: now,
     assuranceLevel,
-    roles,
+    effectiveGrants: effectiveGrantsForRoles(roles),
   })
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { DayOfWeek, Schedule } from '../../../../src/entities/scheduling/schedule'
+import { DayOfWeek, Schedule } from '../../../../src/domains/scheduling/schedule'
 
 describe('Schedule entity recurrence and timing bounds', () => {
   const baseArgs = {

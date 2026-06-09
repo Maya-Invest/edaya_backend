@@ -9,6 +9,7 @@ import {
   StaffMember,
   StaffRole,
 } from '@edaya/core'
+import { effectiveGrantsForRoles } from './effective-grants'
 
 export type FailableRepository
   = | 'classSubjectMatterRepository'
@@ -65,7 +66,7 @@ export function createDefaultTestActor(actor?: ActorMetadata): ActorMetadata {
     subjectId: 'admin-user',
     staffMemberId: 'admin',
     schoolId: 'school',
-    roles: [StaffRole.Admin],
+    effectiveGrants: effectiveGrantsForRoles([StaffRole.Admin]),
     requestId: 'integration-test',
     authenticatedAt: new Date('2026-09-01T00:00:00Z'),
     assuranceLevel: ActorAssuranceLevel.Strong,

@@ -1,6 +1,6 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
-import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
+import { StudentClassEnrollmentStatus } from '../../domains'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
 import { Permission } from '../permissions'
 import { staffGrantCoversAny, staffHasAnyPermission } from './grant-resolver'

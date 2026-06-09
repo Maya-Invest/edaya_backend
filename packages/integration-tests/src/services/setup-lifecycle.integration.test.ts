@@ -3,7 +3,6 @@ import {
   AttendanceMode,
   GradeLevel,
   SchoolType,
-  StaffRole,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -74,7 +73,6 @@ describeIntegration('setup lifecycle journey', () => {
       schoolId: 'school',
       firstName: 'Binta',
       lastName: 'Sow',
-      roles: [StaffRole.Teacher],
     })
     await createClassGroup(app, {
       id: 'class',

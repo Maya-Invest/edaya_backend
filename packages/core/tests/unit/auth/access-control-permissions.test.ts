@@ -8,8 +8,7 @@ import {
   Permission,
   RepositoryAuthorizationPolicy,
 } from '../../../src/authorization'
-import { accessRoleConfig } from '../../../src/services/entity-configs/school/access-role'
-import { staffRoleAssignmentConfig } from '../../../src/services/entity-configs/school/staff-role-assignment'
+import { accessRoleConfig, staffRoleAssignmentConfig } from '../../../src/domains'
 
 function actorWithPermissions(permissions: readonly Permission[]): ActorMetadata {
   const grants: EffectiveGrants = {

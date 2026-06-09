@@ -3,7 +3,7 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { IncidentInvolvementRole } from '../../../src/entities'
+import { IncidentInvolvementRole } from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
   actor,

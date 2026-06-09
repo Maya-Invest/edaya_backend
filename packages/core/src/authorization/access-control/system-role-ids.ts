@@ -1,4 +1,4 @@
-import { StaffRole } from '../../entities/school/staff-member'
+import { StaffRole } from '../../domains'
 
 export function systemAccessRoleId(schoolId: string, staffRole: StaffRole): string {
   return `access_role:${schoolId}:${staffRole}`

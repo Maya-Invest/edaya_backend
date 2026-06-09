@@ -1,4 +1,4 @@
-import type { StaffRoleAssignment } from '../../../src/entities/school/staff-role-assignment'
+import type { StaffRoleAssignment } from '../../../src/domains'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
@@ -9,8 +9,7 @@ import {
   systemAccessRoleId,
   TEACHER_PERMISSIONS,
 } from '../../../src/authorization'
-import { AccessRole, School, StaffMember, StaffRole } from '../../../src/entities'
-import { StaffAssignment } from '../../../src/entities/school/staff-assignment'
+import { AccessRole, School, StaffAssignment, StaffMember, StaffRole } from '../../../src/domains'
 
 function createRepos(): SchoolRepositories {
   const staff = new StaffMember({

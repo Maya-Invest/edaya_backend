@@ -3,7 +3,7 @@ import {
   isSameDate,
   requireNonNegativeNumber,
   requireTimeOfDay,
-} from '../../../src/entities/utils'
+} from '../../../src/domains/utils'
 
 describe('Utils', () => {
   test('requireNonNegativeNumber throws on negative numbers', () => {

@@ -3,7 +3,7 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { ReportCardResultStatus } from '../../../src/entities'
+import { ReportCardResultStatus } from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
   actor,

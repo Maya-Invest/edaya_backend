@@ -1,4 +1,4 @@
-import type { StaffAssignment } from '../../entities/school/staff-assignment'
+import type { StaffAssignment } from '../../domains'
 import type { ScopeGrant } from '../role-types'
 import { ASSIGNMENT_SCOPED_PERMISSIONS } from '../system-role-permissions'
 

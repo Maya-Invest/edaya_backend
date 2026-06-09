@@ -10,26 +10,25 @@ import {
   isInteractiveActor,
   resolveAuditActorId,
 } from '../../../src/authorization'
-import { StaffRole } from '../../../src/entities'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 describe('actor metadata', () => {
-  it('creates immutable staff context with normalized roles and audit identity', () => {
+  it('creates immutable grant-backed staff context with audit identity', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'user-1',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
-      roles: [StaffRole.Teacher, StaffRole.Teacher],
+      effectiveGrants: effectiveGrantsForRoles([]),
       requestId: 'request-1',
       sessionId: 'session-1',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Verified,
     })
 
-    expect(actor.roles).toEqual([StaffRole.Teacher])
     expect(actor.assuranceLevel).toBe(ActorAssuranceLevel.Verified)
     expect(resolveAuditActorId(actor)).toBe('teacher-1')
     expect(Object.isFrozen(actor)).toBe(true)
-    expect(Object.isFrozen(actor.roles)).toBe(true)
+    expect(actor.effectiveGrants).toBeDefined()
   })
 
   it('allows grant-backed staff context without legacy roles', () => {
@@ -46,7 +45,6 @@ describe('actor metadata', () => {
       },
     })
 
-    expect(actor.roles).toBeUndefined()
     expect(actor.effectiveGrants).toBeDefined()
     expect(resolveAuditActorId(actor)).toBe('teacher-1')
   })
@@ -84,12 +82,11 @@ describe('actor metadata', () => {
   it('rejects incomplete trusted metadata and exposes stable authorization errors', () => {
     expect(() => createStaffActorMetadata({
       subjectId: 'user-1',
-      staffMemberId: 'teacher-1',
+      staffMemberId: '',
       schoolId: 'school',
-      roles: [],
       requestId: 'request-1',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
-    })).toThrow('roles must contain at least one role')
+    })).toThrow()
 
     const error = new AuthorizationError(AuthorizationErrorCode.Forbidden)
     expect(error.name).toBe('AuthorizationError')

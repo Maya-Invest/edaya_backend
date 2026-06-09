@@ -1,4 +1,4 @@
-import { StaffRole } from '../entities/school/staff-member'
+import { StaffRole } from '../domains/school/staff-member'
 import { Permission } from './permissions/permission'
 
 /** Permissions granted to Admin / Principal (school-wide elevated staff). */

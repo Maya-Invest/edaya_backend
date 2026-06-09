@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { DisciplinaryAction, DisciplinaryActionKind } from '../../../../src/entities/students/disciplinary-action'
+import { DisciplinaryAction, DisciplinaryActionKind } from '../../../../src/domains/students/disciplinary-action'
 
 describe('DisciplinaryAction entity catalog integrity', () => {
   const baseArgs = {

@@ -1,5 +1,5 @@
 export * from './authorization'
-export * from './entities'
+export * from './domains'
 export * from './ports'
 export * from './services'
 export * from './value_object'

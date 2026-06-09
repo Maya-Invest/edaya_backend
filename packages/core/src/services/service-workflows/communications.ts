@@ -1,12 +1,21 @@
-import type { AnnouncementArgs } from '../../entities/messaging/announcement'
-import type { AnnouncementTarget, AnnouncementTargetArgs } from '../../entities/messaging/announcement-target'
-import type { MessageDeliveryChannel, MessageDeliveryStatus } from '../../entities/messaging/message-delivery'
+import type {
+  AnnouncementArgs,
+  AnnouncementTarget,
+  AnnouncementTargetArgs,
+  MessageDeliveryChannel,
+  MessageDeliveryStatus,
+} from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission } from '../../authorization'
-import { Announcement, AnnouncementStatus } from '../../entities/messaging/announcement'
-import { AnnouncementTarget as AnnouncementTargetEntity, AnnouncementTargetKind as TargetKind } from '../../entities/messaging/announcement-target'
-import { MessageDelivery, MessageDeliveryRecipientKind } from '../../entities/messaging/message-delivery'
-import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
+import {
+  Announcement,
+  AnnouncementStatus,
+  AnnouncementTarget as AnnouncementTargetEntity,
+  MessageDelivery,
+  MessageDeliveryRecipientKind,
+  StudentClassEnrollmentStatus,
+  AnnouncementTargetKind as TargetKind,
+} from '../../domains'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'

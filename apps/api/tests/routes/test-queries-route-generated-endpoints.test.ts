@@ -1,7 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/routes/index.route";
-import { ActorAssuranceLevel, StaffRole } from "@edaya/core";
+import type { Permission } from "@edaya/core";
+import { ActorAssuranceLevel } from "@edaya/core";
 import type { AppBindings } from "@/lib/types";
 
 describe("generated core query endpoints", () => {
@@ -10,7 +11,11 @@ describe("generated core query endpoints", () => {
     subjectId: "admin-user",
     schoolId: "school-1",
     staffMemberId: "staff-1",
-    roles: [StaffRole.Admin],
+    effectiveGrants: {
+      permissions: new Set<Permission>(),
+      scopeGrants: [],
+      isElevated: true,
+    },
     requestId: "request-id",
     authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Strong,

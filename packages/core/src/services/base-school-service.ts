@@ -44,54 +44,57 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../entities'
+} from '../domains'
 import type { AtomicExecutionPort, SchoolRepositories } from '../ports'
 import type { EntityConfigFactoryInput } from '../shared'
 import type { ServiceArgs } from '../shared/service-args'
-import { classSubjectConfig } from './entity-configs/academics/class-subject'
-import { classSubjectMatterConfig } from './entity-configs/academics/class-subject-matter'
-import { classSubjectProgressConfig } from './entity-configs/academics/class-subject-progress'
-import { subjectConfig } from './entity-configs/academics/subject'
-import { subjectMatterConfig } from './entity-configs/academics/subject-matter'
-import { assessmentConfig } from './entity-configs/assessments/assessment'
-import { assessmentResultConfig } from './entity-configs/assessments/assessment-result'
-import { reportCardDefinitionConfig } from './entity-configs/assessments/report-card-definition'
-import { reportCardDefinitionSectionConfig } from './entity-configs/assessments/report-card-definition-section'
-import { reportCardResultConfig } from './entity-configs/assessments/report-card-result'
-import { feeConfig } from './entity-configs/finances/fee'
-import { paymentConfig } from './entity-configs/finances/payment'
-import { studentFeeConfig } from './entity-configs/finances/student-fee'
-import { announcementConfig } from './entity-configs/messaging/announcement'
-import { announcementTargetConfig } from './entity-configs/messaging/announcement-target'
-import { messageDeliveryConfig } from './entity-configs/messaging/message-delivery'
-import { attendanceRecordConfig } from './entity-configs/scheduling/attendance-record'
-import { calendarEventConfig } from './entity-configs/scheduling/calendar-event'
-import { periodDefinitionConfig } from './entity-configs/scheduling/period-definition'
-import { scheduleConfig } from './entity-configs/scheduling/schedule'
-import { sessionConfig } from './entity-configs/scheduling/session'
-import { academicPeriodConfig } from './entity-configs/school/academic-period'
-import { academicYearConfig } from './entity-configs/school/academic-year'
-import { accessRoleConfig } from './entity-configs/school/access-role'
-import { attachmentConfig } from './entity-configs/school/attachment'
-import { classGroupConfig } from './entity-configs/school/class-group'
-import { gradeLevelConfig } from './entity-configs/school/grade-level'
-import { gradeScaleConfig } from './entity-configs/school/grade-scale'
-import { resourceConfig } from './entity-configs/school/resource'
-import { resourceAssignmentConfig } from './entity-configs/school/resource-assignment'
-import { schoolConfig } from './entity-configs/school/school'
-import { staffAssignmentConfig } from './entity-configs/school/staff-assignment'
-import { staffMemberConfig } from './entity-configs/school/staff-member'
-import { staffRoleAssignmentConfig } from './entity-configs/school/staff-role-assignment'
-import { disciplinaryActionConfig } from './entity-configs/students/disciplinary-action'
-import { guardianConfig } from './entity-configs/students/guardian'
-import { guardianStudentLinkConfig } from './entity-configs/students/guardian-student-link'
-import { incidentConfig } from './entity-configs/students/incident'
-import { studentConfig } from './entity-configs/students/student'
-import { studentClassEnrollmentConfig } from './entity-configs/students/student-class-enrollment'
-import { studentDisciplinaryActionConfig } from './entity-configs/students/student-disciplinary-action'
-import { studentHealthProfileConfig } from './entity-configs/students/student-health-profile'
-import { studentIncidentInvolvementConfig } from './entity-configs/students/student-incident-involvement'
-import { studentNoteConfig } from './entity-configs/students/student-note'
+import {
+  academicPeriodConfig,
+  academicYearConfig,
+  accessRoleConfig,
+  announcementConfig,
+  announcementTargetConfig,
+  assessmentConfig,
+  assessmentResultConfig,
+  attachmentConfig,
+  attendanceRecordConfig,
+  calendarEventConfig,
+  classGroupConfig,
+  classSubjectConfig,
+  classSubjectMatterConfig,
+  classSubjectProgressConfig,
+  disciplinaryActionConfig,
+  feeConfig,
+  gradeLevelConfig,
+  gradeScaleConfig,
+  guardianConfig,
+  guardianStudentLinkConfig,
+  incidentConfig,
+  messageDeliveryConfig,
+  paymentConfig,
+  periodDefinitionConfig,
+  reportCardDefinitionConfig,
+  reportCardDefinitionSectionConfig,
+  reportCardResultConfig,
+  resourceAssignmentConfig,
+  resourceConfig,
+  scheduleConfig,
+  schoolConfig,
+  sessionConfig,
+  staffAssignmentConfig,
+  staffMemberConfig,
+  staffRoleAssignmentConfig,
+  studentClassEnrollmentConfig,
+  studentConfig,
+  studentDisciplinaryActionConfig,
+  studentFeeConfig,
+  studentHealthProfileConfig,
+  studentIncidentInvolvementConfig,
+  studentNoteConfig,
+  subjectConfig,
+  subjectMatterConfig,
+} from '../domains'
+
 import { ManagedEntityService } from './managed-entity-service'
 
 export class BaseSchoolService {

@@ -11,7 +11,7 @@ import type {
   StaffAssignmentArgs,
   StaffMember,
   StaffMemberArgs,
-} from '../../entities'
+} from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission } from '../../authorization'
 import {
@@ -23,7 +23,7 @@ import {
   School as SchoolEntity,
   StaffAssignment as StaffAssignmentEntity,
   StaffMember as StaffMemberEntity,
-} from '../../entities'
+} from '../../domains'
 import { permissionAction } from '../../shared'
 import { requireSchool } from '../../shared/require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'

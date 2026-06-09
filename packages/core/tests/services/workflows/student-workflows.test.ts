@@ -8,7 +8,7 @@ import {
   ProgressionDecision,
   StudentClassEnrollmentStatus,
   StudentStatus,
-} from '../../../src/entities'
+} from '../../../src/domains'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
   actor,

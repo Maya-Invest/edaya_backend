@@ -1,4 +1,4 @@
-import type { School } from '../../../src/entities/school/school'
+import type { School } from '../../../src'
 import { describe, expect, test } from 'bun:test'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import { requireSchool } from '../../../src/shared/require-school'

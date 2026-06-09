@@ -1,4 +1,4 @@
-import { requireNonBlank, requireNonNegativeInt } from '../entities/utils'
+import { requireNonBlank, requireNonNegativeInt } from '../domains/utils'
 
 /**
  * Represents a monetary value in minor units for a single currency.

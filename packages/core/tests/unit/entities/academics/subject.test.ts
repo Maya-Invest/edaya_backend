@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { Subject } from '../../../../src/entities/academics/subject'
+import { Subject } from '../../../../src/domains'
 
 describe('Subject entity', () => {
   test('copyWith should copy with new values', () => {

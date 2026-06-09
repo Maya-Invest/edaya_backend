@@ -1,21 +1,31 @@
-import type { Assessment, AssessmentArgs } from '../../entities/assessments/assessment'
-import type { AssessmentResult, AssessmentResultArgs } from '../../entities/assessments/assessment-result'
-import type { ReportCardDefinitionArgs } from '../../entities/assessments/report-card-definition'
-import type { ReportCardDefinitionSection, ReportCardDefinitionSectionArgs } from '../../entities/assessments/report-card-definition-section'
-import type { GradeScale, GradeScaleArgs } from '../../entities/school/grade-scale'
-import type { StudentClassEnrollment } from '../../entities/students/student-class-enrollment'
+import type {
+  Assessment,
+  AssessmentArgs,
+  AssessmentResult,
+  AssessmentResultArgs,
+  GradeScale,
+  GradeScaleArgs,
+  ReportCardDefinitionArgs,
+  ReportCardDefinitionSection,
+  ReportCardDefinitionSectionArgs,
+  StudentClassEnrollment,
+} from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
-import { Permission } from '../../authorization'
-import { denyResourceAccess } from '../../authorization/authorization-error'
-import { Assessment as AssessmentEntity } from '../../entities/assessments/assessment'
-import { AssessmentResult as AssessmentResultEntity } from '../../entities/assessments/assessment-result'
-import { ReportCardDefinition } from '../../entities/assessments/report-card-definition'
-import { ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind } from '../../entities/assessments/report-card-definition-section'
-import { ReportCardResult, ReportCardResultStatus } from '../../entities/assessments/report-card-result'
-import { ReportCardResultSection } from '../../entities/assessments/report-card-result-section'
-import { AttendanceJustificationStatus, AttendanceStatus } from '../../entities/scheduling/attendance-record'
-import { GradeScale as GradeScaleEntity } from '../../entities/school/grade-scale'
-import { normalizeDate, roundTo2 } from '../../entities/utils'
+import { denyResourceAccess, Permission } from '../../authorization'
+import {
+  Assessment as AssessmentEntity,
+  AssessmentResult as AssessmentResultEntity,
+  AttendanceJustificationStatus,
+  AttendanceStatus,
+  GradeScale as GradeScaleEntity,
+  ReportCardDefinition,
+  ReportCardDefinitionSection as ReportCardDefinitionSectionEntity,
+  ReportCardDefinitionSectionKind,
+  ReportCardResult,
+  ReportCardResultSection,
+  ReportCardResultStatus,
+} from '../../domains'
+import { normalizeDate, roundTo2 } from '../../domains/utils'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { AttendanceSummary } from '../../value_object/attendance-summary'

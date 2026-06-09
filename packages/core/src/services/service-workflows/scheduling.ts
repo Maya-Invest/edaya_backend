@@ -1,17 +1,19 @@
-import type { AttendanceStatus } from '../../entities/scheduling/attendance-record'
-import type { CalendarEventArgs } from '../../entities/scheduling/calendar-event'
-import type { ScheduleArgs } from '../../entities/scheduling/schedule'
-import type { SessionArgs } from '../../entities/scheduling/session'
-import type { ClassGroup } from '../../entities/school/class-group'
+import type { AttendanceStatus, CalendarEventArgs, ClassGroup, ScheduleArgs, SessionArgs } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
-import { AttendanceJustificationStatus, AttendanceRecord } from '../../entities/scheduling/attendance-record'
-import { CalendarEvent, CalendarEventScopeKind } from '../../entities/scheduling/calendar-event'
-import { DayOfWeek, Schedule } from '../../entities/scheduling/schedule'
-import { Session, SessionKind } from '../../entities/scheduling/session'
-import { AttendanceMode } from '../../entities/school/class-group'
-import { StudentClassEnrollmentStatus } from '../../entities/students/student-class-enrollment'
-import { normalizeDate } from '../../entities/utils'
+import {
+  AttendanceJustificationStatus,
+  AttendanceMode,
+  AttendanceRecord,
+  CalendarEvent,
+  CalendarEventScopeKind,
+  DayOfWeek,
+  Schedule,
+  Session,
+  SessionKind,
+  StudentClassEnrollmentStatus,
+} from '../../domains'
+import { normalizeDate } from '../../domains/utils'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'

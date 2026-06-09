@@ -10,7 +10,6 @@ import {
   Permission,
   SessionKind,
   StaffRoleAssignment,
-  StaffRole,
   Subject,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
@@ -192,7 +191,6 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       subjectId: 'teacher-user',
       staffMemberId: 'teacher',
       schoolId: 'school',
-      roles: [StaffRole.Teacher],
       requestId: 'teacher-request-101',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -202,7 +200,6 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       subjectId: 'accountant-user',
       staffMemberId: 'accountant',
       schoolId: 'school',
-      roles: [StaffRole.Accountant],
       requestId: 'accountant-request-202',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -234,15 +231,13 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       }
     }
     const [attendanceRecord, paymentRecord, _studentDetailResult, feeSummaryResult] = await Promise.all([
-      label('teacher attendance',
-      teacherApp.recordAttendance({
+      label('teacher attendance', teacherApp.recordAttendance({
         id: 'concurrent-attendance',
         studentId: 'student',
         sessionId: session.id,
         status: AttendanceStatus.Present,
       })),
-      label('accountant payment',
-      accountantApp.recordPayment({
+      label('accountant payment', accountantApp.recordPayment({
         id: 'concurrent-payment',
         studentFeeId: studentFee.id,
         amount: 5000,
