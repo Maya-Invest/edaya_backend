@@ -84,6 +84,7 @@ describe('actor metadata', () => {
       subjectId: 'user-1',
       staffMemberId: '',
       schoolId: 'school',
+      effectiveGrants: effectiveGrantsForRoles([]),
       requestId: 'request-1',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
     })).toThrow()

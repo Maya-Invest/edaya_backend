@@ -1,6 +1,5 @@
 import type { ActorMetadata } from '../../../src/authorization'
-import type { SchoolRepositories } from '../../../src/ports'
-import { describe, expect, mock, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
@@ -8,12 +7,8 @@ import {
   createGuardianActorMetadata,
   createStaffActorMetadata,
   Permission,
-  RepositoryAuthorizationPolicy,
-  SYSTEM_ROLE_PERMISSIONS,
-  systemAccessRoleId,
-  systemRoleAssignmentId,
 } from '../../../src/authorization'
-import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/domains'
+import { StaffRole } from '../../../src/domains'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
@@ -40,58 +35,15 @@ function guardianActor(): ActorMetadata {
   })
 }
 
-function createRepos(staffRoles: StaffRole[]): SchoolRepositories {
-  const accessRoles = Object.values(StaffRole).map(role => new AccessRole({
-    id: systemAccessRoleId('school-1', role),
-    schoolId: 'school-1',
-    name: role,
-    isSystemRole: true,
-    systemRoleKey: role,
-    permissions: SYSTEM_ROLE_PERMISSIONS[role],
-  }))
-  const assignment = new StaffRoleAssignment({
-    id: systemRoleAssignmentId('school-1', 'staff-1'),
-    staffId: 'staff-1',
-    schoolId: 'school-1',
-    roleIds: staffRoles.map(role => systemAccessRoleId('school-1', role)),
-    scopeGrants: [],
-  })
-
-  return {
-    staffMembers: {
-      findById: mock(async () => ({
-        id: 'staff-1',
-        schoolId: 'school-1',
-        isActive: true,
-      })),
-    },
-    staffAssignments: {
-      list: mock(async () => []),
-    },
-    accessRoles: {
-      findById: mock(async (id: string) => accessRoles.find(role => role.id === id)),
-      findByIds: mock(async (ids: string[]) => accessRoles.filter(role => ids.includes(role.id))),
-      list: mock(async () => accessRoles),
-      save: mock(async () => {}),
-    },
-    staffRoleAssignments: {
-      findById: mock(async (id: string) => id === assignment.id ? assignment : undefined),
-      findByIds: mock(async (ids: string[]) => ids.includes(assignment.id) ? [assignment] : []),
-      list: mock(async () => [assignment]),
-      save: mock(async () => {}),
-    },
-  } as unknown as SchoolRepositories
-}
-
-async function expectAuthorizeResult(
-  operation: Promise<void>,
+function expectAuthorizeResult(
+  fn: () => void,
   shouldAllow: boolean,
-): Promise<void> {
+): void {
   if (shouldAllow) {
-    await expect(operation).resolves.toBeUndefined()
+    expect(fn).not.toThrow()
     return
   }
-  await expect(operation).rejects.toBeInstanceOf(AuthorizationError)
+  expect(fn).toThrow(AuthorizationError)
 }
 
 interface ParityCase {
@@ -184,20 +136,16 @@ const PARITY_CASES: ParityCase[] = [
 
 describe('permission engine system role grants', () => {
   for (const parityCase of PARITY_CASES) {
-    test(parityCase.label, async () => {
-      const repos = createRepos(parityCase.staffRoles)
-      const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+    test(parityCase.label, () => {
       const actorId = parityCase.actor.kind === 'staff'
         ? parityCase.actor.staffMemberId
         : parityCase.actor.kind === 'guardian'
           ? parityCase.actor.guardianId
           : 'unknown'
 
-      await expectAuthorizeResult(
-        authorize({
+      expectAuthorizeResult(
+        () => authorize({
           actor: parityCase.actor,
-          policy,
-          repositories: repos,
           request: {
             actorId,
             schoolId: 'school-1',

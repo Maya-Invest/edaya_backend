@@ -44,9 +44,11 @@ import type {
   Subject,
   SubjectMatter,
 } from '../domains'
+import type { AuthorizationRepository } from './authorization-repository'
 import type { BaseRepositoryInterface } from './base-repository'
 
 export interface SchoolRepositories {
+  readonly authorization: AuthorizationRepository
   // SetupRepositories
   readonly schools: BaseRepositoryInterface<School> & {
     getOverdueFeeCount: (schoolId: string) => Promise<number>

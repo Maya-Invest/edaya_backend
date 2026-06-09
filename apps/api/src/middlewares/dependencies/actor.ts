@@ -179,7 +179,7 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
         ...context,
         schoolId: identity.schoolId,
         staffMemberId: identity.staffMemberId,
-        effectiveGrants: identity.effectiveGrants,
+        effectiveGrants: identity.effectiveGrants!,
       });
     case "guardian":
       return createGuardianActorMetadata({

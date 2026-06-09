@@ -48,6 +48,7 @@ import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../
 import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
+  DefaultAuthorizationRepository,
   RepositoryAuthorizationPolicy,
 } from '../../src/authorization'
 import { StaffMember, StaffRole } from '../../src/domains'
@@ -251,6 +252,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const incidents = createStore<Incident>(transactionParticipants)
 
   const schoolRepositories: SchoolRepositories = {
+    authorization: undefined as any,
     // setup
     schools: {
       ...schools,
@@ -344,6 +346,9 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     },
 
   }
+
+  // @ts-ignore
+  schoolRepositories.authorization = new DefaultAuthorizationRepository(schoolRepositories)
 
   const testRepositories = {
     // Nested structure (implements SchoolRepositories)

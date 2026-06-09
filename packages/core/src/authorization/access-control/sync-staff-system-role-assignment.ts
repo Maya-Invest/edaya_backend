@@ -2,10 +2,9 @@ import type { StaffRole } from '../../domains'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { Permission } from '../permissions/permission'
 import { StaffRoleAssignment } from '../../domains'
-import { mergeScopeGrants } from '../effective-grants'
+import { mergeScopeGrants, scopeGrantsFromStaffAssignments } from '../../ports/authorization-repository'
 import { ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_ROLES } from '../system-role-permissions'
 import { ensureSystemAccessRolesForSchool } from './ensure-system-roles'
-import { scopeGrantsFromStaffAssignments } from './scope-grants-from-assignments'
 import { systemAccessRoleId } from './system-role-ids'
 
 export interface SyncStaffSystemRoleAssignmentArgs {

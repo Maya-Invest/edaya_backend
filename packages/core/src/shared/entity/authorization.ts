@@ -5,9 +5,8 @@ import type { EntityReadAuthorization, EntityWriteAuthorization } from '../../se
 import { authorize } from '../../authorization/authorize'
 import { unique } from '../utils/helper-utils'
 
-/** Prefer for new code once call sites pass school context on the actor. */
 export function permissionAction(
-  policy: AuthorizationPolicy,
+  _policy: AuthorizationPolicy,
   permission: Permission,
   scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId' | 'academicYearId'>,
 ): (actor: ActorMetadata) => Promise<void> {
@@ -20,10 +19,8 @@ export function permissionAction(
           ? actor.studentId
           : actor.systemId
 
-    await authorize({
+    authorize({
       actor,
-      policy,
-      repositories: policy.getRepositories?.(),
       request: {
         actorId,
         schoolId: actor.schoolId,

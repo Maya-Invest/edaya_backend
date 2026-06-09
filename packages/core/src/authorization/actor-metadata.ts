@@ -1,5 +1,6 @@
-import type { EffectiveGrants } from './effective-grants'
+import type { EffectiveGrants } from '../ports/authorization-repository'
 import { requireNonBlank, requireValidDate } from '../domains/utils'
+import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from './portal-permissions'
 
 export enum ActorAssuranceLevel {
   Standard = 'standard',
@@ -14,13 +15,13 @@ export interface InteractiveActorContext {
   readonly sessionId?: string
   readonly authenticatedAt: Date
   readonly assuranceLevel: ActorAssuranceLevel
+  readonly effectiveGrants: EffectiveGrants
 }
 
 export interface StaffActorMetadata extends InteractiveActorContext {
   readonly kind: 'staff'
   readonly staffMemberId: string
-  /** Preloaded grants (e.g. from API session); avoids DB round-trip per authorize(). */
-  readonly effectiveGrants?: EffectiveGrants
+  readonly effectiveGrants: EffectiveGrants
 }
 
 export interface GuardianActorMetadata extends InteractiveActorContext {
@@ -55,7 +56,7 @@ interface InteractiveActorContextInput {
 
 export interface StaffActorMetadataInput extends InteractiveActorContextInput {
   staffMemberId: string
-  effectiveGrants?: EffectiveGrants
+  effectiveGrants: EffectiveGrants
 }
 
 export interface GuardianActorMetadataInput extends InteractiveActorContextInput {
@@ -79,23 +80,35 @@ export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffA
     ...context,
     kind: 'staff',
     staffMemberId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
-    ...(input.effectiveGrants ? { effectiveGrants: input.effectiveGrants } : {}),
+    effectiveGrants: input.effectiveGrants,
   })
 }
 
 export function createGuardianActorMetadata(input: GuardianActorMetadataInput): GuardianActorMetadata {
+  const context = normalizeInteractiveContext(input)
   return Object.freeze({
-    ...normalizeInteractiveContext(input),
+    ...context,
     kind: 'guardian',
     guardianId: requireNonBlank(input.guardianId, 'guardianId'),
+    effectiveGrants: {
+      permissions: GUARDIAN_PORTAL_PERMISSIONS,
+      scopeGrants: [],
+      isElevated: false,
+    },
   })
 }
 
 export function createStudentActorMetadata(input: StudentActorMetadataInput): StudentActorMetadata {
+  const context = normalizeInteractiveContext(input)
   return Object.freeze({
-    ...normalizeInteractiveContext(input),
+    ...context,
     kind: 'student',
     studentId: requireNonBlank(input.studentId, 'studentId'),
+    effectiveGrants: {
+      permissions: STUDENT_PORTAL_PERMISSIONS,
+      scopeGrants: [],
+      isElevated: false,
+    },
   })
 }
 
@@ -126,7 +139,7 @@ export function isInteractiveActor(actor: ActorMetadata): actor is InteractiveAc
   return actor.kind !== 'system'
 }
 
-function normalizeInteractiveContext(input: InteractiveActorContextInput): InteractiveActorContext {
+function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<InteractiveActorContext, 'effectiveGrants'> {
   return Object.freeze({
     subjectId: requireNonBlank(input.subjectId, 'subjectId'),
     schoolId: requireNonBlank(input.schoolId, 'schoolId'),

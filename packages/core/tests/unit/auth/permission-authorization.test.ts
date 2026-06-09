@@ -1,18 +1,14 @@
 import type { AuthorizationPolicy } from '../../../src/authorization'
-import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, test } from 'bun:test'
 import {
   AuthorizationError,
+
   authorize,
   createStaffActorMetadata,
   Permission,
   permissionDefinitions,
-  RepositoryAuthorizationPolicy,
-  SYSTEM_ROLE_PERMISSIONS,
-  systemAccessRoleId,
-  systemRoleAssignmentId,
 } from '../../../src/authorization'
-import { AccessRole, StaffRole, StaffRoleAssignment } from '../../../src/domains'
+import { StaffRole } from '../../../src/domains'
 import { anyPermissionAction, permissionAction } from '../../../src/shared'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
@@ -46,49 +42,6 @@ function staffActor(roles: StaffRole[]) {
   })
 }
 
-function createTeacherRepos(): SchoolRepositories {
-  const accessRole = new AccessRole({
-    id: systemAccessRoleId('school-1', StaffRole.Teacher),
-    schoolId: 'school-1',
-    name: StaffRole.Teacher,
-    isSystemRole: true,
-    systemRoleKey: StaffRole.Teacher,
-    permissions: SYSTEM_ROLE_PERMISSIONS[StaffRole.Teacher],
-  })
-  const assignment = new StaffRoleAssignment({
-    id: systemRoleAssignmentId('school-1', 'staff-1'),
-    staffId: 'staff-1',
-    schoolId: 'school-1',
-    roleIds: [accessRole.id],
-    scopeGrants: [],
-  })
-
-  return {
-    staffMembers: {
-      findById: async () => ({
-        id: 'staff-1',
-        schoolId: 'school-1',
-        isActive: true,
-      }),
-    },
-    staffAssignments: {
-      list: async () => [],
-    },
-    accessRoles: {
-      findById: async (id: string) => id === accessRole.id ? accessRole : undefined,
-      findByIds: async (ids: string[]) => ids.includes(accessRole.id) ? [accessRole] : [],
-      list: async () => [accessRole],
-      save: async () => {},
-    },
-    staffRoleAssignments: {
-      findById: async (id: string) => id === assignment.id ? assignment : undefined,
-      findByIds: async (ids: string[]) => ids.includes(assignment.id) ? [assignment] : [],
-      list: async () => [assignment],
-      save: async () => {},
-    },
-  } as unknown as SchoolRepositories
-}
-
 describe('permission catalog', () => {
   test('defines metadata for every permission', () => {
     for (const permission of Object.values(Permission)) {
@@ -99,57 +52,37 @@ describe('permission catalog', () => {
 })
 
 describe('authorize', () => {
-  test('allows teachers to record attendance through effective grants', async () => {
-    const repos = createTeacherRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+  test('allows teachers to record attendance through effective grants', () => {
     const actor = staffActor([StaffRole.Teacher])
 
-    await expect(authorize({
+    expect(authorize({
       actor,
-      policy,
-      repositories: repos,
       request: {
         actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.ATTENDANCE_RECORD,
       },
-    })).resolves.toBeUndefined()
+    })).toBeUndefined()
   })
 
-  test('rejects teachers for finance permissions', async () => {
-    const repos = createTeacherRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+  test('rejects teachers for finance permissions', () => {
     const actor = staffActor([StaffRole.Teacher])
 
-    await expect(authorize({
+    expect(() => authorize({
       actor,
-      policy,
       request: {
         actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.PAYMENT_RECORD,
       },
-    })).rejects.toBeInstanceOf(AuthorizationError)
-
-    await expect(authorize({
-      actor,
-      policy,
-      repositories: repos,
-      request: {
-        actorId: actor.staffMemberId,
-        schoolId: 'school-1',
-        permission: Permission.PAYMENT_RECORD,
-      },
-    })).rejects.toBeInstanceOf(AuthorizationError)
+    })).toThrow(AuthorizationError)
   })
 
-  test('rejects scope types not allowed for the permission', async () => {
-    const policy = noopPolicy()
+  test('rejects scope types not allowed for the permission', () => {
     const actor = staffActor([StaffRole.Admin])
 
-    await expect(authorize({
+    expect(() => authorize({
       actor,
-      policy,
       request: {
         actorId: actor.staffMemberId,
         schoolId: 'school-1',
@@ -157,43 +90,44 @@ describe('authorize', () => {
         scopeType: 'class_group',
         scopeEntityId: 'class-1',
       },
-    })).rejects.toBeInstanceOf(AuthorizationError)
+    })).toThrow(AuthorizationError)
   })
 
-  test('rejects school mismatch', async () => {
-    const policy = noopPolicy()
+  test('rejects school mismatch', () => {
     const actor = staffActor([StaffRole.Admin])
 
-    await expect(authorize({
+    expect(() => authorize({
       actor,
-      policy,
       request: {
         actorId: actor.staffMemberId,
         schoolId: 'school-other',
         permission: Permission.ATTENDANCE_READ,
       },
-    })).rejects.toBeInstanceOf(AuthorizationError)
+    })).toThrow(AuthorizationError)
   })
 
-  test('rejects staff authorization without repositories or preloaded grants', async () => {
-    const policy = noopPolicy()
+  test('rejects staff authorization with empty preloaded grants', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'subject-staff',
       staffMemberId: 'staff-1',
       schoolId: 'school-1',
+      effectiveGrants: {
+        permissions: new Set(),
+        scopeGrants: [],
+        isElevated: false,
+      },
       requestId: 'request-1',
       authenticatedAt: now,
     })
 
-    await expect(authorize({
+    expect(() => authorize({
       actor,
-      policy,
       request: {
         actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.STAFF_READ,
       },
-    })).rejects.toBeInstanceOf(AuthorizationError)
+    })).toThrow(AuthorizationError)
   })
 
   test('permissionAction uses preloaded grants', async () => {

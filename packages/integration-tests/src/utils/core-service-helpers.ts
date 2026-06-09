@@ -66,10 +66,8 @@ export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School
     requestId: 'integration-school-registration',
     reason: 'Seed school fixture',
   })
-  await authorize({
+  authorize({
     actor: registrationActor,
-    policy: app.baseService.authorizationPolicy,
-    repositories: app.baseService.repositories,
     request: {
       actorId: resolveAuditActorId(registrationActor),
       schoolId: school.id,
@@ -130,10 +128,8 @@ async function authorizeCoreServiceHelperPermission(
   app: SchoolService,
   permission: Permission,
 ): Promise<void> {
-  await authorize({
+  authorize({
     actor: app.baseService.actor,
-    policy: app.baseService.authorizationPolicy,
-    repositories: app.baseService.repositories,
     request: {
       actorId: resolveAuditActorId(app.baseService.actor),
       schoolId: app.baseService.actor.schoolId,

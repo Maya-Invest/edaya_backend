@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   assertPortalPermission,
   AuthorizationError,
@@ -8,7 +8,6 @@ import {
   GUARDIAN_PORTAL_PERMISSIONS,
   Permission,
   portalPermissionPolicyFor,
-  RepositoryAuthorizationPolicy,
   STUDENT_PORTAL_PERMISSIONS,
 } from '../../../src/authorization'
 
@@ -47,27 +46,14 @@ describe('portal permission policy', () => {
       .toThrow(AuthorizationError)
   })
 
-  test('authorize applies portal policy without loading staff grants', async () => {
-    const staffLookup = mock(async () => {
-      throw new Error('portal authorization must not load staff grants')
-    })
-    const repositories = {
-      staffMembers: {
-        findById: staffLookup,
-      },
-    } as any
-    const policy = new RepositoryAuthorizationPolicy({ repositories })
-
-    await expect(authorize({
+  test('authorize applies portal policy synchronously', () => {
+    expect(authorize({
       actor: guardianActor,
-      policy,
-      repositories,
       request: {
         actorId: guardianActor.guardianId,
         schoolId: 'school-1',
         permission: Permission.QUERY_STUDENT_DETAIL_READ,
       },
-    })).resolves.toBeUndefined()
-    expect(staffLookup).not.toHaveBeenCalled()
+    })).toBeUndefined()
   })
 })

@@ -8,6 +8,7 @@ import {
   GradeLevel,
   Permission,
   resolveAuditActorId,
+  resolveEffectiveGrants,
   SessionKind,
   StaffMember,
   StaffRole,
@@ -144,18 +145,23 @@ async function setupBaselineFixture() {
     responsibility: 'teacher',
   })
 
-  return { app, repositories, forActor, classSubject, session }
+  return { app, repositories, schoolRepositories, forActor, classSubject, session }
 }
 
 describeIntegration('Actor Role and Assurance Permission Policies', () => {
   it('enforces explicit allow and deny actions per staff role', async () => {
-    const { app, forActor } = await setupBaselineFixture()
+    const { app, schoolRepositories, forActor } = await setupBaselineFixture()
 
     // 1. Coordinator Actor
     const coordApp = forActor(createStaffActorMetadata({
       subjectId: 'coord-user',
       staffMemberId: 'coordinator-staff',
       schoolId: 'school',
+      effectiveGrants: await resolveEffectiveGrants({
+        staffMemberId: 'coordinator-staff',
+        schoolId: 'school',
+        repositories: schoolRepositories,
+      }),
       requestId: 'req-coord',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -198,6 +204,11 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'acct-user',
       staffMemberId: 'accountant-staff',
       schoolId: 'school',
+      effectiveGrants: await resolveEffectiveGrants({
+        staffMemberId: 'accountant-staff',
+        schoolId: 'school',
+        repositories: schoolRepositories,
+      }),
       requestId: 'req-acct',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -228,6 +239,11 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
+      effectiveGrants: await resolveEffectiveGrants({
+        staffMemberId: 'teacher-staff',
+        schoolId: 'school',
+        repositories: schoolRepositories,
+      }),
       requestId: 'req-teacher',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -316,26 +332,29 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     expect(verifiedPeriod.isPublished).toBe(true)
 
     // school staff never receive platform registration authority from school role grants
-    await expect(authorize({
+    expect(() => authorize({
       actor: strongForeignAdminApp.baseService.actor,
-      policy: strongForeignAdminApp.baseService.authorizationPolicy,
-      repositories: strongForeignAdminApp.baseService.repositories,
       request: {
         actorId: resolveAuditActorId(strongForeignAdminApp.baseService.actor),
         schoolId: 'strong-school',
         permission: Permission.PLATFORM_REGISTER_SCHOOL,
       },
-    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    })).toThrow()
   })
 
   it('guarantees denied-mutation rollback and holds strict tenant boundaries', async () => {
-    const { forActor, repositories } = await setupBaselineFixture()
+    const { forActor, schoolRepositories, repositories } = await setupBaselineFixture()
 
     // 1. Denied Mutation rollback guarantee
     const unauthorizedTeacherApp = forActor(createStaffActorMetadata({
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
+      effectiveGrants: await resolveEffectiveGrants({
+        staffMemberId: 'teacher-staff',
+        schoolId: 'school',
+        repositories: schoolRepositories,
+      }),
       requestId: 'req-unauth',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,

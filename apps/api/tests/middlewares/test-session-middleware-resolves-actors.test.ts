@@ -399,6 +399,11 @@ describe("session Middleware ActorMetadata Construction", () => {
       kind: "guardian",
       schoolId: "school-1",
       guardianId: "guardian-1",
+      effectiveGrants: {
+        isElevated: false,
+        permissions: {},
+        scopeGrants: [],
+      },
     });
   });
 
@@ -444,6 +449,11 @@ describe("session Middleware ActorMetadata Construction", () => {
       kind: "student",
       schoolId: "school-1",
       studentId: "student-1",
+      effectiveGrants: {
+        isElevated: false,
+        permissions: {},
+        scopeGrants: [],
+      },
     });
   });
 

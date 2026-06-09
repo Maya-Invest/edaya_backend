@@ -1,6 +1,7 @@
-import type {
-  AtomicExecutionPort,
-  SchoolRepositories,
+import {
+  type AtomicExecutionPort,
+  DefaultAuthorizationRepository,
+  type SchoolRepositories,
 } from '@edaya/core'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import {
@@ -478,6 +479,7 @@ export class PostgresStaffRoleAssignmentStore extends PostgresStore<StaffRoleAss
 }
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
+  public readonly authorization: DefaultAuthorizationRepository
   public readonly schoolsStore: PostgresStore<School>
   public readonly academicYears: PostgresStore<AcademicYear>
   public readonly academicPeriods: PostgresStore<AcademicPeriod>
@@ -532,6 +534,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly schools: SchoolRepositories['schools']
 
   constructor(private readonly db: any) {
+    this.authorization = new DefaultAuthorizationRepository(this)
     // 1. Schools Store
     this.schoolsStore = new PostgresStore(
       db,

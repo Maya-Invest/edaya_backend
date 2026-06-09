@@ -2,8 +2,8 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
 import type { Permission } from '../permissions'
 import type { ScopeType } from '../permissions/scope-type'
+import { resolveEffectiveGrants, scopeGrantCovers } from '../../ports/authorization-repository'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-import { resolveEffectiveGrants, scopeGrantCovers } from '../effective-grants'
 
 export async function staffHasAnyPermission(
   actor: ActorMetadata,

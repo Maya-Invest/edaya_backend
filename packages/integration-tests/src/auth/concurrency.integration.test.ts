@@ -8,6 +8,7 @@ import {
   GradeLevel,
   PaymentMethod,
   Permission,
+  resolveEffectiveGrants,
   SessionKind,
   StaffRoleAssignment,
   Subject,
@@ -29,7 +30,7 @@ import {
 import { createTestApp } from '../utils/test-adapter'
 
 async function createConcurrencyFixture() {
-  const { app, repositories, forActor } = createTestApp()
+  const { app, repositories, schoolRepositories, forActor } = createTestApp()
 
   // Setup standard tenant school context using 'school' matching the default actor
   await saveSchool(app, { id: 'school', name: 'Concurrent Academy', timeZone: 'UTC' })
@@ -179,12 +180,25 @@ async function createConcurrencyFixture() {
     feeId: 'tuition',
   })
 
-  return { app, repositories, forActor, session, studentFee }
+  return { app, repositories, schoolRepositories, forActor, session, studentFee }
 }
 
 describeIntegration('Shared-repository multi-actor concurrency safeguards', () => {
   it('correctly isolates attributions and validates permissions for overlapping concurrent operations', async () => {
-    const { repositories, forActor, session, studentFee } = await createConcurrencyFixture()
+    const { repositories, schoolRepositories, forActor, session, studentFee } = await createConcurrencyFixture()
+
+    // Resolve grants eagerly from the persisted state
+    const teacherGrants = await resolveEffectiveGrants({
+      staffMemberId: 'teacher',
+      schoolId: 'school',
+      repositories: schoolRepositories,
+    })
+
+    const accountantGrants = await resolveEffectiveGrants({
+      staffMemberId: 'accountant',
+      schoolId: 'school',
+      repositories: schoolRepositories,
+    })
 
     // Instantiate concurrent actor-bound facades
     const teacherApp = forActor(createStaffActorMetadata({
@@ -194,6 +208,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       requestId: 'teacher-request-101',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
+      effectiveGrants: teacherGrants,
     }))
 
     const accountantApp = forActor(createStaffActorMetadata({
@@ -203,6 +218,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       requestId: 'accountant-request-202',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
+      effectiveGrants: accountantGrants,
     }))
 
     const guardianApp = forActor(createGuardianActorMetadata({

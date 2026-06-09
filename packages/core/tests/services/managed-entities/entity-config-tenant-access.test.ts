@@ -52,13 +52,14 @@ describe('Entity config tenant and access gates', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
+      effectiveGrants: effectiveGrantsForRoles([StaffRole.Teacher]),
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
     })
     const { app, repositories } = createTestApp(teacherActor)
     await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-1',
+      id: 'class-unassigned-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
@@ -70,27 +71,27 @@ describe('Entity config tenant and access gates', () => {
       name: 'Math',
     }))
     await repositories.subjectMatterRepository.save(new SubjectMatter({
-      id: 'subject-matter-1',
+      id: 'subject-matter-unassigned-1',
       subjectId: 'subject-1',
       name: 'Numbers',
       sequenceOrder: 1,
     }))
     await repositories.classSubjectRepository.save(new ClassSubject({
-      id: 'class-subject-1',
-      classGroupId: 'class-1',
+      id: 'class-subject-unassigned-1',
+      classGroupId: 'class-unassigned-1',
       subjectId: 'subject-1',
     }))
     await repositories.classSubjectMatterRepository.save(new ClassSubjectMatter({
-      id: 'class-subject-matter-1',
-      classSubjectId: 'class-subject-1',
-      subjectMatterId: 'subject-matter-1',
+      id: 'class-subject-matter-unassigned-1',
+      classSubjectId: 'class-subject-unassigned-1',
+      subjectMatterId: 'subject-matter-unassigned-1',
       status: ClassSubjectMatterStatus.NotStarted,
       completedPercentage: 0,
     }))
     await repositories.sessionRepository.save(new Session({
-      id: 'session-1',
-      classGroupId: 'class-1',
-      classSubjectId: 'class-subject-1',
+      id: 'session-unassigned-1',
+      classGroupId: 'class-unassigned-1',
+      classSubjectId: 'class-subject-unassigned-1',
       title: 'Math',
       kind: SessionKind.Course,
       startsAt: new Date('2026-05-01T08:00:00Z'),
@@ -98,9 +99,9 @@ describe('Entity config tenant and access gates', () => {
     }))
 
     await expect(app.baseService.classSubjectProgress.save(new ClassSubjectProgress({
-      id: 'progress-1',
-      classSubjectMatterId: 'class-subject-matter-1',
-      sessionId: 'session-1',
+      id: 'progress-unassigned-1',
+      classSubjectMatterId: 'class-subject-matter-unassigned-1',
+      sessionId: 'session-unassigned-1',
       completedPercentage: 10,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })

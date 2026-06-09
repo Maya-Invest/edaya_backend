@@ -1,11 +1,8 @@
-import type { SchoolRepositories } from '../ports/school-repositories'
 import type { ActorMetadata } from './actor-metadata'
-import type { AuthorizationPolicy } from './authorization-policy'
 import type { AuthorizationRequest } from './authorization-request'
-import type { EffectiveGrants } from './effective-grants'
+import { scopeGrantCovers } from '../ports/authorization-repository'
 import { isInteractiveActor } from './actor-metadata'
 import { AuthorizationError, AuthorizationErrorCode } from './authorization-error'
-import { resolveEffectiveGrants, scopeGrantCovers } from './effective-grants'
 import { assertPermissionAssurance } from './permissions/permission-assurance'
 import { permissionDefinitions } from './permissions/permission-definitions'
 import { assertPortalPermission } from './portal-permissions'
@@ -13,24 +10,21 @@ import { assertPortalPermission } from './portal-permissions'
 export interface AuthorizeArgs {
   actor: ActorMetadata
   request: AuthorizationRequest
-  policy: AuthorizationPolicy
-  repositories?: SchoolRepositories
-  effectiveGrants?: EffectiveGrants
 }
 
 /**
  * Permission-based authorization entry point.
  *
- * Uses preloaded or persisted effective grants.
+ * Uses preloaded effective grants on the actor.
  *
  * Resource-level checks remain on `AuthorizationPolicy` resolvers at call sites.
  */
-export async function authorize(args: AuthorizeArgs): Promise<void> {
+export function authorize(args: AuthorizeArgs): void {
   const { actor, request } = args
 
   assertActorSchool(actor, request.schoolId)
   assertScopeCompatibleWithPermission(request)
-  await assertGrantsCapability(actor, request, args)
+  assertGrantsCapability(actor, request)
 }
 
 function assertActorSchool(actor: ActorMetadata, schoolId: string): void {
@@ -64,11 +58,10 @@ function assertScopeCompatibleWithPermission(request: AuthorizationRequest): voi
   }
 }
 
-async function assertGrantsCapability(
+function assertGrantsCapability(
   actor: ActorMetadata,
   request: AuthorizationRequest,
-  args: AuthorizeArgs,
-): Promise<void> {
+): void {
   if (actor.kind === 'system') {
     return
   }
@@ -84,7 +77,7 @@ async function assertGrantsCapability(
     return
   }
 
-  const grants = await loadEffectiveGrants(actor, request, args)
+  const grants = actor.effectiveGrants
 
   if (!grants.permissions.has(request.permission)) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
@@ -99,31 +92,4 @@ async function assertGrantsCapability(
   })) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
-}
-
-async function loadEffectiveGrants(
-  actor: Extract<ActorMetadata, { kind: 'staff' }>,
-  request: AuthorizationRequest,
-  args: AuthorizeArgs,
-): Promise<EffectiveGrants> {
-  if (args.effectiveGrants) {
-    return args.effectiveGrants
-  }
-
-  if (actor.effectiveGrants) {
-    return actor.effectiveGrants
-  }
-
-  if (!args.repositories) {
-    throw new AuthorizationError(
-      AuthorizationErrorCode.Forbidden,
-      'Staff authorization requires repositories or preloaded effectiveGrants',
-    )
-  }
-
-  return resolveEffectiveGrants({
-    staffMemberId: actor.staffMemberId,
-    schoolId: request.schoolId,
-    repositories: args.repositories,
-  })
 }
