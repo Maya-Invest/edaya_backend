@@ -1,9 +1,10 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum AttachmentOwnerKind {
   StudentHealthProfile = 'student_health_profile',
@@ -18,6 +19,26 @@ export enum AttachmentOwnerKind {
   StudentDisciplinaryAction = 'applied_disciplinary_action',
   Other = 'other',
 }
+
+export const attachmentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  ownerKind: z.nativeEnum(AttachmentOwnerKind),
+  ownerId: z.string().trim().min(1, 'ownerId must not be blank'),
+  fileName: z.string().trim().min(1, 'fileName must not be blank'),
+  fileUrl: z.string().trim().min(1, 'fileUrl must not be blank'),
+  mimeType: z.string().trim().min(1, 'mimeType must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  sizeBytes: z.number().int().positive('sizeBytes must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
+  uploadedById: z.string().trim().min(1, 'uploadedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export const attachmentSchema = attachmentBaseSchema
+
+export type AttachmentData = z.infer<typeof attachmentSchema>
+
+export const attachmentCreateSchema = attachmentBaseSchema.omit({ createdAt: true })
+export const attachmentUpdateSchema = attachmentBaseSchema.partial().required({ id: true })
 
 export interface AttachmentArgs {
   id: string
@@ -38,42 +59,26 @@ export interface AttachmentArgs {
  * with any supported parent entity without requiring foreign keys on each entity.
  */
 export class Attachment {
-  readonly id: string
-  readonly schoolId: string
-  readonly ownerKind: AttachmentOwnerKind
-  readonly ownerId: string
-  readonly fileName: string
-  readonly fileUrl: string
-  readonly mimeType?: string
-  readonly sizeBytes?: number
-  readonly uploadedById?: string
-  readonly createdAt: Date
+  readonly data: AttachmentData
 
-  constructor({
-    id,
-    schoolId,
-    ownerKind,
-    ownerId,
-    fileName,
-    fileUrl,
-    mimeType,
-    sizeBytes,
-    uploadedById,
-    createdAt,
-  }: AttachmentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.ownerKind = ownerKind
-    this.ownerId = requireNonBlank(ownerId, 'ownerId')
-    this.fileName = requireNonBlank(fileName, 'fileName')
-    this.fileUrl = requireNonBlank(fileUrl, 'fileUrl')
-    this.mimeType = requireOptionalNonBlank(mimeType, 'mimeType')
-    if (sizeBytes != null) {
-      this.sizeBytes = requirePositiveInt(sizeBytes, 'sizeBytes')
+  constructor(args: AttachmentArgs) {
+    const result = attachmentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    this.uploadedById = requireOptionalNonBlank(uploadedById, 'uploadedById')
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get ownerKind() { return this.data.ownerKind }
+  get ownerId() { return this.data.ownerId }
+  get fileName() { return this.data.fileName }
+  get fileUrl() { return this.data.fileUrl }
+  get mimeType() { return this.data.mimeType }
+  get sizeBytes() { return this.data.sizeBytes }
+  get uploadedById() { return this.data.uploadedById }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const attachmentConfig: EntityConfigFactory<Attachment> = (input) => {

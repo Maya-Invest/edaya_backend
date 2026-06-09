@@ -1,10 +1,11 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum StudentStatus {
   Active = 'active',
@@ -13,13 +14,35 @@ export enum StudentStatus {
   Archived = 'archived',
 }
 
+export const studentSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  firstName: z.string().trim().min(1, 'firstName must not be blank'),
+  lastName: z.string().trim().min(1, 'lastName must not be blank'),
+  gender: z.string().trim().min(1, 'gender must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  birthDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  placeOfBirth: z.string().trim().min(1, 'placeOfBirth must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  nationality: z.string().trim().min(1, 'nationality must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  matricule: z.string().trim().min(1, 'matricule must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(StudentStatus).default(StudentStatus.Active),
+  enrollmentDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type StudentData = z.infer<typeof studentSchema>
+
+export const studentCreateSchema = studentSchema.omit({ createdAt: true })
+export const studentUpdateSchema = studentSchema.partial().required({ id: true })
+
 export interface StudentArgs {
   id: string
   schoolId: string
   firstName: string
   lastName: string
   gender?: string | null
-  birthDate?: Date
+  birthDate?: Date | null
   placeOfBirth?: string | null
   nationality?: string | null
   matricule?: string | null
@@ -36,52 +59,30 @@ export interface StudentArgs {
  * Gender is a free-form string to allow school-specific customisation.
  */
 export class Student {
-  readonly id: string
-  readonly schoolId: string
-  readonly firstName: string
-  readonly lastName: string
-  readonly gender?: string
-  readonly birthDate?: Date
-  readonly placeOfBirth?: string
-  readonly nationality?: string
-  readonly matricule?: string
-  readonly photoUrl?: string
-  readonly subjectId?: string
-  readonly status: StudentStatus
-  readonly enrollmentDate?: Date
-  readonly createdAt: Date
+  readonly data: StudentData
 
-  constructor({
-    id,
-    schoolId,
-    firstName,
-    lastName,
-    gender,
-    birthDate,
-    placeOfBirth,
-    nationality,
-    matricule,
-    photoUrl,
-    subjectId,
-    status = StudentStatus.Active,
-    enrollmentDate,
-    createdAt,
-  }: StudentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.firstName = requireNonBlank(firstName, 'firstName')
-    this.lastName = requireNonBlank(lastName, 'lastName')
-    this.gender = requireOptionalNonBlank(gender, 'gender')
-    this.birthDate = birthDate
-    this.placeOfBirth = requireOptionalNonBlank(placeOfBirth, 'placeOfBirth')
-    this.nationality = requireOptionalNonBlank(nationality, 'nationality')
-    this.matricule = requireOptionalNonBlank(matricule, 'matricule')
-    this.photoUrl = requireOptionalNonBlank(photoUrl, 'photoUrl')
-    this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
-    this.status = status
-    this.enrollmentDate = enrollmentDate ? requireValidDate(enrollmentDate, 'enrollmentDate') : undefined
-    this.createdAt = createdAt ?? new Date()
+  constructor(args: StudentArgs) {
+    const result = studentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
+    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get firstName() { return this.data.firstName }
+  get lastName() { return this.data.lastName }
+  get gender() { return this.data.gender }
+  get birthDate() { return this.data.birthDate }
+  get placeOfBirth() { return this.data.placeOfBirth }
+  get nationality() { return this.data.nationality }
+  get matricule() { return this.data.matricule }
+  get photoUrl() { return this.data.photoUrl }
+  get subjectId() { return this.data.subjectId }
+  get status() { return this.data.status }
+  get enrollmentDate() { return this.data.enrollmentDate }
+  get createdAt() { return this.data.createdAt }
 
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`

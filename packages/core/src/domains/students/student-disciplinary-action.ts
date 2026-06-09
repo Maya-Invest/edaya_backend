@@ -2,16 +2,54 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum StudentDisciplinaryActionStatus {
   Active = 'active',
   Completed = 'completed',
   Cancelled = 'cancelled',
 }
+
+export const studentDisciplinaryActionBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  incidentId: z.string().trim().min(1, 'incidentId must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  disciplinaryActionId: z.string().trim().min(1, 'disciplinaryActionId must not be blank'),
+  assignedByStaffId: z.string().trim().min(1, 'assignedByStaffId must not be blank'),
+  startsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  endsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(StudentDisciplinaryActionStatus).default(StudentDisciplinaryActionStatus.Active),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+  updatedAt: zodDate().default(() => new Date()),
+})
+
+function refineStudentDisciplinaryAction(data: any, ctx: z.RefinementCtx) {
+  if (data.endsAt && data.startsAt && data.endsAt.getTime() < data.startsAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'endsAt must not be before startsAt',
+    })
+  }
+  if (data.updatedAt.getTime() < data.createdAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'updatedAt must not be before createdAt',
+    })
+  }
+}
+
+export const studentDisciplinaryActionSchema = studentDisciplinaryActionBaseSchema.superRefine(refineStudentDisciplinaryAction)
+
+export type StudentDisciplinaryActionData = z.infer<typeof studentDisciplinaryActionSchema>
+
+export const studentDisciplinaryActionCreateSchema = studentDisciplinaryActionBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentDisciplinaryAction)
+export const studentDisciplinaryActionUpdateSchema = studentDisciplinaryActionBaseSchema.partial().required({ id: true }).superRefine(refineStudentDisciplinaryAction)
 
 export interface StudentDisciplinaryActionArgs {
   id: string
@@ -32,55 +70,28 @@ export interface StudentDisciplinaryActionArgs {
  * Represents a disciplinary catalog action actually applied to a student.
  */
 export class StudentDisciplinaryAction {
-  readonly id: string
-  readonly schoolId: string
-  readonly incidentId: string
-  readonly studentId: string
-  readonly disciplinaryActionId: string
-  readonly assignedByStaffId: string
-  readonly startsAt?: Date
-  readonly endsAt?: Date
-  readonly status: StudentDisciplinaryActionStatus
-  readonly notes?: string
-  readonly createdAt: Date
-  readonly updatedAt: Date
+  readonly data: StudentDisciplinaryActionData
 
-  constructor({
-    id,
-    schoolId,
-    incidentId,
-    studentId,
-    disciplinaryActionId,
-    assignedByStaffId,
-    startsAt,
-    endsAt,
-    status = StudentDisciplinaryActionStatus.Active,
-    notes,
-    createdAt,
-    updatedAt,
-  }: StudentDisciplinaryActionArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.incidentId = requireNonBlank(incidentId, 'incidentId')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.disciplinaryActionId = requireNonBlank(disciplinaryActionId, 'disciplinaryActionId')
-    this.assignedByStaffId = requireNonBlank(assignedByStaffId, 'assignedByStaffId')
-    this.startsAt = startsAt ? requireValidDate(startsAt, 'startsAt') : undefined
-    this.endsAt = endsAt ? requireValidDate(endsAt, 'endsAt') : undefined
-    this.status = status
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-
-    const now = new Date()
-    this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : now
-    this.updatedAt = updatedAt ? requireValidDate(updatedAt, 'updatedAt') : now
-
-    if (this.endsAt && this.startsAt && this.endsAt.getTime() < this.startsAt.getTime()) {
-      throw new Error('endsAt must not be before startsAt')
+  constructor(args: StudentDisciplinaryActionArgs) {
+    const result = studentDisciplinaryActionSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.updatedAt.getTime() < this.createdAt.getTime()) {
-      throw new Error('updatedAt must not be before createdAt')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get incidentId() { return this.data.incidentId }
+  get studentId() { return this.data.studentId }
+  get disciplinaryActionId() { return this.data.disciplinaryActionId }
+  get assignedByStaffId() { return this.data.assignedByStaffId }
+  get startsAt() { return this.data.startsAt }
+  get endsAt() { return this.data.endsAt }
+  get status() { return this.data.status }
+  get notes() { return this.data.notes }
+  get createdAt() { return this.data.createdAt }
+  get updatedAt() { return this.data.updatedAt }
 }
 
 export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDisciplinaryAction> = ({ repositories, policy, atomicExecution }) =>

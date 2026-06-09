@@ -2,15 +2,50 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requirePositiveNumber } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum ReportCardDefinitionSectionKind {
   Group = 'group',
   Subject = 'subject',
 }
+
+export const reportCardDefinitionSectionBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  reportCardDefinitionId: z.string().trim().min(1, 'reportCardDefinitionId must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  kind: z.nativeEnum(ReportCardDefinitionSectionKind).default(ReportCardDefinitionSectionKind.Group),
+  order: z.number().int().positive('order must be a strictly positive integer'),
+  weight: z.number().finite().positive('weight must be a finite, strictly positive number'),
+  parentSectionId: z.string().trim().min(1, 'parentSectionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineReportCardDefinitionSection(data: any, ctx: z.RefinementCtx) {
+  if (data.kind === ReportCardDefinitionSectionKind.Group && data.subjectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'group report card sections must not reference a subject',
+    })
+  }
+  if (data.kind === ReportCardDefinitionSectionKind.Subject && !data.subjectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'subject report card sections must reference a subject',
+    })
+  }
+}
+
+export const reportCardDefinitionSectionSchema = reportCardDefinitionSectionBaseSchema.superRefine(refineReportCardDefinitionSection)
+
+export type ReportCardDefinitionSectionData = z.infer<typeof reportCardDefinitionSectionSchema>
+
+export const reportCardDefinitionSectionCreateSchema = reportCardDefinitionSectionBaseSchema.omit({ createdAt: true }).superRefine(refineReportCardDefinitionSection)
+export const reportCardDefinitionSectionUpdateSchema = reportCardDefinitionSectionBaseSchema.partial().required({ id: true }).superRefine(refineReportCardDefinitionSection)
 
 export interface ReportCardDefinitionSectionArgs {
   id: string
@@ -30,44 +65,25 @@ export interface ReportCardDefinitionSectionArgs {
  * that is resolved to the classGroup's ClassSubject during result generation.
  */
 export class ReportCardDefinitionSection {
-  readonly id: string
-  readonly reportCardDefinitionId: string
-  readonly kind: ReportCardDefinitionSectionKind
-  readonly name: string
-  readonly order: number
-  readonly weight: number
-  readonly parentSectionId?: string
-  readonly subjectId?: string
-  readonly createdAt: Date
+  readonly data: ReportCardDefinitionSectionData
 
-  constructor({
-    id,
-    reportCardDefinitionId,
-    name,
-    kind = ReportCardDefinitionSectionKind.Group,
-    order,
-    weight,
-    parentSectionId,
-    subjectId,
-    createdAt,
-  }: ReportCardDefinitionSectionArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.reportCardDefinitionId = requireNonBlank(reportCardDefinitionId, 'reportCardDefinitionId')
-    this.kind = kind
-    this.name = requireNonBlank(name, 'name')
-    this.order = requirePositiveInt(order, 'order')
-    this.weight = requirePositiveNumber(weight, 'weight')
-    this.parentSectionId = requireOptionalNonBlank(parentSectionId, 'parentSectionId')
-    this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
-    this.createdAt = createdAt ?? new Date()
-
-    if (this.kind === ReportCardDefinitionSectionKind.Group && this.subjectId) {
-      throw new Error('group report card sections must not reference a subject')
+  constructor(args: ReportCardDefinitionSectionArgs) {
+    const result = reportCardDefinitionSectionSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.kind === ReportCardDefinitionSectionKind.Subject && !this.subjectId) {
-      throw new Error('subject report card sections must reference a subject')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get reportCardDefinitionId() { return this.data.reportCardDefinitionId }
+  get kind() { return this.data.kind }
+  get name() { return this.data.name }
+  get order() { return this.data.order }
+  get weight() { return this.data.weight }
+  get parentSectionId() { return this.data.parentSectionId }
+  get subjectId() { return this.data.subjectId }
+  get createdAt() { return this.data.createdAt }
 
   copyWith({
     name,

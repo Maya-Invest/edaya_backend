@@ -1,7 +1,36 @@
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
-import { requireNonBlank, requirePositiveInt, requireTimeOfDay } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const periodDefinitionBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  label: z.string().trim().min(1, 'label must not be blank'),
+  order: z.number().int().positive('order must be a strictly positive integer'),
+  startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'startTime must be a valid time in HH:mm format'),
+  endTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'endTime must be a valid time in HH:mm format'),
+  isBreak: z.boolean().default(false),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refinePeriodDefinition(data: any, ctx: z.RefinementCtx) {
+  if (data.startTime >= data.endTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'endTime must be after startTime',
+    })
+  }
+}
+
+export const periodDefinitionSchema = periodDefinitionBaseSchema.superRefine(refinePeriodDefinition)
+
+export type PeriodDefinitionData = z.infer<typeof periodDefinitionSchema>
+
+export const periodDefinitionCreateSchema = periodDefinitionBaseSchema.omit({ createdAt: true }).superRefine(refinePeriodDefinition)
+export const periodDefinitionUpdateSchema = periodDefinitionBaseSchema.partial().required({ id: true }).superRefine(refinePeriodDefinition)
 
 export interface PeriodDefinitionArgs {
   id: string
@@ -21,44 +50,25 @@ export interface PeriodDefinitionArgs {
  * Break periods (recess, lunch) are flagged and excluded from teaching slots.
  */
 export class PeriodDefinition {
-  readonly id: string
-  readonly schoolId: string
-  readonly academicYearId: string
-  readonly label: string
-  readonly order: number
-  readonly startTime: string
-  readonly endTime: string
-  readonly isBreak: boolean
-  readonly createdAt: Date
+  readonly data: PeriodDefinitionData
 
-  constructor({
-    id,
-    schoolId,
-    academicYearId,
-    label,
-    order,
-    startTime,
-    endTime,
-    isBreak = false,
-    createdAt,
-  }: PeriodDefinitionArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
-    this.label = requireNonBlank(label, 'label')
-    this.order = requirePositiveInt(order, 'order')
-
-    const normalizedStartTime = requireTimeOfDay(startTime, 'startTime')
-    const normalizedEndTime = requireTimeOfDay(endTime, 'endTime')
-    if (normalizedStartTime >= normalizedEndTime) {
-      throw new Error('endTime must be after startTime')
+  constructor(args: PeriodDefinitionArgs) {
+    const result = periodDefinitionSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-
-    this.startTime = normalizedStartTime
-    this.endTime = normalizedEndTime
-    this.isBreak = isBreak
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get academicYearId() { return this.data.academicYearId }
+  get label() { return this.data.label }
+  get order() { return this.data.order }
+  get startTime() { return this.data.startTime }
+  get endTime() { return this.data.endTime }
+  get isBreak() { return this.data.isBreak }
+  get createdAt() { return this.data.createdAt }
 
   get durationMinutes(): number {
     const partsS = this.startTime.split(':')

@@ -1,10 +1,11 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum CalendarEventKind {
   Holiday = 'holiday',
@@ -18,6 +19,48 @@ export enum CalendarEventScopeKind {
   GradeLevel = 'grade_level',
   ClassGroup = 'class_group',
 }
+
+export const calendarEventBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  title: z.string().trim().min(1, 'title must not be blank'),
+  startDate: zodDate(),
+  endDate: zodDate(),
+  kind: z.nativeEnum(CalendarEventKind),
+  isNonSchoolDay: z.boolean().default(false),
+  scopeKind: z.nativeEnum(CalendarEventScopeKind).default(CalendarEventScopeKind.School),
+  scopeId: z.string().trim().min(1, 'scopeId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineCalendarEvent(data: any, ctx: z.RefinementCtx) {
+  if (data.endDate.getTime() < data.startDate.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'endDate must not be before startDate',
+    })
+  }
+  if (data.scopeKind !== CalendarEventScopeKind.School && !data.scopeId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scopeId is required for scoped calendar events',
+    })
+  }
+  if (data.scopeKind === CalendarEventScopeKind.School && data.scopeId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'school-wide calendar events must not define scopeId',
+    })
+  }
+}
+
+export const calendarEventSchema = calendarEventBaseSchema.superRefine(refineCalendarEvent)
+
+export type CalendarEventData = z.infer<typeof calendarEventSchema>
+
+export const calendarEventCreateSchema = calendarEventBaseSchema.omit({ createdAt: true }).superRefine(refineCalendarEvent)
+export const calendarEventUpdateSchema = calendarEventBaseSchema.partial().required({ id: true }).superRefine(refineCalendarEvent)
 
 export interface CalendarEventArgs {
   id: string
@@ -39,53 +82,27 @@ export interface CalendarEventArgs {
  * to calculate effective school days for attendance reporting.
  */
 export class CalendarEvent {
-  readonly id: string
-  readonly schoolId: string
-  readonly academicYearId: string
-  readonly title: string
-  readonly startDate: Date
-  readonly endDate: Date
-  readonly kind: CalendarEventKind
-  readonly isNonSchoolDay: boolean
-  readonly scopeKind: CalendarEventScopeKind
-  readonly scopeId?: string
-  readonly createdAt: Date
+  readonly data: CalendarEventData
 
-  constructor({
-    id,
-    schoolId,
-    academicYearId,
-    title,
-    startDate,
-    endDate,
-    kind,
-    isNonSchoolDay = false,
-    scopeKind = CalendarEventScopeKind.School,
-    scopeId,
-    createdAt,
-  }: CalendarEventArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
-    this.title = requireNonBlank(title, 'title')
-    this.startDate = requireValidDate(startDate, 'startDate')
-    this.endDate = requireValidDate(endDate, 'endDate')
-    this.kind = kind
-    this.isNonSchoolDay = isNonSchoolDay
-    this.scopeKind = scopeKind
-    this.scopeId = requireOptionalNonBlank(scopeId, 'scopeId')
-    this.createdAt = createdAt ?? new Date()
-
-    if (this.endDate.getTime() < this.startDate.getTime()) {
-      throw new Error('endDate must not be before startDate')
+  constructor(args: CalendarEventArgs) {
+    const result = calendarEventSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.scopeKind !== CalendarEventScopeKind.School && !this.scopeId) {
-      throw new Error('scopeId is required for scoped calendar events')
-    }
-    if (this.scopeKind === CalendarEventScopeKind.School && this.scopeId) {
-      throw new Error('school-wide calendar events must not define scopeId')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get academicYearId() { return this.data.academicYearId }
+  get title() { return this.data.title }
+  get startDate() { return this.data.startDate }
+  get endDate() { return this.data.endDate }
+  get kind() { return this.data.kind }
+  get isNonSchoolDay() { return this.data.isNonSchoolDay }
+  get scopeKind() { return this.data.scopeKind }
+  get scopeId() { return this.data.scopeId }
+  get createdAt() { return this.data.createdAt }
 
   /** Returns the number of calendar days this event spans (inclusive). */
   get durationDays(): number {

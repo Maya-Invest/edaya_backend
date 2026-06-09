@@ -2,11 +2,12 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../domains'
 import { config, indirectTenant, permissionAction, read, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '../utils'
+import { DomainValidationError, formatZodError, roundTo2, zodDate } from '../utils'
 
 export enum DeadlineComplianceStatus {
   Met = 'met',
@@ -14,6 +15,22 @@ export enum DeadlineComplianceStatus {
   Missed = 'missed',
   Excused = 'excused',
 }
+
+export const assessmentResultSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  assessmentId: z.string().trim().min(1, 'assessmentId must not be blank'),
+  score: z.number().finite().nonnegative('score must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(DeadlineComplianceStatus).nullable().optional().transform(v => v === null ? undefined : v),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdBy: z.string().trim().min(1, 'createdBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type AssessmentResultData = z.infer<typeof assessmentResultSchema>
+
+export const assessmentResultCreateSchema = assessmentResultSchema.omit({ createdAt: true })
+export const assessmentResultUpdateSchema = assessmentResultSchema.partial().required({ id: true })
 
 export interface AssessmentResultArgs {
   id: string
@@ -32,38 +49,24 @@ export interface AssessmentResultArgs {
  * Also tracks student submission compliance status (e.g. met, late, missed, excused) for the assessment.
  */
 export class AssessmentResult {
-  readonly id: string
-  readonly studentId: string
-  readonly assessmentId: string
-  readonly score?: number
-  readonly status?: DeadlineComplianceStatus
-  readonly notes?: string
-  readonly createdBy?: string
-  readonly createdAt: Date
+  readonly data: AssessmentResultData
 
-  constructor({
-    id,
-    studentId,
-    assessmentId,
-    score,
-    status,
-    notes,
-    createdBy,
-    createdAt,
-  }: AssessmentResultArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.assessmentId = requireNonBlank(assessmentId, 'assessmentId')
-
-    if (score !== undefined && score !== null) {
-      this.score = roundTo2(requireNonNegativeNumber(score, 'score'))
+  constructor(args: AssessmentResultArgs) {
+    const result = assessmentResultSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-
-    this.status = status ?? undefined
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.createdBy = requireOptionalNonBlank(createdBy, 'createdBy')
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get studentId() { return this.data.studentId }
+  get assessmentId() { return this.data.assessmentId }
+  get score() { return this.data.score }
+  get status() { return this.data.status }
+  get notes() { return this.data.notes }
+  get createdBy() { return this.data.createdBy }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ repositories, policy, atomicExecution }) =>

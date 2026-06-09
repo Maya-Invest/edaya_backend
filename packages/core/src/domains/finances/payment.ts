@@ -2,12 +2,13 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { AttachmentOwnerKind, FeeStatus } from '../../domains'
 import { anyPermissionAction, config, dateTime, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { Money } from '../../value_object/money'
-import { requireNonBlank, requireNonNegativeInt, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum PaymentMethod {
   Cash = 'cash',
@@ -22,6 +23,54 @@ export enum PaymentStatus {
   Reversed = 'reversed',
   Cancelled = 'cancelled',
 }
+
+export const paymentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  studentFeeId: z.string().trim().min(1, 'studentFeeId must not be blank'),
+  amount: z.number().int().nonnegative('amount must be a non-negative integer'),
+  currency: z.string().trim().min(1, 'currency must not be blank'),
+  paymentDate: zodDate(),
+  method: z.nativeEnum(PaymentMethod),
+  status: z.nativeEnum(PaymentStatus).default(PaymentStatus.Recorded),
+  reference: z.string().trim().min(1, 'reference must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  recordedById: z.string().trim().min(1, 'recordedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  reversedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  reversedById: z.string().trim().min(1, 'reversedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  cancelledAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  cancelledById: z.string().trim().min(1, 'cancelledById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refinePayment(data: any, ctx: z.RefinementCtx) {
+  if (data.status === PaymentStatus.Reversed && (!data.reversedAt || !data.reversedById)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'reversedAt and reversedById are required for reversed payments',
+    })
+  }
+  if (data.status === PaymentStatus.Cancelled && (!data.cancelledAt || !data.cancelledById)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'cancelledAt and cancelledById are required for cancelled payments',
+    })
+  }
+  if (data.status === PaymentStatus.Recorded && (data.reversedAt || data.reversedById || data.cancelledAt || data.cancelledById)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'recorded payments must not define reversal or cancellation audit fields',
+    })
+  }
+}
+
+export const paymentSchema = paymentBaseSchema.superRefine(refinePayment)
+
+export type PaymentData = Omit<z.infer<typeof paymentSchema>, 'amount' | 'currency'> & {
+  amount: Money
+}
+
+export const paymentCreateSchema = paymentBaseSchema.omit({ createdAt: true }).superRefine(refinePayment)
+export const paymentUpdateSchema = paymentBaseSchema.partial().required({ id: true }).superRefine(refinePayment)
 
 export interface PaymentArgs {
   id: string
@@ -45,68 +94,46 @@ export interface PaymentArgs {
  * Represents a single financial transaction made towards a StudentFee.
  */
 export class Payment {
-  readonly id: string
-  readonly studentFeeId: string
-  readonly amount: Money
-  readonly paymentDate: Date
-  readonly method: PaymentMethod
-  readonly status: PaymentStatus
-  readonly reference?: string
-  readonly notes?: string
-  readonly recordedById?: string
-  readonly reversedAt?: Date
-  readonly reversedById?: string
-  readonly cancelledAt?: Date
-  readonly cancelledById?: string
-  readonly createdAt: Date
+  readonly data: PaymentData
 
-  constructor({
-    id,
-    studentFeeId,
-    amount,
-    currency,
-    paymentDate,
-    method,
-    status = PaymentStatus.Recorded,
-    reference,
-    notes,
-    recordedById,
-    reversedAt,
-    reversedById,
-    cancelledAt,
-    cancelledById,
-    createdAt,
-  }: PaymentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.studentFeeId = requireNonBlank(studentFeeId, 'studentFeeId')
-
-    this.amount = new Money({
-      amount: requireNonNegativeInt(amount, 'amount'),
-      currency: requireNonBlank(currency, 'currency'),
-    })
-
-    this.paymentDate = requireValidDate(paymentDate, 'paymentDate')
-    this.method = method
-    this.status = status
-    this.reference = requireOptionalNonBlank(reference, 'reference')
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.recordedById = requireOptionalNonBlank(recordedById, 'recordedById')
-    this.reversedAt = reversedAt ? requireValidDate(reversedAt, 'reversedAt') : undefined
-    this.reversedById = requireOptionalNonBlank(reversedById, 'reversedById')
-    this.cancelledAt = cancelledAt ? requireValidDate(cancelledAt, 'cancelledAt') : undefined
-    this.cancelledById = requireOptionalNonBlank(cancelledById, 'cancelledById')
-    this.createdAt = createdAt ?? new Date()
-
-    if (this.status === PaymentStatus.Reversed && (!this.reversedAt || !this.reversedById)) {
-      throw new Error('reversedAt and reversedById are required for reversed payments')
+  constructor(args: PaymentArgs) {
+    const result = paymentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.status === PaymentStatus.Cancelled && (!this.cancelledAt || !this.cancelledById)) {
-      throw new Error('cancelledAt and cancelledById are required for cancelled payments')
-    }
-    if (this.status === PaymentStatus.Recorded && (this.reversedAt || this.reversedById || this.cancelledAt || this.cancelledById)) {
-      throw new Error('recorded payments must not define reversal or cancellation audit fields')
+    const validated = result.data
+    this.data = {
+      id: validated.id,
+      studentFeeId: validated.studentFeeId,
+      amount: new Money({ amount: validated.amount, currency: validated.currency }),
+      paymentDate: validated.paymentDate,
+      method: validated.method,
+      status: validated.status,
+      reference: validated.reference,
+      notes: validated.notes,
+      recordedById: validated.recordedById,
+      reversedAt: validated.reversedAt,
+      reversedById: validated.reversedById,
+      cancelledAt: validated.cancelledAt,
+      cancelledById: validated.cancelledById,
+      createdAt: validated.createdAt,
     }
   }
+
+  get id() { return this.data.id }
+  get studentFeeId() { return this.data.studentFeeId }
+  get amount() { return this.data.amount }
+  get paymentDate() { return this.data.paymentDate }
+  get method() { return this.data.method }
+  get status() { return this.data.status }
+  get reference() { return this.data.reference }
+  get notes() { return this.data.notes }
+  get recordedById() { return this.data.recordedById }
+  get reversedAt() { return this.data.reversedAt }
+  get reversedById() { return this.data.reversedById }
+  get cancelledAt() { return this.data.cancelledAt }
+  get cancelledById() { return this.data.cancelledById }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, policy, atomicExecution }) =>

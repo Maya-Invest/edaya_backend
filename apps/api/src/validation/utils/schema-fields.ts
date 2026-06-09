@@ -3,16 +3,40 @@ import { z } from "@hono/zod-openapi";
 export type AnySchema = z.ZodTypeAny;
 export type ObjectSchema = z.ZodObject<z.ZodRawShape>;
 
-export function responseSchema<T>(openApiName: string, shape: z.ZodRawShape): z.ZodType<T> {
-  return z.object(shape).openapi(openApiName) as unknown as z.ZodType<T>;
+/**
+ * Accepts a raw shape from either plain zod or @hono/zod-openapi.
+ * Uses Record<string, any> to bridge the structural incompatibility
+ * between the two zod module augmentations.
+ */
+type AnyZodRawShape = Record<string, any>;
+
+/**
+ * Extracts the inner ZodObject.shape from a schema that may be
+ * wrapped in ZodEffects (via .refine() / .superRefine() / .transform()).
+ * If the schema is already a ZodObject, returns .shape directly.
+ */
+export function unwrapShape(schema: any): AnyZodRawShape {
+  // Duck-type check for ZodEffects (works across zod module instances)
+  if (schema && typeof schema.innerType === "function") {
+    return unwrapShape(schema.innerType());
+  }
+  // Duck-type check for ZodObject
+  if (schema && typeof schema === "object" && "shape" in schema) {
+    return schema.shape;
+  }
+  throw new Error(`Cannot unwrap shape from ${schema?.constructor?.name}`);
 }
 
-export function valueSchema<T>(shape: z.ZodRawShape): z.ZodType<T> {
-  return z.object(shape) as unknown as z.ZodType<T>;
+export function responseSchema<T>(openApiName: string, shape: AnyZodRawShape): z.ZodType<T> {
+  return z.object(shape as z.ZodRawShape).openapi(openApiName) as unknown as z.ZodType<T>;
 }
 
-export function namedObjectSchema(openApiName: string, shape: z.ZodRawShape): z.ZodObject<z.ZodRawShape> {
-  return z.object(shape).openapi(openApiName) as unknown as z.ZodObject<z.ZodRawShape>;
+export function valueSchema<T>(shape: AnyZodRawShape): z.ZodType<T> {
+  return z.object(shape as z.ZodRawShape) as unknown as z.ZodType<T>;
+}
+
+export function namedObjectSchema(openApiName: string, shape: AnyZodRawShape): z.ZodObject<z.ZodRawShape> {
+  return z.object(shape as z.ZodRawShape).openapi(openApiName) as unknown as z.ZodObject<z.ZodRawShape>;
 }
 
 export function arraySchema(itemSchema: AnySchema): AnySchema {

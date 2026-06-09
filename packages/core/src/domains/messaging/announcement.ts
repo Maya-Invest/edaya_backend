@@ -1,9 +1,10 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum AnnouncementStatus {
   Draft = 'draft',
@@ -16,6 +17,49 @@ export enum AnnouncementPriority {
   Important = 'important',
   Urgent = 'urgent',
 }
+
+export const announcementBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  title: z.string().trim().min(1, 'title must not be blank'),
+  content: z.string().trim().min(1, 'content must not be blank'),
+  createdBy: z.string().trim().min(1, 'createdBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(AnnouncementStatus).optional(),
+  priority: z.nativeEnum(AnnouncementPriority).default(AnnouncementPriority.Normal),
+  premiumNotification: z.boolean().default(false),
+  createdAt: zodDate().default(() => new Date()),
+  publishedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  expiresAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+})
+
+function refineAnnouncement(data: any, ctx: z.RefinementCtx) {
+  const computedStatus = data.status ?? (data.publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
+  if (computedStatus === AnnouncementStatus.Published && !data.publishedAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'publishedAt is required for published announcements',
+    })
+  }
+  if (computedStatus === AnnouncementStatus.Draft && data.publishedAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'draft announcements must not define publishedAt',
+    })
+  }
+  if (data.expiresAt && data.publishedAt && data.expiresAt.getTime() < data.publishedAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'expiresAt must not be before publishedAt',
+    })
+  }
+}
+
+export const announcementSchema = announcementBaseSchema.superRefine(refineAnnouncement)
+
+export type AnnouncementData = z.infer<typeof announcementSchema>
+
+export const announcementCreateSchema = announcementBaseSchema.omit({ createdAt: true }).superRefine(refineAnnouncement)
+export const announcementUpdateSchema = announcementBaseSchema.partial().required({ id: true }).superRefine(refineAnnouncement)
 
 export interface AnnouncementArgs {
   id: string
@@ -36,53 +80,30 @@ export interface AnnouncementArgs {
  * Can trigger standard or premium notifications for guardians and staff.
  */
 export class Announcement {
-  readonly id: string
-  readonly schoolId: string
-  readonly title: string
-  readonly content: string
-  readonly createdBy?: string
-  readonly status: AnnouncementStatus
-  readonly priority: AnnouncementPriority
-  readonly premiumNotification: boolean
-  readonly createdAt: Date
-  readonly publishedAt?: Date
-  readonly expiresAt?: Date
+  readonly data: AnnouncementData
 
-  constructor({
-    id,
-    schoolId,
-    title,
-    content,
-    createdBy,
-    status,
-    priority = AnnouncementPriority.Normal,
-    premiumNotification = false,
-    createdAt,
-    publishedAt,
-    expiresAt,
-  }: AnnouncementArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.title = requireNonBlank(title, 'title')
-    this.content = requireNonBlank(content, 'content')
-    this.createdBy = requireOptionalNonBlank(createdBy, 'createdBy')
-    this.status = status ?? (publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
-    this.priority = priority
-    this.premiumNotification = premiumNotification
-    this.createdAt = createdAt ?? new Date()
-    this.publishedAt = publishedAt ? requireValidDate(publishedAt, 'publishedAt') : undefined
-    this.expiresAt = expiresAt ? requireValidDate(expiresAt, 'expiresAt') : undefined
-
-    if (this.status === AnnouncementStatus.Published && !this.publishedAt) {
-      throw new Error('publishedAt is required for published announcements')
+  constructor(args: AnnouncementArgs) {
+    const result = announcementSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.status === AnnouncementStatus.Draft && this.publishedAt) {
-      throw new Error('draft announcements must not define publishedAt')
-    }
-    if (this.expiresAt && this.publishedAt && this.expiresAt.getTime() < this.publishedAt.getTime()) {
-      throw new Error('expiresAt must not be before publishedAt')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get title() { return this.data.title }
+  get content() { return this.data.content }
+  get createdBy() { return this.data.createdBy }
+  get status(): AnnouncementStatus {
+    return this.data.status ?? (this.data.publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
+  }
+
+  get priority() { return this.data.priority }
+  get premiumNotification() { return this.data.premiumNotification }
+  get createdAt() { return this.data.createdAt }
+  get publishedAt() { return this.data.publishedAt }
+  get expiresAt() { return this.data.expiresAt }
 
   get isPublished(): boolean {
     return this.status === AnnouncementStatus.Published

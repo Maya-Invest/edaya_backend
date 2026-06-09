@@ -2,11 +2,12 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
 import { config, dateTime, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum IncidentKind {
   Positive = 'positive',
@@ -20,6 +21,58 @@ export enum IncidentStatus {
   Resolved = 'resolved',
   Cancelled = 'cancelled',
 }
+
+export const incidentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  title: z.string().trim().min(1, 'title must not be blank'),
+  description: z.string().trim().min(1, 'description must not be blank'),
+  date: zodDate(),
+  kind: z.nativeEnum(IncidentKind),
+  reporterId: z.string().trim().min(1, 'reporterId must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(IncidentStatus).default(IncidentStatus.Open),
+  resolutionNotes: z.string().trim().min(1, 'resolutionNotes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  resolvedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  resolvedByStaffId: z.string().trim().min(1, 'resolvedByStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+  updatedAt: zodDate().default(() => new Date()),
+})
+
+function refineIncident(data: any, ctx: z.RefinementCtx) {
+  if ((data.resolvedAt && !data.resolvedByStaffId) || (!data.resolvedAt && data.resolvedByStaffId)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'resolvedAt and resolvedByStaffId must be provided together',
+    })
+  }
+  if (data.status === IncidentStatus.Resolved && !data.resolvedAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'resolvedAt is required for resolved incidents',
+    })
+  }
+  if (data.status === IncidentStatus.Open && (data.resolvedAt || data.resolvedByStaffId || data.resolutionNotes)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'open incidents must not define resolution fields',
+    })
+  }
+  if (data.updatedAt.getTime() < data.createdAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'updatedAt must not be before createdAt',
+    })
+  }
+}
+
+export const incidentSchema = incidentBaseSchema.superRefine(refineIncident)
+
+export type IncidentData = z.infer<typeof incidentSchema>
+
+export const incidentCreateSchema = incidentBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineIncident)
+export const incidentUpdateSchema = incidentBaseSchema.partial().required({ id: true }).superRefine(refineIncident)
 
 export interface IncidentArgs {
   id: string
@@ -44,69 +97,31 @@ export interface IncidentArgs {
  * or negative (infraction/emergency).
  */
 export class Incident {
-  readonly id: string
-  readonly schoolId: string
-  readonly title: string
-  readonly description: string
-  readonly date: Date
-  readonly kind: IncidentKind
-  readonly reporterId: string
-  readonly classGroupId?: string
-  readonly sessionId?: string
-  readonly status: IncidentStatus
-  readonly resolutionNotes?: string
-  readonly resolvedAt?: Date
-  readonly resolvedByStaffId?: string
-  readonly createdAt: Date
-  readonly updatedAt: Date
+  readonly data: IncidentData
 
-  constructor({
-    id,
-    schoolId,
-    title,
-    description,
-    date,
-    kind,
-    reporterId,
-    classGroupId,
-    sessionId,
-    status = IncidentStatus.Open,
-    resolutionNotes,
-    resolvedAt,
-    resolvedByStaffId,
-    createdAt,
-    updatedAt,
-  }: IncidentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.title = requireNonBlank(title, 'title')
-    this.description = requireNonBlank(description, 'description')
-    this.date = requireValidDate(date, 'date')
-    this.kind = kind
-    this.reporterId = requireNonBlank(reporterId, 'reporterId')
-    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
-    this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
-    this.status = status
-    this.resolutionNotes = requireOptionalNonBlank(resolutionNotes, 'resolutionNotes')
-    this.resolvedAt = resolvedAt ? requireValidDate(resolvedAt, 'resolvedAt') : undefined
-    this.resolvedByStaffId = requireOptionalNonBlank(resolvedByStaffId, 'resolvedByStaffId')
-    const now = new Date()
-    this.createdAt = createdAt ?? now
-    this.updatedAt = updatedAt ?? now
-
-    if ((this.resolvedAt && !this.resolvedByStaffId) || (!this.resolvedAt && this.resolvedByStaffId)) {
-      throw new Error('resolvedAt and resolvedByStaffId must be provided together')
+  constructor(args: IncidentArgs) {
+    const result = incidentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.status === IncidentStatus.Resolved && !this.resolvedAt) {
-      throw new Error('resolvedAt is required for resolved incidents')
-    }
-    if (this.status === IncidentStatus.Open && (this.resolvedAt || this.resolvedByStaffId || this.resolutionNotes)) {
-      throw new Error('open incidents must not define resolution fields')
-    }
-    if (this.updatedAt.getTime() < this.createdAt.getTime()) {
-      throw new Error('updatedAt must not be before createdAt')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get title() { return this.data.title }
+  get description() { return this.data.description }
+  get date() { return this.data.date }
+  get kind() { return this.data.kind }
+  get reporterId() { return this.data.reporterId }
+  get classGroupId() { return this.data.classGroupId }
+  get sessionId() { return this.data.sessionId }
+  get status() { return this.data.status }
+  get resolutionNotes() { return this.data.resolutionNotes }
+  get resolvedAt() { return this.data.resolvedAt }
+  get resolvedByStaffId() { return this.data.resolvedByStaffId }
+  get createdAt() { return this.data.createdAt }
+  get updatedAt() { return this.data.updatedAt }
 }
 
 export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, policy, atomicExecution }) =>

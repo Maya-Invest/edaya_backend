@@ -1,9 +1,10 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requirePositiveInt } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum ResourceKind {
   Location = 'location',
@@ -11,6 +12,26 @@ export enum ResourceKind {
   Vehicle = 'vehicle',
   Other = 'other',
 }
+
+export const resourceBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  description: z.preprocess(
+    val => typeof val === 'string' && val.trim() === '' ? undefined : val,
+    z.string().trim().min(1, 'description must not be blank').nullable().optional(),
+  ).transform(v => v === null ? undefined : v),
+  kind: z.nativeEnum(ResourceKind),
+  capacity: z.number().int().positive('capacity must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export const resourceSchema = resourceBaseSchema
+
+export type ResourceData = z.infer<typeof resourceSchema>
+
+export const resourceCreateSchema = resourceBaseSchema.omit({ createdAt: true })
+export const resourceUpdateSchema = resourceBaseSchema.partial().required({ id: true })
 
 export interface ResourceArgs {
   id: string
@@ -26,35 +47,23 @@ export interface ResourceArgs {
  * Represents a physical resource such as a room, piece of equipment, or vehicle.
  */
 export class Resource {
-  readonly id: string
-  readonly schoolId: string
-  readonly name: string
-  readonly description?: string
-  readonly kind: ResourceKind
-  readonly capacity?: number
-  readonly createdAt: Date
+  readonly data: ResourceData
 
-  constructor({
-    id,
-    schoolId,
-    name,
-    description,
-    kind,
-    capacity,
-    createdAt,
-  }: ResourceArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.name = requireNonBlank(name, 'name')
-    if (description != null && description.trim() !== '') {
-      this.description = description.trim()
+  constructor(args: ResourceArgs) {
+    const result = resourceSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    this.kind = kind
-    if (capacity != null) {
-      this.capacity = requirePositiveInt(capacity, 'capacity')
-    }
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get name() { return this.data.name }
+  get description() { return this.data.description }
+  get kind() { return this.data.kind }
+  get capacity() { return this.data.capacity }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const resourceConfig: EntityConfigFactory<Resource> = (input) => {

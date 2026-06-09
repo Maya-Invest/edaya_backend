@@ -1,8 +1,50 @@
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const academicYearBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  startDate: zodDate(),
+  endDate: zodDate(),
+  isActive: z.boolean().default(true),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export const academicYearSchema = academicYearBaseSchema.refine(
+  data => data.endDate.getTime() >= data.startDate.getTime(),
+  {
+    message: 'endDate must not be before startDate',
+    path: ['endDate'],
+  },
+)
+
+export type AcademicYearData = z.infer<typeof academicYearSchema>
+
+export const academicYearCreateSchema = academicYearBaseSchema.omit({ createdAt: true }).refine(
+  data => data.endDate.getTime() >= data.startDate.getTime(),
+  {
+    message: 'endDate must not be before startDate',
+    path: ['endDate'],
+  },
+)
+
+export const academicYearUpdateSchema = academicYearBaseSchema.partial().required({ id: true }).refine(
+  (data) => {
+    if (data.startDate && data.endDate) {
+      return data.endDate.getTime() >= data.startDate.getTime()
+    }
+    return true
+  },
+  {
+    message: 'endDate must not be before startDate',
+    path: ['endDate'],
+  },
+)
 
 export interface AcademicYearArgs {
   id: string
@@ -19,29 +61,23 @@ export interface AcademicYearArgs {
  * Contains multiple academic periods and defines the overall timeline.
  */
 export class AcademicYear {
-  readonly id: string
-  readonly schoolId: string
-  readonly name: string
-  readonly startDate: Date
-  readonly endDate: Date
-  readonly isActive: boolean
-  readonly createdAt: Date
+  readonly data: AcademicYearData
 
-  constructor({ id, schoolId, name, startDate, endDate, isActive = true, createdAt }: AcademicYearArgs) {
-    const normalizedStartDate = requireValidDate(startDate, 'startDate')
-    const normalizedEndDate = requireValidDate(endDate, 'endDate')
-    if (normalizedEndDate.getTime() < normalizedStartDate.getTime()) {
-      throw new Error('endDate must not be before startDate')
+  constructor(args: AcademicYearArgs) {
+    const result = academicYearSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.name = requireNonBlank(name, 'name')
-    this.startDate = normalizedStartDate
-    this.endDate = normalizedEndDate
-    this.isActive = isActive
-    this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get name() { return this.data.name }
+  get startDate() { return this.data.startDate }
+  get endDate() { return this.data.endDate }
+  get isActive() { return this.data.isActive }
+  get createdAt() { return this.data.createdAt }
 
   contains(value: Date): boolean {
     return value.getTime() >= this.startDate.getTime() && value.getTime() <= this.endDate.getTime()

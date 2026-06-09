@@ -1,10 +1,26 @@
 import type { AuthorizationPolicy } from '../../authorization/authorization-policy'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AuthorizationError, AuthorizationErrorCode } from '../../authorization/authorization-error'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const subjectMatterSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  sequenceOrder: z.number().positive('sequenceOrder must be positive'),
+  estimatedHours: z.number().positive('estimatedHours must be positive').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type SubjectMatterData = z.infer<typeof subjectMatterSchema>
+
+export const subjectMatterCreateSchema = subjectMatterSchema.omit({ createdAt: true })
+export const subjectMatterUpdateSchema = subjectMatterSchema.partial().required({ id: true })
 
 export interface SubjectMatterArgs {
   id: string
@@ -17,25 +33,23 @@ export interface SubjectMatterArgs {
 }
 
 export class SubjectMatter {
-  readonly id: string
-  readonly subjectId: string
-  readonly name: string
-  readonly description?: string
-  readonly sequenceOrder: number
-  readonly estimatedHours?: number
-  readonly createdAt: Date
+  readonly data: SubjectMatterData
 
-  constructor({ id, subjectId, name, description, sequenceOrder, estimatedHours, createdAt }: SubjectMatterArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.subjectId = requireNonBlank(subjectId, 'subjectId')
-    this.name = requireNonBlank(name, 'name')
-    this.description = requireOptionalNonBlank(description, 'description')
-    this.sequenceOrder = requirePositiveNumber(sequenceOrder, 'sequenceOrder')
-    if (estimatedHours != null) {
-      this.estimatedHours = requirePositiveNumber(estimatedHours, 'estimatedHours')
+  constructor(args: SubjectMatterArgs) {
+    const result = subjectMatterSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get subjectId() { return this.data.subjectId }
+  get name() { return this.data.name }
+  get description() { return this.data.description }
+  get sequenceOrder() { return this.data.sequenceOrder }
+  get estimatedHours() { return this.data.estimatedHours }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ repositories, policy, atomicExecution }) =>

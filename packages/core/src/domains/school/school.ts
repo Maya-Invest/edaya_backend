@@ -1,9 +1,10 @@
 import type { BaseRepositoryInterface } from '../../ports/base-repository'
 import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../services/managed-entity-service'
 import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum SchoolType {
   Primary = 'primary',
@@ -12,6 +13,30 @@ export enum SchoolType {
   Vocational = 'vocational',
   Other = 'other',
 }
+
+export const schoolSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  timeZone: z.string().trim().min(1, 'timeZone must not be blank').refine((val) => {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: val }).format()
+      return true
+    }
+    catch {
+      return false
+    }
+  }, val => ({ message: `Invalid IANA time zone: ${val}` })),
+  ownerStaffId: z.string().trim().min(1, 'ownerStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  type: z.nativeEnum(SchoolType).nullable().optional().transform(v => v === null ? undefined : v),
+  country: z.string().trim().min(1, 'country must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  city: z.string().trim().min(1, 'city must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type SchoolData = z.infer<typeof schoolSchema>
+
+export const schoolCreateSchema = schoolSchema.omit({ createdAt: true })
+export const schoolUpdateSchema = schoolSchema.partial().required({ id: true })
 
 export interface SchoolArgs {
   id: string
@@ -29,41 +54,29 @@ export interface SchoolArgs {
  * Serves as the root boundary for all other domain entities.
  */
 export class School {
-  readonly id: string
-  readonly name: string
-  readonly timeZone: string
-  readonly ownerStaffId?: string
-  readonly type?: SchoolType
-  readonly country?: string
-  readonly city?: string
-  readonly createdAt: Date
+  readonly data: SchoolData
 
-  constructor({ id, name, timeZone, ownerStaffId, type, country, city, createdAt }: SchoolArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.name = requireNonBlank(name, 'name')
-    this.timeZone = requireTimeZone(timeZone)
-    this.ownerStaffId = requireOptionalNonBlank(ownerStaffId, 'ownerStaffId')
-    this.type = type ?? undefined
-    this.country = requireOptionalNonBlank(country, 'country')
-    this.city = requireOptionalNonBlank(city, 'city')
-    this.createdAt = createdAt ?? new Date()
+  constructor(args: SchoolArgs) {
+    const result = schoolSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
+    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get name() { return this.data.name }
+  get timeZone() { return this.data.timeZone }
+  get ownerStaffId() { return this.data.ownerStaffId }
+  get type() { return this.data.type }
+  get country() { return this.data.country }
+  get city() { return this.data.city }
+  get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {
     const parts = [this.city, this.country].filter((value): value is string => Boolean(value))
     return parts.length > 0 ? parts.join(', ') : undefined
   }
-}
-
-function requireTimeZone(value: string): string {
-  const timeZone = requireNonBlank(value, 'timeZone')
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone }).format()
-  }
-  catch {
-    throw new Error(`Invalid IANA time zone: ${timeZone}`)
-  }
-  return timeZone
 }
 
 export const schoolConfig: EntityConfigFactory<School> = input =>

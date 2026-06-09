@@ -1,10 +1,11 @@
 import type { AuthorizationPolicy } from '../../authorization'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { normalizeDate, requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, normalizeDate, zodDate } from '../utils'
 
 export enum AttendanceStatus {
   Present = 'present',
@@ -18,6 +19,65 @@ export enum AttendanceJustificationStatus {
   Excused = 'excused',
   Rejected = 'rejected',
 }
+
+export const attendanceRecordBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  sessionId: z.string().trim().min(1, 'sessionId must not be blank'),
+  date: zodDate().transform(normalizeDate),
+  status: z.nativeEnum(AttendanceStatus),
+  justificationStatus: z.nativeEnum(AttendanceJustificationStatus).default(AttendanceJustificationStatus.None),
+  reason: z.string().trim().min(1, 'reason must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  justifiedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  justifiedByStaffId: z.string().trim().min(1, 'justifiedByStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  correctedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  correctedByStaffId: z.string().trim().min(1, 'correctedByStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdBy: z.string().trim().min(1, 'createdBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+  updatedAt: zodDate().default(() => new Date()),
+})
+
+function refineAttendanceRecord(data: any, ctx: z.RefinementCtx) {
+  if (data.justifiedByStaffId && !data.justifiedAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'justifiedAt is required when justifiedByStaffId is provided',
+    })
+  }
+  if ((data.correctedAt && !data.correctedByStaffId) || (!data.correctedAt && data.correctedByStaffId)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'correctedAt and correctedByStaffId must be provided together',
+    })
+  }
+  if (
+    data.justificationStatus !== AttendanceJustificationStatus.None
+    && data.status === AttendanceStatus.Present
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'present attendance must not carry an absence justification',
+    })
+  }
+  if (
+    (data.justificationStatus === AttendanceJustificationStatus.Excused
+      || data.justificationStatus === AttendanceJustificationStatus.Rejected)
+    && (!data.justifiedAt || !data.justifiedByStaffId)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'reviewed justifications must identify the reviewing staff member and time',
+    })
+  }
+}
+
+export const attendanceRecordSchema = attendanceRecordBaseSchema.superRefine(refineAttendanceRecord)
+
+export type AttendanceRecordData = z.infer<typeof attendanceRecordSchema>
+
+export const attendanceRecordCreateSchema = attendanceRecordBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineAttendanceRecord)
+export const attendanceRecordUpdateSchema = attendanceRecordBaseSchema.partial().required({ id: true }).superRefine(refineAttendanceRecord)
 
 export interface AttendanceRecordArgs {
   id: string
@@ -42,77 +102,31 @@ export interface AttendanceRecordArgs {
  * typically associated with a particular subject or daily check-in.
  */
 export class AttendanceRecord {
-  readonly id: string
-  readonly studentId: string
-  readonly sessionId: string
-  readonly date: Date
-  readonly status: AttendanceStatus
-  readonly justificationStatus: AttendanceJustificationStatus
-  readonly reason?: string
-  readonly notes?: string
-  readonly justifiedAt?: Date
-  readonly justifiedByStaffId?: string
-  readonly correctedAt?: Date
-  readonly correctedByStaffId?: string
-  readonly createdBy?: string
-  readonly createdAt: Date
-  readonly updatedAt: Date
+  readonly data: AttendanceRecordData
 
-  constructor({
-    id,
-    studentId,
-    sessionId,
-    date,
-    status,
-    justificationStatus = AttendanceJustificationStatus.None,
-    reason,
-    notes,
-    justifiedAt,
-    justifiedByStaffId,
-    correctedAt,
-    correctedByStaffId,
-    createdBy,
-    createdAt,
-    updatedAt,
-  }: AttendanceRecordArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.sessionId = requireNonBlank(sessionId, 'sessionId')
-    this.date = normalizeDate(requireValidDate(date, 'date'))
-    this.status = status
-    this.justificationStatus = justificationStatus
-    this.reason = requireOptionalNonBlank(reason, 'reason')
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.justifiedAt = justifiedAt ? requireValidDate(justifiedAt, 'justifiedAt') : undefined
-    this.justifiedByStaffId = requireOptionalNonBlank(justifiedByStaffId, 'justifiedByStaffId')
-    this.correctedAt = correctedAt ? requireValidDate(correctedAt, 'correctedAt') : undefined
-    this.correctedByStaffId = requireOptionalNonBlank(correctedByStaffId, 'correctedByStaffId')
-    this.createdBy = requireOptionalNonBlank(createdBy, 'createdBy')
-
-    const now = new Date()
-    this.createdAt = createdAt ?? now
-    this.updatedAt = updatedAt ?? now
-
-    if (this.justifiedByStaffId && !this.justifiedAt) {
-      throw new Error('justifiedAt is required when justifiedByStaffId is provided')
+  constructor(args: AttendanceRecordArgs) {
+    const result = attendanceRecordSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if ((this.correctedAt && !this.correctedByStaffId) || (!this.correctedAt && this.correctedByStaffId)) {
-      throw new Error('correctedAt and correctedByStaffId must be provided together')
-    }
-    if (
-      this.justificationStatus !== AttendanceJustificationStatus.None
-      && this.status === AttendanceStatus.Present
-    ) {
-      throw new Error('present attendance must not carry an absence justification')
-    }
-    if (
-      (this.justificationStatus === AttendanceJustificationStatus.Excused
-        || this.justificationStatus === AttendanceJustificationStatus.Rejected)
-      && (!this.justifiedAt || !this.justifiedByStaffId)
-    ) {
-      throw new Error('reviewed justifications must identify the reviewing staff member and time')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get studentId() { return this.data.studentId }
+  get sessionId() { return this.data.sessionId }
+  get date() { return this.data.date }
+  get status() { return this.data.status }
+  get justificationStatus() { return this.data.justificationStatus }
+  get reason() { return this.data.reason }
+  get notes() { return this.data.notes }
+  get justifiedAt() { return this.data.justifiedAt }
+  get justifiedByStaffId() { return this.data.justifiedByStaffId }
+  get correctedAt() { return this.data.correctedAt }
+  get correctedByStaffId() { return this.data.correctedByStaffId }
+  get createdBy() { return this.data.createdBy }
+  get createdAt() { return this.data.createdAt }
+  get updatedAt() { return this.data.updatedAt }
 
   copyWith(changes: Partial<AttendanceRecordArgs>): AttendanceRecord {
     return new AttendanceRecord({

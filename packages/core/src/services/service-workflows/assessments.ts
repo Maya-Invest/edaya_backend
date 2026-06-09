@@ -95,7 +95,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
 
   async completeAssessment({ assessmentId, metAt }: CompleteAssessmentInput): Promise<Assessment> {
     const existing = await this.requireEntity(this.baseService.assessments, assessmentId)
-    const assessment = new AssessmentEntity({ ...existing, metAt: metAt ?? new Date() })
+    const assessment = new AssessmentEntity({ ...existing.data, metAt: metAt ?? new Date() })
     await this.baseService.assessments.save(assessment)
     return assessment
   }

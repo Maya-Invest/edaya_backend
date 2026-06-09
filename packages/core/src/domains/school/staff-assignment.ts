@@ -2,9 +2,37 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
+
 import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const staffAssignmentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  staffId: z.string().trim().min(1, 'staffId must not be blank'),
+  responsibility: z.string().trim().min(1, 'responsibility must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineStaffAssignment(data: any, ctx: z.RefinementCtx) {
+  const targets = [data.classGroupId, data.classSubjectId, data.sessionId].filter(Boolean)
+  if (targets.length !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId',
+    })
+  }
+}
+
+export const staffAssignmentSchema = staffAssignmentBaseSchema.superRefine(refineStaffAssignment)
+export type StaffAssignmentData = z.infer<typeof staffAssignmentSchema>
+
+export const staffAssignmentCreateSchema = staffAssignmentBaseSchema.omit({ createdAt: true }).superRefine(refineStaffAssignment)
+export const staffAssignmentUpdateSchema = staffAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineStaffAssignment)
 
 export interface StaffAssignmentArgs {
   id: string
@@ -20,38 +48,23 @@ export interface StaffAssignmentArgs {
  * Assigns a staff member (with a free-form responsibility label) to a ClassGroup, ClassSubject, or Session.
  */
 export class StaffAssignment {
-  readonly id: string
-  readonly staffId: string
-  readonly responsibility: string
-  readonly classGroupId?: string
-  readonly classSubjectId?: string
-  readonly sessionId?: string
-  readonly createdAt: Date
+  readonly data: StaffAssignmentData
 
-  constructor({
-    id,
-    staffId,
-    responsibility,
-    classGroupId,
-    classSubjectId,
-    sessionId,
-    createdAt,
-  }: StaffAssignmentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.staffId = requireNonBlank(staffId, 'staffId')
-    this.responsibility = requireNonBlank(responsibility, 'responsibility')
-
-    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
-    this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
-    this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
-
-    const targets = [this.classGroupId, this.classSubjectId, this.sessionId].filter(Boolean)
-    if (targets.length !== 1) {
-      throw new Error('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId')
+  constructor(args: StaffAssignmentArgs) {
+    const result = staffAssignmentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get staffId() { return this.data.staffId }
+  get responsibility() { return this.data.responsibility }
+  get classGroupId() { return this.data.classGroupId }
+  get classSubjectId() { return this.data.classSubjectId }
+  get sessionId() { return this.data.sessionId }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ repositories, policy, atomicExecution }) =>

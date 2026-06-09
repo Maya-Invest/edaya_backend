@@ -2,10 +2,11 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, permissionAction, read, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 import { StudentStatus } from './student'
 import { progressionDecisionChanged } from './student-note'
 
@@ -25,6 +26,111 @@ export enum ProgressionDecision {
   Retained = 'retained',
   Graduated = 'graduated',
 }
+
+export const studentClassEnrollmentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  enrollmentIndex: z.number().int().positive('enrollmentIndex must be a strictly positive integer'),
+  status: z.nativeEnum(StudentClassEnrollmentStatus).default(StudentClassEnrollmentStatus.Active),
+  enrolledAt: zodDate().optional(),
+  endedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  endReason: z.nativeEnum(EnrollmentEndReason).nullable().optional().transform(v => v === null ? undefined : v),
+  progressionDecision: z.nativeEnum(ProgressionDecision).nullable().optional().transform(v => v === null ? undefined : v),
+  previousEnrollmentId: z.string().trim().min(1, 'previousEnrollmentId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  closedBy: z.string().trim().min(1, 'closedBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  progressionDecidedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  progressionDecidedBy: z.string().trim().min(1, 'progressionDecidedBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  progressionNotes: z.string().trim().min(1, 'progressionNotes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineEnrollment(data: any, ctx: z.RefinementCtx) {
+  const createdAt = data.createdAt ?? new Date()
+  const enrolledAt = data.enrolledAt ?? createdAt
+
+  if (data.status === StudentClassEnrollmentStatus.Active && (data.endedAt || data.endReason || data.closedBy)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'active enrollments must not define closure information',
+    })
+  }
+  if (data.status === StudentClassEnrollmentStatus.Closed && (!data.endedAt || !data.endReason || !data.closedBy)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'closed enrollments must define endedAt, endReason, and closedBy',
+    })
+  }
+  if (data.endedAt && data.endedAt.getTime() < enrolledAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'endedAt must not be before enrolledAt',
+    })
+  }
+  if (data.progressionDecision && (!data.progressionDecidedAt || !data.progressionDecidedBy)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'progressionDecidedAt and progressionDecidedBy are required when a progression decision is recorded',
+    })
+  }
+  if (!data.progressionDecision && (data.progressionDecidedAt || data.progressionDecidedBy || data.progressionNotes)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'progression metadata requires a progression decision',
+    })
+  }
+  if (data.progressionDecision && data.endReason !== EnrollmentEndReason.Completed) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'a progression decision requires a completed enrollment',
+    })
+  }
+}
+
+export const studentClassEnrollmentSchema = studentClassEnrollmentBaseSchema.superRefine(refineEnrollment)
+
+export type StudentClassEnrollmentData = z.infer<typeof studentClassEnrollmentSchema>
+
+export const studentClassEnrollmentCreateSchema = studentClassEnrollmentBaseSchema.omit({ createdAt: true }).superRefine(refineEnrollment)
+export const studentClassEnrollmentUpdateSchema = studentClassEnrollmentBaseSchema.partial().required({ id: true }).superRefine((data, ctx) => {
+  if (data.status === StudentClassEnrollmentStatus.Active && (data.endedAt || data.endReason || data.closedBy)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'active enrollments must not define closure information',
+    })
+  }
+  if (data.status === StudentClassEnrollmentStatus.Closed && (!data.endedAt || !data.endReason || !data.closedBy)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'closed enrollments must define endedAt, endReason, and closedBy',
+    })
+  }
+  if (data.enrolledAt && data.endedAt && data.endedAt.getTime() < data.enrolledAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'endedAt must not be before enrolledAt',
+    })
+  }
+  if (data.progressionDecision && (!data.progressionDecidedAt || !data.progressionDecidedBy)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'progressionDecidedAt and progressionDecidedBy are required when a progression decision is recorded',
+    })
+  }
+  if (!data.progressionDecision && (data.progressionDecidedAt || data.progressionDecidedBy || data.progressionNotes)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'progression metadata requires a progression decision',
+    })
+  }
+  if (data.progressionDecision && data.endReason && data.endReason !== EnrollmentEndReason.Completed) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'a progression decision requires a completed enrollment',
+    })
+  }
+})
 
 export interface StudentClassEnrollmentArgs {
   id: string
@@ -50,80 +156,36 @@ export interface StudentClassEnrollmentArgs {
  * student's next progression are separate facts.
  */
 export class StudentClassEnrollment {
-  readonly id: string
-  readonly studentId: string
-  readonly classGroupId: string
-  readonly academicYearId: string
-  readonly enrollmentIndex: number
-  readonly status: StudentClassEnrollmentStatus
-  readonly enrolledAt: Date
-  readonly endedAt?: Date
-  readonly endReason?: EnrollmentEndReason
-  readonly progressionDecision?: ProgressionDecision
-  readonly previousEnrollmentId?: string
-  readonly closedBy?: string
-  readonly progressionDecidedAt?: Date
-  readonly progressionDecidedBy?: string
-  readonly progressionNotes?: string
-  readonly createdAt: Date
+  readonly data: StudentClassEnrollmentData
 
-  constructor({
-    id,
-    studentId,
-    classGroupId,
-    academicYearId,
-    enrollmentIndex,
-    status = StudentClassEnrollmentStatus.Active,
-    enrolledAt,
-    endedAt,
-    endReason,
-    progressionDecision,
-    previousEnrollmentId,
-    closedBy,
-    progressionDecidedAt,
-    progressionDecidedBy,
-    progressionNotes,
-    createdAt,
-  }: StudentClassEnrollmentArgs) {
-    const now = new Date()
-    this.id = requireNonBlank(id, 'id')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
-    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
-    this.enrollmentIndex = requirePositiveInt(enrollmentIndex, 'enrollmentIndex')
-    this.status = status
-    this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : now
-    this.enrolledAt = enrolledAt ? requireValidDate(enrolledAt, 'enrolledAt') : this.createdAt
-    this.endedAt = endedAt ? requireValidDate(endedAt, 'endedAt') : undefined
-    this.endReason = endReason ?? undefined
-    this.progressionDecision = progressionDecision ?? undefined
-    this.previousEnrollmentId = requireOptionalNonBlank(previousEnrollmentId, 'previousEnrollmentId')
-    this.closedBy = requireOptionalNonBlank(closedBy, 'closedBy')
-    this.progressionDecidedAt = progressionDecidedAt
-      ? requireValidDate(progressionDecidedAt, 'progressionDecidedAt')
-      : undefined
-    this.progressionDecidedBy = requireOptionalNonBlank(progressionDecidedBy, 'progressionDecidedBy')
-    this.progressionNotes = requireOptionalNonBlank(progressionNotes, 'progressionNotes')
-
-    if (this.status === StudentClassEnrollmentStatus.Active && (this.endedAt || this.endReason || this.closedBy)) {
-      throw new Error('active enrollments must not define closure information')
+  constructor(args: StudentClassEnrollmentArgs) {
+    const result = studentClassEnrollmentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.status === StudentClassEnrollmentStatus.Closed && (!this.endedAt || !this.endReason || !this.closedBy)) {
-      throw new Error('closed enrollments must define endedAt, endReason, and closedBy')
-    }
-    if (this.endedAt && this.endedAt.getTime() < this.enrolledAt.getTime()) {
-      throw new Error('endedAt must not be before enrolledAt')
-    }
-    if (this.progressionDecision && (!this.progressionDecidedAt || !this.progressionDecidedBy)) {
-      throw new Error('progressionDecidedAt and progressionDecidedBy are required when a progression decision is recorded')
-    }
-    if (!this.progressionDecision && (this.progressionDecidedAt || this.progressionDecidedBy || this.progressionNotes)) {
-      throw new Error('progression metadata requires a progression decision')
-    }
-    if (this.progressionDecision && this.endReason !== EnrollmentEndReason.Completed) {
-      throw new Error('a progression decision requires a completed enrollment')
+    const validated = result.data
+    this.data = {
+      ...validated,
+      enrolledAt: validated.enrolledAt ?? validated.createdAt,
     }
   }
+
+  get id() { return this.data.id }
+  get studentId() { return this.data.studentId }
+  get classGroupId() { return this.data.classGroupId }
+  get academicYearId() { return this.data.academicYearId }
+  get enrollmentIndex() { return this.data.enrollmentIndex }
+  get status() { return this.data.status }
+  get enrolledAt() { return this.data.enrolledAt! }
+  get endedAt() { return this.data.endedAt }
+  get endReason() { return this.data.endReason }
+  get progressionDecision() { return this.data.progressionDecision }
+  get previousEnrollmentId() { return this.data.previousEnrollmentId }
+  get closedBy() { return this.data.closedBy }
+  get progressionDecidedAt() { return this.data.progressionDecidedAt }
+  get progressionDecidedBy() { return this.data.progressionDecidedBy }
+  get progressionNotes() { return this.data.progressionNotes }
+  get createdAt() { return this.data.createdAt }
 
   close({
     endedAt,

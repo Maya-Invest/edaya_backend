@@ -2,16 +2,38 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../shared'
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum ClassSubjectMatterStatus {
   NotStarted = 'not_started',
   InProgress = 'in_progress',
   Completed = 'completed',
 }
+
+export const classSubjectMatterSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank'),
+  subjectMatterId: z.string().trim().min(1, 'subjectMatterId must not be blank'),
+  status: z.nativeEnum(ClassSubjectMatterStatus),
+  completedPercentage: z.preprocess(
+    val => val === null ? undefined : val,
+    z.number().min(0, 'completedPercentage must be between 0 and 100').max(100, 'completedPercentage must be between 0 and 100'),
+  ),
+  updatedByStaffId: z.string().trim().min(1, 'updatedByStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  startedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  completedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  updatedAt: zodDate().default(() => new Date()),
+})
+
+export type ClassSubjectMatterData = z.infer<typeof classSubjectMatterSchema>
+
+export const classSubjectMatterCreateSchema = classSubjectMatterSchema.omit({ updatedAt: true })
+export const classSubjectMatterUpdateSchema = classSubjectMatterSchema.partial().required({ id: true })
 
 export interface ClassSubjectMatterArgs {
   id: string
@@ -27,44 +49,26 @@ export interface ClassSubjectMatterArgs {
 }
 
 export class ClassSubjectMatter {
-  readonly id: string
-  readonly classSubjectId: string
-  readonly subjectMatterId: string
-  readonly status: ClassSubjectMatterStatus
-  readonly completedPercentage: number
-  readonly updatedByStaffId?: string
-  readonly startedAt?: Date
-  readonly completedAt?: Date
-  readonly notes?: string
-  readonly updatedAt: Date
+  readonly data: ClassSubjectMatterData
 
-  constructor({
-    id,
-    classSubjectId,
-    subjectMatterId,
-    status,
-    completedPercentage,
-    updatedByStaffId,
-    startedAt,
-    completedAt,
-    notes,
-    updatedAt,
-  }: ClassSubjectMatterArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.classSubjectId = requireNonBlank(classSubjectId, 'classSubjectId')
-    this.subjectMatterId = requireNonBlank(subjectMatterId, 'subjectMatterId')
-    this.status = status
-    this.completedPercentage = requireNonNegativeNumber(completedPercentage, 'completedPercentage')
-    this.updatedByStaffId = requireOptionalNonBlank(updatedByStaffId, 'updatedByStaffId')
-    this.startedAt = startedAt ? requireValidDate(startedAt, 'startedAt') : undefined
-    this.completedAt = completedAt ? requireValidDate(completedAt, 'completedAt') : undefined
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.updatedAt = updatedAt ?? new Date()
-
-    if (this.completedPercentage < 0 || this.completedPercentage > 100) {
-      throw new Error('completedPercentage must be between 0 and 100')
+  constructor(args: ClassSubjectMatterArgs) {
+    const result = classSubjectMatterSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get classSubjectId() { return this.data.classSubjectId }
+  get subjectMatterId() { return this.data.subjectMatterId }
+  get status() { return this.data.status }
+  get completedPercentage() { return this.data.completedPercentage }
+  get updatedByStaffId() { return this.data.updatedByStaffId }
+  get startedAt() { return this.data.startedAt }
+  get completedAt() { return this.data.completedAt }
+  get notes() { return this.data.notes }
+  get updatedAt() { return this.data.updatedAt }
 }
 
 export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> = ({ repositories, policy, atomicExecution }) =>

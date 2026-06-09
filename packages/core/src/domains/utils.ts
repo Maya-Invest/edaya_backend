@@ -1,3 +1,6 @@
+import type { ZodError } from 'zod'
+import { z } from 'zod'
+
 export class DomainValidationError extends Error {
   constructor(message: string) {
     super(message)
@@ -80,4 +83,26 @@ export function isSameDate(left: Date, right: Date): boolean {
 
 export function roundTo2(value: number): number {
   return Math.round(value * 100) / 100
+}
+
+export function formatZodError(error: ZodError): string {
+  return error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+}
+
+export function zodDate() {
+  return z.preprocess(
+    (val) => {
+      if (val === null)
+        return undefined
+      if (typeof val === 'string') {
+        const parsed = new Date(val)
+        if (!Number.isNaN(parsed.getTime()))
+          return parsed
+      }
+      return val
+    },
+    z.custom<Date>(val => val instanceof Date && !Number.isNaN(val.getTime()), {
+      message: 'must be a valid date',
+    }),
+  )
 }

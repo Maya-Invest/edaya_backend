@@ -1,5 +1,37 @@
-import { requireNonBlank, requireNonNegativeNumber, roundTo2 } from '../utils'
+import { z } from 'zod'
+import { DomainValidationError, formatZodError, roundTo2 } from '../utils'
 import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
+
+export const reportCardResultSectionBaseSchema = z.object({
+  sectionId: z.string().trim().min(1, 'sectionId must not be blank'),
+  sectionKind: z.nativeEnum(ReportCardDefinitionSectionKind),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  average: z.number().finite().nonnegative('average must be a finite, non-negative number').transform(v => roundTo2(v)),
+  weight: z.number().finite().nonnegative('weight must be a finite, non-negative number'),
+  parentSectionId: z.string().trim().min(1, 'parentSectionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+})
+
+function refineReportCardResultSection(data: any, ctx: z.RefinementCtx) {
+  if (data.sectionKind === ReportCardDefinitionSectionKind.Group && data.classSubjectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'group section results must not reference a class subject',
+    })
+  }
+  if (data.sectionKind === ReportCardDefinitionSectionKind.Subject && !data.classSubjectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'subject section results must reference a class subject',
+    })
+  }
+}
+
+export const reportCardResultSectionSchema: z.ZodType<any> = reportCardResultSectionBaseSchema.extend({
+  subResults: z.lazy(() => reportCardResultSectionSchema.array()).default([]),
+}).superRefine(refineReportCardResultSection)
+
+export type ReportCardResultSectionData = z.infer<typeof reportCardResultSectionSchema>
 
 export interface ReportCardResultSectionArgs {
   sectionId: string
@@ -17,39 +49,23 @@ export interface ReportCardResultSectionArgs {
  * Group sections derive their average from child results; subject sections derive it from assessment results.
  */
 export class ReportCardResultSection {
-  readonly sectionId: string
-  readonly sectionKind: ReportCardDefinitionSectionKind
-  readonly name: string
-  readonly average: number
-  readonly weight: number
-  readonly parentSectionId?: string
-  readonly classSubjectId?: string
+  readonly data: any
   readonly subResults: readonly ReportCardResultSection[]
 
-  constructor({
-    sectionId,
-    sectionKind,
-    name,
-    average,
-    weight,
-    parentSectionId,
-    classSubjectId,
-    subResults,
-  }: ReportCardResultSectionArgs) {
-    this.sectionId = requireNonBlank(sectionId, 'sectionId')
-    this.sectionKind = sectionKind
-    this.name = requireNonBlank(name, 'name')
-    this.average = roundTo2(requireNonNegativeNumber(average, 'average'))
-    this.weight = requireNonNegativeNumber(weight, 'weight')
-    this.parentSectionId = parentSectionId
-    this.classSubjectId = classSubjectId
-    this.subResults = Object.freeze(subResults ? [...subResults] : [])
-
-    if (this.sectionKind === ReportCardDefinitionSectionKind.Group && this.classSubjectId) {
-      throw new Error('group section results must not reference a class subject')
+  constructor(args: ReportCardResultSectionArgs) {
+    const result = reportCardResultSectionSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.sectionKind === ReportCardDefinitionSectionKind.Subject && !this.classSubjectId) {
-      throw new Error('subject section results must reference a class subject')
-    }
+    this.data = result.data
+    this.subResults = Object.freeze(args.subResults ? [...args.subResults] : [])
   }
+
+  get sectionId() { return this.data.sectionId }
+  get sectionKind() { return this.data.sectionKind }
+  get name() { return this.data.name }
+  get average() { return this.data.average }
+  get weight() { return this.data.weight }
+  get parentSectionId() { return this.data.parentSectionId }
+  get classSubjectId() { return this.data.classSubjectId }
 }

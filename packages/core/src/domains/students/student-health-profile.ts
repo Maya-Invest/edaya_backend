@@ -1,9 +1,38 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const studentHealthProfileBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  allergies: z.string().trim().min(1, 'allergies must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  medicalConditions: z.string().trim().min(1, 'medicalConditions must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  emergencyProtocols: z.string().trim().min(1, 'emergencyProtocols must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  bloodType: z.string().trim().min(1, 'bloodType must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+  updatedAt: zodDate().default(() => new Date()),
+})
+
+function refineStudentHealthProfile(data: any, ctx: z.RefinementCtx) {
+  if (data.updatedAt.getTime() < data.createdAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'updatedAt must not be before createdAt',
+    })
+  }
+}
+
+export const studentHealthProfileSchema = studentHealthProfileBaseSchema.superRefine(refineStudentHealthProfile)
+
+export type StudentHealthProfileData = z.infer<typeof studentHealthProfileSchema>
+
+export const studentHealthProfileCreateSchema = studentHealthProfileBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentHealthProfile)
+export const studentHealthProfileUpdateSchema = studentHealthProfileBaseSchema.partial().required({ id: true }).superRefine(refineStudentHealthProfile)
 
 export interface StudentHealthProfileArgs {
   id: string
@@ -22,41 +51,25 @@ export interface StudentHealthProfileArgs {
  * independent from the general student directory profile.
  */
 export class StudentHealthProfile {
-  readonly id: string
-  readonly schoolId: string
-  readonly studentId: string
-  readonly allergies?: string
-  readonly medicalConditions?: string
-  readonly emergencyProtocols?: string
-  readonly bloodType?: string
-  readonly createdAt: Date
-  readonly updatedAt: Date
+  readonly data: StudentHealthProfileData
 
-  constructor({
-    id,
-    schoolId,
-    studentId,
-    allergies,
-    medicalConditions,
-    emergencyProtocols,
-    bloodType,
-    createdAt,
-    updatedAt,
-  }: StudentHealthProfileArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.allergies = requireOptionalNonBlank(allergies, 'allergies')
-    this.medicalConditions = requireOptionalNonBlank(medicalConditions, 'medicalConditions')
-    this.emergencyProtocols = requireOptionalNonBlank(emergencyProtocols, 'emergencyProtocols')
-    this.bloodType = requireOptionalNonBlank(bloodType, 'bloodType')
-    const now = new Date()
-    this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : now
-    this.updatedAt = updatedAt ? requireValidDate(updatedAt, 'updatedAt') : now
-    if (this.updatedAt.getTime() < this.createdAt.getTime()) {
-      throw new Error('updatedAt must not be before createdAt')
+  constructor(args: StudentHealthProfileArgs) {
+    const result = studentHealthProfileSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get studentId() { return this.data.studentId }
+  get allergies() { return this.data.allergies }
+  get medicalConditions() { return this.data.medicalConditions }
+  get emergencyProtocols() { return this.data.emergencyProtocols }
+  get bloodType() { return this.data.bloodType }
+  get createdAt() { return this.data.createdAt }
+  get updatedAt() { return this.data.updatedAt }
 }
 
 export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = (input) => {

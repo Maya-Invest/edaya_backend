@@ -1,9 +1,33 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { directPermissionEntityConfig, unique } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const guardianStudentLinkSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  guardianId: z.string().trim().min(1, 'guardianId must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  relationship: z.string().trim().min(1, 'relationship must not be blank').default('parent'),
+  isPrimary: z.boolean().default(false),
+  isBillingContact: z.boolean().default(false),
+  legalGuardian: z.boolean().default(false),
+  canPickup: z.boolean().default(false),
+  emergencyContactPriority: z.number().int().positive('emergencyContactPriority must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
+  receivesAcademicReports: z.boolean().default(true),
+  receivesAttendanceAlerts: z.boolean().default(true),
+  contactRestrictions: z.string().trim().min(1, 'contactRestrictions must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type GuardianStudentLinkData = z.infer<typeof guardianStudentLinkSchema>
+
+export const guardianStudentLinkCreateSchema = guardianStudentLinkSchema.omit({ createdAt: true })
+export const guardianStudentLinkUpdateSchema = guardianStudentLinkSchema.partial().required({ id: true })
 
 export interface GuardianStudentLinkArgs {
   id: string
@@ -28,57 +52,31 @@ export interface GuardianStudentLinkArgs {
  * Enables multiple guardians per student and multiple students per guardian.
  */
 export class GuardianStudentLink {
-  readonly id: string
-  readonly schoolId: string
-  readonly guardianId: string
-  readonly studentId: string
-  readonly relationship: string
-  readonly isPrimary: boolean
-  readonly isBillingContact: boolean
-  readonly legalGuardian: boolean
-  readonly canPickup: boolean
-  readonly emergencyContactPriority?: number
-  readonly receivesAcademicReports: boolean
-  readonly receivesAttendanceAlerts: boolean
-  readonly contactRestrictions?: string
-  readonly notes?: string
-  readonly createdAt: Date
+  readonly data: GuardianStudentLinkData
 
-  constructor({
-    id,
-    schoolId,
-    guardianId,
-    studentId,
-    relationship = 'parent',
-    isPrimary = false,
-    isBillingContact = false,
-    legalGuardian = false,
-    canPickup = false,
-    emergencyContactPriority,
-    receivesAcademicReports = true,
-    receivesAttendanceAlerts = true,
-    contactRestrictions,
-    notes,
-    createdAt,
-  }: GuardianStudentLinkArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.guardianId = requireNonBlank(guardianId, 'guardianId')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.relationship = requireNonBlank(relationship, 'relationship')
-    this.isPrimary = isPrimary
-    this.isBillingContact = isBillingContact
-    this.legalGuardian = legalGuardian
-    this.canPickup = canPickup
-    if (emergencyContactPriority != null) {
-      this.emergencyContactPriority = requirePositiveInt(emergencyContactPriority, 'emergencyContactPriority')
+  constructor(args: GuardianStudentLinkArgs) {
+    const result = guardianStudentLinkSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    this.receivesAcademicReports = receivesAcademicReports
-    this.receivesAttendanceAlerts = receivesAttendanceAlerts
-    this.contactRestrictions = requireOptionalNonBlank(contactRestrictions, 'contactRestrictions')
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get guardianId() { return this.data.guardianId }
+  get studentId() { return this.data.studentId }
+  get relationship() { return this.data.relationship }
+  get isPrimary() { return this.data.isPrimary }
+  get isBillingContact() { return this.data.isBillingContact }
+  get legalGuardian() { return this.data.legalGuardian }
+  get canPickup() { return this.data.canPickup }
+  get emergencyContactPriority() { return this.data.emergencyContactPriority }
+  get receivesAcademicReports() { return this.data.receivesAcademicReports }
+  get receivesAttendanceAlerts() { return this.data.receivesAttendanceAlerts }
+  get contactRestrictions() { return this.data.contactRestrictions }
+  get notes() { return this.data.notes }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = (input) => {

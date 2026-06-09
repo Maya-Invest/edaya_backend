@@ -2,17 +2,70 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
-import type { AttendanceSummary } from '../../value_object/attendance-summary'
 import type { ReportCardResultSection } from './report-card-result-section'
-import { denyResourceAccess, Permission } from '../../authorization'
+import { z } from 'zod'
+import { Permission } from '../../authorization'
+import { denyResourceAccess } from '../../authorization/authorization-error'
 import { config, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireNonNegativeInt, requireNonNegativeNumber, requireOptionalNonBlank, roundTo2 } from '../utils'
+import { AttendanceSummary } from '../../value_object/attendance-summary'
+import { DomainValidationError, formatZodError, roundTo2, zodDate } from '../utils'
+import { reportCardResultSectionSchema } from './report-card-result-section'
 
 export enum ReportCardResultStatus {
   Draft = 'draft',
   Published = 'published',
 }
+
+export const reportCardResultBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  reportCardDefinitionId: z.string().trim().min(1, 'reportCardDefinitionId must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
+  periodId: z.string().trim().min(1, 'periodId must not be blank'),
+  attendanceSummary: z.instanceof(AttendanceSummary),
+  assessmentResultCount: z.number().int().nonnegative('assessmentResultCount must be a non-negative integer'),
+  overallAverage: z.number().finite().nonnegative('overallAverage must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  rank: z.number().int().nonnegative('rank must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
+  classSize: z.number().int().nonnegative('classSize must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
+  passThreshold: z.number().finite().nonnegative('passThreshold must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  teacherComment: z.string().trim().min(1, 'teacherComment must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  principalComment: z.string().trim().min(1, 'principalComment must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(ReportCardResultStatus).default(ReportCardResultStatus.Draft),
+  generatedAt: zodDate().default(() => new Date()),
+  publishedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+})
+
+function refineReportCardResult(data: any, ctx: z.RefinementCtx) {
+  if (data.status === ReportCardResultStatus.Published && !data.publishedAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'publishedAt is required for published report cards',
+    })
+  }
+  if (data.status === ReportCardResultStatus.Draft && data.publishedAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'draft report cards must not define publishedAt',
+    })
+  }
+}
+
+export const reportCardResultSchema = reportCardResultBaseSchema.extend({
+  sectionResults: reportCardResultSectionSchema.array(),
+}).superRefine(refineReportCardResult)
+
+export type ReportCardResultData = Omit<z.infer<typeof reportCardResultSchema>, 'sectionResults'> & {
+  readonly sectionResults: readonly ReportCardResultSection[]
+}
+
+export const reportCardResultCreateSchema = reportCardResultBaseSchema.extend({
+  sectionResults: reportCardResultSectionSchema.array(),
+}).omit({ generatedAt: true }).superRefine(refineReportCardResult)
+
+export const reportCardResultUpdateSchema = reportCardResultBaseSchema.extend({
+  sectionResults: reportCardResultSectionSchema.array(),
+}).partial().required({ id: true }).superRefine(refineReportCardResult)
 
 export interface ReportCardResultArgs {
   id: string
@@ -41,75 +94,34 @@ export interface ReportCardResultArgs {
  * collectively describe the student's academic performance.
  */
 export class ReportCardResult {
-  readonly id: string
-  readonly reportCardDefinitionId: string
-  readonly studentId: string
-  readonly classGroupId: string
-  readonly periodId: string
+  readonly data: ReportCardResultData
   readonly sectionResults: readonly ReportCardResultSection[]
-  readonly attendanceSummary: AttendanceSummary
-  readonly assessmentResultCount: number
-  readonly overallAverage?: number
-  readonly rank?: number
-  readonly classSize?: number
-  readonly passThreshold?: number
-  readonly teacherComment?: string
-  readonly principalComment?: string
-  readonly status: ReportCardResultStatus
-  readonly generatedAt: Date
-  readonly publishedAt?: Date
 
-  constructor({
-    id,
-    reportCardDefinitionId,
-    studentId,
-    classGroupId,
-    periodId,
-    sectionResults,
-    attendanceSummary,
-    assessmentResultCount,
-    overallAverage,
-    rank,
-    classSize,
-    passThreshold,
-    teacherComment,
-    principalComment,
-    status = ReportCardResultStatus.Draft,
-    generatedAt,
-    publishedAt,
-  }: ReportCardResultArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.reportCardDefinitionId = requireNonBlank(reportCardDefinitionId, 'reportCardDefinitionId')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
-    this.periodId = requireNonBlank(periodId, 'periodId')
-    this.sectionResults = Object.freeze([...sectionResults])
-    this.attendanceSummary = attendanceSummary
-    this.assessmentResultCount = requireNonNegativeInt(assessmentResultCount, 'assessmentResultCount')
-    this.overallAverage
-      = overallAverage == null ? undefined : roundTo2(requireNonNegativeNumber(overallAverage, 'overallAverage'))
-    if (rank != null) {
-      this.rank = requireNonNegativeInt(rank, 'rank')
+  constructor(args: ReportCardResultArgs) {
+    const result = reportCardResultSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (classSize != null) {
-      this.classSize = requireNonNegativeInt(classSize, 'classSize')
-    }
-    if (passThreshold != null) {
-      this.passThreshold = roundTo2(requireNonNegativeNumber(passThreshold, 'passThreshold'))
-    }
-    this.teacherComment = requireOptionalNonBlank(teacherComment, 'teacherComment')
-    this.principalComment = requireOptionalNonBlank(principalComment, 'principalComment')
-    this.status = status
-    this.generatedAt = generatedAt ?? new Date()
-    this.publishedAt = publishedAt
-
-    if (this.status === ReportCardResultStatus.Published && !this.publishedAt) {
-      throw new Error('publishedAt is required for published report cards')
-    }
-    if (this.status === ReportCardResultStatus.Draft && this.publishedAt) {
-      throw new Error('draft report cards must not define publishedAt')
-    }
+    this.data = result.data as any
+    this.sectionResults = Object.freeze([...args.sectionResults])
   }
+
+  get id() { return this.data.id }
+  get reportCardDefinitionId() { return this.data.reportCardDefinitionId }
+  get studentId() { return this.data.studentId }
+  get classGroupId() { return this.data.classGroupId }
+  get periodId() { return this.data.periodId }
+  get attendanceSummary() { return this.data.attendanceSummary }
+  get assessmentResultCount() { return this.data.assessmentResultCount }
+  get overallAverage() { return this.data.overallAverage }
+  get rank() { return this.data.rank }
+  get classSize() { return this.data.classSize }
+  get passThreshold() { return this.data.passThreshold }
+  get teacherComment() { return this.data.teacherComment }
+  get principalComment() { return this.data.principalComment }
+  get status() { return this.data.status }
+  get generatedAt() { return this.data.generatedAt }
+  get publishedAt() { return this.data.publishedAt }
 
   copyWith({ status, publishedAt }: { status?: ReportCardResultStatus, publishedAt?: Date }): ReportCardResult {
     return new ReportCardResult({
@@ -148,7 +160,7 @@ export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ 
   config({
     repository: repositories.results,
     tenant: reportCardResultTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor, ids) => policy.checkReportCardResultAccess(actor, ids))),
+    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor: any, ids: readonly string[]) => policy.checkReportCardResultAccess(actor, ids))),
     write: write(permissionAction(policy, Permission.REPORT_CARD_PUBLISH), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
     gates: {
       preSave: validateReportCardResultSave,
@@ -158,7 +170,7 @@ export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ 
   })
 
 function reportCardResultTenant(): EntityTenantResolver<ReportCardResult> {
-  return indirectTenant(async (entity, repositories) => {
+  return indirectTenant(async (entity: ReportCardResult, repositories: SchoolRepositories) => {
     const student = await repositories.students.findById(entity.studentId)
     return student?.schoolId
   })

@@ -1,15 +1,33 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { CalendarEventScopeKind, StudentClassEnrollmentStatus } from '../../domains'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveInt } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum AttendanceMode {
   Daily = 'daily',
   Session = 'session',
 }
+
+export const classGroupSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  gradeLevelId: z.string().trim().min(1, 'gradeLevelId must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  capacity: z.number().int('capacity must be a strictly positive integer').positive('capacity must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
+  attendanceMode: z.nativeEnum(AttendanceMode).default(AttendanceMode.Session),
+  homeroomStaffId: z.string().trim().min(1, 'homeroomStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type ClassGroupData = z.infer<typeof classGroupSchema>
+
+export const classGroupCreateSchema = classGroupSchema.omit({ createdAt: true })
+export const classGroupUpdateSchema = classGroupSchema.partial().required({ id: true })
 
 export interface ClassGroupArgs {
   id: string
@@ -29,39 +47,25 @@ export interface ClassGroupArgs {
  * References a GradeLevel for structured level tracking.
  */
 export class ClassGroup {
-  readonly id: string
-  readonly schoolId: string
-  readonly academicYearId: string
-  readonly gradeLevelId: string
-  readonly name: string
-  readonly capacity?: number
-  readonly attendanceMode: AttendanceMode
-  readonly homeroomStaffId?: string
-  readonly createdAt: Date
+  readonly data: ClassGroupData
 
-  constructor({
-    id,
-    schoolId,
-    academicYearId,
-    gradeLevelId,
-    name,
-    capacity,
-    attendanceMode = AttendanceMode.Session,
-    homeroomStaffId,
-    createdAt,
-  }: ClassGroupArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
-    this.gradeLevelId = requireNonBlank(gradeLevelId, 'gradeLevelId')
-    this.name = requireNonBlank(name, 'name')
-    if (capacity != null) {
-      this.capacity = requirePositiveInt(capacity, 'capacity')
+  constructor(args: ClassGroupArgs) {
+    const result = classGroupSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    this.attendanceMode = attendanceMode
-    this.homeroomStaffId = requireOptionalNonBlank(homeroomStaffId, 'homeroomStaffId')
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get academicYearId() { return this.data.academicYearId }
+  get gradeLevelId() { return this.data.gradeLevelId }
+  get name() { return this.data.name }
+  get capacity() { return this.data.capacity }
+  get attendanceMode() { return this.data.attendanceMode }
+  get homeroomStaffId() { return this.data.homeroomStaffId }
+  get createdAt() { return this.data.createdAt }
 
   copyWith(changes: Partial<ClassGroupArgs>): ClassGroup {
     return new ClassGroup({

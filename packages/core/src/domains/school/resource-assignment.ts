@@ -2,10 +2,36 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
+
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const resourceAssignmentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  resourceId: z.string().trim().min(1, 'resourceId must not be blank'),
+  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineResourceAssignment(data: any, ctx: z.RefinementCtx) {
+  const targets = [data.sessionId, data.classGroupId].filter(Boolean)
+  if (targets.length !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'A ResourceAssignment must target exactly one of: sessionId or classGroupId',
+    })
+  }
+}
+
+export const resourceAssignmentSchema = resourceAssignmentBaseSchema.superRefine(refineResourceAssignment)
+export type ResourceAssignmentData = z.infer<typeof resourceAssignmentSchema>
+
+export const resourceAssignmentCreateSchema = resourceAssignmentBaseSchema.omit({ createdAt: true }).superRefine(refineResourceAssignment)
+export const resourceAssignmentUpdateSchema = resourceAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineResourceAssignment)
 
 export interface ResourceAssignmentArgs {
   id: string
@@ -19,32 +45,21 @@ export interface ResourceAssignmentArgs {
  * Assigns a specific Resource (like a room or equipment) to a Session or ClassGroup.
  */
 export class ResourceAssignment {
-  readonly id: string
-  readonly resourceId: string
-  readonly classGroupId?: string
-  readonly sessionId?: string
-  readonly createdAt: Date
+  readonly data: ResourceAssignmentData
 
-  constructor({
-    id,
-    resourceId,
-    sessionId,
-    classGroupId,
-    createdAt,
-  }: ResourceAssignmentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.resourceId = requireNonBlank(resourceId, 'resourceId')
-
-    this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
-    this.classGroupId = requireOptionalNonBlank(classGroupId, 'classGroupId')
-
-    const targets = [this.sessionId, this.classGroupId].filter(Boolean)
-    if (targets.length !== 1) {
-      throw new Error('A ResourceAssignment must target exactly one of: sessionId or classGroupId')
+  constructor(args: ResourceAssignmentArgs) {
+    const result = resourceAssignmentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-
-    this.createdAt = createdAt ?? new Date()
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get resourceId() { return this.data.resourceId }
+  get sessionId() { return this.data.sessionId }
+  get classGroupId() { return this.data.classGroupId }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, policy, atomicExecution }) =>

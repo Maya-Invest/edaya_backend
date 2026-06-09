@@ -2,17 +2,34 @@ import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { StudentClassEnrollmentStatus } from '../../domains'
 import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum IncidentInvolvementRole {
   Subject = 'subject',
   Witness = 'witness',
   Victim = 'victim',
 }
+
+export const studentIncidentInvolvementBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  incidentId: z.string().trim().min(1, 'incidentId must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  role: z.nativeEnum(IncidentInvolvementRole),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export const studentIncidentInvolvementSchema = studentIncidentInvolvementBaseSchema
+
+export type StudentIncidentInvolvementData = z.infer<typeof studentIncidentInvolvementSchema>
+
+export const studentIncidentInvolvementCreateSchema = studentIncidentInvolvementBaseSchema.omit({ createdAt: true })
+export const studentIncidentInvolvementUpdateSchema = studentIncidentInvolvementBaseSchema.partial().required({ id: true })
 
 export interface StudentIncidentInvolvementArgs {
   id: string
@@ -28,28 +45,22 @@ export interface StudentIncidentInvolvementArgs {
  * References a DisciplinaryAction from the school catalog and allows freeform notes.
  */
 export class StudentIncidentInvolvement {
-  readonly id: string
-  readonly incidentId: string
-  readonly studentId: string
-  readonly role: IncidentInvolvementRole
-  readonly notes?: string
-  readonly createdAt: Date
+  readonly data: StudentIncidentInvolvementData
 
-  constructor({
-    id,
-    incidentId,
-    studentId,
-    role,
-    notes,
-    createdAt,
-  }: StudentIncidentInvolvementArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.incidentId = requireNonBlank(incidentId, 'incidentId')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.role = role
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.createdAt = createdAt ?? new Date()
+  constructor(args: StudentIncidentInvolvementArgs) {
+    const result = studentIncidentInvolvementSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
+    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get incidentId() { return this.data.incidentId }
+  get studentId() { return this.data.studentId }
+  get role() { return this.data.role }
+  get notes() { return this.data.notes }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncidentInvolvement> = ({ repositories, policy, atomicExecution }) =>

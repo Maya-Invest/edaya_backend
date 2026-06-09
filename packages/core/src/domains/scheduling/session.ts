@@ -1,9 +1,10 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum SessionKind {
   Course = 'course',
@@ -11,6 +12,34 @@ export enum SessionKind {
   Event = 'event',
   Other = 'other',
 }
+
+export const sessionBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
+  title: z.string().trim().min(1, 'title must not be blank'),
+  kind: z.nativeEnum(SessionKind),
+  startsAt: zodDate(),
+  endsAt: zodDate(),
+  classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  scheduleId: z.string().trim().min(1, 'scheduleId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineSession(data: any, ctx: z.RefinementCtx) {
+  if (data.endsAt.getTime() <= data.startsAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'endsAt must be after startsAt',
+    })
+  }
+}
+
+export const sessionSchema = sessionBaseSchema.superRefine(refineSession)
+
+export type SessionData = z.infer<typeof sessionSchema>
+
+export const sessionCreateSchema = sessionBaseSchema.omit({ createdAt: true }).superRefine(refineSession)
+export const sessionUpdateSchema = sessionBaseSchema.partial().required({ id: true }).superRefine(refineSession)
 
 export interface SessionArgs {
   id: string
@@ -29,41 +58,25 @@ export interface SessionArgs {
  * Attendance is recorded against sessions.
  */
 export class Session {
-  readonly id: string
-  readonly classGroupId: string
-  readonly title: string
-  readonly kind: SessionKind
-  readonly startsAt: Date
-  readonly endsAt: Date
-  readonly classSubjectId?: string
-  readonly scheduleId?: string
-  readonly createdAt: Date
+  readonly data: SessionData
 
-  constructor({
-    id,
-    classGroupId,
-    title,
-    kind,
-    startsAt,
-    endsAt,
-    classSubjectId,
-    scheduleId,
-    createdAt,
-  }: SessionArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
-    this.title = requireNonBlank(title, 'title')
-    this.kind = kind
-    this.startsAt = requireValidDate(startsAt, 'startsAt')
-    this.endsAt = requireValidDate(endsAt, 'endsAt')
-    this.classSubjectId = requireOptionalNonBlank(classSubjectId, 'classSubjectId')
-    this.scheduleId = requireOptionalNonBlank(scheduleId, 'scheduleId')
-    this.createdAt = createdAt ?? new Date()
-
-    if (this.endsAt.getTime() <= this.startsAt.getTime()) {
-      throw new Error('endsAt must be after startsAt')
+  constructor(args: SessionArgs) {
+    const result = sessionSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get classGroupId() { return this.data.classGroupId }
+  get title() { return this.data.title }
+  get kind() { return this.data.kind }
+  get startsAt() { return this.data.startsAt }
+  get endsAt() { return this.data.endsAt }
+  get classSubjectId() { return this.data.classSubjectId }
+  get scheduleId() { return this.data.scheduleId }
+  get createdAt() { return this.data.createdAt }
 
   get durationMinutes(): number {
     return Math.round((this.endsAt.getTime() - this.startsAt.getTime()) / 60000)

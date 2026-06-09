@@ -2,11 +2,30 @@ import type { AuthorizationPolicy } from '../../authorization/authorization-poli
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireNonNegativeNumber, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 import { ClassSubjectMatterStatus } from './class-subject-matter'
+
+export const classSubjectProgressSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  classSubjectMatterId: z.string().trim().min(1, 'classSubjectMatterId must not be blank'),
+  sessionId: z.string().trim().min(1, 'sessionId must not be blank'),
+  completedPercentage: z.preprocess(
+    val => val === null ? undefined : val,
+    z.number().min(0, 'completedPercentage must be between 0 and 100').max(100, 'completedPercentage must be between 0 and 100'),
+  ),
+  recordedByStaffId: z.string().trim().min(1, 'recordedByStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  recordedAt: zodDate().default(() => new Date()),
+})
+
+export type ClassSubjectProgressData = z.infer<typeof classSubjectProgressSchema>
+
+export const classSubjectProgressCreateSchema = classSubjectProgressSchema.omit({ recordedAt: true })
+export const classSubjectProgressUpdateSchema = classSubjectProgressSchema.partial().required({ id: true })
 
 export interface ClassSubjectProgressArgs {
   id: string
@@ -24,35 +43,23 @@ export interface ClassSubjectProgressArgs {
  * retains the current aggregate state.
  */
 export class ClassSubjectProgress {
-  readonly id: string
-  readonly classSubjectMatterId: string
-  readonly sessionId: string
-  readonly completedPercentage: number
-  readonly recordedByStaffId?: string
-  readonly notes?: string
-  readonly recordedAt: Date
+  readonly data: ClassSubjectProgressData
 
-  constructor({
-    id,
-    classSubjectMatterId,
-    sessionId,
-    completedPercentage,
-    recordedByStaffId,
-    notes,
-    recordedAt,
-  }: ClassSubjectProgressArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.classSubjectMatterId = requireNonBlank(classSubjectMatterId, 'classSubjectMatterId')
-    this.sessionId = requireNonBlank(sessionId, 'sessionId')
-    this.completedPercentage = requireNonNegativeNumber(completedPercentage, 'completedPercentage')
-    this.recordedByStaffId = requireOptionalNonBlank(recordedByStaffId, 'recordedByStaffId')
-    this.notes = requireOptionalNonBlank(notes, 'notes')
-    this.recordedAt = recordedAt ? requireValidDate(recordedAt, 'recordedAt') : new Date()
-
-    if (this.completedPercentage > 100) {
-      throw new Error('completedPercentage must be between 0 and 100')
+  constructor(args: ClassSubjectProgressArgs) {
+    const result = classSubjectProgressSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get classSubjectMatterId() { return this.data.classSubjectMatterId }
+  get sessionId() { return this.data.sessionId }
+  get completedPercentage() { return this.data.completedPercentage }
+  get recordedByStaffId() { return this.data.recordedByStaffId }
+  get notes() { return this.data.notes }
+  get recordedAt() { return this.data.recordedAt }
 
   get status(): ClassSubjectMatterStatus {
     if (this.completedPercentage === 0) {

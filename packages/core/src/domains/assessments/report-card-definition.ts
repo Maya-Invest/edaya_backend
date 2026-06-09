@@ -1,16 +1,34 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireSchool } from '../../shared/require-school'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum ReportCardDefinitionKind {
   Default = 'default',
   Custom = 'custom',
 }
+
+export const reportCardDefinitionSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  gradeLevelId: z.string().trim().min(1, 'gradeLevelId must not be blank'),
+  name: z.string().trim().min(1, 'name must not be blank'),
+  kind: z.nativeEnum(ReportCardDefinitionKind).default(ReportCardDefinitionKind.Custom),
+  isDefault: z.boolean().default(false),
+  description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type ReportCardDefinitionData = z.infer<typeof reportCardDefinitionSchema>
+
+export const reportCardDefinitionCreateSchema = reportCardDefinitionSchema.omit({ createdAt: true })
+export const reportCardDefinitionUpdateSchema = reportCardDefinitionSchema.partial().required({ id: true })
 
 export interface ReportCardDefinitionArgs {
   id: string
@@ -30,37 +48,25 @@ export interface ReportCardDefinitionArgs {
  * generating report-card results.
  */
 export class ReportCardDefinition {
-  readonly id: string
-  readonly schoolId: string
-  readonly academicYearId: string
-  readonly gradeLevelId: string
-  readonly name: string
-  readonly kind: ReportCardDefinitionKind
-  readonly isDefault: boolean
-  readonly description?: string
-  readonly createdAt: Date
+  readonly data: ReportCardDefinitionData
 
-  constructor({
-    id,
-    schoolId,
-    academicYearId,
-    gradeLevelId,
-    name,
-    kind = ReportCardDefinitionKind.Custom,
-    isDefault = false,
-    description,
-    createdAt,
-  }: ReportCardDefinitionArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
-    this.gradeLevelId = requireNonBlank(gradeLevelId, 'gradeLevelId')
-    this.name = requireNonBlank(name, 'name')
-    this.kind = kind
-    this.isDefault = isDefault
-    this.description = requireOptionalNonBlank(description, 'description')
-    this.createdAt = createdAt ?? new Date()
+  constructor(args: ReportCardDefinitionArgs) {
+    const result = reportCardDefinitionSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
+    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get academicYearId() { return this.data.academicYearId }
+  get gradeLevelId() { return this.data.gradeLevelId }
+  get name() { return this.data.name }
+  get kind() { return this.data.kind }
+  get isDefault() { return this.data.isDefault }
+  get description() { return this.data.description }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinition> = ({ repositories, policy, atomicExecution }) =>

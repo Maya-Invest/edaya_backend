@@ -1,10 +1,11 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank, requirePositiveNumber, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum AssessmentKind {
   Quiz = 'quiz',
@@ -12,6 +13,38 @@ export enum AssessmentKind {
   Project = 'project',
   Other = 'other',
 }
+
+export const assessmentBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
+  classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank'),
+  periodId: z.string().trim().min(1, 'periodId must not be blank'),
+  title: z.string().trim().min(1, 'title must not be blank'),
+  kind: z.nativeEnum(AssessmentKind),
+  maxScore: z.number().finite().positive('maxScore must be a finite, strictly positive number'),
+  coefficient: z.number().finite().positive('coefficient must be a finite, strictly positive number').default(1),
+  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  dueAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  metAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  date: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineAssessment(data: any, ctx: z.RefinementCtx) {
+  if (!data.sessionId && !data.dueAt && !data.date) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'assessment must be linked to a session, have a due date, or have a date',
+    })
+  }
+}
+
+export const assessmentSchema = assessmentBaseSchema.superRefine(refineAssessment)
+
+export type AssessmentData = z.infer<typeof assessmentSchema>
+
+export const assessmentCreateSchema = assessmentBaseSchema.omit({ createdAt: true }).superRefine(refineAssessment)
+export const assessmentUpdateSchema = assessmentBaseSchema.partial().required({ id: true }).superRefine(refineAssessment)
 
 export interface AssessmentArgs {
   id: string
@@ -34,53 +67,29 @@ export interface AssessmentArgs {
  * Assessment results reference an assessment so scoring rules and grading intent stay explicit.
  */
 export class Assessment {
-  readonly id: string
-  readonly classGroupId: string
-  readonly classSubjectId: string
-  readonly periodId: string
-  readonly title: string
-  readonly kind: AssessmentKind
-  readonly maxScore: number
-  readonly coefficient: number
-  readonly sessionId?: string
-  readonly dueAt?: Date
-  readonly metAt?: Date
-  readonly date?: Date
-  readonly createdAt: Date
+  readonly data: AssessmentData
 
-  constructor({
-    id,
-    classGroupId,
-    classSubjectId,
-    periodId,
-    title,
-    kind,
-    maxScore,
-    coefficient = 1,
-    sessionId,
-    dueAt,
-    metAt,
-    date,
-    createdAt,
-  }: AssessmentArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
-    this.classSubjectId = requireNonBlank(classSubjectId, 'classSubjectId')
-    this.periodId = requireNonBlank(periodId, 'periodId')
-    this.title = requireNonBlank(title, 'title')
-    this.kind = kind
-    this.maxScore = requirePositiveNumber(maxScore, 'maxScore')
-    this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
-    this.sessionId = requireOptionalNonBlank(sessionId, 'sessionId')
-    this.dueAt = dueAt ? requireValidDate(dueAt, 'dueAt') : undefined
-    this.metAt = metAt ? requireValidDate(metAt, 'metAt') : undefined
-    this.date = date ? requireValidDate(date, 'date') : undefined
-    this.createdAt = createdAt ? requireValidDate(createdAt, 'createdAt') : new Date()
-
-    if (!this.sessionId && !this.dueAt && !this.date) {
-      throw new Error('assessment must be linked to a session, have a due date, or have a date')
+  constructor(args: AssessmentArgs) {
+    const result = assessmentSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get classGroupId() { return this.data.classGroupId }
+  get classSubjectId() { return this.data.classSubjectId }
+  get periodId() { return this.data.periodId }
+  get title() { return this.data.title }
+  get kind() { return this.data.kind }
+  get maxScore() { return this.data.maxScore }
+  get coefficient() { return this.data.coefficient }
+  get sessionId() { return this.data.sessionId }
+  get dueAt() { return this.data.dueAt }
+  get metAt() { return this.data.metAt }
+  get date() { return this.data.date }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories, policy, atomicExecution }) =>

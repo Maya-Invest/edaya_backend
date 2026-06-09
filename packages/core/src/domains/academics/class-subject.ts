@@ -1,8 +1,26 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { requireNonBlank, requireNonNegativeNumber, requirePositiveNumber } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
+
+export const classSubjectSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
+  subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
+  coefficient: z.number().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
+  completedPercentage: z.preprocess(
+    val => val === null ? undefined : val,
+    z.number().min(0, 'completedPercentage must be a finite, non-negative number').max(100, 'completedPercentage must be between 0 and 100').default(0),
+  ),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type ClassSubjectData = z.infer<typeof classSubjectSchema>
+
+export const classSubjectCreateSchema = classSubjectSchema.omit({ createdAt: true })
+export const classSubjectUpdateSchema = classSubjectSchema.partial().required({ id: true })
 
 export interface ClassSubjectArgs {
   id: string
@@ -18,33 +36,22 @@ export interface ClassSubjectArgs {
  * This is the teachable unit used by assessments, attendance planning, and staff assignment.
  */
 export class ClassSubject {
-  readonly id: string
-  readonly classGroupId: string
-  readonly subjectId: string
-  readonly coefficient?: number
-  readonly createdAt: Date
-  readonly completedPercentage: number
+  readonly data: ClassSubjectData
 
-  constructor({
-    id,
-    classGroupId,
-    subjectId,
-    coefficient,
-    createdAt,
-    completedPercentage,
-  }: ClassSubjectArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.classGroupId = requireNonBlank(classGroupId, 'classGroupId')
-    this.subjectId = requireNonBlank(subjectId, 'subjectId')
-    if (coefficient != null) {
-      this.coefficient = requirePositiveNumber(coefficient, 'coefficient')
+  constructor(args: ClassSubjectArgs) {
+    const result = classSubjectSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    this.createdAt = createdAt ?? new Date()
-    this.completedPercentage = requireNonNegativeNumber(completedPercentage ?? 0, 'completedPercentage')
-    if (this.completedPercentage > 100) {
-      throw new Error('completedPercentage must be between 0 and 100')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get classGroupId() { return this.data.classGroupId }
+  get subjectId() { return this.data.subjectId }
+  get coefficient() { return this.data.coefficient ?? undefined }
+  get createdAt() { return this.data.createdAt }
+  get completedPercentage() { return this.data.completedPercentage }
 }
 
 export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, policy, atomicExecution }) =>

@@ -1,8 +1,9 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum AnnouncementTargetKind {
   School = 'school',
@@ -16,6 +17,42 @@ export enum AnnouncementTargetKind {
   Student = 'student',
 }
 
+export const announcementTargetBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  announcementId: z.string().trim().min(1, 'announcementId must not be blank'),
+  targetKind: z.nativeEnum(AnnouncementTargetKind),
+  targetId: z.string().trim().min(1, 'targetId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+function refineAnnouncementTarget(data: any, ctx: z.RefinementCtx) {
+  const isBroadcast = [
+    AnnouncementTargetKind.School,
+    AnnouncementTargetKind.AllStaff,
+    AnnouncementTargetKind.AllGuardians,
+    AnnouncementTargetKind.AllStudents,
+  ].includes(data.targetKind)
+  if (isBroadcast && data.targetId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'broadcast announcement targets must not define targetId',
+    })
+  }
+  if (!isBroadcast && !data.targetId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scoped announcement targets must define targetId',
+    })
+  }
+}
+
+export const announcementTargetSchema = announcementTargetBaseSchema.superRefine(refineAnnouncementTarget)
+
+export type AnnouncementTargetData = z.infer<typeof announcementTargetSchema>
+
+export const announcementTargetCreateSchema = announcementTargetBaseSchema.omit({ createdAt: true }).superRefine(refineAnnouncementTarget)
+export const announcementTargetUpdateSchema = announcementTargetBaseSchema.partial().required({ id: true }).superRefine(refineAnnouncementTarget)
+
 export interface AnnouncementTargetArgs {
   id: string
   announcementId: string
@@ -28,32 +65,21 @@ export interface AnnouncementTargetArgs {
  * Resolves a published or custom announcement to a concrete audience target.
  */
 export class AnnouncementTarget {
-  readonly id: string
-  readonly announcementId: string
-  readonly targetKind: AnnouncementTargetKind
-  readonly targetId?: string
-  readonly createdAt: Date
+  readonly data: AnnouncementTargetData
 
-  constructor({ id, announcementId, targetKind, targetId, createdAt }: AnnouncementTargetArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.announcementId = requireNonBlank(announcementId, 'announcementId')
-    this.targetKind = targetKind
-    this.targetId = requireOptionalNonBlank(targetId, 'targetId')
-    this.createdAt = createdAt ?? new Date()
-
-    const isBroadcast = [
-      AnnouncementTargetKind.School,
-      AnnouncementTargetKind.AllStaff,
-      AnnouncementTargetKind.AllGuardians,
-      AnnouncementTargetKind.AllStudents,
-    ].includes(this.targetKind)
-    if (isBroadcast && this.targetId) {
-      throw new Error('broadcast announcement targets must not define targetId')
+  constructor(args: AnnouncementTargetArgs) {
+    const result = announcementTargetSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (!isBroadcast && !this.targetId) {
-      throw new Error('scoped announcement targets must define targetId')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get announcementId() { return this.data.announcementId }
+  get targetKind() { return this.data.targetKind }
+  get targetId() { return this.data.targetId }
+  get createdAt() { return this.data.createdAt }
 }
 
 export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> = ({ repositories, policy, atomicExecution }) =>

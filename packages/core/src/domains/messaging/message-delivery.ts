@@ -1,7 +1,8 @@
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { requireNonBlank, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum MessageDeliveryChannel {
   App = 'app',
@@ -25,6 +26,55 @@ export enum MessageDeliveryStatus {
   Cancelled = 'cancelled',
 }
 
+export const messageDeliveryBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  announcementId: z.string().trim().min(1, 'announcementId must not be blank'),
+  recipientKind: z.nativeEnum(MessageDeliveryRecipientKind),
+  recipientId: z.string().trim().min(1, 'recipientId must not be blank'),
+  channel: z.nativeEnum(MessageDeliveryChannel),
+  status: z.nativeEnum(MessageDeliveryStatus).default(MessageDeliveryStatus.Pending),
+  providerMessageId: z.string().trim().min(1, 'providerMessageId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  failureReason: z.string().trim().min(1, 'failureReason must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  sentAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  readAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  createdAt: zodDate().default(() => new Date()),
+  updatedAt: zodDate().default(() => new Date()),
+})
+
+function refineMessageDelivery(data: any, ctx: z.RefinementCtx) {
+  if ((data.status === MessageDeliveryStatus.Sent || data.status === MessageDeliveryStatus.Read) && !data.sentAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'sentAt is required for sent or read message deliveries',
+    })
+  }
+  if (data.status === MessageDeliveryStatus.Read && !data.readAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'readAt is required for read message deliveries',
+    })
+  }
+  if (data.status === MessageDeliveryStatus.Failed && !data.failureReason) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'failureReason is required for failed message deliveries',
+    })
+  }
+  if (data.readAt && data.sentAt && data.readAt.getTime() < data.sentAt.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'readAt must not be before sentAt',
+    })
+  }
+}
+
+export const messageDeliverySchema = messageDeliveryBaseSchema.superRefine(refineMessageDelivery)
+
+export type MessageDeliveryData = z.infer<typeof messageDeliverySchema>
+
+export const messageDeliveryCreateSchema = messageDeliveryBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineMessageDelivery)
+export const messageDeliveryUpdateSchema = messageDeliveryBaseSchema.partial().required({ id: true }).superRefine(refineMessageDelivery)
+
 export interface MessageDeliveryArgs {
   id: string
   announcementId: string
@@ -44,61 +94,28 @@ export interface MessageDeliveryArgs {
  * Tracks delivery state for one announcement/message to one concrete recipient.
  */
 export class MessageDelivery {
-  readonly id: string
-  readonly announcementId: string
-  readonly recipientKind: MessageDeliveryRecipientKind
-  readonly recipientId: string
-  readonly channel: MessageDeliveryChannel
-  readonly status: MessageDeliveryStatus
-  readonly providerMessageId?: string
-  readonly failureReason?: string
-  readonly sentAt?: Date
-  readonly readAt?: Date
-  readonly createdAt: Date
-  readonly updatedAt: Date
+  readonly data: MessageDeliveryData
 
-  constructor({
-    id,
-    announcementId,
-    recipientKind,
-    recipientId,
-    channel,
-    status = MessageDeliveryStatus.Pending,
-    providerMessageId,
-    failureReason,
-    sentAt,
-    readAt,
-    createdAt,
-    updatedAt,
-  }: MessageDeliveryArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.announcementId = requireNonBlank(announcementId, 'announcementId')
-    this.recipientKind = recipientKind
-    this.recipientId = requireNonBlank(recipientId, 'recipientId')
-    this.channel = channel
-    this.status = status
-    this.providerMessageId = requireOptionalNonBlank(providerMessageId, 'providerMessageId')
-    this.failureReason = requireOptionalNonBlank(failureReason, 'failureReason')
-    this.sentAt = sentAt ? requireValidDate(sentAt, 'sentAt') : undefined
-    this.readAt = readAt ? requireValidDate(readAt, 'readAt') : undefined
-
-    const now = new Date()
-    this.createdAt = createdAt ?? now
-    this.updatedAt = updatedAt ?? now
-
-    if ((this.status === MessageDeliveryStatus.Sent || this.status === MessageDeliveryStatus.Read) && !this.sentAt) {
-      throw new Error('sentAt is required for sent or read message deliveries')
+  constructor(args: MessageDeliveryArgs) {
+    const result = messageDeliverySchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.status === MessageDeliveryStatus.Read && !this.readAt) {
-      throw new Error('readAt is required for read message deliveries')
-    }
-    if (this.status === MessageDeliveryStatus.Failed && !this.failureReason) {
-      throw new Error('failureReason is required for failed message deliveries')
-    }
-    if (this.readAt && this.sentAt && this.readAt.getTime() < this.sentAt.getTime()) {
-      throw new Error('readAt must not be before sentAt')
-    }
+    this.data = result.data
   }
+
+  get id() { return this.data.id }
+  get announcementId() { return this.data.announcementId }
+  get recipientKind() { return this.data.recipientKind }
+  get recipientId() { return this.data.recipientId }
+  get channel() { return this.data.channel }
+  get status() { return this.data.status }
+  get providerMessageId() { return this.data.providerMessageId }
+  get failureReason() { return this.data.failureReason }
+  get sentAt() { return this.data.sentAt }
+  get readAt() { return this.data.readAt }
+  get createdAt() { return this.data.createdAt }
+  get updatedAt() { return this.data.updatedAt }
 }
 
 export interface AnnouncementDeliverySummary {

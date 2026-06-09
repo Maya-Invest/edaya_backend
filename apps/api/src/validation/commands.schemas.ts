@@ -1,525 +1,375 @@
 import { z } from "@hono/zod-openapi";
 import {
-  AcademicPeriodType,
-  AnnouncementPriority,
-  AnnouncementTargetKind,
-  AssessmentKind,
-  AttachmentOwnerKind,
+  academicPeriodSchema,
+  academicYearSchema,
+  accessRoleSchema,
+  announcementSchema,
+  announcementTargetSchema,
+  assessmentResultSchema,
+  assessmentSchema,
+  attachmentSchema,
   AttendanceJustificationStatus,
-  AttendanceMode,
+  attendanceRecordSchema,
   AttendanceStatus,
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  DayOfWeek,
+  calendarEventSchema,
+  classGroupSchema,
+  classSubjectMatterSchema,
+  classSubjectProgressSchema,
+  classSubjectSchema,
+  gradeScaleRangeSchema as coreGradeScaleRangeSchema,
   DeadlineComplianceStatus,
-  DisciplinaryActionKind,
+  disciplinaryActionSchema,
   EnrollmentEndReason,
-  FeeCategory,
-  GuardianContactMethodType,
-  IncidentInvolvementRole,
-  IncidentKind,
+  feeSchema,
+  gradeLevelSchema,
+  gradeScaleSchema,
+  guardianContactMethodSchema,
+  guardianSchema,
+  guardianStudentLinkSchema,
+  incidentSchema,
   MessageDeliveryChannel,
-  MessageDeliveryRecipientKind,
-  MessageDeliveryStatus,
-  PaymentMethod,
-  Permission,
+  messageDeliverySchema,
+  paymentSchema,
+  periodDefinitionSchema,
   ProgressionDecision,
-  ReportCardDefinitionKind,
-  ReportCardDefinitionSectionKind,
-  ResourceKind,
+  reportCardDefinitionSchema,
+  reportCardDefinitionSectionSchema,
+  reportCardResultSchema,
+  resourceAssignmentSchema,
+  resourceSchema,
+  scheduleSchema,
+  // Zod schemas from core
+  schoolSchema,
   SchoolType,
-  SessionKind,
+  sessionSchema,
+  staffAssignmentSchema,
+  staffMemberSchema,
+  staffRoleAssignmentSchema,
+  studentClassEnrollmentSchema,
+  studentDisciplinaryActionSchema,
   StudentDisciplinaryActionStatus,
-  StudentNoteVisibility,
+  studentFeeSchema,
+  studentHealthProfileSchema,
+  studentIncidentInvolvementSchema,
+  studentNoteSchema,
+  studentSchema,
   StudentStatus,
+  subjectMatterSchema,
+  subjectSchema,
 } from "@edaya/core";
-import { field, namedObjectSchema } from "./utils/schema-fields";
+import { field, namedObjectSchema, unwrapShape } from "./utils/schema-fields";
 
-const nullableId = () => field.id().nullable().optional();
 const optionalText = () => z.string().optional();
-const nullableOptionalText = () => z.string().nullable().optional();
 const attendanceByStudentSchema = z.record(field.id(), field.enumValue(AttendanceStatus));
-const scopeTypeSchema = z.enum([
-  "platform",
-  "school",
-  "academic_year",
-  "class_group",
-  "subject",
-  "course_assignment",
-  "session",
-  "student",
-  "student_group",
-]);
 
-export const gradeLevelConfigCommandSchema = namedObjectSchema("GradeLevelConfigCommand", {
-  id: field.id(),
-  name: field.text(),
-  order: field.positiveInt(),
-  cycle: field.nullableText(),
-  createdAt: field.optionalDate(),
-});
+export const gradeLevelConfigCommandSchema = z.object(unwrapShape(gradeLevelSchema) as any).openapi("GradeLevelConfigCommand");
 
-export const periodDefinitionConfigCommandSchema = namedObjectSchema("PeriodDefinitionConfigCommand", {
-  id: field.id(),
+export const periodDefinitionConfigCommandSchema = z.object(unwrapShape(periodDefinitionSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("PeriodDefinitionConfigCommand");
+
+export const resourceConfigCommandSchema = z.object(unwrapShape(resourceSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("ResourceConfigCommand");
+
+export const subjectConfigCommandSchema = z.object(unwrapShape(subjectSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("SubjectConfigCommand");
+
+export const subjectMatterConfigCommandSchema = z.object(unwrapShape(subjectMatterSchema) as any)
+  .openapi("SubjectMatterConfigCommand");
+
+export const disciplinaryActionConfigCommandSchema = z.object(unwrapShape(disciplinaryActionSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("DisciplinaryActionConfigCommand");
+
+export const registerSchoolCommandSchema = z.object(unwrapShape(schoolSchema) as any)
+  .extend({
+    type: z.nativeEnum(SchoolType).nullable().optional(),
+    country: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+  })
+  .openapi("RegisterSchoolCommand");
+
+export const updateSchoolConfigurationCommandSchema = z.object(unwrapShape(schoolSchema) as any)
+  .partial()
+  .omit({ id: true, createdAt: true })
+  .extend({
+    schoolId: field.id(),
+    type: z.nativeEnum(SchoolType).nullable().optional(),
+    country: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+  })
+  .openapi("UpdateSchoolConfigurationCommand");
+
+export const createAcademicYearCommandSchema = z.object(unwrapShape(academicYearSchema) as any)
+  .extend({
+    isActive: field.optionalBoolean(),
+  })
+  .openapi("CreateAcademicYearCommand");
+
+export const activateAcademicYearCommandSchema = z.object({
   academicYearId: field.id(),
-  label: field.text(),
-  order: field.positiveInt(),
-  startTime: field.timeOfDay(),
-  endTime: field.timeOfDay(),
-  isBreak: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-});
+}).openapi("ActivateAcademicYearCommand");
 
-export const resourceConfigCommandSchema = namedObjectSchema("ResourceConfigCommand", {
-  id: field.id(),
-  name: field.text(),
-  description: field.nullableText(),
-  kind: field.enumValue(ResourceKind),
-  capacity: field.nullablePositiveInt(),
-  createdAt: field.optionalDate(),
-});
-
-export const subjectConfigCommandSchema = namedObjectSchema("SubjectConfigCommand", {
-  id: field.id(),
-  name: field.text(),
-  code: field.nullableText(),
-  defaultCoefficient: field.nullablePositiveNumber(),
-  createdAt: field.optionalDate(),
-});
-
-export const subjectMatterConfigCommandSchema = namedObjectSchema("SubjectMatterConfigCommand", {
-  id: field.id(),
-  subjectId: field.id(),
-  name: field.text(),
-  description: field.nullableText(),
-  sequenceOrder: field.positiveNumber(),
-  estimatedHours: field.nullablePositiveNumber(),
-  createdAt: field.optionalDate(),
-});
-
-export const disciplinaryActionConfigCommandSchema = namedObjectSchema("DisciplinaryActionConfigCommand", {
-  id: field.id(),
-  name: field.text(),
-  kind: field.enumValue(DisciplinaryActionKind),
-  severity: field.nullablePositiveNumber(),
-  defaultDurationDays: field.nullablePositiveInt(),
-  description: field.nullableText(),
-  createdAt: field.optionalDate(),
-});
-
-export const registerSchoolCommandSchema = namedObjectSchema("RegisterSchoolCommand", {
-  id: field.id(),
-  name: field.text(),
-  timeZone: field.text(),
-  ownerStaffId: nullableId(),
-  type: field.enumValue(SchoolType).nullable().optional(),
-  country: nullableOptionalText(),
-  city: nullableOptionalText(),
-  createdAt: field.optionalDate(),
-});
-
-export const updateSchoolConfigurationCommandSchema = namedObjectSchema("UpdateSchoolConfigurationCommand", {
-  schoolId: field.id(),
-  name: optionalText(),
-  timeZone: optionalText(),
-  ownerStaffId: nullableId(),
-  type: field.enumValue(SchoolType).nullable().optional(),
-  country: nullableOptionalText(),
-  city: nullableOptionalText(),
-});
-
-export const createAcademicYearCommandSchema = namedObjectSchema("CreateAcademicYearCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  name: field.text(),
-  startDate: field.date(),
-  endDate: field.date(),
-  isActive: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-});
-
-export const activateAcademicYearCommandSchema = namedObjectSchema("ActivateAcademicYearCommand", {
-  academicYearId: field.id(),
-});
-
-export const publishAcademicPeriodCommandSchema = namedObjectSchema("PublishAcademicPeriodCommand", {
+export const publishAcademicPeriodCommandSchema = z.object({
   academicPeriodId: field.id(),
-});
+}).openapi("PublishAcademicPeriodCommand");
 
-export const createAcademicPeriodCommandSchema = namedObjectSchema("CreateAcademicPeriodCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  academicYearId: field.id(),
-  name: field.text(),
-  type: field.enumValue(AcademicPeriodType),
-  startDate: field.date(),
-  endDate: field.date(),
-  isPublished: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-});
+export const createAcademicPeriodCommandSchema = z.object(unwrapShape(academicPeriodSchema) as any)
+  .openapi("CreateAcademicPeriodCommand");
 
-export const createClassGroupCommandSchema = namedObjectSchema("CreateClassGroupCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  academicYearId: field.id(),
-  gradeLevelId: field.id(),
-  name: field.text(),
-  capacity: field.nullablePositiveInt(),
-  attendanceMode: field.enumValue(AttendanceMode).optional(),
-  homeroomStaffId: nullableId(),
-  createdAt: field.optionalDate(),
-});
+export const createClassGroupCommandSchema = z.object(unwrapShape(classGroupSchema) as any)
+  .openapi("CreateClassGroupCommand");
 
-export const updateClassGroupConfigurationCommandSchema = namedObjectSchema("UpdateClassGroupConfigurationCommand", {
-  classGroupId: field.id(),
-  name: optionalText(),
-  capacity: field.nullablePositiveInt(),
-  attendanceMode: field.enumValue(AttendanceMode).optional(),
-  homeroomStaffId: nullableId(),
-});
+export const updateClassGroupConfigurationCommandSchema = z.object(unwrapShape(classGroupSchema) as any)
+  .partial()
+  .omit({ id: true, schoolId: true, academicYearId: true, gradeLevelId: true, createdAt: true })
+  .extend({
+    classGroupId: field.id(),
+  })
+  .openapi("UpdateClassGroupConfigurationCommand");
 
-export const registerStaffMemberCommandSchema = namedObjectSchema("RegisterStaffMemberCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  firstName: field.text(),
-  lastName: field.text(),
-  email: z.string().email().optional(),
-  isActive: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-});
+export const registerStaffMemberCommandSchema = z.object(unwrapShape(staffMemberSchema) as any)
+  .openapi("RegisterStaffMemberCommand");
 
-export const updateStaffMemberStatusCommandSchema = namedObjectSchema("UpdateStaffMemberStatusCommand", {
+export const updateStaffMemberStatusCommandSchema = z.object({
   staffId: field.id(),
   isActive: field.boolean(),
-});
+}).openapi("UpdateStaffMemberStatusCommand");
 
-export const assignStaffToClassCommandSchema = namedObjectSchema("AssignStaffToClassCommand", {
-  id: field.id(),
-  staffId: field.id(),
-  classGroupId: field.id(),
-  responsibility: field.text(),
-  createdAt: field.optionalDate(),
-});
+export const assignStaffToClassCommandSchema = z.object(unwrapShape(staffAssignmentSchema) as any)
+  .omit({ classSubjectId: true, sessionId: true })
+  .extend({
+    classGroupId: field.id(),
+  })
+  .openapi("AssignStaffToClassCommand");
 
-export const assignStaffToClassSubjectCommandSchema = namedObjectSchema("AssignStaffToClassSubjectCommand", {
-  id: field.id(),
-  staffId: field.id(),
-  classSubjectId: field.id(),
-  responsibility: field.text(),
-  createdAt: field.optionalDate(),
-});
+export const assignStaffToClassSubjectCommandSchema = z.object(unwrapShape(staffAssignmentSchema) as any)
+  .omit({ classGroupId: true, sessionId: true })
+  .extend({
+    classSubjectId: field.id(),
+  })
+  .openapi("AssignStaffToClassSubjectCommand");
 
-export const assignStaffToSessionCommandSchema = namedObjectSchema("AssignStaffToSessionCommand", {
-  id: field.id(),
-  staffId: field.id(),
-  sessionId: field.id(),
-  responsibility: field.text(),
-  createdAt: field.optionalDate(),
-});
+export const assignStaffToSessionCommandSchema = z.object(unwrapShape(staffAssignmentSchema) as any)
+  .omit({ classGroupId: true, classSubjectId: true })
+  .extend({
+    sessionId: field.id(),
+  })
+  .openapi("AssignStaffToSessionCommand");
 
-const scopeGrantCommandSchema = namedObjectSchema("ScopeGrantCommandValue", {
-  permission: field.enumValue(Permission),
-  scopeType: scopeTypeSchema,
-  scopeEntityIds: z.array(field.id()),
-});
+export const accessRoleConfigCommandSchema = z.object(unwrapShape(accessRoleSchema) as any)
+  .openapi("AccessRoleConfigCommand");
 
-export const accessRoleConfigCommandSchema = namedObjectSchema("AccessRoleConfigCommand", {
-  id: field.id(),
-  name: field.text(),
-  description: field.nullableText(),
-  permissions: z.array(field.enumValue(Permission)),
-  status: z.enum(["active", "inactive"]).optional(),
-  createdAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-}).strict();
+export const staffRoleAssignmentConfigCommandSchema = z.object(unwrapShape(staffRoleAssignmentSchema) as any)
+  .openapi("StaffRoleAssignmentConfigCommand");
 
-export const staffRoleAssignmentConfigCommandSchema = namedObjectSchema("StaffRoleAssignmentConfigCommand", {
-  id: field.id(),
-  staffId: field.id(),
-  academicYearId: field.id().nullable().optional(),
-  roleIds: z.array(field.id()).min(1),
-  scopeGrants: z.array(scopeGrantCommandSchema).optional(),
-  status: z.enum(["active", "inactive", "expired"]).optional(),
-  startsAt: field.nullableDate(),
-  endsAt: field.nullableDate(),
-  createdAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-});
+export const assignResourceToClassCommandSchema = z.object(unwrapShape(resourceAssignmentSchema) as any)
+  .omit({ sessionId: true })
+  .extend({
+    classGroupId: field.id(),
+  })
+  .openapi("AssignResourceToClassCommand");
 
-export const assignResourceToClassCommandSchema = namedObjectSchema("AssignResourceToClassCommand", {
-  id: field.id(),
-  resourceId: field.id(),
-  classGroupId: field.id(),
-  createdAt: field.optionalDate(),
-});
+export const assignResourceToSessionCommandSchema = z.object(unwrapShape(resourceAssignmentSchema) as any)
+  .omit({ classGroupId: true })
+  .extend({
+    sessionId: field.id(),
+  })
+  .openapi("AssignResourceToSessionCommand");
 
-export const assignResourceToSessionCommandSchema = namedObjectSchema("AssignResourceToSessionCommand", {
-  id: field.id(),
-  resourceId: field.id(),
-  sessionId: field.id(),
-  createdAt: field.optionalDate(),
-});
-
-export const removeResourceAssignmentCommandSchema = namedObjectSchema("RemoveResourceAssignmentCommand", {
+export const removeResourceAssignmentCommandSchema = z.object({
   assignmentId: field.id(),
-});
+}).openapi("RemoveResourceAssignmentCommand");
 
-export const registerAttachmentCommandSchema = namedObjectSchema("RegisterAttachmentCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  ownerKind: field.enumValue(AttachmentOwnerKind),
-  ownerId: field.id(),
-  fileName: field.text(),
-  fileUrl: field.text(),
-  mimeType: nullableOptionalText(),
-  sizeBytes: field.nullablePositiveInt(),
-  createdAt: field.optionalDate(),
-});
+export const registerAttachmentCommandSchema = z.object(unwrapShape(attachmentSchema) as any)
+  .omit({ uploadedById: true })
+  .openapi("RegisterAttachmentCommand");
 
-export const removeAttachmentCommandSchema = namedObjectSchema("RemoveAttachmentCommand", {
+export const removeAttachmentCommandSchema = z.object({
   attachmentId: field.id(),
-});
+}).openapi("RemoveAttachmentCommand");
 
-export const registerStudentCommandSchema = namedObjectSchema("RegisterStudentCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  firstName: field.text(),
-  lastName: field.text(),
-  birthDate: field.optionalDate(),
-  createdAt: field.optionalDate(),
-});
+export const registerStudentCommandSchema = z.object(unwrapShape(studentSchema) as any)
+  .omit({
+    gender: true,
+    placeOfBirth: true,
+    nationality: true,
+    matricule: true,
+    photoUrl: true,
+    subjectId: true,
+    status: true,
+    enrollmentDate: true,
+  })
+  .openapi("RegisterStudentCommand");
 
-export const enrollStudentCommandSchema = namedObjectSchema("EnrollStudentCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  classGroupId: field.id(),
-  createdAt: field.optionalDate(),
-});
+export const enrollStudentCommandSchema = z.object(unwrapShape(studentClassEnrollmentSchema) as any)
+  .omit({
+    enrollmentIndex: true,
+    status: true,
+    endedAt: true,
+    endReason: true,
+    progressionDecision: true,
+    previousEnrollmentId: true,
+    closedBy: true,
+    progressionDecidedAt: true,
+    progressionDecidedBy: true,
+    progressionNotes: true,
+  })
+  .openapi("EnrollStudentCommand");
 
-export const closeEnrollmentCommandSchema = namedObjectSchema("CloseEnrollmentCommand", {
+export const closeEnrollmentCommandSchema = z.object({
   enrollmentId: field.id(),
-  endReason: field.enumValue(EnrollmentEndReason),
+  endReason: z.nativeEnum(EnrollmentEndReason),
   endedAt: field.optionalDate(),
-});
+}).openapi("CloseEnrollmentCommand");
 
-export const recordProgressionDecisionCommandSchema = namedObjectSchema("RecordProgressionDecisionCommand", {
+export const recordProgressionDecisionCommandSchema = z.object({
   enrollmentId: field.id(),
-  decision: field.enumValue(ProgressionDecision),
+  decision: z.nativeEnum(ProgressionDecision),
   decidedAt: field.optionalDate(),
   notes: optionalText(),
-});
+}).openapi("RecordProgressionDecisionCommand");
 
-export const promoteStudentCommandSchema = namedObjectSchema("PromoteStudentCommand", {
+export const promoteStudentCommandSchema = z.object({
   enrollmentId: field.id(),
   nextEnrollmentId: field.id(),
   nextClassGroupId: field.id(),
   effectiveAt: field.date(),
   decidedAt: field.optionalDate(),
   notes: optionalText(),
-});
+}).openapi("PromoteStudentCommand");
 
-export const transferStudentCommandSchema = namedObjectSchema("TransferStudentCommand", {
+export const transferStudentCommandSchema = z.object({
   enrollmentId: field.id(),
   nextEnrollmentId: field.id(),
   nextClassGroupId: field.id(),
   effectiveAt: field.date(),
-});
+}).openapi("TransferStudentCommand");
 
-export const graduateStudentCommandSchema = namedObjectSchema("GraduateStudentCommand", {
+export const graduateStudentCommandSchema = z.object({
   enrollmentId: field.id(),
   effectiveAt: field.date(),
   decidedAt: field.optionalDate(),
   notes: optionalText(),
-});
+}).openapi("GraduateStudentCommand");
 
-const guardianContactMethodSchema = namedObjectSchema("GuardianContactMethodCommandValue", {
-  type: field.enumValue(GuardianContactMethodType),
-  value: field.text(),
-  label: optionalText(),
-  isPrimary: field.optionalBoolean(),
-  allowsNotifications: field.optionalBoolean(),
-});
+export const registerGuardianCommandSchema = z.object(unwrapShape(guardianSchema) as any)
+  .extend({
+    contactMethods: z.array(guardianContactMethodSchema as any).optional(),
+  })
+  .openapi("RegisterGuardianCommand");
 
-export const registerGuardianCommandSchema = namedObjectSchema("RegisterGuardianCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  firstName: field.text(),
-  lastName: field.text(),
-  phone: optionalText(),
-  email: z.string().email().optional(),
-  contactMethods: z.array(guardianContactMethodSchema).optional(),
-  hasAccess: field.optionalBoolean(),
-  premiumNotificationsEnabled: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-});
+export const updateStudentProfileCommandSchema = z.object(unwrapShape(studentSchema) as any)
+  .partial()
+  .omit({ id: true, schoolId: true, status: true, createdAt: true })
+  .extend({
+    studentId: field.id(),
+  })
+  .openapi("UpdateStudentProfileCommand");
 
-export const updateStudentProfileCommandSchema = namedObjectSchema("UpdateStudentProfileCommand", {
+export const updateStudentStatusCommandSchema = z.object({
   studentId: field.id(),
-  firstName: optionalText(),
-  lastName: optionalText(),
-  gender: nullableOptionalText(),
-  birthDate: field.optionalDate(),
-  placeOfBirth: nullableOptionalText(),
-  nationality: nullableOptionalText(),
-  matricule: nullableOptionalText(),
-  photoUrl: nullableOptionalText(),
-  enrollmentDate: field.nullableDate(),
-});
+  status: z.nativeEnum(StudentStatus),
+}).openapi("UpdateStudentStatusCommand");
 
-export const updateStudentStatusCommandSchema = namedObjectSchema("UpdateStudentStatusCommand", {
-  studentId: field.id(),
-  status: field.enumValue(StudentStatus),
-});
+export const upsertStudentHealthProfileCommandSchema = z.object(unwrapShape(studentHealthProfileSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("UpsertStudentHealthProfileCommand");
 
-export const upsertStudentHealthProfileCommandSchema = namedObjectSchema("UpsertStudentHealthProfileCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  allergies: nullableOptionalText(),
-  medicalConditions: nullableOptionalText(),
-  emergencyProtocols: nullableOptionalText(),
-  bloodType: nullableOptionalText(),
-  updatedAt: field.optionalDate(),
-});
+export const createStudentNoteCommandSchema = z.object(unwrapShape(studentNoteSchema) as any)
+  .omit({ schoolId: true, authorStaffId: true })
+  .openapi("CreateStudentNoteCommand");
 
-export const createStudentNoteCommandSchema = namedObjectSchema("CreateStudentNoteCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  title: optionalText(),
-  body: field.text(),
-  visibility: field.enumValue(StudentNoteVisibility).optional(),
-  createdAt: field.optionalDate(),
-});
+export const updateStudentNoteCommandSchema = z.object(unwrapShape(studentNoteSchema) as any)
+  .partial()
+  .omit({ id: true, schoolId: true, studentId: true, authorStaffId: true, createdAt: true })
+  .extend({
+    noteId: field.id(),
+  })
+  .openapi("UpdateStudentNoteCommand");
 
-export const updateStudentNoteCommandSchema = namedObjectSchema("UpdateStudentNoteCommand", {
-  noteId: field.id(),
-  title: nullableOptionalText(),
-  body: optionalText(),
-  visibility: field.enumValue(StudentNoteVisibility).optional(),
-  updatedAt: field.optionalDate(),
-});
+export const updateGuardianContactMethodsCommandSchema = z.object(unwrapShape(guardianSchema) as any)
+  .partial()
+  .omit({ id: true, schoolId: true, subjectId: true, createdAt: true })
+  .extend({
+    guardianId: field.id(),
+    contactMethods: z.array(guardianContactMethodSchema as any).optional(),
+  })
+  .openapi("UpdateGuardianContactMethodsCommand");
 
-export const updateGuardianContactMethodsCommandSchema = namedObjectSchema("UpdateGuardianContactMethodsCommand", {
-  guardianId: field.id(),
-  firstName: optionalText(),
-  lastName: optionalText(),
-  contactMethods: z.array(guardianContactMethodSchema).optional(),
-  hasAccess: field.optionalBoolean(),
-  premiumNotificationsEnabled: field.optionalBoolean(),
-});
+export const linkGuardianToStudentCommandSchema = z.object(unwrapShape(guardianStudentLinkSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("LinkGuardianToStudentCommand");
 
-const guardianStudentLinkFields = {
-  guardianId: field.id(),
-  studentId: field.id(),
-  relationship: optionalText(),
-  isPrimary: field.optionalBoolean(),
-  isBillingContact: field.optionalBoolean(),
-  legalGuardian: field.optionalBoolean(),
-  canPickup: field.optionalBoolean(),
-  emergencyContactPriority: field.nullablePositiveInt(),
-  receivesAcademicReports: field.optionalBoolean(),
-  receivesAttendanceAlerts: field.optionalBoolean(),
-  contactRestrictions: nullableOptionalText(),
-  notes: nullableOptionalText(),
-};
+export const updateGuardianStudentLinkCommandSchema = z.object(unwrapShape(guardianStudentLinkSchema) as any)
+  .partial()
+  .omit({ id: true, schoolId: true, createdAt: true })
+  .openapi("UpdateGuardianStudentLinkCommand");
 
-export const linkGuardianToStudentCommandSchema = namedObjectSchema("LinkGuardianToStudentCommand", {
-  id: field.id(),
-  ...guardianStudentLinkFields,
-  createdAt: field.optionalDate(),
-});
+export const offerSubjectToClassCommandSchema = z.object(unwrapShape(classSubjectSchema) as any)
+  .omit({ completedPercentage: true })
+  .openapi("OfferSubjectToClassCommand");
 
-export const updateGuardianStudentLinkCommandSchema = namedObjectSchema("UpdateGuardianStudentLinkCommand", {
-  ...guardianStudentLinkFields,
-});
+export const assignMatterToClassSubjectCommandSchema = z.object(unwrapShape(classSubjectMatterSchema) as any)
+  .omit({ status: true, completedPercentage: true, updatedByStaffId: true, startedAt: true, completedAt: true })
+  .openapi("AssignMatterToClassSubjectCommand");
 
-export const offerSubjectToClassCommandSchema = namedObjectSchema("OfferSubjectToClassCommand", {
-  id: field.id(),
-  classGroupId: field.id(),
-  subjectId: field.id(),
-  coefficient: field.optionalNumber(),
-  createdAt: field.optionalDate(),
-});
+export const recordSessionProgressCommandSchema = z.object(unwrapShape(classSubjectProgressSchema) as any)
+  .omit({ recordedByStaffId: true })
+  .openapi("RecordSessionProgressCommand");
 
-export const assignMatterToClassSubjectCommandSchema = namedObjectSchema("AssignMatterToClassSubjectCommand", {
-  id: field.id(),
-  classSubjectId: field.id(),
-  subjectMatterId: field.id(),
-  notes: optionalText(),
-  updatedAt: field.optionalDate(),
-});
+export const createScheduleCommandSchema = z.object(unwrapShape(scheduleSchema) as any)
+  .openapi("CreateScheduleCommand");
 
-export const recordSessionProgressCommandSchema = namedObjectSchema("RecordSessionProgressCommand", {
-  id: field.id(),
-  classSubjectMatterId: field.id(),
-  sessionId: field.id(),
-  completedPercentage: z.number().min(0).max(100),
-  notes: optionalText(),
-  recordedAt: field.optionalDate(),
-});
+export const createCalendarEventCommandSchema = z.object(unwrapShape(calendarEventSchema) as any)
+  .openapi("CreateCalendarEventCommand");
 
-export const createScheduleCommandSchema = namedObjectSchema("CreateScheduleCommand", {
-  id: field.id(),
-  classGroupId: field.id(),
-  classSubjectId: nullableId(),
-  title: field.text(),
-  isRecurring: field.boolean(),
-  dayOfWeek: field.enumValue(DayOfWeek).nullable().optional(),
-  startTime: field.timeOfDay(),
-  endTime: field.timeOfDay(),
-  specificDate: field.nullableDate(),
-  createdAt: field.optionalDate(),
-});
-
-export const createCalendarEventCommandSchema = namedObjectSchema("CreateCalendarEventCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  academicYearId: field.id(),
-  title: field.text(),
-  startDate: field.date(),
-  endDate: field.date(),
-  kind: field.enumValue(CalendarEventKind),
-  isNonSchoolDay: field.optionalBoolean(),
-  scopeKind: field.enumValue(CalendarEventScopeKind).optional(),
-  scopeId: optionalText(),
-  createdAt: field.optionalDate(),
-});
-
-export const generateSessionsCommandSchema = namedObjectSchema("GenerateSessionsCommand", {
+export const generateSessionsCommandSchema = z.object({
   classGroupId: field.id(),
   startDate: field.date(),
   endDate: field.date(),
-});
+}).openapi("GenerateSessionsCommand");
 
-export const createSessionCommandSchema = namedObjectSchema("CreateSessionCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  classGroupId: field.id(),
-  title: field.text(),
-  kind: field.enumValue(SessionKind),
-  startsAt: field.date(),
-  endsAt: field.date(),
-  classSubjectId: optionalText(),
-  createdAt: field.optionalDate(),
-});
+export const createSessionCommandSchema = z.object(unwrapShape(sessionSchema) as any)
+  .omit({ schoolId: true })
+  .openapi("CreateSessionCommand");
 
-export const recordAttendanceCommandSchema = namedObjectSchema("RecordAttendanceCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  sessionId: field.id(),
-  status: field.enumValue(AttendanceStatus),
-  createdAt: field.optionalDate(),
-});
+export const recordAttendanceCommandSchema = z.object(unwrapShape(attendanceRecordSchema) as any)
+  .omit({
+    date: true,
+    justificationStatus: true,
+    reason: true,
+    notes: true,
+    justifiedAt: true,
+    justifiedByStaffId: true,
+    correctedAt: true,
+    correctedByStaffId: true,
+    createdBy: true,
+    updatedAt: true,
+  })
+  .openapi("RecordAttendanceCommand");
 
-export const recordDailyAttendanceCommandSchema = namedObjectSchema("RecordDailyAttendanceCommand", {
-  id: field.id(),
-  classGroupId: field.id(),
-  studentId: field.id(),
-  date: field.date(),
-  status: field.enumValue(AttendanceStatus),
-  createdAt: field.optionalDate(),
-});
+export const recordDailyAttendanceCommandSchema = z.object(unwrapShape(attendanceRecordSchema) as any)
+  .omit({
+    sessionId: true,
+    justificationStatus: true,
+    reason: true,
+    notes: true,
+    justifiedAt: true,
+    justifiedByStaffId: true,
+    correctedAt: true,
+    correctedByStaffId: true,
+    createdBy: true,
+    updatedAt: true,
+  })
+  .extend({
+    classGroupId: field.id(),
+  })
+  .openapi("RecordDailyAttendanceCommand");
 
-export const reviewAttendanceJustificationCommandSchema = namedObjectSchema("ReviewAttendanceJustificationCommand", {
+export const reviewAttendanceJustificationCommandSchema = z.object({
   studentId: field.id(),
   sessionId: field.id(),
   decision: z.union([
@@ -529,160 +379,117 @@ export const reviewAttendanceJustificationCommandSchema = namedObjectSchema("Rev
   reason: field.text(),
   notes: optionalText(),
   reviewedAt: field.optionalDate(),
-});
+}).openapi("ReviewAttendanceJustificationCommand");
 
-export const recordSessionAttendanceCommandSchema = namedObjectSchema("RecordSessionAttendanceCommand", {
+export const recordSessionAttendanceCommandSchema = z.object({
   sessionId: field.id(),
   attendanceByStudent: attendanceByStudentSchema,
   createdAt: field.optionalDate(),
-});
+}).openapi("RecordSessionAttendanceCommand");
 
-export const recordClassDailyAttendanceCommandSchema = namedObjectSchema("RecordClassDailyAttendanceCommand", {
+export const recordClassDailyAttendanceCommandSchema = z.object({
   classGroupId: field.id(),
   date: field.date(),
   attendanceByStudent: attendanceByStudentSchema,
   createdAt: field.optionalDate(),
-});
+}).openapi("RecordClassDailyAttendanceCommand");
 
-const gradeScaleRangeSchema = namedObjectSchema("GradeScaleRangeCommandValue", {
-  letter: field.text(),
-  minScore: field.number(),
-  maxScore: field.number(),
-  gpaValue: field.nullableNumber(),
-  interpretation: nullableOptionalText(),
-  isPassing: field.boolean(),
-});
+const gradeScaleRangeCommandSchema = z.object(unwrapShape(coreGradeScaleRangeSchema) as any)
+  .openapi("GradeScaleRangeCommandValue");
 
-export const createGradeScaleCommandSchema = namedObjectSchema("CreateGradeScaleCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  name: field.text(),
-  minScore: field.number(),
-  maxScore: field.number(),
-  ranges: z.array(gradeScaleRangeSchema).min(1),
-  isDefault: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-});
+export const createGradeScaleCommandSchema = z.object(unwrapShape(gradeScaleSchema) as any)
+  .extend({
+    ranges: z.array(gradeScaleRangeCommandSchema).min(1),
+  })
+  .openapi("CreateGradeScaleCommand");
 
-export const createReportCardDefinitionCommandSchema = namedObjectSchema("CreateReportCardDefinitionCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  academicYearId: field.id(),
-  gradeLevelId: field.id(),
-  name: field.text(),
-  kind: field.enumValue(ReportCardDefinitionKind).optional(),
-  isDefault: field.optionalBoolean(),
-  description: nullableOptionalText(),
-  createdAt: field.optionalDate(),
-});
+export const createReportCardDefinitionCommandSchema = z.object(unwrapShape(reportCardDefinitionSchema) as any)
+  .openapi("CreateReportCardDefinitionCommand");
 
-export const createAssessmentCommandSchema = namedObjectSchema("CreateAssessmentCommand", {
-  id: field.id(),
-  classGroupId: field.id(),
-  classSubjectId: field.id(),
-  periodId: field.id(),
-  title: field.text(),
-  kind: field.enumValue(AssessmentKind),
-  maxScore: field.positiveNumber(),
-  coefficient: field.optionalNumber(),
-  sessionId: optionalText(),
-  dueAt: field.optionalDate(),
-  createdAt: field.optionalDate(),
-});
+export const createAssessmentCommandSchema = z.object(unwrapShape(assessmentSchema) as any)
+  .omit({ metAt: true, date: true })
+  .openapi("CreateAssessmentCommand");
 
-export const completeAssessmentCommandSchema = namedObjectSchema("CompleteAssessmentCommand", {
+export const completeAssessmentCommandSchema = z.object({
   assessmentId: field.id(),
   metAt: field.optionalDate(),
-});
+}).openapi("CompleteAssessmentCommand");
 
-export const recordAssessmentResultCommandSchema = namedObjectSchema("RecordAssessmentResultCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  assessmentId: field.id(),
-  score: field.number(),
-  createdAt: field.optionalDate(),
-});
+export const recordAssessmentResultCommandSchema = z.object(unwrapShape(assessmentResultSchema) as any)
+  .omit({ status: true, notes: true, createdBy: true })
+  .openapi("RecordAssessmentResultCommand");
 
-export const recordAssessmentResultComplianceCommandSchema = namedObjectSchema("RecordAssessmentResultComplianceCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  assessmentId: field.id(),
-  status: field.enumValue(DeadlineComplianceStatus),
-  notes: nullableOptionalText(),
-  createdAt: field.optionalDate(),
-});
+export const recordAssessmentResultComplianceCommandSchema = z.object(unwrapShape(assessmentResultSchema) as any)
+  .omit({ score: true, createdBy: true })
+  .extend({
+    status: z.nativeEnum(DeadlineComplianceStatus),
+  })
+  .openapi("RecordAssessmentResultComplianceCommand");
 
-export const createReportCardDefinitionSectionCommandSchema = namedObjectSchema("CreateReportCardDefinitionSectionCommand", {
-  id: field.id(),
-  reportCardDefinitionId: field.id(),
-  kind: field.enumValue(ReportCardDefinitionSectionKind),
-  name: field.text(),
-  order: field.positiveInt(),
-  weight: field.positiveNumber(),
-  parentSectionId: optionalText(),
-  subjectId: optionalText(),
-  createdAt: field.optionalDate(),
-});
+export const createReportCardDefinitionSectionCommandSchema = z.object(unwrapShape(reportCardDefinitionSectionSchema) as any)
+  .openapi("CreateReportCardDefinitionSectionCommand");
 
-export const generateReportCardResultCommandSchema = namedObjectSchema("GenerateReportCardResultCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  periodId: field.id(),
-  reportCardDefinitionId: optionalText(),
-  generatedAt: field.optionalDate(),
-});
+export const generateReportCardResultCommandSchema = z.object(unwrapShape(reportCardResultSchema) as any)
+  .omit({
+    classGroupId: true,
+    periodId: true,
+    sectionResults: true,
+    attendanceSummary: true,
+    assessmentResultCount: true,
+    overallAverage: true,
+    rank: true,
+    classSize: true,
+    passThreshold: true,
+    teacherComment: true,
+    principalComment: true,
+    status: true,
+    publishedAt: true,
+  })
+  .extend({
+    reportCardDefinitionId: optionalText(),
+    periodId: field.id(),
+  })
+  .openapi("GenerateReportCardResultCommand");
 
-export const publishReportCardResultCommandSchema = namedObjectSchema("PublishReportCardResultCommand", {
+export const publishReportCardResultCommandSchema = z.object({
   id: field.id(),
   studentId: field.id(),
   periodId: field.id(),
   reportCardDefinitionId: optionalText(),
   publishedAt: field.optionalDate(),
-});
+}).openapi("PublishReportCardResultCommand");
 
-export const recordIncidentCommandSchema = namedObjectSchema("RecordIncidentCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  title: field.text(),
-  description: field.text(),
-  date: field.date(),
-  kind: field.enumValue(IncidentKind),
-  classGroupId: optionalText(),
-  sessionId: optionalText(),
-  createdAt: field.optionalDate(),
-});
+export const recordIncidentCommandSchema = z.object(unwrapShape(incidentSchema) as any)
+  .omit({
+    reporterId: true,
+    status: true,
+    resolutionNotes: true,
+    resolvedAt: true,
+    resolvedByStaffId: true,
+  })
+  .openapi("RecordIncidentCommand");
 
-export const addStudentInvolvementCommandSchema = namedObjectSchema("AddStudentInvolvementCommand", {
-  id: field.id(),
-  incidentId: field.id(),
-  studentId: field.id(),
-  role: field.enumValue(IncidentInvolvementRole),
-  notes: optionalText(),
-  createdAt: field.optionalDate(),
-});
+export const addStudentInvolvementCommandSchema = z.object(unwrapShape(studentIncidentInvolvementSchema) as any)
+  .openapi("AddStudentInvolvementCommand");
 
-export const applyDisciplinaryActionCommandSchema = namedObjectSchema("ApplyDisciplinaryActionCommand", {
-  id: field.id(),
-  incidentId: field.id(),
-  studentId: field.id(),
-  disciplinaryActionId: field.id(),
-  startsAt: field.optionalDate(),
-  endsAt: field.optionalDate(),
-  notes: optionalText(),
-  createdAt: field.optionalDate(),
-});
+export const applyDisciplinaryActionCommandSchema = z.object(unwrapShape(studentDisciplinaryActionSchema) as any)
+  .omit({
+    assignedByStaffId: true,
+    status: true,
+  })
+  .openapi("ApplyDisciplinaryActionCommand");
 
-export const updateStudentDisciplinaryActionStatusCommandSchema = namedObjectSchema("UpdateStudentDisciplinaryActionStatusCommand", {
+export const updateStudentDisciplinaryActionStatusCommandSchema = z.object({
   studentDisciplinaryActionId: field.id(),
-  status: field.enumValue(StudentDisciplinaryActionStatus),
+  status: z.nativeEnum(StudentDisciplinaryActionStatus),
   updatedAt: field.optionalDate(),
-});
+}).openapi("UpdateStudentDisciplinaryActionStatusCommand");
 
-export const resolveIncidentCommandSchema = namedObjectSchema("ResolveIncidentCommand", {
+export const resolveIncidentCommandSchema = z.object({
   incidentId: field.id(),
   resolutionNotes: optionalText(),
   resolvedAt: field.optionalDate(),
-});
+}).openapi("ResolveIncidentCommand");
 
 const feeInstallmentTemplateCommandSchema = namedObjectSchema("FeeInstallmentTemplateCommandValue", {
   label: field.text(),
@@ -690,113 +497,98 @@ const feeInstallmentTemplateCommandSchema = namedObjectSchema("FeeInstallmentTem
   dueDate: field.nullableDate(),
 });
 
-export const createFeeCommandSchema = namedObjectSchema("CreateFeeCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  academicYearId: field.id(),
-  name: field.text(),
-  category: field.enumValue(FeeCategory).optional(),
-  description: nullableOptionalText(),
-  defaultAmount: field.positiveNumber(),
-  currency: field.text(),
-  installments: z.array(feeInstallmentTemplateCommandSchema).optional(),
-  createdAt: field.optionalDate(),
-});
+export const createFeeCommandSchema = z.object(unwrapShape(feeSchema) as any)
+  .extend({
+    installments: z.array(feeInstallmentTemplateCommandSchema).optional(),
+  })
+  .openapi("CreateFeeCommand");
 
-export const assignFeeToStudentCommandSchema = namedObjectSchema("AssignFeeToStudentCommand", {
-  id: field.id(),
-  studentId: field.id(),
-  feeId: field.id(),
-  expectedAmount: field.optionalNumber(),
-  dueDate: field.optionalDate(),
-  createdAt: field.optionalDate(),
-  referenceDate: field.optionalDate(),
-});
+export const assignFeeToStudentCommandSchema = z.object(unwrapShape(studentFeeSchema) as any)
+  .omit({
+    adjustmentAmount: true,
+    adjustmentReason: true,
+    adjustedById: true,
+    adjustedAt: true,
+    paidAmount: true,
+    currency: true,
+    status: true,
+    cancellationReason: true,
+    cancelledById: true,
+    cancelledAt: true,
+    installments: true,
+    updatedAt: true,
+  })
+  .extend({
+    expectedAmount: field.optionalNumber(),
+    dueDate: field.optionalDate(),
+    referenceDate: field.optionalDate(),
+  })
+  .openapi("AssignFeeToStudentCommand");
 
-export const recordPaymentCommandSchema = namedObjectSchema("RecordPaymentCommand", {
-  id: field.id(),
-  studentFeeId: field.id(),
-  amount: field.positiveNumber(),
-  paymentDate: field.date(),
-  method: field.enumValue(PaymentMethod),
-  reference: optionalText(),
-  notes: optionalText(),
-  createdAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-  referenceDate: field.optionalDate(),
-});
+export const recordPaymentCommandSchema = z.object(unwrapShape(paymentSchema) as any)
+  .omit({
+    currency: true,
+    status: true,
+    recordedById: true,
+    reversedAt: true,
+    reversedById: true,
+    cancelledAt: true,
+    cancelledById: true,
+  })
+  .extend({
+    referenceDate: field.optionalDate(),
+  })
+  .openapi("RecordPaymentCommand");
 
-export const reversePaymentCommandSchema = namedObjectSchema("ReversePaymentCommand", {
+export const reversePaymentCommandSchema = z.object({
   paymentId: field.id(),
   reversedAt: field.optionalDate(),
   updatedAt: field.optionalDate(),
   referenceDate: field.optionalDate(),
-});
+}).openapi("ReversePaymentCommand");
 
-export const cancelPaymentCommandSchema = namedObjectSchema("CancelPaymentCommand", {
+export const cancelPaymentCommandSchema = z.object({
   paymentId: field.id(),
   cancelledAt: field.optionalDate(),
   updatedAt: field.optionalDate(),
   referenceDate: field.optionalDate(),
-});
+}).openapi("CancelPaymentCommand");
 
-export const adjustStudentFeeCommandSchema = namedObjectSchema("AdjustStudentFeeCommand", {
+export const adjustStudentFeeCommandSchema = z.object({
   studentFeeId: field.id(),
   adjustmentAmount: field.positiveNumber(),
   reason: field.text(),
   adjustedAt: field.optionalDate(),
   updatedAt: field.optionalDate(),
   referenceDate: field.optionalDate(),
-});
+}).openapi("AdjustStudentFeeCommand");
 
-export const cancelStudentFeeCommandSchema = namedObjectSchema("CancelStudentFeeCommand", {
+export const cancelStudentFeeCommandSchema = z.object({
   studentFeeId: field.id(),
   reason: field.text(),
   cancelledAt: field.optionalDate(),
   updatedAt: field.optionalDate(),
-});
+}).openapi("CancelStudentFeeCommand");
 
-export const createAnnouncementCommandSchema = namedObjectSchema("CreateAnnouncementCommand", {
-  id: field.id(),
-  schoolId: field.id(),
-  title: field.text(),
-  content: field.text(),
-  priority: field.enumValue(AnnouncementPriority).optional(),
-  premiumNotification: field.optionalBoolean(),
-  createdAt: field.optionalDate(),
-  expiresAt: field.optionalDate(),
-});
+export const createAnnouncementCommandSchema = z.object(unwrapShape(announcementSchema) as any)
+  .omit({
+    status: true,
+    publishedAt: true,
+  })
+  .openapi("CreateAnnouncementCommand");
 
-export const addTargetCommandSchema = namedObjectSchema("AddAnnouncementTargetCommand", {
-  id: field.id(),
-  announcementId: field.id(),
-  targetKind: field.enumValue(AnnouncementTargetKind),
-  targetId: optionalText(),
-  createdAt: field.optionalDate(),
-});
+export const addTargetCommandSchema = z.object(unwrapShape(announcementTargetSchema) as any)
+  .openapi("AddAnnouncementTargetCommand");
 
-export const publishAnnouncementCommandSchema = namedObjectSchema("PublishAnnouncementCommand", {
+export const publishAnnouncementCommandSchema = z.object({
   announcementId: field.id(),
   publishedAt: field.optionalDate(),
-});
+}).openapi("PublishAnnouncementCommand");
 
-export const recordDeliveryCommandSchema = namedObjectSchema("RecordMessageDeliveryCommand", {
-  id: field.id(),
-  announcementId: field.id(),
-  recipientKind: field.enumValue(MessageDeliveryRecipientKind),
-  recipientId: field.id(),
-  channel: field.enumValue(MessageDeliveryChannel),
-  status: field.enumValue(MessageDeliveryStatus).optional(),
-  providerMessageId: optionalText(),
-  failureReason: optionalText(),
-  sentAt: field.optionalDate(),
-  readAt: field.optionalDate(),
-  createdAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-});
+export const recordDeliveryCommandSchema = z.object(unwrapShape(messageDeliverySchema) as any)
+  .openapi("RecordMessageDeliveryCommand");
 
-export const materializeDeliveriesCommandSchema = namedObjectSchema("MaterializeDeliveriesCommand", {
+export const materializeDeliveriesCommandSchema = z.object({
   announcementId: field.id(),
-  channel: field.enumValue(MessageDeliveryChannel),
-  createdAt: field.optionalDate(),
-});
+  channel: z.nativeEnum(MessageDeliveryChannel),
+}).openapi("MaterializeDeliveriesCommand");

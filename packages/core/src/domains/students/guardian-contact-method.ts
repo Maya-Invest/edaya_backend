@@ -1,4 +1,5 @@
-import { requireNonBlank } from '../utils'
+import { z } from 'zod'
+import { DomainValidationError, formatZodError } from '../utils'
 
 export enum GuardianContactMethodType {
   Phone = 'phone',
@@ -8,10 +9,20 @@ export enum GuardianContactMethodType {
   Other = 'other',
 }
 
+export const guardianContactMethodSchema = z.object({
+  type: z.nativeEnum(GuardianContactMethodType),
+  value: z.string().trim().min(1, 'value must not be blank'),
+  label: z.string().trim().min(1, 'label must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  isPrimary: z.boolean().default(false),
+  allowsNotifications: z.boolean().default(true),
+})
+
+export type GuardianContactMethodData = z.infer<typeof guardianContactMethodSchema>
+
 export interface GuardianContactMethodArgs {
   type: GuardianContactMethodType
   value: string
-  label?: string
+  label?: string | null
   isPrimary?: boolean
   allowsNotifications?: boolean
 }
@@ -20,23 +31,19 @@ export interface GuardianContactMethodArgs {
  * Value object describing one way to contact a guardian.
  */
 export class GuardianContactMethod {
-  readonly type: GuardianContactMethodType
-  readonly value: string
-  readonly label?: string
-  readonly isPrimary: boolean
-  readonly allowsNotifications: boolean
+  readonly data: GuardianContactMethodData
 
-  constructor({
-    type,
-    value,
-    label,
-    isPrimary = false,
-    allowsNotifications = true,
-  }: GuardianContactMethodArgs) {
-    this.type = type
-    this.value = requireNonBlank(value, 'value')
-    this.label = label ? requireNonBlank(label, 'label') : undefined
-    this.isPrimary = isPrimary
-    this.allowsNotifications = allowsNotifications
+  constructor(args: GuardianContactMethodArgs) {
+    const result = guardianContactMethodSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
+    }
+    this.data = result.data
   }
+
+  get type() { return this.data.type }
+  get value() { return this.data.value }
+  get label() { return this.data.label }
+  get isPrimary() { return this.data.isPrimary }
+  get allowsNotifications() { return this.data.allowsNotifications }
 }

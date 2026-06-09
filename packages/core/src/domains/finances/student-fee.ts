@@ -2,11 +2,12 @@ import type { AuthorizationPolicy } from '../../authorization/authorization-poli
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { Money } from '../../value_object/money'
-import { requireNonBlank, requireNonNegativeInt, requireOptionalNonBlank, requireValidDate } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 
 export enum FeeStatus {
   Pending = 'pending',
@@ -22,6 +23,104 @@ export interface StudentFeeInstallment {
   expectedAmount: number
   dueDate?: Date | null
 }
+
+export const studentFeeInstallmentSchema = z.object({
+  id: z.string().trim().min(1, 'installment.id must not be blank'),
+  label: z.string().trim().min(1, 'installment.label must not be blank'),
+  expectedAmount: z.number().int().nonnegative('installment.expectedAmount must be a non-negative integer'),
+  dueDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+})
+
+export const studentFeeBaseSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  studentId: z.string().trim().min(1, 'studentId must not be blank'),
+  feeId: z.string().trim().min(1, 'feeId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  expectedAmount: z.number().int().nonnegative('expectedAmount must be a non-negative integer'),
+  paidAmount: z.number().int().nonnegative('paidAmount must be a non-negative integer').default(0),
+  adjustmentAmount: z.number().int().nonnegative('adjustmentAmount must be a non-negative integer').default(0),
+  adjustmentReason: z.string().trim().min(1, 'adjustmentReason must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  adjustedById: z.string().trim().min(1, 'adjustedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  adjustedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  currency: z.string().trim().min(1, 'currency must not be blank'),
+  dueDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(FeeStatus),
+  cancellationReason: z.string().trim().min(1, 'cancellationReason must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  cancelledById: z.string().trim().min(1, 'cancelledById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  cancelledAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  installments: z.array(studentFeeInstallmentSchema).default([]),
+  createdAt: zodDate().default(() => new Date()),
+  updatedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+})
+
+function refineStudentFee(data: any, ctx: z.RefinementCtx) {
+  if (data.adjustmentAmount > data.expectedAmount) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'adjustmentAmount must not exceed expectedAmount',
+    })
+  }
+  if (data.adjustmentAmount > 0 && (!data.adjustmentReason || !data.adjustedById || !data.adjustedAt)) {
+    if (!data.adjustmentReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['adjustmentReason'],
+        message: 'adjustmentReason must not be blank',
+      })
+    }
+    if (!data.adjustedById || !data.adjustedAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'adjustedById and adjustedAt are required for adjusted student fees',
+      })
+    }
+  }
+  if (data.adjustmentAmount === 0 && (data.adjustedById || data.adjustedAt || data.adjustmentReason)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'unadjusted student fees must not define adjustment audit fields',
+    })
+  }
+  if (data.installments && data.installments.length > 0) {
+    const totalExpected = data.installments.reduce((sum: number, inst: any) => sum + inst.expectedAmount, 0)
+    if (totalExpected !== data.expectedAmount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'installment expected amounts must total expectedAmount',
+      })
+    }
+  }
+  if (data.status === FeeStatus.Overdue && !data.dueDate) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'overdue fees must define a dueDate',
+    })
+  }
+  if (data.status === FeeStatus.Cancelled && (!data.cancellationReason || !data.cancelledById || !data.cancelledAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'cancellation reason, actor, and date are required for cancelled student fees',
+    })
+  }
+  if (data.status !== FeeStatus.Cancelled && (data.cancellationReason || data.cancelledById || data.cancelledAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'active student fees must not define cancellation audit fields',
+    })
+  }
+}
+
+export const studentFeeSchema = studentFeeBaseSchema.superRefine(refineStudentFee)
+
+export type StudentFeeData = Omit<z.infer<typeof studentFeeSchema>, 'expectedAmount' | 'paidAmount' | 'adjustmentAmount' | 'currency' | 'installments'> & {
+  expectedAmount: Money
+  paidAmount: Money
+  adjustmentAmount: Money
+  installments: readonly StudentFeeInstallment[]
+}
+
+export const studentFeeCreateSchema = studentFeeBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentFee)
+export const studentFeeUpdateSchema = studentFeeBaseSchema.partial().required({ id: true }).superRefine(refineStudentFee)
 
 export interface StudentFeeArgs {
   id: string
@@ -52,115 +151,55 @@ export interface StudentFeeArgs {
  * Note: Actual payments made are tracked in separate Payment entities.
  */
 export class StudentFee {
-  readonly id: string
-  readonly studentId: string
-  readonly feeId: string
-  readonly academicYearId: string
-  readonly expectedAmount: Money
-  readonly paidAmount: Money
-  readonly adjustmentAmount: Money
-  readonly adjustmentReason?: string
-  readonly adjustedById?: string
-  readonly adjustedAt?: Date
-  readonly dueDate?: Date
-  readonly status: FeeStatus
-  readonly cancellationReason?: string
-  readonly cancelledById?: string
-  readonly cancelledAt?: Date
-  readonly installments: readonly StudentFeeInstallment[]
-  readonly createdAt: Date
-  readonly updatedAt?: Date
+  readonly data: StudentFeeData
 
-  constructor({
-    id,
-    studentId,
-    feeId,
-    academicYearId,
-    expectedAmount,
-    paidAmount = 0,
-    adjustmentAmount = 0,
-    adjustmentReason,
-    adjustedById,
-    adjustedAt,
-    currency,
-    dueDate,
-    status,
-    cancellationReason,
-    cancelledById,
-    cancelledAt,
-    installments = [],
-    createdAt,
-    updatedAt,
-  }: StudentFeeArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.studentId = requireNonBlank(studentId, 'studentId')
-    this.feeId = requireNonBlank(feeId, 'feeId')
-    this.academicYearId = requireNonBlank(academicYearId, 'academicYearId')
-
-    const activeCurrency = requireNonBlank(currency, 'currency')
-    this.expectedAmount = new Money({
-      amount: requireNonNegativeInt(expectedAmount, 'expectedAmount'),
-      currency: activeCurrency,
-    })
-
-    this.paidAmount = new Money({
-      amount: requireNonNegativeInt(paidAmount ?? 0, 'paidAmount'),
-      currency: activeCurrency,
-    })
-    this.adjustmentAmount = new Money({
-      amount: requireNonNegativeInt(adjustmentAmount ?? 0, 'adjustmentAmount'),
-      currency: activeCurrency,
-    })
-    this.adjustmentReason = requireNonBlankIfAmount(adjustmentReason, this.adjustmentAmount.amount, 'adjustmentReason')
-    this.adjustedById = requireOptionalNonBlank(adjustedById, 'adjustedById')
-    this.adjustedAt = adjustedAt ? requireValidDate(adjustedAt, 'adjustedAt') : undefined
-    if (this.adjustmentAmount.amount > this.expectedAmount.amount) {
-      throw new Error('adjustmentAmount must not exceed expectedAmount')
+  constructor(args: StudentFeeArgs) {
+    const result = studentFeeSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
     }
-    if (this.adjustmentAmount.amount > 0 && (!this.adjustedById || !this.adjustedAt)) {
-      throw new Error('adjustedById and adjustedAt are required for adjusted student fees')
-    }
-    if (this.adjustmentAmount.amount === 0 && (this.adjustedById || this.adjustedAt)) {
-      throw new Error('unadjusted student fees must not define adjustment audit fields')
-    }
-
-    this.dueDate = dueDate ? requireValidDate(dueDate, 'dueDate') : undefined
-    this.status = status
-    this.cancellationReason = requireOptionalNonBlank(cancellationReason, 'cancellationReason')
-    this.cancelledById = requireOptionalNonBlank(cancelledById, 'cancelledById')
-    this.cancelledAt = cancelledAt ? requireValidDate(cancelledAt, 'cancelledAt') : undefined
-
-    this.installments = Object.freeze(
-      installments.map(inst => ({
-        id: requireNonBlank(inst.id, 'installment.id'),
-        label: requireNonBlank(inst.label, 'installment.label'),
-        expectedAmount: requireNonNegativeInt(inst.expectedAmount, 'installment.expectedAmount'),
-        dueDate: inst.dueDate ? requireValidDate(inst.dueDate, 'installment.dueDate') : undefined,
-      })),
-    )
-    if (
-      this.installments.length > 0
-      && this.installments.reduce((sum, installment) => sum + installment.expectedAmount, 0)
-      !== this.expectedAmount.amount
-    ) {
-      throw new Error('installment expected amounts must total expectedAmount')
-    }
-
-    this.createdAt = createdAt ?? new Date()
-    this.updatedAt = updatedAt ? requireValidDate(updatedAt, 'updatedAt') : undefined
-
-    if (this.status === FeeStatus.Overdue) {
-      if (!this.dueDate) {
-        throw new Error('overdue fees must define a dueDate')
-      }
-    }
-    if (this.status === FeeStatus.Cancelled && (!this.cancellationReason || !this.cancelledById || !this.cancelledAt)) {
-      throw new Error('cancellation reason, actor, and date are required for cancelled student fees')
-    }
-    if (this.status !== FeeStatus.Cancelled && (this.cancellationReason || this.cancelledById || this.cancelledAt)) {
-      throw new Error('active student fees must not define cancellation audit fields')
+    const validated = result.data
+    const activeCurrency = validated.currency
+    this.data = {
+      id: validated.id,
+      studentId: validated.studentId,
+      feeId: validated.feeId,
+      academicYearId: validated.academicYearId,
+      expectedAmount: new Money({ amount: validated.expectedAmount, currency: activeCurrency }),
+      paidAmount: new Money({ amount: validated.paidAmount, currency: activeCurrency }),
+      adjustmentAmount: new Money({ amount: validated.adjustmentAmount, currency: activeCurrency }),
+      adjustmentReason: validated.adjustmentReason,
+      adjustedById: validated.adjustedById,
+      adjustedAt: validated.adjustedAt,
+      dueDate: validated.dueDate,
+      status: validated.status,
+      cancellationReason: validated.cancellationReason,
+      cancelledById: validated.cancelledById,
+      cancelledAt: validated.cancelledAt,
+      installments: Object.freeze(validated.installments),
+      createdAt: validated.createdAt,
+      updatedAt: validated.updatedAt,
     }
   }
+
+  get id() { return this.data.id }
+  get studentId() { return this.data.studentId }
+  get feeId() { return this.data.feeId }
+  get academicYearId() { return this.data.academicYearId }
+  get expectedAmount() { return this.data.expectedAmount }
+  get paidAmount() { return this.data.paidAmount }
+  get adjustmentAmount() { return this.data.adjustmentAmount }
+  get adjustmentReason() { return this.data.adjustmentReason }
+  get adjustedById() { return this.data.adjustedById }
+  get adjustedAt() { return this.data.adjustedAt }
+  get dueDate() { return this.data.dueDate }
+  get status() { return this.data.status }
+  get cancellationReason() { return this.data.cancellationReason }
+  get cancelledById() { return this.data.cancelledById }
+  get cancelledAt() { return this.data.cancelledAt }
+  get installments() { return this.data.installments }
+  get createdAt() { return this.data.createdAt }
+  get updatedAt() { return this.data.updatedAt }
 
   get balanceDue(): Money {
     return new Money({
@@ -242,17 +281,6 @@ export function buildStudentFeeSummary(studentFees: readonly StudentFee[], fallb
     totalOverdue: new Money({ amount: totalOverdueAmount, currency }),
     itemCount: studentFees.length,
   })
-}
-
-function requireNonBlankIfAmount(
-  value: string | null | undefined,
-  amount: number,
-  fieldName: string,
-): string | undefined {
-  if (amount === 0) {
-    return value == null || value.trim() === '' ? undefined : value.trim()
-  }
-  return requireNonBlank(value ?? '', fieldName)
 }
 
 export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories, policy, atomicExecution }) =>

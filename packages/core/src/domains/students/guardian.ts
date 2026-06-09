@@ -1,24 +1,47 @@
 import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireNonBlank, requireOptionalNonBlank } from '../utils'
+import { DomainValidationError, formatZodError, zodDate } from '../utils'
 import {
   GuardianContactMethod,
+  guardianContactMethodSchema,
   GuardianContactMethodType,
 } from './guardian-contact-method'
 
+export const guardianSchema = z.object({
+  id: z.string().trim().min(1, 'id must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  firstName: z.string().trim().min(1, 'firstName must not be blank'),
+  lastName: z.string().trim().min(1, 'lastName must not be blank'),
+  phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional(),
+  email: z.string().trim().min(1, 'email must not be blank').nullable().optional(),
+  subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  contactMethods: z.array(z.union([z.instanceof(GuardianContactMethod), guardianContactMethodSchema])).default([]),
+  hasAccess: z.boolean().default(true),
+  premiumNotificationsEnabled: z.boolean().default(false),
+  createdAt: zodDate().default(() => new Date()),
+})
+
+export type GuardianData = Omit<z.infer<typeof guardianSchema>, 'contactMethods'> & {
+  contactMethods: readonly GuardianContactMethod[]
+}
+
+export const guardianCreateSchema = guardianSchema.omit({ createdAt: true })
+export const guardianUpdateSchema = guardianSchema.partial().required({ id: true })
+
 export interface GuardianArgs {
   id: string
-  schoolId: string // !
+  schoolId: string
   firstName: string
   lastName: string
   phone?: string | null
   email?: string | null
   subjectId?: string | null
-  contactMethods?: readonly GuardianContactMethod[]
+  contactMethods?: readonly (GuardianContactMethod | any)[]
   hasAccess?: boolean
   premiumNotificationsEnabled?: boolean
   createdAt?: Date
@@ -29,37 +52,19 @@ export interface GuardianArgs {
  * Manages their contact details and system access permissions.
  */
 export class Guardian {
-  readonly id: string
-  readonly schoolId: string
-  readonly firstName: string
-  readonly lastName: string
-  readonly contactMethods: readonly GuardianContactMethod[]
-  readonly subjectId?: string
-  readonly hasAccess: boolean
-  readonly premiumNotificationsEnabled: boolean
-  readonly createdAt: Date
+  readonly data: GuardianData
 
-  constructor({
-    id,
-    schoolId,
-    firstName,
-    lastName,
-    phone,
-    email,
-    subjectId,
-    contactMethods,
-    hasAccess = true,
-    premiumNotificationsEnabled = false,
-    createdAt,
-  }: GuardianArgs) {
-    this.id = requireNonBlank(id, 'id')
-    this.schoolId = requireNonBlank(schoolId, 'schoolId')
-    this.firstName = requireNonBlank(firstName, 'firstName')
-    this.lastName = requireNonBlank(lastName, 'lastName')
-    this.subjectId = requireOptionalNonBlank(subjectId, 'subjectId')
-    const normalizedPhone = requireOptionalNonBlank(phone, 'phone')
-    const normalizedEmail = requireOptionalNonBlank(email, 'email')
-    const builtContactMethods = contactMethods ? [...contactMethods] : []
+  constructor(args: GuardianArgs) {
+    const result = guardianSchema.safeParse(args)
+    if (!result.success) {
+      throw new DomainValidationError(formatZodError(result.error))
+    }
+    const data = result.data
+    const builtContactMethods = data.contactMethods.map(item =>
+      item instanceof GuardianContactMethod ? item : new GuardianContactMethod(item),
+    )
+    const normalizedPhone = data.phone ?? undefined
+    const normalizedEmail = data.email ?? undefined
     if (normalizedPhone) {
       builtContactMethods.push(
         new GuardianContactMethod({
@@ -78,11 +83,24 @@ export class Guardian {
         }),
       )
     }
-    this.contactMethods = Object.freeze(Guardian.normalizeContactMethods(builtContactMethods))
-    this.hasAccess = hasAccess
-    this.premiumNotificationsEnabled = premiumNotificationsEnabled
-    this.createdAt = createdAt ?? new Date()
+    const finalContactMethods = Object.freeze(Guardian.normalizeContactMethods(builtContactMethods))
+    this.data = {
+      ...data,
+      contactMethods: finalContactMethods,
+      phone: finalContactMethods.find(item => item.type === GuardianContactMethodType.Phone)?.value,
+      email: finalContactMethods.find(item => item.type === GuardianContactMethodType.Email)?.value,
+    }
   }
+
+  get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
+  get firstName() { return this.data.firstName }
+  get lastName() { return this.data.lastName }
+  get contactMethods() { return this.data.contactMethods }
+  get subjectId() { return this.data.subjectId }
+  get hasAccess() { return this.data.hasAccess }
+  get premiumNotificationsEnabled() { return this.data.premiumNotificationsEnabled }
+  get createdAt() { return this.data.createdAt }
 
   get phone(): string | undefined {
     return this.contactMethods.find(item => item.type === GuardianContactMethodType.Phone)?.value
