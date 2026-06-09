@@ -5,7 +5,6 @@ import { isInteractiveActor } from './actor-metadata'
 import { AuthorizationError, AuthorizationErrorCode } from './authorization-error'
 import { assertPermissionAssurance } from './permissions/permission-assurance'
 import { permissionDefinitions } from './permissions/permission-definitions'
-import { assertPortalPermission } from './portal-permissions'
 
 export interface AuthorizeArgs {
   actor: ActorMetadata
@@ -71,11 +70,6 @@ function assertGrantsCapability(
   }
 
   assertPermissionAssurance(actor.assuranceLevel, request.permission)
-
-  if (actor.kind === 'guardian' || actor.kind === 'student') {
-    assertPortalPermission(actor, request.permission)
-    return
-  }
 
   const grants = actor.effectiveGrants
 

@@ -1,38 +1,43 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
 import type { Permission } from '../permissions'
 import type { ScopeType } from '../permissions/scope-type'
-import { resolveEffectiveGrants, scopeGrantCovers } from '../../ports/authorization-repository'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
+import { scopeGrantCovers } from '../../ports/authorization-repository'
 
-export async function staffHasAnyPermission(
+export function actorHasAnyPermission(
   actor: ActorMetadata,
   permissions: readonly Permission[],
-  repos: SchoolRepositories,
-): Promise<boolean> {
-  if (actor.kind !== 'staff') {
+): boolean {
+  if (actor.kind === 'system') {
+    return true
+  }
+
+  const grants = actor.effectiveGrants
+  if (!grants) {
     return false
   }
 
-  const grants = await loadStaffEffectiveGrants(actor, repos)
   if (permissions.length === 0) {
-    return true
+    return grants.isElevated || grants.permissions.size > 0
   }
+
   return grants.isElevated || permissions.some(permission => grants.permissions.has(permission))
 }
 
-export async function staffGrantCoversAny(
+export function actorGrantCoversAny(
   actor: ActorMetadata,
   permissions: readonly Permission[],
   scopeType: ScopeType,
   scopeEntityId: string,
-  repos: SchoolRepositories,
-): Promise<boolean> {
-  if (actor.kind !== 'staff') {
+): boolean {
+  if (actor.kind === 'system') {
+    return true
+  }
+
+  const grants = actor.effectiveGrants
+  if (!grants) {
     return false
   }
 
-  const grants = await loadStaffEffectiveGrants(actor, repos)
   return permissions.some(permission =>
     grants.permissions.has(permission)
     && scopeGrantCovers(grants.scopeGrants, {
@@ -44,25 +49,19 @@ export async function staffGrantCoversAny(
     }))
 }
 
-async function loadStaffEffectiveGrants(
-  actor: Extract<ActorMetadata, { kind: 'staff' }>,
-  repos: SchoolRepositories,
-) {
-  if (actor.effectiveGrants) {
-    return actor.effectiveGrants
-  }
+// Backward compatibility wrappers
+export async function staffHasAnyPermission(
+  actor: ActorMetadata,
+  permissions: readonly Permission[],
+): Promise<boolean> {
+  return actorHasAnyPermission(actor, permissions)
+}
 
-  try {
-    return await resolveEffectiveGrants({
-      staffMemberId: actor.staffMemberId,
-      schoolId: actor.schoolId,
-      repositories: repos,
-    })
-  }
-  catch (error) {
-    if (error instanceof AuthorizationError) {
-      throw error
-    }
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
+export async function staffGrantCoversAny(
+  actor: ActorMetadata,
+  permissions: readonly Permission[],
+  scopeType: ScopeType,
+  scopeEntityId: string,
+): Promise<boolean> {
+  return actorGrantCoversAny(actor, permissions, scopeType, scopeEntityId)
 }

@@ -1,6 +1,7 @@
 import {
   AcademicPeriodType,
   AccessRole,
+  ACCOUNTANT_PERMISSIONS,
   ActorAssuranceLevel,
   AttendanceStatus,
   AuthorizationErrorCode,
@@ -10,13 +11,11 @@ import {
   GradeLevel,
   Permission,
   resolveAuditActorId,
-  resolveEffectiveGrants,
   SessionKind,
   StaffMember,
   StaffRoleAssignment,
   Subject,
   TEACHER_PERMISSIONS,
-  ACCOUNTANT_PERMISSIONS,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -184,10 +183,9 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'coord-user',
       staffMemberId: 'coordinator-staff',
       schoolId: 'school',
-      effectiveGrants: await resolveEffectiveGrants({
+      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'coordinator-staff',
         schoolId: 'school',
-        repositories: schoolRepositories,
       }),
       requestId: 'req-coord',
       authenticatedAt: new Date(),
@@ -231,10 +229,9 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'acct-user',
       staffMemberId: 'accountant-staff',
       schoolId: 'school',
-      effectiveGrants: await resolveEffectiveGrants({
+      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'accountant-staff',
         schoolId: 'school',
-        repositories: schoolRepositories,
       }),
       requestId: 'req-acct',
       authenticatedAt: new Date(),
@@ -266,10 +263,9 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
-      effectiveGrants: await resolveEffectiveGrants({
+      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'teacher-staff',
         schoolId: 'school',
-        repositories: schoolRepositories,
       }),
       requestId: 'req-teacher',
       authenticatedAt: new Date(),
@@ -389,10 +385,9 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
-      effectiveGrants: await resolveEffectiveGrants({
+      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'teacher-staff',
         schoolId: 'school',
-        repositories: schoolRepositories,
       }),
       requestId: 'req-unauth',
       authenticatedAt: new Date(),

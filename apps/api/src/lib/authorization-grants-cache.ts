@@ -1,7 +1,6 @@
-import {
-  type EffectiveGrants,
-  resolveEffectiveGrants,
-  type SchoolRepositories,
+import type {
+  EffectiveGrants,
+  SchoolRepositories,
 } from "@edaya/core";
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
@@ -9,11 +8,13 @@ const DEFAULT_TTL_MS = 5 * 60 * 1000;
 interface CacheEntry {
   grants: EffectiveGrants;
   expiresAt: number;
-  staffScope: string;
+  actorScope: string;
 }
 
 export interface ResolveCachedEffectiveGrantsArgs {
-  staffMemberId: string;
+  actorId?: string;
+  actorType?: "staff" | "guardian" | "student";
+  staffMemberId?: string;
   schoolId: string;
   subjectId: string;
   sessionId?: string;
@@ -24,9 +25,11 @@ export interface ResolveCachedEffectiveGrantsArgs {
 }
 
 const entries = new Map<string, CacheEntry>();
-const staffIndex = new Map<string, Set<string>>();
+const actorIndex = new Map<string, Set<string>>();
 
 export async function resolveCachedEffectiveGrants({
+  actorId,
+  actorType = "staff",
   staffMemberId,
   schoolId,
   subjectId,
@@ -36,87 +39,100 @@ export async function resolveCachedEffectiveGrants({
   now = new Date(),
   ttlMs = DEFAULT_TTL_MS,
 }: ResolveCachedEffectiveGrantsArgs): Promise<EffectiveGrants> {
-  const key = cacheKey({ schoolId, staffMemberId, subjectId, sessionId, authenticatedAt });
+  const finalActorId = actorId ?? staffMemberId;
+  if (!finalActorId) {
+    throw new Error("actorId or staffMemberId is required");
+  }
+
+  const key = cacheKey({ schoolId, actorId: finalActorId, actorType, subjectId, sessionId, authenticatedAt });
   const existing = entries.get(key);
   if (existing && existing.expiresAt > now.getTime()) {
     return existing.grants;
   }
 
+  const actorScope = actorCacheScope(schoolId, finalActorId, actorType);
+
   if (existing) {
-    deleteEntry(key, existing.staffScope);
+    deleteEntry(key, existing.actorScope);
   }
 
-  const grants = await resolveEffectiveGrants({
-    staffMemberId,
+  const grants = await repositories.authorization.resolveActorGrants({
+    actorId: finalActorId,
+    actorType,
     schoolId,
-    repositories,
     now,
   });
-  const staffScope = staffCacheScope(schoolId, staffMemberId);
+
   const ttlExpiresAt = now.getTime() + ttlMs;
   const grantExpiresAt = grants.expiresAt?.getTime();
   entries.set(key, {
     grants,
-    staffScope,
+    actorScope,
     expiresAt: grantExpiresAt === undefined ? ttlExpiresAt : Math.min(ttlExpiresAt, grantExpiresAt),
   });
-  indexEntry(staffScope, key);
+  indexEntry(actorScope, key);
   return grants;
 }
 
-export function invalidateEffectiveGrantsCacheForStaff(staffMemberId: string, schoolId?: string): void {
-  const scopeSuffix = `:${staffMemberId}`;
-  for (const staffScope of [...staffIndex.keys()]) {
-    if (schoolId && staffScope !== staffCacheScope(schoolId, staffMemberId)) {
+export function invalidateEffectiveGrantsCacheForActor(actorId: string, actorType: "staff" | "guardian" | "student", schoolId?: string): void {
+  const scopeSuffix = `:${actorType}:${actorId}`;
+  for (const actorScope of [...actorIndex.keys()]) {
+    if (schoolId && actorScope !== actorCacheScope(schoolId, actorId, actorType)) {
       continue;
     }
-    if (!schoolId && !staffScope.endsWith(scopeSuffix)) {
+    if (!schoolId && !actorScope.endsWith(scopeSuffix)) {
       continue;
     }
 
-    for (const key of staffIndex.get(staffScope) ?? []) {
+    for (const key of actorIndex.get(actorScope) ?? []) {
       entries.delete(key);
     }
-    staffIndex.delete(staffScope);
+    actorIndex.delete(actorScope);
   }
+}
+
+export function invalidateEffectiveGrantsCacheForStaff(staffMemberId: string, schoolId?: string): void {
+  invalidateEffectiveGrantsCacheForActor(staffMemberId, "staff", schoolId);
 }
 
 export function clearEffectiveGrantsCache(): void {
   entries.clear();
-  staffIndex.clear();
+  actorIndex.clear();
 }
 
-function indexEntry(staffScope: string, key: string): void {
-  const keys = staffIndex.get(staffScope) ?? new Set<string>();
+function indexEntry(actorScope: string, key: string): void {
+  const keys = actorIndex.get(actorScope) ?? new Set<string>();
   keys.add(key);
-  staffIndex.set(staffScope, keys);
+  actorIndex.set(actorScope, keys);
 }
 
-function deleteEntry(key: string, staffScope: string): void {
+function deleteEntry(key: string, actorScope: string): void {
   entries.delete(key);
-  const keys = staffIndex.get(staffScope);
+  const keys = actorIndex.get(actorScope);
   if (!keys) {
     return;
   }
   keys.delete(key);
   if (keys.size === 0) {
-    staffIndex.delete(staffScope);
+    actorIndex.delete(actorScope);
   }
 }
 
-function staffCacheScope(schoolId: string, staffMemberId: string): string {
-  return `${schoolId}:${staffMemberId}`;
+function actorCacheScope(schoolId: string, actorId: string, actorType: string): string {
+  return `${schoolId}:${actorType}:${actorId}`;
 }
 
 function cacheKey({
   schoolId,
-  staffMemberId,
+  actorId,
+  actorType,
   subjectId,
   sessionId,
   authenticatedAt,
 }: {
   schoolId: string;
-  staffMemberId: string;
+  actorId: string;
+  actorType: string;
   subjectId: string;
   sessionId?: string;
   authenticatedAt: Date;
@@ -124,5 +140,5 @@ function cacheKey({
   const sessionScope = sessionId
     ? `session:${sessionId}`
     : `auth:${subjectId}:${authenticatedAt.toISOString()}`;
-  return `${schoolId}:${staffMemberId}:${sessionScope}`;
+  return `${schoolId}:${actorType}:${actorId}:${sessionScope}`;
 }

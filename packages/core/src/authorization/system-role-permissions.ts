@@ -75,5 +75,3 @@ export const ASSIGNMENT_SCOPED_PERMISSIONS: readonly Permission[] = [
   Permission.CLASS_LOGBOOK_UPDATE,
   Permission.DISCIPLINE_CREATE,
 ]
-
-

@@ -198,6 +198,18 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       repositories: schoolRepositories,
     })
 
+    const guardianGrants = await schoolRepositories.authorization.resolveActorGrants({
+      actorId: 'guardian',
+      actorType: 'guardian',
+      schoolId: 'school',
+    })
+
+    const studentGrants = await schoolRepositories.authorization.resolveActorGrants({
+      actorId: 'student',
+      actorType: 'student',
+      schoolId: 'school',
+    })
+
     // Instantiate concurrent actor-bound facades
     const teacherApp = forActor(createStaffActorMetadata({
       subjectId: 'teacher-user',
@@ -225,6 +237,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       schoolId: 'school',
       requestId: 'guardian-request-303',
       authenticatedAt: new Date(),
+      effectiveGrants: guardianGrants,
     }))
 
     const studentApp = forActor(createStudentActorMetadata({
@@ -233,6 +246,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       schoolId: 'school',
       requestId: 'student-request-404',
       authenticatedAt: new Date(),
+      effectiveGrants: studentGrants,
     }))
 
     // Execute multiple overlapping read & write actions concurrently

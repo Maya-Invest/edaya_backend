@@ -4,7 +4,9 @@ import type { ScopeGrant } from '../authorization/role-types'
 import type { StaffAssignment } from '../domains'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization/authorization-error'
+import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../authorization/portal-permissions'
 import { ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS } from '../authorization/system-role-permissions'
+import { StudentClassEnrollmentStatus } from '../domains'
 
 export interface EffectiveGrants {
   readonly permissions: ReadonlySet<Permission>
@@ -89,6 +91,17 @@ export async function tryResolveEffectiveGrantsFromPersistence(
     }
   }
 
+  const autoSchoolGrants: ScopeGrant[] = []
+  for (const permission of permissions) {
+    if (!ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission)) {
+      autoSchoolGrants.push({
+        permission,
+        scopeType: 'school',
+        scopeEntityIds: [args.schoolId],
+      })
+    }
+  }
+
   const isElevated = false
   const assignmentScopeGrants = isElevated
     ? []
@@ -96,6 +109,7 @@ export async function tryResolveEffectiveGrantsFromPersistence(
   const scopeGrants = mergeScopeGrants([
     ...scoped.flatMap(assignment => [...assignment.scopeGrants]),
     ...assignmentScopeGrants,
+    ...autoSchoolGrants,
   ])
 
   return {
@@ -217,6 +231,16 @@ export function scopeGrantCovers(
     return true
   }
 
+  // A school-scoped grant for the permission covers any resource in that school
+  const hasSchoolGrant = grants.some(grant =>
+    grant.permission === args.permission
+    && grant.scopeType === 'school'
+    && (grant.scopeEntityIds.length === 0 || grant.scopeEntityIds.includes(args.schoolId)),
+  )
+  if (hasSchoolGrant) {
+    return true
+  }
+
   const matching = grants.filter(grant =>
     grant.permission === args.permission && grant.scopeType === args.scopeType)
 
@@ -229,16 +253,146 @@ export function scopeGrantCovers(
   }
 
   return matching.some((grant) => {
-    if (grant.scopeType === 'school') {
-      return grant.scopeEntityIds.length === 0 || grant.scopeEntityIds.includes(args.schoolId)
-    }
     return grant.scopeEntityIds.includes(args.scopeEntityId!)
   })
+}
+
+export async function resolveGuardianGrants(args: {
+  guardianId: string
+  schoolId: string
+  repositories: SchoolRepositories
+}): Promise<EffectiveGrants> {
+  const guardian = await args.repositories.guardians.findById(args.guardianId)
+  if (!guardian || guardian.schoolId !== args.schoolId) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  const links = await args.repositories.guardianLinks.list({ guardianId: args.guardianId })
+  const studentIds = links.filter(l => l.schoolId === args.schoolId).map(l => l.studentId)
+
+  const classGroupIds = new Set<string>()
+  for (const studentId of studentIds) {
+    const enrollments = await args.repositories.enrollments.list({ studentId })
+    const active = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
+    if (active) {
+      classGroupIds.add(active.classGroupId)
+    }
+  }
+
+  const scopeGrants: ScopeGrant[] = []
+
+  if (studentIds.length > 0) {
+    for (const permission of GUARDIAN_PORTAL_PERMISSIONS) {
+      scopeGrants.push({
+        permission,
+        scopeType: 'student',
+        scopeEntityIds: studentIds,
+      })
+    }
+  }
+
+  if (classGroupIds.size > 0) {
+    const classGroupIdList = Array.from(classGroupIds)
+    for (const permission of GUARDIAN_PORTAL_PERMISSIONS) {
+      scopeGrants.push({
+        permission,
+        scopeType: 'class_group',
+        scopeEntityIds: classGroupIdList,
+      })
+    }
+  }
+
+  return {
+    permissions: GUARDIAN_PORTAL_PERMISSIONS,
+    scopeGrants,
+    isElevated: false,
+  }
+}
+
+export async function resolveStudentGrants(args: {
+  studentId: string
+  schoolId: string
+  repositories: SchoolRepositories
+}): Promise<EffectiveGrants> {
+  const student = await args.repositories.students.findById(args.studentId)
+  if (!student || student.schoolId !== args.schoolId) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  const enrollments = await args.repositories.enrollments.list({ studentId: args.studentId })
+  const active = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
+
+  const scopeGrants: ScopeGrant[] = []
+
+  for (const permission of STUDENT_PORTAL_PERMISSIONS) {
+    scopeGrants.push({
+      permission,
+      scopeType: 'student',
+      scopeEntityIds: [args.studentId],
+    })
+  }
+
+  if (active) {
+    for (const permission of STUDENT_PORTAL_PERMISSIONS) {
+      scopeGrants.push({
+        permission,
+        scopeType: 'class_group',
+        scopeEntityIds: [active.classGroupId],
+      })
+    }
+  }
+
+  return {
+    permissions: STUDENT_PORTAL_PERMISSIONS,
+    scopeGrants,
+    isElevated: false,
+  }
+}
+
+export interface ResolveActorGrantsArgs {
+  actorId: string
+  actorType: 'staff' | 'guardian' | 'student'
+  schoolId: string
+  repositories: SchoolRepositories
+  academicYearId?: string
+  now?: Date
+}
+
+export async function resolveActorGrants(args: ResolveActorGrantsArgs): Promise<EffectiveGrants> {
+  switch (args.actorType) {
+    case 'staff':
+      return resolveEffectiveGrants({
+        staffMemberId: args.actorId,
+        schoolId: args.schoolId,
+        repositories: args.repositories,
+        academicYearId: args.academicYearId,
+        now: args.now,
+      })
+    case 'guardian':
+      return resolveGuardianGrants({
+        guardianId: args.actorId,
+        schoolId: args.schoolId,
+        repositories: args.repositories,
+      })
+    case 'student':
+      return resolveStudentGrants({
+        studentId: args.actorId,
+        schoolId: args.schoolId,
+        repositories: args.repositories,
+      })
+  }
 }
 
 export interface AuthorizationRepository {
   resolveEffectiveGrants: (args: {
     staffMemberId: string
+    schoolId: string
+    academicYearId?: string
+    now?: Date
+  }) => Promise<EffectiveGrants>
+  resolveActorGrants: (args: {
+    actorId: string
+    actorType: 'staff' | 'guardian' | 'student'
     schoolId: string
     academicYearId?: string
     now?: Date
@@ -255,6 +409,19 @@ export class DefaultAuthorizationRepository implements AuthorizationRepository {
     now?: Date
   }): Promise<EffectiveGrants> {
     return resolveEffectiveGrants({
+      ...args,
+      repositories: this.repositories as SchoolRepositories,
+    })
+  }
+
+  async resolveActorGrants(args: {
+    actorId: string
+    actorType: 'staff' | 'guardian' | 'student'
+    schoolId: string
+    academicYearId?: string
+    now?: Date
+  }): Promise<EffectiveGrants> {
+    return resolveActorGrants({
       ...args,
       repositories: this.repositories as SchoolRepositories,
     })

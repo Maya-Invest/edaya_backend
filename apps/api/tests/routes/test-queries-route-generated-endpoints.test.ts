@@ -8,6 +8,7 @@ import type { AppBindings } from "@/lib/types";
 describe("generated core query endpoints", () => {
   const mockActor = {
     kind: "staff" as const,
+    actorId: "staff-1",
     subjectId: "admin-user",
     schoolId: "school-1",
     staffMemberId: "staff-1",

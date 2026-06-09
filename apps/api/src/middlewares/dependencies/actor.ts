@@ -48,11 +48,13 @@ type ActorIdentity =
     kind: "guardian";
     schoolId: string;
     guardianId: string;
+    effectiveGrants?: EffectiveGrants;
   }
   | {
     kind: "student";
     schoolId: string;
     studentId: string;
+    effectiveGrants?: EffectiveGrants;
   };
 
 async function resolveDefaultAuthProvider() {
@@ -155,20 +157,30 @@ async function resolveActorIdentity(
   }
 
   const [identity] = identities;
-  if (identity.kind !== "staff") {
-    return identity;
+  if (!identity) {
+    return null;
   }
+
+  const actorId
+    = identity.kind === "staff"
+      ? identity.staffMemberId
+      : identity.kind === "guardian"
+        ? identity.guardianId
+        : identity.studentId;
+
+  const effectiveGrants = await resolveCachedEffectiveGrants({
+    actorId,
+    actorType: identity.kind,
+    schoolId: identity.schoolId,
+    subjectId,
+    ...(session.id ? { sessionId: session.id } : {}),
+    authenticatedAt: session.createdAt,
+    repositories: repos,
+  });
 
   return {
     ...identity,
-    effectiveGrants: await resolveCachedEffectiveGrants({
-      staffMemberId: identity.staffMemberId,
-      schoolId: identity.schoolId,
-      subjectId,
-      ...(session.id ? { sessionId: session.id } : {}),
-      authenticatedAt: session.createdAt,
-      repositories: repos,
-    }),
+    effectiveGrants,
   };
 }
 
@@ -186,12 +198,14 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
         ...context,
         schoolId: identity.schoolId,
         guardianId: identity.guardianId,
+        effectiveGrants: identity.effectiveGrants,
       });
     case "student":
       return createStudentActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         studentId: identity.studentId,
+        effectiveGrants: identity.effectiveGrants,
       });
   }
 }

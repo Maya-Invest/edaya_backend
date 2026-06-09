@@ -1,9 +1,9 @@
 import type { EffectiveGrants } from '@edaya/core'
 import {
-  COORDINATOR_PERMISSIONS,
-  TEACHER_PERMISSIONS,
   ACCOUNTANT_PERMISSIONS,
+  COORDINATOR_PERMISSIONS,
   Permission,
+  TEACHER_PERMISSIONS,
 } from '@edaya/core'
 
 export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'

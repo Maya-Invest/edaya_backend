@@ -1,7 +1,6 @@
 import {
   AccessRole,
   Permission,
-  resolveEffectiveGrants,
   StaffAssignment,
   StaffMember,
   StaffRoleAssignment,
@@ -44,10 +43,9 @@ describeIntegration('access control persistence', () => {
       status: 'active',
     }))
 
-    const grants = await resolveEffectiveGrants({
+    const grants = await repos.authorization.resolveEffectiveGrants({
       staffMemberId: 'staff-teacher-1',
       schoolId: 'school',
-      repositories: repos,
     })
 
     expect(grants.permissions.has(Permission.ATTENDANCE_RECORD)).toBe(true)

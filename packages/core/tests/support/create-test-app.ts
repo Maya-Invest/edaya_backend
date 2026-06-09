@@ -347,7 +347,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
 
   }
 
-  // @ts-ignore
+  // @ts-expect-error - dynamic assignment of authorization repository
   schoolRepositories.authorization = new DefaultAuthorizationRepository(schoolRepositories)
 
   const testRepositories = {

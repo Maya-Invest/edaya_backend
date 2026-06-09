@@ -6,8 +6,6 @@ import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireNonBlank, requireOptionalNonBlank } from '../utils'
 
-
-
 export interface StaffMemberArgs {
   id: string
   schoolId: string

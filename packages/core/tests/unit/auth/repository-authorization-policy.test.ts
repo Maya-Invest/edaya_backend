@@ -1,7 +1,8 @@
 import type { ActorMetadata, EffectiveGrants } from '../../../src/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
+import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, mock, test } from 'bun:test'
-import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, Permission, RepositoryAuthorizationPolicy, resolveEffectiveGrants } from '../../../src/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, RepositoryAuthorizationPolicy, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/authorization'
 import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
   checkClassGroupAccess as checkAcademicClassGroupAccess,
@@ -12,7 +13,7 @@ import {
   checkSessionAccess as checkSchedulingSessionAccess,
 } from '../../../src/authorization/access-resolvers/scheduling-resolver'
 import { AccessRole, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domains'
-import { TEST_ROLE_PERMISSIONS, type TestRole } from '../../support/effective-grants'
+import { TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
 
@@ -30,7 +31,7 @@ async function staffActor(
       repositories: finalRepos,
     })
   }
-  catch (err) {
+  catch {
     grants = {
       permissions: new Set(),
       scopeGrants: [],
@@ -49,23 +50,55 @@ async function staffActor(
   })
 }
 
-function studentActor(studentId = 'student-1'): ActorMetadata {
+function studentActor(studentId = 'student-1', classGroupId = 'class-1'): ActorMetadata {
   return createStudentActorMetadata({
     subjectId: 'subject-student',
     studentId,
     schoolId: 'school-1',
     requestId: 'request-1',
     authenticatedAt: now,
+    effectiveGrants: {
+      permissions: STUDENT_PORTAL_PERMISSIONS,
+      scopeGrants: [
+        ...Array.from(STUDENT_PORTAL_PERMISSIONS).map(permission => ({
+          permission,
+          scopeType: 'student' as const,
+          scopeEntityIds: [studentId],
+        })),
+        ...Array.from(STUDENT_PORTAL_PERMISSIONS).map(permission => ({
+          permission,
+          scopeType: 'class_group' as const,
+          scopeEntityIds: [classGroupId],
+        })),
+      ],
+      isElevated: false,
+    },
   })
 }
 
-function guardianActor(guardianId = 'guardian-1'): ActorMetadata {
+function guardianActor(guardianId = 'guardian-1', studentId = 'student-1', classGroupId = 'class-1'): ActorMetadata {
   return createGuardianActorMetadata({
     subjectId: 'subject-guardian',
     guardianId,
     schoolId: 'school-1',
     requestId: 'request-1',
     authenticatedAt: now,
+    effectiveGrants: {
+      permissions: GUARDIAN_PORTAL_PERMISSIONS,
+      scopeGrants: [
+        ...Array.from(GUARDIAN_PORTAL_PERMISSIONS).map(permission => ({
+          permission,
+          scopeType: 'student' as const,
+          scopeEntityIds: [studentId],
+        })),
+        ...Array.from(GUARDIAN_PORTAL_PERMISSIONS).map(permission => ({
+          permission,
+          scopeType: 'class_group' as const,
+          scopeEntityIds: [classGroupId],
+        })),
+      ],
+      isElevated: false,
+    },
   })
 }
 
@@ -113,13 +146,23 @@ function createRepos(
       schoolId: 'school-1',
       name: role,
       permissions: [...TEST_ROLE_PERMISSIONS[role]],
+      status: 'active',
     }))
   const systemAssignment = new StaffRoleAssignment({
     id: `assignment-staff-1`,
     staffId: 'staff-1',
     schoolId: 'school-1',
     roleIds: staffRoles.map(role => `role-${role}`),
-    scopeGrants: [],
+    status: 'active',
+    scopeGrants: staffRoles.flatMap(role =>
+      TEST_ROLE_PERMISSIONS[role]
+        .filter(permission => role !== 'teacher' || !ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission))
+        .map(permission => ({
+          permission,
+          scopeType: 'school' as const,
+          scopeEntityIds: ['school-1'],
+        })),
+    ),
   })
   const repos = {
     assessments: {
@@ -176,7 +219,15 @@ function createRepos(
     studentNotes: {
       findById: mock(async (id: string) => id === 'note-1' ? { id, studentId: 'student-1' } : undefined),
     },
+    students: {
+      findById: mock(async id => id === 'student-1' ? { id, schoolId: 'school-1' } : undefined),
+    },
+    guardians: {
+      findById: mock(async id => id === 'guardian-1' ? { id, schoolId: 'school-1' } : undefined),
+    },
   } as unknown as SchoolRepositories
+
+  (repos as any).authorization = new DefaultAuthorizationRepository(repos)
 
   return { ...repos, ...overrides } as SchoolRepositories
 }
@@ -229,7 +280,7 @@ describe('RepositoryAuthorizationPolicy', () => {
     await policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.STUDENT_HEALTH_UPDATE]), ['profile-1'])
 
     await expectForbidden(policy.checkStudentAccess(studentActor('student-1'), ['student-2']))
-    await expectForbidden(policy.checkStudentAccess(guardianActor('guardian-2'), ['student-1']))
+    await expectForbidden(policy.checkStudentAccess(guardianActor('guardian-2', 'student-2'), ['student-1']))
     await expectForbidden(policy.checkGuardianAccess(guardianActor(), ['guardian-2']))
     await expectForbidden(policy.checkStudentNoteAccess(await staffActor(['teacher'], repos), ['missing-note']))
     await expectForbidden(policy.checkStudentHealthAccess(await staffActor(['teacher'], repos), ['profile-1']))
@@ -283,7 +334,7 @@ describe('RepositoryAuthorizationPolicy', () => {
 
     await expectForbidden(policy.checkFeeAccess(studentActor(), ['fee-1']))
     await expectForbidden(policy.checkStudentFeeAccess(studentActor('student-2'), ['student-fee-1']))
-    await expectForbidden(policy.checkStudentFeeAccess(guardianActor('guardian-2'), ['student-fee-1']))
+    await expectForbidden(policy.checkStudentFeeAccess(guardianActor('guardian-2', 'student-2'), ['student-fee-1']))
   })
 
   test('rejects inactive or cross-school staff before role checks', async () => {
@@ -316,11 +367,7 @@ describe('RepositoryAuthorizationPolicy', () => {
 
     const reposAcct = createRepos({}, ['accountant'])
     await expectForbidden(checkAcademicClassGroupAccess(await staffActor(['accountant'], reposAcct), ['class-1'], reposAcct))
-    await expectForbidden(checkAcademicClassGroupAccess(guardianActor(), ['class-1'], createRepos({
-      enrollments: {
-        list: mock(async () => []),
-      } as any,
-    })))
+    await expectForbidden(checkAcademicClassGroupAccess(guardianActor('guardian-1', 'student-1', 'class-different'), ['class-1'], createRepos()))
 
     const reposNoAssign = createRepos({
       staffAssignments: {
@@ -328,12 +375,7 @@ describe('RepositoryAuthorizationPolicy', () => {
       } as any,
     })
     await expectForbidden(checkAcademicAssessmentAccess(await staffActor(['teacher'], reposNoAssign), ['assessment-1'], reposNoAssign))
-    await expectForbidden(checkReportCardResultAccess(guardianActor(), ['result-1'], createRepos({
-      guardianLinks: {
-        findOne: mock(async () => ({ id: 'link-1', guardianId: 'guardian-1', studentId: 'student-1', schoolId: 'other-school' })),
-        list: mock(async () => []),
-      } as any,
-    })))
+    await expectForbidden(checkReportCardResultAccess(guardianActor('guardian-1', 'student-different'), ['result-1'], createRepos()))
 
     const reposNoEnroll = createRepos({
       enrollments: {
@@ -357,11 +399,7 @@ describe('RepositoryAuthorizationPolicy', () => {
     const reposPrincipal2 = createRepos({}, ['principal'])
     await checkSchedulingSessionAccess(await staffActor(['principal'], reposPrincipal2), ['missing-session'], reposPrincipal2)
 
-    await expectForbidden(checkSchedulingSessionAccess(guardianActor(), ['session-1'], createRepos({
-      enrollments: {
-        list: mock(async () => []),
-      } as any,
-    })))
+    await expectForbidden(checkSchedulingSessionAccess(guardianActor('guardian-1', 'student-1', 'class-different'), ['session-1'], createRepos()))
 
     const reposAcct2 = createRepos({}, ['accountant'])
     await expectForbidden(checkSchedulingSessionAccess(await staffActor(['accountant'], reposAcct2), ['session-1'], reposAcct2))
@@ -383,5 +421,45 @@ describe('RepositoryAuthorizationPolicy', () => {
       } as any,
     })
     await expectForbidden(checkSchedulingAttendanceAccess(await staffActor(['teacher'], reposNoAssign4), ['student-1'], ['session-1'], reposNoAssign4))
+  })
+
+  test('resolves actor grants for students and guardians via auth repository', async () => {
+    const repos = createRepos({
+      students: {
+        findById: mock(async id => id === 'student-1' ? { id, schoolId: 'school-1' } : undefined),
+      } as any,
+      guardians: {
+        findById: mock(async id => id === 'guardian-1' ? { id, schoolId: 'school-1' } : undefined),
+      } as any,
+    })
+
+    const studentGrants = await repos.authorization.resolveActorGrants({
+      actorId: 'student-1',
+      actorType: 'student',
+      schoolId: 'school-1',
+    })
+    expect(studentGrants.permissions.has(Permission.GRADE_READ)).toBe(true)
+    expect(studentGrants.scopeGrants).toContainEqual({
+      permission: Permission.GRADE_READ,
+      scopeType: 'class_group',
+      scopeEntityIds: ['class-1'],
+    })
+
+    const guardianGrants = await repos.authorization.resolveActorGrants({
+      actorId: 'guardian-1',
+      actorType: 'guardian',
+      schoolId: 'school-1',
+    })
+    expect(guardianGrants.permissions.has(Permission.GRADE_READ)).toBe(true)
+    expect(guardianGrants.scopeGrants).toContainEqual({
+      permission: Permission.GRADE_READ,
+      scopeType: 'student',
+      scopeEntityIds: ['student-1'],
+    })
+    expect(guardianGrants.scopeGrants).toContainEqual({
+      permission: Permission.GRADE_READ,
+      scopeType: 'class_group',
+      scopeEntityIds: ['class-1'],
+    })
   })
 })

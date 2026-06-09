@@ -1,6 +1,7 @@
 import type { EffectiveGrants } from '../../src/authorization'
 import {
   ACCOUNTANT_PERMISSIONS,
+  ASSIGNMENT_SCOPED_PERMISSIONS,
   COORDINATOR_PERMISSIONS,
   Permission,
   TEACHER_PERMISSIONS,
@@ -33,11 +34,18 @@ export function effectiveGrantsForRoles(roles: readonly TestRole[]): EffectiveGr
   return {
     permissions,
     scopeGrants: [...permissions].flatMap(permission =>
-      Object.entries(fixtureScopeEntityIds).map(([scopeType, scopeEntityIds]) => ({
-        permission,
-        scopeType: scopeType as keyof typeof fixtureScopeEntityIds,
-        scopeEntityIds: [...scopeEntityIds],
-      }))),
+      Object.entries(fixtureScopeEntityIds)
+        .filter(([scopeType]) => {
+          if (roles.includes('teacher') && ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission) && scopeType === 'school') {
+            return false
+          }
+          return true
+        })
+        .map(([scopeType, scopeEntityIds]) => ({
+          permission,
+          scopeType: scopeType as keyof typeof fixtureScopeEntityIds,
+          scopeEntityIds: [...scopeEntityIds],
+        }))),
     isElevated: roles.some(role => TEST_ELEVATED_ROLES.has(role)),
   }
 }

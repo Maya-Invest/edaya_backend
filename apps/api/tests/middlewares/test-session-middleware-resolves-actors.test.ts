@@ -8,6 +8,7 @@ import {
 import type { AppBindings } from "@/lib/types";
 import { createDependenciesInjection } from "@/middlewares/dependencies-injection";
 import { createSessionActorDependency } from "@/middlewares/dependencies/actor";
+import { DefaultAuthorizationRepository } from "@edaya/core";
 
 describe("session Middleware ActorMetadata Construction", () => {
   const getSession = mock();
@@ -25,6 +26,9 @@ describe("session Middleware ActorMetadata Construction", () => {
   });
 
   const setupMockApp = (mockRepos: any) => {
+    if (mockRepos && !mockRepos.authorization) {
+      mockRepos.authorization = new DefaultAuthorizationRepository(mockRepos);
+    }
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {
       c.set("schoolApp", {
@@ -175,6 +179,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(body.actor).toEqual({
       ...mockInteractiveContext("auth-user-999", createdAt, "req-fixed"),
       kind: "staff",
+      actorId: "staff-1",
       schoolId: "school-1",
       sessionId: "session-999",
       staffMemberId: "staff-1",
@@ -333,6 +338,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       staffAssignments: { list: mock().mockResolvedValue([]) },
       ...accessControl,
     } as any;
+    mockRepos.authorization = new DefaultAuthorizationRepository(mockRepos);
 
     await resolveCachedEffectiveGrants({
       staffMemberId: "staff-temporary",
@@ -382,7 +388,13 @@ describe("session Middleware ActorMetadata Construction", () => {
     const findGuardianMock = mock().mockResolvedValueOnce(mockGuardian);
     const mockRepos = {
       staffMembers: { findOne: findStaffMock },
-      guardians: { findOne: findGuardianMock },
+      guardians: {
+        findOne: findGuardianMock,
+        findById: mock().mockResolvedValueOnce(mockGuardian),
+      },
+      guardianLinks: {
+        list: mock().mockResolvedValueOnce([]),
+      },
       students: { findOne: mock().mockResolvedValueOnce(null) },
     };
 
@@ -397,6 +409,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(body.actor).toEqual({
       ...mockInteractiveContext("auth-user-888", createdAt),
       kind: "guardian",
+      actorId: "guardian-1",
       schoolId: "school-1",
       guardianId: "guardian-1",
       effectiveGrants: {
@@ -433,7 +446,13 @@ describe("session Middleware ActorMetadata Construction", () => {
     const mockRepos = {
       staffMembers: { findOne: findStaffMock },
       guardians: { findOne: findGuardianMock },
-      students: { findOne: findStudentMock },
+      students: {
+        findOne: findStudentMock,
+        findById: mock().mockResolvedValueOnce(mockStudent),
+      },
+      enrollments: {
+        list: mock().mockResolvedValueOnce([]),
+      },
     };
 
     const app = setupMockApp(mockRepos);
@@ -447,12 +466,25 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(body.actor).toEqual({
       ...mockInteractiveContext("auth-user-777", createdAt),
       kind: "student",
+      actorId: "student-1",
       schoolId: "school-1",
       studentId: "student-1",
       effectiveGrants: {
         isElevated: false,
         permissions: {},
-        scopeGrants: [],
+        scopeGrants: [
+          { permission: "ATTENDANCE_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "PAYMENT_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_STUDENT_DETAIL_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_REPORT_CARD_DETAIL_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_ENROLLMENT_HISTORY_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "GRADE_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "CLASS_LOGBOOK_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_TIMETABLE_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_CALENDAR_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_COMMUNICATIONS_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+          { permission: "QUERY_CLASS_CURRICULUM_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
+        ],
       },
     });
   });

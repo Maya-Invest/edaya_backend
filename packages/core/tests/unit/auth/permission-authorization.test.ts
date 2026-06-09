@@ -1,4 +1,5 @@
 import type { AuthorizationPolicy } from '../../../src/authorization'
+import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
 import {
   AuthorizationError,
@@ -9,7 +10,7 @@ import {
   permissionDefinitions,
 } from '../../../src/authorization'
 import { anyPermissionAction, permissionAction } from '../../../src/shared'
-import { effectiveGrantsForRoles, type TestRole } from '../../support/effective-grants'
+import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 function noopPolicy(): AuthorizationPolicy {
   return {
