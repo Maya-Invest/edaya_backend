@@ -1,7 +1,5 @@
 import type { EffectiveGrants } from '../../ports/authorization-repository'
 import { DomainValidationError } from '../../domains/utils'
-import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../grants/portal-permission-sets'
-import { buildPortalScopeGrants } from '../grants/portal-scope-grants'
 
 export enum ActorAssuranceLevel {
   Standard = 'standard',
@@ -55,21 +53,19 @@ interface InteractiveActorContextInput {
   sessionId?: string
   authenticatedAt: Date
   assuranceLevel?: ActorAssuranceLevel
+  effectiveGrants: EffectiveGrants
 }
 
 export interface StaffActorMetadataInput extends InteractiveActorContextInput {
   staffMemberId: string
-  effectiveGrants: EffectiveGrants
 }
 
 export interface GuardianActorMetadataInput extends InteractiveActorContextInput {
   guardianId: string
-  effectiveGrants?: EffectiveGrants
 }
 
 export interface StudentActorMetadataInput extends InteractiveActorContextInput {
   studentId: string
-  effectiveGrants?: EffectiveGrants
 }
 
 export interface SystemActorMetadataInput {
@@ -86,7 +82,6 @@ export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffA
     kind: 'staff',
     actorId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
     staffMemberId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
-    effectiveGrants: input.effectiveGrants,
   })
 }
 
@@ -97,11 +92,6 @@ export function createGuardianActorMetadata(input: GuardianActorMetadataInput): 
     kind: 'guardian',
     actorId: requireNonBlank(input.guardianId, 'guardianId'),
     guardianId: requireNonBlank(input.guardianId, 'guardianId'),
-    effectiveGrants: input.effectiveGrants ?? {
-      permissions: GUARDIAN_PORTAL_PERMISSIONS,
-      scopeGrants: [],
-      isElevated: false,
-    },
   })
 }
 
@@ -113,11 +103,6 @@ export function createStudentActorMetadata(input: StudentActorMetadataInput): St
     kind: 'student',
     actorId: studentId,
     studentId,
-    effectiveGrants: input.effectiveGrants ?? {
-      permissions: STUDENT_PORTAL_PERMISSIONS,
-      scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, { studentIds: [studentId] }),
-      isElevated: false,
-    },
   })
 }
 
@@ -139,7 +124,7 @@ export function isInteractiveActor(actor: ActorMetadata): actor is InteractiveAc
   return actor.kind !== 'system'
 }
 
-function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<InteractiveActorContext, 'effectiveGrants' | 'actorId' | 'kind'> {
+function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<InteractiveActorContext, 'actorId' | 'kind'> {
   return Object.freeze({
     subjectId: requireNonBlank(input.subjectId, 'subjectId'),
     schoolId: requireNonBlank(input.schoolId, 'schoolId'),
@@ -147,6 +132,7 @@ function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<
     sessionId: input.sessionId ? requireNonBlank(input.sessionId, 'sessionId') : undefined,
     authenticatedAt: requireValidDate(input.authenticatedAt, 'authenticatedAt'),
     assuranceLevel: input.assuranceLevel ?? ActorAssuranceLevel.Standard,
+    effectiveGrants: input.effectiveGrants,
   })
 }
 

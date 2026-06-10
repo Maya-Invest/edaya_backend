@@ -31,14 +31,12 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async offerSubjectToClass(input: OfferSubjectToClassInput): Promise<ClassSubject> {
-    await this.checkModule('academics')
     const classSubject = new ClassSubject(input)
     await this.baseService.classSubjects.save(classSubject)
     return classSubject
   }
 
   async assignMatterToClassSubject(input: AssignMatterToClassSubjectInput): Promise<ClassSubjectMatter> {
-    await this.checkModule('academics')
     const matter = new ClassSubjectMatter({
       ...input,
       status: input.status ?? ClassSubjectMatterStatus.NotStarted,
@@ -56,7 +54,6 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     notes,
     recordedAt,
   }: RecordSessionProgressInput): Promise<ClassSubjectProgress> {
-    await this.checkModule('academics')
     return this.baseService.atomicExecution.execute(async () => {
       const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
       const classSubject = await this.requireClassSubject(matter.classSubjectId)

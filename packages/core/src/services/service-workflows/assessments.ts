@@ -70,35 +70,30 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
-    await this.checkModule('assessments', input.schoolId)
     const gradeScale = new GradeScaleEntity(input)
     await this.baseService.gradeScales.save(gradeScale)
     return gradeScale
   }
 
   async createReportCardDefinition(input: CreateReportCardDefinitionInput): Promise<ReportCardDefinition> {
-    await this.checkModule('assessments', input.schoolId)
     const definition = new ReportCardDefinition(input)
     await this.baseService.definitions.save(definition)
     return definition
   }
 
   async createReportCardDefinitionSection(input: CreateReportCardDefinitionSectionInput): Promise<ReportCardDefinitionSection> {
-    await this.checkModule('assessments')
     const section = new ReportCardDefinitionSectionEntity(input)
     await this.baseService.sections.save(section)
     return section
   }
 
   async createAssessment(input: CreateAssessmentInput): Promise<Assessment> {
-    await this.checkModule('assessments')
     const assessment = new AssessmentEntity(input)
     await this.baseService.assessments.save(assessment)
     return assessment
   }
 
   async completeAssessment({ assessmentId, metAt }: CompleteAssessmentInput): Promise<Assessment> {
-    await this.checkModule('assessments')
     const existing = await this.requireEntity(this.baseService.assessments, assessmentId)
     const assessment = new AssessmentEntity({ ...existing.data, metAt: metAt ?? new Date() })
     await this.baseService.assessments.save(assessment)
@@ -106,7 +101,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
-    await this.checkModule('assessments')
     const result = new AssessmentResultEntity(input)
     await this.baseService.assessmentResults.save(result)
     return result
@@ -120,7 +114,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     classSubjectId,
     periodId,
   }: ListClassSubjectAssessmentResultsForPeriodInput): Promise<AssessmentResult[]> {
-    await this.checkModule('assessments')
     await this.requireEntity(this.baseService.classSubjects, classSubjectId)
     await this.requireEntity(this.baseService.academicPeriods, periodId)
     const assessments = await this.baseService.assessments.list({ classSubjectId, periodId })
@@ -132,7 +125,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
-    await this.checkModule('assessments')
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
     await permissionAction(Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
@@ -145,7 +137,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
-    await this.checkModule('assessments')
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
     await permissionAction(Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
