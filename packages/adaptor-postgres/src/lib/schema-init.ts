@@ -1,0 +1,58 @@
+import { sql } from 'drizzle-orm'
+
+/** Tables cleared in dependency-safe order (children before parents where practical). */
+export const CLEAR_TABLE_ORDER = [
+  'access_role_permissions',
+  'staff_role_assignment_roles',
+  'staff_role_assignment_scope_grants',
+  'staff_role_assignments',
+  'access_roles',
+  'student_incident_involvements',
+  'student_disciplinary_actions',
+  'student_notes',
+  'student_health_profiles',
+  'guardian_student_links',
+  'student_class_enrollments',
+  'report_card_results',
+  'report_card_definition_sections',
+  'assessment_results',
+  'class_subject_progress',
+  'class_subject_matters',
+  'class_subjects',
+  'assessments',
+  'attendance_records',
+  'message_deliveries',
+  'announcement_targets',
+  'announcements',
+  'student_fees',
+  'payments',
+  'fees',
+  'resource_assignments',
+  'staff_assignments',
+  'calendar_events',
+  'sessions',
+  'schedules',
+  'subject_matters',
+  'class_groups',
+  'subjects',
+  'grade_scales',
+  'report_card_definitions',
+  'disciplinary_actions',
+  'incidents',
+  'guardians',
+  'students',
+  'staff_members',
+  'grade_levels',
+  'period_definitions',
+  'academic_periods',
+  'academic_years',
+  'attachments',
+  'resources',
+  'schools',
+] as const
+
+export async function clearAllTables(db: { execute: (query: unknown) => Promise<unknown> }): Promise<void> {
+  for (const table of CLEAR_TABLE_ORDER) {
+    await db.execute(sql.raw(`DELETE FROM ${table}`))
+  }
+}

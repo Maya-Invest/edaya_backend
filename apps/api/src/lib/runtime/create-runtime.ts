@@ -1,14 +1,17 @@
 import type { Environment } from "@/lib/bootstrap/env";
 import { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
-import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
+import { isEphemeralDatabase } from "@/lib/seed";
+import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { createRepositoryAuthorizationPolicy } from "@edaya/core";
 import { createAuth } from "@/lib/runtime/create-auth";
 import { createDatabase } from "@/lib/runtime/database";
 import type { ApiRuntime } from "@/lib/runtime/types";
 
-async function buildSchoolApplication(db: unknown): Promise<ApiSchoolApplication> {
+async function buildSchoolApplication(db: PostgresTransactionalDb, databaseUrl: string): Promise<ApiSchoolApplication> {
   const repos = new PostgresSchoolRepositories(db);
-  await repos.init();
+  await repos.init({
+    driver: isEphemeralDatabase(databaseUrl) ? "pglite" : "postgres-js",
+  });
 
   const atomicExecution = new PostgresAtomicExecution(db);
   return new ApiSchoolApplication({
@@ -36,7 +39,7 @@ export async function createApiRuntime(env: Environment): Promise<ApiRuntime> {
     sqlClient,
     async getSchoolApplication() {
       if (!schoolApp) {
-        schoolApp = await buildSchoolApplication(db);
+        schoolApp = await buildSchoolApplication(db as PostgresTransactionalDb, env.DATABASE_URL);
       }
       return schoolApp;
     },

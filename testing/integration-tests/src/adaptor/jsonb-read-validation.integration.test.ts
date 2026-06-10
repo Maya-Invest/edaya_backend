@@ -21,7 +21,7 @@ describe('[Postgres PGlite] JSONB read validation', () => {
     pglite = new PGlite()
     db = drizzle(pglite)
     repos = new PostgresSchoolRepositories(db)
-    await repos.init()
+    await repos.init({ driver: 'pglite' })
   })
 
   afterEach(async () => {

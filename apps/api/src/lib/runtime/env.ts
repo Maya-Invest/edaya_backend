@@ -1,4 +1,4 @@
-import { parseEnv, type Environment } from "@/lib/bootstrap/env";
+import { type Environment, parseEnv } from "@/lib/bootstrap/env";
 import type { RuntimeBindings, RuntimeKind } from "@/lib/runtime/types";
 
 export function parseRuntimeEnv(

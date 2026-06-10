@@ -1,10 +1,10 @@
 import type { Environment } from "@/lib/bootstrap/env";
 import { isEphemeralDatabase } from "@/lib/seed";
 
-export type DatabaseHandle = {
+export interface DatabaseHandle {
   db: unknown;
   sqlClient: unknown | null;
-};
+}
 
 export async function createDatabase(env: Environment): Promise<DatabaseHandle> {
   if (env.RUNTIME === "worker" && isEphemeralDatabase(env.DATABASE_URL)) {

@@ -14,7 +14,9 @@ export async function getApiRuntime(env: Environment): Promise<ApiRuntime> {
   return pending;
 }
 
-/** @internal Test-only reset — not for production use. */
+/**
+ * Resets the API runtimes for tests.
+ */
 export function resetApiRuntimesForTests(): void {
   runtimes.clear();
 }

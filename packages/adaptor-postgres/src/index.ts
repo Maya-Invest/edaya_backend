@@ -1,7 +1,7 @@
-export {
-  PostgresAtomicExecution,
-  PostgresSchoolRepositories,
-  transactionContext,
-} from './postgres-repositories'
+export { createDefaultMappers, deserializeJsonb, rowToConstructorArgs } from './lib/mappers'
+export type { MigrationDriver } from './lib/migrate'
+export { getMigrationsFolder, runMigrations } from './lib/migrate'
+export { PostgresAtomicExecution, type PostgresTransactionalDb, transactionContext } from './lib/transaction'
 export * as schema from './postgres-schema'
+export { PostgresSchoolRepositories } from './postgres-school-repositories'
 export { PostgresStore } from './postgres-store'

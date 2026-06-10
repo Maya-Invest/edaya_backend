@@ -16,7 +16,7 @@ export function describeIntegration(name: string, suite: () => void) {
       pglite = new PGlite()
       db = drizzle(pglite)
       repos = new RelationalPostgresSchoolRepositories(db)
-      await repos.init()
+      await repos.init({ driver: 'pglite' })
 
       const postgresBuilder = createPostgresAppBuilder(db, repos, RelationalPostgresAtomicExecution)
       setIntegrationTestAdapter({

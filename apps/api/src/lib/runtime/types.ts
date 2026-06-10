@@ -5,17 +5,17 @@ export type RuntimeKind = Environment["RUNTIME"];
 
 export type RuntimeBindings = Record<string, unknown>;
 
-export type AuthService = {
+export interface AuthService {
   handler: (request: Request) => Promise<Response>;
   api: {
     getSession: (args: { headers: Headers }) => Promise<unknown>;
   };
-};
+}
 
-export type ApiRuntime = {
+export interface ApiRuntime {
   readonly env: Environment;
   readonly db: unknown;
   readonly sqlClient: unknown | null;
-  getSchoolApplication(): Promise<ApiSchoolApplication>;
-  getAuth(): AuthService;
-};
+  getSchoolApplication: () => Promise<ApiSchoolApplication>;
+  getAuth: () => AuthService;
+}
