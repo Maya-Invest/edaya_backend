@@ -1,15 +1,15 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { ActorMetadata } from '../actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-import { activeClassGroupIdsByStudent } from '../enrollment-scope'
-import { Permission } from '../permissions'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { ActorMetadata } from '../../model/actor'
+import { actorGrantCoversAny, actorHasAnyPermission } from '../../grants/actor-grant-checks'
+import { activeClassGroupIdsByStudent } from '../../grants/enrollment-scope'
+import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
+import { Permission } from '../../permissions'
 import {
   CLASS_GROUP_TEACHING_ACCESS_PERMISSIONS,
   GUARDIAN_ADMIN_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_STUDENT_NOTE_ACCESS_PERMISSIONS,
   STUDENT_DIRECT_ACCESS_PERMISSIONS,
 } from '../resolver-permissions'
-import { actorGrantCoversAny, actorHasAnyPermission } from './grant-resolver'
 
 export async function checkStudentAccess(
   actor: ActorMetadata,

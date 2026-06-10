@@ -1,10 +1,12 @@
 export * from '../ports/authorization-repository'
-export * from './actor-metadata'
-export * from './authorization-error'
-export * from './authorization-policy'
-export * from './authorization-request'
-export * from './authorize'
+export * from './engine'
+export * from './grants'
+export * from './model'
+/**
+ * Public authorization API.
+ *
+ * Export order matters: `permissions` and `model` must initialize before grant
+ * resolution or policy modules that transitively touch domain entities.
+ */
 export * from './permissions'
-export * from './portal-permissions'
-export * from './role-types'
-export * from './system-role-permissions'
+export * from './policy'

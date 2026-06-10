@@ -82,18 +82,28 @@ Topics to decide before implementing:
 7. **Error code usage** — Map API middleware errors to specific `AuthorizationErrorCode` values.
 8. **`academicYearId` on requests** — Enforce in `authorize()` or remove from request type.
 
-## File Map (after Phase 1–2)
+## Module Layout (reorganized)
 
-| File | Role |
-|------|------|
-| `authorize.ts` | Capability entry point |
-| `portal-permissions.ts` | Portal permission sets |
-| `portal-grants.ts` | Shared portal scope grant builder |
-| `resolver-permissions.ts` | Permission groups used by access resolvers |
-| `enrollment-scope.ts` | Batch active-enrollment lookups |
-| `system-role-permissions.ts` | Role templates + assignment-scoped permissions |
-| `access-resolvers/*.ts` | Resource-level checks |
-| `ports/authorization-repository.ts` | Grant resolution |
+```
+authorization/
+  index.ts                 # Public barrel (permissions/model first — avoids circular init)
+  model/                   # Actor context, errors, requests, ScopeGrant
+  engine/                  # authorize() — synchronous capability checks
+  grants/                  # Grant templates, portal policy, actor grant helpers
+  permissions/             # Permission enum, catalog, assurance rules
+  policy/                  # Resource-level AuthorizationPolicy
+    resolvers/             # student, academic, finance, scheduling, module
+  ports/authorization-repository.ts   # Grant resolution (stays in ports)
+```
+
+| Folder | Responsibility |
+|--------|----------------|
+| `model/` | Who is acting (`ActorMetadata`), errors, `AuthorizationRequest`, `ScopeGrant` |
+| `engine/` | `authorize()` — permission + scope + assurance |
+| `grants/` | Portal permission sets, role templates, scope grant builders, `actorGrantCoversAny` |
+| `permissions/` | `Permission` enum, definitions, assurance map |
+| `policy/` | Resource resolvers + `RepositoryAuthorizationPolicy` |
+| `ports/` | DB-backed `resolveEffectiveGrants` / `resolveActorGrants` |
 
 ## Test Plan
 

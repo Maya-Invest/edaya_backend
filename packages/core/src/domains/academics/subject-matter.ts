@@ -1,9 +1,8 @@
-import type { AuthorizationPolicy } from '../../authorization/authorization-policy'
+import type { AuthorizationPolicy } from '../../authorization'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { AuthorizationError, AuthorizationErrorCode } from '../../authorization/authorization-error'
+import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../authorization'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 

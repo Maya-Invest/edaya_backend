@@ -1,5 +1,5 @@
-import type { ActorMetadata } from '../actor-metadata'
-import type { Permission } from '../permissions'
+import type { ActorMetadata } from '../model/actor'
+import type { Permission } from '../permissions/permission'
 import type { ScopeType } from '../permissions/scope-type'
 import { scopeGrantCovers } from '../../ports/authorization-repository'
 

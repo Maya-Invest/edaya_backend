@@ -1,7 +1,7 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { ActorMetadata } from '../actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-import { actorHasAnyPermission } from './grant-resolver'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { ActorMetadata } from '../../model/actor'
+import { actorHasAnyPermission } from '../../grants/actor-grant-checks'
+import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 
 export async function checkModuleAccess(
   actor: ActorMetadata,

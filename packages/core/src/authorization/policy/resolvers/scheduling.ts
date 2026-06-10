@@ -1,13 +1,13 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { ActorMetadata } from '../actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { ActorMetadata } from '../../model/actor'
+import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
+import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import {
   SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
   SESSION_TEACHING_ACCESS_PERMISSIONS,
 } from '../resolver-permissions'
-import { checkClassGroupAccess } from './academic-resolver'
-import { actorGrantCoversAny } from './grant-resolver'
-import { checkStudentAccess } from './student-resolver'
+import { checkClassGroupAccess } from './academic'
+import { checkStudentAccess } from './student'
 
 export async function checkSessionAccess(
   actor: ActorMetadata,

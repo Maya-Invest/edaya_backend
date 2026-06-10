@@ -9,8 +9,7 @@ import type {
   StudentNoteInput,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
-import { Permission, resolveAuditActorId } from '../../authorization'
-import { denyResourceAccess } from '../../authorization/authorization-error'
+import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import {
   EnrollmentEndReason,
   Guardian,

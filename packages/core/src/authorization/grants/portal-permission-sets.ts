@@ -1,6 +1,4 @@
-import type { ActorMetadata } from './actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from './authorization-error'
-import { Permission } from './permissions/permission'
+import { Permission } from '../permissions/permission'
 
 export type PortalActorKind = 'guardian' | 'student'
 
@@ -48,19 +46,4 @@ export const PORTAL_PERMISSION_POLICIES: Readonly<Record<PortalActorKind, Portal
     actorKind: 'student',
     permissions: STUDENT_PORTAL_PERMISSIONS,
   },
-}
-
-export function portalPermissionPolicyFor(actorKind: PortalActorKind): PortalPermissionPolicy {
-  return PORTAL_PERMISSION_POLICIES[actorKind]
-}
-
-export function assertPortalPermission(actor: ActorMetadata, permission: Permission): void {
-  if (actor.kind !== 'guardian' && actor.kind !== 'student') {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-
-  const policy = portalPermissionPolicyFor(actor.kind)
-  if (!policy.permissions.has(permission)) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
 }

@@ -7,11 +7,11 @@ import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
   checkClassGroupAccess as checkAcademicClassGroupAccess,
   checkReportCardResultAccess,
-} from '../../../src/authorization/access-resolvers/academic-resolver'
+} from '../../../src/authorization/policy/resolvers/academic'
 import {
   checkAttendanceAccess as checkSchedulingAttendanceAccess,
   checkSessionAccess as checkSchedulingSessionAccess,
-} from '../../../src/authorization/access-resolvers/scheduling-resolver'
+} from '../../../src/authorization/policy/resolvers/scheduling'
 import { AccessRole, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domains'
 import { TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
 

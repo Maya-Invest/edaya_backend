@@ -1,9 +1,9 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { ActorMetadata } from '../actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-import { Permission } from '../permissions'
-import { actorGrantCoversAny } from './grant-resolver'
-import { checkStudentAccess } from './student-resolver'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { ActorMetadata } from '../../model/actor'
+import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
+import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
+import { Permission } from '../../permissions'
+import { checkStudentAccess } from './student'
 
 export async function checkFeeAccess(
   actor: ActorMetadata,

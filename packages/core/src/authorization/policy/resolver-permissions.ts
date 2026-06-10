@@ -1,5 +1,5 @@
-import { Permission } from './permissions/permission'
-import { ASSIGNMENT_SCOPED_PERMISSIONS } from './system-role-permissions'
+import { ASSIGNMENT_SCOPED_PERMISSIONS } from '../grants/system-role-permissions'
+import { Permission } from '../permissions/permission'
 
 /** Permissions checked for direct student-level resource access. */
 export const STUDENT_DIRECT_ACCESS_PERMISSIONS: readonly Permission[] = [

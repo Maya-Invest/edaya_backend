@@ -1,13 +1,13 @@
+import type { ScopeGrant } from '../authorization/model/scope-grant'
 import type { Permission } from '../authorization/permissions/permission'
 import type { ScopeType } from '../authorization/permissions/scope-type'
-import type { ScopeGrant } from '../authorization/role-types'
-import type { StaffAssignment } from '../domains'
+import type { StaffAssignment } from '../domains/school/staff-assignment'
 import type { SchoolRepositories } from '../ports/school-repositories'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization/authorization-error'
-import { uniqueActiveClassGroupIds } from '../authorization/enrollment-scope'
-import { buildPortalScopeGrants } from '../authorization/portal-grants'
-import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../authorization/portal-permissions'
-import { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS } from '../authorization/system-role-permissions'
+import { uniqueActiveClassGroupIds } from '../authorization/grants/enrollment-scope'
+import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../authorization/grants/portal-permission-sets'
+import { buildPortalScopeGrants } from '../authorization/grants/portal-scope-grants'
+import { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS } from '../authorization/grants/system-role-permissions'
+import { AuthorizationError, AuthorizationErrorCode } from '../authorization/model/errors'
 
 export interface EffectiveGrants {
   readonly permissions: ReadonlySet<Permission>

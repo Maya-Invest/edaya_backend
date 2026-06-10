@@ -1,8 +1,7 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { denyResourceAccess } from '../../authorization/authorization-error'
+import { denyResourceAccess, Permission } from '../../authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 

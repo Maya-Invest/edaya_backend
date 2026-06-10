@@ -1,5 +1,7 @@
-import type { SchoolRepositories } from '../ports/school-repositories'
-import { StudentClassEnrollmentStatus } from '../domains'
+import type { SchoolRepositories } from '../../ports/school-repositories'
+
+/** Matches `StudentClassEnrollmentStatus.Active` without importing the enrollment domain module. */
+const ACTIVE_ENROLLMENT_STATUS = 'active' as const
 
 export async function activeClassGroupIdsByStudent(
   repositories: SchoolRepositories,
@@ -12,12 +14,12 @@ export async function activeClassGroupIdsByStudent(
   const uniqueStudentIds = [...new Set(studentIds)]
   const enrollments = await repositories.enrollments.list({
     studentId: { $in: uniqueStudentIds },
-    status: StudentClassEnrollmentStatus.Active,
+    status: ACTIVE_ENROLLMENT_STATUS,
   })
 
   const classGroupByStudent = new Map<string, string>()
   for (const enrollment of enrollments) {
-    if (enrollment.status === StudentClassEnrollmentStatus.Active) {
+    if (enrollment.status === ACTIVE_ENROLLMENT_STATUS) {
       classGroupByStudent.set(enrollment.studentId, enrollment.classGroupId)
     }
   }

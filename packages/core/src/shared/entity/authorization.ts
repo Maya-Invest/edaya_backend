@@ -1,8 +1,6 @@
-import type { ActorMetadata, AuthorizationPolicy } from '../../authorization'
-import type { AuthorizationRequest } from '../../authorization/authorization-request'
-import type { Permission } from '../../authorization/permissions'
+import type { ActorMetadata, AuthorizationPolicy, AuthorizationRequest, Permission } from '../../authorization'
 import type { EntityReadAuthorization, EntityWriteAuthorization } from '../../services'
-import { authorize } from '../../authorization/authorize'
+import { authorize } from '../../authorization'
 import { unique } from '../utils/helper-utils'
 
 export function permissionAction(

@@ -1,5 +1,5 @@
-import type { Permission } from './permissions/permission'
-import type { ScopeGrant } from './role-types'
+import type { ScopeGrant } from '../model/scope-grant'
+import type { Permission } from '../permissions/permission'
 
 export function buildPortalScopeGrants(
   permissions: ReadonlySet<Permission>,

@@ -1,46 +1,20 @@
-import type { SchoolRepositories } from '../ports/school-repositories'
-import type { ActorMetadata } from './actor-metadata'
-
-import { checkAssessmentAccess, checkClassGroupAccess, checkReportCardResultAccess } from './access-resolvers/academic-resolver'
-import { checkFeeAccess, checkStudentFeeAccess } from './access-resolvers/finance-resolver'
-import { checkModuleAccess } from './access-resolvers/module-resolver'
-import { checkAttendanceAccess, checkSessionAccess } from './access-resolvers/scheduling-resolver'
-import { checkGuardianAccess, checkStudentAccess, checkStudentHealthAccess, checkStudentNoteAccess } from './access-resolvers/student-resolver'
-
-/**
- * Evaluates actor access after a service has resolved the resource context
- * required by its use case. Implementations may consult current repository
- * relationships such as staff assignments or guardian/student links.
- */
-export interface AuthorizationPolicy {
-  checkStudentAccess: (actor: ActorMetadata, studentIds: readonly string[]) => Promise<void>
-  checkGuardianAccess: (actor: ActorMetadata, guardianIds: readonly string[]) => Promise<void>
-  checkStudentNoteAccess: (actor: ActorMetadata, noteIds: readonly string[]) => Promise<void>
-  checkStudentHealthAccess: (actor: ActorMetadata, profileIds: readonly string[]) => Promise<void>
-  checkClassGroupAccess: (actor: ActorMetadata, classGroupIds: readonly string[]) => Promise<void>
-  checkAssessmentAccess: (actor: ActorMetadata, assessmentIds: readonly string[]) => Promise<void>
-  checkReportCardResultAccess: (actor: ActorMetadata, reportCardResultIds: readonly string[]) => Promise<void>
-  checkFeeAccess: (actor: ActorMetadata, feeIds: readonly string[]) => Promise<void>
-  checkStudentFeeAccess: (actor: ActorMetadata, studentFeeIds: readonly string[]) => Promise<void>
-  checkSessionAccess: (actor: ActorMetadata, sessionIds: readonly string[]) => Promise<void>
-  checkAttendanceAccess: (actor: ActorMetadata, studentIds: readonly string[], sessionIds: readonly string[]) => Promise<void>
-  checkModuleAccess: (actor: ActorMetadata, schoolId: string, module: string) => Promise<void>
-  getRepositories?: () => SchoolRepositories
-}
-
-export interface AuthorizedServiceArgs {
-  actor: ActorMetadata
-  authorizationPolicy: AuthorizationPolicy
-}
-
-export interface RepositoryAuthorizationPolicyArgs {
-  repositories?: SchoolRepositories
-  staffAssignmentRepository?: SchoolRepositories['staffAssignments']
-  staffMemberRepository?: SchoolRepositories['staffMembers']
-  guardianRepository?: SchoolRepositories['guardians']
-  guardianStudentLinkRepository?: SchoolRepositories['guardianLinks']
-  studentRepository?: SchoolRepositories['students']
-}
+import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { ActorMetadata } from '../model/actor'
+import type { AuthorizationPolicy, RepositoryAuthorizationPolicyArgs } from './types'
+import {
+  checkAssessmentAccess,
+  checkAttendanceAccess,
+  checkClassGroupAccess,
+  checkFeeAccess,
+  checkGuardianAccess,
+  checkModuleAccess,
+  checkReportCardResultAccess,
+  checkSessionAccess,
+  checkStudentAccess,
+  checkStudentFeeAccess,
+  checkStudentHealthAccess,
+  checkStudentNoteAccess,
+} from './resolvers'
 
 export class RepositoryAuthorizationPolicy implements AuthorizationPolicy {
   private readonly repositories: SchoolRepositories

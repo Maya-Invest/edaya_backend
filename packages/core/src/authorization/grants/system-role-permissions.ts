@@ -1,4 +1,4 @@
-import { Permission } from './permissions/permission'
+import { Permission } from '../permissions/permission'
 
 /** Permissions granted to Admin / Principal (school-wide elevated staff). */
 export const ELEVATED_STAFF_PERMISSIONS: readonly Permission[] = Object.values(Permission)

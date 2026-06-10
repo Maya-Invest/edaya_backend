@@ -1,4 +1,4 @@
-import type { AuthorizationPolicy } from '../../authorization/authorization-policy'
+import type { AuthorizationPolicy } from '../../authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'

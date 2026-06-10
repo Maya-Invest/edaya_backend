@@ -1,12 +1,12 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { ActorMetadata } from '../actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { ActorMetadata } from '../../model/actor'
+import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
+import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import {
   CLASS_GROUP_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
 } from '../resolver-permissions'
-import { actorGrantCoversAny } from './grant-resolver'
-import { checkStudentAccess } from './student-resolver'
+import { checkStudentAccess } from './student'
 
 export async function checkClassGroupAccess(
   actor: ActorMetadata,

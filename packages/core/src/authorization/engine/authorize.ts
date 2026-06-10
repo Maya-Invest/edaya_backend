@@ -1,10 +1,10 @@
-import type { ActorMetadata } from './actor-metadata'
-import type { AuthorizationRequest } from './authorization-request'
-import { scopeGrantCovers } from '../ports/authorization-repository'
-import { isInteractiveActor } from './actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from './authorization-error'
-import { assertPermissionAssurance } from './permissions/permission-assurance'
-import { permissionDefinitions } from './permissions/permission-definitions'
+import type { ActorMetadata } from '../model/actor'
+import type { AuthorizationRequest } from '../model/request'
+import { scopeGrantCovers } from '../../ports/authorization-repository'
+import { isInteractiveActor } from '../model/actor'
+import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
+import { assertPermissionAssurance } from '../permissions/permission-assurance'
+import { permissionDefinitions } from '../permissions/permission-definitions'
 
 export interface AuthorizeArgs {
   actor: ActorMetadata

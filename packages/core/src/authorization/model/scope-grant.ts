@@ -1,5 +1,5 @@
-import type { Permission } from './permissions/permission'
-import type { ScopeType } from './permissions/scope-type'
+import type { Permission } from '../permissions/permission'
+import type { ScopeType } from '../permissions/scope-type'
 
 /** Limits a single permission to specific scope entities. */
 export interface ScopeGrant {

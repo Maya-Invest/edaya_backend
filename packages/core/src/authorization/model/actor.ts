@@ -1,7 +1,7 @@
-import type { EffectiveGrants } from '../ports/authorization-repository'
-import { requireNonBlank, requireValidDate } from '../domains/utils'
-import { buildPortalScopeGrants } from './portal-grants'
-import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from './portal-permissions'
+import type { EffectiveGrants } from '../../ports/authorization-repository'
+import { requireNonBlank, requireValidDate } from '../../domains/utils'
+import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../grants/portal-permission-sets'
+import { buildPortalScopeGrants } from '../grants/portal-scope-grants'
 
 export enum ActorAssuranceLevel {
   Standard = 'standard',

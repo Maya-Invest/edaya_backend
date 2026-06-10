@@ -1,6 +1,6 @@
 import type { AcademicPeriod, ClassGroup, Student } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
-import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../../authorization/authorization-error'
+import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../../authorization'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 
 export class BaseServiceWorkflow {

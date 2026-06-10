@@ -1,5 +1,5 @@
-import { ActorAssuranceLevel } from '../actor-metadata'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
+import { ActorAssuranceLevel } from '../model/actor'
+import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { Permission } from './permission'
 
 /** Minimum interactive actor assurance required before a permission is allowed. */
