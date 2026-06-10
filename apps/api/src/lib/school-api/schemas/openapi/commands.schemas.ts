@@ -139,10 +139,10 @@ export const updateStaffMemberStatusCommandSchema = z.object({
 }).openapi("UpdateStaffMemberStatusCommand");
 
 export const linkActorSubjectCommandSchema = z.object({
-  subjectId: field.uuid(),
-  staffMemberId: field.uuid().optional(),
-  guardianId: field.uuid().optional(),
-  studentId: field.uuid().optional(),
+  subjectId: field.id(),
+  staffMemberId: field.id().optional(),
+  guardianId: field.id().optional(),
+  studentId: field.id().optional(),
 }).superRefine((data, ctx) => {
   const targetCount = [data.staffMemberId, data.guardianId, data.studentId].filter(Boolean).length;
   if (targetCount !== 1) {
