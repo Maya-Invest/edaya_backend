@@ -1,0 +1,35 @@
+{
+  "name": "@edaya/adaptor-betterauth",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --tsconfig tsconfig.build.json",
+    "check": "npx tsc --noEmit",
+    "auth:generate-schema": "bunx @better-auth/cli@latest generate --config ./src/cli/auth-config.ts --output ./src/schema.ts --yes",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.4.6",
+    "@types/bun": "^1.3.14",
+    "better-auth": "^1.1.21",
+    "drizzle-kit": "^0.30.4"
+  }
+}

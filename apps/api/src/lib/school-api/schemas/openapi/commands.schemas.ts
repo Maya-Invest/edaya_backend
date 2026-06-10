@@ -138,6 +138,21 @@ export const updateStaffMemberStatusCommandSchema = z.object({
   isActive: field.boolean(),
 }).openapi("UpdateStaffMemberStatusCommand");
 
+export const linkActorSubjectCommandSchema = z.object({
+  subjectId: field.uuid(),
+  staffMemberId: field.uuid().optional(),
+  guardianId: field.uuid().optional(),
+  studentId: field.uuid().optional(),
+}).superRefine((data, ctx) => {
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId].filter(Boolean).length;
+  if (targetCount !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Exactly one of staffMemberId, guardianId, or studentId is required",
+    });
+  }
+}).openapi("LinkActorSubjectCommand");
+
 export const assignStaffToClassCommandSchema = z.object(unwrapShape(staffAssignmentSchema) as any)
   .omit({ classSubjectId: true, sessionId: true })
   .extend({

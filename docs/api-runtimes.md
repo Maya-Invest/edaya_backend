@@ -50,7 +50,12 @@ Request
   └─ Hono app.fetch(request, bindings)
        └─ env middleware → parseRuntimeEnv(bindings)
        └─ schoolApp / auth middleware → getApiRuntime(env)
-            └─ createDatabase(env) + Better Auth + SchoolApplication
+            └─ createDatabase(env)
+            └─ runAuthMigrations ( @edaya/adaptor-betterauth )
+            └─ createAuth (Better Auth + authSchema)
+            └─ getSchoolApplication → repos.init ( @edaya/adaptor-postgres )
 ```
+
+Auth schema and SQL migrations live in `packages/adaptor-betterauth`. Runtime Better Auth config lives in `apps/api/src/lib/runtime/create-auth.ts`.
 
 Runtime code lives in `apps/api/src/lib/runtime/`.

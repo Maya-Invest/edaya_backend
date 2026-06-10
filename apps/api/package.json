@@ -15,6 +15,7 @@
     "build": "tsc && tsc-alias"
   },
   "dependencies": {
+    "@edaya/adaptor-betterauth": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/core": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",

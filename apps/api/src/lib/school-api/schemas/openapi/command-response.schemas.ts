@@ -59,6 +59,20 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   updateClassGroupConfiguration: classGroupResponseSchema,
   registerStaffMember: staffMemberResponseSchema,
   updateStaffMemberStatus: staffMemberResponseSchema,
+  linkActorSubject: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("staff"),
+      entity: staffMemberResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("guardian"),
+      entity: guardianResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("student"),
+      entity: studentResponseSchema,
+    }),
+  ]).openapi("LinkActorSubjectResponse"),
   assignStaffToClass: staffAssignmentResponseSchema,
   assignStaffToClassSubject: staffAssignmentResponseSchema,
   assignStaffToSession: staffAssignmentResponseSchema,

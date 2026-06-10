@@ -43,6 +43,10 @@ import type {
   RecordSessionProgressInput,
 } from './service-workflows/accademics'
 import type {
+  LinkActorSubjectInput,
+  LinkActorSubjectResult,
+} from './service-workflows/access-control'
+import type {
   CompleteAssessmentInput,
   CreateAssessmentInput,
   CreateGradeScaleInput,
@@ -125,6 +129,7 @@ import { AuthorizationError, AuthorizationErrorCode, Permission } from '../autho
 import { permissionAction } from '../shared'
 import { BaseSchoolService } from './base-school-service'
 import { AcademicsServiceWorkflow } from './service-workflows/accademics'
+import { AccessControlServiceWorkflow } from './service-workflows/access-control'
 import { AssessmentsServiceWorkflow } from './service-workflows/assessments'
 import { BehaviorServiceWorkflow } from './service-workflows/behavior'
 import { CommunicationsServiceWorkflow } from './service-workflows/communications'
@@ -143,6 +148,7 @@ export class SchoolService {
   readonly setupWorkflow: SetupServiceWorkflow
   readonly communicationsWorkflow: CommunicationsServiceWorkflow
   readonly behaviorWorkflow: BehaviorServiceWorkflow
+  readonly accessControlWorkflow: AccessControlServiceWorkflow
 
   constructor(args: ServiceArgs) {
     this.baseService = new BaseSchoolService(args)
@@ -154,6 +160,7 @@ export class SchoolService {
     this.setupWorkflow = new SetupServiceWorkflow(this.baseService)
     this.communicationsWorkflow = new CommunicationsServiceWorkflow(this.baseService)
     this.behaviorWorkflow = new BehaviorServiceWorkflow(this.baseService)
+    this.accessControlWorkflow = new AccessControlServiceWorkflow(this.baseService)
   }
 
   // REPORTS AND DASHBOARD ENDPOINTS
@@ -364,6 +371,12 @@ export class SchoolService {
 
   async updateGuardianStudentLink(input: UpdateGuardianStudentLinkInput): Promise<GuardianStudentLink> {
     return this.studentWorkflow.updateGuardianStudentLink(input)
+  }
+
+  // ACCESS CONTROL ENDPOINTS
+
+  async linkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
+    return this.accessControlWorkflow.linkActorSubject(input)
   }
 
   // SCHEDULING ENDPOINTS

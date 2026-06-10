@@ -86,6 +86,7 @@ export const coreCommands = [
   command("update-class-group-configuration", "updateClassGroupConfiguration", commandSchemas.updateClassGroupConfigurationCommandSchema),
   command("register-staff-member", "registerStaffMember", commandSchemas.registerStaffMemberCommandSchema),
   command("update-staff-member-status", "updateStaffMemberStatus", commandSchemas.updateStaffMemberStatusCommandSchema),
+  command("link-actor-subject", "linkActorSubject", commandSchemas.linkActorSubjectCommandSchema),
   command("assign-staff-to-class", "assignStaffToClass", commandSchemas.assignStaffToClassCommandSchema),
   command("assign-staff-to-class-subject", "assignStaffToClassSubject", commandSchemas.assignStaffToClassSubjectCommandSchema),
   command("assign-staff-to-session", "assignStaffToSession", commandSchemas.assignStaffToSessionCommandSchema),

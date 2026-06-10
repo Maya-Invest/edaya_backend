@@ -43,6 +43,20 @@ export const SEED_GUARDIANS = [
   { id: "g2", name: "James Bennett", email: "j.bennett@mail.com", phone: "+33 6 22 11 09 87", studentIds: ["s2"] },
 ] as const;
 
+/** Shared dev password for seeded Better Auth accounts. Dev-only — never use in production. */
+export const DEV_AUTH_PASSWORD = "DevPassword1!";
+
+/** Staff accounts provisioned and linked during dev auth seed. */
+export const DEV_AUTH_STAFF_ACCOUNTS = [
+  { staffId: "st5", email: "c.moreau@school.edu", name: "Camille Moreau" },
+  { staffId: "st1", email: "m.dupont@school.edu", name: "Mme Dupont" },
+] as const;
+
+/** Guardian accounts provisioned and linked during dev auth seed. */
+export const DEV_AUTH_GUARDIAN_ACCOUNTS = [
+  { guardianId: "g1", email: "c.laurent@mail.com", name: "Claire Laurent" },
+] as const;
+
 export const SEED_ACADEMIC_PERIODS = [
   { id: "2025-t1", name: "Trimestre 1", startDate: "2025-09-01", endDate: "2025-12-19" },
   { id: "2025-t2", name: "Trimestre 2", startDate: "2026-01-05", endDate: "2026-04-03" },

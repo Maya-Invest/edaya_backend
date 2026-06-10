@@ -769,6 +769,7 @@ export function createEntityStores(db: any): EntityStores {
         lastName: row.lastName,
         email: row.email,
         phone: row.phone,
+        subjectId: row.subjectId,
         contactMethods: deserializeJsonb(row.contactMethods),
         createdAt: row.createdAt,
       }),
