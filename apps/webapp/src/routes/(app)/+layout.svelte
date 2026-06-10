@@ -39,6 +39,12 @@
 	});
 
 	$effect(() => {
+		if (data.academicYears) {
+			academicContext.init(data.academicYears, data.academicPeriods, data.classes || []);
+		}
+	});
+
+	$effect(() => {
 		const pathname = $page.url.pathname;
 		const version = ++drawerSyncVersion;
 

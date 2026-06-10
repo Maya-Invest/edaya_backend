@@ -1,5 +1,92 @@
 import { authSession } from '$lib/auth/session.svelte';
+import type { PermissionCode, ScopeGrantSnapshot } from '$lib/auth/types';
 import { staff, type StaffMember, type StaffRole } from '$lib/data/school';
+
+type Ctx = { classId?: string; subject?: string };
+
+const P = {
+	GRADE_READ: 'GRADE_READ',
+	GRADE_INPUT: 'GRADE_INPUT',
+	DISCIPLINE_CREATE: 'DISCIPLINE_CREATE',
+	DISCIPLINE_UPDATE: 'DISCIPLINE_UPDATE',
+	ATTENDANCE_RECORD: 'ATTENDANCE_RECORD',
+	CLASS_LOGBOOK_CREATE: 'CLASS_LOGBOOK_CREATE',
+	REPORT_CARD_CONFIGURE: 'REPORT_CARD_CONFIGURE',
+	REPORT_CARD_GENERATE: 'REPORT_CARD_GENERATE',
+} as const satisfies Record<string, PermissionCode>;
+
+function scopeGrantCovers(
+	grants: readonly ScopeGrantSnapshot[],
+	args: {
+		permission: PermissionCode;
+		schoolId: string;
+		scopeType?: ScopeGrantSnapshot['scopeType'];
+		scopeEntityId?: string;
+		isElevated: boolean;
+	},
+): boolean {
+	if (args.isElevated) {
+		return true;
+	}
+
+	if (!args.scopeType) {
+		return true;
+	}
+
+	const hasSchoolGrant = grants.some((grant) =>
+		grant.permission === args.permission
+		&& grant.scopeType === 'school'
+		&& (grant.scopeEntityIds.length === 0 || grant.scopeEntityIds.includes(args.schoolId)),
+	);
+	if (hasSchoolGrant) {
+		return true;
+	}
+
+	const matching = grants.filter((grant) =>
+		grant.permission === args.permission && grant.scopeType === args.scopeType);
+
+	if (matching.length === 0) {
+		return false;
+	}
+
+	if (!args.scopeEntityId) {
+		return true;
+	}
+
+	return matching.some((grant) => grant.scopeEntityIds.includes(args.scopeEntityId!));
+}
+
+export function hasPermission(permission: PermissionCode, ctx: Ctx = {}): boolean {
+	const grants = authSession.grants;
+	if (!grants) {
+		return false;
+	}
+
+	if (grants.isElevated) {
+		return true;
+	}
+
+	if (!grants.permissions.includes(permission)) {
+		return false;
+	}
+
+	if (!ctx.classId && !ctx.subject) {
+		return true;
+	}
+
+	const schoolId = authSession.schoolId ?? '';
+	return scopeGrantCovers(grants.scopeGrants, {
+		permission,
+		schoolId,
+		scopeType: ctx.classId ? 'class_group' : 'course_assignment',
+		scopeEntityId: ctx.classId ?? ctx.subject,
+		isElevated: grants.isElevated,
+	});
+}
+
+export function hasAnyPermission(permissions: readonly PermissionCode[], ctx: Ctx = {}): boolean {
+	return permissions.some((permission) => hasPermission(permission, ctx));
+}
 
 export function getCurrentUser(): StaffMember {
 	const sessionUser = authSession.user;
@@ -11,43 +98,25 @@ export function getCurrentRole(): StaffRole {
 	return getCurrentUser().role;
 }
 
-type Ctx = { classId?: string; subject?: string };
-
 export function canEditGrades(ctx: Ctx = {}): boolean {
-	const u = getCurrentUser();
-	switch (u.role) {
-		case 'directeur':
-			return true;
-		case 'prof_principal':
-			if (ctx.classId && u.mainClassId === ctx.classId) return true;
-			return inTeachingScope(u, ctx);
-		case 'professeur':
-			return inTeachingScope(u, ctx);
-		case 'educateur':
-			return false;
-	}
+	return hasPermission(P.GRADE_INPUT, ctx);
 }
 
 export function canViewGrades(_ctx: Ctx = {}): boolean {
-	return true;
+	return hasPermission(P.GRADE_READ);
 }
 
 export function canEditSchoolLife(_ctx: Ctx = {}): boolean {
-	const r = getCurrentRole();
-	return r === 'directeur' || r === 'educateur' || r === 'prof_principal';
+	return hasAnyPermission([
+		P.DISCIPLINE_CREATE,
+		P.DISCIPLINE_UPDATE,
+		P.ATTENDANCE_RECORD,
+		P.CLASS_LOGBOOK_CREATE,
+	]);
 }
 
 export function canEditReportsAndOrientation(ctx: Ctx = {}): boolean {
-	const u = getCurrentUser();
-	if (u.role === 'directeur') return true;
-	if (u.role === 'prof_principal' && ctx.classId && u.mainClassId === ctx.classId) return true;
-	return false;
-}
-
-function inTeachingScope(u: StaffMember, ctx: Ctx): boolean {
-	if (ctx.classId && !u.classes.includes(ctx.classId)) return false;
-	if (ctx.subject && !(u.subjectsTaught ?? []).includes(ctx.subject)) return false;
-	return true;
+	return hasAnyPermission([P.REPORT_CARD_CONFIGURE, P.REPORT_CARD_GENERATE], ctx);
 }
 
 export const ROLE_LABEL_FR: Record<StaffRole, string> = {

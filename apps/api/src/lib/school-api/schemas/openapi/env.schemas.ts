@@ -8,6 +8,7 @@ export const EnvSchema = z.object({
   DATABASE_URL: z.string(),
   BETTER_AUTH_SECRET: z.string().default("super-secret-placeholder-key-for-local-testing"),
   BETTER_AUTH_URL: z.string().url().default("http://localhost:9999"),
+  TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   SYSTEM_ACTOR_SECRET: z.string().min(1).optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
   /** When true, run dev seed on startup. When unset, seeds automatically in development with pglite/memory. */

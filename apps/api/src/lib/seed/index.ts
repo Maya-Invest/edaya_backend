@@ -1,6 +1,7 @@
 import type { Environment } from "@/lib/bootstrap/env";
 import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
 import type { AuthService } from "@/lib/runtime/types";
+import { type DevAccessSeedResult, runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { type DevAuthSeedResult, runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { type DevSeedResult, runDevSeed } from "@/lib/seed/run-dev-seed";
 
@@ -9,6 +10,7 @@ export {
   SEED_ACADEMIC_YEAR_ID,
   SEED_SCHOOL_ID,
 } from "@/lib/seed/dataset";
+export type { DevAccessSeedResult } from "@/lib/seed/run-dev-access-seed";
 export type { DevAuthSeedResult } from "@/lib/seed/run-dev-auth-seed";
 export type { DevSeedResult } from "@/lib/seed/run-dev-seed";
 
@@ -49,4 +51,15 @@ export async function maybeSeedAuthDatabase(
   }
 
   return runDevAuthSeed(application, auth, env);
+}
+
+export async function maybeSeedAccessDatabase(
+  application: ApiSchoolApplication,
+  env: Environment,
+): Promise<DevAccessSeedResult | null> {
+  if (!shouldSeedOnStart(env)) {
+    return null;
+  }
+
+  return runDevAccessSeed(application);
 }

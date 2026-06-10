@@ -186,6 +186,19 @@ class AcademicContext {
 		return removed ?? null;
 	}
 
+	init(years: AcademicYear[], periods: AcademicPeriod[], classes: ClassNode[]) {
+		this.years = years;
+		this.periods = periods;
+		this.classes = classes;
+
+		if (years.length > 0 && !years.some((y) => y.id === this.yearId)) {
+			const activeYear = years.find((y) => y.status === 'published') ?? years[0];
+			if (activeYear) this.yearId = activeYear.id;
+		}
+
+		this.syncPeriodToYear();
+	}
+
 	private nextClassId(gradeLevelId: string): string {
 		const prefix = GRADE_CLASS_PREFIX[gradeLevelId] ?? 'cls';
 		const siblings = this.classes.filter((c) => c.gradeLevelId === gradeLevelId);

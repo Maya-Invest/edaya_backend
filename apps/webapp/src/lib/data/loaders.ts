@@ -1,145 +1,131 @@
 import type { PageLoadMeta } from './load-state';
-
 import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from './load-state';
-
 import {
-
 	getRuntimeClasses,
-
 	getRuntimeHierarchy,
-
 	getRuntimePeriods,
-
 	getRuntimeYears
-
 } from '$lib/academic/context.svelte';
-
+import { ApiError } from '$lib/server/api-client';
 import {
-
 	activities,
-
+	academicPeriods,
+	academicYears,
 	billing,
-
+	classes as seedClasses,
 	evaluations,
-
 	fees,
-
 	gradeLevels,
-
 	guardians,
-
+	hierarchy as seedHierarchy,
 	incidents,
-
 	periodDefinitions,
-
 	planning,
-
 	schoolYearEvents,
-
 	schools,
-
 	staff,
-
 	students,
-
 	subjects
-
 } from './school';
+import { getAppShellData } from '$lib/remote/shell.remote';
+import { getSchoolStudentsData, getSchoolStaffData } from '$lib/remote/people.remote';
 
-
-
-type LoadInput = { url: URL; params?: Record<string, string> };
-
-
+type LoadInput = { url: URL; params?: Record<string, string>; hasSession?: boolean };
 
 function classes() {
-
 	return getRuntimeClasses();
-
 }
-
-
 
 function hierarchy() {
-
 	return getRuntimeHierarchy();
-
 }
 
-
-
-export async function loadAppShell() {
-
+export function loadMockAppShell() {
+	const studentCount = students.length;
 	return {
-
-		hierarchy: hierarchy(),
-
-		studentCount: students.length,
-
-		academicYears: getRuntimeYears(),
-
-		academicPeriods: getRuntimePeriods(),
-
+		schools,
+		academicYears,
+		academicPeriods,
 		gradeLevels,
-
 		periodDefinitions,
-
-		schools
-
+		classes: seedClasses,
+		hierarchy: seedHierarchy,
+		studentCount
 	};
-
 }
 
+function isUnauthorized(error: unknown): boolean {
+	if (error instanceof ApiError) {
+		return error.status === 401;
+	}
+	if (typeof error === 'object' && error !== null) {
+		const candidate = error as { status?: number; message?: string };
+		if (candidate.status === 401) {
+			return true;
+		}
+		if (candidate.message?.includes('(401)')) {
+			return true;
+		}
+	}
+	return false;
+}
 
+async function withApiFallback<T>(fetcher: () => Promise<T>, fallback: T): Promise<T> {
+	try {
+		return await fetcher();
+	}
+	catch (error) {
+		if (isUnauthorized(error)) {
+			return fallback;
+		}
+		throw error;
+	}
+}
 
-export async function loadSchoolStudentsPage({ url }: LoadInput) {
+export async function loadAppShell(hasSession = false) {
+	if (!hasSession) {
+		return loadMockAppShell();
+	}
+	return withApiFallback(() => getAppShellData(), loadMockAppShell());
+}
 
+export async function loadSchoolStudentsPage({ url, hasSession = false }: LoadInput) {
 	await maybeSimulateLoading(url);
-
-	const list = resolveDemoState(url) === 'empty' ? [] : students;
-
+	const list = resolveDemoState(url) === 'empty'
+		? []
+		: hasSession
+			? await withApiFallback(() => getSchoolStudentsData(), students)
+			: students;
 	const meta = finalizeStatus(url, list.length > 0);
-
 	return { ...meta, students: list, classes: classes(), hierarchy: hierarchy() };
-
 }
-
-
 
 export async function loadSchoolGuardiansPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
-
 	const list = resolveDemoState(url) === 'empty' ? [] : guardians;
-
 	const meta = finalizeStatus(url, list.length > 0);
-
 	return { ...meta, guardians: list, students };
-
 }
 
-
-
-export async function loadSchoolStaffPage({ url }: LoadInput) {
-
+export async function loadSchoolStaffPage({ url, hasSession = false }: LoadInput) {
 	await maybeSimulateLoading(url);
-
-	const list = resolveDemoState(url) === 'empty' ? [] : staff;
-
+	const list = resolveDemoState(url) === 'empty'
+		? []
+		: hasSession
+			? await withApiFallback(() => getSchoolStaffData(), staff)
+			: staff;
+	const liveStudents = resolveDemoState(url) === 'empty'
+		? []
+		: hasSession
+			? await withApiFallback(() => getSchoolStudentsData(), students)
+			: students;
 	const meta = finalizeStatus(url, list.length > 0);
-
 	return {
-
 		...meta,
-
 		staff: list,
-
 		guardians,
-
-		students
-
+		students: liveStudents
 	};
-
 }
 
 

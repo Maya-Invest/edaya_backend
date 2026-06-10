@@ -22,7 +22,8 @@
     "db:migrate": "bun --filter @edaya/adaptor-postgres db:migrate",
     "db:generate:auth": "bun --filter @edaya/adaptor-betterauth db:generate",
     "db:migrate:auth": "bun --filter @edaya/adaptor-betterauth db:migrate",
-    "auth:generate-schema": "bun --filter @edaya/adaptor-betterauth auth:generate-schema"
+    "auth:generate-schema": "bun --filter @edaya/adaptor-betterauth auth:generate-schema",
+    "openapi:generate": "bun run --cwd apps/api export-openapi && bun run --cwd apps/webapp openapi:generate"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

@@ -43,7 +43,7 @@ describe("runDevAuthSeed", () => {
     const result = await runDevAuthSeed(application, auth, pgliteEnv);
 
     expect(result.status).toBe("seeded");
-    expect(result.linkedStaff).toBe(2);
+    expect(result.linkedStaff).toBe(4);
     expect(result.linkedGuardians).toBe(1);
 
     const staff = await application.repositories.staffMembers.findById("st5");

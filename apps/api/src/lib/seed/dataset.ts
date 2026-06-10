@@ -50,6 +50,8 @@ export const DEV_AUTH_PASSWORD = "DevPassword1!";
 export const DEV_AUTH_STAFF_ACCOUNTS = [
   { staffId: "st5", email: "c.moreau@school.edu", name: "Camille Moreau" },
   { staffId: "st1", email: "m.dupont@school.edu", name: "Mme Dupont" },
+  { staffId: "st3", email: "m.leon@school.edu", name: "Mme Léon" },
+  { staffId: "st7", email: "t.evrard@school.edu", name: "Tom Évrard" },
 ] as const;
 
 /** Guardian accounts provisioned and linked during dev auth seed. */

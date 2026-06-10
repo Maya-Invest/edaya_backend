@@ -1,13 +1,16 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { GraduationCap, Building2, Check } from '$lib/icons';
 	import { schools, type School } from '$lib/data/school';
 	import { authSession, DEMO_ACCOUNTS } from '$lib/auth/session.svelte';
+	import { authClient } from '$lib/auth/client';
+	import { toast } from '$lib/toast.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
 
 	let selectedSchoolId = $state(schools[0]?.id ?? '');
+	let loading = $state(false);
 
 	const selectedSchool = $derived(
 		schools.find((entry) => entry.id === selectedSchoolId) ?? schools[0]
@@ -23,9 +26,37 @@
 		selectedSchoolId = school.id;
 	}
 
-	function signIn(userId: string) {
-		authSession.login(userId, selectedSchoolId);
-		goto('/school/students');
+	async function signIn(userId: string) {
+		const account = DEMO_ACCOUNTS.find((entry) => entry.id === userId);
+		if (!account) return;
+
+		loading = true;
+		try {
+			const { error } = await authClient.signIn.email({
+				email: account.email,
+				password: 'DevPassword1!',
+			});
+
+			if (error) {
+				toast.error(`Connexion échouée: ${error.message}`);
+				return;
+			}
+
+			authSession.setSchool(selectedSchoolId);
+			authSession.setSession(userId, selectedSchoolId);
+			try {
+				await invalidateAll();
+			}
+			catch {
+				// SSR refresh is best-effort; client session is already set
+			}
+			toast.success(`Bienvenue, ${account.name}`);
+			goto('/school/students');
+		} catch (err: any) {
+			toast.error(`Erreur: ${err.message || err}`);
+		} finally {
+			loading = false;
+		}
 	}
 </script>
 
@@ -57,8 +88,9 @@
 						<button
 							type="button"
 							onclick={() => pickSchool(school)}
+							disabled={loading}
 							class={cn(
-								'rounded-xl border border-border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft',
+								'rounded-xl border border-border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-50 disabled:pointer-events-none',
 								selectedSchool?.id === school.id
 									? 'border-primary/30 bg-primary/5 ring-1 ring-primary/20'
 									: 'bg-card hover:bg-secondary/40'
@@ -88,7 +120,8 @@
 							<button
 								type="button"
 								onclick={() => signIn(account.id)}
-								class="flex w-full items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-primary/20 hover:bg-secondary/50"
+								disabled={loading}
+								class="flex w-full items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-primary/20 hover:bg-secondary/50 disabled:opacity-50 disabled:pointer-events-none"
 							>
 								<span
 									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold text-primary-foreground"

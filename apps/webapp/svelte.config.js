@@ -20,6 +20,11 @@ import adapter from '@sveltejs/adapter-cloudflare';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
+	compilerOptions: {
+		experimental: {
+			async: true
+		}
+	},
 	kit: {
 		adapter: adapter({
 			// See below for an explanation of these options
@@ -34,7 +39,10 @@ const config = {
 				include: ['/*'],
 				exclude: ['<all>']
 			}
-		})
+		}),
+		experimental: {
+			remoteFunctions: true
+		}
 	}
 };
 

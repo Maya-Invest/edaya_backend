@@ -13,6 +13,7 @@ export function createAuth(db: unknown, env: Environment): AuthService {
     }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    trustedOrigins: env.TRUSTED_ORIGINS ? env.TRUSTED_ORIGINS.split(",") : [],
     emailAndPassword: {
       enabled: true,
     },

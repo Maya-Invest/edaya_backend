@@ -167,22 +167,27 @@ async function resolveActorIdentity(
         ? identity.guardianId
         : identity.studentId;
 
-  const effectiveGrants = await resolveCachedEffectiveGrants({
-    actorId,
-    actorType: identity.kind,
-    schoolId: identity.schoolId,
-    ...(academicYearId ? { academicYearId } : {}),
-    subjectId,
-    ...(session.id ? { sessionId: session.id } : {}),
-    authenticatedAt: session.createdAt,
-    repositories: repos,
-    ttlMs,
-  });
+  try {
+    const effectiveGrants = await resolveCachedEffectiveGrants({
+      actorId,
+      actorType: identity.kind,
+      schoolId: identity.schoolId,
+      ...(academicYearId ? { academicYearId } : {}),
+      subjectId,
+      ...(session.id ? { sessionId: session.id } : {}),
+      authenticatedAt: session.createdAt,
+      repositories: repos,
+      ttlMs,
+    });
 
-  return {
-    ...identity,
-    effectiveGrants,
-  };
+    return {
+      ...identity,
+      effectiveGrants,
+    };
+  }
+  catch {
+    return null;
+  }
 }
 
 function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentityContext) {
