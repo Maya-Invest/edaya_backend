@@ -7,7 +7,7 @@
 		HeartHandshake,
 		ChevronRight,
 		Users,
-	} from 'lucide-svelte';
+	} from '$lib/icons';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { cn } from '$lib/utils';
 	import type { StaffMember, StaffRole } from '$lib/data/school';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ShieldCheck, Crown, GraduationCap, HeartHandshake, Check, Eye, X } from 'lucide-svelte';
+	import { ShieldCheck, Crown, GraduationCap, HeartHandshake, Check, Eye, X } from '$lib/icons';
 	import type { StaffRole } from '$lib/data/school';
 	import { staff } from '$lib/data/school';
 	import { ROLE_LABEL_FR } from '$lib/permissions';

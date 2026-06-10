@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ShieldCheck } from 'lucide-svelte';
+	import { ShieldCheck } from '$lib/icons';
 	import type { StaffRole } from '$lib/data/school';
 	import { classes, subjects } from '$lib/data/school';
 	import { ROLE_LABEL_FR } from '$lib/permissions';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarDays, Plus } from 'lucide-svelte';
+	import { CalendarDays, Plus } from '$lib/icons';
 	import type { Evaluation } from '$lib/data/school';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';

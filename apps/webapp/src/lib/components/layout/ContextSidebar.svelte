@@ -1,10 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { Users } from 'lucide-svelte';
+	import type { LucideIcon } from '$lib/icons';
 	import { page } from '$app/stores';
 	import { cn } from '$lib/utils';
-
-	type LucideIcon = typeof Users;
 
 	type Item = {
 		key: string;

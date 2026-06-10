@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Sparkles } from 'lucide-svelte';
+	import { Sparkles } from '$lib/icons';
 	import type { Subject } from '$lib/data/school';
 	import { buildEntries, getSubjectEntries } from '$lib/data/teachingLog';
 	import { t } from '$lib/i18n';

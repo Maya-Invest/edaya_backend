@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, BookOpen } from 'lucide-svelte';
+	import { ChevronDown, BookOpen } from '$lib/icons';
 	import type { Subject } from '$lib/data/school';
 	import { getSubjectEntries } from '$lib/data/teachingLog';
 	import { cn } from '$lib/utils';

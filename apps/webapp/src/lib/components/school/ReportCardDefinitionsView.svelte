@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronRight } from 'lucide-svelte';
+	import { ChevronRight } from '$lib/icons';
 	import type { ReportCardDefinition } from '$lib/data/report-cards';
 	import { gradeScaleById } from '$lib/data/report-cards';
 	import { gradeLevelById } from '$lib/data/school';

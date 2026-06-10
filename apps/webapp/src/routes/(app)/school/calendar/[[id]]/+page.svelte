@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import SchoolCalendarView from '$lib/components/school/SchoolCalendarView.svelte';
-	import { detailHref } from '$lib/detail-routes';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarClock, FileText, Paperclip, Plus } from 'lucide-svelte';
+	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { deadlines as ALL_DEADLINES, type Deadline } from '$lib/data/school';

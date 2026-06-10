@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { GraduationCap, ChevronDown } from 'lucide-svelte';
+	import { GraduationCap, ChevronDown } from '$lib/icons';
 	import { page } from '$app/stores';
 	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';

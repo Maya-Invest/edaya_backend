@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, FileText, Paperclip } from 'lucide-svelte';
+	import { Check, FileText, Paperclip } from '$lib/icons';
 	import type { Subject } from '$lib/data/school';
 	import { getSubjectEntries } from '$lib/data/teachingLog';
 	import { cn } from '$lib/utils';

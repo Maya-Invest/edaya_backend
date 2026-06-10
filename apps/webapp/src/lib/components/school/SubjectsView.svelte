@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock, Plus, User } from 'lucide-svelte';
+	import { Clock, Plus, User } from '$lib/icons';
 	import type { Subject, SubjectCategory } from '$lib/data/school';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';

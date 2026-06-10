@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail, Phone, Plus, Search, Users } from 'lucide-svelte';
+	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { cn } from '$lib/utils';

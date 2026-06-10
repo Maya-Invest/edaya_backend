@@ -11,7 +11,7 @@
 		Clock,
 		Check,
 		Wallet,
-	} from 'lucide-svelte';
+	} from '$lib/icons';
 	import type { Student, PedagogicalNote } from '$lib/data/school';
 	import {
 		guardians,

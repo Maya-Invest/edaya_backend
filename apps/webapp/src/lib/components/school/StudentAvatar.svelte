@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Camera } from 'lucide-svelte';
+	import { Camera } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
 
 	let { s }: { s: Student } = $props();

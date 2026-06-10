@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Layers, Pencil, Plus, Trash2 } from 'lucide-svelte';
+	import { Layers, Pencil, Plus, Trash2 } from '$lib/icons';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';

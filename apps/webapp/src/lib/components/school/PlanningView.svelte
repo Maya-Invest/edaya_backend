@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ClipboardCheck, MapPin, Plus } from 'lucide-svelte';
+	import { ClipboardCheck, MapPin, Plus } from '$lib/icons';
 	import type { PlanningEvent, ClassNode, Student } from '$lib/data/school';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';

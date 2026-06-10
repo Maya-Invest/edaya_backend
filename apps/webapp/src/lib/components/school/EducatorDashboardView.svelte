@@ -10,7 +10,7 @@
 		Pencil,
 		Plus,
 		Search,
-	} from 'lucide-svelte';
+	} from '$lib/icons';
 	import type { Snippet } from 'svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';

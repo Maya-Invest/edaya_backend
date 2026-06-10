@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, Clock, AlertCircle, FileText, Paperclip } from 'lucide-svelte';
+	import { Check, Clock, AlertCircle, FileText, Paperclip } from '$lib/icons';
 	import type { Deadline } from '$lib/data/school';
 	import { students } from '$lib/data/school';
 	import { cn } from '$lib/utils';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock, Plus, User, Layers, Tag, ChevronRight } from 'lucide-svelte';
+	import { Clock, Plus, User, Layers, Tag, ChevronRight } from '$lib/icons';
 	import type { ClassNode, Subject, SubjectCategory } from '$lib/data/school';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';

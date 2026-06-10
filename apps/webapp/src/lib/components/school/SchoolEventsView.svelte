@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { AlertTriangle, Plus, Search } from 'lucide-svelte';
+	import { AlertTriangle, Plus, Search } from '$lib/icons';
 	import type { ClassNode, Incident, Student } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import * as Select from '$lib/components/ui/select';
 	import { cn } from '$lib/utils';
 	import { locale, t } from '$lib/i18n';
 
@@ -64,6 +64,11 @@
 
 		return filtered;
 	});
+
+	const classFilterOptions = $derived([
+		{ value: 'all', label: $t('common.allClasses') },
+		...classes.map((c) => ({ value: c.id, label: c.name })),
+	]);
 </script>
 
 <div class="animate-fade-in">
@@ -82,21 +87,11 @@
 
 	<div class="mb-4 flex flex-wrap items-center gap-3">
 		{#if !classId}
-			<Select.Root
-				type="single"
-				value={classFilter}
-				onValueChange={(v) => v && (classFilter = v)}
-			>
-				<Select.Trigger class="h-9 w-[220px] rounded-lg text-sm">
-					<Select.Value placeholder={$t('sidebar.pickClass')} />
-				</Select.Trigger>
-				<Select.Content>
-					<Select.Item value="all">{$t('common.allClasses')}</Select.Item>
-					{#each classes as c (c.id)}
-						<Select.Item value={c.id}>{c.name}</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+			<FilterSelect
+				bind:value={classFilter}
+				class="h-9 w-[220px] rounded-lg text-sm"
+				options={classFilterOptions}
+			/>
 		{/if}
 		<div class="relative min-w-[200px] max-w-sm flex-1">
 			<Search

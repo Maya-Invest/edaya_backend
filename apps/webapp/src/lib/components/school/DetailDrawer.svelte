@@ -1,26 +1,9 @@
 <script lang="ts">
-	import { X } from 'lucide-svelte';
+	import { X } from '$lib/icons';
 	import { t } from '$lib/i18n';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { DrawerItem } from './drawer-types';
 	import { kindStyle, kindLabelKey } from './drawer-constants';
-	import StudentTabs from './StudentTabs.svelte';
-	import StudentDetailsDialog from './StudentDetailsDialog.svelte';
-	import SubjectForm from './SubjectForm.svelte';
-	import PlanningForm from './PlanningForm.svelte';
-	import EvaluationForm from './EvaluationForm.svelte';
-	import GuardianForm from './GuardianForm.svelte';
-	import StaffForm from './StaffForm.svelte';
-	import DeadlineDetail from './DeadlineDetail.svelte';
-	import BillingDetail from './BillingDetail.svelte';
-	import FeeForm from './FeeForm.svelte';
-	import SchoolYearEventForm from './SchoolYearEventForm.svelte';
-	import IncidentDetail from './IncidentDetail.svelte';
-	import RoleDetail from './RoleDetail.svelte';
-	import LevelDetail from './LevelDetail.svelte';
-	import ActivityDetail from './ActivityDetail.svelte';
-	import ReportCardDefinitionDetail from './ReportCardDefinitionDetail.svelte';
-	import ReportCardResultDetail from './ReportCardResultDetail.svelte';
 
 	let { item, onClose }: { item: DrawerItem | null; onClose: () => void } = $props();
 
@@ -59,43 +42,111 @@
 
 		<div class="scrollbar-thin flex-1 overflow-y-auto px-6 py-6">
 			{#if item.kind === 'student'}
-				<StudentTabs s={item.data} />
+				{#await import('./StudentTabs.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: StudentTabs }}
+					<StudentTabs s={item.data} />
+				{/await}
 			{:else if item.kind === 'subject'}
-				<SubjectForm s={item.data} />
+				{#await import('./SubjectForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: SubjectForm }}
+					<SubjectForm s={item.data} />
+				{/await}
 			{:else if item.kind === 'planning'}
-				<PlanningForm s={item.data} />
+				{#await import('./PlanningForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: PlanningForm }}
+					<PlanningForm s={item.data} />
+				{/await}
 			{:else if item.kind === 'evaluation'}
-				<EvaluationForm s={item.data} />
+				{#await import('./EvaluationForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: EvaluationForm }}
+					<EvaluationForm s={item.data} />
+				{/await}
 			{:else if item.kind === 'guardian'}
-				<GuardianForm g={item.data} />
+				{#await import('./GuardianForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: GuardianForm }}
+					<GuardianForm g={item.data} />
+				{/await}
 			{:else if item.kind === 'staff'}
-				<StaffForm s={item.data} />
+				{#await import('./StaffForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: StaffForm }}
+					<StaffForm s={item.data} />
+				{/await}
 			{:else if item.kind === 'deadline'}
-				<DeadlineDetail d={item.data} />
+				{#await import('./DeadlineDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: DeadlineDetail }}
+					<DeadlineDetail d={item.data} />
+				{/await}
 			{:else if item.kind === 'billing'}
-				<BillingDetail b={item.data} />
+				{#await import('./BillingDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: BillingDetail }}
+					<BillingDetail b={item.data} />
+				{/await}
 			{:else if item.kind === 'fee'}
-				<FeeForm f={item.data} />
+				{#await import('./FeeForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: FeeForm }}
+					<FeeForm f={item.data} />
+				{/await}
 			{:else if item.kind === 'schoolYearEvent'}
-				<SchoolYearEventForm ev={item.data} />
+				{#await import('./SchoolYearEventForm.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: SchoolYearEventForm }}
+					<SchoolYearEventForm ev={item.data} />
+				{/await}
 			{:else if item.kind === 'incident'}
-				<IncidentDetail i={item.data} />
+				{#await import('./IncidentDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: IncidentDetail }}
+					<IncidentDetail i={item.data} />
+				{/await}
 			{:else if item.kind === 'role'}
-				<RoleDetail role={item.data.role} />
+				{#await import('./RoleDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: RoleDetail }}
+					<RoleDetail role={item.data.role} />
+				{/await}
 			{:else if item.kind === 'level'}
-				<LevelDetail label={item.data.label} subtitle={item.data.subtitle} items={item.data.items} />
+				{#await import('./LevelDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: LevelDetail }}
+					<LevelDetail label={item.data.label} subtitle={item.data.subtitle} items={item.data.items} />
+				{/await}
 			{:else if item.kind === 'activity'}
-				<ActivityDetail a={item.data} />
+				{#await import('./ActivityDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: ActivityDetail }}
+					<ActivityDetail a={item.data} />
+				{/await}
 			{:else if item.kind === 'reportCardDefinition'}
-				<ReportCardDefinitionDetail definition={item.data} />
+				{#await import('./ReportCardDefinitionDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: ReportCardDefinitionDetail }}
+					<ReportCardDefinitionDetail definition={item.data} />
+				{/await}
 			{:else if item.kind === 'reportCardResult'}
-				<ReportCardResultDetail result={item.data} />
+				{#await import('./ReportCardResultDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: ReportCardResultDetail }}
+					<ReportCardResultDetail result={item.data} />
+				{/await}
 			{/if}
 		</div>
 
 		<footer class="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
 			{#if item.kind === 'student'}
-				<StudentDetailsDialog s={item.data} />
+				{#await import('./StudentDetailsDialog.svelte')}
+					<span></span>
+				{:then { default: StudentDetailsDialog }}
+					<StudentDetailsDialog s={item.data} />
+				{/await}
 			{/if}
 			<Button variant="ghost" onclick={onClose} class="rounded-full">{$t('common.cancel')}</Button>
 			{#if showSave}

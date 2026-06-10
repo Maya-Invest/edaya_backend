@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown } from 'lucide-svelte';
+	import { ChevronDown } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import type { SubjectGroupItem } from './drawer-types';
 	import { fmtDateFr } from './drawer-constants';
@@ -8,7 +8,7 @@
 		$props();
 
 	const collapsible = $derived(items.length > 1);
-	let open = $state(!collapsible);
+	let open = $state(false);
 	const graded = $derived(items.filter((it) => it.mark !== null));
 
 	$effect(() => {

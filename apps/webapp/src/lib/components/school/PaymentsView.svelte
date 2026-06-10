@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, Clock, Search } from 'lucide-svelte';
+	import { Check, Clock, Search } from '$lib/icons';
 	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/data/school';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { cn } from '$lib/utils';

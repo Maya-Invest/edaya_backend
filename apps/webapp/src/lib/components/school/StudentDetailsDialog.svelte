@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Info } from 'lucide-svelte';
+	import { Info } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
 	import { classes, guardians, healthRecords, incidents } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';

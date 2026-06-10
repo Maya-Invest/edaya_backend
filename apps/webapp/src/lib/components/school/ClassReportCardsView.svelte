@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FileSpreadsheet, Sparkles } from 'lucide-svelte';
+	import { FileSpreadsheet, Sparkles } from '$lib/icons';
 	import type { ReportCardResult } from '$lib/data/report-cards';
 	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { students } from '$lib/data/school';

@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import ReportCardDefinitionsView from '$lib/components/school/ReportCardDefinitionsView.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
-	import { detailHref } from '$lib/detail-routes';
+	import { detailHref } from '$lib/detail-hrefs';
 </script>
 
 <ReportCardDefinitionsView

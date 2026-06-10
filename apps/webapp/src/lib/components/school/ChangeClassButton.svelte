@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Users } from 'lucide-svelte';
+	import { Users } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
 	import { classes } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -10,7 +10,10 @@
 	let { s }: { s: Student } = $props();
 
 	let open = $state(false);
-	let target = $state(s.classId);
+	let target = $state('');
+	$effect.pre(() => {
+		target = s.classId;
+	});
 
 	const currentClass = $derived(classes.find((c) => c.id === s.classId));
 	const targetClass = $derived(classes.find((c) => c.id === target));

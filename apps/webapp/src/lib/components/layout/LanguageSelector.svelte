@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, ChevronDown, Languages } from 'lucide-svelte';
+	import { Check, ChevronDown, Languages } from '$lib/icons';
 	import { lang, setLang, t, type Lang } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 

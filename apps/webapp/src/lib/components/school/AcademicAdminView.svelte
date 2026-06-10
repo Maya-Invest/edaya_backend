@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarRange, ChevronDown, Plus } from 'lucide-svelte';
+	import { CalendarRange, ChevronDown, Plus } from '$lib/icons';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';

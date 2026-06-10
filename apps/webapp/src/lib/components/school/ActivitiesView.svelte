@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, CalendarRange, Users } from 'lucide-svelte';
+	import { Plus, CalendarRange, Users } from '$lib/icons';
 	import type { Activity } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { cn } from '$lib/utils';

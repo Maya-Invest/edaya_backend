@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown } from 'lucide-svelte';
+	import { ChevronDown } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Popover from '$lib/components/ui/popover';

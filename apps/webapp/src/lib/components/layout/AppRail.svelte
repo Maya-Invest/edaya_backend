@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { GraduationCap } from 'lucide-svelte';
+	import { GraduationCap } from '$lib/icons';
 	import { page } from '$app/stores';
 	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';

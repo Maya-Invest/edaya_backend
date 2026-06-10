@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import StudentsView from '$lib/components/school/StudentsView.svelte';
-	import { detailHref } from '$lib/detail-routes';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
 

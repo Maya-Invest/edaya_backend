@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { toast, type ToastKind } from '$lib/toast.svelte';
 	import { cn } from '$lib/utils';
-	import { CheckCircle2, Info, X, XCircle } from 'lucide-svelte';
+	import { CheckCircle2, Info, X, XCircle } from '$lib/icons';
 
 	const tone: Record<ToastKind, string> = {
 		success: 'border-accent/30 bg-accent/10 text-foreground',

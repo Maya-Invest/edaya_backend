@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { GraduationCap, Building2, Check } from 'lucide-svelte';
+	import { GraduationCap, Building2, Check } from '$lib/icons';
 	import { schools, type School } from '$lib/data/school';
 	import { authSession, DEMO_ACCOUNTS } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FileSpreadsheet } from 'lucide-svelte';
+	import { FileSpreadsheet } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
 	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';

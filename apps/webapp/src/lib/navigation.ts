@@ -19,9 +19,10 @@ import {
 	Settings2,
 	CalendarRange,
 	Layers
-} from 'lucide-svelte';
+} from '$lib/icons';
+import type { LucideIcon } from '$lib/icons';
 
-type LucideIcon = typeof Users;
+export type { LucideIcon };
 
 export type ModuleKey = 'school' | 'classes' | 'finance' | 'configuration';
 

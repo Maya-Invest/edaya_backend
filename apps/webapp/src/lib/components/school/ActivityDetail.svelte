@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, ChevronRight, Search } from 'lucide-svelte';
+	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import type { Activity, ActivityEnrollment } from '$lib/data/school';
 	import { students, classes, hierarchy } from '$lib/data/school';
 	import { cn } from '$lib/utils';
@@ -15,7 +15,10 @@
 
 	let { a }: { a: Activity } = $props();
 
-	let enrollments = $state<ActivityEnrollment[]>([...a.enrollments]);
+	let enrollments = $state<ActivityEnrollment[]>([]);
+	$effect.pre(() => {
+		enrollments = [...a.enrollments];
+	});
 	let openAdd = $state(false);
 	let expandedLevels = $state<Set<string>>(new Set(hierarchy.map((g) => g.level)));
 	let selectedClassId = $state<string | null>(hierarchy[0]?.classes[0]?.id ?? null);

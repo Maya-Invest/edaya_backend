@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Building2, Check, ChevronDown } from 'lucide-svelte';
+	import { Building2, Check, ChevronDown } from '$lib/icons';
 	import type { School } from '$lib/data/school';
 	import { authSession } from '$lib/auth/session.svelte';
 	import { cn } from '$lib/utils';

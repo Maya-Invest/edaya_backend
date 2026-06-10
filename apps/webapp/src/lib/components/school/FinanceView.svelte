@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, TrendingUp, AlertCircle, Wallet } from 'lucide-svelte';
+	import { Plus, TrendingUp, AlertCircle, Wallet } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { Fee, Student, StudentBilling } from '$lib/data/school';

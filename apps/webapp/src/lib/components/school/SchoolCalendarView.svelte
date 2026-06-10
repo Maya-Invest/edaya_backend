@@ -7,7 +7,7 @@
 		Palmtree,
 		AlertCircle,
 		PartyPopper,
-	} from 'lucide-svelte';
+	} from '$lib/icons';
 	import type { SchoolYearEvent, ClassNode } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { locale, t } from '$lib/i18n';

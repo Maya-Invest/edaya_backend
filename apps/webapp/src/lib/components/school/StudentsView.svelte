@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail, MoreHorizontal, Plus } from 'lucide-svelte';
+	import { Mail, MoreHorizontal, Plus } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';

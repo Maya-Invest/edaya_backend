@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Mail, MoreHorizontal, Plus, Search } from 'lucide-svelte';
+	import { Mail, MoreHorizontal, Plus, Search } from '$lib/icons';
 	import type { ClassNode, Student } from '$lib/data/school';
 	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import * as Select from '$lib/components/ui/select';
 	import { t } from '$lib/i18n';
 
 	let {
@@ -39,6 +39,16 @@
 
 	const statusKeys = ['all', 'honor', 'active', 'warning'] as const;
 
+	const classFilterGroups = $derived(
+		hierarchy.map((g) => ({
+			label: g.level,
+			options: g.classes.map((c) => ({
+				value: c.id,
+				label: `${c.name} · ${c.studentCount}`,
+			})),
+		}))
+	);
+
 	function statusLabel(k: (typeof statusKeys)[number]) {
 		return k === 'all' ? $t('filter.all') : $t(`studentStatus.${k}`);
 	}
@@ -65,29 +75,12 @@
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
 			</div>
-			<Select.Root
-				type="single"
-				value={classFilter}
-				onValueChange={(v) => v && (classFilter = v)}
-			>
-				<Select.Trigger class="h-9 w-48 rounded-full text-xs">
-					<Select.Value placeholder={$t('common.allClasses')} />
-				</Select.Trigger>
-				<Select.Content>
-					<Select.Item value="all">{$t('common.allClasses')}</Select.Item>
-					{#each hierarchy as g (g.level)}
-						<Select.Group>
-							<Select.Label>{g.level}</Select.Label>
-							{#each g.classes as c (c.id)}
-								<Select.Item value={c.id}>
-									{c.name}
-									<span class="ml-1 text-muted-foreground">· {c.studentCount}</span>
-								</Select.Item>
-							{/each}
-						</Select.Group>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+			<FilterSelect
+				bind:value={classFilter}
+				class="h-9 w-48 rounded-full text-xs"
+				options={[{ value: 'all', label: $t('common.allClasses') }]}
+				groups={classFilterGroups}
+			/>
 			<div class="flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
 				{#each statusKeys as k (k)}
 					<button

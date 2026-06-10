@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus } from 'lucide-svelte';
+	import { Plus } from '$lib/icons';
 	import { resources } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { cn } from '$lib/utils';
