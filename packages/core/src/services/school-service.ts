@@ -121,7 +121,7 @@ import type {
   UpdateStudentStatusInput,
   UpsertStudentHealthProfileInput,
 } from './service-workflows/student'
-import { AuthorizationError, AuthorizationErrorCode, Permission } from '../authorization'
+import { AuthorizationError, AuthorizationErrorCode, checkModuleAccess, Permission } from '../authorization'
 import { permissionAction } from '../shared'
 import { BaseSchoolService } from './base-school-service'
 import { AcademicsServiceWorkflow } from './service-workflows/accademics'
@@ -160,19 +160,25 @@ export class SchoolService {
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await permissionAction(
-      this.baseService.authorizationPolicy,
-      Permission.QUERY_OVERDUE_FEES_READ,
-    )(this.baseService.actor)
+    await checkModuleAccess(
+      this.baseService.actor,
+      schoolId,
+      'finance',
+      this.baseService.repositories,
+    )
+    permissionAction(Permission.QUERY_OVERDUE_FEES_READ)(this.baseService.actor)
     return this.baseService.repositories.schools.getOverdueFeeCount(schoolId)
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await permissionAction(
-      this.baseService.authorizationPolicy,
-      Permission.QUERY_REPORT_CARD_DETAIL_READ,
-    )(this.baseService.actor)
+    await checkModuleAccess(
+      this.baseService.actor,
+      schoolId,
+      'assessments',
+      this.baseService.repositories,
+    )
+    permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ)(this.baseService.actor)
     return this.baseService.repositories.schools.getPublishedReportCardCount(schoolId)
   }
 

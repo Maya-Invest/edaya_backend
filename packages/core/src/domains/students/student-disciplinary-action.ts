@@ -80,8 +80,8 @@ export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDiscipl
   config({
     repository: repositories.studentDisciplinaryActions,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(policy, Permission.DISCIPLINE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.DISCIPLINE_VALIDATE), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
+    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.DISCIPLINE_VALIDATE), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
     gates: {
       preSave: validateStudentDisciplinaryActionSave,
       preDelete: validateStudentDisciplinaryActionDelete,

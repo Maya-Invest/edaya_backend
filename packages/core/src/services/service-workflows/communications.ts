@@ -55,12 +55,14 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createAnnouncement(input: CreateAnnouncementInput): Promise<Announcement> {
+    await this.checkModule('communications', input.schoolId)
     const announcement = new Announcement(input)
     await this.baseService.announcements.save(announcement)
     return announcement
   }
 
   async addTarget(input: AddAnnouncementTargetInput): Promise<AnnouncementTarget> {
+    await this.checkModule('communications')
     const target = new AnnouncementTargetEntity(input)
     await this.baseService.announcementTargets.save(target)
     return target
@@ -70,6 +72,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     announcementId,
     publishedAt,
   }: PublishAnnouncementInput): Promise<Announcement> {
+    await this.checkModule('communications')
     const existing = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: existing.schoolId, announcementId })
     if ((await this.baseService.repositories.announcementTargets.list({ announcementId })).length === 0) {
@@ -106,6 +109,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
     updatedAt,
   }: RecordDeliveryInput): Promise<MessageDelivery> {
+    await this.checkModule('communications')
     const announcement = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: announcement.schoolId, announcementId })
     await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
@@ -136,6 +140,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     channel,
     createdAt,
   }: MaterializeDeliveriesInput): Promise<MessageDelivery[]> {
+    await this.checkModule('communications')
     const announcement = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: announcement.schoolId, announcementId })
     return this.baseService.atomicExecution.execute(async () => {
@@ -408,6 +413,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     announcementId?: string
   }): Promise<void> {
     this.checkActorSchool(resource.schoolId)
-    await permissionAction(this.baseService.authorizationPolicy, Permission.COMMUNICATION_CREATE)(this.baseService.actor)
+    await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
   }
 }

@@ -135,8 +135,8 @@ export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ 
   config({
     repository: repositories.results,
     tenant: reportCardResultTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor: any, ids: readonly string[]) => policy.checkReportCardResultAccess(actor, ids))),
-    write: write(permissionAction(policy, Permission.REPORT_CARD_PUBLISH), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor: any, ids: readonly string[]) => policy.checkReportCardResultAccess(actor, ids))),
+    write: write(permissionAction(Permission.REPORT_CARD_PUBLISH), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
     gates: {
       preSave: validateReportCardResultSave,
       preDelete: validateReportCardResultDelete,

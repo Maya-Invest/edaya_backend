@@ -8,7 +8,7 @@ export interface EntityTenantResolver<T> {
 }
 
 export interface EntityReadAuthorization<T> {
-  checkModule: (actor: ActorMetadata) => Promise<void>
+  checkModule: (actor: ActorMetadata) => void | Promise<void>
   checkAccess: (
     actor: ActorMetadata,
     entities: readonly T[],
@@ -17,7 +17,7 @@ export interface EntityReadAuthorization<T> {
 }
 
 export interface EntityWriteAuthorization<T> {
-  checkModule: (actor: ActorMetadata) => Promise<void>
+  checkModule: (actor: ActorMetadata) => void | Promise<void>
   authorizeSave: (
     actor: ActorMetadata,
     entity: T,

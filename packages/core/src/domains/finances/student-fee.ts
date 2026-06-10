@@ -256,9 +256,9 @@ export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories
   config({
     repository: repositories.studentFees,
     tenant: studentFeeTenant(),
-    read: read(permissionAction(policy, Permission.PAYMENT_READ), readByIds((actor, ids) => policy.checkStudentFeeAccess(actor, ids))),
+    read: read(permissionAction(Permission.PAYMENT_READ), readByIds((actor, ids) => policy.checkStudentFeeAccess(actor, ids))),
     write: write(
-      anyPermissionAction(policy, [Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL]),
+      anyPermissionAction([Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL]),
       authorizeStudentFee(policy),
       authorizeStudentFeeDelete(policy),
     ),
@@ -323,14 +323,14 @@ function cancellationChanged(entity: StudentFee, existing: StudentFee): boolean 
 
 export function authorizeStudentFee(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentFee>['authorizeSave'] {
   return async (actor, entity, existing) => {
-    await permissionAction(policy, studentFeeWritePermission(entity, existing))(actor)
+    await permissionAction(studentFeeWritePermission(entity, existing))(actor)
     await policy.checkStudentAccess(actor, [entity.studentId])
   }
 }
 
 export function authorizeStudentFeeDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentFee>['authorizeDelete'] {
   return async (actor, entity) => {
-    await permissionAction(policy, Permission.PAYMENT_CANCEL)(actor)
+    await permissionAction(Permission.PAYMENT_CANCEL)(actor)
     await policy.checkStudentFeeAccess(actor, [entity.id])
   }
 }

@@ -103,8 +103,8 @@ export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDe
   config({
     repository: repositories.sections,
     tenant: reportCardSectionTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), authorizeReportCardSection(policy), authorizeReportCardSectionDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ), noopReadAccess),
+    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), authorizeReportCardSection(policy), authorizeReportCardSectionDelete(policy)),
     gates: {
       preSave: validateReportCardSectionSave,
       preDelete: validateReportCardSectionDelete,

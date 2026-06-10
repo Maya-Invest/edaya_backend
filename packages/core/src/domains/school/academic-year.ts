@@ -71,12 +71,12 @@ export class AcademicYear {
   }
 }
 
-export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ repositories, policy, atomicExecution }) =>
+export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.academicYears,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_WORKSPACE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.SCHOOL_STRUCTURE_CONFIGURE), noopSaveAccess, noopDeleteAccess),
+    read: read(permissionAction(Permission.QUERY_WORKSPACE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preDelete: async (year, repos) => {
         const classGroups = await repos.classGroups.list({ academicYearId: year.id })

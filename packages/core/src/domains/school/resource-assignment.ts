@@ -55,8 +55,8 @@ export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> =
   config({
     repository: repositories.resourceAssignments,
     tenant: resourceAssignmentTenant(),
-    read: read(permissionAction(policy, Permission.RESOURCE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.RESOURCE_CONFIGURE), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
+    read: read(permissionAction(Permission.RESOURCE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.RESOURCE_CONFIGURE), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
     gates: {
       preSave: validateResourceAssignmentSave,
     },

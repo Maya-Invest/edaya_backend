@@ -18,7 +18,6 @@ export interface AuthorizationPolicy {
   checkStudentFeeAccess: (actor: ActorMetadata, studentFeeIds: readonly string[]) => Promise<void>
   checkSessionAccess: (actor: ActorMetadata, sessionIds: readonly string[]) => Promise<void>
   checkAttendanceAccess: (actor: ActorMetadata, studentIds: readonly string[], sessionIds: readonly string[]) => Promise<void>
-  checkModuleAccess: (actor: ActorMetadata, schoolId: string, module: string) => Promise<void>
   getRepositories?: () => SchoolRepositories
 }
 

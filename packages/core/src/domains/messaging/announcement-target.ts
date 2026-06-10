@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
-import { announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, permissionAction, read, write } from '../../shared'
+import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 
 export enum AnnouncementTargetKind {
@@ -71,12 +71,12 @@ export class AnnouncementTarget {
   get createdAt() { return this.data.createdAt }
 }
 
-export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> = ({ repositories, policy, atomicExecution }) =>
+export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.announcementTargets,
     tenant: announcementLinkedTenant('announcementId'),
-    read: read(permissionAction(policy, Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.COMMUNICATION_CREATE), authorizeAnnouncementLinked(policy, 'announcementId'), authorizeAnnouncementLinkedDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
+    write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateAnnouncementTargetSave,
     },

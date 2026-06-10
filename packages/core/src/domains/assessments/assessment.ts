@@ -76,8 +76,8 @@ export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories
   config({
     repository: repositories.assessments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(policy, Permission.GRADE_READ), readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids))),
-    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(Permission.GRADE_READ), readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids))),
+    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateAssessmentSave,
     },

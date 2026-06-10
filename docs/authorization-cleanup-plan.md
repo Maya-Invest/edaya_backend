@@ -69,18 +69,25 @@ flowchart TD
 - Indexed grant structure on `EffectiveGrants` — marginal gain until grant sets grow large
 - `ManagedEntityService.count()` fix — needs design decision (Phase 3)
 
-## Phase 3 — Structural (brainstorm)
+## Phase 3 — Structural simplification
 
-Topics to decide before implementing:
+**Status: complete**
 
-1. **`checkModuleAccess`** — Wire into workflow/query entry points for portal module gating, or remove from `AuthorizationPolicy`.
-2. **`ManagedEntityService.count()`** — Repository-level scoped count vs. document that count is only for small tenant lists.
-3. **`checkStudentHealthAccess`** — Align with student scope model (currently permission-only).
-4. **`permissionAction` sync** — Drop unnecessary `async` wrapper.
-5. **`hasFullStudentRecordAccess`** in `student-note.ts` — Require preloaded grants; remove DB fallback.
-6. **`authorizeAnnouncementLinked`** — Implement or replace with explicit `noopSaveAccess`.
-7. **Error code usage** — Map API middleware errors to specific `AuthorizationErrorCode` values.
-8. **`academicYearId` on requests** — Enforce in `authorize()` or remove from request type.
+- [x] Unified permission groups in `permissions/groups.ts` (assignment-scoped, resolver, finance)
+- [x] `createRepositoryAuthorizationPolicy` factory; `RepositoryAuthorizationPolicy` class removed
+- [x] `checkModuleAccess` removed from `AuthorizationPolicy`; kept as standalone resolver in `policy/resolvers/module.ts`
+- [x] `permissionAction` / `anyPermissionAction` are synchronous and no longer take a `policy` argument
+- [x] `hasFullStudentRecordAccess` in `student-note.ts` uses preloaded grants via `actorGrantCoversAny`
+- [x] `authorizeAnnouncementLinked` removed; messaging entities use `noopSaveAccess` / `noopDeleteAccess`
+- [x] `academicYearId` removed from `AuthorizationRequest` (year scoping stays in grant resolution)
+- [x] `AuthorizationErrorCode` trimmed to `Forbidden` only (API-specific codes deferred)
+
+- [x] Wire `checkModuleAccess` into workflow/query entry points for portal module gating
+
+**Deferred from Phase 3**
+- `ManagedEntityService.count()` — repository-level scoped count vs. document small-tenant-only usage
+- `checkStudentHealthAccess` — align with student scope model (currently permission-only)
+- Map API middleware errors to richer `AuthorizationErrorCode` values when HTTP layer is refactored
 
 ## Module Layout (reorganized)
 
@@ -102,7 +109,7 @@ authorization/
 | `engine/` | `authorize()` — permission + scope + assurance |
 | `grants/` | Portal permission sets, role templates, scope grant builders, `actorGrantCoversAny` |
 | `permissions/` | `Permission` enum, definitions, assurance map |
-| `policy/` | Resource resolvers + `RepositoryAuthorizationPolicy` |
+| `policy/` | Resource resolvers + `createRepositoryAuthorizationPolicy` |
 | `ports/` | DB-backed `resolveEffectiveGrants` / `resolveActorGrants` |
 
 ## Test Plan

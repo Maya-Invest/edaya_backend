@@ -9,7 +9,7 @@ import {
   GUARDIAN_ADMIN_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_STUDENT_NOTE_ACCESS_PERMISSIONS,
   STUDENT_DIRECT_ACCESS_PERMISSIONS,
-} from '../resolver-permissions'
+} from '../../permissions/groups'
 
 export async function checkStudentAccess(
   actor: ActorMetadata,

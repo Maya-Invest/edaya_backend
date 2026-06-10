@@ -107,8 +107,8 @@ export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, po
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(policy, Permission.DISCIPLINE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.DISCIPLINE_CREATE), authorizeIncident(policy), authorizeIncidentDelete(policy)),
+    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.DISCIPLINE_CREATE), authorizeIncident(policy), authorizeIncidentDelete(policy)),
     gates: {
       preSave: validateIncidentSave,
       preDelete: validateIncidentDelete,

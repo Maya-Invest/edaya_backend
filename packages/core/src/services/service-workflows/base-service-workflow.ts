@@ -1,6 +1,7 @@
 import type { AcademicPeriod, ClassGroup, Student } from '../../domains'
+import type { SchoolModule } from '../../authorization'
 import type { BaseSchoolService } from '../base-school-service'
-import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../../authorization'
+import { AuthorizationError, AuthorizationErrorCode, checkModuleAccess, denyResourceAccess } from '../../authorization'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 
 export class BaseServiceWorkflow {
@@ -11,6 +12,18 @@ export class BaseServiceWorkflow {
   protected checkActorSchool(schoolId: string): void {
     if (schoolId !== this.baseService.actor.schoolId)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  protected async checkModule(
+    module: SchoolModule,
+    schoolId: string = this.baseService.actor.schoolId,
+  ): Promise<void> {
+    await checkModuleAccess(
+      this.baseService.actor,
+      schoolId,
+      module,
+      this.baseService.repositories,
+    )
   }
 
   protected async requireStudent(studentId: string): Promise<Student> {

@@ -33,13 +33,13 @@ export function directPermissionEntityConfig<T extends EntityWithSchoolId & Enti
   writePermission: Permission,
   readAccess: EntityReadAuthorization<T>['checkAccess'] = noopReadAccess,
 ): ManagedEntityServiceConfig<T> {
-  const { policy, atomicExecution } = input
+  const { atomicExecution } = input
 
   return config({
     repository,
     tenant: directSchoolTenant<T>(),
-    read: read(permissionAction(policy, readPermission), readAccess),
-    write: write(permissionAction(policy, writePermission), authorizeExistingById(readAccess), authorizeDeleteByReadAccess(readAccess)),
+    read: read(permissionAction(readPermission), readAccess),
+    write: write(permissionAction(writePermission), authorizeExistingById(readAccess), authorizeDeleteByReadAccess(readAccess)),
     atomicExecution,
   })
 }

@@ -5,7 +5,7 @@ import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import {
   SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
   SESSION_TEACHING_ACCESS_PERMISSIONS,
-} from '../resolver-permissions'
+} from '../../permissions/groups'
 import { checkClassGroupAccess } from './academic'
 import { checkStudentAccess } from './student'
 

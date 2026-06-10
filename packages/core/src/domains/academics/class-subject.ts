@@ -46,8 +46,8 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
   config({
     repository: repositories.classSubjects,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(policy, Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateClassSubjectSave,
     },

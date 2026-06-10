@@ -1,4 +1,7 @@
 import { Permission } from '../permissions/permission'
+import { ASSIGNMENT_SCOPED_PERMISSIONS, ASSIGNMENT_SCOPED_PERMISSION_SET } from '../permissions/groups'
+
+export { ASSIGNMENT_SCOPED_PERMISSIONS, ASSIGNMENT_SCOPED_PERMISSION_SET }
 
 /** Permissions granted to Admin / Principal (school-wide elevated staff). */
 export const ELEVATED_STAFF_PERMISSIONS: readonly Permission[] = Object.values(Permission)
@@ -63,17 +66,3 @@ export const ACCOUNTANT_PERMISSIONS: readonly Permission[] = [
   Permission.PAYMENT_CANCEL,
   Permission.PAYMENT_REVERSE,
 ]
-
-/**
- * Permissions derived from `StaffAssignment` rows (class / course / session).
- * Must stay aligned with teacher global actions that are scope-limited in resolvers.
- */
-export const ASSIGNMENT_SCOPED_PERMISSIONS: readonly Permission[] = [
-  Permission.GRADE_INPUT,
-  Permission.ATTENDANCE_RECORD,
-  Permission.CLASS_LOGBOOK_CREATE,
-  Permission.CLASS_LOGBOOK_UPDATE,
-  Permission.DISCIPLINE_CREATE,
-]
-
-export const ASSIGNMENT_SCOPED_PERMISSION_SET = new Set(ASSIGNMENT_SCOPED_PERMISSIONS)

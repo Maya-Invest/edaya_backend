@@ -4,11 +4,10 @@ import { authorize } from '../../authorization'
 import { unique } from '../utils/helper-utils'
 
 export function permissionAction(
-  _policy: AuthorizationPolicy,
   permission: Permission,
-  scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId' | 'academicYearId'>,
-): (actor: ActorMetadata) => Promise<void> {
-  return async (actor) => {
+  scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId'>,
+): (actor: ActorMetadata) => void {
+  return (actor) => {
     authorize({
       actor,
       request: {
@@ -21,19 +20,18 @@ export function permissionAction(
 }
 
 export function anyPermissionAction(
-  policy: AuthorizationPolicy,
   permissions: readonly Permission[],
-  scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId' | 'academicYearId'>,
-): (actor: ActorMetadata) => Promise<void> {
+  scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId'>,
+): (actor: ActorMetadata) => void {
   if (permissions.length === 0) {
     throw new Error('anyPermissionAction requires at least one permission')
   }
 
-  return async (actor) => {
+  return (actor) => {
     let lastError: unknown
     for (const permission of permissions) {
       try {
-        await permissionAction(policy, permission, scope)(actor)
+        permissionAction(permission, scope)(actor)
         return
       }
       catch (error) {
@@ -45,14 +43,14 @@ export function anyPermissionAction(
 }
 
 export function read<T>(
-  checkModule: (actor: ActorMetadata) => Promise<void>,
+  checkModule: (actor: ActorMetadata) => void | Promise<void>,
   checkAccess: EntityReadAuthorization<T>['checkAccess'],
 ): EntityReadAuthorization<T> {
   return { checkModule, checkAccess }
 }
 
 export function write<T>(
-  checkModule: (actor: ActorMetadata) => Promise<void>,
+  checkModule: (actor: ActorMetadata) => void | Promise<void>,
   authorizeSave: EntityWriteAuthorization<T>['authorizeSave'],
   authorizeDelete: EntityWriteAuthorization<T>['authorizeDelete'],
 ): EntityWriteAuthorization<T> {
@@ -104,17 +102,4 @@ export function authorizeClassGroupLinkedDelete<T extends { classGroupId: string
   return async (actor, entity) => {
     await policy.checkClassGroupAccess(actor, [entity.classGroupId])
   }
-}
-
-export function authorizeAnnouncementLinked<T extends { announcementId: string }>(
-  _policy: AuthorizationPolicy,
-  _field: keyof T,
-): EntityWriteAuthorization<T>['authorizeSave'] {
-  return noopSaveAccess
-}
-
-export function authorizeAnnouncementLinkedDelete<T extends { announcementId: string }>(
-  _policy: AuthorizationPolicy,
-): EntityWriteAuthorization<T>['authorizeDelete'] {
-  return noopDeleteAccess
 }

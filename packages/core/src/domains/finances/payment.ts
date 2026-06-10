@@ -119,9 +119,9 @@ export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, poli
   config({
     repository: repositories.payments,
     tenant: paymentTenant(),
-    read: read(permissionAction(policy, Permission.PAYMENT_READ), noopReadAccess),
+    read: read(permissionAction(Permission.PAYMENT_READ), noopReadAccess),
     write: write(
-      anyPermissionAction(policy, [Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE]),
+      anyPermissionAction([Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE]),
       authorizePayment(policy),
       authorizePaymentDelete(policy),
     ),
@@ -187,14 +187,14 @@ function paymentStatusChanged(entity: Payment, existing: Payment): boolean {
 
 export function authorizePayment(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeSave'] {
   return async (actor, entity, existing) => {
-    await permissionAction(policy, paymentWritePermission(entity, existing))(actor)
+    await permissionAction(paymentWritePermission(entity, existing))(actor)
     await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
   }
 }
 
 export function authorizePaymentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeDelete'] {
   return async (actor, entity) => {
-    await permissionAction(policy, Permission.PAYMENT_CANCEL)(actor)
+    await permissionAction(Permission.PAYMENT_CANCEL)(actor)
     await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
   }
 }

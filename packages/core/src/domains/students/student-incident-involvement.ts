@@ -55,8 +55,8 @@ export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncide
   config({
     repository: repositories.studentIncidentInvolvements,
     tenant: incidentLinkedTenant(),
-    read: read(permissionAction(policy, Permission.DISCIPLINE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.DISCIPLINE_CREATE), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
+    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.DISCIPLINE_CREATE), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
     gates: {
       preSave: validateStudentIncidentInvolvementSave,
     },

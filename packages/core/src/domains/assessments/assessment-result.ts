@@ -59,11 +59,11 @@ export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ 
   config({
     repository: repositories.assessmentResults,
     tenant: assessmentResultTenant(),
-    read: read(permissionAction(policy, Permission.GRADE_READ), async (actor, entities, repos) => {
+    read: read(permissionAction(Permission.GRADE_READ), async (actor, entities, repos) => {
       const assessments = await repos.assessments.findByIds(unique(entities.map(entity => entity.assessmentId)))
       await policy.checkAssessmentAccess(actor, unique(assessments.map(assessment => assessment.id)))
     }),
-    write: write(permissionAction(policy, Permission.GRADE_INPUT), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
+    write: write(permissionAction(Permission.GRADE_INPUT), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
     gates: {
       preSave: validateAssessmentResultSave,
       preDelete: validateAssessmentResultDelete,

@@ -9,11 +9,9 @@ import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 import { StudentStatus } from './student'
 import { progressionDecisionChanged } from './student-note'
+import { StudentClassEnrollmentStatus } from './student-class-enrollment-status'
 
-export enum StudentClassEnrollmentStatus {
-  Active = 'active',
-  Closed = 'closed',
-}
+export { StudentClassEnrollmentStatus } from './student-class-enrollment-status'
 
 export enum EnrollmentEndReason {
   Completed = 'completed',
@@ -232,10 +230,10 @@ export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrol
   config({
     repository: repositories.enrollments,
     tenant: studentLinkedTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_ENROLLMENT_HISTORY_READ), async (actor, entities) => {
+    read: read(permissionAction(Permission.QUERY_ENROLLMENT_HISTORY_READ), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
-    write: write(permissionAction(policy, Permission.ENROLLMENT_CREATE), authorizeStudentLinked(policy), authorizeStudentLinkedDelete(policy)),
+    write: write(permissionAction(Permission.ENROLLMENT_CREATE), authorizeStudentLinked(policy), authorizeStudentLinkedDelete(policy)),
     gates: {
       preSave: validateEnrollmentSave,
       preDelete: validateEnrollmentDelete,

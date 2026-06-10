@@ -5,7 +5,7 @@ import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import {
   CLASS_GROUP_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
-} from '../resolver-permissions'
+} from '../../permissions/groups'
 import { checkStudentAccess } from './student'
 
 export async function checkClassGroupAccess(

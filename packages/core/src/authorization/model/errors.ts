@@ -1,10 +1,5 @@
 export enum AuthorizationErrorCode {
-  AuthenticationRequired = 'authentication_required',
   Forbidden = 'forbidden',
-  SchoolAccessForbidden = 'school_access_forbidden',
-  StaffActorRequired = 'staff_actor_required',
-  GuardianActorRequired = 'guardian_actor_required',
-  StudentActorRequired = 'student_actor_required',
 }
 
 export class AuthorizationError extends Error {

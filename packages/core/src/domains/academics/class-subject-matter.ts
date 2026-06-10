@@ -58,8 +58,8 @@ export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> =
   config({
     repository: repositories.classSubjectMatters,
     tenant: classSubjectMatterTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
     gates: {
       preSave: validateClassSubjectMatterSave,
     },

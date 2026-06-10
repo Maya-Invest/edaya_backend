@@ -42,8 +42,8 @@ export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ reposi
   config({
     repository: repositories.subjectMatters,
     tenant: subjectMatterTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.ACADEMIC_PROGRAM_UPDATE), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
     atomicExecution,
   })
 

@@ -112,12 +112,12 @@ export class GradeScale {
   }
 }
 
-export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories, policy, atomicExecution }) =>
+export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.gradeScales,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(policy, Permission.GRADE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
+    read: read(permissionAction(Permission.GRADE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateGradeScaleSave,
     },

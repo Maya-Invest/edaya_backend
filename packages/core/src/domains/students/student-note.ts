@@ -4,7 +4,7 @@ import type { SchoolRepositories } from '../../ports'
 import type { EntityWriteAuthorization } from '../../services/managed-entity-service'
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
-import { AuthorizationError, denyResourceAccess, Permission, resolveEffectiveGrants, scopeGrantCovers } from '../../authorization'
+import { actorGrantCoversAny, denyResourceAccess, Permission } from '../../authorization'
 import { dateTime, directPermissionEntityConfig, readByIds } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 
@@ -103,14 +103,14 @@ export async function validateStudentNoteSave(
     denyResourceAccess()
   }
   const staffActorId = requireStaffActorId(actor)
-  if (note.visibility === StudentNoteVisibility.AdminOnly && !await hasFullStudentRecordAccess(actor, repositories)) {
+  if (note.visibility === StudentNoteVisibility.AdminOnly && !hasFullStudentRecordAccess(actor)) {
     denyResourceAccess()
   }
   if (existing) {
     if (existing.schoolId !== note.schoolId || existing.studentId !== note.studentId || existing.authorStaffId !== note.authorStaffId) {
       denyResourceAccess()
     }
-    if (existing.authorStaffId !== staffActorId && !await hasFullStudentRecordAccess(actor, repositories)) {
+    if (existing.authorStaffId !== staffActorId && !hasFullStudentRecordAccess(actor)) {
       denyResourceAccess()
     }
   }
@@ -123,33 +123,13 @@ function requireStaffActorId(actor: ActorMetadata): string {
   return actor.staffMemberId
 }
 
-async function hasFullStudentRecordAccess(actor: ActorMetadata, repositories: SchoolRepositories): Promise<boolean> {
-  if (actor.kind !== 'staff') {
-    return false
-  }
-
-  try {
-    const grants = actor.effectiveGrants ?? await resolveEffectiveGrants({
-      staffMemberId: actor.staffMemberId,
-      schoolId: actor.schoolId,
-      repositories,
-    })
-    const permission = Permission.QUERY_STUDENT_DETAIL_READ
-    return grants.permissions.has(permission)
-      && scopeGrantCovers(grants.scopeGrants, {
-        permission,
-        schoolId: actor.schoolId,
-        scopeType: 'school',
-        scopeEntityId: actor.schoolId,
-        isElevated: grants.isElevated,
-      })
-  }
-  catch (error) {
-    if (error instanceof AuthorizationError) {
-      return false
-    }
-    throw error
-  }
+function hasFullStudentRecordAccess(actor: ActorMetadata): boolean {
+  return actorGrantCoversAny(
+    actor,
+    [Permission.QUERY_STUDENT_DETAIL_READ],
+    'school',
+    actor.schoolId,
+  )
 }
 
 export function progressionDecisionChanged(

@@ -63,10 +63,10 @@ export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgres
   config({
     repository: repositories.classSubjectProgress,
     tenant: classSubjectProgressTenant(),
-    read: read(permissionAction(policy, Permission.CLASS_LOGBOOK_READ), async (actor, entities) => {
+    read: read(permissionAction(Permission.CLASS_LOGBOOK_READ), async (actor, entities) => {
       await policy.checkSessionAccess(actor, unique(entities.map(entity => entity.sessionId)))
     }),
-    write: write(permissionAction(policy, Permission.CLASS_LOGBOOK_CREATE), authorizeClassSubjectProgress(policy), authorizeClassSubjectProgressDelete(policy)),
+    write: write(permissionAction(Permission.CLASS_LOGBOOK_CREATE), authorizeClassSubjectProgress(policy), authorizeClassSubjectProgressDelete(policy)),
     gates: {
       preSave: validateClassSubjectProgressSave,
     },

@@ -49,7 +49,7 @@ import {
   ActorAssuranceLevel,
   createStaffActorMetadata,
   DefaultAuthorizationRepository,
-  RepositoryAuthorizationPolicy,
+  createRepositoryAuthorizationPolicy,
 } from '../../src/authorization'
 import { StaffMember } from '../../src/domains'
 import { SchoolApplication } from '../../src/services'
@@ -418,7 +418,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const application = new SchoolApplication({
     atomicExecution: createAtomicExecution(transactionParticipants),
     repositories: schoolRepositories,
-    authorizationPolicy: new RepositoryAuthorizationPolicy({
+    authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories: schoolRepositories,
       staffAssignmentRepository: schoolRepositories.staffAssignments,
       staffMemberRepository: schoolRepositories.staffMembers,

@@ -168,10 +168,10 @@ export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ 
   config({
     repository: repositories.attendance,
     tenant: attendanceTenant(),
-    read: read(permissionAction(policy, Permission.ATTENDANCE_READ), async (actor, entities) => {
+    read: read(permissionAction(Permission.ATTENDANCE_READ), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
-    write: write(permissionAction(policy, Permission.ATTENDANCE_RECORD), authorizeAttendance(policy), authorizeAttendanceDelete(policy)),
+    write: write(permissionAction(Permission.ATTENDANCE_RECORD), authorizeAttendance(policy), authorizeAttendanceDelete(policy)),
     gates: {
       preSave: validateAttendanceSave,
     },

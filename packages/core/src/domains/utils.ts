@@ -8,23 +8,6 @@ export class DomainValidationError extends Error {
   }
 }
 
-/** @deprecated Prefer Zod schemas + `parseDomain`. Retained for authorization actor metadata builders. */
-export function requireNonBlank(value: string, fieldName: string): string {
-  const trimmed = value.trim()
-  if (!trimmed) {
-    throw new DomainValidationError(`${fieldName} must not be blank`)
-  }
-  return trimmed
-}
-
-/** @deprecated Prefer Zod schemas + `parseDomain`. Retained for authorization actor metadata builders. */
-export function requireValidDate(value: Date, fieldName: string): Date {
-  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
-    throw new DomainValidationError(`${fieldName} must be a valid date`)
-  }
-  return value
-}
-
 export function normalizeDate(value: Date): Date {
   return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()))
 }

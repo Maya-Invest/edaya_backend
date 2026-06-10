@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
-import { announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, permissionAction, read, write } from '../../shared'
+import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 
 export enum MessageDeliveryChannel {
@@ -133,11 +133,11 @@ export function buildDeliverySummary(deliveries: MessageDelivery[]): Announcemen
   }, { total: 0, pending: 0, sent: 0, failed: 0, read: 0, cancelled: 0 })
 }
 
-export const messageDeliveryConfig: EntityConfigFactory<MessageDelivery> = ({ repositories, policy, atomicExecution }) =>
+export const messageDeliveryConfig: EntityConfigFactory<MessageDelivery> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.messageDeliveries,
     tenant: announcementLinkedTenant('announcementId'),
-    read: read(permissionAction(policy, Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.COMMUNICATION_CREATE), authorizeAnnouncementLinked(policy, 'announcementId'), authorizeAnnouncementLinkedDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
+    write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
     atomicExecution,
   })

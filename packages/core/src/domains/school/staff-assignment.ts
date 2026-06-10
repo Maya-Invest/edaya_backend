@@ -58,8 +58,8 @@ export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ re
   config({
     repository: repositories.staffAssignments,
     tenant: staffAssignmentTenant(),
-    read: read(permissionAction(policy, Permission.SCHOOL_STRUCTURE_CONFIGURE), noopReadAccess),
-    write: write(permissionAction(policy, Permission.ACCESS_CONTROL_ASSIGN), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
+    read: read(permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE), noopReadAccess),
+    write: write(permissionAction(Permission.ACCESS_CONTROL_ASSIGN), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
     gates: {
       preSave: validateStaffAssignmentSave,
     },

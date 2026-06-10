@@ -85,18 +85,21 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createSchedule(input: CreateScheduleInput): Promise<Schedule> {
+    await this.checkModule('scheduling')
     const schedule = new Schedule(input)
     await this.baseService.schedules.save(schedule)
     return schedule
   }
 
   async createCalendarEvent(input: CreateCalendarEventInput): Promise<CalendarEvent> {
+    await this.checkModule('scheduling', input.schoolId)
     const event = new CalendarEvent(input)
     await this.baseService.calendarEvents.save(event)
     return event
   }
 
   async createSession(input: CreateSessionInput): Promise<Session> {
+    await this.checkModule('scheduling')
     const session = new Session(input)
     await this.baseService.sessions.save(session)
     return session
@@ -107,6 +110,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     startDate,
     endDate,
   }: GenerateSessionsInput): Promise<Session[]> {
+    await this.checkModule('scheduling')
     const classGroup = await this.requireClassGroup(classGroupId)
     await this.authorizeTimetableCreate(classGroup)
     return this.baseService.atomicExecution.execute(async () => {
@@ -175,6 +179,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     status,
     createdAt,
   }: RecordAttendanceInput): Promise<AttendanceRecord> {
+    await this.checkModule('attendance')
     const session = await this.requireSession(sessionId)
     const classGroup = await this.requireClassGroup(session.classGroupId)
     await this.authorizeAttendanceRecord({
@@ -201,6 +206,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     status,
     createdAt,
   }: RecordDailyAttendanceInput): Promise<AttendanceRecord> {
+    await this.checkModule('attendance')
     const classGroup = await this.requireClassGroup(classGroupId)
     this.requireDailyAttendanceMode(classGroup)
     await this.authorizeAttendanceRecord({ classGroup, studentId })
@@ -225,6 +231,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     attendanceByStudent,
     createdAt,
   }: RecordSessionAttendanceInput): Promise<AttendanceRecord[]> {
+    await this.checkModule('attendance')
     const session = await this.requireSession(sessionId)
     const classGroup = await this.requireClassGroup(session.classGroupId)
     await this.authorizeAttendanceRecord({ classGroup, session })
@@ -254,6 +261,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     attendanceByStudent,
     createdAt,
   }: RecordClassDailyAttendanceInput): Promise<AttendanceRecord[]> {
+    await this.checkModule('attendance')
     const classGroup = await this.requireClassGroup(classGroupId)
     this.requireDailyAttendanceMode(classGroup)
     await this.authorizeAttendanceRecord({ classGroup })
@@ -285,6 +293,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     decision,
     reason,
   }: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
+    await this.checkModule('attendance')
     const existing = await this.requireOne(this.baseService.attendance, { studentId, sessionId })
     const record = existing.copyWith({
       justificationStatus: decision ?? AttendanceJustificationStatus.Excused,
@@ -429,7 +438,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(this.baseService.authorizationPolicy, Permission.ATTENDANCE_RECORD, {
+    await permissionAction(Permission.ATTENDANCE_RECORD, {
       scopeType: 'class_group',
       scopeEntityId: classGroup.id,
     })(this.baseService.actor)
@@ -446,7 +455,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
 
   private async authorizeTimetableCreate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(this.baseService.authorizationPolicy, Permission.TIMETABLE_CREATE, {
+    await permissionAction(Permission.TIMETABLE_CREATE, {
       scopeType: 'class_group',
       scopeEntityId: classGroup.id,
     })(this.baseService.actor)

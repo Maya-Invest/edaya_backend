@@ -6,7 +6,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
   Permission,
-  RepositoryAuthorizationPolicy,
+  createRepositoryAuthorizationPolicy,
 } from '../../../src/authorization'
 import { accessRoleConfig, staffRoleAssignmentConfig } from '../../../src/domains'
 
@@ -40,7 +40,7 @@ function createConfigInput() {
 
   return {
     repositories,
-    policy: new RepositoryAuthorizationPolicy({ repositories }),
+    policy: createRepositoryAuthorizationPolicy({ repositories }),
     atomicExecution: {
       execute: async <T>(operation: () => Promise<T>) => operation(),
     },
@@ -53,9 +53,9 @@ describe('access-control entity permissions', () => {
     const reader = actorWithPermissions([Permission.ACCESS_CONTROL_READ])
     const configurer = actorWithPermissions([Permission.ACCESS_CONTROL_CONFIGURE])
 
-    await expect(config.read.checkModule(reader)).resolves.toBeUndefined()
-    await expect(config.write.checkModule(reader)).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(config.write.checkModule(configurer)).resolves.toBeUndefined()
+    expect(config.read.checkModule(reader)).toBeUndefined()
+    expect(() => config.write.checkModule(reader)).toThrow(AuthorizationError)
+    expect(config.write.checkModule(configurer)).toBeUndefined()
   })
 
   test('staff role assignments separate read from assign', async () => {
@@ -63,8 +63,8 @@ describe('access-control entity permissions', () => {
     const reader = actorWithPermissions([Permission.ACCESS_CONTROL_READ])
     const assigner = actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN])
 
-    await expect(config.read.checkModule(reader)).resolves.toBeUndefined()
-    await expect(config.write.checkModule(reader)).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(config.write.checkModule(assigner)).resolves.toBeUndefined()
+    expect(config.read.checkModule(reader)).toBeUndefined()
+    expect(() => config.write.checkModule(reader)).toThrow(AuthorizationError)
+    expect(config.write.checkModule(assigner)).toBeUndefined()
   })
 })

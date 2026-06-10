@@ -55,6 +55,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createFee(input: CreateFeeInput): Promise<Fee> {
+    await this.checkModule('finance', input.schoolId)
     const fee = new FeeEntity(input)
     await this.baseService.fees.save(fee)
     return fee
@@ -69,6 +70,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
     referenceDate,
   }: AssignFeeToStudentInput): Promise<StudentFee> {
+    await this.checkModule('finance')
     const student = await this.requireStudent(studentId)
     this.checkActorSchool(student.schoolId)
     await this.authorizeFinance(Permission.PAYMENT_RECORD, student.schoolId)
@@ -113,6 +115,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: RecordPaymentInput): Promise<Payment> {
+    await this.checkModule('finance')
     return this.baseService.atomicExecution.execute(async () => {
       const studentFee = await this.requireStudentFee(studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
@@ -149,6 +152,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: UpdatePaymentStatusInput): Promise<Payment> {
+    await this.checkModule('finance')
     return this.updatePaymentStatus({
       paymentId,
       status: PaymentStatus.Reversed,
@@ -164,6 +168,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: UpdatePaymentStatusInput): Promise<Payment> {
+    await this.checkModule('finance')
     return this.updatePaymentStatus({
       paymentId,
       status: PaymentStatus.Cancelled,
@@ -230,6 +235,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     adjustmentAmount,
     reason,
   }: AdjustStudentFeeInput): Promise<StudentFee> {
+    await this.checkModule('finance')
     const existing = await this.requireStudentFee(studentFeeId)
     const adjusted = existing.copyWith({
       adjustmentAmount,
@@ -243,6 +249,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async cancelStudentFee({ studentFeeId, reason }: CancelStudentFeeInput): Promise<StudentFee> {
+    await this.checkModule('finance')
     const existing = await this.requireStudentFee(studentFeeId)
     const cancelled = existing.copyWith({
       status: FeeStatus.Cancelled,
@@ -273,7 +280,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async authorizeFinance(permission: Permission, schoolId: string): Promise<void> {
-    await permissionAction(this.baseService.authorizationPolicy, permission, {
+    await permissionAction(permission, {
       scopeType: 'school',
       scopeEntityId: schoolId,
     })(this.baseService.actor)

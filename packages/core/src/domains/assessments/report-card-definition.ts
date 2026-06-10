@@ -53,12 +53,12 @@ export class ReportCardDefinition {
   get createdAt() { return this.data.createdAt }
 }
 
-export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinition> = ({ repositories, policy, atomicExecution }) =>
+export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinition> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.definitions,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(policy, Permission.QUERY_REPORT_CARD_DETAIL_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
+    read: read(permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ), noopReadAccess),
+    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateReportCardDefinitionSave,
       preDelete: validateReportCardDefinitionDelete,

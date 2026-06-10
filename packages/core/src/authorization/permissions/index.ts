@@ -1,3 +1,4 @@
+export * from './groups'
 export * from './permission'
 export * from './permission-assurance'
 export * from './permission-definition'

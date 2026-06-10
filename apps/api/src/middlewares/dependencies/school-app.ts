@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { ApiSchoolApplication } from "@/lib/school-application-runtime";
 import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
 import {
-  RepositoryAuthorizationPolicy,
+  createRepositoryAuthorizationPolicy,
 } from "@edaya/core";
 import type { DependencyModule } from "../dependencies-injection";
 
@@ -20,7 +20,7 @@ export function createSchoolAppDependency(): DependencyModule {
         schoolAppInstance = new ApiSchoolApplication({
           atomicExecution,
           repositories: repos,
-          authorizationPolicy: new RepositoryAuthorizationPolicy({
+          authorizationPolicy: createRepositoryAuthorizationPolicy({
             repositories: repos,
             staffAssignmentRepository: repos.staffAssignments,
             staffMemberRepository: repos.staffMembers,

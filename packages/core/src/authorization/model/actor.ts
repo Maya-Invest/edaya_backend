@@ -1,5 +1,5 @@
 import type { EffectiveGrants } from '../../ports/authorization-repository'
-import { requireNonBlank, requireValidDate } from '../../domains/utils'
+import { DomainValidationError } from '../../domains/utils'
 import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../grants/portal-permission-sets'
 import { buildPortalScopeGrants } from '../grants/portal-scope-grants'
 
@@ -148,4 +148,19 @@ function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<
     authenticatedAt: requireValidDate(input.authenticatedAt, 'authenticatedAt'),
     assuranceLevel: input.assuranceLevel ?? ActorAssuranceLevel.Standard,
   })
+}
+
+function requireNonBlank(value: string, fieldName: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    throw new DomainValidationError(`${fieldName} must not be blank`)
+  }
+  return trimmed
+}
+
+function requireValidDate(value: Date, fieldName: string): Date {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    throw new DomainValidationError(`${fieldName} must be a valid date`)
+  }
+  return value
 }

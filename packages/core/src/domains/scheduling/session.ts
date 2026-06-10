@@ -86,8 +86,8 @@ export const sessionConfig: EntityConfigFactory<Session> = ({ repositories, poli
   config({
     repository: repositories.sessions,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(policy, Permission.QUERY_TIMETABLE_READ), readByIds((actor, ids) => policy.checkSessionAccess(actor, ids))),
-    write: write(permissionAction(policy, Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_TIMETABLE_READ), readByIds((actor, ids) => policy.checkSessionAccess(actor, ids))),
+    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateSessionSave,
     },

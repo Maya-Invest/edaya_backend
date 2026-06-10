@@ -1,4 +1,3 @@
-import type { AuthorizationPolicy } from '../../../src/authorization'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
 import {
@@ -11,23 +10,6 @@ import {
 } from '../../../src/authorization'
 import { anyPermissionAction, permissionAction } from '../../../src/shared'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
-
-function noopPolicy(): AuthorizationPolicy {
-  return {
-    checkStudentAccess: async () => {},
-    checkGuardianAccess: async () => {},
-    checkStudentNoteAccess: async () => {},
-    checkStudentHealthAccess: async () => {},
-    checkClassGroupAccess: async () => {},
-    checkAssessmentAccess: async () => {},
-    checkReportCardResultAccess: async () => {},
-    checkFeeAccess: async () => {},
-    checkStudentFeeAccess: async () => {},
-    checkSessionAccess: async () => {},
-    checkAttendanceAccess: async () => {},
-    checkModuleAccess: async () => {},
-  }
-}
 
 const now = new Date('2026-01-01T00:00:00Z')
 
@@ -125,8 +107,7 @@ describe('authorize', () => {
     })).toThrow(AuthorizationError)
   })
 
-  test('permissionAction uses preloaded grants', async () => {
-    const policy = noopPolicy()
+  test('permissionAction uses preloaded grants', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'subject-staff',
       staffMemberId: 'staff-1',
@@ -144,14 +125,13 @@ describe('authorize', () => {
       },
     })
 
-    await expect(permissionAction(policy, Permission.ATTENDANCE_RECORD, {
+    expect(permissionAction(Permission.ATTENDANCE_RECORD, {
       scopeType: 'school',
       scopeEntityId: 'school-1',
-    })(actor)).resolves.toBeUndefined()
+    })(actor)).toBeUndefined()
   })
 
-  test('anyPermissionAction allows one matching permission gate', async () => {
-    const policy = noopPolicy()
+  test('anyPermissionAction allows one matching permission gate', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'subject-staff',
       staffMemberId: 'staff-1',
@@ -169,9 +149,9 @@ describe('authorize', () => {
       },
     })
 
-    await expect(anyPermissionAction(policy, [
+    expect(anyPermissionAction([
       Permission.PAYMENT_RECORD,
       Permission.PAYMENT_READ,
-    ])(actor)).resolves.toBeUndefined()
+    ])(actor)).toBeUndefined()
   })
 })

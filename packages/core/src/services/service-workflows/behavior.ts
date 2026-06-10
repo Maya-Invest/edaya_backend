@@ -59,6 +59,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async recordIncident(input: RecordIncidentInput): Promise<Incident> {
+    await this.checkModule('behavior', input.schoolId)
     const incident = new IncidentEntity({
       ...input,
       reporterId: input.reporterId ?? resolveAuditActorId(this.baseService.actor),
@@ -75,6 +76,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     notes,
     createdAt,
   }: AddStudentInvolvementInput): Promise<StudentIncidentInvolvement> {
+    await this.checkModule('behavior')
     const incident = await this.requireIncident(incidentId)
     await this.authorize(Permission.DISCIPLINE_CREATE, {
       schoolId: incident.schoolId,
@@ -102,6 +104,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     notes,
     createdAt,
   }: ApplyDisciplinaryActionInput): Promise<StudentDisciplinaryAction> {
+    await this.checkModule('behavior')
     const incident = await this.requireIncident(incidentId)
     await this.authorize(Permission.DISCIPLINE_VALIDATE, {
       schoolId: incident.schoolId,
@@ -138,6 +141,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     actionId,
     status,
   }: UpdateStudentDisciplinaryActionStatusInput): Promise<StudentDisciplinaryAction> {
+    await this.checkModule('behavior')
     const existing = await this.requireEntity(
       this.baseService.studentDisciplinaryActions,
       studentDisciplinaryActionId ?? actionId ?? '',
@@ -161,6 +165,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async resolveIncident({ incidentId, resolutionNotes }: ResolveIncidentInput): Promise<Incident> {
+    await this.checkModule('behavior')
     const existing = await this.requireEntity(this.baseService.incidents, incidentId)
     const incident = new IncidentEntity({
       id: existing.id,
@@ -221,7 +226,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
 
-    await permissionAction(this.baseService.authorizationPolicy, permission)(this.baseService.actor)
+    await permissionAction(permission)(this.baseService.actor)
 
     if (resource.classGroupId) {
       await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [resource.classGroupId])

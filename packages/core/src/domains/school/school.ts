@@ -81,13 +81,13 @@ export function schoolEntityConfig<T extends EntityWithId>(
   readPermission: Permission,
   writePermission: Permission,
 ): ManagedEntityServiceConfig<T> {
-  const { policy, atomicExecution } = input
+  const { atomicExecution } = input
 
   return config({
     repository,
     tenant: schoolEntityTenant<T>(),
-    read: read(permissionAction(policy, readPermission), noopReadAccess),
-    write: write(permissionAction(policy, writePermission), noopSaveAccess, noopDeleteAccess),
+    read: read(permissionAction(readPermission), noopReadAccess),
+    write: write(permissionAction(writePermission), noopSaveAccess, noopDeleteAccess),
     atomicExecution,
   })
 }

@@ -2,12 +2,13 @@ import type { ActorMetadata, EffectiveGrants } from '../../../src/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, mock, test } from 'bun:test'
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, RepositoryAuthorizationPolicy, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/authorization'
 import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
   checkClassGroupAccess as checkAcademicClassGroupAccess,
   checkReportCardResultAccess,
 } from '../../../src/authorization/policy/resolvers/academic'
+import { checkModuleAccess } from '../../../src/authorization/policy/resolvers/module'
 import {
   checkAttendanceAccess as checkSchedulingAttendanceAccess,
   checkSessionAccess as checkSchedulingSessionAccess,
@@ -256,10 +257,10 @@ async function expectForbidden(operation: Promise<void>): Promise<void> {
   await expect(operation).rejects.toBeInstanceOf(AuthorizationError)
 }
 
-describe('RepositoryAuthorizationPolicy', () => {
+describe('createRepositoryAuthorizationPolicy', () => {
   test('allows system actors and empty resource checks without repository access', async () => {
     const repos = createRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+    const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     await policy.checkStudentAccess(systemActor(), ['student-1'])
     await policy.checkClassGroupAccess(studentActor(), [])
@@ -270,18 +271,16 @@ describe('RepositoryAuthorizationPolicy', () => {
   })
 
   test('enforces module school boundaries', async () => {
-    await new RepositoryAuthorizationPolicy({ repositories: createRepos() })
-      .checkModuleAccess(studentActor(), 'school-1', 'attendance')
+    const repos = createRepos()
+    await checkModuleAccess(studentActor(), 'school-1', 'attendance', repos)
 
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos() })
-      .checkModuleAccess(studentActor(), 'other-school', 'attendance'))
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: createRepos() })
-      .checkModuleAccess(guardianActor(), 'school-1', 'setup'))
+    await expectForbidden(checkModuleAccess(studentActor(), 'other-school', 'attendance', repos))
+    await expectForbidden(checkModuleAccess(guardianActor(), 'school-1', 'setup', repos))
   })
 
   test('resolves student, guardian, note, and health access by actor kind', async () => {
     const repos = createRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+    const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     await policy.checkStudentAccess(studentActor('student-1'), ['student-1'])
     await policy.checkStudentAccess(guardianActor(), ['student-1'])
@@ -289,12 +288,12 @@ describe('RepositoryAuthorizationPolicy', () => {
     await policy.checkGuardianAccess(guardianActor(), ['guardian-1'])
 
     const reposPrincipal = createRepos({}, ['principal'])
-    await new RepositoryAuthorizationPolicy({ repositories: reposPrincipal })
+    await createRepositoryAuthorizationPolicy({ repositories: reposPrincipal })
       .checkGuardianAccess(await staffActor(['principal'], reposPrincipal), ['guardian-1'])
     await policy.checkStudentNoteAccess(await staffActor(['teacher'], repos), ['note-1'])
 
     const reposCoordinator = createRepos({}, ['coordinator'])
-    await new RepositoryAuthorizationPolicy({ repositories: reposCoordinator })
+    await createRepositoryAuthorizationPolicy({ repositories: reposCoordinator })
       .checkStudentHealthAccess(await staffActor(['coordinator'], reposCoordinator), ['profile-1'])
     await policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.STUDENT_HEALTH_READ]), ['profile-1'])
     await policy.checkStudentHealthAccess(grantBackedStaffActor([Permission.STUDENT_HEALTH_UPDATE]), ['profile-1'])
@@ -310,7 +309,7 @@ describe('RepositoryAuthorizationPolicy', () => {
 
   test('resolves academic assessment and report-card access through class and student relationships', async () => {
     const repos = createRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+    const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     await policy.checkClassGroupAccess(studentActor(), ['class-1'])
     await policy.checkClassGroupAccess(guardianActor(), ['class-1'])
@@ -327,7 +326,7 @@ describe('RepositoryAuthorizationPolicy', () => {
 
   test('resolves scheduling and attendance access through sessions and roster access', async () => {
     const repos = createRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+    const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     await policy.checkSessionAccess(studentActor(), ['session-1'])
     await policy.checkSessionAccess(guardianActor(), ['session-1'])
@@ -340,16 +339,16 @@ describe('RepositoryAuthorizationPolicy', () => {
 
   test('resolves finance access for staff, students, and guardians', async () => {
     const repos = createRepos()
-    const policy = new RepositoryAuthorizationPolicy({ repositories: repos })
+    const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     const reposAccountant = createRepos({}, ['accountant'])
-    await new RepositoryAuthorizationPolicy({ repositories: reposAccountant })
+    await createRepositoryAuthorizationPolicy({ repositories: reposAccountant })
       .checkFeeAccess(await staffActor(['accountant'], reposAccountant), ['fee-1'])
     await policy.checkStudentFeeAccess(studentActor(), ['student-fee-1'])
     await policy.checkStudentFeeAccess(guardianActor(), ['student-fee-1'])
 
     const reposCoordinator2 = createRepos({}, ['coordinator'])
-    await new RepositoryAuthorizationPolicy({ repositories: reposCoordinator2 })
+    await createRepositoryAuthorizationPolicy({ repositories: reposCoordinator2 })
       .checkStudentFeeAccess(await staffActor(['coordinator'], reposCoordinator2), ['student-fee-1'])
 
     await expectForbidden(policy.checkFeeAccess(studentActor(), ['fee-1']))
@@ -369,8 +368,8 @@ describe('RepositoryAuthorizationPolicy', () => {
       } as any,
     })
 
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: inactiveRepos }).checkStudentAccess(await staffActor(['admin'], inactiveRepos), ['student-1']))
-    await expectForbidden(new RepositoryAuthorizationPolicy({ repositories: crossSchoolRepos }).checkStudentAccess(await staffActor(['admin'], crossSchoolRepos), ['student-1']))
+    await expectForbidden(createRepositoryAuthorizationPolicy({ repositories: inactiveRepos }).checkStudentAccess(await staffActor(['admin'], inactiveRepos), ['student-1']))
+    await expectForbidden(createRepositoryAuthorizationPolicy({ repositories: crossSchoolRepos }).checkStudentAccess(await staffActor(['admin'], crossSchoolRepos), ['student-1']))
   })
 
   test('covers academic resolver elevated paths and teacher relationship denials', async () => {

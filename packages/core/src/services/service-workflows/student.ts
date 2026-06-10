@@ -126,12 +126,14 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStudent(input: RegisterStudentInput): Promise<Student> {
+    await this.checkModule('students', input.schoolId)
     const student = new Student(input)
     await this.baseService.students.save(student)
     return student
   }
 
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
+    await this.checkModule('students', input.schoolId)
     const guardian = new Guardian(input)
     await this.baseService.guardians.save(guardian)
     return guardian
@@ -143,6 +145,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     classGroupId,
     createdAt,
   }: EnrollStudentInput): Promise<StudentClassEnrollment> {
+    await this.checkModule('students')
     const [student, classGroup] = await Promise.all([
       this.requireStudent(studentId),
       this.requireClassGroup(classGroupId),
@@ -154,7 +157,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(this.baseService.authorizationPolicy, Permission.ENROLLMENT_CREATE)(this.baseService.actor)
+    await permissionAction(Permission.ENROLLMENT_CREATE)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
 
@@ -199,6 +202,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     notes,
     createdAt,
   }: LinkGuardianToStudentInput): Promise<GuardianStudentLinkType> {
+    await this.checkModule('students')
     const [guardian, student] = await Promise.all([
       this.requireGuardian(guardianId),
       this.requireStudent(studentId),
@@ -207,7 +211,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(guardian.schoolId)
-    await permissionAction(this.baseService.authorizationPolicy, Permission.PARENT_UPDATE)(this.baseService.actor)
+    await permissionAction(Permission.PARENT_UPDATE)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkGuardianAccess(this.baseService.actor, [guardian.id])
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
 
@@ -243,6 +247,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     decidedAt = effectiveAt,
     notes,
   }: PromoteStudentInput): Promise<StudentClassEnrollment> {
+    await this.checkModule('students')
     return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
@@ -284,6 +289,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     nextClassGroupId,
     effectiveAt,
   }: TransferStudentInput): Promise<StudentClassEnrollment> {
+    await this.checkModule('students')
     return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
@@ -311,6 +317,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     decidedAt = effectiveAt,
     notes,
   }: GraduateStudentInput): Promise<StudentClassEnrollment> {
+    await this.checkModule('students')
     return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
@@ -348,6 +355,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async closeEnrollment({ enrollmentId, endReason, endedAt }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
+    await this.checkModule('students')
     const existing = await this.requireManagedEnrollment(enrollmentId)
     const closed = existing.close({
       endedAt: endedAt ?? new Date(),
@@ -364,6 +372,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     decidedAt,
     notes,
   }: RecordProgressionDecisionInput): Promise<StudentClassEnrollment> {
+    await this.checkModule('students')
     const existing = await this.requireManagedEnrollment(enrollmentId)
     const decided = existing.recordProgressionDecision({
       decision,
@@ -376,6 +385,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateStudentProfile({ studentId, ...changes }: UpdateStudentProfileInput): Promise<Student> {
+    await this.checkModule('students')
     const existing = await this.requireEntity(this.baseService.students, studentId)
     const student = existing.copyWith(changes)
     await this.baseService.students.save(student)
@@ -383,6 +393,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateStudentStatus({ studentId, status }: UpdateStudentStatusInput): Promise<Student> {
+    await this.checkModule('students')
     const existing = await this.requireEntity(this.baseService.students, studentId)
     const student = existing.copyWith({ status })
     await this.baseService.students.save(student)
@@ -390,6 +401,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async upsertStudentHealthProfile(input: UpsertStudentHealthProfileInput): Promise<StudentHealthProfile> {
+    await this.checkModule('students')
     const student = await this.requireEntity(this.baseService.students, input.studentId)
     const healthProfile = new StudentHealthProfileEntity({
       ...input,
@@ -400,6 +412,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote> {
+    await this.checkModule('students')
     const student = await this.requireEntity(this.baseService.students, input.studentId)
     const note = new StudentNoteEntity({
       ...input,
@@ -411,6 +424,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateStudentNote({ noteId, ...changes }: UpdateStudentNoteInput): Promise<StudentNote> {
+    await this.checkModule('students')
     const existing = await this.requireEntity(this.baseService.studentNotes, noteId)
     const note = new StudentNoteEntity({
       id: existing.id,
@@ -428,6 +442,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
+    await this.checkModule('students')
     const existing = await this.requireEntity(this.baseService.guardians, guardianId)
     const guardian = new Guardian({
       id: existing.id,
@@ -449,6 +464,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     ...changes
   }: UpdateGuardianStudentLinkInput): Promise<GuardianStudentLinkType> {
+    await this.checkModule('students')
     const existing = await this.requireOne(this.baseService.guardianLinks, { guardianId, studentId })
     const link = new GuardianStudentLink({
       id: existing.id,
@@ -484,7 +500,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(this.baseService.authorizationPolicy, Permission.ENROLLMENT_CREATE)(this.baseService.actor)
+    await permissionAction(Permission.ENROLLMENT_CREATE)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     return enrollment

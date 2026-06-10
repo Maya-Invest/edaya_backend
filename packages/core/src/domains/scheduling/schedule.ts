@@ -90,8 +90,8 @@ export const scheduleConfig: EntityConfigFactory<Schedule> = ({ repositories, po
   config({
     repository: repositories.schedules,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(policy, Permission.QUERY_TIMETABLE_READ), noopReadAccess),
-    write: write(permissionAction(policy, Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(permissionAction(Permission.QUERY_TIMETABLE_READ), noopReadAccess),
+    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateScheduleSave,
     },
