@@ -1,7 +1,7 @@
 import type { ActorMetadata } from '../model/actor'
 import type { Permission } from '../permissions/permission'
 import type { ScopeType } from '../permissions/scope-type'
-import { scopeGrantCovers } from '../../ports/authorization-repository'
+import { scopeGrantCovers } from './scope-grant-covers'
 
 export function actorHasAnyPermission(
   actor: ActorMetadata,

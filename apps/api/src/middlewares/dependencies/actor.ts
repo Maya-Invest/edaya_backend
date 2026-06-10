@@ -198,14 +198,14 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
         ...context,
         schoolId: identity.schoolId,
         guardianId: identity.guardianId,
-        effectiveGrants: identity.effectiveGrants,
+        effectiveGrants: identity.effectiveGrants!,
       });
     case "student":
       return createStudentActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         studentId: identity.studentId,
-        effectiveGrants: identity.effectiveGrants,
+        effectiveGrants: identity.effectiveGrants!,
       });
   }
 }

@@ -10,7 +10,7 @@ import {
   isInteractiveActor,
   resolveAuditActorId,
 } from '../../../src/authorization'
-import { effectiveGrantsForRoles } from '../../support/effective-grants'
+import { effectiveGrantsForRoles, portalEffectiveGrantsForGuardian, portalEffectiveGrantsForStudent } from '../../support/effective-grants'
 
 describe('actor metadata', () => {
   it('creates immutable grant-backed staff context with audit identity', () => {
@@ -56,6 +56,7 @@ describe('actor metadata', () => {
       schoolId: 'school',
       requestId: 'request-guardian',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
+      effectiveGrants: portalEffectiveGrantsForGuardian(['student']),
     })
     const student = createStudentActorMetadata({
       subjectId: 'user-student',
@@ -63,6 +64,7 @@ describe('actor metadata', () => {
       schoolId: 'school',
       requestId: 'request-student',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
+      effectiveGrants: portalEffectiveGrantsForStudent('student'),
     })
     const system = createSystemActorMetadata({
       systemId: 'nightly-fee-job',

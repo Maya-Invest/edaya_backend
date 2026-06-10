@@ -44,7 +44,7 @@ import type {
   Subject,
   SubjectMatter,
 } from '../domains'
-import type { AuthorizationRepository } from './authorization-repository'
+import type { AuthorizationRepository } from '../authorization/resolution/authorization-repository'
 import type { BaseRepositoryInterface } from './base-repository'
 
 export interface SchoolRepositories {

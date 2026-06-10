@@ -1,4 +1,3 @@
-export * from '../ports/authorization-repository'
 export * from './engine'
 export * from './grants'
 export * from './model'
@@ -10,3 +9,4 @@ export * from './model'
  */
 export * from './permissions'
 export * from './policy'
+export * from './resolution'

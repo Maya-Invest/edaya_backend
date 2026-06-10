@@ -8,7 +8,6 @@ import {
   checkClassGroupAccess as checkAcademicClassGroupAccess,
   checkReportCardResultAccess,
 } from '../../../src/authorization/policy/resolvers/academic'
-import { checkModuleAccess } from '../../../src/authorization/policy/resolvers/module'
 import {
   checkAttendanceAccess as checkSchedulingAttendanceAccess,
   checkSessionAccess as checkSchedulingSessionAccess,
@@ -268,14 +267,6 @@ describe('createRepositoryAuthorizationPolicy', () => {
     await policy.checkFeeAccess(systemActor(), ['fee-1'])
 
     expect(repos.staffMembers.findById).not.toHaveBeenCalled()
-  })
-
-  test('enforces module school boundaries', async () => {
-    const repos = createRepos()
-    await checkModuleAccess(studentActor(), 'school-1', 'attendance', repos)
-
-    await expectForbidden(checkModuleAccess(studentActor(), 'other-school', 'attendance', repos))
-    await expectForbidden(checkModuleAccess(guardianActor(), 'school-1', 'setup', repos))
   })
 
   test('resolves student, guardian, note, and health access by actor kind', async () => {

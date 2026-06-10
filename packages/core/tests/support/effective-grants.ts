@@ -3,9 +3,12 @@ import {
   ACCOUNTANT_PERMISSIONS,
   ASSIGNMENT_SCOPED_PERMISSIONS,
   COORDINATOR_PERMISSIONS,
+  GUARDIAN_PORTAL_PERMISSIONS,
   Permission,
+  STUDENT_PORTAL_PERMISSIONS,
   TEACHER_PERMISSIONS,
 } from '../../src/authorization'
+import { buildPortalScopeGrants } from '../../src/authorization/grants/portal-scope-grants'
 
 export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'
 
@@ -28,6 +31,34 @@ const fixtureScopeEntityIds = {
   session: ['session', 'lesson', 'active-session'],
   student: ['student', 'student-1', 'student-note', 'student-health', 'student-health-verified'],
 } as const
+
+export function portalEffectiveGrantsForStudent(
+  studentId: string,
+  classGroupIds: readonly string[] = ['class-1'],
+): EffectiveGrants {
+  return {
+    permissions: STUDENT_PORTAL_PERMISSIONS,
+    scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, {
+      studentIds: [studentId],
+      classGroupIds: [...classGroupIds],
+    }),
+    isElevated: false,
+  }
+}
+
+export function portalEffectiveGrantsForGuardian(
+  studentIds: readonly string[],
+  classGroupIds: readonly string[] = ['class-1'],
+): EffectiveGrants {
+  return {
+    permissions: GUARDIAN_PORTAL_PERMISSIONS,
+    scopeGrants: buildPortalScopeGrants(GUARDIAN_PORTAL_PERMISSIONS, {
+      studentIds: [...studentIds],
+      classGroupIds: [...classGroupIds],
+    }),
+    isElevated: false,
+  }
+}
 
 export function effectiveGrantsForRoles(roles: readonly TestRole[]): EffectiveGrants {
   const permissions = new Set(roles.flatMap(role => [...TEST_ROLE_PERMISSIONS[role]]))

@@ -1,4 +1,4 @@
-import type { EffectiveGrants } from '../../ports/authorization-repository'
+import type { EffectiveGrants } from './effective-grants'
 import { DomainValidationError } from '../../domains/utils'
 
 export enum ActorAssuranceLevel {

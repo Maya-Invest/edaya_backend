@@ -1,6 +1,6 @@
 import type { ActorMetadata } from '../model/actor'
 import type { AuthorizationRequest } from '../model/request'
-import { scopeGrantCovers } from '../../ports/authorization-repository'
+import { scopeGrantCovers } from '../grants/scope-grant-covers'
 import { isInteractiveActor } from '../model/actor'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { assertPermissionAssurance } from '../permissions/permission-assurance'

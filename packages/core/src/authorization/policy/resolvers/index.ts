@@ -1,5 +1,4 @@
 export * from './academic'
 export * from './finance'
-export * from './module'
 export * from './scheduling'
 export * from './student'
