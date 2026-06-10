@@ -1,0 +1,37 @@
+import type {
+	Student,
+	Subject,
+	PlanningEvent,
+	Evaluation,
+	Guardian,
+	StaffMember,
+	Deadline,
+	StudentBilling,
+	Fee,
+	SchoolYearEvent,
+	Incident,
+	StaffRole,
+	Activity,
+} from '$lib/data/school';
+import type { ReportCardDefinition, ReportCardResult } from '$lib/data/report-cards';
+
+export type DrawerItem =
+	| { kind: 'student'; data: Student }
+	| { kind: 'subject'; data: Subject }
+	| { kind: 'planning'; data: PlanningEvent }
+	| { kind: 'evaluation'; data: Evaluation }
+	| { kind: 'guardian'; data: Guardian }
+	| { kind: 'staff'; data: StaffMember }
+	| { kind: 'deadline'; data: Deadline }
+	| { kind: 'billing'; data: StudentBilling }
+	| { kind: 'fee'; data: Fee }
+	| { kind: 'schoolYearEvent'; data: SchoolYearEvent }
+	| { kind: 'incident'; data: Incident }
+	| { kind: 'role'; data: { role: StaffRole } }
+	| { kind: 'level'; data: { label: string; subtitle: string; items: Subject[] } }
+	| { kind: 'activity'; data: Activity }
+	| { kind: 'reportCardDefinition'; data: ReportCardDefinition }
+	| { kind: 'reportCardResult'; data: ReportCardResult }
+	| null;
+
+export type SubjectGroupItem = { e: Evaluation; mark: number | null };

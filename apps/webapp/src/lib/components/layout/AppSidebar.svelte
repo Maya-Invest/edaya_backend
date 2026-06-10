@@ -1,0 +1,175 @@
+<script lang="ts">
+	import { GraduationCap, ChevronDown } from 'lucide-svelte';
+	import { page } from '$app/stores';
+	import { cn } from '$lib/utils';
+	import { t } from '$lib/i18n';
+	import { authSession } from '$lib/auth/session.svelte';
+	import {
+		MODULES,
+		SCHOOL_ITEMS,
+		CLASS_ITEMS,
+		FINANCE_ITEMS,
+		CONFIG_ITEMS,
+		getModuleFromPath,
+		classItemHref,
+		type ModuleKey,
+		type ContextItem
+	} from '$lib/navigation';
+	import type { HierarchyGroup } from '$lib/data/school';
+	import ClassSelector from '$lib/components/layout/ClassSelector.svelte';
+
+	let {
+		hierarchy,
+		studentCount
+	}: {
+		hierarchy: HierarchyGroup[];
+		studentCount: number;
+	} = $props();
+
+	const MODULE_ITEMS: Record<ModuleKey, ContextItem[]> = {
+		school: SCHOOL_ITEMS,
+		classes: CLASS_ITEMS,
+		finance: FINANCE_ITEMS,
+		configuration: CONFIG_ITEMS
+	};
+
+	const activeModule = $derived(getModuleFromPath($page.url.pathname));
+	const classId = $derived($page.params.classId ?? '6a');
+
+	let expanded = $state<Partial<Record<ModuleKey, boolean>>>({});
+
+	function isExpanded(key: ModuleKey): boolean {
+		return key === activeModule || (expanded[key] ?? false);
+	}
+
+	function toggleModule(key: ModuleKey) {
+		if (key === activeModule) return;
+		expanded[key] = !isExpanded(key);
+	}
+
+	function isActive(href: string): boolean {
+		return $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
+	}
+
+	function resolveItems(key: ModuleKey) {
+		const items = MODULE_ITEMS[key];
+		return items.map((it) => ({
+			key: it.key,
+			label: $t(it.labelKey),
+			icon: it.icon,
+			href: key === 'classes' ? classItemHref(classId, it.href) : it.href,
+			badge: key === 'school' && it.key === 'students' ? studentCount : it.badge
+		}));
+	}
+</script>
+
+<aside class="flex h-full w-64 shrink-0 flex-col border-r border-border bg-card/60 backdrop-blur">
+	<div class="flex items-center gap-3 border-b border-border px-5 py-5">
+		<div
+			class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-soft"
+		>
+			<GraduationCap class="h-5 w-5" />
+		</div>
+		<div class="min-w-0">
+			<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+				{authSession.school?.shortName ?? $t('sidebar.module')}
+			</p>
+			<h2 class="truncate font-display text-sm font-semibold leading-tight">EDAYA</h2>
+		</div>
+	</div>
+
+	<nav class="scrollbar-thin flex-1 overflow-y-auto px-3 py-4">
+		<ul class="space-y-1">
+			{#each MODULES as mod (mod.key)}
+				{@const open = isExpanded(mod.key)}
+				{@const moduleActive = activeModule === mod.key}
+				{@const ModIcon = mod.icon}
+				<li>
+					<button
+						type="button"
+						onclick={() => toggleModule(mod.key)}
+						class={cn(
+							'group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+							moduleActive
+								? 'bg-primary/10 text-primary'
+								: 'text-foreground/80 hover:bg-secondary'
+						)}
+					>
+						<ModIcon
+							class={cn(
+								'h-4 w-4 shrink-0',
+								moduleActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+							)}
+						/>
+						<span class="min-w-0 flex-1 truncate text-left">{$t(mod.tKey)}</span>
+						<ChevronDown
+							class={cn(
+								'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
+								open && 'rotate-180'
+							)}
+						/>
+					</button>
+
+					{#if open}
+						{#if mod.key === 'classes'}
+							<div class="px-3 pb-1 pt-2">
+								<ClassSelector {hierarchy} />
+							</div>
+						{/if}
+
+						<ul class="mb-1 ml-3 space-y-0.5 border-l border-border pl-2">
+							{#each resolveItems(mod.key) as it (it.key)}
+								{@const active = isActive(it.href)}
+								{@const Icon = it.icon}
+								<li>
+									<a
+										href={it.href}
+										class={cn(
+											'group flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors',
+											active
+												? 'bg-primary text-primary-foreground'
+												: 'text-foreground/75 hover:bg-secondary'
+										)}
+									>
+										<span class="flex min-w-0 items-center gap-2">
+											{#if Icon}
+												<Icon
+													class={cn(
+														'h-3.5 w-3.5 shrink-0',
+														active
+															? 'text-primary-foreground/80'
+															: 'text-muted-foreground group-hover:text-foreground'
+													)}
+												/>
+											{:else}
+												<span
+													class={cn(
+														'h-1.5 w-1.5 rounded-full',
+														active ? 'bg-primary-foreground/60' : 'bg-border group-hover:bg-muted-foreground/30'
+													)}
+												></span>
+											{/if}
+											<span class="truncate">{it.label}</span>
+										</span>
+										{#if it.badge !== undefined}
+											<span
+												class={cn(
+													'rounded-md px-1.5 py-0.5 font-mono text-[10px]',
+													active
+														? 'bg-primary-foreground/15 text-primary-foreground'
+														: 'bg-secondary text-muted-foreground'
+												)}
+											>
+												{it.badge}
+											</span>
+										{/if}
+									</a>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	</nav>
+</aside>

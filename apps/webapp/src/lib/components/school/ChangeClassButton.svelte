@@ -1,0 +1,67 @@
+<script lang="ts">
+	import { Users } from 'lucide-svelte';
+	import type { Student } from '$lib/data/school';
+	import { classes } from '$lib/data/school';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import * as Select from '$lib/components/ui/select';
+	import * as Dialog from '$lib/components/ui/dialog';
+
+	let { s }: { s: Student } = $props();
+
+	let open = $state(false);
+	let target = $state('');
+
+	$effect.pre(() => {
+		target = s.classId;
+	});
+
+	const currentClass = $derived(classes.find((c) => c.id === s.classId));
+	const targetClass = $derived(classes.find((c) => c.id === target));
+</script>
+
+<Dialog.Root bind:open>
+	<Dialog.Trigger>
+		{#snippet child({ props })}
+			<Button {...props} variant="outline" size="sm" class="gap-2 rounded-full">
+				<Users class="h-3.5 w-3.5" />
+				Changer de classe
+			</Button>
+		{/snippet}
+	</Dialog.Trigger>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Changer la classe de {s.name}</Dialog.Title>
+			<Dialog.Description>
+				Classe actuelle : {currentClass?.name ?? '—'} · {currentClass?.level ?? ''}
+			</Dialog.Description>
+		</Dialog.Header>
+		<div class="space-y-2 py-2">
+			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+				Nouvelle classe
+			</Label>
+			<Select.Root type="single" value={target} onValueChange={(v) => v && (target = v)}>
+				<Select.Trigger>
+					<Select.Value />
+				</Select.Trigger>
+				<Select.Content>
+					{#each classes as c (c.id)}
+						<Select.Item value={c.id}>
+							{c.name}
+							<span class="ml-1 text-muted-foreground">· {c.level}</span>
+						</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+			{#if targetClass && target !== s.classId}
+				<p class="text-xs text-muted-foreground">
+					{s.name} sera transféré(e) vers {targetClass.name}.
+				</p>
+			{/if}
+		</div>
+		<Dialog.Footer>
+			<Button variant="ghost" onclick={() => (open = false)}>Annuler</Button>
+			<Button onclick={() => (open = false)} disabled={target === s.classId}>Confirmer</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

@@ -14,7 +14,7 @@
     "test:coverage": "turbo run test -- --coverage",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",
-    "fullcheck": "bun lint:fix && bun check && bun test"
+    "fullcheck": "bun lint:fix && bun check && bun run build"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

@@ -1,0 +1,371 @@
+<script lang="ts">
+	import {
+		Lock,
+		Eye,
+		ShieldCheck,
+		AlertTriangle,
+		Clock,
+		CalendarX2,
+		GraduationCap,
+		Pencil,
+		Plus,
+		Search,
+	} from 'lucide-svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { cn } from '$lib/utils';
+	import { t } from '$lib/i18n';
+	import { absences, incidents, students, evaluations, classes } from '$lib/data/school';
+	import { canEditGrades, getCurrentUser, ROLE_LABEL_FR } from '$lib/permissions';
+
+	type Tab = 'schoollife' | 'grades';
+
+	const me = getCurrentUser();
+	let tab = $state<Tab>('schoollife');
+	let q = $state('');
+
+	const studentsBySearch = $derived.by(() => {
+		const term = q.trim().toLowerCase();
+		if (!term) return students;
+		return students.filter((s) => s.name.toLowerCase().includes(term));
+	});
+
+	const recentAbsences = $derived(
+		[...absences].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8)
+	);
+	const recentIncidents = $derived(
+		[...incidents].sort((a, b) => (a.date < b.date ? 1 : -1))
+	);
+	const lateness = $derived(incidents.filter((i) => i.category === 'Tardiness'));
+	const discipline = $derived(
+		incidents.filter((i) => i.category === 'Behavior' || i.category === 'Conflict')
+	);
+
+	const tabItems = [
+		{ k: 'schoollife' as const, labelKey: 'educator.schoolLife' },
+		{ k: 'grades' as const, labelKey: 'educator.gradesReadOnly' },
+	];
+
+	const kpiToneClass = {
+		warm: 'bg-primary text-primary-foreground',
+		sky: 'bg-secondary text-foreground/80',
+		mint: 'bg-primary text-primary-foreground',
+		destructive: 'bg-destructive/10 text-destructive',
+	} as const;
+
+	function schoolAverage() {
+		if (students.length === 0) return '0';
+		const avg = students.reduce((acc, s) => acc + s.average, 0) / students.length;
+		return avg.toFixed(1);
+	}
+
+	const editable = canEditGrades();
+</script>
+
+<div class="animate-fade-in space-y-6">
+	<div
+		class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft"
+	>
+		<div class="flex items-center gap-4">
+			<div
+				class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary font-display text-base font-semibold text-primary-foreground"
+			>
+				{me.initials}
+			</div>
+			<div>
+				<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+					{$t('educator.dashboard')}
+				</p>
+				<h1 class="font-display text-xl font-semibold leading-tight">{me.name}</h1>
+				<p class="text-xs text-muted-foreground">
+					{ROLE_LABEL_FR[me.role]} · {me.department}
+				</p>
+			</div>
+		</div>
+		<div class="flex flex-wrap gap-2">
+			<span
+				class="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/80"
+			>
+				<ShieldCheck class="h-3.5 w-3.5" />
+				{$t('educator.fullAccess')} — {$t('educator.schoolLife')}
+			</span>
+			<span
+				class="inline-flex items-center gap-1.5 rounded-full bg-highlight-soft px-2.5 py-1 text-[11px] font-medium text-highlight"
+			>
+				<Lock class="h-3.5 w-3.5" />
+				{$t('educator.viewOnly')} — {$t('educator.gradesReadOnly')}
+			</span>
+		</div>
+	</div>
+
+	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+		<div class="rounded-2xl border border-border bg-card p-4 shadow-soft">
+			<div class="flex items-center justify-between">
+				<div class={cn('flex h-9 w-9 items-center justify-center rounded-xl', kpiToneClass.warm)}>
+					<CalendarX2 class="h-4 w-4" />
+				</div>
+				<span
+					class="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground"
+				>
+					<ShieldCheck class="h-3 w-3" />
+					{$t('educator.fullAccess')}
+				</span>
+			</div>
+			<p class="mt-3 font-display text-2xl font-semibold tabular-nums">{absences.length}</p>
+			<p class="mt-0.5 text-xs text-muted-foreground">{$t('educator.absences')}</p>
+		</div>
+		<div class="rounded-2xl border border-border bg-card p-4 shadow-soft">
+			<div class="flex items-center justify-between">
+				<div class={cn('flex h-9 w-9 items-center justify-center rounded-xl', kpiToneClass.sky)}>
+					<Clock class="h-4 w-4" />
+				</div>
+				<span
+					class="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground"
+				>
+					<ShieldCheck class="h-3 w-3" />
+					{$t('educator.fullAccess')}
+				</span>
+			</div>
+			<p class="mt-3 font-display text-2xl font-semibold tabular-nums">{lateness.length}</p>
+			<p class="mt-0.5 text-xs text-muted-foreground">{$t('educator.lateness')}</p>
+		</div>
+		<div class="rounded-2xl border border-border bg-card p-4 shadow-soft">
+			<div class="flex items-center justify-between">
+				<div
+					class={cn('flex h-9 w-9 items-center justify-center rounded-xl', kpiToneClass.destructive)}
+				>
+					<AlertTriangle class="h-4 w-4" />
+				</div>
+				<span
+					class="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground"
+				>
+					<ShieldCheck class="h-3 w-3" />
+					{$t('educator.fullAccess')}
+				</span>
+			</div>
+			<p class="mt-3 font-display text-2xl font-semibold tabular-nums">{discipline.length}</p>
+			<p class="mt-0.5 text-xs text-muted-foreground">{$t('educator.discipline')}</p>
+		</div>
+		<div class="rounded-2xl border border-border bg-card p-4 shadow-soft">
+			<div class="flex items-center justify-between">
+				<div class={cn('flex h-9 w-9 items-center justify-center rounded-xl', kpiToneClass.mint)}>
+					<GraduationCap class="h-4 w-4" />
+				</div>
+				<span
+					class="inline-flex items-center gap-1 text-[10px] font-medium text-highlight"
+				>
+					<Lock class="h-3 w-3" />
+					{$t('educator.viewOnly')}
+				</span>
+			</div>
+			<p class="mt-3 font-display text-2xl font-semibold tabular-nums">
+				{schoolAverage()}<span class="ml-0.5 text-sm text-muted-foreground">/20</span>
+			</p>
+			<p class="mt-0.5 text-xs text-muted-foreground">{$t('educator.average')}</p>
+		</div>
+	</div>
+
+	<div
+		class="flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft"
+	>
+		{#each tabItems as x (x.k)}
+			{@const active = tab === x.k}
+			<button
+				type="button"
+				onclick={() => (tab = x.k)}
+				class={cn(
+					'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition',
+					active
+						? 'bg-primary text-primary-foreground shadow-soft'
+						: 'text-muted-foreground hover:text-foreground'
+				)}
+			>
+				{#if x.k === 'schoollife'}
+					<ShieldCheck class="h-3.5 w-3.5" />
+				{:else}
+					<Eye class="h-3.5 w-3.5" />
+				{/if}
+				{$t(x.labelKey)}
+			</button>
+		{/each}
+	</div>
+
+	{#if tab === 'schoollife'}
+		<div class="grid gap-4 lg:grid-cols-2">
+			<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
+				<header class="mb-3 flex items-start justify-between gap-3">
+					<div>
+						<h3 class="font-display text-base font-semibold">{$t('educator.absences')}</h3>
+						<p
+							class="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+						>
+							<ShieldCheck class="h-3 w-3" />
+							{$t('educator.fullAccess')}
+						</p>
+					</div>
+					<Button size="sm" class="rounded-full">
+						<Plus class="mr-1 h-3.5 w-3.5" />
+						{$t('educator.logAbsence')}
+					</Button>
+				</header>
+				{@render absencesList()}
+			</section>
+			<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
+				<header class="mb-3 flex items-start justify-between gap-3">
+					<div>
+						<h3 class="font-display text-base font-semibold">
+							{$t('educator.discipline')} & {$t('educator.lateness')}
+						</h3>
+						<p
+							class="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+						>
+							<ShieldCheck class="h-3 w-3" />
+							{$t('educator.fullAccess')}
+						</p>
+					</div>
+					<Button size="sm" class="rounded-full">
+						<Plus class="mr-1 h-3.5 w-3.5" />
+						{$t('educator.logIncident')}
+					</Button>
+				</header>
+				{@render incidentsList()}
+			</section>
+		</div>
+	{:else}
+		<div class="space-y-4">
+			<div
+				class="flex items-start gap-3 rounded-xl border border-highlight/20 bg-highlight-soft p-4 text-sm text-foreground/80"
+			>
+				<Lock class="mt-0.5 h-4 w-4 shrink-0" />
+				<p>{$t('educator.readOnlyHint')}</p>
+			</div>
+
+			<div class="flex items-center justify-between gap-3">
+				<h3 class="font-display text-base font-semibold">{$t('educator.gradesReadOnly')}</h3>
+				<div class="relative">
+					<Search
+						class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+					/>
+					<Input
+						bind:value={q}
+						placeholder={$t('common.search')}
+						class="h-9 w-56 rounded-full pl-9 text-sm"
+					/>
+				</div>
+			</div>
+
+			<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+				<div
+					class="grid grid-cols-12 gap-4 border-b border-border bg-secondary/40 px-5 py-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+				>
+					<div class="col-span-4">{$t('people.name') || 'Élève'}</div>
+					<div class="col-span-3">Classe</div>
+					<div class="col-span-2">{$t('educator.average')}</div>
+					<div class="col-span-3 text-right">Évaluations</div>
+				</div>
+				<ul>
+					{#each studentsBySearch as s (s.id)}
+						{@const cls = classes.find((c) => c.id === s.classId)}
+						{@const evals = evaluations.filter((e) => e.classId === s.classId).slice(0, 3)}
+						<li
+							class="grid grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-sm last:border-b-0"
+						>
+							<div class="col-span-4 flex items-center gap-3">
+								<div
+									class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-xs font-semibold text-primary-foreground"
+								>
+									{s.initials}
+								</div>
+								<p class="truncate font-medium">{s.name}</p>
+							</div>
+							<div class="col-span-3 text-foreground/80">{cls?.name ?? s.classId}</div>
+							<div class="col-span-2 flex items-center gap-1.5">
+								<Lock class="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+								<span
+									class={cn(
+										'font-mono text-sm tabular-nums',
+										s.average >= 16 && 'text-primary',
+										s.average < 10 && 'text-destructive'
+									)}
+								>
+									{s.average.toFixed(1)}
+								</span>
+								<span class="text-[10px] text-muted-foreground">/20</span>
+							</div>
+							<div class="col-span-3 flex flex-wrap items-center justify-end gap-1">
+								{#each evals as e (e.id)}
+									<span
+										title="{e.title} — {e.subject}"
+										class="rounded-md bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+									>
+										{e.averageMark ? e.averageMark.toFixed(1) : '—'}
+									</span>
+								{/each}
+								<Button
+									size="icon"
+									variant="ghost"
+									class="h-7 w-7 opacity-40"
+									disabled={!editable}
+									title={$t('educator.readOnlyHint')}
+								>
+									<Pencil class="h-3.5 w-3.5" />
+								</Button>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			</div>
+		</div>
+	{/if}
+</div>
+
+{#snippet absencesList()}
+	<ul class="divide-y divide-border">
+		{#each recentAbsences as a (a.id)}
+			{@const s = students.find((x) => x.id === a.studentId)}
+			<li class="flex items-center justify-between gap-3 py-3 text-sm">
+				<div class="min-w-0">
+					<p class="truncate font-medium">{s?.name ?? a.studentId}</p>
+					<p class="text-xs text-muted-foreground">
+						{a.date} · {a.time} · {a.subject}
+					</p>
+				</div>
+				<div class="flex items-center gap-2">
+					<span class="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">
+						{a.eventType}
+					</span>
+					<Button size="icon" variant="ghost" class="h-7 w-7">
+						<Pencil class="h-3.5 w-3.5" />
+					</Button>
+				</div>
+			</li>
+		{/each}
+	</ul>
+{/snippet}
+
+{#snippet incidentsList()}
+	<ul class="divide-y divide-border">
+		{#each recentIncidents as i (i.id)}
+			{@const s = students.find((x) => x.id === i.studentId)}
+			<li class="flex items-start justify-between gap-3 py-3 text-sm">
+				<div class="min-w-0">
+					<p class="truncate font-medium">{s?.name ?? i.studentId}</p>
+					<p class="text-xs text-muted-foreground">
+						{i.date} · {i.category}
+					</p>
+					<p class="mt-1 text-xs text-foreground/80">{i.summary}</p>
+				</div>
+				<span
+					class={cn(
+						'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+						i.severity === 'high' && 'bg-destructive/15 text-destructive',
+						i.severity === 'medium' && 'bg-highlight-soft text-highlight',
+						i.severity === 'low' && 'bg-secondary text-muted-foreground'
+					)}
+				>
+					{i.severity}
+				</span>
+			</li>
+		{/each}
+	</ul>
+{/snippet}
