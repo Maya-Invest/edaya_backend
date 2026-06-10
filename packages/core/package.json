@@ -16,7 +16,8 @@
     "check": "npx tsc --noEmit",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "lint": "eslint src tests"
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14"

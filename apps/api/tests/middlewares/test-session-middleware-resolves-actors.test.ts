@@ -71,7 +71,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     ["missing user id", { user: {}, session: { createdAt: new Date().toISOString() } }],
     ["blank user id", { user: { id: " " }, session: { createdAt: new Date().toISOString() } }],
     ["missing session", { user: { id: "auth-user" } }],
-  ])("should construct null actor for malformed sessions: %s", async (_caseName, malformedSession) => {
+  ])("should construct null actor for malformed sessions: %s", async (_caseName: string, malformedSession: any) => {
     getSession.mockResolvedValueOnce(malformedSession as any);
 
     const mockRepos = createMockRepos();
