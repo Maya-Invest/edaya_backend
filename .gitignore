@@ -15,6 +15,7 @@ pnpm-debug.log*
 
 # Bun
 .bun/
+package-lock.json
 
 # Vite / Build outputs
 dist/
