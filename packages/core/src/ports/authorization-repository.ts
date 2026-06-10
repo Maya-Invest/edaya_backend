@@ -4,9 +4,10 @@ import type { ScopeGrant } from '../authorization/role-types'
 import type { StaffAssignment } from '../domains'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization/authorization-error'
+import { uniqueActiveClassGroupIds } from '../authorization/enrollment-scope'
+import { buildPortalScopeGrants } from '../authorization/portal-grants'
 import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../authorization/portal-permissions'
-import { ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS } from '../authorization/system-role-permissions'
-import { StudentClassEnrollmentStatus } from '../domains'
+import { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS } from '../authorization/system-role-permissions'
 
 export interface EffectiveGrants {
   readonly permissions: ReadonlySet<Permission>
@@ -93,7 +94,7 @@ export async function tryResolveEffectiveGrantsFromPersistence(
 
   const autoSchoolGrants: ScopeGrant[] = []
   for (const permission of permissions) {
-    if (!ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission)) {
+    if (!ASSIGNMENT_SCOPED_PERMISSION_SET.has(permission)) {
       autoSchoolGrants.push({
         permission,
         scopeType: 'school',
@@ -102,10 +103,9 @@ export async function tryResolveEffectiveGrantsFromPersistence(
     }
   }
 
-  const isElevated = false
-  const assignmentScopeGrants = isElevated
-    ? []
-    : scopeGrantsFromStaffAssignments(await args.repositories.staffAssignments.list({ staffId: args.staffMemberId }))
+  const assignmentScopeGrants = scopeGrantsFromStaffAssignments(
+    await args.repositories.staffAssignments.list({ staffId: args.staffMemberId }),
+  )
   const scopeGrants = mergeScopeGrants([
     ...scoped.flatMap(assignment => [...assignment.scopeGrants]),
     ...assignmentScopeGrants,
@@ -115,7 +115,7 @@ export async function tryResolveEffectiveGrantsFromPersistence(
   return {
     permissions,
     scopeGrants,
-    isElevated,
+    isElevated: false,
     ...nextExpiry(scoped),
   }
 }
@@ -269,42 +269,11 @@ export async function resolveGuardianGrants(args: {
 
   const links = await args.repositories.guardianLinks.list({ guardianId: args.guardianId })
   const studentIds = links.filter(l => l.schoolId === args.schoolId).map(l => l.studentId)
-
-  const classGroupIds = new Set<string>()
-  for (const studentId of studentIds) {
-    const enrollments = await args.repositories.enrollments.list({ studentId })
-    const active = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
-    if (active) {
-      classGroupIds.add(active.classGroupId)
-    }
-  }
-
-  const scopeGrants: ScopeGrant[] = []
-
-  if (studentIds.length > 0) {
-    for (const permission of GUARDIAN_PORTAL_PERMISSIONS) {
-      scopeGrants.push({
-        permission,
-        scopeType: 'student',
-        scopeEntityIds: studentIds,
-      })
-    }
-  }
-
-  if (classGroupIds.size > 0) {
-    const classGroupIdList = Array.from(classGroupIds)
-    for (const permission of GUARDIAN_PORTAL_PERMISSIONS) {
-      scopeGrants.push({
-        permission,
-        scopeType: 'class_group',
-        scopeEntityIds: classGroupIdList,
-      })
-    }
-  }
+  const classGroupIds = await uniqueActiveClassGroupIds(args.repositories, studentIds)
 
   return {
     permissions: GUARDIAN_PORTAL_PERMISSIONS,
-    scopeGrants,
+    scopeGrants: buildPortalScopeGrants(GUARDIAN_PORTAL_PERMISSIONS, { studentIds, classGroupIds }),
     isElevated: false,
   }
 }
@@ -319,32 +288,14 @@ export async function resolveStudentGrants(args: {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
-  const enrollments = await args.repositories.enrollments.list({ studentId: args.studentId })
-  const active = enrollments.find(e => e.status === StudentClassEnrollmentStatus.Active)
-
-  const scopeGrants: ScopeGrant[] = []
-
-  for (const permission of STUDENT_PORTAL_PERMISSIONS) {
-    scopeGrants.push({
-      permission,
-      scopeType: 'student',
-      scopeEntityIds: [args.studentId],
-    })
-  }
-
-  if (active) {
-    for (const permission of STUDENT_PORTAL_PERMISSIONS) {
-      scopeGrants.push({
-        permission,
-        scopeType: 'class_group',
-        scopeEntityIds: [active.classGroupId],
-      })
-    }
-  }
+  const [activeClassGroupId] = await uniqueActiveClassGroupIds(args.repositories, [args.studentId])
 
   return {
     permissions: STUDENT_PORTAL_PERMISSIONS,
-    scopeGrants,
+    scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, {
+      studentIds: [args.studentId],
+      ...(activeClassGroupId ? { classGroupIds: [activeClassGroupId] } : {}),
+    }),
     isElevated: false,
   }
 }

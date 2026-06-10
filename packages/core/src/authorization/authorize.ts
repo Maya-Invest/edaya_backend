@@ -27,13 +27,6 @@ export function authorize(args: AuthorizeArgs): void {
 }
 
 function assertActorSchool(actor: ActorMetadata, schoolId: string): void {
-  if (actor.kind === 'system') {
-    if (actor.schoolId !== schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    return
-  }
-
   if (actor.schoolId !== schoolId) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }

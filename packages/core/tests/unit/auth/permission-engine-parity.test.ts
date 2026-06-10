@@ -137,17 +137,10 @@ const PARITY_CASES: ParityCase[] = [
 describe('permission engine system role grants', () => {
   for (const parityCase of PARITY_CASES) {
     test(parityCase.label, () => {
-      const actorId = parityCase.actor.kind === 'staff'
-        ? parityCase.actor.staffMemberId
-        : parityCase.actor.kind === 'guardian'
-          ? parityCase.actor.guardianId
-          : 'unknown'
-
       expectAuthorizeResult(
         () => authorize({
           actor: parityCase.actor,
           request: {
-            actorId,
             schoolId: 'school-1',
             permission: parityCase.permission,
           },

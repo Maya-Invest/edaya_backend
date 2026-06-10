@@ -11,18 +11,9 @@ export function permissionAction(
   scope?: Pick<AuthorizationRequest, 'scopeType' | 'scopeEntityId' | 'academicYearId'>,
 ): (actor: ActorMetadata) => Promise<void> {
   return async (actor) => {
-    const actorId = actor.kind === 'staff'
-      ? actor.staffMemberId
-      : actor.kind === 'guardian'
-        ? actor.guardianId
-        : actor.kind === 'student'
-          ? actor.studentId
-          : actor.systemId
-
     authorize({
       actor,
       request: {
-        actorId,
         schoolId: actor.schoolId,
         permission,
         ...scope,

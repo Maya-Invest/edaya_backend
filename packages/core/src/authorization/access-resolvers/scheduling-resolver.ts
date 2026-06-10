@@ -1,7 +1,10 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-import { Permission } from '../permissions'
+import {
+  SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
+  SESSION_TEACHING_ACCESS_PERMISSIONS,
+} from '../resolver-permissions'
 import { checkClassGroupAccess } from './academic-resolver'
 import { actorGrantCoversAny } from './grant-resolver'
 import { checkStudentAccess } from './student-resolver'
@@ -15,34 +18,44 @@ export async function checkSessionAccess(
     return
   }
 
-  if (actorGrantCoversAny(actor, [
-    Permission.QUERY_TIMETABLE_READ,
-    Permission.TIMETABLE_UPDATE,
-    Permission.TIMETABLE_CREATE,
-  ], 'school', actor.schoolId)) {
+  if (actorGrantCoversAny(
+    actor,
+    SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
+    'school',
+    actor.schoolId,
+  )) {
     return
   }
 
-  for (const sessionId of sessionIds) {
-    const canAccessSession = actorGrantCoversAny(actor, [
-      Permission.ATTENDANCE_RECORD,
-      Permission.GRADE_INPUT,
-      Permission.CLASS_LOGBOOK_CREATE,
-      Permission.CLASS_LOGBOOK_UPDATE,
-      Permission.DISCIPLINE_CREATE,
-    ], 'session', sessionId)
+  const uniqueSessionIds = [...new Set(sessionIds)]
+  const sessionsNeedingClassGroupLookup: string[] = []
+
+  for (const sessionId of uniqueSessionIds) {
+    const canAccessSession = actorGrantCoversAny(
+      actor,
+      SESSION_TEACHING_ACCESS_PERMISSIONS,
+      'session',
+      sessionId,
+    )
 
     if (canAccessSession) {
       continue
     }
 
-    const session = await repos.sessions.findById(sessionId)
-    if (!session) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-
-    await checkClassGroupAccess(actor, [session.classGroupId], repos)
+    sessionsNeedingClassGroupLookup.push(sessionId)
   }
+
+  if (sessionsNeedingClassGroupLookup.length === 0) {
+    return
+  }
+
+  const sessions = await repos.sessions.findByIds(sessionsNeedingClassGroupLookup)
+  if (sessions.length !== sessionsNeedingClassGroupLookup.length) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  const classGroupIds = [...new Set(sessions.map(session => session.classGroupId))]
+  await checkClassGroupAccess(actor, classGroupIds, repos)
 }
 
 export async function checkAttendanceAccess(

@@ -1,5 +1,6 @@
 import type { EffectiveGrants } from '../ports/authorization-repository'
 import { requireNonBlank, requireValidDate } from '../domains/utils'
+import { buildPortalScopeGrants } from './portal-grants'
 import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from './portal-permissions'
 
 export enum ActorAssuranceLevel {
@@ -114,11 +115,7 @@ export function createStudentActorMetadata(input: StudentActorMetadataInput): St
     studentId,
     effectiveGrants: input.effectiveGrants ?? {
       permissions: STUDENT_PORTAL_PERMISSIONS,
-      scopeGrants: Array.from(STUDENT_PORTAL_PERMISSIONS).map(permission => ({
-        permission,
-        scopeType: 'student',
-        scopeEntityIds: [studentId],
-      })),
+      scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, { studentIds: [studentId] }),
       isElevated: false,
     },
   })

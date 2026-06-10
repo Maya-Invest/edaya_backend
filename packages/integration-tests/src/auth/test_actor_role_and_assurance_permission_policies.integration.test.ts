@@ -10,7 +10,6 @@ import {
   createStaffActorMetadata,
   GradeLevel,
   Permission,
-  resolveAuditActorId,
   SessionKind,
   StaffMember,
   StaffRoleAssignment,
@@ -370,7 +369,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     expect(() => authorize({
       actor: strongForeignAdminApp.baseService.actor,
       request: {
-        actorId: resolveAuditActorId(strongForeignAdminApp.baseService.actor),
         schoolId: 'strong-school',
         permission: Permission.PLATFORM_REGISTER_SCHOOL,
       },

@@ -50,7 +50,6 @@ describe('portal permission policy', () => {
     expect(authorize({
       actor: guardianActor,
       request: {
-        actorId: guardianActor.guardianId,
         schoolId: 'school-1',
         permission: Permission.QUERY_STUDENT_DETAIL_READ,
       },

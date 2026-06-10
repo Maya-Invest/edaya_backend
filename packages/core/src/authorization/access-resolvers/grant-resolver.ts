@@ -48,20 +48,3 @@ export function actorGrantCoversAny(
       isElevated: grants.isElevated,
     }))
 }
-
-// Backward compatibility wrappers
-export async function staffHasAnyPermission(
-  actor: ActorMetadata,
-  permissions: readonly Permission[],
-): Promise<boolean> {
-  return actorHasAnyPermission(actor, permissions)
-}
-
-export async function staffGrantCoversAny(
-  actor: ActorMetadata,
-  permissions: readonly Permission[],
-  scopeType: ScopeType,
-  scopeEntityId: string,
-): Promise<boolean> {
-  return actorGrantCoversAny(actor, permissions, scopeType, scopeEntityId)
-}

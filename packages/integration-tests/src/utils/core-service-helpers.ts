@@ -69,7 +69,6 @@ export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School
   authorize({
     actor: registrationActor,
     request: {
-      actorId: resolveAuditActorId(registrationActor),
       schoolId: school.id,
       permission: Permission.PLATFORM_REGISTER_SCHOOL,
     },
@@ -131,7 +130,6 @@ async function authorizeCoreServiceHelperPermission(
   authorize({
     actor: app.baseService.actor,
     request: {
-      actorId: resolveAuditActorId(app.baseService.actor),
       schoolId: app.baseService.actor.schoolId,
       permission,
     },

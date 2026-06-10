@@ -58,7 +58,6 @@ describe('authorize', () => {
     expect(authorize({
       actor,
       request: {
-        actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.ATTENDANCE_RECORD,
       },
@@ -71,7 +70,6 @@ describe('authorize', () => {
     expect(() => authorize({
       actor,
       request: {
-        actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.PAYMENT_RECORD,
       },
@@ -84,7 +82,6 @@ describe('authorize', () => {
     expect(() => authorize({
       actor,
       request: {
-        actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.PAYMENT_RECORD,
         scopeType: 'class_group',
@@ -99,7 +96,6 @@ describe('authorize', () => {
     expect(() => authorize({
       actor,
       request: {
-        actorId: actor.staffMemberId,
         schoolId: 'school-other',
         permission: Permission.ATTENDANCE_READ,
       },
@@ -123,7 +119,6 @@ describe('authorize', () => {
     expect(() => authorize({
       actor,
       request: {
-        actorId: actor.staffMemberId,
         schoolId: 'school-1',
         permission: Permission.STAFF_READ,
       },

@@ -172,9 +172,20 @@ function createRepos(
         .map(id => ({ id, classGroupId: 'class-1' }))),
     },
     enrollments: {
-      list: mock(async ({ studentId }: any = {}) => studentId
-        ? [{ id: `enrollment-${studentId}`, studentId, classGroupId: 'class-1', status: StudentClassEnrollmentStatus.Active }]
-        : []),
+      list: mock(async (filter: any = {}) => {
+        const studentIds = typeof filter.studentId === 'string'
+          ? [filter.studentId]
+          : Array.isArray(filter.studentId?.$in)
+            ? filter.studentId.$in
+            : []
+
+        return studentIds.map((studentId: string) => ({
+          id: `enrollment-${studentId}`,
+          studentId,
+          classGroupId: 'class-1',
+          status: StudentClassEnrollmentStatus.Active,
+        }))
+      }),
     },
     guardianLinks: {
       findOne: mock(async ({ guardianId, studentId }: any = {}) =>
@@ -188,9 +199,15 @@ function createRepos(
     },
     results: {
       findById: mock(async id => id === 'result-1' ? { id, studentId: 'student-1' } : undefined),
+      findByIds: mock(async (ids: string[]) => ids
+        .filter(id => id === 'result-1')
+        .map(id => ({ id, studentId: 'student-1' }))),
     },
     sessions: {
       findById: mock(async id => id === 'session-1' ? { id, classGroupId: 'class-1' } : undefined),
+      findByIds: mock(async (ids: string[]) => ids
+        .filter(id => id === 'session-1')
+        .map(id => ({ id, classGroupId: 'class-1' }))),
     },
     staffAssignments: {
       list: mock(async ({ classGroupId, staffId }: any = {}) =>
@@ -218,6 +235,9 @@ function createRepos(
     },
     studentNotes: {
       findById: mock(async (id: string) => id === 'note-1' ? { id, studentId: 'student-1' } : undefined),
+      findByIds: mock(async (ids: string[]) => ids
+        .filter(id => id === 'note-1')
+        .map(id => ({ id, studentId: 'student-1' }))),
     },
     students: {
       findById: mock(async id => id === 'student-1' ? { id, schoolId: 'school-1' } : undefined),

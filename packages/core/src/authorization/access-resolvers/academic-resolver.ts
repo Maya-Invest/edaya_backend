@@ -1,7 +1,10 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { ActorMetadata } from '../actor-metadata'
 import { AuthorizationError, AuthorizationErrorCode } from '../authorization-error'
-import { Permission } from '../permissions'
+import {
+  CLASS_GROUP_ACCESS_PERMISSIONS,
+  SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
+} from '../resolver-permissions'
 import { actorGrantCoversAny } from './grant-resolver'
 import { checkStudentAccess } from './student-resolver'
 
@@ -15,19 +18,12 @@ export async function checkClassGroupAccess(
   }
 
   for (const classGroupId of classGroupIds) {
-    const canAccess = actorGrantCoversAny(actor, [
-      Permission.ACADEMIC_PROGRAM_READ,
-      Permission.ACADEMIC_PROGRAM_UPDATE,
-      Permission.QUERY_CLASS_DIRECTORY_READ,
-      Permission.GRADE_INPUT,
-      Permission.ATTENDANCE_RECORD,
-      Permission.CLASS_LOGBOOK_CREATE,
-      Permission.CLASS_LOGBOOK_UPDATE,
-      Permission.DISCIPLINE_CREATE,
-      Permission.GRADE_READ,
-      Permission.CLASS_LOGBOOK_READ,
-      Permission.ATTENDANCE_READ,
-    ], 'class_group', classGroupId)
+    const canAccess = actorGrantCoversAny(
+      actor,
+      CLASS_GROUP_ACCESS_PERMISSIONS,
+      'class_group',
+      classGroupId,
+    )
 
     if (!canAccess) {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
@@ -44,15 +40,16 @@ export async function checkAssessmentAccess(
     return
   }
 
-  if (actorGrantCoversAny(actor, [
-    Permission.GRADE_READ,
-    Permission.EXAM_CONFIG_CONFIGURE,
-    Permission.QUERY_CURRICULUM_PROGRESS_READ,
-  ], 'school', actor.schoolId)) {
+  if (actorGrantCoversAny(
+    actor,
+    SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
+    'school',
+    actor.schoolId,
+  )) {
     return
   }
 
-  const assessments = await repos.assessments.findByIds(Array.from(assessmentIds))
+  const assessments = await repos.assessments.findByIds([...assessmentIds])
   if (assessments.length !== assessmentIds.length) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -69,11 +66,11 @@ export async function checkReportCardResultAccess(
     return
   }
 
-  for (const resultId of reportCardResultIds) {
-    const result = await repos.results.findById(resultId)
-    if (!result) {
-      continue
-    }
-    await checkStudentAccess(actor, [result.studentId], repos)
+  const results = await repos.results.findByIds([...reportCardResultIds])
+  const studentIds = [...new Set(results.map(result => result.studentId))]
+  if (studentIds.length === 0) {
+    return
   }
+
+  await checkStudentAccess(actor, studentIds, repos)
 }
