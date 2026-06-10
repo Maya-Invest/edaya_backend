@@ -20,8 +20,22 @@ export async function getApiRuntime(env: Environment): Promise<ApiRuntime> {
 }
 
 /**
- * Resets the API runtimes for tests.
+ * Closes cached runtimes and clears the registry. Use in test teardown so
+ * ephemeral PGlite instances do not keep the Bun test runner alive (exit 99).
  */
-export function resetApiRuntimesForTests(): void {
+export async function resetApiRuntimesForTests(): Promise<void> {
+  const pending = [...runtimes.values()];
   runtimes.clear();
+
+  await Promise.all(
+    pending.map(async (runtimePromise) => {
+      try {
+        const runtime = await runtimePromise;
+        await runtime.close();
+      }
+      catch {
+        // Ignore teardown errors in tests.
+      }
+    }),
+  );
 }

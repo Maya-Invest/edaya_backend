@@ -1,7 +1,18 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
+import { parseEnv } from "@/lib/bootstrap/env";
 import type { AppBindings } from "@/lib/http/types";
 import indexRouter from "@/app-router";
+
+const testEnv = parseEnv({
+  RUNTIME: "node",
+  NODE_ENV: "test",
+  PORT: 9999,
+  LOG_LEVEL: "silent",
+  DATABASE_URL: "pglite",
+  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
+  BETTER_AUTH_URL: "http://localhost:9999",
+});
 
 describe("auth route proxy", () => {
   const authHandler = mock();
@@ -13,6 +24,7 @@ describe("auth route proxy", () => {
   const setupTestApp = () => {
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {
+      c.env = testEnv;
       c.set("auth", {
         handler: authHandler,
         api: {
@@ -33,7 +45,8 @@ describe("auth route proxy", () => {
 
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("ok");
-    expect(authHandler).toHaveBeenCalledWith(expect.any(Request));
+    const proxiedRequest = authHandler.mock.calls[0]?.[0] as Request;
+    expect(proxiedRequest.url).toBe("http://localhost:9999/api/auth/session");
   });
 
   it("should proxy POST auth requests through the OpenAPI route", async () => {
@@ -47,6 +60,7 @@ describe("auth route proxy", () => {
 
     expect(res.status).toBe(201);
     expect(await res.text()).toBe("created");
-    expect(authHandler).toHaveBeenCalledWith(expect.any(Request));
+    const proxiedRequest = authHandler.mock.calls[0]?.[0] as Request;
+    expect(proxiedRequest.url).toBe("http://localhost:9999/api/auth/sign-in/email");
   });
 });

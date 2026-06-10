@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "bun:test";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import {
   createAppRequest,
@@ -8,8 +8,8 @@ import {
 } from "../support/better-auth-route-harness";
 
 describe("better auth effective grants route", () => {
-  beforeEach(() => {
-    resetApiRuntimesForTests();
+  afterEach(async () => {
+    await resetApiRuntimesForTests();
   });
 
   it("returns effective grants after sign-in through the app router", async () => {

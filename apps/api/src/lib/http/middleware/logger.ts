@@ -2,16 +2,13 @@ import type { Context, MiddlewareHandler } from "hono";
 import type { Env } from "hono-pino";
 import { logger } from "hono-pino";
 import { randomUUID } from "node:crypto";
-import pino from "pino";
-import pretty from "pino-pretty";
 
 import type { AppBindings } from "@/lib/http/types";
+import { createAppLogger } from "@/lib/logging/app-logger";
 
 export function pinoLogger() {
   return ((c, next) => logger({
-    pino: pino({
-      level: c.env.LOG_LEVEL || "info",
-    }, c.env.NODE_ENV === "production" ? undefined : pretty()),
+    pino: createAppLogger(c.env),
     http: {
       reqId: () => randomUUID(),
     },

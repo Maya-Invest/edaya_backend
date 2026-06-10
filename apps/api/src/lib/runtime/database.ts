@@ -4,6 +4,7 @@ import { isEphemeralDatabase } from "@/lib/seed";
 export interface DatabaseHandle {
   db: unknown;
   sqlClient: unknown | null;
+  dispose: () => Promise<void>;
 }
 
 export async function createDatabase(env: Environment): Promise<DatabaseHandle> {
@@ -19,6 +20,9 @@ export async function createDatabase(env: Environment): Promise<DatabaseHandle> 
     return {
       db: drizzle(pglite),
       sqlClient: null,
+      async dispose() {
+        await pglite.close();
+      },
     };
   }
 
@@ -29,5 +33,8 @@ export async function createDatabase(env: Environment): Promise<DatabaseHandle> 
   return {
     db: drizzle(sqlClient),
     sqlClient,
+    async dispose() {
+      await sqlClient.end({ timeout: 5 });
+    },
   };
 }

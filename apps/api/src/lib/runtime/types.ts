@@ -18,4 +18,5 @@ export interface ApiRuntime {
   readonly sqlClient: unknown | null;
   getSchoolApplication: () => Promise<ApiSchoolApplication>;
   getAuth: () => AuthService;
+  close: () => Promise<void>;
 }

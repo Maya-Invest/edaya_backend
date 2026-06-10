@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "bun:test";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { SEED_SCHOOL_ID } from "@/lib/seed/dataset";
 import { createSystemActorMetadata } from "@edaya/core";
@@ -14,8 +14,8 @@ import {
 const UNLINKED_STAFF_ID = "st9";
 
 describe("link-actor-subject command route", () => {
-  beforeEach(() => {
-    resetApiRuntimesForTests();
+  afterEach(async () => {
+    await resetApiRuntimesForTests();
   });
 
   it("links a staff member to a Better Auth subject through the command route", async () => {

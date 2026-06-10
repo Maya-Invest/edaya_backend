@@ -30,11 +30,13 @@ export const SEED_SCHOOL_ID = 'sch-edaya-central'
 export interface AuthTestEnv {
   BETTER_AUTH_SECRET: string
   BETTER_AUTH_URL: string
+  LOG_LEVEL?: string
 }
 
 export const PG_LITE_AUTH_ENV: AuthTestEnv = {
   BETTER_AUTH_SECRET: 'super-secret-placeholder-key-for-local-testing',
   BETTER_AUTH_URL: 'http://localhost:9999',
+  LOG_LEVEL: 'silent',
 }
 
 export interface AuthService {
@@ -62,6 +64,7 @@ function createAuth(db: unknown, env: AuthTestEnv): AuthService {
     emailAndPassword: {
       enabled: true,
     },
+    ...(env.LOG_LEVEL === 'silent' ? { logger: { disabled: true } } : {}),
   }) as AuthService
 }
 

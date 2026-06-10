@@ -6,7 +6,7 @@ import { DEV_AUTH_PASSWORD } from "@/lib/seed/dataset";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
 import { Hono } from "hono";
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "bun:test";
 import type { AppBindings } from "@/lib/http/types";
 
 const pgliteEnv = parseEnv({
@@ -30,8 +30,8 @@ function collectSetCookieHeaders(response: Response): string[] {
 }
 
 describe("runDevAuthSeed", () => {
-  beforeEach(() => {
-    resetApiRuntimesForTests();
+  afterEach(async () => {
+    await resetApiRuntimesForTests();
   });
 
   it("links seeded staff and guardian accounts to Better Auth users", async () => {

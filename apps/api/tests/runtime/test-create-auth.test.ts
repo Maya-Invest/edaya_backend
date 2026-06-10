@@ -1,6 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
 import { createAuth } from "@/lib/runtime/create-auth";
 import type { Environment } from "@/lib/bootstrap/env";
@@ -8,6 +8,7 @@ import type { Environment } from "@/lib/bootstrap/env";
 const testEnv = {
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
   BETTER_AUTH_URL: "http://localhost:9999",
+  LOG_LEVEL: "silent",
 } as Environment;
 
 function collectSetCookieHeaders(response: Response): string[] {
@@ -22,12 +23,17 @@ function collectSetCookieHeaders(response: Response): string[] {
 
 describe("createAuth", () => {
   let auth: ReturnType<typeof createAuth>;
+  let pglite: PGlite;
 
   beforeEach(async () => {
-    const pglite = new PGlite();
+    pglite = new PGlite();
     const db = drizzle(pglite);
     await runAuthMigrations(db, { driver: "pglite" });
     auth = createAuth(db, testEnv);
+  });
+
+  afterEach(async () => {
+    await pglite.close();
   });
 
   it("signs up a user and returns a session", async () => {

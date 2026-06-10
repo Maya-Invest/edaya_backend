@@ -13,6 +13,16 @@ interface AuthUserResponse {
   };
 }
 
+async function readAuthUserId(response: Response): Promise<string | undefined> {
+  const bodyText = await response.text();
+  if (!bodyText.trim()) {
+    return undefined;
+  }
+
+  const body = JSON.parse(bodyText) as AuthUserResponse;
+  return body.user?.id;
+}
+
 export async function ensureAuthUser(
   auth: AuthService,
   env: Environment,
@@ -30,8 +40,7 @@ export async function ensureAuthUser(
   }));
 
   if (signInResponse.ok) {
-    const signInBody = await signInResponse.json() as AuthUserResponse;
-    const userId = signInBody.user?.id;
+    const userId = await readAuthUserId(signInResponse);
     if (userId) {
       return userId;
     }
@@ -54,8 +63,7 @@ export async function ensureAuthUser(
     throw new Error(`Failed to provision dev auth user ${account.email}: ${signUpResponse.status} ${message}`);
   }
 
-  const signUpBody = await signUpResponse.json() as AuthUserResponse;
-  const userId = signUpBody.user?.id;
+  const userId = await readAuthUserId(signUpResponse);
   if (!userId) {
     throw new Error(`Better Auth sign-up for ${account.email} did not return a user id`);
   }

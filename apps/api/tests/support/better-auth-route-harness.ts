@@ -42,7 +42,7 @@ export interface AuthenticatedRouteContext {
 }
 
 export async function createCoreRouteTestApp(): Promise<AuthenticatedRouteContext> {
-  resetApiRuntimesForTests();
+  await resetApiRuntimesForTests();
   const runtime = await getApiRuntime(pgliteEnv);
   const application = await runtime.getSchoolApplication();
 
