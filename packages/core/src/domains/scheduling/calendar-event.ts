@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { dateRangeDurationDays, refineEndDateNotBeforeStartDate } from '../../value_object/date-range'
 import { parseDomain, zodDate } from '../utils'
 
 export enum CalendarEventKind {
@@ -34,12 +35,7 @@ export const calendarEventBaseSchema = z.object({
 })
 
 function refineCalendarEvent(data: any, ctx: z.RefinementCtx) {
-  if (data.endDate.getTime() < data.startDate.getTime()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'endDate must not be before startDate',
-    })
-  }
+  refineEndDateNotBeforeStartDate(data, ctx)
   if (data.scopeKind !== CalendarEventScopeKind.School && !data.scopeId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -88,8 +84,7 @@ export class CalendarEvent {
 
   /** Returns the number of calendar days this event spans (inclusive). */
   get durationDays(): number {
-    const msPerDay = 86_400_000
-    return Math.round((this.endDate.getTime() - this.startDate.getTime()) / msPerDay) + 1
+    return dateRangeDurationDays(this.startDate, this.endDate)
   }
 }
 

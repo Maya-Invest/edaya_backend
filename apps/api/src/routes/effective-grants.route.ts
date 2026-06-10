@@ -1,0 +1,55 @@
+import { createRoute, z } from "@hono/zod-openapi";
+import * as HttpStatusCodes from "stoker/http-status-codes";
+import { jsonContent } from "stoker/openapi/helpers";
+import { createMessageObjectSchema } from "stoker/openapi/schemas";
+import type { AppRouteHandler } from "@/lib/http/types";
+import { getErrorMessage, unauthorizedResponse } from "@/lib/http/responses";
+import { requireInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
+import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/openapi/entities.schemas";
+
+const commandMessageSchema = createMessageObjectSchema();
+
+const effectiveGrantsResponseSchema = z.object({
+  kind: z.enum(["staff", "guardian", "student"]),
+  actorId: z.string(),
+  schoolId: z.string(),
+  assuranceLevel: z.enum(["standard", "verified", "strong"]),
+  effectiveGrants: z.object({
+    permissions: z.array(z.string()),
+    scopeGrants: z.array(scopeGrantResponseSchema),
+    isElevated: z.boolean(),
+    expiresAt: z.string().datetime().optional(),
+  }),
+}).openapi("EffectiveGrantsResponse");
+
+export const getEffectiveGrantsRoute = createRoute({
+  method: "get",
+  path: "/api/core/authorization/effective-grants",
+  tags: ["Core Authorization"],
+  summary: "Get current actor effective grants",
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(effectiveGrantsResponseSchema, "Current actor authorization snapshot"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Missing or invalid authorization session"),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(commandMessageSchema, "System actors cannot introspect grants"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(commandMessageSchema, "Internal server error occurred"),
+  },
+});
+
+export const getEffectiveGrantsHandler: AppRouteHandler<typeof getEffectiveGrantsRoute> = async (c) => {
+  const actor = c.get("actor");
+  if (!actor) {
+    return unauthorizedResponse(c);
+  }
+
+  const interactiveActor = requireInteractiveActor(actor);
+  if (!interactiveActor) {
+    return c.json({ message: "System actors cannot introspect grants" }, HttpStatusCodes.FORBIDDEN);
+  }
+
+  try {
+    return c.json(serializeActorAuthorization(interactiveActor), HttpStatusCodes.OK);
+  }
+  catch (err) {
+    return c.json({ message: getErrorMessage(err) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};

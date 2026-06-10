@@ -1,26 +1,14 @@
-import type { ScopeGrant, ScopeType } from '../../authorization'
+import type { ScopeGrant } from '../../authorization'
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 
 import { directPermissionEntityConfig } from '../../shared'
+import { refineEndsAtNotBeforeStartsAtOptional } from '../../value_object/date-time-range'
+import { scopeGrantSchema } from '../../value_object/scope-grant'
 import { parseDomain, zodDate } from '../utils'
 
-export const scopeGrantSchema = z.object({
-  permission: z.nativeEnum(Permission),
-  scopeType: z.enum([
-    'platform',
-    'school',
-    'academic_year',
-    'class_group',
-    'subject',
-    'course_assignment',
-    'session',
-    'student',
-    'student_group',
-  ]) as z.ZodType<ScopeType>,
-  scopeEntityIds: z.array(z.string()),
-})
+export { scopeGrantSchema }
 
 export const staffRoleAssignmentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -36,13 +24,8 @@ export const staffRoleAssignmentBaseSchema = z.object({
   updatedAt: zodDate().optional(),
 })
 
-function refineStaffRoleAssignment(data: any, ctx: z.RefinementCtx) {
-  if (data.startsAt && data.endsAt && data.endsAt < data.startsAt) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'endsAt must not be before startsAt',
-    })
-  }
+function refineStaffRoleAssignment(data: { startsAt?: Date, endsAt?: Date }, ctx: z.RefinementCtx) {
+  refineEndsAtNotBeforeStartsAtOptional(data, ctx)
 }
 
 export const staffRoleAssignmentSchema = staffRoleAssignmentBaseSchema.superRefine(refineStaffRoleAssignment)

@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import type { AppBindings } from "@/lib/types";
+import type { AppBindings } from "@/lib/http/types";
 
 const authHandler = mock();
 
-mock.module("@/routes/auth/auth.config", () => ({
+mock.module("@/lib/authentication/auth.config", () => ({
   auth: {
     handler: authHandler,
   },
 }));
 
-const { default: indexRouter } = await import("@/routes/index.route");
+const { default: indexRouter } = await import("@/app-router");
 
 describe("auth route proxy", () => {
   beforeEach(() => {

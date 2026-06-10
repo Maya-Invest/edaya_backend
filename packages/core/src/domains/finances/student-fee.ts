@@ -7,6 +7,7 @@ import { Permission } from '../../authorization'
 import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { Money } from '../../value_object/money'
+import { StudentFeeSummary } from '../../value_object/student-fee-summary'
 import { parseDomain, zodDate } from '../utils'
 
 export enum FeeStatus {
@@ -204,35 +205,7 @@ export class StudentFee {
   }
 }
 
-export class StudentFeeSummary {
-  readonly totalExpected: Money
-  readonly totalPaid: Money
-  readonly totalOverdue: Money
-  readonly totalAdjusted: Money
-  readonly balanceDue: Money
-  readonly itemCount: number
-
-  constructor(args: {
-    totalExpected: Money
-    totalPaid: Money
-    totalOverdue: Money
-    totalAdjusted?: Money
-    itemCount: number
-  }) {
-    this.totalExpected = args.totalExpected
-    this.totalPaid = args.totalPaid
-    this.totalOverdue = args.totalOverdue
-    this.totalAdjusted = args.totalAdjusted ?? new Money({
-      amount: 0,
-      currency: args.totalExpected.currency,
-    })
-    this.balanceDue = new Money({
-      amount: Math.max(0, args.totalExpected.amount - this.totalAdjusted.amount - args.totalPaid.amount),
-      currency: args.totalExpected.currency,
-    })
-    this.itemCount = args.itemCount
-  }
-}
+export { StudentFeeSummary } from '../../value_object/student-fee-summary'
 
 export function buildStudentFeeSummary(studentFees: readonly StudentFee[], fallbackCurrency = 'XAF'): StudentFeeSummary {
   const currency = studentFees[0]?.expectedAmount.currency ?? fallbackCurrency

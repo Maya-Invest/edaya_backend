@@ -65,10 +65,10 @@ Too thin unless you add validation/formatting behavior (E.164, etc.)
 EffectiveGrants
 Runtime authorization snapshot, not domain input
 Suggested priority
-Phase 7c (planned)     Money + AttendanceSummary → Zod
-Next low-hanging fruit TimeOfDay / TimeRange schema + helper
-Then                   DateRange / DateTimeRange
-Then                   StudentFeeSummary + ScopeGrant unification
+Phase 7c (done)        Money + AttendanceSummary → Zod
+Phase 7c½ (done)       TimeOfDay / TimeRange schema + helper
+Phase 7c¾ (done)       DateRange / DateTimeRange
+Phase 7c⅞ (done)       StudentFeeSummary + ScopeGrant unification
 Only if needed         Score/Percentage schema helpers (not full classes)
 Rule of thumb: extract a value object when you have (a) repeated validation, (b) behavior on the composite, or (c) a concept used across multiple aggregates — not when it’s a single-field primitive or a 1:1 part of one entity.
 

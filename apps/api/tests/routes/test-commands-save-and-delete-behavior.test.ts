@@ -1,9 +1,9 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import indexRouter from "@/routes/index.route";
+import indexRouter from "@/app-router";
 import type { Permission } from "@edaya/core";
 import { ActorAssuranceLevel, GradeLevel } from "@edaya/core";
-import type { AppBindings } from "@/lib/types";
+import type { AppBindings } from "@/lib/http/types";
 
 describe("core entity and command routes", () => {
   const mockActor = {
@@ -95,7 +95,31 @@ describe("core entity and command routes", () => {
     expect(mockDelete).toHaveBeenCalledWith("grade-level-6");
   });
 
-  it("returns 400 when entity construction rejects a save payload", async () => {
+  it("returns 405 when direct save is disabled for command-only entities", async () => {
+    const mockSave = mock().mockResolvedValue(undefined);
+    const app = setupTestApp({
+      baseService: {
+        students: mockEntityService({ save: mockSave }),
+      },
+    });
+
+    const res = await app.request("/api/core/entities/students/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "student-1",
+        schoolId: "school-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        status: "active",
+      }),
+    });
+
+    expect(res.status).toBe(405);
+    expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it("returns 422 when entity save payload fails OpenAPI schema validation", async () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
@@ -114,7 +138,7 @@ describe("core entity and command routes", () => {
       }),
     });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
     expect(mockSave).not.toHaveBeenCalled();
   });
 

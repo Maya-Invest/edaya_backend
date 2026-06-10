@@ -8,8 +8,8 @@ import { config, indirectTenant, permissionAction, read, unique, write } from '.
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 import { StudentStatus } from './student'
-import { progressionDecisionChanged } from './student-note'
 import { StudentClassEnrollmentStatus } from './student-class-enrollment-status'
+import { progressionDecisionChanged } from './student-note'
 
 export { StudentClassEnrollmentStatus } from './student-class-enrollment-status'
 

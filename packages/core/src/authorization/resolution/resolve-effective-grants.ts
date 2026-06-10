@@ -1,11 +1,11 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { EffectiveGrants } from '../model/effective-grants'
+import type { ScopeGrant } from '../model/scope-grant'
+import type { Permission } from '../permissions/permission'
 import { mergeScopeGrants } from '../grants/scope-grant-covers'
 import { scopeGrantsFromStaffAssignments } from '../grants/staff-assignment-scope'
 import { ASSIGNMENT_SCOPED_PERMISSION_SET, ELEVATED_STAFF_PERMISSIONS } from '../grants/system-role-permissions'
-import type { EffectiveGrants } from '../model/effective-grants'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
-import type { ScopeGrant } from '../model/scope-grant'
-import type { Permission } from '../permissions/permission'
 
 export interface ResolveEffectiveGrantsArgs {
   staffMemberId: string

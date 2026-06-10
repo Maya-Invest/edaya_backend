@@ -4,6 +4,8 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
+import { zodTimeOfDay } from '../../value_object/time-of-day'
+import { refineTimeRangeStrictAfter } from '../../value_object/time-range'
 import { parseDomain, zodDate } from '../utils'
 
 export enum DayOfWeek {
@@ -23,19 +25,14 @@ export const scheduleBaseSchema = z.object({
   title: z.string().trim().min(1, 'title must not be blank'),
   isRecurring: z.boolean(),
   dayOfWeek: z.nativeEnum(DayOfWeek).nullable().optional().transform(v => v === null ? undefined : v),
-  startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'startTime must be a valid time in HH:mm format'),
-  endTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'endTime must be a valid time in HH:mm format'),
+  startTime: zodTimeOfDay('startTime'),
+  endTime: zodTimeOfDay('endTime'),
   specificDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
 function refineSchedule(data: any, ctx: z.RefinementCtx) {
-  if (data.startTime >= data.endTime) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'endTime must be after startTime',
-    })
-  }
+  refineTimeRangeStrictAfter(data, ctx)
   if (data.isRecurring) {
     if (!data.dayOfWeek) {
       ctx.addIssue({

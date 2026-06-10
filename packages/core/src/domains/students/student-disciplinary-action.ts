@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { refineEndsAtNotBeforeStartsAtOptional } from '../../value_object/date-time-range'
 import { parseDomain, zodDate } from '../utils'
 
 export enum StudentDisciplinaryActionStatus {
@@ -30,12 +31,7 @@ export const studentDisciplinaryActionBaseSchema = z.object({
 })
 
 function refineStudentDisciplinaryAction(data: any, ctx: z.RefinementCtx) {
-  if (data.endsAt && data.startsAt && data.endsAt.getTime() < data.startsAt.getTime()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'endsAt must not be before startsAt',
-    })
-  }
+  refineEndsAtNotBeforeStartsAtOptional(data, ctx)
   if (data.updatedAt.getTime() < data.createdAt.getTime()) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

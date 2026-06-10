@@ -9,6 +9,8 @@ const noopAccessExceptions = new Set([
   'academics/subject-matter.ts',
   'assessments/report-card-definition-section.ts',
   'assessments/report-card-definition.ts',
+  'messaging/announcement-target.ts',
+  'messaging/message-delivery.ts',
   'school/academic-year.ts',
   'school/grade-scale.ts',
   'school/school.ts',

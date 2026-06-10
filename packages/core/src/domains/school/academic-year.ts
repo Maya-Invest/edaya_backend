@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../value_object/date-range'
 import { parseDomain, zodDate } from '../utils'
 
 export const academicYearBaseSchema = z.object({
@@ -15,37 +16,14 @@ export const academicYearBaseSchema = z.object({
   createdAt: zodDate().default(() => new Date()),
 })
 
-export const academicYearSchema = academicYearBaseSchema.refine(
-  data => data.endDate.getTime() >= data.startDate.getTime(),
-  {
-    message: 'endDate must not be before startDate',
-    path: ['endDate'],
-  },
-)
+export const academicYearSchema = academicYearBaseSchema.superRefine(refineEndDateNotBeforeStartDate)
 
 export type AcademicYearData = z.infer<typeof academicYearSchema>
 export type AcademicYearInput = z.input<typeof academicYearSchema>
 
-export const academicYearCreateSchema = academicYearBaseSchema.omit({ createdAt: true }).refine(
-  data => data.endDate.getTime() >= data.startDate.getTime(),
-  {
-    message: 'endDate must not be before startDate',
-    path: ['endDate'],
-  },
-)
+export const academicYearCreateSchema = academicYearBaseSchema.omit({ createdAt: true }).superRefine(refineEndDateNotBeforeStartDate)
 
-export const academicYearUpdateSchema = academicYearBaseSchema.partial().required({ id: true }).refine(
-  (data) => {
-    if (data.startDate && data.endDate) {
-      return data.endDate.getTime() >= data.startDate.getTime()
-    }
-    return true
-  },
-  {
-    message: 'endDate must not be before startDate',
-    path: ['endDate'],
-  },
-)
+export const academicYearUpdateSchema = academicYearBaseSchema.partial().required({ id: true }).superRefine(refineEndDateNotBeforeStartDatePartial)
 
 /**
  * Represents a full academic year for a school.
@@ -67,7 +45,7 @@ export class AcademicYear {
   get createdAt() { return this.data.createdAt }
 
   contains(value: Date): boolean {
-    return value.getTime() >= this.startDate.getTime() && value.getTime() <= this.endDate.getTime()
+    return dateRangeContains(this.startDate, this.endDate, value)
   }
 }
 

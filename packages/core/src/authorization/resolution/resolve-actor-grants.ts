@@ -1,7 +1,7 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EffectiveGrants } from '../model/effective-grants'
-import { resolveGuardianGrants, resolveStudentGrants } from './resolve-portal-grants'
 import { resolveEffectiveGrants } from './resolve-effective-grants'
+import { resolveGuardianGrants, resolveStudentGrants } from './resolve-portal-grants'
 
 export interface ResolveActorGrantsArgs {
   actorId: string

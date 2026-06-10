@@ -1,9 +1,18 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { coreCommands, coreEntities, coreQueries } from "@/routes/core/core-registries";
-import { coreRoutePairs } from "@/routes/core/core.route";
-import { getQueryOptionFields } from "@/validation/utils/query-options";
+import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
+import { commandMessageResponseSchema, commandResponseByMethod } from "@/lib/school-api/schemas/openapi/command-response.schemas";
+import { getQueryOptionFields } from "@/lib/school-api/schemas/openapi/utils/query-options";
+import { buildCommandRoutes } from "@/routes/commands.routes";
+import { buildEntityRoutes } from "@/routes/entities.routes";
+import { buildQueryRoutes } from "@/routes/queries.routes";
+
+const coreRoutePairs = [
+  ...buildCommandRoutes(),
+  ...buildQueryRoutes(),
+  ...buildEntityRoutes(),
+];
 
 function fieldsFor(entityName: string): readonly string[] {
   const entity = coreEntities.find(candidate => candidate.serviceName === entityName);
@@ -57,6 +66,29 @@ describe("core route registry contracts", () => {
     for (const publicName of publicNames) {
       expect(publicName).toMatch(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/);
     }
+  });
+
+  it("registers typed OpenAPI response schemas for every command", () => {
+    for (const command of coreCommands) {
+      expect(commandResponseByMethod[command.methodName]).toBeDefined();
+      expect(command.responseSchema).toBeDefined();
+    }
+
+    expect(commandResponseByMethod.removeResourceAssignment).toBe(commandMessageResponseSchema);
+    expect(commandResponseByMethod.removeAttachment).toBe(commandMessageResponseSchema);
+    expect(commandResponseByMethod.registerStudent).not.toBe(commandMessageResponseSchema);
+  });
+
+  it("marks command-only entities as disallowing direct save", () => {
+    const commandOnlyEntities = coreEntities.filter(entity => !entity.allowDirectSave);
+    expect(commandOnlyEntities.map(entity => entity.serviceName)).toEqual(expect.arrayContaining([
+      "students",
+      "enrollments",
+      "studentFees",
+      "payments",
+      "assessmentResults",
+      "results",
+    ]));
   });
 
   it("exposes current domain field names for known drift-prone query filters", () => {

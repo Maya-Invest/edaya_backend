@@ -4,9 +4,9 @@ import { describe, expect, test } from 'bun:test'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
+  createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
   Permission,
-  createRepositoryAuthorizationPolicy,
 } from '../../../src/authorization'
 import { accessRoleConfig, staffRoleAssignmentConfig } from '../../../src/domains'
 

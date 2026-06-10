@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../value_object/date-range'
 import { parseDomain, zodDate } from '../utils'
 
 export enum AcademicPeriodType {
@@ -24,37 +25,14 @@ export const academicPeriodBaseSchema = z.object({
   createdAt: zodDate().default(() => new Date()),
 })
 
-export const academicPeriodSchema = academicPeriodBaseSchema.refine(
-  data => data.endDate.getTime() >= data.startDate.getTime(),
-  {
-    message: 'endDate must not be before startDate',
-    path: ['endDate'],
-  },
-)
+export const academicPeriodSchema = academicPeriodBaseSchema.superRefine(refineEndDateNotBeforeStartDate)
 
 export type AcademicPeriodData = z.infer<typeof academicPeriodSchema>
 export type AcademicPeriodInput = z.input<typeof academicPeriodSchema>
 
-export const academicPeriodCreateSchema = academicPeriodBaseSchema.omit({ createdAt: true }).refine(
-  data => data.endDate.getTime() >= data.startDate.getTime(),
-  {
-    message: 'endDate must not be before startDate',
-    path: ['endDate'],
-  },
-)
+export const academicPeriodCreateSchema = academicPeriodBaseSchema.omit({ createdAt: true }).superRefine(refineEndDateNotBeforeStartDate)
 
-export const academicPeriodUpdateSchema = academicPeriodBaseSchema.partial().required({ id: true }).refine(
-  (data) => {
-    if (data.startDate && data.endDate) {
-      return data.endDate.getTime() >= data.startDate.getTime()
-    }
-    return true
-  },
-  {
-    message: 'endDate must not be before startDate',
-    path: ['endDate'],
-  },
-)
+export const academicPeriodUpdateSchema = academicPeriodBaseSchema.partial().required({ id: true }).superRefine(refineEndDateNotBeforeStartDatePartial)
 
 /**
  * Represents a specific time period within an academic year (e.g., Trimester, Semester).
@@ -78,7 +56,7 @@ export class AcademicPeriod {
   get createdAt() { return this.data.createdAt }
 
   contains(value: Date): boolean {
-    return value.getTime() >= this.startDate.getTime() && value.getTime() <= this.endDate.getTime()
+    return dateRangeContains(this.startDate, this.endDate, value)
   }
 }
 

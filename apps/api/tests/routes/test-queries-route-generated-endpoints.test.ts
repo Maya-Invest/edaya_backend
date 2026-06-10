@@ -1,9 +1,9 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import indexRouter from "@/routes/index.route";
+import indexRouter from "@/app-router";
 import type { Permission } from "@edaya/core";
 import { ActorAssuranceLevel } from "@edaya/core";
-import type { AppBindings } from "@/lib/types";
+import type { AppBindings } from "@/lib/http/types";
 
 describe("generated core query endpoints", () => {
   const mockActor = {

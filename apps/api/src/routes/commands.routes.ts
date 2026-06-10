@@ -1,0 +1,52 @@
+import type { AppRouteHandler } from "@/lib/http/types";
+import { dispatchCoreCommand } from "@/lib/school-api/dispatch/command-dispatch";
+import { routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
+import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared-responses";
+import { coreCommands } from "@/lib/school-api/registry";
+import { createRoute } from "@hono/zod-openapi";
+import * as HttpStatusCodes from "stoker/http-status-codes";
+import { jsonContent } from "stoker/openapi/helpers";
+import type { SchoolApiRoutePair } from "@/lib/school-api/routes/route-types";
+import { validatedJson } from "@/lib/school-api/routes/request-validation";
+
+export function buildCommandRoutes(): SchoolApiRoutePair[] {
+  const pairs: SchoolApiRoutePair[] = [];
+
+  coreCommands.forEach((commandConfig) => {
+    const route = createRoute({
+      method: "post",
+      path: `/api/core/commands/${commandConfig.publicName}`,
+      tags: ["Core Commands"],
+      summary: commandConfig.publicName,
+      request: {
+        body: jsonContent(commandConfig.requestSchema, `${commandConfig.publicName} payload`),
+      },
+      responses: {
+        [HttpStatusCodes.OK]: jsonContent(commandConfig.responseSchema, `Executed ${commandConfig.publicName}`),
+        ...coreRouteErrorResponses,
+      },
+    });
+
+    const handler: AppRouteHandler<typeof route> = async (c) => {
+      const actor = c.get("actor");
+      if (!actor) {
+        return unauthorizedResponse(c);
+      }
+
+      const service = c.get("schoolApp").forActor(actor);
+      const payload = validatedJson(c);
+
+      try {
+        const result = await dispatchCoreCommand(service, commandConfig.methodName, payload);
+        return c.json(result ?? { message: `${commandConfig.publicName} completed` }, HttpStatusCodes.OK);
+      }
+      catch (err) {
+        return routeErrorResponse(c, err);
+      }
+    };
+
+    pairs.push({ route, handler });
+  });
+
+  return pairs;
+}

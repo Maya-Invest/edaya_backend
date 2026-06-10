@@ -2,6 +2,8 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
+import { zodTimeOfDay } from '../../value_object/time-of-day'
+import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../value_object/time-range'
 import { parseDomain, zodDate } from '../utils'
 
 export const periodDefinitionBaseSchema = z.object({
@@ -10,18 +12,15 @@ export const periodDefinitionBaseSchema = z.object({
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   label: z.string().trim().min(1, 'label must not be blank'),
   order: z.number().int().positive('order must be a strictly positive integer'),
-  startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'startTime must be a valid time in HH:mm format'),
-  endTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'endTime must be a valid time in HH:mm format'),
+  startTime: zodTimeOfDay('startTime'),
+  endTime: zodTimeOfDay('endTime'),
   isBreak: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
 })
 
-function refinePeriodDefinition(data: any, ctx: z.RefinementCtx) {
-  if (data.startTime >= data.endTime) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'endTime must be after startTime',
-    })
+function refinePeriodDefinition(data: { startTime?: string, endTime?: string }, ctx: z.RefinementCtx) {
+  if (data.startTime && data.endTime) {
+    refineTimeRangeStrictAfter({ startTime: data.startTime, endTime: data.endTime }, ctx)
   }
 }
 
@@ -56,13 +55,7 @@ export class PeriodDefinition {
   get createdAt() { return this.data.createdAt }
 
   get durationMinutes(): number {
-    const partsS = this.startTime.split(':')
-    const partsE = this.endTime.split(':')
-    const sh = Number(partsS[0])
-    const sm = Number(partsS[1])
-    const eh = Number(partsE[0])
-    const em = Number(partsE[1])
-    return eh * 60 + em - (sh * 60 + sm)
+    return timeRangeDurationMinutes(this.startTime, this.endTime)
   }
 }
 

@@ -85,8 +85,8 @@ Multiple grants are merged by `(permission, scopeType)` via `mergeScopeGrants()`
 interface EffectiveGrants {
   permissions: ReadonlySet<Permission>
   scopeGrants: readonly ScopeGrant[]
-  isElevated: boolean      // school owner / principal: school-wide, no per-entity scopes
-  expiresAt?: Date         // earliest assignment expiry; bounds API cache TTL
+  isElevated: boolean // school owner / principal: school-wide, no per-entity scopes
+  expiresAt?: Date // earliest assignment expiry; bounds API cache TTL
 }
 ```
 
@@ -219,15 +219,17 @@ Resolver implementations live in `policy/resolvers/` (`student.ts`, `academic.ts
 Domain entity configs (`domains/*/foo.ts`) wire authorization through `shared/entity/authorization.ts`:
 
 ```ts
-read: read(
-  permissionAction(Permission.STUDENT_READ),   // capability gate (sync)
-  (actor, entities) => policy.checkStudentAccess(actor, ids),  // resource gate (async)
-),
-write: write(
-  permissionAction(Permission.STUDENT_UPDATE),
-  authorizeExistingById(readAccess),
-  authorizeDeleteByReadAccess(readAccess),
-),
+const authorization = {
+  read: read(
+    permissionAction(Permission.STUDENT_READ), // capability gate (sync)
+    (actor, entities) => policy.checkStudentAccess(actor, ids), // resource gate (async)
+  ),
+  write: write(
+    permissionAction(Permission.STUDENT_UPDATE),
+    authorizeExistingById(readAccess),
+    authorizeDeleteByReadAccess(readAccess),
+  ),
+}
 ```
 
 - **`checkModule`** (historical name) → capability check via `permissionAction` / `anyPermissionAction`.

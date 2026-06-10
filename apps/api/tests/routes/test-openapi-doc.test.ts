@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import configureOpenAPI from "@/lib/configure-open-api";
-import { createRouter } from "@/lib/create-app";
-import indexRouter from "@/routes/index.route";
+import configureOpenAPI from "@/lib/http/openapi";
+import { createRouter } from "@/lib/http/create-app";
+import indexRouter from "@/app-router";
 
 describe("OpenAPI document", () => {
   it("generates /doc without unsupported Zod schema errors", async () => {

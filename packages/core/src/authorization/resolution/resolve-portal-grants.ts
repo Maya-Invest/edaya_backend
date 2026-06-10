@@ -1,8 +1,8 @@
 import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { EffectiveGrants } from '../model/effective-grants'
 import { uniqueActiveClassGroupIds } from '../grants/enrollment-scope'
 import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../grants/portal-permission-sets'
 import { buildPortalScopeGrants } from '../grants/portal-scope-grants'
-import type { EffectiveGrants } from '../model/effective-grants'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 
 export async function resolveGuardianGrants(args: {

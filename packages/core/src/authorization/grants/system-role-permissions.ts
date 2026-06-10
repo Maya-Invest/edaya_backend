@@ -1,7 +1,7 @@
+import { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS } from '../permissions/groups'
 import { Permission } from '../permissions/permission'
-import { ASSIGNMENT_SCOPED_PERMISSIONS, ASSIGNMENT_SCOPED_PERMISSION_SET } from '../permissions/groups'
 
-export { ASSIGNMENT_SCOPED_PERMISSIONS, ASSIGNMENT_SCOPED_PERMISSION_SET }
+export { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS }
 
 /** Permissions granted to Admin / Principal (school-wide elevated staff). */
 export const ELEVATED_STAFF_PERMISSIONS: readonly Permission[] = Object.values(Permission)

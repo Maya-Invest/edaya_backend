@@ -1,12 +1,12 @@
-import configureOpenAPI from "@/lib/configure-open-api";
-import createApp from "@/lib/create-app";
-import index from "@/routes/index.route";
+import configureOpenAPI from "@/lib/http/openapi";
+import createApp from "@/lib/http/create-app";
+import appRouter from "@/app-router";
 
 const app = createApp();
 
 configureOpenAPI(app);
 
-const routes = [index] as const;
+const routes = [appRouter] as const;
 
 routes.forEach((route) => {
   app.route("/", route);

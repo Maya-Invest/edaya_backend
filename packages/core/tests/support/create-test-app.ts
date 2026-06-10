@@ -47,9 +47,9 @@ import type {
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import {
   ActorAssuranceLevel,
+  createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
   DefaultAuthorizationRepository,
-  createRepositoryAuthorizationPolicy,
 } from '../../src/authorization'
 import { StaffMember } from '../../src/domains'
 import { SchoolApplication } from '../../src/services'

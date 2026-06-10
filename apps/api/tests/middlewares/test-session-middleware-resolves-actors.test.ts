@@ -4,10 +4,10 @@ import {
   clearEffectiveGrantsCache,
   invalidateEffectiveGrantsCacheForStaff,
   resolveCachedEffectiveGrants,
-} from "@/lib/authorization-grants-cache";
-import type { AppBindings } from "@/lib/types";
-import { createDependenciesInjection } from "@/middlewares/dependencies-injection";
-import { createSessionActorDependency } from "@/middlewares/dependencies/actor";
+} from "@/lib/authorization/grants-cache/resolve-cached";
+import type { AppBindings } from "@/lib/http/types";
+import { createDependenciesInjection } from "@/lib/http/middleware/dependencies";
+import { createSessionActorDependency } from "@/lib/http/middleware/dependencies/session-actor";
 import { DefaultAuthorizationRepository } from "@edaya/core";
 
 describe("session Middleware ActorMetadata Construction", () => {
@@ -528,6 +528,52 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
     expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
     expect(body.actor).toBeNull();
+  });
+
+  it("should pass X-Academic-Year-Id to grant resolution for staff actors", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-year" },
+      session: { id: "session-year", createdAt },
+    } as any);
+
+    const resolveActorGrants = mock().mockResolvedValue({
+      permissions: new Set(),
+      scopeGrants: [],
+      isElevated: false,
+    });
+    const mockStaff = {
+      id: "staff-year",
+      schoolId: "school-1",
+      roles: ["teacher"],
+      isActive: true,
+    };
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValue(mockStaff),
+        findById: mock().mockResolvedValue(mockStaff),
+      },
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...mockAccessControlForStaff("staff-year", "school-1"),
+      guardians: { findOne: mock().mockResolvedValue(null) },
+      students: { findOne: mock().mockResolvedValue(null) },
+      authorization: { resolveActorGrants },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected", {
+      headers: {
+        "x-academic-year-id": "year-2026",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(resolveActorGrants).toHaveBeenCalledWith(expect.objectContaining({
+      actorId: "staff-year",
+      actorType: "staff",
+      schoolId: "school-1",
+      academicYearId: "year-2026",
+    }));
   });
 });
 

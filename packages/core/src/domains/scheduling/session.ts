@@ -3,6 +3,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../shared'
+import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../value_object/date-time-range'
 import { parseDomain, zodDate } from '../utils'
 
 export enum SessionKind {
@@ -24,12 +25,9 @@ export const sessionBaseSchema = z.object({
   createdAt: zodDate().default(() => new Date()),
 })
 
-function refineSession(data: any, ctx: z.RefinementCtx) {
-  if (data.endsAt.getTime() <= data.startsAt.getTime()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'endsAt must be after startsAt',
-    })
+function refineSession(data: { startsAt?: Date, endsAt?: Date }, ctx: z.RefinementCtx) {
+  if (data.startsAt && data.endsAt) {
+    refineEndsAtAfterStartsAt({ startsAt: data.startsAt, endsAt: data.endsAt }, ctx)
   }
 }
 
@@ -63,7 +61,7 @@ export class Session {
   get createdAt() { return this.data.createdAt }
 
   get durationMinutes(): number {
-    return Math.round((this.endsAt.getTime() - this.startsAt.getTime()) / 60000)
+    return dateTimeRangeDurationMinutes(this.startsAt, this.endsAt)
   }
 
   copyWith(changes: Partial<SessionInput>): Session {
