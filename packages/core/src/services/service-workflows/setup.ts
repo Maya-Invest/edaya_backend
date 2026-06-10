@@ -1,16 +1,16 @@
 import type {
   AcademicPeriod,
-  AcademicPeriodArgs,
+  AcademicPeriodInput,
   AcademicYear,
-  AttachmentArgs,
-  ClassGroupArgs,
-  ResourceAssignmentArgs,
+  AttachmentInput,
+  ClassGroupInput,
+  ResourceAssignmentInput,
   School,
-  SchoolArgs,
+  SchoolInput,
   StaffAssignment,
-  StaffAssignmentArgs,
+  StaffAssignmentInput,
   StaffMember,
-  StaffMemberArgs,
+  StaffMemberInput,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission } from '../../authorization'
@@ -41,40 +41,40 @@ export interface ActivateAcademicYearInput {
   academicYearId: string
 }
 
-export type RegisterSchoolInput = SchoolArgs
+export type RegisterSchoolInput = SchoolInput
 
-export interface UpdateSchoolConfigurationInput extends Partial<Omit<SchoolArgs, 'id' | 'createdAt'>> {
+export interface UpdateSchoolConfigurationInput extends Partial<Omit<SchoolInput, 'id' | 'createdAt'>> {
   schoolId: string
 }
 
-export type CreateAcademicPeriodInput = AcademicPeriodArgs
+export type CreateAcademicPeriodInput = AcademicPeriodInput
 
 export interface PublishAcademicPeriodInput {
   academicPeriodId: string
 }
 
-export type CreateClassGroupInput = ClassGroupArgs
+export type CreateClassGroupInput = ClassGroupInput
 
-export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupArgs> {
+export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupInput> {
   classGroupId: string
 }
 
-export type RegisterStaffMemberInput = StaffMemberArgs
+export type RegisterStaffMemberInput = StaffMemberInput
 
 export interface UpdateStaffMemberStatusInput {
   staffId: string
   isActive: boolean
 }
 
-export type AssignStaffInput = StaffAssignmentArgs
-export type AssignResourceInput = ResourceAssignmentArgs
+export type AssignStaffInput = StaffAssignmentInput
+export type AssignResourceInput = ResourceAssignmentInput
 
 export interface RemoveResourceAssignmentInput {
   resourceAssignmentId?: string
   id?: string
 }
 
-export type RegisterAttachmentInput = AttachmentArgs
+export type RegisterAttachmentInput = AttachmentInput
 
 export interface RemoveAttachmentInput {
   attachmentId?: string

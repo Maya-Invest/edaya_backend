@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { directPermissionEntityConfig, unique } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const guardianStudentLinkSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -25,27 +25,10 @@ export const guardianStudentLinkSchema = z.object({
 })
 
 export type GuardianStudentLinkData = z.infer<typeof guardianStudentLinkSchema>
+export type GuardianStudentLinkInput = z.input<typeof guardianStudentLinkSchema>
 
 export const guardianStudentLinkCreateSchema = guardianStudentLinkSchema.omit({ createdAt: true })
 export const guardianStudentLinkUpdateSchema = guardianStudentLinkSchema.partial().required({ id: true })
-
-export interface GuardianStudentLinkArgs {
-  id: string
-  schoolId: string
-  guardianId: string
-  studentId: string
-  relationship?: string
-  isPrimary?: boolean
-  isBillingContact?: boolean
-  legalGuardian?: boolean
-  canPickup?: boolean
-  emergencyContactPriority?: number | null
-  receivesAcademicReports?: boolean
-  receivesAttendanceAlerts?: boolean
-  contactRestrictions?: string | null
-  notes?: string | null
-  createdAt?: Date
-}
 
 /**
  * Defines a relationship between a guardian and a student.
@@ -54,12 +37,8 @@ export interface GuardianStudentLinkArgs {
 export class GuardianStudentLink {
   readonly data: GuardianStudentLinkData
 
-  constructor(args: GuardianStudentLinkArgs) {
-    const result = guardianStudentLinkSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: GuardianStudentLinkInput) {
+    this.data = parseDomain(guardianStudentLinkSchema, args)
   }
 
   get id() { return this.data.id }

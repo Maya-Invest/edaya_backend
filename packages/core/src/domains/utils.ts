@@ -1,4 +1,4 @@
-import type { ZodError } from 'zod'
+import type { ZodError, ZodType } from 'zod'
 import { z } from 'zod'
 
 export class DomainValidationError extends Error {
@@ -8,6 +8,7 @@ export class DomainValidationError extends Error {
   }
 }
 
+/** @deprecated Prefer Zod schemas + `parseDomain`. Retained for authorization actor metadata builders. */
 export function requireNonBlank(value: string, fieldName: string): string {
   const trimmed = value.trim()
   if (!trimmed) {
@@ -16,55 +17,10 @@ export function requireNonBlank(value: string, fieldName: string): string {
   return trimmed
 }
 
-export function requireOptionalNonBlank(
-  value: string | null | undefined,
-  fieldName: string,
-): string | undefined {
-  if (value == null) {
-    return undefined
-  }
-
-  return requireNonBlank(value, fieldName)
-}
-
-export function requireNonNegativeNumber(value: number, fieldName: string): number {
-  if (!Number.isFinite(value) || value < 0) {
-    throw new DomainValidationError(`${fieldName} must be a finite, non-negative number`)
-  }
-  return value
-}
-
-export function requirePositiveNumber(value: number, fieldName: string): number {
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new DomainValidationError(`${fieldName} must be a finite, strictly positive number`)
-  }
-  return value
-}
-
-export function requireNonNegativeInt(value: number, fieldName: string): number {
-  if (!Number.isInteger(value) || value < 0) {
-    throw new DomainValidationError(`${fieldName} must be a non-negative integer`)
-  }
-  return value
-}
-
-export function requirePositiveInt(value: number, fieldName: string): number {
-  if (!Number.isInteger(value) || value <= 0) {
-    throw new DomainValidationError(`${fieldName} must be a strictly positive integer`)
-  }
-  return value
-}
-
+/** @deprecated Prefer Zod schemas + `parseDomain`. Retained for authorization actor metadata builders. */
 export function requireValidDate(value: Date, fieldName: string): Date {
   if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
     throw new DomainValidationError(`${fieldName} must be a valid date`)
-  }
-  return value
-}
-
-export function requireTimeOfDay(value: string, fieldName: string): string {
-  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) {
-    throw new DomainValidationError(`${fieldName} must be a valid time in HH:mm format`)
   }
   return value
 }
@@ -87,6 +43,18 @@ export function roundTo2(value: number): number {
 
 export function formatZodError(error: ZodError): string {
   return error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+}
+
+/** Parse domain input through a Zod schema; throws `DomainValidationError` on failure. */
+export function parseDomain<TSchema extends ZodType>(
+  schema: TSchema,
+  input: unknown,
+): z.infer<TSchema> {
+  const result = schema.safeParse(input)
+  if (!result.success) {
+    throw new DomainValidationError(formatZodError(result.error))
+  }
+  return result.data
 }
 
 export function zodDate() {

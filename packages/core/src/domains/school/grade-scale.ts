@@ -5,16 +5,7 @@ import { Permission } from '../../authorization'
 import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireSchool } from '../../shared/require-school'
-import { DomainValidationError, formatZodError, roundTo2, zodDate } from '../utils'
-
-export interface GradeScaleRange {
-  letter: string // e.g. "A" or "Assez Bien"
-  minScore: number
-  maxScore: number
-  gpaValue?: number | null
-  interpretation?: string | null
-  isPassing: boolean
-}
+import { parseDomain, roundTo2, zodDate } from '../utils'
 
 export const gradeScaleRangeSchema = z.object({
   letter: z.string().trim().min(1, 'letter must not be blank'),
@@ -24,6 +15,7 @@ export const gradeScaleRangeSchema = z.object({
   interpretation: z.string().trim().min(1, 'interpretation must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   isPassing: z.boolean(),
 })
+export type GradeScaleRange = z.infer<typeof gradeScaleRangeSchema>
 
 export const gradeScaleBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -81,6 +73,7 @@ export const gradeScaleSchema = gradeScaleBaseSchema.extend({
 export type GradeScaleData = Omit<z.infer<typeof gradeScaleSchema>, 'ranges'> & {
   readonly ranges: readonly GradeScaleRange[]
 }
+export type GradeScaleInput = z.input<typeof gradeScaleSchema>
 
 export const gradeScaleCreateSchema = gradeScaleBaseSchema.extend({
   ranges: gradeScaleRangeSchema.array(),
@@ -90,27 +83,12 @@ export const gradeScaleUpdateSchema = gradeScaleBaseSchema.extend({
   ranges: gradeScaleRangeSchema.array(),
 }).partial().required({ id: true }).superRefine(refineGradeScale)
 
-export interface GradeScaleArgs {
-  id: string
-  schoolId: string
-  name: string
-  minScore: number
-  maxScore: number
-  ranges: readonly GradeScaleRange[]
-  isDefault?: boolean
-  createdAt?: Date
-}
-
 export class GradeScale {
   readonly data: GradeScaleData
   readonly ranges: readonly GradeScaleRange[]
 
-  constructor(args: GradeScaleArgs) {
-    const result = gradeScaleSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data as any
+  constructor(args: GradeScaleInput) {
+    this.data = parseDomain(gradeScaleSchema, args) as any
     this.ranges = Object.freeze(args.ranges.map(r => Object.freeze({
       letter: r.letter,
       minScore: roundTo2(r.minScore),

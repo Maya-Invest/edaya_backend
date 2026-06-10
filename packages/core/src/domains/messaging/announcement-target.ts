@@ -3,7 +3,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AnnouncementTargetKind {
   School = 'school',
@@ -49,17 +49,10 @@ function refineAnnouncementTarget(data: any, ctx: z.RefinementCtx) {
 export const announcementTargetSchema = announcementTargetBaseSchema.superRefine(refineAnnouncementTarget)
 
 export type AnnouncementTargetData = z.infer<typeof announcementTargetSchema>
+export type AnnouncementTargetInput = z.input<typeof announcementTargetSchema>
 
 export const announcementTargetCreateSchema = announcementTargetBaseSchema.omit({ createdAt: true }).superRefine(refineAnnouncementTarget)
 export const announcementTargetUpdateSchema = announcementTargetBaseSchema.partial().required({ id: true }).superRefine(refineAnnouncementTarget)
-
-export interface AnnouncementTargetArgs {
-  id: string
-  announcementId: string
-  targetKind: AnnouncementTargetKind
-  targetId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Resolves a published or custom announcement to a concrete audience target.
@@ -67,12 +60,8 @@ export interface AnnouncementTargetArgs {
 export class AnnouncementTarget {
   readonly data: AnnouncementTargetData
 
-  constructor(args: AnnouncementTargetArgs) {
-    const result = announcementTargetSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AnnouncementTargetInput) {
+    this.data = parseDomain(announcementTargetSchema, args)
   }
 
   get id() { return this.data.id }

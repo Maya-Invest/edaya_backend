@@ -6,7 +6,7 @@ import { denyResourceAccess } from '../../authorization/authorization-error'
 import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireSchool } from '../../shared/require-school'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum ReportCardDefinitionKind {
   Default = 'default',
@@ -26,21 +26,10 @@ export const reportCardDefinitionSchema = z.object({
 })
 
 export type ReportCardDefinitionData = z.infer<typeof reportCardDefinitionSchema>
+export type ReportCardDefinitionInput = z.input<typeof reportCardDefinitionSchema>
 
 export const reportCardDefinitionCreateSchema = reportCardDefinitionSchema.omit({ createdAt: true })
 export const reportCardDefinitionUpdateSchema = reportCardDefinitionSchema.partial().required({ id: true })
-
-export interface ReportCardDefinitionArgs {
-  id: string
-  schoolId: string
-  academicYearId: string
-  gradeLevelId: string
-  name: string
-  kind?: ReportCardDefinitionKind
-  isDefault?: boolean
-  description?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents a reusable report-card template for a grade level.
@@ -50,12 +39,8 @@ export interface ReportCardDefinitionArgs {
 export class ReportCardDefinition {
   readonly data: ReportCardDefinitionData
 
-  constructor(args: ReportCardDefinitionArgs) {
-    const result = reportCardDefinitionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ReportCardDefinitionInput) {
+    this.data = parseDomain(reportCardDefinitionSchema, args)
   }
 
   get id() { return this.data.id }

@@ -2,7 +2,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const gradeLevelSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -14,18 +14,10 @@ export const gradeLevelSchema = z.object({
 })
 
 export type GradeLevelData = z.infer<typeof gradeLevelSchema>
+export type GradeLevelInput = z.input<typeof gradeLevelSchema>
 
 export const gradeLevelCreateSchema = gradeLevelSchema.omit({ createdAt: true })
 export const gradeLevelUpdateSchema = gradeLevelSchema.partial().required({ id: true })
-
-export interface GradeLevelArgs {
-  id: string
-  schoolId: string
-  name: string
-  order: number
-  cycle?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents a formal grade level in the school's progression ladder
@@ -35,12 +27,8 @@ export interface GradeLevelArgs {
 export class GradeLevel {
   readonly data: GradeLevelData
 
-  constructor(args: GradeLevelArgs) {
-    const result = gradeLevelSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: GradeLevelInput) {
+    this.data = parseDomain(gradeLevelSchema, args)
   }
 
   get id() { return this.data.id }

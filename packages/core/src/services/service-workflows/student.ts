@@ -1,12 +1,12 @@
 import type {
   ClassGroup,
-  GuardianArgs,
+  GuardianInput,
   GuardianStudentLink as GuardianStudentLinkType,
-  StudentArgs,
   StudentHealthProfile,
-  StudentHealthProfileArgs,
+  StudentHealthProfileInput,
+  StudentInput,
   StudentNote,
-  StudentNoteArgs,
+  StudentNoteInput,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { Permission, resolveAuditActorId } from '../../authorization'
@@ -74,8 +74,8 @@ export interface GraduateStudentInput {
   notes?: string
 }
 
-export type RegisterStudentInput = StudentArgs
-export type RegisterGuardianInput = GuardianArgs
+export type RegisterStudentInput = StudentInput
+export type RegisterGuardianInput = GuardianInput
 
 export interface CloseEnrollmentInput {
   enrollmentId: string
@@ -90,7 +90,7 @@ export interface RecordProgressionDecisionInput {
   notes?: string
 }
 
-export interface UpdateStudentProfileInput extends Partial<StudentArgs> {
+export interface UpdateStudentProfileInput extends Partial<StudentInput> {
   studentId: string
 }
 
@@ -99,20 +99,20 @@ export interface UpdateStudentStatusInput {
   status: StudentStatus
 }
 
-export type UpsertStudentHealthProfileInput = Omit<StudentHealthProfileArgs, 'schoolId'> & {
+export type UpsertStudentHealthProfileInput = Omit<StudentHealthProfileInput, 'schoolId'> & {
   schoolId?: string
 }
 
-export type CreateStudentNoteInput = Omit<StudentNoteArgs, 'schoolId' | 'authorStaffId'> & {
+export type CreateStudentNoteInput = Omit<StudentNoteInput, 'schoolId' | 'authorStaffId'> & {
   schoolId?: string
   authorStaffId?: string
 }
 
-export interface UpdateStudentNoteInput extends Partial<StudentNoteArgs> {
+export interface UpdateStudentNoteInput extends Partial<StudentNoteInput> {
   noteId: string
 }
 
-export interface UpdateGuardianContactMethodsInput extends Partial<GuardianArgs> {
+export interface UpdateGuardianContactMethodsInput extends Partial<GuardianInput> {
   guardianId: string
 }
 
@@ -435,7 +435,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       schoolId: existing.schoolId,
       firstName: changes.firstName ?? existing.firstName,
       lastName: changes.lastName ?? existing.lastName,
-      contactMethods: changes.contactMethods ?? existing.contactMethods,
+      contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
       subjectId: existing.subjectId,
       hasAccess: changes.hasAccess ?? existing.hasAccess,
       premiumNotificationsEnabled: changes.premiumNotificationsEnabled ?? existing.premiumNotificationsEnabled,

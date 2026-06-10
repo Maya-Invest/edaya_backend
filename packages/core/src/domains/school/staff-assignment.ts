@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 
 import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const staffAssignmentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -30,19 +30,10 @@ function refineStaffAssignment(data: any, ctx: z.RefinementCtx) {
 
 export const staffAssignmentSchema = staffAssignmentBaseSchema.superRefine(refineStaffAssignment)
 export type StaffAssignmentData = z.infer<typeof staffAssignmentSchema>
+export type StaffAssignmentInput = z.input<typeof staffAssignmentSchema>
 
 export const staffAssignmentCreateSchema = staffAssignmentBaseSchema.omit({ createdAt: true }).superRefine(refineStaffAssignment)
 export const staffAssignmentUpdateSchema = staffAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineStaffAssignment)
-
-export interface StaffAssignmentArgs {
-  id: string
-  staffId: string
-  responsibility: string
-  classGroupId?: string | null
-  classSubjectId?: string | null
-  sessionId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Assigns a staff member (with a free-form responsibility label) to a ClassGroup, ClassSubject, or Session.
@@ -50,12 +41,8 @@ export interface StaffAssignmentArgs {
 export class StaffAssignment {
   readonly data: StaffAssignmentData
 
-  constructor(args: StaffAssignmentArgs) {
-    const result = staffAssignmentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StaffAssignmentInput) {
+    this.data = parseDomain(staffAssignmentSchema, args)
   }
 
   get id() { return this.data.id }

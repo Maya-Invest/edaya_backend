@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum ClassSubjectMatterStatus {
   NotStarted = 'not_started',
@@ -31,32 +31,16 @@ export const classSubjectMatterSchema = z.object({
 })
 
 export type ClassSubjectMatterData = z.infer<typeof classSubjectMatterSchema>
+export type ClassSubjectMatterInput = z.input<typeof classSubjectMatterSchema>
 
 export const classSubjectMatterCreateSchema = classSubjectMatterSchema.omit({ updatedAt: true })
 export const classSubjectMatterUpdateSchema = classSubjectMatterSchema.partial().required({ id: true })
 
-export interface ClassSubjectMatterArgs {
-  id: string
-  classSubjectId: string
-  subjectMatterId: string
-  status: ClassSubjectMatterStatus
-  completedPercentage: number
-  updatedByStaffId?: string | null
-  startedAt?: Date | null
-  completedAt?: Date | null
-  notes?: string | null
-  updatedAt?: Date
-}
-
 export class ClassSubjectMatter {
   readonly data: ClassSubjectMatterData
 
-  constructor(args: ClassSubjectMatterArgs) {
-    const result = classSubjectMatterSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ClassSubjectMatterInput) {
+    this.data = parseDomain(classSubjectMatterSchema, args)
   }
 
   get id() { return this.data.id }

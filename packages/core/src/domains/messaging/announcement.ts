@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AnnouncementStatus {
   Draft = 'draft',
@@ -57,23 +57,10 @@ function refineAnnouncement(data: any, ctx: z.RefinementCtx) {
 export const announcementSchema = announcementBaseSchema.superRefine(refineAnnouncement)
 
 export type AnnouncementData = z.infer<typeof announcementSchema>
+export type AnnouncementInput = z.input<typeof announcementSchema>
 
 export const announcementCreateSchema = announcementBaseSchema.omit({ createdAt: true }).superRefine(refineAnnouncement)
 export const announcementUpdateSchema = announcementBaseSchema.partial().required({ id: true }).superRefine(refineAnnouncement)
-
-export interface AnnouncementArgs {
-  id: string
-  schoolId: string
-  title: string
-  content: string
-  createdBy?: string
-  status?: AnnouncementStatus
-  priority?: AnnouncementPriority
-  premiumNotification?: boolean
-  createdAt?: Date
-  publishedAt?: Date
-  expiresAt?: Date | null
-}
 
 /**
  * Represents publishable communication content; target records define its audience.
@@ -82,12 +69,8 @@ export interface AnnouncementArgs {
 export class Announcement {
   readonly data: AnnouncementData
 
-  constructor(args: AnnouncementArgs) {
-    const result = announcementSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AnnouncementInput) {
+    this.data = parseDomain(announcementSchema, args)
   }
 
   get id() { return this.data.id }

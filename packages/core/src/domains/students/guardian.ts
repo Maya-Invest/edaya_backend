@@ -5,7 +5,7 @@ import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 import {
   GuardianContactMethod,
   guardianContactMethodSchema,
@@ -29,23 +29,10 @@ export const guardianSchema = z.object({
 export type GuardianData = Omit<z.infer<typeof guardianSchema>, 'contactMethods'> & {
   contactMethods: readonly GuardianContactMethod[]
 }
+export type GuardianInput = z.input<typeof guardianSchema>
 
 export const guardianCreateSchema = guardianSchema.omit({ createdAt: true })
 export const guardianUpdateSchema = guardianSchema.partial().required({ id: true })
-
-export interface GuardianArgs {
-  id: string
-  schoolId: string
-  firstName: string
-  lastName: string
-  phone?: string | null
-  email?: string | null
-  subjectId?: string | null
-  contactMethods?: readonly (GuardianContactMethod | any)[]
-  hasAccess?: boolean
-  premiumNotificationsEnabled?: boolean
-  createdAt?: Date
-}
 
 /**
  * Represents a parent, guardian, or sponsor of one or more students.
@@ -54,12 +41,8 @@ export interface GuardianArgs {
 export class Guardian {
   readonly data: GuardianData
 
-  constructor(args: GuardianArgs) {
-    const result = guardianSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    const data = result.data
+  constructor(args: GuardianInput) {
+    const data = parseDomain(guardianSchema, args)
     const builtContactMethods = data.contactMethods.map(item =>
       item instanceof GuardianContactMethod ? item : new GuardianContactMethod(item),
     )

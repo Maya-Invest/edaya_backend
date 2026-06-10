@@ -5,7 +5,7 @@ import { denyResourceAccess, Permission } from '../../authorization'
 import { CalendarEventScopeKind, StudentClassEnrollmentStatus } from '../../domains'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AttendanceMode {
   Daily = 'daily',
@@ -25,21 +25,10 @@ export const classGroupSchema = z.object({
 })
 
 export type ClassGroupData = z.infer<typeof classGroupSchema>
+export type ClassGroupInput = z.input<typeof classGroupSchema>
 
 export const classGroupCreateSchema = classGroupSchema.omit({ createdAt: true })
 export const classGroupUpdateSchema = classGroupSchema.partial().required({ id: true })
-
-export interface ClassGroupArgs {
-  id: string
-  schoolId: string
-  academicYearId: string
-  gradeLevelId: string
-  name: string
-  capacity?: number | null
-  attendanceMode?: AttendanceMode
-  homeroomStaffId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents an academic class group where students are enrolled.
@@ -49,12 +38,8 @@ export interface ClassGroupArgs {
 export class ClassGroup {
   readonly data: ClassGroupData
 
-  constructor(args: ClassGroupArgs) {
-    const result = classGroupSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ClassGroupInput) {
+    this.data = parseDomain(classGroupSchema, args)
   }
 
   get id() { return this.data.id }
@@ -67,7 +52,7 @@ export class ClassGroup {
   get homeroomStaffId() { return this.data.homeroomStaffId }
   get createdAt() { return this.data.createdAt }
 
-  copyWith(changes: Partial<ClassGroupArgs>): ClassGroup {
+  copyWith(changes: Partial<ClassGroupInput>): ClassGroup {
     return new ClassGroup({
       id: this.id,
       schoolId: this.schoolId,

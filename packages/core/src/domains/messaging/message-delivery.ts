@@ -2,7 +2,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { announcementLinkedTenant, authorizeAnnouncementLinked, authorizeAnnouncementLinkedDelete, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum MessageDeliveryChannel {
   App = 'app',
@@ -71,24 +71,10 @@ function refineMessageDelivery(data: any, ctx: z.RefinementCtx) {
 export const messageDeliverySchema = messageDeliveryBaseSchema.superRefine(refineMessageDelivery)
 
 export type MessageDeliveryData = z.infer<typeof messageDeliverySchema>
+export type MessageDeliveryInput = z.input<typeof messageDeliverySchema>
 
 export const messageDeliveryCreateSchema = messageDeliveryBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineMessageDelivery)
 export const messageDeliveryUpdateSchema = messageDeliveryBaseSchema.partial().required({ id: true }).superRefine(refineMessageDelivery)
-
-export interface MessageDeliveryArgs {
-  id: string
-  announcementId: string
-  recipientKind: MessageDeliveryRecipientKind
-  recipientId: string
-  channel: MessageDeliveryChannel
-  status?: MessageDeliveryStatus
-  providerMessageId?: string | null
-  failureReason?: string | null
-  sentAt?: Date | null
-  readAt?: Date | null
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Tracks delivery state for one announcement/message to one concrete recipient.
@@ -96,12 +82,8 @@ export interface MessageDeliveryArgs {
 export class MessageDelivery {
   readonly data: MessageDeliveryData
 
-  constructor(args: MessageDeliveryArgs) {
-    const result = messageDeliverySchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: MessageDeliveryInput) {
+    this.data = parseDomain(messageDeliverySchema, args)
   }
 
   get id() { return this.data.id }

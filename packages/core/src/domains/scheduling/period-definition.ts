@@ -2,7 +2,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const periodDefinitionBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -28,21 +28,10 @@ function refinePeriodDefinition(data: any, ctx: z.RefinementCtx) {
 export const periodDefinitionSchema = periodDefinitionBaseSchema.superRefine(refinePeriodDefinition)
 
 export type PeriodDefinitionData = z.infer<typeof periodDefinitionSchema>
+export type PeriodDefinitionInput = z.input<typeof periodDefinitionSchema>
 
 export const periodDefinitionCreateSchema = periodDefinitionBaseSchema.omit({ createdAt: true }).superRefine(refinePeriodDefinition)
 export const periodDefinitionUpdateSchema = periodDefinitionBaseSchema.partial().required({ id: true }).superRefine(refinePeriodDefinition)
-
-export interface PeriodDefinitionArgs {
-  id: string
-  schoolId: string
-  academicYearId: string
-  label: string
-  order: number
-  startTime: string
-  endTime: string
-  isBreak?: boolean
-  createdAt?: Date
-}
 
 /**
  * Defines one slot in the school's daily period grid (e.g., "Period 1: 08:00–08:45").
@@ -52,12 +41,8 @@ export interface PeriodDefinitionArgs {
 export class PeriodDefinition {
   readonly data: PeriodDefinitionData
 
-  constructor(args: PeriodDefinitionArgs) {
-    const result = periodDefinitionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: PeriodDefinitionInput) {
+    this.data = parseDomain(periodDefinitionSchema, args)
   }
 
   get id() { return this.data.id }

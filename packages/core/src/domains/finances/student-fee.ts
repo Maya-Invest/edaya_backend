@@ -7,7 +7,7 @@ import { Permission } from '../../authorization'
 import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { Money } from '../../value_object/money'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum FeeStatus {
   Pending = 'pending',
@@ -17,19 +17,13 @@ export enum FeeStatus {
   Cancelled = 'cancelled',
 }
 
-export interface StudentFeeInstallment {
-  id: string
-  label: string
-  expectedAmount: number
-  dueDate?: Date | null
-}
-
 export const studentFeeInstallmentSchema = z.object({
   id: z.string().trim().min(1, 'installment.id must not be blank'),
   label: z.string().trim().min(1, 'installment.label must not be blank'),
   expectedAmount: z.number().int().nonnegative('installment.expectedAmount must be a non-negative integer'),
   dueDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
 })
+export type StudentFeeInstallment = z.infer<typeof studentFeeInstallmentSchema>
 
 export const studentFeeBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -118,31 +112,10 @@ export type StudentFeeData = Omit<z.infer<typeof studentFeeSchema>, 'expectedAmo
   adjustmentAmount: Money
   installments: readonly StudentFeeInstallment[]
 }
+export type StudentFeeInput = z.input<typeof studentFeeSchema>
 
 export const studentFeeCreateSchema = studentFeeBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentFee)
 export const studentFeeUpdateSchema = studentFeeBaseSchema.partial().required({ id: true }).superRefine(refineStudentFee)
-
-export interface StudentFeeArgs {
-  id: string
-  studentId: string
-  feeId: string
-  academicYearId: string
-  expectedAmount: number
-  paidAmount?: number | null
-  adjustmentAmount?: number | null
-  adjustmentReason?: string | null
-  adjustedById?: string | null
-  adjustedAt?: Date | null
-  currency: string
-  dueDate?: Date | null
-  status: FeeStatus
-  cancellationReason?: string | null
-  cancelledById?: string | null
-  cancelledAt?: Date | null
-  installments?: readonly StudentFeeInstallment[]
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Represents the assignment of a Fee to a specific Student.
@@ -153,12 +126,8 @@ export interface StudentFeeArgs {
 export class StudentFee {
   readonly data: StudentFeeData
 
-  constructor(args: StudentFeeArgs) {
-    const result = studentFeeSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    const validated = result.data
+  constructor(args: StudentFeeInput) {
+    const validated = parseDomain(studentFeeSchema, args)
     const activeCurrency = validated.currency
     this.data = {
       id: validated.id,
@@ -210,7 +179,7 @@ export class StudentFee {
     })
   }
 
-  copyWith(changes: Partial<StudentFeeArgs>): StudentFee {
+  copyWith(changes: Partial<StudentFeeInput>): StudentFee {
     return new StudentFee({
       id: this.id,
       studentId: this.studentId,
@@ -228,7 +197,7 @@ export class StudentFee {
       cancellationReason: changes.cancellationReason !== undefined ? changes.cancellationReason : this.cancellationReason,
       cancelledById: changes.cancelledById !== undefined ? changes.cancelledById : this.cancelledById,
       cancelledAt: changes.cancelledAt !== undefined ? changes.cancelledAt : this.cancelledAt,
-      installments: this.installments,
+      installments: [...this.installments],
       createdAt: this.createdAt,
       updatedAt: changes.updatedAt !== undefined ? changes.updatedAt : this.updatedAt,
     })

@@ -7,7 +7,7 @@ import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const resourceAssignmentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -29,17 +29,10 @@ function refineResourceAssignment(data: any, ctx: z.RefinementCtx) {
 
 export const resourceAssignmentSchema = resourceAssignmentBaseSchema.superRefine(refineResourceAssignment)
 export type ResourceAssignmentData = z.infer<typeof resourceAssignmentSchema>
+export type ResourceAssignmentInput = z.input<typeof resourceAssignmentSchema>
 
 export const resourceAssignmentCreateSchema = resourceAssignmentBaseSchema.omit({ createdAt: true }).superRefine(refineResourceAssignment)
 export const resourceAssignmentUpdateSchema = resourceAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineResourceAssignment)
-
-export interface ResourceAssignmentArgs {
-  id: string
-  resourceId: string
-  sessionId?: string | null
-  classGroupId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Assigns a specific Resource (like a room or equipment) to a Session or ClassGroup.
@@ -47,12 +40,8 @@ export interface ResourceAssignmentArgs {
 export class ResourceAssignment {
   readonly data: ResourceAssignmentData
 
-  constructor(args: ResourceAssignmentArgs) {
-    const result = resourceAssignmentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ResourceAssignmentInput) {
+    this.data = parseDomain(resourceAssignmentSchema, args)
   }
 
   get id() { return this.data.id }

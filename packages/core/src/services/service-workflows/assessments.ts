@@ -1,13 +1,13 @@
 import type {
   Assessment,
-  AssessmentArgs,
+  AssessmentInput,
   AssessmentResult,
-  AssessmentResultArgs,
+  AssessmentResultInput,
   GradeScale,
-  GradeScaleArgs,
-  ReportCardDefinitionArgs,
+  GradeScaleInput,
+  ReportCardDefinitionInput,
   ReportCardDefinitionSection,
-  ReportCardDefinitionSectionArgs,
+  ReportCardDefinitionSectionInput,
   StudentClassEnrollment,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
@@ -47,17 +47,17 @@ export interface GenerateReportCardResultInput {
   generatedAt?: Date
 }
 
-export type CreateGradeScaleInput = GradeScaleArgs
-export type CreateReportCardDefinitionInput = ReportCardDefinitionArgs
-export type CreateReportCardDefinitionSectionInput = ReportCardDefinitionSectionArgs
-export type CreateAssessmentInput = AssessmentArgs
+export type CreateGradeScaleInput = GradeScaleInput
+export type CreateReportCardDefinitionInput = ReportCardDefinitionInput
+export type CreateReportCardDefinitionSectionInput = ReportCardDefinitionSectionInput
+export type CreateAssessmentInput = AssessmentInput
 
 export interface CompleteAssessmentInput {
   assessmentId: string
   metAt?: Date
 }
 
-export type RecordAssessmentResultInput = AssessmentResultArgs
+export type RecordAssessmentResultInput = AssessmentResultInput
 
 export interface ListClassSubjectAssessmentResultsForPeriodInput {
   classSubjectId: string

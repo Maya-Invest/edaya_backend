@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum ResourceKind {
   Location = 'location',
@@ -29,19 +29,10 @@ export const resourceBaseSchema = z.object({
 export const resourceSchema = resourceBaseSchema
 
 export type ResourceData = z.infer<typeof resourceSchema>
+export type ResourceInput = z.input<typeof resourceSchema>
 
 export const resourceCreateSchema = resourceBaseSchema.omit({ createdAt: true })
 export const resourceUpdateSchema = resourceBaseSchema.partial().required({ id: true })
-
-export interface ResourceArgs {
-  id: string
-  schoolId: string
-  name: string
-  description?: string | null
-  kind: ResourceKind
-  capacity?: number | null
-  createdAt?: Date
-}
 
 /**
  * Represents a physical resource such as a room, piece of equipment, or vehicle.
@@ -49,12 +40,8 @@ export interface ResourceArgs {
 export class Resource {
   readonly data: ResourceData
 
-  constructor(args: ResourceArgs) {
-    const result = resourceSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ResourceInput) {
+    this.data = parseDomain(resourceSchema, args)
   }
 
   get id() { return this.data.id }

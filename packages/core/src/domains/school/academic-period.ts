@@ -5,7 +5,7 @@ import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AcademicPeriodType {
   Trimester = 'trimester',
@@ -34,6 +34,7 @@ export const academicPeriodSchema = academicPeriodBaseSchema.refine(
 )
 
 export type AcademicPeriodData = z.infer<typeof academicPeriodSchema>
+export type AcademicPeriodInput = z.input<typeof academicPeriodSchema>
 
 export const academicPeriodCreateSchema = academicPeriodBaseSchema.omit({ createdAt: true }).refine(
   data => data.endDate.getTime() >= data.startDate.getTime(),
@@ -56,18 +57,6 @@ export const academicPeriodUpdateSchema = academicPeriodBaseSchema.partial().req
   },
 )
 
-export interface AcademicPeriodArgs {
-  id: string
-  schoolId: string
-  academicYearId: string
-  name: string
-  type?: AcademicPeriodType
-  startDate: Date
-  endDate: Date
-  isPublished?: boolean
-  createdAt?: Date
-}
-
 /**
  * Represents a specific time period within an academic year (e.g., Trimester, Semester).
  * Used for organizing grading, attendance, and reporting.
@@ -75,12 +64,8 @@ export interface AcademicPeriodArgs {
 export class AcademicPeriod {
   readonly data: AcademicPeriodData
 
-  constructor(args: AcademicPeriodArgs) {
-    const result = academicPeriodSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AcademicPeriodInput) {
+    this.data = parseDomain(academicPeriodSchema, args)
   }
 
   get id() { return this.data.id }

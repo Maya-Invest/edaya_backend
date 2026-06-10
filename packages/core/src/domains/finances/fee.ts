@@ -5,13 +5,7 @@ import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { Money } from '../../value_object/money'
-import { DomainValidationError, formatZodError, roundTo2, zodDate } from '../utils'
-
-export interface FeeInstallmentTemplate {
-  label: string
-  percentage: number // e.g., 50 for 50%
-  dueDate?: Date | null
-}
+import { parseDomain, roundTo2, zodDate } from '../utils'
 
 export enum FeeCategory {
   Tuition = 'tuition',
@@ -25,6 +19,7 @@ export const feeInstallmentTemplateSchema = z.object({
   percentage: z.number().positive('installment.percentage must be a strictly positive number'),
   dueDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
 })
+export type FeeInstallmentTemplate = z.infer<typeof feeInstallmentTemplateSchema>
 
 export const feeBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -57,22 +52,10 @@ export type FeeData = Omit<z.infer<typeof feeSchema>, 'defaultAmount' | 'currenc
   defaultAmount: Money
   installments: readonly FeeInstallmentTemplate[]
 }
+export type FeeInput = z.input<typeof feeSchema>
 
 export const feeCreateSchema = feeBaseSchema.omit({ createdAt: true }).superRefine(refineFee)
 export const feeUpdateSchema = feeBaseSchema.partial().required({ id: true }).superRefine(refineFee)
-
-export interface FeeArgs {
-  id: string
-  schoolId: string
-  academicYearId: string
-  name: string
-  category?: FeeCategory
-  description?: string | null
-  defaultAmount: number
-  currency: string
-  installments?: readonly FeeInstallmentTemplate[]
-  createdAt?: Date
-}
 
 /**
  * Defines a global fee for the school (e.g., "Tuition 2026").
@@ -81,12 +64,8 @@ export interface FeeArgs {
 export class Fee {
   readonly data: FeeData
 
-  constructor(args: FeeArgs) {
-    const result = feeSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    const validated = result.data
+  constructor(args: FeeInput) {
+    const validated = parseDomain(feeSchema, args)
     this.data = {
       id: validated.id,
       schoolId: validated.schoolId,

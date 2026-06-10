@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum StudentDisciplinaryActionStatus {
   Active = 'active',
@@ -47,24 +47,10 @@ function refineStudentDisciplinaryAction(data: any, ctx: z.RefinementCtx) {
 export const studentDisciplinaryActionSchema = studentDisciplinaryActionBaseSchema.superRefine(refineStudentDisciplinaryAction)
 
 export type StudentDisciplinaryActionData = z.infer<typeof studentDisciplinaryActionSchema>
+export type StudentDisciplinaryActionInput = z.input<typeof studentDisciplinaryActionSchema>
 
 export const studentDisciplinaryActionCreateSchema = studentDisciplinaryActionBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentDisciplinaryAction)
 export const studentDisciplinaryActionUpdateSchema = studentDisciplinaryActionBaseSchema.partial().required({ id: true }).superRefine(refineStudentDisciplinaryAction)
-
-export interface StudentDisciplinaryActionArgs {
-  id: string
-  schoolId: string
-  incidentId: string
-  studentId: string
-  disciplinaryActionId: string
-  assignedByStaffId: string
-  startsAt?: Date | null
-  endsAt?: Date | null
-  status?: StudentDisciplinaryActionStatus
-  notes?: string | null
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Represents a disciplinary catalog action actually applied to a student.
@@ -72,12 +58,8 @@ export interface StudentDisciplinaryActionArgs {
 export class StudentDisciplinaryAction {
   readonly data: StudentDisciplinaryActionData
 
-  constructor(args: StudentDisciplinaryActionArgs) {
-    const result = studentDisciplinaryActionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StudentDisciplinaryActionInput) {
+    this.data = parseDomain(studentDisciplinaryActionSchema, args)
   }
 
   get id() { return this.data.id }

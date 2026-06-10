@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { DomainValidationError } from '../../../src/domains/utils'
 import { AttendanceSummary } from '../../../src/value_object/attendance-summary'
 
 describe('attendanceSummary value object', () => {
@@ -18,7 +19,7 @@ describe('attendanceSummary value object', () => {
     expect(summary.attendanceRate).toBe(10 / 15)
   })
 
-  test('should throw error for negative values', () => {
+  test('handles zero counts with zero attendance rate', () => {
     const summary = new AttendanceSummary({
       presentCount: 0,
       absenceCount: 0,
@@ -27,6 +28,14 @@ describe('attendanceSummary value object', () => {
 
     expect(summary.total).toBe(0)
     expect(summary.attendanceRate).toBe(0)
+  })
+
+  test('throws DomainValidationError for negative counts', () => {
+    expect(() => new AttendanceSummary({
+      presentCount: -1,
+      absenceCount: 0,
+      lateCount: 0,
+    })).toThrow(DomainValidationError)
   })
 
   test('throws error if excusedAbsenceCount exceeds absenceCount', () => {

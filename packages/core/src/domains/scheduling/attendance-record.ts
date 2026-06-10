@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, normalizeDate, zodDate } from '../utils'
+import { normalizeDate, parseDomain, zodDate } from '../utils'
 
 export enum AttendanceStatus {
   Present = 'present',
@@ -75,27 +75,10 @@ function refineAttendanceRecord(data: any, ctx: z.RefinementCtx) {
 export const attendanceRecordSchema = attendanceRecordBaseSchema.superRefine(refineAttendanceRecord)
 
 export type AttendanceRecordData = z.infer<typeof attendanceRecordSchema>
+export type AttendanceRecordInput = z.input<typeof attendanceRecordSchema>
 
 export const attendanceRecordCreateSchema = attendanceRecordBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineAttendanceRecord)
 export const attendanceRecordUpdateSchema = attendanceRecordBaseSchema.partial().required({ id: true }).superRefine(refineAttendanceRecord)
-
-export interface AttendanceRecordArgs {
-  id: string
-  studentId: string
-  sessionId: string
-  date: Date
-  status: AttendanceStatus
-  justificationStatus?: AttendanceJustificationStatus
-  reason?: string | null
-  notes?: string | null
-  justifiedAt?: Date | null
-  justifiedByStaffId?: string | null
-  correctedAt?: Date | null
-  correctedByStaffId?: string | null
-  createdBy?: string
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Records the presence, absence, or tardiness of a student on a specific date,
@@ -104,12 +87,8 @@ export interface AttendanceRecordArgs {
 export class AttendanceRecord {
   readonly data: AttendanceRecordData
 
-  constructor(args: AttendanceRecordArgs) {
-    const result = attendanceRecordSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AttendanceRecordInput) {
+    this.data = parseDomain(attendanceRecordSchema, args)
   }
 
   get id() { return this.data.id }
@@ -128,7 +107,7 @@ export class AttendanceRecord {
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
 
-  copyWith(changes: Partial<AttendanceRecordArgs>): AttendanceRecord {
+  copyWith(changes: Partial<AttendanceRecordInput>): AttendanceRecord {
     return new AttendanceRecord({
       id: this.id,
       studentId: this.studentId,

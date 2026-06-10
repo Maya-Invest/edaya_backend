@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, permissionAction, read, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 import { StudentStatus } from './student'
 import { progressionDecisionChanged } from './student-note'
 
@@ -91,6 +91,7 @@ function refineEnrollment(data: any, ctx: z.RefinementCtx) {
 export const studentClassEnrollmentSchema = studentClassEnrollmentBaseSchema.superRefine(refineEnrollment)
 
 export type StudentClassEnrollmentData = z.infer<typeof studentClassEnrollmentSchema>
+export type StudentClassEnrollmentInput = z.input<typeof studentClassEnrollmentSchema>
 
 export const studentClassEnrollmentCreateSchema = studentClassEnrollmentBaseSchema.omit({ createdAt: true }).superRefine(refineEnrollment)
 export const studentClassEnrollmentUpdateSchema = studentClassEnrollmentBaseSchema.partial().required({ id: true }).superRefine((data, ctx) => {
@@ -132,25 +133,6 @@ export const studentClassEnrollmentUpdateSchema = studentClassEnrollmentBaseSche
   }
 })
 
-export interface StudentClassEnrollmentArgs {
-  id: string
-  studentId: string
-  classGroupId: string
-  academicYearId: string
-  enrollmentIndex: number
-  status?: StudentClassEnrollmentStatus
-  enrolledAt?: Date
-  endedAt?: Date | null
-  endReason?: EnrollmentEndReason | null
-  progressionDecision?: ProgressionDecision | null
-  previousEnrollmentId?: string | null
-  closedBy?: string | null
-  progressionDecidedAt?: Date | null
-  progressionDecidedBy?: string | null
-  progressionNotes?: string | null
-  createdAt?: Date
-}
-
 /**
  * Records one placement in a class. Closing a placement and deciding the
  * student's next progression are separate facts.
@@ -158,12 +140,8 @@ export interface StudentClassEnrollmentArgs {
 export class StudentClassEnrollment {
   readonly data: StudentClassEnrollmentData
 
-  constructor(args: StudentClassEnrollmentArgs) {
-    const result = studentClassEnrollmentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    const validated = result.data
+  constructor(args: StudentClassEnrollmentInput) {
+    const validated = parseDomain(studentClassEnrollmentSchema, args)
     this.data = {
       ...validated,
       enrolledAt: validated.enrolledAt ?? validated.createdAt,

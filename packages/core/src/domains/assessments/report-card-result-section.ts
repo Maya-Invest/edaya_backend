@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DomainValidationError, formatZodError, roundTo2 } from '../utils'
+import { parseDomain, roundTo2 } from '../utils'
 import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
 
 export const reportCardResultSectionBaseSchema = z.object({
@@ -32,17 +32,7 @@ export const reportCardResultSectionSchema: z.ZodType<any> = reportCardResultSec
 }).superRefine(refineReportCardResultSection)
 
 export type ReportCardResultSectionData = z.infer<typeof reportCardResultSectionSchema>
-
-export interface ReportCardResultSectionArgs {
-  sectionId: string
-  sectionKind: ReportCardDefinitionSectionKind
-  name: string
-  average: number
-  weight: number
-  parentSectionId?: string
-  classSubjectId?: string
-  subResults?: ReportCardResultSection[]
-}
+export type ReportCardResultSectionInput = z.input<typeof reportCardResultSectionSchema>
 
 /**
  * Represents the computed result for one report-card section.
@@ -52,12 +42,8 @@ export class ReportCardResultSection {
   readonly data: any
   readonly subResults: readonly ReportCardResultSection[]
 
-  constructor(args: ReportCardResultSectionArgs) {
-    const result = reportCardResultSectionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ReportCardResultSectionInput) {
+    this.data = parseDomain(reportCardResultSectionSchema, args)
     this.subResults = Object.freeze(args.subResults ? [...args.subResults] : [])
   }
 

@@ -5,7 +5,7 @@ import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AssessmentKind {
   Quiz = 'quiz',
@@ -42,25 +42,10 @@ function refineAssessment(data: any, ctx: z.RefinementCtx) {
 export const assessmentSchema = assessmentBaseSchema.superRefine(refineAssessment)
 
 export type AssessmentData = z.infer<typeof assessmentSchema>
+export type AssessmentInput = z.input<typeof assessmentSchema>
 
 export const assessmentCreateSchema = assessmentBaseSchema.omit({ createdAt: true }).superRefine(refineAssessment)
 export const assessmentUpdateSchema = assessmentBaseSchema.partial().required({ id: true }).superRefine(refineAssessment)
-
-export interface AssessmentArgs {
-  id: string
-  classGroupId: string
-  classSubjectId: string
-  periodId: string
-  title: string
-  kind: AssessmentKind
-  maxScore: number
-  coefficient?: number
-  sessionId?: string | null
-  dueAt?: Date | null
-  metAt?: Date | null
-  date?: Date | null
-  createdAt?: Date
-}
 
 /**
  * Defines a graded activity for a classGroup subject.
@@ -69,12 +54,8 @@ export interface AssessmentArgs {
 export class Assessment {
   readonly data: AssessmentData
 
-  constructor(args: AssessmentArgs) {
-    const result = assessmentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AssessmentInput) {
+    this.data = parseDomain(assessmentSchema, args)
   }
 
   get id() { return this.data.id }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DomainValidationError, formatZodError } from '../utils'
+import { parseDomain } from '../utils'
 
 export enum GuardianContactMethodType {
   Phone = 'phone',
@@ -18,14 +18,7 @@ export const guardianContactMethodSchema = z.object({
 })
 
 export type GuardianContactMethodData = z.infer<typeof guardianContactMethodSchema>
-
-export interface GuardianContactMethodArgs {
-  type: GuardianContactMethodType
-  value: string
-  label?: string | null
-  isPrimary?: boolean
-  allowsNotifications?: boolean
-}
+export type GuardianContactMethodInput = z.input<typeof guardianContactMethodSchema>
 
 /**
  * Value object describing one way to contact a guardian.
@@ -33,12 +26,8 @@ export interface GuardianContactMethodArgs {
 export class GuardianContactMethod {
   readonly data: GuardianContactMethodData
 
-  constructor(args: GuardianContactMethodArgs) {
-    const result = guardianContactMethodSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: GuardianContactMethodInput) {
+    this.data = parseDomain(guardianContactMethodSchema, args)
   }
 
   get type() { return this.data.type }

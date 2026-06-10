@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { DomainValidationError } from '../../../src/domains/utils'
 import { Money } from '../../../src/value_object/money'
 
 describe('money value object', () => {
@@ -8,9 +9,12 @@ describe('money value object', () => {
     expect(money.currency).toBe('XAF')
   })
 
-  test('should fail to parse improperly formatted currency', () => {
-    // This is a placeholder for future negative validation logic
-    expect(true).toBe(true)
+  test('throws DomainValidationError for blank currency', () => {
+    expect(() => new Money({ amount: 1000, currency: ' ' })).toThrow(DomainValidationError)
+  })
+
+  test('throws DomainValidationError for negative amount', () => {
+    expect(() => new Money({ amount: -1, currency: 'XAF' })).toThrow(DomainValidationError)
   })
 
   test('should add successfully', () => {

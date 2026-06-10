@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AttachmentOwnerKind {
   StudentHealthProfile = 'student_health_profile',
@@ -36,22 +36,10 @@ export const attachmentBaseSchema = z.object({
 export const attachmentSchema = attachmentBaseSchema
 
 export type AttachmentData = z.infer<typeof attachmentSchema>
+export type AttachmentInput = z.input<typeof attachmentSchema>
 
 export const attachmentCreateSchema = attachmentBaseSchema.omit({ createdAt: true })
 export const attachmentUpdateSchema = attachmentBaseSchema.partial().required({ id: true })
-
-export interface AttachmentArgs {
-  id: string
-  schoolId: string
-  ownerKind: AttachmentOwnerKind
-  ownerId: string
-  fileName: string
-  fileUrl: string
-  mimeType?: string | null
-  sizeBytes?: number | null
-  uploadedById?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents a file attached to a domain entity (health record, incident, student profile, etc.).
@@ -61,12 +49,8 @@ export interface AttachmentArgs {
 export class Attachment {
   readonly data: AttachmentData
 
-  constructor(args: AttachmentArgs) {
-    const result = attachmentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AttachmentInput) {
+    this.data = parseDomain(attachmentSchema, args)
   }
 
   get id() { return this.data.id }

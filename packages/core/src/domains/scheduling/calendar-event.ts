@@ -5,7 +5,7 @@ import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum CalendarEventKind {
   Holiday = 'holiday',
@@ -58,23 +58,10 @@ function refineCalendarEvent(data: any, ctx: z.RefinementCtx) {
 export const calendarEventSchema = calendarEventBaseSchema.superRefine(refineCalendarEvent)
 
 export type CalendarEventData = z.infer<typeof calendarEventSchema>
+export type CalendarEventInput = z.input<typeof calendarEventSchema>
 
 export const calendarEventCreateSchema = calendarEventBaseSchema.omit({ createdAt: true }).superRefine(refineCalendarEvent)
 export const calendarEventUpdateSchema = calendarEventBaseSchema.partial().required({ id: true }).superRefine(refineCalendarEvent)
-
-export interface CalendarEventArgs {
-  id: string
-  schoolId: string
-  academicYearId: string
-  title: string
-  startDate: Date
-  endDate: Date
-  kind: CalendarEventKind
-  isNonSchoolDay?: boolean
-  scopeKind?: CalendarEventScopeKind
-  scopeId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents a school-wide calendar event such as a holiday, break, or special event.
@@ -84,12 +71,8 @@ export interface CalendarEventArgs {
 export class CalendarEvent {
   readonly data: CalendarEventData
 
-  constructor(args: CalendarEventArgs) {
-    const result = calendarEventSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: CalendarEventInput) {
+    this.data = parseDomain(calendarEventSchema, args)
   }
 
   get id() { return this.data.id }

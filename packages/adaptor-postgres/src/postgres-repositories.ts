@@ -75,6 +75,7 @@ export class PostgresAtomicExecution implements AtomicExecutionPort {
   }
 }
 
+/** Custom store: permissions live in `access_role_permissions` (not on the main row). All reads rebuild via `AccessRole` constructor. */
 export class PostgresAccessRoleStore extends PostgresStore<AccessRole> {
   constructor(db: any) {
     super(
@@ -256,6 +257,7 @@ export class PostgresAccessRoleStore extends PostgresStore<AccessRole> {
   }
 }
 
+/** Custom store: `roleIds` and `scopeGrants` are normalized tables; `populateRelations` always constructs via Zod. */
 export class PostgresStaffRoleAssignmentStore extends PostgresStore<StaffRoleAssignment> {
   constructor(db: any) {
     super(
@@ -674,7 +676,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       createDefaultMappers(ResourceAssignment).toDomain,
     )
 
-    // 11. Fees Store (Custom defaultAmount & installments mapping)
+    // 11. Fees Store — custom: Money columns + JSONB installments (deserializeJsonb → Fee constructor / Zod)
     this.fees = new PostgresStore(
       db,
       schema.fees,
@@ -1106,7 +1108,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       }),
     )
 
-    // 29. Grade Scales Store (Custom bounds/ranges mapping)
+    // 29. Grade Scales Store — custom: JSONB ranges (deserializeJsonb → GradeScale constructor / Zod)
     this.gradeScales = new PostgresStore(
       db,
       schema.gradeScales,
@@ -1166,7 +1168,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       }),
     )
 
-    // 32. Report Card Results Store (Custom sections/summary tree, no schoolId)
+    // 32. Report Card Results Store — custom: nested section JSONB + AttendanceSummary value object on read
     this.results = new PostgresStore(
       db,
       schema.reportCardResults,

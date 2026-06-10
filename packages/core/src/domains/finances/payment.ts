@@ -8,7 +8,7 @@ import { AttachmentOwnerKind, FeeStatus } from '../../domains'
 import { anyPermissionAction, config, dateTime, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { Money } from '../../value_object/money'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum PaymentMethod {
   Cash = 'cash',
@@ -68,27 +68,10 @@ export const paymentSchema = paymentBaseSchema.superRefine(refinePayment)
 export type PaymentData = Omit<z.infer<typeof paymentSchema>, 'amount' | 'currency'> & {
   amount: Money
 }
+export type PaymentInput = z.input<typeof paymentSchema>
 
 export const paymentCreateSchema = paymentBaseSchema.omit({ createdAt: true }).superRefine(refinePayment)
 export const paymentUpdateSchema = paymentBaseSchema.partial().required({ id: true }).superRefine(refinePayment)
-
-export interface PaymentArgs {
-  id: string
-  studentFeeId: string
-  amount: number
-  currency: string
-  paymentDate: Date
-  method: PaymentMethod
-  status?: PaymentStatus
-  reference?: string | null
-  notes?: string | null
-  recordedById?: string | null
-  reversedAt?: Date | null
-  reversedById?: string | null
-  cancelledAt?: Date | null
-  cancelledById?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents a single financial transaction made towards a StudentFee.
@@ -96,12 +79,8 @@ export interface PaymentArgs {
 export class Payment {
   readonly data: PaymentData
 
-  constructor(args: PaymentArgs) {
-    const result = paymentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    const validated = result.data
+  constructor(args: PaymentInput) {
+    const validated = parseDomain(paymentSchema, args)
     this.data = {
       id: validated.id,
       studentFeeId: validated.studentFeeId,

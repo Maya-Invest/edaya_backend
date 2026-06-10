@@ -1,4 +1,4 @@
-import type { Fee, FeeArgs, PaymentMethod, StudentFeeInstallment } from '../../domains'
+import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import { Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '../../domains'
@@ -36,7 +36,7 @@ export interface UpdatePaymentStatusInput {
   referenceDate?: Date
 }
 
-export type CreateFeeInput = FeeArgs
+export type CreateFeeInput = FeeInput
 
 export interface AdjustStudentFeeInput {
   studentFeeId: string

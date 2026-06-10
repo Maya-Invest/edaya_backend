@@ -301,7 +301,7 @@ export async function updateGuardian(app: SchoolService, input: {
     schoolId: existing.schoolId,
     firstName: input.firstName ?? existing.firstName,
     lastName: existing.lastName,
-    contactMethods: existing.contactMethods,
+    contactMethods: [...existing.contactMethods],
     subjectId: existing.subjectId,
     hasAccess: existing.hasAccess,
     premiumNotificationsEnabled: existing.premiumNotificationsEnabled,

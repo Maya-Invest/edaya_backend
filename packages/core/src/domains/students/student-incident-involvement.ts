@@ -7,7 +7,7 @@ import { denyResourceAccess, Permission } from '../../authorization'
 import { StudentClassEnrollmentStatus } from '../../domains'
 import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum IncidentInvolvementRole {
   Subject = 'subject',
@@ -27,18 +27,10 @@ export const studentIncidentInvolvementBaseSchema = z.object({
 export const studentIncidentInvolvementSchema = studentIncidentInvolvementBaseSchema
 
 export type StudentIncidentInvolvementData = z.infer<typeof studentIncidentInvolvementSchema>
+export type StudentIncidentInvolvementInput = z.input<typeof studentIncidentInvolvementSchema>
 
 export const studentIncidentInvolvementCreateSchema = studentIncidentInvolvementBaseSchema.omit({ createdAt: true })
 export const studentIncidentInvolvementUpdateSchema = studentIncidentInvolvementBaseSchema.partial().required({ id: true })
-
-export interface StudentIncidentInvolvementArgs {
-  id: string
-  incidentId: string
-  studentId: string
-  role: IncidentInvolvementRole
-  notes?: string | null
-  createdAt?: Date
-}
 
 /**
  * Links a Student to an Incident, specifying their role and any resulting disciplinary action.
@@ -47,12 +39,8 @@ export interface StudentIncidentInvolvementArgs {
 export class StudentIncidentInvolvement {
   readonly data: StudentIncidentInvolvementData
 
-  constructor(args: StudentIncidentInvolvementArgs) {
-    const result = studentIncidentInvolvementSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StudentIncidentInvolvementInput) {
+    this.data = parseDomain(studentIncidentInvolvementSchema, args)
   }
 
   get id() { return this.data.id }

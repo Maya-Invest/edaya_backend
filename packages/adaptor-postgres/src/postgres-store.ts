@@ -2,6 +2,15 @@ import type { BaseRepositoryInterface, Filter, QueryOptions } from '@edaya/core'
 import { and, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, ne, not, notInArray, or, sql } from 'drizzle-orm'
 import { transactionContext } from './postgres-repositories'
 
+/** DB row → constructor args (`null` becomes `undefined`). Pair with `new Entity(args)` so Zod runs on read. */
+export function rowToConstructorArgs(row: Record<string, unknown>): Record<string, unknown> {
+  const args: Record<string, unknown> = {}
+  for (const key of Object.keys(row)) {
+    args[key] = row[key] === null ? undefined : row[key]
+  }
+  return args
+}
+
 export function deserializeJsonb(value: any): any {
   if (value === null || value === undefined) {
     return value
@@ -266,13 +275,6 @@ export function createDefaultMappers<T extends { readonly id: string }>(
       }
       return row
     },
-    toDomain: (row: any): T => {
-      const args: any = {}
-      for (const key of Object.keys(row)) {
-        const val = row[key]
-        args[key] = val === null ? undefined : val
-      }
-      return new Ctor(args)
-    },
+    toDomain: (row: any): T => new Ctor(rowToConstructorArgs(row)),
   }
 }

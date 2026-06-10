@@ -1,6 +1,6 @@
 import type {
   Incident,
-  IncidentArgs,
+  IncidentInput,
   IncidentInvolvementRole,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
@@ -38,7 +38,7 @@ export interface ApplyDisciplinaryActionInput {
   createdAt?: Date
 }
 
-export type RecordIncidentInput = Omit<IncidentArgs, 'reporterId'> & {
+export type RecordIncidentInput = Omit<IncidentInput, 'reporterId'> & {
   reporterId?: string
 }
 

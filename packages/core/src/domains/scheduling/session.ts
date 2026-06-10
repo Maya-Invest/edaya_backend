@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum SessionKind {
   Course = 'course',
@@ -37,21 +37,10 @@ function refineSession(data: any, ctx: z.RefinementCtx) {
 export const sessionSchema = sessionBaseSchema.superRefine(refineSession)
 
 export type SessionData = z.infer<typeof sessionSchema>
+export type SessionInput = z.input<typeof sessionSchema>
 
 export const sessionCreateSchema = sessionBaseSchema.omit({ createdAt: true }).superRefine(refineSession)
 export const sessionUpdateSchema = sessionBaseSchema.partial().required({ id: true }).superRefine(refineSession)
-
-export interface SessionArgs {
-  id: string
-  classGroupId: string
-  title: string
-  kind: SessionKind
-  startsAt: Date
-  endsAt: Date
-  classSubjectId?: string | null
-  scheduleId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents a concrete scheduled time slot where a classGroup activity actually happens.
@@ -60,12 +49,8 @@ export interface SessionArgs {
 export class Session {
   readonly data: SessionData
 
-  constructor(args: SessionArgs) {
-    const result = sessionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: SessionInput) {
+    this.data = parseDomain(sessionSchema, args)
   }
 
   get id() { return this.data.id }
@@ -82,7 +67,7 @@ export class Session {
     return Math.round((this.endsAt.getTime() - this.startsAt.getTime()) / 60000)
   }
 
-  copyWith(changes: Partial<SessionArgs>): Session {
+  copyWith(changes: Partial<SessionInput>): Session {
     return new Session({
       id: this.id,
       classGroupId: this.classGroupId,

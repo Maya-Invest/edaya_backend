@@ -5,7 +5,7 @@ import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum StudentStatus {
   Active = 'active',
@@ -32,26 +32,10 @@ export const studentSchema = z.object({
 })
 
 export type StudentData = z.infer<typeof studentSchema>
+export type StudentInput = z.input<typeof studentSchema>
 
 export const studentCreateSchema = studentSchema.omit({ createdAt: true })
 export const studentUpdateSchema = studentSchema.partial().required({ id: true })
-
-export interface StudentArgs {
-  id: string
-  schoolId: string
-  firstName: string
-  lastName: string
-  gender?: string | null
-  birthDate?: Date | null
-  placeOfBirth?: string | null
-  nationality?: string | null
-  matricule?: string | null
-  photoUrl?: string | null
-  subjectId?: string | null
-  status?: StudentStatus
-  enrollmentDate?: Date | null
-  createdAt?: Date
-}
 
 /**
  * Represents an individual student attending the school.
@@ -61,12 +45,8 @@ export interface StudentArgs {
 export class Student {
   readonly data: StudentData
 
-  constructor(args: StudentArgs) {
-    const result = studentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StudentInput) {
+    this.data = parseDomain(studentSchema, args)
   }
 
   get id() { return this.data.id }
@@ -88,7 +68,7 @@ export class Student {
     return `${this.firstName} ${this.lastName}`
   }
 
-  copyWith(changes: Partial<StudentArgs>): Student {
+  copyWith(changes: Partial<StudentInput>): Student {
     return new Student({
       id: this.id,
       schoolId: this.schoolId,

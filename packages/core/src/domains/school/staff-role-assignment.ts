@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 
 import { directPermissionEntityConfig } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const scopeGrantSchema = z.object({
   permission: z.nativeEnum(Permission),
@@ -47,25 +47,12 @@ function refineStaffRoleAssignment(data: any, ctx: z.RefinementCtx) {
 
 export const staffRoleAssignmentSchema = staffRoleAssignmentBaseSchema.superRefine(refineStaffRoleAssignment)
 export type StaffRoleAssignmentData = z.infer<typeof staffRoleAssignmentSchema>
+export type StaffRoleAssignmentInput = z.input<typeof staffRoleAssignmentSchema>
 
 export const staffRoleAssignmentCreateSchema = staffRoleAssignmentBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStaffRoleAssignment)
 export const staffRoleAssignmentUpdateSchema = staffRoleAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineStaffRoleAssignment)
 
 export type StaffRoleAssignmentStatus = 'active' | 'inactive' | 'expired'
-
-export interface StaffRoleAssignmentArgs {
-  id: string
-  staffId: string
-  schoolId: string
-  academicYearId?: string | null
-  roleIds: readonly string[]
-  scopeGrants?: readonly ScopeGrant[]
-  status?: StaffRoleAssignmentStatus
-  startsAt?: Date | null
-  endsAt?: Date | null
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /** Persisted staff access grant (roles + per-permission scope). */
 export class StaffRoleAssignment {
@@ -73,12 +60,8 @@ export class StaffRoleAssignment {
   readonly roleIds: readonly string[]
   readonly scopeGrants: readonly ScopeGrant[]
 
-  constructor(args: StaffRoleAssignmentArgs) {
-    const result = staffRoleAssignmentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    const parsed = result.data
+  constructor(args: StaffRoleAssignmentInput) {
+    const parsed = parseDomain(staffRoleAssignmentSchema, args)
     this.data = {
       ...parsed,
       updatedAt: parsed.updatedAt ?? parsed.createdAt,

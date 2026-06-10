@@ -7,7 +7,7 @@ import { denyResourceAccess, Permission } from '../../authorization'
 import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../domains'
 import { config, indirectTenant, permissionAction, read, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, roundTo2, zodDate } from '../utils'
+import { parseDomain, roundTo2, zodDate } from '../utils'
 
 export enum DeadlineComplianceStatus {
   Met = 'met',
@@ -28,20 +28,10 @@ export const assessmentResultSchema = z.object({
 })
 
 export type AssessmentResultData = z.infer<typeof assessmentResultSchema>
+export type AssessmentResultInput = z.input<typeof assessmentResultSchema>
 
 export const assessmentResultCreateSchema = assessmentResultSchema.omit({ createdAt: true })
 export const assessmentResultUpdateSchema = assessmentResultSchema.partial().required({ id: true })
-
-export interface AssessmentResultArgs {
-  id: string
-  studentId: string
-  assessmentId: string
-  score?: number | null
-  status?: DeadlineComplianceStatus | null
-  notes?: string | null
-  createdBy?: string
-  createdAt?: Date
-}
 
 /**
  * Represents a student's assessment result/score for a specific subject within a classGroup program.
@@ -51,12 +41,8 @@ export interface AssessmentResultArgs {
 export class AssessmentResult {
   readonly data: AssessmentResultData
 
-  constructor(args: AssessmentResultArgs) {
-    const result = assessmentResultSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AssessmentResultInput) {
+    this.data = parseDomain(assessmentResultSchema, args)
   }
 
   get id() { return this.data.id }

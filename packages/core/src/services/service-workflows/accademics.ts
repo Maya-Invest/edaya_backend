@@ -1,4 +1,4 @@
-import type { ClassSubjectArgs, ClassSubjectMatterArgs } from '../../domains'
+import type { ClassSubjectInput, ClassSubjectMatterInput } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import {
@@ -21,9 +21,9 @@ export interface RecordSessionProgressInput {
   recordedAt?: Date
 }
 
-export type OfferSubjectToClassInput = ClassSubjectArgs
+export type OfferSubjectToClassInput = ClassSubjectInput
 
-export type AssignMatterToClassSubjectInput = ClassSubjectMatterArgs
+export type AssignMatterToClassSubjectInput = ClassSubjectMatterInput
 
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {

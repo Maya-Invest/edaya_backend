@@ -1,11 +1,26 @@
-import { requireNonNegativeInt } from '../domains/utils'
+import { z } from 'zod'
+import { parseDomain } from '../domains/utils'
 
-export interface AttendanceSummaryArgs {
-  presentCount: number
-  absenceCount: number
-  excusedAbsenceCount?: number
-  lateCount: number
+export const attendanceSummaryBaseSchema = z.object({
+  presentCount: z.number().int().nonnegative('presentCount must be a non-negative integer'),
+  absenceCount: z.number().int().nonnegative('absenceCount must be a non-negative integer'),
+  excusedAbsenceCount: z.number().int().nonnegative('excusedAbsenceCount must be a non-negative integer').default(0),
+  lateCount: z.number().int().nonnegative('lateCount must be a non-negative integer'),
+})
+
+function refineAttendanceSummary(data: z.infer<typeof attendanceSummaryBaseSchema>, ctx: z.RefinementCtx) {
+  if (data.excusedAbsenceCount > data.absenceCount) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'excusedAbsenceCount must not exceed absenceCount',
+    })
+  }
 }
+
+export const attendanceSummarySchema = attendanceSummaryBaseSchema.superRefine(refineAttendanceSummary)
+
+export type AttendanceSummaryData = z.infer<typeof attendanceSummarySchema>
+export type AttendanceSummaryInput = z.input<typeof attendanceSummarySchema>
 
 /**
  * An aggregated summary of a student's attendance records over a specific period,
@@ -17,14 +32,12 @@ export class AttendanceSummary {
   readonly excusedAbsenceCount: number
   readonly lateCount: number
 
-  constructor({ presentCount, absenceCount, excusedAbsenceCount = 0, lateCount }: AttendanceSummaryArgs) {
-    this.presentCount = requireNonNegativeInt(presentCount, 'presentCount')
-    this.absenceCount = requireNonNegativeInt(absenceCount, 'absenceCount')
-    this.excusedAbsenceCount = requireNonNegativeInt(excusedAbsenceCount, 'excusedAbsenceCount')
-    this.lateCount = requireNonNegativeInt(lateCount, 'lateCount')
-    if (this.excusedAbsenceCount > this.absenceCount) {
-      throw new Error('excusedAbsenceCount must not exceed absenceCount')
-    }
+  constructor(input: AttendanceSummaryInput) {
+    const data = parseDomain(attendanceSummarySchema, input)
+    this.presentCount = data.presentCount
+    this.absenceCount = data.absenceCount
+    this.excusedAbsenceCount = data.excusedAbsenceCount
+    this.lateCount = data.lateCount
   }
 
   get total(): number {

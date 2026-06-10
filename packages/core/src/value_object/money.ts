@@ -1,4 +1,13 @@
-import { requireNonBlank, requireNonNegativeInt } from '../domains/utils'
+import { z } from 'zod'
+import { parseDomain } from '../domains/utils'
+
+export const moneySchema = z.object({
+  amount: z.number().int().nonnegative('amount must be a non-negative integer'),
+  currency: z.string().trim().min(1, 'currency must not be blank'),
+})
+
+export type MoneyData = z.infer<typeof moneySchema>
+export type MoneyInput = z.input<typeof moneySchema>
 
 /**
  * Represents a monetary value in minor units for a single currency.
@@ -7,9 +16,10 @@ export class Money {
   readonly amount: number
   readonly currency: string
 
-  constructor({ amount, currency }: { amount: number, currency: string }) {
-    this.amount = requireNonNegativeInt(amount, 'amount')
-    this.currency = requireNonBlank(currency, 'currency')
+  constructor(input: MoneyInput) {
+    const data = parseDomain(moneySchema, input)
+    this.amount = data.amount
+    this.currency = data.currency
   }
 
   add(other: Money): Money {

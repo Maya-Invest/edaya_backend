@@ -2,7 +2,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const subjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -14,18 +14,10 @@ export const subjectSchema = z.object({
 })
 
 export type SubjectData = z.infer<typeof subjectSchema>
+export type SubjectInput = z.input<typeof subjectSchema>
 
 export const subjectCreateSchema = subjectSchema.omit({ createdAt: true })
 export const subjectUpdateSchema = subjectSchema.partial().required({ id: true })
-
-export interface SubjectArgs {
-  id: string
-  schoolId: string
-  name: string
-  code?: string | null
-  defaultCoefficient?: number | null
-  createdAt?: Date
-}
 
 /**
  * Represents a learning subject (e.g., Mathematics, History) in the global school catalog.
@@ -34,12 +26,8 @@ export interface SubjectArgs {
 export class Subject {
   readonly data: SubjectData
 
-  constructor(args: SubjectArgs) {
-    const result = subjectSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: SubjectInput) {
+    this.data = parseDomain(subjectSchema, args)
   }
 
   get id() { return this.data.id }
@@ -49,7 +37,7 @@ export class Subject {
   get defaultCoefficient() { return this.data.defaultCoefficient }
   get createdAt() { return this.data.createdAt }
 
-  copyWith(overrides: Partial<SubjectArgs>): Subject {
+  copyWith(overrides: Partial<SubjectInput>): Subject {
     return new Subject({
       id: this.id,
       schoolId: this.schoolId,

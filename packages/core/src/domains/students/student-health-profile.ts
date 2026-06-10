@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const studentHealthProfileBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -30,21 +30,10 @@ function refineStudentHealthProfile(data: any, ctx: z.RefinementCtx) {
 export const studentHealthProfileSchema = studentHealthProfileBaseSchema.superRefine(refineStudentHealthProfile)
 
 export type StudentHealthProfileData = z.infer<typeof studentHealthProfileSchema>
+export type StudentHealthProfileInput = z.input<typeof studentHealthProfileSchema>
 
 export const studentHealthProfileCreateSchema = studentHealthProfileBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentHealthProfile)
 export const studentHealthProfileUpdateSchema = studentHealthProfileBaseSchema.partial().required({ id: true }).superRefine(refineStudentHealthProfile)
-
-export interface StudentHealthProfileArgs {
-  id: string
-  schoolId: string
-  studentId: string
-  allergies?: string | null
-  medicalConditions?: string | null
-  emergencyProtocols?: string | null
-  bloodType?: string | null
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Contains health and emergency information that requires access controls
@@ -53,12 +42,8 @@ export interface StudentHealthProfileArgs {
 export class StudentHealthProfile {
   readonly data: StudentHealthProfileData
 
-  constructor(args: StudentHealthProfileArgs) {
-    const result = studentHealthProfileSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StudentHealthProfileInput) {
+    this.data = parseDomain(studentHealthProfileSchema, args)
   }
 
   get id() { return this.data.id }

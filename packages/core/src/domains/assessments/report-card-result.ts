@@ -9,7 +9,7 @@ import { denyResourceAccess } from '../../authorization/authorization-error'
 import { config, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { AttendanceSummary } from '../../value_object/attendance-summary'
-import { DomainValidationError, formatZodError, roundTo2, zodDate } from '../utils'
+import { parseDomain, roundTo2, zodDate } from '../utils'
 import { reportCardResultSectionSchema } from './report-card-result-section'
 
 export enum ReportCardResultStatus {
@@ -58,6 +58,7 @@ export const reportCardResultSchema = reportCardResultBaseSchema.extend({
 export type ReportCardResultData = Omit<z.infer<typeof reportCardResultSchema>, 'sectionResults'> & {
   readonly sectionResults: readonly ReportCardResultSection[]
 }
+export type ReportCardResultInput = z.input<typeof reportCardResultSchema>
 
 export const reportCardResultCreateSchema = reportCardResultBaseSchema.extend({
   sectionResults: reportCardResultSectionSchema.array(),
@@ -66,27 +67,6 @@ export const reportCardResultCreateSchema = reportCardResultBaseSchema.extend({
 export const reportCardResultUpdateSchema = reportCardResultBaseSchema.extend({
   sectionResults: reportCardResultSectionSchema.array(),
 }).partial().required({ id: true }).superRefine(refineReportCardResult)
-
-export interface ReportCardResultArgs {
-  id: string
-  reportCardDefinitionId: string
-  studentId: string
-  classGroupId: string
-  periodId: string
-  /** Root-level section results. Each may recursively contain subResults. */
-  sectionResults: readonly ReportCardResultSection[]
-  attendanceSummary: AttendanceSummary
-  assessmentResultCount: number
-  overallAverage?: number | null
-  rank?: number | null
-  classSize?: number | null
-  passThreshold?: number | null
-  teacherComment?: string | null
-  principalComment?: string | null
-  status?: ReportCardResultStatus
-  generatedAt?: Date
-  publishedAt?: Date
-}
 
 /**
  * Represents a student's official report card for a specific academic period.
@@ -97,12 +77,8 @@ export class ReportCardResult {
   readonly data: ReportCardResultData
   readonly sectionResults: readonly ReportCardResultSection[]
 
-  constructor(args: ReportCardResultArgs) {
-    const result = reportCardResultSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data as any
+  constructor(args: ReportCardResultInput) {
+    this.data = parseDomain(reportCardResultSchema, args) as any
     this.sectionResults = Object.freeze([...args.sectionResults])
   }
 
@@ -130,7 +106,7 @@ export class ReportCardResult {
       studentId: this.studentId,
       classGroupId: this.classGroupId,
       periodId: this.periodId,
-      sectionResults: this.sectionResults,
+      sectionResults: [...this.sectionResults],
       attendanceSummary: this.attendanceSummary,
       assessmentResultCount: this.assessmentResultCount,
       overallAverage: this.overallAverage,

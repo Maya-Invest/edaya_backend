@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AuthorizationError, AuthorizationErrorCode } from '../../authorization/authorization-error'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const subjectMatterSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -18,29 +18,16 @@ export const subjectMatterSchema = z.object({
 })
 
 export type SubjectMatterData = z.infer<typeof subjectMatterSchema>
+export type SubjectMatterInput = z.input<typeof subjectMatterSchema>
 
 export const subjectMatterCreateSchema = subjectMatterSchema.omit({ createdAt: true })
 export const subjectMatterUpdateSchema = subjectMatterSchema.partial().required({ id: true })
 
-export interface SubjectMatterArgs {
-  id: string
-  subjectId: string
-  name: string
-  description?: string | null
-  sequenceOrder: number
-  estimatedHours?: number | null
-  createdAt?: Date
-}
-
 export class SubjectMatter {
   readonly data: SubjectMatterData
 
-  constructor(args: SubjectMatterArgs) {
-    const result = subjectMatterSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: SubjectMatterInput) {
+    this.data = parseDomain(subjectMatterSchema, args)
   }
 
   get id() { return this.data.id }

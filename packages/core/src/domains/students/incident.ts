@@ -7,7 +7,7 @@ import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../au
 import { AttachmentOwnerKind } from '../../domains'
 import { config, dateTime, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum IncidentKind {
   Positive = 'positive',
@@ -70,27 +70,10 @@ function refineIncident(data: any, ctx: z.RefinementCtx) {
 export const incidentSchema = incidentBaseSchema.superRefine(refineIncident)
 
 export type IncidentData = z.infer<typeof incidentSchema>
+export type IncidentInput = z.input<typeof incidentSchema>
 
 export const incidentCreateSchema = incidentBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineIncident)
 export const incidentUpdateSchema = incidentBaseSchema.partial().required({ id: true }).superRefine(refineIncident)
-
-export interface IncidentArgs {
-  id: string
-  schoolId: string
-  title: string
-  description: string
-  date: Date
-  kind: IncidentKind
-  reporterId: string
-  classGroupId?: string | null
-  sessionId?: string | null
-  status?: IncidentStatus
-  resolutionNotes?: string | null
-  resolvedAt?: Date | null
-  resolvedByStaffId?: string | null
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Represents a logged behavior event, which can be positive (merit/award)
@@ -99,12 +82,8 @@ export interface IncidentArgs {
 export class Incident {
   readonly data: IncidentData
 
-  constructor(args: IncidentArgs) {
-    const result = incidentSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: IncidentInput) {
+    this.data = parseDomain(incidentSchema, args)
   }
 
   get id() { return this.data.id }

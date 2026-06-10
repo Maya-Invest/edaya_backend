@@ -1,4 +1,4 @@
-import type { AttendanceStatus, CalendarEventArgs, ClassGroup, ScheduleArgs, SessionArgs } from '../../domains'
+import type { AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput, SessionInput } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import {
@@ -68,9 +68,9 @@ export interface RecordClassDailyAttendanceInput {
   createdAt?: Date
 }
 
-export type CreateScheduleInput = ScheduleArgs
-export type CreateCalendarEventInput = CalendarEventArgs
-export type CreateSessionInput = SessionArgs
+export type CreateScheduleInput = ScheduleInput
+export type CreateCalendarEventInput = CalendarEventInput
+export type CreateSessionInput = SessionInput
 
 export interface ReviewAttendanceJustificationInput {
   studentId: string

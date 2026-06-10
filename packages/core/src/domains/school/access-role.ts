@@ -2,7 +2,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export type AccessRoleStatus = 'active' | 'inactive'
 
@@ -33,31 +33,17 @@ export const accessRoleSchema = accessRoleBaseSchema.extend({
 export type AccessRoleData = Omit<z.infer<typeof accessRoleSchema>, 'permissions'> & {
   readonly permissions: readonly Permission[]
 }
+export type AccessRoleInput = z.input<typeof accessRoleSchema>
 
 export const accessRoleCreateSchema = accessRoleBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineAccessRole)
 export const accessRoleUpdateSchema = accessRoleBaseSchema.partial().required({ id: true }).superRefine(refineAccessRole)
-
-export interface AccessRoleArgs {
-  id: string
-  schoolId: string
-  name: string
-  description?: string | null
-  permissions: readonly Permission[]
-  status?: AccessRoleStatus
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /** School-scoped role definition (system templates or custom roles). */
 export class AccessRole {
   readonly data: AccessRoleData
 
-  constructor(args: AccessRoleArgs) {
-    const result = accessRoleSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data as any
+  constructor(args: AccessRoleInput) {
+    this.data = parseDomain(accessRoleSchema, args) as any
   }
 
   get id() { return this.data.id }

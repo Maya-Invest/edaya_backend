@@ -3,7 +3,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const classSubjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -18,18 +18,10 @@ export const classSubjectSchema = z.object({
 })
 
 export type ClassSubjectData = z.infer<typeof classSubjectSchema>
+export type ClassSubjectInput = z.input<typeof classSubjectSchema>
 
 export const classSubjectCreateSchema = classSubjectSchema.omit({ createdAt: true })
 export const classSubjectUpdateSchema = classSubjectSchema.partial().required({ id: true })
-
-export interface ClassSubjectArgs {
-  id: string
-  classGroupId: string
-  subjectId: string
-  coefficient?: number | null
-  completedPercentage?: number | null
-  createdAt?: Date
-}
 
 /**
  * Represents a concrete subject offering inside a classGroup for an academic year.
@@ -38,12 +30,8 @@ export interface ClassSubjectArgs {
 export class ClassSubject {
   readonly data: ClassSubjectData
 
-  constructor(args: ClassSubjectArgs) {
-    const result = classSubjectSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ClassSubjectInput) {
+    this.data = parseDomain(classSubjectSchema, args)
   }
 
   get id() { return this.data.id }

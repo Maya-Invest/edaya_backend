@@ -6,7 +6,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { AuthorizationError, denyResourceAccess, Permission, resolveEffectiveGrants, scopeGrantCovers } from '../../authorization'
 import { dateTime, directPermissionEntityConfig, readByIds } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum StudentNoteVisibility {
   Staff = 'staff',
@@ -38,21 +38,10 @@ function refineStudentNote(data: any, ctx: z.RefinementCtx) {
 export const studentNoteSchema = studentNoteBaseSchema.superRefine(refineStudentNote)
 
 export type StudentNoteData = z.infer<typeof studentNoteSchema>
+export type StudentNoteInput = z.input<typeof studentNoteSchema>
 
 export const studentNoteCreateSchema = studentNoteBaseSchema.omit({ createdAt: true, updatedAt: true }).superRefine(refineStudentNote)
 export const studentNoteUpdateSchema = studentNoteBaseSchema.partial().required({ id: true }).superRefine(refineStudentNote)
-
-export interface StudentNoteArgs {
-  id: string
-  schoolId: string
-  studentId: string
-  authorStaffId: string
-  body: string
-  title?: string | null
-  visibility?: StudentNoteVisibility
-  createdAt?: Date
-  updatedAt?: Date
-}
 
 /**
  * Internal note attached to a student profile, with explicit visibility.
@@ -60,12 +49,8 @@ export interface StudentNoteArgs {
 export class StudentNote {
   readonly data: StudentNoteData
 
-  constructor(args: StudentNoteArgs) {
-    const result = studentNoteSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StudentNoteInput) {
+    this.data = parseDomain(studentNoteSchema, args)
   }
 
   get id() { return this.data.id }

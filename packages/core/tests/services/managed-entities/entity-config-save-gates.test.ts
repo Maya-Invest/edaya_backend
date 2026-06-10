@@ -854,7 +854,7 @@ describe('Entity config save gates', () => {
       studentId: published.studentId,
       classGroupId: published.classGroupId,
       periodId: published.periodId,
-      sectionResults: published.sectionResults,
+      sectionResults: [...published.sectionResults],
       attendanceSummary: published.attendanceSummary,
       assessmentResultCount: 1,
       status: ReportCardResultStatus.Published,

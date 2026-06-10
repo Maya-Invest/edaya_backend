@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum ReportCardDefinitionSectionKind {
   Group = 'group',
@@ -43,21 +43,10 @@ function refineReportCardDefinitionSection(data: any, ctx: z.RefinementCtx) {
 export const reportCardDefinitionSectionSchema = reportCardDefinitionSectionBaseSchema.superRefine(refineReportCardDefinitionSection)
 
 export type ReportCardDefinitionSectionData = z.infer<typeof reportCardDefinitionSectionSchema>
+export type ReportCardDefinitionSectionInput = z.input<typeof reportCardDefinitionSectionSchema>
 
 export const reportCardDefinitionSectionCreateSchema = reportCardDefinitionSectionBaseSchema.omit({ createdAt: true }).superRefine(refineReportCardDefinitionSection)
 export const reportCardDefinitionSectionUpdateSchema = reportCardDefinitionSectionBaseSchema.partial().required({ id: true }).superRefine(refineReportCardDefinitionSection)
-
-export interface ReportCardDefinitionSectionArgs {
-  id: string
-  reportCardDefinitionId: string
-  name: string
-  kind?: ReportCardDefinitionSectionKind
-  order: number
-  weight: number
-  parentSectionId?: string | null
-  subjectId?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents one section in a report-card definition.
@@ -67,12 +56,8 @@ export interface ReportCardDefinitionSectionArgs {
 export class ReportCardDefinitionSection {
   readonly data: ReportCardDefinitionSectionData
 
-  constructor(args: ReportCardDefinitionSectionArgs) {
-    const result = reportCardDefinitionSectionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ReportCardDefinitionSectionInput) {
+    this.data = parseDomain(reportCardDefinitionSectionSchema, args)
   }
 
   get id() { return this.data.id }

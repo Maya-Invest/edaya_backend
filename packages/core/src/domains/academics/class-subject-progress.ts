@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 import { ClassSubjectMatterStatus } from './class-subject-matter'
 
 export const classSubjectProgressSchema = z.object({
@@ -23,19 +23,10 @@ export const classSubjectProgressSchema = z.object({
 })
 
 export type ClassSubjectProgressData = z.infer<typeof classSubjectProgressSchema>
+export type ClassSubjectProgressInput = z.input<typeof classSubjectProgressSchema>
 
 export const classSubjectProgressCreateSchema = classSubjectProgressSchema.omit({ recordedAt: true })
 export const classSubjectProgressUpdateSchema = classSubjectProgressSchema.partial().required({ id: true })
-
-export interface ClassSubjectProgressArgs {
-  id: string
-  classSubjectMatterId: string
-  sessionId: string
-  completedPercentage: number
-  recordedByStaffId?: string | null
-  notes?: string | null
-  recordedAt?: Date
-}
 
 /**
  * Captures a class subject matter's cumulative progress at the end of a session.
@@ -45,12 +36,8 @@ export interface ClassSubjectProgressArgs {
 export class ClassSubjectProgress {
   readonly data: ClassSubjectProgressData
 
-  constructor(args: ClassSubjectProgressArgs) {
-    const result = classSubjectProgressSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ClassSubjectProgressInput) {
+    this.data = parseDomain(classSubjectProgressSchema, args)
   }
 
   get id() { return this.data.id }

@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const staffMemberSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -19,20 +19,10 @@ export const staffMemberSchema = z.object({
 })
 
 export type StaffMemberData = z.infer<typeof staffMemberSchema>
+export type StaffMemberInput = z.input<typeof staffMemberSchema>
 
 export const staffMemberCreateSchema = staffMemberSchema.omit({ createdAt: true })
 export const staffMemberUpdateSchema = staffMemberSchema.partial().required({ id: true })
-
-export interface StaffMemberArgs {
-  id: string
-  schoolId: string
-  firstName: string
-  lastName: string
-  email?: string | null
-  subjectId?: string | null
-  isActive?: boolean
-  createdAt?: Date
-}
 
 /**
  * Represents a school staff member.
@@ -40,12 +30,8 @@ export interface StaffMemberArgs {
 export class StaffMember {
   readonly data: StaffMemberData
 
-  constructor(args: StaffMemberArgs) {
-    const result = staffMemberSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: StaffMemberInput) {
+    this.data = parseDomain(staffMemberSchema, args)
   }
 
   get id() { return this.data.id }

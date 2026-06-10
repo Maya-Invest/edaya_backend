@@ -2,7 +2,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum DisciplinaryActionKind {
   Sanction = 'sanction',
@@ -23,20 +23,10 @@ export const disciplinaryActionBaseSchema = z.object({
 export const disciplinaryActionSchema = disciplinaryActionBaseSchema
 
 export type DisciplinaryActionData = z.infer<typeof disciplinaryActionSchema>
+export type DisciplinaryActionInput = z.input<typeof disciplinaryActionSchema>
 
 export const disciplinaryActionCreateSchema = disciplinaryActionBaseSchema.omit({ createdAt: true })
 export const disciplinaryActionUpdateSchema = disciplinaryActionBaseSchema.partial().required({ id: true })
-
-export interface DisciplinaryActionArgs {
-  id: string
-  schoolId: string
-  name: string
-  kind?: DisciplinaryActionKind
-  severity?: number | null
-  defaultDurationDays?: number | null
-  description?: string | null
-  createdAt?: Date
-}
 
 /**
  * Defines a standardized disciplinary action in the school's catalog.
@@ -46,12 +36,8 @@ export interface DisciplinaryActionArgs {
 export class DisciplinaryAction {
   readonly data: DisciplinaryActionData
 
-  constructor(args: DisciplinaryActionArgs) {
-    const result = disciplinaryActionSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: DisciplinaryActionInput) {
+    this.data = parseDomain(disciplinaryActionSchema, args)
   }
 
   get id() { return this.data.id }

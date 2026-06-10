@@ -4,7 +4,7 @@ import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum SchoolType {
   Primary = 'primary',
@@ -34,20 +34,10 @@ export const schoolSchema = z.object({
 })
 
 export type SchoolData = z.infer<typeof schoolSchema>
+export type SchoolInput = z.input<typeof schoolSchema>
 
 export const schoolCreateSchema = schoolSchema.omit({ createdAt: true })
 export const schoolUpdateSchema = schoolSchema.partial().required({ id: true })
-
-export interface SchoolArgs {
-  id: string
-  name: string
-  timeZone: string
-  ownerStaffId?: string | null
-  type?: SchoolType | null
-  country?: string | null
-  city?: string | null
-  createdAt?: Date
-}
 
 /**
  * Represents the primary educational institution entity.
@@ -56,12 +46,8 @@ export interface SchoolArgs {
 export class School {
   readonly data: SchoolData
 
-  constructor(args: SchoolArgs) {
-    const result = schoolSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: SchoolInput) {
+    this.data = parseDomain(schoolSchema, args)
   }
 
   get id() { return this.data.id }

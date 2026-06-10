@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export const academicYearBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -24,6 +24,7 @@ export const academicYearSchema = academicYearBaseSchema.refine(
 )
 
 export type AcademicYearData = z.infer<typeof academicYearSchema>
+export type AcademicYearInput = z.input<typeof academicYearSchema>
 
 export const academicYearCreateSchema = academicYearBaseSchema.omit({ createdAt: true }).refine(
   data => data.endDate.getTime() >= data.startDate.getTime(),
@@ -46,16 +47,6 @@ export const academicYearUpdateSchema = academicYearBaseSchema.partial().require
   },
 )
 
-export interface AcademicYearArgs {
-  id: string
-  schoolId: string
-  name: string
-  startDate: Date
-  endDate: Date
-  isActive?: boolean
-  createdAt?: Date
-}
-
 /**
  * Represents a full academic year for a school.
  * Contains multiple academic periods and defines the overall timeline.
@@ -63,12 +54,8 @@ export interface AcademicYearArgs {
 export class AcademicYear {
   readonly data: AcademicYearData
 
-  constructor(args: AcademicYearArgs) {
-    const result = academicYearSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: AcademicYearInput) {
+    this.data = parseDomain(academicYearSchema, args)
   }
 
   get id() { return this.data.id }

@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { denyResourceAccess } from '../../authorization/authorization-error'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { DomainValidationError, formatZodError, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../utils'
 
 export enum DayOfWeek {
   Monday = 'monday',
@@ -58,22 +58,10 @@ function refineSchedule(data: any, ctx: z.RefinementCtx) {
 export const scheduleSchema = scheduleBaseSchema.superRefine(refineSchedule)
 
 export type ScheduleData = z.infer<typeof scheduleSchema>
+export type ScheduleInput = z.input<typeof scheduleSchema>
 
 export const scheduleCreateSchema = scheduleBaseSchema.omit({ createdAt: true }).superRefine(refineSchedule)
 export const scheduleUpdateSchema = scheduleBaseSchema.partial().required({ id: true }).superRefine(refineSchedule)
-
-export interface ScheduleArgs {
-  id: string
-  classGroupId: string
-  classSubjectId?: string | null
-  title: string
-  isRecurring: boolean
-  dayOfWeek?: DayOfWeek | null
-  startTime: string
-  endTime: string
-  specificDate?: Date | null
-  createdAt?: Date
-}
 
 /**
  * Defines a recurring (weekly template) or non-recurring (one-off) schedule slot for a ClassGroup.
@@ -83,12 +71,8 @@ export interface ScheduleArgs {
 export class Schedule {
   readonly data: ScheduleData
 
-  constructor(args: ScheduleArgs) {
-    const result = scheduleSchema.safeParse(args)
-    if (!result.success) {
-      throw new DomainValidationError(formatZodError(result.error))
-    }
-    this.data = result.data
+  constructor(args: ScheduleInput) {
+    this.data = parseDomain(scheduleSchema, args)
   }
 
   get id() { return this.data.id }

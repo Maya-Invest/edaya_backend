@@ -1,7 +1,7 @@
 import type {
-  AnnouncementArgs,
+  AnnouncementInput,
   AnnouncementTarget,
-  AnnouncementTargetArgs,
+  AnnouncementTargetInput,
   MessageDeliveryChannel,
   MessageDeliveryStatus,
 } from '../../domains'
@@ -46,8 +46,8 @@ export interface MaterializeDeliveriesInput {
   createdAt?: Date
 }
 
-export type CreateAnnouncementInput = AnnouncementArgs
-export type AddAnnouncementTargetInput = AnnouncementTargetArgs
+export type CreateAnnouncementInput = AnnouncementInput
+export type AddAnnouncementTargetInput = AnnouncementTargetInput
 
 export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
