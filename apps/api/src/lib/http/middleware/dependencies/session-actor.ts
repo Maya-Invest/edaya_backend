@@ -7,7 +7,9 @@ import {
   type SchoolRepositories,
 } from "@edaya/core";
 import { randomUUID } from "node:crypto";
-import { resolveCachedEffectiveGrants } from "@/lib/authorization/grants-cache/resolve-cached";
+import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
+import type { AppBindings } from "@/lib/http/types";
+import type { Context } from "hono";
 import type { DependencyModule } from "../dependencies";
 
 export interface AuthSession {
@@ -56,11 +58,6 @@ type ActorIdentity =
     studentId: string;
     effectiveGrants?: EffectiveGrants;
   };
-
-async function resolveDefaultAuthProvider() {
-  const { auth } = await import("@/lib/authentication/auth.config");
-  return auth;
-}
 
 interface NormalizedAuthSession {
   user: {
@@ -119,7 +116,8 @@ async function resolveActorIdentity(
   repos: SchoolRepositories,
   subjectId: string,
   session: NormalizedAuthSession["session"],
-  academicYearId?: string,
+  academicYearId: string | undefined,
+  ttlMs: number,
 ): Promise<ActorIdentity | null> {
   const [staff, guardian, student] = await Promise.all([
     repos.staffMembers.findOne({ subjectId }),
@@ -178,6 +176,7 @@ async function resolveActorIdentity(
     ...(session.id ? { sessionId: session.id } : {}),
     authenticatedAt: session.createdAt,
     repositories: repos,
+    ttlMs,
   });
 
   return {
@@ -217,14 +216,16 @@ function resolveAcademicYearId(headerValue: string | undefined): string | undefi
   return trimmed || undefined;
 }
 
-export function createSessionActorDependency(resolveAuth: ResolveAuthSessionProvider = resolveDefaultAuthProvider): DependencyModule {
+export function createSessionActorDependency(
+  resolveAuth?: (c: Context<AppBindings>) => Promise<AuthSessionProvider> | AuthSessionProvider,
+): DependencyModule {
   return {
     name: "sessionActor",
     async resolve(c) {
-      const auth = await resolveAuth();
+      const auth = resolveAuth ? await resolveAuth(c) : c.var.auth;
       const session = normalizeAuthSession(await auth.api.getSession({
         headers: c.req.raw.headers,
-      }));
+      }) as AuthSession | null | undefined);
 
       if (!session) {
         c.set("actor", null);
@@ -246,6 +247,7 @@ export function createSessionActorDependency(resolveAuth: ResolveAuthSessionProv
         user.id,
         session.session,
         resolveAcademicYearId(c.req.header("x-academic-year-id")),
+        resolveGrantsCacheTtlMs(c.env),
       );
       if (identity) {
         c.set("actor", createActorFromIdentity(identity, interactiveContext));

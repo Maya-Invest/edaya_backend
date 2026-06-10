@@ -1,5 +1,6 @@
 import type { AppBindings } from "@/lib/http/types";
 import type { Context, MiddlewareHandler } from "hono";
+import { authDependency } from "./dependencies/auth";
 import { sessionActorDependency } from "./dependencies/session-actor";
 import { envDependency } from "./dependencies/env";
 import { createSchoolAppDependency } from "./dependencies/school-app";
@@ -22,5 +23,6 @@ export function createDependenciesInjection(dependencies: readonly DependencyMod
 export const dependenciesInjection = createDependenciesInjection([
   envDependency,
   createSchoolAppDependency(),
+  authDependency,
   sessionActorDependency,
 ]);

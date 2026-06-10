@@ -18,9 +18,10 @@ export default function createApp() {
   const app = createRouter();
 
   app.use(cors({
-    origin: "*",
+    origin: ["http://localhost:5173", "http://localhost:4173"],
     allowMethods: ["GET", "POST", "DELETE"],
-    allowHeaders: ["Content-Type"],
+    allowHeaders: ["Content-Type", "Cookie", "X-Academic-Year-Id"],
+    credentials: true,
   }));
 
   app.use(dependenciesInjection);

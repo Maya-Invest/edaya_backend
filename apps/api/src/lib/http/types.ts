@@ -3,6 +3,7 @@ import type { PinoLogger } from "hono-pino";
 
 import type { Environment } from "@/lib/bootstrap/env";
 import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { AuthService } from "@/lib/runtime/types";
 import type { ActorMetadata } from "@edaya/core";
 
 export interface AppBindings {
@@ -10,6 +11,7 @@ export interface AppBindings {
   Variables: {
     logger: PinoLogger;
     schoolApp: ApiSchoolApplication;
+    auth: AuthService;
     actor: ActorMetadata | null;
   };
 };

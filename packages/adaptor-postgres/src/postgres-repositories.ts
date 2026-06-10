@@ -1250,7 +1250,23 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.guardians = new PostgresStore(
       db,
       schema.guardians,
-      createDefaultMappers(Guardian).toRow,
+      (entity: Guardian) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        firstName: entity.firstName,
+        lastName: entity.lastName,
+        email: entity.email ?? null,
+        phone: entity.phone ?? null,
+        subjectId: entity.subjectId ?? null,
+        contactMethods: entity.contactMethods.map(method => ({
+          type: method.type,
+          value: method.value,
+          label: method.label,
+          isPrimary: method.isPrimary,
+          allowsNotifications: method.allowsNotifications,
+        })),
+        createdAt: entity.createdAt,
+      }),
       row => new Guardian({
         id: row.id,
         schoolId: row.schoolId,

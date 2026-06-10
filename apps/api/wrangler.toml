@@ -1,0 +1,17 @@
+name = "maya-school-api"
+main = "src/entries/worker.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 9999
+
+[vars]
+NODE_ENV = "development"
+LOG_LEVEL = "info"
+RUNTIME = "worker"
+BETTER_AUTH_URL = "http://localhost:9999"
+
+# Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
+# Required: DATABASE_URL, BETTER_AUTH_SECRET
+# Optional: SYSTEM_ACTOR_SECRET, GRANTS_CACHE_TTL_MS, SEED_ON_START

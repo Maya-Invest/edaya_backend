@@ -1,24 +1,26 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import type { AppBindings } from "@/lib/http/types";
-
-const authHandler = mock();
-
-mock.module("@/lib/authentication/auth.config", () => ({
-  auth: {
-    handler: authHandler,
-  },
-}));
-
-const { default: indexRouter } = await import("@/app-router");
+import indexRouter from "@/app-router";
 
 describe("auth route proxy", () => {
+  const authHandler = mock();
+
   beforeEach(() => {
     authHandler.mockReset();
   });
 
   const setupTestApp = () => {
     const app = new Hono<AppBindings>();
+    app.use(async (c, next) => {
+      c.set("auth", {
+        handler: authHandler,
+        api: {
+          getSession: mock(),
+        },
+      });
+      await next();
+    });
     app.route("/", indexRouter);
     return app;
   };

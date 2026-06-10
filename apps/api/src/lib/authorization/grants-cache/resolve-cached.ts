@@ -2,7 +2,7 @@ import type {
   EffectiveGrants,
   SchoolRepositories,
 } from "@edaya/core";
-import env from "@/lib/bootstrap/env-runtime";
+import type { Environment } from "@/lib/bootstrap/env";
 import {
   getEffectiveGrantsCacheStore,
   resetEffectiveGrantsCacheStore,
@@ -24,8 +24,8 @@ export interface ResolveCachedEffectiveGrantsArgs {
   ttlMs?: number;
 }
 
-export function resolveDefaultGrantsCacheTtlMs(): number {
-  return env.GRANTS_CACHE_TTL_MS ?? DEFAULT_TTL_MS;
+export function resolveGrantsCacheTtlMs(env?: Pick<Environment, "GRANTS_CACHE_TTL_MS">): number {
+  return env?.GRANTS_CACHE_TTL_MS ?? DEFAULT_TTL_MS;
 }
 
 export async function resolveCachedEffectiveGrants({
@@ -39,7 +39,7 @@ export async function resolveCachedEffectiveGrants({
   authenticatedAt,
   repositories,
   now = new Date(),
-  ttlMs = resolveDefaultGrantsCacheTtlMs(),
+  ttlMs = DEFAULT_TTL_MS,
 }: ResolveCachedEffectiveGrantsArgs): Promise<EffectiveGrants> {
   const finalActorId = actorId ?? staffMemberId;
   if (!finalActorId) {

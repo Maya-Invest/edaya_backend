@@ -27,8 +27,7 @@ const getAuthRoute = createAuthProxyRoute("get");
 const postAuthRoute = createAuthProxyRoute("post");
 
 const authRouteHandler: AppRouteHandler<typeof getAuthRoute> = async (c) => {
-  const { auth } = await import("@/lib/authentication/auth.config");
-  return auth.handler(c.req.raw);
+  return c.var.auth.handler(c.req.raw);
 };
 
 export { authRouteHandler, getAuthRoute, postAuthRoute };

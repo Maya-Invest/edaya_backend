@@ -6,6 +6,7 @@ import type { AppBindings } from "@/lib/http/types";
 import indexRouter from "@/app-router";
 
 const baseEnv = parseEnv({
+  RUNTIME: "node",
   NODE_ENV: "test",
   PORT: 9999,
   LOG_LEVEL: "silent",

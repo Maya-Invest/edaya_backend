@@ -1,42 +1,14 @@
-# sv
+# Maya School Webapp
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit staff UI for Maya School Core.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
+## Local development
 
 ```sh
-# create a new project
-npx sv create my-app
+cp .env.example .env   # from apps/webapp
+bun dev                # http://localhost:5173
 ```
 
-To recreate this project with the same configuration:
+Requires the API running at `API_URL` (default `http://localhost:9999`). From the repo root, `bun dev` starts both apps.
 
-```sh
-# recreate this project
-npx sv@0.15.4 create --template minimal --types ts --no-install sveltekit
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+See [docs/local-dev.md](../../docs/local-dev.md) for the full setup and how server-side API calls work.

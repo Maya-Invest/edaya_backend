@@ -1,0 +1,47 @@
+import type { Environment } from "@/lib/bootstrap/env";
+import { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import { PostgresAtomicExecution, PostgresSchoolRepositories } from "@edaya/adaptor-postgres";
+import { createRepositoryAuthorizationPolicy } from "@edaya/core";
+import { createAuth } from "@/lib/runtime/create-auth";
+import { createDatabase } from "@/lib/runtime/database";
+import type { ApiRuntime } from "@/lib/runtime/types";
+
+async function buildSchoolApplication(db: unknown): Promise<ApiSchoolApplication> {
+  const repos = new PostgresSchoolRepositories(db);
+  await repos.init();
+
+  const atomicExecution = new PostgresAtomicExecution(db);
+  return new ApiSchoolApplication({
+    atomicExecution,
+    repositories: repos,
+    authorizationPolicy: createRepositoryAuthorizationPolicy({
+      repositories: repos,
+      staffAssignmentRepository: repos.staffAssignments,
+      staffMemberRepository: repos.staffMembers,
+      guardianRepository: repos.guardians,
+      guardianStudentLinkRepository: repos.guardianLinks,
+      studentRepository: repos.students,
+    }),
+  });
+}
+
+export async function createApiRuntime(env: Environment): Promise<ApiRuntime> {
+  const { db, sqlClient } = await createDatabase(env);
+  let schoolApp: ApiSchoolApplication | null = null;
+  const auth = createAuth(db, env);
+
+  return {
+    env,
+    db,
+    sqlClient,
+    async getSchoolApplication() {
+      if (!schoolApp) {
+        schoolApp = await buildSchoolApplication(db);
+      }
+      return schoolApp;
+    },
+    getAuth() {
+      return auth;
+    },
+  };
+}

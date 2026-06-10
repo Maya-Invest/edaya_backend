@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsx watch src/entries/node.ts",
+    "dev:worker": "wrangler dev",
+    "seed": "tsx src/scripts/seed.ts",
     "start": "node dist/src/main.js",
     "check": "tsc --noEmit",
     "lint": "eslint src tests",
@@ -32,12 +34,14 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260610.0",
     "@types/node": "^22.15.17",
     "cross-env": "^7.0.3",
     "drizzle-kit": "^0.24.2",
     "eslint": "^9.26.0",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "wrangler": "^4.99.0"
   }
 }

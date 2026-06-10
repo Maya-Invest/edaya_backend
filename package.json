@@ -9,6 +9,8 @@
     "testing/*"
   ],
   "scripts": {
+    "dev": "turbo run dev",
+    "seed": "turbo run seed",
     "build": "turbo run build",
     "check": "turbo run check",
     "test": "turbo run test",

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const EnvSchema = z.object({
+  RUNTIME: z.enum(["node", "worker"]).default("node"),
   NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(9999),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
@@ -9,6 +10,8 @@ export const EnvSchema = z.object({
   BETTER_AUTH_URL: z.string().url().default("http://localhost:9999"),
   SYSTEM_ACTOR_SECRET: z.string().min(1).optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
+  /** When true, run dev seed on startup. When unset, seeds automatically in development with pglite/memory. */
+  SEED_ON_START: z.coerce.boolean().optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema>;
