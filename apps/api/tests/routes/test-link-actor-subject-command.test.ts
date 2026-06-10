@@ -63,16 +63,14 @@ describe("link-actor-subject command route", () => {
     const body = await response.json() as {
       kind: string;
       entity: {
-        data: {
-          id: string;
-          subjectId: string;
-        };
+        id: string;
+        subjectId: string;
       };
     };
 
     expect(body.kind).toBe("staff");
-    expect(body.entity.data.id).toBe(UNLINKED_STAFF_ID);
-    expect(body.entity.data.subjectId).toBe(subjectId);
+    expect(body.entity.id).toBe(UNLINKED_STAFF_ID);
+    expect(body.entity.subjectId).toBe(subjectId);
 
     const linkedStaff = await application.repositories.staffMembers.findById(UNLINKED_STAFF_ID);
     expect(linkedStaff?.subjectId).toBe(subjectId);

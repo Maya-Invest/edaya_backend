@@ -1,4 +1,5 @@
 import type { AppRouteHandler } from "@/lib/http/types";
+import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
@@ -27,7 +28,7 @@ const getAuthRoute = createAuthProxyRoute("get");
 const postAuthRoute = createAuthProxyRoute("post");
 
 const authRouteHandler: AppRouteHandler<typeof getAuthRoute> = async (c) => {
-  return c.var.auth.handler(c.req.raw);
+  return c.var.auth.handler(toBetterAuthHandlerRequest(c));
 };
 
 export { authRouteHandler, getAuthRoute, postAuthRoute };

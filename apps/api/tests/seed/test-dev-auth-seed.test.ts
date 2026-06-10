@@ -1,12 +1,12 @@
 import { parseEnv } from "@/lib/bootstrap/env";
-import { createApiRuntime } from "@/lib/runtime/create-runtime";
+import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { createDependenciesInjection } from "@/lib/http/middleware/dependencies";
 import { type AuthSessionProvider, createSessionActorDependency } from "@/lib/http/middleware/dependencies/session-actor";
 import { DEV_AUTH_PASSWORD } from "@/lib/seed/dataset";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
 import { Hono } from "hono";
-import { describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import type { AppBindings } from "@/lib/http/types";
 
 const pgliteEnv = parseEnv({
@@ -30,8 +30,12 @@ function collectSetCookieHeaders(response: Response): string[] {
 }
 
 describe("runDevAuthSeed", () => {
+  beforeEach(() => {
+    resetApiRuntimesForTests();
+  });
+
   it("links seeded staff and guardian accounts to Better Auth users", async () => {
-    const runtime = await createApiRuntime(pgliteEnv);
+    const runtime = await getApiRuntime(pgliteEnv);
     const application = await runtime.getSchoolApplication();
     const auth = runtime.getAuth();
 
@@ -98,7 +102,7 @@ describe("runDevAuthSeed", () => {
   }, 30_000);
 
   it("is idempotent when auth links already exist", async () => {
-    const runtime = await createApiRuntime(pgliteEnv);
+    const runtime = await getApiRuntime(pgliteEnv);
     const application = await runtime.getSchoolApplication();
     const auth = runtime.getAuth();
 

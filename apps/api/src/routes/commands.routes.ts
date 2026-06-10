@@ -8,6 +8,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import type { SchoolApiRoutePair } from "@/lib/school-api/routes/route-types";
 import { validatedJson } from "@/lib/school-api/routes/request-validation";
+import { serializeCommandResult } from "@/lib/school-api/serialize/command-result";
 
 export function buildCommandRoutes(): SchoolApiRoutePair[] {
   const pairs: SchoolApiRoutePair[] = [];
@@ -38,7 +39,10 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
 
       try {
         const result = await dispatchCoreCommand(service, commandConfig.methodName, payload);
-        return c.json(result ?? { message: `${commandConfig.publicName} completed` }, HttpStatusCodes.OK);
+        if (result === undefined || result === null) {
+          return c.json({ message: `${commandConfig.publicName} completed` }, HttpStatusCodes.OK);
+        }
+        return c.json(serializeCommandResult(result) as Record<string, unknown>, HttpStatusCodes.OK);
       }
       catch (err) {
         return routeErrorResponse(c, err);

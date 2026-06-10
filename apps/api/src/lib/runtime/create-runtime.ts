@@ -30,7 +30,8 @@ async function buildSchoolApplication(db: PostgresTransactionalDb, databaseUrl: 
   });
 }
 
-export async function createApiRuntime(env: Environment): Promise<ApiRuntime> {
+/** Use {@link getApiRuntime} so callers share the cached runtime. */
+export async function buildApiRuntime(env: Environment): Promise<ApiRuntime> {
   const { db, sqlClient } = await createDatabase(env);
   await runAuthMigrations(db, { driver: resolveMigrationDriver(env.DATABASE_URL) });
   let schoolApp: ApiSchoolApplication | null = null;

@@ -4,7 +4,9 @@ Tracked follow-up work across the monorepo. Check items off as they ship.
 
 ---
 
-## 1. Better Auth — production hardening
+## Production Readiness
+
+### 1. Better Auth — production hardening
 
 Deferred until deploying auth to production or exposing the API to external clients. See [better-auth-integration-plan.md](docs/better-auth-integration-plan.md) (Phase 5).
 

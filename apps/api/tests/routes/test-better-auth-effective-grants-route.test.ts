@@ -41,7 +41,8 @@ describe("better auth effective grants route", () => {
 
     expect(body.kind).toBe("staff");
     expect(body.actorId).toBe("st5");
-    expect(body.schoolId).toBe(staff?.schoolId);
+    expect(staff?.schoolId).toBeTruthy();
+    expect(body.schoolId).toBe(staff!.schoolId);
     expect(body.assuranceLevel).toBe("standard");
     expect(Array.isArray(body.effectiveGrants.permissions)).toBe(true);
     expect(Array.isArray(body.effectiveGrants.scopeGrants)).toBe(true);
