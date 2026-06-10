@@ -95,7 +95,7 @@
         "@types/bun": "^1.3.14",
       },
     },
-    "packages/integration-tests": {
+    "testing/integration-tests": {
       "name": "@edaya/integration-tests",
       "devDependencies": {
         "@edaya/adaptor-postgres": "workspace:*",
@@ -103,6 +103,9 @@
         "@types/bun": "^1.3.14",
       },
     },
+  },
+  "overrides": {
+    "svelte": "5.56.3",
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
@@ -171,7 +174,7 @@
 
     "@edaya/core": ["@edaya/core@workspace:packages/core"],
 
-    "@edaya/integration-tests": ["@edaya/integration-tests@workspace:packages/integration-tests"],
+    "@edaya/integration-tests": ["@edaya/integration-tests@workspace:testing/integration-tests"],
 
     "@edaya/webapp": ["@edaya/webapp@workspace:apps/webapp"],
 

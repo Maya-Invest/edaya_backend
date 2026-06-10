@@ -8,10 +8,10 @@
 		$props();
 
 	const collapsible = $derived(items.length > 1);
-	let open = $state(true);
+	let open = $state(!collapsible);
 	const graded = $derived(items.filter((it) => it.mark !== null));
 
-	$effect.pre(() => {
+	$effect(() => {
 		open = !collapsible;
 	});
 </script>

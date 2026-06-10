@@ -9,11 +9,7 @@
 
 	let { s }: { s: StaffMember } = $props();
 
-	let role = $state<StaffRole>('directeur');
-
-	$effect.pre(() => {
-		role = s.role;
-	});
+	let role = $state<StaffRole>(s.role);
 
 	const roles: StaffRole[] = ['directeur', 'prof_principal', 'professeur', 'educateur'];
 </script>

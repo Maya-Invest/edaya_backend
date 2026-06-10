@@ -9,13 +9,8 @@
 
 	let { ev }: { ev: SchoolYearEvent } = $props();
 
-	let scoped = $state(false);
-	let selectedClasses = $state<string[]>([]);
-
-	$effect.pre(() => {
-		scoped = ev.scope !== 'all';
-		selectedClasses = ev.scope === 'all' ? [] : [...ev.scope];
-	});
+	let scoped = $state(ev.scope !== 'all');
+	let selectedClasses = $state<string[]>(ev.scope === 'all' ? [] : [...ev.scope]);
 
 	const calTypeKey: Record<SchoolYearEvent['type'], string> = {
 		holiday: 'calType.holiday',

@@ -11,6 +11,7 @@
 		Plus,
 		Search,
 	} from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { cn } from '$lib/utils';
@@ -61,6 +62,28 @@
 
 	const editable = canEditGrades();
 </script>
+
+{#snippet panel(title: string, subtitle: string | undefined, action: Snippet | undefined, children: Snippet)}
+	<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
+		<header class="mb-3 flex items-start justify-between gap-3">
+			<div>
+				<h3 class="font-display text-base font-semibold">{title}</h3>
+				{#if subtitle}
+					<p
+						class="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+					>
+						<ShieldCheck class="h-3 w-3" />
+						{subtitle}
+					</p>
+				{/if}
+			</div>
+			{#if action}
+				{@render action()}
+			{/if}
+		</header>
+		{@render children()}
+	</section>
+{/snippet}
 
 <div class="animate-fade-in space-y-6">
 	<div
@@ -192,44 +215,13 @@
 
 	{#if tab === 'schoollife'}
 		<div class="grid gap-4 lg:grid-cols-2">
-			<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
-				<header class="mb-3 flex items-start justify-between gap-3">
-					<div>
-						<h3 class="font-display text-base font-semibold">{$t('educator.absences')}</h3>
-						<p
-							class="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-						>
-							<ShieldCheck class="h-3 w-3" />
-							{$t('educator.fullAccess')}
-						</p>
-					</div>
-					<Button size="sm" class="rounded-full">
-						<Plus class="mr-1 h-3.5 w-3.5" />
-						{$t('educator.logAbsence')}
-					</Button>
-				</header>
-				{@render absencesList()}
-			</section>
-			<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
-				<header class="mb-3 flex items-start justify-between gap-3">
-					<div>
-						<h3 class="font-display text-base font-semibold">
-							{$t('educator.discipline')} & {$t('educator.lateness')}
-						</h3>
-						<p
-							class="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-						>
-							<ShieldCheck class="h-3 w-3" />
-							{$t('educator.fullAccess')}
-						</p>
-					</div>
-					<Button size="sm" class="rounded-full">
-						<Plus class="mr-1 h-3.5 w-3.5" />
-						{$t('educator.logIncident')}
-					</Button>
-				</header>
-				{@render incidentsList()}
-			</section>
+			{@render panel($t('educator.absences'), $t('educator.fullAccess'), absencesAction, absencesList)}
+			{@render panel(
+				`${$t('educator.discipline')} & ${$t('educator.lateness')}`,
+				$t('educator.fullAccess'),
+				incidentsAction,
+				incidentsList
+			)}
 		</div>
 	{:else}
 		<div class="space-y-4">
@@ -318,6 +310,20 @@
 		</div>
 	{/if}
 </div>
+
+{#snippet absencesAction()}
+	<Button size="sm" class="rounded-full">
+		<Plus class="mr-1 h-3.5 w-3.5" />
+		{$t('educator.logAbsence')}
+	</Button>
+{/snippet}
+
+{#snippet incidentsAction()}
+	<Button size="sm" class="rounded-full">
+		<Plus class="mr-1 h-3.5 w-3.5" />
+		{$t('educator.logIncident')}
+	</Button>
+{/snippet}
 
 {#snippet absencesList()}
 	<ul class="divide-y divide-border">

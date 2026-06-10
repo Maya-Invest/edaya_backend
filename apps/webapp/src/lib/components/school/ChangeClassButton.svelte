@@ -10,11 +10,7 @@
 	let { s }: { s: Student } = $props();
 
 	let open = $state(false);
-	let target = $state('');
-
-	$effect.pre(() => {
-		target = s.classId;
-	});
+	let target = $state(s.classId);
 
 	const currentClass = $derived(classes.find((c) => c.id === s.classId));
 	const targetClass = $derived(classes.find((c) => c.id === target));

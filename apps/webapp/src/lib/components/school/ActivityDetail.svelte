@@ -15,15 +15,11 @@
 
 	let { a }: { a: Activity } = $props();
 
-	let enrollments = $state<ActivityEnrollment[]>([]);
+	let enrollments = $state<ActivityEnrollment[]>([...a.enrollments]);
 	let openAdd = $state(false);
 	let expandedLevels = $state<Set<string>>(new Set(hierarchy.map((g) => g.level)));
 	let selectedClassId = $state<string | null>(hierarchy[0]?.classes[0]?.id ?? null);
 	let search = $state('');
-
-	$effect.pre(() => {
-		enrollments = [...a.enrollments];
-	});
 
 	const enrolledIds = $derived(new Set(enrollments.map((e) => e.studentId)));
 
