@@ -10,7 +10,10 @@
     }
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
+    "lint": "eslint src --ignore-pattern src/generated/**",
+    "lint:fix": "eslint src --ignore-pattern src/generated/** --fix"
   },
   "devDependencies": {
     "typescript": "^6.0.2"

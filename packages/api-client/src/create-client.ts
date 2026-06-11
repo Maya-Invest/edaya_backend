@@ -1,9 +1,9 @@
-import { clientBindings } from './generated/client-bindings.ts'
-import { EntityResource } from './entity-resource.ts'
 import type { Transport } from './transport.ts'
+import { EntityResource } from './entity-resource.ts'
+import { clientBindings } from './generated/client-bindings.ts'
 
-type SchemaName<TSchemas extends Record<string, unknown>, TName extends string> =
-  TName extends keyof TSchemas ? TSchemas[TName] : never
+type SchemaName<TSchemas extends Record<string, unknown>, TName extends string>
+  = TName extends keyof TSchemas ? TSchemas[TName] : never
 
 type EntityClients<TSchemas extends Record<string, unknown>> = {
   [K in keyof typeof clientBindings.entities]: EntityResource<

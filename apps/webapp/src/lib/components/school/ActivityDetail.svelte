@@ -15,7 +15,7 @@
 
 	const { a }: { a: Activity } = $props();
 
-	let enrollments = $state([...a.enrollments]);
+	let enrollments = $derived([...a.enrollments]);
 	let openAdd = $state(false);
 	let expandedLevels = $state(hierarchy.map(g => g.level));
 	let selectedClassId = $state<string | null>(hierarchy[0]?.classes[0]?.id ?? null);

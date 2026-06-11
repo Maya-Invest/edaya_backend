@@ -13,7 +13,8 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean --tsconfig tsconfig.build.json",
-    "check": "npx tsc --noEmit",
+    "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

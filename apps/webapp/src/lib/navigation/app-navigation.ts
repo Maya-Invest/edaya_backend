@@ -10,11 +10,21 @@ export function appGoto(href: ResolvedPathname, opts?: AppGotoOptions) {
 	return kitGoto(href, opts);
 }
 
+const resolvePath = resolve as (
+	route: RouteId,
+	params?: Record<string, string | undefined>,
+) => ResolvedPathname;
+
+export function appPath(route: RouteId): ResolvedPathname;
+export function appPath(
+	route: RouteId,
+	params: Record<string, string | undefined>,
+): ResolvedPathname;
 export function appPath(
 	route: RouteId,
 	params?: Record<string, string | undefined>,
 ): ResolvedPathname {
-	return resolve(route, params as never) as ResolvedPathname;
+	return params === undefined ? resolvePath(route) : resolvePath(route, params);
 }
 
 const CLASS_SEGMENTS: Record<string, RouteId> = {

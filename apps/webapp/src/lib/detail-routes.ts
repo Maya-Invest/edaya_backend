@@ -69,70 +69,70 @@ const matchers: Matcher[] = [
 		test: p => p.match(/^\/school\/students\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const s = students.find(x => x.id === m[1]);
-			return s ? { item: { kind: 'student', data: s }, listPath: appPath('/school/students') } : null;
+			return s ? { item: { kind: 'student', data: s }, listPath: appPath('/(app)/school/students/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/guardians\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const g = guardians.find(x => x.id === m[1]);
-			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/school/guardians') } : null;
+			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/(app)/school/guardians/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/activities\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const a = activities.find(x => x.id === m[1]);
-			return a ? { item: { kind: 'activity', data: a }, listPath: appPath('/school/activities') } : null;
+			return a ? { item: { kind: 'activity', data: a }, listPath: appPath('/(app)/school/activities/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/events\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const i = incidents.find(x => x.id === m[1]);
-			return i ? { item: { kind: 'incident', data: i }, listPath: appPath('/school/events') } : null;
+			return i ? { item: { kind: 'incident', data: i }, listPath: appPath('/(app)/school/events/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/calendar\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const ev = schoolYearEvents.find(x => x.id === m[1]);
-			return ev ? { item: { kind: 'schoolYearEvent', data: ev }, listPath: appPath('/school/calendar') } : null;
+			return ev ? { item: { kind: 'schoolYearEvent', data: ev }, listPath: appPath('/(app)/school/calendar/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/students\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const s = students.find(x => x.id === m[2]);
-			return s ? { item: { kind: 'student', data: s }, listPath: appPath('/classes/[classId]/students/[[id]]', { classId: m[1] }) } : null;
+			return s ? { item: { kind: 'student', data: s }, listPath: appPath('/(app)/classes/[classId]/students/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/subjects\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const s = subjects.find(x => x.id === m[2]);
-			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/classes/[classId]/subjects/[[id]]', { classId: m[1] }) } : null;
+			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/classes/[classId]/subjects/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/timetable\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const ev = planning.find(x => x.id === m[2]);
-			return ev ? { item: { kind: 'planning', data: ev }, listPath: appPath('/classes/[classId]/timetable/[[id]]', { classId: m[1] }) } : null;
+			return ev ? { item: { kind: 'planning', data: ev }, listPath: appPath('/(app)/classes/[classId]/timetable/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/evaluations\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const ev = evaluations.find(x => x.id === m[2]);
-			return ev ? { item: { kind: 'evaluation', data: ev }, listPath: appPath('/classes/[classId]/evaluations/[[id]]', { classId: m[1] }) } : null;
+			return ev ? { item: { kind: 'evaluation', data: ev }, listPath: appPath('/(app)/classes/[classId]/evaluations/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/teaching\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const s = subjects.find(x => x.id === m[2]);
-			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/classes/[classId]/teaching/[[id]]', { classId: m[1] }) } : null;
+			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/classes/[classId]/teaching/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
@@ -140,14 +140,14 @@ const matchers: Matcher[] = [
 		parse: (m) => {
 			const label = decodeURIComponent(m[1]);
 			const group = getSubjectLevelGroup(label);
-			return group ? { item: { kind: 'level', data: group }, listPath: appPath('/configuration/subjects') } : null;
+			return group ? { item: { kind: 'level', data: group }, listPath: appPath('/(app)/configuration/subjects/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/configuration\/subjects\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const s = subjects.find(x => x.id === m[1]);
-			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/configuration/subjects') } : null;
+			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/configuration/subjects/[[id]]') } : null;
 		},
 	},
 	{
@@ -156,10 +156,10 @@ const matchers: Matcher[] = [
 			const id = m[1];
 			if (id.startsWith('st')) {
 				const s = staff.find(x => x.id === id);
-				return s ? { item: { kind: 'staff', data: s }, listPath: appPath('/configuration/staff') } : null;
+				return s ? { item: { kind: 'staff', data: s }, listPath: appPath('/(app)/configuration/staff/[[id]]') } : null;
 			}
 			const g = guardians.find(x => x.id === id);
-			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/configuration/staff') } : null;
+			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/(app)/configuration/staff/[[id]]') } : null;
 		},
 	},
 	{
@@ -168,21 +168,21 @@ const matchers: Matcher[] = [
 			const role = m[1] as StaffRole;
 			if (!STAFF_ROLES.has(role))
 				return null;
-			return { item: { kind: 'role', data: { role } }, listPath: appPath('/configuration/roles') };
+			return { item: { kind: 'role', data: { role } }, listPath: appPath('/(app)/configuration/roles/[[role]]') };
 		},
 	},
 	{
 		test: p => p.match(/^\/finance\/billing\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const b = billing.find(x => x.id === m[1]);
-			return b ? { item: { kind: 'billing', data: b }, listPath: appPath('/finance/billing') } : null;
+			return b ? { item: { kind: 'billing', data: b }, listPath: appPath('/(app)/finance/billing/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/finance\/fees\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const f = fees.find(x => x.id === m[1]);
-			return f ? { item: { kind: 'fee', data: f }, listPath: appPath('/finance/fees') } : null;
+			return f ? { item: { kind: 'fee', data: f }, listPath: appPath('/(app)/finance/fees/[[id]]') } : null;
 		},
 	},
 	{
@@ -190,7 +190,7 @@ const matchers: Matcher[] = [
 		parse: (m) => {
 			const d = getRuntimeReportCardDefinitions().find(x => x.id === m[1]);
 			return d
-				? { item: { kind: 'reportCardDefinition', data: d }, listPath: appPath('/configuration/report-cards') }
+				? { item: { kind: 'reportCardDefinition', data: d }, listPath: appPath('/(app)/configuration/report-cards/[[id]]') }
 				: null;
 		},
 	},
@@ -201,7 +201,7 @@ const matchers: Matcher[] = [
 			return r
 				? {
 						item: { kind: 'reportCardResult', data: r },
-						listPath: appPath('/classes/[classId]/report-cards/[[id]]', { classId: m[1] }),
+						listPath: appPath('/(app)/classes/[classId]/report-cards/[[id]]', { classId: m[1] }),
 					}
 				: null;
 		},

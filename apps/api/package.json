@@ -9,6 +9,7 @@
     "seed": "tsx src/scripts/seed.ts",
     "start": "node dist/src/main.js",
     "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "test": "cross-env NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",

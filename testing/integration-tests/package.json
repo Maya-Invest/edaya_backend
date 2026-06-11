@@ -3,7 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "check": "npx tsc --noEmit",
+    "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
     "test": "bun test",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
