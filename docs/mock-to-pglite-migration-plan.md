@@ -12,12 +12,12 @@ Transférer les données de démo du front (`apps/webapp/src/lib/data/`) vers la
 
 | Indicateur | Valeur |
 |------------|--------|
-| **Progression globale** | **7 / 16 domaines** complets · **~44 %** |
-| **Prochaine étape** | PR 3 — Finance (phases 3a–3c) |
+| **Progression globale** | **8 / 16 domaines** complets · **~50 %** |
+| **Prochaine étape** | PR 4 — Planning (phase 4) |
 | **Bloquant webapp** | Finance, planning, évaluations, vie scolaire, bulletins (voir [plan webapp](./webapp-mock-migration-plan.md)) |
 
 ```
-[█████████░░░░░░░░░░░]  7/16 domaines
+[██████████░░░░░░░░░░]  8/16 domaines
  Fait ──►              Reste
 ```
 
@@ -50,9 +50,9 @@ Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de
 | 1b | Tuteurs + liens | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 1c | Staff (st1–st7, rôles, affectations) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 | Matières + programme + offerings classe 6a | ✅ | ✅ | ✅ | ✅ | 🟡 |
-| 3a | Catalogue frais | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3b | Facturation élève (`student-fees`) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3c | Paiements | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3a | Catalogue frais | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3b | Facturation élève (`student-fees`) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3c | Paiements | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 | Ressources + emploi du temps + sessions | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 5 | Évaluations + résultats | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 6a | Calendrier scolaire | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -95,6 +95,12 @@ Résumé consolidé — le détail historique est dans le tracker ci-dessus.
 - Décision **C2** : les libellés trimestre du mock restent dans `academic-periods`, pas dans `period-definitions`
 - Test : `period-definitions/list` ≥ 11
 
+### Finance (phases 3a–3c)
+
+- 6 frais catalogue (`f1`–`f6`), 6 factures élèves (`b1`–`b6`, s1–s6), 13 paiements
+- `billing[]` mock s9/s10 exclus (élèves non seedés)
+- Test : `fees/list` ≥ 6, `student-fees/list` ≥ 6, `payments/list` ≥ 13
+
 ### Personnes (phase 1)
 
 - 8 élèves (`s1`–`s8`), 6 tuteurs, 7 staff (`st1`–`st7`, dont st4 Cheng et st6 Klein)
@@ -125,7 +131,7 @@ Résumé consolidé — le détail historique est dans le tracker ci-dessus.
 
 ### Constantes seed existantes (`dataset.ts`)
 
-`SEED_SCHOOL_*`, `SEED_GRADE_LEVELS`, `SEED_CLASSES`, `SEED_ACADEMIC_PERIODS`, `SEED_PERIOD_DEFINITIONS`, `SEED_STAFF`, `SEED_STUDENTS`, `SEED_GUARDIANS`, `SEED_SUBJECT_CATALOG`, `SEED_SUBJECT_MATTERS`, `SEED_CLASS_SUBJECTS`, `DEV_AUTH_*`
+`SEED_SCHOOL_*`, `SEED_GRADE_LEVELS`, `SEED_CLASSES`, `SEED_ACADEMIC_PERIODS`, `SEED_PERIOD_DEFINITIONS`, `SEED_FEES`, `SEED_STUDENT_FEES`, `SEED_PAYMENTS`, `SEED_STAFF`, `SEED_STUDENTS`, `SEED_GUARDIANS`, `SEED_SUBJECT_CATALOG`, `SEED_SUBJECT_MATTERS`, `SEED_CLASS_SUBJECTS`, `DEV_AUTH_*`
 
 ---
 
@@ -140,13 +146,13 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 - [x] Permissions (`QUERY_WORKSPACE_READ` via shell) + test `period-definitions/list`
 - [ ] (Optionnel) Deuxième école mock `sch-edaya-nord`
 
-### PR 3 — Finance (phases 3a–3c)
+### PR 3 — Finance (phases 3a–3c) ✅
 
-- [ ] `SEED_FEES` ← `fees[]` + `createFee`
-- [ ] `SEED_STUDENT_FEES` ← `billing[]` + `assignFeeToStudent`
-- [ ] `SEED_PAYMENTS` ← lignes payées + `recordPayment`
-- [ ] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS` dans access seed
-- [ ] Tests : `fees/list`, `student-fees/list`, `payments/list`
+- [x] `SEED_FEES` ← `fees[]` + `createFee`
+- [x] `SEED_STUDENT_FEES` ← `billing[]` (s1–s6) + `assignFeeToStudent`
+- [x] `SEED_PAYMENTS` ← échéances payées + `recordPayment`
+- [x] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS` dans access seed (rôle directeur)
+- [x] Tests : `fees/list`, `student-fees/list`, `payments/list`
 
 ### PR 4 — Planning (phase 4)
 
@@ -207,19 +213,6 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 ## Détails par phase (phases ouvertes uniquement)
 
 ---
-
-### Phase 3 — Finance ⬜
-
-**Source mock :** `school.ts` — `fees[]`, `billing[]`  
-**Commandes :** `createFee`, `assignFeeToStudent`, `recordPayment`
-
-| Sous-domaine | Entité API | Mock |
-|--------------|------------|------|
-| Catalogue | `fees` | `fees[]` |
-| Facturation | `student-fees` | `billing[]` |
-| Paiements | `payments` | lignes statut payé |
-
-**Écrans débloqués :** `/finance/fees`, `/finance/billing`, `/finance/payment`
 
 ---
 
@@ -282,7 +275,7 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 **Groupes permissions à créer au fil des PRs**
 
-- [ ] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS`
+- [x] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS`
 - [ ] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
 - [ ] `DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS`
 - [ ] `DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS`
@@ -371,11 +364,11 @@ school.ts (mock)          testing/dev-fixtures/dataset.ts
 
 | Métrique | Actuel | Cible |
 |----------|--------|-------|
-| Domaines seed complets | 7 / 16 | 16 / 16 |
-| Constantes `SEED_*` | 12 | ~25 |
+| Domaines seed complets | 8 / 16 | 16 / 16 |
+| Constantes `SEED_*` | 15 | ~25 |
 | Couverture mock `school.ts` | ~40 % | 100 % (hors UI-only) |
-| Tests seed (assertions list) | 4 scénarios | 1 par domaine |
-| Groupes permissions dev | 3 | ~8 |
+| Tests seed (assertions list) | 5 scénarios | 1 par domaine |
+| Groupes permissions dev | 4 | ~8 |
 
 ### Docs & fichiers
 

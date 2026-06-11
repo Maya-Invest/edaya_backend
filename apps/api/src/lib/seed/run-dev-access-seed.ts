@@ -37,6 +37,12 @@ const DEV_WEBAPP_STAFF_ADMIN_READ_PERMISSIONS = [
   Permission.STAFF_READ,
 ] as const;
 
+/** Entity list endpoints used by finance pages (`/finance/fees`, billing, payments). */
+const DEV_WEBAPP_FINANCE_READ_PERMISSIONS = [
+  Permission.FINANCIAL_CONFIG_READ,
+  Permission.PAYMENT_READ,
+] as const;
+
 const EDUCATOR_PERMISSIONS = [
   Permission.DISCIPLINE_READ,
   Permission.DISCIPLINE_CREATE,
@@ -106,6 +112,7 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
       DEV_WEBAPP_SHELL_READ_PERMISSIONS,
       DEV_WEBAPP_PEOPLE_READ_PERMISSIONS,
       DEV_WEBAPP_STAFF_ADMIN_READ_PERMISSIONS,
+      DEV_WEBAPP_FINANCE_READ_PERMISSIONS,
     ),
   }));
 

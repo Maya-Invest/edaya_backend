@@ -5,7 +5,12 @@ import {
   SEED_ACADEMIC_YEAR_ID,
   SEED_CLASS_SUBJECTS,
   SEED_CLASSES,
+  SEED_CURRENCY,
+  SEED_FEES,
+  SEED_FINANCE_REFERENCE_DATE,
   SEED_GRADE_LEVELS,
+  SEED_PAYMENTS,
+  SEED_STUDENT_FEES,
   SEED_GUARDIANS,
   SEED_PERIOD_DEFINITIONS,
   SEED_SCHOOL_ID,
@@ -19,7 +24,9 @@ import {
 import {
   AcademicPeriodType,
   createSystemActorMetadata,
+  FeeCategory,
   GradeLevel,
+  PaymentMethod,
   PeriodDefinition,
   Subject,
   SubjectMatter,
@@ -40,6 +47,9 @@ export type DevSeedResult =
     subjects: number;
     classSubjects: number;
     periodDefinitions: number;
+    fees: number;
+    studentFees: number;
+    payments: number;
   };
 
 export async function runDevSeed(application: ApiSchoolApplication): Promise<DevSeedResult> {
@@ -209,6 +219,47 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     });
   }
 
+  const financeReferenceDate = parseSeedDate(SEED_FINANCE_REFERENCE_DATE);
+
+  for (const fee of SEED_FEES) {
+    await service.createFee({
+      id: fee.id,
+      schoolId: SEED_SCHOOL_ID,
+      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      name: fee.name,
+      category: fee.category as FeeCategory,
+      defaultAmount: fee.defaultAmount,
+      currency: SEED_CURRENCY,
+      installments: fee.installments.map(installment => ({
+        label: installment.label,
+        percentage: installment.percentage,
+        dueDate: installment.dueDate ? parseSeedDate(installment.dueDate) : undefined,
+      })),
+    });
+  }
+
+  for (const studentFee of SEED_STUDENT_FEES) {
+    await service.assignFeeToStudent({
+      id: studentFee.id,
+      studentId: studentFee.studentId,
+      feeId: studentFee.feeId,
+      expectedAmount: studentFee.total,
+      dueDate: parseSeedDate(studentFee.dueDate),
+      referenceDate: financeReferenceDate,
+    });
+  }
+
+  for (const payment of SEED_PAYMENTS) {
+    await service.recordPayment({
+      id: payment.id,
+      studentFeeId: payment.studentFeeId,
+      amount: payment.amount,
+      paymentDate: parseSeedDate(payment.paymentDate),
+      method: PaymentMethod.BankTransfer,
+      referenceDate: financeReferenceDate,
+    });
+  }
+
   return {
     status: "seeded",
     schoolId: SEED_SCHOOL_ID,
@@ -222,5 +273,8 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     subjects: SEED_SUBJECT_CATALOG.length,
     classSubjects: SEED_CLASS_SUBJECTS.length,
     periodDefinitions: SEED_PERIOD_DEFINITIONS.length,
+    fees: SEED_FEES.length,
+    studentFees: SEED_STUDENT_FEES.length,
+    payments: SEED_PAYMENTS.length,
   };
 }
