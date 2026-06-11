@@ -1,3 +1,4 @@
+import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
 import { PGlite } from "@electric-sql/pglite";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
@@ -44,7 +45,7 @@ describe("createAuth", () => {
       },
       body: JSON.stringify({
         email: "teacher@school.edu",
-        password: "DevPassword1!",
+        password: DEV_AUTH_PASSWORD,
         name: "Teacher User",
       }),
     }));
@@ -80,7 +81,7 @@ describe("createAuth", () => {
       },
       body: JSON.stringify({
         email: "existing@school.edu",
-        password: "DevPassword1!",
+        password: DEV_AUTH_PASSWORD,
         name: "Existing User",
       }),
     }));
@@ -92,7 +93,7 @@ describe("createAuth", () => {
       },
       body: JSON.stringify({
         email: "existing@school.edu",
-        password: "DevPassword1!",
+        password: DEV_AUTH_PASSWORD,
       }),
     }));
 

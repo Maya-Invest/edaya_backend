@@ -5,6 +5,14 @@
 
 export const SEED_SCHOOL_ID = 'sch-edaya-central'
 
+export const SEED_SCHOOL_PROFILE = {
+  id: SEED_SCHOOL_ID,
+  name: 'EDAYA — Campus Central',
+  timeZone: 'Europe/Paris',
+  city: 'Paris',
+  country: 'FR',
+} as const
+
 export const SEED_ACADEMIC_YEAR_ID = '2025'
 
 export const SEED_GRADE_LEVELS = [
@@ -182,6 +190,15 @@ export const DEV_AUTH_STAFF_ACCOUNTS = [
 export const DEV_AUTH_GUARDIAN_ACCOUNTS = [
   { guardianId: 'g1', email: 'c.laurent@mail.com', name: 'Claire Laurent' },
 ] as const
+
+/** Primary staff fixture for Better Auth integration tests. */
+export const MINIMAL_AUTH_FIXTURE_STAFF_ID = DEV_AUTH_STAFF_ACCOUNTS[0].staffId
+
+/** Primary staff email for Better Auth integration tests. */
+export const MINIMAL_AUTH_FIXTURE_STAFF_EMAIL = DEV_AUTH_STAFF_ACCOUNTS[0].email
+
+/** Primary guardian fixture for Better Auth integration tests. */
+export const MINIMAL_AUTH_FIXTURE_GUARDIAN_ID = DEV_AUTH_GUARDIAN_ACCOUNTS[0].guardianId
 
 export const SEED_ACADEMIC_PERIODS = [
   { id: '2025-t1', name: 'Trimestre 1', startDate: '2025-09-01', endDate: '2025-12-19' },

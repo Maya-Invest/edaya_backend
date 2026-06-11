@@ -15,6 +15,9 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
   },
+  "dependencies": {
+    "@edaya/core": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^6.0.2"
   }

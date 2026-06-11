@@ -69,7 +69,7 @@ With `DATABASE_URL=pglite`, the API **auto-seeds on startup** in development (sc
 | `bun seed` (repo root) | Run seed manually |
 | `cd apps/api && bun run seed` | Same, API package only |
 
-Fixture data lives in `packages/dev-fixtures/`. Seed orchestration stays in `apps/api/src/lib/seed/`. Extend the fixtures package and `run-dev-seed.ts` as you connect more pages to the API.
+Fixture data lives in `testing/dev-fixtures/`. API seed orchestration stays in `apps/api/src/lib/seed/`. Extend the fixtures package and `run-dev-seed.ts` as you connect more pages to the API.
 
 | Env | Behavior |
 |-----|----------|

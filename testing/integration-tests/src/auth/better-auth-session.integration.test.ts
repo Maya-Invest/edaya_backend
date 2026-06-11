@@ -1,4 +1,11 @@
 import { Guardian, StaffMember } from '@edaya/core'
+import {
+  DEV_AUTH_PASSWORD,
+  MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
+  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  seedMinimalSchoolFixtures,
+} from '@edaya/dev-fixtures'
 import { afterEach, describe, expect, it } from 'bun:test'
 import {
   collectSetCookieHeaders,
@@ -6,12 +13,10 @@ import {
   countAuthTableRows,
   createAuthIntegrationContext,
   createSessionActorApp,
-  DEV_AUTH_PASSWORD,
   ensureAuthUser,
   findUserByEmail,
   linkStaffMemberToAuthUser,
   mountEffectiveGrantsRoute,
-  seedMinimalSchoolFixtures,
   signInEmail,
   signUpEmail,
 } from './support/better-auth-harness'
@@ -79,19 +84,19 @@ describe('Better Auth session integration', () => {
 
     await seedMinimalSchoolFixtures(application)
     const subjectId = await ensureAuthUser(auth, env, db, {
-      email: 'c.moreau@school.edu',
+      email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       password: DEV_AUTH_PASSWORD,
       name: 'Camille Moreau',
     })
-    await linkStaffMemberToAuthUser(application, 'st5', subjectId)
+    await linkStaffMemberToAuthUser(application, MINIMAL_AUTH_FIXTURE_STAFF_ID, subjectId)
 
     const signInResponse = await signInEmail(auth, env, {
-      email: 'c.moreau@school.edu',
+      email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       password: DEV_AUTH_PASSWORD,
     })
 
     const cookies = collectSetCookieHeaders(signInResponse)
-    const staff = await application.repositories.staffMembers.findById('st5')
+    const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
     const app = createSessionActorApp(application, auth)
     app.get('/actor', c => c.json({ actor: c.get('actor') }))
@@ -113,7 +118,7 @@ describe('Better Auth session integration', () => {
     }
 
     expect(body.actor?.kind).toBe('staff')
-    expect(body.actor?.staffMemberId).toBe('st5')
+    expect(body.actor?.staffMemberId).toBe(MINIMAL_AUTH_FIXTURE_STAFF_ID)
     expect(body.actor?.subjectId).toBe(staff?.subjectId)
   }, 30_000)
 
@@ -156,8 +161,8 @@ describe('Better Auth session integration', () => {
     const user = await findUserByEmail(db, 'ambiguous@school.edu')
     expect(user).toBeTruthy()
 
-    const staff = await application.repositories.staffMembers.findById('st5')
-    const guardian = await application.repositories.guardians.findById('g1')
+    const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID)
+    const guardian = await application.repositories.guardians.findById(MINIMAL_AUTH_FIXTURE_GUARDIAN_ID)
     expect(staff).toBeTruthy()
     expect(guardian).toBeTruthy()
 

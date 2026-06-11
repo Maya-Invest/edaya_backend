@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
-import { SEED_SCHOOL_ID } from "@edaya/dev-fixtures";
+import {
+  DEV_AUTH_STAFF_ACCOUNTS,
+  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  SEED_SCHOOL_ID,
+} from "@edaya/dev-fixtures";
 import { createSystemActorMetadata } from "@edaya/core";
 import {
   createAppRequest,
@@ -21,7 +26,7 @@ describe("link-actor-subject command route", () => {
   it("links a staff member to a Better Auth subject through the command route", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
-    await grantAccessControlAssign(application, "st5");
+    await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID);
 
     const systemActor = createSystemActorMetadata({
       systemId: "link-actor-subject-test",
@@ -44,7 +49,7 @@ describe("link-actor-subject command route", () => {
       name: "Paul Martin",
     });
 
-    const cookies = await signInThroughApp(app, { email: "c.moreau@school.edu" });
+    const cookies = await signInThroughApp(app, { email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL });
 
     const response = await app.request(createAppRequest("/api/core/commands/link-actor-subject", {
       method: "POST",
@@ -87,7 +92,7 @@ describe("link-actor-subject command route", () => {
       },
       body: JSON.stringify({
         subjectId: "auth-user-unauthenticated",
-        staffMemberId: "st1",
+        staffMemberId: DEV_AUTH_STAFF_ACCOUNTS[1].staffId,
       }),
     }));
 
