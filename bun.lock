@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "maya_school_core",
+      "name": "edaya_core",
       "devDependencies": {
         "@antfu/eslint-config": "^9.0.0",
         "@types/node": "^25.9.1",

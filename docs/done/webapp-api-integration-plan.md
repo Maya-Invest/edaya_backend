@@ -137,7 +137,7 @@ const config = {
 };
 ```
 
-### Four flavours → Maya API mapping
+### Four flavours → Edaya API mapping
 
 | Remote flavour | Use in Edaya webapp | Maps to `apps/api` |
 |----------------|---------------------|---------------------|

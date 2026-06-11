@@ -13,7 +13,7 @@ describe('Setup owner workflow', () => {
 
     await app.registerSchool({
       id: 'school',
-      name: 'Maya School',
+      name: 'Edaya',
       timeZone: 'UTC',
     })
 

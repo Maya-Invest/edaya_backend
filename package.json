@@ -1,5 +1,5 @@
 {
-  "name": "maya_school_core",
+  "name": "@edaya/solution",
   "type": "module",
   "private": true,
   "packageManager": "bun@1.2.13",

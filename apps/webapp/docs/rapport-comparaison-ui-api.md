@@ -1,7 +1,7 @@
-# Rapport de comparaison — Interface SvelteKit vs API Maya
+# Rapport de comparaison — Interface SvelteKit vs API Edaya
 
 **Projet :** EDAYA / Scholaria  
-**Spec API :** `openapi/edaya_open_api.json` (Maya School Core API v1.0.0)  
+**Spec API :** `openapi/edaya_open_api.json` (Edaya Core API v1.0.0)  
 **Données UI :** `src/lib/data/school.ts` + composants Svelte  
 **Date :** juin 2026
 
@@ -9,7 +9,7 @@
 
 ## Résumé exécutif
 
-| | Interface SvelteKit | API Maya (OpenAPI) |
+| | Interface SvelteKit | API Edaya (OpenAPI) |
 |---|---|---|
 | **Modules** | 4 (School, Classes, Finance, Configuration) | 44 entités + 73 commands + 2 queries |
 | **Types de données** | ~20 types mock | ~47 schémas métier |
@@ -207,7 +207,7 @@ get-published-report-card-count
        │             │             │                  │
        ▼             ▼             ▼                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      API MAYA (OpenAPI)                         │
+│                      API EDAYA (OpenAPI)                         │
 ├─────────────────────────────────────────────────────────────────┤
 │  COUVERT par l'UI (avec mappers)     │  API SANS écran UI       │
 │  • students, enrollments, guardians  │  • report-cards          │

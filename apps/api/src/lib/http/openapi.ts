@@ -9,7 +9,7 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     openapi: "3.0.0",
     info: {
       version: packageJSON.version,
-      title: "Maya School Core API",
+      title: "Edaya Core API",
     },
   });
 
@@ -17,7 +17,7 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     "/reference",
     Scalar({
       url: "/doc",
-      pageTitle: "Maya School Core API Reference",
+      pageTitle: "Edaya Core API Reference",
       theme: "laserwave",
       layout: "classic",
       defaultHttpClient: {

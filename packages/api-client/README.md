@@ -1,6 +1,6 @@
 # @edaya/api-client
 
-Type-safe, domain-shaped HTTP client for the Maya School Core API.
+Type-safe, domain-shaped HTTP client for the Edaya Core API.
 
 This package provides a **maintainable SDK** for calling `/api/core/*` endpoints from TypeScript consumers (today: the SvelteKit webapp). Instead of hand-writing URL strings and generic `fetch` wrappers, you work with a structured client:
 
@@ -50,7 +50,7 @@ The design optimizes for **easy iteration**: when the API registry changes, run 
 | **Runtime portability** | HTTP details live in a `Transport` interface. SvelteKit, tests, or future mobile clients can each provide their own adapter. |
 | **Small generated diffs** | Codegen emits a single bindings file (~600 lines) instead of one method per endpoint. |
 
-This package intentionally does **not** try to be a generic OpenAPI Generator output. It understands the regular shape of the Maya School API.
+This package intentionally does **not** try to be a generic OpenAPI Generator output. It understands the regular shape of the Edaya API.
 
 ---
 

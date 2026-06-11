@@ -19,13 +19,13 @@ const router = createRouter()
       responses: {
         [HttpStatusCodes.OK]: jsonContent(
           createMessageObjectSchema(),
-          "Maya School Core API Index",
+          "Edaya Core API Index",
         ),
       },
     }),
     async (c) => {
       return c.json({
-        message: "Maya School Core API",
+        message: "Edaya Core API",
       }, HttpStatusCodes.OK);
     },
   );

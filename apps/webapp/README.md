@@ -1,6 +1,6 @@
-# Maya School Webapp
+# Edaya Webapp
 
-SvelteKit staff UI for Maya School Core.
+SvelteKit staff UI for Edaya Core.
 
 ## Local development
 

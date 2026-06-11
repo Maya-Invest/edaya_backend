@@ -79,7 +79,7 @@ describe("generated core query endpoints", () => {
     const student = {
       id: "student-1",
       schoolId: "school-1",
-      firstName: "Maya",
+      firstName: "Edaya",
       lastName: "Diallo",
     };
     const mockFindOne = mock().mockResolvedValue(student);

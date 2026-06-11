@@ -1,6 +1,6 @@
-# Maya School API
+# Edaya API
 
-Hono API for Maya School Core (`@edaya/api`).
+Hono API for Edaya Core (`@edaya/api`).
 
 ## Local development
 

@@ -4,7 +4,7 @@ import { School, SchoolType } from '../../../../src/domains/school/school'
 describe('School entity', () => {
   const baseArgs = {
     id: 'sch1',
-    name: 'Maya High School',
+    name: 'Edaya High School',
     timeZone: 'Africa/Douala',
   }
 
@@ -18,7 +18,7 @@ describe('School entity', () => {
     })
 
     expect(school.id).toBe('sch1')
-    expect(school.name).toBe('Maya High School')
+    expect(school.name).toBe('Edaya High School')
     expect(school.timeZone).toBe('Africa/Douala')
     expect(school.ownerStaffId).toBe('staff-owner')
     expect(school.type).toBe(SchoolType.Secondary)

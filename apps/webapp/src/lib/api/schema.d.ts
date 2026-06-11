@@ -20,7 +20,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Maya School Core API Index */
+                /** @description Edaya Core API Index */
                 200: {
                     headers: {
                         [name: string]: unknown;

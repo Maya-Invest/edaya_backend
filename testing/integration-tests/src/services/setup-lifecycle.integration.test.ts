@@ -22,15 +22,15 @@ import { createTestApp } from '../utils/test-adapter'
 describeIntegration('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {
     const { app, repositories } = createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Maya School', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
     const school = await updateSchool(app, {
       schoolId: 'school',
-      name: 'Maya International School',
+      name: 'Edaya International School',
       type: SchoolType.K12,
       country: 'CM',
       city: 'Douala',
     })
-    expect(school.name).toBe('Maya International School')
+    expect(school.name).toBe('Edaya International School')
     expect(school.type).toBe(SchoolType.K12)
 
     await app.createAcademicYear({

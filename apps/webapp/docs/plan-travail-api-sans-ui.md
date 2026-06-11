@@ -31,7 +31,7 @@
 ```
 Aujourd'hui                          Plus tard (hors plan)
 ─────────────────                    ─────────────────────
-school.ts (mocks)  →  Composants  →  resources/*.ts  →  API Maya
+school.ts (mocks)  →  Composants  →  resources/*.ts  →  API Edaya
      ↑                      ↑              ↑
   types alignés         navigation      mappers
   sur l'OpenAPI         i18n            +page.server.ts
