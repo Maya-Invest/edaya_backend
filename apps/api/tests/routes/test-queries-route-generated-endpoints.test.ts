@@ -58,7 +58,7 @@ describe("generated core query endpoints", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/students/count", {
+    const res = await app.request("/core/entities/students/count", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -89,7 +89,7 @@ describe("generated core query endpoints", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/students/one", {
+    const res = await app.request("/core/entities/students/one", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -108,7 +108,7 @@ describe("generated core query endpoints", () => {
       getOverdueFeeCount: mockGetOverdueFeeCount,
     });
 
-    const res = await app.request("/api/core/queries/get-overdue-fee-count", {
+    const res = await app.request("/core/queries/get-overdue-fee-count", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ schoolId: "school-1" }),

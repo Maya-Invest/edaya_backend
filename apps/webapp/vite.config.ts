@@ -7,7 +7,7 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	server: {
 		proxy: {
-			'/api': { target: apiOrigin, changeOrigin: true },
+			'/core': { target: apiOrigin, changeOrigin: true },
 			'/auth': { target: apiOrigin, changeOrigin: true },
 			'/doc': { target: apiOrigin, changeOrigin: true },
 			'/reference': { target: apiOrigin, changeOrigin: true },

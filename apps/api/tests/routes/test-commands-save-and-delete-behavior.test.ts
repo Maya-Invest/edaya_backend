@@ -50,7 +50,7 @@ describe("core entity and command routes", () => {
     ...overrides,
   });
 
-  it("saves an entity through /api/core/entities/{entity-name}/save", async () => {
+  it("saves an entity through /core/entities/{entity-name}/save", async () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
@@ -58,7 +58,7 @@ describe("core entity and command routes", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/grade-levels/save", {
+    const res = await app.request("/core/entities/grade-levels/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -85,7 +85,7 @@ describe("core entity and command routes", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/grade-levels/delete", {
+    const res = await app.request("/core/entities/grade-levels/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: "grade-level-6" }),
@@ -103,7 +103,7 @@ describe("core entity and command routes", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/students/save", {
+    const res = await app.request("/core/entities/students/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -127,7 +127,7 @@ describe("core entity and command routes", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/grade-levels/save", {
+    const res = await app.request("/core/entities/grade-levels/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -150,7 +150,7 @@ describe("core entity and command routes", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/grade-levels/batch-save", {
+    const res = await app.request("/core/entities/grade-levels/batch-save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -178,7 +178,7 @@ describe("core entity and command routes", () => {
       },
     });
 
-    const res = await app.request("/api/core/entities/grade-levels/batch-delete", {
+    const res = await app.request("/core/entities/grade-levels/batch-delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: ["grade-level-6", "grade-level-7"] }),
@@ -199,7 +199,7 @@ describe("core entity and command routes", () => {
       createAcademicYear: mockCreateAcademicYear,
     });
 
-    const res = await app.request("/api/core/commands/create-academic-year", {
+    const res = await app.request("/core/commands/create-academic-year", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -225,7 +225,7 @@ describe("core entity and command routes", () => {
       createAcademicYear: mockCreateAcademicYear,
     });
 
-    const res = await app.request("/api/core/commands/create-academic-year", {
+    const res = await app.request("/core/commands/create-academic-year", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -69,7 +69,7 @@ describe("dev period definitions seed", () => {
       "cookie": cookies.join("; "),
     };
 
-    const response = await app.request(createAppRequest("/api/core/entities/period-definitions/list", {
+    const response = await app.request(createAppRequest("/core/entities/period-definitions/list", {
       method: "POST",
       headers: authHeaders,
       body: JSON.stringify({}),

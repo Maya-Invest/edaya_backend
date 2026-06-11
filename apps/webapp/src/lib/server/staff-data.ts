@@ -90,19 +90,19 @@ export function mapStaffMembers(
 
 async function fetchStaffSources() {
 	const [staffRaw, roleAssignmentsRaw, classGroupsRaw, assignmentsRaw] = await Promise.all([
-		apiFetch<StaffRaw[]>('/api/core/entities/staff-members/list', {
+		apiFetch<StaffRaw[]>('/core/entities/staff-members/list', {
 			method: 'POST',
 			body: JSON.stringify({}),
 		}),
-		apiFetch<RoleAssignmentRaw[]>('/api/core/entities/staff-role-assignments/list', {
+		apiFetch<RoleAssignmentRaw[]>('/core/entities/staff-role-assignments/list', {
 			method: 'POST',
 			body: JSON.stringify({}),
 		}),
-		apiFetch<ClassGroupRaw[]>('/api/core/entities/class-groups/list', {
+		apiFetch<ClassGroupRaw[]>('/core/entities/class-groups/list', {
 			method: 'POST',
 			body: JSON.stringify({}),
 		}),
-		apiFetch<AssignmentRaw[]>('/api/core/entities/staff-assignments/list', {
+		apiFetch<AssignmentRaw[]>('/core/entities/staff-assignments/list', {
 			method: 'POST',
 			body: JSON.stringify({}),
 		}),

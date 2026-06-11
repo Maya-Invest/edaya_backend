@@ -1,5 +1,6 @@
 import type { Transport } from './transport.ts'
 import { unwrapEntity, unwrapEntityList } from './entity-envelope.ts'
+import { schoolApiPath } from './paths.ts'
 
 export type EntityQuery = Record<string, unknown> & {
   $orderBy?: Array<{ field: string, direction: 'asc' | 'desc' }>
@@ -28,7 +29,7 @@ export class EntityResource<TEntity> {
   }
 
   async get(id: string): Promise<TEntity> {
-    const result = await this.transport.request<unknown>('GET', `/api/core/entities/${this.publicName}/${id}`)
+    const result = await this.transport.request<unknown>('GET', schoolApiPath('entities', this.publicName, id))
     return unwrapEntity<TEntity>(result)
   }
 
@@ -50,6 +51,6 @@ export class EntityResource<TEntity> {
   }
 
   private path(action: string): string {
-    return `/api/core/entities/${this.publicName}/${action}`
+    return schoolApiPath('entities', this.publicName, action)
   }
 }

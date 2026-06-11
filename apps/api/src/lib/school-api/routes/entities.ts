@@ -15,6 +15,7 @@ import {
   entitySaveHandler,
 } from "./entity-handlers";
 import { coreRouteErrorResponses, type SchoolApiRoutePair } from "./shared";
+import { schoolApiPath } from "./paths";
 
 const idParamSchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityIdParam");
 const deleteEntitySchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityDelete");
@@ -29,7 +30,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
   coreEntities.forEach((entityConfig) => {
     const listRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/list`,
+      path: schoolApiPath("entities", entityConfig.publicName, "list"),
       tags: ["Core Entities"],
       summary: `List ${entityConfig.displayName}`,
       request: {
@@ -44,7 +45,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const oneRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/one`,
+      path: schoolApiPath("entities", entityConfig.publicName, "one"),
       tags: ["Core Entities"],
       summary: `Find one ${entityConfig.displayName}`,
       request: {
@@ -60,7 +61,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const countRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/count`,
+      path: schoolApiPath("entities", entityConfig.publicName, "count"),
       tags: ["Core Entities"],
       summary: `Count ${entityConfig.displayName}`,
       request: {
@@ -75,7 +76,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const getRoute = createRoute({
       method: "get",
-      path: `/api/core/entities/${entityConfig.publicName}/{id}`,
+      path: schoolApiPath("entities", entityConfig.publicName, "{id}"),
       tags: ["Core Entities"],
       summary: `Get ${entityConfig.displayName}`,
       request: {
@@ -91,7 +92,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const saveRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/save`,
+      path: schoolApiPath("entities", entityConfig.publicName, "save"),
       tags: ["Core Entities"],
       summary: `Save ${entityConfig.displayName}`,
       request: {
@@ -107,7 +108,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const deleteRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/delete`,
+      path: schoolApiPath("entities", entityConfig.publicName, "delete"),
       tags: ["Core Entities"],
       summary: `Delete ${entityConfig.displayName}`,
       request: {
@@ -122,7 +123,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const batchSaveRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/batch-save`,
+      path: schoolApiPath("entities", entityConfig.publicName, "batch-save"),
       tags: ["Core Entities"],
       summary: `Batch save ${entityConfig.displayName}`,
       request: {
@@ -141,7 +142,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
 
     const batchDeleteRoute = createRoute({
       method: "post",
-      path: `/api/core/entities/${entityConfig.publicName}/batch-delete`,
+      path: schoolApiPath("entities", entityConfig.publicName, "batch-delete"),
       tags: ["Core Entities"],
       summary: `Batch delete ${entityConfig.displayName}`,
       request: {

@@ -10,7 +10,7 @@ export async function load() {
 
 	if (api.connected) {
 		try {
-			session = await apiFetch<SessionSnapshot>('/api/core/authorization/effective-grants');
+			session = await apiFetch<SessionSnapshot>('/core/authorization/effective-grants');
 		}
 		catch {
 			// Not authenticated

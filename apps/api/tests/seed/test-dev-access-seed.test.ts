@@ -45,7 +45,7 @@ describe("dev access seed", () => {
     }));
     const cookies = collectSetCookieHeaders(signIn);
 
-    const response = await app.request(createAppRequest("/api/core/entities/students/list", {
+    const response = await app.request(createAppRequest("/core/entities/students/list", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -74,12 +74,12 @@ describe("dev access seed", () => {
       "cookie": cookies.join("; "),
     };
 
-    const guardians = await app.request(createAppRequest("/api/core/entities/guardians/list", {
+    const guardians = await app.request(createAppRequest("/core/entities/guardians/list", {
       method: "POST",
       headers: authHeaders,
       body: JSON.stringify({}),
     }));
-    const classSubjects = await app.request(createAppRequest("/api/core/entities/class-subjects/list", {
+    const classSubjects = await app.request(createAppRequest("/core/entities/class-subjects/list", {
       method: "POST",
       headers: authHeaders,
       body: JSON.stringify({}),
@@ -119,7 +119,7 @@ describe("dev access seed", () => {
       "cookie": cookies.join("; "),
     };
 
-    const staffCount = await app.request(createAppRequest("/api/core/entities/staff-members/count", {
+    const staffCount = await app.request(createAppRequest("/core/entities/staff-members/count", {
       method: "POST",
       headers: authHeaders,
       body: JSON.stringify({}),

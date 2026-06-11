@@ -6,6 +6,7 @@ import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
+import { schoolApiPath } from "./paths";
 
 export function buildCommandRoutes(): SchoolApiRoutePair[] {
   const pairs: SchoolApiRoutePair[] = [];
@@ -13,7 +14,7 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
   coreCommands.forEach((commandConfig) => {
     const route = createRoute({
       method: "post",
-      path: `/api/core/commands/${commandConfig.publicName}`,
+      path: schoolApiPath("commands", commandConfig.publicName),
       tags: ["Core Commands"],
       summary: commandConfig.publicName,
       request: {

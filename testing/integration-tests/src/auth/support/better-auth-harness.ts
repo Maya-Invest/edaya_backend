@@ -217,7 +217,7 @@ export function createSessionActorApp(
 }
 
 export function mountEffectiveGrantsRoute(app: ReturnType<typeof createSessionActorApp>): void {
-  app.get('/api/core/authorization/effective-grants', (c) => {
+  app.get('/core/authorization/effective-grants', (c) => {
     const actor = c.get('actor')
     if (!actor) {
       return c.json({ message: 'Missing or invalid authorization session' }, 401)

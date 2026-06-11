@@ -69,17 +69,17 @@ describe("dev finance seed", () => {
     };
 
     const [feesResponse, studentFeesResponse, paymentsResponse] = await Promise.all([
-      app.request(createAppRequest("/api/core/entities/fees/list", {
+      app.request(createAppRequest("/core/entities/fees/list", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({}),
       })),
-      app.request(createAppRequest("/api/core/entities/student-fees/list", {
+      app.request(createAppRequest("/core/entities/student-fees/list", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({}),
       })),
-      app.request(createAppRequest("/api/core/entities/payments/list", {
+      app.request(createAppRequest("/core/entities/payments/list", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({}),

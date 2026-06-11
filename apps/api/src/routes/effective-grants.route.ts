@@ -6,6 +6,7 @@ import type { AppRouteHandler } from "@/lib/http/types";
 import { getErrorMessage, unauthorizedResponse } from "@/lib/http/responses";
 import { requireInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
 import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/entities";
+import { schoolApiPath } from "@/lib/school-api/routes/paths";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -24,7 +25,7 @@ const effectiveGrantsResponseSchema = z.object({
 
 export const getEffectiveGrantsRoute = createRoute({
   method: "get",
-  path: "/api/core/authorization/effective-grants",
+  path: schoolApiPath("authorization", "effective-grants"),
   tags: ["Core Authorization"],
   summary: "Get current actor effective grants",
   responses: {

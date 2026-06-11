@@ -5,6 +5,7 @@ import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
+import { schoolApiPath } from "./paths";
 
 export function buildQueryRoutes(): SchoolApiRoutePair[] {
   const pairs: SchoolApiRoutePair[] = [];
@@ -12,7 +13,7 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
   coreQueries.forEach((queryConfig) => {
     const route = createRoute({
       method: "post",
-      path: `/api/core/queries/${queryConfig.publicName}`,
+      path: schoolApiPath("queries", queryConfig.publicName),
       tags: ["Core Queries"],
       summary: queryConfig.publicName,
       request: {

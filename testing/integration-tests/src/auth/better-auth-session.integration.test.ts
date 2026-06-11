@@ -137,7 +137,7 @@ describe('Better Auth session integration', () => {
     const app = createSessionActorApp(application, auth)
     mountEffectiveGrantsRoute(app)
 
-    const response = await app.request('/api/core/authorization/effective-grants', {
+    const response = await app.request('/core/authorization/effective-grants', {
       headers: {
         cookie: cookies.join('; '),
       },
@@ -190,7 +190,7 @@ describe('Better Auth session integration', () => {
     const app = createSessionActorApp(application, auth)
     mountEffectiveGrantsRoute(app)
 
-    const response = await app.request('/api/core/authorization/effective-grants', {
+    const response = await app.request('/core/authorization/effective-grants', {
       headers: {
         cookie: cookies.join('; '),
       },

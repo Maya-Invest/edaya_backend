@@ -9,6 +9,7 @@ import { badRequestResponse, routeErrorResponse, unauthorizedResponse } from "@/
 import { dispatchCoreCommand } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
+import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { createSystemActorMetadata } from "@edaya/core";
 
 const commandMessageSchema = createMessageObjectSchema();
@@ -26,7 +27,7 @@ const systemCommandRequestSchema = z.object({
 
 export const systemCommandRoute = createRoute({
   method: "post",
-  path: "/api/core/system/commands/{commandName}",
+  path: schoolApiPath("system", "commands", "{commandName}"),
   tags: ["Core System"],
   summary: "Execute a core command as a system actor",
   request: {
