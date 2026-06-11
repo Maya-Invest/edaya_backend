@@ -7,6 +7,7 @@ import {
 import {
   AccessRole,
   COORDINATOR_PERMISSIONS,
+  ELEVATED_STAFF_PERMISSIONS,
   Permission,
   StaffAssignment,
   StaffRoleAssignment,
@@ -96,6 +97,18 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
     ),
   }));
 
+  await application.repositories.accessRoles.save(new AccessRole({
+    id: "role-director",
+    schoolId: SEED_SCHOOL_ID,
+    name: "Director",
+    permissions: mergePermissions(
+      ELEVATED_STAFF_PERMISSIONS,
+      DEV_WEBAPP_SHELL_READ_PERMISSIONS,
+      DEV_WEBAPP_PEOPLE_READ_PERMISSIONS,
+      DEV_WEBAPP_STAFF_ADMIN_READ_PERMISSIONS,
+    ),
+  }));
+
   await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
     id: "sra-st1",
     staffId: "st1",
@@ -123,6 +136,47 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
     academicYearId: SEED_ACADEMIC_YEAR_ID,
     roleIds: ["role-coordinator"],
     scopeGrants: [],
+    status: "active",
+  }));
+
+  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: "sra-st4",
+    staffId: "st4",
+    schoolId: SEED_SCHOOL_ID,
+    academicYearId: SEED_ACADEMIC_YEAR_ID,
+    roleIds: ["role-teacher"],
+    scopeGrants: [],
+    status: "active",
+  }));
+
+  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: "sra-st5",
+    staffId: "st5",
+    schoolId: SEED_SCHOOL_ID,
+    academicYearId: SEED_ACADEMIC_YEAR_ID,
+    roleIds: ["role-director"],
+    scopeGrants: [],
+    status: "active",
+  }));
+
+  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: "sra-st6",
+    staffId: "st6",
+    schoolId: SEED_SCHOOL_ID,
+    academicYearId: SEED_ACADEMIC_YEAR_ID,
+    roleIds: ["role-educator"],
+    scopeGrants: [
+      {
+        permission: Permission.DISCIPLINE_CREATE,
+        scopeType: "school",
+        scopeEntityIds: [SEED_SCHOOL_ID],
+      },
+      {
+        permission: Permission.ATTENDANCE_RECORD,
+        scopeType: "school",
+        scopeEntityIds: [SEED_SCHOOL_ID],
+      },
+    ],
     status: "active",
   }));
 
@@ -179,8 +233,8 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
 
   return {
     status: "seeded",
-    roles: 3,
-    assignments: 4,
+    roles: 4,
+    assignments: 7,
     staffAssignments: 3 + SEED_CLASS_SUBJECTS.length,
   };
 }

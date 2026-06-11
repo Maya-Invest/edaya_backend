@@ -23,11 +23,14 @@ export const SEED_CLASSES = [
   { id: "5a", gradeLevelId: "gl-5", name: "5th — A", capacity: 30 },
 ] as const;
 
+/** All staff from `apps/webapp/src/lib/data/school.ts` — st5 first (school owner). */
 export const SEED_STAFF = [
   { id: "st5", name: "Camille Moreau", email: "c.moreau@school.edu" },
   { id: "st3", name: "Mme Léon", email: "m.leon@school.edu" },
   { id: "st1", name: "Mme Dupont", email: "m.dupont@school.edu" },
   { id: "st2", name: "M. Garnier", email: "m.garnier@school.edu" },
+  { id: "st4", name: "M. Cheng", email: "m.cheng@school.edu" },
+  { id: "st6", name: "Sarah Klein", email: "s.klein@school.edu" },
   { id: "st7", name: "Tom Évrard", email: "t.evrard@school.edu" },
 ] as const;
 

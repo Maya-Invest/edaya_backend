@@ -86,4 +86,40 @@ describe("dev access seed", () => {
     expect(guardianBody.length).toBeGreaterThanOrEqual(6);
     expect(classSubjectBody.length).toBeGreaterThanOrEqual(8);
   }, 30_000);
+
+  it("seeds all staff members and lets the director list them", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    await runDevSeed(application);
+    await runDevAuthSeed(application, runtime.getAuth(), pgliteEnv);
+    await runDevAccessSeed(application);
+
+    const staffMembers = await application.repositories.staffMembers.list({});
+    const directorAssignments = await application.repositories.staffRoleAssignments.list({
+      staffId: "st5",
+      status: "active",
+    });
+    expect(staffMembers.length).toBeGreaterThanOrEqual(7);
+    expect(directorAssignments.some(entry => entry.roleIds.includes("role-director"))).toBe(true);
+
+    const signIn = await app.request(createAppRequest("/api/auth/sign-in/email", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "c.moreau@school.edu", password: "DevPassword1!" }),
+    }));
+    const cookies = collectSetCookieHeaders(signIn);
+    const authHeaders = {
+      "content-type": "application/json",
+      "cookie": cookies.join("; "),
+    };
+
+    const staffCount = await app.request(createAppRequest("/api/core/entities/staff-members/count", {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({}),
+    }));
+
+    expect(staffCount.status).toBe(200);
+    const countBody = await staffCount.json() as { count: number };
+    expect(countBody.count).toBeGreaterThanOrEqual(7);
+  }, 30_000);
 });
