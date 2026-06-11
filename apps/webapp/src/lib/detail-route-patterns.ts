@@ -1,6 +1,6 @@
 const DETAIL_PATH_PATTERNS = [
 	/^\/school\/(students|guardians|activities|events|calendar)\/[^/]+$/,
-	/^\/classes\/[^/]+\/(students|subjects|timetable|teaching|evaluations|report-cards)\/[^/]+$/,
+	/^\/classes\/[^/]+\/(students|subjects|timetable|teaching|homework|evaluations|report-cards)\/[^/]+$/,
 	/^\/finance\/(billing|fees)\/[^/]+$/,
 	/^\/configuration\/subjects\/level\/[^/]+$/,
 	/^\/configuration\/subjects\/[^/]+$/,

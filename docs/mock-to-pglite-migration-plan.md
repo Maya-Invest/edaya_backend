@@ -12,12 +12,12 @@ Transférer les données de démo du front (`apps/webapp/src/lib/data/`) vers la
 
 | Indicateur | Valeur |
 |------------|--------|
-| **Progression globale** | **16 / 16 domaines** complets · **100 %** |
-| **Prochaine étape** | PR 10 — Décisions produit |
-| **Bloquant webapp** | Aucun (decisions produit phase 10 uniquement) |
+| **Progression globale** | **17 / 17 domaines** complets · **100 %** |
+| **Prochaine étape** | Finitions transversales (champs UI-only) |
+| **Bloquant webapp** | Aucun |
 
 ```
-[████████████████████]  16/16 domaines
+[████████████████████]  17/17 domaines
  Fait ──►              Reste
 ```
 
@@ -61,7 +61,7 @@ Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de
 | 7 | Santé + notes pédagogiques élève | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 8 | Bulletins (barèmes, modèles, résultats) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 9 | Accès & auth (comptes + permissions dev) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 10 | Activités / devoirs (sans entité API) | — | — | — | — | — |
+| 10 | Activités & devoirs (stub API) | ✅ | — | ✅ | ✅ | ✅ |
 
 **Légende colonnes**
 
@@ -229,8 +229,10 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ### PR 10 — Décisions produit (phase 10)
 
-- [ ] Décision : `activities[]`, `deadlines[]`, deuxième école
-- [ ] Implémenter ou marquer « mock permanent » dans `school.ts`
+- [x] Décision : `activities[]`, `deadlines[]` → endpoints stub `/core/prototype/*` (pas d'entité domaine)
+- [ ] Décision : deuxième école (`schools[1]`) — mock permanent UI
+- [x] Webapp : `/school/activities` + `/classes/[id]/homework` branchés sur stub API
+- [x] Tests : `test-prototype-routes.test.ts`
 
 ### Finitions transversales (phase 2 + champs UI-only)
 
@@ -313,15 +315,15 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ---
 
-### Phase 10 — Sans entité API ⬜
+### Phase 10 — Stub API prototype ✅
 
-**Décision produit requise** (voir [webapp-mock-migration-plan §8](./webapp-mock-migration-plan.md)).
+**Décision** : endpoints stub `/core/prototype/activities/list` et `/core/prototype/deadlines/list` (seed `@maya/dev-fixtures`) en attendant entités domaine.
 
-| Mock | Lignes | Options |
-|------|--------|---------|
-| `activities[]` | ~5 activités | (A) nouvelle entité (B) `calendar-events` typés (C) mock permanent |
-| `deadlines[]` | devoirs | (A) `assessments` typés (B) nouvelle entité (C) mock permanent |
-| Deuxième école | `schools[1]` | seed multi-école ou UI seule |
+| Donnée | Statut |
+|--------|--------|
+| `activities[]` | ✅ stub API + webapp `/school/activities` |
+| `deadlines[]` | ✅ stub API + `HomeworkView` via `loadClassHomeworkPage` |
+| Deuxième école (`schools[1]`) | mock permanent UI (non migré) |
 
 ---
 

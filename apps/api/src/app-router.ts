@@ -2,6 +2,12 @@ import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
 import { createRouter } from "@/lib/http/create-app";
 import type { AppBindings } from "@/lib/http/types";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
+import {
+  listPrototypeActivitiesHandler,
+  listPrototypeActivitiesRoute,
+  listPrototypeDeadlinesHandler,
+  listPrototypeDeadlinesRoute,
+} from "@/routes/prototype.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
@@ -34,6 +40,8 @@ const router = createRouter()
 // Mount routes from route builders
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
+  .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
+  .openapi(listPrototypeDeadlinesRoute, listPrototypeDeadlinesHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 
 // Mount routes from route factories

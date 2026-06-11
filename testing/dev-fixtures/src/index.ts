@@ -1,4 +1,8 @@
 export {
+  SEED_ACTIVITIES,
+  SEED_DEADLINES,
+} from './activities-deadlines-seed'
+export {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,

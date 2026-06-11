@@ -734,31 +734,31 @@ export interface Resource {
 }
 
 export const activities: Activity[] = [
-	{ id: 'a1', name: 'Club Robotique', category: 'Science', coach: 'M. Adler', schedule: 'Mer 14:00 – 16:00', participants: 18, capacity: 24, description: 'Conception et programmation de robots avec Arduino et Lego Mindstorms.', startDate: '2025-09-15', endDate: '2026-06-12', enrollments: [
+	{ id: 'act-robot', name: 'Club Robotique', category: 'Science', coach: 'M. Adler', schedule: 'Mer 14:00 – 16:00', participants: 18, capacity: 24, description: 'Conception et programmation de robots avec Arduino et Lego Mindstorms.', startDate: '2025-09-15', endDate: '2026-06-12', enrollments: [
 		{ studentId: 's1', status: 'approved' },
 		{ studentId: 's2', status: 'pending' },
 		{ studentId: 's3', status: 'denied' },
 		{ studentId: 's4', status: 'approved' },
 	] },
-	{ id: 'a2', name: 'Chorale', category: 'Arts', coach: 'Mme Garnier', schedule: 'Ven 12:30 – 13:30', participants: 22, capacity: 30, description: 'Ensemble vocal pluri-niveaux préparant les concerts trimestriels de l\'école.', startDate: '2025-09-20', endDate: '2026-06-20', enrollments: [
+	{ id: 'act-chorale', name: 'Chorale', category: 'Arts', coach: 'Mme Garnier', schedule: 'Ven 12:30 – 13:30', participants: 22, capacity: 30, description: 'Ensemble vocal pluri-niveaux préparant les concerts trimestriels de l\'école.', startDate: '2025-09-20', endDate: '2026-06-20', enrollments: [
 		{ studentId: 's5', status: 'approved' },
 		{ studentId: 's6', status: 'approved' },
 		{ studentId: 's7', status: 'pending' },
 	] },
-	{ id: 'a3', name: 'Équipe de basketball', category: 'Sport', coach: 'M. Roux', schedule: 'Mar & Jeu 17:00', participants: 14, capacity: 16, description: 'Entraînements hebdomadaires et tournois inter-établissements.', startDate: '2025-09-08', endDate: '2026-05-30', enrollments: [
+	{ id: 'act-basket', name: 'Équipe de basketball', category: 'Sport', coach: 'M. Roux', schedule: 'Mar & Jeu 17:00', participants: 14, capacity: 16, description: 'Entraînements hebdomadaires et tournois inter-établissements.', startDate: '2025-09-08', endDate: '2026-05-30', enrollments: [
 		{ studentId: 's8', status: 'approved' },
 		{ studentId: 's9', status: 'approved' },
 		{ studentId: 's10', status: 'pending' },
 	] },
-	{ id: 'a4', name: 'Conversation espagnole', category: 'Language', coach: 'Mme Reyes', schedule: 'Lun 13:00 – 14:00', participants: 9, capacity: 18, description: 'Ateliers d\'expression orale en petits groupes, tous niveaux.', startDate: '2025-10-01', endDate: '2026-06-05', enrollments: [
+	{ id: 'act-es', name: 'Conversation espagnole', category: 'Language', coach: 'Mme Reyes', schedule: 'Lun 13:00 – 14:00', participants: 9, capacity: 18, description: 'Ateliers d\'expression orale en petits groupes, tous niveaux.', startDate: '2025-10-01', endDate: '2026-06-05', enrollments: [
 		{ studentId: 's1', status: 'pending' },
 		{ studentId: 's5', status: 'approved' },
 	] },
-	{ id: 'a5', name: 'Cercle de pleine conscience', category: 'Wellbeing', coach: 'T. Évrard', schedule: 'Jeu 12:30 – 13:00', participants: 12, capacity: 20, description: 'Sessions de méditation guidée pour la gestion du stress scolaire.', startDate: '2025-09-25', endDate: '2026-06-18', enrollments: [
+	{ id: 'act-mindful', name: 'Cercle de pleine conscience', category: 'Wellbeing', coach: 'T. Évrard', schedule: 'Jeu 12:30 – 13:00', participants: 12, capacity: 20, description: 'Sessions de méditation guidée pour la gestion du stress scolaire.', startDate: '2025-09-25', endDate: '2026-06-18', enrollments: [
 		{ studentId: 's2', status: 'approved' },
 		{ studentId: 's7', status: 'denied' },
 	] },
-	{ id: 'a6', name: 'Atelier théâtre', category: 'Arts', coach: 'M. Garnier', schedule: 'Mer 16:00 – 18:00', participants: 16, capacity: 20, description: 'Mise en scène d\'une pièce jouée en fin d\'année scolaire.', startDate: '2025-10-05', endDate: '2026-06-25', enrollments: [
+	{ id: 'act-theatre', name: 'Atelier théâtre', category: 'Arts', coach: 'M. Garnier', schedule: 'Mer 16:00 – 18:00', participants: 16, capacity: 20, description: 'Mise en scène d\'une pièce jouée en fin d\'année scolaire.', startDate: '2025-10-05', endDate: '2026-06-25', enrollments: [
 		{ studentId: 's3', status: 'approved' },
 		{ studentId: 's8', status: 'pending' },
 		{ studentId: 's9', status: 'approved' },

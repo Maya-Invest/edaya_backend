@@ -9,6 +9,7 @@ import {
 	planning,
 	evaluations,
 	activities,
+	deadlines,
 	incidents,
 	schoolYearEvents,
 	billing,
@@ -119,6 +120,13 @@ const matchers: Matcher[] = [
 		parse: (m) => {
 			const ev = planning.find(x => x.id === m[2]);
 			return ev ? { item: { kind: 'planning', data: ev }, listPath: appPath('/(app)/classes/[classId]/timetable/[[id]]', { classId: m[1] }) } : null;
+		},
+	},
+	{
+		test: p => p.match(/^\/classes\/([^/]+)\/homework\/([^/]+)$/) ?? null,
+		parse: (m) => {
+			const d = deadlines.find(x => x.id === m[2] && x.classId === m[1]);
+			return d ? { item: { kind: 'deadline', data: d }, listPath: appPath('/(app)/classes/[classId]/homework/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{

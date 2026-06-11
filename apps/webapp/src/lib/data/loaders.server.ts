@@ -15,20 +15,23 @@ import { loadClassEvaluations } from '$lib/server/assessments-data';
 import { loadFinanceData } from '$lib/server/finance-data';
 import { loadPeopleData } from '$lib/server/people-data';
 import { loadClassPlanning } from '$lib/server/planning-data';
+import { loadActivities, loadDeadlines } from '$lib/server/prototype-data';
 import { loadReportCardsData } from '$lib/server/report-cards-data';
 import { loadCalendarEvents, loadIncidents, loadSchoolLifeData } from '$lib/server/school-life-data';
 import { loadStudent360Data } from '$lib/server/student-360-data';
 import { loadClassSubjects } from '$lib/server/subjects-data';
 import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from './load-state';
-import { loadMockAppShell,	loadFinancePage as loadMockFinancePage,	loadPaymentsPage as loadMockPaymentsPage,	loadRolesPage as loadMockRolesPage,	loadSchoolEventsPage as loadMockSchoolEventsPage } from './loaders';
+import { loadMockAppShell, loadFinancePage as loadMockFinancePage, loadPaymentsPage as loadMockPaymentsPage, loadRolesPage as loadMockRolesPage, loadSchoolActivitiesPage as loadMockSchoolActivitiesPage, loadSchoolEventsPage as loadMockSchoolEventsPage } from './loaders';
 import {
 	gradeScales as mockGradeScales,
 	reportCardDefinitions as mockReportCardDefinitions,
 	reportCardResults as mockReportCardResults,
 } from './report-cards';
 import {
+	activities as mockActivities,
 	absences,
 	billing,
+	deadlines as mockDeadlines,
 	evaluations,
 	fees,
 	guardians,
@@ -422,4 +425,47 @@ export async function loadRolesPage({ url, hasSession = false }: LoadInput) {
 	}
 
 	return loadMockRolesPage({ url });
+}
+
+export async function loadSchoolActivitiesPage({ url, hasSession = false }: LoadInput) {
+	await maybeSimulateLoading(url);
+
+	if (resolveDemoState(url) === 'empty') {
+		const meta = finalizeStatus(url, false);
+		return { ...meta, activities: [] };
+	}
+
+	if (hasSession) {
+		const live = await withApiFallback(
+			() => loadActivities(),
+			mockActivities,
+		);
+		const meta = finalizeStatus(url, live.length > 0);
+		return { ...meta, activities: live };
+	}
+
+	return loadMockSchoolActivitiesPage({ url });
+}
+
+export async function loadClassHomeworkPage({ url, params, hasSession = false }: LoadInput) {
+	await maybeSimulateLoading(url);
+
+	const classList = classes();
+	const classId = params?.classId ?? classList[0]?.id ?? '6a';
+
+	if (resolveDemoState(url) === 'empty') {
+		const meta = finalizeStatus(url, false);
+		return { ...meta, classId, deadlines: [] };
+	}
+
+	const mockList = mockDeadlines.filter(deadline => deadline.classId === classId);
+	const list = hasSession
+		? await withApiFallback(
+				() => loadDeadlines(classId),
+				mockList,
+			)
+		: mockList;
+
+	const meta = finalizeStatus(url, list.length > 0);
+	return { ...meta, classId, deadlines: list };
 }
