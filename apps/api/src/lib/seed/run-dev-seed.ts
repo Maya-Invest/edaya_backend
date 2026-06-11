@@ -8,12 +8,13 @@ import {
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
   SEED_SCHOOL_ID,
+  SEED_SCHOOL_PROFILE,
   SEED_STAFF,
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
   splitDisplayName,
-} from "@/lib/seed/dataset";
+} from "@edaya/dev-fixtures";
 import {
   AcademicPeriodType,
   createSystemActorMetadata,
@@ -52,13 +53,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
   });
   const service = application.forActor(actor);
 
-  await service.registerSchool({
-    id: SEED_SCHOOL_ID,
-    name: "EDAYA — Campus Central",
-    timeZone: "Europe/Paris",
-    city: "Paris",
-    country: "FR",
-  });
+  await service.registerSchool(SEED_SCHOOL_PROFILE);
 
   for (const gradeLevel of SEED_GRADE_LEVELS) {
     await service.baseService.gradeLevels.save(new GradeLevel({

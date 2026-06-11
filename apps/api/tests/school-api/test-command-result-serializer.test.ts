@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { SEED_GUARDIANS, SEED_SCHOOL_ID, splitDisplayName } from "@edaya/dev-fixtures";
 import { Guardian, StaffMember } from "@edaya/core";
 import { serializeCommandResult } from "@/lib/school-api/serialize/command-result";
 
@@ -6,7 +7,7 @@ describe("serializeCommandResult", () => {
   it("flattens domain entities returned from commands", () => {
     const staff = new StaffMember({
       id: "st9",
-      schoolId: "sch-edaya-central",
+      schoolId: SEED_SCHOOL_ID,
       firstName: "Paul",
       lastName: "Martin",
       email: "p.martin@school.edu",
@@ -26,13 +27,15 @@ describe("serializeCommandResult", () => {
   });
 
   it("flattens linkActorSubject responses", () => {
+    const guardianFixture = SEED_GUARDIANS[0];
+    const { firstName, lastName } = splitDisplayName(guardianFixture.name);
     const guardian = new Guardian({
       id: "g9",
-      schoolId: "sch-edaya-central",
-      firstName: "Claire",
-      lastName: "Laurent",
-      email: "c.laurent@mail.com",
-      phone: "+33 6 12 34 56 78",
+      schoolId: SEED_SCHOOL_ID,
+      firstName,
+      lastName,
+      email: guardianFixture.email,
+      phone: guardianFixture.phone,
       subjectId: "auth-user-2",
     });
 

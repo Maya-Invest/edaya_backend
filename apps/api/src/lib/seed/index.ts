@@ -1,24 +1,19 @@
 import type { Environment } from "@/lib/bootstrap/env";
 import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
 import type { AuthService } from "@/lib/runtime/types";
+import { isEphemeralDatabase } from "@/lib/runtime/database-url";
 import { type DevAccessSeedResult, runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { type DevAuthSeedResult, runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { type DevSeedResult, runDevSeed } from "@/lib/seed/run-dev-seed";
 
+export type { DevAccessSeedResult } from "@/lib/seed/run-dev-access-seed";
+export type { DevAuthSeedResult } from "@/lib/seed/run-dev-auth-seed";
+export type { DevSeedResult } from "@/lib/seed/run-dev-seed";
 export {
   DEV_AUTH_PASSWORD,
   SEED_ACADEMIC_YEAR_ID,
   SEED_SCHOOL_ID,
-} from "@/lib/seed/dataset";
-export type { DevAccessSeedResult } from "@/lib/seed/run-dev-access-seed";
-export type { DevAuthSeedResult } from "@/lib/seed/run-dev-auth-seed";
-export type { DevSeedResult } from "@/lib/seed/run-dev-seed";
-
-export function isEphemeralDatabase(databaseUrl: string): boolean {
-  return databaseUrl === "memory"
-    || databaseUrl === "pglite"
-    || databaseUrl.startsWith("postgres://memory");
-}
+} from "@edaya/dev-fixtures";
 
 export function shouldSeedOnStart(env: Environment): boolean {
   if (env.SEED_ON_START === true) {

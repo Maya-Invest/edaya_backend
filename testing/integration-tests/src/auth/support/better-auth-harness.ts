@@ -8,8 +8,6 @@ import {
 } from '@edaya/adaptor-postgres'
 import {
   createRepositoryAuthorizationPolicy,
-  createSystemActorMetadata,
-  Guardian,
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
@@ -23,9 +21,6 @@ import {
 
   createSessionActorMiddleware,
 } from './session-actor-harness'
-
-export const DEV_AUTH_PASSWORD = 'DevPassword1!'
-export const SEED_SCHOOL_ID = 'sch-edaya-central'
 
 export interface AuthTestEnv {
   BETTER_AUTH_SECRET: string
@@ -109,46 +104,6 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
     auth,
     env: PG_LITE_AUTH_ENV,
   }
-}
-
-export async function seedMinimalSchoolFixtures(application: SchoolApplication): Promise<void> {
-  const existingSchools = await application.repositories.schools.list()
-  if (existingSchools.length > 0) {
-    return
-  }
-
-  const actor = createSystemActorMetadata({
-    systemId: 'auth-integration-seed',
-    schoolId: SEED_SCHOOL_ID,
-    requestId: 'auth-integration-seed',
-    reason: 'Seed minimal school fixtures for Better Auth integration tests',
-  })
-  const service = application.forActor(actor)
-
-  await service.registerSchool({
-    id: SEED_SCHOOL_ID,
-    name: 'EDAYA — Campus Central',
-    timeZone: 'Europe/Paris',
-    city: 'Paris',
-    country: 'FR',
-  })
-
-  await service.registerStaffMember({
-    id: 'st5',
-    schoolId: SEED_SCHOOL_ID,
-    firstName: 'Camille',
-    lastName: 'Moreau',
-    email: 'c.moreau@school.edu',
-  })
-
-  await application.repositories.guardians.save(new Guardian({
-    id: 'g1',
-    schoolId: SEED_SCHOOL_ID,
-    firstName: 'Claire',
-    lastName: 'Laurent',
-    email: 'c.laurent@mail.com',
-    phone: '+33 6 12 34 56 78',
-  }))
 }
 
 export async function ensureAuthUser(

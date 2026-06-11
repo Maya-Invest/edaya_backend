@@ -5,7 +5,7 @@ import type { AppBindings } from "@/lib/http/types";
 import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import type { ApiRuntime } from "@/lib/runtime/types";
-import { DEV_AUTH_PASSWORD, SEED_SCHOOL_ID } from "@/lib/seed/dataset";
+import { DEV_AUTH_PASSWORD, SEED_SCHOOL_ID } from "@edaya/dev-fixtures";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
 import {

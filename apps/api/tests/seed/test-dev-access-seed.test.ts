@@ -1,3 +1,4 @@
+import { DEV_AUTH_PASSWORD, DEV_AUTH_STAFF_ACCOUNTS } from "@edaya/dev-fixtures";
 import { parseEnv } from "@/lib/bootstrap/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
@@ -34,7 +35,7 @@ describe("dev access seed", () => {
     const signIn = await app.request(createAppRequest("/api/auth/sign-in/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "m.dupont@school.edu", password: "DevPassword1!" }),
+      body: JSON.stringify({ email: DEV_AUTH_STAFF_ACCOUNTS[1].email, password: DEV_AUTH_PASSWORD }),
     }));
     const cookies = collectSetCookieHeaders(signIn);
 
@@ -59,7 +60,7 @@ describe("dev access seed", () => {
     const signIn = await app.request(createAppRequest("/api/auth/sign-in/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "m.dupont@school.edu", password: "DevPassword1!" }),
+      body: JSON.stringify({ email: DEV_AUTH_STAFF_ACCOUNTS[1].email, password: DEV_AUTH_PASSWORD }),
     }));
     const cookies = collectSetCookieHeaders(signIn);
     const authHeaders = {

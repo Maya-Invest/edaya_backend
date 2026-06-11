@@ -2,7 +2,14 @@ import { parseEnv } from "@/lib/bootstrap/env";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { createDependenciesInjection } from "@/lib/http/middleware/dependencies";
 import { type AuthSessionProvider, createSessionActorDependency } from "@/lib/http/middleware/dependencies/session-actor";
-import { DEV_AUTH_PASSWORD } from "@/lib/seed/dataset";
+import {
+  DEV_AUTH_GUARDIAN_ACCOUNTS,
+  DEV_AUTH_PASSWORD,
+  DEV_AUTH_STAFF_ACCOUNTS,
+  MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
+  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  MINIMAL_AUTH_FIXTURE_STAFF_ID,
+} from "@edaya/dev-fixtures";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
 import { Hono } from "hono";
@@ -43,11 +50,11 @@ describe("runDevAuthSeed", () => {
     const result = await runDevAuthSeed(application, auth, pgliteEnv);
 
     expect(result.status).toBe("seeded");
-    expect(result.linkedStaff).toBe(4);
-    expect(result.linkedGuardians).toBe(1);
+    expect(result.linkedStaff).toBe(DEV_AUTH_STAFF_ACCOUNTS.length);
+    expect(result.linkedGuardians).toBe(DEV_AUTH_GUARDIAN_ACCOUNTS.length);
 
-    const staff = await application.repositories.staffMembers.findById("st5");
-    const guardian = await application.repositories.guardians.findById("g1");
+    const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID);
+    const guardian = await application.repositories.guardians.findById(MINIMAL_AUTH_FIXTURE_GUARDIAN_ID);
 
     expect(staff?.subjectId).toBeTruthy();
     expect(guardian?.subjectId).toBeTruthy();
@@ -58,7 +65,7 @@ describe("runDevAuthSeed", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        email: "c.moreau@school.edu",
+        email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
         password: DEV_AUTH_PASSWORD,
       }),
     }));
@@ -97,7 +104,7 @@ describe("runDevAuthSeed", () => {
     };
 
     expect(body.actor?.kind).toBe("staff");
-    expect(body.actor?.staffMemberId).toBe("st5");
+    expect(body.actor?.staffMemberId).toBe(MINIMAL_AUTH_FIXTURE_STAFF_ID);
     expect(body.actor?.subjectId).toBe(staff?.subjectId);
   }, 30_000);
 
@@ -122,7 +129,7 @@ describe("runDevAuthSeed", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        email: "c.moreau@school.edu",
+        email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
         password: DEV_AUTH_PASSWORD,
       }),
     }));

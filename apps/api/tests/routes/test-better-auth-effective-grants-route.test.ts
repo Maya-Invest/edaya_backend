@@ -1,4 +1,8 @@
 import { afterEach, describe, expect, it } from "bun:test";
+import {
+  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  MINIMAL_AUTH_FIXTURE_STAFF_ID,
+} from "@edaya/dev-fixtures";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import {
   createAppRequest,
@@ -16,8 +20,8 @@ describe("better auth effective grants route", () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const cookies = await signInThroughApp(app, { email: "c.moreau@school.edu" });
-    const staff = await application.repositories.staffMembers.findById("st5");
+    const cookies = await signInThroughApp(app, { email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL });
+    const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID);
 
     const response = await app.request(createAppRequest("/api/core/authorization/effective-grants", {
       headers: {
@@ -40,7 +44,7 @@ describe("better auth effective grants route", () => {
     };
 
     expect(body.kind).toBe("staff");
-    expect(body.actorId).toBe("st5");
+    expect(body.actorId).toBe(MINIMAL_AUTH_FIXTURE_STAFF_ID);
     expect(staff?.schoolId).toBeTruthy();
     expect(body.schoolId).toBe(staff!.schoolId);
     expect(body.assuranceLevel).toBe("standard");
