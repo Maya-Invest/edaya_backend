@@ -1604,9 +1604,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
-          "name": "name",
+        "academic_year_id": {
+          "name": "academic_year_id",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_val": {
+          "name": "order_val",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -1621,6 +1633,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_break": {
+          "name": "is_break",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

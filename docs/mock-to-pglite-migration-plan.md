@@ -1,54 +1,313 @@
 # Plan de migration — mocks webapp → PGLite
 
-Plan vivant pour transférer les données de démo du front (`apps/webapp/src/lib/data/`) vers la base **PGLite** de l'API (`DATABASE_URL=pglite`), via le seed de développement.
+Transférer les données de démo du front (`apps/webapp/src/lib/data/`) vers la base **PGLite** de l'API (`DATABASE_URL=pglite`), via le seed de développement.
 
 **Objectif :** après `bun dev`, un utilisateur connecté voit les **mêmes données** que les mocks, servies par `/api/core/*`.
-
-**Docs liées**
-
-- [Webapp mock → API migration plan](./webapp-mock-migration-plan.md) — branchement des écrans (loaders, mappers)
-- [Local dev](./done/local-dev.md) — PGLite, `bun seed`, comptes Better Auth
-- Source mocks : `apps/webapp/src/lib/data/school.ts`, `report-cards.ts`, `teachingLog.ts`
-- Cible seed : `apps/api/src/lib/seed/dataset.ts`, `run-dev-seed.ts`, `run-dev-access-seed.ts`
 
 **Dernière mise à jour :** 2026-06-11
 
 ---
 
-## Légende
+## Tableau de bord
+
+| Indicateur | Valeur |
+|------------|--------|
+| **Progression globale** | **7 / 16 domaines** complets · **~44 %** |
+| **Prochaine étape** | PR 3 — Finance (phases 3a–3c) |
+| **Bloquant webapp** | Finance, planning, évaluations, vie scolaire, bulletins (voir [plan webapp](./webapp-mock-migration-plan.md)) |
+
+```
+[█████████░░░░░░░░░░░]  7/16 domaines
+ Fait ──►              Reste
+```
+
+### Comment lire ce document
+
+1. **§ Tracker** — source de vérité : une ligne = un domaine, colonnes = étapes (dataset → seed → permissions → tests).
+2. **§ Terminé** — récapitulatif de ce qui est livré (ne pas recocher ici, le tracker suffit).
+3. **§ Backlog** — liste ordonnée de ce qu'il reste à faire, avec cases à cocher actionnables.
+4. **§ Détails par phase** — détail technique uniquement pour les phases **non terminées**.
+5. À chaque PR seed : mettre à jour le **tracker**, cocher le **backlog**, actualiser la date en tête.
 
 | Symbole | Signification |
 |---------|---------------|
-| `- [x]` | Terminé |
-| `- [ ]` | À faire |
-| `- [~]` | Partiel (détaillé dans la section) |
+| ✅ | Terminé |
+| 🟡 | Partiel |
+| ⬜ | À faire |
+| — | Non applicable / en attente décision produit |
 
 ---
 
-## Vue d'ensemble
+## Tracker (source de vérité)
 
-| Phase | Domaine | Jeux de données mock | Statut global |
-|-------|---------|----------------------|---------------|
-| 0 | Fondations & structure scolaire | `schools`, `gradeLevels`, `academicYears`, `academicPeriods`, `classes` | ✅ |
-| 1 | Personnes | `students`, `guardians`, `staff` | ✅ |
-| 2 | Pédagogie — matières | `subjects`, programme | ✅ |
-| 3 | Finance | `fees`, `billing` | ⬜ |
-| 4 | Emploi du temps & sessions | `planning`, `resources` | ⬜ |
-| 5 | Évaluations | `evaluations` | ⬜ |
-| 6 | Vie scolaire | `schoolYearEvents`, `incidents`, `absences` | ⬜ |
-| 7 | Élève 360° | `healthRecords`, `pedagogicalNotes` | ⬜ |
-| 8 | Bulletins | `report-cards.ts` | ⬜ |
-| 9 | Accès & auth | rôles UI, comptes démo | 🟡 partiel |
-| 10 | Domaines sans entité API | `activities`, `deadlines` | ⬜ décision produit |
+Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de passer la ligne en ✅.
 
-**Progression seed :** 7 / 16 domaines complets · **~44 %**
+| # | Domaine | `SEED_*` | `run-dev-seed` | Permissions | Test seed | Statut |
+|---|---------|:--------:|:--------------:|:-----------:|:---------:|:------:|
+| 0a | École, années, trimestres, niveaux, classes | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 0b | Créneaux horaires (`period-definitions`) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 1a | Élèves + inscriptions | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 1b | Tuteurs + liens | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 1c | Staff (st1–st7, rôles, affectations) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2 | Matières + programme + offerings classe 6a | ✅ | ✅ | ✅ | ✅ | 🟡 |
+| 3a | Catalogue frais | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3b | Facturation élève (`student-fees`) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3c | Paiements | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 4 | Ressources + emploi du temps + sessions | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 5 | Évaluations + résultats | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 6a | Calendrier scolaire | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 6b | Incidents & discipline | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 6c | Absences / présences | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 7 | Santé + notes pédagogiques élève | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8 | Bulletins (barèmes, modèles, résultats) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 9 | Accès & auth (comptes + permissions dev) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| 10 | Activités / devoirs (sans entité API) | — | — | — | — | — |
+
+**Légende colonnes**
+
+| Colonne | Fichier / action |
+|---------|------------------|
+| `SEED_*` | Constantes dans `testing/dev-fixtures/src/dataset.ts` |
+| `run-dev-seed` | Insertion via commandes métier dans `apps/api/src/lib/seed/run-dev-seed.ts` |
+| Permissions | `apps/api/src/lib/seed/run-dev-access-seed.ts` |
+| Test seed | Assertion liste non vide dans `apps/api/tests/seed/` |
+
+**Notes tracker**
+
+- **Phase 2 🟡** : offerings 6a/6b OK ; reste `assignMatterToClassSubject` + matières autres niveaux (5a).
+- **Phase 9 🟡** : 4 comptes staff + 1 tuteur ; permissions finance/assessment/attendance/discipline/report-card à ajouter au fil des phases.
 
 ---
 
-## Architecture cible
+## Terminé
+
+Résumé consolidé — le détail historique est dans le tracker ci-dessus.
+
+### Fondations (phase 0a)
+
+- École `sch-edaya-central`, année `2025`, 7 niveaux, 3 classes (6a, 6b, 5a), 3 trimestres
+- `registerSchool`, `createAcademicYear`, périodes publiées, `createClassGroup` + prof principal 6a (`st3`)
+- Tests : list schools / years / classes
+
+### Créneaux horaires (phase 0b)
+
+- 11 créneaux journaliers (`pd-1`…`pd-8` + récréations + pause déjeuner), alignés sur les horaires du mock `planning[]`
+- Décision **C2** : les libellés trimestre du mock restent dans `academic-periods`, pas dans `period-definitions`
+- Test : `period-definitions/list` ≥ 11
+
+### Personnes (phase 1)
+
+- 8 élèves (`s1`–`s8`), 6 tuteurs, 7 staff (`st1`–`st7`, dont st4 Cheng et st6 Klein)
+- Inscriptions, liens tuteur–élève, `StaffRoleAssignment`, `role-director` pour st5, affectations classe/matière
+- Tests : `students/list`, `guardians/list` ≥ 6, `staff-members/count` = 7
+
+### Pédagogie — matières (phase 2, cœur)
+
+- Catalogue 6 matières, programme (`SEED_SUBJECT_MATTERS`), 8 offerings classe 6a/6b avec enseignants
+- Test : `class-subjects/list` ≥ 8
+
+### Auth de base (phase 9, partiel)
+
+| Compte | Entité | Statut |
+|--------|--------|--------|
+| c.moreau@school.edu | st5 (directeur) | ✅ |
+| m.dupont@school.edu | st1 (prof) | ✅ |
+| m.leon@school.edu | st3 (prof principal) | ✅ |
+| t.evrard@school.edu | st7 (éducateur) | ✅ |
+| c.laurent@mail.com | g1 (tuteur) | ✅ |
+
+- Rôles dev : `role-teacher`, `role-coordinator`, `role-educator`, `role-director`
+
+### Décisions actées
+
+- **C3** — Staff st4, st6 seedés depuis mock
+- **C4** — Directeur st5 : `role-director` + owner école
+
+### Constantes seed existantes (`dataset.ts`)
+
+`SEED_SCHOOL_*`, `SEED_GRADE_LEVELS`, `SEED_CLASSES`, `SEED_ACADEMIC_PERIODS`, `SEED_PERIOD_DEFINITIONS`, `SEED_STAFF`, `SEED_STUDENTS`, `SEED_GUARDIANS`, `SEED_SUBJECT_CATALOG`, `SEED_SUBJECT_MATTERS`, `SEED_CLASS_SUBJECTS`, `DEV_AUTH_*`
+
+---
+
+## Backlog (à faire, dans l'ordre)
+
+Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
+
+### PR 2 — Créneaux horaires (phase 0b) ✅
+
+- [x] `SEED_PERIOD_DEFINITIONS` ← grille horaire journalière (11 créneaux, pas les libellés trimestre mock)
+- [x] Seed via `baseService.periodDefinitions.save`
+- [x] Permissions (`QUERY_WORKSPACE_READ` via shell) + test `period-definitions/list`
+- [ ] (Optionnel) Deuxième école mock `sch-edaya-nord`
+
+### PR 3 — Finance (phases 3a–3c)
+
+- [ ] `SEED_FEES` ← `fees[]` + `createFee`
+- [ ] `SEED_STUDENT_FEES` ← `billing[]` + `assignFeeToStudent`
+- [ ] `SEED_PAYMENTS` ← lignes payées + `recordPayment`
+- [ ] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS` dans access seed
+- [ ] Tests : `fees/list`, `student-fees/list`, `payments/list`
+
+### PR 4 — Planning (phase 4)
+
+- [ ] `SEED_RESOURCES` ← `resources[]`
+- [ ] `SEED_SCHEDULES` + sessions classe 6a (`createSchedule`, `createSession`)
+- [ ] Lier sessions → class-subjects, staff, resources
+- [ ] `recordSessionProgress` (échantillon) — prérequis `teachingLog.ts`
+- [ ] Permissions scheduling + test `sessions/list`
+
+### PR 5 — Évaluations (phase 5)
+
+- [ ] `SEED_ASSESSMENTS` ← `evaluations[]`
+- [ ] `SEED_ASSESSMENT_RESULTS` — notes partielles élèves 6a
+- [ ] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
+- [ ] Tests : `assessments/list`, `assessment-results/list`
+
+### PR 6 — Vie scolaire (phases 6a–6c)
+
+- [ ] Calendrier ← `schoolYearEvents[]`
+- [ ] Incidents ← `incidents[]` + involvements
+- [ ] Absences ← `absences[]`
+- [ ] Permissions attendance / discipline / calendrier
+- [ ] Tests list par entité
+
+### PR 7 — Élève 360° (phase 7)
+
+- [ ] Santé ← `healthRecords`
+- [ ] Notes ← `pedagogicalNotes[]`
+- [ ] Tests : `student-health-profiles`, `student-notes/list`
+
+### PR 8 — Bulletins (phase 8)
+
+- [ ] Barèmes ← `report-cards.ts` `gradeScales[]`
+- [ ] Modèles + sections
+- [ ] Résultats trimestre 1 classe 6a
+- [ ] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
+- [ ] Tests : `grade-scales`, `report-card-definitions`, `report-card-results`
+
+### PR 9 — Auth & accès restants (phase 9)
+
+- [ ] Compte st2 (`m.garnier@school.edu`)
+- [ ] Comptes tuteurs g2–g6
+- [ ] Matrice UI `/configuration/roles` alignée sur `access-roles` seedés
+
+### PR 10 — Décisions produit (phase 10)
+
+- [ ] Décision : `activities[]`, `deadlines[]`, deuxième école
+- [ ] Implémenter ou marquer « mock permanent » dans `school.ts`
+
+### Finitions transversales (phase 2 + champs UI-only)
+
+- [ ] `assignMatterToClassSubject` (progression par classe)
+- [ ] Matières classes 5a / autres niveaux
+- [ ] Documenter champs UI-only non persistés (`Student.attendance`, `StaffMember.initials`, etc.)
+
+---
+
+## Détails par phase (phases ouvertes uniquement)
+
+---
+
+### Phase 3 — Finance ⬜
+
+**Source mock :** `school.ts` — `fees[]`, `billing[]`  
+**Commandes :** `createFee`, `assignFeeToStudent`, `recordPayment`
+
+| Sous-domaine | Entité API | Mock |
+|--------------|------------|------|
+| Catalogue | `fees` | `fees[]` |
+| Facturation | `student-fees` | `billing[]` |
+| Paiements | `payments` | lignes statut payé |
+
+**Écrans débloqués :** `/finance/fees`, `/finance/billing`, `/finance/payment`
+
+---
+
+### Phase 4 — Emploi du temps & ressources ⬜
+
+**Source mock :** `school.ts` — `planning[]`, `resources[]`  
+**Entités API :** `schedules`, `sessions`, `resources`, `resource-assignments`
+
+**Écrans débloqués :** `/classes/[id]/timetable`, `/classes/[id]/teaching`  
+**Prérequis journal :** `teachingLog.ts` = dérivé de `subjects` + `sessions` (décision **C6**)
+
+---
+
+### Phase 5 — Évaluations ⬜
+
+**Source mock :** `school.ts` — `evaluations[]`  
+**Entités API :** `assessments`, `assessment-results`
+
+**Écrans débloqués :** `/classes/[id]/evaluations`
+
+---
+
+### Phase 6 — Vie scolaire ⬜
+
+**Source mock :** `school.ts` — `schoolYearEvents`, `incidents`, `absences`
+
+| Sous-domaine | Commande typique |
+|--------------|------------------|
+| Calendrier | `createCalendarEvent` |
+| Incidents | `recordIncident` + involvements |
+| Absences | `recordAttendance` / `recordDailyAttendance` |
+
+**Écrans débloqués :** `/school/calendar`, `/school/events`, onglets élève
+
+---
+
+### Phase 7 — Élève 360° ⬜
+
+**Source mock :** `school.ts` — `healthRecords`, `pedagogicalNotes`  
+**Écrans :** drawers `StudentDetailsDialog` (santé, notes)
+
+---
+
+### Phase 8 — Bulletins ⬜
+
+**Source mock :** `report-cards.ts` — `gradeScales`, définitions, sections, résultats
+
+**Écrans débloqués :** `/configuration/grade-scales`, `/configuration/report-cards`, `/classes/[id]/report-cards`
+
+---
+
+### Phase 9 — Accès & auth (reste) 🟡
+
+**Comptes manquants**
+
+| Compte | Entité | Statut |
+|--------|--------|--------|
+| m.garnier@school.edu | st2 | ⬜ |
+| tuteurs g2–g6 | g2–g6 | ⬜ |
+
+**Groupes permissions à créer au fil des PRs**
+
+- [ ] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS`
+- [ ] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
+- [ ] `DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS`
+- [ ] `DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS`
+- [ ] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
+
+---
+
+### Phase 10 — Sans entité API ⬜
+
+**Décision produit requise** (voir [webapp-mock-migration-plan §8](./webapp-mock-migration-plan.md)).
+
+| Mock | Lignes | Options |
+|------|--------|---------|
+| `activities[]` | ~5 activités | (A) nouvelle entité (B) `calendar-events` typés (C) mock permanent |
+| `deadlines[]` | devoirs | (A) `assessments` typés (B) nouvelle entité (C) mock permanent |
+| Deuxième école | `schools[1]` | seed multi-école ou UI seule |
+
+---
+
+## Annexe
+
+### Architecture cible
 
 ```
-school.ts (mock)          dataset.ts (constantes)
+school.ts (mock)          testing/dev-fixtures/dataset.ts
        │                          │
        └──────── aligner IDs ─────┘
                     │
@@ -65,409 +324,72 @@ school.ts (mock)          dataset.ts (constantes)
 
 **Règle d'or :** les IDs du seed (`6a`, `s1`, `st5`…) restent **identiques** aux mocks tant que la stratégie UUID n'est pas adoptée (voir [webapp-mock-migration-plan § C4](./webapp-mock-migration-plan.md)).
 
----
+### Recette standard (chaque domaine du backlog)
 
-## Recette standard (par tranche)
+**Données**
 
-Cocher chaque item pour **chaque** domaine migré :
+- [ ] Extraire mock → `SEED_<DOMAINE>` dans `dataset.ts`
+- [ ] Commenter les champs UI-only non persistés
+- [ ] Insertion dans `run-dev-seed.ts` via commandes métier
+- [ ] Idempotence : second `bun seed` → `skipped` sans doublon
 
-### Données
+**Accès dev**
 
-- [ ] Extraire les lignes mock → `SEED_<DOMAINE>` dans `dataset.ts` (IDs, champs, relations)
-- [ ] Documenter les champs UI-only non persistés (commentaire dans `dataset.ts`)
-- [ ] Implémenter l'insertion dans `run-dev-seed.ts` via **commandes métier** (`service.create*`, `service.register*`, etc.)
-- [ ] Vérifier l'idempotence : second `bun seed` → `skipped` sans doublon
+- [ ] Permissions dans `run-dev-access-seed.ts`
+- [ ] Attribution au rôle dev concerné
 
-### Accès dev
+**Auth** (si compte démo requis)
 
-- [ ] Ajouter les `Permission.*` nécessaires dans `run-dev-access-seed.ts`
-- [ ] Attribuer les permissions au rôle dev concerné (`role-teacher`, `role-coordinator`, `role-educator`, futur `role-director`)
+- [ ] Entrée dans `DEV_AUTH_STAFF_ACCOUNTS` ou `DEV_AUTH_GUARDIAN_ACCOUNTS`
 
-### Auth (si compte démo requis)
+**Tests & suivi**
 
-- [ ] Ajouter l'entrée dans `DEV_AUTH_STAFF_ACCOUNTS` ou `DEV_AUTH_GUARDIAN_ACCOUNTS`
-- [ ] Vérifier connexion : email + `DevPassword1!`
-
-### Tests
-
-- [ ] Assertion liste non vide dans `apps/api/tests/seed/test-dev-access-seed.test.ts`
+- [ ] Assertion dans `apps/api/tests/seed/`
 - [ ] `bun test apps/api/tests/seed/` vert
-- [ ] Smoke manuel : `bun seed` puis `POST /api/core/entities/<entity>/list` avec cookie session
-
-### Suivi
-
-- [ ] Mettre à jour **§ Tracker domaines** ci-dessous
-- [ ] Mettre à jour [webapp-mock-migration-plan §7](./webapp-mock-migration-plan.md) (seed tracker)
-
----
-
-## Décisions transversales
-
-- [ ] **C1 — IDs seed** : conserver les IDs lisibles (`6a`, `s1`) vs migrer vers UUID (impact filtres API)
-- [ ] **C2 — `periodDefinitions`** : le mock mélange créneaux horaires et libellés trimestre ; l'API `period-definitions` = créneaux (`08:00`–`09:00`). Décider mapping shell
-- [x] **C3 — Staff manquants** : `st4`, `st6` présents dans `school.ts` — seedés (2026-06-11)
-- [x] **C4 — Directeur (`st5`)** : rôle `role-director` + owner école (2026-06-11)
-- [ ] **C5 — Activités / devoirs** : pas d'entité API dédiée → voir Phase 10
-- [ ] **C6 — `teachingLog.ts`** : données dérivées de `subjects` + `sessions` ; seed après Phase 4
-
----
-
-## Phase 0 — Fondations & structure scolaire ✅
-
-**Source mock :** `school.ts` — `schools`, `gradeLevels`, `academicYears`, `academicPeriods`, `classes`, `hierarchy`
-
-| Tâche | Statut |
-|-------|--------|
-| `SEED_SCHOOL_ID`, `SEED_ACADEMIC_YEAR_ID` | [x] |
-| `SEED_GRADE_LEVELS` (7 niveaux) | [x] |
-| `SEED_CLASSES` (6a, 6b, 5a) | [x] |
-| `SEED_ACADEMIC_PERIODS` (3 trimestres) | [x] |
-| `registerSchool` + `createAcademicYear` + périodes publiées | [x] |
-| `createClassGroup` + prof principal 6a (`st3`) | [x] |
-| Test shell : list schools / years / classes | [x] |
-
-**Reste ouvert (shell complet) :**
-
-- [ ] `SEED_PERIOD_DEFINITIONS` — créneaux horaires alignés mock `periodDefinitions[]`
-- [ ] `period-definitions` seedés via service
-- [ ] Deuxième école mock (`sch-edaya-nord`) — optionnel, UI a 2 écoles
-
----
-
-## Phase 1 — Personnes ✅
-
-**Source mock :** `school.ts` — `students`, `guardians`, `staff`
-
-### Élèves & inscriptions
-
-| Tâche | Statut |
-|-------|--------|
-| `SEED_STUDENTS` (8 élèves, ids `s1`–`s8`) | [x] |
-| `registerStudent` + `enrollStudent` par classe | [x] |
-| Test : `students/list` ≥ 8 | [x] |
-
-### Tuteurs & liens
-
-| Tâche | Statut |
-|-------|--------|
-| `SEED_GUARDIANS` (6 tuteurs) | [x] |
-| `registerGuardian` + `linkGuardianToStudent` | [x] |
-| Test : `guardians/list` ≥ 6 | [x] |
-
-### Personnel
-
-| Tâche | Statut |
-|-------|--------|
-| `SEED_STAFF` — st1–st7 (7 membres) | [x] |
-| st4 (M. Cheng), st6 (Sarah Klein) depuis mock | [x] |
-| `StaffRoleAssignment` pour tous les staff seedés | [x] |
-| `role-director` pour st5 | [x] |
-| `StaffAssignment` classe + class-subject | [x] |
-| Test : `staff-members/list` ≥ 7 | [x] |
-
-### Champs UI-only (non seedés — documentés)
-
-- [ ] `Student.attendance`, `Student.average`, badges `honor` / `warning`
-- [ ] `StaffMember.initials`, `department`, `classes[]`, `subjectsTaught[]` (dérivés ou mock fallback)
-
----
-
-## Phase 2 — Pédagogie : matières ✅
-
-**Source mock :** `school.ts` — `subjects` (catalogue + offerings classe 6a/6b)
-
-| Tâche | Statut |
-|-------|--------|
-| `SEED_SUBJECT_CATALOG` (6 matières) | [x] |
-| `SEED_SUBJECT_MATTERS` (programme / chapitres) | [x] |
-| `SEED_CLASS_SUBJECTS` (8 offerings + enseignants) | [x] |
-| `offerSubjectToClass` + matters | [x] |
-| Assignations enseignant → `run-dev-access-seed` | [x] |
-| Test : `class-subjects/list` ≥ 8 | [x] |
-| `assignMatterToClassSubject` (progression par classe) | [ ] |
-| Matières classes 5a / autres niveaux (mock partiel) | [ ] |
-
----
-
-## Phase 3 — Finance ⬜
-
-**Source mock :** `school.ts` — `fees`, `billing`  
-**Commandes API :** `createFee`, `assignFeeToStudent`, `recordPayment`
-
-### Catalogue des frais
-
-- [ ] `SEED_FEES` ← `fees[]` (ids, libellés, montants, échéances)
-- [ ] `createFee` dans `run-dev-seed.ts`
-- [ ] Permissions `FEE_READ` / finance query → `run-dev-access-seed.ts`
-- [ ] Test : `fees/list` non vide
-
-### Facturation élève (`student-fees`)
-
-- [ ] `SEED_STUDENT_FEES` ← `billing[]` (élève, fee, montant, statut, échéances)
-- [ ] `assignFeeToStudent` pour chaque ligne mock
-- [ ] Permissions billing read
-- [ ] Test : `student-fees/list` non vide
-
-### Paiements
-
-- [ ] `SEED_PAYMENTS` ← lignes `billing` avec statut payé
-- [ ] `recordPayment` pour chaque paiement mock
-- [ ] Permissions `PAYMENT_READ`
-- [ ] Test : `payments/list` non vide
-
-**Écrans débloqués :** `/finance/fees`, `/finance/billing`, `/finance/payment`
-
----
-
-## Phase 4 — Emploi du temps & ressources ⬜
-
-**Source mock :** `school.ts` — `planning[]`, `resources[]`  
-**Entités API :** `schedules`, `sessions`, `resources`, `resource-assignments`
-
-### Ressources (salles)
-
-- [ ] `SEED_RESOURCES` ← `resources[]`
-- [ ] Persistance ressources + `resource-assignments` si applicable
-- [ ] Test : `resources/list`
-
-### Emploi du temps
-
-- [ ] `SEED_SCHEDULES` — grille hebdo classe `6a`
-- [ ] `createSchedule` + `createSession` (ou `generateSessions`)
-- [ ] Lier sessions → `class-subjects`, staff, resources
-- [ ] Permissions scheduling read
-- [ ] Test : `sessions/list` pour classe `6a`
-
-### Journal de classe (prérequis Phase 4)
-
-- [ ] `recordSessionProgress` / `class-subject-progress` pour quelques sessions
-- [ ] Aligner `teachingLog.ts` (données dérivées)
-
-**Écrans débloqués :** `/classes/[id]/timetable`, `/classes/[id]/teaching`
-
----
-
-## Phase 5 — Évaluations ⬜
-
-**Source mock :** `school.ts` — `evaluations[]`  
-**Entités API :** `assessments`, `assessment-results`
-
-- [ ] `SEED_ASSESSMENTS` ← `evaluations[]` (titre, date, matière, classe, barème)
-- [ ] `createAssessment` par évaluation mock
-- [ ] `SEED_ASSESSMENT_RESULTS` — notes partielles (`graded` / `total` du mock)
-- [ ] `recordAssessmentResult` pour un échantillon d'élèves `6a`
-- [ ] Permissions `GRADE_READ` / assessment query
-- [ ] Test : `assessments/list` + `assessment-results/list`
-
-**Écrans débloqués :** `/classes/[id]/evaluations`
-
----
-
-## Phase 6 — Vie scolaire ⬜
-
-**Source mock :** `school.ts` — `schoolYearEvents`, `incidents`, `absences`
-
-### Calendrier scolaire
-
-- [ ] `SEED_CALENDAR_EVENTS` ← `schoolYearEvents[]`
-- [ ] `createCalendarEvent` (cérémonies, vacances, réunions)
-- [ ] Permissions calendrier read
-- [ ] Test : `calendar-events/list`
-
-### Incidents & discipline
-
-- [ ] `SEED_INCIDENTS` ← `incidents[]`
-- [ ] `recordIncident` + `student-incident-involvements`
-- [ ] `disciplinary-actions` si présents dans mock
-- [ ] Permissions `DISCIPLINE_READ`
-- [ ] Test : `incidents/list`
-
-### Absences / présences
-
-- [ ] `SEED_ATTENDANCE` ← `absences[]`
-- [ ] `recordAttendance` ou `recordDailyAttendance`
-- [ ] Permissions `ATTENDANCE_READ`
-- [ ] Test : `attendance/list`
-
-**Écrans débloqués :** `/school/calendar`, `/school/events`, onglets élève (absences, incidents)
-
----
-
-## Phase 7 — Élève 360° ⬜
-
-**Source mock :** `school.ts` — `healthRecords`, `pedagogicalNotes`
-
-### Profils santé
-
-- [ ] `SEED_STUDENT_HEALTH` ← `healthRecords` (par `studentId`)
-- [ ] Persistance `student-health-profiles`
-- [ ] Test : `student-health-profiles/list` ou `one`
-
-### Notes pédagogiques
-
-- [ ] `SEED_STUDENT_NOTES` ← `pedagogicalNotes[]`
-- [ ] `createStudentNote`
-- [ ] Test : `student-notes/list`
-
-**Écrans débloqués :** drawers `StudentDetailsDialog` (onglets santé, notes)
-
----
-
-## Phase 8 — Bulletins ⬜
-
-**Source mock :** `report-cards.ts` — `gradeScales`, définitions, sections, résultats
-
-### Barèmes
-
-- [ ] `SEED_GRADE_SCALES` ← `gradeScales[]`
-- [ ] `createGradeScale`
-- [ ] Test : `grade-scales/list`
-
-### Modèles de bulletin
-
-- [ ] `SEED_REPORT_CARD_DEFINITIONS` + sections
-- [ ] `createReportCardDefinition` + `createReportCardDefinitionSection`
-- [ ] Test : `report-card-definitions/list`
-
-### Résultats
-
-- [ ] `SEED_REPORT_CARD_RESULTS` — échantillon trimestre 1, classe `6a`
-- [ ] `generateReportCardResult` (+ `publish` si requis)
-- [ ] Permissions `REPORT_CARD_*`
-- [ ] Test : `report-card-results/list`
-
-**Écrans débloqués :** `/configuration/grade-scales`, `/configuration/report-cards`, `/classes/[id]/report-cards`
-
----
-
-## Phase 9 — Accès & auth 🟡
-
-**Source mock :** rôles UI (`StaffRole`), matrice permissions, comptes login
-
-### Comptes Better Auth
-
-| Compte | Entité | Statut |
-|--------|--------|--------|
-| c.moreau@school.edu | st5 (directeur) | [x] |
-| m.dupont@school.edu | st1 (prof) | [x] |
-| m.leon@school.edu | st3 (prof principal) | [x] |
-| t.evrard@school.edu | st7 (éducateur) | [x] |
-| c.laurent@mail.com | g1 (tuteur) | [x] |
-| m.garnier@school.edu | st2 | [ ] |
-| Comptes tuteurs g2–g6 | g2–g6 | [ ] |
-
-### Rôles & permissions API
-
-- [x] `role-teacher`, `role-coordinator`, `role-educator`
-- [x] `role-director` pour st5 (permissions admin / finance / config)
-- [ ] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
-- [ ] Matrice UI `/configuration/roles` alignée sur `access-roles` seedés
-
----
-
-## Phase 10 — Domaines sans entité API ⬜
-
-**Décision produit requise** avant seed (voir [webapp-mock-migration-plan §8](./webapp-mock-migration-plan.md)).
-
-| Mock | Lignes | Options |
-|------|--------|---------|
-| `activities[]` | ~5 activités parascolaires | (A) nouvelle entité (B) `calendar-events` typés (C) garder mock |
-| `deadlines[]` | devoirs / échéances | (A) `assessments` typés (B) nouvelle entité (C) garder mock |
-| Deuxième école | `schools[1]` | seed multi-école ou UI seule |
-
-- [ ] Décision produit documentée
-- [ ] Implémentation seed (si option A ou B)
-- [ ] Sinon : marquer « mock permanent » dans `school.ts`
-
----
-
-## Tracker domaines (récapitulatif)
-
-| Domaine mock | Constante seed | `run-dev-seed` | Permissions | Test seed | Webapp API |
-|--------------|----------------|----------------|-------------|-----------|------------|
-| École, années, trimestres, niveaux, classes | ✅ | ✅ | ✅ | ✅ | ✅ shell |
-| Élèves + inscriptions | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Tuteurs + liens | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Staff | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Matières + programme + offerings | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Créneaux horaires (`period-definitions`) | [ ] | [ ] | [ ] | [ ] | partiel |
-| Frais | [ ] | [ ] | [ ] | [ ] | mock |
-| Facturation élève | [ ] | [ ] | [ ] | [ ] | mock |
-| Paiements | [ ] | [ ] | [ ] | [ ] | mock |
-| Ressources & planning | [ ] | [ ] | [ ] | [ ] | mock |
-| Évaluations & notes | [ ] | [ ] | [ ] | [ ] | mock |
-| Calendrier scolaire | [ ] | [ ] | [ ] | [ ] | mock |
-| Incidents | [ ] | [ ] | [ ] | [ ] | mock |
-| Absences | [ ] | [ ] | [ ] | [ ] | mock |
-| Santé & notes élève | [ ] | [ ] | [ ] | [ ] | mock |
-| Bulletins (barèmes, modèles, résultats) | [ ] | [ ] | [ ] | [ ] | mock |
-| Rôles / accès complets | 🟡 | 🟡 | 🟡 | partiel | mock |
-| Activités / devoirs | — | — | — | — | mock |
-
----
-
-## Séquence de PRs suggérée
-
-Ordre optimisé pour débloquer le [plan webapp](./webapp-mock-migration-plan.md) :
-
-```
-PR 1  ✅ Phase 1 — compléter staff (st4, st6) + role-director st5
-PR 2  Phase 0 — period-definitions (créneaux horaires)
-PR 3   Phase 3 — finance (fees → student-fees → payments)
-PR 4   Phase 4 — resources + schedules/sessions (classe 6a)
-PR 5   Phase 5 — assessments + results
-PR 6   Phase 6 — calendar-events + incidents + attendance
-PR 7   Phase 7 — health profiles + student notes
-PR 8   Phase 8 — grade scales + report cards
-PR 9   Phase 9 — auth accounts restants + permissions groups
-PR 10  Phase 10 — activités / devoirs (si décidé)
-```
-
-Chaque PR : **seed + permissions + test + mise à jour de ce document**.
-
----
-
-## Validation globale
-
-Cocher quand l'environnement dev est complet :
+- [ ] Mettre à jour **§ Tracker** et **§ Backlog** de ce document
+- [ ] Mettre à jour [webapp-mock-migration-plan §7](./webapp-mock-migration-plan.md)
+
+### Décisions transversales ouvertes
+
+| ID | Sujet | Statut |
+|----|-------|--------|
+| C1 | IDs seed lisibles vs UUID | ⬜ |
+| C2 | Mapping `periodDefinitions` mock → API | ✅ grille horaire seedée ; trimestres restent dans `academic-periods` |
+| C5 | Activités / devoirs sans entité | ⬜ Phase 10 |
+| C6 | `teachingLog.ts` après sessions seedées | ⬜ Phase 4 |
+
+### Validation globale (fin de migration)
 
 - [ ] `DATABASE_URL=pglite` dans `apps/api/.env`
 - [ ] `bun seed` → `Dev database seeded` sans erreur
 - [ ] `bun dev` → API auto-seed au démarrage
 - [ ] Connexion `m.dupont@school.edu` / `DevPassword1!` → écrans migrés non vides
 - [ ] `bun test apps/api/tests/seed/` vert
-- [ ] Aucun écran connecté vide après seed frais (règle « no empty logged-in screens »)
+- [ ] Aucun écran connecté vide après seed frais
 
----
+### Métriques
 
-## Métriques
-
-| Métrique | Baseline (2026-06-11) | Cible |
-|----------|----------------------|-------|
-| Domaines seed complets | 6 / 16 | 16 / 16 (+ décisions Phase 10) |
-| Entrées `SEED_*` dans `dataset.ts` | 11 constantes | ~25 |
-| Lignes mock couvertes (`school.ts`) | ~40 % | 100 % (hors UI-only) |
-| Tests seed (assertions list) | 2 | 1 par domaine migré |
+| Métrique | Actuel | Cible |
+|----------|--------|-------|
+| Domaines seed complets | 7 / 16 | 16 / 16 |
+| Constantes `SEED_*` | 12 | ~25 |
+| Couverture mock `school.ts` | ~40 % | 100 % (hors UI-only) |
+| Tests seed (assertions list) | 4 scénarios | 1 par domaine |
 | Groupes permissions dev | 3 | ~8 |
 
----
-
-## Références
+### Docs & fichiers
 
 | Ressource | Chemin |
 |-----------|--------|
 | Mocks webapp | `apps/webapp/src/lib/data/school.ts` |
 | Mocks bulletins | `apps/webapp/src/lib/data/report-cards.ts` |
-| Dataset seed | `apps/api/src/lib/seed/dataset.ts` |
+| Dataset seed | `testing/dev-fixtures/src/dataset.ts` |
 | Seed entités | `apps/api/src/lib/seed/run-dev-seed.ts` |
 | Seed permissions | `apps/api/src/lib/seed/run-dev-access-seed.ts` |
 | Seed auth | `apps/api/src/lib/seed/run-dev-auth-seed.ts` |
-| Tests seed | `apps/api/tests/seed/test-dev-access-seed.test.ts` |
+| Tests seed | `apps/api/tests/seed/` |
 | Commandes métier | `packages/core/src/services/school-service.ts` |
-| Registry entités API | `apps/api/src/lib/school-api/registry/index.ts` |
+| Plan branchement webapp | [webapp-mock-migration-plan.md](./webapp-mock-migration-plan.md) |
+| PGLite & comptes dev | [done/local-dev.md](./done/local-dev.md) |
 
-**Règle de maintenance :** à chaque PR seed, cocher les cases correspondantes et mettre à jour la date en tête de document.
+**Règle de maintenance :** à chaque PR seed → tracker + backlog + date en tête.

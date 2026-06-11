@@ -209,6 +209,25 @@ export const SEED_ACADEMIC_PERIODS = [
   { id: '2025-t3', name: 'Trimestre 3', startDate: '2026-04-20', endDate: '2026-07-03' },
 ] as const
 
+/**
+ * Daily time-slot grid for the school year (API `period-definitions`).
+ * Not the trimester labels in mock `periodDefinitions[]` — those map to `academic-periods`.
+ * Times align with planning sessions in `school.ts` (08:30, 09:00, 10:00, 11:00, 14:00…).
+ */
+export const SEED_PERIOD_DEFINITIONS = [
+  { id: 'pd-1', label: 'Période 1', order: 1, startTime: '08:00', endTime: '08:45', isBreak: false },
+  { id: 'pd-2', label: 'Période 2', order: 2, startTime: '08:45', endTime: '09:30', isBreak: false },
+  { id: 'pd-break-am', label: 'Récréation', order: 3, startTime: '09:30', endTime: '09:45', isBreak: true },
+  { id: 'pd-3', label: 'Période 3', order: 4, startTime: '09:45', endTime: '10:30', isBreak: false },
+  { id: 'pd-4', label: 'Période 4', order: 5, startTime: '10:30', endTime: '11:15', isBreak: false },
+  { id: 'pd-5', label: 'Période 5', order: 6, startTime: '11:15', endTime: '12:00', isBreak: false },
+  { id: 'pd-lunch', label: 'Pause déjeuner', order: 7, startTime: '12:00', endTime: '13:30', isBreak: true },
+  { id: 'pd-6', label: 'Période 6', order: 8, startTime: '13:30', endTime: '14:15', isBreak: false },
+  { id: 'pd-7', label: 'Période 7', order: 9, startTime: '14:15', endTime: '15:00', isBreak: false },
+  { id: 'pd-break-pm', label: 'Récréation', order: 10, startTime: '15:00', endTime: '15:15', isBreak: true },
+  { id: 'pd-8', label: 'Période 8', order: 11, startTime: '15:15', endTime: '16:00', isBreak: false },
+] as const
+
 export function splitDisplayName(fullName: string): { firstName: string, lastName: string } {
   const parts = fullName.trim().split(/\s+/)
   if (parts.length <= 1) {

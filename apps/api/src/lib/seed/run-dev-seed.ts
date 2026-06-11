@@ -7,6 +7,7 @@ import {
   SEED_CLASSES,
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
+  SEED_PERIOD_DEFINITIONS,
   SEED_SCHOOL_ID,
   SEED_SCHOOL_PROFILE,
   SEED_STAFF,
@@ -19,6 +20,7 @@ import {
   AcademicPeriodType,
   createSystemActorMetadata,
   GradeLevel,
+  PeriodDefinition,
   Subject,
   SubjectMatter,
 } from "@edaya/core";
@@ -37,6 +39,7 @@ export type DevSeedResult =
     academicPeriods: number;
     subjects: number;
     classSubjects: number;
+    periodDefinitions: number;
   };
 
 export async function runDevSeed(application: ApiSchoolApplication): Promise<DevSeedResult> {
@@ -84,6 +87,19 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       endDate: parseSeedDate(period.endDate),
     });
     await service.publishAcademicPeriod({ academicPeriodId: created.id });
+  }
+
+  for (const slot of SEED_PERIOD_DEFINITIONS) {
+    await service.baseService.periodDefinitions.save(new PeriodDefinition({
+      id: slot.id,
+      schoolId: SEED_SCHOOL_ID,
+      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      label: slot.label,
+      order: slot.order,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      isBreak: slot.isBreak,
+    }), { moduleChecked: true });
   }
 
   const director = SEED_STAFF[0];
@@ -205,5 +221,6 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     academicPeriods: SEED_ACADEMIC_PERIODS.length,
     subjects: SEED_SUBJECT_CATALOG.length,
     classSubjects: SEED_CLASS_SUBJECTS.length,
+    periodDefinitions: SEED_PERIOD_DEFINITIONS.length,
   };
 }
