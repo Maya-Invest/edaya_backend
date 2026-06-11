@@ -22,4 +22,11 @@ OpenAPI reference: http://localhost:9999/reference
 
 Default `DATABASE_URL=pglite` uses in-memory Postgres on Node only (no Docker). Dev data is auto-seeded on startup; run `bun run seed` to seed manually.
 
-See [docs/local-dev.md](../../docs/local-dev.md) and [docs/api-runtimes.md](../../docs/api-runtimes.md).
+## Build & deploy
+
+| Target | Command | Output |
+|--------|---------|--------|
+| **Node** | `bun run build` then `bun start` | `dist/node.js` (bundles workspace packages) |
+| **Worker** | `bun run deploy:worker` | Wrangler bundles `src/entries/worker.ts` |
+
+See [docs/local-dev.md](../../docs/local-dev.md) and [docs/done/api-runtimes.md](../../docs/done/api-runtimes.md).

@@ -9,18 +9,11 @@
       "cache": false
     },
     "build": {
-      "dependsOn": ["^build"],
       "outputs": ["dist/**", ".svelte-kit/**"]
     },
-    "check": {
-      "dependsOn": ["^build"]
-    },
-    "quality": {
-      "dependsOn": ["^build"]
-    },
-    "test": {
-      "dependsOn": ["^build"]
-    },
+    "check": {},
+    "quality": {},
+    "test": {},
     "lint": {},
     "lint:fix": {}
   }

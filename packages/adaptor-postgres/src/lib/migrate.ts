@@ -1,24 +1,17 @@
-import { existsSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator'
 import { migrate as migratePostgresJs } from 'drizzle-orm/postgres-js/migrator'
 
 export type MigrationDriver = 'pglite' | 'postgres-js'
 
-/** Resolve the SQL migrations folder from package root (works from `dist/` or `src/`). */
+const packageRoot = dirname(
+  createRequire(import.meta.url).resolve('@edaya/adaptor-postgres/package.json'),
+)
+
+/** Resolve the SQL migrations folder from the installed package root. */
 export function getMigrationsFolder(): string {
-  const currentDir = dirname(fileURLToPath(import.meta.url))
-  const candidates = [
-    join(currentDir, '../drizzle'),
-    join(currentDir, '../../drizzle'),
-  ]
-  for (const folder of candidates) {
-    if (existsSync(folder)) {
-      return folder
-    }
-  }
-  return candidates[0]!
+  return join(packageRoot, 'drizzle')
 }
 
 export async function runMigrations(

@@ -132,7 +132,8 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | `cd apps/webapp && bun run preview` | Preview production build |
 | `cd apps/webapp && bun run preview:cloudflare` | Preview on Cloudflare Pages locally |
 | `cd apps/webapp && bun run deploy` | Build and deploy webapp to Cloudflare Pages |
-| `cd apps/api && bun start` | Run compiled API (`dist/`) |
+| `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
+| `cd apps/api && bun run deploy:worker` | Deploy API to Cloudflare Workers |
 
 ### Database
 
@@ -172,7 +173,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run quality` | `lint` + `check` per package |
 | `bun run test` | Unit and integration tests |
 | `bun run test:coverage` | Tests with coverage (where supported) |
-| `bun run build` | Build all packages |
+| `bun run build` | Build deployable apps (webapp + API Node bundle) |
 | `bun run fullcheck` | `lint:fix` → `quality` → `build` → `test` (full gate) |
 
 ### Per-package shortcuts

@@ -5,14 +5,11 @@
   "private": true,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     }
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean --tsconfig tsconfig.build.json",
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "db:generate": "drizzle-kit generate",
