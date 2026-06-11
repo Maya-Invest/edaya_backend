@@ -1,4 +1,10 @@
-import { DEV_AUTH_PASSWORD, DEV_AUTH_STAFF_ACCOUNTS } from "@edaya/dev-fixtures";
+import {
+  DEV_AUTH_PASSWORD,
+  DEV_AUTH_STAFF_ACCOUNTS,
+  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  SEED_STAFF,
+} from "@edaya/dev-fixtures";
 import { parseEnv } from "@/lib/bootstrap/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
@@ -96,16 +102,16 @@ describe("dev access seed", () => {
 
     const staffMembers = await application.repositories.staffMembers.list({});
     const directorAssignments = await application.repositories.staffRoleAssignments.list({
-      staffId: "st5",
+      staffId: MINIMAL_AUTH_FIXTURE_STAFF_ID,
       status: "active",
     });
-    expect(staffMembers.length).toBeGreaterThanOrEqual(7);
+    expect(staffMembers.length).toBe(SEED_STAFF.length);
     expect(directorAssignments.some(entry => entry.roleIds.includes("role-director"))).toBe(true);
 
     const signIn = await app.request(createAppRequest("/api/auth/sign-in/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "c.moreau@school.edu", password: "DevPassword1!" }),
+      body: JSON.stringify({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, password: DEV_AUTH_PASSWORD }),
     }));
     const cookies = collectSetCookieHeaders(signIn);
     const authHeaders = {
@@ -121,6 +127,6 @@ describe("dev access seed", () => {
 
     expect(staffCount.status).toBe(200);
     const countBody = await staffCount.json() as { count: number };
-    expect(countBody.count).toBeGreaterThanOrEqual(7);
+    expect(countBody.count).toBe(SEED_STAFF.length);
   }, 30_000);
 });
