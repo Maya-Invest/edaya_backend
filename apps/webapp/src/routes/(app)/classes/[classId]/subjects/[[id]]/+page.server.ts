@@ -1,4 +1,4 @@
-import { loadClassSubjectsPage } from '$lib/data/loaders';
+import { loadClassSubjectsPage } from '$lib/data/loaders.server';
 
 export async function load({ parent, url, params }) {
 	const { session } = await parent();

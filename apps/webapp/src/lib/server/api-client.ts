@@ -1,9 +1,24 @@
 import { getRequestEvent } from '$app/server';
 import { API_URL } from '$env/static/private';
 
-import { ApiError } from '@edaya/api-client';
+import { ApiError, unwrapEntity, unwrapEntityList } from '@edaya/api-client';
 
 export { ApiError };
+
+function isEntityCollectionPath(path: string): boolean {
+	return /\/api\/core\/entities\/[^/]+\/(list|one|save)$/.test(path);
+}
+
+function isEntityGetPath(path: string): boolean {
+	return /\/api\/core\/entities\/[^/]+\/[^/]+$/.test(path)
+		&& !path.endsWith('/list')
+		&& !path.endsWith('/one')
+		&& !path.endsWith('/save')
+		&& !path.endsWith('/count')
+		&& !path.endsWith('/delete')
+		&& !path.endsWith('/batch-save')
+		&& !path.endsWith('/batch-delete');
+}
 
 export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
 	const headers = new Headers(init.headers);
@@ -40,7 +55,14 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
 		return undefined as T;
 	}
 
-	return response.json() as Promise<T>;
+	const json = await response.json();
+	if (isEntityCollectionPath(path)) {
+		return (Array.isArray(json) ? unwrapEntityList(json) : unwrapEntity(json)) as T;
+	}
+	if (isEntityGetPath(path)) {
+		return unwrapEntity(json) as T;
+	}
+	return json as T;
 }
 
 export async function checkApiHealth(): Promise<{ connected: true; message: string } | { connected: false }> {

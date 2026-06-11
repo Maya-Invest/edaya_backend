@@ -24,13 +24,16 @@ export const getAppShellData = query(async () => {
 		client.entities.enrollments.list({}),
 	]);
 
-	const schools: School[] = (schoolsRaw ?? []).map(s => ({
-		id: s.id,
-		name: s.name,
-		shortName: s.name.split(' ')[0] ?? s.name,
-		city: s.city ?? '',
-		timeZone: s.timeZone ?? 'Europe/Paris',
-	}));
+	const schools: School[] = (schoolsRaw ?? [])
+		.filter((school): school is NonNullable<typeof school> & { id: string; name: string } =>
+			Boolean(school?.id && school?.name))
+		.map(s => ({
+			id: s.id,
+			name: s.name,
+			shortName: s.name.split(' ')[0] ?? s.name,
+			city: s.city ?? '',
+			timeZone: s.timeZone ?? 'Europe/Paris',
+		}));
 
 	const academicYears: AcademicYear[] = (yearsRaw ?? []).map(y => ({
 		id: y.id,

@@ -24,7 +24,8 @@ export function appPath(
 	route: RouteId,
 	params?: Record<string, string | undefined>,
 ): ResolvedPathname {
-	return params === undefined ? resolvePath(route) : resolvePath(route, params);
+	// Routes with optional [[param]] segments still require a params object at runtime.
+	return resolvePath(route, params ?? {});
 }
 
 const CLASS_SEGMENTS: Record<string, RouteId> = {

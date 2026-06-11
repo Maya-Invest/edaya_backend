@@ -101,6 +101,35 @@ describe("runDevAuthSeed", () => {
     expect(body.actor?.subjectId).toBe(staff?.subjectId);
   }, 30_000);
 
+  it("re-provisions Better Auth users when domain links already exist", async () => {
+    const runtime = await getApiRuntime(pgliteEnv);
+    const application = await runtime.getSchoolApplication();
+    const auth = runtime.getAuth();
+
+    await runDevSeed(application);
+    const firstRun = await runDevAuthSeed(application, auth, pgliteEnv);
+    expect(firstRun.status).toBe("seeded");
+
+    const secondRun = await runDevAuthSeed(application, auth, pgliteEnv);
+    expect(secondRun.status).toBe("skipped");
+    if (secondRun.status === "skipped") {
+      expect(secondRun.reason).toBe("already-linked");
+    }
+
+    const signInResponse = await auth.handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/api/auth/sign-in/email`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "c.moreau@school.edu",
+        password: DEV_AUTH_PASSWORD,
+      }),
+    }));
+
+    expect(signInResponse.status).toBe(200);
+  }, 30_000);
+
   it("is idempotent when auth links already exist", async () => {
     const runtime = await getApiRuntime(pgliteEnv);
     const application = await runtime.getSchoolApplication();

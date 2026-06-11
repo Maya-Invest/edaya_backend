@@ -13,6 +13,16 @@ interface AuthUserResponse {
   };
 }
 
+function collectSetCookieHeaders(response: Response): string[] {
+  const headers = response.headers as Headers & { getSetCookie?: () => string[] };
+  if (typeof headers.getSetCookie === "function") {
+    return headers.getSetCookie();
+  }
+
+  const single = response.headers.get("set-cookie");
+  return single ? [single] : [];
+}
+
 async function readAuthUserId(response: Response): Promise<string | undefined> {
   const bodyText = await response.text();
   if (!bodyText.trim()) {
@@ -21,6 +31,24 @@ async function readAuthUserId(response: Response): Promise<string | undefined> {
 
   const body = JSON.parse(bodyText) as AuthUserResponse;
   return body.user?.id;
+}
+
+async function readSessionUserId(auth: AuthService, env: Environment, response: Response): Promise<string | undefined> {
+  const userId = await readAuthUserId(response);
+  if (userId) {
+    return userId;
+  }
+
+  const cookies = collectSetCookieHeaders(response);
+  if (cookies.length === 0) {
+    return undefined;
+  }
+
+  const session = await auth.api.getSession({
+    headers: new Headers({ cookie: cookies.join("; ") }),
+  }) as AuthUserResponse | null;
+
+  return session?.user?.id;
 }
 
 export async function ensureAuthUser(
@@ -40,7 +68,7 @@ export async function ensureAuthUser(
   }));
 
   if (signInResponse.ok) {
-    const userId = await readAuthUserId(signInResponse);
+    const userId = await readSessionUserId(auth, env, signInResponse);
     if (userId) {
       return userId;
     }
@@ -63,7 +91,7 @@ export async function ensureAuthUser(
     throw new Error(`Failed to provision dev auth user ${account.email}: ${signUpResponse.status} ${message}`);
   }
 
-  const userId = await readAuthUserId(signUpResponse);
+  const userId = await readSessionUserId(auth, env, signUpResponse);
   if (!userId) {
     throw new Error(`Better Auth sign-up for ${account.email} did not return a user id`);
   }

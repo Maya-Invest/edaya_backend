@@ -1,4 +1,5 @@
 export { createSchoolClient, type SchoolClient } from './create-client.ts'
+export { unwrapEntity, unwrapEntityList } from './entity-envelope.ts'
 export { type EntityQuery, EntityResource } from './entity-resource.ts'
 export { ApiError } from './errors.ts'
 export { clientBindings, type ClientBindings } from './generated/client-bindings.ts'

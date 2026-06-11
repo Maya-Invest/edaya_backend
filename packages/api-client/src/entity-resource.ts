@@ -1,3 +1,4 @@
+import { unwrapEntity, unwrapEntityList } from './entity-envelope.ts'
 import type { Transport } from './transport.ts'
 
 export type EntityQuery = Record<string, unknown> & {
@@ -12,24 +13,28 @@ export class EntityResource<TEntity> {
     private readonly publicName: string,
   ) {}
 
-  list(query: EntityQuery = {}): Promise<TEntity[]> {
-    return this.transport.request('POST', this.path('list'), { body: query })
+  async list(query: EntityQuery = {}): Promise<TEntity[]> {
+    const result = await this.transport.request<unknown>('POST', this.path('list'), { body: query })
+    return unwrapEntityList<TEntity>(result)
   }
 
-  one(query: EntityQuery): Promise<TEntity> {
-    return this.transport.request('POST', this.path('one'), { body: query })
+  async one(query: EntityQuery): Promise<TEntity> {
+    const result = await this.transport.request<unknown>('POST', this.path('one'), { body: query })
+    return unwrapEntity<TEntity>(result)
   }
 
   count(query: EntityQuery = {}): Promise<{ count: number }> {
     return this.transport.request('POST', this.path('count'), { body: query })
   }
 
-  get(id: string): Promise<TEntity> {
-    return this.transport.request('GET', `/api/core/entities/${this.publicName}/${id}`)
+  async get(id: string): Promise<TEntity> {
+    const result = await this.transport.request<unknown>('GET', `/api/core/entities/${this.publicName}/${id}`)
+    return unwrapEntity<TEntity>(result)
   }
 
-  save(entity: TEntity): Promise<TEntity> {
-    return this.transport.request('POST', this.path('save'), { body: entity })
+  async save(entity: TEntity): Promise<TEntity> {
+    const result = await this.transport.request<unknown>('POST', this.path('save'), { body: entity })
+    return unwrapEntity<TEntity>(result)
   }
 
   delete(input: { id: string }): Promise<{ message: string }> {

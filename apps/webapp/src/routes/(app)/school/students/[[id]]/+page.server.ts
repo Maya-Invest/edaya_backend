@@ -1,4 +1,4 @@
-import { loadSchoolStudentsPage } from '$lib/data/loaders';
+import { loadSchoolStudentsPage } from '$lib/data/loaders.server';
 
 export async function load({ parent, url }) {
 	const { session } = await parent();

@@ -29,27 +29,6 @@ export async function runDevAuthSeed(
     return { status: "skipped", reason: "school-not-seeded", linkedStaff: 0, linkedGuardians: 0 };
   }
 
-  const pendingStaff = await Promise.all(
-    DEV_AUTH_STAFF_ACCOUNTS.map(async (account) => {
-      const staff = await application.repositories.staffMembers.findById(account.staffId);
-      return staff && !staff.subjectId ? account : null;
-    }),
-  );
-
-  const pendingGuardians = await Promise.all(
-    DEV_AUTH_GUARDIAN_ACCOUNTS.map(async (account) => {
-      const guardian = await application.repositories.guardians.findById(account.guardianId);
-      return guardian && !guardian.subjectId ? account : null;
-    }),
-  );
-
-  const staffToLink = pendingStaff.filter((account): account is (typeof DEV_AUTH_STAFF_ACCOUNTS)[number] => account !== null);
-  const guardiansToLink = pendingGuardians.filter((account): account is (typeof DEV_AUTH_GUARDIAN_ACCOUNTS)[number] => account !== null);
-
-  if (staffToLink.length === 0 && guardiansToLink.length === 0) {
-    return { status: "skipped", reason: "already-linked", linkedStaff: 0, linkedGuardians: 0 };
-  }
-
   const actor = createSystemActorMetadata({
     systemId: "dev-auth-seed",
     schoolId: SEED_SCHOOL_ID,
@@ -58,19 +37,31 @@ export async function runDevAuthSeed(
   });
   const service = application.forActor(actor);
   const linkedAccounts: Array<{ email: string; kind: "staff" | "guardian"; entityId: string }> = [];
+  let linkedStaff = 0;
+  let linkedGuardians = 0;
 
-  for (const account of staffToLink) {
+  for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
+    const staff = await application.repositories.staffMembers.findById(account.staffId);
+    if (!staff) {
+      continue;
+    }
+
     const subjectId = await ensureAuthUser(auth, env, {
       email: account.email,
       password: DEV_AUTH_PASSWORD,
       name: account.name,
     });
 
+    if (staff.subjectId === subjectId) {
+      continue;
+    }
+
     await service.linkActorSubject({
       subjectId,
       staffMemberId: account.staffId,
     });
 
+    linkedStaff++;
     linkedAccounts.push({
       email: account.email,
       kind: "staff",
@@ -78,18 +69,28 @@ export async function runDevAuthSeed(
     });
   }
 
-  for (const account of guardiansToLink) {
+  for (const account of DEV_AUTH_GUARDIAN_ACCOUNTS) {
+    const guardian = await application.repositories.guardians.findById(account.guardianId);
+    if (!guardian) {
+      continue;
+    }
+
     const subjectId = await ensureAuthUser(auth, env, {
       email: account.email,
       password: DEV_AUTH_PASSWORD,
       name: account.name,
     });
 
+    if (guardian.subjectId === subjectId) {
+      continue;
+    }
+
     await service.linkActorSubject({
       subjectId,
       guardianId: account.guardianId,
     });
 
+    linkedGuardians++;
     linkedAccounts.push({
       email: account.email,
       kind: "guardian",
@@ -97,10 +98,14 @@ export async function runDevAuthSeed(
     });
   }
 
+  if (linkedStaff === 0 && linkedGuardians === 0) {
+    return { status: "skipped", reason: "already-linked", linkedStaff: 0, linkedGuardians: 0 };
+  }
+
   return {
     status: "seeded",
-    linkedStaff: linkedAccounts.filter(account => account.kind === "staff").length,
-    linkedGuardians: linkedAccounts.filter(account => account.kind === "guardian").length,
+    linkedStaff,
+    linkedGuardians,
     accounts: linkedAccounts,
   };
 }

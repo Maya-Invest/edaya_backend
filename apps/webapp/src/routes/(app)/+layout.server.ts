@@ -1,4 +1,4 @@
-import { loadAppShell } from '$lib/data/loaders';
+import { loadAppShell } from '$lib/data/loaders.server';
 
 export async function load({ parent }) {
 	const { session } = await parent();

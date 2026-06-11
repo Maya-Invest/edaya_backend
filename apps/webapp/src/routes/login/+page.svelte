@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { School } from '$lib/data/school';
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { authClient } from '$lib/auth/client';
 	import { authSession, DEMO_ACCOUNTS } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
@@ -14,9 +15,28 @@
 	let selectedSchoolId = $state(schools[0]?.id ?? '');
 	let loading = $state(false);
 
+	const apiConnected = $derived(
+		($page.data.api as { connected?: boolean } | undefined)?.connected ?? false,
+	);
 	const selectedSchool = $derived(
 		schools.find(entry => entry.id === selectedSchoolId) ?? schools[0],
 	);
+
+	async function signInWithRetry(email: string, password: string) {
+		const maxAttempts = 3;
+		for (let attempt = 0; attempt < maxAttempts; attempt++) {
+			const { error } = await authClient.signIn.email({ email, password });
+			if (!error) {
+				return null;
+			}
+			const retryable = /user not found/i.test(error.message ?? '') && attempt < maxAttempts - 1;
+			if (!retryable) {
+				return error;
+			}
+			await new Promise(resolve => setTimeout(resolve, 1_000));
+		}
+		return { message: 'User not found' };
+	}
 
 	$effect(() => {
 		if (authSession.ready && authSession.isLoggedIn) {
@@ -33,12 +53,14 @@
 		if (!account)
 			return;
 
+		if (!apiConnected) {
+			toast.error('API locale indisponible — attendez le démarrage du serveur.');
+			return;
+		}
+
 		loading = true;
 		try {
-			const { error } = await authClient.signIn.email({
-				email: account.email,
-				password: 'DevPassword1!',
-			});
+			const error = await signInWithRetry(account.email, 'DevPassword1!');
 
 			if (error) {
 				toast.error(`Connexion échouée: ${error.message}`);
@@ -93,7 +115,7 @@
 						<button
 							type="button"
 							onclick={() => pickSchool(school)}
-							disabled={loading}
+							disabled={loading || !apiConnected}
 							class={cn(
 								'rounded-xl border border-border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-50 disabled:pointer-events-none',
 								selectedSchool?.id === school.id
@@ -118,6 +140,11 @@
 			<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
 				<h2 class="mb-1 font-display text-base font-semibold">{$t('auth.pickAccount')}</h2>
 				<p class="mb-4 text-xs text-muted-foreground">{$t('auth.demoHint')}</p>
+				{#if !apiConnected}
+					<p class="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+						API locale indisponible — attendez quelques secondes que le serveur termine son initialisation.
+					</p>
+				{/if}
 
 				<ul class="space-y-2">
 					{#each DEMO_ACCOUNTS as account (account.id)}
@@ -125,7 +152,7 @@
 							<button
 								type="button"
 								onclick={() => signIn(account.id)}
-								disabled={loading}
+								disabled={loading || !apiConnected}
 								class="flex w-full items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-primary/20 hover:bg-secondary/50 disabled:opacity-50 disabled:pointer-events-none"
 							>
 								<span
