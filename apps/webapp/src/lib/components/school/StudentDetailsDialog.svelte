@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { Student } from '$lib/data/school';
+	import type { Student } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { classes, guardians, healthRecords, incidents } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Info } from '$lib/icons';
 
 	const { s }: { s: Student } = $props();
 
-	const cls = $derived(classes.find(c => c.id === s.classId));
-	const linkedG = $derived(guardians.filter(g => g.studentIds.includes(s.id)));
-	const health = $derived(healthRecords[s.id]);
-	const studentIncidents = $derived(incidents.filter(i => i.studentId === s.id));
+	const cls = $derived(academicContext.classes.find(c => c.id === s.classId));
+	const linkedG = $derived(detailDataContext.guardians.filter(g => g.studentIds.includes(s.id)));
+	const health = $derived(detailDataContext.healthRecords[s.id]);
+	const studentIncidents = $derived(detailDataContext.incidents.filter(i => i.studentId === s.id));
 </script>
 
 <Dialog.Root>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ClassNode, Incident, Student } from '$lib/data/school';
+	import type { ClassNode, Incident, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';

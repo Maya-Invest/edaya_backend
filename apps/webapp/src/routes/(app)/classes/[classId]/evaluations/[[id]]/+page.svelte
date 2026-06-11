@@ -1,26 +1,31 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import EvaluationsView from '$lib/components/school/EvaluationsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
+	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
-
-	const { data }: { data: PageData } = $props();
+	import { queryClassEvaluationsPage } from '$lib/queries/assessments.queries';
 
 	const selectedId = $derived($page.params.id);
+	const classId = $derived($page.params.classId ?? '6a');
+	const query = $derived(queryClassEvaluationsPage(classId));
 </script>
 
-<DataState
-	status={data.status}
-	errorMessage={data.errorMessage}
-	emptyTitle={$t('tab.evaluations')}
-	emptyDescription={$t('dataState.emptyDescription')}
->
-	<EvaluationsView
-		evaluations={data.evaluations}
-		onSelect={ev => appGoto(detailHref.classEvaluation(data.classId, ev.id))}
-		{selectedId}
-	/>
-</DataState>
+<PageQuery {query} loadingTitle={$t('tab.evaluations')}>
+	{#snippet children(data)}
+		<DataState
+			status={data.status}
+			errorMessage={data.errorMessage}
+			emptyTitle={$t('tab.evaluations')}
+			emptyDescription={$t('dataState.emptyDescription')}
+		>
+			<EvaluationsView
+				evaluations={data.evaluations}
+				onSelect={ev => appGoto(detailHref.classEvaluation(data.classId, ev.id))}
+				{selectedId}
+			/>
+		</DataState>
+	{/snippet}
+</PageQuery>

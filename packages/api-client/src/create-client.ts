@@ -1,6 +1,7 @@
 import type { Transport } from './transport.ts'
 import { EntityResource } from './entity-resource.ts'
 import { clientBindings } from './generated/client-bindings.ts'
+import { schoolApiPath } from './paths.ts'
 
 type SchemaName<TSchemas extends Record<string, unknown>, TName extends string>
   = TName extends keyof TSchemas ? TSchemas[TName] : never
@@ -46,7 +47,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     Object.entries(clientBindings.commands).map(([key, binding]) => [
       key,
       (payload: unknown) =>
-        transport.request('POST', `/api/core/commands/${binding.publicName}`, { body: payload }),
+        transport.request('POST', schoolApiPath('commands', binding.publicName), { body: payload }),
     ]),
   ) as CommandClients<TSchemas>
 
@@ -54,7 +55,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     Object.entries(clientBindings.queries).map(([key, binding]) => [
       key,
       (payload: unknown) =>
-        transport.request('POST', `/api/core/queries/${binding.publicName}`, { body: payload }),
+        transport.request('POST', schoolApiPath('queries', binding.publicName), { body: payload }),
     ]),
   ) as QueryClients<TSchemas>
 
@@ -63,7 +64,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     commands,
     queries,
     authorization: {
-      effectiveGrants: () => transport.request('GET', '/api/core/authorization/effective-grants'),
+      effectiveGrants: () => transport.request('GET', schoolApiPath('authorization', 'effective-grants')),
     },
   }
 }

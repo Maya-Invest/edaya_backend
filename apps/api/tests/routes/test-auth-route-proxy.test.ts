@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import { parseEnv } from "@/lib/bootstrap/env";
+import { parseEnv } from "@/lib/runtime/env";
 import type { AppBindings } from "@/lib/http/types";
 import indexRouter from "@/app-router";
 
@@ -41,19 +41,19 @@ describe("auth route proxy", () => {
     authHandler.mockResolvedValueOnce(new Response("ok", { status: 200 }));
 
     const app = setupTestApp();
-    const res = await app.request("/api/auth/session");
+    const res = await app.request("/auth/session");
 
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("ok");
     const proxiedRequest = authHandler.mock.calls[0]?.[0] as Request;
-    expect(proxiedRequest.url).toBe("http://localhost:9999/api/auth/session");
+    expect(proxiedRequest.url).toBe("http://localhost:9999/auth/session");
   });
 
   it("should proxy POST auth requests through the OpenAPI route", async () => {
     authHandler.mockResolvedValueOnce(new Response("created", { status: 201 }));
 
     const app = setupTestApp();
-    const res = await app.request("/api/auth/sign-in/email", {
+    const res = await app.request("/auth/sign-in/email", {
       method: "POST",
       body: JSON.stringify({ email: "user@example.com", password: "secret" }),
     });
@@ -61,6 +61,6 @@ describe("auth route proxy", () => {
     expect(res.status).toBe(201);
     expect(await res.text()).toBe("created");
     const proxiedRequest = authHandler.mock.calls[0]?.[0] as Request;
-    expect(proxiedRequest.url).toBe("http://localhost:9999/api/auth/sign-in/email");
+    expect(proxiedRequest.url).toBe("http://localhost:9999/auth/sign-in/email");
   });
 });

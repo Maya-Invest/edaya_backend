@@ -1,5 +1,5 @@
-import type { Environment } from "@/lib/bootstrap/env";
-import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { Environment } from "@/lib/runtime/env";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { AuthService } from "@/lib/runtime/types";
 import { isEphemeralDatabase } from "@/lib/runtime/database-url";
 import { type DevAccessSeedResult, runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";

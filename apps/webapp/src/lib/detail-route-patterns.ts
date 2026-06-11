@@ -1,6 +1,6 @@
 const DETAIL_PATH_PATTERNS = [
 	/^\/school\/(students|guardians|activities|events|calendar)\/[^/]+$/,
-	/^\/classes\/[^/]+\/(students|subjects|timetable|teaching|evaluations|report-cards)\/[^/]+$/,
+	/^\/classes\/[^/]+\/(students|subjects|timetable|teaching|homework|evaluations|report-cards)\/[^/]+$/,
 	/^\/finance\/(billing|fees)\/[^/]+$/,
 	/^\/configuration\/subjects\/level\/[^/]+$/,
 	/^\/configuration\/subjects\/[^/]+$/,
@@ -11,4 +11,14 @@ const DETAIL_PATH_PATTERNS = [
 
 export function isLikelyDetailPath(pathname: string): boolean {
 	return DETAIL_PATH_PATTERNS.some(pattern => pattern.test(pathname));
+}
+
+/** Stable key for list page data — ignores optional detail segments in the URL. */
+export function listRouteCacheKey(url: URL): string {
+	const pathname = url.pathname.replace(/\/$/, '') || '/';
+	const listPathname = isLikelyDetailPath(pathname)
+		? pathname.replace(/\/[^/]+$/, '')
+		: pathname;
+	const demo = url.searchParams.get('demo');
+	return demo ? `${listPathname}?demo=${demo}` : listPathname;
 }

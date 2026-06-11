@@ -1,5 +1,5 @@
 import type { ResolvedPathname } from '$app/types';
-import type { StaffRole } from '$lib/data/school';
+import type { StaffRole } from '$lib/types/school';
 import { appPath } from '$lib/navigation/app-navigation';
 
 export const detailHref = {
@@ -18,6 +18,8 @@ export const detailHref = {
 		appPath('/(app)/classes/[classId]/evaluations/[[id]]', { classId, id }),
 	classTeachingSubject: (classId: string, id: string): ResolvedPathname =>
 		appPath('/(app)/classes/[classId]/teaching/[[id]]', { classId, id }),
+	classDeadline: (classId: string, id: string): ResolvedPathname =>
+		appPath('/(app)/classes/[classId]/homework/[[id]]', { classId, id }),
 	configSubject: (id: string): ResolvedPathname => appPath('/(app)/configuration/subjects/[[id]]', { id }),
 	configSubjectLevel: (label: string): ResolvedPathname =>
 		appPath('/(app)/configuration/subjects/level/[[level]]', { level: label }),

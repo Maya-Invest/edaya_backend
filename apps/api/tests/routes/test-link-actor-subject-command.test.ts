@@ -51,7 +51,7 @@ describe("link-actor-subject command route", () => {
 
     const cookies = await signInThroughApp(app, { email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL });
 
-    const response = await app.request(createAppRequest("/api/core/commands/link-actor-subject", {
+    const response = await app.request(createAppRequest("/core/commands/link-actor-subject", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -85,7 +85,7 @@ describe("link-actor-subject command route", () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const response = await app.request(createAppRequest("/api/core/commands/link-actor-subject", {
+    const response = await app.request(createAppRequest("/core/commands/link-actor-subject", {
       method: "POST",
       headers: {
         "content-type": "application/json",

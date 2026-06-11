@@ -69,7 +69,7 @@ handle that middleware will not see.
 
 ### Better Auth proxy
 
-`/api/auth/*` routes forward to the Better Auth handler. Incoming request URLs are rewritten to
+`/auth/*` routes forward to the Better Auth handler. Incoming request URLs are rewritten to
 `BETTER_AUTH_URL` before delegation, so a port or host mismatch between the client request and
 `BETTER_AUTH_URL` does not break sign-in. Keep `BETTER_AUTH_URL` aligned with the public API URL
 in each environment (including reverse proxies).

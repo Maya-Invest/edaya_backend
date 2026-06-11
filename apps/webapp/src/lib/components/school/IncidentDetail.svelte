@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type { Incident } from '$lib/data/school';
+	import type { Incident } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-	import { students, classes } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import { incidentSevTone, incidentCatTone } from './drawer-constants';
@@ -10,8 +11,8 @@
 
 	const { i }: { i: Incident } = $props();
 
-	const student = $derived(students.find(s => s.id === i.studentId));
-	const cls = $derived(classes.find(c => c.id === student?.classId));
+	const student = $derived(detailDataContext.students.find(s => s.id === i.studentId));
+	const cls = $derived(academicContext.classes.find(c => c.id === student?.classId));
 </script>
 
 <div class="space-y-5">

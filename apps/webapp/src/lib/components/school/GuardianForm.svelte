@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { Guardian } from '$lib/data/school';
+	import type { Guardian } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { students } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { relationKey } from './drawer-constants';
 	import DrawerField from './DrawerField.svelte';
 
 	const { g }: { g: Guardian } = $props();
 
-	const linked = $derived(students.filter(s => g.studentIds.includes(s.id)));
+	const linked = $derived(detailDataContext.students.filter(s => g.studentIds.includes(s.id)));
 </script>
 
 <div class="space-y-5">

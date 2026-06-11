@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Subject } from '$lib/data/school';
-	import { getSubjectEntries } from '$lib/data/teachingLog';
+	import type { Subject } from '$lib/types/school';
 	import { ChevronDown, BookOpen } from '$lib/icons';
+	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { cn } from '$lib/utils';
 	import { dotByColor } from './drawer-constants';
 
@@ -9,7 +9,7 @@
 
 	let open = $state(false);
 
-	const entries = $derived(getSubjectEntries(s.name));
+	const entries = $derived(teachingLogContext.resolveSubjectEntries(s.name));
 
 	const chapters = $derived.by(() => {
 		const map: Record<string, { chapter: string; sessions: number; lastDate: string; progress: number }> = {};

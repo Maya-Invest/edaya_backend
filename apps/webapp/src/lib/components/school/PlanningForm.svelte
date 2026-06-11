@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PlanningEvent } from '$lib/data/school';
+	import type { PlanningEvent } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
 	import DrawerField from './DrawerField.svelte';

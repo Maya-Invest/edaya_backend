@@ -1,13 +1,18 @@
 <script lang="ts">
-	import type { ReportCardResult } from '$lib/data/report-cards';
+	import type { ReportCardResult } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import {
+		generateReportCardResultMutation,
+		generateReportCardsForClassMutation,
+		publishReportCardResultMutation,
+	} from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
-	import { students } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { FileSpreadsheet, Sparkles } from '$lib/icons';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { formatGrade } from '$lib/types/report-cards';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
@@ -24,7 +29,7 @@
 	const results = $derived(reportCardsContext.resultsForClass(classId));
 
 	const period = $derived(academicContext.period);
-	const classStudents = $derived(students.filter(s => s.classId === classId));
+	const classStudents = $derived(detailDataContext.students.filter(s => s.classId === classId));
 
 	const statusLabel: Record<ReportCardResult['status'], string> = {
 		draft: 'Brouillon',
@@ -36,23 +41,35 @@
 		return results.find(r => r.studentId === studentId);
 	}
 
-	function generateAll() {
-		const n = reportCardsContext.generateForClass(classId);
+	async function generateAll() {
+		const n = await generateReportCardsForClassMutation(classId);
+		if (n === null) {
+			return;
+		}
 		toast.success(get(t)('reportCards.toastGeneratedClass', { n: String(n) }));
 	}
 
-	function generateOne(studentId: string) {
-		const r = reportCardsContext.generateResult(studentId);
-		if (r) {
-			const name = students.find(s => s.id === studentId)?.name ?? '';
+	async function generateOne(studentId: string) {
+		const ok = await generateReportCardResultMutation(studentId);
+		if (ok) {
+			const name = detailDataContext.students.find(s => s.id === studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastGenerated', { name }));
 		}
 	}
 
-	function publishOne(resultId: string) {
-		const r = reportCardsContext.publishResult(resultId);
-		if (r) {
-			const name = students.find(s => s.id === r.studentId)?.name ?? '';
+	async function publishOne(resultId: string) {
+		const result = reportCardsContext.results.find(entry => entry.id === resultId);
+		if (!result) {
+			return;
+		}
+		const ok = await publishReportCardResultMutation(
+			result.id,
+			result.studentId,
+			result.academicPeriodId,
+			result.definitionId,
+		);
+		if (ok) {
+			const name = detailDataContext.students.find(s => s.id === result.studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastPublished', { name }));
 		}
 	}
@@ -86,7 +103,7 @@
 			<tbody>
 				{#each classStudents as student (student.id)}
 					{@const result = resultForStudent(student.id)}
-					{@const scale = result ? gradeScaleById(result.gradeScaleId) : null}
+					{@const scale = result ? reportCardsContext.scales.find(s => s.id === result.gradeScaleId) : null}
 					<tr
 						class={cn(
 							'border-b border-border/60 last:border-0',
@@ -103,7 +120,7 @@
 							</button>
 						</td>
 						<td class="px-4 py-3 font-mono">
-							{result && scale ? formatGrade(result.overallAverage, scale.id) : '—'}
+							{result && scale ? formatGrade(result.overallAverage, scale) : '—'}
 						</td>
 						<td class="px-4 py-3 font-mono">
 							{result ? `${result.classRank}/${result.classSize}` : '—'}

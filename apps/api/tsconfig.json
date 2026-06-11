@@ -12,13 +12,22 @@
       "@/*": ["./src/*"]
     },
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"],
-    // "types": [
-    //   "@cloudflare/workers-types/2023-07-01"
-    // ],
+    "types": [
+      "bun"
+    ],
     "strict": true,
     "outDir": "./dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": true
   },
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
   "tsc-alias": {
     "resolveFullPaths": true
   }

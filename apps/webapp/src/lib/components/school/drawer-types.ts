@@ -1,4 +1,4 @@
-import type { ReportCardDefinition, ReportCardResult } from '$lib/data/report-cards';
+import type { ReportCardDefinition, ReportCardResult } from '$lib/types/report-cards';
 import type {
 	Student,
 	Subject,
@@ -13,7 +13,7 @@ import type {
 	Incident,
 	StaffRole,
 	Activity,
-} from '$lib/data/school';
+} from '$lib/types/school';
 
 export type DrawerItem
 	= | { kind: 'student'; data: Student }

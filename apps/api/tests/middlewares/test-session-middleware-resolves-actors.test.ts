@@ -6,8 +6,8 @@ import {
   resolveCachedEffectiveGrants,
 } from "@/lib/authorization/grants-cache/resolve-cached";
 import type { AppBindings } from "@/lib/http/types";
-import { createDependenciesInjection } from "@/lib/http/middleware/dependencies";
-import { createSessionActorDependency } from "@/lib/http/middleware/dependencies/session-actor";
+import { createDependenciesInjection } from "@/lib/http/dependencies";
+import { createSessionActorDependency } from "@/lib/http/dependencies/session-actor";
 import { DefaultAuthorizationRepository } from "@edaya/core";
 
 describe("session Middleware ActorMetadata Construction", () => {

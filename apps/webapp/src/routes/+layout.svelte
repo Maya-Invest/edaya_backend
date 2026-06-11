@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import favicon from '$lib/assets/favicon.svg';
-	import { authSession } from '$lib/auth/session.svelte';
+	import { bootstrapSession } from '$lib/auth/bootstrap';
 	import ApiDevBanner from '$lib/components/dev/ApiDevBanner.svelte';
 	import '../app.css';
 
-	const { data, children } = $props();
+	const { children } = $props();
 
 	$effect(() => {
-		authSession.setFromServer(data.session, data.staffProfile);
+		if (!browser) {
+			return;
+		}
+		void bootstrapSession();
 	});
 </script>
 
@@ -16,6 +20,6 @@
 	<title>Scholaria — School Management</title>
 </svelte:head>
 
-<ApiDevBanner initial={data.api} />
+<ApiDevBanner />
 
 {@render children()}

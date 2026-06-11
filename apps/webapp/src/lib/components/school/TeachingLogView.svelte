@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Subject } from '$lib/data/school';
-	import { buildEntries, getSubjectEntries } from '$lib/data/teachingLog';
+	import type { Subject } from '$lib/types/school';
 	import { t } from '$lib/i18n';
 	import { Sparkles } from '$lib/icons';
+	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import SubjectsView from './SubjectsView.svelte';
 
 	const {
@@ -17,8 +17,8 @@
 		selectedSubjectId?: string;
 	} = $props();
 
-	const entries = $derived(buildEntries(classId));
 	const classSubjects = $derived(subjects.filter(s => s.classId === classId));
+	const entries = $derived(teachingLogContext.resolveClassEntries(classId, classSubjects));
 	const allSubjects = $derived(Array.from(new Set(entries.map(e => e.subject))));
 
 	const overallProgress = $derived(
@@ -33,7 +33,7 @@
 	);
 
 	function getProgress(s: Subject) {
-		const es = getSubjectEntries(s.name);
+		const es = teachingLogContext.resolveSubjectEntries(s.name);
 		const byCh: Record<string, number> = {};
 		for (const e of es) {
 			const prev = byCh[e.chapter];

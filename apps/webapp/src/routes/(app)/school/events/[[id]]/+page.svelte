@@ -1,28 +1,32 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import SchoolEventsView from '$lib/components/school/SchoolEventsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
+	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
-
-	const { data }: { data: PageData } = $props();
+	import { querySchoolEventsPage } from '$lib/queries/school-life.queries';
 
 	const selectedId = $derived($page.params.id);
+	const query = querySchoolEventsPage();
 </script>
 
-<DataState
-	status={data.status}
-	errorMessage={data.errorMessage}
-	emptyTitle={$t('school.events')}
-	emptyDescription={$t('dataState.emptyDescription')}
->
-	<SchoolEventsView
-		incidents={data.incidents}
-		students={data.students}
-		classes={data.classes}
-		onSelect={i => appGoto(detailHref.schoolIncident(i.id))}
-		{selectedId}
-	/>
-</DataState>
+<PageQuery {query} loadingTitle={$t('school.events')}>
+	{#snippet children(data)}
+		<DataState
+			status={data.status}
+			errorMessage={data.errorMessage}
+			emptyTitle={$t('school.events')}
+			emptyDescription={$t('dataState.emptyDescription')}
+		>
+			<SchoolEventsView
+				incidents={data.incidents}
+				students={data.students}
+				classes={data.classes}
+				onSelect={i => appGoto(detailHref.schoolIncident(i.id))}
+				{selectedId}
+			/>
+		</DataState>
+	{/snippet}
+</PageQuery>

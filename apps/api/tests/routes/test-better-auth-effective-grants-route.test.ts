@@ -23,7 +23,7 @@ describe("better auth effective grants route", () => {
     const cookies = await signInThroughApp(app, { email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL });
     const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID);
 
-    const response = await app.request(createAppRequest("/api/core/authorization/effective-grants", {
+    const response = await app.request(createAppRequest("/core/authorization/effective-grants", {
       headers: {
         cookie: cookies.join("; "),
       },
@@ -56,7 +56,7 @@ describe("better auth effective grants route", () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const response = await app.request(createAppRequest("/api/core/authorization/effective-grants"));
+    const response = await app.request(createAppRequest("/core/authorization/effective-grants"));
     expect(response.status).toBe(401);
   }, 30_000);
 });

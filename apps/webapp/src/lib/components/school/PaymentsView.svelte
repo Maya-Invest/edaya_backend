@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/data/school';
+	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, Search } from '$lib/icons';

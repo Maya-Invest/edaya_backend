@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { HierarchyGroup } from '$lib/data/school';
+	import type { HierarchyGroup } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import { appGoto, classItemHref } from '$lib/navigation/app-navigation';
 

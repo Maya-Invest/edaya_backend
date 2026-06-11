@@ -6,15 +6,8 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		// interface PageState {}
-		interface Platform {
-			env: Env;
-			ctx: ExecutionContext;
-			caches: CacheStorage;
-			cf?: IncomingRequestCfProperties;
-		}
+		// interface Platform {}
 	}
 }
-
-interface Env {}
 
 export {};

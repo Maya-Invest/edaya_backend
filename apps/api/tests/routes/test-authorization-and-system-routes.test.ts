@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import { parseEnv } from "@/lib/bootstrap/env";
+import { parseEnv } from "@/lib/runtime/env";
 import { ActorAssuranceLevel, Permission } from "@edaya/core";
 import type { AppBindings } from "@/lib/http/types";
 import indexRouter from "@/app-router";
@@ -46,7 +46,7 @@ describe("authorization routes", () => {
     });
     app.route("/", indexRouter);
 
-    const res = await app.request("/api/core/authorization/effective-grants");
+    const res = await app.request("/core/authorization/effective-grants");
     const body = await res.json() as {
       kind: string;
       actorId: string;
@@ -75,7 +75,7 @@ describe("authorization routes", () => {
     });
     app.route("/", indexRouter);
 
-    const res = await app.request("/api/core/authorization/effective-grants");
+    const res = await app.request("/core/authorization/effective-grants");
     expect(res.status).toBe(401);
   });
 });
@@ -90,7 +90,7 @@ describe("system actor routes", () => {
     });
     app.route("/", indexRouter);
 
-    const res = await app.request("/api/core/system/commands/register-school", {
+    const res = await app.request("/core/system/commands/register-school", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -117,7 +117,7 @@ describe("system actor routes", () => {
     });
     app.route("/", indexRouter);
 
-    const res = await app.request("/api/core/system/commands/register-school", {
+    const res = await app.request("/core/system/commands/register-school", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

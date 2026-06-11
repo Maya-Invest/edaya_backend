@@ -161,6 +161,7 @@ export const en: Dict = {
 	'classGroups.toastCreated': 'Class {name} added.',
 	'classGroups.toastUpdated': 'Class {name} updated.',
 	'classGroups.toastDeleted': 'Class {name} removed.',
+	'classGroups.deleteUnsupported': 'Class deletion is not available via the API yet.',
 
 	// Tabs
 	'tab.students': 'Students',
@@ -636,6 +637,7 @@ export const fr: Dict = {
 	'classGroups.toastCreated': 'Classe {name} ajoutée.',
 	'classGroups.toastUpdated': 'Classe {name} mise à jour.',
 	'classGroups.toastDeleted': 'Classe {name} supprimée.',
+	'classGroups.deleteUnsupported': 'La suppression de classe n\'est pas encore disponible via l\'API.',
 
 	'tab.students': 'Élèves',
 	'tab.subjects': 'Matières',

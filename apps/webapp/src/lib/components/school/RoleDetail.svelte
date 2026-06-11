@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { StaffRole } from '$lib/data/school';
+	import type { StaffRole } from '$lib/types/school';
 	import type { Crud } from './drawer-constants';
-	import { staff } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
@@ -18,6 +18,9 @@
 	} from './drawer-constants';
 
 	const { role }: { role: StaffRole } = $props();
+
+	const staff = $derived(detailDataContext.staff);
+	const liveCrudMatrix = $derived(detailDataContext.roleCrudMatrix[role]);
 
 	const ROLE_ICON = {
 		directeur: Crown,
@@ -40,6 +43,14 @@
 	let perms = $state<Record<string, Record<Crud, boolean>>>(
 		Object.fromEntries(ROLE_PERMISSIONS.map(p => [p.key, defaultCrud(p.access[role])])),
 	);
+
+	$effect(() => {
+		if (liveCrudMatrix) {
+			perms = liveCrudMatrix;
+			return;
+		}
+		perms = Object.fromEntries(ROLE_PERMISSIONS.map(p => [p.key, defaultCrud(p.access[role])]));
+	});
 
 	function toggle(permKey: string, op: Crud) {
 		perms = {

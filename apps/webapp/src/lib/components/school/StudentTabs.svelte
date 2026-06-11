@@ -1,21 +1,11 @@
 <script lang="ts">
-	import type { Student, PedagogicalNote } from '$lib/data/school';
+	import type { Student, PedagogicalNote } from '$lib/types/school';
 	import type { SubjectGroupItem } from './drawer-types';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
-	import {
-		guardians,
-		healthRecords,
-		incidents,
-		classes,
-		pedagogicalNotes,
-		staff,
-		evaluations,
-		absences,
-		billing,
-		fees,
-	} from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import {
 		AlertTriangle,
@@ -41,13 +31,18 @@
 
 	const { s }: { s: Student } = $props();
 
+	const incidents = $derived(detailDataContext.incidents);
+	const absences = $derived(detailDataContext.absences);
+	const healthRecords = $derived(detailDataContext.healthRecords);
+	const pedagogicalNotes = $derived(detailDataContext.pedagogicalNotes);
+
 	let tab = $state<'profile' | 'notes' | 'absence' | 'incidents' | 'finances' | 'bulletin'>('profile');
 
-	const linkedG = $derived(guardians.filter(g => g.studentIds.includes(s.id)));
+	const linkedG = $derived(detailDataContext.guardians.filter(g => g.studentIds.includes(s.id)));
 	const health = $derived(healthRecords[s.id]);
 	const studentIncidents = $derived(incidents.filter(i => i.studentId === s.id));
 	const absenceRate = $derived(100 - s.attendance);
-	const studentClass = $derived(classes.find(cl => cl.id === s.classId));
+	const studentClass = $derived(academicContext.classes.find(cl => cl.id === s.classId));
 
 	const tabLabelKeys: Record<
 		'profile' | 'notes' | 'absence' | 'incidents' | 'finances' | 'bulletin',
@@ -78,7 +73,7 @@
 	};
 
 	const notesData = $derived.by(() => {
-		const studentEvals = evaluations
+		const studentEvals = detailDataContext.evaluations
 			.filter(e => e.classId === s.classId)
 			.sort((x, y) => y.date.localeCompare(x.date));
 		const seed = s.id.charCodeAt(1) || 1;
@@ -131,7 +126,7 @@
 	});
 
 	const financesData = $derived.by(() => {
-		const studentBilling = billing.filter(b => b.studentId === s.id);
+		const studentBilling = detailDataContext.billing.filter(b => b.studentId === s.id);
 		const total = studentBilling.reduce((acc, b) => acc + b.total, 0);
 		const paid = studentBilling.reduce((acc, b) => acc + b.paid, 0);
 		return { studentBilling, total, paid, balance: total - paid };
@@ -319,7 +314,7 @@
 				{:else}
 					<ul class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 						{#each studentNotes as n (n.id)}
-							{@const author = staff.find(st => st.id === n.authorId)}
+							{@const author = detailDataContext.staff.find(st => st.id === n.authorId)}
 							<li class="border-b border-border px-4 py-3 last:border-b-0">
 								<div class="flex items-center justify-between gap-2">
 									<span
@@ -536,7 +531,7 @@
 						</DrawerEmptyState>
 					{:else}
 						{#each financesData.studentBilling as b (b.id)}
-							{@const fee = fees.find(f => f.id === b.feeId)}
+							{@const fee = detailDataContext.fees.find(f => f.id === b.feeId)}
 							<div class="rounded-xl border border-border bg-card p-4">
 								<div class="flex items-center justify-between">
 									<span

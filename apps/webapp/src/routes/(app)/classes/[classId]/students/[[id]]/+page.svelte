@@ -1,28 +1,35 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import StudentsView from '$lib/components/school/StudentsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
+	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
-
-	const { data }: { data: PageData } = $props();
+	import { queryClassStudentsPage } from '$lib/queries/people.queries';
 
 	const selectedId = $derived($page.params.id);
+	const classId = $derived($page.params.classId ?? '6a');
+	const query = $derived(queryClassStudentsPage(classId));
 </script>
 
-<DataState
-	status={data.status}
-	errorMessage={data.errorMessage}
-	emptyTitle={$t('tab.students')}
-	emptyDescription={$t('dataState.emptyDescription')}
->
-	<StudentsView
-		students={data.students}
-		className={data.currentClass.name}
-		classLevel={data.currentClass.level}
-		onSelect={s => appGoto(detailHref.classStudent(data.classId, s.id))}
-		{selectedId}
-	/>
-</DataState>
+<PageQuery {query} loadingTitle={$t('tab.students')}>
+	{#snippet children(data)}
+		<DataState
+			status={data.status}
+			errorMessage={data.errorMessage}
+			emptyTitle={$t('tab.students')}
+			emptyDescription={$t('dataState.emptyDescription')}
+		>
+			{#if data.currentClass}
+				<StudentsView
+					students={data.students}
+					className={data.currentClass.name}
+					classLevel={data.currentClass.level}
+					onSelect={s => appGoto(detailHref.classStudent(data.classId, s.id))}
+					{selectedId}
+				/>
+			{/if}
+		</DataState>
+	{/snippet}
+</PageQuery>

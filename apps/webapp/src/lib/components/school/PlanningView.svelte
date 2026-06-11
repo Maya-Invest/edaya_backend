@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PlanningEvent, ClassNode, Student } from '$lib/data/school';
+	import type { PlanningEvent, ClassNode, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
 	import { ClipboardCheck, MapPin, Plus } from '$lib/icons';

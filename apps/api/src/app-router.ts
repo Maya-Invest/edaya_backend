@@ -1,15 +1,26 @@
+import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
+import { createRouter } from "@/lib/http/create-app";
+import type { AppBindings } from "@/lib/http/types";
+import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
+import {
+  listPrototypeActivitiesHandler,
+  listPrototypeActivitiesRoute,
+  listPrototypeDeadlinesHandler,
+  listPrototypeDeadlinesRoute,
+  listPrototypeDemoAccountsHandler,
+  listPrototypeDemoAccountsRoute,
+  listPrototypeTeachingLogHandler,
+  listPrototypeTeachingLogRoute,
+} from "@/routes/prototype.routes";
+import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import { createRoute } from "@hono/zod-openapi";
+import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import { authRouteHandler, getAuthRoute, postAuthRoute } from "@/routes/auth.route";
-import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
-import { createRouter } from "@/lib/http/create-app";
-import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
-import { buildCommandRoutes } from "@/routes/commands.routes";
-import { buildEntityRoutes } from "@/routes/entities.routes";
-import { buildQueryRoutes } from "@/routes/queries.routes";
+import { buildCoreRoutes } from "@/lib/school-api/routes";
 
+// Index route
 const router = createRouter()
   .openapi(
     createRoute({
@@ -30,15 +41,23 @@ const router = createRouter()
     },
   );
 
+// Mount routes from route builders
 router
-  .openapi(getAuthRoute, authRouteHandler)
-  .openapi(postAuthRoute, authRouteHandler)
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
+  .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
+  .openapi(listPrototypeDeadlinesRoute, listPrototypeDeadlinesHandler)
+  .openapi(listPrototypeDemoAccountsRoute, listPrototypeDemoAccountsHandler)
+  .openapi(listPrototypeTeachingLogRoute, listPrototypeTeachingLogHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 
-[...buildCommandRoutes(), ...buildQueryRoutes(), ...buildEntityRoutes()]
+// Mount routes from route factories
+[...buildCoreRoutes()]
   .forEach(({ route, handler }) => {
     router.openapi(route, handler);
   });
+
+// Mount auth routes
+router
+  .on(["GET", "POST"], "/auth/*", (c: Context<AppBindings>) => c.var.auth.handler(toBetterAuthHandlerRequest(c)));
 
 export default router;

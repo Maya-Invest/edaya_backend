@@ -1,14 +1,10 @@
 <script lang="ts">
 	import { browser, dev } from '$app/environment';
-	import { page } from '$app/stores';
+	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 
 	type ApiStatus = { connected: true; message: string } | { connected: false };
 
-	const { initial }: { initial: ApiStatus } = $props();
-
-	let live = $state<ApiStatus | null>(null);
-
-	const status = $derived(live ?? ($page.data.api as ApiStatus | undefined) ?? initial);
+	let status = $state<ApiStatus>({ connected: false });
 
 	$effect(() => {
 		if (!browser || !dev)
@@ -17,16 +13,9 @@
 		let cancelled = false;
 
 		async function refresh() {
-			try {
-				const response = await fetch('/dev/api-health');
-				if (!response.ok || cancelled)
-					return;
-				live = (await response.json()) as ApiStatus;
-			}
-			catch {
-				if (!cancelled)
-					live = { connected: false };
-			}
+			const next = await checkBrowserApiHealth();
+			if (!cancelled)
+				status = next;
 		}
 
 		void refresh();

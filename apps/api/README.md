@@ -18,7 +18,7 @@ cp .dev.vars.example .dev.vars
 bun run dev:worker
 ```
 
-OpenAPI reference: http://localhost:9999/reference
+OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
 Default `DATABASE_URL=pglite` uses in-memory Postgres on Node only (no Docker). Dev data is auto-seeded on startup; run `bun run seed` to seed manually.
 

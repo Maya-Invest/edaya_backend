@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { academicContext } from '$lib/academic/context.svelte';
+	import {
+		createClassGroupMutation,
+		updateClassGroupMutation,
+	} from '$lib/api/mutations/academic.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { gradeLevelById, gradeLevels } from '$lib/data/school';
 	import { t } from '$lib/i18n';
 	import { Layers, Pencil, Plus, Trash2 } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
@@ -11,15 +14,15 @@
 	let showForm = $state(false);
 	let editingId = $state<string | null>(null);
 	let name = $state('');
-	let gradeLevelId = $state(gradeLevels[0]?.id ?? 'gl-6');
+	let gradeLevelId = $state(academicContext.gradeLevels[0]?.id ?? 'gl-6');
 	let studentCount = $state('0');
 
-	const sortedLevels = $derived([...gradeLevels].sort((a, b) => a.order - b.order));
+	const sortedLevels = $derived([...academicContext.gradeLevels].sort((a, b) => a.order - b.order));
 
 	function resetForm() {
 		editingId = null;
 		name = '';
-		gradeLevelId = gradeLevels[0]?.id ?? 'gl-6';
+		gradeLevelId = academicContext.gradeLevels[0]?.id ?? 'gl-6';
 		studentCount = '0';
 		showForm = false;
 	}
@@ -35,32 +38,31 @@
 		showForm = true;
 	}
 
-	function handleSubmit() {
+	async function handleSubmit() {
 		if (!name.trim())
 			return;
 		if (editingId) {
-			academicContext.updateClass(editingId, {
+			const ok = await updateClassGroupMutation(editingId, {
 				name: name.trim(),
-				gradeLevelId,
-				studentCount: Number(studentCount) || 0,
+				capacity: Number(studentCount) || null,
 			});
-			toast.success(get(t)('classGroups.toastUpdated', { name: name.trim() }));
-		}
-		else {
-			const created = academicContext.addClass(name.trim(), gradeLevelId);
-			if (created) {
-				academicContext.updateClass(created.id, { studentCount: Number(studentCount) || 0 });
-				toast.success(get(t)('classGroups.toastCreated', { name: created.name }));
+			if (ok) {
+				toast.success(get(t)('classGroups.toastUpdated', { name: name.trim() }));
+				resetForm();
 			}
+			return;
 		}
-		resetForm();
+
+		const ok = await createClassGroupMutation(name.trim(), gradeLevelId);
+		if (ok) {
+			toast.success(get(t)('classGroups.toastCreated', { name: name.trim() }));
+			resetForm();
+		}
 	}
 
-	function handleDelete(classId: string) {
-		const removed = academicContext.removeClass(classId);
-		if (removed)
-			toast.success(get(t)('classGroups.toastDeleted', { name: removed.name }));
-		if (editingId === classId)
+	function handleDelete(_classId: string) {
+		toast.error(get(t)('classGroups.deleteUnsupported'));
+		if (editingId === _classId)
 			resetForm();
 	}
 </script>
@@ -147,7 +149,7 @@
 						</thead>
 						<tbody>
 							{#each group.classes as cls (cls.id)}
-								{@const level = gradeLevelById(cls.gradeLevelId)}
+								{@const level = academicContext.gradeLevelById(cls.gradeLevelId)}
 								<tr class="border-b border-border/60 last:border-0">
 									<td class="px-4 py-3">
 										<p class="font-medium">{cls.name}</p>

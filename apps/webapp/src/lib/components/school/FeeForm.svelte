@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Fee } from '$lib/data/school';
+	import type { Fee } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
 	import DrawerField from './DrawerField.svelte';

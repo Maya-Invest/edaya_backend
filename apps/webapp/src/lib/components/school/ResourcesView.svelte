@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { resources } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Plus } from '$lib/icons';
 	import { cn } from '$lib/utils';
@@ -13,7 +13,7 @@
 				{$t('resources.eyebrow')}
 			</p>
 			<h2 class="font-display text-2xl font-semibold">
-				{$t('resources.count', { n: resources.length })}
+				{$t('resources.count', { n: detailDataContext.resources.length })}
 			</h2>
 		</div>
 		<Button size="sm" class="rounded-full">
@@ -33,7 +33,7 @@
 			<div class="col-span-1 text-right">{$t('resources.status')}</div>
 		</div>
 		<ul>
-			{#each resources as r (r.id)}
+			{#each detailDataContext.resources as r (r.id)}
 				<li
 					class="grid grid-cols-12 items-center gap-4 border-b border-border px-5 py-3.5 last:border-b-0 hover:bg-secondary"
 				>

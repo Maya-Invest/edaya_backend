@@ -4,7 +4,8 @@ import { notFound, onError, serveEmojiFavicon } from "stoker/middlewares";
 import { defaultHook } from "stoker/openapi";
 
 import type { AppBindings, AppOpenAPI } from "@/lib/http/types";
-import { dependenciesInjection } from "@/lib/http/middleware/dependencies";
+import { resolveCorsOrigin } from "@/lib/http/cors";
+import { dependenciesInjection } from "@/lib/http/dependencies";
 import { pinoLogger } from "@/lib/http/middleware/logger";
 
 export function createRouter() {
@@ -17,14 +18,14 @@ export function createRouter() {
 export default function createApp() {
   const app = createRouter();
 
+  app.use(dependenciesInjection);
   app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:4173"],
-    allowMethods: ["GET", "POST", "DELETE"],
+    origin: (origin, c) => resolveCorsOrigin(origin, c.env),
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Cookie", "X-Academic-Year-Id"],
     credentials: true,
   }));
 
-  app.use(dependenciesInjection);
   app.use(serveEmojiFavicon("📝"));
   app.use(pinoLogger());
 

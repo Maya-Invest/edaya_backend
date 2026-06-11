@@ -1,12 +1,16 @@
 <script lang="ts">
-	import type { Student } from '$lib/data/school';
+	import type { Student } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import {
+		generateReportCardResultMutation,
+		publishReportCardResultMutation,
+	} from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { t } from '$lib/i18n';
 	import { FileSpreadsheet } from '$lib/icons';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { formatGrade } from '$lib/types/report-cards';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 	import DrawerEmptyState from './DrawerEmptyState.svelte';
@@ -17,22 +21,33 @@
 	const latest = $derived(
 		[...results].sort((a, b) => b.academicPeriodId.localeCompare(a.academicPeriodId))[0],
 	);
-	const scale = $derived(latest ? gradeScaleById(latest.gradeScaleId) : null);
+	const scale = $derived(
+		latest ? reportCardsContext.scales.find(entry => entry.id === latest.gradeScaleId) : null,
+	);
 	const period = $derived(
 		latest ? academicContext.periods.find(p => p.id === latest.academicPeriodId) : null,
 	);
 
-	function generate() {
-		const r = reportCardsContext.generateResult(s.id);
-		if (r)
+	async function generate() {
+		const ok = await generateReportCardResultMutation(s.id);
+		if (ok) {
 			toast.success(get(t)('reportCards.toastGenerated', { name: s.name }));
+		}
 	}
 
-	function publish() {
-		if (!latest)
+	async function publish() {
+		if (!latest) {
 			return;
-		reportCardsContext.publishResult(latest.id);
-		toast.success(get(t)('reportCards.toastPublished', { name: s.name }));
+		}
+		const ok = await publishReportCardResultMutation(
+			latest.id,
+			latest.studentId,
+			latest.academicPeriodId,
+			latest.definitionId,
+		);
+		if (ok) {
+			toast.success(get(t)('reportCards.toastPublished', { name: s.name }));
+		}
 	}
 </script>
 
@@ -77,7 +92,7 @@
 			<div class="rounded-xl border border-border bg-secondary/30 p-4 text-center">
 				<p class="font-mono text-[10px] uppercase text-muted-foreground">{$t('reportCards.overall')}</p>
 				<p class="font-display text-3xl font-semibold">
-					{scale ? formatGrade(latest.overallAverage, scale.id) : latest.overallAverage}
+					{scale ? formatGrade(latest.overallAverage, scale) : latest.overallAverage}
 				</p>
 			</div>
 			<div class="rounded-xl border border-border bg-secondary/30 p-4 text-center">
@@ -93,7 +108,7 @@
 						{$t('reportCards.marks')}
 						{#if section.sectionAverage !== undefined && scale}
 							<span class="ml-1 font-mono text-xs font-normal text-muted-foreground">
-								({formatGrade(section.sectionAverage, scale.id)})
+								({formatGrade(section.sectionAverage, scale)})
 							</span>
 						{/if}
 					</p>
@@ -102,7 +117,7 @@
 							<li class="flex justify-between rounded-lg border border-border/60 px-3 py-2 text-sm">
 								<span>{mark.subjectName}</span>
 								<span class="font-mono font-medium">
-									{scale ? formatGrade(mark.average, scale.id) : mark.average}
+									{scale ? formatGrade(mark.average, scale) : mark.average}
 								</span>
 							</li>
 						{/each}

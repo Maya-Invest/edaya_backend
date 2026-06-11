@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { Activity } from '$lib/data/school';
+	import type { Activity } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { students, classes, hierarchy } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import {
@@ -15,11 +16,23 @@
 
 	const { a }: { a: Activity } = $props();
 
+	const hierarchy = $derived(academicContext.hierarchy);
+	const students = $derived(detailDataContext.students);
+
 	let enrollments = $derived([...a.enrollments]);
 	let openAdd = $state(false);
-	let expandedLevels = $state(hierarchy.map(g => g.level));
-	let selectedClassId = $state<string | null>(hierarchy[0]?.classes[0]?.id ?? null);
+	let expandedLevels = $state<string[]>([]);
+	let selectedClassId = $state<string | null>(null);
 	let search = $state('');
+
+	$effect.pre(() => {
+		if (hierarchy.length > 0 && expandedLevels.length === 0) {
+			expandedLevels = hierarchy.map(g => g.level);
+		}
+		if (hierarchy.length > 0 && selectedClassId === null) {
+			selectedClassId = hierarchy[0]?.classes[0]?.id ?? null;
+		}
+	});
 
 	const enrolledIds = $derived(new Set(enrollments.map(e => e.studentId)));
 
@@ -196,7 +209,7 @@
 				{#each enrollments as e (e.studentId)}
 					{@const s = students.find(st => st.id === e.studentId)}
 					{#if s}
-						{@const cls = classes.find(c => c.id === s.classId)}
+						{@const cls = academicContext.classes.find(c => c.id === s.classId)}
 						<li class="flex items-center justify-between gap-3 px-4 py-2.5">
 							<div class="flex min-w-0 items-center gap-2">
 								<span

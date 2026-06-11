@@ -41,93 +41,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/*": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Better Auth GET proxy
-         * @description Delegates Better Auth requests to the configured Better Auth handler.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Better Auth response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Invalid Better Auth request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized Better Auth request */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Better Auth POST proxy
-         * @description Delegates Better Auth requests to the configured Better Auth handler.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Better Auth response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Invalid Better Auth request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized Better Auth request */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/core/authorization/effective-grants": {
+    "/core/authorization/effective-grants": {
         parameters: {
             query?: never;
             header?: never;
@@ -196,7 +110,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/system/commands/{commandName}": {
+    "/core/system/commands/{commandName}": {
         parameters: {
             query?: never;
             header?: never;
@@ -314,7 +228,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/register-school": {
+    "/core/commands/register-school": {
         parameters: {
             query?: never;
             header?: never;
@@ -408,7 +322,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-school-configuration": {
+    "/core/commands/update-school-configuration": {
         parameters: {
             query?: never;
             header?: never;
@@ -502,7 +416,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-academic-year": {
+    "/core/commands/create-academic-year": {
         parameters: {
             query?: never;
             header?: never;
@@ -596,7 +510,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/activate-academic-year": {
+    "/core/commands/activate-academic-year": {
         parameters: {
             query?: never;
             header?: never;
@@ -690,7 +604,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-academic-period": {
+    "/core/commands/create-academic-period": {
         parameters: {
             query?: never;
             header?: never;
@@ -784,7 +698,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/publish-academic-period": {
+    "/core/commands/publish-academic-period": {
         parameters: {
             query?: never;
             header?: never;
@@ -878,7 +792,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-class-group": {
+    "/core/commands/create-class-group": {
         parameters: {
             query?: never;
             header?: never;
@@ -972,7 +886,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-class-group-configuration": {
+    "/core/commands/update-class-group-configuration": {
         parameters: {
             query?: never;
             header?: never;
@@ -1066,7 +980,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/register-staff-member": {
+    "/core/commands/register-staff-member": {
         parameters: {
             query?: never;
             header?: never;
@@ -1160,7 +1074,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-staff-member-status": {
+    "/core/commands/update-staff-member-status": {
         parameters: {
             query?: never;
             header?: never;
@@ -1254,7 +1168,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/link-actor-subject": {
+    "/core/commands/link-actor-subject": {
         parameters: {
             query?: never;
             header?: never;
@@ -1348,7 +1262,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-staff-to-class": {
+    "/core/commands/assign-staff-to-class": {
         parameters: {
             query?: never;
             header?: never;
@@ -1442,7 +1356,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-staff-to-class-subject": {
+    "/core/commands/assign-staff-to-class-subject": {
         parameters: {
             query?: never;
             header?: never;
@@ -1536,7 +1450,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-staff-to-session": {
+    "/core/commands/assign-staff-to-session": {
         parameters: {
             query?: never;
             header?: never;
@@ -1630,7 +1544,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-resource-to-class": {
+    "/core/commands/assign-resource-to-class": {
         parameters: {
             query?: never;
             header?: never;
@@ -1724,7 +1638,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-resource-to-session": {
+    "/core/commands/assign-resource-to-session": {
         parameters: {
             query?: never;
             header?: never;
@@ -1818,7 +1732,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/remove-resource-assignment": {
+    "/core/commands/remove-resource-assignment": {
         parameters: {
             query?: never;
             header?: never;
@@ -1912,7 +1826,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/register-attachment": {
+    "/core/commands/register-attachment": {
         parameters: {
             query?: never;
             header?: never;
@@ -2006,7 +1920,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/remove-attachment": {
+    "/core/commands/remove-attachment": {
         parameters: {
             query?: never;
             header?: never;
@@ -2100,7 +2014,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/register-student": {
+    "/core/commands/register-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -2194,7 +2108,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/enroll-student": {
+    "/core/commands/enroll-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -2288,7 +2202,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/link-guardian-to-student": {
+    "/core/commands/link-guardian-to-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -2382,7 +2296,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/register-guardian": {
+    "/core/commands/register-guardian": {
         parameters: {
             query?: never;
             header?: never;
@@ -2476,7 +2390,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/promote-student": {
+    "/core/commands/promote-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -2570,7 +2484,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/transfer-student": {
+    "/core/commands/transfer-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -2664,7 +2578,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/graduate-student": {
+    "/core/commands/graduate-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -2758,7 +2672,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/close-enrollment": {
+    "/core/commands/close-enrollment": {
         parameters: {
             query?: never;
             header?: never;
@@ -2852,7 +2766,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-progression-decision": {
+    "/core/commands/record-progression-decision": {
         parameters: {
             query?: never;
             header?: never;
@@ -2946,7 +2860,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-student-profile": {
+    "/core/commands/update-student-profile": {
         parameters: {
             query?: never;
             header?: never;
@@ -3040,7 +2954,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-student-status": {
+    "/core/commands/update-student-status": {
         parameters: {
             query?: never;
             header?: never;
@@ -3134,7 +3048,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/upsert-student-health-profile": {
+    "/core/commands/upsert-student-health-profile": {
         parameters: {
             query?: never;
             header?: never;
@@ -3228,7 +3142,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-student-note": {
+    "/core/commands/create-student-note": {
         parameters: {
             query?: never;
             header?: never;
@@ -3322,7 +3236,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-student-note": {
+    "/core/commands/update-student-note": {
         parameters: {
             query?: never;
             header?: never;
@@ -3416,7 +3330,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-guardian-contact-methods": {
+    "/core/commands/update-guardian-contact-methods": {
         parameters: {
             query?: never;
             header?: never;
@@ -3510,7 +3424,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-guardian-student-link": {
+    "/core/commands/update-guardian-student-link": {
         parameters: {
             query?: never;
             header?: never;
@@ -3604,7 +3518,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/offer-subject-to-class": {
+    "/core/commands/offer-subject-to-class": {
         parameters: {
             query?: never;
             header?: never;
@@ -3698,7 +3612,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-matter-to-class-subject": {
+    "/core/commands/assign-matter-to-class-subject": {
         parameters: {
             query?: never;
             header?: never;
@@ -3792,7 +3706,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-session-progress": {
+    "/core/commands/record-session-progress": {
         parameters: {
             query?: never;
             header?: never;
@@ -3886,7 +3800,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-grade-scale": {
+    "/core/commands/create-grade-scale": {
         parameters: {
             query?: never;
             header?: never;
@@ -3980,7 +3894,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-report-card-definition": {
+    "/core/commands/create-report-card-definition": {
         parameters: {
             query?: never;
             header?: never;
@@ -4074,7 +3988,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-report-card-definition-section": {
+    "/core/commands/create-report-card-definition-section": {
         parameters: {
             query?: never;
             header?: never;
@@ -4168,7 +4082,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-assessment": {
+    "/core/commands/create-assessment": {
         parameters: {
             query?: never;
             header?: never;
@@ -4262,7 +4176,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/complete-assessment": {
+    "/core/commands/complete-assessment": {
         parameters: {
             query?: never;
             header?: never;
@@ -4356,7 +4270,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-assessment-result": {
+    "/core/commands/record-assessment-result": {
         parameters: {
             query?: never;
             header?: never;
@@ -4450,7 +4364,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-assessment-result-compliance": {
+    "/core/commands/record-assessment-result-compliance": {
         parameters: {
             query?: never;
             header?: never;
@@ -4544,7 +4458,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/list-class-subject-assessment-results-for-period": {
+    "/core/commands/list-class-subject-assessment-results-for-period": {
         parameters: {
             query?: never;
             header?: never;
@@ -4638,7 +4552,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/generate-report-card-result": {
+    "/core/commands/generate-report-card-result": {
         parameters: {
             query?: never;
             header?: never;
@@ -4732,7 +4646,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/publish-report-card-result": {
+    "/core/commands/publish-report-card-result": {
         parameters: {
             query?: never;
             header?: never;
@@ -4826,7 +4740,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-incident": {
+    "/core/commands/record-incident": {
         parameters: {
             query?: never;
             header?: never;
@@ -4920,7 +4834,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/add-student-involvement": {
+    "/core/commands/add-student-involvement": {
         parameters: {
             query?: never;
             header?: never;
@@ -5014,7 +4928,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/apply-disciplinary-action": {
+    "/core/commands/apply-disciplinary-action": {
         parameters: {
             query?: never;
             header?: never;
@@ -5108,7 +5022,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/update-student-disciplinary-action-status": {
+    "/core/commands/update-student-disciplinary-action-status": {
         parameters: {
             query?: never;
             header?: never;
@@ -5202,7 +5116,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/resolve-incident": {
+    "/core/commands/resolve-incident": {
         parameters: {
             query?: never;
             header?: never;
@@ -5296,7 +5210,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-fee": {
+    "/core/commands/create-fee": {
         parameters: {
             query?: never;
             header?: never;
@@ -5390,7 +5304,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/assign-fee-to-student": {
+    "/core/commands/assign-fee-to-student": {
         parameters: {
             query?: never;
             header?: never;
@@ -5484,7 +5398,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-payment": {
+    "/core/commands/record-payment": {
         parameters: {
             query?: never;
             header?: never;
@@ -5578,7 +5492,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/reverse-payment": {
+    "/core/commands/reverse-payment": {
         parameters: {
             query?: never;
             header?: never;
@@ -5672,7 +5586,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/cancel-payment": {
+    "/core/commands/cancel-payment": {
         parameters: {
             query?: never;
             header?: never;
@@ -5766,7 +5680,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/adjust-student-fee": {
+    "/core/commands/adjust-student-fee": {
         parameters: {
             query?: never;
             header?: never;
@@ -5860,7 +5774,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/cancel-student-fee": {
+    "/core/commands/cancel-student-fee": {
         parameters: {
             query?: never;
             header?: never;
@@ -5954,7 +5868,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-schedule": {
+    "/core/commands/create-schedule": {
         parameters: {
             query?: never;
             header?: never;
@@ -6048,7 +5962,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-calendar-event": {
+    "/core/commands/create-calendar-event": {
         parameters: {
             query?: never;
             header?: never;
@@ -6142,7 +6056,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-session": {
+    "/core/commands/create-session": {
         parameters: {
             query?: never;
             header?: never;
@@ -6236,7 +6150,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/generate-sessions": {
+    "/core/commands/generate-sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -6330,7 +6244,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-attendance": {
+    "/core/commands/record-attendance": {
         parameters: {
             query?: never;
             header?: never;
@@ -6424,7 +6338,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-daily-attendance": {
+    "/core/commands/record-daily-attendance": {
         parameters: {
             query?: never;
             header?: never;
@@ -6518,7 +6432,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-session-attendance": {
+    "/core/commands/record-session-attendance": {
         parameters: {
             query?: never;
             header?: never;
@@ -6612,7 +6526,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-class-daily-attendance": {
+    "/core/commands/record-class-daily-attendance": {
         parameters: {
             query?: never;
             header?: never;
@@ -6706,7 +6620,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/review-attendance-justification": {
+    "/core/commands/review-attendance-justification": {
         parameters: {
             query?: never;
             header?: never;
@@ -6800,7 +6714,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/create-announcement": {
+    "/core/commands/create-announcement": {
         parameters: {
             query?: never;
             header?: never;
@@ -6894,7 +6808,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/add-target": {
+    "/core/commands/add-target": {
         parameters: {
             query?: never;
             header?: never;
@@ -6988,7 +6902,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/publish-announcement": {
+    "/core/commands/publish-announcement": {
         parameters: {
             query?: never;
             header?: never;
@@ -7082,7 +6996,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/record-delivery": {
+    "/core/commands/record-delivery": {
         parameters: {
             query?: never;
             header?: never;
@@ -7176,7 +7090,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/commands/materialize-deliveries": {
+    "/core/commands/materialize-deliveries": {
         parameters: {
             query?: never;
             header?: never;
@@ -7270,7 +7184,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/queries/get-overdue-fee-count": {
+    "/core/queries/get-overdue-fee-count": {
         parameters: {
             query?: never;
             header?: never;
@@ -7364,7 +7278,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/queries/get-published-report-card-count": {
+    "/core/queries/get-published-report-card-count": {
         parameters: {
             query?: never;
             header?: never;
@@ -7458,7 +7372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/list": {
+    "/core/entities/schools/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -7560,7 +7474,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/one": {
+    "/core/entities/schools/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -7673,7 +7587,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/count": {
+    "/core/entities/schools/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -7777,7 +7691,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/{id}": {
+    "/core/entities/schools/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -7879,7 +7793,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/save": {
+    "/core/entities/schools/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -7984,7 +7898,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/delete": {
+    "/core/entities/schools/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -8080,7 +7994,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/batch-save": {
+    "/core/entities/schools/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -8187,7 +8101,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schools/batch-delete": {
+    "/core/entities/schools/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -8283,7 +8197,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/list": {
+    "/core/entities/academic-years/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -8385,7 +8299,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/one": {
+    "/core/entities/academic-years/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -8498,7 +8412,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/count": {
+    "/core/entities/academic-years/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -8602,7 +8516,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/{id}": {
+    "/core/entities/academic-years/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -8704,7 +8618,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/save": {
+    "/core/entities/academic-years/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -8809,7 +8723,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/delete": {
+    "/core/entities/academic-years/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -8905,7 +8819,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/batch-save": {
+    "/core/entities/academic-years/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -9012,7 +8926,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-years/batch-delete": {
+    "/core/entities/academic-years/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -9108,7 +9022,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/list": {
+    "/core/entities/academic-periods/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -9210,7 +9124,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/one": {
+    "/core/entities/academic-periods/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -9323,7 +9237,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/count": {
+    "/core/entities/academic-periods/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -9427,7 +9341,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/{id}": {
+    "/core/entities/academic-periods/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -9529,7 +9443,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/save": {
+    "/core/entities/academic-periods/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -9634,7 +9548,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/delete": {
+    "/core/entities/academic-periods/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -9730,7 +9644,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/batch-save": {
+    "/core/entities/academic-periods/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -9837,7 +9751,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/academic-periods/batch-delete": {
+    "/core/entities/academic-periods/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -9933,7 +9847,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/list": {
+    "/core/entities/period-definitions/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -10035,7 +9949,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/one": {
+    "/core/entities/period-definitions/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -10148,7 +10062,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/count": {
+    "/core/entities/period-definitions/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -10252,7 +10166,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/{id}": {
+    "/core/entities/period-definitions/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -10354,7 +10268,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/save": {
+    "/core/entities/period-definitions/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -10459,7 +10373,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/delete": {
+    "/core/entities/period-definitions/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -10555,7 +10469,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/batch-save": {
+    "/core/entities/period-definitions/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -10662,7 +10576,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/period-definitions/batch-delete": {
+    "/core/entities/period-definitions/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -10758,7 +10672,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/list": {
+    "/core/entities/grade-levels/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -10860,7 +10774,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/one": {
+    "/core/entities/grade-levels/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -10973,7 +10887,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/count": {
+    "/core/entities/grade-levels/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -11077,7 +10991,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/{id}": {
+    "/core/entities/grade-levels/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -11179,7 +11093,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/save": {
+    "/core/entities/grade-levels/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -11284,7 +11198,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/delete": {
+    "/core/entities/grade-levels/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -11380,7 +11294,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/batch-save": {
+    "/core/entities/grade-levels/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -11487,7 +11401,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-levels/batch-delete": {
+    "/core/entities/grade-levels/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -11583,7 +11497,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/list": {
+    "/core/entities/staff-members/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -11685,7 +11599,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/one": {
+    "/core/entities/staff-members/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -11798,7 +11712,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/count": {
+    "/core/entities/staff-members/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -11902,7 +11816,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/{id}": {
+    "/core/entities/staff-members/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -12004,7 +11918,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/save": {
+    "/core/entities/staff-members/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -12109,7 +12023,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/delete": {
+    "/core/entities/staff-members/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -12205,7 +12119,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/batch-save": {
+    "/core/entities/staff-members/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -12312,7 +12226,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-members/batch-delete": {
+    "/core/entities/staff-members/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -12408,7 +12322,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/list": {
+    "/core/entities/staff-assignments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -12510,7 +12424,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/one": {
+    "/core/entities/staff-assignments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -12623,7 +12537,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/count": {
+    "/core/entities/staff-assignments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -12727,7 +12641,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/{id}": {
+    "/core/entities/staff-assignments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -12829,7 +12743,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/save": {
+    "/core/entities/staff-assignments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -12934,7 +12848,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/delete": {
+    "/core/entities/staff-assignments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -13030,7 +12944,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/batch-save": {
+    "/core/entities/staff-assignments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -13137,7 +13051,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-assignments/batch-delete": {
+    "/core/entities/staff-assignments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -13233,7 +13147,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/list": {
+    "/core/entities/access-roles/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -13335,7 +13249,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/one": {
+    "/core/entities/access-roles/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -13448,7 +13362,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/count": {
+    "/core/entities/access-roles/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -13552,7 +13466,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/{id}": {
+    "/core/entities/access-roles/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -13654,7 +13568,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/save": {
+    "/core/entities/access-roles/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -13759,7 +13673,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/delete": {
+    "/core/entities/access-roles/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -13855,7 +13769,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/batch-save": {
+    "/core/entities/access-roles/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -13962,7 +13876,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/access-roles/batch-delete": {
+    "/core/entities/access-roles/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -14058,7 +13972,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/list": {
+    "/core/entities/staff-role-assignments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -14160,7 +14074,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/one": {
+    "/core/entities/staff-role-assignments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -14273,7 +14187,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/count": {
+    "/core/entities/staff-role-assignments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -14377,7 +14291,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/{id}": {
+    "/core/entities/staff-role-assignments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -14479,7 +14393,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/save": {
+    "/core/entities/staff-role-assignments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -14584,7 +14498,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/delete": {
+    "/core/entities/staff-role-assignments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -14680,7 +14594,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/batch-save": {
+    "/core/entities/staff-role-assignments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -14787,7 +14701,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/staff-role-assignments/batch-delete": {
+    "/core/entities/staff-role-assignments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -14883,7 +14797,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/list": {
+    "/core/entities/attachments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -14985,7 +14899,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/one": {
+    "/core/entities/attachments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -15098,7 +15012,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/count": {
+    "/core/entities/attachments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -15202,7 +15116,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/{id}": {
+    "/core/entities/attachments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -15304,7 +15218,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/save": {
+    "/core/entities/attachments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -15409,7 +15323,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/delete": {
+    "/core/entities/attachments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -15505,7 +15419,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/batch-save": {
+    "/core/entities/attachments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -15612,7 +15526,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attachments/batch-delete": {
+    "/core/entities/attachments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -15708,7 +15622,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/list": {
+    "/core/entities/resources/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -15810,7 +15724,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/one": {
+    "/core/entities/resources/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -15923,7 +15837,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/count": {
+    "/core/entities/resources/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -16027,7 +15941,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/{id}": {
+    "/core/entities/resources/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -16129,7 +16043,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/save": {
+    "/core/entities/resources/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -16234,7 +16148,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/delete": {
+    "/core/entities/resources/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -16330,7 +16244,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/batch-save": {
+    "/core/entities/resources/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -16437,7 +16351,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resources/batch-delete": {
+    "/core/entities/resources/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -16533,7 +16447,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/list": {
+    "/core/entities/resource-assignments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -16635,7 +16549,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/one": {
+    "/core/entities/resource-assignments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -16748,7 +16662,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/count": {
+    "/core/entities/resource-assignments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -16852,7 +16766,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/{id}": {
+    "/core/entities/resource-assignments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -16954,7 +16868,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/save": {
+    "/core/entities/resource-assignments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -17059,7 +16973,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/delete": {
+    "/core/entities/resource-assignments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -17155,7 +17069,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/batch-save": {
+    "/core/entities/resource-assignments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -17262,7 +17176,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/resource-assignments/batch-delete": {
+    "/core/entities/resource-assignments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -17358,7 +17272,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/list": {
+    "/core/entities/fees/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -17460,7 +17374,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/one": {
+    "/core/entities/fees/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -17573,7 +17487,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/count": {
+    "/core/entities/fees/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -17677,7 +17591,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/{id}": {
+    "/core/entities/fees/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -17779,7 +17693,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/save": {
+    "/core/entities/fees/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -17884,7 +17798,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/delete": {
+    "/core/entities/fees/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -17980,7 +17894,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/batch-save": {
+    "/core/entities/fees/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -18087,7 +18001,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/fees/batch-delete": {
+    "/core/entities/fees/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -18183,7 +18097,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/list": {
+    "/core/entities/student-fees/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -18285,7 +18199,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/one": {
+    "/core/entities/student-fees/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -18398,7 +18312,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/count": {
+    "/core/entities/student-fees/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -18502,7 +18416,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/{id}": {
+    "/core/entities/student-fees/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -18604,7 +18518,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/save": {
+    "/core/entities/student-fees/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -18709,7 +18623,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/delete": {
+    "/core/entities/student-fees/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -18805,7 +18719,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/batch-save": {
+    "/core/entities/student-fees/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -18912,7 +18826,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-fees/batch-delete": {
+    "/core/entities/student-fees/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -19008,7 +18922,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/list": {
+    "/core/entities/payments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -19110,7 +19024,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/one": {
+    "/core/entities/payments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -19223,7 +19137,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/count": {
+    "/core/entities/payments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -19327,7 +19241,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/{id}": {
+    "/core/entities/payments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -19429,7 +19343,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/save": {
+    "/core/entities/payments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -19534,7 +19448,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/delete": {
+    "/core/entities/payments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -19630,7 +19544,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/batch-save": {
+    "/core/entities/payments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -19737,7 +19651,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/payments/batch-delete": {
+    "/core/entities/payments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -19833,7 +19747,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/list": {
+    "/core/entities/schedules/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -19935,7 +19849,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/one": {
+    "/core/entities/schedules/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -20048,7 +19962,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/count": {
+    "/core/entities/schedules/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -20152,7 +20066,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/{id}": {
+    "/core/entities/schedules/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -20254,7 +20168,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/save": {
+    "/core/entities/schedules/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -20359,7 +20273,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/delete": {
+    "/core/entities/schedules/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -20455,7 +20369,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/batch-save": {
+    "/core/entities/schedules/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -20562,7 +20476,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/schedules/batch-delete": {
+    "/core/entities/schedules/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -20658,7 +20572,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/list": {
+    "/core/entities/sessions/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -20760,7 +20674,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/one": {
+    "/core/entities/sessions/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -20873,7 +20787,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/count": {
+    "/core/entities/sessions/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -20977,7 +20891,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/{id}": {
+    "/core/entities/sessions/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -21079,7 +20993,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/save": {
+    "/core/entities/sessions/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -21184,7 +21098,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/delete": {
+    "/core/entities/sessions/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -21280,7 +21194,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/batch-save": {
+    "/core/entities/sessions/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -21387,7 +21301,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sessions/batch-delete": {
+    "/core/entities/sessions/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -21483,7 +21397,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/list": {
+    "/core/entities/calendar-events/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -21585,7 +21499,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/one": {
+    "/core/entities/calendar-events/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -21698,7 +21612,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/count": {
+    "/core/entities/calendar-events/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -21802,7 +21716,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/{id}": {
+    "/core/entities/calendar-events/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -21904,7 +21818,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/save": {
+    "/core/entities/calendar-events/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -22009,7 +21923,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/delete": {
+    "/core/entities/calendar-events/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -22105,7 +22019,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/batch-save": {
+    "/core/entities/calendar-events/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -22212,7 +22126,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/calendar-events/batch-delete": {
+    "/core/entities/calendar-events/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -22308,7 +22222,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/list": {
+    "/core/entities/attendance/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -22410,7 +22324,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/one": {
+    "/core/entities/attendance/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -22523,7 +22437,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/count": {
+    "/core/entities/attendance/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -22627,7 +22541,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/{id}": {
+    "/core/entities/attendance/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -22729,7 +22643,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/save": {
+    "/core/entities/attendance/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -22834,7 +22748,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/delete": {
+    "/core/entities/attendance/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -22930,7 +22844,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/batch-save": {
+    "/core/entities/attendance/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -23037,7 +22951,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/attendance/batch-delete": {
+    "/core/entities/attendance/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -23133,7 +23047,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/list": {
+    "/core/entities/announcements/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -23235,7 +23149,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/one": {
+    "/core/entities/announcements/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -23348,7 +23262,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/count": {
+    "/core/entities/announcements/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -23452,7 +23366,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/{id}": {
+    "/core/entities/announcements/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -23554,7 +23468,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/save": {
+    "/core/entities/announcements/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -23659,7 +23573,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/delete": {
+    "/core/entities/announcements/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -23755,7 +23669,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/batch-save": {
+    "/core/entities/announcements/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -23862,7 +23776,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcements/batch-delete": {
+    "/core/entities/announcements/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -23958,7 +23872,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/list": {
+    "/core/entities/announcement-targets/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -24060,7 +23974,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/one": {
+    "/core/entities/announcement-targets/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -24173,7 +24087,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/count": {
+    "/core/entities/announcement-targets/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -24277,7 +24191,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/{id}": {
+    "/core/entities/announcement-targets/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -24379,7 +24293,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/save": {
+    "/core/entities/announcement-targets/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -24484,7 +24398,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/delete": {
+    "/core/entities/announcement-targets/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -24580,7 +24494,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/batch-save": {
+    "/core/entities/announcement-targets/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -24687,7 +24601,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/announcement-targets/batch-delete": {
+    "/core/entities/announcement-targets/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -24783,7 +24697,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/list": {
+    "/core/entities/message-deliveries/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -24885,7 +24799,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/one": {
+    "/core/entities/message-deliveries/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -24998,7 +24912,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/count": {
+    "/core/entities/message-deliveries/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -25102,7 +25016,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/{id}": {
+    "/core/entities/message-deliveries/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -25204,7 +25118,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/save": {
+    "/core/entities/message-deliveries/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -25309,7 +25223,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/delete": {
+    "/core/entities/message-deliveries/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -25405,7 +25319,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/batch-save": {
+    "/core/entities/message-deliveries/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -25512,7 +25426,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/message-deliveries/batch-delete": {
+    "/core/entities/message-deliveries/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -25608,7 +25522,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/list": {
+    "/core/entities/subjects/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -25710,7 +25624,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/one": {
+    "/core/entities/subjects/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -25823,7 +25737,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/count": {
+    "/core/entities/subjects/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -25927,7 +25841,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/{id}": {
+    "/core/entities/subjects/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -26029,7 +25943,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/save": {
+    "/core/entities/subjects/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -26134,7 +26048,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/delete": {
+    "/core/entities/subjects/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -26230,7 +26144,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/batch-save": {
+    "/core/entities/subjects/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -26337,7 +26251,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subjects/batch-delete": {
+    "/core/entities/subjects/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -26433,7 +26347,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/list": {
+    "/core/entities/subject-matters/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -26535,7 +26449,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/one": {
+    "/core/entities/subject-matters/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -26648,7 +26562,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/count": {
+    "/core/entities/subject-matters/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -26752,7 +26666,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/{id}": {
+    "/core/entities/subject-matters/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -26854,7 +26768,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/save": {
+    "/core/entities/subject-matters/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -26959,7 +26873,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/delete": {
+    "/core/entities/subject-matters/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -27055,7 +26969,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/batch-save": {
+    "/core/entities/subject-matters/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -27162,7 +27076,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/subject-matters/batch-delete": {
+    "/core/entities/subject-matters/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -27258,7 +27172,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/list": {
+    "/core/entities/class-groups/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -27360,7 +27274,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/one": {
+    "/core/entities/class-groups/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -27473,7 +27387,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/count": {
+    "/core/entities/class-groups/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -27577,7 +27491,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/{id}": {
+    "/core/entities/class-groups/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -27679,7 +27593,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/save": {
+    "/core/entities/class-groups/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -27784,7 +27698,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/delete": {
+    "/core/entities/class-groups/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -27880,7 +27794,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/batch-save": {
+    "/core/entities/class-groups/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -27987,7 +27901,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-groups/batch-delete": {
+    "/core/entities/class-groups/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -28083,7 +27997,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/list": {
+    "/core/entities/class-subjects/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -28185,7 +28099,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/one": {
+    "/core/entities/class-subjects/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -28298,7 +28212,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/count": {
+    "/core/entities/class-subjects/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -28402,7 +28316,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/{id}": {
+    "/core/entities/class-subjects/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -28504,7 +28418,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/save": {
+    "/core/entities/class-subjects/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -28609,7 +28523,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/delete": {
+    "/core/entities/class-subjects/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -28705,7 +28619,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/batch-save": {
+    "/core/entities/class-subjects/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -28812,7 +28726,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subjects/batch-delete": {
+    "/core/entities/class-subjects/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -28908,7 +28822,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/list": {
+    "/core/entities/class-subject-matters/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -29010,7 +28924,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/one": {
+    "/core/entities/class-subject-matters/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -29123,7 +29037,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/count": {
+    "/core/entities/class-subject-matters/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -29227,7 +29141,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/{id}": {
+    "/core/entities/class-subject-matters/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -29329,7 +29243,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/save": {
+    "/core/entities/class-subject-matters/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -29434,7 +29348,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/delete": {
+    "/core/entities/class-subject-matters/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -29530,7 +29444,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/batch-save": {
+    "/core/entities/class-subject-matters/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -29637,7 +29551,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-matters/batch-delete": {
+    "/core/entities/class-subject-matters/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -29733,7 +29647,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/list": {
+    "/core/entities/class-subject-progress/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -29835,7 +29749,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/one": {
+    "/core/entities/class-subject-progress/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -29948,7 +29862,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/count": {
+    "/core/entities/class-subject-progress/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -30052,7 +29966,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/{id}": {
+    "/core/entities/class-subject-progress/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -30154,7 +30068,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/save": {
+    "/core/entities/class-subject-progress/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -30259,7 +30173,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/delete": {
+    "/core/entities/class-subject-progress/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -30355,7 +30269,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/batch-save": {
+    "/core/entities/class-subject-progress/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -30462,7 +30376,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/class-subject-progress/batch-delete": {
+    "/core/entities/class-subject-progress/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -30558,7 +30472,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/list": {
+    "/core/entities/assessments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -30660,7 +30574,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/one": {
+    "/core/entities/assessments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -30773,7 +30687,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/count": {
+    "/core/entities/assessments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -30877,7 +30791,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/{id}": {
+    "/core/entities/assessments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -30979,7 +30893,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/save": {
+    "/core/entities/assessments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -31084,7 +30998,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/delete": {
+    "/core/entities/assessments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -31180,7 +31094,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/batch-save": {
+    "/core/entities/assessments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -31287,7 +31201,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessments/batch-delete": {
+    "/core/entities/assessments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -31383,7 +31297,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/list": {
+    "/core/entities/assessment-results/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -31485,7 +31399,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/one": {
+    "/core/entities/assessment-results/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -31598,7 +31512,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/count": {
+    "/core/entities/assessment-results/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -31702,7 +31616,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/{id}": {
+    "/core/entities/assessment-results/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -31804,7 +31718,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/save": {
+    "/core/entities/assessment-results/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -31909,7 +31823,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/delete": {
+    "/core/entities/assessment-results/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -32005,7 +31919,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/batch-save": {
+    "/core/entities/assessment-results/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -32112,7 +32026,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/assessment-results/batch-delete": {
+    "/core/entities/assessment-results/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -32208,7 +32122,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/list": {
+    "/core/entities/grade-scales/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -32310,7 +32224,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/one": {
+    "/core/entities/grade-scales/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -32423,7 +32337,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/count": {
+    "/core/entities/grade-scales/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -32527,7 +32441,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/{id}": {
+    "/core/entities/grade-scales/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -32629,7 +32543,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/save": {
+    "/core/entities/grade-scales/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -32734,7 +32648,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/delete": {
+    "/core/entities/grade-scales/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -32830,7 +32744,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/batch-save": {
+    "/core/entities/grade-scales/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -32937,7 +32851,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/grade-scales/batch-delete": {
+    "/core/entities/grade-scales/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -33033,7 +32947,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/list": {
+    "/core/entities/definitions/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -33135,7 +33049,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/one": {
+    "/core/entities/definitions/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -33248,7 +33162,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/count": {
+    "/core/entities/definitions/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -33352,7 +33266,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/{id}": {
+    "/core/entities/definitions/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -33454,7 +33368,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/save": {
+    "/core/entities/definitions/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -33559,7 +33473,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/delete": {
+    "/core/entities/definitions/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -33655,7 +33569,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/batch-save": {
+    "/core/entities/definitions/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -33762,7 +33676,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/definitions/batch-delete": {
+    "/core/entities/definitions/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -33858,7 +33772,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/list": {
+    "/core/entities/sections/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -33960,7 +33874,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/one": {
+    "/core/entities/sections/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -34073,7 +33987,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/count": {
+    "/core/entities/sections/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -34177,7 +34091,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/{id}": {
+    "/core/entities/sections/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -34279,7 +34193,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/save": {
+    "/core/entities/sections/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -34384,7 +34298,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/delete": {
+    "/core/entities/sections/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -34480,7 +34394,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/batch-save": {
+    "/core/entities/sections/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -34587,7 +34501,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/sections/batch-delete": {
+    "/core/entities/sections/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -34683,7 +34597,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/list": {
+    "/core/entities/results/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -34785,7 +34699,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/one": {
+    "/core/entities/results/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -34898,7 +34812,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/count": {
+    "/core/entities/results/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -35002,7 +34916,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/{id}": {
+    "/core/entities/results/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -35104,7 +35018,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/save": {
+    "/core/entities/results/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -35209,7 +35123,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/delete": {
+    "/core/entities/results/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -35305,7 +35219,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/batch-save": {
+    "/core/entities/results/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -35412,7 +35326,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/results/batch-delete": {
+    "/core/entities/results/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -35508,7 +35422,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/list": {
+    "/core/entities/students/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -35610,7 +35524,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/one": {
+    "/core/entities/students/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -35723,7 +35637,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/count": {
+    "/core/entities/students/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -35827,7 +35741,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/{id}": {
+    "/core/entities/students/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -35929,7 +35843,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/save": {
+    "/core/entities/students/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -36034,7 +35948,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/delete": {
+    "/core/entities/students/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -36130,7 +36044,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/batch-save": {
+    "/core/entities/students/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -36237,7 +36151,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/students/batch-delete": {
+    "/core/entities/students/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -36333,7 +36247,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/list": {
+    "/core/entities/enrollments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -36435,7 +36349,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/one": {
+    "/core/entities/enrollments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -36548,7 +36462,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/count": {
+    "/core/entities/enrollments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -36652,7 +36566,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/{id}": {
+    "/core/entities/enrollments/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -36754,7 +36668,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/save": {
+    "/core/entities/enrollments/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -36859,7 +36773,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/delete": {
+    "/core/entities/enrollments/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -36955,7 +36869,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/batch-save": {
+    "/core/entities/enrollments/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -37062,7 +36976,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/enrollments/batch-delete": {
+    "/core/entities/enrollments/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -37158,7 +37072,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/list": {
+    "/core/entities/guardians/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -37260,7 +37174,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/one": {
+    "/core/entities/guardians/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -37373,7 +37287,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/count": {
+    "/core/entities/guardians/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -37477,7 +37391,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/{id}": {
+    "/core/entities/guardians/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -37579,7 +37493,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/save": {
+    "/core/entities/guardians/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -37684,7 +37598,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/delete": {
+    "/core/entities/guardians/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -37780,7 +37694,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/batch-save": {
+    "/core/entities/guardians/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -37887,7 +37801,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardians/batch-delete": {
+    "/core/entities/guardians/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -37983,7 +37897,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/list": {
+    "/core/entities/guardian-links/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -38085,7 +37999,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/one": {
+    "/core/entities/guardian-links/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -38198,7 +38112,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/count": {
+    "/core/entities/guardian-links/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -38302,7 +38216,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/{id}": {
+    "/core/entities/guardian-links/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -38404,7 +38318,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/save": {
+    "/core/entities/guardian-links/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -38509,7 +38423,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/delete": {
+    "/core/entities/guardian-links/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -38605,7 +38519,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/batch-save": {
+    "/core/entities/guardian-links/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -38712,7 +38626,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/guardian-links/batch-delete": {
+    "/core/entities/guardian-links/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -38808,7 +38722,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/list": {
+    "/core/entities/student-notes/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -38910,7 +38824,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/one": {
+    "/core/entities/student-notes/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -39023,7 +38937,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/count": {
+    "/core/entities/student-notes/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -39127,7 +39041,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/{id}": {
+    "/core/entities/student-notes/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -39229,7 +39143,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/save": {
+    "/core/entities/student-notes/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -39334,7 +39248,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/delete": {
+    "/core/entities/student-notes/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -39430,7 +39344,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/batch-save": {
+    "/core/entities/student-notes/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -39537,7 +39451,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-notes/batch-delete": {
+    "/core/entities/student-notes/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -39633,7 +39547,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/list": {
+    "/core/entities/student-health-profiles/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -39735,7 +39649,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/one": {
+    "/core/entities/student-health-profiles/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -39848,7 +39762,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/count": {
+    "/core/entities/student-health-profiles/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -39952,7 +39866,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/{id}": {
+    "/core/entities/student-health-profiles/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -40054,7 +39968,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/save": {
+    "/core/entities/student-health-profiles/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -40159,7 +40073,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/delete": {
+    "/core/entities/student-health-profiles/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -40255,7 +40169,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/batch-save": {
+    "/core/entities/student-health-profiles/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -40362,7 +40276,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-health-profiles/batch-delete": {
+    "/core/entities/student-health-profiles/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -40458,7 +40372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/list": {
+    "/core/entities/student-disciplinary-actions/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -40560,7 +40474,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/one": {
+    "/core/entities/student-disciplinary-actions/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -40673,7 +40587,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/count": {
+    "/core/entities/student-disciplinary-actions/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -40777,7 +40691,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/{id}": {
+    "/core/entities/student-disciplinary-actions/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -40879,7 +40793,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/save": {
+    "/core/entities/student-disciplinary-actions/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -40984,7 +40898,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/delete": {
+    "/core/entities/student-disciplinary-actions/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -41080,7 +40994,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/batch-save": {
+    "/core/entities/student-disciplinary-actions/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -41187,7 +41101,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-disciplinary-actions/batch-delete": {
+    "/core/entities/student-disciplinary-actions/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -41283,7 +41197,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/list": {
+    "/core/entities/disciplinary-actions/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -41385,7 +41299,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/one": {
+    "/core/entities/disciplinary-actions/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -41498,7 +41412,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/count": {
+    "/core/entities/disciplinary-actions/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -41602,7 +41516,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/{id}": {
+    "/core/entities/disciplinary-actions/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -41704,7 +41618,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/save": {
+    "/core/entities/disciplinary-actions/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -41809,7 +41723,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/delete": {
+    "/core/entities/disciplinary-actions/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -41905,7 +41819,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/batch-save": {
+    "/core/entities/disciplinary-actions/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -42012,7 +41926,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/disciplinary-actions/batch-delete": {
+    "/core/entities/disciplinary-actions/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -42108,7 +42022,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/list": {
+    "/core/entities/student-incident-involvements/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -42210,7 +42124,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/one": {
+    "/core/entities/student-incident-involvements/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -42323,7 +42237,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/count": {
+    "/core/entities/student-incident-involvements/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -42427,7 +42341,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/{id}": {
+    "/core/entities/student-incident-involvements/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -42529,7 +42443,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/save": {
+    "/core/entities/student-incident-involvements/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -42634,7 +42548,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/delete": {
+    "/core/entities/student-incident-involvements/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -42730,7 +42644,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/batch-save": {
+    "/core/entities/student-incident-involvements/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -42837,7 +42751,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/student-incident-involvements/batch-delete": {
+    "/core/entities/student-incident-involvements/batch-delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -42933,7 +42847,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/list": {
+    "/core/entities/incidents/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -43035,7 +42949,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/one": {
+    "/core/entities/incidents/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -43148,7 +43062,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/count": {
+    "/core/entities/incidents/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -43252,7 +43166,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/{id}": {
+    "/core/entities/incidents/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -43354,7 +43268,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/save": {
+    "/core/entities/incidents/save": {
         parameters: {
             query?: never;
             header?: never;
@@ -43459,7 +43373,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/delete": {
+    "/core/entities/incidents/delete": {
         parameters: {
             query?: never;
             header?: never;
@@ -43555,7 +43469,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/batch-save": {
+    "/core/entities/incidents/batch-save": {
         parameters: {
             query?: never;
             header?: never;
@@ -43662,7 +43576,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/entities/incidents/batch-delete": {
+    "/core/entities/incidents/batch-delete": {
         parameters: {
             query?: never;
             header?: never;

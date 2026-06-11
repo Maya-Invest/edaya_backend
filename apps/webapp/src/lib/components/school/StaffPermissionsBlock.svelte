@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { StaffRole } from '$lib/data/school';
+	import type { StaffRole } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
-	import { classes, subjects } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
@@ -15,18 +16,21 @@
 
 	const { role }: { role: StaffRole } = $props();
 
-	const classItems = $derived(classes.map(c => ({ id: c.id, label: c.name, hint: c.level })));
+	const classItems = $derived(academicContext.classes.map(c => ({ id: c.id, label: c.name, hint: c.level })));
 
 	const subjectItems = $derived.by(() => {
 		const map: Record<string, { id: string; label: string }> = {};
-		subjects.forEach((s) => {
+		detailDataContext.subjects.forEach((s) => {
 			if (!map[s.name])
 				map[s.name] = { id: s.name, label: s.name };
 		});
 		return Object.values(map);
 	});
 
-	const enabledMap = $derived(defaultEnabledFor(role));
+	const enabledMap = $derived.by(() => {
+		const live = detailDataContext.roleEnabledPermissions[role];
+		return live ?? defaultEnabledFor(role);
+	});
 
 	const grouped = $derived.by(() => {
 		const acc: Record<string, typeof STAFF_PERMISSIONS> = {};
@@ -37,7 +41,7 @@
 	});
 
 	let classSel = $state<Record<string, string[]>>(
-		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, classes.map(c => c.id)])),
+		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, academicContext.classes.map(c => c.id)])),
 	);
 	let subjectSel = $state<Record<string, string[]>>(
 		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, subjectItems.map(s => s.id)])),

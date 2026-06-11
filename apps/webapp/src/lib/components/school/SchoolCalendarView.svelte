@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SchoolYearEvent, ClassNode } from '$lib/data/school';
+	import type { SchoolYearEvent, ClassNode } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { locale, t } from '$lib/i18n';
 	import {

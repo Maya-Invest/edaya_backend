@@ -1,8 +1,8 @@
 import indexRouter from "@/app-router";
-import { parseEnv } from "@/lib/bootstrap/env";
-import { dependenciesInjection } from "@/lib/http/middleware/dependencies";
+import { parseEnv } from "@/lib/runtime/env";
+import { dependenciesInjection } from "@/lib/http/dependencies";
 import type { AppBindings } from "@/lib/http/types";
-import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import type { ApiRuntime } from "@/lib/runtime/types";
 import { DEV_AUTH_PASSWORD, SEED_SCHOOL_ID } from "@edaya/dev-fixtures";
@@ -88,7 +88,7 @@ export async function signInThroughApp(
   app: Hono<AppBindings>,
   input: { email: string; password?: string },
 ): Promise<string[]> {
-  const response = await app.request(createAppRequest("/api/auth/sign-in/email", {
+  const response = await app.request(createAppRequest("/auth/sign-in/email", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -111,7 +111,7 @@ export async function signUpAuthUser(
   runtime: ApiRuntime,
   input: { email: string; password?: string; name: string },
 ): Promise<string> {
-  const response = await runtime.getAuth().handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
+  const response = await runtime.getAuth().handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/auth/sign-up/email`, {
     method: "POST",
     headers: {
       "content-type": "application/json",

@@ -432,7 +432,7 @@ Other files still using raw `apiFetch` (e.g. `staff-data.ts`) can be migrated in
 
 ## Limitations
 
-- **Auth routes** (`/api/auth/*`) are not covered. The webapp uses `better-auth` directly for authentication.
+- **Auth routes** (`/auth/*`) are not covered. The webapp uses `better-auth` directly for authentication.
 - **Entity query types** are currently loose (`EntityQuery`). OpenAPI generates opaque `Filter_N` schema names for query bodies; stricter per-entity query typing would require naming those schemas in the API layer.
 - **`allowDirectSave: false`** is recorded in bindings but not enforced at the client type level. Callers should use domain commands for entities like `students` and `enrollments`.
 - **No browser bundle yet.** The current transport is designed for server-side use in SvelteKit. A browser transport would need its own CORS and auth strategy.

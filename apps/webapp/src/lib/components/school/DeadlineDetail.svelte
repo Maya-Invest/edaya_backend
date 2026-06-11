@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { Deadline } from '$lib/data/school';
+	import type { Deadline } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
-	import { students } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, AlertCircle, FileText, Paperclip } from '$lib/icons';
 	import { cn } from '$lib/utils';
@@ -68,7 +68,7 @@
 		</Label>
 		<div class="mt-2 overflow-hidden rounded-xl border border-border">
 			{#each d.submissions as sub, i (sub.studentId)}
-				{@const st = students.find(s => s.id === sub.studentId)}
+				{@const st = detailDataContext.students.find(s => s.id === sub.studentId)}
 				{#if st}
 					{@const meta = subStatusStyle[sub.status]}
 					<div class={cn('flex items-center gap-3 px-3 py-2.5', i % 2 && 'bg-secondary/30')}>

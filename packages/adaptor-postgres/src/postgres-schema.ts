@@ -38,9 +38,12 @@ export const academicPeriods = pgTable('academic_periods', {
 export const periodDefinitions = pgTable('period_definitions', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
-  name: text('name').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  label: text('label').notNull(),
+  order: integer('order_val').notNull(),
   startTime: text('start_time').notNull(),
   endTime: text('end_time').notNull(),
+  isBreak: boolean('is_break').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

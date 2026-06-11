@@ -285,9 +285,12 @@ CREATE TABLE "payments" (
 CREATE TABLE "period_definitions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"school_id" text NOT NULL,
-	"name" text NOT NULL,
+	"academic_year_id" text NOT NULL,
+	"label" text NOT NULL,
+	"order_val" integer NOT NULL,
 	"start_time" text NOT NULL,
 	"end_time" text NOT NULL,
+	"is_break" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp NOT NULL
 );
 --> statement-breakpoint

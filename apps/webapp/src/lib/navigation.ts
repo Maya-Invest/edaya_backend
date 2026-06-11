@@ -9,6 +9,7 @@ import {
 	GraduationCap,
 	BookOpen,
 	ClipboardCheck,
+	CalendarClock,
 	FileSpreadsheet,
 	Percent,
 	BadgeDollarSign,
@@ -61,6 +62,7 @@ export const CLASS_ITEMS: ContextItem[] = [
 	{ key: 'subjects', labelKey: 'tab.subjects', icon: GraduationCap, href: 'subjects' },
 	{ key: 'timetable', labelKey: 'tab.timetable', icon: CalendarDays, href: 'timetable' },
 	{ key: 'teaching', labelKey: 'tab.teaching', icon: BookOpen, href: 'teaching' },
+	{ key: 'homework', labelKey: 'tab.homework', icon: CalendarClock, href: 'homework' },
 	{ key: 'evaluations', labelKey: 'tab.evaluations', icon: ClipboardCheck, href: 'evaluations' },
 	{ key: 'reportCards', labelKey: 'tab.reportCards', icon: FileSpreadsheet, href: 'report-cards' },
 ];

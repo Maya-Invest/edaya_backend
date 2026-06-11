@@ -1,17 +1,18 @@
 <script lang="ts">
-	import type { Deadline } from '$lib/data/school';
+	import type { Deadline } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { deadlines as ALL_DEADLINES } from '$lib/data/school';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';
 	import { cn } from '$lib/utils';
 
 	const {
 		classId,
+		deadlines = [],
 		onSelect,
 		selectedId,
 	}: {
 		classId: string;
+		deadlines?: Deadline[];
 		onSelect?: (d: Deadline) => void;
 		selectedId?: string;
 	} = $props();
@@ -19,7 +20,7 @@
 	let filter = $state<'all' | 'open' | 'overdue' | 'done'>('all');
 	const today = new Date('2026-05-22');
 
-	const list = $derived(ALL_DEADLINES.filter(d => d.classId === classId));
+	const list = $derived(deadlines.filter(d => d.classId === classId));
 
 	const enriched = $derived(
 		list.map((d) => {

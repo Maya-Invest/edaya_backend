@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { HierarchyGroup } from '$lib/data/school';
 	import type { ModuleKey, ContextItem } from '$lib/navigation';
+	import type { HierarchyGroup } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import { authSession } from '$lib/auth/session.svelte';
 	import ClassSelector from '$lib/components/layout/ClassSelector.svelte';

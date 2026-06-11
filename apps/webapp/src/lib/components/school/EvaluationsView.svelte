@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Evaluation } from '$lib/data/school';
+	import type { Evaluation } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarDays, Plus } from '$lib/icons';
