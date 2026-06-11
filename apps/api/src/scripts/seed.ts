@@ -1,6 +1,6 @@
 import { loadNodeProcessEnv } from "@/lib/runtime/node";
 import { getApiRuntime } from "@/lib/runtime/registry";
-import { DEV_AUTH_PASSWORD } from "@/lib/seed/dataset";
+import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";

@@ -73,6 +73,7 @@ More detail: [docs/done/api-folder-structure.md](./docs/done/api-folder-structur
 | `@edaya/adaptor-postgres` | `packages/adaptor-postgres` | Drizzle schema, migrations, Postgres repository implementations |
 | `@edaya/adaptor-betterauth` | `packages/adaptor-betterauth` | Better Auth Drizzle schema and SQL migrations |
 | `@edaya/api-client` | `packages/api-client` | Type-safe client for entities, commands, queries (generated bindings) |
+| `@edaya/dev-fixtures` | `packages/dev-fixtures` | Shared dev seed IDs and fixture records (API seed, tests, webapp migration) |
 | `@edaya/integration-tests` | `testing/integration-tests` | Cross-package integration tests (auth, Postgres, core services) |
 
 ## Prerequisites

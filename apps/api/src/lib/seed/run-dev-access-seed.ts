@@ -3,7 +3,7 @@ import {
   SEED_ACADEMIC_YEAR_ID,
   SEED_CLASS_SUBJECTS,
   SEED_SCHOOL_ID,
-} from "@/lib/seed/dataset";
+} from "@edaya/dev-fixtures";
 import {
   AccessRole,
   COORDINATOR_PERMISSIONS,

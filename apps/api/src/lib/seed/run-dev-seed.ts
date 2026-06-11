@@ -13,7 +13,7 @@ import {
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
   splitDisplayName,
-} from "@/lib/seed/dataset";
+} from "@edaya/dev-fixtures";
 import {
   AcademicPeriodType,
   createSystemActorMetadata,

@@ -1,6 +1,6 @@
 import type { Environment } from "@/lib/bootstrap/env";
 import { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
-import { isEphemeralDatabase } from "@/lib/seed";
+import { isEphemeralDatabase } from "@/lib/runtime/database-url";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
 import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { createRepositoryAuthorizationPolicy } from "@edaya/core";

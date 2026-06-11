@@ -2,7 +2,7 @@ import { parseEnv } from "@/lib/bootstrap/env";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { createDependenciesInjection } from "@/lib/http/middleware/dependencies";
 import { type AuthSessionProvider, createSessionActorDependency } from "@/lib/http/middleware/dependencies/session-actor";
-import { DEV_AUTH_PASSWORD } from "@/lib/seed/dataset";
+import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
 import { Hono } from "hono";

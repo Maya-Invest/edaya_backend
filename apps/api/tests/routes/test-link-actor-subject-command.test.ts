@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
-import { SEED_SCHOOL_ID } from "@/lib/seed/dataset";
+import { SEED_SCHOOL_ID } from "@edaya/dev-fixtures";
 import { createSystemActorMetadata } from "@edaya/core";
 import {
   createAppRequest,

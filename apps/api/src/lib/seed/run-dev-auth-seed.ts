@@ -7,7 +7,7 @@ import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_ID,
-} from "@/lib/seed/dataset";
+} from "@edaya/dev-fixtures";
 import { createSystemActorMetadata } from "@edaya/core";
 
 export type DevAuthSeedResult =
