@@ -6,7 +6,7 @@ import { ApiError, unwrapEntity, unwrapEntityList } from '@edaya/api-client';
 export { ApiError };
 
 function isEntityCollectionPath(path: string): boolean {
-	return /\/api\/core\/entities\/[^/]+\/(list|one|save)$/.test(path);
+	return /\/api\/core\/entities\/[^/]+\/(?:list|one|save)$/.test(path);
 }
 
 function isEntityGetPath(path: string): boolean {

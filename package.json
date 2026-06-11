@@ -18,7 +18,7 @@
     "test:coverage": "turbo run test -- --coverage",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "fullcheck": "bun run lint:fix && bun run quality && bun run build && bun run test --dots",
+    "fullcheck": "bun run lint:fix && bun run quality && bun run build && turbo run test -- --dots",
     "db:generate": "bun --filter @edaya/adaptor-postgres db:generate",
     "db:migrate": "bun --filter @edaya/adaptor-postgres db:migrate",
     "db:generate:auth": "bun --filter @edaya/adaptor-betterauth db:generate",

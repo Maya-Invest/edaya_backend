@@ -1,5 +1,5 @@
-import { unwrapEntity, unwrapEntityList } from './entity-envelope.ts'
 import type { Transport } from './transport.ts'
+import { unwrapEntity, unwrapEntityList } from './entity-envelope.ts'
 
 export type EntityQuery = Record<string, unknown> & {
   $orderBy?: Array<{ field: string, direction: 'asc' | 'desc' }>
