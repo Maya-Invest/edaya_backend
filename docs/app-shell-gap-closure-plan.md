@@ -20,7 +20,7 @@ The **infrastructure layer is largely spec-aligned**; the **interaction layer is
 |-----------|----------|---------|
 | Shell layout | ~75% | Mobile/responsive, user dropdown |
 | URL-backed detail routes | ~90% | Filter params not in URL |
-| List page template | ~60% | Pagination, More menu, URL filters |
+| List page template | ~60% | Infinite loading, More menu, URL filters |
 | Detail drawer | ~25% | Forms in drawer, Save footer |
 | Mutation modals | ~30% | No `*FormModal` pattern; inert CTAs |
 | Sub-collection tabs | ~50% | Student tabs closest; many `+ Add` unwired |
@@ -81,7 +81,7 @@ Keep and extend these patterns — they are the foundation every migration shoul
 |-----|---------|--------|
 | Primary CTAs | "Add student/guardian/…" often inert | Wire to create modals |
 | More menu | `MoreHorizontal` icons decorative | Export, bulk, view toggle, column settings |
-| Pagination | None | Pagination or infinite scroll on large lists |
+| Infinite loading | None | Cursor-based infinite scroll on large lists (see [§4](#4-infinite-loading)) |
 | Bulk selection | None | Checkbox column + floating action bar |
 | URL filter persistence | Local `$state` only | `?class=6a&status=active` in query params |
 | Sort | None on tables | Column header or sort dropdown |
@@ -147,7 +147,29 @@ Keep and extend these patterns — they are the foundation every migration shoul
 
 ---
 
-## 4. Phased closure plan
+## 4. Infinite loading
+
+**Design decision:** scalable collections use **infinite scroll** — not page numbers or explicit "Load more" buttons. Aligns with spec §2.3 ("pagination or infinite scroll"); this project standardizes on infinite loading.
+
+| Aspect | Rule |
+|--------|------|
+| **Trigger** | Sentinel element at list bottom (`IntersectionObserver`); fetch next page when visible |
+| **Cursor** | Server returns `nextCursor` (or equivalent); client appends rows, never replaces on scroll |
+| **Page size** | Fixed batch (e.g. 50); tune per entity density |
+| **Initial load** | First page via existing `PageQuery` / route loader |
+| **Subsequent pages** | Client-side fetch (remote or BFF) with cursor + current filters |
+| **Filter/search change** | Reset list to page 1; clear cursor; refetch from top |
+| **Loading UX** | Skeleton rows or inline spinner at bottom — no full-page overlay on append |
+| **End of list** | Subtle "no more results" or simply stop observing sentinel |
+| **Drawer open** | Scroll position and loaded pages preserved (list stays in context behind drawer) |
+| **URL** | Filters in query params; cursor stays in memory only (not shareable deep-link state) |
+| **Accessibility** | `aria-busy` on collection while appending; announce new batch count via `aria-live` region |
+
+**Shared primitive:** `useInfiniteList` (or `InfiniteList.svelte` wrapper) — cursor state, observer lifecycle, reset on filter change. Reuse across all scalable collections in Phase 3 rollout.
+
+---
+
+## 5. Phased closure plan
 
 ### Phase 0 — Shared foundations (1 sprint)
 
@@ -229,10 +251,10 @@ read-only Detail/Tabs → footer actions → modals → remove Form from drawer
 Target `SchoolStudentsView` as the gold-standard list, then roll out.
 
 1. **URL filter sync** — `class`, `status`, `q` in search params; preserve on drawer open/close via `listRouteCacheKey` extension
-2. **Pagination** — cursor or page-based on school students first
+2. **Infinite loading** — cursor-based fetch-on-scroll on school students first (see [§4](#4-infinite-loading))
 3. **More menu** — export stub, view toggle (cards/table), column visibility
 4. **Bulk selection** — defer real bulk mutations until API supports them; UI shell only if needed
-5. **Eliminate double loading** — `PageQuery` owns loading; `DataState` only for empty/error/ready
+5. **Eliminate double loading** — `PageQuery` owns initial load; `DataState` only for empty/error/ready; append pages without full-page spinner
 
 Roll out to: guardians, staff, fees, evaluations, subjects.
 
@@ -265,7 +287,7 @@ Apply `PermissionGate` to every CTA identified in Phases 1–2. Denied actions: 
 
 ---
 
-## 5. API write path dependency
+## 6. API write path dependency
 
 UI conformance and API migration are coupled. From [webapp-mock-migration-plan.md](./done/webapp-mock-migration-plan.md):
 
@@ -292,7 +314,7 @@ incident.mutations.ts
 
 ---
 
-## 6. Entity inventory
+## 7. Entity inventory
 
 Tracking board. Status reflects **current** state as of 2026-06-11.
 
@@ -321,7 +343,7 @@ Legend: ✅ done · ⚠️ partial · ❌ missing · — N/A
 
 ---
 
-## 7. Execution order
+## 8. Execution order
 
 ```mermaid
 flowchart TD
@@ -329,7 +351,7 @@ flowchart TD
     P1a[Phase 1a: Student\nreference entity]
     P1b[Phase 1b-d: Guardian, Staff, Evaluation, Fee...]
     P2[Phase 2: Remaining drawers + config screens]
-    P3[Phase 3: List infrastructure\nURL filters, pagination, More menu]
+    P3[Phase 3: List infrastructure\nURL filters, infinite loading, More menu]
     P4[Phase 4: Shell polish\nmobile, a11y]
     P5[Phase 5: Permissions pass\nparallel with 1-3]
 
@@ -347,7 +369,7 @@ flowchart TD
 
 ---
 
-## 8. Success metrics
+## 9. Success metrics
 
 The gap is closed when:
 
@@ -357,12 +379,12 @@ The gap is closed when:
 4. Every sub-collection `+ Add` / Edit opens a modal
 5. `runMutation` (or equivalent) backs every write with success + error toast
 6. Every write action has a permission gate
-7. `SchoolStudentsView` has URL-persisted filters + pagination
+7. `SchoolStudentsView` has URL-persisted filters + cursor-based infinite loading
 8. Drawer + sidebar are responsive per spec §6.5
 
 ---
 
-## 9. File quick-reference
+## 10. File quick-reference
 
 | Role | Good examples | Violation examples |
 |------|---------------|-------------------|
