@@ -75,7 +75,8 @@ Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de
 **Notes tracker**
 
 - **Phase 2 ✅** : offerings 6a/6b/5a ; `assignMatterToClassSubject` pour toutes les offerings ; `recordSessionProgress` échantillon sur sess-p1.
-- **Phase 9 🟡** : 4 comptes staff + 1 tuteur ; permissions finance/assessment/attendance/discipline/report-card à ajouter au fil des phases.
+- **Phase 9 ✅** : 5 comptes staff + 8 tuteurs (g1–g8) ; permissions finance/assessment/attendance/discipline/report-card.
+- **Extension 2026-06-11** : classes `4a`–`term-s`, élèves `s9`–`s13`, Terminale (matières, évals, bulletin `rcd-term`, facturation `b7`/`b8`).
 
 ---
 
@@ -170,7 +171,7 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 - [x] `SEED_PERIOD_DEFINITIONS` ← grille horaire journalière (11 créneaux, pas les libellés trimestre mock)
 - [x] Seed via `baseService.periodDefinitions.save`
 - [x] Permissions (`QUERY_WORKSPACE_READ` via shell) + test `period-definitions/list`
-- [ ] (Optionnel) Deuxième école mock `sch-edaya-nord`
+- [x] (Optionnel) Deuxième école mock `sch-edaya-nord` → profil stub `/core/prototype/schools/list` (PGLite : Campus Central seulement)
 
 ### PR 3 — Finance (phases 3a–3c) ✅
 
@@ -229,8 +230,8 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ### PR 10 — Décisions produit (phase 10)
 
-- [x] Décision : `activities[]`, `deadlines[]` → endpoints stub `/core/prototype/*` (pas d'entité domaine)
-- [ ] Décision : deuxième école (`schools[1]`) — mock permanent UI
+- [x] Décision : `activities[]`, `deadlines[]`, `teachingLog[]` → endpoints stub `/core/prototype/*` (pas d'entité domaine)
+- [x] Décision : deuxième école (`sch-edaya-nord`) → profil stub `/core/prototype/schools/list` (pas `registerSchool` — conflit tenant)
 - [x] Webapp : `/school/activities` + `/classes/[id]/homework` branchés sur stub API
 - [x] Tests : `test-prototype-routes.test.ts`
 
@@ -317,13 +318,14 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ### Phase 10 — Stub API prototype ✅
 
-**Décision** : endpoints stub `/core/prototype/activities/list` et `/core/prototype/deadlines/list` (seed `@maya/dev-fixtures`) en attendant entités domaine.
+**Décision** : endpoints stub `/core/prototype/*` (seed `@edaya/dev-fixtures`) en attendant entités domaine.
 
 | Donnée | Statut |
 |--------|--------|
 | `activities[]` | ✅ stub API + webapp `/school/activities` |
-| `deadlines[]` | ✅ stub API + `HomeworkView` via `loadClassHomeworkPage` |
-| Deuxième école (`schools[1]`) | mock permanent UI (non migré) |
+| `deadlines[]` | ✅ stub API + `/classes/[id]/homework` |
+| `teachingLog[]` | ✅ stub API `/core/prototype/teaching-log/list` + `teachingLogContext` layout |
+| Deuxième école (`sch-edaya-nord`) | ✅ stub API `/core/prototype/schools/list` (shell multi-école ; PGLite = Campus Central) |
 
 ---
 

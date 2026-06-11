@@ -91,6 +91,8 @@ describe("dev assessments seed", () => {
     expect(assessments.length).toBeGreaterThanOrEqual(SEED_ASSESSMENTS.length);
     expect(results.length).toBeGreaterThanOrEqual(expectedAssessmentResultCount);
     expect(assessments.some(assessment => assessment.id === "e1" && assessment.classGroupId === "6a")).toBe(true);
+    expect(assessments.some(assessment => assessment.id === "e5" && assessment.classGroupId === "term-s")).toBe(true);
     expect(results.some(result => result.assessmentId === "e1" && result.studentId === "s1")).toBe(true);
+    expect(results.some(result => result.assessmentId === "e5" && result.studentId === "s9")).toBe(true);
   }, 30_000);
 });

@@ -2,8 +2,8 @@ import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   SEED_GRADE_SCALES,
-  SEED_REPORT_CARD_DEFINITION_MS6,
-  SEED_REPORT_CARD_RESULTS_6A,
+  SEED_REPORT_CARD_DEFINITIONS,
+  SEED_REPORT_CARD_RESULTS,
 } from "@edaya/dev-fixtures";
 import { parseEnv } from "@/lib/runtime/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
@@ -45,8 +45,10 @@ function unwrapEntityList<T>(values: unknown): T[] {
   return values.map(entry => unwrapEntity<T>(entry));
 }
 
-const expectedSectionCount = SEED_REPORT_CARD_DEFINITION_MS6.sections.reduce((total, section) => {
-  return total + 1 + section.subjectIds.length;
+const expectedSectionCount = SEED_REPORT_CARD_DEFINITIONS.reduce((total, definition) => {
+  return total + definition.sections.reduce((sectionTotal, section) => {
+    return sectionTotal + 1 + section.subjectIds.length;
+  }, 0);
 }, 0);
 
 const pgliteEnv = parseEnv({
@@ -70,9 +72,9 @@ describe("dev report cards seed", () => {
     expect(seedResult.status).toBe("seeded");
     if (seedResult.status === "seeded") {
       expect(seedResult.gradeScales).toBe(SEED_GRADE_SCALES.length);
-      expect(seedResult.reportCardDefinitions).toBe(1);
+      expect(seedResult.reportCardDefinitions).toBe(SEED_REPORT_CARD_DEFINITIONS.length);
       expect(seedResult.reportCardSections).toBe(expectedSectionCount);
-      expect(seedResult.reportCardResults).toBe(SEED_REPORT_CARD_RESULTS_6A.length);
+      expect(seedResult.reportCardResults).toBe(SEED_REPORT_CARD_RESULTS.length);
     }
 
     await runDevAuthSeed(application, runtime.getAuth(), pgliteEnv);
@@ -123,11 +125,13 @@ describe("dev report cards seed", () => {
     const results = unwrapEntityList<{ id: string; studentId: string }>(await resultsResponse.json());
 
     expect(gradeScales.length).toBeGreaterThanOrEqual(SEED_GRADE_SCALES.length);
-    expect(definitions.length).toBeGreaterThanOrEqual(1);
+    expect(definitions.length).toBeGreaterThanOrEqual(SEED_REPORT_CARD_DEFINITIONS.length);
     expect(sections.length).toBeGreaterThanOrEqual(expectedSectionCount);
-    expect(results.length).toBeGreaterThanOrEqual(SEED_REPORT_CARD_RESULTS_6A.length);
+    expect(results.length).toBeGreaterThanOrEqual(SEED_REPORT_CARD_RESULTS.length);
     expect(gradeScales.some(scale => scale.id === "gs-20")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-ms-6")).toBe(true);
+    expect(definitions.some(definition => definition.id === "rcd-term")).toBe(true);
     expect(results.some(result => result.id === "rcr-s1-t3" && result.studentId === "s1")).toBe(true);
+    expect(results.some(result => result.id === "rcr-s9-t3" && result.studentId === "s9")).toBe(true);
   }, 30_000);
 });

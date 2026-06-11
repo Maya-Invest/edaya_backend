@@ -1,4 +1,5 @@
 import type { Activity, Deadline } from '$lib/data/school';
+import type { LogEntry } from '$lib/data/teachingLog';
 import { apiFetch } from '$lib/server/api-client';
 
 interface PrototypeActivity {
@@ -26,6 +27,56 @@ interface PrototypeDeadline {
 	type: Deadline['type'];
 	attachments: Deadline['attachments'];
 	submissions: Deadline['submissions'];
+}
+
+interface PrototypeTeachingLogEntry {
+	id: string;
+	classGroupId: string;
+	subjectId: string;
+	subjectName: string;
+	teacher: string;
+	date: string;
+	chapter: string;
+	content: string;
+	objectives: string[];
+	homework?: string;
+	attachments?: string[];
+	progress: number;
+}
+
+interface PrototypeSchoolProfile {
+	id: string;
+	name: string;
+	shortName: string;
+	city: string;
+	timeZone: string;
+}
+
+export function mapSchoolProfiles(raw: PrototypeSchoolProfile[]) {
+	return raw.map(school => ({ ...school }));
+}
+
+export async function loadSchoolProfiles() {
+	const raw = await apiFetch<PrototypeSchoolProfile[]>('/core/prototype/schools/list', {
+		method: 'POST',
+		body: JSON.stringify({}),
+	});
+	return mapSchoolProfiles(raw ?? []);
+}
+
+export function mapTeachingLogEntries(raw: PrototypeTeachingLogEntry[]): LogEntry[] {
+	return raw.map(entry => ({
+		id: entry.id,
+		date: entry.date,
+		subject: entry.subjectName,
+		teacher: entry.teacher,
+		chapter: entry.chapter,
+		content: entry.content,
+		objectives: entry.objectives,
+		homework: entry.homework,
+		attachments: entry.attachments,
+		progress: entry.progress,
+	}));
 }
 
 export function mapActivities(raw: PrototypeActivity[]): Activity[] {
@@ -61,4 +112,12 @@ export async function loadDeadlines(classGroupId?: string): Promise<Deadline[]> 
 		body: JSON.stringify(classGroupId ? { classGroupId } : {}),
 	});
 	return mapDeadlines(raw ?? []);
+}
+
+export async function loadTeachingLogEntries(filters?: { classGroupId?: string; subjectName?: string }): Promise<LogEntry[]> {
+	const raw = await apiFetch<PrototypeTeachingLogEntry[]>('/core/prototype/teaching-log/list', {
+		method: 'POST',
+		body: JSON.stringify(filters ?? {}),
+	});
+	return mapTeachingLogEntries(raw ?? []);
 }

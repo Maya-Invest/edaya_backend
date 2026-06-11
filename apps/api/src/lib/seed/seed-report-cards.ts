@@ -3,8 +3,8 @@ import {
   parseSeedDate,
   SEED_ACADEMIC_YEAR_ID,
   SEED_GRADE_SCALES,
-  SEED_REPORT_CARD_DEFINITION_MS6,
-  SEED_REPORT_CARD_RESULTS_6A,
+  SEED_REPORT_CARD_DEFINITIONS,
+  SEED_REPORT_CARD_RESULTS,
   SEED_SCHOOL_ID,
 } from "@edaya/dev-fixtures";
 import type { SchoolService } from "@edaya/core";
@@ -24,6 +24,8 @@ const CLASS_SUBJECT_BY_SUBJECT: Record<string, string> = {
   "subj-sci": "cs-6a-sci",
   "subj-en": "cs-6a-en",
   "subj-eps": "cs-6a-eps",
+  "subj-advmath": "cs-term-advmath",
+  "subj-phys": "cs-term-phys",
 };
 
 function mapResultStatus(mockStatus: "published" | "generated"): ReportCardResultStatus {
@@ -33,6 +35,7 @@ function mapResultStatus(mockStatus: "published" | "generated"): ReportCardResul
 }
 
 function buildSectionResults(
+  definition: (typeof SEED_REPORT_CARD_DEFINITIONS)[number],
   sectionMarks: Record<string, readonly {
     subjectId: string;
     average: number;
@@ -40,7 +43,7 @@ function buildSectionResults(
     appreciation: string;
   }[]>,
 ): ReportCardResultSection[] {
-  return SEED_REPORT_CARD_DEFINITION_MS6.sections
+  return definition.sections
     .filter(section => section.mockKind === "matieres")
     .map((section) => {
       const marks = sectionMarks[section.id] ?? [];
@@ -86,45 +89,53 @@ export async function seedReportCards(
     });
   }
 
-  await service.createReportCardDefinition({
-    id: SEED_REPORT_CARD_DEFINITION_MS6.id,
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    gradeLevelId: SEED_REPORT_CARD_DEFINITION_MS6.gradeLevelId,
-    name: SEED_REPORT_CARD_DEFINITION_MS6.name,
-    kind: ReportCardDefinitionKind.Default,
-    isDefault: SEED_REPORT_CARD_DEFINITION_MS6.isDefault,
-    description: "Bulletin trimestriel collège 6ème",
-  });
-
   let sectionCount = 0;
-  for (const section of SEED_REPORT_CARD_DEFINITION_MS6.sections) {
-    await service.createReportCardDefinitionSection({
-      id: section.id,
-      reportCardDefinitionId: SEED_REPORT_CARD_DEFINITION_MS6.id,
-      name: section.name,
-      kind: ReportCardDefinitionSectionKind.Group,
-      order: section.order,
-      weight: section.weight > 0 ? section.weight : 1,
-    });
-    sectionCount += 1;
 
-    for (const subjectId of section.subjectIds) {
+  for (const definition of SEED_REPORT_CARD_DEFINITIONS) {
+    await service.createReportCardDefinition({
+      id: definition.id,
+      schoolId: SEED_SCHOOL_ID,
+      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      gradeLevelId: definition.gradeLevelId,
+      name: definition.name,
+      kind: ReportCardDefinitionKind.Default,
+      isDefault: definition.isDefault,
+      description: definition.name,
+    });
+
+    for (const section of definition.sections) {
       await service.createReportCardDefinitionSection({
-        id: `${section.id}-${subjectId}`,
-        reportCardDefinitionId: SEED_REPORT_CARD_DEFINITION_MS6.id,
-        name: subjectId,
-        kind: ReportCardDefinitionSectionKind.Subject,
-        order: 1,
-        weight: 1,
-        parentSectionId: section.id,
-        subjectId,
+        id: section.id,
+        reportCardDefinitionId: definition.id,
+        name: section.name,
+        kind: ReportCardDefinitionSectionKind.Group,
+        order: section.order,
+        weight: section.weight > 0 ? section.weight : 1,
       });
       sectionCount += 1;
+
+      for (const subjectId of section.subjectIds) {
+        await service.createReportCardDefinitionSection({
+          id: `${section.id}-${subjectId}`,
+          reportCardDefinitionId: definition.id,
+          name: subjectId,
+          kind: ReportCardDefinitionSectionKind.Subject,
+          order: 1,
+          weight: 1,
+          parentSectionId: section.id,
+          subjectId,
+        });
+        sectionCount += 1;
+      }
     }
   }
 
-  for (const result of SEED_REPORT_CARD_RESULTS_6A) {
+  for (const result of SEED_REPORT_CARD_RESULTS) {
+    const definition = SEED_REPORT_CARD_DEFINITIONS.find(entry => entry.id === result.definitionId);
+    if (!definition) {
+      continue;
+    }
+
     const status = mapResultStatus(result.mockStatus);
     await application.repositories.results.save(new ReportCardResult({
       id: result.id,
@@ -147,14 +158,14 @@ export async function seedReportCards(
       status,
       generatedAt: parseSeedDate(result.generatedAt),
       publishedAt: "publishedAt" in result ? parseSeedDate(result.publishedAt) : undefined,
-      sectionResults: buildSectionResults(result.sectionMarks),
+      sectionResults: buildSectionResults(definition, result.sectionMarks),
     }));
   }
 
   return {
     gradeScales: SEED_GRADE_SCALES.length,
-    definitions: 1,
+    definitions: SEED_REPORT_CARD_DEFINITIONS.length,
     sections: sectionCount,
-    results: SEED_REPORT_CARD_RESULTS_6A.length,
+    results: SEED_REPORT_CARD_RESULTS.length,
   };
 }

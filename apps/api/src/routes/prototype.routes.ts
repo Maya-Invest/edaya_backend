@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { SEED_ACTIVITIES, SEED_DEADLINES } from "@edaya/dev-fixtures";
+import { SEED_ACTIVITIES, SEED_DEADLINES, SEED_SCHOOL_PROFILES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
 import type { AppRouteHandler } from "@/lib/http/types";
 import { unauthorizedResponse } from "@/lib/http/responses";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
@@ -50,6 +50,34 @@ const prototypeDeadlinesListRequestSchema = z.object({
   classGroupId: z.string().optional(),
 }).openapi("PrototypeDeadlinesListRequest");
 
+const prototypeTeachingLogListRequestSchema = z.object({
+  classGroupId: z.string().optional(),
+  subjectName: z.string().optional(),
+}).openapi("PrototypeTeachingLogListRequest");
+
+const prototypeTeachingLogEntrySchema = z.object({
+  id: z.string(),
+  classGroupId: z.string(),
+  subjectId: z.string(),
+  subjectName: z.string(),
+  teacher: z.string(),
+  date: z.string(),
+  chapter: z.string(),
+  content: z.string(),
+  objectives: z.array(z.string()),
+  homework: z.string().optional(),
+  attachments: z.array(z.string()).optional(),
+  progress: z.number(),
+}).openapi("PrototypeTeachingLogEntry");
+
+const prototypeSchoolProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  shortName: z.string(),
+  city: z.string(),
+  timeZone: z.string(),
+}).openapi("PrototypeSchoolProfile");
+
 export const listPrototypeActivitiesRoute = createRoute({
   method: "post",
   path: schoolApiPath("prototype", "activities", "list"),
@@ -84,6 +112,40 @@ export const listPrototypeDeadlinesRoute = createRoute({
   },
 });
 
+export const listPrototypeSchoolsRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("prototype", "schools", "list"),
+  tags: ["Core Prototype"],
+  summary: "List school profiles for multi-school UI (stub — Campus Nord has no PGLite seed yet)",
+  request: {
+    body: jsonContent(prototypeListRequestSchema, "Prototype schools list request"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.array(prototypeSchoolProfileSchema).openapi("PrototypeSchoolsListResponse"),
+      "Stub school profiles",
+    ),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const listPrototypeTeachingLogRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("prototype", "teaching-log", "list"),
+  tags: ["Core Prototype"],
+  summary: "List teaching journal entries (stub — no domain entity yet)",
+  request: {
+    body: jsonContent(prototypeTeachingLogListRequestSchema, "Prototype teaching log list request"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.array(prototypeTeachingLogEntrySchema).openapi("PrototypeTeachingLogListResponse"),
+      "Stub teaching journal entries",
+    ),
+    ...coreRouteErrorResponses,
+  },
+});
+
 export const listPrototypeActivitiesHandler: AppRouteHandler<typeof listPrototypeActivitiesRoute> = async (c) => {
   if (!c.get("actor")) {
     return unauthorizedResponse(c);
@@ -113,6 +175,38 @@ export const listPrototypeDeadlinesHandler: AppRouteHandler<typeof listPrototype
       ...deadline,
       attachments: deadline.attachments.map(attachment => ({ ...attachment })),
       submissions: deadline.submissions.map(submission => ({ ...submission })),
+    })),
+    HttpStatusCodes.OK,
+  );
+};
+
+export const listPrototypeSchoolsHandler: AppRouteHandler<typeof listPrototypeSchoolsRoute> = async (c) => {
+  if (!c.get("actor")) {
+    return unauthorizedResponse(c);
+  }
+
+  return c.json([...SEED_SCHOOL_PROFILES], HttpStatusCodes.OK);
+};
+
+export const listPrototypeTeachingLogHandler: AppRouteHandler<typeof listPrototypeTeachingLogRoute> = async (c) => {
+  if (!c.get("actor")) {
+    return unauthorizedResponse(c);
+  }
+
+  const body = c.req.valid("json") as { classGroupId?: string; subjectName?: string };
+  let entries = SEED_TEACHING_LOG_ENTRIES;
+  if (body.classGroupId) {
+    entries = entries.filter(entry => entry.classGroupId === body.classGroupId);
+  }
+  if (body.subjectName) {
+    entries = entries.filter(entry => entry.subjectName === body.subjectName);
+  }
+
+  return c.json(
+    entries.map(entry => ({
+      ...entry,
+      objectives: [...entry.objectives],
+      attachments: entry.attachments ? [...entry.attachments] : undefined,
     })),
     HttpStatusCodes.OK,
   );

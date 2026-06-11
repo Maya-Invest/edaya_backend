@@ -3,6 +3,20 @@
  * Canonical source — align `apps/webapp/src/lib/data/school.ts` with this package over time.
  */
 
+import {
+  SEED_EXTENDED_ASSESSMENT_RESULT_SCORES,
+  SEED_EXTENDED_ASSESSMENTS,
+  SEED_EXTENDED_AUTH_GUARDIANS,
+  SEED_EXTENDED_CLASS_SUBJECTS,
+  SEED_EXTENDED_CLASSES,
+  SEED_EXTENDED_GUARDIANS,
+  SEED_EXTENDED_PAYMENTS,
+  SEED_EXTENDED_STUDENT_FEES,
+  SEED_EXTENDED_STUDENTS,
+  SEED_EXTENDED_SUBJECT_CATALOG,
+  SEED_EXTENDED_SUBJECT_MATTERS,
+} from './extended-dataset'
+
 export const SEED_SCHOOL_ID = 'sch-edaya-central'
 
 export const SEED_SCHOOL_PROFILE = {
@@ -10,6 +24,16 @@ export const SEED_SCHOOL_PROFILE = {
   name: 'EDAYA — Campus Central',
   timeZone: 'Europe/Paris',
   city: 'Paris',
+  country: 'FR',
+} as const
+
+export const SEED_SCHOOL_NORD_ID = 'sch-edaya-nord'
+
+export const SEED_SCHOOL_NORD_PROFILE = {
+  id: SEED_SCHOOL_NORD_ID,
+  name: 'EDAYA — Campus Nord',
+  timeZone: 'Europe/Paris',
+  city: 'Lille',
   country: 'FR',
 } as const
 
@@ -29,6 +53,7 @@ export const SEED_CLASSES = [
   { id: '6a', gradeLevelId: 'gl-6', name: '6th — A', capacity: 30 },
   { id: '6b', gradeLevelId: 'gl-6', name: '6th — B', capacity: 30 },
   { id: '5a', gradeLevelId: 'gl-5', name: '5th — A', capacity: 30 },
+  ...SEED_EXTENDED_CLASSES,
 ] as const
 
 /** All staff from `apps/webapp/src/lib/data/school.ts` — st5 first (school owner). */
@@ -51,6 +76,7 @@ export const SEED_STUDENTS = [
   { id: 's6', classId: '6a', name: 'Sofia Reyes', birthDate: '2014-08-17' },
   { id: 's7', classId: '6b', name: 'Liam Foster', birthDate: '2014-02-21' },
   { id: 's8', classId: '6b', name: 'Zara Khan', birthDate: '2014-06-11' },
+  ...SEED_EXTENDED_STUDENTS,
 ] as const
 
 export const SEED_GUARDIANS = [
@@ -102,6 +128,7 @@ export const SEED_GUARDIANS = [
     studentIds: ['s6'],
     relationship: 'father',
   },
+  ...SEED_EXTENDED_GUARDIANS,
 ] as const
 
 /** School-wide subject catalog aligned with the webapp school mock data. */
@@ -112,6 +139,7 @@ export const SEED_SUBJECT_CATALOG = [
   { id: 'subj-sci', code: 'SCI', name: 'Natural Sciences', defaultCoefficient: 2 },
   { id: 'subj-en', code: 'EN', name: 'English', defaultCoefficient: 2 },
   { id: 'subj-eps', code: 'EPS', name: 'Physical Education', defaultCoefficient: 1 },
+  ...SEED_EXTENDED_SUBJECT_CATALOG,
 ] as const
 
 /** Programme breakdown used by the class-subjects webapp mapper for hours and descriptions. */
@@ -164,6 +192,7 @@ export const SEED_SUBJECT_MATTERS = [
     sequenceOrder: 1,
     estimatedHours: 2,
   },
+  ...SEED_EXTENDED_SUBJECT_MATTERS,
 ] as const
 
 /** Class offerings and assigned teachers for migrated class-subjects UI. */
@@ -182,23 +211,26 @@ export const SEED_CLASS_SUBJECTS = [
   { id: 'cs-5a-sci', classGroupId: '5a', subjectId: 'subj-sci', coefficient: 2, teacherId: 'st1' },
   { id: 'cs-5a-en', classGroupId: '5a', subjectId: 'subj-en', coefficient: 2, teacherId: 'st7' },
   { id: 'cs-5a-eps', classGroupId: '5a', subjectId: 'subj-eps', coefficient: 1, teacherId: 'st7' },
+  ...SEED_EXTENDED_CLASS_SUBJECTS,
 ] as const
 
+const SEED_SUBJECT_MATTER_BY_SUBJECT_ID: Record<string, string> = {
+  'subj-math': 'sm-math',
+  'subj-fr': 'sm-fr',
+  'subj-hist': 'sm-hist',
+  'subj-sci': 'sm-sci',
+  'subj-en': 'sm-en',
+  'subj-eps': 'sm-eps',
+  'subj-advmath': 'sm-advmath',
+  'subj-phys': 'sm-phys',
+}
+
 /** Links programme matters to class offerings for teaching progress tracking. */
-export const SEED_CLASS_SUBJECT_MATTERS = SEED_CLASS_SUBJECTS.map((offering) => {
-  const subjectMatterId = `sm-${offering.subjectId.replace('subj-', '')}` as
-    | 'sm-math'
-    | 'sm-fr'
-    | 'sm-hist'
-    | 'sm-sci'
-    | 'sm-en'
-    | 'sm-eps'
-  return {
-    id: `csm-${offering.id}`,
-    classSubjectId: offering.id,
-    subjectMatterId,
-  }
-})
+export const SEED_CLASS_SUBJECT_MATTERS = SEED_CLASS_SUBJECTS.map(offering => ({
+  id: `csm-${offering.id}`,
+  classSubjectId: offering.id,
+  subjectMatterId: SEED_SUBJECT_MATTER_BY_SUBJECT_ID[offering.subjectId]!,
+}))
 
 /** Physical resources from mock `resources[]`. UI-only `status` / `location` are not persisted. */
 export const SEED_RESOURCES = [
@@ -257,6 +289,7 @@ export const SEED_ASSESSMENTS = [
   { id: 'e3b', classGroupId: '6a', classSubjectId: 'cs-6a-hist', title: 'Antiquity test', date: '2026-03-10', coefficient: 2, maxScore: 20, kind: 'other' as const },
   { id: 'e4', classGroupId: '6a', classSubjectId: 'cs-6a-sci', title: 'Lab report', date: '2026-05-02', coefficient: 2, maxScore: 20, kind: 'project' as const },
   { id: 'e4b', classGroupId: '6a', classSubjectId: 'cs-6a-sci', title: 'Ecosystems quiz', date: '2026-03-28', coefficient: 1, maxScore: 20, kind: 'quiz' as const },
+  ...SEED_EXTENDED_ASSESSMENTS,
 ] as const
 
 /** Partial student scores keyed by assessment id — empty means not yet graded. */
@@ -272,6 +305,7 @@ export const SEED_ASSESSMENT_RESULT_SCORES: Record<string, Partial<Record<(typeo
   e3b: { s1: 14, s2: 13, s3: 15, s4: 13, s5: 14, s6: 12 },
   e4: {},
   e4b: { s1: 14, s2: 15, s3: 13, s4: 14, s5: 15, s6: 14 },
+  ...SEED_EXTENDED_ASSESSMENT_RESULT_SCORES,
 }
 
 /** School calendar from mock `schoolYearEvents[]`. UI `type` / multi-class `scope` mapped at seed time. */
@@ -345,6 +379,7 @@ export const DEV_AUTH_GUARDIAN_ACCOUNTS = [
   { guardianId: 'g4', email: 'l.marchetti@mail.com', name: 'Luca Marchetti' },
   { guardianId: 'g5', email: 'h.tanaka@mail.com', name: 'Hana Tanaka' },
   { guardianId: 'g6', email: 'm.reyes@mail.com', name: 'Marco Reyes' },
+  ...SEED_EXTENDED_AUTH_GUARDIANS,
 ] as const
 
 /** Primary staff fixture for Better Auth integration tests. */
@@ -440,7 +475,7 @@ export const SEED_FEES = [
 ] as const
 
 /**
- * Student billing lines from mock `billing[]` — only students seeded in `SEED_STUDENTS` (s1–s6).
+ * Student billing lines from mock `billing[]`.
  * UI-only mock fields (`status`) are derived by payment workflow, not stored here.
  */
 export const SEED_STUDENT_FEES = [
@@ -450,6 +485,7 @@ export const SEED_STUDENT_FEES = [
   { id: 'b4', studentId: 's4', feeId: 'f3', total: 720, dueDate: '2025-09-30' },
   { id: 'b5', studentId: 's5', feeId: 'f1', total: 4800, dueDate: '2026-05-30' },
   { id: 'b6', studentId: 's6', feeId: 'f4', total: 1620, dueDate: '2026-06-01' },
+  ...SEED_EXTENDED_STUDENT_FEES,
 ] as const
 
 /** Paid installments from mock `billing[]` — replayed via `recordPayment`. */
@@ -467,6 +503,7 @@ export const SEED_PAYMENTS = [
   { id: 'pay-b6-3', studentFeeId: 'b6', amount: 180, paymentDate: '2025-12-01' },
   { id: 'pay-b6-4', studentFeeId: 'b6', amount: 180, paymentDate: '2026-01-01' },
   { id: 'pay-b6-5', studentFeeId: 'b6', amount: 180, paymentDate: '2026-02-01' },
+  ...SEED_EXTENDED_PAYMENTS,
 ] as const
 
 export function splitDisplayName(fullName: string): { firstName: string, lastName: string } {

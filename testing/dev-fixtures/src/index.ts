@@ -34,6 +34,8 @@ export {
   SEED_PLANNING_SLOTS,
   SEED_RESOURCES,
   SEED_SCHOOL_ID,
+  SEED_SCHOOL_NORD_ID,
+  SEED_SCHOOL_NORD_PROFILE,
   SEED_SCHOOL_PROFILE,
   SEED_SESSION_PROGRESS,
   SEED_STAFF,
@@ -48,6 +50,17 @@ export {
 export {
   SEED_GRADE_SCALES,
   SEED_REPORT_CARD_DEFINITION_MS6,
+  SEED_REPORT_CARD_DEFINITION_TERM,
+  SEED_REPORT_CARD_DEFINITIONS,
+  SEED_REPORT_CARD_RESULTS,
   SEED_REPORT_CARD_RESULTS_6A,
+  SEED_REPORT_CARD_RESULTS_TERM,
 } from './report-cards-seed'
+export {
+  SEED_SCHOOL_PROFILES,
+} from './school-profiles-seed'
 export { seedMinimalSchoolFixtures } from './seed-minimal-school'
+export {
+  SEED_TEACHING_LOG_ENTRIES,
+  type TeachingLogSeedEntry,
+} from './teaching-log-seed'

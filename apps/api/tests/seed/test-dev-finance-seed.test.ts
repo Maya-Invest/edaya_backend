@@ -99,6 +99,8 @@ describe("dev finance seed", () => {
     expect(payments.length).toBeGreaterThanOrEqual(SEED_PAYMENTS.length);
     expect(fees.some(fee => fee.name === "Tuition — Middle School")).toBe(true);
     expect(studentFees.some(fee => fee.studentId === "s1")).toBe(true);
+    expect(studentFees.some(fee => fee.studentId === "s9")).toBe(true);
     expect(payments.some(payment => payment.studentFeeId === "b1")).toBe(true);
+    expect(payments.some(payment => payment.studentFeeId === "b7")).toBe(true);
   }, 30_000);
 });

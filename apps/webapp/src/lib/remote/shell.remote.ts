@@ -1,6 +1,7 @@
 import type { AcademicPeriod, AcademicYear, ClassNode, GradeLevel, PeriodDefinition, School } from '$lib/data/school';
 import { query } from '$app/server';
 import { buildClassHierarchy } from '$lib/data/school';
+import { loadSchoolProfiles } from '$lib/server/prototype-data';
 import { getSchoolClient } from '$lib/server/school-client';
 
 export const getAppShellData = query(async () => {
@@ -8,6 +9,7 @@ export const getAppShellData = query(async () => {
 
 	const [
 		schoolsRaw,
+		prototypeSchools,
 		yearsRaw,
 		periodsRaw,
 		gradeLevelsRaw,
@@ -16,6 +18,7 @@ export const getAppShellData = query(async () => {
 		enrollmentsRaw,
 	] = await Promise.all([
 		client.entities.schools.list({}),
+		loadSchoolProfiles(),
 		client.entities.academicYears.list({}),
 		client.entities.academicPeriods.list({}),
 		client.entities.gradeLevels.list({}),
@@ -24,7 +27,7 @@ export const getAppShellData = query(async () => {
 		client.entities.enrollments.list({}),
 	]);
 
-	const schools: School[] = (schoolsRaw ?? [])
+	const entitySchools: School[] = (schoolsRaw ?? [])
 		.filter((school): school is NonNullable<typeof school> & { id: string; name: string } =>
 			Boolean(school?.id && school?.name))
 		.map(s => ({
@@ -34,6 +37,8 @@ export const getAppShellData = query(async () => {
 			city: s.city ?? '',
 			timeZone: s.timeZone ?? 'Europe/Paris',
 		}));
+
+	const schools: School[] = prototypeSchools.length > 0 ? prototypeSchools : entitySchools;
 
 	const academicYears: AcademicYear[] = (yearsRaw ?? []).map(y => ({
 		id: y.id,

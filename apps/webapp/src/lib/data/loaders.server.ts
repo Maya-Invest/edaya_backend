@@ -1,4 +1,5 @@
 import type { LoadInput } from './loaders';
+import type { LogEntry } from './teachingLog';
 import {
 	getRuntimeClasses,
 	getRuntimeHierarchy,
@@ -15,7 +16,7 @@ import { loadClassEvaluations } from '$lib/server/assessments-data';
 import { loadFinanceData } from '$lib/server/finance-data';
 import { loadPeopleData } from '$lib/server/people-data';
 import { loadClassPlanning } from '$lib/server/planning-data';
-import { loadActivities, loadDeadlines } from '$lib/server/prototype-data';
+import { loadActivities, loadDeadlines, loadTeachingLogEntries } from '$lib/server/prototype-data';
 import { loadReportCardsData } from '$lib/server/report-cards-data';
 import { loadCalendarEvents, loadIncidents, loadSchoolLifeData } from '$lib/server/school-life-data';
 import { loadStudent360Data } from '$lib/server/student-360-data';
@@ -44,6 +45,11 @@ import {
 	students,
 	subjects,
 } from './school';
+import {
+	demoTeachingLogEntries,
+	filterEntriesForClass,
+
+} from './teachingLog';
 
 function classes() {
 	return getRuntimeClasses();
@@ -314,6 +320,17 @@ export async function loadStudent360ForLayout({ hasSession = false }: { hasSessi
 	);
 }
 
+export async function loadTeachingLogForLayout({ hasSession = false }: { hasSession?: boolean }): Promise<{ teachingLogEntries: LogEntry[] }> {
+	if (!hasSession) {
+		return { teachingLogEntries: demoTeachingLogEntries() };
+	}
+
+	return withApiFallback(
+		() => loadTeachingLogEntries().then(teachingLogEntries => ({ teachingLogEntries })),
+		{ teachingLogEntries: filterEntriesForClass(demoTeachingLogEntries(), '6a', subjects) },
+	);
+}
+
 export async function loadSchoolLifeForLayout({ hasSession = false }: { hasSession?: boolean }) {
 	if (!hasSession) {
 		return { incidents, absences };
@@ -445,6 +462,28 @@ export async function loadSchoolActivitiesPage({ url, hasSession = false }: Load
 	}
 
 	return loadMockSchoolActivitiesPage({ url });
+}
+
+export async function loadClassTeachingPage({ url, params, hasSession = false }: LoadInput) {
+	await maybeSimulateLoading(url);
+
+	const classId = params?.classId ?? '6a';
+
+	if (resolveDemoState(url) === 'empty') {
+		const meta = finalizeStatus(url, false);
+		return { ...meta, classId, subjects: [] };
+	}
+
+	const mockList = subjects.filter(subject => subject.classId === classId);
+	const list = hasSession
+		? await withApiFallback(
+				() => loadClassSubjects(classId),
+				mockList,
+			)
+		: mockList;
+
+	const meta = finalizeStatus(url, list.length > 0);
+	return { ...meta, classId, subjects: list };
 }
 
 export async function loadClassHomeworkPage({ url, params, hasSession = false }: LoadInput) {

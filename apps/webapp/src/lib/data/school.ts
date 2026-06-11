@@ -201,6 +201,7 @@ export interface School {
 	timeZone: string;
 }
 
+/** Demo-mode school picker. Canonical profiles: `@edaya/dev-fixtures` → `SEED_SCHOOL_PROFILES`. */
 export const schools: School[] = [
 	{
 		id: 'sch-edaya-central',

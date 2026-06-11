@@ -15,6 +15,7 @@
 	import { LogOut } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
+	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { setContext } from 'svelte';
 
 	const { data, children }: { data: import('./$types').LayoutData; children: Snippet } = $props();
@@ -52,6 +53,12 @@
 				reportCardDefinitions: data.reportCardDefinitions,
 				reportCardResults: data.reportCardResults,
 			});
+		}
+	});
+
+	$effect(() => {
+		if (data.teachingLogEntries) {
+			teachingLogContext.hydrateFromServer(data.teachingLogEntries);
 		}
 	});
 

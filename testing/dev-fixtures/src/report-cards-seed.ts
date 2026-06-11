@@ -109,6 +109,50 @@ export const SEED_REPORT_CARD_DEFINITION_MS6 = {
   ],
 } as const
 
+export const SEED_REPORT_CARD_DEFINITION_TERM = {
+  id: 'rcd-term',
+  name: 'Bulletin semestriel — Terminale',
+  gradeLevelId: 'gl-t',
+  gradeScaleId: 'gs-20',
+  mockStatus: 'published' as const,
+  isDefault: true,
+  sections: [
+    {
+      id: 'rcs-term-spé',
+      name: 'Spécialités',
+      kind: 'group' as const,
+      order: 1,
+      weight: 3,
+      mockKind: 'matieres' as const,
+      mockCoefficient: 3,
+      subjectIds: ['subj-advmath', 'subj-phys'],
+    },
+    {
+      id: 'rcs-term-synth',
+      name: 'Moyennes & rang',
+      kind: 'group' as const,
+      order: 2,
+      weight: 0,
+      mockKind: 'synthese' as const,
+      subjectIds: [] as const,
+    },
+    {
+      id: 'rcs-term-appr',
+      name: 'Appréciations & orientation',
+      kind: 'group' as const,
+      order: 3,
+      weight: 0,
+      mockKind: 'appreciation' as const,
+      subjectIds: [] as const,
+    },
+  ],
+} as const
+
+export const SEED_REPORT_CARD_DEFINITIONS = [
+  SEED_REPORT_CARD_DEFINITION_MS6,
+  SEED_REPORT_CARD_DEFINITION_TERM,
+] as const
+
 /** Class 6a report card results for period 2025-t3 (from mock `reportCardResults[]`). */
 export const SEED_REPORT_CARD_RESULTS_6A = [
   {
@@ -229,4 +273,34 @@ export const SEED_REPORT_CARD_RESULTS_6A = [
       ],
     },
   },
+] as const
+
+export const SEED_REPORT_CARD_RESULTS_TERM = [
+  {
+    id: 'rcr-s9-t3',
+    studentId: 's9',
+    classGroupId: 'term-s',
+    periodId: '2025-t3',
+    definitionId: 'rcd-term',
+    gradeScaleId: 'gs-20',
+    mockStatus: 'published' as const,
+    overallAverage: 16.2,
+    classRank: 3,
+    classSize: 2,
+    homeroomComment: 'Éliot aborde le bac avec sérieux et méthode.',
+    principalComment: 'Parcours cohérent vers les études scientifiques.',
+    generatedAt: '2026-06-18',
+    publishedAt: '2026-06-25',
+    sectionMarks: {
+      'rcs-term-spé': [
+        { subjectId: 'subj-advmath', average: 17.0, coefficient: 3, appreciation: 'Solide en analyse.' },
+        { subjectId: 'subj-phys', average: 15.8, coefficient: 3, appreciation: 'Bon raisonnement en PC.' },
+      ],
+    },
+  },
+] as const
+
+export const SEED_REPORT_CARD_RESULTS = [
+  ...SEED_REPORT_CARD_RESULTS_6A,
+  ...SEED_REPORT_CARD_RESULTS_TERM,
 ] as const

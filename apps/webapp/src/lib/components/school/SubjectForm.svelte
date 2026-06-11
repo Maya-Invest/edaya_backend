@@ -1,15 +1,15 @@
 <script lang="ts">
 	import type { Subject } from '$lib/data/school';
-	import { getSubjectEntries } from '$lib/data/teachingLog';
 	import { t } from '$lib/i18n';
 	import { Check, FileText, Paperclip } from '$lib/icons';
+	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { cn } from '$lib/utils';
 
 	const { s }: { s: Subject } = $props();
 
 	let tab = $state<'progression' | 'logbook'>('progression');
 
-	const entries = $derived(getSubjectEntries(s.name));
+	const entries = $derived(teachingLogContext.resolveSubjectEntries(s.name));
 
 	const teacherInitials = $derived(
 		s.teacher

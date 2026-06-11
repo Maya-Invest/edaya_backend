@@ -7,6 +7,10 @@ import {
   listPrototypeActivitiesRoute,
   listPrototypeDeadlinesHandler,
   listPrototypeDeadlinesRoute,
+  listPrototypeSchoolsHandler,
+  listPrototypeSchoolsRoute,
+  listPrototypeTeachingLogHandler,
+  listPrototypeTeachingLogRoute,
 } from "@/routes/prototype.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import { createRoute } from "@hono/zod-openapi";
@@ -42,6 +46,8 @@ router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
   .openapi(listPrototypeDeadlinesRoute, listPrototypeDeadlinesHandler)
+  .openapi(listPrototypeSchoolsRoute, listPrototypeSchoolsHandler)
+  .openapi(listPrototypeTeachingLogRoute, listPrototypeTeachingLogHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 
 // Mount routes from route factories
