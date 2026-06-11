@@ -176,6 +176,153 @@ export const SEED_CLASS_SUBJECTS = [
   { id: 'cs-6a-eps', classGroupId: '6a', subjectId: 'subj-eps', coefficient: 1, teacherId: 'st7' },
   { id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', coefficient: 3, teacherId: 'st1' },
   { id: 'cs-6b-fr', classGroupId: '6b', subjectId: 'subj-fr', coefficient: 2, teacherId: 'st2' },
+  { id: 'cs-5a-math', classGroupId: '5a', subjectId: 'subj-math', coefficient: 3, teacherId: 'st1' },
+  { id: 'cs-5a-fr', classGroupId: '5a', subjectId: 'subj-fr', coefficient: 2, teacherId: 'st2' },
+  { id: 'cs-5a-hist', classGroupId: '5a', subjectId: 'subj-hist', coefficient: 2, teacherId: 'st3' },
+  { id: 'cs-5a-sci', classGroupId: '5a', subjectId: 'subj-sci', coefficient: 2, teacherId: 'st1' },
+  { id: 'cs-5a-en', classGroupId: '5a', subjectId: 'subj-en', coefficient: 2, teacherId: 'st7' },
+  { id: 'cs-5a-eps', classGroupId: '5a', subjectId: 'subj-eps', coefficient: 1, teacherId: 'st7' },
+] as const
+
+/** Links programme matters to class offerings for teaching progress tracking. */
+export const SEED_CLASS_SUBJECT_MATTERS = SEED_CLASS_SUBJECTS.map((offering) => {
+  const subjectMatterId = `sm-${offering.subjectId.replace('subj-', '')}` as
+    | 'sm-math'
+    | 'sm-fr'
+    | 'sm-hist'
+    | 'sm-sci'
+    | 'sm-en'
+    | 'sm-eps'
+  return {
+    id: `csm-${offering.id}`,
+    classSubjectId: offering.id,
+    subjectMatterId,
+  }
+})
+
+/** Physical resources from mock `resources[]`. UI-only `status` / `location` are not persisted. */
+export const SEED_RESOURCES = [
+  { id: 'r1', name: 'Auditorium', kind: 'location' as const, capacity: 220, description: 'Building A · GF' },
+  { id: 'r2', name: 'Lab — Chemistry 2', kind: 'location' as const, capacity: 24, description: 'Building B · 2F' },
+  { id: 'r3', name: 'Gymnasium', kind: 'location' as const, capacity: 120, description: 'Annex' },
+  { id: 'r4', name: 'Mobile tablet cart', kind: 'equipment' as const, capacity: 30, description: 'IT office' },
+  { id: 'r5', name: 'School bus #2', kind: 'vehicle' as const, capacity: 48, description: 'Garage' },
+  { id: 'r6', name: 'Library — Reading hall', kind: 'location' as const, capacity: 60, description: 'Building C · 1F' },
+  { id: 'r7', name: '3D printer', kind: 'equipment' as const, description: 'Lab — Physics' },
+] as const
+
+/** Reference Monday for concrete timetable sessions (week aligned with mock planning). */
+export const SEED_PLANNING_REFERENCE_WEEK_START = '2026-05-11'
+
+const PLANNING_DAY_OFFSET = {
+  Mon: 0,
+  Tue: 1,
+  Wed: 2,
+  Thu: 3,
+  Fri: 4,
+} as const
+
+/** Weekly timetable slots for class 6a from mock `planning[]`. */
+export const SEED_PLANNING_SLOTS = [
+  { id: 'p1', scheduleId: 'sch-p1', sessionId: 'sess-p1', classGroupId: '6a', classSubjectId: 'cs-6a-math', title: 'Algebra basics', day: 'Mon', startTime: '08:30', endTime: '09:30', teacherId: 'st1' },
+  { id: 'p2', scheduleId: 'sch-p2', sessionId: 'sess-p2', classGroupId: '6a', classSubjectId: 'cs-6a-fr', title: 'Reading session', day: 'Mon', startTime: '10:00', endTime: '11:00', teacherId: 'st2' },
+  { id: 'p3', scheduleId: 'sch-p3', sessionId: 'sess-p3', classGroupId: '6a', classSubjectId: 'cs-6a-hist', title: 'Ancient Greece', day: 'Tue', startTime: '09:00', endTime: '10:00', teacherId: 'st3' },
+  { id: 'p4', scheduleId: 'sch-p4', sessionId: 'sess-p4', classGroupId: '6a', classSubjectId: 'cs-6a-sci', title: 'Lab — Cells', day: 'Wed', startTime: '08:30', endTime: '10:30', teacherId: 'st1', resourceId: 'r2' },
+  { id: 'p5', scheduleId: 'sch-p5', sessionId: 'sess-p5', classGroupId: '6a', classSubjectId: 'cs-6a-en', title: 'Conversation', day: 'Thu', startTime: '11:00', endTime: '12:00', teacherId: 'st7' },
+  { id: 'p6', scheduleId: 'sch-p6', sessionId: 'sess-p6', classGroupId: '6a', classSubjectId: 'cs-6a-eps', title: 'Athletics', day: 'Fri', startTime: '14:00', endTime: '16:00', teacherId: 'st7', resourceId: 'r3' },
+  { id: 'p7', scheduleId: 'sch-p7', sessionId: 'sess-p7', classGroupId: '6a', classSubjectId: 'cs-6a-math', title: 'Geometry workshop', day: 'Thu', startTime: '08:30', endTime: '09:30', teacherId: 'st1' },
+  { id: 'p8', scheduleId: 'sch-p8', sessionId: 'sess-p8', classGroupId: '6a', classSubjectId: 'cs-6a-fr', title: 'Essay writing', day: 'Wed', startTime: '11:00', endTime: '12:00', teacherId: 'st2' },
+] as const
+
+/** Sample teaching progress recorded against the first maths session. */
+export const SEED_SESSION_PROGRESS = {
+  id: 'csp-p1',
+  classSubjectMatterId: 'csm-cs-6a-math',
+  sessionId: 'sess-p1',
+  completedPercentage: 25,
+  notes: 'Introduced algebra basics.',
+} as const
+
+/** Class 6a assessments from mock `evaluations[]` (term-s entries excluded). */
+/** Coefficients are integers in DB — mock fractions (0.5, 1.5) rounded to nearest whole number. */
+export const SEED_ASSESSMENTS = [
+  { id: 'e1', classGroupId: '6a', classSubjectId: 'cs-6a-math', title: 'Algebra mid-term', date: '2026-04-12', coefficient: 2, maxScore: 20, kind: 'other' as const },
+  { id: 'e1b', classGroupId: '6a', classSubjectId: 'cs-6a-math', title: 'Geometry quiz', date: '2026-03-15', coefficient: 1, maxScore: 20, kind: 'quiz' as const },
+  { id: 'e1c', classGroupId: '6a', classSubjectId: 'cs-6a-math', title: 'Mental arithmetic', date: '2026-02-20', coefficient: 1, maxScore: 20, kind: 'quiz' as const },
+  { id: 'e1d', classGroupId: '6a', classSubjectId: 'cs-6a-math', title: 'Problem solving', date: '2026-05-05', coefficient: 2, maxScore: 20, kind: 'other' as const },
+  { id: 'e2', classGroupId: '6a', classSubjectId: 'cs-6a-fr', title: 'Essay — La Fontaine', date: '2026-04-18', coefficient: 1, maxScore: 20, kind: 'other' as const },
+  { id: 'e2b', classGroupId: '6a', classSubjectId: 'cs-6a-fr', title: 'Dictée', date: '2026-03-22', coefficient: 1, maxScore: 20, kind: 'quiz' as const },
+  { id: 'e2c', classGroupId: '6a', classSubjectId: 'cs-6a-fr', title: 'Oral presentation', date: '2026-02-28', coefficient: 2, maxScore: 20, kind: 'other' as const },
+  { id: 'e3', classGroupId: '6a', classSubjectId: 'cs-6a-hist', title: 'Map quiz', date: '2026-04-25', coefficient: 1, maxScore: 20, kind: 'quiz' as const },
+  { id: 'e3b', classGroupId: '6a', classSubjectId: 'cs-6a-hist', title: 'Antiquity test', date: '2026-03-10', coefficient: 2, maxScore: 20, kind: 'other' as const },
+  { id: 'e4', classGroupId: '6a', classSubjectId: 'cs-6a-sci', title: 'Lab report', date: '2026-05-02', coefficient: 2, maxScore: 20, kind: 'project' as const },
+  { id: 'e4b', classGroupId: '6a', classSubjectId: 'cs-6a-sci', title: 'Ecosystems quiz', date: '2026-03-28', coefficient: 1, maxScore: 20, kind: 'quiz' as const },
+] as const
+
+/** Partial student scores keyed by assessment id — empty means not yet graded. */
+export const SEED_ASSESSMENT_RESULT_SCORES: Record<string, Partial<Record<(typeof SEED_STUDENTS)[number]['id'], number>>> = {
+  e1: { s1: 15, s2: 13, s3: 14, s4: 16, s5: 14, s6: 13 },
+  e1b: { s1: 14, s2: 12, s3: 13, s4: 15, s5: 13, s6: 12 },
+  e1c: { s1: 16, s2: 15, s3: 16, s4: 15, s5: 17, s6: 14 },
+  e1d: { s1: 13, s2: 11, s3: 12, s4: 14, s5: 13, s6: 13 },
+  e2: { s1: 13, s2: 12, s3: 14, s4: 13, s5: 12 },
+  e2b: { s1: 12, s2: 10, s3: 11, s4: 13, s5: 12, s6: 11 },
+  e2c: { s1: 15, s2: 14, s3: 14, s4: 15, s5: 13, s6: 13 },
+  e3: {},
+  e3b: { s1: 14, s2: 13, s3: 15, s4: 13, s5: 14, s6: 12 },
+  e4: {},
+  e4b: { s1: 14, s2: 15, s3: 13, s4: 14, s5: 15, s6: 14 },
+}
+
+/** School calendar from mock `schoolYearEvents[]`. UI `type` / multi-class `scope` mapped at seed time. */
+export const SEED_CALENDAR_EVENTS = [
+  { id: 'yc1', title: 'Fête du Travail', startDate: '2026-05-01', endDate: '2026-05-01', mockType: 'holiday' as const, description: 'Jour férié national. L\'école est fermée.', scope: 'all' as const },
+  { id: 'yc2', title: 'Ascension', startDate: '2026-05-14', endDate: '2026-05-14', mockType: 'holiday' as const, description: 'Jour férié. Pas de cours.', scope: 'all' as const },
+  { id: 'yc3', title: 'Vacances de printemps', startDate: '2026-04-20', endDate: '2026-05-02', mockType: 'vacation' as const, description: 'Vacances scolaires de printemps. Réouverture le 4 mai.', scope: 'all' as const },
+  { id: 'yc4', title: 'Formation enseignants', startDate: '2026-05-20', endDate: '2026-05-20', mockType: 'closure' as const, description: 'Journée de formation pédagogique. Arrêt de cours pour tous les élèves.', scope: 'all' as const },
+  { id: 'yc5', title: 'Réunion parents-professeurs', startDate: '2026-05-15', endDate: '2026-05-15', mockType: 'ceremony' as const, description: 'Réunion de fin de trimestre pour les classes de Middle School.', scope: ['6a', '6b', '5a'] as const },
+  { id: 'yc6', title: 'Journée sportive', startDate: '2026-06-05', endDate: '2026-06-05', mockType: 'ceremony' as const, description: 'Compétitions inter-classes et activités sportives en plein air.', scope: 'all' as const },
+  { id: 'yc7', title: 'Lundi de Pentecôte', startDate: '2026-05-25', endDate: '2026-05-25', mockType: 'holiday' as const, description: 'Jour férié national. L\'école est fermée.', scope: 'all' as const },
+  { id: 'yc8', title: 'Conseil de classe', startDate: '2026-06-12', endDate: '2026-06-12', mockType: 'closure' as const, description: 'Conseil de classe — arrêt des cours à 12h.', scope: 'all' as const },
+  { id: 'yc9', title: 'Vacances d\'été', startDate: '2026-07-03', endDate: '2026-07-03', mockType: 'vacation' as const, description: 'Vacances scolaires d\'été. Réouverture le 1er septembre 2026.', scope: 'all' as const },
+  { id: 'yc10', title: 'Cérémonie de remise des prix', startDate: '2026-06-26', endDate: '2026-06-26', mockType: 'ceremony' as const, description: 'Cérémonie de fin d\'année et remise des prix au tableau d\'honneur.', scope: 'all' as const },
+] as const
+
+/** Discipline incidents from mock `incidents[]` with student involvements. */
+export const SEED_INCIDENTS = [
+  { id: 'i1', studentId: 's3', classGroupId: '6a', date: '2026-04-12', title: 'Repeated tardiness', description: 'Late to class 3 times this month.', kind: 'minor_infraction' as const, mockCategory: 'Tardiness' as const, mockSeverity: 'low' as const },
+  { id: 'i2', studentId: 's2', classGroupId: '6a', date: '2026-03-22', title: 'Class disruption', description: 'Disruption during English class.', kind: 'minor_infraction' as const, mockCategory: 'Behavior' as const, mockSeverity: 'medium' as const },
+  { id: 'i3', studentId: 's3', classGroupId: '6a', date: '2026-04-26', title: 'Recess conflict', description: 'Argument with classmate during recess.', kind: 'minor_infraction' as const, mockCategory: 'Conflict' as const, mockSeverity: 'medium' as const },
+] as const
+
+/** Attendance absences from mock `absences[]` — includes dedicated session slots. */
+export const SEED_ABSENCE_RECORDS = [
+  { id: 'a1', sessionId: 'sess-abs-a1', classGroupId: '6a', classSubjectId: 'cs-6a-math', studentId: 's1', date: '2026-05-12', startTime: '08:30', endTime: '09:30', reason: 'Maladie' },
+  { id: 'a2', sessionId: 'sess-abs-a2', classGroupId: '6a', classSubjectId: 'cs-6a-hist', studentId: 's1', date: '2026-04-28', startTime: '14:00', endTime: '15:00', reason: 'Rendez-vous médical' },
+  { id: 'a3', sessionId: 'sess-abs-a3', classGroupId: '6a', classSubjectId: 'cs-6a-en', studentId: 's2', date: '2026-05-05', startTime: '10:15', endTime: '11:15' },
+  { id: 'a4', sessionId: 'sess-abs-a4', classGroupId: '6a', classSubjectId: 'cs-6a-sci', studentId: 's3', date: '2026-05-14', startTime: '09:00', endTime: '10:00', reason: 'Non justifiée' },
+  { id: 'a5', sessionId: 'sess-abs-a5', classGroupId: '6a', classSubjectId: 'cs-6a-sci', studentId: 's3', date: '2026-04-22', startTime: '13:30', endTime: '14:30', reason: 'Maladie' },
+  { id: 'a6', sessionId: 'sess-abs-a6', classGroupId: '6a', classSubjectId: 'cs-6a-eps', studentId: 's3', date: '2026-03-18', startTime: '16:00', endTime: '17:00' },
+  { id: 'a7', sessionId: 'sess-abs-a7', classGroupId: '6a', classSubjectId: 'cs-6a-fr', studentId: 's4', date: '2026-05-02', startTime: '11:00', endTime: '12:00', reason: 'Famille' },
+  { id: 'a8', sessionId: 'sess-abs-a8', classGroupId: '6a', classSubjectId: 'cs-6a-math', studentId: 's6', date: '2026-04-15', startTime: '08:30', endTime: '09:30' },
+] as const
+
+/** Student health profiles from mock `healthRecords`. */
+export const SEED_STUDENT_HEALTH_PROFILES = [
+  { id: 'hp-s1', studentId: 's1', bloodType: 'A+', allergies: ['Pollen'] as const, medications: [] as const, chronicConditions: ['Asthme'] as const, lastVisit: '2026-02-14', notes: 'Mild seasonal allergies.' },
+  { id: 'hp-s3', studentId: 's3', bloodType: 'O-', allergies: ['Peanuts', 'Shellfish'] as const, medications: ['EpiPen'] as const, chronicConditions: ['Asthme', 'Epilepsie'] as const, lastVisit: '2026-04-08', notes: 'Severe peanut allergy. EpiPen in nurse\'s office.' },
+  { id: 'hp-s5', studentId: 's5', bloodType: 'B+', allergies: [] as const, medications: [] as const, chronicConditions: [] as const, lastVisit: '2025-11-22', notes: 'No known issues.' },
+] as const
+
+/** Pedagogical notes from mock `pedagogicalNotes[]`. UI `category` stored in note title at seed time. */
+export const SEED_PEDAGOGICAL_NOTES = [
+  { id: 'pn1', studentId: 's1', date: '2026-05-12', authorId: 'st1', category: 'Progression' as const, content: 'Très bonne progression en algèbre, raisonnement clair.' },
+  { id: 'pn2', studentId: 's1', date: '2026-04-22', authorId: 'st2', category: 'Travail' as const, content: 'Travail écrit soigné, à approfondir l\'argumentation.' },
+  { id: 'pn3', studentId: 's1', date: '2026-03-15', authorId: 'st3', category: 'Encouragement' as const, content: 'Participation orale en hausse, continuer ainsi.' },
+  { id: 'pn4', studentId: 's2', date: '2026-05-05', authorId: 'st1', category: 'Comportement' as const, content: 'Bavardages réguliers en classe, vigilance demandée.' },
+  { id: 'pn5', studentId: 's2', date: '2026-04-10', authorId: 'st2', category: 'Travail' as const, content: 'Devoirs rendus en retard à deux reprises.' },
+  { id: 'pn6', studentId: 's3', date: '2026-05-18', authorId: 'st3', category: 'Progression' as const, content: 'Compréhension solide en histoire, bon esprit de synthèse.' },
+  { id: 'pn7', studentId: 's3', date: '2026-04-02', authorId: 'st1', category: 'Encouragement' as const, content: 'Excellent investissement sur le projet de groupe.' },
 ] as const
 
 /** Shared dev password for seeded Better Auth accounts. Dev-only — never use in production. */
@@ -185,6 +332,7 @@ export const DEV_AUTH_PASSWORD = 'DevPassword1!'
 export const DEV_AUTH_STAFF_ACCOUNTS = [
   { staffId: 'st5', email: 'c.moreau@school.edu', name: 'Camille Moreau' },
   { staffId: 'st1', email: 'm.dupont@school.edu', name: 'Mme Dupont' },
+  { staffId: 'st2', email: 'm.garnier@school.edu', name: 'M. Garnier' },
   { staffId: 'st3', email: 'm.leon@school.edu', name: 'Mme Léon' },
   { staffId: 'st7', email: 't.evrard@school.edu', name: 'Tom Évrard' },
 ] as const
@@ -192,6 +340,11 @@ export const DEV_AUTH_STAFF_ACCOUNTS = [
 /** Guardian accounts provisioned and linked during dev auth seed. */
 export const DEV_AUTH_GUARDIAN_ACCOUNTS = [
   { guardianId: 'g1', email: 'c.laurent@mail.com', name: 'Claire Laurent' },
+  { guardianId: 'g2', email: 'j.bennett@mail.com', name: 'James Bennett' },
+  { guardianId: 'g3', email: 'a.okafor@mail.com', name: 'Adaeze Okafor' },
+  { guardianId: 'g4', email: 'l.marchetti@mail.com', name: 'Luca Marchetti' },
+  { guardianId: 'g5', email: 'h.tanaka@mail.com', name: 'Hana Tanaka' },
+  { guardianId: 'g6', email: 'm.reyes@mail.com', name: 'Marco Reyes' },
 ] as const
 
 /** Primary staff fixture for Better Auth integration tests. */
@@ -326,4 +479,29 @@ export function splitDisplayName(fullName: string): { firstName: string, lastNam
 
 export function parseSeedDate(isoDate: string): Date {
   return new Date(`${isoDate}T12:00:00.000Z`)
+}
+
+export function parseSeedDateTime(isoDate: string, time: string): Date {
+  const [hours, minutes] = time.split(':').map(Number)
+  const date = parseSeedDate(isoDate)
+  date.setUTCHours(hours ?? 0, minutes ?? 0, 0, 0)
+  return date
+}
+
+export function planningSessionDate(day: keyof typeof PLANNING_DAY_OFFSET): string {
+  const base = parseSeedDate(SEED_PLANNING_REFERENCE_WEEK_START)
+  base.setUTCDate(base.getUTCDate() + PLANNING_DAY_OFFSET[day])
+  return base.toISOString().slice(0, 10)
+}
+
+/** Maps an assessment date to the containing academic period id. */
+export function seedPeriodIdForDate(isoDate: string): (typeof SEED_ACADEMIC_PERIODS)[number]['id'] {
+  const date = parseSeedDate(isoDate)
+  if (date <= parseSeedDate('2025-12-19')) {
+    return '2025-t1'
+  }
+  if (date <= parseSeedDate('2026-04-03')) {
+    return '2025-t2'
+  }
+  return '2025-t3'
 }

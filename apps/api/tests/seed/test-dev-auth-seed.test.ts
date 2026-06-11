@@ -108,6 +108,35 @@ describe("runDevAuthSeed", () => {
     expect(body.actor?.subjectId).toBe(staff?.subjectId);
   }, 30_000);
 
+  it("links st2 and additional guardian accounts to Better Auth users", async () => {
+    const runtime = await getApiRuntime(pgliteEnv);
+    const application = await runtime.getSchoolApplication();
+    const auth = runtime.getAuth();
+
+    await runDevSeed(application);
+    const result = await runDevAuthSeed(application, auth, pgliteEnv);
+    expect(result.status).toBe("seeded");
+
+    const st2 = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "st2");
+    const g2 = DEV_AUTH_GUARDIAN_ACCOUNTS.find(account => account.guardianId === "g2");
+    expect(st2).toBeTruthy();
+    expect(g2).toBeTruthy();
+
+    for (const email of [st2!.email, g2!.email]) {
+      const signInResponse = await auth.handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password: DEV_AUTH_PASSWORD,
+        }),
+      }));
+      expect(signInResponse.status).toBe(200);
+    }
+  }, 30_000);
+
   it("re-provisions Better Auth users when domain links already exist", async () => {
     const runtime = await getApiRuntime(pgliteEnv);
     const application = await runtime.getSchoolApplication();

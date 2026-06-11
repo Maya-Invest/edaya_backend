@@ -37,6 +37,9 @@ Mocks remain only for **unauthenticated demo mode** and `?demo=` load-state scen
 | Students (school) | `people.remote.ts` | students, enrollments, guardians, guardian-links | `people-data.ts` | yes |
 | Guardians | `people.remote.ts` | same bundle | `people-data.ts` | yes |
 | Staff (config) | `people.remote.ts` → `staff-data.ts` | staff-members, staff-role-assignments, staff-assignments, class-groups | `staff-data.ts` | partial |
+| Finance | `loaders.server.ts` → `finance-data.ts` | fees, student-fees, payments | `finance-data.ts` | yes |
+| Class → timetable | `loaders.server.ts` → `planning-data.ts` | sessions, class-subjects, staff-assignments, resource-assignments | `planning-data.ts` | yes |
+| Class → evaluations | `loaders.server.ts` → `assessments-data.ts` | assessments, assessment-results, class-subjects | `assessments-data.ts` | yes |
 | Class → students | `loaders.ts` + `people-data.ts` | same as students | filter by enrollment | yes |
 | Class → subjects | `loaders.ts` + `subjects-data.ts` | subjects, class-subjects, subject-matters, staff-* | `subjects-data.ts` | yes |
 | Session / grants | `+layout.server.ts` | effective-grants | — | via auth seed |
@@ -61,12 +64,8 @@ Mocks remain only for **unauthenticated demo mode** and `?demo=` load-state scen
 | `loadSchoolActivitiesPage` | `activities` | `/school/activities` |
 | `loadSchoolCalendarPage` | `schoolYearEvents` | `/school/calendar` |
 | `loadSchoolEventsPage` | `incidents` | `/school/events` |
-| `loadFinancePage` | `fees`, `billing` | `/finance/fees`, `/finance/billing` |
-| `loadPaymentsPage` | `billing`, `fees` | `/finance/payment` |
 | `loadRolesPage` | `staff` (wrong entity) | `/configuration/roles` |
 | `loadConfigSubjectsPage` | `subjects` (UI shape) | `/configuration/subjects` |
-| `loadClassTimetablePage` | `planning` | `/classes/[id]/timetable` |
-| `loadClassEvaluationsPage` | `evaluations` | `/classes/[id]/evaluations` |
 | `loadClassTeachingPage` | `subjects` | `/classes/[id]/teaching` |
 | `loadClassReportCardsPage` | shell only | `/classes/[id]/report-cards` |
 
@@ -312,10 +311,10 @@ Extend `apps/api/src/lib/seed/dataset.ts` as slices land.
 | Payments | todo | payments |
 | Schedules + sessions | todo | timetable, teaching |
 | Assessments + results | todo | evaluations |
-| Calendar events | todo | school calendar |
-| Incidents + involvements | todo | school events |
-| Attendance | todo | absences, educator dashboard |
-| Health profiles + student notes | todo | student detail |
+| Calendar events | done | school calendar |
+| Incidents + involvements | done | school events |
+| Attendance | done | absences, student drawer |
+| Health profiles + student notes | done | student detail |
 | Report card defs + results | todo | report cards |
 | Access roles (full matrix) | partial | roles screen |
 

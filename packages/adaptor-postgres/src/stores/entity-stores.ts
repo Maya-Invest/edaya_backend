@@ -71,6 +71,7 @@ import {
   PeriodDefinition as PeriodDefinitionCtor,
   ReportCardDefinition as ReportCardDefinitionCtor,
   ReportCardDefinitionSection as ReportCardDefinitionSectionCtor,
+  ReportCardDefinitionSectionKind,
   ReportCardResult as ReportCardResultCtor,
   ReportCardResultSection as ReportCardResultSectionCtor,
   ResourceAssignment as ResourceAssignmentCtor,
@@ -93,6 +94,55 @@ import {
 import { createDefaultMappers, deserializeJsonb } from '../lib/mappers'
 import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
+
+interface StoredReportCardResultSection {
+  sectionId: string
+  sectionKind: ReportCardDefinitionSectionKind
+  name: string
+  average: number
+  weight: number
+  parentSectionId?: string | null
+  classSubjectId?: string | null
+  subResults?: StoredReportCardResultSection[]
+  data?: StoredReportCardResultSection
+}
+
+function serializeReportCardResultSection(section: ReportCardResultSection): StoredReportCardResultSection {
+  return {
+    sectionId: section.sectionId,
+    sectionKind: section.sectionKind,
+    name: section.name,
+    average: section.average,
+    weight: section.weight,
+    parentSectionId: section.parentSectionId ?? null,
+    classSubjectId: section.classSubjectId ?? null,
+    subResults: section.subResults.map(serializeReportCardResultSection),
+  }
+}
+
+function unwrapReportCardResultSection(raw: StoredReportCardResultSection): StoredReportCardResultSection {
+  if (raw.data?.sectionId) {
+    return {
+      ...raw.data,
+      subResults: raw.subResults ?? raw.data.subResults ?? [],
+    }
+  }
+  return raw
+}
+
+function deserializeReportCardResultSection(raw: StoredReportCardResultSection): ReportCardResultSection {
+  const section = unwrapReportCardResultSection(raw)
+  return new ReportCardResultSectionCtor({
+    sectionId: section.sectionId,
+    sectionKind: section.sectionKind,
+    name: section.name,
+    average: section.average,
+    weight: section.weight,
+    parentSectionId: section.parentSectionId ?? undefined,
+    classSubjectId: section.classSubjectId ?? undefined,
+    subResults: (section.subResults ?? []).map(deserializeReportCardResultSection),
+  })
+}
 
 export interface EntityStores {
   schoolsStore: PostgresStore<School>
@@ -670,6 +720,9 @@ export function createEntityStores(db: any): EntityStores {
         id: row.id,
         reportCardDefinitionId: row.definitionId,
         name: row.name,
+        kind: row.subjectId
+          ? ReportCardDefinitionSectionKind.Subject
+          : ReportCardDefinitionSectionKind.Group,
         order: row.order,
         weight: row.weight,
         parentSectionId: row.parentSectionId,
@@ -687,7 +740,7 @@ export function createEntityStores(db: any): EntityStores {
         classGroupId: entity.classGroupId,
         periodId: entity.periodId,
         reportCardDefinitionId: entity.reportCardDefinitionId,
-        sectionResults: entity.sectionResults,
+        sectionResults: entity.sectionResults.map(serializeReportCardResultSection),
         attendanceSummary: entity.attendanceSummary,
         assessmentResultCount: entity.assessmentResultCount,
         overallAverage: entity.overallAverage ?? null,
@@ -704,26 +757,13 @@ export function createEntityStores(db: any): EntityStores {
         const sectionsData = deserializeJsonb(row.sectionResults) || []
         const attendanceData = deserializeJsonb(row.attendanceSummary)
 
-        const mapSection = (s: any): ReportCardResultSection => {
-          return new ReportCardResultSectionCtor({
-            sectionId: s.sectionId,
-            sectionKind: s.sectionKind,
-            name: s.name,
-            average: s.average,
-            weight: s.weight,
-            parentSectionId: s.parentSectionId,
-            classSubjectId: s.classSubjectId,
-            subResults: s.subResults?.map(mapSection),
-          })
-        }
-
         return new ReportCardResultCtor({
           id: row.id,
           reportCardDefinitionId: row.reportCardDefinitionId,
           studentId: row.studentId,
           classGroupId: row.classGroupId,
           periodId: row.periodId,
-          sectionResults: (sectionsData as any[]).map(mapSection),
+          sectionResults: (sectionsData as StoredReportCardResultSection[]).map(deserializeReportCardResultSection),
           attendanceSummary: new AttendanceSummary(attendanceData),
           assessmentResultCount: row.assessmentResultCount,
           overallAverage: row.overallAverage,

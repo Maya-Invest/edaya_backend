@@ -129,4 +129,36 @@ describe("dev access seed", () => {
     const countBody = await staffCount.json() as { count: number };
     expect(countBody.count).toBe(SEED_STAFF.length);
   }, 30_000);
+
+  it("seeds access roles and lets the director list them", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    await runDevSeed(application);
+    await runDevAuthSeed(application, runtime.getAuth(), pgliteEnv);
+    await runDevAccessSeed(application);
+
+    const accessRoles = await application.repositories.accessRoles.list({});
+    expect(accessRoles.length).toBe(4);
+    expect(accessRoles.some(role => role.id === "role-director")).toBe(true);
+    expect(accessRoles.some(role => role.id === "role-teacher")).toBe(true);
+
+    const signIn = await app.request(createAppRequest("/auth/sign-in/email", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, password: DEV_AUTH_PASSWORD }),
+    }));
+    const cookies = collectSetCookieHeaders(signIn);
+
+    const response = await app.request(createAppRequest("/core/entities/access-roles/list", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "cookie": cookies.join("; "),
+      },
+      body: JSON.stringify({}),
+    }));
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as unknown[];
+    expect(body.length).toBeGreaterThanOrEqual(4);
+  }, 30_000);
 });

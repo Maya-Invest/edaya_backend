@@ -43,6 +43,46 @@ const DEV_WEBAPP_FINANCE_READ_PERMISSIONS = [
   Permission.PAYMENT_READ,
 ] as const;
 
+/** Entity list endpoints used by timetable / planning pages. */
+const DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS = [
+  Permission.QUERY_TIMETABLE_READ,
+  Permission.RESOURCE_READ,
+] as const;
+
+/** Entity list endpoints used by class evaluations pages. */
+const DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS = [
+  Permission.GRADE_READ,
+] as const;
+
+/** Entity list endpoints used by school calendar pages. */
+const DEV_WEBAPP_CALENDAR_READ_PERMISSIONS = [
+  Permission.QUERY_CALENDAR_READ,
+] as const;
+
+/** Entity list endpoints used by attendance / absence views. */
+const DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS = [
+  Permission.QUERY_ATTENDANCE_READ,
+  Permission.ATTENDANCE_READ,
+] as const;
+
+/** Entity list endpoints used by discipline / incidents views. */
+const DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS = [
+  Permission.DISCIPLINE_READ,
+] as const;
+
+/** Entity list endpoints used by report card / grade scale views. */
+const DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS = [
+  Permission.QUERY_REPORT_CARD_DETAIL_READ,
+  Permission.GRADE_READ,
+] as const;
+
+/** Entity list endpoints used by student drawer (health profiles, pedagogical notes). */
+const DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS = [
+  Permission.QUERY_STUDENT_DETAIL_READ,
+  Permission.CLASS_LOGBOOK_READ,
+  Permission.STUDENT_HEALTH_READ,
+] as const;
+
 const EDUCATOR_PERMISSIONS = [
   Permission.DISCIPLINE_READ,
   Permission.DISCIPLINE_CREATE,
@@ -78,6 +118,13 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
       [Permission.GRADE_READ],
       DEV_WEBAPP_SHELL_READ_PERMISSIONS,
       DEV_WEBAPP_PEOPLE_READ_PERMISSIONS,
+      DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS,
+      DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS,
+      DEV_WEBAPP_CALENDAR_READ_PERMISSIONS,
+      DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS,
+      DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS,
+      DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
+      DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
   }));
 
@@ -89,6 +136,13 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
       COORDINATOR_PERMISSIONS,
       [Permission.REPORT_CARD_CONFIGURE, Permission.REPORT_CARD_GENERATE, Permission.QUERY_STUDENT_DIRECTORY_READ],
       DEV_WEBAPP_STAFF_ADMIN_READ_PERMISSIONS,
+      DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS,
+      DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS,
+      DEV_WEBAPP_CALENDAR_READ_PERMISSIONS,
+      DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS,
+      DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS,
+      DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
+      DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
   }));
 
@@ -100,6 +154,8 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
       EDUCATOR_PERMISSIONS,
       DEV_WEBAPP_SHELL_READ_PERMISSIONS,
       [Permission.QUERY_STUDENT_DIRECTORY_READ, Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ],
+      DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
+      DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
   }));
 
@@ -113,6 +169,13 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
       DEV_WEBAPP_PEOPLE_READ_PERMISSIONS,
       DEV_WEBAPP_STAFF_ADMIN_READ_PERMISSIONS,
       DEV_WEBAPP_FINANCE_READ_PERMISSIONS,
+      DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS,
+      DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS,
+      DEV_WEBAPP_CALENDAR_READ_PERMISSIONS,
+      DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS,
+      DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS,
+      DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
+      DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
   }));
 

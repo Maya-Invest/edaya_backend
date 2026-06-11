@@ -172,6 +172,16 @@ count += 1;
 	resultsForStudent(studentId: string) {
 		return this.results.filter(r => r.studentId === studentId);
 	}
+
+	hydrateFromServer(input: {
+		gradeScales: GradeScale[];
+		reportCardDefinitions: ReportCardDefinition[];
+		reportCardResults: ReportCardResult[];
+	}) {
+		this.scales = clone(input.gradeScales);
+		this.definitions = clone(input.reportCardDefinitions);
+		this.results = clone(input.reportCardResults);
+	}
 }
 
 export const reportCardsContext = new ReportCardsContext();

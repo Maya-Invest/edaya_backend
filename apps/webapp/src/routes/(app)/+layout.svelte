@@ -14,6 +14,7 @@
 	import { t } from '$lib/i18n';
 	import { LogOut } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { setContext } from 'svelte';
 
 	const { data, children }: { data: import('./$types').LayoutData; children: Snippet } = $props();
@@ -41,6 +42,16 @@
 	$effect(() => {
 		if (data.academicYears) {
 			academicContext.init(data.academicYears, data.academicPeriods, data.classes || []);
+		}
+	});
+
+	$effect(() => {
+		if (data.gradeScales && data.reportCardDefinitions && data.reportCardResults) {
+			reportCardsContext.hydrateFromServer({
+				gradeScales: data.gradeScales,
+				reportCardDefinitions: data.reportCardDefinitions,
+				reportCardResults: data.reportCardResults,
+			});
 		}
 	});
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { StaffRole } from '$lib/data/school';
+	import { page } from '$app/stores';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { classes, subjects } from '$lib/data/school';
 	import { ShieldCheck } from '$lib/icons';
@@ -26,7 +27,10 @@
 		return Object.values(map);
 	});
 
-	const enabledMap = $derived(defaultEnabledFor(role));
+	const enabledMap = $derived.by(() => {
+		const live = ($page.data.roleEnabledPermissions as Partial<Record<StaffRole, Record<string, boolean>>> | undefined)?.[role];
+		return live ?? defaultEnabledFor(role);
+	});
 
 	const grouped = $derived.by(() => {
 		const acc: Record<string, typeof STAFF_PERMISSIONS> = {};

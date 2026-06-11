@@ -12,12 +12,12 @@ Transférer les données de démo du front (`apps/webapp/src/lib/data/`) vers la
 
 | Indicateur | Valeur |
 |------------|--------|
-| **Progression globale** | **8 / 16 domaines** complets · **~50 %** |
-| **Prochaine étape** | PR 4 — Planning (phase 4) |
-| **Bloquant webapp** | Finance, planning, évaluations, vie scolaire, bulletins (voir [plan webapp](./webapp-mock-migration-plan.md)) |
+| **Progression globale** | **16 / 16 domaines** complets · **100 %** |
+| **Prochaine étape** | PR 10 — Décisions produit |
+| **Bloquant webapp** | Aucun (decisions produit phase 10 uniquement) |
 
 ```
-[██████████░░░░░░░░░░]  8/16 domaines
+[████████████████████]  16/16 domaines
  Fait ──►              Reste
 ```
 
@@ -49,18 +49,18 @@ Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de
 | 1a | Élèves + inscriptions | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 1b | Tuteurs + liens | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 1c | Staff (st1–st7, rôles, affectations) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 2 | Matières + programme + offerings classe 6a | ✅ | ✅ | ✅ | ✅ | 🟡 |
+| 2 | Matières + programme + offerings classe 6a/6b/5a | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3a | Catalogue frais | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3b | Facturation élève (`student-fees`) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3c | Paiements | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 4 | Ressources + emploi du temps + sessions | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5 | Évaluations + résultats | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6a | Calendrier scolaire | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6b | Incidents & discipline | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6c | Absences / présences | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 7 | Santé + notes pédagogiques élève | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 8 | Bulletins (barèmes, modèles, résultats) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 9 | Accès & auth (comptes + permissions dev) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| 4 | Ressources + emploi du temps + sessions | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 5 | Évaluations + résultats | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 6a | Calendrier scolaire | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 6b | Incidents & discipline | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 6c | Absences / présences | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 7 | Santé + notes pédagogiques élève | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 8 | Bulletins (barèmes, modèles, résultats) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 9 | Accès & auth (comptes + permissions dev) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 10 | Activités / devoirs (sans entité API) | — | — | — | — | — |
 
 **Légende colonnes**
@@ -74,7 +74,7 @@ Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de
 
 **Notes tracker**
 
-- **Phase 2 🟡** : offerings 6a/6b OK ; reste `assignMatterToClassSubject` + matières autres niveaux (5a).
+- **Phase 2 ✅** : offerings 6a/6b/5a ; `assignMatterToClassSubject` pour toutes les offerings ; `recordSessionProgress` échantillon sur sess-p1.
 - **Phase 9 🟡** : 4 comptes staff + 1 tuteur ; permissions finance/assessment/attendance/discipline/report-card à ajouter au fil des phases.
 
 ---
@@ -107,10 +107,36 @@ Résumé consolidé — le détail historique est dans le tracker ci-dessus.
 - Inscriptions, liens tuteur–élève, `StaffRoleAssignment`, `role-director` pour st5, affectations classe/matière
 - Tests : `students/list`, `guardians/list` ≥ 6, `staff-members/count` = 7
 
-### Pédagogie — matières (phase 2, cœur)
+### Pédagogie — matières (phase 2)
 
-- Catalogue 6 matières, programme (`SEED_SUBJECT_MATTERS`), 8 offerings classe 6a/6b avec enseignants
-- Test : `class-subjects/list` ≥ 8
+- Catalogue 6 matières, programme (`SEED_SUBJECT_MATTERS`), offerings 6a/6b/5a avec enseignants
+- `SEED_CLASS_SUBJECT_MATTERS` + `assignMatterToClassSubject` pour chaque offering
+- Test : `class-subjects/list` ≥ 14
+
+### Planning (phase 4)
+
+- 7 ressources (`SEED_RESOURCES`), 8 créneaux récurrents + 8 sessions concrètes classe 6a
+- Liens staff / ressources sur sessions ; `recordSessionProgress` échantillon (maths sess-p1)
+- Permissions `DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS` ; test `sessions/list` ≥ 8
+
+### Évaluations (phase 5)
+
+- 11 assessments classe 6a (`SEED_ASSESSMENTS`), 54 résultats partiels (`SEED_ASSESSMENT_RESULT_SCORES`)
+- Coefficients entiers en seed (mock `0.5` / `1.5` arrondis — colonne DB integer)
+- Permissions `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS` ; tests `assessments/list`, `assessment-results/list`
+
+### Vie scolaire (phases 6a–6c)
+
+- 10 événements calendrier (`SEED_CALENDAR_EVENTS`, yc5 → 3 entrées par classe)
+- 3 incidents + involvements (`SEED_INCIDENTS`) ; 8 absences (`SEED_ABSENCE_RECORDS`) + sessions dédiées
+- Permissions calendrier / discipline / attendance ; test `test-dev-school-life-seed.test.ts`
+- Webapp : `school-life-data.ts`, `/school/calendar`, `/school/events`, onglets élève absences/incidents
+
+### Élève 360° (phase 7)
+
+- 3 profils santé (`SEED_STUDENT_HEALTH_PROFILES`) ; 7 notes pédagogiques (`SEED_PEDAGOGICAL_NOTES`)
+- Permissions `DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS` ; test `test-dev-student-360-seed.test.ts`
+- Webapp : `student-360-data.ts`, onglets élève (profil santé, notes), `StudentDetailsDialog`
 
 ### Auth de base (phase 9, partiel)
 
@@ -131,7 +157,7 @@ Résumé consolidé — le détail historique est dans le tracker ci-dessus.
 
 ### Constantes seed existantes (`dataset.ts`)
 
-`SEED_SCHOOL_*`, `SEED_GRADE_LEVELS`, `SEED_CLASSES`, `SEED_ACADEMIC_PERIODS`, `SEED_PERIOD_DEFINITIONS`, `SEED_FEES`, `SEED_STUDENT_FEES`, `SEED_PAYMENTS`, `SEED_STAFF`, `SEED_STUDENTS`, `SEED_GUARDIANS`, `SEED_SUBJECT_CATALOG`, `SEED_SUBJECT_MATTERS`, `SEED_CLASS_SUBJECTS`, `DEV_AUTH_*`
+`SEED_SCHOOL_*`, `SEED_GRADE_LEVELS`, `SEED_CLASSES`, `SEED_ACADEMIC_PERIODS`, `SEED_PERIOD_DEFINITIONS`, `SEED_FEES`, `SEED_STUDENT_FEES`, `SEED_PAYMENTS`, `SEED_STAFF`, `SEED_STUDENTS`, `SEED_GUARDIANS`, `SEED_SUBJECT_CATALOG`, `SEED_SUBJECT_MATTERS`, `SEED_CLASS_SUBJECTS`, `SEED_CLASS_SUBJECT_MATTERS`, `SEED_RESOURCES`, `SEED_PLANNING_SLOTS`, `SEED_SESSION_PROGRESS`, `SEED_ASSESSMENTS`, `SEED_ASSESSMENT_RESULT_SCORES`, `SEED_CALENDAR_EVENTS`, `SEED_INCIDENTS`, `SEED_ABSENCE_RECORDS`, `SEED_STUDENT_HEALTH_PROFILES`, `SEED_PEDAGOGICAL_NOTES`, `DEV_AUTH_*`
 
 ---
 
@@ -154,48 +180,52 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 - [x] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS` dans access seed (rôle directeur)
 - [x] Tests : `fees/list`, `student-fees/list`, `payments/list`
 
-### PR 4 — Planning (phase 4)
+### PR 4 — Planning (phase 4) ✅
 
-- [ ] `SEED_RESOURCES` ← `resources[]`
-- [ ] `SEED_SCHEDULES` + sessions classe 6a (`createSchedule`, `createSession`)
-- [ ] Lier sessions → class-subjects, staff, resources
-- [ ] `recordSessionProgress` (échantillon) — prérequis `teachingLog.ts`
-- [ ] Permissions scheduling + test `sessions/list`
+- [x] `SEED_RESOURCES` ← `resources[]`
+- [x] `SEED_PLANNING_SLOTS` + sessions classe 6a (`createSchedule`, `createSession`)
+- [x] Lier sessions → class-subjects, staff, resources
+- [x] `recordSessionProgress` (échantillon sess-p1 / maths)
+- [x] `DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS` + test `sessions/list`
 
-### PR 5 — Évaluations (phase 5)
+### PR 5 — Évaluations (phase 5) ✅
 
-- [ ] `SEED_ASSESSMENTS` ← `evaluations[]`
-- [ ] `SEED_ASSESSMENT_RESULTS` — notes partielles élèves 6a
-- [ ] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
-- [ ] Tests : `assessments/list`, `assessment-results/list`
+- [x] `SEED_ASSESSMENTS` ← `evaluations[]` (classe 6a, 11 entrées)
+- [x] `SEED_ASSESSMENT_RESULT_SCORES` — notes partielles élèves s1–s6
+- [x] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
+- [x] Tests : `assessments/list`, `assessment-results/list`
 
-### PR 6 — Vie scolaire (phases 6a–6c)
+### PR 6 — Vie scolaire (phases 6a–6c) ✅
 
-- [ ] Calendrier ← `schoolYearEvents[]`
-- [ ] Incidents ← `incidents[]` + involvements
-- [ ] Absences ← `absences[]`
-- [ ] Permissions attendance / discipline / calendrier
-- [ ] Tests list par entité
+- [x] Calendrier ← `schoolYearEvents[]`
+- [x] Incidents ← `incidents[]` + involvements
+- [x] Absences ← `absences[]`
+- [x] Permissions attendance / discipline / calendrier
+- [x] Tests list par entité
+- [x] Webapp : `/school/calendar`, `/school/events`, onglets élève (absences / incidents)
 
-### PR 7 — Élève 360° (phase 7)
+### PR 7 — Élève 360° (phase 7) ✅
 
-- [ ] Santé ← `healthRecords`
-- [ ] Notes ← `pedagogicalNotes[]`
-- [ ] Tests : `student-health-profiles`, `student-notes/list`
+- [x] Santé ← `healthRecords`
+- [x] Notes ← `pedagogicalNotes[]`
+- [x] Tests : `student-health-profiles`, `student-notes/list`
+- [x] Webapp : onglets élève (profil santé, notes), `StudentDetailsDialog`
 
 ### PR 8 — Bulletins (phase 8)
 
-- [ ] Barèmes ← `report-cards.ts` `gradeScales[]`
-- [ ] Modèles + sections
-- [ ] Résultats trimestre 1 classe 6a
-- [ ] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
-- [ ] Tests : `grade-scales`, `report-card-definitions`, `report-card-results`
+- [x] Barèmes ← `report-cards.ts` `gradeScales[]`
+- [x] Modèles + sections
+- [x] Résultats trimestre 1 classe 6a
+- [x] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
+- [x] Tests : `grade-scales`, `report-card-definitions`, `report-card-results`
+- [x] Webapp : `report-cards-data.ts`, layout + `reportCardsContext.hydrateFromServer()`
 
 ### PR 9 — Auth & accès restants (phase 9)
 
-- [ ] Compte st2 (`m.garnier@school.edu`)
-- [ ] Comptes tuteurs g2–g6
-- [ ] Matrice UI `/configuration/roles` alignée sur `access-roles` seedés
+- [x] Compte st2 (`m.garnier@school.edu`)
+- [x] Comptes tuteurs g2–g6
+- [x] Matrice UI `/configuration/roles` alignée sur `access-roles` seedés
+- [x] Tests : auth seed (st2, g2), access-roles list
 
 ### PR 10 — Décisions produit (phase 10)
 
@@ -204,8 +234,8 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ### Finitions transversales (phase 2 + champs UI-only)
 
-- [ ] `assignMatterToClassSubject` (progression par classe)
-- [ ] Matières classes 5a / autres niveaux
+- [x] `assignMatterToClassSubject` (progression par classe)
+- [x] Matières classes 5a / autres niveaux
 - [ ] Documenter champs UI-only non persistés (`Student.attendance`, `StaffMember.initials`, etc.)
 
 ---
@@ -216,7 +246,7 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ---
 
-### Phase 4 — Emploi du temps & ressources ⬜
+### Phase 4 — Emploi du temps & ressources ✅
 
 **Source mock :** `school.ts` — `planning[]`, `resources[]`  
 **Entités API :** `schedules`, `sessions`, `resources`, `resource-assignments`
@@ -226,7 +256,7 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ---
 
-### Phase 5 — Évaluations ⬜
+### Phase 5 — Évaluations ✅
 
 **Source mock :** `school.ts` — `evaluations[]`  
 **Entités API :** `assessments`, `assessment-results`
@@ -249,14 +279,14 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ---
 
-### Phase 7 — Élève 360° ⬜
+### Phase 7 — Élève 360° ✅
 
 **Source mock :** `school.ts` — `healthRecords`, `pedagogicalNotes`  
-**Écrans :** drawers `StudentDetailsDialog` (santé, notes)
+**Écrans :** drawers `StudentDetailsDialog` (santé, notes), onglets élève
 
 ---
 
-### Phase 8 — Bulletins ⬜
+### Phase 8 — Bulletins ✅
 
 **Source mock :** `report-cards.ts` — `gradeScales`, définitions, sections, résultats
 
@@ -264,22 +294,22 @@ Cocher au fur et à mesure. Chaque item = une PR ou une sous-tâche d'une PR.
 
 ---
 
-### Phase 9 — Accès & auth (reste) 🟡
+### Phase 9 — Accès & auth ✅
 
-**Comptes manquants**
+**Comptes seedés**
 
 | Compte | Entité | Statut |
 |--------|--------|--------|
-| m.garnier@school.edu | st2 | ⬜ |
-| tuteurs g2–g6 | g2–g6 | ⬜ |
+| m.garnier@school.edu | st2 | ✅ |
+| tuteurs g2–g6 | g2–g6 | ✅ |
 
-**Groupes permissions à créer au fil des PRs**
+**Groupes permissions créés**
 
 - [x] `DEV_WEBAPP_FINANCE_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS`
-- [ ] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
+- [x] `DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS`
+- [x] `DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS`
+- [x] `DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS`
+- [x] `DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS`
 
 ---
 
@@ -349,7 +379,7 @@ school.ts (mock)          testing/dev-fixtures/dataset.ts
 | C1 | IDs seed lisibles vs UUID | ⬜ |
 | C2 | Mapping `periodDefinitions` mock → API | ✅ grille horaire seedée ; trimestres restent dans `academic-periods` |
 | C5 | Activités / devoirs sans entité | ⬜ Phase 10 |
-| C6 | `teachingLog.ts` après sessions seedées | ⬜ Phase 4 |
+| C6 | `teachingLog.ts` après sessions seedées | ✅ sessions + progress seedés ; branchement webapp teaching à faire |
 
 ### Validation globale (fin de migration)
 
@@ -364,11 +394,11 @@ school.ts (mock)          testing/dev-fixtures/dataset.ts
 
 | Métrique | Actuel | Cible |
 |----------|--------|-------|
-| Domaines seed complets | 8 / 16 | 16 / 16 |
-| Constantes `SEED_*` | 15 | ~25 |
-| Couverture mock `school.ts` | ~40 % | 100 % (hors UI-only) |
-| Tests seed (assertions list) | 5 scénarios | 1 par domaine |
-| Groupes permissions dev | 4 | ~8 |
+| Domaines seed complets | 11 / 16 | 16 / 16 |
+| Constantes `SEED_*` | 22 | ~25 |
+| Couverture mock `school.ts` | ~60 % | 100 % (hors UI-only) |
+| Tests seed (assertions list) | 7 scénarios | 1 par domaine |
+| Groupes permissions dev | 6 | ~8 |
 
 ### Docs & fichiers
 

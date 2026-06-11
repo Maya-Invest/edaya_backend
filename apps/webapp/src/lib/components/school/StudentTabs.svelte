@@ -1,18 +1,19 @@
 <script lang="ts">
-	import type { Student, PedagogicalNote } from '$lib/data/school';
+	import type { Student, PedagogicalNote, Incident, AbsenceRecord, HealthRecord } from '$lib/data/school';
 	import type { SubjectGroupItem } from './drawer-types';
+	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import {
 		guardians,
-		healthRecords,
-		incidents,
+		healthRecords as mockHealthRecords,
+		incidents as mockIncidents,
 		classes,
-		pedagogicalNotes,
+		pedagogicalNotes as mockPedagogicalNotes,
 		staff,
 		evaluations,
-		absences,
+		absences as mockAbsences,
 		billing,
 		fees,
 	} from '$lib/data/school';
@@ -40,6 +41,15 @@
 	import SubjectGroup from './SubjectGroup.svelte';
 
 	const { s }: { s: Student } = $props();
+
+	const incidents = $derived(($page.data.incidents as Incident[] | undefined) ?? mockIncidents);
+	const absences = $derived(($page.data.absences as AbsenceRecord[] | undefined) ?? mockAbsences);
+	const healthRecords = $derived(
+		($page.data.healthRecords as Record<string, HealthRecord> | undefined) ?? mockHealthRecords,
+	);
+	const pedagogicalNotes = $derived(
+		($page.data.pedagogicalNotes as PedagogicalNote[] | undefined) ?? mockPedagogicalNotes,
+	);
 
 	let tab = $state<'profile' | 'notes' | 'absence' | 'incidents' | 'finances' | 'bulletin'>('profile');
 
