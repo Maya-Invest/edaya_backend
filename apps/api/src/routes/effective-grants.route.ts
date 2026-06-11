@@ -5,7 +5,7 @@ import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import type { AppRouteHandler } from "@/lib/http/types";
 import { getErrorMessage, unauthorizedResponse } from "@/lib/http/responses";
 import { requireInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
-import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/openapi/entities.schemas";
+import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/entities";
 
 const commandMessageSchema = createMessageObjectSchema();
 

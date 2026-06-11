@@ -4,7 +4,7 @@ import { notFound, onError, serveEmojiFavicon } from "stoker/middlewares";
 import { defaultHook } from "stoker/openapi";
 
 import type { AppBindings, AppOpenAPI } from "@/lib/http/types";
-import { dependenciesInjection } from "@/lib/http/middleware/dependencies";
+import { dependenciesInjection } from "@/lib/http/dependencies";
 import { pinoLogger } from "@/lib/http/middleware/logger";
 
 export function createRouter() {

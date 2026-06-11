@@ -1,4 +1,4 @@
-import type { Environment } from "@/lib/bootstrap/env";
+import type { Environment } from "@/lib/runtime/env";
 import { isEphemeralDatabase } from "@/lib/runtime/database-url";
 
 export interface DatabaseHandle {

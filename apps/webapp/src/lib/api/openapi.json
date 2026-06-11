@@ -6732,7 +6732,7 @@
         }
       }
     },
-    "/api/auth/*": {
+    "/auth/*": {
       "get": {
         "tags": [
           "Auth"

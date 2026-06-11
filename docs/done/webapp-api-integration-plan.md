@@ -41,7 +41,7 @@ The webapp is in the Bun workspace as `@edaya/webapp` (Turbo build fixed); integ
 ┌─────────────────────────────────────────────────────────────┐
 │ apps/api (Hono, port 9999)                                  │
 │                                                             │
-│  /api/auth/*                         → Better Auth          │
+│  /auth/*                         → Better Auth          │
 │  /api/core/entities/{name}/*         → entity CRUD          │
 │  /api/core/commands/{name}           → domain commands       │
 │  /api/core/queries/{name}            → aggregate queries    │
@@ -90,7 +90,7 @@ Default dev API: `http://localhost:9999` (`PORT` in `apps/api` env schema).
 
 | Category | Pattern | Methods |
 |----------|---------|---------|
-| Auth | `/api/auth/*` | GET, POST (Better Auth proxy) |
+| Auth | `/auth/*` | GET, POST (Better Auth proxy) |
 | Entities | `/api/core/entities/{publicName}/list\|one\|count\|get\|save\|delete\|batch-*` | Mostly POST; `get` is GET |
 | Commands | `/api/core/commands/{publicName}` | POST |
 | Queries | `/api/core/queries/{publicName}` | POST |
@@ -288,7 +288,7 @@ Migrate **incrementally**: one remote module per domain; keep mocks behind a fea
 
 | Concern | Approach |
 |---------|----------|
-| Better Auth browser SDK | Direct to `/api/auth/*` **or** SvelteKit `form` remote proxying to API |
+| Better Auth browser SDK | Direct to `/auth/*` **or** SvelteKit `form` remote proxying to API |
 | OpenAPI / external clients | Keep `apps/api` as the public HTTP surface |
 | System actor automation | `POST /api/core/system/commands/*` — not exposed via webapp remotes |
 | Webhooks / third parties | Hono routes only |
@@ -344,7 +344,7 @@ The webapp UI implies direct CRUD in several places; those flows must be routed 
 
 ### API today
 
-- Better Auth at `/api/auth/*` (`apps/api/src/lib/authentication/auth.config.ts`).
+- Better Auth at `/auth/*` (`apps/api/src/lib/authentication/auth.config.ts`).
 - Session → actor resolution in `session-actor.ts` middleware (staff / guardian / student).
 - `GET /api/core/authorization/effective-grants` for permission introspection.
 
@@ -389,7 +389,7 @@ No shared API client package exists in `packages/` today. Webapp duplicates doma
 
 ### Phase 1 — Auth & authorization
 
-- [ ] Better Auth: browser SDK **or** `form` remote proxy to `{API_URL}/api/auth`
+- [ ] Better Auth: browser SDK **or** `form` remote proxy to `{API_URL}/auth`
 - [ ] Replace `authSession` mock; hydrate actor from session + API
 - [ ] Wire `getEffectiveGrants` remote into layout; replace `permissions.ts` enum gates
 - [ ] Pass `academicYearId` into remotes (header forwarding in `api-client`)
@@ -434,7 +434,7 @@ sequenceDiagram
   participant UI as Component
   participant RF as *.remote.ts (SvelteKit)
   participant BFF as api-client.ts
-  participant Auth as apps/api /api/auth/*
+  participant Auth as apps/api /auth/*
   participant API as apps/api /api/core/*
 
   UI->>RF: await listStudents({ schoolId })

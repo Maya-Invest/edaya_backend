@@ -16,10 +16,13 @@ export default function configureOpenAPI(app: AppOpenAPI) {
   app.get(
     "/reference",
     Scalar({
-      url: "/doc",
-      pageTitle: "Edaya Core API Reference",
+      pageTitle: "Edaya API Reference",
       theme: "laserwave",
       layout: "classic",
+      sources: [
+        { url: "/doc", title: "Core API" },
+        { url: "/auth/open-api/generate-schema", title: "Auth" },
+      ],
       defaultHttpClient: {
         targetKey: "js",
         clientKey: "fetch",

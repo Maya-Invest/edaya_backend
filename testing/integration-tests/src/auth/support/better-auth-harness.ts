@@ -56,6 +56,7 @@ function createAuth(db: unknown, env: AuthTestEnv): AuthService {
     }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    basePath: '/auth',
     emailAndPassword: {
       enabled: true,
     },
@@ -112,7 +113,7 @@ export async function ensureAuthUser(
   db: ReturnType<typeof drizzle>,
   account: { email: string, password: string, name: string },
 ): Promise<string> {
-  const signInResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/api/auth/sign-in/email`, {
+  const signInResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-in/email`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -130,7 +131,7 @@ export async function ensureAuthUser(
     }
   }
 
-  const signUpResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
+  const signUpResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-up/email`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -179,7 +180,7 @@ export async function signUpEmail(
   env: AuthTestEnv,
   input: { email: string, password: string, name: string },
 ): Promise<Response> {
-  return auth.handler(new Request(`${env.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
+  return auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-up/email`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -193,7 +194,7 @@ export async function signInEmail(
   env: AuthTestEnv,
   input: { email: string, password: string },
 ): Promise<Response> {
-  return auth.handler(new Request(`${env.BETTER_AUTH_URL}/api/auth/sign-in/email`, {
+  return auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-in/email`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

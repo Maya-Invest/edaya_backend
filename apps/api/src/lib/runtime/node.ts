@@ -4,7 +4,7 @@ import { expand } from "dotenv-expand";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { parseRuntimeEnv } from "@/lib/runtime/env";
-import type { Environment } from "@/lib/bootstrap/env";
+import type { Environment } from "@/lib/runtime/env";
 
 const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 

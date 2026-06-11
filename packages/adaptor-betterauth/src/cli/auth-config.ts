@@ -13,6 +13,7 @@ export default betterAuth({
   }),
   secret: 'cli-schema-generation-secret-32-chars-min',
   baseURL: 'http://localhost:9999',
+  basePath: '/auth',
   emailAndPassword: {
     enabled: true,
   },

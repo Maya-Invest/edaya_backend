@@ -1,12 +1,10 @@
 import type { AppRouteHandler } from "@/lib/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
-import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared-responses";
 import { coreQueries } from "@/lib/school-api/registry";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import type { SchoolApiRoutePair } from "@/lib/school-api/routes/route-types";
-import { validatedJson } from "@/lib/school-api/routes/request-validation";
+import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
 
 export function buildQueryRoutes(): SchoolApiRoutePair[] {
   const pairs: SchoolApiRoutePair[] = [];

@@ -1,7 +1,7 @@
-import { parseEnv } from "@/lib/bootstrap/env";
+import { parseEnv } from "@/lib/runtime/env";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
-import { createDependenciesInjection } from "@/lib/http/middleware/dependencies";
-import { type AuthSessionProvider, createSessionActorDependency } from "@/lib/http/middleware/dependencies/session-actor";
+import { createDependenciesInjection } from "@/lib/http/dependencies";
+import { type AuthSessionProvider, createSessionActorDependency } from "@/lib/http/dependencies/session-actor";
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
@@ -59,7 +59,7 @@ describe("runDevAuthSeed", () => {
     expect(staff?.subjectId).toBeTruthy();
     expect(guardian?.subjectId).toBeTruthy();
 
-    const signInResponse = await auth.handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/api/auth/sign-in/email`, {
+    const signInResponse = await auth.handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -123,7 +123,7 @@ describe("runDevAuthSeed", () => {
       expect(secondRun.reason).toBe("already-linked");
     }
 
-    const signInResponse = await auth.handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/api/auth/sign-in/email`, {
+    const signInResponse = await auth.handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
       method: "POST",
       headers: {
         "content-type": "application/json",

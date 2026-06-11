@@ -36,7 +36,7 @@ import {
   studentIncidentInvolvementResponseSchema,
   studentNoteResponseSchema,
   studentResponseSchema,
-} from "./entities.schemas";
+} from "./entities";
 
 export const commandMessageResponseSchema = z.object({
   message: z.string(),

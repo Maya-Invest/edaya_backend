@@ -4,7 +4,7 @@ import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
 import { createAuth } from "@/lib/runtime/create-auth";
-import type { Environment } from "@/lib/bootstrap/env";
+import type { Environment } from "@/lib/runtime/env";
 
 const testEnv = {
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
@@ -38,7 +38,7 @@ describe("createAuth", () => {
   });
 
   it("signs up a user and returns a session", async () => {
-    const signUpResponse = await auth.handler(new Request("http://localhost:9999/api/auth/sign-up/email", {
+    const signUpResponse = await auth.handler(new Request("http://localhost:9999/auth/sign-up/email", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -55,7 +55,7 @@ describe("createAuth", () => {
     const cookies = collectSetCookieHeaders(signUpResponse);
     expect(cookies.length).toBeGreaterThan(0);
 
-    const sessionResponse = await auth.handler(new Request("http://localhost:9999/api/auth/get-session", {
+    const sessionResponse = await auth.handler(new Request("http://localhost:9999/auth/get-session", {
       method: "GET",
       headers: {
         cookie: cookies.join("; "),
@@ -74,7 +74,7 @@ describe("createAuth", () => {
   });
 
   it("signs in an existing user with email and password", async () => {
-    await auth.handler(new Request("http://localhost:9999/api/auth/sign-up/email", {
+    await auth.handler(new Request("http://localhost:9999/auth/sign-up/email", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -86,7 +86,7 @@ describe("createAuth", () => {
       }),
     }));
 
-    const signInResponse = await auth.handler(new Request("http://localhost:9999/api/auth/sign-in/email", {
+    const signInResponse = await auth.handler(new Request("http://localhost:9999/auth/sign-in/email", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -99,5 +99,29 @@ describe("createAuth", () => {
 
     expect(signInResponse.status).toBe(200);
     expect(collectSetCookieHeaders(signInResponse).length).toBeGreaterThan(0);
+  });
+
+  it("exposes the Better Auth OpenAPI schema for Scalar sources", async () => {
+    const schemaResponse = await auth.handler(
+      new Request("http://localhost:9999/auth/open-api/generate-schema"),
+    );
+
+    expect(schemaResponse.status).toBe(200);
+
+    const schema = await schemaResponse.json() as {
+      openapi: string;
+      paths: Record<string, unknown>;
+    };
+
+    expect(schema.openapi).toMatch(/^3\./);
+    expect(schema.paths["/sign-in/email"]).toBeDefined();
+  });
+
+  it("does not serve a separate Better Auth reference page", async () => {
+    const referenceResponse = await auth.handler(
+      new Request("http://localhost:9999/auth/reference"),
+    );
+
+    expect(referenceResponse.status).toBe(404);
   });
 });

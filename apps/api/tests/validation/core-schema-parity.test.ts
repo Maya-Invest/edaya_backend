@@ -12,7 +12,7 @@ import {
   recordPaymentCommandSchema,
   registerSchoolCommandSchema,
   registerStudentCommandSchema,
-} from "@/lib/school-api/schemas/openapi/commands.schemas";
+} from "@/lib/school-api/schemas/commands";
 
 interface AnySchema {
   innerType?: () => AnySchema;

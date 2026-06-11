@@ -1,6 +1,5 @@
 import { coreEntities } from "@/lib/school-api/registry";
-import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared-responses";
-import { arraySchema } from "@/lib/school-api/schemas/openapi/utils/schema-fields";
+import { arraySchema } from "@/lib/school-api/schemas/helpers";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -14,8 +13,8 @@ import {
   entityListHandler,
   entityOneHandler,
   entitySaveHandler,
-} from "@/lib/school-api/routes/entity-handlers";
-import type { SchoolApiRoutePair } from "@/lib/school-api/routes/route-types";
+} from "./entity-handlers";
+import { coreRouteErrorResponses, type SchoolApiRoutePair } from "./shared";
 
 const idParamSchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityIdParam");
 const deleteEntitySchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityDelete");

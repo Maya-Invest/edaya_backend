@@ -8,6 +8,7 @@ export default defineConfig({
 	server: {
 		proxy: {
 			'/api': { target: apiOrigin, changeOrigin: true },
+			'/auth': { target: apiOrigin, changeOrigin: true },
 			'/doc': { target: apiOrigin, changeOrigin: true },
 			'/reference': { target: apiOrigin, changeOrigin: true },
 		},

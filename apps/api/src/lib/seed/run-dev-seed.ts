@@ -1,4 +1,4 @@
-import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import {
   parseSeedDate,
   SEED_ACADEMIC_PERIODS,
@@ -9,22 +9,24 @@ import {
   SEED_FEES,
   SEED_FINANCE_REFERENCE_DATE,
   SEED_GRADE_LEVELS,
-  SEED_PAYMENTS,
-  SEED_STUDENT_FEES,
   SEED_GUARDIANS,
+  SEED_PAYMENTS,
   SEED_PERIOD_DEFINITIONS,
   SEED_SCHOOL_ID,
   SEED_SCHOOL_PROFILE,
   SEED_STAFF,
+  SEED_STUDENT_FEES,
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
   splitDisplayName,
 } from "@edaya/dev-fixtures";
+import type {
+  FeeCategory,
+} from "@edaya/core";
 import {
   AcademicPeriodType,
   createSystemActorMetadata,
-  FeeCategory,
   GradeLevel,
   PaymentMethod,
   PeriodDefinition,

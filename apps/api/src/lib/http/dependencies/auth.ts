@@ -1,5 +1,5 @@
 import { getApiRuntime } from "@/lib/runtime/registry";
-import type { DependencyModule } from "../dependencies";
+import type { DependencyModule } from ".";
 
 export const authDependency: DependencyModule = {
   name: "auth",

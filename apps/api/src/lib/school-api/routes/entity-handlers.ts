@@ -1,10 +1,10 @@
 import type { AppBindings, AppRouteHandler } from "@/lib/http/types";
-import type { CoreEntityConfig } from "@/lib/school-api/registry";
 import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
-import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entity-services";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
-import { validatedJson, validatedParam } from "./request-validation";
+import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
+import type { CoreEntityConfig } from "@/lib/school-api/registry";
+import { validatedJson, validatedParam } from "./shared";
 
 export function resolveServices(c: Context<AppBindings>, serviceName: string) {
   const actor = c.get("actor");

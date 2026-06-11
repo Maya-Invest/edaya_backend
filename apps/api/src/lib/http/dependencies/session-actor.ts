@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
 import type { AppBindings } from "@/lib/http/types";
 import type { Context } from "hono";
-import type { DependencyModule } from "../dependencies";
+import type { DependencyModule } from ".";
 
 export interface AuthSession {
   user: {

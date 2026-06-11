@@ -2,17 +2,11 @@ import { describe, expect, it } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
-import { commandMessageResponseSchema, commandResponseByMethod } from "@/lib/school-api/schemas/openapi/command-response.schemas";
-import { getQueryOptionFields } from "@/lib/school-api/schemas/openapi/utils/query-options";
-import { buildCommandRoutes } from "@/routes/commands.routes";
-import { buildEntityRoutes } from "@/routes/entities.routes";
-import { buildQueryRoutes } from "@/routes/queries.routes";
+import { commandMessageResponseSchema, commandResponseByMethod } from "@/lib/school-api/schemas/command-responses";
+import { getQueryOptionFields } from "@/lib/school-api/schemas/helpers";
+import { buildCoreRoutes } from "@/lib/school-api/routes";
 
-const coreRoutePairs = [
-  ...buildCommandRoutes(),
-  ...buildQueryRoutes(),
-  ...buildEntityRoutes(),
-];
+const coreRoutePairs = buildCoreRoutes();
 
 function fieldsFor(entityName: string): readonly string[] {
   const entity = coreEntities.find(candidate => candidate.serviceName === entityName);

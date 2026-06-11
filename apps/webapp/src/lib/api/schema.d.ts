@@ -41,7 +41,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/*": {
+    "/auth/*": {
         parameters: {
             query?: never;
             header?: never;

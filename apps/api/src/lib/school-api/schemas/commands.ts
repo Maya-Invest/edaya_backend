@@ -57,7 +57,7 @@ import {
   subjectMatterSchema,
   subjectSchema,
 } from "@edaya/core";
-import { field, namedObjectSchema, unwrapShape } from "./utils/schema-fields";
+import { field, namedObjectSchema, unwrapShape } from "./helpers";
 
 const optionalText = () => z.string().optional();
 const attendanceByStudentSchema = z.record(field.id(), field.enumValue(AttendanceStatus));

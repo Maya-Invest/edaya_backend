@@ -5,7 +5,7 @@ import {
   SEED_PAYMENTS,
   SEED_STUDENT_FEES,
 } from "@edaya/dev-fixtures";
-import { parseEnv } from "@/lib/bootstrap/env";
+import { parseEnv } from "@/lib/runtime/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
@@ -57,7 +57,7 @@ describe("dev finance seed", () => {
     await runDevAuthSeed(application, runtime.getAuth(), pgliteEnv);
     await runDevAccessSeed(application);
 
-    const signIn = await app.request(createAppRequest("/api/auth/sign-in/email", {
+    const signIn = await app.request(createAppRequest("/auth/sign-in/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, password: DEV_AUTH_PASSWORD }),

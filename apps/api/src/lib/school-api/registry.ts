@@ -1,8 +1,8 @@
 import { z } from "@hono/zod-openapi";
-import type { AnySchema } from "@/lib/school-api/schemas/openapi/utils/schema-fields";
-import * as commandResponseSchemas from "@/lib/school-api/schemas/openapi/command-response.schemas";
-import * as commandSchemas from "@/lib/school-api/schemas/openapi/commands.schemas";
-import * as entitySchemas from "@/lib/school-api/schemas/openapi/entities.schemas";
+import type { AnySchema } from "@/lib/school-api/schemas/helpers";
+import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
+import * as commandSchemas from "@/lib/school-api/schemas/commands";
+import * as entitySchemas from "@/lib/school-api/schemas/entities";
 import {
   AcademicPeriod,
   AcademicYear,

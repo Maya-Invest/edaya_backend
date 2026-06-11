@@ -1,5 +1,5 @@
-import type { Environment } from "@/lib/bootstrap/env";
-import { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { Environment } from "@/lib/runtime/env";
+import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { isEphemeralDatabase } from "@/lib/runtime/database-url";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
 import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb } from "@edaya/adaptor-postgres";

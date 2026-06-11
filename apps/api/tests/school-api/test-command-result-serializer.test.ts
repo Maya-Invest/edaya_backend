@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { SEED_GUARDIANS, SEED_SCHOOL_ID, splitDisplayName } from "@edaya/dev-fixtures";
 import { Guardian, StaffMember } from "@edaya/core";
-import { serializeCommandResult } from "@/lib/school-api/serialize/command-result";
+import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 
 describe("serializeCommandResult", () => {
   it("flattens domain entities returned from commands", () => {

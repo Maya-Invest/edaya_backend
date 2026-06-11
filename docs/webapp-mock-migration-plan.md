@@ -40,7 +40,7 @@ Mocks remain only for **unauthenticated demo mode** and `?demo=` load-state scen
 | Class → students | `loaders.ts` + `people-data.ts` | same as students | filter by enrollment | yes |
 | Class → subjects | `loaders.ts` + `subjects-data.ts` | subjects, class-subjects, subject-matters, staff-* | `subjects-data.ts` | yes |
 | Session / grants | `+layout.server.ts` | effective-grants | — | via auth seed |
-| Login | `authClient.signIn.email` | `/api/auth/*` | — | yes |
+| Login | `authClient.signIn.email` | `/auth/*` | — | yes |
 
 ### Partial / technical debt
 

@@ -146,7 +146,7 @@
 | **Workflow discipline** (`disciplinary-actions`, commands resolve/apply…) | Sanctions, statuts, validation | UI liste incidents simple |
 | **Commands métier** (73 actions) | promote, transfer, graduate, publish-report-card, generate-sessions… | Aucun formulaire ne les appelle |
 | **Queries agrégées** | `get-overdue-fee-count`, `get-published-report-card-count` | Pas de KPI dashboard API |
-| **Auth Better Auth** (`/api/auth/*`) | Login, session | Pas de page login |
+| **Auth Better Auth** (`/auth/*`) | Login, session | Pas de page login |
 | **Multi-écoles** (`schools`) | Plusieurs établissements | Un seul `PUBLIC_SCHOOL_ID` prévu |
 | **Périodes académiques publiées** | `publish-academic-period`, `isPublished` | Header mock statique |
 

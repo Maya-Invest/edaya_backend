@@ -1,4 +1,4 @@
-import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import {
   SEED_ACADEMIC_YEAR_ID,
   SEED_CLASS_SUBJECTS,

@@ -3,13 +3,13 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { randomUUID } from "node:crypto";
-import type { Environment } from "@/lib/bootstrap/env";
+import type { Environment } from "@/lib/runtime/env";
 import type { AppRouteHandler } from "@/lib/http/types";
-import { dispatchCoreCommand } from "@/lib/school-api/dispatch/command-dispatch";
 import { badRequestResponse, routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
-import { createSystemActorMetadata } from "@edaya/core";
+import { dispatchCoreCommand } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
-import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared-responses";
+import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
+import { createSystemActorMetadata } from "@edaya/core";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -23,15 +23,6 @@ const systemCommandRequestSchema = z.object({
   reason: z.string().min(1),
   payload: z.record(z.unknown()),
 }).openapi("SystemCommandRequest");
-
-function resolveSystemActorSecret(env: Environment): string | undefined {
-  return env.SYSTEM_ACTOR_SECRET?.trim() || undefined;
-}
-
-function isValidSystemActorSecret(env: Environment, provided: string | undefined): boolean {
-  const configured = resolveSystemActorSecret(env);
-  return Boolean(configured && provided && configured === provided);
-}
 
 export const systemCommandRoute = createRoute({
   method: "post",
@@ -86,3 +77,12 @@ export const systemCommandHandler: AppRouteHandler<typeof systemCommandRoute> = 
     return routeErrorResponse(c, err);
   }
 };
+
+function resolveSystemActorSecret(env: Environment): string | undefined {
+  return env.SYSTEM_ACTOR_SECRET?.trim() || undefined;
+}
+
+function isValidSystemActorSecret(env: Environment, provided: string | undefined): boolean {
+  const configured = resolveSystemActorSecret(env);
+  return Boolean(configured && provided && configured === provided);
+}

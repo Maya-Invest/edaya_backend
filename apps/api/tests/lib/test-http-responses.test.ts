@@ -15,7 +15,7 @@ import {
   clearEffectiveGrantsCache,
   resolveCachedEffectiveGrants,
 } from "@/lib/authorization/grants-cache/resolve-cached";
-import { getEntityWriteService } from "@/lib/school-api/dispatch/entity-services";
+import { getEntityWriteService } from "@/lib/school-api/dispatch/entities";
 
 function createTestContext(): { context: any; json: ReturnType<typeof mock> } {
   const json = mock((body: unknown, status: number) => ({ body, status }));

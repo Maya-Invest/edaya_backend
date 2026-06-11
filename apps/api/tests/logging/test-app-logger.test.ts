@@ -4,8 +4,8 @@ import {
   createBetterAuthLogger,
   resetAppLoggersForTests,
   setAppLogDestinationForTests,
-} from "@/lib/logging/app-logger";
-import type { Environment } from "@/lib/bootstrap/env";
+} from "@/lib/http/middleware/logger";
+import type { Environment } from "@/lib/runtime/env";
 
 const baseEnv = {
   RUNTIME: "node",

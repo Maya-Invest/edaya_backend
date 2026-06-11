@@ -1,4 +1,4 @@
-import type { Environment } from "@/lib/bootstrap/env";
+import type { Environment } from "@/lib/runtime/env";
 import type { AuthService } from "@/lib/runtime/types";
 
 export interface DevAuthAccount {
@@ -56,7 +56,7 @@ export async function ensureAuthUser(
   env: Environment,
   account: DevAuthAccount,
 ): Promise<string> {
-  const signInResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/api/auth/sign-in/email`, {
+  const signInResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-in/email`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -74,7 +74,7 @@ export async function ensureAuthUser(
     }
   }
 
-  const signUpResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
+  const signUpResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-up/email`, {
     method: "POST",
     headers: {
       "content-type": "application/json",

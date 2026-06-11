@@ -1,4 +1,4 @@
-import type { Environment } from "@/lib/bootstrap/env";
+import type { Environment } from "@/lib/runtime/env";
 import { buildApiRuntime } from "@/lib/runtime/create-runtime";
 import type { ApiRuntime } from "@/lib/runtime/types";
 

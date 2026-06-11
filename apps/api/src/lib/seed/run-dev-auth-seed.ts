@@ -1,5 +1,5 @@
-import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
-import type { Environment } from "@/lib/bootstrap/env";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
+import type { Environment } from "@/lib/runtime/env";
 import type { AuthService } from "@/lib/runtime/types";
 import { ensureAuthUser } from "@/lib/seed/auth-users";
 import {

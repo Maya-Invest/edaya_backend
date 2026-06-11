@@ -1,8 +1,8 @@
 import type { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 import type { PinoLogger } from "hono-pino";
 
-import type { Environment } from "@/lib/bootstrap/env";
-import type { ApiSchoolApplication } from "@/lib/school-api/runtime/school-application";
+import type { Environment } from "@/lib/runtime/env";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { AuthService } from "@/lib/runtime/types";
 import type { ActorMetadata } from "@edaya/core";
 

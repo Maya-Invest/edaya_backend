@@ -33,7 +33,7 @@ Complete the API-side Better Auth integration so a real email/password sign-in p
 ```
 apps/api
   create-auth.ts          → betterAuth({ drizzleAdapter(db), emailAndPassword })
-  auth.route.ts           → proxies /api/auth/* to auth.handler
+  auth.route.ts           → proxies /auth/* to auth.handler
   session-actor.ts        → getSession() → findOne({ subjectId }) → effectiveGrants
 
 packages/adaptor-postgres
@@ -266,7 +266,7 @@ Extend `maybeSeedDatabase` signature or call `runDevAuthSeed` from `node.ts` ent
 - [ ] Add `@edaya/adaptor-betterauth` dependency to `apps/api`
 - [ ] Update `create-auth.ts` to pass `schema`
 - [ ] Run auth migrations in `createApiRuntime` before `createAuth`
-- [ ] Verify manually: `POST /api/auth/sign-up/email` → `GET /api/auth/session` returns user
+- [ ] Verify manually: `POST /auth/sign-up/email` → `GET /auth/session` returns user
 - [ ] Update `docs/api-runtimes.md` (remove stale `auth.config.ts` reference)
 
 **Done when:** sign-up and sign-in work against pglite dev server without manual SQL.
@@ -309,7 +309,7 @@ Extend `maybeSeedDatabase` signature or call `runDevAuthSeed` from `node.ts` ent
 - [ ] `trustedOrigins` when external clients are added
 - [ ] `BETTER_AUTH_SECRET` rotation notes in runbook
 - [ ] Worker runtime: confirm auth migrations run on cold start with `postgres-js` driver
-- [ ] Rate limiting on `/api/auth/*` (Cloudflare or Hono middleware)
+- [ ] Rate limiting on `/auth/*` (Cloudflare or Hono middleware)
 
 ---
 
@@ -358,7 +358,7 @@ Better Auth integration is **complete** (webapp excluded) when:
 
 1. `@edaya/adaptor-betterauth` owns schema + migrations and is the single source of truth for auth tables
 2. `bun dev` on pglite auto-migrates auth tables and seeds linkable users
-3. `POST /api/auth/sign-in/email` + cookie → `GET /api/core/authorization/effective-grants` returns a staff actor with grants
+3. `POST /auth/sign-in/email` + cookie → `GET /api/core/authorization/effective-grants` returns a staff actor with grants
 4. Integration tests cover the sign-in → actor path
 5. Admin can link subjects via `linkActorSubject` command (Phase 3) or documented system-actor workaround until then
 

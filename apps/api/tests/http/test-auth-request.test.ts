@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
-import { parseEnv } from "@/lib/bootstrap/env";
+import { parseEnv } from "@/lib/runtime/env";
 import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
 import type { AppBindings } from "@/lib/http/types";
 
@@ -24,18 +24,18 @@ describe("toBetterAuthHandlerRequest", () => {
       await next();
     });
 
-    app.post("/api/auth/sign-in/email", async (c) => {
+    app.post("/auth/sign-in/email", async (c) => {
       capturedUrl = toBetterAuthHandlerRequest(c).url;
       return c.text("ok");
     });
 
-    await app.request("http://localhost/api/auth/sign-in/email", {
+    await app.request("http://localhost/auth/sign-in/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email: "user@example.com", password: "secret" }),
     });
 
-    expect(capturedUrl).toBe("http://localhost:9999/api/auth/sign-in/email");
+    expect(capturedUrl).toBe("http://localhost:9999/auth/sign-in/email");
   });
 
   it("preserves query strings", async () => {
@@ -47,15 +47,15 @@ describe("toBetterAuthHandlerRequest", () => {
       await next();
     });
 
-    app.get("/api/auth/get-session", async (c) => {
+    app.get("/auth/get-session", async (c) => {
       capturedUrl = toBetterAuthHandlerRequest(c).url;
       return c.text("ok");
     });
 
-    await app.request("http://127.0.0.1/api/auth/get-session?foo=bar", {
+    await app.request("http://127.0.0.1/auth/get-session?foo=bar", {
       method: "GET",
     });
 
-    expect(capturedUrl).toBe("http://localhost:9999/api/auth/get-session?foo=bar");
+    expect(capturedUrl).toBe("http://localhost:9999/auth/get-session?foo=bar");
   });
 });
