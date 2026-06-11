@@ -148,9 +148,41 @@ export const SEED_REPORT_CARD_DEFINITION_TERM = {
   ],
 } as const
 
+/** Draft template for `/configuration/report-cards` — not used for results yet. */
+export const SEED_REPORT_CARD_DEFINITION_MS_DRAFT = {
+  id: 'rcd-ms-draft',
+  name: 'Bulletin trimestriel — Collège (modèle brouillon)',
+  gradeLevelId: 'gl-6',
+  gradeScaleId: 'gs-20',
+  mockStatus: 'draft' as const,
+  isDefault: false,
+  sections: [
+    {
+      id: 'rcs-draft-fond',
+      name: 'Matières fondamentales',
+      kind: 'group' as const,
+      order: 1,
+      weight: 2,
+      mockKind: 'matieres' as const,
+      mockCoefficient: 2,
+      subjectIds: ['subj-math', 'subj-fr', 'subj-hist'],
+    },
+    {
+      id: 'rcs-draft-appr',
+      name: 'Appréciations',
+      kind: 'group' as const,
+      order: 2,
+      weight: 0,
+      mockKind: 'appreciation' as const,
+      subjectIds: [] as const,
+    },
+  ],
+} as const
+
 export const SEED_REPORT_CARD_DEFINITIONS = [
   SEED_REPORT_CARD_DEFINITION_MS6,
   SEED_REPORT_CARD_DEFINITION_TERM,
+  SEED_REPORT_CARD_DEFINITION_MS_DRAFT,
 ] as const
 
 /** Class 6a report card results for period 2025-t3 (from mock `reportCardResults[]`). */

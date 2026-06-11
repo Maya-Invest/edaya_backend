@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { DemoAccount } from '$lib/types/demo-account';
 	import { browser } from '$app/environment';
+	import { browserFetch } from '$lib/api/browser-fetch';
+	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 	import { bootstrapSession } from '$lib/auth/bootstrap';
 	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authClient } from '$lib/auth/client';
 	import { authSession } from '$lib/auth/session.svelte';
-	import { browserFetch } from '$lib/api/browser-fetch';
-	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import { t } from '$lib/i18n';
 	import { GraduationCap } from '$lib/icons';

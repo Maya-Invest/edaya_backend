@@ -1,5 +1,5 @@
 import type { PermissionCode, ScopeGrantSnapshot } from '$lib/auth/types';
-import type { StaffMember, StaffRole } from '$lib/data/school';
+import type { StaffMember, StaffRole } from '$lib/types/school';
 import { authSession } from '$lib/auth/session.svelte';
 
 interface Ctx { classId?: string; subject?: string }

@@ -1,5 +1,5 @@
 import type { EffectiveGrantsSnapshot, SessionSnapshot } from '$lib/auth/types';
-import type { School, StaffMember } from '$lib/data/school';
+import type { School, StaffMember } from '$lib/types/school';
 import { browser } from '$app/environment';
 import { authClient } from './client';
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Subject, SubjectCategory } from '$lib/data/school';
+	import type { Subject, SubjectCategory } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
 	import { Clock, Plus, User } from '$lib/icons';

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { Student } from '$lib/data/school';
+	import type { Student } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Info } from '$lib/icons';
 
 	const { s }: { s: Student } = $props();

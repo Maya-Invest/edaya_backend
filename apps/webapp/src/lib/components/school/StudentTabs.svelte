@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { Student, PedagogicalNote, Incident, AbsenceRecord, HealthRecord } from '$lib/data/school';
+	import type { Student, PedagogicalNote } from '$lib/types/school';
 	import type { SubjectGroupItem } from './drawer-types';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import {
 		AlertTriangle,

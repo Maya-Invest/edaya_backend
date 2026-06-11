@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { StudentBilling } from '$lib/data/school';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import type { StudentBilling } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock } from '$lib/icons';
 	import { cn } from '$lib/utils';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PageLoadState } from '$lib/data/load-state';
+	import type { PageLoadState } from '$lib/page/load-state';
 	import type { Snippet } from 'svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';

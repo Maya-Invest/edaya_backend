@@ -1,6 +1,6 @@
-import { loadCalendarEvents, loadIncidents } from '$lib/api/school-life-data';
-import { loadPeopleData } from '$lib/api/people-data';
 import { academicContext } from '$lib/academic/context.svelte';
+import { loadPeopleData } from '$lib/api/people-data';
+import { loadCalendarEvents, loadIncidents } from '$lib/api/school-life-data';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 

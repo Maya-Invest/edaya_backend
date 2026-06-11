@@ -17,7 +17,7 @@ import type {
 	Student,
 	StudentBilling,
 	Subject,
-} from '$lib/data/school';
+} from '$lib/types/school';
 
 export interface DetailDataSnapshot {
 	students: Student[];

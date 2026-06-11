@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { Activity } from '$lib/data/school';
+	import type { Activity } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import {

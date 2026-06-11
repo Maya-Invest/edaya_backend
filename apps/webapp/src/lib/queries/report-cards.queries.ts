@@ -2,9 +2,9 @@ import type {
 	GradeScale,
 	ReportCardDefinition,
 	ReportCardResult,
-} from '$lib/data/report-cards';
-import { loadReportCardsData } from '$lib/api/report-cards-data';
+} from '$lib/types/report-cards';
 import { academicContext } from '$lib/academic/context.svelte';
+import { loadReportCardsData } from '$lib/api/report-cards-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 

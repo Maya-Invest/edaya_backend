@@ -1,5 +1,5 @@
-import type { PageLoadMeta } from '$lib/data/load-state';
-import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from '$lib/data/load-state';
+import type { PageLoadMeta } from '$lib/page/load-state';
+import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from '$lib/page/load-state';
 
 export async function resolvePageLoad<T>(
 	url: URL,

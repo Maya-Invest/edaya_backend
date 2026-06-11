@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Activity } from '$lib/data/school';
+	import type { Activity } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
 	import { Plus, CalendarRange, Users } from '$lib/icons';

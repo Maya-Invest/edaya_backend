@@ -1,19 +1,42 @@
 <script lang="ts">
-	import type { Student } from '$lib/data/school';
+	import type { Student } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { transferStudentMutation } from '$lib/api/mutations/student.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { Users } from '$lib/icons';
+	import { toast } from '$lib/toast.svelte';
 
 	const { s }: { s: Student } = $props();
 
 	let open = $state(false);
-	let target = $derived(s.classId);
+	let target = $state(s.classId);
+	let busy = $state(false);
 
 	const currentClass = $derived(academicContext.classes.find(c => c.id === s.classId));
 	const targetClass = $derived(academicContext.classes.find(c => c.id === target));
+
+	async function confirmTransfer() {
+		if (target === s.classId || !s.enrollmentId) {
+			if (!s.enrollmentId) {
+				toast.error('Inscription active introuvable pour cet élève.');
+			}
+			return;
+		}
+
+		busy = true;
+		const ok = await transferStudentMutation({
+			enrollmentId: s.enrollmentId,
+			studentId: s.id,
+			nextClassGroupId: target,
+		});
+		busy = false;
+		if (ok) {
+			open = false;
+		}
+	}
 </script>
 
 <Dialog.Root bind:open>
@@ -56,8 +79,13 @@
 			{/if}
 		</div>
 		<Dialog.Footer>
-			<Button variant="ghost" onclick={() => (open = false)}>Annuler</Button>
-			<Button onclick={() => (open = false)} disabled={target === s.classId}>Confirmer</Button>
+			<Button variant="ghost" onclick={() => (open = false)} disabled={busy}>Annuler</Button>
+			<Button
+				onclick={confirmTransfer}
+				disabled={busy || target === s.classId || !s.enrollmentId}
+			>
+				Confirmer
+			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

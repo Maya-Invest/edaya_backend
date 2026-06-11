@@ -1,6 +1,6 @@
 import type { components } from '$lib/api/schema';
-import type { Fee, StudentBilling } from '$lib/data/school';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
+import type { Fee, StudentBilling } from '$lib/types/school';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 

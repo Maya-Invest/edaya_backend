@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { ReportCardDefinition } from '$lib/data/report-cards';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade } from '$lib/data/report-cards';
+	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { publishReportCardDefinitionMutation } from '$lib/api/mutations/report-cards.mutations';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { formatGrade } from '$lib/types/report-cards';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
@@ -23,10 +24,12 @@
 		appreciation: 'Appréciations',
 	};
 
-	function publish() {
-		const updated = reportCardsContext.publishDefinition(live.id);
-		if (updated)
-			toast.success(get(t)('reportCards.toastModelPublished', { name: updated.name }));
+	async function publish() {
+		const ok = await publishReportCardDefinitionMutation(live.id);
+		if (ok) {
+			const updated = reportCardsContext.definitions.find(entry => entry.id === live.id);
+			toast.success(get(t)('reportCards.toastModelPublished', { name: updated?.name ?? live.name }));
+		}
 	}
 </script>
 

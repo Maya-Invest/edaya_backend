@@ -1,12 +1,12 @@
 import { academicContext } from '$lib/academic/context.svelte';
+import { configureBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
+import { getDetailDataSnapshot } from '$lib/queries/detail-data.queries';
+import { fetchTeachingLogEntries } from '$lib/queries/prototype.queries';
+import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
+import { getAppShellData } from '$lib/queries/shell.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 import { teachingLogContext } from '$lib/teaching-log/context.svelte';
-import { configureBrowserSchoolClient } from '$lib/api/school-client';
-import { getDetailDataSnapshot } from '$lib/queries/detail-data.queries';
-import { getAppShellData } from '$lib/queries/shell.queries';
-import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
-import { fetchTeachingLogEntries } from '$lib/queries/prototype.queries';
 
 let bootstrapPromise: Promise<void> | null = null;
 

@@ -1,4 +1,4 @@
-import type { Guardian, Subject, StaffRole, ActivityEnrollmentStatus, Incident } from '$lib/data/school';
+import type { Guardian, Subject, StaffRole, ActivityEnrollmentStatus, Incident } from '$lib/types/school';
 import type { DrawerItem } from './drawer-types';
 import { BADGE, BADGE_DANGER, BADGE_INFO, BADGE_WARN } from '$lib/ui-tones';
 

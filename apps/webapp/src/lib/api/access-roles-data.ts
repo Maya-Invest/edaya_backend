@@ -1,8 +1,8 @@
 import type { components } from '$lib/api/schema';
-import type { Crud } from '$lib/components/school/drawer-constants';
-import type { StaffRole } from '$lib/data/school';
-import { ROLE_PERMISSIONS, STAFF_PERMISSIONS } from '$lib/components/school/drawer-constants';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
+import type { Crud } from '$lib/components/school/drawer-constants';
+import type { StaffRole } from '$lib/types/school';
+import { ROLE_PERMISSIONS, STAFF_PERMISSIONS } from '$lib/components/school/drawer-constants';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 

@@ -1,6 +1,6 @@
 import type { components } from '$lib/api/schema';
-import type { Guardian, Student } from '$lib/data/school';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
+import type { Guardian, Student } from '$lib/types/school';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -201,6 +201,7 @@ export function mapStudents(
 		return {
 			id: student.id,
 			classId,
+			enrollmentId: activeEnrollment?.id,
 			name: `${student.firstName} ${student.lastName}`,
 			initials: initialsFor(student.firstName, student.lastName),
 			email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@school.edu`,

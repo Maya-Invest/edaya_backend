@@ -131,6 +131,7 @@ describe("dev report cards seed", () => {
     expect(gradeScales.some(scale => scale.id === "gs-20")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-ms-6")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-term")).toBe(true);
+    expect(definitions.some(definition => definition.id === "rcd-ms-draft")).toBe(true);
     expect(results.some(result => result.id === "rcr-s1-t3" && result.studentId === "s1")).toBe(true);
     expect(results.some(result => result.id === "rcr-s9-t3" && result.studentId === "s9")).toBe(true);
   }, 30_000);

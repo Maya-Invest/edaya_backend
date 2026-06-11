@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { StaffRole } from '$lib/data/school';
+	import type { StaffRole } from '$lib/types/school';
 	import type { Crud } from './drawer-constants';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';

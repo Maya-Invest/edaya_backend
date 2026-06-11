@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Student } from '$lib/data/school';
+	import type { Student } from '$lib/types/school';
 	import { Camera } from '$lib/icons';
 
 	const { s }: { s: Student } = $props();

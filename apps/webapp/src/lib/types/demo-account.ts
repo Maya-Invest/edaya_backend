@@ -1,4 +1,4 @@
-import type { StaffRole } from '$lib/data/school';
+import type { StaffRole } from '$lib/types/school';
 
 export interface DemoAccount {
 	staffId: string;

@@ -10,8 +10,8 @@
 	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import SchoolSelector from '$lib/components/layout/SchoolSelector.svelte';
-	import { isLikelyDetailPath } from '$lib/detail-route-patterns';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { isLikelyDetailPath } from '$lib/detail-route-patterns';
 	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';
 	import { LogOut, LoaderCircle } from '$lib/icons';

@@ -1,5 +1,5 @@
-import type { Activity, Deadline } from '$lib/data/school';
-import type { LogEntry } from '$lib/data/teachingLog';
+import type { Activity, Deadline } from '$lib/types/school';
+import type { LogEntry } from '$lib/types/teaching-log';
 import { browserFetch } from '$lib/api/browser-fetch';
 
 interface PrototypeActivity {

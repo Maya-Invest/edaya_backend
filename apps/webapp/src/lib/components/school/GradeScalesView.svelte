@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createGradeScaleMutation } from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
@@ -15,19 +16,21 @@
 	let decimalPlaces = $state('2');
 	let description = $state('');
 
-	function handleCreate() {
-		const scale = reportCardsContext.addGradeScale({
-			name,
+	async function handleCreate() {
+		const createdName = name.trim();
+		const ok = await createGradeScaleMutation({
+			name: createdName,
 			minScore: Number(minScore),
 			maxScore: Number(maxScore),
 			passingScore: Number(passingScore),
-			decimalPlaces: Number(decimalPlaces),
-			description,
 		});
+		if (!ok) {
+			return;
+		}
 		showCreate = false;
 		name = '';
 		description = '';
-		toast.success(get(t)('gradeScales.toastCreated', { name: scale.name }));
+		toast.success(get(t)('gradeScales.toastCreated', { name: createdName }));
 	}
 </script>
 

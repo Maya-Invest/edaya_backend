@@ -1,6 +1,6 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
 	import { browser } from '$app/environment';
+	import favicon from '$lib/assets/favicon.svg';
 	import { bootstrapSession } from '$lib/auth/bootstrap';
 	import ApiDevBanner from '$lib/components/dev/ApiDevBanner.svelte';
 	import '../app.css';

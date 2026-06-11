@@ -1,5 +1,5 @@
 import type { ResolvedPathname } from '$app/types';
-import type { StaffRole } from '$lib/data/school';
+import type { StaffRole } from '$lib/types/school';
 import { appPath } from '$lib/navigation/app-navigation';
 
 export const detailHref = {

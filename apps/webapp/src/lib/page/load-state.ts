@@ -1,4 +1,4 @@
-/** État de chargement d'une page (prêt pour brancher l'API plus tard). */
+/** État de chargement d'une page. */
 export type PageLoadState = 'loading' | 'ready' | 'empty' | 'error';
 
 export interface PageLoadMeta {
@@ -9,8 +9,9 @@ export interface PageLoadMeta {
 /** ?demo=loading|empty|error — preview des états UI en dev. */
 export function resolveDemoState(url: URL): PageLoadState {
 	const demo = url.searchParams.get('demo');
-	if (demo === 'loading' || demo === 'empty' || demo === 'error')
+	if (demo === 'loading' || demo === 'empty' || demo === 'error') {
 		return demo;
+	}
 	return 'ready';
 }
 
@@ -26,11 +27,14 @@ export function finalizeStatus(
 	errorMessage = 'Unable to load this page.',
 ): PageLoadMeta {
 	let status = resolveDemoState(url);
-	if (status === 'loading')
+	if (status === 'loading') {
 		status = 'ready';
-	if (status === 'error')
+	}
+	if (status === 'error') {
 		return { status: 'error', errorMessage };
-	if (status === 'empty' || !hasItems)
+	}
+	if (status === 'empty' || !hasItems) {
 		return { status: 'empty' };
+	}
 	return { status: 'ready' };
 }

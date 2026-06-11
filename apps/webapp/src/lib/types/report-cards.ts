@@ -21,7 +21,6 @@ export interface ReportCardSection {
 	kind: ReportCardSectionKind;
 	order: number;
 	coefficient?: number;
-	/** Matières incluses ; vide = toutes les matières de la classe. */
 	subjectIds?: string[];
 }
 
@@ -67,9 +66,7 @@ export interface ReportCardResult {
 	classRank: number;
 	classSize: number;
 	sectionResults: ReportCardSectionResult[];
-	/** Commentaire professeur principal / classe. */
 	homeroomComment?: string;
-	/** Commentaire chef d'établissement / direction. */
 	principalComment?: string;
 	generatedAt?: string;
 	publishedAt?: string;

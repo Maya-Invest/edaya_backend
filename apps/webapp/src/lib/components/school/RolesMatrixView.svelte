@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { StaffMember, StaffRole } from '$lib/data/school';
+	import type { StaffMember, StaffRole } from '$lib/types/school';
+	import { authSession } from '$lib/auth/session.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import {
 		ShieldCheck,
@@ -11,7 +12,6 @@
 		Users,
 	} from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
-	import { authSession } from '$lib/auth/session.svelte';
 	import { cn } from '$lib/utils';
 
 	const {

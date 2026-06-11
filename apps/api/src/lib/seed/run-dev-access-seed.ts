@@ -134,7 +134,7 @@ export async function runDevAccessSeed(application: ApiSchoolApplication): Promi
     name: "Lead teacher",
     permissions: mergePermissions(
       COORDINATOR_PERMISSIONS,
-      [Permission.REPORT_CARD_CONFIGURE, Permission.REPORT_CARD_GENERATE, Permission.QUERY_STUDENT_DIRECTORY_READ],
+      [Permission.SCHOOL_STRUCTURE_CONFIGURE, Permission.REPORT_CARD_CONFIGURE, Permission.REPORT_CARD_GENERATE, Permission.QUERY_STUDENT_DIRECTORY_READ],
       DEV_WEBAPP_STAFF_ADMIN_READ_PERMISSIONS,
       DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS,
       DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS,

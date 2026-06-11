@@ -1,4 +1,6 @@
 import type { components } from '$lib/api/schema';
+import type { getBrowserSchoolClient } from '$lib/api/school-client';
+import type { ClassSubjectsSources } from '$lib/api/subjects-data';
 import type {
 	GradeScale,
 	ReportCardDefinition,
@@ -9,9 +11,7 @@ import type {
 	ReportCardSectionKind,
 	ReportCardSectionResult,
 	ReportCardSubjectMark,
-} from '$lib/data/report-cards';
-import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { ClassSubjectsSources } from '$lib/api/subjects-data';
+} from '$lib/types/report-cards';
 import { fetchClassSubjectsSources } from '$lib/api/subjects-data';
 
 type GradeScaleRaw = components['schemas']['GradeScale'];
@@ -41,6 +41,8 @@ const GRADE_SCALE_UI_META: Record<string, Pick<GradeScale, 'passingScore' | 'dec
 
 const DEFINITION_UI_META: Record<string, { gradeScaleId: string; status: ReportCardPublishStatus }> = {
 	'rcd-ms-6': { gradeScaleId: 'gs-20', status: 'published' },
+	'rcd-term': { gradeScaleId: 'gs-20', status: 'published' },
+	'rcd-ms-draft': { gradeScaleId: 'gs-20', status: 'draft' },
 };
 
 const SECTION_UI_META: Record<string, { kind: ReportCardSectionKind; coefficient?: number }> = {
@@ -49,6 +51,11 @@ const SECTION_UI_META: Record<string, { kind: ReportCardSectionKind; coefficient
 	'rcs-ms-sport': { kind: 'matieres', coefficient: 1 },
 	'rcs-ms-synth': { kind: 'synthese' },
 	'rcs-ms-appr': { kind: 'appreciation' },
+	'rcs-term-spé': { kind: 'matieres', coefficient: 3 },
+	'rcs-term-synth': { kind: 'synthese' },
+	'rcs-term-appr': { kind: 'appreciation' },
+	'rcs-draft-fond': { kind: 'matieres', coefficient: 2 },
+	'rcs-draft-appr': { kind: 'appreciation' },
 };
 
 const SUBJECT_TO_CLASS_SUBJECT_6A: Record<string, string> = {
@@ -173,7 +180,7 @@ export function mapReportCardDefinitions(
 			academicYearId: definition.academicYearId,
 			gradeLevelId: definition.gradeLevelId,
 			gradeScaleId: meta?.gradeScaleId ?? 'gs-20',
-			status: meta?.status ?? (definition.isDefault ? 'published' : 'draft'),
+			status: definition.isDefault ? 'published' : (meta?.status ?? 'draft'),
 			sections: mapDefinitionSections(definition.id, sectionsRaw),
 		};
 	});

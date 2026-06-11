@@ -1,3 +1,4 @@
+import type { DetailDataSnapshot } from '$lib/detail-data/context.svelte';
 import { loadAccessRolesData } from '$lib/api/access-roles-data';
 import { fetchAssessmentsSources, mapAllEvaluations } from '$lib/api/assessments-data';
 import { loadFinanceData } from '$lib/api/finance-data';
@@ -6,9 +7,8 @@ import { fetchPlanningSources, mapAllPlanningEvents, mapResources } from '$lib/a
 import { fetchActivities, fetchDeadlines } from '$lib/api/prototype-data';
 import { loadAbsences, loadCalendarEvents, loadIncidents } from '$lib/api/school-life-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
-import { fetchClassSubjectsSources, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { loadStudent360Data } from '$lib/api/student-360-data';
-import type { DetailDataSnapshot } from '$lib/detail-data/context.svelte';
+import { fetchClassSubjectsSources, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { queryClient } from '$lib/queries/client';
 
 export async function getDetailDataSnapshot(classGroupIds: string[]): Promise<DetailDataSnapshot> {

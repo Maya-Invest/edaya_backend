@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { academicContext } from '$lib/academic/context.svelte';
+	import {
+		activateAcademicYearMutation,
+		createAcademicYearMutation,
+		publishAcademicPeriodMutation,
+	} from '$lib/api/mutations/academic.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
@@ -24,24 +29,38 @@
 			.sort((a, b) => a.startDate.localeCompare(b.startDate));
 	}
 
-	function handleCreate() {
-		const year = academicContext.createYear(label, startDate, endDate);
+	async function handleCreate() {
+		const yearId = await createAcademicYearMutation(label, startDate, endDate);
+		if (!yearId) {
+			return;
+		}
+		const year = academicContext.years.find(entry => entry.id === yearId);
 		showCreate = false;
 		label = '';
-		expandedYear = year.id;
-		toast.success(get(t)('academic.toastYearCreated', { label: year.label }));
+		expandedYear = yearId;
+		toast.success(get(t)('academic.toastYearCreated', { label: year?.label ?? yearId }));
 	}
 
-	function handlePublishYear(yearId: string) {
-		const year = academicContext.publishYear(yearId);
-		if (year)
+	async function handlePublishYear(yearId: string) {
+		const ok = await activateAcademicYearMutation(yearId);
+		if (!ok) {
+			return;
+		}
+		const year = academicContext.years.find(entry => entry.id === yearId);
+		if (year) {
 			toast.success(get(t)('academic.toastYearPublished', { label: year.label }));
+		}
 	}
 
-	function handlePublishPeriod(periodId: string) {
-		const period = academicContext.publishPeriod(periodId);
-		if (period)
+	async function handlePublishPeriod(periodId: string) {
+		const ok = await publishAcademicPeriodMutation(periodId);
+		if (!ok) {
+			return;
+		}
+		const period = academicContext.periods.find(entry => entry.id === periodId);
+		if (period) {
 			toast.success(get(t)('academic.toastPeriodPublished', { label: period.label }));
+		}
 	}
 </script>
 

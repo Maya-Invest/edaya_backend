@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Subject } from '$lib/data/school';
+	import type { Subject } from '$lib/types/school';
 	import SubjectChaptersRow from './SubjectChaptersRow.svelte';
 
 	const { label, subtitle, items }: { label: string; subtitle: string; items: Subject[] } = $props();

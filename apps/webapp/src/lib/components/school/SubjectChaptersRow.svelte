@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Subject } from '$lib/data/school';
+	import type { Subject } from '$lib/types/school';
 	import { ChevronDown, BookOpen } from '$lib/icons';
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { cn } from '$lib/utils';

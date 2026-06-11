@@ -1,11 +1,11 @@
 <script lang="ts" generics="T extends PageLoadMeta">
-	import type { PageLoadMeta } from '$lib/data/load-state';
+	import type { PageLoadMeta } from '$lib/page/load-state';
 	import type { Snippet } from 'svelte';
-	import { get } from 'svelte/store';
 	import { page } from '$app/stores';
 	import { listRouteCacheKey } from '$lib/detail-route-patterns';
 	import { t } from '$lib/i18n';
 	import { LoaderCircle } from '$lib/icons';
+	import { get } from 'svelte/store';
 
 	const {
 		query,

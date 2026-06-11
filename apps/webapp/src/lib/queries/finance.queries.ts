@@ -1,6 +1,6 @@
+import { academicContext } from '$lib/academic/context.svelte';
 import { loadFinanceData } from '$lib/api/finance-data';
 import { loadPeopleData } from '$lib/api/people-data';
-import { academicContext } from '$lib/academic/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 

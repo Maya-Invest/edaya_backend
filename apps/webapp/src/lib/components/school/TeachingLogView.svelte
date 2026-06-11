@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Subject } from '$lib/data/school';
+	import type { Subject } from '$lib/types/school';
 	import { t } from '$lib/i18n';
 	import { Sparkles } from '$lib/icons';
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';

@@ -1,5 +1,5 @@
-import { fetchClassSubjectsSources, loadClassSubjects, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { academicContext } from '$lib/academic/context.svelte';
+import { fetchClassSubjectsSources, loadClassSubjects, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';

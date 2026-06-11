@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { ReportCardResult } from '$lib/data/report-cards';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import type { ReportCardResult } from '$lib/types/report-cards';
+	import { publishReportCardResultMutation } from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade } from '$lib/data/report-cards';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { formatGrade } from '$lib/types/report-cards';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
@@ -22,10 +23,16 @@
 		published: 'Publié',
 	};
 
-	function publish() {
-		const updated = reportCardsContext.publishResult(live.id);
-		if (updated)
+	async function publish() {
+		const ok = await publishReportCardResultMutation(
+			live.id,
+			live.studentId,
+			live.academicPeriodId,
+			live.definitionId,
+		);
+		if (ok) {
 			toast.success(get(t)('reportCards.toastPublished', { name: student?.name ?? '' }));
+		}
 	}
 </script>
 

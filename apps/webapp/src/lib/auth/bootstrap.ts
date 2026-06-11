@@ -1,8 +1,8 @@
 import type { SessionSnapshot } from '$lib/auth/types';
-import { ApiError } from '@edaya/api-client';
 import { browserFetch } from '$lib/api/browser-fetch';
-import { fetchStaffMemberById } from '$lib/api/staff-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { fetchStaffMemberById } from '$lib/api/staff-data';
+import { ApiError } from '@edaya/api-client';
 import { authSession } from './session.svelte';
 
 export async function bootstrapSession() {

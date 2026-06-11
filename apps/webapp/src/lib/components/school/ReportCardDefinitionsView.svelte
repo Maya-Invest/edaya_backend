@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ReportCardDefinition } from '$lib/data/report-cards';
+	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { t } from '$lib/i18n';
 	import { ChevronRight } from '$lib/icons';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { cn } from '$lib/utils';
 
 	const {

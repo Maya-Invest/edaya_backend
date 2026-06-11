@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Deadline } from '$lib/data/school';
+	import type { Deadline } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';

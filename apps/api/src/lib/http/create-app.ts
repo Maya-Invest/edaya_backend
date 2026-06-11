@@ -4,6 +4,7 @@ import { notFound, onError, serveEmojiFavicon } from "stoker/middlewares";
 import { defaultHook } from "stoker/openapi";
 
 import type { AppBindings, AppOpenAPI } from "@/lib/http/types";
+import { resolveCorsOrigin } from "@/lib/http/cors";
 import { dependenciesInjection } from "@/lib/http/dependencies";
 import { pinoLogger } from "@/lib/http/middleware/logger";
 
@@ -14,31 +15,17 @@ export function createRouter() {
   });
 }
 
-function corsOrigins(): string[] {
-  const trusted = process.env.TRUSTED_ORIGINS;
-  if (trusted) {
-    return trusted.split(",").map(origin => origin.trim()).filter(Boolean);
-  }
-  return ["http://localhost:5173", "http://localhost:4173"];
-}
-
 export default function createApp() {
   const app = createRouter();
-  const allowedOrigins = corsOrigins();
 
+  app.use(dependenciesInjection);
   app.use(cors({
-    origin: (origin) => {
-      if (!origin) {
-        return allowedOrigins[0] ?? "http://localhost:5173";
-      }
-      return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-    },
+    origin: (origin, c) => resolveCorsOrigin(origin, c.env),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Cookie", "X-Academic-Year-Id"],
     credentials: true,
   }));
 
-  app.use(dependenciesInjection);
   app.use(serveEmojiFavicon("📝"));
   app.use(pinoLogger());
 

@@ -14,6 +14,7 @@ export interface HierarchyGroup { level: string; classes: ClassNode[] }
 export interface Student {
 	id: string;
 	classId: string;
+	enrollmentId?: string;
 	name: string;
 	initials: string;
 	email: string;
@@ -83,9 +84,7 @@ export interface StaffMember {
 	department: string;
 	email: string;
 	classes: string[];
-	/** Classe attitrée pour un professeur principal */
 	mainClassId?: string;
-	/** Matières enseignées (pour 'professeur' / 'prof_principal') */
 	subjectsTaught?: string[];
 }
 
@@ -154,7 +153,6 @@ export interface StudentBilling {
 
 export type AcademicPublishStatus = 'draft' | 'published';
 
-/** Modèle de période (trimestre) — aligné futur API `PeriodDefinition`. */
 export interface PeriodDefinition {
 	id: string;
 	schoolId: string;
@@ -162,7 +160,6 @@ export interface PeriodDefinition {
 	order: number;
 }
 
-/** Niveau scolaire — aligné futur API `GradeLevel`. */
 export interface GradeLevel {
 	id: string;
 	schoolId: string;
@@ -192,7 +189,6 @@ export interface AcademicPeriod {
 	status: AcademicPublishStatus;
 }
 
-/** Établissement scolaire (aligné futur API `School`). */
 export interface School {
 	id: string;
 	name: string;
@@ -248,23 +244,4 @@ export interface Resource {
 	capacity?: number;
 	location: string;
 	status: 'available' | 'booked' | 'maintenance';
-}
-
-/** Regroupe les classes par cycle, ordonnées selon les niveaux. */
-export function buildClassHierarchy(
-	classList: ClassNode[],
-	gradeLevelList: GradeLevel[],
-): HierarchyGroup[] {
-	const sortedLevels = [...gradeLevelList].sort((a, b) => a.order - b.order);
-	const cycles: string[] = [];
-	for (const gl of sortedLevels) {
-		if (!cycles.includes(gl.cycle))
-			cycles.push(gl.cycle);
-	}
-	return cycles.map(cycle => ({
-		level: cycle,
-		classes: sortedLevels
-			.filter(gl => gl.cycle === cycle)
-			.flatMap(gl => classList.filter(c => c.gradeLevelId === gl.id)),
-	}));
 }

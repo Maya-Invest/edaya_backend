@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Evaluation } from '$lib/data/school';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import type { Evaluation } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import DrawerField from './DrawerField.svelte';

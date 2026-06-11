@@ -1,4 +1,4 @@
-import type { components } from '$lib/api/schema';
+import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type {
 	AcademicPeriod,
 	AcademicYear,
@@ -7,9 +7,8 @@ import type {
 	HierarchyGroup,
 	PeriodDefinition,
 	School,
-} from '$lib/data/school';
-import { buildClassHierarchy } from '$lib/data/school';
-import type { getBrowserSchoolClient } from '$lib/api/school-client';
+} from '$lib/types/school';
+import { buildClassHierarchy } from '$lib/academic/hierarchy';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 

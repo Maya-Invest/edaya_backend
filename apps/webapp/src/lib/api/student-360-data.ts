@@ -1,6 +1,6 @@
 import type { components } from '$lib/api/schema';
-import type { ChronicCondition, HealthRecord, PedagogicalNote } from '$lib/data/school';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
+import type { ChronicCondition, HealthRecord, PedagogicalNote } from '$lib/types/school';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 

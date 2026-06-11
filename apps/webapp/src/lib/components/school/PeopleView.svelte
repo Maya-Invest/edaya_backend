@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Guardian, StaffMember, Student } from '$lib/data/school';
+	import type { Guardian, StaffMember, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { StaffRole } from '$lib/data/school';
+	import type { StaffRole } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';

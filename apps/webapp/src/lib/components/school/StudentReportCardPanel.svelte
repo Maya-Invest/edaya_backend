@@ -1,12 +1,16 @@
 <script lang="ts">
-	import type { Student } from '$lib/data/school';
+	import type { Student } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import {
+		generateReportCardResultMutation,
+		publishReportCardResultMutation,
+	} from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade } from '$lib/data/report-cards';
 	import { t } from '$lib/i18n';
 	import { FileSpreadsheet } from '$lib/icons';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { formatGrade } from '$lib/types/report-cards';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 	import DrawerEmptyState from './DrawerEmptyState.svelte';
@@ -24,17 +28,26 @@
 		latest ? academicContext.periods.find(p => p.id === latest.academicPeriodId) : null,
 	);
 
-	function generate() {
-		const r = reportCardsContext.generateResult(s.id);
-		if (r)
+	async function generate() {
+		const ok = await generateReportCardResultMutation(s.id);
+		if (ok) {
 			toast.success(get(t)('reportCards.toastGenerated', { name: s.name }));
+		}
 	}
 
-	function publish() {
-		if (!latest)
+	async function publish() {
+		if (!latest) {
 			return;
-		reportCardsContext.publishResult(latest.id);
-		toast.success(get(t)('reportCards.toastPublished', { name: s.name }));
+		}
+		const ok = await publishReportCardResultMutation(
+			latest.id,
+			latest.studentId,
+			latest.academicPeriodId,
+			latest.definitionId,
+		);
+		if (ok) {
+			toast.success(get(t)('reportCards.toastPublished', { name: s.name }));
+		}
 	}
 </script>
 

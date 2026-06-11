@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { School } from '$lib/data/school';
+	import type { School } from '$lib/types/school';
 	import { authSession } from '$lib/auth/session.svelte';
 	import { Building2 } from '$lib/icons';
 

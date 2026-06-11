@@ -1,10 +1,9 @@
 <script lang="ts">
-	import type { Incident } from '$lib/data/school';
+	import type { Incident } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/label/label.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import { incidentSevTone, incidentCatTone } from './drawer-constants';

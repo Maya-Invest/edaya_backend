@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Plus } from '$lib/icons';
 	import { cn } from '$lib/utils';

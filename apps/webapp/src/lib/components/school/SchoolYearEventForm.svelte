@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SchoolYearEvent } from '$lib/data/school';
+	import type { SchoolYearEvent } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Input from '$lib/components/ui/input/input.svelte';

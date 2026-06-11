@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Guardian } from '$lib/data/school';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import type { Guardian } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { relationKey } from './drawer-constants';
 	import DrawerField from './DrawerField.svelte';

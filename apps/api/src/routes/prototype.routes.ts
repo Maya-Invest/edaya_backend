@@ -1,8 +1,7 @@
-import { DEV_AUTH_STAFF_ACCOUNTS } from "@edaya/dev-fixtures";
+import { DEV_AUTH_STAFF_ACCOUNTS, SEED_ACTIVITIES, SEED_DEADLINES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { SEED_ACTIVITIES, SEED_DEADLINES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
 import type { AppRouteHandler } from "@/lib/http/types";
 import { unauthorizedResponse } from "@/lib/http/responses";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";

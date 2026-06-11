@@ -1,13 +1,18 @@
 <script lang="ts">
-	import type { ReportCardResult } from '$lib/data/report-cards';
+	import type { ReportCardResult } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import {
+		generateReportCardResultMutation,
+		generateReportCardsForClassMutation,
+		publishReportCardResultMutation,
+	} from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade } from '$lib/data/report-cards';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { FileSpreadsheet, Sparkles } from '$lib/icons';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { formatGrade } from '$lib/types/report-cards';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
@@ -36,23 +41,35 @@
 		return results.find(r => r.studentId === studentId);
 	}
 
-	function generateAll() {
-		const n = reportCardsContext.generateForClass(classId);
+	async function generateAll() {
+		const n = await generateReportCardsForClassMutation(classId);
+		if (n === null) {
+			return;
+		}
 		toast.success(get(t)('reportCards.toastGeneratedClass', { n: String(n) }));
 	}
 
-	function generateOne(studentId: string) {
-		const r = reportCardsContext.generateResult(studentId);
-		if (r) {
+	async function generateOne(studentId: string) {
+		const ok = await generateReportCardResultMutation(studentId);
+		if (ok) {
 			const name = detailDataContext.students.find(s => s.id === studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastGenerated', { name }));
 		}
 	}
 
-	function publishOne(resultId: string) {
-		const r = reportCardsContext.publishResult(resultId);
-		if (r) {
-			const name = detailDataContext.students.find(s => s.id === r.studentId)?.name ?? '';
+	async function publishOne(resultId: string) {
+		const result = reportCardsContext.results.find(entry => entry.id === resultId);
+		if (!result) {
+			return;
+		}
+		const ok = await publishReportCardResultMutation(
+			result.id,
+			result.studentId,
+			result.academicPeriodId,
+			result.definitionId,
+		);
+		if (ok) {
+			const name = detailDataContext.students.find(s => s.id === result.studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastPublished', { name }));
 		}
 	}

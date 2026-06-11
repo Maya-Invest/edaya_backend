@@ -1,4 +1,4 @@
-import type { LogEntry } from '$lib/data/teachingLog';
+import type { LogEntry } from '$lib/types/teaching-log';
 
 let runtimeEntries: LogEntry[] = [];
 let ready = false;

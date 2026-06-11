@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { StaffRole } from '$lib/data/school';
+	import type { StaffRole } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import RolesMatrixView from '$lib/components/school/RolesMatrixView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';

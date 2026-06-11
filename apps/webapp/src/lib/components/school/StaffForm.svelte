@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { StaffMember, StaffRole } from '$lib/data/school';
+	import type { StaffMember, StaffRole } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { t } from '$lib/i18n';
