@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
 	import type { Guardian, Student } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
+	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		guardians,
 		students,
 		onSelect,
@@ -19,15 +19,15 @@
 	} = $props();
 
 	const relationKey: Record<Guardian['relation'], string> = {
-		Mother: 'guardian.relation.Mother',
-		Father: 'guardian.relation.Father',
+		'Mother': 'guardian.relation.Mother',
+		'Father': 'guardian.relation.Father',
 		'Legal guardian': 'guardian.relation.LegalGuardian',
 	};
 
 	let q = $state('');
 
 	const list = $derived(
-		guardians.filter((g) => g.name.toLowerCase().includes(q.toLowerCase()))
+		guardians.filter(g => g.name.toLowerCase().includes(q.toLowerCase())),
 	);
 </script>
 
@@ -73,7 +73,7 @@
 			{#each list as g (g.id)}
 				{@const active = selectedId === g.id}
 				{@const linked = g.studentIds
-					.map((id) => students.find((s) => s.id === id))
+					.map(id => students.find(s => s.id === id))
 					.filter(Boolean) as typeof students}
 				<li>
 					<button
@@ -81,7 +81,7 @@
 						onclick={() => onSelect?.(g)}
 						class={cn(
 							'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-3.5 text-left transition-colors last:border-b-0',
-							active ? 'bg-primary/10' : 'hover:bg-secondary'
+							active ? 'bg-primary/10' : 'hover:bg-secondary',
 						)}
 					>
 						<div class="col-span-4 flex items-center gap-3">

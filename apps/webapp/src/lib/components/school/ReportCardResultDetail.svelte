@@ -1,30 +1,31 @@
 <script lang="ts">
 	import type { ReportCardResult } from '$lib/data/report-cards';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { formatGrade, gradeScaleById, reportCardDefinitionById } from '$lib/data/report-cards';
 	import { students } from '$lib/data/school';
-	import { reportCardsContext } from '$lib/report-cards/context.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
-	let { result }: { result: ReportCardResult } = $props();
+	const { result }: { result: ReportCardResult } = $props();
 
-	const live = $derived(reportCardsContext.results.find((r) => r.id === result.id) ?? result);
-	const student = $derived(students.find((s) => s.id === live.studentId));
+	const live = $derived(reportCardsContext.results.find(r => r.id === result.id) ?? result);
+	const student = $derived(students.find(s => s.id === live.studentId));
 	const definition = $derived(reportCardDefinitionById(live.definitionId));
 	const scale = $derived(gradeScaleById(live.gradeScaleId));
 
 	const statusLabel: Record<ReportCardResult['status'], string> = {
 		draft: 'Brouillon',
 		generated: 'Généré',
-		published: 'Publié'
+		published: 'Publié',
 	};
 
 	function publish() {
 		const updated = reportCardsContext.publishResult(live.id);
-		if (updated) toast.success(get(t)('reportCards.toastPublished', { name: student?.name ?? '' }));
+		if (updated)
+			toast.success(get(t)('reportCards.toastPublished', { name: student?.name ?? '' }));
 	}
 </script>
 
@@ -38,8 +39,8 @@
 				live.status === 'published'
 					? 'bg-accent/15 text-accent-foreground'
 					: live.status === 'generated'
-						? 'bg-highlight-soft text-highlight'
-						: 'bg-secondary text-muted-foreground'
+					? 'bg-highlight-soft text-highlight'
+					: 'bg-secondary text-muted-foreground',
 			)}
 		>
 			{statusLabel[live.status]}
@@ -67,7 +68,7 @@
 		{#if section.marks.length > 0}
 			<div>
 				<p class="mb-2 font-display text-sm font-semibold">
-					{definition?.sections.find((s) => s.id === section.sectionId)?.name ?? 'Section'}
+					{definition?.sections.find(s => s.id === section.sectionId)?.name ?? 'Section'}
 					{#if section.sectionAverage !== undefined}
 						<span class="ml-2 font-mono text-xs text-muted-foreground">
 							(moy. {scale ? formatGrade(section.sectionAverage, scale.id) : section.sectionAverage})

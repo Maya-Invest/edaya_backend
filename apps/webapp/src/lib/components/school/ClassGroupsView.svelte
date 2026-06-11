@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Layers, Pencil, Plus, Trash2 } from '$lib/icons';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { gradeLevelById, gradeLevels } from '$lib/data/school';
 	import { t } from '$lib/i18n';
+	import { Layers, Pencil, Plus, Trash2 } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
 	import { get } from 'svelte/store';
 
@@ -25,8 +25,9 @@
 	}
 
 	function startEdit(classId: string) {
-		const entry = academicContext.classes.find((c) => c.id === classId);
-		if (!entry) return;
+		const entry = academicContext.classes.find(c => c.id === classId);
+		if (!entry)
+			return;
 		editingId = classId;
 		name = entry.name;
 		gradeLevelId = entry.gradeLevelId;
@@ -35,15 +36,17 @@
 	}
 
 	function handleSubmit() {
-		if (!name.trim()) return;
+		if (!name.trim())
+			return;
 		if (editingId) {
 			academicContext.updateClass(editingId, {
 				name: name.trim(),
 				gradeLevelId,
-				studentCount: Number(studentCount) || 0
+				studentCount: Number(studentCount) || 0,
 			});
 			toast.success(get(t)('classGroups.toastUpdated', { name: name.trim() }));
-		} else {
+		}
+		else {
 			const created = academicContext.addClass(name.trim(), gradeLevelId);
 			if (created) {
 				academicContext.updateClass(created.id, { studentCount: Number(studentCount) || 0 });
@@ -55,8 +58,10 @@
 
 	function handleDelete(classId: string) {
 		const removed = academicContext.removeClass(classId);
-		if (removed) toast.success(get(t)('classGroups.toastDeleted', { name: removed.name }));
-		if (editingId === classId) resetForm();
+		if (removed)
+			toast.success(get(t)('classGroups.toastDeleted', { name: removed.name }));
+		if (editingId === classId)
+			resetForm();
 	}
 </script>
 

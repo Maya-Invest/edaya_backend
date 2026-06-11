@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import type { PageData } from './$types';
 	import { page } from '$app/stores';
-	import DataState from '$lib/components/ui/DataState.svelte';
 	import GuardiansView from '$lib/components/school/GuardiansView.svelte';
+	import DataState from '$lib/components/ui/DataState.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
-	import type { PageData } from './$types';
+	import { appGoto } from '$lib/navigation/app-navigation';
 
-	let { data }: { data: PageData } = $props();
+	const { data }: { data: PageData } = $props();
 
 	const selectedId = $derived($page.params.id);
 </script>
@@ -21,7 +21,7 @@
 	<GuardiansView
 		guardians={data.guardians}
 		students={data.students}
-		onSelect={(g) => goto(detailHref.schoolGuardian(g.id))}
+		onSelect={g => appGoto(detailHref.schoolGuardian(g.id))}
 		{selectedId}
 	/>
 </DataState>

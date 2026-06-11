@@ -1,20 +1,17 @@
 <script lang="ts">
 	import type { StaffMember, StaffRole } from '$lib/data/school';
-	import { ROLE_LABEL_FR } from '$lib/permissions';
-	import { t } from '$lib/i18n';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Select from '$lib/components/ui/select';
+	import { t } from '$lib/i18n';
+	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import DrawerField from './DrawerField.svelte';
 	import StaffPermissionsBlock from './StaffPermissionsBlock.svelte';
 
-	let { s }: { s: StaffMember } = $props();
+	const { s }: { s: StaffMember } = $props();
 
 	const roles: StaffRole[] = ['directeur', 'prof_principal', 'professeur', 'educateur'];
 
-	let role = $state<StaffRole>(roles[0]);
-	$effect.pre(() => {
-		role = s.role;
-	});
+	let role = $state<StaffRole>(s.role);
 </script>
 
 <div class="space-y-5">
@@ -40,7 +37,7 @@
 		<Select.Root
 			type="single"
 			value={role}
-			onValueChange={(v) => v && (role = v as StaffRole)}
+			onValueChange={v => v && (role = v as StaffRole)}
 		>
 			<Select.Trigger>
 				<Select.Value />

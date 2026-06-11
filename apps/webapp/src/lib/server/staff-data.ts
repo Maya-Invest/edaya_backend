@@ -1,6 +1,6 @@
-import { apiFetch } from '$lib/server/api-client';
 import type { components } from '$lib/api/schema';
 import type { StaffMember, StaffRole } from '$lib/data/school';
+import { apiFetch } from '$lib/server/api-client';
 
 type StaffRaw = components['schemas']['StaffMember'];
 type RoleAssignmentRaw = components['schemas']['StaffRoleAssignment'];
@@ -11,7 +11,7 @@ function mapStaffRole(
 	member: StaffRaw,
 	roleAssignments: RoleAssignmentRaw[],
 ): StaffRole {
-	const assignment = roleAssignments.find((entry) => entry.staffId === member.id);
+	const assignment = roleAssignments.find(entry => entry.staffId === member.id);
 	if (assignment && assignment.roleIds.length > 0) {
 		const assignedRole = assignment.roleIds[0];
 		if (assignedRole === 'directeur' || assignedRole === 'director' || assignedRole === 'role-director') {
@@ -25,16 +25,22 @@ function mapStaffRole(
 		}
 	}
 
-	if (member.id === 'st5') return 'directeur';
-	if (member.id === 'st3') return 'prof_principal';
-	if (member.id === 'st7') return 'educateur';
+	if (member.id === 'st5')
+		return 'directeur';
+	if (member.id === 'st3')
+		return 'prof_principal';
+	if (member.id === 'st7')
+		return 'educateur';
 	return 'professeur';
 }
 
 function mapDepartment(member: StaffRaw, role: StaffRole): string {
-	if (role === 'directeur') return 'Direction';
-	if (role === 'educateur') return 'Vie scolaire';
-	if (member.id === 'st3') return 'Lettres';
+	if (role === 'directeur')
+		return 'Direction';
+	if (role === 'educateur')
+		return 'Vie scolaire';
+	if (member.id === 'st3')
+		return 'Lettres';
 	return 'Sciences';
 }
 
@@ -48,18 +54,18 @@ export function mapStaffMembers(
 		const role = mapStaffRole(member, roleAssignmentsRaw);
 
 		const classesTaught = (assignmentsRaw ?? [])
-			.filter((entry) => entry.staffId === member.id && entry.classGroupId)
-			.map((entry) => entry.classGroupId as string);
+			.filter(entry => entry.staffId === member.id && entry.classGroupId)
+			.map(entry => entry.classGroupId as string);
 
-		const homeroomClass = (classGroupsRaw ?? []).find((entry) => entry.homeroomStaffId === member.id);
+		const homeroomClass = (classGroupsRaw ?? []).find(entry => entry.homeroomStaffId === member.id);
 		const mainClassId = homeroomClass?.id;
 		if (mainClassId && !classesTaught.includes(mainClassId)) {
 			classesTaught.push(mainClassId);
 		}
 
 		const subjectsTaught = (assignmentsRaw ?? [])
-			.filter((entry) => entry.staffId === member.id && entry.classSubjectId)
-			.map((entry) => entry.classSubjectId as string);
+			.filter(entry => entry.staffId === member.id && entry.classSubjectId)
+			.map(entry => entry.classSubjectId as string);
 
 		if (member.id === 'st3' && subjectsTaught.length === 0) {
 			subjectsTaught.push('subj-6-fr');
@@ -111,5 +117,5 @@ export async function fetchStaffMembers(): Promise<StaffMember[]> {
 
 export async function fetchStaffMemberById(staffId: string): Promise<StaffMember | null> {
 	const members = await fetchStaffSources();
-	return members.find((member) => member.id === staffId) ?? null;
+	return members.find(member => member.id === staffId) ?? null;
 }

@@ -1,8 +1,8 @@
 {
-	"name": "sveltekit",
-	"private": true,
-	"version": "0.0.1",
+	"name": "@edaya/webapp",
 	"type": "module",
+	"version": "0.0.1",
+	"private": true,
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -12,7 +12,19 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"lint": "eslint src",
+		"lint:fix": "eslint src --fix",
 		"openapi:generate": "openapi-typescript src/lib/api/openapi.json -o src/lib/api/schema.d.ts"
+	},
+	"dependencies": {
+		"@edaya/api-client": "workspace:*",
+		"@internationalized/date": "^3.12.2",
+		"better-auth": "^1.6.16",
+		"bits-ui": "^2.18.1",
+		"clsx": "^2.1.1",
+		"lucide-svelte": "^1.0.1",
+		"openapi-fetch": "^0.17.0",
+		"tailwind-merge": "^3.6.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20251217.0",
@@ -31,14 +43,5 @@
 		"typescript": "^6.0.2",
 		"vite": "^8.0.7",
 		"wrangler": "^4.54.0"
-	},
-	"dependencies": {
-		"@internationalized/date": "^3.12.2",
-		"better-auth": "^1.6.16",
-		"bits-ui": "^2.18.1",
-		"clsx": "^2.1.1",
-		"lucide-svelte": "^1.0.1",
-		"openapi-fetch": "^0.17.0",
-		"tailwind-merge": "^3.6.0"
 	}
 }

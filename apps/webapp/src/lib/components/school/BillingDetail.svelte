@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { Check, Clock } from '$lib/icons';
 	import type { StudentBilling } from '$lib/data/school';
-	import { students, fees } from '$lib/data/school';
-	import { cn } from '$lib/utils';
-	import { locale, t } from '$lib/i18n';
-	import Label from '$lib/components/ui/label/label.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import { students, fees } from '$lib/data/school';
+	import { locale, t } from '$lib/i18n';
+	import { Check, Clock } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let { b }: { b: StudentBilling } = $props();
+	const { b }: { b: StudentBilling } = $props();
 
-	const student = $derived(students.find((s) => s.id === b.studentId));
-	const fee = $derived(fees.find((f) => f.id === b.feeId));
+	const student = $derived(students.find(s => s.id === b.studentId));
+	const fee = $derived(fees.find(f => f.id === b.feeId));
 	const remaining = $derived(b.total - b.paid);
 	const pct = $derived((b.paid / b.total) * 100);
 </script>
@@ -67,7 +67,7 @@
 							<div
 								class={cn(
 									'flex h-7 w-7 items-center justify-center rounded-full',
-									inst.status === 'paid' ? 'bg-accent text-primary' : 'bg-secondary text-muted-foreground'
+									inst.status === 'paid' ? 'bg-accent text-primary' : 'bg-secondary text-muted-foreground',
 								)}
 							>
 								{#if inst.status === 'paid'}
@@ -92,7 +92,7 @@
 								'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase',
 								inst.status === 'paid'
 									? 'bg-secondary text-foreground/80'
-									: 'bg-highlight-soft text-highlight'
+									: 'bg-highlight-soft text-highlight',
 							)}
 						>
 							{$t(`installment.${inst.status}`)}

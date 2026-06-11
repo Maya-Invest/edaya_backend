@@ -1,7 +1,7 @@
-import { checkApiHealth, apiFetch } from '$lib/server/api-client';
-import { fetchStaffMemberById } from '$lib/server/staff-data';
 import type { SessionSnapshot } from '$lib/auth/types';
 import type { StaffMember } from '$lib/data/school';
+import { checkApiHealth, apiFetch } from '$lib/server/api-client';
+import { fetchStaffMemberById } from '$lib/server/staff-data';
 
 export async function load() {
 	const api = await checkApiHealth();

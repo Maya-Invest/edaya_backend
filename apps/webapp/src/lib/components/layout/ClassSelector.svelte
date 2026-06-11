@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import type { HierarchyGroup } from '$lib/data/school';
+	import { page } from '$app/stores';
+	import { appGoto, classItemHref } from '$lib/navigation/app-navigation';
 
-	let { hierarchy }: { hierarchy: HierarchyGroup[] } = $props();
+	const { hierarchy }: { hierarchy: HierarchyGroup[] } = $props();
 
 	const classId = $derived($page.params.classId ?? '6a');
-	const currentSegment = $derived($page.url.pathname.split('/').pop() ?? 'students');
+	const currentSegment = $derived($page.url.pathname.split('/')[3] ?? 'students');
 
 	function onChange(e: Event) {
 		const target = e.target as HTMLSelectElement;
-		goto(`/classes/${target.value}/${currentSegment}`);
+		appGoto(classItemHref(target.value, currentSegment));
 	}
 </script>
 

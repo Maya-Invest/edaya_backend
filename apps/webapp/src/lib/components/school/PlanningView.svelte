@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { ClipboardCheck, MapPin, Plus } from '$lib/icons';
 	import type { PlanningEvent, ClassNode, Student } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { ClipboardCheck, MapPin, Plus } from '$lib/icons';
+	import { cn } from '$lib/utils';
 	import AttendanceFlow from './AttendanceFlow.svelte';
 
-	let {
+	const {
 		events,
 		classes,
 		students,
@@ -25,10 +25,10 @@
 	let attendanceSession = $state<PlanningEvent | null>(null);
 
 	const attendanceClass = $derived(
-		attendanceSession ? classes.find((c) => c.id === attendanceSession!.classId) : null
+		attendanceSession ? classes.find(c => c.id === attendanceSession!.classId) : null,
 	);
 	const attendanceStudents = $derived(
-		attendanceSession ? students.filter((s) => s.classId === attendanceSession!.classId) : []
+		attendanceSession ? students.filter(s => s.classId === attendanceSession!.classId) : [],
 	);
 
 	function subjectTone(subject: string) {
@@ -61,7 +61,7 @@
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-5">
 		{#each DAYS as day (day)}
 			{@const items = events
-				.filter((e) => e.day === day)
+				.filter(e => e.day === day)
 				.sort((a, b) => a.start.localeCompare(b.start))}
 			<div class="flex flex-col rounded-2xl border border-border bg-card/50 p-3">
 				<div class="mb-3 flex items-center justify-between px-1">
@@ -79,7 +79,7 @@
 							class={cn(
 								'group relative rounded-xl border transition-all hover:-translate-y-0.5 hover:shadow-soft',
 								subjectTone(ev.subject),
-								active && 'ring-2 ring-primary'
+								active && 'ring-2 ring-primary',
 							)}
 						>
 							<button

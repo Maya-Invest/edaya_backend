@@ -6,9 +6,9 @@ const DETAIL_PATH_PATTERNS = [
 	/^\/configuration\/subjects\/[^/]+$/,
 	/^\/configuration\/staff\/[^/]+$/,
 	/^\/configuration\/roles\/[^/]+$/,
-	/^\/configuration\/report-cards\/[^/]+$/
+	/^\/configuration\/report-cards\/[^/]+$/,
 ] as const;
 
 export function isLikelyDetailPath(pathname: string): boolean {
-	return DETAIL_PATH_PATTERNS.some((pattern) => pattern.test(pathname));
+	return DETAIL_PATH_PATTERNS.some(pattern => pattern.test(pathname));
 }

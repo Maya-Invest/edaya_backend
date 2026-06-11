@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { Check, X, Clock, ArrowLeft, RotateCcw } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { locale, t } from '$lib/i18n';
+	import { Check, X, Clock, ArrowLeft, RotateCcw } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
 	type Status = 'present' | 'absent' | 'late';
 
-	let {
+	const {
 		open,
 		onClose,
 		students,
@@ -39,7 +39,7 @@
 
 	const counts = $derived.by(() => {
 		const c = { present: 0, absent: 0, late: 0 } as Record<Status, number>;
-		Object.values(marks).forEach((m) => (c[m] += 1));
+		Object.values(marks).forEach(m => (c[m] += 1));
 		return c;
 	});
 
@@ -59,9 +59,11 @@
 	} satisfies Record<Status, { label: string; pill: string }>);
 
 	function setStatus(s: Status) {
-		if (!current) return;
+		if (!current)
+			return;
 		marks = { ...marks, [current.id]: s };
-		if (index < total - 1) index += 1;
+		if (index < total - 1)
+			index += 1;
 	}
 
 	function reset() {
@@ -130,7 +132,7 @@
 							<div
 								class={cn(
 									'mx-auto flex h-24 w-24 items-center justify-center rounded-full font-display text-3xl font-semibold text-primary',
-									AVATAR_TINTS[index % AVATAR_TINTS.length]
+									AVATAR_TINTS[index % AVATAR_TINTS.length],
 								)}
 							>
 								{current.initials}
@@ -150,8 +152,8 @@
 											i === index
 												? 'w-5 bg-accent'
 												: marks[s.id]
-													? 'w-1.5 bg-accent/60'
-													: 'w-1.5 bg-white/15'
+												? 'w-1.5 bg-accent/60'
+												: 'w-1.5 bg-white/15',
 										)}
 									></span>
 								{/each}
@@ -214,7 +216,7 @@
 											<div
 												class={cn(
 													'flex h-9 w-9 items-center justify-center rounded-full font-display text-xs font-semibold text-primary',
-													AVATAR_TINTS[i % AVATAR_TINTS.length]
+													AVATAR_TINTS[i % AVATAR_TINTS.length],
 												)}
 											>
 												{s.initials}
@@ -224,7 +226,7 @@
 										<span
 											class={cn(
 												'rounded-full px-2.5 py-1 text-[11px] font-medium',
-												meta.pill
+												meta.pill,
 											)}
 										>
 											{meta.label}
@@ -258,9 +260,8 @@
 							class={cn(
 								'flex flex-col items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-sm font-medium transition-all active:scale-[0.97]',
 								statusKey === 'present' && 'hover:border-accent/40 hover:bg-accent/20',
-								statusKey === 'absent' &&
-									'hover:border-destructive/40 hover:bg-destructive/20',
-								statusKey === 'late' && 'hover:border-highlight/40 hover:bg-highlight/20'
+								statusKey === 'absent' && 'hover:border-destructive/40 hover:bg-destructive/20',
+								statusKey === 'late' && 'hover:border-highlight/40 hover:bg-highlight/20',
 							)}
 						>
 							{#if statusKey === 'present'}

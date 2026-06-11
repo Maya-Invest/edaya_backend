@@ -1,22 +1,19 @@
 <script lang="ts">
-	import { Users } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
-	import { classes } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import { classes } from '$lib/data/school';
+	import { Users } from '$lib/icons';
 
-	let { s }: { s: Student } = $props();
+	const { s }: { s: Student } = $props();
 
 	let open = $state(false);
-	let target = $state('');
-	$effect.pre(() => {
-		target = s.classId;
-	});
+	let target = $state(s.classId);
 
-	const currentClass = $derived(classes.find((c) => c.id === s.classId));
-	const targetClass = $derived(classes.find((c) => c.id === target));
+	const currentClass = $derived(classes.find(c => c.id === s.classId));
+	const targetClass = $derived(classes.find(c => c.id === target));
 </script>
 
 <Dialog.Root bind:open>
@@ -39,7 +36,7 @@
 			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 				Nouvelle classe
 			</Label>
-			<Select.Root type="single" value={target} onValueChange={(v) => v && (target = v)}>
+			<Select.Root type="single" value={target} onValueChange={v => v && (target = v)}>
 				<Select.Trigger>
 					<Select.Value />
 				</Select.Trigger>

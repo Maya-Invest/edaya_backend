@@ -1,11 +1,13 @@
-import { derived, writable } from 'svelte/store';
+import type { Lang } from './dictionaries';
 import { browser } from '$app/environment';
-import { dictionaries, type Lang } from './dictionaries';
+import { derived, writable } from 'svelte/store';
+import { dictionaries } from './dictionaries';
 
 export type { Lang } from './dictionaries';
 
 function initialLang(): Lang {
-	if (!browser) return 'fr';
+	if (!browser)
+		return 'fr';
 	const stored = localStorage.getItem('lang');
 	return stored === 'fr' || stored === 'en' ? stored : 'fr';
 }
@@ -19,7 +21,7 @@ lang.subscribe((l) => {
 	}
 });
 
-export const locale = derived(lang, ($lang) => ($lang === 'fr' ? 'fr-FR' : 'en-US'));
+export const locale = derived(lang, $lang => ($lang === 'fr' ? 'fr-FR' : 'en-US'));
 
 function translate($lang: Lang, key: string, vars?: Record<string, string | number>): string {
 	let s = dictionaries[$lang][key] ?? dictionaries.en[key] ?? key;

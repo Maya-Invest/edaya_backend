@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Plus, ChevronRight, Search } from '$lib/icons';
-	import type { Activity, ActivityEnrollment } from '$lib/data/school';
-	import { students, classes, hierarchy } from '$lib/data/school';
-	import { cn } from '$lib/utils';
+	import type { Activity } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import { students, classes, hierarchy } from '$lib/data/school';
+	import { Plus, ChevronRight, Search } from '$lib/icons';
+	import { cn } from '$lib/utils';
 	import {
 		ENROLL_STATUS_STYLE,
 		ENROLL_STATUS_LABEL,
@@ -13,36 +13,32 @@
 		fmtActivityDate,
 	} from './drawer-constants';
 
-	let { a }: { a: Activity } = $props();
+	const { a }: { a: Activity } = $props();
 
-	let enrollments = $state<ActivityEnrollment[]>([]);
-	$effect.pre(() => {
-		enrollments = [...a.enrollments];
-	});
+	let enrollments = $state([...a.enrollments]);
 	let openAdd = $state(false);
-	let expandedLevels = $state<Set<string>>(new Set(hierarchy.map((g) => g.level)));
+	let expandedLevels = $state(hierarchy.map(g => g.level));
 	let selectedClassId = $state<string | null>(hierarchy[0]?.classes[0]?.id ?? null);
 	let search = $state('');
 
-	const enrolledIds = $derived(new Set(enrollments.map((e) => e.studentId)));
+	const enrolledIds = $derived(new Set(enrollments.map(e => e.studentId)));
 
 	const selectedClass = $derived(
-		selectedClassId ? (hierarchy.flatMap((g) => g.classes).find((c) => c.id === selectedClassId) ?? null) : null
+		selectedClassId ? (hierarchy.flatMap(g => g.classes).find(c => c.id === selectedClassId) ?? null) : null,
 	);
-	const classStudents = $derived(selectedClassId ? students.filter((s) => s.classId === selectedClassId) : []);
-	const filteredStudents = $derived(classStudents.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())));
+	const classStudents = $derived(selectedClassId ? students.filter(s => s.classId === selectedClassId) : []);
+	const filteredStudents = $derived(classStudents.filter(s => s.name.toLowerCase().includes(search.toLowerCase())));
 
 	function toggleStatus(studentId: string) {
-		enrollments = enrollments.map((e) =>
-			e.studentId === studentId ? { ...e, status: ENROLL_NEXT[e.status] } : e
+		enrollments = enrollments.map(e =>
+			e.studentId === studentId ? { ...e, status: ENROLL_NEXT[e.status] } : e,
 		);
 	}
 
 	function toggleLevel(level: string) {
-		const next = new Set(expandedLevels);
-		if (next.has(level)) next.delete(level);
-		else next.add(level);
-		expandedLevels = next;
+		expandedLevels = expandedLevels.includes(level)
+			? expandedLevels.filter(entry => entry !== level)
+			: [...expandedLevels, level];
 	}
 
 	function addStudent(studentId: string) {
@@ -63,9 +59,9 @@
 			<span>Créneau : <span class="text-foreground/80">{a.schedule}</span></span>
 			<span>·</span>
 			<span
-				>Capacité : <span class="font-mono tabular-nums text-foreground/80"
-					>{enrollments.length}/{a.capacity}</span
-				></span
+			>Capacité : <span class="font-mono tabular-nums text-foreground/80"
+			>{enrollments.length}/{a.capacity}</span
+			></span
 			>
 		</div>
 	</div>
@@ -91,7 +87,7 @@
 					<div class="grid h-[55vh] grid-cols-[30%_70%] gap-0 overflow-hidden rounded-xl border border-border">
 						<div class="scrollbar-thin overflow-y-auto border-r border-border bg-secondary/30">
 							{#each hierarchy as g (g.level)}
-								{@const levelOpen = expandedLevels.has(g.level)}
+								{@const levelOpen = expandedLevels.includes(g.level)}
 								<div class="border-b border-border last:border-b-0">
 									<button
 										onclick={() => toggleLevel(g.level)}
@@ -100,7 +96,7 @@
 										<ChevronRight
 											class={cn(
 												'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
-												levelOpen && 'rotate-90 text-foreground'
+												levelOpen && 'rotate-90 text-foreground',
 											)}
 										/>
 										<span class="truncate font-semibold">{g.level}</span>
@@ -114,13 +110,13 @@
 														onclick={() => (selectedClassId = c.id)}
 														class={cn(
 															'flex w-full items-center gap-2 py-1.5 pl-9 pr-3 text-left text-sm transition-colors hover:bg-secondary',
-															active && 'border-l-2 border-highlight bg-card font-semibold'
+															active && 'border-l-2 border-highlight bg-card font-semibold',
 														)}
 													>
 														<span class="truncate">{c.name}</span>
 														<span
 															class="ml-auto font-mono text-[10px] tabular-nums text-muted-foreground"
-															>{c.studentCount}</span
+														>{c.studentCount}</span
 														>
 													</button>
 												</li>
@@ -168,7 +164,7 @@
 												</div>
 												{#if already}
 													<span class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-														>Inscrit</span
+													>Inscrit</span
 													>
 												{:else}
 													<Button
@@ -198,9 +194,9 @@
 		{:else}
 			<ul class="divide-y divide-border">
 				{#each enrollments as e (e.studentId)}
-					{@const s = students.find((st) => st.id === e.studentId)}
+					{@const s = students.find(st => st.id === e.studentId)}
 					{#if s}
-						{@const cls = classes.find((c) => c.id === s.classId)}
+						{@const cls = classes.find(c => c.id === s.classId)}
 						<li class="flex items-center justify-between gap-3 px-4 py-2.5">
 							<div class="flex min-w-0 items-center gap-2">
 								<span
@@ -217,7 +213,7 @@
 								onclick={() => toggleStatus(e.studentId)}
 								class={cn(
 									'rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider transition-colors',
-									ENROLL_STATUS_STYLE[e.status]
+									ENROLL_STATUS_STYLE[e.status],
 								)}
 								title="Cliquer pour changer le statut"
 							>

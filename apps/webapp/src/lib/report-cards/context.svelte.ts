@@ -1,3 +1,4 @@
+import type { GradeScale, ReportCardDefinition, ReportCardResult, ReportCardSectionResult, ReportCardSubjectMark } from '$lib/data/report-cards';
 import { browser } from '$app/environment';
 import { academicContext } from '$lib/academic/context.svelte';
 import {
@@ -5,11 +6,7 @@ import {
 	gradeScales as seedScales,
 	reportCardDefinitions as seedDefinitions,
 	reportCardResults as seedResults,
-	type GradeScale,
-	type ReportCardDefinition,
-	type ReportCardResult,
-	type ReportCardSectionResult,
-	type ReportCardSubjectMark
+
 } from '$lib/data/report-cards';
 import { schools, students, subjects } from '$lib/data/school';
 
@@ -42,58 +39,62 @@ class ReportCardsContext {
 			maxScore: input.maxScore,
 			passingScore: input.passingScore,
 			decimalPlaces: input.decimalPlaces,
-			description: input.description?.trim()
+			description: input.description?.trim(),
 		};
 		this.scales = [...this.scales, scale];
 		return scale;
 	}
 
 	publishDefinition(definitionId: string) {
-		this.definitions = this.definitions.map((d) =>
-			d.id === definitionId ? { ...d, status: 'published' as const } : d
+		this.definitions = this.definitions.map(d =>
+			d.id === definitionId ? { ...d, status: 'published' as const } : d,
 		);
-		return this.definitions.find((d) => d.id === definitionId);
+		return this.definitions.find(d => d.id === definitionId);
 	}
 
 	publishResult(resultId: string) {
 		const now = new Date().toISOString().slice(0, 10);
-		this.results = this.results.map((r) =>
+		this.results = this.results.map(r =>
 			r.id === resultId
 				? { ...r, status: 'published' as const, publishedAt: now }
-				: r
+				: r,
 		);
-		return this.results.find((r) => r.id === resultId);
+		return this.results.find(r => r.id === resultId);
 	}
 
 	generateResult(studentId: string, periodId = academicContext.periodId): ReportCardResult | null {
-		const student = students.find((s) => s.id === studentId);
-		if (!student) return null;
+		const student = students.find(s => s.id === studentId);
+		if (!student)
+return null;
 
 		const existing = this.results.find(
-			(r) => r.studentId === studentId && r.academicPeriodId === periodId
+			r => r.studentId === studentId && r.academicPeriodId === periodId,
 		);
-		if (existing) return existing;
+		if (existing)
+return existing;
 
-		const cls = academicContext.classes.find((c) => c.id === student.classId);
-		if (!cls) return null;
+		const cls = academicContext.classes.find(c => c.id === student.classId);
+		if (!cls)
+return null;
 
-		const definition =
-			this.definitions.find(
-				(d) =>
-					d.gradeLevelId === cls.gradeLevelId &&
-					d.academicYearId === academicContext.yearId &&
-					d.status === 'published'
-			) ??
-			this.definitions.find(
-				(d) => d.gradeLevelId === cls.gradeLevelId && d.status === 'published'
+		const definition
+			= this.definitions.find(
+				d =>
+					d.gradeLevelId === cls.gradeLevelId
+					&& d.academicYearId === academicContext.yearId
+					&& d.status === 'published',
+			)
+			?? this.definitions.find(
+				d => d.gradeLevelId === cls.gradeLevelId && d.status === 'published',
 			);
-		if (!definition) return null;
+		if (!definition)
+return null;
 
-		const classSubjects = subjects.filter((s) => s.classId === student.classId);
-		const matiereSections = definition.sections.filter((s) => s.kind === 'matieres');
+		const classSubjects = subjects.filter(s => s.classId === student.classId);
+		const matiereSections = definition.sections.filter(s => s.kind === 'matieres');
 		const sectionResults: ReportCardSectionResult[] = matiereSections.map((section) => {
 			const sectionSubjects = section.subjectIds?.length
-				? classSubjects.filter((s) => section.subjectIds!.includes(s.id))
+				? classSubjects.filter(s => section.subjectIds!.includes(s.id))
 				: classSubjects;
 			const coef = section.coefficient ?? 1;
 			const marks: ReportCardSubjectMark[] = sectionSubjects.map((sub, idx) => {
@@ -105,21 +106,21 @@ class ReportCardsContext {
 					average: Math.round(avg * 10) / 10,
 					coefficient: coef,
 					appreciation: 'Résultats consolidés sur la période.',
-					teacherName: sub.teacher
+					teacherName: sub.teacher,
 				};
 			});
-			const sectionAverage =
-				marks.length > 0
+			const sectionAverage
+				= marks.length > 0
 					? Math.round(
-							(marks.reduce((s, m) => s + m.average * m.coefficient, 0) /
-								marks.reduce((s, m) => s + m.coefficient, 0)) *
-								100
+							(marks.reduce((s, m) => s + m.average * m.coefficient, 0)
+								/ marks.reduce((s, m) => s + m.coefficient, 0))
+							* 100,
 						) / 100
 					: undefined;
 			return { sectionId: section.id, sectionAverage, marks };
 		});
 
-		const classStudents = students.filter((s) => s.classId === student.classId);
+		const classStudents = students.filter(s => s.classId === student.classId);
 		const result: ReportCardResult = {
 			id: `rcr-${studentId}-${periodId}`,
 			schoolId: schoolId(),
@@ -135,40 +136,41 @@ class ReportCardsContext {
 			classSize: classStudents.length,
 			sectionResults,
 			homeroomComment: 'Bulletin généré automatiquement (mock).',
-			generatedAt: new Date().toISOString().slice(0, 10)
+			generatedAt: new Date().toISOString().slice(0, 10),
 		};
 
 		const peers = [...this.results.filter(
-			(r) => r.classId === student.classId && r.academicPeriodId === periodId && r.id !== result.id
+			r => r.classId === student.classId && r.academicPeriodId === periodId && r.id !== result.id,
 		), result];
 		peers.sort((a, b) => b.overallAverage - a.overallAverage);
-		result.classRank = peers.findIndex((r) => r.id === result.id) + 1;
+		result.classRank = peers.findIndex(r => r.id === result.id) + 1;
 		result.classSize = classStudents.length;
 
-		this.results = [...this.results.filter((r) => r.id !== result.id), result];
+		this.results = [...this.results.filter(r => r.id !== result.id), result];
 		return result;
 	}
 
 	generateForClass(classId: string, periodId = academicContext.periodId): number {
-		const classStudents = students.filter((s) => s.classId === classId);
+		const classStudents = students.filter(s => s.classId === classId);
 		let count = 0;
 		for (const s of classStudents) {
 			const had = this.results.some(
-				(r) => r.studentId === s.id && r.academicPeriodId === periodId
+				r => r.studentId === s.id && r.academicPeriodId === periodId,
 			);
-			if (!had && this.generateResult(s.id, periodId)) count += 1;
+			if (!had && this.generateResult(s.id, periodId))
+count += 1;
 		}
 		return count;
 	}
 
 	resultsForClass(classId: string, periodId = academicContext.periodId) {
 		return this.results.filter(
-			(r) => r.classId === classId && r.academicPeriodId === periodId
+			r => r.classId === classId && r.academicPeriodId === periodId,
 		);
 	}
 
 	resultsForStudent(studentId: string) {
-		return this.results.filter((r) => r.studentId === studentId);
+		return this.results.filter(r => r.studentId === studentId);
 	}
 }
 

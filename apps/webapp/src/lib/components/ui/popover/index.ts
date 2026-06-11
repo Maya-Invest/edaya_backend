@@ -5,10 +5,10 @@ import Trigger from './popover-trigger.svelte';
 const Root = PopoverPrimitive.Root;
 
 export {
-	Root,
 	Content,
-	Trigger,
 	Root as Popover,
 	Content as PopoverContent,
 	Trigger as PopoverTrigger,
+	Root,
+	Trigger,
 };

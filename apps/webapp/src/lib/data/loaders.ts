@@ -1,12 +1,17 @@
-import type { PageLoadMeta } from './load-state';
-import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from './load-state';
 import {
 	getRuntimeClasses,
 	getRuntimeHierarchy,
-	getRuntimePeriods,
-	getRuntimeYears
 } from '$lib/academic/context.svelte';
+import {
+	getSchoolGuardiansData,
+	getSchoolStaffData,
+	getSchoolStudentsData,
+} from '$lib/remote/people.remote';
+import { getAppShellData } from '$lib/remote/shell.remote';
 import { ApiError } from '$lib/server/api-client';
+import { loadPeopleData } from '$lib/server/people-data';
+import { loadClassSubjects } from '$lib/server/subjects-data';
+import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from './load-state';
 import {
 	activities,
 	academicPeriods,
@@ -25,12 +30,10 @@ import {
 	schools,
 	staff,
 	students,
-	subjects
+	subjects,
 } from './school';
-import { getAppShellData } from '$lib/remote/shell.remote';
-import { getSchoolStudentsData, getSchoolStaffData } from '$lib/remote/people.remote';
 
-type LoadInput = { url: URL; params?: Record<string, string>; hasSession?: boolean };
+interface LoadInput { url: URL; params?: Record<string, string>; hasSession?: boolean }
 
 function classes() {
 	return getRuntimeClasses();
@@ -50,20 +53,20 @@ export function loadMockAppShell() {
 		periodDefinitions,
 		classes: seedClasses,
 		hierarchy: seedHierarchy,
-		studentCount
+		studentCount,
 	};
 }
 
-function isUnauthorized(error: unknown): boolean {
+function isAccessDenied(error: unknown): boolean {
 	if (error instanceof ApiError) {
-		return error.status === 401;
+		return error.status === 401 || error.status === 403;
 	}
 	if (typeof error === 'object' && error !== null) {
 		const candidate = error as { status?: number; message?: string };
-		if (candidate.status === 401) {
+		if (candidate.status === 401 || candidate.status === 403) {
 			return true;
 		}
-		if (candidate.message?.includes('(401)')) {
+		if (candidate.message?.includes('(401)') || candidate.message?.includes('(403)')) {
 			return true;
 		}
 	}
@@ -75,7 +78,7 @@ async function withApiFallback<T>(fetcher: () => Promise<T>, fallback: T): Promi
 		return await fetcher();
 	}
 	catch (error) {
-		if (isUnauthorized(error)) {
+		if (isAccessDenied(error)) {
 			return fallback;
 		}
 		throw error;
@@ -100,11 +103,24 @@ export async function loadSchoolStudentsPage({ url, hasSession = false }: LoadIn
 	return { ...meta, students: list, classes: classes(), hierarchy: hierarchy() };
 }
 
-export async function loadSchoolGuardiansPage({ url }: LoadInput) {
+export async function loadSchoolGuardiansPage({ url, hasSession = false }: LoadInput) {
 	await maybeSimulateLoading(url);
-	const list = resolveDemoState(url) === 'empty' ? [] : guardians;
-	const meta = finalizeStatus(url, list.length > 0);
-	return { ...meta, guardians: list, students };
+	if (resolveDemoState(url) === 'empty') {
+		const meta = finalizeStatus(url, false);
+		return { ...meta, guardians: [], students: [] };
+	}
+
+	if (hasSession) {
+		const live = await withApiFallback(
+			() => getSchoolGuardiansData(),
+			{ guardians, students },
+		);
+		const meta = finalizeStatus(url, live.guardians.length > 0);
+		return { ...meta, guardians: live.guardians, students: live.students };
+	}
+
+	const meta = finalizeStatus(url, guardians.length > 0);
+	return { ...meta, guardians, students };
 }
 
 export async function loadSchoolStaffPage({ url, hasSession = false }: LoadInput) {
@@ -124,14 +140,11 @@ export async function loadSchoolStaffPage({ url, hasSession = false }: LoadInput
 		...meta,
 		staff: list,
 		guardians,
-		students: liveStudents
+		students: liveStudents,
 	};
 }
 
-
-
 export async function loadSchoolActivitiesPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const list = resolveDemoState(url) === 'empty' ? [] : activities;
@@ -139,13 +152,9 @@ export async function loadSchoolActivitiesPage({ url }: LoadInput) {
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, activities: list };
-
 }
 
-
-
 export async function loadSchoolCalendarPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const list = resolveDemoState(url) === 'empty' ? [] : schoolYearEvents;
@@ -153,13 +162,9 @@ export async function loadSchoolCalendarPage({ url }: LoadInput) {
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, events: list, classes: classes() };
-
 }
 
-
-
 export async function loadSchoolEventsPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const list = resolveDemoState(url) === 'empty' ? [] : incidents;
@@ -167,13 +172,9 @@ export async function loadSchoolEventsPage({ url }: LoadInput) {
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, incidents: list, students, classes: classes() };
-
 }
 
-
-
 export async function loadFinancePage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const empty = resolveDemoState(url) === 'empty';
@@ -188,16 +189,12 @@ export async function loadFinancePage({ url }: LoadInput) {
 
 		billing: empty ? [] : billing,
 
-		students
+		students,
 
 	};
-
 }
 
-
-
 export async function loadPaymentsPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const empty = resolveDemoState(url) === 'empty';
@@ -214,16 +211,12 @@ export async function loadPaymentsPage({ url }: LoadInput) {
 
 		fees,
 
-		classes: classes()
+		classes: classes(),
 
 	};
-
 }
 
-
-
 export async function loadRolesPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const list = resolveDemoState(url) === 'empty' ? [] : staff;
@@ -231,13 +224,9 @@ export async function loadRolesPage({ url }: LoadInput) {
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, staff: list };
-
 }
 
-
-
 export async function loadConfigSubjectsPage({ url }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const list = resolveDemoState(url) === 'empty' ? [] : subjects;
@@ -245,148 +234,122 @@ export async function loadConfigSubjectsPage({ url }: LoadInput) {
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, subjects: list, classes: classes() };
-
 }
 
-
-
-export async function loadClassStudentsPage({ url, params }: LoadInput) {
-
+export async function loadClassStudentsPage({ url, params, hasSession = false }: LoadInput) {
 	await maybeSimulateLoading(url);
 
 	const classList = classes();
+	const classId = params?.classId ?? classList[0]?.id ?? '6a';
+	const currentClass = classList.find(entry => entry.id === classId) ?? classList[0];
 
-	const classId = params?.classId ?? '6a';
+	if (resolveDemoState(url) === 'empty') {
+		const meta = finalizeStatus(url, false);
+		return { ...meta, classId, currentClass, students: [] };
+	}
 
-	const currentClass = classList.find((c) => c.id === classId) ?? classList[0];
-
-	const list =
-
-		resolveDemoState(url) === 'empty'
-
-			? []
-
-			: students.filter((s) => s.classId === classId);
+	const mockList = students.filter(student => student.classId === classId);
+	const list = hasSession
+		? await withApiFallback(
+				async () => {
+					const { students: liveStudents } = await loadPeopleData();
+					return liveStudents.filter(student => student.classId === classId);
+				},
+				mockList,
+			)
+		: mockList;
 
 	const meta = finalizeStatus(url, list.length > 0);
-
-	return {
-
-		...meta,
-
-		classId,
-
-		currentClass,
-
-		students: list
-
-	};
-
+	return { ...meta, classId, currentClass, students: list };
 }
 
-
-
-export async function loadClassSubjectsPage({ url, params }: LoadInput) {
-
+export async function loadClassSubjectsPage({ url, params, hasSession = false }: LoadInput) {
 	await maybeSimulateLoading(url);
 
-	const classId = params?.classId ?? '6a';
+	const classList = classes();
+	const classId = params?.classId ?? classList[0]?.id ?? '6a';
 
-	const list =
+	if (resolveDemoState(url) === 'empty') {
+		const meta = finalizeStatus(url, false);
+		return { ...meta, classId, subjects: [] };
+	}
 
-		resolveDemoState(url) === 'empty'
-
-			? []
-
-			: subjects.filter((s) => s.classId === classId);
+	const mockList = subjects.filter(subject => subject.classId === classId);
+	const list = hasSession
+		? await withApiFallback(
+				() => loadClassSubjects(classId),
+				mockList,
+			)
+		: mockList;
 
 	const meta = finalizeStatus(url, list.length > 0);
-
 	return { ...meta, classId, subjects: list };
-
 }
-
-
 
 export async function loadClassTimetablePage({ url, params }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const classId = params?.classId ?? '6a';
 
-	const list =
+	const list
 
-		resolveDemoState(url) === 'empty'
+		= resolveDemoState(url) === 'empty'
 
 			? []
 
-			: planning.filter((p) => p.classId === classId);
+			: planning.filter(p => p.classId === classId);
 
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, classId, planning: list, classes: classes(), students };
-
 }
 
-
-
 export async function loadClassEvaluationsPage({ url, params }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const classId = params?.classId ?? '6a';
 
-	const list =
+	const list
 
-		resolveDemoState(url) === 'empty'
+		= resolveDemoState(url) === 'empty'
 
 			? []
 
-			: evaluations.filter((e) => e.classId === classId);
+			: evaluations.filter(e => e.classId === classId);
 
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, classId, evaluations: list };
-
 }
 
-
-
 export async function loadClassTeachingPage({ url, params }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const classId = params?.classId ?? '6a';
 
-	const list =
+	const list
 
-		resolveDemoState(url) === 'empty'
+		= resolveDemoState(url) === 'empty'
 
 			? []
 
-			: subjects.filter((s) => s.classId === classId);
+			: subjects.filter(s => s.classId === classId);
 
 	const meta = finalizeStatus(url, list.length > 0);
 
 	return { ...meta, classId, subjects: list };
-
 }
 
-
-
 export async function loadClassReportCardsPage({ url, params }: LoadInput) {
-
 	await maybeSimulateLoading(url);
 
 	const classId = params?.classId ?? '6a';
 
 	const classList = classes();
 
-	const hasClass = classList.some((c) => c.id === classId);
+	const hasClass = classList.some(c => c.id === classId);
 
 	const meta = finalizeStatus(url, hasClass);
 
 	return { ...meta, classId };
-
 }
-

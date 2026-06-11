@@ -1,17 +1,17 @@
 <script lang="ts">
 	import type { Incident } from '$lib/data/school';
-	import { students, classes } from '$lib/data/school';
-	import { cn } from '$lib/utils';
-	import { locale, t } from '$lib/i18n';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-	import DrawerField from './DrawerField.svelte';
+	import { students, classes } from '$lib/data/school';
+	import { locale, t } from '$lib/i18n';
+	import { cn } from '$lib/utils';
 	import { incidentSevTone, incidentCatTone } from './drawer-constants';
+	import DrawerField from './DrawerField.svelte';
 
-	let { i }: { i: Incident } = $props();
+	const { i }: { i: Incident } = $props();
 
-	const student = $derived(students.find((s) => s.id === i.studentId));
-	const cls = $derived(classes.find((c) => c.id === student?.classId));
+	const student = $derived(students.find(s => s.id === i.studentId));
+	const cls = $derived(classes.find(c => c.id === student?.classId));
 </script>
 
 <div class="space-y-5">
@@ -20,7 +20,7 @@
 			<span
 				class={cn(
 					'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-					incidentSevTone[i.severity]
+					incidentSevTone[i.severity],
 				)}
 			>
 				{$t(`events.severity.${i.severity}`)}

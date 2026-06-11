@@ -1,6 +1,6 @@
 import type { Guardian, Subject, StaffRole, ActivityEnrollmentStatus, Incident } from '$lib/data/school';
-import { BADGE, BADGE_DANGER, BADGE_INFO, BADGE_WARN } from '$lib/ui-tones';
 import type { DrawerItem } from './drawer-types';
+import { BADGE, BADGE_DANGER, BADGE_INFO, BADGE_WARN } from '$lib/ui-tones';
 
 const drawerBadge = BADGE_INFO;
 
@@ -43,8 +43,8 @@ export const kindLabelKey: Record<NonNullable<DrawerItem>['kind'], string> = {
 };
 
 export const relationKey: Record<Guardian['relation'], string> = {
-	Mother: 'guardian.relation.Mother',
-	Father: 'guardian.relation.Father',
+	'Mother': 'guardian.relation.Mother',
+	'Father': 'guardian.relation.Father',
 	'Legal guardian': 'guardian.relation.LegalGuardian',
 };
 
@@ -87,13 +87,13 @@ export const incidentCatTone: Record<Incident['category'], string> = {
 
 export type StaffPermScope = 'global' | 'class' | 'subject';
 
-export type StaffPerm = {
+export interface StaffPerm {
 	key: string;
 	category: string;
 	label: string;
 	description: string;
 	scopes: StaffPermScope[];
-};
+}
 
 export const STAFF_PERMISSIONS: StaffPerm[] = [
 	{
@@ -182,21 +182,21 @@ export const STAFF_SCOPE_TONE: Record<StaffPermScope, string> = {
 
 export function defaultEnabledFor(role: StaffRole): Record<string, boolean> {
 	const matrix: Record<StaffRole, Record<string, boolean>> = {
-		directeur: Object.fromEntries(STAFF_PERMISSIONS.map((p) => [p.key, true])),
+		directeur: Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, true])),
 		prof_principal: Object.fromEntries(
-			STAFF_PERMISSIONS.map((p) => [p.key, !['staff.manage', 'finance.manage', 'config.school'].includes(p.key)])
+			STAFF_PERMISSIONS.map(p => [p.key, !['staff.manage', 'finance.manage', 'config.school'].includes(p.key)]),
 		),
 		professeur: Object.fromEntries(
-			STAFF_PERMISSIONS.map((p) => [
+			STAFF_PERMISSIONS.map(p => [
 				p.key,
 				['grades.edit', 'grades.view', 'records.edit', 'life.absences', 'life.tardiness', 'life.discipline'].includes(p.key),
-			])
+			]),
 		),
 		educateur: Object.fromEntries(
-			STAFF_PERMISSIONS.map((p) => [
+			STAFF_PERMISSIONS.map(p => [
 				p.key,
 				['grades.view', 'life.absences', 'life.tardiness', 'life.discipline'].includes(p.key),
-			])
+			]),
 		),
 	};
 	return matrix[role];

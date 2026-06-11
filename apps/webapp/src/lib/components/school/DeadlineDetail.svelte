@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { Check, Clock, AlertCircle, FileText, Paperclip } from '$lib/icons';
 	import type { Deadline } from '$lib/data/school';
-	import { students } from '$lib/data/school';
-	import { cn } from '$lib/utils';
-	import { locale, t } from '$lib/i18n';
-	import Label from '$lib/components/ui/label/label.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import { students } from '$lib/data/school';
+	import { locale, t } from '$lib/i18n';
+	import { Check, Clock, AlertCircle, FileText, Paperclip } from '$lib/icons';
+	import { cn } from '$lib/utils';
 	import DrawerField from './DrawerField.svelte';
 
-	let { d }: { d: Deadline } = $props();
+	const { d }: { d: Deadline } = $props();
 
 	const subStatusStyle = {
 		submitted: { icon: Check, cls: 'text-accent' },
@@ -68,7 +68,7 @@
 		</Label>
 		<div class="mt-2 overflow-hidden rounded-xl border border-border">
 			{#each d.submissions as sub, i (sub.studentId)}
-				{@const st = students.find((s) => s.id === sub.studentId)}
+				{@const st = students.find(s => s.id === sub.studentId)}
 				{#if st}
 					{@const meta = subStatusStyle[sub.status]}
 					<div class={cn('flex items-center gap-3 px-3 py-2.5', i % 2 && 'bg-secondary/30')}>

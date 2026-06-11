@@ -2,7 +2,7 @@
 	import type { Subject } from '$lib/data/school';
 	import SubjectChaptersRow from './SubjectChaptersRow.svelte';
 
-	let { label, subtitle, items }: { label: string; subtitle: string; items: Subject[] } = $props();
+	const { label, subtitle, items }: { label: string; subtitle: string; items: Subject[] } = $props();
 
 	const totalHours = $derived(items.reduce((s, x) => s + x.hoursPerWeek, 0));
 </script>

@@ -1,4 +1,22 @@
 <script lang="ts">
+	import type { Student, PedagogicalNote } from '$lib/data/school';
+	import type { SubjectGroupItem } from './drawer-types';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import {
+		guardians,
+		healthRecords,
+		incidents,
+		classes,
+		pedagogicalNotes,
+		staff,
+		evaluations,
+		absences,
+		billing,
+		fees,
+	} from '$lib/data/school';
+	import { t } from '$lib/i18n';
 	import {
 		AlertTriangle,
 		Users,
@@ -12,42 +30,24 @@
 		Check,
 		Wallet,
 	} from '$lib/icons';
-	import type { Student, PedagogicalNote } from '$lib/data/school';
-	import {
-		guardians,
-		healthRecords,
-		incidents,
-		classes,
-		pedagogicalNotes,
-		staff,
-		evaluations,
-		absences,
-		billing,
-		fees,
-	} from '$lib/data/school';
 	import { cn } from '$lib/utils';
-	import { t } from '$lib/i18n';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/label/label.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import StudentAvatar from './StudentAvatar.svelte';
 	import ChangeClassButton from './ChangeClassButton.svelte';
-	import DrawerField from './DrawerField.svelte';
+	import { relationKey, fmtDateFr } from './drawer-constants';
 	import DrawerEmptyState from './DrawerEmptyState.svelte';
+	import DrawerField from './DrawerField.svelte';
+	import StudentAvatar from './StudentAvatar.svelte';
 	import StudentReportCardPanel from './StudentReportCardPanel.svelte';
 	import SubjectGroup from './SubjectGroup.svelte';
-	import { relationKey, fmtDateFr } from './drawer-constants';
-	import type { SubjectGroupItem } from './drawer-types';
 
-	let { s }: { s: Student } = $props();
+	const { s }: { s: Student } = $props();
 
 	let tab = $state<'profile' | 'notes' | 'absence' | 'incidents' | 'finances' | 'bulletin'>('profile');
 
-	const linkedG = $derived(guardians.filter((g) => g.studentIds.includes(s.id)));
+	const linkedG = $derived(guardians.filter(g => g.studentIds.includes(s.id)));
 	const health = $derived(healthRecords[s.id]);
-	const studentIncidents = $derived(incidents.filter((i) => i.studentId === s.id));
+	const studentIncidents = $derived(incidents.filter(i => i.studentId === s.id));
 	const absenceRate = $derived(100 - s.attendance);
-	const studentClass = $derived(classes.find((cl) => cl.id === s.classId));
+	const studentClass = $derived(classes.find(cl => cl.id === s.classId));
 
 	const tabLabelKeys: Record<
 		'profile' | 'notes' | 'absence' | 'incidents' | 'finances' | 'bulletin',
@@ -58,7 +58,7 @@
 		absence: null,
 		incidents: 'drawer.tab.incidents',
 		finances: null,
-		bulletin: 'drawer.tab.reportCard'
+		bulletin: 'drawer.tab.reportCard',
 	};
 	const tabLabelFallback: Record<'notes' | 'absence' | 'finances', string> = {
 		notes: 'Notes',
@@ -67,7 +67,7 @@
 	};
 
 	const studentNotes = $derived(
-		pedagogicalNotes.filter((n) => n.studentId === s.id).sort((a, b) => b.date.localeCompare(a.date))
+		pedagogicalNotes.filter(n => n.studentId === s.id).sort((a, b) => b.date.localeCompare(a.date)),
 	);
 
 	const toneByCategory: Record<PedagogicalNote['category'], string> = {
@@ -79,7 +79,7 @@
 
 	const notesData = $derived.by(() => {
 		const studentEvals = evaluations
-			.filter((e) => e.classId === s.classId)
+			.filter(e => e.classId === s.classId)
 			.sort((x, y) => y.date.localeCompare(x.date));
 		const seed = s.id.charCodeAt(1) || 1;
 		const marks = studentEvals.map((e, idx) => {
@@ -88,24 +88,28 @@
 			return e.graded > 0 ? Math.max(0, Math.min(e.outOf, base + jitter)) : null;
 		});
 		const valid = marks.filter((m): m is number => m !== null);
-		const overall = valid.length
-			? valid.reduce((acc, m, i) => acc + (m / studentEvals[i].outOf) * 20 * studentEvals[i].coefficient, 0) /
-				valid.reduce((acc, _m, i) => acc + studentEvals[i].coefficient, 0)
-			: 0;
+		const weightedSum = valid.reduce(
+			(acc, m, i) => acc + (m / studentEvals[i].outOf) * 20 * studentEvals[i].coefficient,
+			0,
+		);
+		const weightTotal = valid.reduce((acc, _m, i) => acc + studentEvals[i].coefficient, 0);
+		const overall = valid.length ? weightedSum / weightTotal : 0;
 
-		const groups = new Map<string, SubjectGroupItem[]>();
+		const groups: Record<string, SubjectGroupItem[]> = {};
 		studentEvals.forEach((e, idx) => {
-			const arr = groups.get(e.subject) ?? [];
+			const arr = groups[e.subject] ?? [];
 			arr.push({ e, mark: marks[idx] });
-			groups.set(e.subject, arr);
+			groups[e.subject] = arr;
 		});
 
-		const subjectGroups = Array.from(groups.entries()).map(([subject, items]) => {
-			const graded = items.filter((it) => it.mark !== null);
-			const subjectAvg = graded.length
-				? graded.reduce((acc, it) => acc + (it.mark! / it.e.outOf) * 20 * it.e.coefficient, 0) /
-					graded.reduce((acc, it) => acc + it.e.coefficient, 0)
-				: null;
+		const subjectGroups = Object.entries(groups).map(([subject, items]) => {
+			const graded = items.filter(it => it.mark !== null);
+			const subjectWeightedSum = graded.reduce(
+				(acc, it) => acc + (it.mark! / it.e.outOf) * 20 * it.e.coefficient,
+				0,
+			);
+			const subjectWeightTotal = graded.reduce((acc, it) => acc + it.e.coefficient, 0);
+			const subjectAvg = graded.length ? subjectWeightedSum / subjectWeightTotal : null;
 			return { subject, items, subjectAvg };
 		});
 
@@ -113,21 +117,21 @@
 	});
 
 	const absenceData = $derived(
-		absences.filter((a) => a.studentId === s.id).sort((x, y) => (y.date + y.time).localeCompare(x.date + x.time))
+		absences.filter(a => a.studentId === s.id).sort((x, y) => (y.date + y.time).localeCompare(x.date + x.time)),
 	);
 
 	const incidentsData = $derived.by(() => {
 		const sorted = [...studentIncidents].sort((x, y) => y.date.localeCompare(x.date));
 		return {
 			sorted,
-			high: sorted.filter((i) => i.severity === 'high').length,
-			med: sorted.filter((i) => i.severity === 'medium').length,
-			low: sorted.filter((i) => i.severity === 'low').length,
+			high: sorted.filter(i => i.severity === 'high').length,
+			med: sorted.filter(i => i.severity === 'medium').length,
+			low: sorted.filter(i => i.severity === 'low').length,
 		};
 	});
 
 	const financesData = $derived.by(() => {
-		const studentBilling = billing.filter((b) => b.studentId === s.id);
+		const studentBilling = billing.filter(b => b.studentId === s.id);
 		const total = studentBilling.reduce((acc, b) => acc + b.total, 0);
 		const paid = studentBilling.reduce((acc, b) => acc + b.paid, 0);
 		return { studentBilling, total, paid, balance: total - paid };
@@ -171,7 +175,7 @@
 				onclick={() => (tab = k)}
 				class={cn(
 					'flex-1 rounded-full px-2.5 py-1.5 font-medium transition',
-					tab === k ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground'
+					tab === k ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground',
 				)}
 			>
 				{tabLabelKeys[k] ? $t(tabLabelKeys[k]!) : tabLabelFallback[k as 'notes' | 'absence' | 'finances']}
@@ -315,13 +319,13 @@
 				{:else}
 					<ul class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 						{#each studentNotes as n (n.id)}
-							{@const author = staff.find((st) => st.id === n.authorId)}
+							{@const author = staff.find(st => st.id === n.authorId)}
 							<li class="border-b border-border px-4 py-3 last:border-b-0">
 								<div class="flex items-center justify-between gap-2">
 									<span
 										class={cn(
 											'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-											toneByCategory[n.category]
+											toneByCategory[n.category],
 										)}
 									>
 										{n.category}
@@ -430,7 +434,7 @@
 								<div class="flex items-center justify-between gap-2">
 									<span
 										class="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-										>{a.eventType}</span
+									>{a.eventType}</span
 									>
 									<span class="font-mono text-[10px] text-muted-foreground">
 										{fmtDateFr(a.date)} · {a.time}
@@ -484,8 +488,8 @@
 											i.severity === 'high'
 												? 'bg-destructive/10 text-destructive'
 												: i.severity === 'medium'
-													? 'bg-highlight-soft text-highlight'
-													: 'bg-secondary text-muted-foreground'
+												? 'bg-highlight-soft text-highlight'
+												: 'bg-secondary text-muted-foreground',
 										)}
 									>
 										{$t(`events.severity.${i.severity}`)}
@@ -532,13 +536,13 @@
 						</DrawerEmptyState>
 					{:else}
 						{#each financesData.studentBilling as b (b.id)}
-							{@const fee = fees.find((f) => f.id === b.feeId)}
+							{@const fee = fees.find(f => f.id === b.feeId)}
 							<div class="rounded-xl border border-border bg-card p-4">
 								<div class="flex items-center justify-between">
 									<span
 										class={cn(
 											'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase',
-											statusTone[b.status]
+											statusTone[b.status],
 										)}
 									>
 										{b.status}
@@ -562,7 +566,7 @@
 															'flex h-5 w-5 items-center justify-center rounded-full',
 															inst.status === 'paid'
 																? 'bg-secondary text-foreground/80'
-																: 'bg-secondary text-muted-foreground'
+																: 'bg-secondary text-muted-foreground',
 														)}
 													>
 														{#if inst.status === 'paid'}
@@ -578,7 +582,7 @@
 												<span
 													class={cn(
 														'font-mono tabular-nums',
-														inst.status === 'paid' ? 'text-foreground' : 'text-muted-foreground'
+														inst.status === 'paid' ? 'text-foreground' : 'text-muted-foreground',
 													)}
 												>
 													{inst.amount.toLocaleString('fr-FR')} €

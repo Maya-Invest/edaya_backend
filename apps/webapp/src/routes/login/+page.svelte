@@ -1,24 +1,26 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
-	import { GraduationCap, Building2, Check } from '$lib/icons';
-	import { schools, type School } from '$lib/data/school';
-	import { authSession, DEMO_ACCOUNTS } from '$lib/auth/session.svelte';
+	import type { School } from '$lib/data/school';
+	import { invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth/client';
-	import { toast } from '$lib/toast.svelte';
+	import { authSession, DEMO_ACCOUNTS } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
-	import { cn } from '$lib/utils';
+	import { schools } from '$lib/data/school';
 	import { t } from '$lib/i18n';
+	import { GraduationCap, Building2, Check } from '$lib/icons';
+	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { toast } from '$lib/toast.svelte';
+	import { cn } from '$lib/utils';
 
 	let selectedSchoolId = $state(schools[0]?.id ?? '');
 	let loading = $state(false);
 
 	const selectedSchool = $derived(
-		schools.find((entry) => entry.id === selectedSchoolId) ?? schools[0]
+		schools.find(entry => entry.id === selectedSchoolId) ?? schools[0],
 	);
 
 	$effect(() => {
 		if (authSession.ready && authSession.isLoggedIn) {
-			goto('/school/students', { replaceState: true });
+			appGoto(appPath('/(app)/school/students/[[id]]'), { replaceState: true });
 		}
 	});
 
@@ -27,8 +29,9 @@
 	}
 
 	async function signIn(userId: string) {
-		const account = DEMO_ACCOUNTS.find((entry) => entry.id === userId);
-		if (!account) return;
+		const account = DEMO_ACCOUNTS.find(entry => entry.id === userId);
+		if (!account)
+			return;
 
 		loading = true;
 		try {
@@ -48,13 +51,15 @@
 				await invalidateAll();
 			}
 			catch {
-				// SSR refresh is best-effort; client session is already set
+			// SSR refresh is best-effort; client session is already set
 			}
 			toast.success(`Bienvenue, ${account.name}`);
-			goto('/school/students');
-		} catch (err: any) {
+			appGoto(appPath('/(app)/school/students/[[id]]'));
+		}
+		catch (err: any) {
 			toast.error(`Erreur: ${err.message || err}`);
-		} finally {
+		}
+		finally {
 			loading = false;
 		}
 	}
@@ -93,7 +98,7 @@
 								'rounded-xl border border-border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-50 disabled:pointer-events-none',
 								selectedSchool?.id === school.id
 									? 'border-primary/30 bg-primary/5 ring-1 ring-primary/20'
-									: 'bg-card hover:bg-secondary/40'
+									: 'bg-card hover:bg-secondary/40',
 							)}
 						>
 							<div class="flex items-start justify-between gap-2">

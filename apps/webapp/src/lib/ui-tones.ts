@@ -8,8 +8,8 @@ export const BADGE_DANGER = 'bg-destructive/10 text-destructive';
 export const ROW_ACTIVE = 'bg-primary/10';
 export const ROW_HOVER = 'hover:bg-secondary';
 
-export const AVATAR =
-	'flex items-center justify-center bg-primary font-display font-semibold text-primary-foreground';
+export const AVATAR
+	= 'flex items-center justify-center bg-primary font-display font-semibold text-primary-foreground';
 
 export const SURFACE = 'rounded-xl bg-secondary/50 p-3';
 export const SURFACE_INFO = 'rounded-xl bg-primary/5 p-3';

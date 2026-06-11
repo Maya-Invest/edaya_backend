@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Clock, Plus, User, Layers, Tag, ChevronRight } from '$lib/icons';
 	import type { ClassNode, Subject, SubjectCategory } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { Clock, Plus, User, Layers, Tag, ChevronRight } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		subjects,
 		classes,
 		onSelect,
@@ -30,12 +30,12 @@
 	};
 
 	const categoryTone: Record<SubjectCategory, string> = {
-		Scientifique: 'bg-secondary text-foreground/80',
-		Littéraire: 'bg-secondary text-foreground/80',
-		Langues: 'bg-secondary text-foreground/80',
+		'Scientifique': 'bg-secondary text-foreground/80',
+		'Littéraire': 'bg-secondary text-foreground/80',
+		'Langues': 'bg-secondary text-foreground/80',
 		'Sciences humaines': 'bg-secondary text-foreground/80',
-		Sport: 'bg-secondary text-foreground/80',
-		Arts: 'bg-secondary text-foreground/80',
+		'Sport': 'bg-secondary text-foreground/80',
+		'Arts': 'bg-secondary text-foreground/80',
 	};
 
 	function yearLabel(className: string): string {
@@ -46,15 +46,16 @@
 			'3rd': '3ème',
 			'2nd': '2nde',
 			'1st': '1ère',
-			Terminale: 'Terminale',
+			'Terminale': 'Terminale',
 		};
 		for (const key of Object.keys(map)) {
-			if (className.startsWith(key)) return map[key];
+			if (className.startsWith(key))
+				return map[key];
 		}
 		return className;
 	}
 
-	const classById = $derived(Object.fromEntries(classes.map((c) => [c.id, c])));
+	const classById = $derived(Object.fromEntries(classes.map(c => [c.id, c])));
 
 	const groups = $derived.by(() => {
 		if (mode === 'level') {
@@ -62,14 +63,16 @@
 			const byYear: Record<string, { subtitle: string; items: Subject[] }> = {};
 			for (const s of subjects) {
 				const cls = classById[s.classId];
-				if (!cls) continue;
+				if (!cls)
+					continue;
 				const y = yearLabel(cls.name);
-				if (!byYear[y]) byYear[y] = { subtitle: cls.level, items: [] };
+				if (!byYear[y])
+					byYear[y] = { subtitle: cls.level, items: [] };
 				byYear[y].items.push(s);
 			}
 			return order
-				.filter((y) => byYear[y])
-				.map((y) => ({
+				.filter(y => byYear[y])
+				.map(y => ({
 					key: y,
 					label: y,
 					subtitle: byYear[y].subtitle,
@@ -89,8 +92,8 @@
 			(byCat[s.category] ||= []).push(s);
 		}
 		return order
-			.filter((c) => byCat[c])
-			.map((c) => ({
+			.filter(c => byCat[c])
+			.map(c => ({
 				key: c,
 				label: c,
 				subtitle: `${byCat[c].length} matière${byCat[c].length > 1 ? 's' : ''}`,
@@ -118,7 +121,7 @@
 						'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition',
 						mode === 'level'
 							? 'bg-primary text-primary-foreground'
-							: 'text-muted-foreground hover:text-foreground'
+							: 'text-muted-foreground hover:text-foreground',
 					)}
 				>
 					<Layers class="h-3.5 w-3.5" />
@@ -131,7 +134,7 @@
 						'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition',
 						mode === 'category'
 							? 'bg-primary text-primary-foreground'
-							: 'text-muted-foreground hover:text-foreground'
+							: 'text-muted-foreground hover:text-foreground',
 					)}
 				>
 					<Tag class="h-3.5 w-3.5" />
@@ -154,7 +157,7 @@
 					onclick={() => onSelectLevel?.({ label: g.label, subtitle: g.subtitle, items: g.items })}
 					class={cn(
 						'group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary',
-						idx !== groups.length - 1 && 'border-b border-border'
+						idx !== groups.length - 1 && 'border-b border-border',
 					)}
 				>
 					<div class="h-8 w-1.5 shrink-0 rounded-full bg-accent"></div>
@@ -168,7 +171,7 @@
 						<p class="mt-0.5 truncate text-xs text-muted-foreground">
 							{g.items
 								.slice(0, 4)
-								.map((s) => s.name)
+								.map(s => s.name)
 								.join(' · ')}{g.items.length > 4 ? ' …' : ''}
 						</p>
 					</div>
@@ -214,7 +217,7 @@
 								class={cn(
 									'flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary',
 									idx !== g.items.length - 1 && 'border-b border-border',
-									active && 'bg-secondary'
+									active && 'bg-secondary',
 								)}
 							>
 								<div class={cn('h-8 w-1.5 shrink-0 rounded-full', dotColor[s.color])}></div>
@@ -224,7 +227,7 @@
 										<span
 											class={cn(
 												'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-												categoryTone[s.category]
+												categoryTone[s.category],
 											)}
 										>
 											{s.category}

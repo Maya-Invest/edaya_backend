@@ -13,7 +13,8 @@
     "lint:fix": "eslint src tests --fix",
     "test": "cross-env NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
     "build": "tsc && tsc-alias",
-    "export-openapi": "tsx src/scripts/export-openapi.ts"
+    "export-openapi": "tsx src/scripts/export-openapi.ts",
+    "generate-api-client": "tsx src/scripts/generate-api-client.ts"
   },
   "dependencies": {
     "@edaya/adaptor-betterauth": "workspace:*",

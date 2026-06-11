@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Select as SelectPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils';
+	import { Select as SelectPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		class: className,
 		children,
 		...restProps

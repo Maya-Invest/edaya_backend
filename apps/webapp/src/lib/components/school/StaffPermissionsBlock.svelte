@@ -1,45 +1,46 @@
 <script lang="ts">
-	import { ShieldCheck } from '$lib/icons';
 	import type { StaffRole } from '$lib/data/school';
+	import Label from '$lib/components/ui/label/label.svelte';
 	import { classes, subjects } from '$lib/data/school';
+	import { ShieldCheck } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
-	import Label from '$lib/components/ui/label/label.svelte';
-	import ScopeChipSelector from './ScopeChipSelector.svelte';
 	import {
 		STAFF_PERMISSIONS,
 		STAFF_SCOPE_LABEL,
 		STAFF_SCOPE_TONE,
 		defaultEnabledFor,
 	} from './drawer-constants';
+	import ScopeChipSelector from './ScopeChipSelector.svelte';
 
-	let { role }: { role: StaffRole } = $props();
+	const { role }: { role: StaffRole } = $props();
 
-	const classItems = $derived(classes.map((c) => ({ id: c.id, label: c.name, hint: c.level })));
+	const classItems = $derived(classes.map(c => ({ id: c.id, label: c.name, hint: c.level })));
 
 	const subjectItems = $derived.by(() => {
-		const map = new Map<string, { id: string; label: string }>();
+		const map: Record<string, { id: string; label: string }> = {};
 		subjects.forEach((s) => {
-			if (!map.has(s.name)) map.set(s.name, { id: s.name, label: s.name });
+			if (!map[s.name])
+				map[s.name] = { id: s.name, label: s.name };
 		});
-		return Array.from(map.values());
+		return Object.values(map);
 	});
 
 	const enabledMap = $derived(defaultEnabledFor(role));
 
 	const grouped = $derived.by(() => {
 		const acc: Record<string, typeof STAFF_PERMISSIONS> = {};
-		STAFF_PERMISSIONS.filter((p) => enabledMap[p.key]).forEach((p) => {
+		STAFF_PERMISSIONS.filter(p => enabledMap[p.key]).forEach((p) => {
 			(acc[p.category] ||= []).push(p);
 		});
 		return acc;
 	});
 
 	let classSel = $state<Record<string, string[]>>(
-		Object.fromEntries(STAFF_PERMISSIONS.map((p) => [p.key, classes.map((c) => c.id)]))
+		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, classes.map(c => c.id)])),
 	);
 	let subjectSel = $state<Record<string, string[]>>(
-		Object.fromEntries(STAFF_PERMISSIONS.map((p) => [p.key, subjectItems.map((s) => s.id)]))
+		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, subjectItems.map(s => s.id)])),
 	);
 </script>
 
@@ -75,7 +76,7 @@
 									<span
 										class={cn(
 											'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium',
-											STAFF_SCOPE_TONE[s]
+											STAFF_SCOPE_TONE[s],
 										)}
 									>
 										{STAFF_SCOPE_LABEL[s]}
@@ -85,14 +86,14 @@
 										type="class"
 										items={classItems}
 										selected={classSel[p.key]}
-										onChange={(next) => (classSel = { ...classSel, [p.key]: next })}
+										onChange={next => (classSel = { ...classSel, [p.key]: next })}
 									/>
 								{:else}
 									<ScopeChipSelector
 										type="subject"
 										items={subjectItems}
 										selected={subjectSel[p.key]}
-										onChange={(next) => (subjectSel = { ...subjectSel, [p.key]: next })}
+										onChange={next => (subjectSel = { ...subjectSel, [p.key]: next })}
 									/>
 								{/if}
 							{/each}

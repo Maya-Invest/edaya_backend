@@ -1,4 +1,9 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import { absences, incidents, students, evaluations, classes } from '$lib/data/school';
+	import { t } from '$lib/i18n';
 	import {
 		Lock,
 		Eye,
@@ -11,13 +16,8 @@
 		Plus,
 		Search,
 	} from '$lib/icons';
-	import type { Snippet } from 'svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { cn } from '$lib/utils';
-	import { t } from '$lib/i18n';
-	import { absences, incidents, students, evaluations, classes } from '$lib/data/school';
 	import { canEditGrades, getCurrentUser, ROLE_LABEL_FR } from '$lib/permissions';
+	import { cn } from '$lib/utils';
 
 	type Tab = 'schoollife' | 'grades';
 
@@ -27,19 +27,20 @@
 
 	const studentsBySearch = $derived.by(() => {
 		const term = q.trim().toLowerCase();
-		if (!term) return students;
-		return students.filter((s) => s.name.toLowerCase().includes(term));
+		if (!term)
+			return students;
+		return students.filter(s => s.name.toLowerCase().includes(term));
 	});
 
 	const recentAbsences = $derived(
-		[...absences].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8)
+		[...absences].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8),
 	);
 	const recentIncidents = $derived(
-		[...incidents].sort((a, b) => (a.date < b.date ? 1 : -1))
+		[...incidents].sort((a, b) => (a.date < b.date ? 1 : -1)),
 	);
-	const lateness = $derived(incidents.filter((i) => i.category === 'Tardiness'));
+	const lateness = $derived(incidents.filter(i => i.category === 'Tardiness'));
 	const discipline = $derived(
-		incidents.filter((i) => i.category === 'Behavior' || i.category === 'Conflict')
+		incidents.filter(i => i.category === 'Behavior' || i.category === 'Conflict'),
 	);
 
 	const tabItems = [
@@ -55,7 +56,8 @@
 	} as const;
 
 	function schoolAverage() {
-		if (students.length === 0) return '0';
+		if (students.length === 0)
+			return '0';
 		const avg = students.reduce((acc, s) => acc + s.average, 0) / students.length;
 		return avg.toFixed(1);
 	}
@@ -200,7 +202,7 @@
 					'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition',
 					active
 						? 'bg-primary text-primary-foreground shadow-soft'
-						: 'text-muted-foreground hover:text-foreground'
+						: 'text-muted-foreground hover:text-foreground',
 				)}
 			>
 				{#if x.k === 'schoollife'}
@@ -220,7 +222,7 @@
 				`${$t('educator.discipline')} & ${$t('educator.lateness')}`,
 				$t('educator.fullAccess'),
 				incidentsAction,
-				incidentsList
+				incidentsList,
 			)}
 		</div>
 	{:else}
@@ -257,8 +259,8 @@
 				</div>
 				<ul>
 					{#each studentsBySearch as s (s.id)}
-						{@const cls = classes.find((c) => c.id === s.classId)}
-						{@const evals = evaluations.filter((e) => e.classId === s.classId).slice(0, 3)}
+						{@const cls = classes.find(c => c.id === s.classId)}
+						{@const evals = evaluations.filter(e => e.classId === s.classId).slice(0, 3)}
 						<li
 							class="grid grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-sm last:border-b-0"
 						>
@@ -277,7 +279,7 @@
 									class={cn(
 										'font-mono text-sm tabular-nums',
 										s.average >= 16 && 'text-primary',
-										s.average < 10 && 'text-destructive'
+										s.average < 10 && 'text-destructive',
 									)}
 								>
 									{s.average.toFixed(1)}
@@ -328,7 +330,7 @@
 {#snippet absencesList()}
 	<ul class="divide-y divide-border">
 		{#each recentAbsences as a (a.id)}
-			{@const s = students.find((x) => x.id === a.studentId)}
+			{@const s = students.find(x => x.id === a.studentId)}
 			<li class="flex items-center justify-between gap-3 py-3 text-sm">
 				<div class="min-w-0">
 					<p class="truncate font-medium">{s?.name ?? a.studentId}</p>
@@ -352,7 +354,7 @@
 {#snippet incidentsList()}
 	<ul class="divide-y divide-border">
 		{#each recentIncidents as i (i.id)}
-			{@const s = students.find((x) => x.id === i.studentId)}
+			{@const s = students.find(x => x.id === i.studentId)}
 			<li class="flex items-start justify-between gap-3 py-3 text-sm">
 				<div class="min-w-0">
 					<p class="truncate font-medium">{s?.name ?? i.studentId}</p>
@@ -366,7 +368,7 @@
 						'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
 						i.severity === 'high' && 'bg-destructive/15 text-destructive',
 						i.severity === 'medium' && 'bg-highlight-soft text-highlight',
-						i.severity === 'low' && 'bg-secondary text-muted-foreground'
+						i.severity === 'low' && 'bg-secondary text-muted-foreground',
 					)}
 				>
 					{i.severity}

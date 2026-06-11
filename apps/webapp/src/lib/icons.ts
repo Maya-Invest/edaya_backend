@@ -62,5 +62,5 @@ export {
 	Users,
 	Wallet,
 	X,
-	XCircle
+	XCircle,
 } from 'lucide-svelte';

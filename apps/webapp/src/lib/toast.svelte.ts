@@ -1,10 +1,10 @@
 export type ToastKind = 'success' | 'error' | 'info';
 
-export type ToastItem = {
+export interface ToastItem {
 	id: number;
 	kind: ToastKind;
 	message: string;
-};
+}
 
 class ToastStore {
 	items = $state<ToastItem[]>([]);
@@ -27,7 +27,7 @@ class ToastStore {
 	}
 
 	dismiss(id: number) {
-		this.items = this.items.filter((t) => t.id !== id);
+		this.items = this.items.filter(t => t.id !== id);
 	}
 }
 

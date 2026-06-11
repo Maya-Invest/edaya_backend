@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { StaffMember, StaffRole } from '$lib/data/school';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import {
 		ShieldCheck,
 		Search,
@@ -8,12 +10,10 @@
 		ChevronRight,
 		Users,
 	} from '$lib/icons';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import { cn } from '$lib/utils';
-	import type { StaffMember, StaffRole } from '$lib/data/school';
 	import { ROLE_LABEL_FR, getCurrentUser } from '$lib/permissions';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		staff,
 		onSelect,
 		selectedRole,
@@ -31,7 +31,7 @@
 		{
 			key: 'directeur',
 			tint: 'bg-primary/10 text-primary',
-			desc: "Accès total en lecture/écriture sur tout l'établissement.",
+			desc: 'Accès total en lecture/écriture sur tout l\'établissement.',
 		},
 		{
 			key: 'prof_principal',
@@ -55,16 +55,15 @@
 
 	const list = $derived.by(() => {
 		const term = q.trim().toLowerCase();
-		if (!term) return ROLES;
-		return ROLES.filter(
-			(r) =>
-				ROLE_LABEL_FR[r.key].toLowerCase().includes(term) ||
-				r.desc.toLowerCase().includes(term)
+		if (!term)
+			return ROLES;
+		return ROLES.filter(r =>
+			ROLE_LABEL_FR[r.key].toLowerCase().includes(term) || r.desc.toLowerCase().includes(term),
 		);
 	});
 
 	function countByRole(r: StaffRole) {
-		return staff.filter((s) => s.role === r).length;
+		return staff.filter(s => s.role === r).length;
 	}
 </script>
 
@@ -121,14 +120,14 @@
 						onclick={() => onSelect?.(r.key)}
 						class={cn(
 							'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0',
-							active ? 'bg-primary/10' : 'hover:bg-secondary'
+							active ? 'bg-primary/10' : 'hover:bg-secondary',
 						)}
 					>
 						<div class="col-span-5 flex items-center gap-3">
 							<span
 								class={cn(
 									'flex h-10 w-10 items-center justify-center rounded-xl',
-									r.tint
+									r.tint,
 								)}
 							>
 								{#if r.key === 'directeur'}

@@ -1,18 +1,19 @@
 <script lang="ts">
-	import { toast, type ToastKind } from '$lib/toast.svelte';
-	import { cn } from '$lib/utils';
+	import type { ToastKind } from '$lib/toast.svelte';
 	import { CheckCircle2, Info, X, XCircle } from '$lib/icons';
+	import { toast } from '$lib/toast.svelte';
+	import { cn } from '$lib/utils';
 
 	const tone: Record<ToastKind, string> = {
 		success: 'border-accent/30 bg-accent/10 text-foreground',
 		error: 'border-destructive/30 bg-destructive/10 text-foreground',
-		info: 'border-border bg-card text-foreground'
+		info: 'border-border bg-card text-foreground',
 	};
 
 	const Icon: Record<ToastKind, typeof Info> = {
 		success: CheckCircle2,
 		error: XCircle,
-		info: Info
+		info: Info,
 	};
 </script>
 
@@ -25,7 +26,7 @@
 		<div
 			class={cn(
 				'pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-panel animate-fade-in',
-				tone[item.kind]
+				tone[item.kind],
 			)}
 			role="status"
 		>

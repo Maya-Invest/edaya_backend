@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { Info } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
-	import { classes, guardians, healthRecords, incidents } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { classes, guardians, healthRecords, incidents } from '$lib/data/school';
+	import { Info } from '$lib/icons';
 
-	let { s }: { s: Student } = $props();
+	const { s }: { s: Student } = $props();
 
-	const cls = $derived(classes.find((c) => c.id === s.classId));
-	const linkedG = $derived(guardians.filter((g) => g.studentIds.includes(s.id)));
+	const cls = $derived(classes.find(c => c.id === s.classId));
+	const linkedG = $derived(guardians.filter(g => g.studentIds.includes(s.id)));
 	const health = $derived(healthRecords[s.id]);
-	const studentIncidents = $derived(incidents.filter((i) => i.studentId === s.id));
+	const studentIncidents = $derived(incidents.filter(i => i.studentId === s.id));
 </script>
 
 <Dialog.Root>

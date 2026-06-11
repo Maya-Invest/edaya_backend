@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
-	import DataState from '$lib/components/ui/DataState.svelte';
-	import RolesMatrixView from '$lib/components/school/RolesMatrixView.svelte';
-	import { detailHref } from '$lib/detail-hrefs';
-	import { t } from '$lib/i18n';
 	import type { StaffRole } from '$lib/data/school';
 	import type { PageData } from './$types';
+	import { page } from '$app/stores';
+	import RolesMatrixView from '$lib/components/school/RolesMatrixView.svelte';
+	import DataState from '$lib/components/ui/DataState.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
+	import { t } from '$lib/i18n';
+	import { appGoto } from '$lib/navigation/app-navigation';
 
-	let { data }: { data: PageData } = $props();
+	const { data }: { data: PageData } = $props();
 
 	const selectedRole = $derived($page.params.role as StaffRole | undefined);
 </script>
@@ -21,7 +21,7 @@
 >
 	<RolesMatrixView
 		staff={data.staff}
-		onSelect={(role) => goto(detailHref.configRole(role))}
+		onSelect={role => appGoto(detailHref.configRole(role))}
 		{selectedRole}
 	/>
 </DataState>

@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { Mail, MoreHorizontal, Plus } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { Mail, MoreHorizontal, Plus } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		students,
 		onSelect,
 		selectedId,
-		className: _className,
-		classLevel: _classLevel,
 	}: {
 		students: Student[];
 		onSelect?: (s: Student) => void;
@@ -29,8 +27,8 @@
 		return st === 'honor'
 			? $t('studentStatus.honorLong')
 			: st === 'warning'
-				? $t('studentStatus.warningLong')
-				: $t('studentStatus.active');
+			? $t('studentStatus.warningLong')
+			: $t('studentStatus.active');
 	}
 </script>
 
@@ -71,7 +69,7 @@
 						onclick={() => onSelect?.(s)}
 						class={cn(
 							'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0',
-							active ? 'bg-primary/10' : 'hover:bg-secondary'
+							active ? 'bg-primary/10' : 'hover:bg-secondary',
 						)}
 					>
 						<div class="col-span-5 flex items-center gap-3">
@@ -102,7 +100,7 @@
 							<span
 								class={cn(
 									'rounded-full px-2.5 py-1 text-[11px] font-medium',
-									statusStyle[s.status]
+									statusStyle[s.status],
 								)}
 							>
 								{statusLabel(s.status)}

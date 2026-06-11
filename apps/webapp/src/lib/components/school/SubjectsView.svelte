@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Clock, Plus, User } from '$lib/icons';
 	import type { Subject, SubjectCategory } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { Clock, Plus, User } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		subjects,
 		onSelect,
 		selectedId,
@@ -24,12 +24,12 @@
 	};
 
 	const categoryTone: Record<SubjectCategory, string> = {
-		Scientifique: 'bg-secondary text-foreground/80',
-		Littéraire: 'bg-secondary text-foreground/80',
-		Langues: 'bg-secondary text-foreground/80',
+		'Scientifique': 'bg-secondary text-foreground/80',
+		'Littéraire': 'bg-secondary text-foreground/80',
+		'Langues': 'bg-secondary text-foreground/80',
 		'Sciences humaines': 'bg-secondary text-foreground/80',
-		Sport: 'bg-secondary text-foreground/80',
-		Arts: 'bg-secondary text-foreground/80',
+		'Sport': 'bg-secondary text-foreground/80',
+		'Arts': 'bg-secondary text-foreground/80',
 	};
 </script>
 
@@ -59,7 +59,7 @@
 				class={cn(
 					'flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary',
 					idx !== subjects.length - 1 && 'border-b border-border',
-					active && 'bg-secondary'
+					active && 'bg-secondary',
 				)}
 			>
 				<div class={cn('h-8 w-1.5 shrink-0 rounded-full', dotColor[s.color])}></div>
@@ -69,7 +69,7 @@
 						<span
 							class={cn(
 								'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-								categoryTone[s.category]
+								categoryTone[s.category],
 							)}
 						>
 							{s.category}

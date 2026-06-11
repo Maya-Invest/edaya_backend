@@ -1,6 +1,7 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import type { ResolvedPathname } from '$app/types';
 	import type { LucideIcon } from '$lib/icons';
+	import type { Snippet } from 'svelte';
 	import { page } from '$app/stores';
 	import { cn } from '$lib/utils';
 
@@ -9,15 +10,15 @@
 		label: string;
 		icon?: LucideIcon;
 		badge?: string | number;
-		href: string;
+		href: ResolvedPathname;
 	};
 
-	let {
+	const {
 		title,
 		subtitle = 'Module',
 		items,
 		header,
-		footer
+		footer,
 	}: {
 		title: string;
 		subtitle?: string;
@@ -27,7 +28,7 @@
 	} = $props();
 
 	function isActive(href: string): boolean {
-		return $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
+		return $page.url.pathname === href || $page.url.pathname.startsWith(`${href}/`);
 	}
 </script>
 
@@ -53,7 +54,7 @@
 						href={it.href}
 						class={cn(
 							'group flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors',
-							active ? 'bg-primary text-primary-foreground shadow-soft' : 'text-foreground/80 hover:bg-secondary'
+							active ? 'bg-primary text-primary-foreground shadow-soft' : 'text-foreground/80 hover:bg-secondary',
 						)}
 					>
 						<span class="flex min-w-0 items-center gap-2.5">
@@ -61,14 +62,14 @@
 								<Icon
 									class={cn(
 										'h-4 w-4 shrink-0',
-										active ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground'
+										active ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground',
 									)}
 								/>
 							{:else}
 								<span
 									class={cn(
 										'h-1.5 w-1.5 rounded-full transition',
-										active ? 'bg-accent' : 'bg-border group-hover:bg-accent'
+										active ? 'bg-accent' : 'bg-border group-hover:bg-accent',
 									)}
 								></span>
 							{/if}
@@ -78,7 +79,7 @@
 							<span
 								class={cn(
 									'rounded-md px-1.5 py-0.5 font-mono text-[10px]',
-									active ? 'bg-primary-foreground/15 text-primary-foreground' : 'bg-secondary text-muted-foreground'
+									active ? 'bg-primary-foreground/15 text-primary-foreground' : 'bg-secondary text-muted-foreground',
 								)}
 							>
 								{it.badge}

@@ -9,13 +9,11 @@ import Value from './select-value.svelte';
 const Root = SelectPrimitive.Root;
 
 export {
-	Root,
 	Content,
 	Group,
 	Item,
 	Label,
-	Trigger,
-	Value,
+	Root,
 	Root as Select,
 	Content as SelectContent,
 	Group as SelectGroup,
@@ -23,4 +21,6 @@ export {
 	Label as SelectLabel,
 	Trigger as SelectTrigger,
 	Value as SelectValue,
+	Trigger,
+	Value,
 };

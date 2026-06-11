@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { CalendarRange, ChevronDown, Plus } from '$lib/icons';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { periodDefinitionById } from '$lib/data/school';
 	import { t } from '$lib/i18n';
+	import { CalendarRange, ChevronDown, Plus } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
@@ -16,12 +16,12 @@
 	let expandedYear = $state<string | null>(academicContext.yearId);
 
 	const sortedYears = $derived(
-		[...academicContext.years].sort((a, b) => b.startDate.localeCompare(a.startDate))
+		[...academicContext.years].sort((a, b) => b.startDate.localeCompare(a.startDate)),
 	);
 
 	function periodsFor(yearId: string) {
 		return academicContext.periods
-			.filter((p) => p.academicYearId === yearId)
+			.filter(p => p.academicYearId === yearId)
 			.sort((a, b) => a.startDate.localeCompare(b.startDate));
 	}
 
@@ -35,12 +35,14 @@
 
 	function handlePublishYear(yearId: string) {
 		const year = academicContext.publishYear(yearId);
-		if (year) toast.success(get(t)('academic.toastYearPublished', { label: year.label }));
+		if (year)
+			toast.success(get(t)('academic.toastYearPublished', { label: year.label }));
 	}
 
 	function handlePublishPeriod(periodId: string) {
 		const period = academicContext.publishPeriod(periodId);
-		if (period) toast.success(get(t)('academic.toastPeriodPublished', { label: period.label }));
+		if (period)
+			toast.success(get(t)('academic.toastPeriodPublished', { label: period.label }));
 	}
 </script>
 
@@ -109,7 +111,7 @@
 									'rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide',
 									year.status === 'published'
 										? 'bg-accent/15 text-accent-foreground'
-										: 'bg-secondary text-muted-foreground'
+										: 'bg-secondary text-muted-foreground',
 								)}
 							>
 								{year.status === 'published' ? $t('academic.published') : $t('academic.draft')}
@@ -162,7 +164,7 @@
 												'rounded-full px-2 py-0.5 font-mono text-[10px] uppercase',
 												period.status === 'published'
 													? 'bg-accent/15 text-accent-foreground'
-													: 'bg-secondary text-muted-foreground'
+													: 'bg-secondary text-muted-foreground',
 											)}
 										>
 											{period.status === 'published'

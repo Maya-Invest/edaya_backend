@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { FileSpreadsheet, Sparkles } from '$lib/icons';
 	import type { ReportCardResult } from '$lib/data/report-cards';
+	import { academicContext } from '$lib/academic/context.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { students } from '$lib/data/school';
-	import { academicContext } from '$lib/academic/context.svelte';
-	import { reportCardsContext } from '$lib/report-cards/context.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
+	import { FileSpreadsheet, Sparkles } from '$lib/icons';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
-	let {
+	const {
 		classId,
 		onSelect,
-		selectedId
+		selectedId,
 	}: {
 		classId: string;
 		onSelect?: (r: ReportCardResult) => void;
@@ -24,16 +24,16 @@
 	const results = $derived(reportCardsContext.resultsForClass(classId));
 
 	const period = $derived(academicContext.period);
-	const classStudents = $derived(students.filter((s) => s.classId === classId));
+	const classStudents = $derived(students.filter(s => s.classId === classId));
 
 	const statusLabel: Record<ReportCardResult['status'], string> = {
 		draft: 'Brouillon',
 		generated: 'Généré',
-		published: 'Publié'
+		published: 'Publié',
 	};
 
 	function resultForStudent(studentId: string) {
-		return results.find((r) => r.studentId === studentId);
+		return results.find(r => r.studentId === studentId);
 	}
 
 	function generateAll() {
@@ -44,7 +44,7 @@
 	function generateOne(studentId: string) {
 		const r = reportCardsContext.generateResult(studentId);
 		if (r) {
-			const name = students.find((s) => s.id === studentId)?.name ?? '';
+			const name = students.find(s => s.id === studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastGenerated', { name }));
 		}
 	}
@@ -52,7 +52,7 @@
 	function publishOne(resultId: string) {
 		const r = reportCardsContext.publishResult(resultId);
 		if (r) {
-			const name = students.find((s) => s.id === r.studentId)?.name ?? '';
+			const name = students.find(s => s.id === r.studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastPublished', { name }));
 		}
 	}
@@ -90,7 +90,7 @@
 					<tr
 						class={cn(
 							'border-b border-border/60 last:border-0',
-							selectedId === result?.id && 'bg-primary/5'
+							selectedId === result?.id && 'bg-primary/5',
 						)}
 					>
 						<td class="px-4 py-3">
@@ -116,8 +116,8 @@
 										result.status === 'published'
 											? 'bg-accent/15'
 											: result.status === 'generated'
-												? 'bg-highlight-soft text-highlight'
-												: 'bg-secondary text-muted-foreground'
+											? 'bg-highlight-soft text-highlight'
+											: 'bg-secondary text-muted-foreground',
 									)}
 								>
 									{statusLabel[result.status]}

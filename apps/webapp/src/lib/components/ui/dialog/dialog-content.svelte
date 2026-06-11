@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils';
+	import { Dialog as DialogPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		class: className,
 		children,
 		...restProps
@@ -16,7 +16,7 @@
 	<DialogPrimitive.Content
 		class={cn(
 			'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg',
-			className
+			className,
 		)}
 		{...restProps}
 	>

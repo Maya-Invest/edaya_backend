@@ -1,10 +1,10 @@
 <script lang="ts">
-	import DataState from '$lib/components/ui/DataState.svelte';
-	import PaymentsView from '$lib/components/school/PaymentsView.svelte';
-	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
+	import PaymentsView from '$lib/components/school/PaymentsView.svelte';
+	import DataState from '$lib/components/ui/DataState.svelte';
+	import { t } from '$lib/i18n';
 
-	let { data }: { data: PageData } = $props();
+	const { data }: { data: PageData } = $props();
 </script>
 
 <DataState

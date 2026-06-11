@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { Mail, MoreHorizontal, Plus, Search } from '$lib/icons';
 	import type { ClassNode, Student } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
+	import { Mail, MoreHorizontal, Plus, Search } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		students,
 		classes,
 		hierarchy,
@@ -32,21 +32,21 @@
 	let status = $state<'all' | Student['status']>('all');
 
 	const list = $derived(
-		students.filter((s) => classFilter === 'all' || s.classId === classFilter)
-			.filter((s) => status === 'all' || s.status === status)
-			.filter((s) => s.name.toLowerCase().includes(q.toLowerCase()))
+		students.filter(s => classFilter === 'all' || s.classId === classFilter)
+			.filter(s => status === 'all' || s.status === status)
+			.filter(s => s.name.toLowerCase().includes(q.toLowerCase())),
 	);
 
 	const statusKeys = ['all', 'honor', 'active', 'warning'] as const;
 
 	const classFilterGroups = $derived(
-		hierarchy.map((g) => ({
+		hierarchy.map(g => ({
 			label: g.level,
-			options: g.classes.map((c) => ({
+			options: g.classes.map(c => ({
 				value: c.id,
 				label: `${c.name} · ${c.studentCount}`,
 			})),
-		}))
+		})),
 	);
 
 	function statusLabel(k: (typeof statusKeys)[number]) {
@@ -90,7 +90,7 @@
 							'rounded-full px-3 py-1 text-[11px] font-medium transition',
 							status === k
 								? 'bg-primary text-primary-foreground'
-								: 'text-muted-foreground hover:text-foreground'
+								: 'text-muted-foreground hover:text-foreground',
 						)}
 					>
 						{statusLabel(k)}
@@ -116,7 +116,7 @@
 		</div>
 		<ul>
 			{#each list as s (s.id)}
-				{@const cls = classes.find((c) => c.id === s.classId)}
+				{@const cls = classes.find(c => c.id === s.classId)}
 				{@const active = selectedId === s.id}
 				<li>
 					<button
@@ -124,7 +124,7 @@
 						onclick={() => onSelect?.(s)}
 						class={cn(
 							'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-3.5 text-left transition-colors last:border-b-0',
-							active ? 'bg-primary/10' : 'hover:bg-secondary'
+							active ? 'bg-primary/10' : 'hover:bg-secondary',
 						)}
 					>
 						<div class="col-span-4 flex items-center gap-3">
@@ -155,7 +155,7 @@
 							<span
 								class={cn(
 									'rounded-full px-2 py-0.5 text-[10px] font-medium',
-									statusStyle[s.status]
+									statusStyle[s.status],
 								)}
 							>
 								{$t(`studentStatus.${s.status}`)}

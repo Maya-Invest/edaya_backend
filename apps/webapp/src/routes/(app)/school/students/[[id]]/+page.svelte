@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import type { PageData } from './$types';
 	import { page } from '$app/stores';
-	import DataState from '$lib/components/ui/DataState.svelte';
 	import SchoolStudentsView from '$lib/components/school/SchoolStudentsView.svelte';
+	import DataState from '$lib/components/ui/DataState.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
-	import type { PageData } from './$types';
+	import { appGoto } from '$lib/navigation/app-navigation';
 
-	let { data }: { data: PageData } = $props();
+	const { data }: { data: PageData } = $props();
 
 	const selectedId = $derived($page.params.id);
 </script>
@@ -22,7 +22,7 @@
 		students={data.students}
 		classes={data.classes}
 		hierarchy={data.hierarchy}
-		onSelect={(s) => goto(detailHref.schoolStudent(s.id))}
+		onSelect={s => appGoto(detailHref.schoolStudent(s.id))}
 		{selectedId}
 	/>
 </DataState>

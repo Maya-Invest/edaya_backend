@@ -1,11 +1,11 @@
 <script lang="ts">
+	import type { Fee, Student, StudentBilling } from '$lib/data/school';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { locale, t } from '$lib/i18n';
 	import { Plus, TrendingUp, AlertCircle, Wallet } from '$lib/icons';
 	import { cn } from '$lib/utils';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import type { Fee, Student, StudentBilling } from '$lib/data/school';
-	import { locale, t } from '$lib/i18n';
 
-	let {
+	const {
 		fees,
 		billing,
 		students,
@@ -37,7 +37,7 @@
 	const totals = $derived.by(() => {
 		const totalDue = billing.reduce((sum, b) => sum + (b.total - b.paid), 0);
 		const collected = billing.reduce((sum, b) => sum + b.paid, 0);
-		const overdue = billing.filter((b) => b.status === 'overdue').length;
+		const overdue = billing.filter(b => b.status === 'overdue').length;
 		return { totalDue, collected, overdue };
 	});
 
@@ -67,7 +67,7 @@
 								'rounded-full px-3.5 py-1.5 text-xs font-medium transition',
 								tab === k
 									? 'bg-primary text-primary-foreground shadow-soft'
-									: 'text-muted-foreground hover:text-foreground'
+									: 'text-muted-foreground hover:text-foreground',
 							)}
 						>
 							{$t(`finance.${k}`)}
@@ -135,8 +135,8 @@
 			</div>
 			<ul>
 				{#each billing as b (b.id)}
-					{@const student = students.find((s) => s.id === b.studentId)}
-					{@const fee = fees.find((f) => f.id === b.feeId)}
+					{@const student = students.find(s => s.id === b.studentId)}
+					{@const fee = fees.find(f => f.id === b.feeId)}
 					{#if student && fee}
 						{@const pct = (b.paid / b.total) * 100}
 						{@const active = selectedId === b.id}
@@ -146,7 +146,7 @@
 								onclick={() => onSelectBilling?.(b)}
 								class={cn(
 									'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0',
-									active ? 'bg-primary/10' : 'hover:bg-secondary'
+									active ? 'bg-primary/10' : 'hover:bg-secondary',
 								)}
 							>
 								<div class="col-span-4 flex items-center gap-3">
@@ -180,7 +180,7 @@
 										<div
 											class={cn(
 												'h-full rounded-full',
-												b.status === 'overdue' ? 'bg-destructive' : 'bg-accent'
+												b.status === 'overdue' ? 'bg-destructive' : 'bg-accent',
 											)}
 											style:width="{pct}%"
 										></div>
@@ -197,7 +197,7 @@
 									<span
 										class={cn(
 											'rounded-full px-2 py-1 text-[10px] font-medium uppercase',
-											statusStyle[b.status]
+											statusStyle[b.status],
 										)}
 									>
 										{$t(`billing.status.${b.status}`)}
@@ -213,13 +213,13 @@
 		<div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
 			{#each fees as f (f.id)}
 				{@const active = selectedId === f.id}
-				{@const usage = billing.filter((b) => b.feeId === f.id).length}
+				{@const usage = billing.filter(b => b.feeId === f.id).length}
 				<button
 					type="button"
 					onclick={() => onSelectFee?.(f)}
 					class={cn(
 						'rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-						active && 'ring-2 ring-accent'
+						active && 'ring-2 ring-accent',
 					)}
 				>
 					<div class="flex items-start justify-between">
@@ -230,7 +230,7 @@
 						</span>
 						<span class="font-mono text-[10px] uppercase text-muted-foreground">
 							/ {$t(
-								`feePeriod.${f.period.toLowerCase() === 'year' ? 'year' : f.period.toLowerCase() === 'term' ? 'term' : 'month'}`
+								`feePeriod.${f.period.toLowerCase() === 'year' ? 'year' : f.period.toLowerCase() === 'term' ? 'term' : 'month'}`,
 							)}
 						</span>
 					</div>

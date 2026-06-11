@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Plus } from '$lib/icons';
-	import { resources } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { cn } from '$lib/utils';
+	import { resources } from '$lib/data/school';
 	import { t } from '$lib/i18n';
+	import { Plus } from '$lib/icons';
+	import { cn } from '$lib/utils';
 </script>
 
 <div class="animate-fade-in">
@@ -55,7 +55,7 @@
 								'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase',
 								r.status === 'available' && 'bg-secondary text-foreground/80',
 								r.status === 'booked' && 'bg-secondary text-foreground/80',
-								r.status === 'maintenance' && 'bg-destructive/10 text-destructive'
+								r.status === 'maintenance' && 'bg-destructive/10 text-destructive',
 							)}
 						>
 							{$t(`resourceStatus.${r.status}`)}

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { GraduationCap } from '$lib/icons';
 	import { page } from '$app/stores';
-	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
+	import { GraduationCap } from '$lib/icons';
 	import { MODULES, getModuleFromPath } from '$lib/navigation';
+	import { cn } from '$lib/utils';
 
 	const activeModule = $derived(getModuleFromPath($page.url.pathname));
 </script>
@@ -27,7 +27,7 @@
 					'group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all',
 					active
 						? 'bg-primary-foreground/10 text-accent'
-						: 'text-primary-foreground/55 hover:bg-primary-foreground/5 hover:text-primary-foreground'
+						: 'text-primary-foreground/55 hover:bg-primary-foreground/5 hover:text-primary-foreground',
 				)}
 			>
 				<Icon class="h-[18px] w-[18px]" />

@@ -1,16 +1,16 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
 	import type { PageLoadState } from '$lib/data/load-state';
-	import { AlertCircle, Inbox, LoaderCircle } from '$lib/icons';
+	import type { Snippet } from 'svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { AlertCircle, Inbox, LoaderCircle } from '$lib/icons';
 
-	let {
+	const {
 		status,
 		errorMessage,
 		emptyTitle,
 		emptyDescription,
-		children
+		children,
 	}: {
 		status: PageLoadState;
 		errorMessage?: string;
@@ -20,7 +20,8 @@
 	} = $props();
 
 	function retry() {
-		if (typeof window !== 'undefined') window.location.reload();
+		if (typeof window !== 'undefined')
+			window.location.reload();
 	}
 </script>
 

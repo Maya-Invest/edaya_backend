@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import type { PageData } from './$types';
 	import { page } from '$app/stores';
-	import DataState from '$lib/components/ui/DataState.svelte';
 	import PeopleView from '$lib/components/school/PeopleView.svelte';
+	import DataState from '$lib/components/ui/DataState.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
-	import type { PageData } from './$types';
+	import { appGoto } from '$lib/navigation/app-navigation';
 
-	let { data }: { data: PageData } = $props();
+	const { data }: { data: PageData } = $props();
 
 	const selectedId = $derived($page.params.id);
 </script>
@@ -23,8 +23,8 @@
 		guardians={data.guardians}
 		students={data.students}
 		forcedTab="staff"
-		onSelectGuardian={(g) => goto(detailHref.configStaffGuardian(g.id))}
-		onSelectStaff={(s) => goto(detailHref.configStaffMember(s.id))}
+		onSelectGuardian={g => appGoto(detailHref.configStaffGuardian(g.id))}
+		onSelectStaff={s => appGoto(detailHref.configStaffMember(s.id))}
 		{selectedId}
 	/>
 </DataState>

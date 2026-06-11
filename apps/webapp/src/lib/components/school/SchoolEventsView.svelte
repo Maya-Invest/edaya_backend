@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { AlertTriangle, Plus, Search } from '$lib/icons';
 	import type { ClassNode, Incident, Student } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { cn } from '$lib/utils';
 	import { locale, t } from '$lib/i18n';
+	import { AlertTriangle, Plus, Search } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		incidents,
 		students,
 		classes,
@@ -40,7 +40,8 @@
 	let searchQuery = $state('');
 
 	$effect.pre(() => {
-		if (classId) classFilter = classId;
+		if (classId)
+			classFilter = classId;
 	});
 
 	const list = $derived.by(() => {
@@ -49,15 +50,15 @@
 		const effectiveClassId = classId || (classFilter !== 'all' ? classFilter : undefined);
 		if (effectiveClassId) {
 			const sIds = new Set(
-				students.filter((s) => s.classId === effectiveClassId).map((s) => s.id)
+				students.filter(s => s.classId === effectiveClassId).map(s => s.id),
 			);
-			filtered = filtered.filter((i) => sIds.has(i.studentId));
+			filtered = filtered.filter(i => sIds.has(i.studentId));
 		}
 
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
 			filtered = filtered.filter((i) => {
-				const st = students.find((s) => s.id === i.studentId);
+				const st = students.find(s => s.id === i.studentId);
 				return st?.name.toLowerCase().includes(q) ?? false;
 			});
 		}
@@ -67,7 +68,7 @@
 
 	const classFilterOptions = $derived([
 		{ value: 'all', label: $t('common.allClasses') },
-		...classes.map((c) => ({ value: c.id, label: c.name })),
+		...classes.map(c => ({ value: c.id, label: c.name })),
 	]);
 </script>
 
@@ -117,15 +118,15 @@
 		</div>
 		<ul>
 			{#each list as i (i.id)}
-				{@const st = students.find((s) => s.id === i.studentId)}
-				{@const cls = classes.find((c) => c.id === st?.classId)}
+				{@const st = students.find(s => s.id === i.studentId)}
+				{@const cls = classes.find(c => c.id === st?.classId)}
 				<li>
 					<button
 						type="button"
 						onclick={() => onSelect?.(i)}
 						class={cn(
 							'grid w-full grid-cols-12 gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0 hover:bg-secondary',
-							selectedId === i.id && 'bg-secondary/60'
+							selectedId === i.id && 'bg-secondary/60',
 						)}
 					>
 						<div class="col-span-2 font-mono text-xs text-muted-foreground">
@@ -150,7 +151,7 @@
 							<span
 								class={cn(
 									'rounded-full px-2 py-0.5 text-[10px] font-medium',
-									catTone[i.category]
+									catTone[i.category],
 								)}
 							>
 								{$t(`events.cat.${i.category}`)}
@@ -160,7 +161,7 @@
 							<span
 								class={cn(
 									'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase',
-									sevTone[i.severity]
+									sevTone[i.severity],
 								)}
 							>
 								{$t(`events.severity.${i.severity}`)}

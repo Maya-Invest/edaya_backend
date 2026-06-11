@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Fee } from '$lib/data/school';
-	import { t } from '$lib/i18n';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import { t } from '$lib/i18n';
 	import DrawerField from './DrawerField.svelte';
 
-	let { f }: { f: Fee } = $props();
+	const { f }: { f: Fee } = $props();
 
 	const periodLowerKey = $derived(
-		f.period.toLowerCase() === 'year' ? 'year' : f.period.toLowerCase() === 'term' ? 'term' : 'month'
+		f.period.toLowerCase() === 'year' ? 'year' : f.period.toLowerCase() === 'term' ? 'term' : 'month',
 	);
 </script>
 

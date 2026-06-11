@@ -1,20 +1,15 @@
 <script lang="ts">
-	import { X } from '$lib/icons';
-	import { t } from '$lib/i18n';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import type { DrawerItem } from './drawer-types';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { t } from '$lib/i18n';
+	import { X } from '$lib/icons';
 	import { kindStyle, kindLabelKey } from './drawer-constants';
 
-	let { item, onClose }: { item: DrawerItem | null; onClose: () => void } = $props();
+	const { item, onClose }: { item: DrawerItem | null; onClose: () => void } = $props();
 
-	const showSave = $derived(
-		item !== null &&
-			item.kind !== 'role' &&
-			item.kind !== 'level' &&
-			item.kind !== 'activity' &&
-			item.kind !== 'reportCardDefinition' &&
-			item.kind !== 'reportCardResult'
-	);
+	const nonSaveKinds = new Set(['role', 'level', 'activity', 'reportCardDefinition', 'reportCardResult']);
+
+	const showSave = $derived(item !== null && !nonSaveKinds.has(item.kind));
 </script>
 
 {#if item}

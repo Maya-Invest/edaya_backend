@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { Check, Clock, Search } from '$lib/icons';
 	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/data/school';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { cn } from '$lib/utils';
 	import { locale, t } from '$lib/i18n';
+	import { Check, Clock, Search } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		billing,
 		students,
 		fees,
-		classes
+		classes,
 	}: {
 		billing: StudentBilling[];
 		students: Student[];
@@ -37,7 +37,7 @@
 					date: i.date,
 					amount: i.amount,
 					status: i.status,
-				})
+				}),
 			);
 		});
 		return out.sort((a, b) => b.date.localeCompare(a.date));
@@ -49,20 +49,24 @@
 
 	const list = $derived(
 		rows.filter((r) => {
-			if (status !== 'all' && r.status !== status) return false;
-			const st = students.find((s) => s.id === r.studentId);
-			if (!st) return false;
-			if (classFilter !== 'all' && st.classId !== classFilter) return false;
-			if (q && !st.name.toLowerCase().includes(q.toLowerCase())) return false;
+			if (status !== 'all' && r.status !== status)
+				return false;
+			const st = students.find(s => s.id === r.studentId);
+			if (!st)
+				return false;
+			if (classFilter !== 'all' && st.classId !== classFilter)
+				return false;
+			if (q && !st.name.toLowerCase().includes(q.toLowerCase()))
+				return false;
 			return true;
-		})
+		}),
 	);
 
 	const collected = $derived(
-		list.filter((r) => r.status === 'paid').reduce((s, r) => s + r.amount, 0)
+		list.filter(r => r.status === 'paid').reduce((s, r) => s + r.amount, 0),
 	);
 	const pending = $derived(
-		list.filter((r) => r.status === 'pending').reduce((s, r) => s + r.amount, 0)
+		list.filter(r => r.status === 'pending').reduce((s, r) => s + r.amount, 0),
 	);
 
 	const statusKeys = ['all', 'paid', 'pending'] as const;
@@ -71,8 +75,8 @@
 		return k === 'all'
 			? $t('filter.all')
 			: k === 'paid'
-				? $t('installment.paid')
-				: $t('installment.pending');
+			? $t('installment.paid')
+			: $t('installment.pending');
 	}
 </script>
 
@@ -113,7 +117,7 @@
 							'rounded-full px-3 py-1 text-[11px] font-medium',
 							status === k
 								? 'bg-primary text-primary-foreground'
-								: 'text-muted-foreground hover:text-foreground'
+								: 'text-muted-foreground hover:text-foreground',
 						)}
 					>
 						{statusLabel(k)}
@@ -154,8 +158,8 @@
 		</div>
 		<ul>
 			{#each list as r (r.id)}
-				{@const st = students.find((s) => s.id === r.studentId)}
-				{@const fee = fees.find((f) => f.id === r.feeId)}
+				{@const st = students.find(s => s.id === r.studentId)}
+				{@const fee = fees.find(f => f.id === r.feeId)}
 				<li
 					class="grid grid-cols-12 items-center gap-4 border-b border-border px-5 py-3 last:border-b-0"
 				>

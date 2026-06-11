@@ -27,6 +27,7 @@ export const SEED_STAFF = [
   { id: "st5", name: "Camille Moreau", email: "c.moreau@school.edu" },
   { id: "st3", name: "Mme Léon", email: "m.leon@school.edu" },
   { id: "st1", name: "Mme Dupont", email: "m.dupont@school.edu" },
+  { id: "st2", name: "M. Garnier", email: "m.garnier@school.edu" },
   { id: "st7", name: "Tom Évrard", email: "t.evrard@school.edu" },
 ] as const;
 
@@ -34,13 +35,136 @@ export const SEED_STUDENTS = [
   { id: "s1", classId: "6a", name: "Amélie Laurent", birthDate: "2014-03-12" },
   { id: "s2", classId: "6a", name: "Noah Bennett", birthDate: "2014-07-22" },
   { id: "s3", classId: "6a", name: "Mira Okafor", birthDate: "2014-01-09" },
+  { id: "s4", classId: "6a", name: "Theo Marchetti", birthDate: "2014-05-30" },
+  { id: "s5", classId: "6a", name: "Yuki Tanaka", birthDate: "2014-11-04" },
+  { id: "s6", classId: "6a", name: "Sofia Reyes", birthDate: "2014-08-17" },
   { id: "s7", classId: "6b", name: "Liam Foster", birthDate: "2014-02-21" },
   { id: "s8", classId: "6b", name: "Zara Khan", birthDate: "2014-06-11" },
 ] as const;
 
 export const SEED_GUARDIANS = [
-  { id: "g1", name: "Claire Laurent", email: "c.laurent@mail.com", phone: "+33 6 12 34 56 78", studentIds: ["s1"] },
-  { id: "g2", name: "James Bennett", email: "j.bennett@mail.com", phone: "+33 6 22 11 09 87", studentIds: ["s2"] },
+  {
+    id: "g1",
+    name: "Claire Laurent",
+    email: "c.laurent@mail.com",
+    phone: "+33 6 12 34 56 78",
+    studentIds: ["s1"],
+    relationship: "mother",
+  },
+  {
+    id: "g2",
+    name: "James Bennett",
+    email: "j.bennett@mail.com",
+    phone: "+33 6 22 11 09 87",
+    studentIds: ["s2"],
+    relationship: "father",
+  },
+  {
+    id: "g3",
+    name: "Adaeze Okafor",
+    email: "a.okafor@mail.com",
+    phone: "+33 6 78 90 12 34",
+    studentIds: ["s3"],
+    relationship: "mother",
+  },
+  {
+    id: "g4",
+    name: "Luca Marchetti",
+    email: "l.marchetti@mail.com",
+    phone: "+33 6 55 66 77 88",
+    studentIds: ["s4"],
+    relationship: "father",
+  },
+  {
+    id: "g5",
+    name: "Hana Tanaka",
+    email: "h.tanaka@mail.com",
+    phone: "+33 6 11 22 33 44",
+    studentIds: ["s5"],
+    relationship: "mother",
+  },
+  {
+    id: "g6",
+    name: "Marco Reyes",
+    email: "m.reyes@mail.com",
+    phone: "+33 6 88 77 66 55",
+    studentIds: ["s6"],
+    relationship: "father",
+  },
+] as const;
+
+/** School-wide subject catalog aligned with `apps/webapp/src/lib/data/school.ts`. */
+export const SEED_SUBJECT_CATALOG = [
+  { id: "subj-math", code: "MATH", name: "Mathematics", defaultCoefficient: 3 },
+  { id: "subj-fr", code: "FR", name: "French Literature", defaultCoefficient: 2 },
+  { id: "subj-hist", code: "HIST", name: "History & Geography", defaultCoefficient: 2 },
+  { id: "subj-sci", code: "SCI", name: "Natural Sciences", defaultCoefficient: 2 },
+  { id: "subj-en", code: "EN", name: "English", defaultCoefficient: 2 },
+  { id: "subj-eps", code: "EPS", name: "Physical Education", defaultCoefficient: 1 },
+] as const;
+
+/** Programme breakdown used by the class-subjects webapp mapper for hours and descriptions. */
+export const SEED_SUBJECT_MATTERS = [
+  {
+    id: "sm-math",
+    subjectId: "subj-math",
+    name: "Core programme",
+    description: "Algebra fundamentals, geometry and problem solving.",
+    sequenceOrder: 1,
+    estimatedHours: 5,
+  },
+  {
+    id: "sm-fr",
+    subjectId: "subj-fr",
+    name: "Core programme",
+    description: "Reading, writing and analysis of classical texts.",
+    sequenceOrder: 1,
+    estimatedHours: 4,
+  },
+  {
+    id: "sm-hist",
+    subjectId: "subj-hist",
+    name: "Core programme",
+    description: "Antiquity to medieval Europe; world geography.",
+    sequenceOrder: 1,
+    estimatedHours: 3,
+  },
+  {
+    id: "sm-sci",
+    subjectId: "subj-sci",
+    name: "Core programme",
+    description: "Biology, ecology and earth sciences.",
+    sequenceOrder: 1,
+    estimatedHours: 3,
+  },
+  {
+    id: "sm-en",
+    subjectId: "subj-en",
+    name: "Core programme",
+    description: "Communication, comprehension and culture.",
+    sequenceOrder: 1,
+    estimatedHours: 3,
+  },
+  {
+    id: "sm-eps",
+    subjectId: "subj-eps",
+    name: "Core programme",
+    description: "Athletics, team sports and wellbeing.",
+    sequenceOrder: 1,
+    estimatedHours: 2,
+  },
+] as const;
+
+/** Class offerings and assigned teachers for migrated class-subjects UI. */
+export const SEED_CLASS_SUBJECTS = [
+  { id: "cs-6a-math", classGroupId: "6a", subjectId: "subj-math", coefficient: 3, teacherId: "st1" },
+  { id: "cs-6a-fr", classGroupId: "6a", subjectId: "subj-fr", coefficient: 2, teacherId: "st2" },
+  { id: "cs-6a-hist", classGroupId: "6a", subjectId: "subj-hist", coefficient: 2, teacherId: "st3" },
+  { id: "cs-6a-sci", classGroupId: "6a", subjectId: "subj-sci", coefficient: 2, teacherId: "st1" },
+  { id: "cs-6a-en", classGroupId: "6a", subjectId: "subj-en", coefficient: 2, teacherId: "st7" },
+  { id: "cs-6a-eps", classGroupId: "6a", subjectId: "subj-eps", coefficient: 1, teacherId: "st7" },
+  { id: "cs-6b-math", classGroupId: "6b", subjectId: "subj-math", coefficient: 3, teacherId: "st1" },
+  { id: "cs-6b-fr", classGroupId: "6b", subjectId: "subj-fr", coefficient: 2, teacherId: "st2" },
 ] as const;
 
 /** Shared dev password for seeded Better Auth accounts. Dev-only — never use in production. */

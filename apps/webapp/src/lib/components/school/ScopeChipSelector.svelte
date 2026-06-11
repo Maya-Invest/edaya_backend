@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { ChevronDown } from '$lib/icons';
-	import { cn } from '$lib/utils';
+	import type { StaffPermScope } from './drawer-constants';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Popover from '$lib/components/ui/popover';
+	import { ChevronDown } from '$lib/icons';
+	import { cn } from '$lib/utils';
 	import {
 		STAFF_SCOPE_LABEL,
 		STAFF_SCOPE_TONE,
-		type StaffPermScope,
+
 	} from './drawer-constants';
 
-	let {
+	const {
 		type,
 		items,
 		selected,
@@ -26,7 +27,7 @@
 	const summary = $derived(all ? 'Toutes' : none ? 'Aucune' : `${selected.length} sél.`);
 
 	function toggle(id: string) {
-		onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+		onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
 	}
 </script>
 
@@ -38,7 +39,7 @@
 				type="button"
 				class={cn(
 					'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium transition hover:brightness-95',
-					STAFF_SCOPE_TONE[type]
+					STAFF_SCOPE_TONE[type],
 				)}
 			>
 				<span>{STAFF_SCOPE_LABEL[type]}</span>
@@ -52,7 +53,7 @@
 			<p class="text-xs font-semibold">{type === 'class' ? 'Classes' : 'Matières'}</p>
 			<div class="flex items-center gap-1 text-[10px]">
 				<button
-					onclick={() => onChange(items.map((i) => i.id))}
+					onclick={() => onChange(items.map(i => i.id))}
 					class="rounded-full px-2 py-0.5 text-muted-foreground hover:bg-secondary"
 				>
 					Tout

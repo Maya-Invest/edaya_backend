@@ -4,25 +4,28 @@
 
 	type ApiStatus = { connected: true; message: string } | { connected: false };
 
-	let { initial }: { initial: ApiStatus } = $props();
+	const { initial }: { initial: ApiStatus } = $props();
 
 	let live = $state<ApiStatus | null>(null);
 
 	const status = $derived(live ?? ($page.data.api as ApiStatus | undefined) ?? initial);
 
 	$effect(() => {
-		if (!browser || !dev) return;
+		if (!browser || !dev)
+			return;
 
 		let cancelled = false;
 
 		async function refresh() {
 			try {
 				const response = await fetch('/dev/api-health');
-				if (!response.ok || cancelled) return;
+				if (!response.ok || cancelled)
+					return;
 				live = (await response.json()) as ApiStatus;
 			}
 			catch {
-				if (!cancelled) live = { connected: false };
+				if (!cancelled)
+					live = { connected: false };
 			}
 		}
 

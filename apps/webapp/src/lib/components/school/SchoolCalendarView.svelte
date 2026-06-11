@@ -1,4 +1,7 @@
 <script lang="ts">
+	import type { SchoolYearEvent, ClassNode } from '$lib/data/school';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { locale, t } from '$lib/i18n';
 	import {
 		CalendarDays,
 		Plus,
@@ -8,15 +11,12 @@
 		AlertCircle,
 		PartyPopper,
 	} from '$lib/icons';
-	import type { SchoolYearEvent, ClassNode } from '$lib/data/school';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { locale, t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		events,
 		classes,
-		onSelect
+		onSelect,
 	}: {
 		events: SchoolYearEvent[];
 		classes: ClassNode[];
@@ -61,29 +61,32 @@
 
 	const filtered = $derived.by(() => {
 		let list = events.slice().sort((a, b) => a.date.localeCompare(b.date));
-		if (typeFilter !== 'all') list = list.filter((e) => e.type === typeFilter);
+		if (typeFilter !== 'all')
+			list = list.filter(e => e.type === typeFilter);
 		if (query.trim()) {
 			const q = query.toLowerCase();
 			list = list.filter(
-				(e) => e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
+				e => e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q),
 			);
 		}
 		return list;
 	});
 
 	const grouped = $derived.by(() => {
-		const map = new Map<string, SchoolYearEvent[]>();
+		const map: Record<string, SchoolYearEvent[]> = {};
 		for (const ev of filtered) {
 			const key = formatMonthYear(ev.date, $locale);
-			if (!map.has(key)) map.set(key, []);
-			map.get(key)!.push(ev);
+			if (!map[key])
+				map[key] = [];
+			map[key].push(ev);
 		}
 		return map;
 	});
 
 	function scopeLabel(scope: SchoolYearEvent['scope']) {
-		if (scope === 'all') return $t('cal.scopeAll');
-		return scope.map((id) => classes.find((c) => c.id === id)?.name ?? id).join(', ');
+		if (scope === 'all')
+			return $t('cal.scopeAll');
+		return scope.map(id => classes.find(c => c.id === id)?.name ?? id).join(', ');
 	}
 </script>
 
@@ -121,7 +124,7 @@
 						'rounded-full px-3 py-1.5 text-[11px] font-medium transition',
 						typeFilter === k
 							? 'bg-primary text-primary-foreground'
-							: 'text-muted-foreground hover:text-foreground'
+							: 'text-muted-foreground hover:text-foreground',
 					)}
 				>
 					{k === 'all' ? $t('common.allClasses') : $t(typeConfig[k].labelKey)}
@@ -135,7 +138,7 @@
 	</p>
 
 	<div class="space-y-8">
-		{#each [...grouped.entries()] as [month, events] (month)}
+		{#each Object.entries(grouped) as [month, events] (month)}
 			<div>
 				<div class="mb-3 flex items-center gap-3">
 					<div class="h-px flex-1 bg-border"></div>
@@ -172,7 +175,7 @@
 									<span
 										class={cn(
 											'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium',
-											cfg.style
+											cfg.style,
 										)}
 									>
 										{#if ev.type === 'holiday'}

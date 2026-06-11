@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	let { icon, label }: { icon: Snippet; label: string } = $props();
+	const { icon, label }: { icon: Snippet; label: string } = $props();
 </script>
 
 <div class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border py-8 text-center">

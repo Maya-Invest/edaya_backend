@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { cn } from '$lib/utils';
-	import type { HTMLLabelAttributes } from 'svelte/elements';
 	import type { Snippet } from 'svelte';
+	import type { HTMLLabelAttributes } from 'svelte/elements';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		class: className,
 		children,
 		...restProps

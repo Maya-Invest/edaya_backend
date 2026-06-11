@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { Plus } from '$lib/icons';
-	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
+	import { Plus } from '$lib/icons';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
-	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
 	let showCreate = $state(false);
@@ -23,7 +22,7 @@
 			maxScore: Number(maxScore),
 			passingScore: Number(passingScore),
 			decimalPlaces: Number(decimalPlaces),
-			description
+			description,
 		});
 		showCreate = false;
 		name = '';

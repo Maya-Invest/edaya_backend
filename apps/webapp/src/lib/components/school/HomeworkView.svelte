@@ -1,11 +1,12 @@
 <script lang="ts">
+	import type { Deadline } from '$lib/data/school';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { deadlines as ALL_DEADLINES } from '$lib/data/school';
+	import { locale, t } from '$lib/i18n';
 	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';
 	import { cn } from '$lib/utils';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { deadlines as ALL_DEADLINES, type Deadline } from '$lib/data/school';
-	import { locale, t } from '$lib/i18n';
 
-	let {
+	const {
 		classId,
 		onSelect,
 		selectedId,
@@ -18,36 +19,39 @@
 	let filter = $state<'all' | 'open' | 'overdue' | 'done'>('all');
 	const today = new Date('2026-05-22');
 
-	const list = $derived(ALL_DEADLINES.filter((d) => d.classId === classId));
+	const list = $derived(ALL_DEADLINES.filter(d => d.classId === classId));
 
 	const enriched = $derived(
 		list.map((d) => {
 			const due = new Date(d.dueDate);
-			const submitted = d.submissions.filter((s) => s.status === 'submitted').length;
-			const late = d.submissions.filter((s) => s.status === 'late').length;
-			const missing = d.submissions.filter((s) => s.status === 'missing').length;
+			const submitted = d.submissions.filter(s => s.status === 'submitted').length;
+			const late = d.submissions.filter(s => s.status === 'late').length;
+			const missing = d.submissions.filter(s => s.status === 'missing').length;
 			const total = d.submissions.length;
 			const ratio = total ? (submitted + late) / total : 0;
 			const overdue = due < today && missing > 0;
 			const done = ratio === 1;
 			return { d, submitted, late, missing, total, ratio, overdue, done, due };
-		})
+		}),
 	);
 
 	const filtered = $derived(
 		enriched.filter((e) => {
-			if (filter === 'open') return !e.done && !e.overdue;
-			if (filter === 'overdue') return e.overdue;
-			if (filter === 'done') return e.done;
+			if (filter === 'open')
+				return !e.done && !e.overdue;
+			if (filter === 'overdue')
+				return e.overdue;
+			if (filter === 'done')
+				return e.done;
 			return true;
-		})
+		}),
 	);
 
 	const stats = $derived({
 		all: enriched.length,
-		open: enriched.filter((e) => !e.done && !e.overdue).length,
-		overdue: enriched.filter((e) => e.overdue).length,
-		done: enriched.filter((e) => e.done).length,
+		open: enriched.filter(e => !e.done && !e.overdue).length,
+		overdue: enriched.filter(e => e.overdue).length,
+		done: enriched.filter(e => e.done).length,
 	});
 
 	const filterKeys = ['all', 'open', 'overdue', 'done'] as const;
@@ -73,14 +77,14 @@
 								? k === 'overdue'
 									? 'bg-highlight text-highlight-foreground shadow-soft'
 									: 'bg-primary text-primary-foreground shadow-soft'
-								: 'text-muted-foreground hover:text-foreground'
+								: 'text-muted-foreground hover:text-foreground',
 						)}
 					>
 						{$t(`hw.filter.${k}`)}
 						<span
 							class={cn(
 								'rounded-full px-1 font-mono text-[10px]',
-								filter === k ? 'bg-primary-foreground/15' : 'bg-secondary text-muted-foreground'
+								filter === k ? 'bg-primary-foreground/15' : 'bg-secondary text-muted-foreground',
 							)}
 						>
 							{stats[k]}
@@ -105,7 +109,7 @@
 				class={cn(
 					'group grid w-full grid-cols-12 items-center gap-4 rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
 					active && 'ring-2 ring-accent',
-					overdue && 'border-l-4 border-l-highlight'
+					overdue && 'border-l-4 border-l-highlight',
 				)}
 			>
 				<div class="col-span-5">
@@ -143,14 +147,14 @@
 					<p
 						class={cn(
 							'mt-0.5 font-mono text-[11px]',
-							overdue ? 'text-highlight' : 'text-muted-foreground'
+							overdue ? 'text-highlight' : 'text-muted-foreground',
 						)}
 					>
 						{done
 							? $t('hw.allIn')
 							: overdue
-								? $t('hw.daysOverdue', { n: Math.abs(daysLeft) })
-								: $t('hw.daysLeft', { n: daysLeft })}
+							? $t('hw.daysOverdue', { n: Math.abs(daysLeft) })
+							: $t('hw.daysLeft', { n: daysLeft })}
 					</p>
 				</div>
 				<div class="col-span-4">

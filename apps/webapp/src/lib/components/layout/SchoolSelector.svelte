@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Building2, Check, ChevronDown } from '$lib/icons';
 	import type { School } from '$lib/data/school';
 	import { authSession } from '$lib/auth/session.svelte';
-	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
+	import { Building2, Check, ChevronDown } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let { schools }: { schools: School[] } = $props();
+	const { schools }: { schools: School[] } = $props();
 
 	let open = $state(false);
 
@@ -19,7 +19,7 @@
 			onclick={() => (open = !open)}
 			class={cn(
 				'flex h-9 max-w-[11rem] items-center gap-2 rounded-full border border-border bg-card pl-2.5 pr-3 text-xs font-medium transition hover:bg-secondary',
-				open && 'bg-secondary'
+				open && 'bg-secondary',
 			)}
 			title={school.name}
 		>
@@ -46,7 +46,7 @@
 						}}
 						class={cn(
 							'flex w-full items-start justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-secondary/60',
-							entry.id === school.id && 'bg-primary/5'
+							entry.id === school.id && 'bg-primary/5',
 						)}
 					>
 						<span class="min-w-0">

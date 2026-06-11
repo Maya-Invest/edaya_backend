@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Sparkles } from '$lib/icons';
 	import type { Subject } from '$lib/data/school';
 	import { buildEntries, getSubjectEntries } from '$lib/data/teachingLog';
 	import { t } from '$lib/i18n';
+	import { Sparkles } from '$lib/icons';
 	import SubjectsView from './SubjectsView.svelte';
 
-	let {
+	const {
 		classId,
 		subjects,
 		onSelectSubject,
@@ -18,28 +18,29 @@
 	} = $props();
 
 	const entries = $derived(buildEntries(classId));
-	const classSubjects = $derived(subjects.filter((s) => s.classId === classId));
-	const allSubjects = $derived(Array.from(new Set(entries.map((e) => e.subject))));
+	const classSubjects = $derived(subjects.filter(s => s.classId === classId));
+	const allSubjects = $derived(Array.from(new Set(entries.map(e => e.subject))));
 
 	const overallProgress = $derived(
 		Math.round(
 			allSubjects.reduce((acc, name) => {
 				const latest = entries
-					.filter((e) => e.subject === name)
+					.filter(e => e.subject === name)
 					.sort((a, b) => (a.date < b.date ? 1 : -1))[0];
 				return acc + (latest?.progress ?? 0);
-			}, 0) / Math.max(1, allSubjects.length)
-		)
+			}, 0) / Math.max(1, allSubjects.length),
+		),
 	);
 
 	function getProgress(s: Subject) {
 		const es = getSubjectEntries(s.name);
-		const byCh = new Map<string, number>();
+		const byCh: Record<string, number> = {};
 		for (const e of es) {
-			const prev = byCh.get(e.chapter);
-			if (prev === undefined || e.progress > prev) byCh.set(e.chapter, e.progress);
+			const prev = byCh[e.chapter];
+			if (prev === undefined || e.progress > prev)
+				byCh[e.chapter] = e.progress;
 		}
-		const arr = Array.from(byCh.values());
+		const arr = Object.values(byCh);
 		return arr.length ? Math.round(arr.reduce((a, p) => a + p, 0) / arr.length) : 0;
 	}
 </script>
@@ -74,7 +75,7 @@
 	<div class="mb-6">
 		<SubjectsView
 			subjects={classSubjects}
-			onSelect={(s) => onSelectSubject?.(s)}
+			onSelect={s => onSelectSubject?.(s)}
 			selectedId={selectedSubjectId}
 			{getProgress}
 		/>

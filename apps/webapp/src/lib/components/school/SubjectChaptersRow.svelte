@@ -1,29 +1,31 @@
 <script lang="ts">
-	import { ChevronDown, BookOpen } from '$lib/icons';
 	import type { Subject } from '$lib/data/school';
 	import { getSubjectEntries } from '$lib/data/teachingLog';
+	import { ChevronDown, BookOpen } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import { dotByColor } from './drawer-constants';
 
-	let { s, isLast }: { s: Subject; isLast: boolean } = $props();
+	const { s, isLast }: { s: Subject; isLast: boolean } = $props();
 
 	let open = $state(false);
 
 	const entries = $derived(getSubjectEntries(s.name));
 
 	const chapters = $derived.by(() => {
-		const map = new Map<string, { chapter: string; sessions: number; lastDate: string; progress: number }>();
+		const map: Record<string, { chapter: string; sessions: number; lastDate: string; progress: number }> = {};
 		for (const e of entries) {
-			const cur = map.get(e.chapter);
+			const cur = map[e.chapter];
 			if (!cur) {
-				map.set(e.chapter, { chapter: e.chapter, sessions: 1, lastDate: e.date, progress: e.progress });
-			} else {
+				map[e.chapter] = { chapter: e.chapter, sessions: 1, lastDate: e.date, progress: e.progress };
+			}
+			else {
 				cur.sessions += 1;
-				if (e.date > cur.lastDate) cur.lastDate = e.date;
+				if (e.date > cur.lastDate)
+					cur.lastDate = e.date;
 				cur.progress = Math.max(cur.progress, e.progress);
 			}
 		}
-		return Array.from(map.values());
+		return Object.values(map);
 	});
 </script>
 

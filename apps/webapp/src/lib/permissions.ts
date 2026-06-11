@@ -1,8 +1,9 @@
-import { authSession } from '$lib/auth/session.svelte';
 import type { PermissionCode, ScopeGrantSnapshot } from '$lib/auth/types';
-import { staff, type StaffMember, type StaffRole } from '$lib/data/school';
+import type { StaffMember, StaffRole } from '$lib/data/school';
+import { authSession } from '$lib/auth/session.svelte';
+import { staff } from '$lib/data/school';
 
-type Ctx = { classId?: string; subject?: string };
+interface Ctx { classId?: string; subject?: string }
 
 const P = {
 	GRADE_READ: 'GRADE_READ',
@@ -33,7 +34,7 @@ function scopeGrantCovers(
 		return true;
 	}
 
-	const hasSchoolGrant = grants.some((grant) =>
+	const hasSchoolGrant = grants.some(grant =>
 		grant.permission === args.permission
 		&& grant.scopeType === 'school'
 		&& (grant.scopeEntityIds.length === 0 || grant.scopeEntityIds.includes(args.schoolId)),
@@ -42,7 +43,7 @@ function scopeGrantCovers(
 		return true;
 	}
 
-	const matching = grants.filter((grant) =>
+	const matching = grants.filter(grant =>
 		grant.permission === args.permission && grant.scopeType === args.scopeType);
 
 	if (matching.length === 0) {
@@ -53,7 +54,7 @@ function scopeGrantCovers(
 		return true;
 	}
 
-	return matching.some((grant) => grant.scopeEntityIds.includes(args.scopeEntityId!));
+	return matching.some(grant => grant.scopeEntityIds.includes(args.scopeEntityId!));
 }
 
 export function hasPermission(permission: PermissionCode, ctx: Ctx = {}): boolean {
@@ -85,12 +86,13 @@ export function hasPermission(permission: PermissionCode, ctx: Ctx = {}): boolea
 }
 
 export function hasAnyPermission(permissions: readonly PermissionCode[], ctx: Ctx = {}): boolean {
-	return permissions.some((permission) => hasPermission(permission, ctx));
+	return permissions.some(permission => hasPermission(permission, ctx));
 }
 
 export function getCurrentUser(): StaffMember {
 	const sessionUser = authSession.user;
-	if (sessionUser) return sessionUser;
+	if (sessionUser)
+		return sessionUser;
 	return staff[0];
 }
 

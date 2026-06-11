@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { GraduationCap, ChevronDown } from '$lib/icons';
+	import type { HierarchyGroup } from '$lib/data/school';
+	import type { ModuleKey, ContextItem } from '$lib/navigation';
 	import { page } from '$app/stores';
-	import { cn } from '$lib/utils';
-	import { t } from '$lib/i18n';
 	import { authSession } from '$lib/auth/session.svelte';
+	import ClassSelector from '$lib/components/layout/ClassSelector.svelte';
+	import { t } from '$lib/i18n';
+	import { GraduationCap, ChevronDown } from '$lib/icons';
 	import {
 		MODULES,
 		SCHOOL_ITEMS,
@@ -12,15 +14,13 @@
 		CONFIG_ITEMS,
 		getModuleFromPath,
 		classItemHref,
-		type ModuleKey,
-		type ContextItem
-	} from '$lib/navigation';
-	import type { HierarchyGroup } from '$lib/data/school';
-	import ClassSelector from '$lib/components/layout/ClassSelector.svelte';
 
-	let {
+	} from '$lib/navigation';
+	import { cn } from '$lib/utils';
+
+	const {
 		hierarchy,
-		studentCount
+		studentCount,
 	}: {
 		hierarchy: HierarchyGroup[];
 		studentCount: number;
@@ -30,35 +30,36 @@
 		school: SCHOOL_ITEMS,
 		classes: CLASS_ITEMS,
 		finance: FINANCE_ITEMS,
-		configuration: CONFIG_ITEMS
+		configuration: CONFIG_ITEMS,
 	};
 
 	const activeModule = $derived(getModuleFromPath($page.url.pathname));
 	const classId = $derived($page.params.classId ?? '6a');
 
-	let expanded = $state<Partial<Record<ModuleKey, boolean>>>({});
+	const expanded = $state<Partial<Record<ModuleKey, boolean>>>({});
 
 	function isExpanded(key: ModuleKey): boolean {
 		return key === activeModule || (expanded[key] ?? false);
 	}
 
 	function toggleModule(key: ModuleKey) {
-		if (key === activeModule) return;
+		if (key === activeModule)
+			return;
 		expanded[key] = !isExpanded(key);
 	}
 
 	function isActive(href: string): boolean {
-		return $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
+		return $page.url.pathname === href || $page.url.pathname.startsWith(`${href}/`);
 	}
 
 	function resolveItems(key: ModuleKey) {
 		const items = MODULE_ITEMS[key];
-		return items.map((it) => ({
+		return items.map(it => ({
 			key: it.key,
 			label: $t(it.labelKey),
 			icon: it.icon,
 			href: key === 'classes' ? classItemHref(classId, it.href) : it.href,
-			badge: key === 'school' && it.key === 'students' ? studentCount : it.badge
+			badge: key === 'school' && it.key === 'students' ? studentCount : it.badge,
 		}));
 	}
 </script>
@@ -92,20 +93,20 @@
 							'group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
 							moduleActive
 								? 'bg-primary/10 text-primary'
-								: 'text-foreground/80 hover:bg-secondary'
+								: 'text-foreground/80 hover:bg-secondary',
 						)}
 					>
 						<ModIcon
 							class={cn(
 								'h-4 w-4 shrink-0',
-								moduleActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+								moduleActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
 							)}
 						/>
 						<span class="min-w-0 flex-1 truncate text-left">{$t(mod.tKey)}</span>
 						<ChevronDown
 							class={cn(
 								'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
-								open && 'rotate-180'
+								open && 'rotate-180',
 							)}
 						/>
 					</button>
@@ -128,7 +129,7 @@
 											'group flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors',
 											active
 												? 'bg-primary text-primary-foreground'
-												: 'text-foreground/75 hover:bg-secondary'
+												: 'text-foreground/75 hover:bg-secondary',
 										)}
 									>
 										<span class="flex min-w-0 items-center gap-2">
@@ -138,14 +139,14 @@
 														'h-3.5 w-3.5 shrink-0',
 														active
 															? 'text-primary-foreground/80'
-															: 'text-muted-foreground group-hover:text-foreground'
+															: 'text-muted-foreground group-hover:text-foreground',
 													)}
 												/>
 											{:else}
 												<span
 													class={cn(
 														'h-1.5 w-1.5 rounded-full',
-														active ? 'bg-primary-foreground/60' : 'bg-border group-hover:bg-muted-foreground/30'
+														active ? 'bg-primary-foreground/60' : 'bg-border group-hover:bg-muted-foreground/30',
 													)}
 												></span>
 											{/if}
@@ -157,7 +158,7 @@
 													'rounded-md px-1.5 py-0.5 font-mono text-[10px]',
 													active
 														? 'bg-primary-foreground/15 text-primary-foreground'
-														: 'bg-secondary text-muted-foreground'
+														: 'bg-secondary text-muted-foreground',
 												)}
 											>
 												{it.badge}

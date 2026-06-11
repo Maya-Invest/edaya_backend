@@ -1,26 +1,24 @@
 <script lang="ts">
-	import { Check, FileText, Paperclip } from '$lib/icons';
 	import type { Subject } from '$lib/data/school';
 	import { getSubjectEntries } from '$lib/data/teachingLog';
-	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
+	import { Check, FileText, Paperclip } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let { s }: { s: Subject } = $props();
+	const { s }: { s: Subject } = $props();
 
 	let tab = $state<'progression' | 'logbook'>('progression');
 
 	const entries = $derived(getSubjectEntries(s.name));
-	const latest = $derived(entries[0]);
-	const progress = $derived(latest?.progress ?? 0);
 
 	const teacherInitials = $derived(
 		s.teacher
 			.split(/\s+/)
-			.map((p) => p[0])
+			.map(p => p[0])
 			.filter(Boolean)
 			.slice(0, 2)
 			.join('')
-			.toUpperCase()
+			.toUpperCase(),
 	);
 
 	const tabLabels: Record<'progression' | 'logbook', string> = {
@@ -29,12 +27,13 @@
 	};
 
 	const chaptersData = $derived.by(() => {
-		const byChapter = new Map<string, number>();
+		const byChapter: Record<string, number> = {};
 		for (const e of entries) {
-			const prev = byChapter.get(e.chapter);
-			if (prev === undefined || e.progress > prev) byChapter.set(e.chapter, e.progress);
+			const prev = byChapter[e.chapter];
+			if (prev === undefined || e.progress > prev)
+				byChapter[e.chapter] = e.progress;
 		}
-		const chapters = Array.from(byChapter.entries());
+		const chapters = Object.entries(byChapter);
 		const overall = chapters.length
 			? Math.round(chapters.reduce((a, [, p]) => a + p, 0) / chapters.length)
 			: 0;
@@ -72,7 +71,7 @@
 				onclick={() => (tab = k)}
 				class={cn(
 					'flex-1 rounded-full px-2.5 py-1.5 font-medium transition',
-					tab === k ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground'
+					tab === k ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground',
 				)}
 			>
 				{tabLabels[k]}

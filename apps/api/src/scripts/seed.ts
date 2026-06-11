@@ -1,6 +1,7 @@
 import { loadNodeProcessEnv } from "@/lib/runtime/node";
 import { getApiRuntime } from "@/lib/runtime/registry";
 import { DEV_AUTH_PASSWORD } from "@/lib/seed/dataset";
+import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
 
@@ -9,6 +10,7 @@ const runtime = await getApiRuntime(env);
 const application = await runtime.getSchoolApplication();
 const result = await runDevSeed(application);
 const authResult = await runDevAuthSeed(application, runtime.getAuth(), env);
+const accessResult = await runDevAccessSeed(application);
 
 if (result.status === "skipped") {
   // eslint-disable-next-line no-console
@@ -26,6 +28,15 @@ if (authResult.status === "seeded") {
 else {
   // eslint-disable-next-line no-console
   console.log("Dev auth seed skipped:", authResult.reason);
+}
+
+if (accessResult.status === "seeded") {
+  // eslint-disable-next-line no-console
+  console.log("Dev access seed applied:", accessResult);
+}
+else {
+  // eslint-disable-next-line no-console
+  console.log("Dev access seed skipped:", accessResult.reason);
 }
 
 if (env.DATABASE_URL === "pglite" || env.DATABASE_URL === "memory") {

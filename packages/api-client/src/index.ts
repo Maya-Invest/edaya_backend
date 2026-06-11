@@ -1,0 +1,5 @@
+export { ApiError } from './errors.ts'
+export { createSchoolClient, type SchoolClient } from './create-client.ts'
+export { EntityResource, type EntityQuery } from './entity-resource.ts'
+export { type Transport, type TransportRequestOptions } from './transport.ts'
+export { clientBindings, type ClientBindings } from './generated/client-bindings.ts'

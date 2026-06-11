@@ -1,26 +1,21 @@
 <script lang="ts">
-	import { ChevronRight } from '$lib/icons';
 	import type { ReportCardDefinition } from '$lib/data/report-cards';
 	import { gradeScaleById } from '$lib/data/report-cards';
 	import { gradeLevelById } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
+	import { ChevronRight } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		definitions,
 		onSelect,
-		selectedId
+		selectedId,
 	}: {
 		definitions: ReportCardDefinition[];
 		onSelect?: (d: ReportCardDefinition) => void;
 		selectedId?: string;
 	} = $props();
 
-	const sectionKindLabel: Record<string, string> = {
-		matieres: 'Matières',
-		synthese: 'Synthèse',
-		appreciation: 'Appréciations'
-	};
 </script>
 
 <div class="animate-fade-in">
@@ -42,7 +37,7 @@
 				onclick={() => onSelect?.(def)}
 				class={cn(
 					'flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 text-left shadow-soft transition hover:bg-secondary/40',
-					selectedId === def.id && 'border-primary/40 bg-primary/5'
+					selectedId === def.id && 'border-primary/40 bg-primary/5',
 				)}
 			>
 				<div class="min-w-0">
@@ -53,7 +48,7 @@
 								'rounded-full px-2 py-0.5 font-mono text-[10px] uppercase',
 								def.status === 'published'
 									? 'bg-accent/15 text-accent-foreground'
-									: 'bg-secondary text-muted-foreground'
+									: 'bg-secondary text-muted-foreground',
 							)}
 						>
 							{def.status === 'published' ? $t('academic.published') : $t('academic.draft')}

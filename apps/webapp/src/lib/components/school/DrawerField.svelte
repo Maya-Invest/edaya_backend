@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Label from '$lib/components/ui/label/label.svelte';
 	import type { Snippet } from 'svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
 
-	let { label, children }: { label: string; children: Snippet } = $props();
+	const { label, children }: { label: string; children: Snippet } = $props();
 </script>
 
 <div class="space-y-1.5">

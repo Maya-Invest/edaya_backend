@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { CalendarDays, Plus } from '$lib/icons';
 	import type { Evaluation } from '$lib/data/school';
-	import { cn } from '$lib/utils';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { locale, t } from '$lib/i18n';
+	import { CalendarDays, Plus } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		evaluations,
 		onSelect,
 		selectedId,
@@ -42,7 +42,7 @@
 				onclick={() => onSelect?.(ev)}
 				class={cn(
 					'group grid w-full grid-cols-12 items-center gap-4 rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-					active && 'ring-2 ring-accent'
+					active && 'ring-2 ring-accent',
 				)}
 			>
 				<div class="col-span-5">

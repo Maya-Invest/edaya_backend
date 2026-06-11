@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { PlanningEvent } from '$lib/data/school';
-	import { t } from '$lib/i18n';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import { t } from '$lib/i18n';
 	import DrawerField from './DrawerField.svelte';
 
-	let { s }: { s: PlanningEvent } = $props();
+	const { s }: { s: PlanningEvent } = $props();
 </script>
 
 <div class="space-y-5">

@@ -3,18 +3,23 @@ import {
   parseSeedDate,
   SEED_ACADEMIC_PERIODS,
   SEED_ACADEMIC_YEAR_ID,
+  SEED_CLASS_SUBJECTS,
   SEED_CLASSES,
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
   SEED_SCHOOL_ID,
   SEED_STAFF,
   SEED_STUDENTS,
+  SEED_SUBJECT_CATALOG,
+  SEED_SUBJECT_MATTERS,
   splitDisplayName,
 } from "@/lib/seed/dataset";
 import {
   AcademicPeriodType,
   createSystemActorMetadata,
   GradeLevel,
+  Subject,
+  SubjectMatter,
 } from "@edaya/core";
 
 export type DevSeedResult =
@@ -29,6 +34,8 @@ export type DevSeedResult =
     students: number;
     guardians: number;
     academicPeriods: number;
+    subjects: number;
+    classSubjects: number;
   };
 
 export async function runDevSeed(application: ApiSchoolApplication): Promise<DevSeedResult> {
@@ -154,10 +161,41 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
         id: `link-${guardian.id}-${studentId}`,
         guardianId: guardian.id,
         studentId,
+        relationship: guardian.relationship,
         isPrimary: true,
         legalGuardian: true,
       });
     }
+  }
+
+  for (const subject of SEED_SUBJECT_CATALOG) {
+    await service.baseService.subjects.save(new Subject({
+      id: subject.id,
+      schoolId: SEED_SCHOOL_ID,
+      name: subject.name,
+      code: subject.code,
+      defaultCoefficient: subject.defaultCoefficient,
+    }), { moduleChecked: true });
+  }
+
+  for (const matter of SEED_SUBJECT_MATTERS) {
+    await service.baseService.subjectMatters.save(new SubjectMatter({
+      id: matter.id,
+      subjectId: matter.subjectId,
+      name: matter.name,
+      description: matter.description,
+      sequenceOrder: matter.sequenceOrder,
+      estimatedHours: matter.estimatedHours,
+    }), { moduleChecked: true });
+  }
+
+  for (const offering of SEED_CLASS_SUBJECTS) {
+    await service.offerSubjectToClass({
+      id: offering.id,
+      classGroupId: offering.classGroupId,
+      subjectId: offering.subjectId,
+      coefficient: offering.coefficient,
+    });
   }
 
   return {
@@ -170,5 +208,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     students: SEED_STUDENTS.length,
     guardians: SEED_GUARDIANS.length,
     academicPeriods: SEED_ACADEMIC_PERIODS.length,
+    subjects: SEED_SUBJECT_CATALOG.length,
+    classSubjects: SEED_CLASS_SUBJECTS.length,
   };
 }

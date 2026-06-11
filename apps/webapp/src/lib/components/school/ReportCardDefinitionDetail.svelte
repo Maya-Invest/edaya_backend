@@ -1,18 +1,18 @@
 <script lang="ts">
 	import type { ReportCardDefinition } from '$lib/data/report-cards';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { gradeLevelById } from '$lib/data/school';
-	import { reportCardsContext } from '$lib/report-cards/context.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 
-	let { definition }: { definition: ReportCardDefinition } = $props();
+	const { definition }: { definition: ReportCardDefinition } = $props();
 
 	const live = $derived(
-		reportCardsContext.definitions.find((d) => d.id === definition.id) ?? definition
+		reportCardsContext.definitions.find(d => d.id === definition.id) ?? definition,
 	);
 	const level = $derived(gradeLevelById(live.gradeLevelId));
 	const scale = $derived(gradeScaleById(live.gradeScaleId));
@@ -20,12 +20,13 @@
 	const sectionKindLabel: Record<string, string> = {
 		matieres: 'Matières',
 		synthese: 'Synthèse',
-		appreciation: 'Appréciations'
+		appreciation: 'Appréciations',
 	};
 
 	function publish() {
 		const updated = reportCardsContext.publishDefinition(live.id);
-		if (updated) toast.success(get(t)('reportCards.toastModelPublished', { name: updated.name }));
+		if (updated)
+			toast.success(get(t)('reportCards.toastModelPublished', { name: updated.name }));
 	}
 </script>
 
@@ -40,7 +41,7 @@
 				'mt-2 inline-block rounded-full px-2 py-0.5 font-mono text-[10px] uppercase',
 				live.status === 'published'
 					? 'bg-accent/15 text-accent-foreground'
-					: 'bg-secondary text-muted-foreground'
+					: 'bg-secondary text-muted-foreground',
 			)}
 		>
 			{live.status === 'published' ? $t('academic.published') : $t('academic.draft')}

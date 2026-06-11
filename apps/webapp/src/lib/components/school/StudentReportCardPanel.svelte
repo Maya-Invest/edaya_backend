@@ -1,34 +1,36 @@
 <script lang="ts">
-	import { FileSpreadsheet } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
-	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import DrawerEmptyState from './DrawerEmptyState.svelte';
+	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
 	import { t } from '$lib/i18n';
+	import { FileSpreadsheet } from '$lib/icons';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
+	import DrawerEmptyState from './DrawerEmptyState.svelte';
 
-	let { s }: { s: Student } = $props();
+	const { s }: { s: Student } = $props();
 
 	const results = $derived(reportCardsContext.resultsForStudent(s.id));
 	const latest = $derived(
-		[...results].sort((a, b) => b.academicPeriodId.localeCompare(a.academicPeriodId))[0]
+		[...results].sort((a, b) => b.academicPeriodId.localeCompare(a.academicPeriodId))[0],
 	);
 	const scale = $derived(latest ? gradeScaleById(latest.gradeScaleId) : null);
 	const period = $derived(
-		latest ? academicContext.periods.find((p) => p.id === latest.academicPeriodId) : null
+		latest ? academicContext.periods.find(p => p.id === latest.academicPeriodId) : null,
 	);
 
 	function generate() {
 		const r = reportCardsContext.generateResult(s.id);
-		if (r) toast.success(get(t)('reportCards.toastGenerated', { name: s.name }));
+		if (r)
+			toast.success(get(t)('reportCards.toastGenerated', { name: s.name }));
 	}
 
 	function publish() {
-		if (!latest) return;
+		if (!latest)
+			return;
 		reportCardsContext.publishResult(latest.id);
 		toast.success(get(t)('reportCards.toastPublished', { name: s.name }));
 	}
@@ -59,15 +61,15 @@
 					latest.status === 'published'
 						? 'bg-accent/15'
 						: latest.status === 'generated'
-							? 'bg-highlight-soft text-highlight'
-							: 'bg-secondary text-muted-foreground'
+						? 'bg-highlight-soft text-highlight'
+						: 'bg-secondary text-muted-foreground',
 				)}
 			>
 				{latest.status === 'published'
 					? $t('academic.published')
 					: latest.status === 'generated'
-						? 'Généré'
-						: $t('academic.draft')}
+					? 'Généré'
+					: $t('academic.draft')}
 			</span>
 		</div>
 

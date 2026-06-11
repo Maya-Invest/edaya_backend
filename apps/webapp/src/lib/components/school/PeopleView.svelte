@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { cn } from '$lib/utils';
 	import type { Guardian, StaffMember, Student } from '$lib/data/school';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import { t } from '$lib/i18n';
+	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
 	type PeopleTab = 'guardians' | 'staff';
 
-	let {
+	const {
 		staff,
 		guardians,
 		students,
@@ -27,8 +27,8 @@
 	} = $props();
 
 	const relationKey: Record<Guardian['relation'], string> = {
-		Mother: 'guardian.relation.Mother',
-		Father: 'guardian.relation.Father',
+		'Mother': 'guardian.relation.Mother',
+		'Father': 'guardian.relation.Father',
 		'Legal guardian': 'guardian.relation.LegalGuardian',
 	};
 
@@ -37,9 +37,9 @@
 
 	const tab = $derived(forcedTab ?? internalTab);
 	const filteredG = $derived(
-		guardians.filter((g) => g.name.toLowerCase().includes(q.toLowerCase()))
+		guardians.filter(g => g.name.toLowerCase().includes(q.toLowerCase())),
 	);
-	const filteredS = $derived(staff.filter((s) => s.name.toLowerCase().includes(q.toLowerCase())));
+	const filteredS = $derived(staff.filter(s => s.name.toLowerCase().includes(q.toLowerCase())));
 	const tabKeys: PeopleTab[] = ['guardians', 'staff'];
 </script>
 
@@ -66,7 +66,7 @@
 								'rounded-full px-3.5 py-1.5 text-xs font-medium transition',
 								tab === k
 									? 'bg-primary text-primary-foreground shadow-soft'
-									: 'text-muted-foreground hover:text-foreground'
+									: 'text-muted-foreground hover:text-foreground',
 							)}
 						>
 							{$t(`people.${k}`)}
@@ -95,7 +95,7 @@
 		<div class="grid gap-3 md:grid-cols-2">
 			{#each filteredG as g (g.id)}
 				{@const linked = g.studentIds
-					.map((id) => students.find((s) => s.id === id))
+					.map(id => students.find(s => s.id === id))
 					.filter(Boolean) as typeof students}
 				{@const active = selectedId === g.id}
 				<button
@@ -103,7 +103,7 @@
 					onclick={() => onSelectGuardian?.(g)}
 					class={cn(
 						'group flex items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-						active && 'ring-2 ring-accent'
+						active && 'ring-2 ring-accent',
 					)}
 				>
 					<div
@@ -162,7 +162,7 @@
 							onclick={() => onSelectStaff?.(s)}
 							class={cn(
 								'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0',
-								active ? 'bg-primary/10' : 'hover:bg-secondary'
+								active ? 'bg-primary/10' : 'hover:bg-secondary',
 							)}
 						>
 							<div class="col-span-5 flex items-center gap-3">

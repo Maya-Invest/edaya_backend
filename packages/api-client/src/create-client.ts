@@ -1,0 +1,69 @@
+import { clientBindings } from './generated/client-bindings.ts'
+import { EntityResource } from './entity-resource.ts'
+import type { Transport } from './transport.ts'
+
+type SchemaName<TSchemas extends Record<string, unknown>, TName extends string> =
+  TName extends keyof TSchemas ? TSchemas[TName] : never
+
+type EntityClients<TSchemas extends Record<string, unknown>> = {
+  [K in keyof typeof clientBindings.entities]: EntityResource<
+    SchemaName<TSchemas, typeof clientBindings.entities[K]['schemaName']>
+  >
+}
+
+type CommandClients<TSchemas extends Record<string, unknown>> = {
+  [K in keyof typeof clientBindings.commands]: (
+    payload: SchemaName<TSchemas, typeof clientBindings.commands[K]['requestSchemaName']>,
+  ) => Promise<SchemaName<TSchemas, typeof clientBindings.commands[K]['responseSchemaName']>>
+}
+
+type QueryClients<TSchemas extends Record<string, unknown>> = {
+  [K in keyof typeof clientBindings.queries]: (
+    payload: SchemaName<TSchemas, typeof clientBindings.queries[K]['requestSchemaName']>,
+  ) => Promise<SchemaName<TSchemas, typeof clientBindings.queries[K]['responseSchemaName']>>
+}
+
+export interface SchoolClient<TSchemas extends Record<string, unknown>> {
+  entities: EntityClients<TSchemas>
+  commands: CommandClients<TSchemas>
+  queries: QueryClients<TSchemas>
+  authorization: {
+    effectiveGrants: () => Promise<SchemaName<TSchemas, 'EffectiveGrantsResponse'>>
+  }
+}
+
+export function createSchoolClient<TSchemas extends Record<string, unknown>>(
+  transport: Transport,
+): SchoolClient<TSchemas> {
+  const entities = Object.fromEntries(
+    Object.entries(clientBindings.entities).map(([key, binding]) => [
+      key,
+      new EntityResource(transport, binding.publicName),
+    ]),
+  ) as EntityClients<TSchemas>
+
+  const commands = Object.fromEntries(
+    Object.entries(clientBindings.commands).map(([key, binding]) => [
+      key,
+      (payload: unknown) =>
+        transport.request('POST', `/api/core/commands/${binding.publicName}`, { body: payload }),
+    ]),
+  ) as CommandClients<TSchemas>
+
+  const queries = Object.fromEntries(
+    Object.entries(clientBindings.queries).map(([key, binding]) => [
+      key,
+      (payload: unknown) =>
+        transport.request('POST', `/api/core/queries/${binding.publicName}`, { body: payload }),
+    ]),
+  ) as QueryClients<TSchemas>
+
+  return {
+    entities,
+    commands,
+    queries,
+    authorization: {
+      effectiveGrants: () => transport.request('GET', '/api/core/authorization/effective-grants'),
+    },
+  }
+}

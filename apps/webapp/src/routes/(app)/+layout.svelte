@@ -1,22 +1,22 @@
 <script lang="ts">
+	import type { DrawerItem } from '$lib/components/school/drawer-types';
 	import type { Component, Snippet } from 'svelte';
 	import { browser } from '$app/environment';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
-	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
-	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
-	import SchoolSelector from '$lib/components/layout/SchoolSelector.svelte';
-	import { DrawerState } from '$lib/drawer.svelte';
-	import { isLikelyDetailPath } from '$lib/detail-route-patterns';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { authSession } from '$lib/auth/session.svelte';
+	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
+	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
+	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
+	import SchoolSelector from '$lib/components/layout/SchoolSelector.svelte';
+	import { isLikelyDetailPath } from '$lib/detail-route-patterns';
+	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';
 	import { LogOut } from '$lib/icons';
+	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { setContext } from 'svelte';
-	import type { DrawerItem } from '$lib/components/school/drawer-types';
 
-	let { data, children }: { data: import('./$types').LayoutData; children: Snippet } = $props();
+	const { data, children }: { data: import('./$types').LayoutData; children: Snippet } = $props();
 
 	const drawer = new DrawerState();
 	setContext('drawer', drawer);
@@ -34,7 +34,7 @@
 
 	$effect(() => {
 		if (authSession.ready && !authSession.isLoggedIn) {
-			goto('/login', { replaceState: true });
+			appGoto(appPath('/login'), { replaceState: true });
 		}
 	});
 
@@ -54,22 +54,26 @@
 		}
 
 		void import('$lib/detail-routes').then(({ parseDetailPath }) => {
-			if (version !== drawerSyncVersion) return;
+			if (version !== drawerSyncVersion)
+				return;
 			const parsed = parseDetailPath(pathname);
-			if (parsed) drawer.open(parsed.item);
+			if (parsed)
+				drawer.open(parsed.item);
 			else drawer.close();
 		});
 	});
 
 	$effect(() => {
-		if (!needsDrawer || DetailDrawer) return;
+		if (!needsDrawer || DetailDrawer)
+			return;
 		void import('$lib/components/school/DetailDrawer.svelte').then((module) => {
 			DetailDrawer = module.default;
 		});
 	});
 
 	$effect(() => {
-		if (!browser || ToastHost) return;
+		if (!browser || ToastHost)
+			return;
 		void import('$lib/components/ui/ToastHost.svelte').then((module) => {
 			ToastHost = module.default;
 		});
@@ -78,13 +82,14 @@
 	async function closeDetail() {
 		const { getListPathForDetail } = await import('$lib/detail-routes');
 		const listPath = getListPathForDetail($page.url.pathname);
-		if (listPath) goto(listPath);
+		if (listPath)
+			appGoto(listPath);
 		else drawer.close();
 	}
 
 	function logout() {
 		authSession.logout();
-		goto('/login', { replaceState: true });
+		appGoto(appPath('/login'), { replaceState: true });
 	}
 </script>
 

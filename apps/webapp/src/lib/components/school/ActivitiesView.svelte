@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Plus, CalendarRange, Users } from '$lib/icons';
 	import type { Activity } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { cn } from '$lib/utils';
 	import { t } from '$lib/i18n';
+	import { Plus, CalendarRange, Users } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
-	let {
+	const {
 		activities,
 		onSelect,
 		selectedId,
@@ -66,7 +66,7 @@
 						onclick={() => onSelect?.(a)}
 						class={cn(
 							'grid w-full grid-cols-[1.6fr_2fr_1.2fr_0.6fr] items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-secondary',
-							isSelected && 'bg-secondary/60'
+							isSelected && 'bg-secondary/60',
 						)}
 					>
 						<div class="min-w-0">
@@ -74,7 +74,7 @@
 								<span
 									class={cn(
 										'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-										catTone[a.category]
+										catTone[a.category],
 									)}
 								>
 									{$t(`activities.cat.${a.category}`)}
@@ -87,7 +87,7 @@
 						<div class="flex items-center gap-1.5 text-xs text-foreground/80">
 							<CalendarRange class="h-3.5 w-3.5 text-muted-foreground" />
 							<span class="font-mono tabular-nums"
-								>{fmtDate(a.startDate)} → {fmtDate(a.endDate)}</span
+							>{fmtDate(a.startDate)} → {fmtDate(a.endDate)}</span
 							>
 						</div>
 						<div class="flex items-center justify-end gap-1 text-xs">

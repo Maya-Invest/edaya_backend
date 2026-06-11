@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { Camera } from '$lib/icons';
 	import type { Student } from '$lib/data/school';
+	import { Camera } from '$lib/icons';
 
-	let { s }: { s: Student } = $props();
+	const { s }: { s: Student } = $props();
 
 	let photo = $state<string | null>(null);
 	const inputId = $derived(`student-photo-${s.id}`);
 
 	function handleFile(e: Event) {
 		const file = (e.target as HTMLInputElement).files?.[0];
-		if (!file) return;
+		if (!file)
+			return;
 		const reader = new FileReader();
 		reader.onload = () => {
 			photo = typeof reader.result === 'string' ? reader.result : null;

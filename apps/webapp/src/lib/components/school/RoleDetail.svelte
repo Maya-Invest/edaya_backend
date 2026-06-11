@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { ShieldCheck, Crown, GraduationCap, HeartHandshake, Check, Eye, X } from '$lib/icons';
 	import type { StaffRole } from '$lib/data/school';
+	import type { Crud } from './drawer-constants';
 	import { staff } from '$lib/data/school';
+	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
 	import {
@@ -13,10 +14,10 @@
 		CRUD_LABEL,
 		CRUD_TONE,
 		defaultCrud,
-		type Crud,
+
 	} from './drawer-constants';
 
-	let { role }: { role: StaffRole } = $props();
+	const { role }: { role: StaffRole } = $props();
 
 	const ROLE_ICON = {
 		directeur: Crown,
@@ -25,7 +26,7 @@
 		educateur: HeartHandshake,
 	} as const;
 
-	const members = $derived(staff.filter((s) => s.role === role));
+	const members = $derived(staff.filter(s => s.role === role));
 	const Icon = $derived(ROLE_ICON[role]);
 
 	const grouped = $derived.by(() => {
@@ -37,7 +38,7 @@
 	});
 
 	let perms = $state<Record<string, Record<Crud, boolean>>>(
-		Object.fromEntries(ROLE_PERMISSIONS.map((p) => [p.key, defaultCrud(p.access[role])]))
+		Object.fromEntries(ROLE_PERMISSIONS.map(p => [p.key, defaultCrud(p.access[role])])),
 	);
 
 	function toggle(permKey: string, op: Crud) {
@@ -105,7 +106,7 @@
 											<span
 												class={cn(
 													'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium',
-													SCOPE_TONE[s]
+													SCOPE_TONE[s],
 												)}
 											>
 												{SCOPE_LABEL[s]}
@@ -128,7 +129,7 @@
 											title="{CRUD_LABEL[op]}{on ? ' · activé' : ' · désactivé'}"
 											class={cn(
 												'flex h-7 w-7 items-center justify-center rounded-full border border-border bg-muted/40 font-mono text-[11px] font-semibold text-muted-foreground transition hover:bg-secondary',
-												CRUD_TONE[op]
+												CRUD_TONE[op],
 											)}
 										>
 											{op}
