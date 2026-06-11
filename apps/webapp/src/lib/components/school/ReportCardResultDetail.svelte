@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { ReportCardResult } from '$lib/data/report-cards';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade, gradeScaleById, reportCardDefinitionById } from '$lib/data/report-cards';
-	import { students } from '$lib/data/school';
+	import { formatGrade } from '$lib/data/report-cards';
 	import { t } from '$lib/i18n';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
@@ -12,9 +12,9 @@
 	const { result }: { result: ReportCardResult } = $props();
 
 	const live = $derived(reportCardsContext.results.find(r => r.id === result.id) ?? result);
-	const student = $derived(students.find(s => s.id === live.studentId));
-	const definition = $derived(reportCardDefinitionById(live.definitionId));
-	const scale = $derived(gradeScaleById(live.gradeScaleId));
+	const student = $derived(detailDataContext.students.find(s => s.id === live.studentId));
+	const definition = $derived(reportCardsContext.definitions.find(d => d.id === live.definitionId));
+	const scale = $derived(reportCardsContext.scales.find(s => s.id === live.gradeScaleId));
 
 	const statusLabel: Record<ReportCardResult['status'], string> = {
 		draft: 'Brouillon',
@@ -51,7 +51,7 @@
 		<div class="rounded-xl border border-border bg-secondary/30 p-3 text-center">
 			<p class="font-mono text-[10px] uppercase text-muted-foreground">{$t('reportCards.overall')}</p>
 			<p class="font-display text-2xl font-semibold">
-				{scale ? formatGrade(live.overallAverage, scale.id) : live.overallAverage}
+				{scale ? formatGrade(live.overallAverage, scale) : live.overallAverage}
 			</p>
 		</div>
 		<div class="rounded-xl border border-border bg-secondary/30 p-3 text-center">
@@ -71,7 +71,7 @@
 					{definition?.sections.find(s => s.id === section.sectionId)?.name ?? 'Section'}
 					{#if section.sectionAverage !== undefined}
 						<span class="ml-2 font-mono text-xs text-muted-foreground">
-							(moy. {scale ? formatGrade(section.sectionAverage, scale.id) : section.sectionAverage})
+							(moy. {scale ? formatGrade(section.sectionAverage, scale) : section.sectionAverage})
 						</span>
 					{/if}
 				</p>
@@ -84,7 +84,7 @@
 									<p class="text-xs text-muted-foreground">{mark.teacherName}</p>
 								</div>
 								<p class="font-mono font-semibold">
-									{scale ? formatGrade(mark.average, scale.id) : mark.average}
+									{scale ? formatGrade(mark.average, scale) : mark.average}
 								</p>
 							</div>
 							{#if mark.appreciation}

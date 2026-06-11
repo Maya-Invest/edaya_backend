@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { ReportCardDefinition } from '$lib/data/report-cards';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
-	import { gradeLevelById } from '$lib/data/school';
+	import { formatGrade } from '$lib/data/report-cards';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import { t } from '$lib/i18n';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
@@ -14,8 +14,8 @@
 	const live = $derived(
 		reportCardsContext.definitions.find(d => d.id === definition.id) ?? definition,
 	);
-	const level = $derived(gradeLevelById(live.gradeLevelId));
-	const scale = $derived(gradeScaleById(live.gradeScaleId));
+	const level = $derived(academicContext.gradeLevelById(live.gradeLevelId));
+	const scale = $derived(reportCardsContext.scales.find(s => s.id === live.gradeScaleId));
 
 	const sectionKindLabel: Record<string, string> = {
 		matieres: 'Matières',
@@ -94,7 +94,7 @@
 
 	{#if scale}
 		<p class="text-xs text-muted-foreground">
-			{$t('gradeScales.passing')} : {formatGrade(scale.passingScore, scale.id)} / {scale.maxScore}
+			{$t('gradeScales.passing')} : {formatGrade(scale.passingScore, scale)} / {scale.maxScore}
 		</p>
 	{/if}
 </div>

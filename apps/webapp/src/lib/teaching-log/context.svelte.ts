@@ -1,15 +1,25 @@
 import type { LogEntry } from '$lib/data/teachingLog';
-import { demoTeachingLogEntries, filterEntriesForClass, filterEntriesForSubject } from '$lib/data/teachingLog';
 
 let runtimeEntries: LogEntry[] = [];
+let ready = false;
 
 export const teachingLogContext = {
-	hydrateFromServer(entries: LogEntry[]) {
-		runtimeEntries = entries;
+	get ready() {
+		return ready;
 	},
 
 	get entries(): LogEntry[] {
 		return runtimeEntries;
+	},
+
+	hydrateFromServer(entries: LogEntry[]) {
+		runtimeEntries = entries;
+		ready = true;
+	},
+
+	reset() {
+		runtimeEntries = [];
+		ready = false;
 	},
 
 	forClass(classId: string, subjectNames: string[]): LogEntry[] {
@@ -21,23 +31,10 @@ export const teachingLogContext = {
 	},
 
 	resolveClassEntries(classId: string, classSubjects: { name: string }[]): LogEntry[] {
-		if (runtimeEntries.length > 0) {
-			return this.forClass(classId, classSubjects.map(subject => subject.name));
-		}
-		return filterEntriesForClass(demoTeachingLogEntries(), classId, classSubjects.map(subject => ({
-			classId,
-			name: subject.name,
-		})));
+		return this.forClass(classId, classSubjects.map(subject => subject.name));
 	},
 
 	resolveSubjectEntries(subjectName: string): LogEntry[] {
-		if (runtimeEntries.length > 0) {
-			return this.forSubject(subjectName);
-		}
-		return filterEntriesForSubject(demoTeachingLogEntries(), subjectName);
+		return this.forSubject(subjectName);
 	},
 };
-
-export function getRuntimeTeachingLogEntries(): LogEntry[] {
-	return runtimeEntries;
-}

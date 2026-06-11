@@ -14,12 +14,26 @@ export function createRouter() {
   });
 }
 
+function corsOrigins(): string[] {
+  const trusted = process.env.TRUSTED_ORIGINS;
+  if (trusted) {
+    return trusted.split(",").map(origin => origin.trim()).filter(Boolean);
+  }
+  return ["http://localhost:5173", "http://localhost:4173"];
+}
+
 export default function createApp() {
   const app = createRouter();
+  const allowedOrigins = corsOrigins();
 
   app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:4173"],
-    allowMethods: ["GET", "POST", "DELETE"],
+    origin: (origin) => {
+      if (!origin) {
+        return allowedOrigins[0] ?? "http://localhost:5173";
+      }
+      return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+    },
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Cookie", "X-Academic-Year-Id"],
     credentials: true,
   }));

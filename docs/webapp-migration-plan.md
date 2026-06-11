@@ -523,7 +523,7 @@ Wire context mutations to `/core/commands/*` (create year, publish bulletin, etc
 
 | Phase | Status | PR |
 |-------|--------|-----|
-| 0 — Transport + auth + types | ⬜ | |
+| 0 — Transport + auth + types | 🟡 | in progress |
 | 1 — Client queries + bootstrap | ⬜ | |
 | 2 — Page migration | ⬜ | |
 | 3 — UI-only compute | ⬜ | |

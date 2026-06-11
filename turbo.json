@@ -9,7 +9,7 @@
       "cache": false
     },
     "build": {
-      "outputs": ["dist/**", ".svelte-kit/**"]
+      "outputs": ["dist/**", "build/**", ".svelte-kit/**"]
     },
     "check": {},
     "quality": {},

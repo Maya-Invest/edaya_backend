@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { ReportCardResult } from '$lib/data/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { formatGrade, gradeScaleById } from '$lib/data/report-cards';
-	import { students } from '$lib/data/school';
+	import { formatGrade } from '$lib/data/report-cards';
 	import { t } from '$lib/i18n';
 	import { FileSpreadsheet, Sparkles } from '$lib/icons';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -24,7 +24,7 @@
 	const results = $derived(reportCardsContext.resultsForClass(classId));
 
 	const period = $derived(academicContext.period);
-	const classStudents = $derived(students.filter(s => s.classId === classId));
+	const classStudents = $derived(detailDataContext.students.filter(s => s.classId === classId));
 
 	const statusLabel: Record<ReportCardResult['status'], string> = {
 		draft: 'Brouillon',
@@ -44,7 +44,7 @@
 	function generateOne(studentId: string) {
 		const r = reportCardsContext.generateResult(studentId);
 		if (r) {
-			const name = students.find(s => s.id === studentId)?.name ?? '';
+			const name = detailDataContext.students.find(s => s.id === studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastGenerated', { name }));
 		}
 	}
@@ -52,7 +52,7 @@
 	function publishOne(resultId: string) {
 		const r = reportCardsContext.publishResult(resultId);
 		if (r) {
-			const name = students.find(s => s.id === r.studentId)?.name ?? '';
+			const name = detailDataContext.students.find(s => s.id === r.studentId)?.name ?? '';
 			toast.success(get(t)('reportCards.toastPublished', { name }));
 		}
 	}
@@ -86,7 +86,7 @@
 			<tbody>
 				{#each classStudents as student (student.id)}
 					{@const result = resultForStudent(student.id)}
-					{@const scale = result ? gradeScaleById(result.gradeScaleId) : null}
+					{@const scale = result ? reportCardsContext.scales.find(s => s.id === result.gradeScaleId) : null}
 					<tr
 						class={cn(
 							'border-b border-border/60 last:border-0',
@@ -103,7 +103,7 @@
 							</button>
 						</td>
 						<td class="px-4 py-3 font-mono">
-							{result && scale ? formatGrade(result.overallAverage, scale.id) : '—'}
+							{result && scale ? formatGrade(result.overallAverage, scale) : '—'}
 						</td>
 						<td class="px-4 py-3 font-mono">
 							{result ? `${result.classRank}/${result.classSize}` : '—'}

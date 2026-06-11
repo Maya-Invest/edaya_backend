@@ -1,14 +1,13 @@
 <script lang="ts">
 	import type { Deadline } from '$lib/data/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { deadlines as mockDeadlines } from '$lib/data/school';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';
 	import { cn } from '$lib/utils';
 
 	const {
 		classId,
-		deadlines = mockDeadlines,
+		deadlines = [],
 		onSelect,
 		selectedId,
 	}: {

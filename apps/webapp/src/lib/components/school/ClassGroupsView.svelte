@@ -2,7 +2,6 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { gradeLevelById, gradeLevels } from '$lib/data/school';
 	import { t } from '$lib/i18n';
 	import { Layers, Pencil, Plus, Trash2 } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
@@ -11,15 +10,15 @@
 	let showForm = $state(false);
 	let editingId = $state<string | null>(null);
 	let name = $state('');
-	let gradeLevelId = $state(gradeLevels[0]?.id ?? 'gl-6');
+	let gradeLevelId = $state(academicContext.gradeLevels[0]?.id ?? 'gl-6');
 	let studentCount = $state('0');
 
-	const sortedLevels = $derived([...gradeLevels].sort((a, b) => a.order - b.order));
+	const sortedLevels = $derived([...academicContext.gradeLevels].sort((a, b) => a.order - b.order));
 
 	function resetForm() {
 		editingId = null;
 		name = '';
-		gradeLevelId = gradeLevels[0]?.id ?? 'gl-6';
+		gradeLevelId = academicContext.gradeLevels[0]?.id ?? 'gl-6';
 		studentCount = '0';
 		showForm = false;
 	}
@@ -147,7 +146,7 @@
 						</thead>
 						<tbody>
 							{#each group.classes as cls (cls.id)}
-								{@const level = gradeLevelById(cls.gradeLevelId)}
+								{@const level = academicContext.gradeLevelById(cls.gradeLevelId)}
 								<tr class="border-b border-border/60 last:border-0">
 									<td class="px-4 py-3">
 										<p class="font-medium">{cls.name}</p>

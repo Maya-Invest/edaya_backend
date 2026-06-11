@@ -3,7 +3,6 @@ import {
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_ACTIVITIES,
   SEED_DEADLINES,
-  SEED_SCHOOL_PROFILES,
   SEED_TEACHING_LOG_ENTRIES,
 } from "@edaya/dev-fixtures";
 import { parseEnv } from "@/lib/runtime/env";
@@ -50,7 +49,7 @@ describe("prototype stub routes", () => {
       "cookie": cookies.join("; "),
     };
 
-    const [activitiesResponse, deadlinesResponse, filteredDeadlinesResponse, teachingLogResponse, filteredTeachingLogResponse, schoolsResponse] = await Promise.all([
+    const [activitiesResponse, deadlinesResponse, filteredDeadlinesResponse, teachingLogResponse, filteredTeachingLogResponse, demoAccountsResponse] = await Promise.all([
       app.request(createAppRequest("/core/prototype/activities/list", {
         method: "POST",
         headers: authHeaders,
@@ -76,9 +75,9 @@ describe("prototype stub routes", () => {
         headers: authHeaders,
         body: JSON.stringify({ classGroupId: "6a", subjectName: "Mathematics" }),
       })),
-      app.request(createAppRequest("/core/prototype/schools/list", {
+      app.request(createAppRequest("/core/prototype/demo-accounts/list", {
         method: "POST",
-        headers: authHeaders,
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
       })),
     ]);
@@ -88,14 +87,14 @@ describe("prototype stub routes", () => {
     expect(filteredDeadlinesResponse.status).toBe(200);
     expect(teachingLogResponse.status).toBe(200);
     expect(filteredTeachingLogResponse.status).toBe(200);
-    expect(schoolsResponse.status).toBe(200);
+    expect(demoAccountsResponse.status).toBe(200);
 
     const activities = await activitiesResponse.json() as Array<{ id: string }>;
     const deadlines = await deadlinesResponse.json() as Array<{ id: string; classGroupId: string }>;
     const filteredDeadlines = await filteredDeadlinesResponse.json() as Array<{ id: string; classGroupId: string }>;
     const teachingLog = await teachingLogResponse.json() as Array<{ id: string; classGroupId: string }>;
     const filteredTeachingLog = await filteredTeachingLogResponse.json() as Array<{ id: string; subjectName: string }>;
-    const schools = await schoolsResponse.json() as Array<{ id: string }>;
+    const demoAccounts = await demoAccountsResponse.json() as Array<{ staffId: string; email: string }>;
 
     expect(activities.length).toBe(SEED_ACTIVITIES.length);
     expect(deadlines.length).toBe(SEED_DEADLINES.length);
@@ -106,7 +105,7 @@ describe("prototype stub routes", () => {
     expect(teachingLog.length).toBe(SEED_TEACHING_LOG_ENTRIES.length);
     expect(filteredTeachingLog.every(entry => entry.subjectName === "Mathematics")).toBe(true);
     expect(filteredTeachingLog.some(entry => entry.id === "sub1-0")).toBe(true);
-    expect(schools.length).toBe(SEED_SCHOOL_PROFILES.length);
-    expect(schools.some(school => school.id === "sch-edaya-nord")).toBe(true);
+    expect(demoAccounts.some(account => account.staffId === "st5")).toBe(true);
+    expect(demoAccounts.some(account => account.email === "m.dupont@school.edu")).toBe(true);
   }, 30_000);
 });

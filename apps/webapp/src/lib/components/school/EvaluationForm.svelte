@@ -1,15 +1,15 @@
 <script lang="ts">
 	import type { Evaluation } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
-	import { students } from '$lib/data/school';
 	import { t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import DrawerField from './DrawerField.svelte';
 
 	const { s }: { s: Evaluation } = $props();
 
-	const classStudents = $derived(students.filter(st => st.classId === s.classId));
+	const classStudents = $derived(detailDataContext.students.filter(st => st.classId === s.classId));
 </script>
 
 <div class="space-y-5">

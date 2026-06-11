@@ -16,6 +16,16 @@ export function createAuth(db: unknown, env: Environment): AuthService {
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/auth",
     trustedOrigins: env.TRUSTED_ORIGINS ? env.TRUSTED_ORIGINS.split(",") : [],
+    advanced: {
+      ...(env.COOKIE_DOMAIN
+        ? {
+            crossSubDomainCookies: {
+              enabled: true,
+              domain: env.COOKIE_DOMAIN,
+            },
+          }
+        : {}),
+    },
     emailAndPassword: {
       enabled: true,
     },

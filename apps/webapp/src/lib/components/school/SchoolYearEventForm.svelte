@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { SchoolYearEvent } from '$lib/data/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-	import { classes } from '$lib/data/school';
 	import { locale, t } from '$lib/i18n';
 	import DrawerField from './DrawerField.svelte';
 
@@ -76,7 +76,7 @@
 		</p>
 		{#if scoped}
 			<div class="grid grid-cols-2 gap-2 pt-1">
-				{#each classes as c (c.id)}
+				{#each academicContext.classes as c (c.id)}
 					<label
 						class="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs"
 					>

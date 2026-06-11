@@ -2,7 +2,6 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { periodDefinitionById } from '$lib/data/school';
 	import { t } from '$lib/i18n';
 	import { CalendarRange, ChevronDown, Plus } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
@@ -143,7 +142,7 @@
 						</p>
 						<ul class="space-y-2">
 							{#each yearPeriods as period (period.id)}
-								{@const def = periodDefinitionById(period.periodDefinitionId)}
+								{@const def = academicContext.periodDefinitionById(period.periodDefinitionId)}
 								<li
 									class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/60 px-4 py-3"
 								>

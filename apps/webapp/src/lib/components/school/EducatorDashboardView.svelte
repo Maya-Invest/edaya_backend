@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { academicContext } from '$lib/academic/context.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { absences, incidents, students, evaluations, classes } from '$lib/data/school';
 	import { t } from '$lib/i18n';
 	import {
 		Lock,
@@ -16,12 +17,19 @@
 		Plus,
 		Search,
 	} from '$lib/icons';
-	import { canEditGrades, getCurrentUser, ROLE_LABEL_FR } from '$lib/permissions';
+	import { authSession } from '$lib/auth/session.svelte';
+	import { canEditGrades, ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
 
 	type Tab = 'schoollife' | 'grades';
 
-	const me = getCurrentUser();
+	const students = $derived(detailDataContext.students);
+	const absences = $derived(detailDataContext.absences);
+	const incidents = $derived(detailDataContext.incidents);
+	const evaluations = $derived(detailDataContext.evaluations);
+	const classes = $derived(academicContext.classes);
+
+	const me = $derived(authSession.user);
 	let tab = $state<Tab>('schoollife');
 	let q = $state('');
 
@@ -92,20 +100,22 @@
 		class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft"
 	>
 		<div class="flex items-center gap-4">
-			<div
-				class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary font-display text-base font-semibold text-primary-foreground"
-			>
-				{me.initials}
-			</div>
-			<div>
-				<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-					{$t('educator.dashboard')}
-				</p>
-				<h1 class="font-display text-xl font-semibold leading-tight">{me.name}</h1>
-				<p class="text-xs text-muted-foreground">
-					{ROLE_LABEL_FR[me.role]} · {me.department}
-				</p>
-			</div>
+			{#if me}
+				<div
+					class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary font-display text-base font-semibold text-primary-foreground"
+				>
+					{me.initials}
+				</div>
+				<div>
+					<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+						{$t('educator.dashboard')}
+					</p>
+					<h1 class="font-display text-xl font-semibold leading-tight">{me.name}</h1>
+					<p class="text-xs text-muted-foreground">
+						{ROLE_LABEL_FR[me.role]} · {me.department}
+					</p>
+				</div>
+			{/if}
 		</div>
 		<div class="flex flex-wrap gap-2">
 			<span

@@ -1,16 +1,16 @@
 <script lang="ts">
 	import type { StudentBilling } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
-	import { students, fees } from '$lib/data/school';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock } from '$lib/icons';
 	import { cn } from '$lib/utils';
 
 	const { b }: { b: StudentBilling } = $props();
 
-	const student = $derived(students.find(s => s.id === b.studentId));
-	const fee = $derived(fees.find(f => f.id === b.feeId));
+	const student = $derived(detailDataContext.students.find(s => s.id === b.studentId));
+	const fee = $derived(detailDataContext.fees.find(f => f.id === b.feeId));
 	const remaining = $derived(b.total - b.paid);
 	const pct = $derived((b.paid / b.total) * 100);
 </script>

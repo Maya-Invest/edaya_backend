@@ -1,17 +1,8 @@
-import type { AcademicPeriod, AcademicYear, ClassNode, HierarchyGroup } from '$lib/data/school';
+import type { AcademicPeriod, AcademicYear, ClassNode, GradeLevel, HierarchyGroup, PeriodDefinition, School } from '$lib/data/school';
 import { browser } from '$app/environment';
 import { authSession } from '$lib/auth/session.svelte';
-import {
-	academicPeriods as seedPeriods,
-	academicYears as seedYears,
-	buildClassHierarchy,
-	classes as seedClasses,
-	gradeLevelById,
-	gradeLevels,
-	periodDefinitions,
-	schools,
-
-} from '$lib/data/school';
+import { buildClassHierarchy } from '$lib/data/school';
+import type { AppShellData } from '$lib/api/shell-data';
 
 const STORAGE_YEAR = 'edaya:yearId';
 const STORAGE_PERIOD = 'edaya:periodId';
@@ -31,41 +22,47 @@ function clone<T>(value: T): T {
 }
 
 function schoolId(): string {
-	return authSession.schoolId ?? schools[0]?.id ?? 'sch-edaya-central';
+	return authSession.schoolId ?? 'sch-edaya-central';
 }
 
 class AcademicContext {
-	years = $state<AcademicYear[]>(clone(seedYears));
-	periods = $state<AcademicPeriod[]>(clone(seedPeriods));
-	classes = $state<ClassNode[]>(clone(seedClasses));
-	yearId = $state('2025');
-	periodId = $state('2025-t3');
+	years = $state<AcademicYear[]>([]);
+	periods = $state<AcademicPeriod[]>([]);
+	classes = $state<ClassNode[]>([]);
+	gradeLevels = $state<GradeLevel[]>([]);
+	periodDefinitions = $state<PeriodDefinition[]>([]);
+	schools = $state<School[]>([]);
+	studentCount = $state(0);
+	shellReady = $state(false);
+	yearId = $state('');
+	periodId = $state('');
 
 	constructor() {
-		if (browser)
-this.hydrateSelection();
+		if (browser) {
+			this.hydrateSelection();
+		}
 	}
 
 	private hydrateSelection() {
 		const storedYear = sessionStorage.getItem(STORAGE_YEAR);
 		const storedPeriod = sessionStorage.getItem(STORAGE_PERIOD);
-		if (storedYear && this.years.some(y => y.id === storedYear)) {
+		if (storedYear) {
 			this.yearId = storedYear;
 		}
-		if (storedPeriod && this.periods.some(p => p.id === storedPeriod)) {
+		if (storedPeriod) {
 			this.periodId = storedPeriod;
 		}
-		this.syncPeriodToYear();
 	}
 
 	private persistSelection() {
-		if (!browser)
-return;
+		if (!browser) {
+			return;
+		}
 		sessionStorage.setItem(STORAGE_YEAR, this.yearId);
 		sessionStorage.setItem(STORAGE_PERIOD, this.periodId);
 	}
 
-	hierarchy = $derived(buildClassHierarchy(this.classes, gradeLevels));
+	hierarchy = $derived(buildClassHierarchy(this.classes, this.gradeLevels));
 
 	publishedYears = $derived(this.years.filter(y => y.status === 'published'));
 
@@ -81,6 +78,14 @@ return;
 		this.publishedPeriods.filter(p => p.academicYearId === this.yearId),
 	);
 
+	gradeLevelById(id: string): GradeLevel | undefined {
+		return this.gradeLevels.find(g => g.id === id);
+	}
+
+	periodDefinitionById(id: string): PeriodDefinition | undefined {
+		return this.periodDefinitions.find(p => p.id === id);
+	}
+
 	setYear(id: string) {
 		this.yearId = id;
 		this.syncPeriodToYear();
@@ -94,8 +99,9 @@ return;
 
 	private syncPeriodToYear() {
 		const options = this.publishedPeriodsForYear;
-		if (options.length === 0)
-return;
+		if (options.length === 0) {
+			return;
+		}
 		if (!options.some(p => p.id === this.periodId)) {
 			this.periodId = options[options.length - 1]!.id;
 		}
@@ -116,7 +122,7 @@ return;
 			status: 'draft',
 		};
 
-		const newPeriods: AcademicPeriod[] = periodDefinitions.map(def => ({
+		const newPeriods: AcademicPeriod[] = this.periodDefinitions.map(def => ({
 			id: `${id}-t${def.order}`,
 			schoolId: sid,
 			academicYearId: id,
@@ -148,9 +154,10 @@ return;
 	}
 
 	addClass(name: string, gradeLevelId: string) {
-		const gradeLevel = gradeLevelById(gradeLevelId);
-		if (!gradeLevel)
-return null;
+		const gradeLevel = this.gradeLevelById(gradeLevelId);
+		if (!gradeLevel) {
+			return null;
+		}
 
 		const id = this.nextClassId(gradeLevelId);
 		const entry: ClassNode = {
@@ -171,10 +178,11 @@ return null;
 		id: string,
 		patch: Partial<Pick<ClassNode, 'name' | 'gradeLevelId' | 'studentCount'>>,
 	) {
-		const gradeLevel = patch.gradeLevelId ? gradeLevelById(patch.gradeLevelId) : undefined;
+		const gradeLevel = patch.gradeLevelId ? this.gradeLevelById(patch.gradeLevelId) : undefined;
 		this.classes = this.classes.map((c) => {
-			if (c.id !== id)
-return c;
+			if (c.id !== id) {
+				return c;
+			}
 			return {
 				...c,
 				...patch,
@@ -196,11 +204,32 @@ return c;
 
 		if (years.length > 0 && !years.some(y => y.id === this.yearId)) {
 			const activeYear = years.find(y => y.status === 'published') ?? years[0];
-			if (activeYear)
-this.yearId = activeYear.id;
+			if (activeYear) {
+				this.yearId = activeYear.id;
+			}
 		}
 
 		this.syncPeriodToYear();
+	}
+
+	initFromShell(shell: AppShellData) {
+		this.schools = clone(shell.schools);
+		this.gradeLevels = clone(shell.gradeLevels);
+		this.periodDefinitions = clone(shell.periodDefinitions);
+		this.studentCount = shell.studentCount;
+		this.init(shell.academicYears, shell.academicPeriods, shell.classes);
+		this.shellReady = true;
+	}
+
+	reset() {
+		this.years = [];
+		this.periods = [];
+		this.classes = [];
+		this.gradeLevels = [];
+		this.periodDefinitions = [];
+		this.schools = [];
+		this.studentCount = 0;
+		this.shellReady = false;
 	}
 
 	private nextClassId(gradeLevelId: string): string {
@@ -217,20 +246,3 @@ this.yearId = activeYear.id;
 }
 
 export const academicContext = new AcademicContext();
-
-/** Classes visibles côté load() — seed en SSR, contexte en client. */
-export function getRuntimeClasses(): ClassNode[] {
-	return browser ? academicContext.classes : seedClasses;
-}
-
-export function getRuntimeHierarchy(): HierarchyGroup[] {
-	return browser ? academicContext.hierarchy : buildClassHierarchy(seedClasses, gradeLevels);
-}
-
-export function getRuntimeYears(): AcademicYear[] {
-	return browser ? academicContext.years : seedYears;
-}
-
-export function getRuntimePeriods(): AcademicPeriod[] {
-	return browser ? academicContext.periods : seedPeriods;
-}

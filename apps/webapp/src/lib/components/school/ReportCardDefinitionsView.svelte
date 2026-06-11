@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ReportCardDefinition } from '$lib/data/report-cards';
-	import { gradeScaleById } from '$lib/data/report-cards';
-	import { gradeLevelById } from '$lib/data/school';
+	import { academicContext } from '$lib/academic/context.svelte';
+	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { t } from '$lib/i18n';
 	import { ChevronRight } from '$lib/icons';
 	import { cn } from '$lib/utils';
@@ -30,8 +30,8 @@
 
 	<div class="space-y-2">
 		{#each definitions as def (def.id)}
-			{@const level = gradeLevelById(def.gradeLevelId)}
-			{@const scale = gradeScaleById(def.gradeScaleId)}
+			{@const level = academicContext.gradeLevelById(def.gradeLevelId)}
+			{@const scale = reportCardsContext.scales.find(s => s.id === def.gradeScaleId)}
 			<button
 				type="button"
 				onclick={() => onSelect?.(def)}

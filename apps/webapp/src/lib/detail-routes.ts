@@ -1,23 +1,10 @@
 import type { ResolvedPathname } from '$app/types';
 import type { DrawerItem } from '$lib/components/school/drawer-types';
 import type { StaffRole, Subject } from '$lib/data/school';
-import {
-	students,
-	guardians,
-	staff,
-	subjects,
-	planning,
-	evaluations,
-	activities,
-	deadlines,
-	incidents,
-	schoolYearEvents,
-	billing,
-	fees,
-	classes,
-} from '$lib/data/school';
+import { academicContext } from '$lib/academic/context.svelte';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { appPath } from '$lib/navigation/app-navigation';
-import { getRuntimeReportCardDefinitions, getRuntimeReportCardResults } from '$lib/report-cards/context.svelte';
+import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 export interface ParsedDetail {
 	item: NonNullable<DrawerItem>;
@@ -44,9 +31,9 @@ function yearLabel(className: string): string {
 }
 
 function getSubjectLevelGroup(label: string): { label: string; subtitle: string; items: Subject[] } | null {
-	const classById = Object.fromEntries(classes.map(c => [c.id, c]));
+	const classById = Object.fromEntries(academicContext.classes.map(c => [c.id, c]));
 	const byYear: Record<string, { subtitle: string; items: Subject[] }> = {};
-	for (const s of subjects) {
+	for (const s of detailDataContext.subjects) {
 		const cls = classById[s.classId];
 		if (!cls)
 			continue;
@@ -69,77 +56,77 @@ const matchers: Matcher[] = [
 	{
 		test: p => p.match(/^\/school\/students\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const s = students.find(x => x.id === m[1]);
+			const s = detailDataContext.students.find(x => x.id === m[1]);
 			return s ? { item: { kind: 'student', data: s }, listPath: appPath('/(app)/school/students/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/guardians\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const g = guardians.find(x => x.id === m[1]);
+			const g = detailDataContext.guardians.find(x => x.id === m[1]);
 			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/(app)/school/guardians/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/activities\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const a = activities.find(x => x.id === m[1]);
+			const a = detailDataContext.activities.find(x => x.id === m[1]);
 			return a ? { item: { kind: 'activity', data: a }, listPath: appPath('/(app)/school/activities/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/events\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const i = incidents.find(x => x.id === m[1]);
+			const i = detailDataContext.incidents.find(x => x.id === m[1]);
 			return i ? { item: { kind: 'incident', data: i }, listPath: appPath('/(app)/school/events/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/school\/calendar\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const ev = schoolYearEvents.find(x => x.id === m[1]);
+			const ev = detailDataContext.schoolYearEvents.find(x => x.id === m[1]);
 			return ev ? { item: { kind: 'schoolYearEvent', data: ev }, listPath: appPath('/(app)/school/calendar/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/students\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const s = students.find(x => x.id === m[2]);
+			const s = detailDataContext.students.find(x => x.id === m[2]);
 			return s ? { item: { kind: 'student', data: s }, listPath: appPath('/(app)/classes/[classId]/students/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/subjects\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const s = subjects.find(x => x.id === m[2]);
+			const s = detailDataContext.subjects.find(x => x.id === m[2]);
 			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/classes/[classId]/subjects/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/timetable\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const ev = planning.find(x => x.id === m[2]);
+			const ev = detailDataContext.planning.find(x => x.id === m[2]);
 			return ev ? { item: { kind: 'planning', data: ev }, listPath: appPath('/(app)/classes/[classId]/timetable/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/homework\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const d = deadlines.find(x => x.id === m[2] && x.classId === m[1]);
+			const d = detailDataContext.deadlines.find(x => x.id === m[2] && x.classId === m[1]);
 			return d ? { item: { kind: 'deadline', data: d }, listPath: appPath('/(app)/classes/[classId]/homework/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/evaluations\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const ev = evaluations.find(x => x.id === m[2]);
+			const ev = detailDataContext.evaluations.find(x => x.id === m[2]);
 			return ev ? { item: { kind: 'evaluation', data: ev }, listPath: appPath('/(app)/classes/[classId]/evaluations/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/teaching\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const s = subjects.find(x => x.id === m[2]);
+			const s = detailDataContext.subjects.find(x => x.id === m[2]);
 			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/classes/[classId]/teaching/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
@@ -154,7 +141,7 @@ const matchers: Matcher[] = [
 	{
 		test: p => p.match(/^\/configuration\/subjects\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const s = subjects.find(x => x.id === m[1]);
+			const s = detailDataContext.subjects.find(x => x.id === m[1]);
 			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/configuration/subjects/[[id]]') } : null;
 		},
 	},
@@ -163,10 +150,10 @@ const matchers: Matcher[] = [
 		parse: (m) => {
 			const id = m[1];
 			if (id.startsWith('st')) {
-				const s = staff.find(x => x.id === id);
+				const s = detailDataContext.staff.find(x => x.id === id);
 				return s ? { item: { kind: 'staff', data: s }, listPath: appPath('/(app)/configuration/staff/[[id]]') } : null;
 			}
-			const g = guardians.find(x => x.id === id);
+			const g = detailDataContext.guardians.find(x => x.id === id);
 			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/(app)/configuration/staff/[[id]]') } : null;
 		},
 	},
@@ -182,21 +169,21 @@ const matchers: Matcher[] = [
 	{
 		test: p => p.match(/^\/finance\/billing\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const b = billing.find(x => x.id === m[1]);
+			const b = detailDataContext.billing.find(x => x.id === m[1]);
 			return b ? { item: { kind: 'billing', data: b }, listPath: appPath('/(app)/finance/billing/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/finance\/fees\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const f = fees.find(x => x.id === m[1]);
+			const f = detailDataContext.fees.find(x => x.id === m[1]);
 			return f ? { item: { kind: 'fee', data: f }, listPath: appPath('/(app)/finance/fees/[[id]]') } : null;
 		},
 	},
 	{
 		test: p => p.match(/^\/configuration\/report-cards\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const d = getRuntimeReportCardDefinitions().find(x => x.id === m[1]);
+			const d = reportCardsContext.definitions.find(x => x.id === m[1]);
 			return d
 				? { item: { kind: 'reportCardDefinition', data: d }, listPath: appPath('/(app)/configuration/report-cards/[[id]]') }
 				: null;
@@ -205,7 +192,7 @@ const matchers: Matcher[] = [
 	{
 		test: p => p.match(/^\/classes\/([^/]+)\/report-cards\/([^/]+)$/) ?? null,
 		parse: (m) => {
-			const r = getRuntimeReportCardResults().find(x => x.id === m[2]);
+			const r = reportCardsContext.results.find(x => x.id === m[2]);
 			return r
 				? {
 						item: { kind: 'reportCardResult', data: r },

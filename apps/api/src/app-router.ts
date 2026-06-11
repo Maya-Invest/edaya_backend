@@ -7,8 +7,8 @@ import {
   listPrototypeActivitiesRoute,
   listPrototypeDeadlinesHandler,
   listPrototypeDeadlinesRoute,
-  listPrototypeSchoolsHandler,
-  listPrototypeSchoolsRoute,
+  listPrototypeDemoAccountsHandler,
+  listPrototypeDemoAccountsRoute,
   listPrototypeTeachingLogHandler,
   listPrototypeTeachingLogRoute,
 } from "@/routes/prototype.routes";
@@ -46,7 +46,7 @@ router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
   .openapi(listPrototypeDeadlinesRoute, listPrototypeDeadlinesHandler)
-  .openapi(listPrototypeSchoolsRoute, listPrototypeSchoolsHandler)
+  .openapi(listPrototypeDemoAccountsRoute, listPrototypeDemoAccountsHandler)
   .openapi(listPrototypeTeachingLogRoute, listPrototypeTeachingLogHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 

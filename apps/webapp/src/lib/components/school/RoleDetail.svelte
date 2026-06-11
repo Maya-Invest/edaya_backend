@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { StaffRole } from '$lib/data/school';
 	import type { Crud } from './drawer-constants';
-	import { page } from '$app/stores';
-	import { staff as mockStaff } from '$lib/data/school';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
@@ -20,10 +19,8 @@
 
 	const { role }: { role: StaffRole } = $props();
 
-	const staff = $derived(($page.data.staff as typeof mockStaff | undefined) ?? mockStaff);
-	const liveCrudMatrix = $derived(
-		($page.data.roleCrudMatrix as Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>> | undefined)?.[role],
-	);
+	const staff = $derived(detailDataContext.staff);
+	const liveCrudMatrix = $derived(detailDataContext.roleCrudMatrix[role]);
 
 	const ROLE_ICON = {
 		directeur: Crown,

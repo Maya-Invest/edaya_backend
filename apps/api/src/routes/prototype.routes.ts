@@ -1,7 +1,8 @@
+import { DEV_AUTH_STAFF_ACCOUNTS } from "@edaya/dev-fixtures";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { SEED_ACTIVITIES, SEED_DEADLINES, SEED_SCHOOL_PROFILES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
+import { SEED_ACTIVITIES, SEED_DEADLINES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
 import type { AppRouteHandler } from "@/lib/http/types";
 import { unauthorizedResponse } from "@/lib/http/responses";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
@@ -70,13 +71,32 @@ const prototypeTeachingLogEntrySchema = z.object({
   progress: z.number(),
 }).openapi("PrototypeTeachingLogEntry");
 
-const prototypeSchoolProfileSchema = z.object({
-  id: z.string(),
+const demoStaffRoleSchema = z.enum(["directeur", "prof_principal", "professeur", "educateur"]);
+
+const prototypeDemoAccountSchema = z.object({
+  staffId: z.string(),
+  email: z.string(),
   name: z.string(),
-  shortName: z.string(),
-  city: z.string(),
-  timeZone: z.string(),
-}).openapi("PrototypeSchoolProfile");
+  role: demoStaffRoleSchema,
+  initials: z.string(),
+}).openapi("PrototypeDemoAccount");
+
+const LOGIN_DEMO_STAFF_IDS = ["st5", "st3", "st1", "st7"] as const;
+
+const DEMO_STAFF_ROLES: Record<string, z.infer<typeof demoStaffRoleSchema>> = {
+  st5: "directeur",
+  st3: "prof_principal",
+  st7: "educateur",
+  st1: "professeur",
+  st2: "professeur",
+};
+
+function initialsForName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts[parts.length - 1]?.[0] ?? "";
+  return `${first}${last}`.toUpperCase();
+}
 
 export const listPrototypeActivitiesRoute = createRoute({
   method: "post",
@@ -112,18 +132,18 @@ export const listPrototypeDeadlinesRoute = createRoute({
   },
 });
 
-export const listPrototypeSchoolsRoute = createRoute({
+export const listPrototypeDemoAccountsRoute = createRoute({
   method: "post",
-  path: schoolApiPath("prototype", "schools", "list"),
+  path: schoolApiPath("prototype", "demo-accounts", "list"),
   tags: ["Core Prototype"],
-  summary: "List school profiles for multi-school UI (stub — Campus Nord has no PGLite seed yet)",
+  summary: "List demo login accounts for the webapp login screen",
   request: {
-    body: jsonContent(prototypeListRequestSchema, "Prototype schools list request"),
+    body: jsonContent(prototypeListRequestSchema, "Prototype demo accounts list request"),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      z.array(prototypeSchoolProfileSchema).openapi("PrototypeSchoolsListResponse"),
-      "Stub school profiles",
+      z.array(prototypeDemoAccountSchema).openapi("PrototypeDemoAccountsListResponse"),
+      "Demo staff accounts for login UI",
     ),
     ...coreRouteErrorResponses,
   },
@@ -180,12 +200,18 @@ export const listPrototypeDeadlinesHandler: AppRouteHandler<typeof listPrototype
   );
 };
 
-export const listPrototypeSchoolsHandler: AppRouteHandler<typeof listPrototypeSchoolsRoute> = async (c) => {
-  if (!c.get("actor")) {
-    return unauthorizedResponse(c);
-  }
+export const listPrototypeDemoAccountsHandler: AppRouteHandler<typeof listPrototypeDemoAccountsRoute> = async (c) => {
+  const accounts = DEV_AUTH_STAFF_ACCOUNTS
+    .filter(account => LOGIN_DEMO_STAFF_IDS.includes(account.staffId as typeof LOGIN_DEMO_STAFF_IDS[number]))
+    .map(account => ({
+      staffId: account.staffId,
+      email: account.email,
+      name: account.name,
+      role: DEMO_STAFF_ROLES[account.staffId] ?? "professeur",
+      initials: initialsForName(account.name),
+    }));
 
-  return c.json([...SEED_SCHOOL_PROFILES], HttpStatusCodes.OK);
+  return c.json(accounts, HttpStatusCodes.OK);
 };
 
 export const listPrototypeTeachingLogHandler: AppRouteHandler<typeof listPrototypeTeachingLogRoute> = async (c) => {

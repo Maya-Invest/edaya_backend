@@ -10,7 +10,8 @@
 		ChevronRight,
 		Users,
 	} from '$lib/icons';
-	import { ROLE_LABEL_FR, getCurrentUser } from '$lib/permissions';
+	import { ROLE_LABEL_FR } from '$lib/permissions';
+	import { authSession } from '$lib/auth/session.svelte';
 	import { cn } from '$lib/utils';
 
 	const {
@@ -50,7 +51,7 @@
 		},
 	];
 
-	const me = getCurrentUser();
+	const me = $derived(authSession.user);
 	let q = $state('');
 
 	const list = $derived.by(() => {
@@ -88,16 +89,18 @@
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
 			</div>
-			<div
-				class="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] text-muted-foreground shadow-soft"
-			>
-				<span
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+			{#if me}
+				<div
+					class="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] text-muted-foreground shadow-soft"
 				>
-					{me.initials}
-				</span>
-				<span class="font-mono uppercase tracking-wider">{ROLE_LABEL_FR[me.role]}</span>
-			</div>
+					<span
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+					>
+						{me.initials}
+					</span>
+					<span class="font-mono uppercase tracking-wider">{ROLE_LABEL_FR[me.role]}</span>
+				</div>
+			{/if}
 		</div>
 	</div>
 

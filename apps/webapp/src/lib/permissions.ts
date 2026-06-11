@@ -1,7 +1,6 @@
 import type { PermissionCode, ScopeGrantSnapshot } from '$lib/auth/types';
 import type { StaffMember, StaffRole } from '$lib/data/school';
 import { authSession } from '$lib/auth/session.svelte';
-import { staff } from '$lib/data/school';
 
 interface Ctx { classId?: string; subject?: string }
 
@@ -89,15 +88,12 @@ export function hasAnyPermission(permissions: readonly PermissionCode[], ctx: Ct
 	return permissions.some(permission => hasPermission(permission, ctx));
 }
 
-export function getCurrentUser(): StaffMember {
-	const sessionUser = authSession.user;
-	if (sessionUser)
-		return sessionUser;
-	return staff[0];
+export function getCurrentUser(): StaffMember | null {
+	return authSession.user;
 }
 
 export function getCurrentRole(): StaffRole {
-	return getCurrentUser().role;
+	return getCurrentUser()?.role ?? 'professeur';
 }
 
 export function canEditGrades(ctx: Ctx = {}): boolean {

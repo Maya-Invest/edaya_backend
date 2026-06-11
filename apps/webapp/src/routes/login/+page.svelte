@@ -1,26 +1,23 @@
 <script lang="ts">
-	import type { School } from '$lib/data/school';
-	import { invalidateAll } from '$app/navigation';
-	import { page } from '$app/stores';
+	import type { DemoAccount } from '$lib/types/demo-account';
+	import { browser } from '$app/environment';
+	import { bootstrapSession } from '$lib/auth/bootstrap';
+	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authClient } from '$lib/auth/client';
-	import { authSession, DEMO_ACCOUNTS } from '$lib/auth/session.svelte';
+	import { authSession } from '$lib/auth/session.svelte';
+	import { browserFetch } from '$lib/api/browser-fetch';
+	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
-	import { schools } from '$lib/data/school';
 	import { t } from '$lib/i18n';
-	import { GraduationCap, Building2, Check } from '$lib/icons';
+	import { GraduationCap } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { toast } from '$lib/toast.svelte';
-	import { cn } from '$lib/utils';
 
-	let selectedSchoolId = $state(schools[0]?.id ?? '');
+	const DEV_AUTH_PASSWORD = 'DevPassword1!';
+
+	let demoAccounts = $state<DemoAccount[]>([]);
 	let loading = $state(false);
-
-	const apiConnected = $derived(
-		($page.data.api as { connected?: boolean } | undefined)?.connected ?? false,
-	);
-	const selectedSchool = $derived(
-		schools.find(entry => entry.id === selectedSchoolId) ?? schools[0],
-	);
+	let apiConnected = $state(false);
 
 	async function signInWithRetry(email: string, password: string) {
 		const maxAttempts = 3;
@@ -44,15 +41,31 @@
 		}
 	});
 
-	function pickSchool(school: School) {
-		selectedSchoolId = school.id;
-	}
-
-	async function signIn(userId: string) {
-		const account = DEMO_ACCOUNTS.find(entry => entry.id === userId);
-		if (!account)
+	$effect(() => {
+		if (!browser) {
 			return;
+		}
 
+		void (async () => {
+			const health = await checkBrowserApiHealth();
+			apiConnected = health.connected;
+			if (!health.connected) {
+				return;
+			}
+
+			try {
+				demoAccounts = await browserFetch<DemoAccount[]>('/core/prototype/demo-accounts/list', {
+					method: 'POST',
+					body: JSON.stringify({}),
+				});
+			}
+			catch {
+				demoAccounts = [];
+			}
+		})();
+	});
+
+	async function signIn(account: DemoAccount) {
 		if (!apiConnected) {
 			toast.error('API locale indisponible — attendez le démarrage du serveur.');
 			return;
@@ -60,26 +73,21 @@
 
 		loading = true;
 		try {
-			const error = await signInWithRetry(account.email, 'DevPassword1!');
+			const error = await signInWithRetry(account.email, DEV_AUTH_PASSWORD);
 
 			if (error) {
 				toast.error(`Connexion échouée: ${error.message}`);
 				return;
 			}
 
-			authSession.setSchool(selectedSchoolId);
-			authSession.setSession(userId, selectedSchoolId);
-			try {
-				await invalidateAll();
-			}
-			catch {
-			// SSR refresh is best-effort; client session is already set
-			}
+			resetAppShellBootstrap();
+			await bootstrapSession();
 			toast.success(`Bienvenue, ${account.name}`);
 			appGoto(appPath('/(app)/school/students/[[id]]'));
 		}
-		catch (err: any) {
-			toast.error(`Erreur: ${err.message || err}`);
+		catch (err: unknown) {
+			const message = err instanceof Error ? err.message : String(err);
+			toast.error(`Erreur: ${message}`);
 		}
 		finally {
 			loading = false;
@@ -105,38 +113,6 @@
 				<p class="mt-2 max-w-sm text-sm text-muted-foreground">{$t('auth.subtitle')}</p>
 			</div>
 
-			<section class="mb-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
-				<div class="mb-3 flex items-center gap-2">
-					<Building2 class="h-4 w-4 text-muted-foreground" />
-					<h2 class="font-display text-base font-semibold">{$t('auth.pickSchool')}</h2>
-				</div>
-				<div class="grid gap-2 sm:grid-cols-2">
-					{#each schools as school (school.id)}
-						<button
-							type="button"
-							onclick={() => pickSchool(school)}
-							disabled={loading || !apiConnected}
-							class={cn(
-								'rounded-xl border border-border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-50 disabled:pointer-events-none',
-								selectedSchool?.id === school.id
-									? 'border-primary/30 bg-primary/5 ring-1 ring-primary/20'
-									: 'bg-card hover:bg-secondary/40',
-							)}
-						>
-							<div class="flex items-start justify-between gap-2">
-								<span>
-									<span class="block text-sm font-medium">{school.shortName}</span>
-									<span class="font-mono text-[10px] text-muted-foreground">{school.city}</span>
-								</span>
-								{#if selectedSchool?.id === school.id}
-									<Check class="h-4 w-4 shrink-0 text-accent" />
-								{/if}
-							</div>
-						</button>
-					{/each}
-				</div>
-			</section>
-
 			<section class="rounded-2xl border border-border bg-card p-5 shadow-soft">
 				<h2 class="mb-1 font-display text-base font-semibold">{$t('auth.pickAccount')}</h2>
 				<p class="mb-4 text-xs text-muted-foreground">{$t('auth.demoHint')}</p>
@@ -147,13 +123,13 @@
 				{/if}
 
 				<ul class="space-y-2">
-					{#each DEMO_ACCOUNTS as account (account.id)}
+					{#each demoAccounts as account (account.staffId)}
 						<li>
 							<button
 								type="button"
-								onclick={() => signIn(account.id)}
+								onclick={() => signIn(account)}
 								disabled={loading || !apiConnected}
-								class="flex w-full items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-primary/20 hover:bg-secondary/50 disabled:opacity-50 disabled:pointer-events-none"
+								class="flex w-full items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-primary/20 hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-50"
 							>
 								<span
 									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold text-primary-foreground"

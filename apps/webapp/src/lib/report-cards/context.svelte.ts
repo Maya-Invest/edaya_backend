@@ -1,27 +1,20 @@
 import type { GradeScale, ReportCardDefinition, ReportCardResult, ReportCardSectionResult, ReportCardSubjectMark } from '$lib/data/report-cards';
-import { browser } from '$app/environment';
 import { academicContext } from '$lib/academic/context.svelte';
-import {
-	defaultGradeScale,
-	gradeScales as seedScales,
-	reportCardDefinitions as seedDefinitions,
-	reportCardResults as seedResults,
-
-} from '$lib/data/report-cards';
-import { schools, students, subjects } from '$lib/data/school';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 
 function clone<T>(value: T): T {
 	return structuredClone(value);
 }
 
 function schoolId(): string {
-	return schools[0]?.id ?? 'sch-edaya-central';
+	return academicContext.schools[0]?.id ?? 'sch-edaya-central';
 }
 
 class ReportCardsContext {
-	scales = $state<GradeScale[]>(clone(seedScales));
-	definitions = $state<ReportCardDefinition[]>(clone(seedDefinitions));
-	results = $state<ReportCardResult[]>(clone(seedResults));
+	scales = $state<GradeScale[]>([]);
+	definitions = $state<ReportCardDefinition[]>([]);
+	results = $state<ReportCardResult[]>([]);
+	ready = $state(false);
 
 	addGradeScale(input: {
 		name: string;
@@ -63,7 +56,7 @@ class ReportCardsContext {
 	}
 
 	generateResult(studentId: string, periodId = academicContext.periodId): ReportCardResult | null {
-		const student = students.find(s => s.id === studentId);
+		const student = detailDataContext.students.find(s => s.id === studentId);
 		if (!student)
 return null;
 
@@ -90,7 +83,7 @@ return null;
 		if (!definition)
 return null;
 
-		const classSubjects = subjects.filter(s => s.classId === student.classId);
+		const classSubjects = detailDataContext.subjects.filter(s => s.classId === student.classId);
 		const matiereSections = definition.sections.filter(s => s.kind === 'matieres');
 		const sectionResults: ReportCardSectionResult[] = matiereSections.map((section) => {
 			const sectionSubjects = section.subjectIds?.length
@@ -120,7 +113,7 @@ return null;
 			return { sectionId: section.id, sectionAverage, marks };
 		});
 
-		const classStudents = students.filter(s => s.classId === student.classId);
+		const classStudents = detailDataContext.students.filter(s => s.classId === student.classId);
 		const result: ReportCardResult = {
 			id: `rcr-${studentId}-${periodId}`,
 			schoolId: schoolId(),
@@ -151,7 +144,7 @@ return null;
 	}
 
 	generateForClass(classId: string, periodId = academicContext.periodId): number {
-		const classStudents = students.filter(s => s.classId === classId);
+		const classStudents = detailDataContext.students.filter(s => s.classId === classId);
 		let count = 0;
 		for (const s of classStudents) {
 			const had = this.results.some(
@@ -181,23 +174,15 @@ count += 1;
 		this.scales = clone(input.gradeScales);
 		this.definitions = clone(input.reportCardDefinitions);
 		this.results = clone(input.reportCardResults);
+		this.ready = true;
+	}
+
+	reset() {
+		this.scales = [];
+		this.definitions = [];
+		this.results = [];
+		this.ready = false;
 	}
 }
 
 export const reportCardsContext = new ReportCardsContext();
-
-export function getRuntimeGradeScales(): GradeScale[] {
-	return browser ? reportCardsContext.scales : seedScales;
-}
-
-export function getRuntimeReportCardDefinitions(): ReportCardDefinition[] {
-	return browser ? reportCardsContext.definitions : seedDefinitions;
-}
-
-export function getRuntimeReportCardResults(): ReportCardResult[] {
-	return browser ? reportCardsContext.results : seedResults;
-}
-
-export function getDefaultGradeScale(): GradeScale {
-	return defaultGradeScale();
-}
