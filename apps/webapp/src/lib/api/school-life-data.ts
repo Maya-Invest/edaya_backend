@@ -22,12 +22,6 @@ export interface SchoolLifeSources {
 	subjectsRaw: SubjectRaw[];
 }
 
-const INCIDENT_UI_META: Record<string, { category: Incident['category']; severity: Incident['severity'] }> = {
-	i1: { category: 'Tardiness', severity: 'low' },
-	i2: { category: 'Behavior', severity: 'medium' },
-	i3: { category: 'Conflict', severity: 'medium' },
-};
-
 const CALENDAR_KIND_TO_TYPE: Record<string, SchoolYearEvent['type']> = {
 	holiday: 'holiday',
 	break: 'vacation',
@@ -114,6 +108,46 @@ export function mapCalendarEvents(eventsRaw: CalendarEventRaw[]): SchoolYearEven
 		.sort((left, right) => left.date.localeCompare(right.date));
 }
 
+function incidentLabel(incident: IncidentRaw): string {
+	return `${incident.title} ${incident.description}`.toLowerCase();
+}
+
+export function mapIncidentCategory(incident: IncidentRaw): Incident['category'] {
+	const label = incidentLabel(incident);
+
+	if (/tardiness|retard|late/.test(label)) {
+		return 'Tardiness';
+	}
+	if (/conflict|argument|dispute|fight/.test(label)) {
+		return 'Conflict';
+	}
+	if (/disruption|behavior|behaviour|discipline|bavard/.test(label)) {
+		return 'Behavior';
+	}
+
+	return 'Other';
+}
+
+export function mapIncidentSeverity(
+	incident: IncidentRaw,
+	category: Incident['category'],
+): Incident['severity'] {
+	if (incident.kind === 'emergency') {
+		return 'high';
+	}
+	if (incident.kind === 'major_infraction') {
+		return 'medium';
+	}
+	if (category === 'Tardiness') {
+		return 'low';
+	}
+	if (category === 'Behavior' || category === 'Conflict') {
+		return 'medium';
+	}
+
+	return 'low';
+}
+
 export function mapIncidents(
 	incidentsRaw: IncidentRaw[],
 	involvementsRaw: InvolvementRaw[],
@@ -132,17 +166,14 @@ export function mapIncidents(
 				return null;
 			}
 
-			const meta = INCIDENT_UI_META[incident.id] ?? {
-				category: 'Other' as const,
-				severity: 'low' as const,
-			};
+			const category = mapIncidentCategory(incident);
 
 			return {
 				id: incident.id,
 				studentId: involvement.studentId,
 				date: formatDate(incident.date),
-				category: meta.category,
-				severity: meta.severity,
+				category,
+				severity: mapIncidentSeverity(incident, category),
 				summary: incident.description,
 			} satisfies Incident;
 		})

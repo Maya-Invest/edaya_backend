@@ -443,7 +443,9 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       title: incident.title,
       description: incident.description,
       date: parseSeedDate(incident.date),
-      kind: IncidentKind.MinorInfraction,
+      kind: incident.kind === "major_infraction"
+        ? IncidentKind.MajorInfraction
+        : IncidentKind.MinorInfraction,
       reporterId: "st7",
     });
     await service.addStudentInvolvement({

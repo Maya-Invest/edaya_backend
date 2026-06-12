@@ -95,7 +95,7 @@ describe("dev school life seed", () => {
     expect(attendanceResponse.status).toBe(200);
 
     const calendarEvents = unwrapEntityList<{ id: string; title: string }>(await calendarResponse.json());
-    const incidents = unwrapEntityList<{ id: string; title: string }>(await incidentsResponse.json());
+    const incidents = unwrapEntityList<{ id: string; title: string; kind: string }>(await incidentsResponse.json());
     const attendance = unwrapEntityList<{ id: string; studentId: string }>(await attendanceResponse.json());
 
     expect(calendarEvents.length).toBeGreaterThanOrEqual(expectedCalendarEvents);
@@ -103,6 +103,9 @@ describe("dev school life seed", () => {
     expect(attendance.length).toBeGreaterThanOrEqual(SEED_ABSENCE_RECORDS.length);
     expect(calendarEvents.some(event => event.title === "Fête du Travail")).toBe(true);
     expect(incidents.some(incident => incident.id === "i1")).toBe(true);
+    expect(incidents.find(incident => incident.id === "i1")?.kind).toBe("minor_infraction");
+    expect(incidents.find(incident => incident.id === "i2")?.kind).toBe("minor_infraction");
+    expect(incidents.find(incident => incident.id === "i3")?.kind).toBe("major_infraction");
     expect(attendance.some(record => record.id === "a1" && record.studentId === "s1")).toBe(true);
   }, 30_000);
 });

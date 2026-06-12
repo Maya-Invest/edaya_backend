@@ -326,7 +326,7 @@ export const SEED_CALENDAR_EVENTS = [
 export const SEED_INCIDENTS = [
   { id: 'i1', studentId: 's3', classGroupId: '6a', date: '2026-04-12', title: 'Repeated tardiness', description: 'Late to class 3 times this month.', kind: 'minor_infraction' as const, mockCategory: 'Tardiness' as const, mockSeverity: 'low' as const },
   { id: 'i2', studentId: 's2', classGroupId: '6a', date: '2026-03-22', title: 'Class disruption', description: 'Disruption during English class.', kind: 'minor_infraction' as const, mockCategory: 'Behavior' as const, mockSeverity: 'medium' as const },
-  { id: 'i3', studentId: 's3', classGroupId: '6a', date: '2026-04-26', title: 'Recess conflict', description: 'Argument with classmate during recess.', kind: 'minor_infraction' as const, mockCategory: 'Conflict' as const, mockSeverity: 'medium' as const },
+  { id: 'i3', studentId: 's3', classGroupId: '6a', date: '2026-04-26', title: 'Recess conflict', description: 'Argument with classmate during recess.', kind: 'major_infraction' as const, mockCategory: 'Conflict' as const, mockSeverity: 'medium' as const },
 ] as const
 
 /** Attendance absences from mock `absences[]` — includes dedicated session slots. */
