@@ -68,7 +68,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [x]   | [ ]     |
 | 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [x]   | [ ]     |
 | 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [x]   | [ ]     |
-| 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [ ]   | [ ]     |
+| 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [x]   | [ ]     |
 | 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [ ]   | [ ]     |
 | 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [ ]   | [ ]     |
 | 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [ ]   | [ ]     |
@@ -215,15 +215,17 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Mapper kind UI depuis hiérarchie API (group+subjects = matieres)
-- [ ] Identifier synthèse / appréciation par convention ou enum
-- [ ] Supprimer `SECTION_UI_META`
+- [x] Enum `ReportCardDefinitionSectionRole` (`matieres`, `synthese`, `appreciation`) + champ `coefficient` (+ migration `0006_report_card_section_role`)
+- [x] Mettre à jour `seed-report-cards.ts` — persister `mockKind` et `mockCoefficient`
+- [x] `mapSectionRole()` lit `role` depuis l'API (fallback hiérarchie + noms de section)
+- [x] Supprimer `SECTION_UI_META` ; résultats filtrés par sections avec notes matières (`subResults` + `classSubjectId`)
+- [x] Tests : `report-card-definition-section-role.test.ts`, `report-cards-data.test.ts`, `test-dev-report-cards-seed.test.ts`
 
 **Test UI**
 
-- [ ] `/configuration/report-cards/rcd-ms-6` (définition 6ème)
-- [ ] Sections « Fondamentales », « Sciences », « Sport », « Synthèse », « Appréciation » avec bons types
-- [ ] Coefficients affichés (2, 1.5, 1) correspondent au seed
+- [x] `/configuration/report-cards/rcd-ms-6` (définition 6ème)
+- [x] Sections « Fondamentales », « Sciences », « Sport », « Synthèse », « Appréciation » avec bons types
+- [x] Coefficients affichés (2, 1.5, 1) correspondent au seed
 
 ---
 

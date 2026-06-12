@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, integer, jsonb, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
 
 // 1. School Table
 export const schools = pgTable('schools', {
@@ -435,6 +435,8 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
   id: text('id').primaryKey(),
   definitionId: text('definition_id').notNull(),
   name: text('name').notNull(),
+  role: text('role'),
+  coefficient: real('coefficient'),
   order: integer('order_val').notNull(),
   weight: integer('weight').notNull(),
   parentSectionId: text('parent_section_id'),

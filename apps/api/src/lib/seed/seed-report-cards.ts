@@ -12,11 +12,18 @@ import {
   AttendanceSummary,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
+  ReportCardDefinitionSectionRole,
   ReportCardDefinitionStatus,
   ReportCardResult,
   ReportCardResultSection,
   ReportCardResultStatus,
 } from "@edaya/core";
+
+const SEED_SECTION_ROLE_BY_KIND = {
+  matieres: ReportCardDefinitionSectionRole.Subjects,
+  synthese: ReportCardDefinitionSectionRole.Summary,
+  appreciation: ReportCardDefinitionSectionRole.Comments,
+} as const;
 
 function mapDefinitionStatus(mockStatus: "published" | "draft"): ReportCardDefinitionStatus {
   return mockStatus === "published"
@@ -120,6 +127,8 @@ export async function seedReportCards(
         reportCardDefinitionId: definition.id,
         name: section.name,
         kind: ReportCardDefinitionSectionKind.Group,
+        role: SEED_SECTION_ROLE_BY_KIND[section.mockKind],
+        coefficient: "mockCoefficient" in section ? section.mockCoefficient : undefined,
         order: section.order,
         weight: section.weight > 0 ? section.weight : 1,
       });

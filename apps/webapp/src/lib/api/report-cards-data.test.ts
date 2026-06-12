@@ -4,6 +4,7 @@ import {
 	mapDefinitionStatus,
 	mapGradeScales,
 	mapReportCardDefinitions,
+	mapSectionRole,
 } from './report-cards-data';
 
 const seedGradeScalesRaw = [
@@ -117,8 +118,44 @@ const seedDefinitionSectionsRaw = [
 		id: 'rcs-ms-fond',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'Matières fondamentales',
+		role: 'matieres',
+		coefficient: 2,
 		order: 1,
 		weight: 2,
+	},
+	{
+		id: 'rcs-ms-sci',
+		reportCardDefinitionId: 'rcd-ms-6',
+		name: 'Sciences & langues',
+		role: 'matieres',
+		coefficient: 1.5,
+		order: 2,
+		weight: 2,
+	},
+	{
+		id: 'rcs-ms-sport',
+		reportCardDefinitionId: 'rcd-ms-6',
+		name: 'EPS & arts',
+		role: 'matieres',
+		coefficient: 1,
+		order: 3,
+		weight: 1,
+	},
+	{
+		id: 'rcs-ms-synth',
+		reportCardDefinitionId: 'rcd-ms-6',
+		name: 'Synthèse trimestrielle',
+		role: 'synthese',
+		order: 4,
+		weight: 1,
+	},
+	{
+		id: 'rcs-ms-appr',
+		reportCardDefinitionId: 'rcd-ms-6',
+		name: 'Appréciations',
+		role: 'appreciation',
+		order: 5,
+		weight: 1,
 	},
 	{
 		id: 'rcs-ms-fond-subj-math',
@@ -152,6 +189,41 @@ describe('report cards definition mapping', () => {
 			gradeScaleId: 'gs-20',
 			status: 'draft',
 		});
-		expect(definitions.find(definition => definition.id === 'rcd-ms-6')?.sections).toHaveLength(1);
+		const ms6 = definitions.find(definition => definition.id === 'rcd-ms-6');
+		expect(ms6?.sections).toHaveLength(5);
+		expect(ms6?.sections.find(section => section.id === 'rcs-ms-fond')).toMatchObject({
+			kind: 'matieres',
+			coefficient: 2,
+		});
+		expect(ms6?.sections.find(section => section.id === 'rcs-ms-sci')).toMatchObject({
+			kind: 'matieres',
+			coefficient: 1.5,
+		});
+		expect(ms6?.sections.find(section => section.id === 'rcs-ms-sport')).toMatchObject({
+			kind: 'matieres',
+			coefficient: 1,
+		});
+		expect(ms6?.sections.find(section => section.id === 'rcs-ms-synth')).toMatchObject({
+			kind: 'synthese',
+		});
+		expect(ms6?.sections.find(section => section.id === 'rcs-ms-appr')).toMatchObject({
+			kind: 'appreciation',
+		});
+	});
+});
+
+describe('report cards section role mapping', () => {
+	it('maps API role to UI kind', () => {
+		expect(mapSectionRole({ role: 'matieres', name: 'Matières' }, false)).toBe('matieres');
+		expect(mapSectionRole({ role: 'synthese', name: 'Synthèse' }, false)).toBe('synthese');
+	});
+
+	it('derives matieres from subject children when role is absent', () => {
+		expect(mapSectionRole({ name: 'Groupe' }, true)).toBe('matieres');
+	});
+
+	it('derives synthese and appreciation from section names', () => {
+		expect(mapSectionRole({ name: 'Synthèse trimestrielle' }, false)).toBe('synthese');
+		expect(mapSectionRole({ name: 'Appréciations' }, false)).toBe('appreciation');
 	});
 });

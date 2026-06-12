@@ -43,6 +43,13 @@
       "when": 1781104996407,
       "tag": "0005_report_card_definition_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781104996408,
+      "tag": "0006_report_card_section_role",
+      "breakpoints": true
     }
   ]
 }

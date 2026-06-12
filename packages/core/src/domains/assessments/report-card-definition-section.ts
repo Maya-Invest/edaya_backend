@@ -13,11 +13,19 @@ export enum ReportCardDefinitionSectionKind {
   Subject = 'subject',
 }
 
+export enum ReportCardDefinitionSectionRole {
+  Subjects = 'matieres',
+  Summary = 'synthese',
+  Comments = 'appreciation',
+}
+
 export const reportCardDefinitionSectionBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   reportCardDefinitionId: z.string().trim().min(1, 'reportCardDefinitionId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
   kind: z.nativeEnum(ReportCardDefinitionSectionKind).default(ReportCardDefinitionSectionKind.Group),
+  role: z.nativeEnum(ReportCardDefinitionSectionRole).nullable().optional().transform(v => v === null ? undefined : v),
+  coefficient: z.number().finite().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
   order: z.number().int().positive('order must be a strictly positive integer'),
   weight: z.number().finite().positive('weight must be a finite, strictly positive number'),
   parentSectionId: z.string().trim().min(1, 'parentSectionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -63,6 +71,8 @@ export class ReportCardDefinitionSection {
   get id() { return this.data.id }
   get reportCardDefinitionId() { return this.data.reportCardDefinitionId }
   get kind() { return this.data.kind }
+  get role() { return this.data.role }
+  get coefficient() { return this.data.coefficient }
   get name() { return this.data.name }
   get order() { return this.data.order }
   get weight() { return this.data.weight }

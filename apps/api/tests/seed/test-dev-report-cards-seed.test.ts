@@ -132,7 +132,12 @@ describe("dev report cards seed", () => {
       gradeScaleId?: string;
       status?: string;
     }>(await definitionsResponse.json());
-    const sections = unwrapEntityList<{ id: string; reportCardDefinitionId: string }>(await sectionsResponse.json());
+    const sections = unwrapEntityList<{
+      id: string;
+      reportCardDefinitionId: string;
+      role?: string;
+      coefficient?: number;
+    }>(await sectionsResponse.json());
     const results = unwrapEntityList<{ id: string; studentId: string }>(await resultsResponse.json());
 
     expect(gradeScales.length).toBeGreaterThanOrEqual(SEED_GRADE_SCALES.length);
@@ -155,6 +160,10 @@ describe("dev report cards seed", () => {
     expect(definitions.find(definition => definition.id === "rcd-ms-6")?.gradeScaleId).toBe("gs-20");
     expect(definitions.find(definition => definition.id === "rcd-ms-6")?.status).toBe("published");
     expect(definitions.find(definition => definition.id === "rcd-ms-draft")?.status).toBe("draft");
+    expect(sections.find(section => section.id === "rcs-ms-fond")?.role).toBe("matieres");
+    expect(sections.find(section => section.id === "rcs-ms-sci")?.coefficient).toBe(1.5);
+    expect(sections.find(section => section.id === "rcs-ms-synth")?.role).toBe("synthese");
+    expect(sections.find(section => section.id === "rcs-ms-appr")?.role).toBe("appreciation");
     expect(results.some(result => result.id === "rcr-s1-t3" && result.studentId === "s1")).toBe(true);
     expect(results.some(result => result.id === "rcr-s9-t3" && result.studentId === "s9")).toBe(true);
   }, 30_000);

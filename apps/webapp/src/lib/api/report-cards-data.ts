@@ -23,19 +23,6 @@ const DEMO_SCHOOL_ID = 'sch-edaya-central';
 
 type GradeScaleRangeRaw = GradeScaleRaw['ranges'][number];
 
-const SECTION_UI_META: Record<string, { kind: ReportCardSectionKind; coefficient?: number }> = {
-	'rcs-ms-fond': { kind: 'matieres', coefficient: 2 },
-	'rcs-ms-sci': { kind: 'matieres', coefficient: 1.5 },
-	'rcs-ms-sport': { kind: 'matieres', coefficient: 1 },
-	'rcs-ms-synth': { kind: 'synthese' },
-	'rcs-ms-appr': { kind: 'appreciation' },
-	'rcs-term-spé': { kind: 'matieres', coefficient: 3 },
-	'rcs-term-synth': { kind: 'synthese' },
-	'rcs-term-appr': { kind: 'appreciation' },
-	'rcs-draft-fond': { kind: 'matieres', coefficient: 2 },
-	'rcs-draft-appr': { kind: 'appreciation' },
-};
-
 const SUBJECT_TO_CLASS_SUBJECT_6A: Record<string, string> = {
 	'subj-math': 'cs-6a-math',
 	'subj-fr': 'cs-6a-fr',
@@ -132,6 +119,28 @@ export function mapGradeScales(scalesRaw: GradeScaleRaw[]): GradeScale[] {
 	}));
 }
 
+const SECTION_ROLE_VALUES = new Set<ReportCardSectionKind>(['matieres', 'synthese', 'appreciation']);
+
+export function mapSectionRole(
+	section: Pick<ReportCardDefinitionSectionRaw, 'role' | 'name'>,
+	hasSubjectChildren: boolean,
+): ReportCardSectionKind {
+	if (section.role && SECTION_ROLE_VALUES.has(section.role as ReportCardSectionKind)) {
+		return section.role as ReportCardSectionKind;
+	}
+	if (hasSubjectChildren) {
+		return 'matieres';
+	}
+	const normalizedName = section.name.toLowerCase();
+	if (normalizedName.includes('appréciation')) {
+		return 'appreciation';
+	}
+	if (normalizedName.includes('synthèse') || normalizedName.includes('moyennes')) {
+		return 'synthese';
+	}
+	return 'matieres';
+}
+
 function mapDefinitionSections(
 	definitionId: string,
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
@@ -142,18 +151,18 @@ function mapDefinitionSections(
 	return topLevelSections
 		.sort((left, right) => left.order - right.order)
 		.map((section) => {
-			const meta = SECTION_UI_META[section.id];
 			const childSubjects = definitionSections.filter(
 				child => child.parentSectionId === section.id && child.subjectId,
 			);
+			const kind = mapSectionRole(section, childSubjects.length > 0);
 
 			return {
 				id: section.id,
 				definitionId,
 				name: section.name,
-				kind: meta?.kind ?? 'matieres',
+				kind,
 				order: section.order,
-				coefficient: meta?.coefficient ?? section.weight,
+				coefficient: section.coefficient ?? (kind === 'matieres' ? section.weight : undefined),
 				subjectIds: childSubjects.length > 0
 					? childSubjects
 							.map(child => SUBJECT_TO_CLASS_SUBJECT_6A[child.subjectId ?? ''] ?? child.subjectId ?? '')
@@ -232,7 +241,7 @@ function mapSectionResults(
 	sources: ClassSubjectsSources,
 ): ReportCardSectionResult[] {
 	return sectionResultsRaw
-		.filter(section => SECTION_UI_META[section.sectionId ?? '']?.kind === 'matieres')
+		.filter(section => (section.subResults ?? []).some(sub => sub.classSubjectId))
 		.map((section) => {
 			const marks = (section.subResults ?? [])
 				.map(sub => mapSubjectMark(resultId, section.sectionId ?? '', sub, sources))

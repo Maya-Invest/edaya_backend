@@ -716,6 +716,8 @@ export function createEntityStores(db: any): EntityStores {
         id: entity.id,
         definitionId: entity.reportCardDefinitionId,
         name: entity.name,
+        role: entity.role ?? null,
+        coefficient: entity.coefficient ?? null,
         order: entity.order,
         weight: entity.weight,
         parentSectionId: entity.parentSectionId ?? null,
@@ -729,6 +731,8 @@ export function createEntityStores(db: any): EntityStores {
         kind: row.subjectId
           ? ReportCardDefinitionSectionKind.Subject
           : ReportCardDefinitionSectionKind.Group,
+        role: row.role ?? undefined,
+        coefficient: row.coefficient ?? undefined,
         order: row.order,
         weight: row.weight,
         parentSectionId: row.parentSectionId,

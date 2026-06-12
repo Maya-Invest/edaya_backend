@@ -44891,6 +44891,9 @@ export interface components {
              * @enum {string}
              */
             kind: "group" | "subject";
+            /** @enum {string|null} */
+            role?: "matieres" | "synthese" | "appreciation" | null;
+            coefficient?: number | null;
             order: number;
             weight: number;
             parentSectionId?: string | null;
@@ -44906,6 +44909,9 @@ export interface components {
              * @enum {string}
              */
             kind: "group" | "subject";
+            /** @enum {string|null} */
+            role?: "matieres" | "synthese" | "appreciation" | null;
+            coefficient?: number | null;
             order: number;
             weight: number;
             parentSectionId?: string | null;

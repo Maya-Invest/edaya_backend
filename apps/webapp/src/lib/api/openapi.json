@@ -3257,6 +3257,21 @@
             ],
             "default": "group"
           },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "matieres",
+              "synthese",
+              "appreciation"
+            ]
+          },
+          "coefficient": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
           "order": {
             "type": "integer",
             "minimum": 0,
@@ -3309,6 +3324,21 @@
               "subject"
             ],
             "default": "group"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "matieres",
+              "synthese",
+              "appreciation"
+            ]
+          },
+          "coefficient": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "order": {
             "type": "integer",
