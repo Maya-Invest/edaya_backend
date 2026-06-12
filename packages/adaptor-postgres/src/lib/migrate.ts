@@ -5,11 +5,17 @@ import { migrate as migratePostgresJs } from 'drizzle-orm/postgres-js/migrator'
 
 export type MigrationDriver = 'pglite' | 'postgres-js'
 
-const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
+function getPackageRoot(): string {
+  if (typeof import.meta.url !== 'string' || import.meta.url.length === 0) {
+    throw new Error('Cannot resolve Postgres migrations folder in this runtime')
+  }
+
+  return join(dirname(fileURLToPath(import.meta.url)), '..', '..')
+}
 
 /** Resolve the SQL migrations folder from the installed package root. */
 export function getMigrationsFolder(): string {
-  return join(packageRoot, 'drizzle')
+  return join(getPackageRoot(), 'drizzle')
 }
 
 export async function runMigrations(

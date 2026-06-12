@@ -10,6 +10,10 @@ const runtimes = new Map<string, Promise<ApiRuntime>>();
  * risk creating a second database handle that middleware will not see.
  */
 export async function getApiRuntime(env: Environment): Promise<ApiRuntime> {
+  if (env.RUNTIME === "worker") {
+    throw new Error("getApiRuntime() must not be used on the worker runtime; use resolveApiRuntime(c) per request.");
+  }
+
   const cacheKey = `${env.RUNTIME}:${env.DATABASE_URL}`;
   let pending = runtimes.get(cacheKey);
   if (!pending) {

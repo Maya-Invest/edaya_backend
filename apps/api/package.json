@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch src/entries/node.ts",
-    "dev:worker": "wrangler dev",
+    "dev:worker": "wrangler dev --env-file .dev.vars",
+    "db:migrate:dev": "bun ./scripts/migrate-dev-database.ts",
     "seed": "tsx src/scripts/seed.ts",
     "start": "node dist/node.js",
     "deploy:worker": "wrangler deploy",

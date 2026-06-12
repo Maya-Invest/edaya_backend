@@ -70,7 +70,7 @@ import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('tenant boundary safeguards', () => {
   it('rejects cross-school setup, staffing, curriculum, and communications references', async () => {
-    const { app, forActor, repositories } = createTestApp(createStaffActorMetadata({
+    const { app, forActor, repositories } = await createTestApp(createStaffActorMetadata({
       subjectId: 'school-a-admin-user',
       staffMemberId: 'school-a-admin',
       schoolId: 'school-a',

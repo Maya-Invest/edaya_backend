@@ -13,6 +13,10 @@ import {
   listPrototypeTeachingLogRoute,
 } from "@/routes/prototype.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
+import {
+  onboardingRegisterSchoolHandler,
+  onboardingRegisterSchoolRoute,
+} from "@/routes/onboarding.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -48,6 +52,7 @@ router
   .openapi(listPrototypeDeadlinesRoute, listPrototypeDeadlinesHandler)
   .openapi(listPrototypeDemoAccountsRoute, listPrototypeDemoAccountsHandler)
   .openapi(listPrototypeTeachingLogRoute, listPrototypeTeachingLogHandler)
+  .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 
 // Mount routes from route factories

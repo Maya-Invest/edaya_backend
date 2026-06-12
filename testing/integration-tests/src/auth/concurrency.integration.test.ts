@@ -30,7 +30,7 @@ import {
 import { createTestApp } from '../utils/test-adapter'
 
 async function createConcurrencyFixture() {
-  const { app, repositories, schoolRepositories, forActor } = createTestApp()
+  const { app, repositories, schoolRepositories, forActor } = await createTestApp()
 
   // Setup standard tenant school context using 'school' matching the default actor
   await saveSchool(app, { id: 'school', name: 'Concurrent Academy', timeZone: 'UTC' })

@@ -1,6 +1,7 @@
 import type { RuntimeBindings, RuntimeKind } from "@/lib/runtime/types";
 
 import { z } from "zod";
+import { resolveDatabaseUrl } from "@/lib/runtime/hyperdrive";
 
 export const EnvSchema = z.object({
   RUNTIME: z.enum(["node", "worker"]).default("node"),
@@ -16,6 +17,8 @@ export const EnvSchema = z.object({
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
   /** When true, run dev seed on startup. When unset, seeds automatically in development with pglite/memory. */
   SEED_ON_START: z.coerce.boolean().optional(),
+  /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
+  ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema>;
@@ -38,6 +41,7 @@ export function parseRuntimeEnv(
   return parseEnv({
     ...source,
     RUNTIME: runtime,
+    DATABASE_URL: resolveDatabaseUrl(source, runtime),
   });
 }
 
@@ -47,4 +51,14 @@ function inferRuntimeKind(source: RuntimeBindings): RuntimeKind {
     return value;
   }
   return "node";
+}
+
+export function shouldAllowPublicSchoolRegistration(env: Environment): boolean {
+  if (env.ALLOW_PUBLIC_SCHOOL_REGISTRATION === true) {
+    return true;
+  }
+  if (env.ALLOW_PUBLIC_SCHOOL_REGISTRATION === false) {
+    return false;
+  }
+  return env.NODE_ENV === "development";
 }

@@ -1,10 +1,10 @@
-import { getApiRuntime } from "@/lib/runtime/registry";
+import { resolveApiRuntime } from "@/lib/runtime/resolve-api-runtime";
 import type { DependencyModule } from ".";
 
 export const authDependency: DependencyModule = {
   name: "auth",
   async resolve(c) {
-    const runtime = await getApiRuntime(c.env);
+    const runtime = await resolveApiRuntime(c);
     c.set("auth", runtime.getAuth());
   },
 };

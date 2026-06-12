@@ -9,11 +9,17 @@ import { createDatabase } from "@/lib/runtime/database";
 import { resolveMigrationDriver } from "@/lib/runtime/migration-driver";
 import type { ApiRuntime } from "@/lib/runtime/types";
 
-async function buildSchoolApplication(db: PostgresTransactionalDb, databaseUrl: string): Promise<ApiSchoolApplication> {
+async function buildSchoolApplication(
+  db: PostgresTransactionalDb,
+  databaseUrl: string,
+  runtime: Environment["RUNTIME"],
+): Promise<ApiSchoolApplication> {
   const repos = new PostgresSchoolRepositories(db);
-  await repos.init({
-    driver: isEphemeralDatabase(databaseUrl) ? "pglite" : "postgres-js",
-  });
+  if (runtime !== "worker") {
+    await repos.init({
+      driver: isEphemeralDatabase(databaseUrl) ? "pglite" : "postgres-js",
+    });
+  }
 
   const atomicExecution = new PostgresAtomicExecution(db);
   return new ApiSchoolApplication({
@@ -33,7 +39,9 @@ async function buildSchoolApplication(db: PostgresTransactionalDb, databaseUrl: 
 /** Use {@link getApiRuntime} so callers share the cached runtime. */
 export async function buildApiRuntime(env: Environment): Promise<ApiRuntime> {
   const { db, sqlClient, dispose } = await createDatabase(env);
-  await runAuthMigrations(db, { driver: resolveMigrationDriver(env.DATABASE_URL) });
+  if (env.RUNTIME !== "worker") {
+    await runAuthMigrations(db, { driver: resolveMigrationDriver(env.DATABASE_URL) });
+  }
   let schoolApp: ApiSchoolApplication | null = null;
   const auth = createAuth(db, env);
 
@@ -43,7 +51,7 @@ export async function buildApiRuntime(env: Environment): Promise<ApiRuntime> {
     sqlClient,
     async getSchoolApplication() {
       if (!schoolApp) {
-        schoolApp = await buildSchoolApplication(db as PostgresTransactionalDb, env.DATABASE_URL);
+        schoolApp = await buildSchoolApplication(db as PostgresTransactionalDb, env.DATABASE_URL, env.RUNTIME);
       }
       return schoolApp;
     },

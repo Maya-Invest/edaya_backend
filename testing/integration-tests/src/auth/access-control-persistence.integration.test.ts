@@ -11,7 +11,7 @@ import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('access control persistence', () => {
   test('backfill and resolve grants from postgres', async () => {
-    const { schoolRepositories: repos } = createTestApp()
+    const { schoolRepositories: repos } = await createTestApp()
 
     await repos.staffMembers.save(new StaffMember({
       id: 'staff-teacher-1',

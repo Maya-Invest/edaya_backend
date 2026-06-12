@@ -36,7 +36,7 @@ import { effectiveGrantsForRoles } from '../utils/effective-grants'
 import { createTestApp } from '../utils/test-adapter'
 
 async function setupBaselineFixture() {
-  const { app, repositories, schoolRepositories, forActor } = createTestApp()
+  const { app, repositories, schoolRepositories, forActor } = await createTestApp()
 
   // Standard Admin setup of tenant school
   await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })

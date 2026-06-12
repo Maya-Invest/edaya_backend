@@ -11,7 +11,31 @@ NODE_ENV = "development"
 LOG_LEVEL = "info"
 RUNTIME = "worker"
 BETTER_AUTH_URL = "http://localhost:9999"
+TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 
 # Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
-# Required: DATABASE_URL, BETTER_AUTH_SECRET
-# Optional: SYSTEM_ACTOR_SECRET, GRANTS_CACHE_TTL_MS, SEED_ON_START
+# Required: BETTER_AUTH_SECRET
+# Optional: DATABASE_URL (Node / wrangler fallback), SYSTEM_ACTOR_SECRET, GRANTS_CACHE_TTL_MS, SEED_ON_START
+#
+# Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
+# CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://...
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "62c00eeda7d047fc9951daf7db430070"
+# Do not commit credentials here. Set localConnectionString via the env var above or `.dev.vars`.
+
+[env.production]
+name = "edaya-api"
+
+[env.production.vars]
+NODE_ENV = "production"
+LOG_LEVEL = "info"
+RUNTIME = "worker"
+BETTER_AUTH_URL = "https://api.softilab.dev"
+TRUSTED_ORIGINS = "https://softilab.dev"
+ALLOW_PUBLIC_SCHOOL_REGISTRATION = "false"
+
+[[env.production.routes]]
+pattern = "api.softilab.dev"
+custom_domain = true

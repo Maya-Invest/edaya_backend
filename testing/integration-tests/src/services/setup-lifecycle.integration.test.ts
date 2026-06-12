@@ -21,7 +21,7 @@ import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {
-    const { app, repositories } = createTestApp()
+    const { app, repositories } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
     const school = await updateSchool(app, {
       schoolId: 'school',

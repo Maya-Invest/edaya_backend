@@ -15,11 +15,26 @@ import type { DependencyModule } from ".";
 export interface AuthSession {
   user: {
     id: string;
+    email?: string | null;
+    name?: string | null;
   };
   session: {
     id?: string;
     createdAt: string | Date;
     assuranceLevel?: ActorAssuranceLevel | string;
+  };
+}
+
+export interface AuthenticatedSession {
+  user: {
+    id: string;
+    email?: string;
+    name?: string;
+  };
+  session: {
+    id?: string;
+    createdAt: Date;
+    assuranceLevel: ActorAssuranceLevel;
   };
 }
 
@@ -59,16 +74,7 @@ type ActorIdentity =
     effectiveGrants?: EffectiveGrants;
   };
 
-interface NormalizedAuthSession {
-  user: {
-    id: string;
-  };
-  session: {
-    id?: string;
-    createdAt: Date;
-    assuranceLevel: ActorAssuranceLevel;
-  };
-}
+type NormalizedAuthSession = AuthenticatedSession;
 
 function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
   if (input === ActorAssuranceLevel.Verified || input === ActorAssuranceLevel.Strong) {
@@ -77,7 +83,7 @@ function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
   return ActorAssuranceLevel.Standard;
 }
 
-function normalizeAuthSession(input: AuthSession | null | undefined): NormalizedAuthSession | null {
+export function normalizeAuthSession(input: AuthSession | null | undefined): AuthenticatedSession | null {
   if (!input || typeof input !== "object") {
     return null;
   }
@@ -98,6 +104,12 @@ function normalizeAuthSession(input: AuthSession | null | undefined): Normalized
   return {
     user: {
       id: input.user.id,
+      ...(typeof input.user.email === "string" && input.user.email.trim() !== ""
+        ? { email: input.user.email.trim() }
+        : {}),
+      ...(typeof input.user.name === "string" && input.user.name.trim() !== ""
+        ? { name: input.user.name.trim() }
+        : {}),
     },
     session: {
       ...(input.session.id ? { id: input.session.id } : {}),
@@ -105,6 +117,14 @@ function normalizeAuthSession(input: AuthSession | null | undefined): Normalized
       assuranceLevel: normalizeAssuranceLevel(input.session.assuranceLevel),
     },
   };
+}
+
+export async function resolveAuthenticatedSession(
+  auth: AuthSessionProvider,
+  headers: Headers,
+): Promise<AuthenticatedSession | null> {
+  const session = await auth.api.getSession({ headers });
+  return normalizeAuthSession(session as AuthSession | null | undefined);
 }
 
 function resolveRequestId(headerValue: string | undefined): string {

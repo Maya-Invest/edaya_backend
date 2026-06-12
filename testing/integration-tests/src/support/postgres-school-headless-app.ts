@@ -11,7 +11,7 @@ import {
 } from '../utils/test-adapter'
 
 export function createPostgresAppBuilder(db: any, repos: any, AtomicExecutionCtor: any) {
-  return (actor?: ActorMetadata) => {
+  return async (actor?: ActorMetadata) => {
     const { failSaveOnAttempt, getSaveFailure, clearSaveFailure } = createSaveFailureController()
 
     applyAllSaveFailureWraps(repos, getSaveFailure, clearSaveFailure)
@@ -24,7 +24,7 @@ export function createPostgresAppBuilder(db: any, repos: any, AtomicExecutionCto
       actor: defaultActor,
     })
 
-    seedDefaultStaffMember(repos, defaultActor)
+    await seedDefaultStaffMember(repos, defaultActor)
 
     return {
       app: application.forActor(defaultActor),

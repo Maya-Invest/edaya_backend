@@ -92,9 +92,9 @@ export function buildSchoolApplication(opts: {
   })
 }
 
-export function seedDefaultStaffMember(repos: any, actor: ActorMetadata) {
+export async function seedDefaultStaffMember(repos: any, actor: ActorMetadata) {
   if (actor.kind === 'staff') {
-    void repos.staffMembers.save(new StaffMember({
+    await repos.staffMembers.save(new StaffMember({
       id: actor.staffMemberId,
       schoolId: actor.schoolId,
       firstName: 'Fixture',
@@ -160,7 +160,7 @@ export interface TestAppResult {
 }
 
 export interface IntegrationTestAdapter {
-  createApp: (actor?: ActorMetadata) => TestAppResult
+  createApp: (actor?: ActorMetadata) => Promise<TestAppResult>
 }
 
 let activeAdapter: IntegrationTestAdapter | undefined
@@ -169,7 +169,7 @@ export function setIntegrationTestAdapter(adapter: IntegrationTestAdapter) {
   activeAdapter = adapter
 }
 
-export function createTestApp(actor?: ActorMetadata): TestAppResult {
+export async function createTestApp(actor?: ActorMetadata): Promise<TestAppResult> {
   if (!activeAdapter) {
     throw new Error('No integration test adapter configured. Call setIntegrationTestAdapter() first.')
   }

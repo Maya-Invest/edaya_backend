@@ -1,5 +1,6 @@
 import type { AppBindings } from "@/lib/http/types";
 import type { Context, MiddlewareHandler } from "hono";
+import { closeRequestApiRuntime } from "@/lib/runtime/resolve-api-runtime";
 import { authDependency } from "./auth";
 import { sessionActorDependency } from "./session-actor";
 import { envDependency } from "./env";
@@ -16,7 +17,12 @@ export function createDependenciesInjection(dependencies: readonly DependencyMod
       await dependency.resolve(c);
     }
 
-    await next();
+    try {
+      await next();
+    }
+    finally {
+      await closeRequestApiRuntime(c);
+    }
   };
 }
 
