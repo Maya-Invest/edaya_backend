@@ -4,7 +4,7 @@ import {
   SEED_ACTIVITIES,
 } from "@edaya/dev-fixtures";
 import { parseEnv } from "@/lib/runtime/env";
-import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
+import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { runDevSeed } from "@/lib/seed/run-dev-seed";
@@ -12,18 +12,13 @@ import {
   collectSetCookieHeaders,
   createAppRequest,
   createCoreRouteTestApp,
+  pgliteEnv,
 } from "../support/better-auth-route-harness";
+import indexRouter from "@/app-router";
+import { dependenciesInjection } from "@/lib/http/dependencies";
+import type { AppBindings } from "@/lib/http/types";
+import { Hono } from "hono";
 import { afterEach, describe, expect, it } from "bun:test";
-
-const pgliteEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "development",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
 
 describe("prototype stub routes", () => {
   afterEach(async () => {
@@ -47,31 +42,61 @@ describe("prototype stub routes", () => {
       "cookie": cookies.join("; "),
     };
 
-    const [activitiesResponse, demoAccountsResponse] = await Promise.all([
-      app.request(createAppRequest("/core/prototype/activities/list", {
-        method: "POST",
-        headers: authHeaders,
-        body: JSON.stringify({}),
-      })),
-      app.request(createAppRequest("/core/prototype/demo-accounts/list", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({}),
-      })),
-    ]);
+    const activitiesResponse = await app.request(createAppRequest("/core/prototype/activities/list", {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({}),
+    }));
 
     expect(activitiesResponse.status).toBe(200);
-    expect(demoAccountsResponse.status).toBe(200);
 
     const activities = await activitiesResponse.json() as Array<{ id: string }>;
-    const demoAccounts = await demoAccountsResponse.json() as Array<{
+
+    expect(activities.length).toBe(SEED_ACTIVITIES.length);
+    expect(activities.some(activity => activity.id === "act-robot")).toBe(true);
+  }, 30_000);
+});
+
+describe("demo login accounts route", () => {
+  afterEach(async () => {
+    await resetApiRuntimesForTests();
+  });
+
+  async function createAppWithEnv(env: ReturnType<typeof parseEnv>) {
+    await resetApiRuntimesForTests();
+    await getApiRuntime(env);
+
+    const app = new Hono<AppBindings>();
+    app.use(async (c, next) => {
+      c.env = env;
+      await next();
+    });
+    app.use(dependenciesInjection);
+    app.route("/", indexRouter);
+
+    return app;
+  }
+
+  it("returns linked staff demo accounts without authentication in development", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    await runDevSeed(application);
+    await runDevAuthSeed(application, runtime.getAuth(), pgliteEnv);
+    await runDevAccessSeed(application);
+
+    const response = await app.request(createAppRequest("/core/auth/demo-login-accounts/list", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    }));
+
+    expect(response.status).toBe(200);
+
+    const demoAccounts = await response.json() as Array<{
       staffId: string;
       email: string;
       role: string;
     }>;
 
-    expect(activities.length).toBe(SEED_ACTIVITIES.length);
-    expect(activities.some(activity => activity.id === "act-robot")).toBe(true);
     expect(demoAccounts).toHaveLength(4);
     expect(demoAccounts.find(account => account.staffId === "st5")).toMatchObject({
       email: "c.moreau@school.edu",
@@ -89,4 +114,30 @@ describe("prototype stub routes", () => {
     });
     expect(demoAccounts.some(account => account.staffId === "st2")).toBe(false);
   }, 30_000);
+
+  it("returns 503 when demo login accounts are disabled in production", async () => {
+    const productionEnv = parseEnv({
+      RUNTIME: "node",
+      NODE_ENV: "production",
+      PORT: 9999,
+      LOG_LEVEL: "silent",
+      DATABASE_URL: "pglite",
+      BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
+      BETTER_AUTH_URL: "http://localhost:9999",
+      ALLOW_DEMO_LOGIN_ACCOUNTS: false,
+    });
+
+    const app = await createAppWithEnv(productionEnv);
+
+    const response = await app.request(createAppRequest("/core/auth/demo-login-accounts/list", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    }));
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      message: "Demo login accounts are disabled in this environment",
+    });
+  });
 });

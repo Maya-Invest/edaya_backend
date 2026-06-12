@@ -1,5 +1,4 @@
-import type { StaffRoleAssignment } from "@edaya/core";
-import { DEV_AUTH_STAFF_ACCOUNTS } from "@edaya/dev-fixtures";
+import type { SchoolRepositories, StaffRoleAssignment } from "@edaya/core";
 
 export type DemoStaffRole = "directeur" | "prof_principal" | "professeur" | "educateur";
 
@@ -11,11 +10,25 @@ export interface DemoLoginAccount {
   initials: string;
 }
 
+export interface DemoLoginStaffSource {
+  id: string;
+  email?: string;
+  name: string;
+  subjectId?: string;
+}
+
 const ACCESS_ROLE_TO_DEMO_ROLE: Record<string, DemoStaffRole> = {
   "role-director": "directeur",
   "role-coordinator": "prof_principal",
   "role-educator": "educateur",
   "role-teacher": "professeur",
+};
+
+const DEMO_ROLE_DISPLAY_ORDER: Record<DemoStaffRole, number> = {
+  directeur: 0,
+  professeur: 1,
+  prof_principal: 2,
+  educateur: 3,
 };
 
 export function initialsForName(name: string): string {
@@ -41,12 +54,17 @@ export function resolveDemoStaffRole(
 }
 
 export function buildDemoLoginAccounts(
+  staffMembers: readonly DemoLoginStaffSource[],
   roleAssignments: readonly StaffRoleAssignment[],
 ): DemoLoginAccount[] {
   let teacherAccountIncluded = false;
 
-  return DEV_AUTH_STAFF_ACCOUNTS.flatMap((account) => {
-    const { role, accessRoleId } = resolveDemoStaffRole(account.staffId, roleAssignments);
+  const accounts = staffMembers.flatMap((member) => {
+    if (!member.subjectId || !member.email) {
+      return [];
+    }
+
+    const { role, accessRoleId } = resolveDemoStaffRole(member.id, roleAssignments);
     if (!accessRoleId) {
       return [];
     }
@@ -59,11 +77,38 @@ export function buildDemoLoginAccounts(
     }
 
     return [{
-      staffId: account.staffId,
-      email: account.email,
-      name: account.name,
+      staffId: member.id,
+      email: member.email,
+      name: member.name,
       role,
-      initials: initialsForName(account.name),
+      initials: initialsForName(member.name),
     }];
   });
+
+  return accounts.sort((left, right) => {
+    const roleOrder = DEMO_ROLE_DISPLAY_ORDER[left.role] - DEMO_ROLE_DISPLAY_ORDER[right.role];
+    if (roleOrder !== 0) {
+      return roleOrder;
+    }
+    return left.name.localeCompare(right.name, "fr");
+  });
+}
+
+export async function loadDemoLoginAccounts(
+  repositories: SchoolRepositories,
+): Promise<DemoLoginAccount[]> {
+  const [staffMembers, roleAssignments] = await Promise.all([
+    repositories.staffMembers.list({}),
+    repositories.staffRoleAssignments.list({}),
+  ]);
+
+  return buildDemoLoginAccounts(
+    staffMembers.map(member => ({
+      id: member.id,
+      email: member.email,
+      name: member.fullName,
+      subjectId: member.subjectId,
+    })),
+    roleAssignments,
+  );
 }

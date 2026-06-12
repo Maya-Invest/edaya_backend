@@ -1,4 +1,3 @@
-import { buildDemoLoginAccounts } from "@/lib/demo-accounts";
 import { SEED_ACTIVITIES } from "@edaya/dev-fixtures";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -27,16 +26,6 @@ const prototypeActivitySchema = z.object({
   })),
 }).openapi("PrototypeActivity");
 
-const demoStaffRoleSchema = z.enum(["directeur", "prof_principal", "professeur", "educateur"]);
-
-const prototypeDemoAccountSchema = z.object({
-  staffId: z.string(),
-  email: z.string(),
-  name: z.string(),
-  role: demoStaffRoleSchema,
-  initials: z.string(),
-}).openapi("PrototypeDemoAccount");
-
 export const listPrototypeActivitiesRoute = createRoute({
   method: "post",
   path: schoolApiPath("prototype", "activities", "list"),
@@ -54,23 +43,6 @@ export const listPrototypeActivitiesRoute = createRoute({
   },
 });
 
-export const listPrototypeDemoAccountsRoute = createRoute({
-  method: "post",
-  path: schoolApiPath("prototype", "demo-accounts", "list"),
-  tags: ["Core Prototype"],
-  summary: "List demo login accounts for the webapp login screen",
-  request: {
-    body: jsonContent(prototypeListRequestSchema, "Prototype demo accounts list request"),
-  },
-  responses: {
-    [HttpStatusCodes.OK]: jsonContent(
-      z.array(prototypeDemoAccountSchema).openapi("PrototypeDemoAccountsListResponse"),
-      "Demo staff accounts for login UI",
-    ),
-    ...coreRouteErrorResponses,
-  },
-});
-
 export const listPrototypeActivitiesHandler: AppRouteHandler<typeof listPrototypeActivitiesRoute> = async (c) => {
   if (!c.get("actor")) {
     return unauthorizedResponse(c);
@@ -83,11 +55,4 @@ export const listPrototypeActivitiesHandler: AppRouteHandler<typeof listPrototyp
     })),
     HttpStatusCodes.OK,
   );
-};
-
-export const listPrototypeDemoAccountsHandler: AppRouteHandler<typeof listPrototypeDemoAccountsRoute> = async (c) => {
-  const roleAssignments = await c.get("schoolApp").repositories.staffRoleAssignments.list({});
-  const accounts = buildDemoLoginAccounts(roleAssignments);
-
-  return c.json(accounts, HttpStatusCodes.OK);
 };

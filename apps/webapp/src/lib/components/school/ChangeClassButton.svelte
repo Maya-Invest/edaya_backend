@@ -12,7 +12,7 @@
 	const { s }: { s: Student } = $props();
 
 	let open = $state(false);
-	let target = $state(s.classId);
+	let target = $derived(s.classId);
 	let busy = $state(false);
 
 	const currentClass = $derived(academicContext.classes.find(c => c.id === s.classId));

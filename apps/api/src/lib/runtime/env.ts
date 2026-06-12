@@ -19,6 +19,8 @@ export const EnvSchema = z.object({
   SEED_ON_START: z.coerce.boolean().optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
+  /** When true, allow POST /core/auth/demo-login-accounts/list for the login screen. */
+  ALLOW_DEMO_LOGIN_ACCOUNTS: z.coerce.boolean().optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema>;
@@ -58,6 +60,16 @@ export function shouldAllowPublicSchoolRegistration(env: Environment): boolean {
     return true;
   }
   if (env.ALLOW_PUBLIC_SCHOOL_REGISTRATION === false) {
+    return false;
+  }
+  return env.NODE_ENV === "development";
+}
+
+export function shouldAllowDemoLoginAccounts(env: Environment): boolean {
+  if (env.ALLOW_DEMO_LOGIN_ACCOUNTS === true) {
+    return true;
+  }
+  if (env.ALLOW_DEMO_LOGIN_ACCOUNTS === false) {
     return false;
   }
   return env.NODE_ENV === "development";

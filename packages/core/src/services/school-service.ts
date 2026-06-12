@@ -41,7 +41,7 @@ import type {
   AssignMatterToClassSubjectInput,
   OfferSubjectToClassInput,
   RecordSessionProgressInput,
-} from './service-workflows/accademics'
+} from './service-workflows/academics'
 import type {
   LinkActorSubjectInput,
   LinkActorSubjectResult,
@@ -128,7 +128,7 @@ import type {
 import { AuthorizationError, AuthorizationErrorCode, Permission } from '../authorization'
 import { permissionAction } from '../shared'
 import { BaseSchoolService } from './base-school-service'
-import { AcademicsServiceWorkflow } from './service-workflows/accademics'
+import { AcademicsServiceWorkflow } from './service-workflows/academics'
 import { AccessControlServiceWorkflow } from './service-workflows/access-control'
 import { AssessmentsServiceWorkflow } from './service-workflows/assessments'
 import { BehaviorServiceWorkflow } from './service-workflows/behavior'

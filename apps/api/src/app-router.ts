@@ -3,10 +3,12 @@ import { createRouter } from "@/lib/http/create-app";
 import type { AppBindings } from "@/lib/http/types";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
+  listDemoLoginAccountsHandler,
+  listDemoLoginAccountsRoute,
+} from "@/routes/auth.routes";
+import {
   listPrototypeActivitiesHandler,
   listPrototypeActivitiesRoute,
-  listPrototypeDemoAccountsHandler,
-  listPrototypeDemoAccountsRoute,
 } from "@/routes/prototype.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import {
@@ -44,8 +46,8 @@ const router = createRouter()
 // Mount routes from route builders
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
+  .openapi(listDemoLoginAccountsRoute, listDemoLoginAccountsHandler)
   .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
-  .openapi(listPrototypeDemoAccountsRoute, listPrototypeDemoAccountsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 

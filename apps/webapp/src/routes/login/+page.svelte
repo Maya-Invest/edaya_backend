@@ -54,7 +54,7 @@
 			}
 
 			try {
-				demoAccounts = await browserFetch<DemoAccount[]>('/core/prototype/demo-accounts/list', {
+				demoAccounts = await browserFetch<DemoAccount[]>('/core/auth/demo-login-accounts/list', {
 					method: 'POST',
 					body: JSON.stringify({}),
 				});

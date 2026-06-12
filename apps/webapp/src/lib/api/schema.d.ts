@@ -110,6 +110,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/auth/demo-login-accounts/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List demo login accounts for the webapp login screen (dev only) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Demo login accounts list request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DemoLoginAccountsListRequest"];
+                };
+            };
+            responses: {
+                /** @description Demo staff accounts for login UI */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DemoLoginAccountsListResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Demo login accounts are disabled outside development */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/prototype/activities/list": {
         parameters: {
             query?: never;
@@ -204,7 +309,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/prototype/demo-accounts/list": {
+    "/core/onboarding/register-school": {
         parameters: {
             query?: never;
             header?: never;
@@ -213,7 +318,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** List demo login accounts for the webapp login screen */
+        /** Register a school and make the current user its owner (dev bootstrap) */
         post: {
             parameters: {
                 query?: never;
@@ -221,20 +326,20 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            /** @description Prototype demo accounts list request */
+            /** @description School registration payload */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["PrototypeListRequest"];
+                    "application/json": components["schemas"]["OnboardingRegisterSchoolRequest"];
                 };
             };
             responses: {
-                /** @description Demo staff accounts for login UI */
+                /** @description Registered school */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PrototypeDemoAccountsListResponse"];
+                        "application/json": components["schemas"]["School"];
                     };
                 };
                 /** @description Invalid request payload */
@@ -281,6 +386,17 @@ export interface paths {
                 };
                 /** @description Internal server error occurred */
                 500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Public school registration is disabled */
+                503: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -46360,6 +46476,20 @@ export interface components {
                 expiresAt?: string;
             };
         };
+        DemoLoginAccount: {
+            staffId: string;
+            email: string;
+            name: string;
+            /** @enum {string} */
+            role: "directeur" | "prof_principal" | "professeur" | "educateur";
+            initials: string;
+        };
+        DemoLoginAccountsListResponse: components["schemas"]["DemoLoginAccount"][];
+        BusinessRuleViolationResponse: {
+            message: string;
+            code: string;
+        };
+        DemoLoginAccountsListRequest: Record<string, never>;
         PrototypeActivity: {
             id: string;
             name: string;
@@ -46379,31 +46509,7 @@ export interface components {
             }[];
         };
         PrototypeActivitiesListResponse: components["schemas"]["PrototypeActivity"][];
-        BusinessRuleViolationResponse: {
-            message: string;
-            code: string;
-        };
         PrototypeListRequest: Record<string, never>;
-        PrototypeDemoAccount: {
-            staffId: string;
-            email: string;
-            name: string;
-            /** @enum {string} */
-            role: "directeur" | "prof_principal" | "professeur" | "educateur";
-            initials: string;
-        };
-        PrototypeDemoAccountsListResponse: components["schemas"]["PrototypeDemoAccount"][];
-        SystemCommandResponse: {
-            [key: string]: unknown;
-        };
-        SystemCommandRequest: {
-            schoolId: string;
-            systemId: string;
-            reason: string;
-            payload: {
-                [key: string]: unknown;
-            };
-        };
         School: {
             id: string;
             name: string;
@@ -46414,6 +46520,25 @@ export interface components {
             country?: string | null;
             city?: string | null;
             createdAt?: unknown;
+        };
+        OnboardingRegisterSchoolRequest: {
+            name: string;
+            timeZone: string;
+            /** @enum {string|null} */
+            type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
+            country?: string | null;
+            city?: string | null;
+        };
+        SystemCommandResponse: {
+            [key: string]: unknown;
+        };
+        SystemCommandRequest: {
+            schoolId: string;
+            systemId: string;
+            reason: string;
+            payload: {
+                [key: string]: unknown;
+            };
         };
         RegisterSchoolCommand: {
             id: string;

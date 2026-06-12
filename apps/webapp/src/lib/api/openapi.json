@@ -208,6 +208,64 @@
           "effectiveGrants"
         ]
       },
+      "DemoLoginAccount": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "directeur",
+              "prof_principal",
+              "professeur",
+              "educateur"
+            ]
+          },
+          "initials": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "staffId",
+          "email",
+          "name",
+          "role",
+          "initials"
+        ]
+      },
+      "DemoLoginAccountsListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/DemoLoginAccount"
+        }
+      },
+      "BusinessRuleViolationResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "code"
+        ]
+      },
+      "DemoLoginAccountsListRequest": {
+        "type": "object",
+        "properties": {}
+      },
       "PrototypeActivity": {
         "type": "object",
         "properties": {
@@ -292,98 +350,9 @@
           "$ref": "#/components/schemas/PrototypeActivity"
         }
       },
-      "BusinessRuleViolationResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message",
-          "code"
-        ]
-      },
       "PrototypeListRequest": {
         "type": "object",
         "properties": {}
-      },
-      "PrototypeDemoAccount": {
-        "type": "object",
-        "properties": {
-          "staffId": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "directeur",
-              "prof_principal",
-              "professeur",
-              "educateur"
-            ]
-          },
-          "initials": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "staffId",
-          "email",
-          "name",
-          "role",
-          "initials"
-        ]
-      },
-      "PrototypeDemoAccountsListResponse": {
-        "type": "array",
-        "items": {
-          "$ref": "#/components/schemas/PrototypeDemoAccount"
-        }
-      },
-      "SystemCommandResponse": {
-        "type": "object",
-        "additionalProperties": {
-          "nullable": true
-        }
-      },
-      "SystemCommandRequest": {
-        "type": "object",
-        "properties": {
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "systemId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "reason": {
-            "type": "string",
-            "minLength": 1
-          },
-          "payload": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          }
-        },
-        "required": [
-          "schoolId",
-          "systemId",
-          "reason",
-          "payload"
-        ]
       },
       "School": {
         "type": "object",
@@ -432,6 +401,79 @@
           "id",
           "name",
           "timeZone"
+        ]
+      },
+      "OnboardingRegisterSchoolRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "primary",
+              "secondary",
+              "k12",
+              "vocational",
+              "other"
+            ]
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "timeZone"
+        ]
+      },
+      "SystemCommandResponse": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        }
+      },
+      "SystemCommandRequest": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "systemId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            }
+          }
+        },
+        "required": [
+          "schoolId",
+          "systemId",
+          "reason",
+          "payload"
         ]
       },
       "RegisterSchoolCommand": {
@@ -7331,6 +7373,151 @@
         }
       }
     },
+    "/core/auth/demo-login-accounts/list": {
+      "post": {
+        "tags": [
+          "Core Auth"
+        ],
+        "summary": "List demo login accounts for the webapp login screen (dev only)",
+        "requestBody": {
+          "description": "Demo login accounts list request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoLoginAccountsListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Demo staff accounts for login UI",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLoginAccountsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Demo login accounts are disabled outside development",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/prototype/activities/list": {
       "post": {
         "tags": [
@@ -7455,29 +7642,29 @@
         }
       }
     },
-    "/core/prototype/demo-accounts/list": {
+    "/core/onboarding/register-school": {
       "post": {
         "tags": [
-          "Core Prototype"
+          "Core Onboarding"
         ],
-        "summary": "List demo login accounts for the webapp login screen",
+        "summary": "Register a school and make the current user its owner (dev bootstrap)",
         "requestBody": {
-          "description": "Prototype demo accounts list request",
+          "description": "School registration payload",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PrototypeListRequest"
+                "$ref": "#/components/schemas/OnboardingRegisterSchoolRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Demo staff accounts for login UI",
+            "description": "Registered school",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PrototypeDemoAccountsListResponse"
+                  "$ref": "#/components/schemas/School"
                 }
               }
             }
@@ -7557,6 +7744,27 @@
           },
           "500": {
             "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Public school registration is disabled",
             "content": {
               "application/json": {
                 "schema": {
