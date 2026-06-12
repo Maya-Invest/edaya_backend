@@ -50,5 +50,15 @@
 		</Select.Root>
 	</DrawerField>
 
+	<DrawerField label={$t('people.department')}>
+		<Input value={s.department} readonly class="bg-secondary/30" />
+	</DrawerField>
+
+	{#if s.subjectLabels && s.subjectLabels.length > 0}
+		<DrawerField label={$t('reportCards.subjects')}>
+			<p class="text-sm text-muted-foreground">{s.subjectLabels.join(', ')}</p>
+		</DrawerField>
+	{/if}
+
 	<StaffPermissionsBlock {role} />
 </div>

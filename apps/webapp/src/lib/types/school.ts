@@ -86,6 +86,7 @@ export interface StaffMember {
 	classes: string[];
 	mainClassId?: string;
 	subjectsTaught?: string[];
+	subjectLabels?: string[];
 }
 
 export type ChronicCondition = 'Asthme' | 'Epilepsie' | 'Diabete';

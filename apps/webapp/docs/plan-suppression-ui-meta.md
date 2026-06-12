@@ -71,7 +71,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [x]   | [ ]     |
 | 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [x]   | [ ]     |
 | 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [x]   | [ ]     |
-| 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [ ]   | [ ]     |
+| 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [x]   | [ ]     |
 | 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [ ]   | [ ]     |
 | 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [ ]   | [ ]     |
 | 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [ ]   | [ ]     |
@@ -275,18 +275,19 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] `mapStaffRole()` : lire uniquement `staffRoleAssignments` (`role-director` → directeur, etc.)
-- [ ] `mapDepartment()` : dériver de `StaffAssignment.responsibility` ou champ API
-- [ ] `subjectsTaught` : lire `staffAssignments` avec `classSubjectId` (compléter seed si manquant)
-- [ ] Supprimer tous les fallbacks par ID staff
+- [x] `mapStaffRole()` — `staffRoleAssignments.roleIds` (`role-director` → directeur, etc.)
+- [x] `mapDepartment()` — rôle + `responsibility` + catalogue matières enseignées
+- [x] `subjectsTaught` / `subjectLabels` — via `staffAssignments.classSubjectId` → `classSubjects` → `subjects`
+- [x] Supprimer tous les fallbacks par ID staff ; fiche staff affiche département + matières
+- [x] Tests : `staff-data.test.ts`
 
 **Test UI**
 
-- [ ] Header : nom + rôle correct selon compte connecté
-- [ ] `/configuration/staff/st5` → Camille Moreau, rôle **Directeur**, département Direction
-- [ ] `/configuration/staff/st3` → Mme Léon, **Prof principal**, département Lettres
-- [ ] `/configuration/staff/st1` → matières enseignées visibles (Maths, Sciences)
-- [ ] Dashboard éducateur (`st7`) : classes et élèves filtrés correctement
+- [x] Header : nom + rôle correct selon compte connecté
+- [x] `/configuration/staff/st5` → Camille Moreau, rôle **Directeur**, département Direction
+- [x] `/configuration/staff/st3` → Mme Léon, **Prof principal**, département Lettres
+- [x] `/configuration/staff/st1` → matières enseignées visibles (Maths, Sciences)
+- [x] Dashboard éducateur (`st7`) : classes et élèves filtrés correctement
 
 ---
 
