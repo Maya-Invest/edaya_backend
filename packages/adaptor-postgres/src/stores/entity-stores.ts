@@ -219,7 +219,32 @@ export function createEntityStores(db: any): EntityStores {
       }),
     ),
 
-    academicPeriods: defaultStore(db, schema.academicPeriods, AcademicPeriodCtor),
+    academicPeriods: customStore(
+      db,
+      schema.academicPeriods,
+      (entity: AcademicPeriod) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        academicYearId: entity.academicYearId,
+        name: entity.name,
+        type: entity.type ?? null,
+        startDate: entity.startDate,
+        endDate: entity.endDate,
+        isPublished: entity.isPublished,
+        createdAt: entity.createdAt,
+      }),
+      row => new AcademicPeriodCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        academicYearId: row.academicYearId,
+        name: row.name,
+        type: row.type ?? undefined,
+        startDate: row.startDate,
+        endDate: row.endDate,
+        isPublished: row.isPublished,
+        createdAt: row.createdAt,
+      }),
+    ),
     periodDefinitions: defaultStore(db, schema.periodDefinitions, PeriodDefinitionCtor),
     gradeLevels: defaultStore(db, schema.gradeLevels, GradeLevelCtor),
 

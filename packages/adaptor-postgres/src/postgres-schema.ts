@@ -29,8 +29,10 @@ export const academicPeriods = pgTable('academic_periods', {
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   name: text('name').notNull(),
+  type: text('type'),
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+  isPublished: boolean('is_published').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

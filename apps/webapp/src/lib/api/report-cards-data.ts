@@ -23,14 +23,22 @@ const DEMO_SCHOOL_ID = 'sch-edaya-central';
 
 type GradeScaleRangeRaw = GradeScaleRaw['ranges'][number];
 
-const SUBJECT_TO_CLASS_SUBJECT_6A: Record<string, string> = {
-	'subj-math': 'cs-6a-math',
-	'subj-fr': 'cs-6a-fr',
-	'subj-hist': 'cs-6a-hist',
-	'subj-sci': 'cs-6a-sci',
-	'subj-en': 'cs-6a-en',
-	'subj-eps': 'cs-6a-eps',
-};
+export function resolveClassSubjectId(
+	catalogSubjectId: string,
+	classGroupId: string,
+	sources: ClassSubjectsSources,
+): string | undefined {
+	return sources.classSubjectsRaw.find(
+		entry => entry.classGroupId === classGroupId && entry.subjectId === catalogSubjectId,
+	)?.id;
+}
+
+export function subjectLabelForCatalogId(
+	catalogSubjectId: string,
+	sources: ClassSubjectsSources,
+): string {
+	return sources.subjectsRaw.find(entry => entry.id === catalogSubjectId)?.name ?? catalogSubjectId;
+}
 
 function formatDate(value: unknown): string | undefined {
 	if (!value) {
@@ -117,6 +125,7 @@ export function mapSectionRole(
 function mapDefinitionSections(
 	definitionId: string,
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
+	sources: ClassSubjectsSources,
 ): ReportCardSection[] {
 	const definitionSections = sectionsRaw.filter(section => section.reportCardDefinitionId === definitionId);
 	const topLevelSections = definitionSections.filter(section => !section.parentSectionId);
@@ -129,6 +138,10 @@ function mapDefinitionSections(
 			);
 			const kind = mapSectionRole(section, childSubjects.length > 0);
 
+			const catalogSubjectIds = childSubjects
+				.map(child => child.subjectId ?? '')
+				.filter(Boolean);
+
 			return {
 				id: section.id,
 				definitionId,
@@ -136,10 +149,9 @@ function mapDefinitionSections(
 				kind,
 				order: section.order,
 				coefficient: section.coefficient ?? (kind === 'matieres' ? section.weight : undefined),
-				subjectIds: childSubjects.length > 0
-					? childSubjects
-							.map(child => SUBJECT_TO_CLASS_SUBJECT_6A[child.subjectId ?? ''] ?? child.subjectId ?? '')
-							.filter(Boolean)
+				subjectIds: catalogSubjectIds.length > 0 ? catalogSubjectIds : undefined,
+				subjectLabels: catalogSubjectIds.length > 0
+					? catalogSubjectIds.map(subjectId => subjectLabelForCatalogId(subjectId, sources))
 					: undefined,
 			} satisfies ReportCardSection;
 		});
@@ -154,6 +166,7 @@ export function mapDefinitionStatus(
 export function mapReportCardDefinitions(
 	definitionsRaw: ReportCardDefinitionRaw[],
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
+	sources: ClassSubjectsSources,
 ): ReportCardDefinition[] {
 	return definitionsRaw.map((definition) => ({
 		id: definition.id,
@@ -163,7 +176,7 @@ export function mapReportCardDefinitions(
 		gradeLevelId: definition.gradeLevelId,
 		gradeScaleId: definition.gradeScaleId,
 		status: mapDefinitionStatus(definition.status),
-		sections: mapDefinitionSections(definition.id, sectionsRaw),
+		sections: mapDefinitionSections(definition.id, sectionsRaw, sources),
 	}));
 }
 
@@ -192,13 +205,14 @@ export function mapSubjectMark(
 	}
 
 	const classSubject = sources.classSubjectsRaw.find(entry => entry.id === classSubjectId);
-	const subject = classSubject
-		? sources.subjectsRaw.find(entry => entry.id === classSubject.subjectId)
+	const catalogSubjectId = classSubject?.subjectId ?? subjectResult.name;
+	const subject = catalogSubjectId
+		? sources.subjectsRaw.find(entry => entry.id === catalogSubjectId)
 		: undefined;
 
 	return {
 		subjectId: classSubjectId,
-		subjectName: subject?.name ?? subjectResult.name ?? classSubjectId,
+		subjectName: subject?.name ?? subjectLabelForCatalogId(catalogSubjectId ?? classSubjectId, sources),
 		average: subjectResult.average ?? 0,
 		coefficient: subjectResult.weight ?? 1,
 		appreciation: subjectResult.comment ?? undefined,
@@ -277,7 +291,7 @@ export async function loadReportCardsData(client: SchoolClient): Promise<{
 
 	return {
 		gradeScales: mapGradeScales(gradeScalesRaw ?? []),
-		definitions: mapReportCardDefinitions(definitionsRaw ?? [], sectionsRaw ?? []),
+		definitions: mapReportCardDefinitions(definitionsRaw ?? [], sectionsRaw ?? [], subjectsSources),
 		results: mapReportCardResults(resultsRaw ?? [], definitionsRaw ?? [], subjectsSources),
 	};
 }

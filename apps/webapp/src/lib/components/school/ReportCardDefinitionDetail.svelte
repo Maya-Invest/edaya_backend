@@ -83,8 +83,10 @@
 							<td class="px-4 py-3 font-mono">
 								{section.coefficient ?? '—'}
 							</td>
-							<td class="px-4 py-3 font-mono text-xs text-muted-foreground">
-								{section.subjectIds?.length
+							<td class="px-4 py-3 text-sm text-muted-foreground">
+								{section.subjectLabels?.length
+									? section.subjectLabels.join(', ')
+									: section.subjectIds?.length
 									? section.subjectIds.join(', ')
 									: $t('reportCards.allSubjects')}
 							</td>

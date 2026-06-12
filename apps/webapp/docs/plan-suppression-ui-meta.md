@@ -70,7 +70,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [x]   | [ ]     |
 | 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [x]   | [ ]     |
 | 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [x]   | [ ]     |
-| 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [ ]   | [ ]     |
+| 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [x]   | [ ]     |
 | 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [ ]   | [ ]     |
 | 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [ ]   | [ ]     |
 | 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [ ]   | [ ]     |
@@ -256,13 +256,16 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Résoudre dynamiquement via `classSubjects` + `classGroupId` du résultat
-- [ ] Supprimer `SUBJECT_TO_CLASS_SUBJECT_6A`
+- [x] `resolveClassSubjectId()` — résolution dynamique via `classSubjects` + `classGroupId`
+- [x] Définitions : `subjectIds` = catalogue API, `subjectLabels` depuis `subjectsRaw`
+- [x] Résultats : noms matières via `classSubjectId` → `subjectsRaw` (déjà `classSubjectId` en seed)
+- [x] Supprimer `SUBJECT_TO_CLASS_SUBJECT_6A` ; UI définition affiche les libellés
+- [x] Tests : `report-cards-data.test.ts`
 
 **Test UI**
 
-- [ ] Bulletins classe 6a ET Terminale (si applicable) : matières correctement liées
-- [ ] Pas de matière orpheline ou ID technique affiché à l'utilisateur
+- [x] Bulletins classe 6a ET Terminale (si applicable) : matières correctement liées
+- [x] Pas de matière orpheline ou ID technique affiché à l'utilisateur
 
 ---
 

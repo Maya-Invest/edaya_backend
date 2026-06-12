@@ -7,6 +7,8 @@ import {
 	mapReportCardResults,
 	mapSectionRole,
 	mapSubjectMark,
+	resolveClassSubjectId,
+	subjectLabelForCatalogId,
 } from './report-cards-data';
 
 const seedGradeScalesRaw = [
@@ -170,6 +172,21 @@ const seedDefinitionSectionsRaw = [
 	},
 ] as const;
 
+const classSubjectsSources = {
+	classSubjectsRaw: [
+		{ id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', completedPercentage: 0 },
+		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
+		{ id: 'cs-term-advmath', classGroupId: 'term-s', subjectId: 'subj-advmath', completedPercentage: 0 },
+	],
+	subjectsRaw: [
+		{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', defaultCoefficient: 3 },
+		{ id: 'subj-advmath', schoolId: 'sch-edaya-central', name: 'Advanced Mathematics', defaultCoefficient: 3 },
+	],
+	subjectMattersRaw: [],
+	staffAssignmentsRaw: [],
+	staffMembersRaw: [],
+} as const;
+
 describe('report cards definition mapping', () => {
 	it('maps definition status from API enum', () => {
 		expect(mapDefinitionStatus('published')).toBe('published');
@@ -181,6 +198,7 @@ describe('report cards definition mapping', () => {
 		const definitions = mapReportCardDefinitions(
 			[...seedDefinitionsRaw],
 			[...seedDefinitionSectionsRaw],
+			classSubjectsSources,
 		);
 
 		expect(definitions.find(definition => definition.id === 'rcd-ms-6')).toMatchObject({
@@ -196,6 +214,8 @@ describe('report cards definition mapping', () => {
 		expect(ms6?.sections.find(section => section.id === 'rcs-ms-fond')).toMatchObject({
 			kind: 'matieres',
 			coefficient: 2,
+			subjectIds: ['subj-math'],
+			subjectLabels: ['Mathematics'],
 		});
 		expect(ms6?.sections.find(section => section.id === 'rcs-ms-sci')).toMatchObject({
 			kind: 'matieres',
@@ -211,6 +231,20 @@ describe('report cards definition mapping', () => {
 		expect(ms6?.sections.find(section => section.id === 'rcs-ms-appr')).toMatchObject({
 			kind: 'appreciation',
 		});
+	});
+});
+
+describe('report cards subject resolution', () => {
+	it('resolves class subject ids dynamically by class group', () => {
+		expect(resolveClassSubjectId('subj-math', '6a', classSubjectsSources)).toBe('cs-6a-math');
+		expect(resolveClassSubjectId('subj-math', '6b', classSubjectsSources)).toBe('cs-6b-math');
+		expect(resolveClassSubjectId('subj-advmath', 'term-s', classSubjectsSources)).toBe('cs-term-advmath');
+		expect(resolveClassSubjectId('subj-math', 'term-s', classSubjectsSources)).toBeUndefined();
+	});
+
+	it('maps catalog subject ids to display labels', () => {
+		expect(subjectLabelForCatalogId('subj-math', classSubjectsSources)).toBe('Mathematics');
+		expect(subjectLabelForCatalogId('subj-advmath', classSubjectsSources)).toBe('Advanced Mathematics');
 	});
 });
 
@@ -230,13 +264,6 @@ describe('report cards section role mapping', () => {
 	});
 });
 
-const emptyClassSubjectsSources = {
-	classSubjectsRaw: [],
-	subjectsRaw: [],
-	staffAssignmentsRaw: [],
-	staffMembersRaw: [],
-} as const;
-
 describe('report cards result mapping', () => {
 	it('maps subject marks from API comment and weight', () => {
 		const mark = mapSubjectMark({
@@ -245,7 +272,7 @@ describe('report cards result mapping', () => {
 			average: 18.5,
 			weight: 2,
 			comment: 'Excellent — maîtrise remarquable de l\'algèbre.',
-		}, emptyClassSubjectsSources);
+		}, classSubjectsSources);
 
 		expect(mark).toMatchObject({
 			subjectId: 'cs-6a-math',
@@ -295,7 +322,7 @@ describe('report cards result mapping', () => {
 				status: 'published',
 				isDefault: true,
 			}],
-			emptyClassSubjectsSources,
+			classSubjectsSources,
 		);
 
 		const mathMark = results[0]?.sectionResults[0]?.marks.find(mark => mark.subjectId === 'cs-6a-math');

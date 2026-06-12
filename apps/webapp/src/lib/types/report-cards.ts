@@ -21,7 +21,10 @@ export interface ReportCardSection {
 	kind: ReportCardSectionKind;
 	order: number;
 	coefficient?: number;
+	/** Catalog subject ids from the report card definition. */
 	subjectIds?: string[];
+	/** Human-readable subject names aligned with `subjectIds`. */
+	subjectLabels?: string[];
 }
 
 export interface ReportCardDefinition {

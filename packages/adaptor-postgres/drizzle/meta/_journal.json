@@ -50,6 +50,13 @@
       "when": 1781104996408,
       "tag": "0006_report_card_section_role",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781104996409,
+      "tag": "0007_academic_period_publish_fields",
+      "breakpoints": true
     }
   ]
 }
