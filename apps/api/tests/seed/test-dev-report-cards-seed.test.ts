@@ -126,7 +126,12 @@ describe("dev report cards seed", () => {
       description?: string;
       ranges?: { minScore: number; isPassing: boolean }[];
     }>(await gradeScalesResponse.json());
-    const definitions = unwrapEntityList<{ id: string; name: string }>(await definitionsResponse.json());
+    const definitions = unwrapEntityList<{
+      id: string;
+      name: string;
+      gradeScaleId?: string;
+      status?: string;
+    }>(await definitionsResponse.json());
     const sections = unwrapEntityList<{ id: string; reportCardDefinitionId: string }>(await sectionsResponse.json());
     const results = unwrapEntityList<{ id: string; studentId: string }>(await resultsResponse.json());
 
@@ -147,6 +152,9 @@ describe("dev report cards seed", () => {
     expect(definitions.some(definition => definition.id === "rcd-ms-6")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-term")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-ms-draft")).toBe(true);
+    expect(definitions.find(definition => definition.id === "rcd-ms-6")?.gradeScaleId).toBe("gs-20");
+    expect(definitions.find(definition => definition.id === "rcd-ms-6")?.status).toBe("published");
+    expect(definitions.find(definition => definition.id === "rcd-ms-draft")?.status).toBe("draft");
     expect(results.some(result => result.id === "rcr-s1-t3" && result.studentId === "s1")).toBe(true);
     expect(results.some(result => result.id === "rcr-s9-t3" && result.studentId === "s9")).toBe(true);
   }, 30_000);

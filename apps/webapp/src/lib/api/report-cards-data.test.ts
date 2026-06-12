@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { derivePassingScore, mapGradeScales } from './report-cards-data';
+import {
+	derivePassingScore,
+	mapDefinitionStatus,
+	mapGradeScales,
+	mapReportCardDefinitions,
+} from './report-cards-data';
 
 const seedGradeScalesRaw = [
 	{
@@ -81,5 +86,72 @@ describe('report cards grade scale mapping', () => {
 			decimalPlaces: 0,
 			description: 'A = Très bien · B = Bien · C = Assez bien · D = Insuffisant.',
 		});
+	});
+});
+
+const seedDefinitionsRaw = [
+	{
+		id: 'rcd-ms-6',
+		schoolId: 'sch-edaya-central',
+		academicYearId: '2025',
+		gradeLevelId: 'gl-6',
+		gradeScaleId: 'gs-20',
+		name: 'Bulletin trimestriel — Collège (6ème)',
+		status: 'published',
+		isDefault: true,
+	},
+	{
+		id: 'rcd-ms-draft',
+		schoolId: 'sch-edaya-central',
+		academicYearId: '2025',
+		gradeLevelId: 'gl-6',
+		gradeScaleId: 'gs-20',
+		name: 'Bulletin trimestriel — Collège (modèle brouillon)',
+		status: 'draft',
+		isDefault: false,
+	},
+] as const;
+
+const seedDefinitionSectionsRaw = [
+	{
+		id: 'rcs-ms-fond',
+		reportCardDefinitionId: 'rcd-ms-6',
+		name: 'Matières fondamentales',
+		order: 1,
+		weight: 2,
+	},
+	{
+		id: 'rcs-ms-fond-subj-math',
+		reportCardDefinitionId: 'rcd-ms-6',
+		name: 'subj-math',
+		order: 1,
+		weight: 1,
+		parentSectionId: 'rcs-ms-fond',
+		subjectId: 'subj-math',
+	},
+] as const;
+
+describe('report cards definition mapping', () => {
+	it('maps definition status from API enum', () => {
+		expect(mapDefinitionStatus('published')).toBe('published');
+		expect(mapDefinitionStatus('draft')).toBe('draft');
+		expect(mapDefinitionStatus(undefined)).toBe('draft');
+	});
+
+	it('maps report card definitions from API fields without per-id tables', () => {
+		const definitions = mapReportCardDefinitions(
+			[...seedDefinitionsRaw],
+			[...seedDefinitionSectionsRaw],
+		);
+
+		expect(definitions.find(definition => definition.id === 'rcd-ms-6')).toMatchObject({
+			gradeScaleId: 'gs-20',
+			status: 'published',
+		});
+		expect(definitions.find(definition => definition.id === 'rcd-ms-draft')).toMatchObject({
+			gradeScaleId: 'gs-20',
+			status: 'draft',
+		});
+		expect(definitions.find(definition => definition.id === 'rcd-ms-6')?.sections).toHaveLength(1);
 	});
 });

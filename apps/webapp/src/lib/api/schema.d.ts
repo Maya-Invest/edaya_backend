@@ -44843,12 +44843,18 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             gradeLevelId: string;
+            gradeScaleId: string;
             name: string;
             /**
              * @default custom
              * @enum {string}
              */
             kind: "default" | "custom";
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "published";
             /** @default false */
             isDefault: boolean;
             description?: string | null;
@@ -44859,12 +44865,18 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             gradeLevelId: string;
+            gradeScaleId: string;
             name: string;
             /**
              * @default custom
              * @enum {string}
              */
             kind: "default" | "custom";
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "published";
             /** @default false */
             isDefault: boolean;
             description?: string | null;

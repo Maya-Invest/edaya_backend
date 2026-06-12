@@ -67,7 +67,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [x]   | [ ]     |
 | 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [x]   | [ ]     |
 | 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [x]   | [ ]     |
-| 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [ ]   | [ ]     |
+| 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [x]   | [ ]     |
 | 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [ ]   | [ ]     |
 | 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [ ]   | [ ]     |
 | 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [ ]   | [ ]     |
@@ -193,17 +193,19 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Ajouter `gradeScaleId` sur `ReportCardDefinition` (core)
-- [ ] Mapper `status` depuis un champ API (pas `isDefault` seul)
-- [ ] Mettre à jour `seed-report-cards.ts`
-- [ ] Supprimer `DEFINITION_UI_META`
+- [x] Ajouter `gradeScaleId` et enum `status` (`draft` / `published`) sur `ReportCardDefinition` (+ migration `0005_report_card_definition_fields`)
+- [x] Mettre à jour `seed-report-cards.ts` — persister `gradeScaleId` et `mockStatus`
+- [x] Mapper `status` et `gradeScaleId` depuis l'API via `mapDefinitionStatus()` — plus de confusion avec `isDefault`
+- [x] Supprimer `DEFINITION_UI_META` ; résultats bulletins lisent `gradeScaleId` depuis la définition liée
+- [x] Corriger `publishReportCardDefinitionMutation` — met `status: 'published'` (plus `isDefault: true`)
+- [x] Tests : `report-card-definition.test.ts`, `report-cards-data.test.ts`, `test-dev-report-cards-seed.test.ts`
 
 **Test UI**
 
 - [ ] `/configuration/report-cards`
-- [ ] Définition « Bulletin mi-scolarité 6ème » → statut **Publié**, barème Sur 20
-- [ ] Définition brouillon → badge **Brouillon**
-- [ ] Détail définition : sections listées, barème affiché
+- [x] Définition « Bulletin mi-scolarité 6ème » → statut **Publié**, barème Sur 20
+- [x] Définition brouillon → badge **Brouillon**
+- [x] Détail définition : sections listées, barème affiché
 
 ---
 

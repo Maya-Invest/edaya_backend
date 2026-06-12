@@ -115,6 +115,7 @@ describe('Entity config delete gates', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
+      gradeScaleId: 'gs-test',
       name: 'Definition',
     }))
     await repositories.reportCardResultRepository.save(new ReportCardResult({

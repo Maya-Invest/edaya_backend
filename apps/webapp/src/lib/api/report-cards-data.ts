@@ -23,12 +23,6 @@ const DEMO_SCHOOL_ID = 'sch-edaya-central';
 
 type GradeScaleRangeRaw = GradeScaleRaw['ranges'][number];
 
-const DEFINITION_UI_META: Record<string, { gradeScaleId: string; status: ReportCardPublishStatus }> = {
-	'rcd-ms-6': { gradeScaleId: 'gs-20', status: 'published' },
-	'rcd-term': { gradeScaleId: 'gs-20', status: 'published' },
-	'rcd-ms-draft': { gradeScaleId: 'gs-20', status: 'draft' },
-};
-
 const SECTION_UI_META: Record<string, { kind: ReportCardSectionKind; coefficient?: number }> = {
 	'rcs-ms-fond': { kind: 'matieres', coefficient: 2 },
 	'rcs-ms-sci': { kind: 'matieres', coefficient: 1.5 },
@@ -169,23 +163,26 @@ function mapDefinitionSections(
 		});
 }
 
+export function mapDefinitionStatus(
+	status?: string | null,
+): ReportCardPublishStatus {
+	return status === 'published' ? 'published' : 'draft';
+}
+
 export function mapReportCardDefinitions(
 	definitionsRaw: ReportCardDefinitionRaw[],
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
 ): ReportCardDefinition[] {
-	return definitionsRaw.map((definition) => {
-		const meta = DEFINITION_UI_META[definition.id];
-		return {
-			id: definition.id,
-			schoolId: definition.schoolId,
-			name: definition.name,
-			academicYearId: definition.academicYearId,
-			gradeLevelId: definition.gradeLevelId,
-			gradeScaleId: meta?.gradeScaleId ?? 'gs-20',
-			status: definition.isDefault ? 'published' : (meta?.status ?? 'draft'),
-			sections: mapDefinitionSections(definition.id, sectionsRaw),
-		};
-	});
+	return definitionsRaw.map((definition) => ({
+		id: definition.id,
+		schoolId: definition.schoolId,
+		name: definition.name,
+		academicYearId: definition.academicYearId,
+		gradeLevelId: definition.gradeLevelId,
+		gradeScaleId: definition.gradeScaleId,
+		status: mapDefinitionStatus(definition.status),
+		sections: mapDefinitionSections(definition.id, sectionsRaw),
+	}));
 }
 
 interface ApiSectionResult {
@@ -258,7 +255,6 @@ export function mapReportCardResults(
 
 	return resultsRaw.map((result) => {
 		const definition = definitionById.get(result.reportCardDefinitionId);
-		const meta = DEFINITION_UI_META[result.reportCardDefinitionId];
 
 		return {
 			id: result.id,
@@ -268,7 +264,7 @@ export function mapReportCardResults(
 			definitionId: result.reportCardDefinitionId,
 			academicYearId: definition?.academicYearId ?? '2025',
 			academicPeriodId: result.periodId,
-			gradeScaleId: meta?.gradeScaleId ?? 'gs-20',
+			gradeScaleId: definition?.gradeScaleId ?? 'gs-20',
 			status: mapResultStatus(result.status),
 			overallAverage: result.overallAverage ?? 0,
 			classRank: result.rank ?? 0,

@@ -36,6 +36,13 @@
       "when": 1781104996406,
       "tag": "0004_grade_scale_ui_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781104996407,
+      "tag": "0005_report_card_definition_fields",
+      "breakpoints": true
     }
   ]
 }

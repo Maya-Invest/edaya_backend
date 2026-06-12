@@ -12,10 +12,17 @@ import {
   AttendanceSummary,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
+  ReportCardDefinitionStatus,
   ReportCardResult,
   ReportCardResultSection,
   ReportCardResultStatus,
 } from "@edaya/core";
+
+function mapDefinitionStatus(mockStatus: "published" | "draft"): ReportCardDefinitionStatus {
+  return mockStatus === "published"
+    ? ReportCardDefinitionStatus.Published
+    : ReportCardDefinitionStatus.Draft;
+}
 
 const CLASS_SUBJECT_BY_SUBJECT: Record<string, string> = {
   "subj-math": "cs-6a-math",
@@ -99,8 +106,10 @@ export async function seedReportCards(
       schoolId: SEED_SCHOOL_ID,
       academicYearId: SEED_ACADEMIC_YEAR_ID,
       gradeLevelId: definition.gradeLevelId,
+      gradeScaleId: definition.gradeScaleId,
       name: definition.name,
       kind: ReportCardDefinitionKind.Default,
+      status: mapDefinitionStatus(definition.mockStatus),
       isDefault: definition.isDefault,
       description: definition.name,
     });

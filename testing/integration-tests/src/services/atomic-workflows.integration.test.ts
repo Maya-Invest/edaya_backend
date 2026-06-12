@@ -5,6 +5,7 @@ import {
   AuthorizationErrorCode,
   FeeStatus,
   GradeLevel,
+  GradeScale,
   MessageDeliveryChannel,
   PaymentMethod,
   PaymentStatus,
@@ -194,11 +195,20 @@ describeIntegration('atomic workflow safeguards', () => {
     })
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
+    await app.baseService.gradeScales.save(new GradeScale({
+      id: 'gs-test',
+      schoolId: 'school',
+      name: 'Standard',
+      minScore: 0,
+      maxScore: 20,
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }],
+    }))
     await saveReportCardDefinition(app, {
       id: 'definition',
       schoolId: 'school',
       academicYearId: 'year',
       gradeLevelId: 'level',
+      gradeScaleId: 'gs-test',
       name: 'Grade 6 Standard',
       isDefault: true,
     })
