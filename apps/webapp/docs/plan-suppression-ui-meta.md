@@ -412,10 +412,10 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Test UI**
 
-- [ ] `/classes/6a/teaching` — entrées du carnet listées
-- [ ] Détail entrée → chapitre, contenu, objectifs, progression %
-- [ ] Filtre par matière fonctionne
-- [ ] Devoirs à faire (homework) affichés si présents dans l'entrée
+- [x] `/classes/6a/teaching` — entrées du carnet listées
+- [x] Détail entrée → chapitre, contenu, objectifs, progression %
+- [x] Filtre par matière fonctionne
+- [x] Devoirs à faire (homework) affichés si présents dans l'entrée
 
 ---
 
