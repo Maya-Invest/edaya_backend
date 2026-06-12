@@ -65,3 +65,7 @@ export {
   SEED_TEACHING_LOG_ENTRIES,
   type TeachingLogSeedEntry,
 } from './teaching-log-seed'
+export {
+  SEED_HOMEWORK_ASSIGNMENTS,
+  SEED_HOMEWORK_SUBMISSIONS,
+} from './homework-seed'

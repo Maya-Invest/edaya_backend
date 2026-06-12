@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, integer, jsonb, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
 
 // 1. School Table
 export const schools = pgTable('schools', {
@@ -29,8 +29,10 @@ export const academicPeriods = pgTable('academic_periods', {
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   name: text('name').notNull(),
+  type: text('type'),
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+  isPublished: boolean('is_published').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -239,6 +241,7 @@ export const calendarEvents = pgTable('calendar_events', {
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   title: text('title').notNull(),
+  description: text('description'),
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   kind: text('kind').notNull(),
@@ -313,6 +316,8 @@ export const subjects = pgTable('subjects', {
   name: text('name').notNull(),
   code: text('code'),
   defaultCoefficient: integer('default_coefficient'),
+  category: text('category').notNull().default('Scientifique'),
+  color: text('color').notNull().default('mint'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -347,7 +352,48 @@ export const classSubjects = pgTable('class_subjects', {
   completedPercentage: integer('completed_percentage').notNull(),
 })
 
-// 25. Class Subject Matter Table
+// 25. Homework Assignment Table
+export const homeworkAssignments = pgTable('homework_assignments', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  classSubjectId: text('class_subject_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  dueDate: timestamp('due_date', { mode: 'date' }).notNull(),
+  assignedDate: timestamp('assigned_date', { mode: 'date' }).notNull(),
+  type: text('type').notNull(),
+  attachments: jsonb('attachments').notNull().default([]),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+// 26. Class Logbook Entry Table
+export const classLogbookEntries = pgTable('class_logbook_entries', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  classSubjectId: text('class_subject_id').notNull(),
+  date: timestamp('date', { mode: 'date' }).notNull(),
+  chapter: text('chapter').notNull(),
+  content: text('content').notNull(),
+  objectives: jsonb('objectives').notNull().default([]),
+  homework: text('homework'),
+  attachments: jsonb('attachments').notNull().default([]),
+  progress: integer('progress').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+// 27. Homework Submission Table
+export const homeworkSubmissions = pgTable('homework_submissions', {
+  id: text('id').primaryKey(),
+  homeworkAssignmentId: text('homework_assignment_id').notNull(),
+  studentId: text('student_id').notNull(),
+  status: text('status').notNull(),
+  submittedAt: timestamp('submitted_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+// 27. Class Subject Matter Table
 export const classSubjectMatters = pgTable('class_subject_matters', {
   id: text('id').primaryKey(),
   classSubjectId: text('class_subject_id').notNull(),
@@ -409,6 +455,8 @@ export const gradeScales = pgTable('grade_scales', {
   minScore: integer('min_score').notNull(),
   maxScore: integer('max_score').notNull(),
   ranges: jsonb('ranges').notNull(),
+  decimalPlaces: integer('decimal_places').notNull().default(1),
+  description: text('description'),
   isDefault: boolean('is_default').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
@@ -418,8 +466,10 @@ export const reportCardDefinitions = pgTable('report_card_definitions', {
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   gradeLevelId: text('grade_level_id').notNull(),
+  gradeScaleId: text('grade_scale_id').notNull(),
   name: text('name').notNull(),
   kind: text('kind').notNull(),
+  status: text('status').notNull().default('draft'),
   isDefault: boolean('is_default').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
@@ -430,6 +480,8 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
   id: text('id').primaryKey(),
   definitionId: text('definition_id').notNull(),
   name: text('name').notNull(),
+  role: text('role'),
+  coefficient: real('coefficient'),
   order: integer('order_val').notNull(),
   weight: integer('weight').notNull(),
   parentSectionId: text('parent_section_id'),
@@ -527,6 +579,7 @@ export const studentNotes = pgTable('student_notes', {
   studentId: text('student_id').notNull(),
   authorStaffId: text('author_staff_id').notNull(),
   title: text('title'),
+  category: text('category').notNull().default('work'),
   body: text('body').notNull(),
   visibility: text('visibility').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
@@ -541,6 +594,9 @@ export const studentHealthProfiles = pgTable('student_health_profiles', {
   bloodType: text('blood_type'),
   allergies: jsonb('allergies').notNull(),
   medicalConditions: jsonb('medical_conditions').notNull(),
+  medications: text('medications'),
+  clinicalNotes: text('clinical_notes'),
+  lastVisit: timestamp('last_visit', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

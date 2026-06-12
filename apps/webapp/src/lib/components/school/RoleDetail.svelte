@@ -1,26 +1,26 @@
 <script lang="ts">
 	import type { StaffRole } from '$lib/types/school';
-	import type { Crud } from './drawer-constants';
+	import type { Crud } from '$lib/api/access-roles-data';
+	import { emptyCrudMatrix, PERMISSION_CATALOG } from '$lib/api/access-roles-data';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
 	import {
-		ROLE_PERMISSIONS,
 		SCOPE_LABEL,
 		SCOPE_TONE,
 		ROLE_TINT,
 		CRUD_KEYS,
 		CRUD_LABEL,
 		CRUD_TONE,
-		defaultCrud,
-
 	} from './drawer-constants';
 
 	const { role }: { role: StaffRole } = $props();
 
 	const staff = $derived(detailDataContext.staff);
-	const liveCrudMatrix = $derived(detailDataContext.roleCrudMatrix[role]);
+	const liveCrudMatrix = $derived(
+		detailDataContext.roleCrudMatrix[role] ?? emptyCrudMatrix(),
+	);
 
 	const ROLE_ICON = {
 		directeur: Crown,
@@ -33,23 +33,17 @@
 	const Icon = $derived(ROLE_ICON[role]);
 
 	const grouped = $derived.by(() => {
-		const acc: Record<string, typeof ROLE_PERMISSIONS> = {};
-		ROLE_PERMISSIONS.forEach((p) => {
-			(acc[p.category] ||= []).push(p);
+		const acc: Record<string, typeof PERMISSION_CATALOG> = {};
+		PERMISSION_CATALOG.forEach((permission) => {
+			(acc[permission.category] ||= []).push(permission);
 		});
 		return acc;
 	});
 
-	let perms = $state<Record<string, Record<Crud, boolean>>>(
-		Object.fromEntries(ROLE_PERMISSIONS.map(p => [p.key, defaultCrud(p.access[role])])),
-	);
+	let perms = $state<Record<string, Record<Crud, boolean>>>(emptyCrudMatrix());
 
 	$effect(() => {
-		if (liveCrudMatrix) {
-			perms = liveCrudMatrix;
-			return;
-		}
-		perms = Object.fromEntries(ROLE_PERMISSIONS.map(p => [p.key, defaultCrud(p.access[role])]));
+		perms = liveCrudMatrix;
 	});
 
 	function toggle(permKey: string, op: Crud) {
@@ -103,7 +97,7 @@
 					</div>
 					<ul class="divide-y divide-border/60">
 						{#each rows as p (p.key)}
-							{@const note = p.scopedNote?.[role]}
+							{@const note = p.scopedNotes?.[role]}
 							{@const current = perms[p.key]}
 							<li class="flex items-start justify-between gap-3 px-4 py-3">
 								<div class="min-w-0 flex-1">

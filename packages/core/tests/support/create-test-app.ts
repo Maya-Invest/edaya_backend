@@ -13,7 +13,10 @@ import type {
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
+  ClassLogbookEntry,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -223,6 +226,9 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const classSubjects = createStore<ClassSubject>(transactionParticipants)
   const classSubjectMatters = createStore<ClassSubjectMatter>(transactionParticipants)
   const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
+  const classLogbookEntries = createStore<ClassLogbookEntry>(transactionParticipants)
+  const homeworkAssignments = createStore<HomeworkAssignment>(transactionParticipants)
+  const homeworkSubmissions = createStore<HomeworkSubmission>(transactionParticipants)
   const sessions = createStore<Session>(transactionParticipants)
   const assessments = createStore<Assessment>(transactionParticipants)
   const attendance = createStore<AttendanceRecord>(transactionParticipants)
@@ -310,6 +316,9 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
     },
     classSubjectProgress,
+    classLogbookEntries,
+    homeworkAssignments,
+    homeworkSubmissions,
 
     // assessments
     assessments,

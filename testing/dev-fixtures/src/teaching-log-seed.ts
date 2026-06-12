@@ -1,11 +1,11 @@
-/** Teaching journal entries from mock `teachingLog.ts`. No domain entity yet. */
+import { SEED_SCHOOL_ID } from './dataset'
 
+/** Teaching journal entries aligned with class subjects in the dev seed. */
 export interface TeachingLogSeedEntry {
   id: string
+  schoolId: string
   classGroupId: string
-  subjectId: string
-  subjectName: string
-  teacher: string
+  classSubjectId: string
   date: string
   chapter: string
   content: string
@@ -17,7 +17,7 @@ export interface TeachingLogSeedEntry {
 
 const ISO_DATES = ['2026-05-22', '2026-05-21', '2026-05-20', '2026-05-19', '2026-05-18', '2026-05-15', '2026-05-14'] as const
 
-const SEED_BY_SUBJECT: Record<string, Omit<TeachingLogSeedEntry, 'id' | 'date' | 'subjectName' | 'teacher' | 'classGroupId' | 'subjectId'>[]> = {
+const SEED_BY_SUBJECT: Record<string, Omit<TeachingLogSeedEntry, 'id' | 'date' | 'schoolId' | 'classGroupId' | 'classSubjectId'>[]> = {
   'Mathematics': [
     { chapter: 'Ch. 6 — Fractions', content: 'Addition et soustraction de fractions à dénominateurs différents. Exercices guidés au tableau.', objectives: ['Mettre au même dénominateur', 'Simplifier le résultat'], homework: 'Manuel p.84 ex. 12 à 18', attachments: ['fiche-fractions.pdf'], progress: 62 },
     { chapter: 'Ch. 6 — Fractions', content: 'Multiplication de fractions. Travail en binôme sur situations concrètes.', objectives: ['Multiplier deux fractions', 'Interpréter le produit'], homework: 'Cahier d\'exercices p.27', progress: 66 },
@@ -48,16 +48,16 @@ const SEED_BY_SUBJECT: Record<string, Omit<TeachingLogSeedEntry, 'id' | 'date' |
   ],
 }
 
-const CLASS_SUBJECTS: { classGroupId: string, subjectId: string, subjectName: string, teacher: string }[] = [
-  { classGroupId: '6a', subjectId: 'sub1', subjectName: 'Mathematics', teacher: 'Mme Dupont' },
-  { classGroupId: '6a', subjectId: 'sub2', subjectName: 'French Literature', teacher: 'M. Garnier' },
-  { classGroupId: '6a', subjectId: 'sub3', subjectName: 'History & Geography', teacher: 'Mme Léon' },
-  { classGroupId: '6a', subjectId: 'sub4', subjectName: 'Natural Sciences', teacher: 'M. Adler' },
-  { classGroupId: '6a', subjectId: 'sub5', subjectName: 'English', teacher: 'Ms. Hart' },
-  { classGroupId: '6a', subjectId: 'sub6', subjectName: 'Physical Education', teacher: 'M. Roux' },
-  { classGroupId: 'term-s', subjectId: 'sub7', subjectName: 'Advanced Mathematics', teacher: 'M. Cheng' },
-  { classGroupId: 'term-s', subjectId: 'sub8', subjectName: 'Physics & Chemistry', teacher: 'Mme Ortiz' },
-]
+const CLASS_SUBJECTS = [
+  { classGroupId: '6a', classSubjectId: 'cs-6a-math', subjectName: 'Mathematics' },
+  { classGroupId: '6a', classSubjectId: 'cs-6a-fr', subjectName: 'French Literature' },
+  { classGroupId: '6a', classSubjectId: 'cs-6a-hist', subjectName: 'History & Geography' },
+  { classGroupId: '6a', classSubjectId: 'cs-6a-sci', subjectName: 'Natural Sciences' },
+  { classGroupId: '6a', classSubjectId: 'cs-6a-en', subjectName: 'English' },
+  { classGroupId: '6a', classSubjectId: 'cs-6a-eps', subjectName: 'Physical Education' },
+  { classGroupId: 'term-s', classSubjectId: 'cs-term-advmath', subjectName: 'Advanced Mathematics' },
+  { classGroupId: 'term-s', classSubjectId: 'cs-term-phys', subjectName: 'Physics & Chemistry' },
+] as const
 
 function defaultSeeds(subjectName: string) {
   return [{
@@ -76,11 +76,10 @@ function buildSeedEntries(): TeachingLogSeedEntry[] {
     const seeds = SEED_BY_SUBJECT[subject.subjectName] ?? defaultSeeds(subject.subjectName)
     seeds.forEach((seed, index) => {
       out.push({
-        id: `${subject.subjectId}-${index}`,
+        id: `tle-${subject.classSubjectId}-${index}`,
+        schoolId: SEED_SCHOOL_ID,
         classGroupId: subject.classGroupId,
-        subjectId: subject.subjectId,
-        subjectName: subject.subjectName,
-        teacher: subject.teacher,
+        classSubjectId: subject.classSubjectId,
         date: ISO_DATES[(dateIndex + index) % ISO_DATES.length] ?? ISO_DATES[0],
         ...seed,
       })

@@ -112,13 +112,23 @@
 							</span>
 						{/if}
 					</p>
-					<ul class="space-y-1.5">
+					<ul class="space-y-2">
 						{#each section.marks as mark (mark.subjectId)}
-							<li class="flex justify-between rounded-lg border border-border/60 px-3 py-2 text-sm">
-								<span>{mark.subjectName}</span>
-								<span class="font-mono font-medium">
-									{scale ? formatGrade(mark.average, scale) : mark.average}
-								</span>
+							<li class="rounded-lg border border-border/60 px-3 py-2 text-sm">
+								<div class="flex items-start justify-between gap-2">
+									<div>
+										<p class="font-medium">{mark.subjectName}</p>
+										{#if mark.teacherName}
+											<p class="text-xs text-muted-foreground">{mark.teacherName}</p>
+										{/if}
+									</div>
+									<p class="font-mono font-medium">
+										{scale ? formatGrade(mark.average, scale) : mark.average}
+									</p>
+								</div>
+								{#if mark.appreciation}
+									<p class="mt-2 text-sm text-muted-foreground">{mark.appreciation}</p>
+								{/if}
 							</li>
 						{/each}
 					</ul>

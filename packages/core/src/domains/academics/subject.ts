@@ -4,12 +4,29 @@ import { Permission } from '../../authorization'
 import { directPermissionEntityConfig } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 
+export enum SubjectCategory {
+  Scientific = 'Scientifique',
+  Literary = 'Littéraire',
+  Languages = 'Langues',
+  Humanities = 'Sciences humaines',
+  Sport = 'Sport',
+  Arts = 'Arts',
+}
+
+export enum SubjectColor {
+  Mint = 'mint',
+  Sky = 'sky',
+  Warm = 'warm',
+}
+
 export const subjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   defaultCoefficient: z.number().positive('defaultCoefficient must be a finite, positive number').nullable().optional().transform(v => v === null ? undefined : v),
+  category: z.nativeEnum(SubjectCategory).default(SubjectCategory.Scientific),
+  color: z.nativeEnum(SubjectColor).default(SubjectColor.Mint),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -35,6 +52,8 @@ export class Subject {
   get name() { return this.data.name }
   get code() { return this.data.code }
   get defaultCoefficient() { return this.data.defaultCoefficient }
+  get category() { return this.data.category }
+  get color() { return this.data.color }
   get createdAt() { return this.data.createdAt }
 
   copyWith(overrides: Partial<SubjectInput>): Subject {
@@ -44,6 +63,8 @@ export class Subject {
       name: overrides.name ?? this.name,
       code: overrides.code !== undefined ? overrides.code : this.code,
       defaultCoefficient: overrides.defaultCoefficient !== undefined ? overrides.defaultCoefficient : this.defaultCoefficient,
+      category: overrides.category ?? this.category,
+      color: overrides.color ?? this.color,
       createdAt: this.createdAt,
     })
   }

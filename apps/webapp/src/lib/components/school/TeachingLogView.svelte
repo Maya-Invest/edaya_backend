@@ -33,7 +33,7 @@
 	);
 
 	function getProgress(s: Subject) {
-		const es = teachingLogContext.resolveSubjectEntries(s.name);
+		const es = teachingLogContext.resolveSubjectEntries(s.name, s.classId);
 		const byCh: Record<string, number> = {};
 		for (const e of es) {
 			const prev = byCh[e.chapter];

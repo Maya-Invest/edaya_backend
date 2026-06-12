@@ -11,7 +11,10 @@ import type {
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
+  ClassLogbookEntry,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -58,7 +61,10 @@ import {
   ClassGroup as ClassGroupCtor,
   ClassSubject as ClassSubjectCtor,
   ClassSubjectMatter as ClassSubjectMatterCtor,
+  ClassLogbookEntry as ClassLogbookEntryCtor,
   ClassSubjectProgress as ClassSubjectProgressCtor,
+  HomeworkAssignment as HomeworkAssignmentCtor,
+  HomeworkSubmission as HomeworkSubmissionCtor,
   DisciplinaryAction as DisciplinaryActionCtor,
   Fee as FeeCtor,
   GradeLevel as GradeLevelCtor,
@@ -103,6 +109,7 @@ interface StoredReportCardResultSection {
   weight: number
   parentSectionId?: string | null
   classSubjectId?: string | null
+  comment?: string | null
   subResults?: StoredReportCardResultSection[]
   data?: StoredReportCardResultSection
 }
@@ -116,6 +123,7 @@ function serializeReportCardResultSection(section: ReportCardResultSection): Sto
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? null,
     classSubjectId: section.classSubjectId ?? null,
+    comment: section.comment ?? null,
     subResults: section.subResults.map(serializeReportCardResultSection),
   }
 }
@@ -140,6 +148,7 @@ function deserializeReportCardResultSection(raw: StoredReportCardResultSection):
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? undefined,
     classSubjectId: section.classSubjectId ?? undefined,
+    comment: section.comment ?? undefined,
     subResults: (section.subResults ?? []).map(deserializeReportCardResultSection),
   })
 }
@@ -171,6 +180,9 @@ export interface EntityStores {
   classSubjects: PostgresStore<ClassSubject>
   classSubjectMatters: PostgresStore<ClassSubjectMatter>
   classSubjectProgress: PostgresStore<ClassSubjectProgress>
+  classLogbookEntries: PostgresStore<ClassLogbookEntry>
+  homeworkAssignments: PostgresStore<HomeworkAssignment>
+  homeworkSubmissions: PostgresStore<HomeworkSubmission>
   assessments: PostgresStore<Assessment>
   assessmentResults: PostgresStore<AssessmentResult>
   gradeScales: PostgresStore<GradeScale>
@@ -216,7 +228,32 @@ export function createEntityStores(db: any): EntityStores {
       }),
     ),
 
-    academicPeriods: defaultStore(db, schema.academicPeriods, AcademicPeriodCtor),
+    academicPeriods: customStore(
+      db,
+      schema.academicPeriods,
+      (entity: AcademicPeriod) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        academicYearId: entity.academicYearId,
+        name: entity.name,
+        type: entity.type ?? null,
+        startDate: entity.startDate,
+        endDate: entity.endDate,
+        isPublished: entity.isPublished,
+        createdAt: entity.createdAt,
+      }),
+      row => new AcademicPeriodCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        academicYearId: row.academicYearId,
+        name: row.name,
+        type: row.type ?? undefined,
+        startDate: row.startDate,
+        endDate: row.endDate,
+        isPublished: row.isPublished,
+        createdAt: row.createdAt,
+      }),
+    ),
     periodDefinitions: defaultStore(db, schema.periodDefinitions, PeriodDefinitionCtor),
     gradeLevels: defaultStore(db, schema.gradeLevels, GradeLevelCtor),
 
@@ -421,6 +458,7 @@ export function createEntityStores(db: any): EntityStores {
         schoolId: entity.schoolId,
         academicYearId: entity.academicYearId,
         title: entity.title,
+        description: entity.description ?? null,
         startDate: entity.startDate,
         endDate: entity.endDate,
         kind: entity.kind,
@@ -434,6 +472,7 @@ export function createEntityStores(db: any): EntityStores {
         schoolId: row.schoolId,
         academicYearId: row.academicYearId,
         title: row.title,
+        description: row.description ?? undefined,
         startDate: row.startDate,
         endDate: row.endDate,
         kind: row.kind as any,
@@ -616,6 +655,72 @@ export function createEntityStores(db: any): EntityStores {
       }),
     ),
 
+    classLogbookEntries: customStore(
+      db,
+      schema.classLogbookEntries,
+      (entity: ClassLogbookEntry) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        classGroupId: entity.classGroupId,
+        classSubjectId: entity.classSubjectId,
+        date: entity.date,
+        chapter: entity.chapter,
+        content: entity.content,
+        objectives: entity.objectives,
+        homework: entity.homework ?? null,
+        attachments: entity.attachments,
+        progress: entity.progress,
+        createdAt: entity.createdAt,
+      }),
+      row => new ClassLogbookEntryCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        classGroupId: row.classGroupId,
+        classSubjectId: row.classSubjectId,
+        date: row.date,
+        chapter: row.chapter,
+        content: row.content,
+        objectives: deserializeJsonb(row.objectives) ?? [],
+        homework: row.homework,
+        attachments: deserializeJsonb(row.attachments) ?? [],
+        progress: row.progress,
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    homeworkAssignments: customStore(
+      db,
+      schema.homeworkAssignments,
+      (entity: HomeworkAssignment) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        classGroupId: entity.classGroupId,
+        classSubjectId: entity.classSubjectId,
+        title: entity.title,
+        description: entity.description,
+        dueDate: entity.dueDate,
+        assignedDate: entity.assignedDate,
+        type: entity.type,
+        attachments: entity.attachments,
+        createdAt: entity.createdAt,
+      }),
+      row => new HomeworkAssignmentCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        classGroupId: row.classGroupId,
+        classSubjectId: row.classSubjectId,
+        title: row.title,
+        description: row.description,
+        dueDate: row.dueDate,
+        assignedDate: row.assignedDate,
+        type: row.type as HomeworkAssignment['type'],
+        attachments: deserializeJsonb(row.attachments) ?? [],
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    homeworkSubmissions: defaultStore(db, schema.homeworkSubmissions, HomeworkSubmissionCtor),
+
     assessments: customStore(
       db,
       schema.assessments,
@@ -686,6 +791,8 @@ export function createEntityStores(db: any): EntityStores {
         minScore: entity.minScore,
         maxScore: entity.maxScore,
         ranges: entity.ranges,
+        decimalPlaces: entity.decimalPlaces,
+        description: entity.description,
         isDefault: entity.isDefault,
         createdAt: entity.createdAt,
       }),
@@ -696,6 +803,8 @@ export function createEntityStores(db: any): EntityStores {
         minScore: row.minScore,
         maxScore: row.maxScore,
         ranges: deserializeJsonb(row.ranges) || [],
+        decimalPlaces: row.decimalPlaces,
+        description: row.description,
         isDefault: row.isDefault,
         createdAt: row.createdAt,
       }),
@@ -710,6 +819,8 @@ export function createEntityStores(db: any): EntityStores {
         id: entity.id,
         definitionId: entity.reportCardDefinitionId,
         name: entity.name,
+        role: entity.role ?? null,
+        coefficient: entity.coefficient ?? null,
         order: entity.order,
         weight: entity.weight,
         parentSectionId: entity.parentSectionId ?? null,
@@ -723,6 +834,8 @@ export function createEntityStores(db: any): EntityStores {
         kind: row.subjectId
           ? ReportCardDefinitionSectionKind.Subject
           : ReportCardDefinitionSectionKind.Group,
+        role: row.role ?? undefined,
+        coefficient: row.coefficient ?? undefined,
         order: row.order,
         weight: row.weight,
         parentSectionId: row.parentSectionId,
@@ -829,6 +942,9 @@ export function createEntityStores(db: any): EntityStores {
         bloodType: row.bloodType as any,
         allergies: deserializeJsonb(row.allergies),
         medicalConditions: deserializeJsonb(row.medicalConditions),
+        medications: row.medications ?? undefined,
+        clinicalNotes: row.clinicalNotes ?? undefined,
+        lastVisit: row.lastVisit ?? undefined,
         createdAt: row.createdAt,
       }),
     ),

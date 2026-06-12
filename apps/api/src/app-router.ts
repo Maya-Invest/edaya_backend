@@ -5,12 +5,8 @@ import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/eff
 import {
   listPrototypeActivitiesHandler,
   listPrototypeActivitiesRoute,
-  listPrototypeDeadlinesHandler,
-  listPrototypeDeadlinesRoute,
   listPrototypeDemoAccountsHandler,
   listPrototypeDemoAccountsRoute,
-  listPrototypeTeachingLogHandler,
-  listPrototypeTeachingLogRoute,
 } from "@/routes/prototype.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import {
@@ -49,7 +45,6 @@ const router = createRouter()
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
-  .openapi(listPrototypeDeadlinesRoute, listPrototypeDeadlinesHandler)
   .openapi(listPrototypeDemoAccountsRoute, listPrototypeDemoAccountsHandler)
   .openapi(listPrototypeTeachingLogRoute, listPrototypeTeachingLogHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)

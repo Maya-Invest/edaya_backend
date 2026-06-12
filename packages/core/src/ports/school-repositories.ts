@@ -13,7 +13,10 @@ import type {
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
+  ClassLogbookEntry,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -89,6 +92,9 @@ export interface SchoolRepositories {
   readonly classSubjects: BaseRepositoryInterface<ClassSubject>
   readonly classSubjectMatters: BaseRepositoryInterface<ClassSubjectMatter>
   readonly classSubjectProgress: BaseRepositoryInterface<ClassSubjectProgress>
+  readonly classLogbookEntries: BaseRepositoryInterface<ClassLogbookEntry>
+  readonly homeworkAssignments: BaseRepositoryInterface<HomeworkAssignment>
+  readonly homeworkSubmissions: BaseRepositoryInterface<HomeworkSubmission>
 
   // AssessmentRepositories
   readonly assessments: BaseRepositoryInterface<Assessment>

@@ -2,7 +2,7 @@ import { academicContext } from '$lib/academic/context.svelte';
 import { configureBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { getDetailDataSnapshot } from '$lib/queries/detail-data.queries';
-import { fetchTeachingLogEntries } from '$lib/queries/prototype.queries';
+import { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
 import { getAppShellData } from '$lib/queries/shell.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';

@@ -8,6 +8,76 @@
       "when": 1781104996402,
       "tag": "0000_plain_hardball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781104996403,
+      "tag": "0001_calendar_event_description",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781104996404,
+      "tag": "0002_student_health_profile_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781104996405,
+      "tag": "0003_student_note_category",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781104996406,
+      "tag": "0004_grade_scale_ui_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781104996407,
+      "tag": "0005_report_card_definition_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781104996408,
+      "tag": "0006_report_card_section_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781104996409,
+      "tag": "0007_academic_period_publish_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781104996410,
+      "tag": "0008_subject_ui_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781104996411,
+      "tag": "0009_homework_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781104996412,
+      "tag": "0010_class_logbook_entries",
+      "breakpoints": true
     }
   ]
 }

@@ -9,7 +9,7 @@
 
 	let tab = $state<'progression' | 'logbook'>('progression');
 
-	const entries = $derived(teachingLogContext.resolveSubjectEntries(s.name));
+	const entries = $derived(teachingLogContext.resolveSubjectEntries(s.name, s.classId));
 
 	const teacherInitials = $derived(
 		s.teacher

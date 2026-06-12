@@ -14,6 +14,7 @@ import {
   DisciplinaryAction,
   DisciplinaryActionKind,
   GradeLevel,
+  GradeScale,
   IncidentInvolvementRole,
   IncidentKind,
   PaymentMethod,
@@ -357,11 +358,20 @@ describeIntegration('tenant boundary safeguards', () => {
       fileName: 'outside.pdf',
       fileUrl: 'https://files.example.test/outside.pdf',
     })
+    await schoolBApp.baseService.gradeScales.save(new GradeScale({
+      id: 'gs-b',
+      schoolId: 'school-b',
+      name: 'Standard',
+      minScore: 0,
+      maxScore: 20,
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }],
+    }))
     await saveReportCardDefinition(schoolBApp, {
       id: 'definition-b',
       schoolId: 'school-b',
       academicYearId: 'year-b',
       gradeLevelId: 'level-b',
+      gradeScaleId: 'gs-b',
       name: 'School B Report Card',
       isDefault: true,
     })

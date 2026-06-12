@@ -133,12 +133,12 @@ export const SEED_GUARDIANS = [
 
 /** School-wide subject catalog aligned with the webapp school mock data. */
 export const SEED_SUBJECT_CATALOG = [
-  { id: 'subj-math', code: 'MATH', name: 'Mathematics', defaultCoefficient: 3 },
-  { id: 'subj-fr', code: 'FR', name: 'French Literature', defaultCoefficient: 2 },
-  { id: 'subj-hist', code: 'HIST', name: 'History & Geography', defaultCoefficient: 2 },
-  { id: 'subj-sci', code: 'SCI', name: 'Natural Sciences', defaultCoefficient: 2 },
-  { id: 'subj-en', code: 'EN', name: 'English', defaultCoefficient: 2 },
-  { id: 'subj-eps', code: 'EPS', name: 'Physical Education', defaultCoefficient: 1 },
+  { id: 'subj-math', code: 'MATH', name: 'Mathematics', defaultCoefficient: 3, category: 'Scientifique', color: 'mint' },
+  { id: 'subj-fr', code: 'FR', name: 'French Literature', defaultCoefficient: 2, category: 'Littéraire', color: 'warm' },
+  { id: 'subj-hist', code: 'HIST', name: 'History & Geography', defaultCoefficient: 2, category: 'Sciences humaines', color: 'sky' },
+  { id: 'subj-sci', code: 'SCI', name: 'Natural Sciences', defaultCoefficient: 2, category: 'Scientifique', color: 'warm' },
+  { id: 'subj-en', code: 'EN', name: 'English', defaultCoefficient: 2, category: 'Langues', color: 'sky' },
+  { id: 'subj-eps', code: 'EPS', name: 'Physical Education', defaultCoefficient: 1, category: 'Sport', color: 'mint' },
   ...SEED_EXTENDED_SUBJECT_CATALOG,
 ] as const
 
@@ -326,7 +326,7 @@ export const SEED_CALENDAR_EVENTS = [
 export const SEED_INCIDENTS = [
   { id: 'i1', studentId: 's3', classGroupId: '6a', date: '2026-04-12', title: 'Repeated tardiness', description: 'Late to class 3 times this month.', kind: 'minor_infraction' as const, mockCategory: 'Tardiness' as const, mockSeverity: 'low' as const },
   { id: 'i2', studentId: 's2', classGroupId: '6a', date: '2026-03-22', title: 'Class disruption', description: 'Disruption during English class.', kind: 'minor_infraction' as const, mockCategory: 'Behavior' as const, mockSeverity: 'medium' as const },
-  { id: 'i3', studentId: 's3', classGroupId: '6a', date: '2026-04-26', title: 'Recess conflict', description: 'Argument with classmate during recess.', kind: 'minor_infraction' as const, mockCategory: 'Conflict' as const, mockSeverity: 'medium' as const },
+  { id: 'i3', studentId: 's3', classGroupId: '6a', date: '2026-04-26', title: 'Recess conflict', description: 'Argument with classmate during recess.', kind: 'major_infraction' as const, mockCategory: 'Conflict' as const, mockSeverity: 'medium' as const },
 ] as const
 
 /** Attendance absences from mock `absences[]` — includes dedicated session slots. */

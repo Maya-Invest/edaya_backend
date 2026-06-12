@@ -12,6 +12,9 @@ describe('StudentHealthProfile entity', () => {
     const profile = new StudentHealthProfile({
       ...baseArgs,
       allergies: 'Peanuts',
+      medications: 'EpiPen',
+      clinicalNotes: 'Severe peanut allergy. EpiPen in nurse\'s office.',
+      lastVisit: new Date('2026-04-08T00:00:00Z'),
       bloodType: 'O+',
     })
 
@@ -19,6 +22,9 @@ describe('StudentHealthProfile entity', () => {
     expect(profile.schoolId).toBe('sch1')
     expect(profile.studentId).toBe('stu1')
     expect(profile.allergies).toBe('Peanuts')
+    expect(profile.medications).toBe('EpiPen')
+    expect(profile.clinicalNotes).toBe('Severe peanut allergy. EpiPen in nurse\'s office.')
+    expect(profile.lastVisit?.toISOString()).toBe('2026-04-08T00:00:00.000Z')
     expect(profile.bloodType).toBe('O+')
     expect(profile.createdAt).toBeInstanceOf(Date)
     expect(profile.updatedAt).toBeInstanceOf(Date)

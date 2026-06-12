@@ -95,7 +95,7 @@ export async function publishReportCardDefinitionMutation(definitionId: string):
 		const definition = await client.entities.definitions.get(definitionId);
 		return client.entities.definitions.save({
 			...definition,
-			isDefault: true,
+			status: 'published',
 		});
 	});
 	return result !== null;

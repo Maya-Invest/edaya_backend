@@ -1,12 +1,103 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { Crud } from '$lib/components/school/drawer-constants';
 import type { StaffRole } from '$lib/types/school';
-import { ROLE_PERMISSIONS, STAFF_PERMISSIONS } from '$lib/components/school/drawer-constants';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
 type AccessRoleRaw = components['schemas']['AccessRole'];
+
+export type Crud = 'C' | 'R' | 'U' | 'D';
+export type PermissionScope = 'global' | 'class' | 'subject';
+
+export interface PermissionCatalogEntry {
+	key: string;
+	category: string;
+	label: string;
+	description: string;
+	scopes: PermissionScope[];
+	scopedNotes?: Partial<Record<StaffRole, string>>;
+}
+
+export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
+	{
+		key: 'grades.edit',
+		category: 'Pédagogie',
+		label: 'Saisir / modifier les notes',
+		description: 'Création et édition des évaluations et notes académiques.',
+		scopes: ['class', 'subject'],
+		scopedNotes: {
+			prof_principal: 'Classe attitrée + matières',
+			professeur: 'Classes & matières assignées',
+		},
+	},
+	{
+		key: 'grades.view',
+		category: 'Pédagogie',
+		label: 'Consulter les notes & moyennes',
+		description: 'Lecture des notes et moyennes pour suivi pédagogique.',
+		scopes: ['global', 'class', 'subject'],
+	},
+	{
+		key: 'reports.edit',
+		category: 'Pédagogie',
+		label: 'Bulletins & orientation',
+		description: 'Édition des bulletins et décisions d\'orientation.',
+		scopes: ['global', 'class'],
+		scopedNotes: { prof_principal: 'Classe attitrée uniquement' },
+	},
+	{
+		key: 'records.edit',
+		category: 'Dossiers',
+		label: 'Dossiers élèves',
+		description: 'Lecture / écriture des dossiers administratifs et pédagogiques.',
+		scopes: ['global', 'class'],
+		scopedNotes: { prof_principal: 'Classe attitrée' },
+	},
+	{
+		key: 'life.absences',
+		category: 'Vie scolaire',
+		label: 'Absences',
+		description: 'Saisie et suivi des absences.',
+		scopes: ['global', 'class'],
+		scopedNotes: { professeur: 'Pour ses cours' },
+	},
+	{
+		key: 'life.tardiness',
+		category: 'Vie scolaire',
+		label: 'Retards',
+		description: 'Enregistrement des retards.',
+		scopes: ['global', 'class'],
+		scopedNotes: { professeur: 'Pour ses cours' },
+	},
+	{
+		key: 'life.discipline',
+		category: 'Vie scolaire',
+		label: 'Discipline & incidents',
+		description: 'Création et suivi des incidents disciplinaires.',
+		scopes: ['global', 'class'],
+	},
+	{
+		key: 'staff.manage',
+		category: 'Administration',
+		label: 'Gestion du personnel',
+		description: 'Ajout, retrait et affectation du personnel.',
+		scopes: ['global'],
+	},
+	{
+		key: 'finance.manage',
+		category: 'Administration',
+		label: 'Finance & facturation',
+		description: 'Frais, facturation et paiements.',
+		scopes: ['global'],
+	},
+	{
+		key: 'config.school',
+		category: 'Administration',
+		label: 'Configuration de l\'école',
+		description: 'Matières, ressources, calendrier et paramètres.',
+		scopes: ['global'],
+	},
+];
 
 export const ACCESS_ROLE_ID_TO_STAFF_ROLE: Record<string, StaffRole> = {
 	'role-director': 'directeur',
@@ -81,11 +172,20 @@ function hasAnyPermission(granted: Set<string>, candidates: string[] | undefined
 	return candidates.some(permission => granted.has(permission));
 }
 
+export function emptyCrudMatrix(): Record<string, Record<Crud, boolean>> {
+	return Object.fromEntries(
+		PERMISSION_CATALOG.map(permission => [
+			permission.key,
+			{ C: false, R: false, U: false, D: false },
+		]),
+	);
+}
+
 export function buildRoleCrudMatrix(permissions: readonly string[]): Record<string, Record<Crud, boolean>> {
 	const granted = new Set(permissions);
 	const matrix: Record<string, Record<Crud, boolean>> = {};
 
-	for (const permission of ROLE_PERMISSIONS) {
+	for (const permission of PERMISSION_CATALOG) {
 		const rules = UI_PERMISSION_API_RULES[permission.key] ?? {};
 		matrix[permission.key] = {
 			C: hasAnyPermission(granted, rules.C),
@@ -101,7 +201,7 @@ export function buildRoleCrudMatrix(permissions: readonly string[]): Record<stri
 export function buildRoleEnabledPermissions(permissions: readonly string[]): Record<string, boolean> {
 	const crudMatrix = buildRoleCrudMatrix(permissions);
 	return Object.fromEntries(
-		STAFF_PERMISSIONS.map(permission => [
+		PERMISSION_CATALOG.map(permission => [
 			permission.key,
 			Object.values(crudMatrix[permission.key] ?? {}).some(Boolean),
 		]),

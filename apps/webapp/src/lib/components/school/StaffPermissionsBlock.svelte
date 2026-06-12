@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { StaffRole } from '$lib/types/school';
+	import { PERMISSION_CATALOG } from '$lib/api/access-roles-data';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
@@ -7,10 +8,8 @@
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
 	import {
-		STAFF_PERMISSIONS,
 		STAFF_SCOPE_LABEL,
 		STAFF_SCOPE_TONE,
-		defaultEnabledFor,
 	} from './drawer-constants';
 	import ScopeChipSelector from './ScopeChipSelector.svelte';
 
@@ -27,24 +26,21 @@
 		return Object.values(map);
 	});
 
-	const enabledMap = $derived.by(() => {
-		const live = detailDataContext.roleEnabledPermissions[role];
-		return live ?? defaultEnabledFor(role);
-	});
+	const enabledMap = $derived(detailDataContext.roleEnabledPermissions[role] ?? {});
 
 	const grouped = $derived.by(() => {
-		const acc: Record<string, typeof STAFF_PERMISSIONS> = {};
-		STAFF_PERMISSIONS.filter(p => enabledMap[p.key]).forEach((p) => {
-			(acc[p.category] ||= []).push(p);
+		const acc: Record<string, typeof PERMISSION_CATALOG> = {};
+		PERMISSION_CATALOG.filter(permission => enabledMap[permission.key]).forEach((permission) => {
+			(acc[permission.category] ||= []).push(permission);
 		});
 		return acc;
 	});
 
 	let classSel = $state<Record<string, string[]>>(
-		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, academicContext.classes.map(c => c.id)])),
+		Object.fromEntries(PERMISSION_CATALOG.map(permission => [permission.key, academicContext.classes.map(c => c.id)])),
 	);
 	let subjectSel = $state<Record<string, string[]>>(
-		Object.fromEntries(STAFF_PERMISSIONS.map(p => [p.key, subjectItems.map(s => s.id)])),
+		Object.fromEntries(PERMISSION_CATALOG.map(permission => [permission.key, subjectItems.map(s => s.id)])),
 	);
 </script>
 

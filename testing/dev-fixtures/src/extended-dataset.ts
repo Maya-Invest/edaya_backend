@@ -36,8 +36,8 @@ export const SEED_EXTENDED_GUARDIANS = [
 ] as const
 
 export const SEED_EXTENDED_SUBJECT_CATALOG = [
-  { id: 'subj-advmath', code: 'ADVMATH', name: 'Advanced Mathematics', defaultCoefficient: 3 },
-  { id: 'subj-phys', code: 'PHYS', name: 'Physics & Chemistry', defaultCoefficient: 3 },
+  { id: 'subj-advmath', code: 'ADVMATH', name: 'Advanced Mathematics', defaultCoefficient: 3, category: 'Scientifique', color: 'sky' },
+  { id: 'subj-phys', code: 'PHYS', name: 'Physics & Chemistry', defaultCoefficient: 3, category: 'Scientifique', color: 'mint' },
 ] as const
 
 export const SEED_EXTENDED_SUBJECT_MATTERS = [

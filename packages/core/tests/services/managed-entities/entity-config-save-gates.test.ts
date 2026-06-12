@@ -120,11 +120,20 @@ describe('Entity config save gates', () => {
       name: 'Grade 1',
       order: 1,
     }))
+    await repositories.gradeScaleRepository.save(new GradeScale({
+      id: 'gs-test',
+      schoolId: 'school',
+      name: 'Test scale',
+      minScore: 0,
+      maxScore: 20,
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }],
+    }))
     await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
       id: 'definition-existing',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
+      gradeScaleId: 'gs-test',
       name: 'Default',
       isDefault: true,
     }))
@@ -134,6 +143,7 @@ describe('Entity config save gates', () => {
       schoolId: 'school',
       academicYearId: 'missing-year',
       gradeLevelId: 'grade-1',
+      gradeScaleId: 'gs-test',
       name: 'Invalid',
     }))).rejects.toBeInstanceOf(AuthorizationError)
 
@@ -142,6 +152,7 @@ describe('Entity config save gates', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
+      gradeScaleId: 'gs-test',
       name: 'Other default',
       isDefault: true,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
@@ -159,6 +170,7 @@ describe('Entity config save gates', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
+      gradeScaleId: 'gs-test',
       name: 'Definition',
     }))
 
@@ -832,6 +844,7 @@ describe('Entity config save gates', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
+      gradeScaleId: 'gs-test',
       name: 'Definition',
     }))
     const published = new ReportCardResult({

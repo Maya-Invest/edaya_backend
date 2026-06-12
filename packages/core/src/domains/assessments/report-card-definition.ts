@@ -12,13 +12,20 @@ export enum ReportCardDefinitionKind {
   Custom = 'custom',
 }
 
+export enum ReportCardDefinitionStatus {
+  Draft = 'draft',
+  Published = 'published',
+}
+
 export const reportCardDefinitionSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   gradeLevelId: z.string().trim().min(1, 'gradeLevelId must not be blank'),
+  gradeScaleId: z.string().trim().min(1, 'gradeScaleId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
   kind: z.nativeEnum(ReportCardDefinitionKind).default(ReportCardDefinitionKind.Custom),
+  status: z.nativeEnum(ReportCardDefinitionStatus).default(ReportCardDefinitionStatus.Draft),
   isDefault: z.boolean().default(false),
   description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
@@ -46,8 +53,10 @@ export class ReportCardDefinition {
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }
   get gradeLevelId() { return this.data.gradeLevelId }
+  get gradeScaleId() { return this.data.gradeScaleId }
   get name() { return this.data.name }
   get kind() { return this.data.kind }
+  get status() { return this.data.status }
   get isDefault() { return this.data.isDefault }
   get description() { return this.data.description }
   get createdAt() { return this.data.createdAt }
@@ -72,14 +81,18 @@ async function validateReportCardDefinitionSave(
   repositories: SchoolRepositories,
 ): Promise<void> {
   await requireSchool(repositories.schools, definition.schoolId)
-  const [academicYear, gradeLevel] = await Promise.all([
+  const [academicYear, gradeLevel, gradeScale] = await Promise.all([
     repositories.academicYears.findById(definition.academicYearId),
     repositories.gradeLevels.findById(definition.gradeLevelId),
+    repositories.gradeScales.findById(definition.gradeScaleId),
   ])
   if (!academicYear || academicYear.schoolId !== definition.schoolId) {
     denyResourceAccess()
   }
   if (!gradeLevel || gradeLevel.schoolId !== definition.schoolId) {
+    denyResourceAccess()
+  }
+  if (!gradeScale || gradeScale.schoolId !== definition.schoolId) {
     denyResourceAccess()
   }
   if (!definition.isDefault)

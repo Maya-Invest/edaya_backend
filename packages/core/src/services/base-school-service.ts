@@ -13,7 +13,10 @@ import type {
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
+  ClassLogbookEntry,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -62,7 +65,10 @@ import {
   classGroupConfig,
   classSubjectConfig,
   classSubjectMatterConfig,
+  classLogbookEntryConfig,
   classSubjectProgressConfig,
+  homeworkAssignmentConfig,
+  homeworkSubmissionConfig,
   disciplinaryActionConfig,
   feeConfig,
   gradeLevelConfig,
@@ -135,6 +141,9 @@ export class BaseSchoolService {
   readonly classSubjects: ManagedEntityService<ClassSubject>
   readonly classSubjectMatters: ManagedEntityService<ClassSubjectMatter>
   readonly classSubjectProgress: ManagedEntityService<ClassSubjectProgress>
+  readonly classLogbookEntries: ManagedEntityService<ClassLogbookEntry>
+  readonly homeworkAssignments: ManagedEntityService<HomeworkAssignment>
+  readonly homeworkSubmissions: ManagedEntityService<HomeworkSubmission>
 
   readonly assessments: ManagedEntityService<Assessment>
   readonly assessmentResults: ManagedEntityService<AssessmentResult>
@@ -203,6 +212,9 @@ export class BaseSchoolService {
     this.classSubjects = new ManagedEntityService({ ...serviceArgs, config: classSubjectConfig(input) })
     this.classSubjectMatters = new ManagedEntityService({ ...serviceArgs, config: classSubjectMatterConfig(input) })
     this.classSubjectProgress = new ManagedEntityService({ ...serviceArgs, config: classSubjectProgressConfig(input) })
+    this.classLogbookEntries = new ManagedEntityService({ ...serviceArgs, config: classLogbookEntryConfig(input) })
+    this.homeworkAssignments = new ManagedEntityService({ ...serviceArgs, config: homeworkAssignmentConfig(input) })
+    this.homeworkSubmissions = new ManagedEntityService({ ...serviceArgs, config: homeworkSubmissionConfig(input) })
 
     this.assessments = new ManagedEntityService({ ...serviceArgs, config: assessmentConfig(input) })
     this.assessmentResults = new ManagedEntityService({ ...serviceArgs, config: assessmentResultConfig(input) })

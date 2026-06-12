@@ -82,12 +82,25 @@ describe("dev student 360 seed", () => {
     expect(healthResponse.status).toBe(200);
     expect(notesResponse.status).toBe(200);
 
-    const healthProfiles = unwrapEntityList<{ id: string; studentId: string }>(await healthResponse.json());
-    const notes = unwrapEntityList<{ id: string; studentId: string }>(await notesResponse.json());
+    const healthProfiles = unwrapEntityList<{
+      id: string;
+      studentId: string;
+      medications?: string;
+      clinicalNotes?: string;
+      lastVisit?: string;
+    }>(await healthResponse.json());
+    const notes = unwrapEntityList<{ id: string; studentId: string; category?: string }>(await notesResponse.json());
 
     expect(healthProfiles.length).toBeGreaterThanOrEqual(SEED_STUDENT_HEALTH_PROFILES.length);
     expect(notes.length).toBeGreaterThanOrEqual(SEED_PEDAGOGICAL_NOTES.length);
     expect(healthProfiles.some(profile => profile.id === "hp-s1" && profile.studentId === "s1")).toBe(true);
+    expect(healthProfiles.find(profile => profile.id === "hp-s3")?.medications).toBe("EpiPen");
+    expect(healthProfiles.find(profile => profile.id === "hp-s3")?.clinicalNotes).toBe(
+      "Severe peanut allergy. EpiPen in nurse's office.",
+    );
+    expect(healthProfiles.find(profile => profile.id === "hp-s3")?.lastVisit).toBeDefined();
     expect(notes.some(note => note.id === "pn1" && note.studentId === "s1")).toBe(true);
+    expect(notes.find(note => note.id === "pn1")?.category).toBe("progress");
+    expect(notes.find(note => note.id === "pn4")?.category).toBe("behavior");
   }, 30_000);
 });

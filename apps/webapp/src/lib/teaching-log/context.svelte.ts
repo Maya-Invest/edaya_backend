@@ -23,18 +23,22 @@ export const teachingLogContext = {
 	},
 
 	forClass(classId: string, subjectNames: string[]): LogEntry[] {
-		return runtimeEntries.filter(entry => subjectNames.includes(entry.subject));
+		return runtimeEntries.filter(entry =>
+			entry.classId === classId && subjectNames.includes(entry.subject),
+		);
 	},
 
-	forSubject(subjectName: string): LogEntry[] {
-		return runtimeEntries.filter(entry => entry.subject === subjectName);
+	forSubject(subjectName: string, classId?: string): LogEntry[] {
+		return runtimeEntries.filter(entry =>
+			entry.subject === subjectName && (!classId || entry.classId === classId),
+		);
 	},
 
 	resolveClassEntries(classId: string, classSubjects: { name: string }[]): LogEntry[] {
 		return this.forClass(classId, classSubjects.map(subject => subject.name));
 	},
 
-	resolveSubjectEntries(subjectName: string): LogEntry[] {
-		return this.forSubject(subjectName);
+	resolveSubjectEntries(subjectName: string, classId?: string): LogEntry[] {
+		return this.forSubject(subjectName, classId);
 	},
 };

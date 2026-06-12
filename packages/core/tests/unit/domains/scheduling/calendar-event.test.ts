@@ -13,8 +13,12 @@ describe('CalendarEvent entity', () => {
   }
 
   test('instantiates successfully with valid inputs', () => {
-    const event = new CalendarEvent(baseArgs)
+    const event = new CalendarEvent({
+      ...baseArgs,
+      description: 'Two-week spring break for all students.',
+    })
     expect(event.id).toBe('evt1')
+    expect(event.description).toBe('Two-week spring break for all students.')
     expect(event.isNonSchoolDay).toBe(false)
     expect(event.scopeKind).toBe(CalendarEventScopeKind.School)
     expect(event.durationDays).toBe(7)

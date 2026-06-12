@@ -18,36 +18,29 @@ export interface ClassSubjectsSources {
 	staffAssignmentsRaw: StaffAssignmentRaw[];
 }
 
-const SUBJECT_COLORS: Subject['color'][] = ['mint', 'sky', 'warm'];
+const SUBJECT_CATEGORIES = new Set<SubjectCategory>([
+	'Scientifique',
+	'Littéraire',
+	'Langues',
+	'Sciences humaines',
+	'Sport',
+	'Arts',
+]);
 
-function pickColor(seed: string): Subject['color'] {
-	let hash = 0;
-	for (const char of seed) {
-		hash = (hash * 31 + char.charCodeAt(0)) | 0;
+const SUBJECT_COLORS = new Set<Subject['color']>(['mint', 'sky', 'warm']);
+
+function subjectCategory(raw: SubjectRaw): SubjectCategory {
+	if (raw.category && SUBJECT_CATEGORIES.has(raw.category as SubjectCategory)) {
+		return raw.category as SubjectCategory;
 	}
-	return SUBJECT_COLORS[Math.abs(hash) % SUBJECT_COLORS.length] ?? 'mint';
+	return 'Scientifique';
 }
 
-function inferCategory(name: string, code?: string | null): SubjectCategory {
-	const label = `${name} ${code ?? ''}`.toLowerCase();
-
-	if (/english|anglais|espagnol|allemand|langue/.test(label)) {
-		return 'Langues';
+function subjectColor(raw: SubjectRaw): Subject['color'] {
+	if (raw.color && SUBJECT_COLORS.has(raw.color as Subject['color'])) {
+		return raw.color as Subject['color'];
 	}
-	if (/sport|eps|physique/.test(label) && !/chimie|physics/.test(label)) {
-		return 'Sport';
-	}
-	if (/art|musique|dessin/.test(label)) {
-		return 'Arts';
-	}
-	if (/histoire|géographie|geography|humanities/.test(label)) {
-		return 'Sciences humaines';
-	}
-	if (/français|literature|littér|lettre/.test(label)) {
-		return 'Littéraire';
-	}
-
-	return 'Scientifique';
+	return 'mint';
 }
 
 function teacherNameForClassSubject(
@@ -157,9 +150,9 @@ export function mapClassSubjects(
 					sources.staffMembersRaw,
 				),
 				hoursPerWeek: hoursPerWeekForSubject(subject, classSubject, sources.subjectMattersRaw),
-				color: pickColor(classSubject.id),
+				color: subjectColor(subject),
 				description: descriptionForSubject(subject, sources.subjectMattersRaw),
-				category: inferCategory(subject.name, subject.code),
+				category: subjectCategory(subject),
 			} satisfies Subject;
 		})
 		.filter((subject): subject is Subject => subject !== null)

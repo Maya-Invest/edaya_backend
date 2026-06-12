@@ -19,6 +19,8 @@ import {
   SEED_FINANCE_REFERENCE_DATE,
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
+  SEED_HOMEWORK_ASSIGNMENTS,
+  SEED_HOMEWORK_SUBMISSIONS,
   SEED_INCIDENTS,
   SEED_PAYMENTS,
   SEED_PEDAGOGICAL_NOTES,
@@ -34,6 +36,7 @@ import {
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
+  SEED_TEACHING_LOG_ENTRIES,
   seedPeriodIdForDate,
   splitDisplayName,
 } from "@edaya/dev-fixtures";
@@ -46,10 +49,15 @@ import {
   AttendanceStatus,
   CalendarEventKind,
   CalendarEventScopeKind,
+  ClassLogbookEntry,
   ClassSubjectMatterStatus,
   createSystemActorMetadata,
   DayOfWeek,
   GradeLevel,
+  HomeworkAssignment,
+  HomeworkAssignmentType,
+  HomeworkSubmission,
+  HomeworkSubmissionStatus,
   IncidentInvolvementRole,
   IncidentKind,
   PaymentMethod,
@@ -58,9 +66,19 @@ import {
   ResourceKind,
   SessionKind,
   StudentNote,
+  StudentNoteCategory,
   Subject,
+  SubjectCategory,
+  SubjectColor,
   SubjectMatter,
 } from "@edaya/core";
+
+const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
+  Comportement: StudentNoteCategory.Behavior,
+  Travail: StudentNoteCategory.Work,
+  Progression: StudentNoteCategory.Progress,
+  Encouragement: StudentNoteCategory.Encouragement,
+};
 
 export type DevSeedResult =
   | { status: "skipped"; reason: "already-seeded"; schoolCount: number }
@@ -86,6 +104,9 @@ export type DevSeedResult =
     sessions: number;
     assessments: number;
     assessmentResults: number;
+    homeworkAssignments: number;
+    homeworkSubmissions: number;
+    classLogbookEntries: number;
     calendarEvents: number;
     incidents: number;
     attendanceRecords: number;
@@ -245,6 +266,8 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       name: subject.name,
       code: subject.code,
       defaultCoefficient: subject.defaultCoefficient,
+      category: subject.category as SubjectCategory,
+      color: subject.color as SubjectColor,
     }), { moduleChecked: true });
   }
 
@@ -388,6 +411,60 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     }
   }
 
+  const homeworkTypeBySeed = {
+    homework: HomeworkAssignmentType.Homework,
+    project: HomeworkAssignmentType.Project,
+    reading: HomeworkAssignmentType.Reading,
+    lab: HomeworkAssignmentType.Lab,
+  } as const;
+
+  const submissionStatusBySeed = {
+    submitted: HomeworkSubmissionStatus.Submitted,
+    late: HomeworkSubmissionStatus.Late,
+    missing: HomeworkSubmissionStatus.Missing,
+  } as const;
+
+  for (const assignment of SEED_HOMEWORK_ASSIGNMENTS) {
+    await service.baseService.homeworkAssignments.save(new HomeworkAssignment({
+      id: assignment.id,
+      schoolId: assignment.schoolId,
+      classGroupId: assignment.classGroupId,
+      classSubjectId: assignment.classSubjectId,
+      title: assignment.title,
+      description: assignment.description,
+      dueDate: parseSeedDate(assignment.dueDate),
+      assignedDate: parseSeedDate(assignment.assignedDate),
+      type: homeworkTypeBySeed[assignment.type],
+      attachments: assignment.attachments.map(attachment => ({ ...attachment })),
+    }), { moduleChecked: true });
+  }
+
+  for (const submission of SEED_HOMEWORK_SUBMISSIONS) {
+    await service.baseService.homeworkSubmissions.save(new HomeworkSubmission({
+      id: submission.id,
+      homeworkAssignmentId: submission.homeworkAssignmentId,
+      studentId: submission.studentId,
+      status: submissionStatusBySeed[submission.status],
+      submittedAt: submission.submittedAt ? parseSeedDate(submission.submittedAt) : undefined,
+    }), { moduleChecked: true });
+  }
+
+  for (const entry of SEED_TEACHING_LOG_ENTRIES) {
+    await service.baseService.classLogbookEntries.save(new ClassLogbookEntry({
+      id: entry.id,
+      schoolId: entry.schoolId,
+      classGroupId: entry.classGroupId,
+      classSubjectId: entry.classSubjectId,
+      date: parseSeedDate(entry.date),
+      chapter: entry.chapter,
+      content: entry.content,
+      objectives: [...entry.objectives],
+      homework: entry.homework,
+      attachments: entry.attachments ? [...entry.attachments] : [],
+      progress: entry.progress,
+    }), { moduleChecked: true });
+  }
+
   const calendarKindByMock = {
     holiday: CalendarEventKind.Holiday,
     vacation: CalendarEventKind.Break,
@@ -408,6 +485,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
         schoolId: SEED_SCHOOL_ID,
         academicYearId: SEED_ACADEMIC_YEAR_ID,
         title: event.title,
+        description: event.description,
         startDate: parseSeedDate(event.startDate),
         endDate: parseSeedDate(event.endDate),
         kind: calendarKindByMock[event.mockType],
@@ -424,6 +502,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
         schoolId: SEED_SCHOOL_ID,
         academicYearId: SEED_ACADEMIC_YEAR_ID,
         title: event.title,
+        description: event.description,
         startDate: parseSeedDate(event.startDate),
         endDate: parseSeedDate(event.endDate),
         kind: calendarKindByMock[event.mockType],
@@ -443,7 +522,9 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       title: incident.title,
       description: incident.description,
       date: parseSeedDate(incident.date),
-      kind: IncidentKind.MinorInfraction,
+      kind: incident.kind === "major_infraction"
+        ? IncidentKind.MajorInfraction
+        : IncidentKind.MinorInfraction,
       reporterId: "st7",
     });
     await service.addStudentInvolvement({
@@ -479,6 +560,9 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       bloodType: profile.bloodType,
       allergies: joinHealthList(profile.allergies) ?? "Aucune",
       medicalConditions: joinHealthList(profile.chronicConditions) ?? "Aucune",
+      medications: joinHealthList(profile.medications),
+      clinicalNotes: profile.notes,
+      lastVisit: parseSeedDate(profile.lastVisit),
     });
   }
 
@@ -488,7 +572,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       schoolId: SEED_SCHOOL_ID,
       studentId: note.studentId,
       authorStaffId: note.authorId,
-      title: note.category,
+      category: SEED_NOTE_CATEGORY_BY_LABEL[note.category] ?? StudentNoteCategory.Work,
       body: note.content,
       createdAt: parseSeedDate(note.date),
     }));
@@ -558,6 +642,9 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     sessions: SEED_PLANNING_SLOTS.length,
     assessments: SEED_ASSESSMENTS.length,
     assessmentResults: assessmentResultCount,
+    homeworkAssignments: SEED_HOMEWORK_ASSIGNMENTS.length,
+    homeworkSubmissions: SEED_HOMEWORK_SUBMISSIONS.length,
+    classLogbookEntries: SEED_TEACHING_LOG_ENTRIES.length,
     calendarEvents: calendarEventCount,
     incidents: SEED_INCIDENTS.length,
     attendanceRecords: SEED_ABSENCE_RECORDS.length,

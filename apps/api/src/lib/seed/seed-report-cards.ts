@@ -12,10 +12,24 @@ import {
   AttendanceSummary,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
+  ReportCardDefinitionSectionRole,
+  ReportCardDefinitionStatus,
   ReportCardResult,
   ReportCardResultSection,
   ReportCardResultStatus,
 } from "@edaya/core";
+
+const SEED_SECTION_ROLE_BY_KIND = {
+  matieres: ReportCardDefinitionSectionRole.Subjects,
+  synthese: ReportCardDefinitionSectionRole.Summary,
+  appreciation: ReportCardDefinitionSectionRole.Comments,
+} as const;
+
+function mapDefinitionStatus(mockStatus: "published" | "draft"): ReportCardDefinitionStatus {
+  return mockStatus === "published"
+    ? ReportCardDefinitionStatus.Published
+    : ReportCardDefinitionStatus.Draft;
+}
 
 const CLASS_SUBJECT_BY_SUBJECT: Record<string, string> = {
   "subj-math": "cs-6a-math",
@@ -51,8 +65,9 @@ function buildSectionResults(
         sectionId: `${section.id}-${mark.subjectId}`,
         sectionKind: ReportCardDefinitionSectionKind.Subject,
         name: mark.subjectId,
-        average: Math.round(mark.average),
-        weight: Math.max(1, Math.round(mark.coefficient)),
+        average: mark.average,
+        weight: mark.coefficient,
+        comment: mark.appreciation,
         parentSectionId: section.id,
         classSubjectId: CLASS_SUBJECT_BY_SUBJECT[mark.subjectId],
         subResults: [],
@@ -84,6 +99,8 @@ export async function seedReportCards(
       name: scale.name,
       minScore: scale.minScore,
       maxScore: scale.maxScore,
+      decimalPlaces: scale.mockDecimalPlaces,
+      description: scale.mockDescription,
       isDefault: scale.isDefault,
       ranges: [...scale.ranges],
     });
@@ -97,8 +114,10 @@ export async function seedReportCards(
       schoolId: SEED_SCHOOL_ID,
       academicYearId: SEED_ACADEMIC_YEAR_ID,
       gradeLevelId: definition.gradeLevelId,
+      gradeScaleId: definition.gradeScaleId,
       name: definition.name,
       kind: ReportCardDefinitionKind.Default,
+      status: mapDefinitionStatus(definition.mockStatus),
       isDefault: definition.isDefault,
       description: definition.name,
     });
@@ -109,6 +128,8 @@ export async function seedReportCards(
         reportCardDefinitionId: definition.id,
         name: section.name,
         kind: ReportCardDefinitionSectionKind.Group,
+        role: SEED_SECTION_ROLE_BY_KIND[section.mockKind],
+        coefficient: "mockCoefficient" in section ? section.mockCoefficient : undefined,
         order: section.order,
         weight: section.weight > 0 ? section.weight : 1,
       });
