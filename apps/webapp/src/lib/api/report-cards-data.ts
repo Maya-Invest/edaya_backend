@@ -32,33 +32,6 @@ const SUBJECT_TO_CLASS_SUBJECT_6A: Record<string, string> = {
 	'subj-eps': 'cs-6a-eps',
 };
 
-const MARK_UI_META: Record<string, { coefficient: number; appreciation: string }> = {
-	'rcr-s1-t3:rcs-ms-fond:cs-6a-math': { coefficient: 2, appreciation: 'Excellent — maîtrise remarquable de l\'algèbre.' },
-	'rcr-s1-t3:rcs-ms-fond:cs-6a-fr': { coefficient: 2, appreciation: 'Expression claire, analyses pertinentes.' },
-	'rcr-s1-t3:rcs-ms-fond:cs-6a-hist': { coefficient: 2, appreciation: 'Bon esprit de synthèse en géographie.' },
-	'rcr-s1-t3:rcs-ms-sci:cs-6a-sci': { coefficient: 1.5, appreciation: 'Curiosité scientifique et rigueur en TP.' },
-	'rcr-s1-t3:rcs-ms-sci:cs-6a-en': { coefficient: 1.5, appreciation: 'Participation active, oral fluide.' },
-	'rcr-s1-t3:rcs-ms-sport:cs-6a-eps': { coefficient: 1, appreciation: 'Esprit d\'équipe et investissement exemplaire.' },
-	'rcr-s2-t3:rcs-ms-fond:cs-6a-math': { coefficient: 2, appreciation: 'Progrès en algèbre, rester vigilant sur la rigueur.' },
-	'rcr-s2-t3:rcs-ms-fond:cs-6a-fr': { coefficient: 2, appreciation: 'Devoirs parfois incomplets.' },
-	'rcr-s2-t3:rcs-ms-fond:cs-6a-hist': { coefficient: 2, appreciation: 'Participation correcte.' },
-	'rcr-s2-t3:rcs-ms-sci:cs-6a-sci': { coefficient: 1.5, appreciation: 'Résultats hétérogènes en sciences.' },
-	'rcr-s2-t3:rcs-ms-sci:cs-6a-en': { coefficient: 1.5, appreciation: 'Bon niveau à l\'oral.' },
-	'rcr-s2-t3:rcs-ms-sport:cs-6a-eps': { coefficient: 1, appreciation: 'Assiduité satisfaisante.' },
-	'rcr-s3-t3:rcs-ms-fond:cs-6a-math': { coefficient: 2, appreciation: 'Difficultés en calcul, soutien recommandé.' },
-	'rcr-s3-t3:rcs-ms-fond:cs-6a-fr': { coefficient: 2, appreciation: 'Peut mieux faire à l\'écrit.' },
-	'rcr-s3-t3:rcs-ms-fond:cs-6a-hist': { coefficient: 2, appreciation: 'Efforts visibles en histoire.' },
-	'rcr-s3-t3:rcs-ms-sci:cs-6a-sci': { coefficient: 1.5, appreciation: 'Compréhension fragile des notions clés.' },
-	'rcr-s3-t3:rcs-ms-sci:cs-6a-en': { coefficient: 1.5, appreciation: 'Timide à l\'oral.' },
-	'rcr-s3-t3:rcs-ms-sport:cs-6a-eps': { coefficient: 1, appreciation: 'Motivée en EPS.' },
-	'rcr-s5-t3:rcs-ms-fond:cs-6a-math': { coefficient: 2, appreciation: 'Maîtrise exceptionnelle.' },
-	'rcr-s5-t3:rcs-ms-fond:cs-6a-fr': { coefficient: 2, appreciation: 'Style élégant, analyses fines.' },
-	'rcr-s5-t3:rcs-ms-fond:cs-6a-hist': { coefficient: 2, appreciation: 'Culture générale remarquable.' },
-	'rcr-s5-t3:rcs-ms-sci:cs-6a-sci': { coefficient: 1.5, appreciation: 'Excellente méthode expérimentale.' },
-	'rcr-s5-t3:rcs-ms-sci:cs-6a-en': { coefficient: 1.5, appreciation: 'Expression orale très assurée.' },
-	'rcr-s5-t3:rcs-ms-sport:cs-6a-eps': { coefficient: 1, appreciation: 'Performance sportive au top.' },
-};
-
 function formatDate(value: unknown): string | undefined {
 	if (!value) {
 		return undefined;
@@ -200,6 +173,7 @@ interface ApiSectionResult {
 	name?: string;
 	average?: number;
 	weight?: number;
+	comment?: string | null;
 	classSubjectId?: string | null;
 	subResults?: ApiSectionResult[];
 }
@@ -208,9 +182,7 @@ function mapResultStatus(status: ReportCardResultRaw['status']): ReportCardResul
 	return status === 'published' ? 'published' : 'generated';
 }
 
-function mapSubjectMark(
-	resultId: string,
-	sectionId: string,
+export function mapSubjectMark(
 	subjectResult: ApiSectionResult,
 	sources: ClassSubjectsSources,
 ): ReportCardSubjectMark | null {
@@ -223,20 +195,18 @@ function mapSubjectMark(
 	const subject = classSubject
 		? sources.subjectsRaw.find(entry => entry.id === classSubject.subjectId)
 		: undefined;
-	const meta = MARK_UI_META[`${resultId}:${sectionId}:${classSubjectId}`];
 
 	return {
 		subjectId: classSubjectId,
 		subjectName: subject?.name ?? subjectResult.name ?? classSubjectId,
 		average: subjectResult.average ?? 0,
-		coefficient: meta?.coefficient ?? subjectResult.weight ?? 1,
-		appreciation: meta?.appreciation,
+		coefficient: subjectResult.weight ?? 1,
+		appreciation: subjectResult.comment ?? undefined,
 		teacherName: teacherNameForClassSubject(classSubjectId, sources),
 	};
 }
 
 function mapSectionResults(
-	resultId: string,
 	sectionResultsRaw: ApiSectionResult[],
 	sources: ClassSubjectsSources,
 ): ReportCardSectionResult[] {
@@ -244,7 +214,7 @@ function mapSectionResults(
 		.filter(section => (section.subResults ?? []).some(sub => sub.classSubjectId))
 		.map((section) => {
 			const marks = (section.subResults ?? [])
-				.map(sub => mapSubjectMark(resultId, section.sectionId ?? '', sub, sources))
+				.map(sub => mapSubjectMark(sub, sources))
 				.filter((mark): mark is ReportCardSubjectMark => mark !== null);
 
 			return {
@@ -279,7 +249,6 @@ export function mapReportCardResults(
 			classRank: result.rank ?? 0,
 			classSize: result.classSize ?? 0,
 			sectionResults: mapSectionResults(
-				result.id,
 				(result.sectionResults ?? []) as ApiSectionResult[],
 				sources,
 			),

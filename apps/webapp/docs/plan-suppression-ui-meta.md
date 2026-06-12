@@ -69,7 +69,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [x]   | [ ]     |
 | 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [x]   | [ ]     |
 | 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [x]   | [ ]     |
-| 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [ ]   | [ ]     |
+| 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [x]   | [ ]     |
 | 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [ ]   | [ ]     |
 | 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [ ]   | [ ]     |
 | 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [ ]   | [ ]     |
@@ -235,9 +235,10 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Ajouter `comment` / `appreciation` sur `ReportCardResultSection` (niveau subject, core)
-- [ ] Persister dans `seed-report-cards.ts` → `buildSectionResults()`
-- [ ] Supprimer `MARK_UI_META`
+- [x] Ajouter `comment` sur `ReportCardResultSection` (niveau subject, core) — mappé en `appreciation` côté UI
+- [x] Persister `appreciation` et `coefficient` exacts dans `buildSectionResults()` (jsonb `sectionResults`)
+- [x] Supprimer `MARK_UI_META` ; `mapSubjectMark()` lit `comment` et `weight` depuis l'API
+- [x] Tests : `report-card-result-section.test.ts`, `report-cards-data.test.ts`, `test-dev-report-cards-seed.test.ts`
 
 **Test UI**
 

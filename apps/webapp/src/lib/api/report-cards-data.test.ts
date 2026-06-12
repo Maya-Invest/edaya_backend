@@ -4,7 +4,9 @@ import {
 	mapDefinitionStatus,
 	mapGradeScales,
 	mapReportCardDefinitions,
+	mapReportCardResults,
 	mapSectionRole,
+	mapSubjectMark,
 } from './report-cards-data';
 
 const seedGradeScalesRaw = [
@@ -225,5 +227,82 @@ describe('report cards section role mapping', () => {
 	it('derives synthese and appreciation from section names', () => {
 		expect(mapSectionRole({ name: 'Synthèse trimestrielle' }, false)).toBe('synthese');
 		expect(mapSectionRole({ name: 'Appréciations' }, false)).toBe('appreciation');
+	});
+});
+
+const emptyClassSubjectsSources = {
+	classSubjectsRaw: [],
+	subjectsRaw: [],
+	staffAssignmentsRaw: [],
+	staffMembersRaw: [],
+} as const;
+
+describe('report cards result mapping', () => {
+	it('maps subject marks from API comment and weight', () => {
+		const mark = mapSubjectMark({
+			classSubjectId: 'cs-6a-math',
+			name: 'subj-math',
+			average: 18.5,
+			weight: 2,
+			comment: 'Excellent — maîtrise remarquable de l\'algèbre.',
+		}, emptyClassSubjectsSources);
+
+		expect(mark).toMatchObject({
+			subjectId: 'cs-6a-math',
+			average: 18.5,
+			coefficient: 2,
+			appreciation: 'Excellent — maîtrise remarquable de l\'algèbre.',
+		});
+	});
+
+	it('maps report card results without per-id appreciation tables', () => {
+		const results = mapReportCardResults(
+			[{
+				id: 'rcr-s1-t3',
+				studentId: 's1',
+				classGroupId: '6a',
+				periodId: '2025-t3',
+				reportCardDefinitionId: 'rcd-ms-6',
+				status: 'published',
+				overallAverage: 17.2,
+				rank: 1,
+				classSize: 6,
+				sectionResults: [{
+					sectionId: 'rcs-ms-fond',
+					sectionKind: 'group',
+					name: 'Matières fondamentales',
+					average: 17.17,
+					weight: 2,
+					subResults: [{
+						sectionId: 'rcs-ms-fond-subj-math',
+						sectionKind: 'subject',
+						name: 'subj-math',
+						average: 18.5,
+						weight: 2,
+						comment: 'Excellent — maîtrise remarquable de l\'algèbre.',
+						classSubjectId: 'cs-6a-math',
+						subResults: [],
+					}],
+				}],
+			}],
+			[{
+				id: 'rcd-ms-6',
+				schoolId: 'sch-edaya-central',
+				academicYearId: '2025',
+				gradeLevelId: 'gl-6',
+				gradeScaleId: 'gs-20',
+				name: 'Bulletin trimestriel — Collège (6ème)',
+				status: 'published',
+				isDefault: true,
+			}],
+			emptyClassSubjectsSources,
+		);
+
+		const mathMark = results[0]?.sectionResults[0]?.marks.find(mark => mark.subjectId === 'cs-6a-math');
+		expect(mathMark).toMatchObject({
+			average: 18.5,
+			coefficient: 2,
+			appreciation: 'Excellent — maîtrise remarquable de l\'algèbre.',
+		});
 	});
 });

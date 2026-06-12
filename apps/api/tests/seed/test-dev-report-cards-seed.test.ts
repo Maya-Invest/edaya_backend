@@ -138,7 +138,18 @@ describe("dev report cards seed", () => {
       role?: string;
       coefficient?: number;
     }>(await sectionsResponse.json());
-    const results = unwrapEntityList<{ id: string; studentId: string }>(await resultsResponse.json());
+    const results = unwrapEntityList<{
+      id: string;
+      studentId: string;
+      sectionResults?: Array<{
+        sectionId: string;
+        subResults?: Array<{
+          classSubjectId?: string;
+          comment?: string;
+          average?: number;
+        }>;
+      }>;
+    }>(await resultsResponse.json());
 
     expect(gradeScales.length).toBeGreaterThanOrEqual(SEED_GRADE_SCALES.length);
     expect(definitions.length).toBeGreaterThanOrEqual(SEED_REPORT_CARD_DEFINITIONS.length);
@@ -166,5 +177,22 @@ describe("dev report cards seed", () => {
     expect(sections.find(section => section.id === "rcs-ms-appr")?.role).toBe("appreciation");
     expect(results.some(result => result.id === "rcr-s1-t3" && result.studentId === "s1")).toBe(true);
     expect(results.some(result => result.id === "rcr-s9-t3" && result.studentId === "s9")).toBe(true);
+
+    const s1MathMark = results
+      .find(result => result.id === "rcr-s1-t3")
+      ?.sectionResults
+      ?.find(section => section.sectionId === "rcs-ms-fond")
+      ?.subResults
+      ?.find(mark => mark.classSubjectId === "cs-6a-math");
+    expect(s1MathMark?.average).toBe(18.5);
+    expect(s1MathMark?.comment).toContain("Excellent");
+
+    const s2MathMark = results
+      .find(result => result.id === "rcr-s2-t3")
+      ?.sectionResults
+      ?.find(section => section.sectionId === "rcs-ms-fond")
+      ?.subResults
+      ?.find(mark => mark.classSubjectId === "cs-6a-math");
+    expect(s2MathMark?.comment).toContain("Progrès en algèbre");
   }, 30_000);
 });

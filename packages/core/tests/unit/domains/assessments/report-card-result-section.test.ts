@@ -41,6 +41,20 @@ describe('ReportCardResultSection entity', () => {
     expect(result.classSubjectId).toBe('csub1')
   })
 
+  test('persists teacher comment on subject sections', () => {
+    const result = new ReportCardResultSection({
+      sectionId: 'sec3',
+      sectionKind: ReportCardDefinitionSectionKind.Subject,
+      name: 'subj-math',
+      average: 18.5,
+      weight: 2,
+      classSubjectId: 'cs-6a-math',
+      comment: 'Excellent — maîtrise remarquable de l\'algèbre.',
+    })
+
+    expect(result.comment).toBe('Excellent — maîtrise remarquable de l\'algèbre.')
+  })
+
   test('throws error if group section references a class subject', () => {
     expect(() => {
       new ReportCardResultSection({

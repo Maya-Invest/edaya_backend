@@ -103,6 +103,7 @@ interface StoredReportCardResultSection {
   weight: number
   parentSectionId?: string | null
   classSubjectId?: string | null
+  comment?: string | null
   subResults?: StoredReportCardResultSection[]
   data?: StoredReportCardResultSection
 }
@@ -116,6 +117,7 @@ function serializeReportCardResultSection(section: ReportCardResultSection): Sto
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? null,
     classSubjectId: section.classSubjectId ?? null,
+    comment: section.comment ?? null,
     subResults: section.subResults.map(serializeReportCardResultSection),
   }
 }
@@ -140,6 +142,7 @@ function deserializeReportCardResultSection(raw: StoredReportCardResultSection):
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? undefined,
     classSubjectId: section.classSubjectId ?? undefined,
+    comment: section.comment ?? undefined,
     subResults: (section.subResults ?? []).map(deserializeReportCardResultSection),
   })
 }
