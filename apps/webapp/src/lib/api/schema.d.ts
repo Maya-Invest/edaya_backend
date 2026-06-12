@@ -44625,6 +44625,9 @@ export interface components {
             studentId: string;
             allergies?: string | null;
             medicalConditions?: string | null;
+            medications?: string | null;
+            clinicalNotes?: string | null;
+            lastVisit?: unknown;
             emergencyProtocols?: string | null;
             bloodType?: string | null;
             createdAt?: unknown;
@@ -44635,6 +44638,9 @@ export interface components {
             studentId: string;
             allergies?: string | null;
             medicalConditions?: string | null;
+            medications?: string | null;
+            clinicalNotes?: string | null;
+            lastVisit?: unknown;
             emergencyProtocols?: string | null;
             bloodType?: string | null;
             createdAt?: unknown;

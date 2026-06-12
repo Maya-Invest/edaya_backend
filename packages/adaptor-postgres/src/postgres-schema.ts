@@ -542,6 +542,9 @@ export const studentHealthProfiles = pgTable('student_health_profiles', {
   bloodType: text('blood_type'),
   allergies: jsonb('allergies').notNull(),
   medicalConditions: jsonb('medical_conditions').notNull(),
+  medications: text('medications'),
+  clinicalNotes: text('clinical_notes'),
+  lastVisit: timestamp('last_visit', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

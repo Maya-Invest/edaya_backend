@@ -12,6 +12,9 @@ export const studentHealthProfileBaseSchema = z.object({
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   allergies: z.string().trim().min(1, 'allergies must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   medicalConditions: z.string().trim().min(1, 'medicalConditions must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  medications: z.string().trim().min(1, 'medications must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  clinicalNotes: z.string().trim().min(1, 'clinicalNotes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  lastVisit: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   emergencyProtocols: z.string().trim().min(1, 'emergencyProtocols must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   bloodType: z.string().trim().min(1, 'bloodType must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
@@ -51,6 +54,9 @@ export class StudentHealthProfile {
   get studentId() { return this.data.studentId }
   get allergies() { return this.data.allergies }
   get medicalConditions() { return this.data.medicalConditions }
+  get medications() { return this.data.medications }
+  get clinicalNotes() { return this.data.clinicalNotes }
+  get lastVisit() { return this.data.lastVisit }
   get emergencyProtocols() { return this.data.emergencyProtocols }
   get bloodType() { return this.data.bloodType }
   get createdAt() { return this.data.createdAt }

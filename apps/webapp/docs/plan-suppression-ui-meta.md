@@ -64,7 +64,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | --- | -------------------------------------------- | ----------------------------------------- | ---------------------- | ----- | ------- |
 | 1   | Incidents — catégorie / gravité              | `INCIDENT_UI_META` par ID                 | `school-life-data.ts`  | [x]   | [ ]     |
 | 2   | Calendrier — descriptions                    | Textes génériques hardcodés               | `school-life-data.ts`  | [x]   | [ ]     |
-| 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [ ]   | [ ]     |
+| 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [x]   | [ ]     |
 | 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [ ]   | [ ]     |
 | 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [ ]   | [ ]     |
 | 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [ ]   | [ ]     |
@@ -132,16 +132,16 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Étendre `StudentHealthProfile` (`lastVisit`, `medications`, `clinicalNotes`) **ou** réutiliser `emergencyProtocols`
-- [ ] Mettre à jour `run-dev-seed.ts` — persister tous les champs de `SEED_STUDENT_HEALTH_PROFILES`
-- [ ] Supprimer `HEALTH_UI_META` dans `student-360-data.ts`
+- [x] Étendre `StudentHealthProfile` (`lastVisit`, `medications`, `clinicalNotes`) + migration `0002_student_health_profile_fields`
+- [x] Mettre à jour `run-dev-seed.ts` — persister tous les champs de `SEED_STUDENT_HEALTH_PROFILES`
+- [x] Supprimer `HEALTH_UI_META` dans `student-360-data.ts`
 
 **Test UI**
 
-- [ ] `/school/students/s3` → onglet **Santé**
-- [ ] Mira Okafor (`s3`) : allergies Arachides + Crustacés, médicament EpiPen, dernière visite `08/04/2026`
-- [ ] Amélie Laurent (`s1`) : allergie Pollen, asthme, visite `14/02/2026`
-- [ ] Élève sans profil santé → état vide propre (pas de données fantômes)
+- [x] `/school/students/s3` → onglet **Santé**
+- [x] Mira Okafor (`s3`) : allergies Arachides + Crustacés, médicament EpiPen, dernière visite `08/04/2026`
+- [x] Amélie Laurent (`s1`) : allergie Pollen, asthme, visite `14/02/2026`
+- [x] Élève sans profil santé → état vide propre (pas de données fantômes)
 - [ ] Network : `studentHealthProfiles/list` contient les champs affichés
 
 ---
@@ -479,11 +479,12 @@ Mot de passe comptes démo : voir `DEV_AUTH_PASSWORD` dans `@edaya/dev-fixtures`
 ## Journal de progression
 
 
-| Date       | Item(s) | Note                                                                        |
-| ---------- | ------- | --------------------------------------------------------------------------- |
-| 2026-06-11 | —       | Plan initial : audit architecture API OK                                    |
-| 2026-06-11 | Doc     | Restructuration : tableau cochable + tests UI par item                      |
-| 2026-06-11 | 1       | Incidents : seed kinds + mapper `mapIncidentCategory/Severity`, tests bun   |
-| 2026-06-11 | 2       | Calendrier : champ `description` core + seed + mapper, OpenAPI regen, tests |
+| Date       | Item(s) | Note                                                                            |
+| ---------- | ------- | ------------------------------------------------------------------------------- |
+| 2026-06-11 | —       | Plan initial : audit architecture API OK                                        |
+| 2026-06-11 | Doc     | Restructuration : tableau cochable + tests UI par item                          |
+| 2026-06-11 | 1       | Incidents : seed kinds + mapper `mapIncidentCategory/Severity`, tests bun       |
+| 2026-06-11 | 2       | Calendrier : champ `description` core + seed + mapper, OpenAPI regen, tests     |
+| 2026-06-11 | 3       | Santé : `lastVisit`, `medications`, `clinicalNotes` core + seed + mapper, tests |
 
 

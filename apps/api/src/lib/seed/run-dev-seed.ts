@@ -483,6 +483,9 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       bloodType: profile.bloodType,
       allergies: joinHealthList(profile.allergies) ?? "Aucune",
       medicalConditions: joinHealthList(profile.chronicConditions) ?? "Aucune",
+      medications: joinHealthList(profile.medications),
+      clinicalNotes: profile.notes,
+      lastVisit: parseSeedDate(profile.lastVisit),
     });
   }
 

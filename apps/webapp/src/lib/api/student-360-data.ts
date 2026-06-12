@@ -7,12 +7,6 @@ type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 type StudentHealthProfileRaw = components['schemas']['StudentHealthProfile'];
 type StudentNoteRaw = components['schemas']['StudentNote'];
 
-const HEALTH_UI_META: Record<string, Pick<HealthRecord, 'lastVisit' | 'notes' | 'medications'>> = {
-	s1: { lastVisit: '2026-02-14', notes: 'Mild seasonal allergies.', medications: [] },
-	s3: { lastVisit: '2026-04-08', notes: 'Severe peanut allergy. EpiPen in nurse\'s office.', medications: ['EpiPen'] },
-	s5: { lastVisit: '2025-11-22', notes: 'No known issues.', medications: [] },
-};
-
 const NOTE_CATEGORIES = ['Comportement', 'Travail', 'Progression', 'Encouragement'] as const;
 
 function formatDate(value: unknown): string {
@@ -28,9 +22,12 @@ function formatDate(value: unknown): string {
 	return String(value).slice(0, 10);
 }
 
-function splitHealthList(value?: string | null): string[] {
+function splitHealthList(value?: string | null | string[]): string[] {
 	if (!value || value === 'Aucune') {
 		return [];
+	}
+	if (Array.isArray(value)) {
+		return value.map(entry => entry.trim()).filter(Boolean);
 	}
 	return value.split(',').map(entry => entry.trim()).filter(Boolean);
 }
@@ -51,16 +48,14 @@ export function mapHealthProfiles(profilesRaw: StudentHealthProfileRaw[]): Recor
 	const records: Record<string, HealthRecord> = {};
 
 	for (const profile of profilesRaw) {
-		const meta = HEALTH_UI_META[profile.studentId] ?? { lastVisit: '', notes: '', medications: [] };
-
 		records[profile.studentId] = {
 			studentId: profile.studentId,
 			bloodType: profile.bloodType ?? '—',
 			allergies: splitHealthList(profile.allergies),
-			medications: meta.medications,
+			medications: splitHealthList(profile.medications),
 			chronicConditions: mapChronicConditions(splitHealthList(profile.medicalConditions)),
-			lastVisit: meta.lastVisit,
-			notes: meta.notes,
+			lastVisit: formatDate(profile.lastVisit),
+			notes: profile.clinicalNotes ?? '',
 		};
 	}
 

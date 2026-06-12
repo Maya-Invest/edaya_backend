@@ -2342,6 +2342,19 @@
             "nullable": true,
             "minLength": 1
           },
+          "medications": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "clinicalNotes": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "lastVisit": {
+            "nullable": true
+          },
           "emergencyProtocols": {
             "type": "string",
             "nullable": true,
@@ -2381,6 +2394,19 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
+          },
+          "medications": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "clinicalNotes": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "lastVisit": {
+            "nullable": true
           },
           "emergencyProtocols": {
             "type": "string",
