@@ -73,7 +73,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [x]   | [ ]     |
 | 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [x]   | [ ]     |
 | 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [x]   | [ ]     |
-| 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [ ]   | [ ]     |
+| 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [x]   | [ ]     |
 | 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [ ]   | [ ]     |
 | 14  | Activités extrascolaires                     | Stub `/prototype/activities`              | `prototype-data.ts`    | [ ]   | [ ]     |
 | 15  | Devoirs / deadlines                          | Stub `/prototype/deadlines`               | `prototype-data.ts`    | [ ]   | [ ]     |
@@ -317,15 +317,17 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Compléter `loadAccessRolesData()` pour toute la matrice CRUD
-- [ ] `RolesMatrixView` + `StaffPermissionsBlock` : données API uniquement
-- [ ] Garder `drawer-constants.ts` pour styles / i18n seulement
+- [x] `PERMISSION_CATALOG` + `UI_PERMISSION_API_RULES` dans `access-roles-data.ts`
+- [x] `loadAccessRolesData()` → matrice CRUD complète depuis `accessRoles.permissions`
+- [x] `RoleDetail` + `StaffPermissionsBlock` : `roleCrudMatrix` / `roleEnabledPermissions` API uniquement
+- [x] `drawer-constants.ts` : styles, libellés CRUD/portée uniquement (plus de `ROLE_PERMISSIONS` statique)
+- [x] Tests : `access-roles-data.test.ts`
 
 **Test UI**
 
-- [ ] `/configuration/roles` → matrice 4 rôles × permissions
-- [ ] Cliquer rôle **Professeur** → détail : notes en scoped, finance en none
-- [ ] `/configuration/staff/st1` → bloc permissions staff cohérent avec le rôle
+- [x] `/configuration/roles` → matrice 4 rôles × permissions
+- [x] Cliquer rôle **Professeur** → détail : notes en scoped, finance en none
+- [x] `/configuration/staff/st1` → bloc permissions staff cohérent avec le rôle
 - [ ] Connecté en professeur : boutons admin (finance, config) masqués
 
 ---
