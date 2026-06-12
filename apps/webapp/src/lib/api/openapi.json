@@ -208,10 +208,88 @@
           "effectiveGrants"
         ]
       },
-      "SystemCommandResponse": {
+      "PrototypeActivity": {
         "type": "object",
-        "additionalProperties": {
-          "nullable": true
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Sport",
+              "Arts",
+              "Science",
+              "Language",
+              "Wellbeing"
+            ]
+          },
+          "coach": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": "string"
+          },
+          "participants": {
+            "type": "number"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "enrollments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "approved",
+                    "pending",
+                    "denied"
+                  ]
+                }
+              },
+              "required": [
+                "studentId",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "coach",
+          "schedule",
+          "participants",
+          "capacity",
+          "description",
+          "startDate",
+          "endDate",
+          "enrollments"
+        ]
+      },
+      "PrototypeActivitiesListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PrototypeActivity"
         }
       },
       "BusinessRuleViolationResponse": {
@@ -228,6 +306,236 @@
           "message",
           "code"
         ]
+      },
+      "PrototypeListRequest": {
+        "type": "object",
+        "properties": {}
+      },
+      "PrototypeDeadline": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "assignedDate": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Homework",
+              "Project",
+              "Reading",
+              "Lab"
+            ]
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "size"
+              ]
+            }
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "submitted",
+                    "late",
+                    "missing"
+                  ]
+                },
+                "date": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "studentId",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "classGroupId",
+          "title",
+          "subject",
+          "description",
+          "dueDate",
+          "assignedDate",
+          "type",
+          "attachments",
+          "submissions"
+        ]
+      },
+      "PrototypeDeadlinesListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PrototypeDeadline"
+        }
+      },
+      "PrototypeDeadlinesListRequest": {
+        "type": "object",
+        "properties": {
+          "classGroupId": {
+            "type": "string"
+          }
+        }
+      },
+      "PrototypeDemoAccount": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "directeur",
+              "prof_principal",
+              "professeur",
+              "educateur"
+            ]
+          },
+          "initials": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "staffId",
+          "email",
+          "name",
+          "role",
+          "initials"
+        ]
+      },
+      "PrototypeDemoAccountsListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PrototypeDemoAccount"
+        }
+      },
+      "PrototypeTeachingLogEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          },
+          "teacher": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "chapter": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "objectives": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "homework": {
+            "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "progress": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "classGroupId",
+          "subjectId",
+          "subjectName",
+          "teacher",
+          "date",
+          "chapter",
+          "content",
+          "objectives",
+          "progress"
+        ]
+      },
+      "PrototypeTeachingLogListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PrototypeTeachingLogEntry"
+        }
+      },
+      "PrototypeTeachingLogListRequest": {
+        "type": "object",
+        "properties": {
+          "classGroupId": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          }
+        }
+      },
+      "SystemCommandResponse": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        }
       },
       "SystemCommandRequest": {
         "type": "object",
@@ -4436,6 +4744,11 @@
             "type": "string",
             "minLength": 1
           },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "startDate": {},
           "endDate": {},
           "kind": {
@@ -4494,6 +4807,11 @@
           },
           "title": {
             "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "startDate": {},
@@ -6787,6 +7105,502 @@
                   "example": {
                     "message": "Hello World"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/prototype/activities/list": {
+      "post": {
+        "tags": [
+          "Core Prototype"
+        ],
+        "summary": "List extracurricular activities (stub — no domain entity yet)",
+        "requestBody": {
+          "description": "Prototype activities list request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrototypeListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stub extracurricular activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrototypeActivitiesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/prototype/deadlines/list": {
+      "post": {
+        "tags": [
+          "Core Prototype"
+        ],
+        "summary": "List homework deadlines (stub — no domain entity yet)",
+        "requestBody": {
+          "description": "Prototype deadlines list request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrototypeDeadlinesListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stub homework deadlines",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrototypeDeadlinesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/prototype/demo-accounts/list": {
+      "post": {
+        "tags": [
+          "Core Prototype"
+        ],
+        "summary": "List demo login accounts for the webapp login screen",
+        "requestBody": {
+          "description": "Prototype demo accounts list request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrototypeListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Demo staff accounts for login UI",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrototypeDemoAccountsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/prototype/teaching-log/list": {
+      "post": {
+        "tags": [
+          "Core Prototype"
+        ],
+        "summary": "List teaching journal entries (stub — no domain entity yet)",
+        "requestBody": {
+          "description": "Prototype teaching log list request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrototypeTeachingLogListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stub teaching journal entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrototypeTeachingLogListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
                 }
               }
             }

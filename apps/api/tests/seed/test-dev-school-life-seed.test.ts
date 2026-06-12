@@ -94,7 +94,7 @@ describe("dev school life seed", () => {
     expect(incidentsResponse.status).toBe(200);
     expect(attendanceResponse.status).toBe(200);
 
-    const calendarEvents = unwrapEntityList<{ id: string; title: string }>(await calendarResponse.json());
+    const calendarEvents = unwrapEntityList<{ id: string; title: string; description?: string }>(await calendarResponse.json());
     const incidents = unwrapEntityList<{ id: string; title: string; kind: string }>(await incidentsResponse.json());
     const attendance = unwrapEntityList<{ id: string; studentId: string }>(await attendanceResponse.json());
 
@@ -102,6 +102,9 @@ describe("dev school life seed", () => {
     expect(incidents.length).toBeGreaterThanOrEqual(SEED_INCIDENTS.length);
     expect(attendance.length).toBeGreaterThanOrEqual(SEED_ABSENCE_RECORDS.length);
     expect(calendarEvents.some(event => event.title === "Fête du Travail")).toBe(true);
+    expect(calendarEvents.find(event => event.id === "yc3")?.description).toBe(
+      "Vacances scolaires de printemps. Réouverture le 4 mai.",
+    );
     expect(incidents.some(incident => incident.id === "i1")).toBe(true);
     expect(incidents.find(incident => incident.id === "i1")?.kind).toBe("minor_infraction");
     expect(incidents.find(incident => incident.id === "i2")?.kind).toBe("minor_infraction");

@@ -110,6 +110,382 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/prototype/activities/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List extracurricular activities (stub — no domain entity yet) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Prototype activities list request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PrototypeListRequest"];
+                };
+            };
+            responses: {
+                /** @description Stub extracurricular activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PrototypeActivitiesListResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/prototype/deadlines/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List homework deadlines (stub — no domain entity yet) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Prototype deadlines list request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PrototypeDeadlinesListRequest"];
+                };
+            };
+            responses: {
+                /** @description Stub homework deadlines */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PrototypeDeadlinesListResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/prototype/demo-accounts/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List demo login accounts for the webapp login screen */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Prototype demo accounts list request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PrototypeListRequest"];
+                };
+            };
+            responses: {
+                /** @description Demo staff accounts for login UI */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PrototypeDemoAccountsListResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/prototype/teaching-log/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List teaching journal entries (stub — no domain entity yet) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Prototype teaching log list request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PrototypeTeachingLogListRequest"];
+                };
+            };
+            responses: {
+                /** @description Stub teaching journal entries */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PrototypeTeachingLogListResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/system/commands/{commandName}": {
         parameters: {
             query?: never;
@@ -43697,12 +44073,85 @@ export interface components {
                 expiresAt?: string;
             };
         };
-        SystemCommandResponse: {
-            [key: string]: unknown;
+        PrototypeActivity: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
+            coach: string;
+            schedule: string;
+            participants: number;
+            capacity: number;
+            description: string;
+            startDate: string;
+            endDate: string;
+            enrollments: {
+                studentId: string;
+                /** @enum {string} */
+                status: "approved" | "pending" | "denied";
+            }[];
         };
+        PrototypeActivitiesListResponse: components["schemas"]["PrototypeActivity"][];
         BusinessRuleViolationResponse: {
             message: string;
             code: string;
+        };
+        PrototypeListRequest: Record<string, never>;
+        PrototypeDeadline: {
+            id: string;
+            classGroupId: string;
+            title: string;
+            subject: string;
+            description: string;
+            dueDate: string;
+            assignedDate: string;
+            /** @enum {string} */
+            type: "Homework" | "Project" | "Reading" | "Lab";
+            attachments: {
+                name: string;
+                size: string;
+            }[];
+            submissions: {
+                studentId: string;
+                /** @enum {string} */
+                status: "submitted" | "late" | "missing";
+                date?: string;
+            }[];
+        };
+        PrototypeDeadlinesListResponse: components["schemas"]["PrototypeDeadline"][];
+        PrototypeDeadlinesListRequest: {
+            classGroupId?: string;
+        };
+        PrototypeDemoAccount: {
+            staffId: string;
+            email: string;
+            name: string;
+            /** @enum {string} */
+            role: "directeur" | "prof_principal" | "professeur" | "educateur";
+            initials: string;
+        };
+        PrototypeDemoAccountsListResponse: components["schemas"]["PrototypeDemoAccount"][];
+        PrototypeTeachingLogEntry: {
+            id: string;
+            classGroupId: string;
+            subjectId: string;
+            subjectName: string;
+            teacher: string;
+            date: string;
+            chapter: string;
+            content: string;
+            objectives: string[];
+            homework?: string;
+            attachments?: string[];
+            progress: number;
+        };
+        PrototypeTeachingLogListResponse: components["schemas"]["PrototypeTeachingLogEntry"][];
+        PrototypeTeachingLogListRequest: {
+            classGroupId?: string;
+            subjectName?: string;
+        };
+        SystemCommandResponse: {
+            [key: string]: unknown;
         };
         SystemCommandRequest: {
             schoolId: string;
@@ -44805,6 +45254,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             title: string;
+            description?: string | null;
             startDate: unknown;
             endDate: unknown;
             /** @enum {string} */
@@ -44824,6 +45274,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             title: string;
+            description?: string | null;
             startDate: unknown;
             endDate: unknown;
             /** @enum {string} */

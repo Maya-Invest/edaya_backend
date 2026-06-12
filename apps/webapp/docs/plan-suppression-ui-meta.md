@@ -63,7 +63,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | #   | Domaine                                      | Problème                                  | Fichier(s)             | Impl. | Test UI |
 | --- | -------------------------------------------- | ----------------------------------------- | ---------------------- | ----- | ------- |
 | 1   | Incidents — catégorie / gravité              | `INCIDENT_UI_META` par ID                 | `school-life-data.ts`  | [x]   | [ ]     |
-| 2   | Calendrier — descriptions                    | Textes génériques hardcodés               | `school-life-data.ts`  | [ ]   | [ ]     |
+| 2   | Calendrier — descriptions                    | Textes génériques hardcodés               | `school-life-data.ts`  | [x]   | [ ]     |
 | 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [ ]   | [ ]     |
 | 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [ ]   | [ ]     |
 | 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [ ]   | [ ]     |
@@ -112,17 +112,17 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Ajouter `description` au domaine `CalendarEvent` **ou** dériver via i18n depuis `kind` (sans texte fixe par ID)
-- [ ] Mettre à jour `run-dev-seed.ts` pour persister les descriptions du seed
-- [ ] Supprimer les textes génériques dans `mapCalendarEvents()`
+- [x] Ajouter `description` au domaine `CalendarEvent` (+ migration Postgres `0001_calendar_event_description`)
+- [x] Mettre à jour `run-dev-seed.ts` pour persister les descriptions du seed
+- [x] Mapper lit `event.description` depuis l'API (fallback par `kind` seulement si absent)
 
 **Test UI**
 
-- [ ] `/school/calendar` — au moins 10 événements listés
-- [ ] Événement « Vacances de printemps » → description du seed (pas « Vacances scolaires. » générique)
-- [ ] Événement « Cérémonie de remise des prix » → description spécifique du seed
-- [ ] Filtre par type (férié / vacances / cérémonie) fonctionne
-- [ ] Drawer détail événement : titre, dates, description, portée (toute l'école / classe)
+- [x] `/school/calendar` — au moins 10 événements listés
+- [x] Événement « Vacances de printemps » → description du seed (pas « Vacances scolaires. » générique)
+- [x] Événement « Cérémonie de remise des prix » → description spécifique du seed
+- [x] Filtre par type (férié / vacances / cérémonie) fonctionne
+- [x] Drawer détail événement : titre, dates, description, portée (toute l'école / classe)
 
 ---
 
@@ -479,10 +479,11 @@ Mot de passe comptes démo : voir `DEV_AUTH_PASSWORD` dans `@edaya/dev-fixtures`
 ## Journal de progression
 
 
-| Date       | Item(s) | Note                                                                      |
-| ---------- | ------- | ------------------------------------------------------------------------- |
-| 2026-06-11 | —       | Plan initial : audit architecture API OK                                  |
-| 2026-06-11 | Doc     | Restructuration : tableau cochable + tests UI par item                    |
-| 2026-06-11 | 1       | Incidents : seed kinds + mapper `mapIncidentCategory/Severity`, tests bun |
+| Date       | Item(s) | Note                                                                        |
+| ---------- | ------- | --------------------------------------------------------------------------- |
+| 2026-06-11 | —       | Plan initial : audit architecture API OK                                    |
+| 2026-06-11 | Doc     | Restructuration : tableau cochable + tests UI par item                      |
+| 2026-06-11 | 1       | Incidents : seed kinds + mapper `mapIncidentCategory/Severity`, tests bun   |
+| 2026-06-11 | 2       | Calendrier : champ `description` core + seed + mapper, OpenAPI regen, tests |
 
 

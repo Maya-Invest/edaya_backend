@@ -29,6 +29,25 @@ const CALENDAR_KIND_TO_TYPE: Record<string, SchoolYearEvent['type']> = {
 	event: 'ceremony',
 };
 
+const CALENDAR_KIND_FALLBACK_DESCRIPTION: Record<string, string> = {
+	holiday: 'Jour férié.',
+	break: 'Vacances scolaires.',
+	other: 'Fermeture ou arrêt de cours.',
+	event: 'Événement scolaire.',
+};
+
+export function mapCalendarEventType(kind: string): SchoolYearEvent['type'] {
+	return CALENDAR_KIND_TO_TYPE[kind] ?? 'ceremony';
+}
+
+export function mapCalendarEventDescription(event: CalendarEventRaw): string {
+	if (typeof event.description === 'string' && event.description.trim().length > 0) {
+		return event.description;
+	}
+
+	return CALENDAR_KIND_FALLBACK_DESCRIPTION[event.kind] ?? CALENDAR_KIND_FALLBACK_DESCRIPTION.event;
+}
+
 function formatDate(value: unknown): string {
 	if (!value) {
 		return '';
@@ -82,7 +101,7 @@ export async function fetchSchoolLifeSources(client: SchoolClient): Promise<Scho
 export function mapCalendarEvents(eventsRaw: CalendarEventRaw[]): SchoolYearEvent[] {
 	return eventsRaw
 		.map((event) => {
-			const mockType = CALENDAR_KIND_TO_TYPE[event.kind] ?? 'ceremony';
+			const type = mapCalendarEventType(event.kind);
 			const scope = event.scopeKind === 'school' || !event.scopeId
 				? 'all'
 				: [event.scopeId];
@@ -94,14 +113,8 @@ export function mapCalendarEvents(eventsRaw: CalendarEventRaw[]): SchoolYearEven
 				endDate: formatDate(event.endDate) !== formatDate(event.startDate)
 					? formatDate(event.endDate)
 					: undefined,
-				type: mockType,
-				description: mockType === 'holiday'
-					? 'Jour férié.'
-					: mockType === 'vacation'
-						? 'Vacances scolaires.'
-						: mockType === 'closure'
-							? 'Fermeture ou arrêt de cours.'
-							: 'Événement scolaire.',
+				type,
+				description: mapCalendarEventDescription(event),
 				scope,
 			} satisfies SchoolYearEvent;
 		})

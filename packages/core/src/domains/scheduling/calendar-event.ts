@@ -25,6 +25,7 @@ export const calendarEventBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   title: z.string().trim().min(1, 'title must not be blank'),
+  description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   startDate: zodDate(),
   endDate: zodDate(),
   kind: z.nativeEnum(CalendarEventKind),
@@ -74,6 +75,7 @@ export class CalendarEvent {
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }
   get title() { return this.data.title }
+  get description() { return this.data.description }
   get startDate() { return this.data.startDate }
   get endDate() { return this.data.endDate }
   get kind() { return this.data.kind }

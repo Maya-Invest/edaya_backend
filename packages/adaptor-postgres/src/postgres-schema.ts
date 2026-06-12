@@ -239,6 +239,7 @@ export const calendarEvents = pgTable('calendar_events', {
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   title: text('title').notNull(),
+  description: text('description'),
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   kind: text('kind').notNull(),

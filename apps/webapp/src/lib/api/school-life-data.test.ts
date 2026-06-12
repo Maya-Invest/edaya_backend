@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
+	mapCalendarEventDescription,
+	mapCalendarEvents,
 	mapIncidentCategory,
 	mapIncidentSeverity,
 	mapIncidents,
@@ -52,6 +54,66 @@ const seedInvolvements = [
 	{ id: 'inv-i2-s2', incidentId: 'i2', studentId: 's2', role: 'subject' },
 	{ id: 'inv-i3-s3', incidentId: 'i3', studentId: 's3', role: 'subject' },
 ] as const;
+
+const seedCalendarEvents = [
+	{
+		id: 'yc3',
+		schoolId: 'sch-edaya-central',
+		academicYearId: '2025',
+		title: 'Vacances de printemps',
+		description: 'Vacances scolaires de printemps. Réouverture le 4 mai.',
+		startDate: '2026-04-20',
+		endDate: '2026-05-02',
+		kind: 'break',
+		isNonSchoolDay: true,
+		scopeKind: 'school',
+		createdAt: '2026-04-20',
+	},
+	{
+		id: 'yc10',
+		schoolId: 'sch-edaya-central',
+		academicYearId: '2025',
+		title: 'Cérémonie de remise des prix',
+		description: 'Cérémonie de fin d\'année et remise des prix au tableau d\'honneur.',
+		startDate: '2026-06-26',
+		endDate: '2026-06-26',
+		kind: 'event',
+		isNonSchoolDay: false,
+		scopeKind: 'school',
+		createdAt: '2026-06-26',
+	},
+] as const;
+
+describe('school-life calendar mapping', () => {
+	it('uses API description when present', () => {
+		expect(mapCalendarEventDescription(seedCalendarEvents[0])).toBe(
+			'Vacances scolaires de printemps. Réouverture le 4 mai.',
+		);
+	});
+
+	it('falls back to kind label only when description is missing', () => {
+		expect(mapCalendarEventDescription({
+			...seedCalendarEvents[1],
+			description: undefined,
+		})).toBe('Événement scolaire.');
+	});
+
+	it('maps calendar events for the school calendar UI', () => {
+		const events = mapCalendarEvents([...seedCalendarEvents]);
+
+		expect(events).toHaveLength(2);
+		expect(events.find(entry => entry.id === 'yc3')).toMatchObject({
+			title: 'Vacances de printemps',
+			type: 'vacation',
+			description: 'Vacances scolaires de printemps. Réouverture le 4 mai.',
+			scope: 'all',
+		});
+		expect(events.find(entry => entry.id === 'yc10')).toMatchObject({
+			type: 'ceremony',
+			description: 'Cérémonie de fin d\'année et remise des prix au tableau d\'honneur.',
+		});
+	});
+});
 
 describe('school-life incident mapping', () => {
 	it('derives category and severity from API fields without per-id tables', () => {
