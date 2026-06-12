@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { StaffRole } from '$lib/types/school';
 	import type { Crud } from '$lib/api/access-roles-data';
+	import type { StaffRole } from '$lib/types/school';
 	import { emptyCrudMatrix, PERMISSION_CATALOG } from '$lib/api/access-roles-data';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';
@@ -40,11 +40,7 @@
 		return acc;
 	});
 
-	let perms = $state<Record<string, Record<Crud, boolean>>>(emptyCrudMatrix());
-
-	$effect(() => {
-		perms = liveCrudMatrix;
-	});
+	let perms = $derived(liveCrudMatrix);
 
 	function toggle(permKey: string, op: Crud) {
 		perms = {

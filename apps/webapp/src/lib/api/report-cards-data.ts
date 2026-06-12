@@ -168,7 +168,7 @@ export function mapReportCardDefinitions(
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
 	sources: ClassSubjectsSources,
 ): ReportCardDefinition[] {
-	return definitionsRaw.map((definition) => ({
+	return definitionsRaw.map(definition => ({
 		id: definition.id,
 		schoolId: definition.schoolId,
 		name: definition.name,

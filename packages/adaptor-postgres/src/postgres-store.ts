@@ -29,14 +29,14 @@ implements BaseRepositoryInterface<T> {
     return this.toDomain(rows[0])
   }
 
-  async findByIds(ids: string[]): Promise<T[]> {
+  async findByIds(ids: readonly string[]): Promise<T[]> {
     if (ids.length === 0) {
       return []
     }
     const rows = await this.getClient()
       .select()
       .from(this.table)
-      .where(inArray(this.table.id, ids))
+      .where(inArray(this.table.id, [...ids]))
 
     return rows.map((r: any) => this.toDomain(r))
   }
@@ -134,6 +134,6 @@ implements BaseRepositoryInterface<T> {
     }
     await this.getClient()
       .delete(this.table)
-      .where(inArray(this.table.id, ids))
+      .where(inArray(this.table.id, [...ids]))
   }
 }

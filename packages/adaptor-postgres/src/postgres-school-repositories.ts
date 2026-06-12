@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, AccessRole, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, AttendanceRecord, CalendarEvent, ClassGroup, ClassLogbookEntry, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, HomeworkAssignment, HomeworkSubmission, DisciplinaryAction, Fee, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, Session, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, AccessRole, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, AttendanceRecord, CalendarEvent, ClassGroup, ClassLogbookEntry, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeScale, Guardian, GuardianStudentLink, HomeworkAssignment, HomeworkSubmission, Incident, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, Session, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
 import { DefaultAuthorizationRepository } from '@edaya/core'
@@ -114,7 +114,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.schools = {
       findById: (id: string) => this.schoolsStore.findById(id),
       findOne: (options, last) => this.schoolsStore.findOne(options, last),
-      findByIds: (ids: string[]) => this.schoolsStore.findByIds(ids),
+      findByIds: (ids: readonly string[]) => this.schoolsStore.findByIds(ids),
       list: options => this.schoolsStore.list(options),
       count: filter => this.schoolsStore.count(filter),
       save: (entity: School) => this.schoolsStore.save(entity),

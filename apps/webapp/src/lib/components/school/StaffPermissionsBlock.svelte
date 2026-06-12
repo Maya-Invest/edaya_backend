@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { StaffRole } from '$lib/types/school';
-	import { PERMISSION_CATALOG } from '$lib/api/access-roles-data';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { PERMISSION_CATALOG } from '$lib/api/access-roles-data';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { ShieldCheck } from '$lib/icons';

@@ -45,7 +45,7 @@ function resolveRemoteDatabaseUrl(): string | undefined {
 
 function buildConfig(): IntegrationTestConfig {
   const databaseUrl = resolveRemoteDatabaseUrl()
-  const runRemotePostgres = parseBooleanFlag(process.env['RUN_POSTGRES_REMOTE']) && Boolean(databaseUrl)
+  const runRemotePostgres = parseBooleanFlag(process.env['INTEGRATION_TEST_INCLUDE_REMOTE']) && Boolean(databaseUrl)
 
   return {
     runRemotePostgres,

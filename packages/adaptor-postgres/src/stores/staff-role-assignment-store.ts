@@ -140,7 +140,7 @@ export class PostgresStaffRoleAssignmentStore extends PostgresStore<StaffRoleAss
     return populated
   }
 
-  override async findByIds(ids: string[]): Promise<StaffRoleAssignment[]> {
+  override async findByIds(ids: readonly string[]): Promise<StaffRoleAssignment[]> {
     return this.populateRelations(await super.findByIds(ids))
   }
 

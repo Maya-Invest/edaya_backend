@@ -45,7 +45,7 @@ describe('mapClassSubjects', () => {
 
 		const byName = Object.fromEntries(subjects.map(subject => [subject.name, subject]));
 
-		expect(byName['Mathematics']).toMatchObject({ category: 'Scientifique', color: 'mint' });
+		expect(byName.Mathematics).toMatchObject({ category: 'Scientifique', color: 'mint' });
 		expect(byName['French Literature']).toMatchObject({ category: 'Littéraire', color: 'warm' });
 		expect(byName['History & Geography']).toMatchObject({ category: 'Sciences humaines', color: 'sky' });
 		expect(byName.English).toMatchObject({ category: 'Langues', color: 'sky' });

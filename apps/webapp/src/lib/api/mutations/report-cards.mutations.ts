@@ -83,6 +83,7 @@ export async function createGradeScaleMutation(input: {
 		name: input.name.trim(),
 		minScore: input.minScore,
 		maxScore: input.maxScore,
+		decimalPlaces: 2,
 		isDefault: false,
 		ranges: buildGradeScaleRanges(input.minScore, input.maxScore, input.passingScore),
 	}));

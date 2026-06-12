@@ -80,7 +80,7 @@ export class PostgresAccessRoleStore extends PostgresStore<AccessRole> {
     return enriched
   }
 
-  override async findByIds(ids: string[]): Promise<AccessRole[]> {
+  override async findByIds(ids: readonly string[]): Promise<AccessRole[]> {
     return this.enrichRoles(await super.findByIds(ids))
   }
 

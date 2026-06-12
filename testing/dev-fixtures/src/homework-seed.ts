@@ -26,7 +26,7 @@ export const SEED_HOMEWORK_ASSIGNMENTS = SEED_DEADLINES.map(deadline => ({
   assignedDate: deadline.assignedDate,
   type: DEADLINE_TYPE_TO_HOMEWORK_TYPE[deadline.type],
   attachments: deadline.attachments.map(attachment => ({ ...attachment })),
-})) as const
+}))
 
 export const SEED_HOMEWORK_SUBMISSIONS = SEED_DEADLINES.flatMap(deadline =>
   deadline.submissions.map(submission => ({
@@ -36,4 +36,4 @@ export const SEED_HOMEWORK_SUBMISSIONS = SEED_DEADLINES.flatMap(deadline =>
     status: submission.status,
     submittedAt: 'date' in submission ? submission.date : undefined,
   })),
-) as const
+)

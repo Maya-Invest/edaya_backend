@@ -19,7 +19,7 @@ const result = spawnSync(
     stdio: 'inherit',
     env: {
       ...process.env,
-      RUN_POSTGRES_REMOTE: '1',
+      INTEGRATION_TEST_INCLUDE_REMOTE: '1',
     },
   },
 )

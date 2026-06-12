@@ -48,6 +48,10 @@ export {
   splitDisplayName,
 } from './dataset'
 export {
+  SEED_HOMEWORK_ASSIGNMENTS,
+  SEED_HOMEWORK_SUBMISSIONS,
+} from './homework-seed'
+export {
   SEED_GRADE_SCALES,
   SEED_REPORT_CARD_DEFINITION_MS6,
   SEED_REPORT_CARD_DEFINITION_MS_DRAFT,
@@ -65,7 +69,3 @@ export {
   SEED_TEACHING_LOG_ENTRIES,
   type TeachingLogSeedEntry,
 } from './teaching-log-seed'
-export {
-  SEED_HOMEWORK_ASSIGNMENTS,
-  SEED_HOMEWORK_SUBMISSIONS,
-} from './homework-seed'

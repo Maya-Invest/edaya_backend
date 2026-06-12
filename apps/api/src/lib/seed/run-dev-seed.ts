@@ -42,6 +42,9 @@ import {
 } from "@edaya/dev-fixtures";
 import type {
   FeeCategory,
+
+  SubjectCategory,
+  SubjectColor,
 } from "@edaya/core";
 import {
   AcademicPeriodType,
@@ -68,8 +71,6 @@ import {
   StudentNote,
   StudentNoteCategory,
   Subject,
-  SubjectCategory,
-  SubjectColor,
   SubjectMatter,
 } from "@edaya/core";
 

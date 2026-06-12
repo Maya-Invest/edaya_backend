@@ -11,18 +11,18 @@ import type {
   AttendanceRecord,
   CalendarEvent,
   ClassGroup,
+  ClassLogbookEntry,
   ClassSubject,
   ClassSubjectMatter,
-  ClassLogbookEntry,
   ClassSubjectProgress,
-  HomeworkAssignment,
-  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
   GradeScale,
   Guardian,
   GuardianStudentLink,
+  HomeworkAssignment,
+  HomeworkSubmission,
   Incident,
   MessageDelivery,
   Payment,
@@ -89,7 +89,7 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   })
   const store = {
     findById: async (id: string) => entries.get(id),
-    findByIds: async (ids: string[]) => ids.map(id => entries.get(id)).filter((entity): entity is T => entity !== undefined),
+    findByIds: async (ids: readonly string[]) => ids.map(id => entries.get(id)).filter((entity): entity is T => entity !== undefined),
     findOne: async (options?: Filter<T>) => {
       const results = await store.list(options)
       return results[0]
@@ -146,7 +146,7 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
       }
       return entitiesToSave.map(e => e.id)
     },
-    batchDelete: async (ids: string[]) => {
+    batchDelete: async (ids: readonly string[]) => {
       for (const id of ids) {
         entries.delete(id)
       }

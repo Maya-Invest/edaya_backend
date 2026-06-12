@@ -46,7 +46,6 @@ router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
   .openapi(listPrototypeDemoAccountsRoute, listPrototypeDemoAccountsHandler)
-  .openapi(listPrototypeTeachingLogRoute, listPrototypeTeachingLogHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 

@@ -16,12 +16,12 @@ const ROLE_ID_TO_STAFF_ROLE: Record<string, StaffRole> = {
 	'role-coordinator': 'prof_principal',
 	'role-educator': 'educateur',
 	'role-teacher': 'professeur',
-	directeur: 'directeur',
-	director: 'directeur',
-	prof_principal: 'prof_principal',
-	principal_teacher: 'prof_principal',
-	educateur: 'educateur',
-	educator: 'educateur',
+	'directeur': 'directeur',
+	'director': 'directeur',
+	'prof_principal': 'prof_principal',
+	'principal_teacher': 'prof_principal',
+	'educateur': 'educateur',
+	'educator': 'educateur',
 };
 
 function inferSubjectCategory(name: string, code?: string | null): SubjectCategory {
@@ -183,8 +183,8 @@ export function mapStaffMembers(
 }
 
 export async function fetchStaffMembers(client: SchoolClient): Promise<StaffMember[]> {
-	const [staffRaw, roleAssignmentsRaw, classGroupsRaw, assignmentsRaw, classSubjectsRaw, subjectsRaw] =
-		await Promise.all([
+	const [staffRaw, roleAssignmentsRaw, classGroupsRaw, assignmentsRaw, classSubjectsRaw, subjectsRaw]
+		= await Promise.all([
 			client.entities.staffMembers.list({}),
 			client.entities.staffRoleAssignments.list({}),
 			client.entities.classGroups.list({}),

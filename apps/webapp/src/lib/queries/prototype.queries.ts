@@ -1,10 +1,10 @@
-import { fetchActivities } from '$lib/api/prototype-data';
 import { fetchDeadlines } from '$lib/api/homework-data';
+import { fetchActivities } from '$lib/api/prototype-data';
 import { resolvePageLoad } from '$lib/queries/page-status';
 
 export { fetchDeadlines } from '$lib/api/homework-data';
-export { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 export { fetchActivities } from '$lib/api/prototype-data';
+export { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 
 export function querySchoolActivitiesPage() {
 	return (url: URL) => resolvePageLoad(url, {

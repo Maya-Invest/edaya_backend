@@ -37,7 +37,7 @@ export type QueryOptions<T> = Filter<T> & {
 export interface BaseRepositoryInterface<T> {
   findById: (id: string) => Promise<T | undefined>
   findOne: (options?: QueryOptions<T>, last?: boolean) => Promise<T | undefined>
-  findByIds: (ids: string[]) => Promise<T[]>
+  findByIds: (ids: readonly string[]) => Promise<T[]>
   list: (options?: QueryOptions<T>) => Promise<T[]>
 
   count: (filter?: Filter<T>) => Promise<number>

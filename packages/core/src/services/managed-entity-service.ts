@@ -84,7 +84,7 @@ export class ManagedEntityService<T> {
     return entity
   }
 
-  async findByIds(ids: string[]): Promise<T[]> {
+  async findByIds(ids: readonly string[]): Promise<T[]> {
     await this.config.read.checkModule(this.actor)
     const entities = await this.config.repository.findByIds(ids)
     await this.ensureEntitiesTenant(entities)

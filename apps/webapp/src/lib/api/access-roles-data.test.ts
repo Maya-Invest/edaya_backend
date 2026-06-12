@@ -2,7 +2,6 @@ import { describe, expect, it } from 'bun:test';
 import {
 	buildRoleCrudMatrix,
 	buildRoleEnabledPermissions,
-	PERMISSION_CATALOG,
 } from './access-roles-data';
 
 const teacherPermissions = [
