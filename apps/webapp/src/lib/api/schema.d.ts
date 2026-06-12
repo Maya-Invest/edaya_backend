@@ -44652,6 +44652,11 @@ export interface components {
             studentId: string;
             authorStaffId: string;
             title?: string | null;
+            /**
+             * @default work
+             * @enum {string}
+             */
+            category: "behavior" | "work" | "progress" | "encouragement";
             body: string;
             /**
              * @default staff
@@ -44665,6 +44670,11 @@ export interface components {
             id: string;
             studentId: string;
             title?: string | null;
+            /**
+             * @default work
+             * @enum {string}
+             */
+            category: "behavior" | "work" | "progress" | "encouragement";
             body: string;
             /**
              * @default staff
@@ -44676,6 +44686,11 @@ export interface components {
         };
         UpdateStudentNoteCommand: {
             title?: string | null;
+            /**
+             * @default work
+             * @enum {string}
+             */
+            category: "behavior" | "work" | "progress" | "encouragement";
             body?: string;
             /**
              * @default staff

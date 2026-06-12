@@ -89,7 +89,7 @@ describe("dev student 360 seed", () => {
       clinicalNotes?: string;
       lastVisit?: string;
     }>(await healthResponse.json());
-    const notes = unwrapEntityList<{ id: string; studentId: string }>(await notesResponse.json());
+    const notes = unwrapEntityList<{ id: string; studentId: string; category?: string }>(await notesResponse.json());
 
     expect(healthProfiles.length).toBeGreaterThanOrEqual(SEED_STUDENT_HEALTH_PROFILES.length);
     expect(notes.length).toBeGreaterThanOrEqual(SEED_PEDAGOGICAL_NOTES.length);
@@ -100,5 +100,7 @@ describe("dev student 360 seed", () => {
     );
     expect(healthProfiles.find(profile => profile.id === "hp-s3")?.lastVisit).toBeDefined();
     expect(notes.some(note => note.id === "pn1" && note.studentId === "s1")).toBe(true);
+    expect(notes.find(note => note.id === "pn1")?.category).toBe("progress");
+    expect(notes.find(note => note.id === "pn4")?.category).toBe("behavior");
   }, 30_000);
 });

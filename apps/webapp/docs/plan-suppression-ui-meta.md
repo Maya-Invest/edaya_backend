@@ -65,7 +65,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 1   | Incidents — catégorie / gravité              | `INCIDENT_UI_META` par ID                 | `school-life-data.ts`  | [x]   | [ ]     |
 | 2   | Calendrier — descriptions                    | Textes génériques hardcodés               | `school-life-data.ts`  | [x]   | [ ]     |
 | 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [x]   | [ ]     |
-| 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [ ]   | [ ]     |
+| 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [x]   | [ ]     |
 | 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [ ]   | [ ]     |
 | 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [ ]   | [ ]     |
 | 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [ ]   | [ ]     |
@@ -152,16 +152,17 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Décider : enum `category` sur `StudentNote` vs garder `title`
-- [ ] Si enum : migration core + seed + simplifier `mapNoteCategory()`
-- [ ] Supprimer `NOTE_CATEGORIES` en dur si l'API expose l'enum
+- [x] Enum `StudentNoteCategory` (`behavior`, `work`, `progress`, `encouragement`) sur `StudentNote` + migration `0003_student_note_category`
+- [x] Mettre à jour `run-dev-seed.ts` — persister `category` depuis `SEED_PEDAGOGICAL_NOTES` (plus de hack `title`)
+- [x] Simplifier `mapNoteCategory()` — lit `note.category` depuis l'API (fallback `title` pour rétrocompat)
+- [x] Tests : `student-note.test.ts`, `student-360-data.test.ts`, `test-dev-student-360-seed.test.ts`
 
 **Test UI**
 
-- [ ] `/school/students/s1` → onglet **Notes** (ou section notes pédagogiques)
-- [ ] 3 notes visibles avec bonnes catégories : Progression, Travail, Encouragement
-- [ ] `/school/students/s2` → note « Comportement » visible
-- [ ] Dates et auteurs (st1, st2, st3) corrects
+- [x] `/school/students/s1` → onglet **Notes** (ou section notes pédagogiques)
+- [x] 3 notes visibles avec bonnes catégories : Progression, Travail, Encouragement
+- [x] `/school/students/s2` → note « Comportement » visible
+- [x] Dates et auteurs (st1, st2, st3) corrects
 
 ---
 

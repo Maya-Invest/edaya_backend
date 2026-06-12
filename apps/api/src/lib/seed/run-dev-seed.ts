@@ -58,9 +58,17 @@ import {
   ResourceKind,
   SessionKind,
   StudentNote,
+  StudentNoteCategory,
   Subject,
   SubjectMatter,
 } from "@edaya/core";
+
+const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
+  Comportement: StudentNoteCategory.Behavior,
+  Travail: StudentNoteCategory.Work,
+  Progression: StudentNoteCategory.Progress,
+  Encouragement: StudentNoteCategory.Encouragement,
+};
 
 export type DevSeedResult =
   | { status: "skipped"; reason: "already-seeded"; schoolCount: number }
@@ -495,7 +503,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       schoolId: SEED_SCHOOL_ID,
       studentId: note.studentId,
       authorStaffId: note.authorId,
-      title: note.category,
+      category: SEED_NOTE_CATEGORY_BY_LABEL[note.category] ?? StudentNoteCategory.Work,
       body: note.content,
       createdAt: parseSeedDate(note.date),
     }));

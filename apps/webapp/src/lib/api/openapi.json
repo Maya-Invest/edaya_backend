@@ -2450,6 +2450,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "category": {
+            "type": "string",
+            "enum": [
+              "behavior",
+              "work",
+              "progress",
+              "encouragement"
+            ],
+            "default": "work"
+          },
           "body": {
             "type": "string",
             "minLength": 1
@@ -2490,6 +2500,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "category": {
+            "type": "string",
+            "enum": [
+              "behavior",
+              "work",
+              "progress",
+              "encouragement"
+            ],
+            "default": "work"
+          },
           "body": {
             "type": "string",
             "minLength": 1
@@ -2519,6 +2539,16 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "behavior",
+              "work",
+              "progress",
+              "encouragement"
+            ],
+            "default": "work"
           },
           "body": {
             "type": "string",

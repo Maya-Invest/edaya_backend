@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { mapHealthProfiles } from './student-360-data';
+import { mapHealthProfiles, mapNoteCategory, mapPedagogicalNotes } from './student-360-data';
 
 const seedHealthProfiles = [
 	{
@@ -29,6 +29,53 @@ const seedHealthProfiles = [
 		updatedAt: '2026-04-08',
 	},
 ] as const;
+
+const seedPedagogicalNotes = [
+	{
+		id: 'pn1',
+		schoolId: 'sch-edaya-central',
+		studentId: 's1',
+		authorStaffId: 'st1',
+		category: 'progress',
+		body: 'Très bonne progression en algèbre, raisonnement clair.',
+		createdAt: '2026-05-12',
+		updatedAt: '2026-05-12',
+	},
+	{
+		id: 'pn4',
+		schoolId: 'sch-edaya-central',
+		studentId: 's2',
+		authorStaffId: 'st1',
+		category: 'behavior',
+		body: 'Bavardages réguliers en classe, vigilance demandée.',
+		createdAt: '2026-05-05',
+		updatedAt: '2026-05-05',
+	},
+] as const;
+
+describe('student 360 pedagogical notes mapping', () => {
+	it('maps API category enum to UI labels', () => {
+		expect(mapNoteCategory('progress')).toBe('Progression');
+		expect(mapNoteCategory('behavior')).toBe('Comportement');
+		expect(mapNoteCategory('work')).toBe('Travail');
+		expect(mapNoteCategory('encouragement')).toBe('Encouragement');
+	});
+
+	it('maps pedagogical notes from API fields', () => {
+		const notes = mapPedagogicalNotes([...seedPedagogicalNotes]);
+
+		expect(notes).toHaveLength(2);
+		expect(notes.find(note => note.id === 'pn1')).toMatchObject({
+			studentId: 's1',
+			category: 'Progression',
+			content: 'Très bonne progression en algèbre, raisonnement clair.',
+		});
+		expect(notes.find(note => note.id === 'pn4')).toMatchObject({
+			studentId: 's2',
+			category: 'Comportement',
+		});
+	});
+});
 
 describe('student 360 health mapping', () => {
 	it('maps health fields from API without per-student tables', () => {

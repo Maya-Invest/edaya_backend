@@ -528,6 +528,7 @@ export const studentNotes = pgTable('student_notes', {
   studentId: text('student_id').notNull(),
   authorStaffId: text('author_staff_id').notNull(),
   title: text('title'),
+  category: text('category').notNull().default('work'),
   body: text('body').notNull(),
   visibility: text('visibility').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),

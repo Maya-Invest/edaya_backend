@@ -14,12 +14,20 @@ export enum StudentNoteVisibility {
   GuardianVisible = 'guardian_visible',
 }
 
+export enum StudentNoteCategory {
+  Behavior = 'behavior',
+  Work = 'work',
+  Progress = 'progress',
+  Encouragement = 'encouragement',
+}
+
 export const studentNoteBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   authorStaffId: z.string().trim().min(1, 'authorStaffId must not be blank'),
   title: z.string().trim().min(1, 'title must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  category: z.nativeEnum(StudentNoteCategory).default(StudentNoteCategory.Work),
   body: z.string().trim().min(1, 'body must not be blank'),
   visibility: z.nativeEnum(StudentNoteVisibility).default(StudentNoteVisibility.Staff),
   createdAt: zodDate().default(() => new Date()),
@@ -58,6 +66,7 @@ export class StudentNote {
   get studentId() { return this.data.studentId }
   get authorStaffId() { return this.data.authorStaffId }
   get title() { return this.data.title }
+  get category() { return this.data.category }
   get body() { return this.data.body }
   get visibility() { return this.data.visibility }
   get createdAt() { return this.data.createdAt }

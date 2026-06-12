@@ -7,7 +7,12 @@ type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 type StudentHealthProfileRaw = components['schemas']['StudentHealthProfile'];
 type StudentNoteRaw = components['schemas']['StudentNote'];
 
-const NOTE_CATEGORIES = ['Comportement', 'Travail', 'Progression', 'Encouragement'] as const;
+const NOTE_CATEGORY_TO_UI: Record<string, PedagogicalNote['category']> = {
+	behavior: 'Comportement',
+	work: 'Travail',
+	progress: 'Progression',
+	encouragement: 'Encouragement',
+};
 
 function formatDate(value: unknown): string {
 	if (!value) {
@@ -37,10 +42,18 @@ function mapChronicConditions(values: string[]): ChronicCondition[] {
 	return values.filter((value): value is ChronicCondition => allowed.has(value as ChronicCondition));
 }
 
-function mapNoteCategory(title?: string | null): PedagogicalNote['category'] {
-	if (title && NOTE_CATEGORIES.includes(title as PedagogicalNote['category'])) {
+export function mapNoteCategory(
+	category?: string | null,
+	title?: string | null,
+): PedagogicalNote['category'] {
+	if (category && category in NOTE_CATEGORY_TO_UI) {
+		return NOTE_CATEGORY_TO_UI[category];
+	}
+
+	if (title && Object.values(NOTE_CATEGORY_TO_UI).includes(title as PedagogicalNote['category'])) {
 		return title as PedagogicalNote['category'];
 	}
+
 	return 'Travail';
 }
 
@@ -69,7 +82,7 @@ export function mapPedagogicalNotes(notesRaw: StudentNoteRaw[]): PedagogicalNote
 			studentId: note.studentId,
 			date: formatDate(note.createdAt),
 			authorId: note.authorStaffId,
-			category: mapNoteCategory(note.title),
+			category: mapNoteCategory(note.category, note.title),
 			content: note.body,
 		}))
 		.sort((left, right) => right.date.localeCompare(left.date));
