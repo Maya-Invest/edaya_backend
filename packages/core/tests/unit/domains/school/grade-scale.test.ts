@@ -31,6 +31,21 @@ describe('GradeScale entity', () => {
     expect(scale.findRange(21)).toBeUndefined()
   })
 
+  test('derives passingScore from first passing range', () => {
+    const scale = new GradeScale(baseArgs)
+    expect(scale.passingScore).toBe(10)
+  })
+
+  test('persists decimalPlaces and description', () => {
+    const scale = new GradeScale({
+      ...baseArgs,
+      decimalPlaces: 2,
+      description: 'Barème standard français — note sur 20, seuil de réussite à 10.',
+    })
+    expect(scale.decimalPlaces).toBe(2)
+    expect(scale.description).toBe('Barème standard français — note sur 20, seuil de réussite à 10.')
+  })
+
   test('throws error if minScore exceeds maxScore', () => {
     expect(() => {
       new GradeScale({ ...baseArgs, minScore: 20, maxScore: 10 })

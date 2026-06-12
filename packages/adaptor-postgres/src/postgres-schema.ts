@@ -410,6 +410,8 @@ export const gradeScales = pgTable('grade_scales', {
   minScore: integer('min_score').notNull(),
   maxScore: integer('max_score').notNull(),
   ranges: jsonb('ranges').notNull(),
+  decimalPlaces: integer('decimal_places').notNull().default(1),
+  description: text('description'),
   isDefault: boolean('is_default').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })

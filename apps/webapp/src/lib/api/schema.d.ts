@@ -44801,6 +44801,9 @@ export interface components {
             name: string;
             minScore: number;
             maxScore: number;
+            /** @default 1 */
+            decimalPlaces: number;
+            description?: string | null;
             /** @default false */
             isDefault: boolean;
             createdAt?: unknown;
@@ -44827,6 +44830,9 @@ export interface components {
             name: string;
             minScore: number;
             maxScore: number;
+            /** @default 1 */
+            decimalPlaces: number;
+            description?: string | null;
             /** @default false */
             isDefault: boolean;
             createdAt?: unknown;

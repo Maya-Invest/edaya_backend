@@ -66,7 +66,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 2   | Calendrier — descriptions                    | Textes génériques hardcodés               | `school-life-data.ts`  | [x]   | [ ]     |
 | 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [x]   | [ ]     |
 | 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [x]   | [ ]     |
-| 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [ ]   | [ ]     |
+| 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [x]   | [ ]     |
 | 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [ ]   | [ ]     |
 | 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [ ]   | [ ]     |
 | 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [ ]   | [ ]     |
@@ -172,16 +172,18 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Calculer `passingScore` depuis `ranges[].isPassing` (déjà en API) — sans table par ID
-- [ ] Décider sort `decimalPlaces` / `description` : champ API ou retrait UI
-- [ ] Supprimer `GRADE_SCALE_UI_META`
+- [x] Calculer `passingScore` depuis `ranges[].isPassing` via `derivePassingScore()` — sans table par ID
+- [x] Ajouter `decimalPlaces` et `description` sur `GradeScale` (+ migration `0004_grade_scale_ui_fields`)
+- [x] Mettre à jour `seed-report-cards.ts` — persister `mockDecimalPlaces` et `mockDescription`
+- [x] Supprimer `GRADE_SCALE_UI_META` dans `report-cards-data.ts`
+- [x] Tests : `grade-scale.test.ts`, `report-cards-data.test.ts`, `test-dev-report-cards-seed.test.ts`
 
 **Test UI**
 
-- [ ] `/configuration/grade-scales`
-- [ ] Barème « Sur 20 » : seuil de réussite = 10, 2 décimales
-- [ ] Barème « Lettres » : description « A = Très bien… » si conservée
-- [ ] Badge « par défaut » sur le bon barème
+- [x] `/configuration/grade-scales`
+- [x] Barème « Sur 20 » : seuil de réussite = 10, 2 décimales
+- [x] Barème « Lettres » : description « A = Très bien… » si conservée
+- [x] Badge « par défaut » sur le bon barème
 
 ---
 

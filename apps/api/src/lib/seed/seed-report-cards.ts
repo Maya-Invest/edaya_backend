@@ -84,6 +84,8 @@ export async function seedReportCards(
       name: scale.name,
       minScore: scale.minScore,
       maxScore: scale.maxScore,
+      decimalPlaces: scale.mockDecimalPlaces,
+      description: scale.mockDescription,
       isDefault: scale.isDefault,
       ranges: [...scale.ranges],
     });

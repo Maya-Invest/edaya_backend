@@ -119,7 +119,13 @@ describe("dev report cards seed", () => {
     expect(sectionsResponse.status).toBe(200);
     expect(resultsResponse.status).toBe(200);
 
-    const gradeScales = unwrapEntityList<{ id: string; name: string }>(await gradeScalesResponse.json());
+    const gradeScales = unwrapEntityList<{
+      id: string;
+      name: string;
+      decimalPlaces?: number;
+      description?: string;
+      ranges?: { minScore: number; isPassing: boolean }[];
+    }>(await gradeScalesResponse.json());
     const definitions = unwrapEntityList<{ id: string; name: string }>(await definitionsResponse.json());
     const sections = unwrapEntityList<{ id: string; reportCardDefinitionId: string }>(await sectionsResponse.json());
     const results = unwrapEntityList<{ id: string; studentId: string }>(await resultsResponse.json());
@@ -129,6 +135,15 @@ describe("dev report cards seed", () => {
     expect(sections.length).toBeGreaterThanOrEqual(expectedSectionCount);
     expect(results.length).toBeGreaterThanOrEqual(SEED_REPORT_CARD_RESULTS.length);
     expect(gradeScales.some(scale => scale.id === "gs-20")).toBe(true);
+    expect(gradeScales.find(scale => scale.id === "gs-20")?.decimalPlaces).toBe(2);
+    expect(gradeScales.find(scale => scale.id === "gs-20")?.description).toContain("seuil de réussite à 10");
+    expect(gradeScales.find(scale => scale.id === "gs-lettres")?.decimalPlaces).toBe(0);
+    const gs20Passing = gradeScales
+      .find(scale => scale.id === "gs-20")
+      ?.ranges
+      ?.filter(range => range.isPassing)
+      .map(range => range.minScore) ?? [];
+    expect(Math.min(...gs20Passing)).toBe(10);
     expect(definitions.some(definition => definition.id === "rcd-ms-6")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-term")).toBe(true);
     expect(definitions.some(definition => definition.id === "rcd-ms-draft")).toBe(true);

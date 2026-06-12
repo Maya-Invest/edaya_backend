@@ -21,23 +21,7 @@ type ReportCardResultRaw = components['schemas']['ReportCardResult'];
 
 const DEMO_SCHOOL_ID = 'sch-edaya-central';
 
-const GRADE_SCALE_UI_META: Record<string, Pick<GradeScale, 'passingScore' | 'decimalPlaces' | 'description'>> = {
-	'gs-20': {
-		passingScore: 10,
-		decimalPlaces: 2,
-		description: 'Barème standard français — note sur 20, seuil de réussite à 10.',
-	},
-	'gs-100': {
-		passingScore: 50,
-		decimalPlaces: 1,
-		description: 'Pourcentage ou centième — utilisé en sport ou projets transversaux.',
-	},
-	'gs-lettres': {
-		passingScore: 2,
-		decimalPlaces: 0,
-		description: 'A = Très bien · B = Bien · C = Assez bien · D = Insuffisant.',
-	},
-};
+type GradeScaleRangeRaw = GradeScaleRaw['ranges'][number];
 
 const DEFINITION_UI_META: Record<string, { gradeScaleId: string; status: ReportCardPublishStatus }> = {
 	'rcd-ms-6': { gradeScaleId: 'gs-20', status: 'published' },
@@ -122,6 +106,24 @@ function teacherNameForClassSubject(
 	return `${teacher.firstName} ${teacher.lastName}`;
 }
 
+export function derivePassingScore(ranges: GradeScaleRangeRaw[]): number {
+	const passingRanges = ranges.filter(range => range.isPassing);
+	if (passingRanges.length === 0) {
+		return 0;
+	}
+	return Math.min(...passingRanges.map(range => range.minScore));
+}
+
+function buildDescriptionFromRanges(ranges: GradeScaleRangeRaw[]): string | undefined {
+	if (ranges.length === 0 || !ranges.every(range => range.interpretation)) {
+		return undefined;
+	}
+	return [...ranges]
+		.reverse()
+		.map(range => `${range.letter} = ${range.interpretation}`)
+		.join(' · ');
+}
+
 export function mapGradeScales(scalesRaw: GradeScaleRaw[]): GradeScale[] {
 	return scalesRaw.map(scale => ({
 		id: scale.id,
@@ -130,9 +132,9 @@ export function mapGradeScales(scalesRaw: GradeScaleRaw[]): GradeScale[] {
 		minScore: scale.minScore,
 		maxScore: scale.maxScore,
 		isDefault: scale.isDefault,
-		passingScore: GRADE_SCALE_UI_META[scale.id]?.passingScore ?? Math.round((scale.minScore + scale.maxScore) / 2),
-		decimalPlaces: GRADE_SCALE_UI_META[scale.id]?.decimalPlaces ?? 1,
-		description: GRADE_SCALE_UI_META[scale.id]?.description,
+		passingScore: derivePassingScore(scale.ranges),
+		decimalPlaces: scale.decimalPlaces ?? 1,
+		description: scale.description ?? buildDescriptionFromRanges(scale.ranges),
 	}));
 }
 

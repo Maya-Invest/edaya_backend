@@ -23,6 +23,8 @@ export const gradeScaleBaseSchema = z.object({
   name: z.string().trim().min(1, 'name must not be blank'),
   minScore: z.number().finite().nonnegative('minScore must be a finite, non-negative number').transform(v => roundTo2(v)),
   maxScore: z.number().finite().nonnegative('maxScore must be a finite, non-negative number').transform(v => roundTo2(v)),
+  decimalPlaces: z.number().int().min(0, 'decimalPlaces must be between 0 and 3').max(3, 'decimalPlaces must be between 0 and 3').default(1),
+  description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   isDefault: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
 })
@@ -105,7 +107,17 @@ export class GradeScale {
   get minScore() { return this.data.minScore }
   get maxScore() { return this.data.maxScore }
   get isDefault() { return this.data.isDefault }
+  get decimalPlaces() { return this.data.decimalPlaces }
+  get description() { return this.data.description }
   get createdAt() { return this.data.createdAt }
+
+  get passingScore(): number {
+    const passingRanges = this.ranges.filter(range => range.isPassing)
+    if (passingRanges.length === 0) {
+      return this.minScore
+    }
+    return Math.min(...passingRanges.map(range => range.minScore))
+  }
 
   findRange(score: number): GradeScaleRange | undefined {
     return this.ranges.find(r => score >= r.minScore && score <= r.maxScore)
