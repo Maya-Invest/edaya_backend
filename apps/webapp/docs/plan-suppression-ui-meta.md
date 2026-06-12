@@ -72,7 +72,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [x]   | [ ]     |
 | 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [x]   | [ ]     |
 | 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [x]   | [ ]     |
-| 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [ ]   | [ ]     |
+| 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [x]   | [ ]     |
 | 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [ ]   | [ ]     |
 | 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [ ]   | [ ]     |
 | 14  | Activités extrascolaires                     | Stub `/prototype/activities`              | `prototype-data.ts`    | [ ]   | [ ]     |
@@ -297,15 +297,17 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] `listPrototypeDemoAccountsHandler` : résoudre le rôle depuis les assignments seedés
-- [ ] Supprimer `DEMO_STAFF_ROLES` et `LOGIN_DEMO_STAFF_IDS` si filtrage dynamique possible
+- [x] `buildDemoLoginAccounts()` — rôles depuis `staffRoleAssignments` (`role-director` → directeur, etc.)
+- [x] `listPrototypeDemoAccountsHandler` lit les assignments en base
+- [x] Supprimer `DEMO_STAFF_ROLES` et `LOGIN_DEMO_STAFF_IDS` ; filtre dynamique (comptes auth + 1 prof)
+- [x] Tests : `test-demo-accounts.test.ts`, `test-prototype-routes.test.ts`
 
 **Test UI**
 
-- [ ] `/login` — 4 comptes démo affichés
-- [ ] Camille Moreau → rôle **Directeur** ; Tom Évrard → **Éducateur**
+- [x] `/login` — 4 comptes démo affichés
+- [x] Camille Moreau → rôle **Directeur** ; Tom Évrard → **Éducateur**
 - [ ] Connexion chaque compte → header affiche bon nom + permissions cohérentes
-- [ ] Déconnexion + reconnexion autre compte → données rechargées
+- [x] Déconnexion + reconnexion autre compte → données rechargées
 
 ---
 

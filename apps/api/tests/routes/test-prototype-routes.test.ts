@@ -94,7 +94,11 @@ describe("prototype stub routes", () => {
     const filteredDeadlines = await filteredDeadlinesResponse.json() as Array<{ id: string; classGroupId: string }>;
     const teachingLog = await teachingLogResponse.json() as Array<{ id: string; classGroupId: string }>;
     const filteredTeachingLog = await filteredTeachingLogResponse.json() as Array<{ id: string; subjectName: string }>;
-    const demoAccounts = await demoAccountsResponse.json() as Array<{ staffId: string; email: string }>;
+    const demoAccounts = await demoAccountsResponse.json() as Array<{
+      staffId: string;
+      email: string;
+      role: string;
+    }>;
 
     expect(activities.length).toBe(SEED_ACTIVITIES.length);
     expect(deadlines.length).toBe(SEED_DEADLINES.length);
@@ -105,7 +109,21 @@ describe("prototype stub routes", () => {
     expect(teachingLog.length).toBe(SEED_TEACHING_LOG_ENTRIES.length);
     expect(filteredTeachingLog.every(entry => entry.subjectName === "Mathematics")).toBe(true);
     expect(filteredTeachingLog.some(entry => entry.id === "sub1-0")).toBe(true);
-    expect(demoAccounts.some(account => account.staffId === "st5")).toBe(true);
-    expect(demoAccounts.some(account => account.email === "m.dupont@school.edu")).toBe(true);
+    expect(demoAccounts).toHaveLength(4);
+    expect(demoAccounts.find(account => account.staffId === "st5")).toMatchObject({
+      email: "c.moreau@school.edu",
+      role: "directeur",
+    });
+    expect(demoAccounts.find(account => account.staffId === "st3")).toMatchObject({
+      role: "prof_principal",
+    });
+    expect(demoAccounts.find(account => account.staffId === "st7")).toMatchObject({
+      role: "educateur",
+    });
+    expect(demoAccounts.find(account => account.staffId === "st1")).toMatchObject({
+      email: "m.dupont@school.edu",
+      role: "professeur",
+    });
+    expect(demoAccounts.some(account => account.staffId === "st2")).toBe(false);
   }, 30_000);
 });

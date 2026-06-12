@@ -1,4 +1,5 @@
-import { DEV_AUTH_STAFF_ACCOUNTS, SEED_ACTIVITIES, SEED_DEADLINES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
+import { buildDemoLoginAccounts } from "@/lib/demo-accounts";
+import { SEED_ACTIVITIES, SEED_DEADLINES, SEED_TEACHING_LOG_ENTRIES } from "@edaya/dev-fixtures";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -79,23 +80,6 @@ const prototypeDemoAccountSchema = z.object({
   role: demoStaffRoleSchema,
   initials: z.string(),
 }).openapi("PrototypeDemoAccount");
-
-const LOGIN_DEMO_STAFF_IDS = ["st5", "st3", "st1", "st7"] as const;
-
-const DEMO_STAFF_ROLES: Record<string, z.infer<typeof demoStaffRoleSchema>> = {
-  st5: "directeur",
-  st3: "prof_principal",
-  st7: "educateur",
-  st1: "professeur",
-  st2: "professeur",
-};
-
-function initialsForName(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts[parts.length - 1]?.[0] ?? "";
-  return `${first}${last}`.toUpperCase();
-}
 
 export const listPrototypeActivitiesRoute = createRoute({
   method: "post",
@@ -200,15 +184,8 @@ export const listPrototypeDeadlinesHandler: AppRouteHandler<typeof listPrototype
 };
 
 export const listPrototypeDemoAccountsHandler: AppRouteHandler<typeof listPrototypeDemoAccountsRoute> = async (c) => {
-  const accounts = DEV_AUTH_STAFF_ACCOUNTS
-    .filter(account => LOGIN_DEMO_STAFF_IDS.includes(account.staffId as typeof LOGIN_DEMO_STAFF_IDS[number]))
-    .map(account => ({
-      staffId: account.staffId,
-      email: account.email,
-      name: account.name,
-      role: DEMO_STAFF_ROLES[account.staffId] ?? "professeur",
-      initials: initialsForName(account.name),
-    }));
+  const roleAssignments = await c.get("schoolApp").repositories.staffRoleAssignments.list({});
+  const accounts = buildDemoLoginAccounts(roleAssignments);
 
   return c.json(accounts, HttpStatusCodes.OK);
 };
