@@ -6680,6 +6680,27 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Scientifique",
+              "Littéraire",
+              "Langues",
+              "Sciences humaines",
+              "Sport",
+              "Arts"
+            ],
+            "default": "Scientifique"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "mint",
+              "sky",
+              "warm"
+            ],
+            "default": "mint"
+          },
           "createdAt": {}
         },
         "required": [

@@ -45705,6 +45705,16 @@ export interface components {
             name: string;
             code?: string | null;
             defaultCoefficient?: number | null;
+            /**
+             * @default Scientifique
+             * @enum {string}
+             */
+            category: "Scientifique" | "Littéraire" | "Langues" | "Sciences humaines" | "Sport" | "Arts";
+            /**
+             * @default mint
+             * @enum {string}
+             */
+            color: "mint" | "sky" | "warm";
             createdAt?: unknown;
         };
         Filter_23: Record<string, never>;

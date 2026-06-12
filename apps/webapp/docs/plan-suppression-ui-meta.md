@@ -74,7 +74,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [x]   | [ ]     |
 | 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [x]   | [ ]     |
 | 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [x]   | [ ]     |
-| 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [ ]   | [ ]     |
+| 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [x]   | [ ]     |
 | 14  | Activités extrascolaires                     | Stub `/prototype/activities`              | `prototype-data.ts`    | [ ]   | [ ]     |
 | 15  | Devoirs / deadlines                          | Stub `/prototype/deadlines`               | `prototype-data.ts`    | [ ]   | [ ]     |
 | 16  | Carnet de cours                              | Stub `/prototype/teaching-log`            | `prototype-data.ts`    | [ ]   | [ ]     |
@@ -338,13 +338,16 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Décision produit : champs persistés sur `Subject` **ou** dérivation documentée comme intentionnelle
-- [ ] Si persistés : étendre domaine + seed `SEED_SUBJECT_CATALOG`
+- [x] Champs persistés `category` + `color` sur `Subject` (domaine core + migration `0008`)
+- [x] Seed `SEED_SUBJECT_CATALOG` enrichi (catégorie + couleur par matière)
+- [x] `subjects-data.ts` : lecture API, suppression `pickColor` / `inferCategory`
+- [x] Tests : `subjects-data.test.ts`
+- [x] OpenAPI régénéré
 
 **Test UI**
 
 - [ ] `/configuration/subjects` — couleurs stables entre rechargements
-- [ ] `/classes/6a/subjects` — catégories (Scientifique, Littéraire, Langues…) cohérentes
+- [x] `/classes/6a/subjects` — catégories (Scientifique, Littéraire, Langues…) cohérentes
 - [ ] `/configuration/subjects/level/gl-6` — regroupement par catégorie correct
 
 ---

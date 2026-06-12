@@ -60,6 +60,8 @@ import {
   StudentNote,
   StudentNoteCategory,
   Subject,
+  SubjectCategory,
+  SubjectColor,
   SubjectMatter,
 } from "@edaya/core";
 
@@ -253,6 +255,8 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
       name: subject.name,
       code: subject.code,
       defaultCoefficient: subject.defaultCoefficient,
+      category: subject.category as SubjectCategory,
+      color: subject.color as SubjectColor,
     }), { moduleChecked: true });
   }
 

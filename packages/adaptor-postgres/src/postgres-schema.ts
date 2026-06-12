@@ -316,6 +316,8 @@ export const subjects = pgTable('subjects', {
   name: text('name').notNull(),
   code: text('code'),
   defaultCoefficient: integer('default_coefficient'),
+  category: text('category').notNull().default('Scientifique'),
+  color: text('color').notNull().default('mint'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
