@@ -143,6 +143,11 @@ export const clientBindings = {
       "schemaName": "ClassSubjectProgress",
       "allowDirectSave": true
     },
+    "classLogbookEntries": {
+      "publicName": "class-logbook-entries",
+      "schemaName": "ClassLogbookEntry",
+      "allowDirectSave": true
+    },
     "homeworkAssignments": {
       "publicName": "homework-assignments",
       "schemaName": "HomeworkAssignment",

@@ -1,5 +1,6 @@
 export interface LogEntry {
 	id: string;
+	classId: string;
 	date: string;
 	subject: string;
 	teacher: string;

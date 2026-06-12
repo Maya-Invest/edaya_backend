@@ -77,7 +77,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [x]   | [ ]     |
 | 14  | Activités extrascolaires                     | Stub `/prototype/activities`              | `prototype-data.ts`    | [ ]   | [ ]     |
 | 15  | Devoirs / deadlines                          | Stub `/prototype/deadlines`               | `prototype-data.ts`    | [x]   | [ ]     |
-| 16  | Carnet de cours                              | Stub `/prototype/teaching-log`            | `prototype-data.ts`    | [ ]   | [ ]     |
+| 16  | Carnet de cours                              | Stub `/prototype/teaching-log`            | `prototype-data.ts`    | [x]   | [ ]     |
 | 17  | Comptes démo login                           | Stub `/prototype/demo-accounts`           | `login/+page.svelte`   | [ ]   | [ ]     |
 
 
@@ -402,10 +402,13 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Créer entité class logbook
-- [ ] Seed `SEED_TEACHING_LOG_ENTRIES`
-- [ ] Remplacer `fetchTeachingLogEntries()`
-- [ ] Supprimer route prototype
+- [x] Entité `ClassLogbookEntry` (domaine core + migration `0010`)
+- [x] Seed `SEED_TEACHING_LOG_ENTRIES` dans `run-dev-seed.ts` (IDs `tle-{classSubjectId}-{index}`)
+- [x] `teaching-log-data.ts` : `fetchTeachingLogEntries()` via `client.entities.classLogbookEntries`
+- [x] `LogEntry.classId` + filtre par classe dans `teachingLogContext`
+- [x] Route prototype `/prototype/teaching-log/list` supprimée
+- [x] Tests : `teaching-log-data.test.ts`, `test-dev-teaching-log-seed.test.ts`
+- [x] OpenAPI régénéré
 
 **Test UI**
 

@@ -11,6 +11,7 @@ import {
   attendanceRecordSchema,
   calendarEventSchema,
   classGroupSchema,
+  classLogbookEntrySchema,
   classSubjectMatterSchema,
   classSubjectProgressSchema,
   classSubjectSchema,
@@ -69,6 +70,7 @@ import type {
   AttendanceSummary,
   CalendarEventInput,
   ClassGroupInput,
+  ClassLogbookEntryInput,
   ClassSubjectInput,
   ClassSubjectMatterInput,
   ClassSubjectProgressInput,
@@ -147,6 +149,11 @@ export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGr
 export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
 export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
 export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressInput>("ClassSubjectProgress", unwrapShape(classSubjectProgressSchema));
+export const classLogbookEntryResponseSchema = responseSchema<ClassLogbookEntryInput>("ClassLogbookEntry", {
+  ...unwrapShape(classLogbookEntrySchema),
+  objectives: z.array(z.string()),
+  attachments: z.array(z.string()),
+});
 export const homeworkAttachmentResponseSchema = valueSchema<HomeworkAttachment>(unwrapShape(coreHomeworkAttachmentSchema));
 export const homeworkAssignmentResponseSchema = responseSchema<HomeworkAssignmentInput>("HomeworkAssignment", {
   ...unwrapShape(homeworkAssignmentSchema),
@@ -379,6 +386,14 @@ export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
   classSubjectMatterId: field.uuid(),
   sessionId: field.uuid(),
+});
+
+export const classLogbookEntryQuerySchema = createQueryOptionsSchema({
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  classGroupId: field.uuid(),
+  classSubjectId: field.uuid(),
+  chapter: field.string(),
 });
 
 export const homeworkAssignmentQuerySchema = createQueryOptionsSchema({

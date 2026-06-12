@@ -1,0 +1,95 @@
+import { describe, expect, it } from 'bun:test';
+import { mapTeachingLogEntries } from './teaching-log-data';
+
+const sources = {
+	classLogbookEntriesRaw: [
+		{
+			id: 'tle-cs-6a-math-0',
+			schoolId: 'sch-edaya-central',
+			classGroupId: '6a',
+			classSubjectId: 'cs-6a-math',
+			date: '2026-05-22',
+			chapter: 'Ch. 6 — Fractions',
+			content: 'Addition et soustraction de fractions.',
+			objectives: ['Mettre au même dénominateur'],
+			homework: 'Manuel p.84 ex. 12 à 18',
+			attachments: ['fiche-fractions.pdf'],
+			progress: 62,
+		},
+		{
+			id: 'tle-cs-6b-math-0',
+			schoolId: 'sch-edaya-central',
+			classGroupId: '6b',
+			classSubjectId: 'cs-6b-math',
+			date: '2026-05-21',
+			chapter: 'Other class session',
+			content: 'Should not appear when filtering 6a.',
+			objectives: ['Other'],
+			progress: 40,
+		},
+	],
+	classSubjectsRaw: [
+		{ id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', completedPercentage: 0 },
+		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
+	],
+	subjectsRaw: [
+		{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
+	],
+	staffMembersRaw: [
+		{ id: 'st1', schoolId: 'sch-edaya-central', firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
+	],
+	staffAssignmentsRaw: [
+		{ id: 'sa-st1-math', staffId: 'st1', responsibility: 'Teacher', classSubjectId: 'cs-6a-math' },
+	],
+} as const;
+
+describe('mapTeachingLogEntries', () => {
+	it('maps logbook entries with subject and teacher labels', () => {
+		const entries = mapTeachingLogEntries({
+			classLogbookEntriesRaw: [...sources.classLogbookEntriesRaw],
+			classSubjectsRaw: [...sources.classSubjectsRaw],
+			subjectsRaw: [...sources.subjectsRaw],
+			staffMembersRaw: [...sources.staffMembersRaw],
+			staffAssignmentsRaw: [...sources.staffAssignmentsRaw],
+		}, { classGroupId: '6a' });
+
+		expect(entries).toHaveLength(1);
+		expect(entries[0]).toMatchObject({
+			id: 'tle-cs-6a-math-0',
+			classId: '6a',
+			subject: 'Mathematics',
+			teacher: 'Marie Dupont',
+			chapter: 'Ch. 6 — Fractions',
+			homework: 'Manuel p.84 ex. 12 à 18',
+			progress: 62,
+		});
+	});
+
+	it('filters entries by subject name', () => {
+		const entries = mapTeachingLogEntries({
+			classLogbookEntriesRaw: [...sources.classLogbookEntriesRaw],
+			classSubjectsRaw: [...sources.classSubjectsRaw],
+			subjectsRaw: [...sources.subjectsRaw],
+			staffMembersRaw: [...sources.staffMembersRaw],
+			staffAssignmentsRaw: [...sources.staffAssignmentsRaw],
+		}, { classGroupId: '6a', subjectName: 'Mathematics' });
+
+		expect(entries).toHaveLength(1);
+		expect(entries[0]?.subject).toBe('Mathematics');
+	});
+
+	it('sorts entries by date descending', () => {
+		const entries = mapTeachingLogEntries({
+			classLogbookEntriesRaw: [
+				{ ...sources.classLogbookEntriesRaw[0], date: '2026-05-18' },
+				{ ...sources.classLogbookEntriesRaw[0], id: 'tle-cs-6a-math-1', date: '2026-05-22' },
+			],
+			classSubjectsRaw: [...sources.classSubjectsRaw],
+			subjectsRaw: [...sources.subjectsRaw],
+			staffMembersRaw: [],
+			staffAssignmentsRaw: [],
+		});
+
+		expect(entries.map(entry => entry.date)).toEqual(['2026-05-22', '2026-05-18']);
+	});
+});

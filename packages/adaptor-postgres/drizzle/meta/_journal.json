@@ -71,6 +71,13 @@
       "when": 1781104996411,
       "tag": "0009_homework_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781104996412,
+      "tag": "0010_class_logbook_entries",
+      "breakpoints": true
     }
   ]
 }

@@ -36,6 +36,7 @@ import {
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
+  SEED_TEACHING_LOG_ENTRIES,
   seedPeriodIdForDate,
   splitDisplayName,
 } from "@edaya/dev-fixtures";
@@ -48,6 +49,7 @@ import {
   AttendanceStatus,
   CalendarEventKind,
   CalendarEventScopeKind,
+  ClassLogbookEntry,
   ClassSubjectMatterStatus,
   createSystemActorMetadata,
   DayOfWeek,
@@ -104,6 +106,7 @@ export type DevSeedResult =
     assessmentResults: number;
     homeworkAssignments: number;
     homeworkSubmissions: number;
+    classLogbookEntries: number;
     calendarEvents: number;
     incidents: number;
     attendanceRecords: number;
@@ -446,6 +449,22 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     }), { moduleChecked: true });
   }
 
+  for (const entry of SEED_TEACHING_LOG_ENTRIES) {
+    await service.baseService.classLogbookEntries.save(new ClassLogbookEntry({
+      id: entry.id,
+      schoolId: entry.schoolId,
+      classGroupId: entry.classGroupId,
+      classSubjectId: entry.classSubjectId,
+      date: parseSeedDate(entry.date),
+      chapter: entry.chapter,
+      content: entry.content,
+      objectives: [...entry.objectives],
+      homework: entry.homework,
+      attachments: entry.attachments ? [...entry.attachments] : [],
+      progress: entry.progress,
+    }), { moduleChecked: true });
+  }
+
   const calendarKindByMock = {
     holiday: CalendarEventKind.Holiday,
     vacation: CalendarEventKind.Break,
@@ -625,6 +644,7 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     assessmentResults: assessmentResultCount,
     homeworkAssignments: SEED_HOMEWORK_ASSIGNMENTS.length,
     homeworkSubmissions: SEED_HOMEWORK_SUBMISSIONS.length,
+    classLogbookEntries: SEED_TEACHING_LOG_ENTRIES.length,
     calendarEvents: calendarEventCount,
     incidents: SEED_INCIDENTS.length,
     attendanceRecords: SEED_ABSENCE_RECORDS.length,

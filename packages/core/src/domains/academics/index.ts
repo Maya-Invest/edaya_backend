@@ -1,3 +1,4 @@
+export * from './class-logbook-entry'
 export * from './class-subject'
 export * from './class-subject-matter'
 export * from './class-subject-progress'

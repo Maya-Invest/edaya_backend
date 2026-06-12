@@ -367,7 +367,23 @@ export const homeworkAssignments = pgTable('homework_assignments', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
-// 26. Homework Submission Table
+// 26. Class Logbook Entry Table
+export const classLogbookEntries = pgTable('class_logbook_entries', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  classSubjectId: text('class_subject_id').notNull(),
+  date: timestamp('date', { mode: 'date' }).notNull(),
+  chapter: text('chapter').notNull(),
+  content: text('content').notNull(),
+  objectives: jsonb('objectives').notNull().default([]),
+  homework: text('homework'),
+  attachments: jsonb('attachments').notNull().default([]),
+  progress: integer('progress').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+// 27. Homework Submission Table
 export const homeworkSubmissions = pgTable('homework_submissions', {
   id: text('id').primaryKey(),
   homeworkAssignmentId: text('homework_assignment_id').notNull(),

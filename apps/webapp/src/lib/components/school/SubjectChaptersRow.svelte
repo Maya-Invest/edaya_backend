@@ -9,7 +9,7 @@
 
 	let open = $state(false);
 
-	const entries = $derived(teachingLogContext.resolveSubjectEntries(s.name));
+	const entries = $derived(teachingLogContext.resolveSubjectEntries(s.name, s.classId));
 
 	const chapters = $derived.by(() => {
 		const map: Record<string, { chapter: string; sessions: number; lastDate: string; progress: number }> = {};

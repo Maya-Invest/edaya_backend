@@ -11,6 +11,7 @@ import type {
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
+  ClassLogbookEntry,
   ClassSubjectProgress,
   HomeworkAssignment,
   HomeworkSubmission,
@@ -60,6 +61,7 @@ import {
   ClassGroup as ClassGroupCtor,
   ClassSubject as ClassSubjectCtor,
   ClassSubjectMatter as ClassSubjectMatterCtor,
+  ClassLogbookEntry as ClassLogbookEntryCtor,
   ClassSubjectProgress as ClassSubjectProgressCtor,
   HomeworkAssignment as HomeworkAssignmentCtor,
   HomeworkSubmission as HomeworkSubmissionCtor,
@@ -178,6 +180,7 @@ export interface EntityStores {
   classSubjects: PostgresStore<ClassSubject>
   classSubjectMatters: PostgresStore<ClassSubjectMatter>
   classSubjectProgress: PostgresStore<ClassSubjectProgress>
+  classLogbookEntries: PostgresStore<ClassLogbookEntry>
   homeworkAssignments: PostgresStore<HomeworkAssignment>
   homeworkSubmissions: PostgresStore<HomeworkSubmission>
   assessments: PostgresStore<Assessment>
@@ -649,6 +652,39 @@ export function createEntityStores(db: any): EntityStores {
         recordedByStaffId: row.recordedByStaffId,
         notes: row.notes,
         recordedAt: row.recordedAt,
+      }),
+    ),
+
+    classLogbookEntries: customStore(
+      db,
+      schema.classLogbookEntries,
+      (entity: ClassLogbookEntry) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        classGroupId: entity.classGroupId,
+        classSubjectId: entity.classSubjectId,
+        date: entity.date,
+        chapter: entity.chapter,
+        content: entity.content,
+        objectives: entity.objectives,
+        homework: entity.homework ?? null,
+        attachments: entity.attachments,
+        progress: entity.progress,
+        createdAt: entity.createdAt,
+      }),
+      row => new ClassLogbookEntryCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        classGroupId: row.classGroupId,
+        classSubjectId: row.classSubjectId,
+        date: row.date,
+        chapter: row.chapter,
+        content: row.content,
+        objectives: deserializeJsonb(row.objectives) ?? [],
+        homework: row.homework,
+        attachments: deserializeJsonb(row.attachments) ?? [],
+        progress: row.progress,
+        createdAt: row.createdAt,
       }),
     ),
 
