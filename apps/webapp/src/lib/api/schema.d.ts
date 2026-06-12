@@ -204,100 +204,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/prototype/deadlines/list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** List homework deadlines (stub — no domain entity yet) */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            /** @description Prototype deadlines list request */
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["PrototypeDeadlinesListRequest"];
-                };
-            };
-            responses: {
-                /** @description Stub homework deadlines */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PrototypeDeadlinesListResponse"];
-                    };
-                };
-                /** @description Invalid request payload */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Missing or invalid authorization session */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Access denied due to authorization policies */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Business rule violation */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                    };
-                };
-                /** @description Internal server error occurred */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/core/prototype/demo-accounts/list": {
         parameters: {
             query?: never;
@@ -30848,6 +30754,1656 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/homework-assignments/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_29"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Listed Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkAssignment"][];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_29"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Found Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkAssignment"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Homework Assignments not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_29"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Counted Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Homework Assignments */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Fetched Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkAssignment"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Homework Assignments not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments entity */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["HomeworkAssignment"];
+                };
+            };
+            responses: {
+                /** @description Saved Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkAssignment"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityDelete"];
+                };
+            };
+            responses: {
+                /** @description Deleted Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments batch save request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["HomeworkAssignmentsBatchSave"];
+                };
+            };
+            responses: {
+                /** @description Batch saved Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ids: string[];
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-assignments/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Homework Assignments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Assignments batch delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityBatchDelete"];
+                };
+            };
+            responses: {
+                /** @description Batch deleted Homework Assignments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_30"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Listed Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkSubmission"][];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_30"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Found Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkSubmission"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Homework Submissions not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_30"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Counted Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Homework Submissions */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Fetched Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkSubmission"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Homework Submissions not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions entity */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["HomeworkSubmission"];
+                };
+            };
+            responses: {
+                /** @description Saved Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeworkSubmission"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityDelete"];
+                };
+            };
+            responses: {
+                /** @description Deleted Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions batch save request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["HomeworkSubmissionsBatchSave"];
+                };
+            };
+            responses: {
+                /** @description Batch saved Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ids: string[];
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/homework-submissions/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Homework Submissions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Homework Submissions batch delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityBatchDelete"];
+                };
+            };
+            responses: {
+                /** @description Batch deleted Homework Submissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/assessments/list": {
         parameters: {
             query?: never;
@@ -30868,7 +32424,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_29"] & {
+                    "application/json": components["schemas"]["Filter_31"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -30970,7 +32526,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_29"] & {
+                    "application/json": components["schemas"]["Filter_31"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31083,7 +32639,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_29"] & {
+                    "application/json": components["schemas"]["Filter_31"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31693,7 +33249,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_30"] & {
+                    "application/json": components["schemas"]["Filter_32"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31795,7 +33351,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_30"] & {
+                    "application/json": components["schemas"]["Filter_32"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31908,7 +33464,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_30"] & {
+                    "application/json": components["schemas"]["Filter_32"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32518,7 +34074,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_31"] & {
+                    "application/json": components["schemas"]["Filter_33"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32620,7 +34176,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_31"] & {
+                    "application/json": components["schemas"]["Filter_33"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32733,7 +34289,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_31"] & {
+                    "application/json": components["schemas"]["Filter_33"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33343,7 +34899,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33445,7 +35001,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33558,7 +35114,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34168,7 +35724,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34270,7 +35826,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34383,7 +35939,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34993,7 +36549,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35095,7 +36651,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35208,7 +36764,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35818,7 +37374,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35920,7 +37476,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36033,7 +37589,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36643,7 +38199,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36745,7 +38301,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36858,7 +38414,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37468,7 +39024,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37570,7 +39126,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37683,7 +39239,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38293,7 +39849,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38395,7 +39951,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38508,7 +40064,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39118,7 +40674,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39220,7 +40776,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39333,7 +40889,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39943,7 +41499,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40045,7 +41601,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40158,7 +41714,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40768,7 +42324,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40870,7 +42426,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40983,7 +42539,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41593,7 +43149,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41695,7 +43251,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41808,7 +43364,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42418,7 +43974,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42520,7 +44076,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42633,7 +44189,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43243,7 +44799,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43345,7 +44901,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43458,7 +45014,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44097,31 +45653,6 @@ export interface components {
             code: string;
         };
         PrototypeListRequest: Record<string, never>;
-        PrototypeDeadline: {
-            id: string;
-            classGroupId: string;
-            title: string;
-            subject: string;
-            description: string;
-            dueDate: string;
-            assignedDate: string;
-            /** @enum {string} */
-            type: "Homework" | "Project" | "Reading" | "Lab";
-            attachments: {
-                name: string;
-                size: string;
-            }[];
-            submissions: {
-                studentId: string;
-                /** @enum {string} */
-                status: "submitted" | "late" | "missing";
-                date?: string;
-            }[];
-        };
-        PrototypeDeadlinesListResponse: components["schemas"]["PrototypeDeadline"][];
-        PrototypeDeadlinesListRequest: {
-            classGroupId?: string;
-        };
         PrototypeDemoAccount: {
             staffId: string;
             email: string;
@@ -45750,55 +47281,89 @@ export interface components {
         ClassSubjectProgressBatchSave: {
             entities: components["schemas"]["ClassSubjectProgress"][];
         };
+        HomeworkAssignment: {
+            id: string;
+            schoolId: string;
+            classGroupId: string;
+            classSubjectId: string;
+            title: string;
+            description: string;
+            dueDate: unknown;
+            assignedDate: unknown;
+            /** @enum {string} */
+            type: "homework" | "project" | "reading" | "lab";
+            attachments: {
+                name: string;
+                size: string;
+            }[];
+            createdAt?: unknown;
+        };
         Filter_29: Record<string, never>;
+        HomeworkAssignmentsBatchSave: {
+            entities: components["schemas"]["HomeworkAssignment"][];
+        };
+        HomeworkSubmission: {
+            id: string;
+            homeworkAssignmentId: string;
+            studentId: string;
+            /** @enum {string} */
+            status: "submitted" | "late" | "missing";
+            submittedAt?: unknown;
+            createdAt?: unknown;
+        };
+        Filter_30: Record<string, never>;
+        HomeworkSubmissionsBatchSave: {
+            entities: components["schemas"]["HomeworkSubmission"][];
+        };
+        Filter_31: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_30: Record<string, never>;
+        Filter_32: Record<string, never>;
         AssessmentResultsBatchSave: {
             entities: components["schemas"]["AssessmentResult"][];
         };
-        Filter_31: Record<string, never>;
+        Filter_33: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_32: Record<string, never>;
+        Filter_34: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_33: Record<string, never>;
+        Filter_35: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
-        Filter_34: Record<string, never>;
+        Filter_36: Record<string, never>;
         ReportCardResultsBatchSave: {
             entities: components["schemas"]["ReportCardResult"][];
         };
-        Filter_35: Record<string, never>;
+        Filter_37: Record<string, never>;
         StudentsBatchSave: {
             entities: components["schemas"]["Student"][];
         };
-        Filter_36: Record<string, never>;
+        Filter_38: Record<string, never>;
         StudentEnrollmentsBatchSave: {
             entities: components["schemas"]["StudentClassEnrollment"][];
         };
-        Filter_37: Record<string, never>;
+        Filter_39: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_38: Record<string, never>;
+        Filter_40: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_39: Record<string, never>;
+        Filter_41: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_40: Record<string, never>;
+        Filter_42: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_41: Record<string, never>;
+        Filter_43: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
@@ -45816,15 +47381,15 @@ export interface components {
             description?: string | null;
             createdAt?: unknown;
         };
-        Filter_42: Record<string, never>;
+        Filter_44: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_43: Record<string, never>;
+        Filter_45: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_44: Record<string, never>;
+        Filter_46: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };

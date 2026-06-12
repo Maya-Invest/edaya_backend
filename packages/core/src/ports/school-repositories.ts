@@ -14,6 +14,8 @@ import type {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -89,6 +91,8 @@ export interface SchoolRepositories {
   readonly classSubjects: BaseRepositoryInterface<ClassSubject>
   readonly classSubjectMatters: BaseRepositoryInterface<ClassSubjectMatter>
   readonly classSubjectProgress: BaseRepositoryInterface<ClassSubjectProgress>
+  readonly homeworkAssignments: BaseRepositoryInterface<HomeworkAssignment>
+  readonly homeworkSubmissions: BaseRepositoryInterface<HomeworkSubmission>
 
   // AssessmentRepositories
   readonly assessments: BaseRepositoryInterface<Assessment>

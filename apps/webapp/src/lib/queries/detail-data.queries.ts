@@ -4,7 +4,8 @@ import { fetchAssessmentsSources, mapAllEvaluations } from '$lib/api/assessments
 import { loadFinanceData } from '$lib/api/finance-data';
 import { loadPeopleData } from '$lib/api/people-data';
 import { fetchPlanningSources, mapAllPlanningEvents, mapResources } from '$lib/api/planning-data';
-import { fetchActivities, fetchDeadlines } from '$lib/api/prototype-data';
+import { fetchActivities } from '$lib/api/prototype-data';
+import { fetchHomeworkSources, mapDeadlines } from '$lib/api/homework-data';
 import { loadAbsences, loadCalendarEvents, loadIncidents } from '$lib/api/school-life-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
 import { loadStudent360Data } from '$lib/api/student-360-data';
@@ -33,7 +34,7 @@ export async function getDetailDataSnapshot(classGroupIds: string[]): Promise<De
 		fetchClassSubjectsSources(client),
 		loadFinanceData(client),
 		fetchActivities(),
-		fetchDeadlines(),
+		fetchHomeworkSources(client).then(sources => mapDeadlines(undefined, sources)),
 		loadCalendarEvents(client),
 		loadIncidents(client),
 		loadAbsences(client),

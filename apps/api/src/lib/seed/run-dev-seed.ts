@@ -19,6 +19,8 @@ import {
   SEED_FINANCE_REFERENCE_DATE,
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
+  SEED_HOMEWORK_ASSIGNMENTS,
+  SEED_HOMEWORK_SUBMISSIONS,
   SEED_INCIDENTS,
   SEED_PAYMENTS,
   SEED_PEDAGOGICAL_NOTES,
@@ -50,6 +52,10 @@ import {
   createSystemActorMetadata,
   DayOfWeek,
   GradeLevel,
+  HomeworkAssignment,
+  HomeworkAssignmentType,
+  HomeworkSubmission,
+  HomeworkSubmissionStatus,
   IncidentInvolvementRole,
   IncidentKind,
   PaymentMethod,
@@ -96,6 +102,8 @@ export type DevSeedResult =
     sessions: number;
     assessments: number;
     assessmentResults: number;
+    homeworkAssignments: number;
+    homeworkSubmissions: number;
     calendarEvents: number;
     incidents: number;
     attendanceRecords: number;
@@ -400,6 +408,44 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     }
   }
 
+  const homeworkTypeBySeed = {
+    homework: HomeworkAssignmentType.Homework,
+    project: HomeworkAssignmentType.Project,
+    reading: HomeworkAssignmentType.Reading,
+    lab: HomeworkAssignmentType.Lab,
+  } as const;
+
+  const submissionStatusBySeed = {
+    submitted: HomeworkSubmissionStatus.Submitted,
+    late: HomeworkSubmissionStatus.Late,
+    missing: HomeworkSubmissionStatus.Missing,
+  } as const;
+
+  for (const assignment of SEED_HOMEWORK_ASSIGNMENTS) {
+    await service.baseService.homeworkAssignments.save(new HomeworkAssignment({
+      id: assignment.id,
+      schoolId: assignment.schoolId,
+      classGroupId: assignment.classGroupId,
+      classSubjectId: assignment.classSubjectId,
+      title: assignment.title,
+      description: assignment.description,
+      dueDate: parseSeedDate(assignment.dueDate),
+      assignedDate: parseSeedDate(assignment.assignedDate),
+      type: homeworkTypeBySeed[assignment.type],
+      attachments: assignment.attachments.map(attachment => ({ ...attachment })),
+    }), { moduleChecked: true });
+  }
+
+  for (const submission of SEED_HOMEWORK_SUBMISSIONS) {
+    await service.baseService.homeworkSubmissions.save(new HomeworkSubmission({
+      id: submission.id,
+      homeworkAssignmentId: submission.homeworkAssignmentId,
+      studentId: submission.studentId,
+      status: submissionStatusBySeed[submission.status],
+      submittedAt: submission.submittedAt ? parseSeedDate(submission.submittedAt) : undefined,
+    }), { moduleChecked: true });
+  }
+
   const calendarKindByMock = {
     holiday: CalendarEventKind.Holiday,
     vacation: CalendarEventKind.Break,
@@ -577,6 +623,8 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     sessions: SEED_PLANNING_SLOTS.length,
     assessments: SEED_ASSESSMENTS.length,
     assessmentResults: assessmentResultCount,
+    homeworkAssignments: SEED_HOMEWORK_ASSIGNMENTS.length,
+    homeworkSubmissions: SEED_HOMEWORK_SUBMISSIONS.length,
     calendarEvents: calendarEventCount,
     incidents: SEED_INCIDENTS.length,
     attendanceRecords: SEED_ABSENCE_RECORDS.length,

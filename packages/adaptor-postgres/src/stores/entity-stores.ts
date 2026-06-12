@@ -12,6 +12,8 @@ import type {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -59,6 +61,8 @@ import {
   ClassSubject as ClassSubjectCtor,
   ClassSubjectMatter as ClassSubjectMatterCtor,
   ClassSubjectProgress as ClassSubjectProgressCtor,
+  HomeworkAssignment as HomeworkAssignmentCtor,
+  HomeworkSubmission as HomeworkSubmissionCtor,
   DisciplinaryAction as DisciplinaryActionCtor,
   Fee as FeeCtor,
   GradeLevel as GradeLevelCtor,
@@ -174,6 +178,8 @@ export interface EntityStores {
   classSubjects: PostgresStore<ClassSubject>
   classSubjectMatters: PostgresStore<ClassSubjectMatter>
   classSubjectProgress: PostgresStore<ClassSubjectProgress>
+  homeworkAssignments: PostgresStore<HomeworkAssignment>
+  homeworkSubmissions: PostgresStore<HomeworkSubmission>
   assessments: PostgresStore<Assessment>
   assessmentResults: PostgresStore<AssessmentResult>
   gradeScales: PostgresStore<GradeScale>
@@ -645,6 +651,39 @@ export function createEntityStores(db: any): EntityStores {
         recordedAt: row.recordedAt,
       }),
     ),
+
+    homeworkAssignments: customStore(
+      db,
+      schema.homeworkAssignments,
+      (entity: HomeworkAssignment) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        classGroupId: entity.classGroupId,
+        classSubjectId: entity.classSubjectId,
+        title: entity.title,
+        description: entity.description,
+        dueDate: entity.dueDate,
+        assignedDate: entity.assignedDate,
+        type: entity.type,
+        attachments: entity.attachments,
+        createdAt: entity.createdAt,
+      }),
+      row => new HomeworkAssignmentCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        classGroupId: row.classGroupId,
+        classSubjectId: row.classSubjectId,
+        title: row.title,
+        description: row.description,
+        dueDate: row.dueDate,
+        assignedDate: row.assignedDate,
+        type: row.type as HomeworkAssignment['type'],
+        attachments: deserializeJsonb(row.attachments) ?? [],
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    homeworkSubmissions: defaultStore(db, schema.homeworkSubmissions, HomeworkSubmissionCtor),
 
     assessments: customStore(
       db,

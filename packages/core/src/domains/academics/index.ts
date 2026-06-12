@@ -1,5 +1,7 @@
 export * from './class-subject'
 export * from './class-subject-matter'
 export * from './class-subject-progress'
+export * from './homework-assignment'
+export * from './homework-submission'
 export * from './subject'
 export * from './subject-matter'

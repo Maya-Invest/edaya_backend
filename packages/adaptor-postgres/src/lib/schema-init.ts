@@ -16,6 +16,8 @@ export const CLEAR_TABLE_ORDER = [
   'report_card_results',
   'report_card_definition_sections',
   'assessment_results',
+  'homework_submissions',
+  'homework_assignments',
   'class_subject_progress',
   'class_subject_matters',
   'class_subjects',

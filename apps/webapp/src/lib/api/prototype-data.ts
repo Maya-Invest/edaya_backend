@@ -1,4 +1,4 @@
-import type { Activity, Deadline } from '$lib/types/school';
+import type { Activity } from '$lib/types/school';
 import type { LogEntry } from '$lib/types/teaching-log';
 import { browserFetch } from '$lib/api/browser-fetch';
 
@@ -14,19 +14,6 @@ interface PrototypeActivity {
 	startDate: string;
 	endDate: string;
 	enrollments: Activity['enrollments'];
-}
-
-interface PrototypeDeadline {
-	id: string;
-	classGroupId: string;
-	title: string;
-	subject: string;
-	description: string;
-	dueDate: string;
-	assignedDate: string;
-	type: Deadline['type'];
-	attachments: Deadline['attachments'];
-	submissions: Deadline['submissions'];
 }
 
 interface PrototypeTeachingLogEntry {
@@ -63,21 +50,6 @@ export function mapActivities(raw: PrototypeActivity[]): Activity[] {
 	return raw.map(activity => ({ ...activity }));
 }
 
-export function mapDeadlines(raw: PrototypeDeadline[]): Deadline[] {
-	return raw.map(deadline => ({
-		id: deadline.id,
-		classId: deadline.classGroupId,
-		title: deadline.title,
-		subject: deadline.subject,
-		description: deadline.description,
-		dueDate: deadline.dueDate,
-		assignedDate: deadline.assignedDate,
-		type: deadline.type,
-		attachments: deadline.attachments,
-		submissions: deadline.submissions,
-	}));
-}
-
 export async function fetchTeachingLogEntries(
 	filters?: { classGroupId?: string; subjectName?: string },
 ): Promise<LogEntry[]> {
@@ -96,10 +68,3 @@ export async function fetchActivities(): Promise<Activity[]> {
 	return mapActivities(raw ?? []);
 }
 
-export async function fetchDeadlines(classGroupId?: string): Promise<Deadline[]> {
-	const raw = await browserFetch<PrototypeDeadline[]>('/core/prototype/deadlines/list', {
-		method: 'POST',
-		body: JSON.stringify(classGroupId ? { classGroupId } : {}),
-	});
-	return mapDeadlines(raw ?? []);
-}

@@ -76,7 +76,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 | 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [x]   | [ ]     |
 | 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [x]   | [ ]     |
 | 14  | Activités extrascolaires                     | Stub `/prototype/activities`              | `prototype-data.ts`    | [ ]   | [ ]     |
-| 15  | Devoirs / deadlines                          | Stub `/prototype/deadlines`               | `prototype-data.ts`    | [ ]   | [ ]     |
+| 15  | Devoirs / deadlines                          | Stub `/prototype/deadlines`               | `prototype-data.ts`    | [x]   | [ ]     |
 | 16  | Carnet de cours                              | Stub `/prototype/teaching-log`            | `prototype-data.ts`    | [ ]   | [ ]     |
 | 17  | Comptes démo login                           | Stub `/prototype/demo-accounts`           | `login/+page.svelte`   | [ ]   | [ ]     |
 
@@ -379,17 +379,20 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 **Implémentation**
 
-- [ ] Créer entité homework (+ submissions)
-- [ ] Seed `SEED_DEADLINES` dans `run-dev-seed.ts`
-- [ ] Remplacer `fetchDeadlines()`
-- [ ] Supprimer route prototype
+- [x] Entités `HomeworkAssignment` + `HomeworkSubmission` (domaine core + migration `0009`)
+- [x] Seed `SEED_HOMEWORK_ASSIGNMENTS` / `SEED_HOMEWORK_SUBMISSIONS` dans `run-dev-seed.ts`
+- [x] `homework-data.ts` : `fetchDeadlines()` via `client.entities.homework`*
+- [x] Route prototype `/prototype/deadlines/list` supprimée
+- [x] Tests : `homework-data.test.ts`, `test-dev-homework-seed.test.ts`
+- [x] OpenAPI régénéré
 
 **Test UI**
 
-- [ ] `/classes/6a/homework` — devoirs listés par date
-- [ ] Détail devoir → matière, description, pièces jointes, soumissions par élève
-- [ ] Statuts submitted / late / missing visibles
-- [ ] Filtre par classe : devoirs d'une autre classe non mélangés
+- [x] `/classes/6a/homework` — devoirs listés par date
+- [x] Détail devoir → matière, description, pièces jointes, soumissions par élève
+- [x] Statuts submitted / late / missing visibles
+- [x] Filtre par classe : devoirs d'une autre classe non mélangés
+- [ ] ajouter plusieurs classes avec devoirs
 
 ---
 

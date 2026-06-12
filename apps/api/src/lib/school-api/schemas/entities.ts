@@ -23,6 +23,9 @@ import {
   feeSchema,
   gradeLevelSchema,
   gradeScaleSchema,
+  homeworkAssignmentSchema,
+  homeworkAttachmentSchema as coreHomeworkAttachmentSchema,
+  homeworkSubmissionSchema,
   guardianContactMethodSchema,
   guardianSchema,
   guardianStudentLinkSchema,
@@ -75,6 +78,9 @@ import type {
   GradeLevelInput,
   GradeScaleInput,
   GradeScaleRange,
+  HomeworkAssignmentInput,
+  HomeworkAttachment,
+  HomeworkSubmissionInput,
   GuardianInput,
   GuardianStudentLinkInput,
   IncidentInput,
@@ -141,6 +147,12 @@ export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGr
 export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
 export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
 export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressInput>("ClassSubjectProgress", unwrapShape(classSubjectProgressSchema));
+export const homeworkAttachmentResponseSchema = valueSchema<HomeworkAttachment>(unwrapShape(coreHomeworkAttachmentSchema));
+export const homeworkAssignmentResponseSchema = responseSchema<HomeworkAssignmentInput>("HomeworkAssignment", {
+  ...unwrapShape(homeworkAssignmentSchema),
+  attachments: z.array(homeworkAttachmentResponseSchema),
+});
+export const homeworkSubmissionResponseSchema = responseSchema<HomeworkSubmissionInput>("HomeworkSubmission", unwrapShape(homeworkSubmissionSchema));
 export const assessmentResponseSchema = responseSchema<AssessmentInput>("Assessment", unwrapShape(assessmentSchema));
 export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>("AssessmentResult", unwrapShape(assessmentResultSchema));
 export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema));
@@ -367,6 +379,22 @@ export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
   classSubjectMatterId: field.uuid(),
   sessionId: field.uuid(),
+});
+
+export const homeworkAssignmentQuerySchema = createQueryOptionsSchema({
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  classGroupId: field.uuid(),
+  classSubjectId: field.uuid(),
+  title: field.string(),
+  type: field.string(),
+});
+
+export const homeworkSubmissionQuerySchema = createQueryOptionsSchema({
+  id: field.uuid(),
+  homeworkAssignmentId: field.uuid(),
+  studentId: field.uuid(),
+  status: field.string(),
 });
 
 export const assessmentQuerySchema = createQueryOptionsSchema({

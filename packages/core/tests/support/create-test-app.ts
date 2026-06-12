@@ -14,6 +14,8 @@ import type {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
+  HomeworkAssignment,
+  HomeworkSubmission,
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -223,6 +225,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const classSubjects = createStore<ClassSubject>(transactionParticipants)
   const classSubjectMatters = createStore<ClassSubjectMatter>(transactionParticipants)
   const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
+  const homeworkAssignments = createStore<HomeworkAssignment>(transactionParticipants)
+  const homeworkSubmissions = createStore<HomeworkSubmission>(transactionParticipants)
   const sessions = createStore<Session>(transactionParticipants)
   const assessments = createStore<Assessment>(transactionParticipants)
   const attendance = createStore<AttendanceRecord>(transactionParticipants)
@@ -310,6 +314,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
     },
     classSubjectProgress,
+    homeworkAssignments,
+    homeworkSubmissions,
 
     // assessments
     assessments,
