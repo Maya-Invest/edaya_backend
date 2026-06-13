@@ -1,5 +1,7 @@
 # Better Auth integration plan
 
+> **Note:** Auth persistence now lives in `integrations/betterauth-d1-migrations` (`@edaya/betterauth-d1-migrations`), not `packages/adaptor-betterauth`. See [integrations restructure](./integrations-restructure.md).
+
 Complete the API-side Better Auth integration so a real email/password sign-in produces a session, resolves to an `ActorMetadata`, and authorizes core routes. **Webapp work is explicitly out of scope.**
 
 **Related docs:** [API runtimes](./api-runtimes.md), [Authorization README](../packages/core/src/authorization/README.md), [Webapp integration plan](./webapp-api-integration-plan.md) (Phase 1 deferred).

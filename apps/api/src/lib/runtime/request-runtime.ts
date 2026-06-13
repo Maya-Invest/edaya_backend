@@ -1,5 +1,5 @@
 import type { Context, Env } from "hono";
-import type { RuntimeKind } from "./types";
+import type { RuntimeKind } from "@/lib/runtime/host-types";
 
 export interface RequestRuntimeStore<E extends Env, TRuntime> {
   get: (c: Context<E>) => TRuntime | undefined;

@@ -1,7 +1,7 @@
 import type { Environment } from "@/lib/runtime/env";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { AuthService } from "@/lib/runtime/types";
-import { isEphemeralDatabase } from "@edaya/adaptor-neon";
+import { isEphemeralDatabase } from "@edaya/adaptor-postgres";
 import { type DevAccessSeedResult, runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { type DevAuthSeedResult, runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
 import { type DevSeedResult, runDevSeed } from "@/lib/seed/run-dev-seed";

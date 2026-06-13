@@ -32,7 +32,7 @@ id = "62c00eeda7d047fc9951daf7db430070"
 binding = "AUTH_DB"
 database_name = "edaya-auth"
 database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
-migrations_dir = "../../packages/adaptor-betterauth/drizzle"
+migrations_dir = "../../integrations/betterauth-d1-migrations/drizzle"
 
 [env.production]
 name = "edaya-api"
@@ -55,7 +55,7 @@ id = "62c00eeda7d047fc9951daf7db430070"
 binding = "AUTH_DB"
 database_name = "edaya-auth"
 database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
-migrations_dir = "../../packages/adaptor-betterauth/drizzle"
+migrations_dir = "../../integrations/betterauth-d1-migrations/drizzle"
 
 [[env.production.routes]]
 pattern = "api.edaya.softilab.dev"

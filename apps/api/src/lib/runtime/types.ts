@@ -1,4 +1,4 @@
-import type { RuntimeBindings, RuntimeKind } from "@edaya/adaptor-cloudflare";
+import type { RuntimeBindings, RuntimeKind } from "@/lib/runtime/host-types";
 import type { Environment } from "@/lib/runtime/env";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 

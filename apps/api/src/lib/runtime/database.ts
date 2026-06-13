@@ -1,5 +1,5 @@
 import type { Environment } from "@/lib/runtime/env";
-import { isEphemeralDatabase } from "@edaya/adaptor-neon";
+import { isEphemeralDatabase } from "@edaya/adaptor-postgres";
 
 export interface DatabaseHandle {
   db: unknown;

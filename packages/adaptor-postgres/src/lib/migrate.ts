@@ -7,7 +7,7 @@ export type MigrationDriver = 'pglite' | 'postgres-js'
 
 function getPackageRoot(): string {
   if (typeof import.meta.url !== 'string' || import.meta.url.length === 0) {
-    throw new Error('Cannot resolve Neon migrations folder in this runtime')
+    throw new Error('Cannot resolve Postgres migrations folder in this runtime')
   }
 
   return join(dirname(fileURLToPath(import.meta.url)), '..', '..')

@@ -1,4 +1,4 @@
-import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver, type PostgresTransactionalDb } from "@edaya/adaptor-neon";
+import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createAuthDatabase } from "@/lib/runtime/create-auth-database";
 import { createAuth } from "@/lib/runtime/create-auth";

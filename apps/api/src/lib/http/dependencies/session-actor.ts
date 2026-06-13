@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
 import type { AppBindings } from "@/lib/http/types";
 import type { Context } from "hono";
-import type { DependencyModule } from "@edaya/adaptor-cloudflare";
+import type { DependencyModule } from "@/lib/http/dependency-injection";
 
 export interface AuthSession {
   user: {

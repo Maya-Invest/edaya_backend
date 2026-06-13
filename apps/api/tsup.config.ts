@@ -10,4 +10,5 @@ export default defineConfig({
   sourcemap: true,
   tsconfig: 'tsconfig.json',
   noExternal: [/^@edaya\//],
+  external: ['bun:sqlite'],
 })

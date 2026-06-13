@@ -1,4 +1,4 @@
-import { PostgresSchoolRepositories } from '@edaya/adaptor-neon'
+import { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 

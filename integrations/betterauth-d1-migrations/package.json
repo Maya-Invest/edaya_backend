@@ -1,5 +1,5 @@
 {
-  "name": "@edaya/adaptor-betterauth",
+  "name": "@edaya/betterauth-d1-migrations",
   "type": "module",
   "version": "0.0.1",
   "private": true,
@@ -14,9 +14,8 @@
     "quality": "bun run lint && bun run check",
     "auth:generate-schema": "bunx @better-auth/cli@latest generate --config ./src/cli/auth-config.ts --output ./src/schema.ts --yes",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun ./scripts/migrate-d1-local.ts",
-    "db:migrate:local": "bun ./scripts/migrate-d1-local.ts",
-    "db:migrate:remote": "bun ./scripts/migrate-d1-remote.ts",
+    "migrate:local": "bun ./scripts/migrate-local.ts",
+    "migrate:remote": "bun ./scripts/migrate-remote.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint src",

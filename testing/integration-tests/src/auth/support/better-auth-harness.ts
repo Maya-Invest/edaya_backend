@@ -1,19 +1,19 @@
-import type { PostgresTransactionalDb } from '@edaya/adaptor-neon'
+import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { AuthSessionProvider, SessionActorBindings } from './session-actor-harness'
-import { authSchema, runMigrations as runAuthMigrations } from '@edaya/adaptor-betterauth'
 import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
-} from '@edaya/adaptor-neon'
+} from '@edaya/adaptor-postgres'
+import { authSchema, runMigrations as runAuthMigrations } from '@edaya/betterauth-d1-migrations'
 import {
   createRepositoryAuthorizationPolicy,
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
-import { Database } from 'bun:sqlite'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { Database } from 'bun:sqlite'
 import { sql } from 'drizzle-orm'
 import { drizzle as drizzleBunSqlite } from 'drizzle-orm/bun-sqlite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
@@ -243,25 +243,25 @@ export async function countAuthTableRows(
   authDb: AuthDb,
   table: 'user' | 'account' | 'session',
 ): Promise<number> {
-  const row = await authDb.get<{ count: number }>(sql.raw(`SELECT COUNT(*) AS count FROM "${table}"`))
-  return row?.count ?? 0
+  const rows = await authDb.all<{ count: number }>(sql.raw(`SELECT COUNT(*) AS count FROM "${table}"`))
+  return rows[0]?.count ?? 0
 }
 
 export async function findUserByEmail(
   authDb: AuthDb,
   email: string,
 ): Promise<{ id: string, email: string } | null> {
-  const row = await authDb.get<{ id: string, email: string }>(
+  const rows = await authDb.all<{ id: string, email: string }>(
     sql`SELECT id, email FROM "user" WHERE email = ${email}`,
   )
-  return row ?? null
+  return rows[0] ?? null
 }
 
 export async function countAccountRowsForUser(authDb: AuthDb, userId: string): Promise<number> {
-  const row = await authDb.get<{ count: number }>(
+  const rows = await authDb.all<{ count: number }>(
     sql`SELECT COUNT(*) AS count FROM "account" WHERE user_id = ${userId}`,
   )
-  return row?.count ?? 0
+  return rows[0]?.count ?? 0
 }
 
 export async function closeAuthIntegrationContext(context: AuthIntegrationContext): Promise<void> {

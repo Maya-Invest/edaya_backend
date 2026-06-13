@@ -21,6 +21,7 @@ export const pgliteEnv = parseEnv({
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
+  AUTH_DATABASE_PATH: ":memory:",
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
   BETTER_AUTH_URL: "http://localhost:9999",
 });

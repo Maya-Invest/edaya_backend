@@ -1,4 +1,4 @@
-import { createWorkerRequestRuntimeResolver } from "@edaya/adaptor-cloudflare";
+import { createWorkerRequestRuntimeResolver } from "@/lib/runtime/request-runtime";
 import type { Context } from "hono";
 import { buildApiRuntime } from "@/lib/runtime/create-runtime";
 import { getApiRuntime } from "@/lib/runtime/registry";

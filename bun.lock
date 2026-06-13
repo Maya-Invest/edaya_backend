@@ -20,9 +20,8 @@
       "name": "@edaya/api",
       "version": "1.0.0",
       "dependencies": {
-        "@edaya/adaptor-betterauth": "workspace:*",
-        "@edaya/adaptor-cloudflare": "workspace:*",
-        "@edaya/adaptor-neon": "workspace:*",
+        "@edaya/adaptor-postgres": "workspace:*",
+        "@edaya/betterauth-d1-migrations": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/dev-fixtures": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
@@ -84,8 +83,8 @@
         "wrangler": "^4.99.0",
       },
     },
-    "packages/adaptor-betterauth": {
-      "name": "@edaya/adaptor-betterauth",
+    "integrations/betterauth-d1-migrations": {
+      "name": "@edaya/betterauth-d1-migrations",
       "version": "0.0.1",
       "dependencies": {
         "drizzle-orm": "^0.39.0",
@@ -97,18 +96,18 @@
         "wrangler": "^4.99.0",
       },
     },
-    "packages/adaptor-cloudflare": {
-      "name": "@edaya/adaptor-cloudflare",
+    "integrations/neon-migrations": {
+      "name": "@edaya/neon-migrations",
       "version": "0.0.1",
-      "dependencies": {
-        "hono": "^4.7.9",
-      },
       "devDependencies": {
         "@types/bun": "^1.3.14",
+        "dotenv": "^16.5.0",
+        "dotenv-expand": "^11.0.7",
+        "drizzle-kit": "^0.30.4",
       },
     },
-    "packages/adaptor-neon": {
-      "name": "@edaya/adaptor-neon",
+    "packages/adaptor-postgres": {
+      "name": "@edaya/adaptor-postgres",
       "version": "0.0.1",
       "dependencies": {
         "@edaya/core": "workspace:*",
@@ -116,8 +115,6 @@
       },
       "devDependencies": {
         "@types/bun": "^1.3.14",
-        "dotenv": "^16.5.0",
-        "dotenv-expand": "^11.0.7",
         "drizzle-kit": "^0.30.4",
       },
     },
@@ -151,8 +148,8 @@
     "testing/integration-tests": {
       "name": "@edaya/integration-tests",
       "devDependencies": {
-        "@edaya/adaptor-betterauth": "workspace:*",
-        "@edaya/adaptor-neon": "workspace:*",
+        "@edaya/adaptor-postgres": "workspace:*",
+        "@edaya/betterauth-d1-migrations": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/dev-fixtures": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
@@ -232,21 +229,21 @@
 
     "@e18e/eslint-plugin": ["@e18e/eslint-plugin@0.4.1", "", { "dependencies": { "empathic": "^2.0.0", "module-replacements": "^3.0.0-beta.7", "semver": "^7.7.4" }, "peerDependencies": { "eslint": "^9.0.0 || ^10.0.0", "oxlint": "^1.61.0" }, "optionalPeers": ["eslint", "oxlint"] }, "sha512-Re00N8ad1HsNrzpuIX7Bhdr8RSaFWp6VgwJUEJF+47+D1CMcXoS7VNRkIG23e46pddhgxWU0cWk4wYiQIuMHqQ=="],
 
-    "@edaya/adaptor-betterauth": ["@edaya/adaptor-betterauth@workspace:packages/adaptor-betterauth"],
-
-    "@edaya/adaptor-cloudflare": ["@edaya/adaptor-cloudflare@workspace:packages/adaptor-cloudflare"],
-
-    "@edaya/adaptor-neon": ["@edaya/adaptor-neon@workspace:packages/adaptor-neon"],
+    "@edaya/adaptor-postgres": ["@edaya/adaptor-postgres@workspace:packages/adaptor-postgres"],
 
     "@edaya/api": ["@edaya/api@workspace:apps/api"],
 
     "@edaya/api-client": ["@edaya/api-client@workspace:packages/api-client"],
+
+    "@edaya/betterauth-d1-migrations": ["@edaya/betterauth-d1-migrations@workspace:integrations/betterauth-d1-migrations"],
 
     "@edaya/core": ["@edaya/core@workspace:packages/core"],
 
     "@edaya/dev-fixtures": ["@edaya/dev-fixtures@workspace:testing/dev-fixtures"],
 
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:testing/integration-tests"],
+
+    "@edaya/neon-migrations": ["@edaya/neon-migrations@workspace:integrations/neon-migrations"],
 
     "@edaya/webapp": ["@edaya/webapp@workspace:apps/webapp"],
 

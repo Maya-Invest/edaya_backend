@@ -1,49 +1,78 @@
 # Edaya Core
 
-Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared **domain core** (`packages/core`), persistence/auth adaptors, and a generated **API client**.
+Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared **domain core** (`packages/core`), portable persistence adaptors, platform **integrations**, and a generated **API client**.
 
 Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build).
 
+## Monorepo layout
+
+```text
+maya_school_core/
+├── apps/
+│   ├── api/                              @edaya/api — Hono API (Node + Cloudflare Worker)
+│   └── webapp/                           @edaya/webapp — SvelteKit UI (Cloudflare Pages)
+├── packages/
+│   ├── core/                             @edaya/core — domain, services, ports
+│   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
+│   └── api-client/                       @edaya/api-client — typed API SDK
+├── integrations/
+│   ├── neon-migrations/                  @edaya/neon-migrations — apply school migrations (Neon/Hyperdrive)
+│   └── betterauth-d1-migrations/         @edaya/betterauth-d1-migrations — auth schema + D1 deploy
+└── testing/
+    ├── dev-fixtures/
+    └── integration-tests/
+```
+
+**Boundary rule:** `packages/*` are vendor-agnostic persistence; `integrations/*` are platform-specific migration/deploy orchestration; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; infrastructure (Postgres, Better Auth) lives in adaptor packages; the API is a thin HTTP layer; the webapp consumes the API through `@edaya/api-client`.
+The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; platform migrations live in `integrations/*`; the API wires runtime and HTTP; the webapp consumes the API through `@edaya/api-client`.
 
 ```mermaid
 flowchart TB
   subgraph clients["Clients"]
-    Webapp["@edaya/webapp<br/>SvelteKit"]
+    Webapp["@edaya/webapp<br/>SvelteKit · Cloudflare Pages"]
   end
 
-  subgraph api_layer["API layer"]
-    API["@edaya/api<br/>Hono + OpenAPI"]
-    Client["@edaya/api-client<br/>typed SDK"]
+  subgraph api_layer["API"]
+    API["@edaya/api<br/>Hono · Node + Worker"]
+    Client["@edaya/api-client"]
+    WorkerHost["lib/runtime + http/di<br/>Hyperdrive · DI · request cache"]
   end
 
   subgraph domain["Domain"]
-    Core["@edaya/core<br/>entities, services, ports"]
+    Core["@edaya/core"]
   end
 
-  subgraph infra["Infrastructure"]
-  PG["@edaya/adaptor-neon<br/>Drizzle + repositories"]
-  Auth["@edaya/adaptor-betterauth<br/>auth schema + migrations"]
-  CF["@edaya/adaptor-cloudflare<br/>Worker DI + Hyperdrive"]
+  subgraph packages["Packages"]
+    PG["@edaya/adaptor-postgres"]
+  end
+
+  subgraph integrations["Integrations"]
+    Auth["@edaya/betterauth-d1-migrations"]
+    NeonM["@edaya/neon-migrations"]
   end
 
   Webapp --> Client
-  Webapp -->|SSR / BFF| API
+  Webapp -->|SSR / dev proxy| API
   Client --> API
+  API --> WorkerHost
   API --> Core
+  API --> PG
   API --> Auth
   Core --> PG
-  PG --> DB[(Postgres / PGlite)]
-  Auth --> DB
+  NeonM --> PG
+  NeonM -.->|migrate:all| Auth
+  PG --> SchoolDB[(Postgres / PGlite)]
+  Auth --> AuthDB[(D1 / SQLite)]
 ```
 
 ### Request flow
 
 1. **Webapp** — Server code calls the API via `API_URL` (`@edaya/api-client`). In dev, Vite proxies `/api`, `/doc`, and `/reference` to the API.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
-3. **Runtime** — Opens the database, runs auth migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
+3. **Runtime** — Opens the school Postgres DB and auth store (D1 or local SQLite), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
 4. **Core** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
 
 ### API runtimes
@@ -59,22 +88,40 @@ Node supports in-memory Postgres (`DATABASE_URL=pglite`). Workers require a real
 
 - `apps/api/src/routes/` — OpenAPI route modules (thin HTTP surface)
 - `apps/api/src/lib/school-api/` — registry, schemas, dispatch, entity handlers
-- `apps/api/src/lib/runtime/` — database, auth, runtime registry
+- `apps/api/src/lib/runtime/` — database, auth, Worker bindings, Hyperdrive, runtime registry
+- `apps/api/src/lib/http/` — Hono app, dependency injection middleware
 - `packages/core/src/` — domains, entities, authorization, services, ports
 
 More detail: [docs/done/api-folder-structure.md](./docs/done/api-folder-structure.md), [docs/done/api-runtimes.md](./docs/done/api-runtimes.md).
 
-## Packages
+## Workspace packages
+
+### Apps
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, dev seed |
+| `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, dev seed, Worker host wiring |
 | `@edaya/webapp` | `apps/webapp` | SvelteKit UI (Cloudflare Pages adapter) |
+
+### Packages
+
+| Package | Path | Role |
+|---------|------|------|
 | `@edaya/core` | `packages/core` | Domain model, business services, authorization, repository ports |
-| `@edaya/adaptor-neon` | `packages/adaptor-neon` | Drizzle schema, migrations, Neon Postgres repository implementations |
-| `@edaya/adaptor-betterauth` | `packages/adaptor-betterauth` | Better Auth Drizzle schema and SQL migrations |
-| `@edaya/adaptor-cloudflare` | `packages/adaptor-cloudflare` | Hono DI middleware, Hyperdrive binding resolution, Worker request runtime lifecycle |
+| `@edaya/adaptor-postgres` | `packages/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
 | `@edaya/api-client` | `packages/api-client` | Type-safe client for entities, commands, queries (generated bindings) |
+
+### Integrations
+
+| Package | Path | Role |
+|---------|------|------|
+| `@edaya/neon-migrations` | `integrations/neon-migrations` | Apply school migrations on Neon / Hyperdrive origin |
+| `@edaya/betterauth-d1-migrations` | `integrations/betterauth-d1-migrations` | Better Auth schema, SQL migrations, D1 deploy scripts |
+
+### Testing
+
+| Package | Path | Role |
+|---------|------|------|
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/integration-tests` | `testing/integration-tests` | Cross-package integration tests (auth, Postgres, core services) |
 
@@ -142,11 +189,11 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 | Command | Description |
 |---------|-------------|
-| `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-neon`) |
-| `bun run db:migrate` | Apply school schema migrations |
-| `bun run db:migrate:all` | Apply school + auth schema migrations |
-| `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate the Hyperdrive origin DB |
-| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/adaptor-betterauth`) |
+| `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-postgres`) |
+| `bun run db:migrate` | Apply school schema migrations (`@edaya/neon-migrations`) |
+| `bun run db:migrate:all` | Apply school + local D1 auth migrations (dev bootstrap) |
+| `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate Hyperdrive origin + local D1 auth |
+| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/betterauth-d1-migrations`) |
 | `bun run db:migrate:auth` | Apply Better Auth migrations to local D1 |
 | `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 |
 | `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI config |
@@ -155,10 +202,10 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 
 | Command | Description |
 |---------|-------------|
-| `bun --filter @edaya/adaptor-neon db:push` | Push schema to database (drizzle-kit) |
-| `bun --filter @edaya/adaptor-neon db:studio` | Open Drizzle Studio |
-| `bun --filter @edaya/adaptor-betterauth db:push` | Push auth schema |
-| `bun --filter @edaya/adaptor-betterauth db:studio` | Drizzle Studio for auth schema |
+| `bun --filter @edaya/adaptor-postgres db:push` | Push schema to database (drizzle-kit) |
+| `bun --filter @edaya/adaptor-postgres db:studio` | Open Drizzle Studio |
+| `bun --filter @edaya/betterauth-d1-migrations db:push` | Push auth schema |
+| `bun --filter @edaya/betterauth-d1-migrations db:studio` | Drizzle Studio for auth schema |
 
 ### OpenAPI & API client
 

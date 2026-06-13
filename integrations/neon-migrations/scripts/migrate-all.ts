@@ -4,8 +4,7 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const repoRoot = path.resolve(packageRoot, '../..')
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
 const databaseUrl = process.env['DATABASE_URL']
 

@@ -1,4 +1,4 @@
-import type { RuntimeBindings, RuntimeKind } from "./types";
+import type { RuntimeBindings, RuntimeKind } from "@/lib/runtime/host-types";
 
 const HYPERDRIVE_BINDING = "HYPERDRIVE";
 
@@ -23,7 +23,7 @@ export function resolveDatabaseUrl(source: RuntimeBindings, runtime: RuntimeKind
     }
   }
 
-  const databaseUrl = source["DATABASE_URL"];
+  const databaseUrl = source.DATABASE_URL;
   if (typeof databaseUrl === "string" && databaseUrl.length > 0) {
     return databaseUrl;
   }

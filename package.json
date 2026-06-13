@@ -6,6 +6,7 @@
   "workspaces": [
     "apps/*",
     "packages/*",
+    "integrations/*",
     "testing/*"
   ],
   "scripts": {
@@ -19,14 +20,14 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "fullcheck": "bun run lint:fix && bun run quality && bun run build && turbo run test -- --dots",
-    "db:generate": "bun --filter @edaya/adaptor-neon db:generate",
-    "db:migrate": "bun --filter @edaya/adaptor-neon db:migrate",
-    "db:migrate:all": "bun --filter @edaya/adaptor-neon db:migrate:all",
-    "db:migrate:dev": "bun --filter @edaya/adaptor-neon db:migrate:dev",
-    "db:generate:auth": "bun --filter @edaya/adaptor-betterauth db:generate",
-    "db:migrate:auth": "bun --filter @edaya/adaptor-betterauth db:migrate:local",
-    "db:migrate:auth:remote": "bun --filter @edaya/adaptor-betterauth db:migrate:remote",
-    "auth:generate-schema": "bun --filter @edaya/adaptor-betterauth auth:generate-schema",
+    "db:generate": "bun --filter @edaya/adaptor-postgres db:generate",
+    "db:migrate": "bun --filter @edaya/neon-migrations migrate",
+    "db:migrate:all": "bun --filter @edaya/neon-migrations migrate:all",
+    "db:migrate:dev": "bun --filter @edaya/neon-migrations migrate:dev",
+    "db:generate:auth": "bun --filter @edaya/betterauth-d1-migrations db:generate",
+    "db:migrate:auth": "bun --filter @edaya/betterauth-d1-migrations migrate:local",
+    "db:migrate:auth:remote": "bun --filter @edaya/betterauth-d1-migrations migrate:remote",
+    "auth:generate-schema": "bun --filter @edaya/betterauth-d1-migrations auth:generate-schema",
     "openapi:generate": "bun run --cwd apps/api export-openapi && bun run --cwd apps/webapp openapi:generate && bun run --cwd apps/api generate-api-client"
   },
   "devDependencies": {

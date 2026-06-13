@@ -1,4 +1,4 @@
-import { PostgresAtomicExecution as RelationalPostgresAtomicExecution, PostgresSchoolRepositories as RelationalPostgresSchoolRepositories } from '@edaya/adaptor-neon'
+import { PostgresAtomicExecution as RelationalPostgresAtomicExecution, PostgresSchoolRepositories as RelationalPostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeAll, beforeEach, describe } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'

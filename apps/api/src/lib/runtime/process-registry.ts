@@ -1,4 +1,4 @@
-import type { RuntimeKind } from "./types";
+import type { RuntimeKind } from "@/lib/runtime/host-types";
 
 export interface RuntimeRegistry<TEnv extends { RUNTIME: RuntimeKind; DATABASE_URL: string }, TRuntime> {
   get: (env: TEnv) => Promise<TRuntime>;

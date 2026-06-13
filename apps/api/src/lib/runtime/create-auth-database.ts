@@ -1,11 +1,13 @@
 /// <reference types="@cloudflare/workers-types" />
 
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import type { Environment } from "@/lib/runtime/env";
 import type { DatabaseHandle } from "@/lib/runtime/database";
-import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
+import { runMigrations as runAuthMigrations } from "@edaya/betterauth-d1-migrations";
 
 function readAuthDbBinding(source: Record<string, unknown>): D1Database | undefined {
-  const binding = source["AUTH_DB"];
+  const binding = source.AUTH_DB;
   if (binding && typeof binding === "object" && "prepare" in binding) {
     return binding as D1Database;
   }
@@ -29,6 +31,7 @@ export async function createAuthDatabase(env: Environment, bindings?: Record<str
 
   const { Database } = await import("bun:sqlite");
   const { drizzle } = await import("drizzle-orm/bun-sqlite");
+  mkdirSync(dirname(env.AUTH_DATABASE_PATH), { recursive: true });
   const sqlite = new Database(env.AUTH_DATABASE_PATH, { create: true });
   const db = drizzle(sqlite);
   await runAuthMigrations(db, { driver: "sqlite" });

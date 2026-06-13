@@ -1,7 +1,7 @@
 import {
   createDependenciesInjection as createHonoDependenciesInjection,
   type DependencyModule,
-} from "@edaya/adaptor-cloudflare";
+} from "@/lib/http/dependency-injection";
 import type { MiddlewareHandler } from "hono";
 import { closeRequestApiRuntime } from "@/lib/runtime/resolve-api-runtime";
 import type { AppBindings } from "@/lib/http/types";

@@ -1,4 +1,4 @@
-import { PostgresSchoolRepositories } from '@edaya/adaptor-neon'
+import { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import {
   DomainValidationError,
   Fee,

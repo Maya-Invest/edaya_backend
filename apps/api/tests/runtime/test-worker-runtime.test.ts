@@ -1,13 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
-import {
-  createDependenciesInjection,
-  createRuntimeRegistry,
-  createWorkerRequestRuntimeResolver,
-  prepareRuntimeBindings,
-  resolveDatabaseUrl,
-  usesHyperdriveBinding,
-} from "../src/index";
+import { createDependenciesInjection } from "@/lib/http/dependency-injection";
+import { prepareRuntimeBindings } from "@/lib/runtime/bindings";
+import { resolveDatabaseUrl, usesHyperdriveBinding } from "@/lib/runtime/hyperdrive";
+import { createRuntimeRegistry } from "@/lib/runtime/process-registry";
+import { createWorkerRequestRuntimeResolver } from "@/lib/runtime/request-runtime";
 
 describe("resolveDatabaseUrl", () => {
   it("prefers Hyperdrive on the worker runtime", () => {
@@ -56,7 +53,7 @@ describe("prepareRuntimeBindings", () => {
 
     expect(bindings.RUNTIME).toBe("worker");
     expect(bindings.DATABASE_URL).toBe("postgres://direct");
-    expect(bindings["LOG_LEVEL"]).toBe("info");
+    expect(bindings.LOG_LEVEL).toBe("info");
   });
 });
 
@@ -64,7 +61,7 @@ describe("createDependenciesInjection", () => {
   it("runs dependencies in order and teardown after the handler", async () => {
     const events: string[] = [];
 
-    type TestEnv = { Variables: { value?: string } };
+    interface TestEnv { Variables: { value?: string } }
 
     const app = new Hono<TestEnv>();
     app.use(createDependenciesInjection<TestEnv>([
@@ -102,31 +99,31 @@ describe("createWorkerRequestRuntimeResolver", () => {
     const builds: string[] = [];
     const closes: string[] = [];
 
-    type WorkerEnv = {
+    interface WorkerEnv {
       Bindings: { RUNTIME: "worker"; DATABASE_URL: string };
       Variables: { apiRuntime?: { value: string; close: () => Promise<void> } };
-    };
+    }
 
     const resolver = createWorkerRequestRuntimeResolver<
       { RUNTIME: "worker"; DATABASE_URL: string },
       { value: string; close: () => Promise<void> },
       WorkerEnv
     >({
-      get(c) {
-        return c.var.apiRuntime;
-      },
-      set(c, runtime) {
-        c.set("apiRuntime", runtime);
-      },
-    }, async (env) => {
-      builds.push(env.DATABASE_URL);
-      return {
-        value: env.DATABASE_URL,
-        close: async () => {
-          closes.push(env.DATABASE_URL);
-        },
-      };
-    }, runtime => runtime.close());
+          get(c) {
+            return c.var.apiRuntime;
+          },
+          set(c, runtime) {
+            c.set("apiRuntime", runtime);
+          },
+        }, async (env) => {
+          builds.push(env.DATABASE_URL);
+          return {
+            value: env.DATABASE_URL,
+            close: async () => {
+              closes.push(env.DATABASE_URL);
+            },
+          };
+        }, runtime => runtime.close());
 
     const app = new Hono<WorkerEnv>();
     app.use(async (c, next) => {
@@ -138,7 +135,7 @@ describe("createWorkerRequestRuntimeResolver", () => {
         await resolver.close(c);
       }
     });
-    app.get("/", (c) => c.text(c.var.apiRuntime?.value ?? "missing"));
+    app.get("/", c => c.text(c.var.apiRuntime?.value ?? "missing"));
 
     const response = await app.request("/", {}, {
       RUNTIME: "worker",
@@ -159,12 +156,12 @@ describe("createRuntimeRegistry", () => {
       { RUNTIME: "node" | "worker"; DATABASE_URL: string },
       { close: () => Promise<void> }
     >({
-      buildRuntime: async () => {
-        buildCount += 1;
-        return { close: async () => {} };
-      },
-      closeRuntime: async () => {},
-    });
+          buildRuntime: async () => {
+            buildCount += 1;
+            return { close: async () => {} };
+          },
+          closeRuntime: async () => {},
+        });
 
     const env = { RUNTIME: "node" as const, DATABASE_URL: "postgres://node" };
     await registry.get(env);

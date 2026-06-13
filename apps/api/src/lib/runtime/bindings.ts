@@ -1,8 +1,8 @@
-import { resolveDatabaseUrl } from "./hyperdrive";
-import type { RuntimeBindings, RuntimeKind } from "./types";
+import { resolveDatabaseUrl } from "@/lib/runtime/hyperdrive";
+import type { RuntimeBindings, RuntimeKind } from "@/lib/runtime/host-types";
 
 export function inferRuntimeKind(source: RuntimeBindings): RuntimeKind {
-  const value = source["RUNTIME"];
+  const value = source.RUNTIME;
   if (value === "node" || value === "worker") {
     return value;
   }

@@ -1,7 +1,10 @@
-import { createRuntimeRegistry } from "@edaya/adaptor-cloudflare";
+import { unlinkSync } from "node:fs";
+import { createRuntimeRegistry } from "@/lib/runtime/process-registry";
 import { buildApiRuntime } from "@/lib/runtime/create-runtime";
 import type { Environment } from "@/lib/runtime/env";
 import type { ApiRuntime } from "@/lib/runtime/types";
+
+const DEFAULT_AUTH_DATABASE_PATH = ".data/auth.sqlite";
 
 const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
   buildRuntime: buildApiRuntime,
@@ -16,8 +19,20 @@ const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
  */
 export const getApiRuntime = runtimeRegistry.get;
 
+function removeDefaultAuthDatabaseFile(): void {
+  try {
+    unlinkSync(DEFAULT_AUTH_DATABASE_PATH);
+  }
+  catch {
+    // Ignore missing file or active handles; the next runtime opens a fresh database.
+  }
+}
+
 /**
  * Closes cached runtimes and clears the registry. Use in test teardown so
  * ephemeral PGlite instances do not keep the Bun test runner alive (exit 99).
  */
-export const resetApiRuntimesForTests = runtimeRegistry.reset;
+export async function resetApiRuntimesForTests(): Promise<void> {
+  await runtimeRegistry.reset();
+  removeDefaultAuthDatabaseFile();
+}

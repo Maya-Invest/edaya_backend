@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { inferRuntimeKind, prepareRuntimeBindings, type RuntimeBindings, type RuntimeKind } from "@edaya/adaptor-cloudflare";
+import { inferRuntimeKind, prepareRuntimeBindings } from "@/lib/runtime/bindings";
+import type { RuntimeBindings, RuntimeKind } from "@/lib/runtime/host-types";
 
 import { z } from "zod";
 
@@ -40,7 +41,7 @@ export function parseEnv(data: Record<string, unknown>) {
 }
 
 function readAuthDbBinding(source: RuntimeBindings): D1Database | undefined {
-  const binding = source["AUTH_DB"];
+  const binding = source.AUTH_DB;
   if (binding && typeof binding === "object" && "prepare" in binding) {
     return binding as D1Database;
   }

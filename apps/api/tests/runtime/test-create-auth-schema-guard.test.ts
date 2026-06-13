@@ -11,7 +11,7 @@ describe("createAuth schema guard", () => {
     );
     const source = readFileSync(sourcePath, "utf8");
 
-    expect(source).toContain("@edaya/adaptor-betterauth");
+    expect(source).toContain("@edaya/betterauth-d1-migrations");
     expect(source).toContain("authSchema");
     expect(source).toMatch(/schema:\s*authSchema/);
   });

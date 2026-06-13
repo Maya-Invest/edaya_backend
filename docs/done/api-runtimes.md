@@ -48,15 +48,15 @@ Deploy with `bun run deploy:worker` (`wrangler deploy --env production`) once `B
 ```
 Request
   └─ Hono app.fetch(request, bindings)
-       └─ env middleware → parseRuntimeEnv(prepareRuntimeBindings) via @edaya/adaptor-cloudflare
+       └─ env middleware → parseRuntimeEnv(prepareRuntimeBindings) in apps/api/src/lib/runtime/
        └─ createAuthDatabase(env) → D1 on Worker, SQLite file on Node
        └─ createDatabase(env) → Neon/Hyperdrive school DB
-            └─ getSchoolApplication → repos.init ( @edaya/adaptor-neon )
+            └─ getSchoolApplication → repos.init ( @edaya/adaptor-postgres )
 ```
 
-Auth schema and SQL migrations live in `packages/adaptor-betterauth`. Runtime Better Auth config lives in `apps/api/src/lib/runtime/create-auth.ts`.
+Auth schema and SQL migrations live in `integrations/betterauth-d1-migrations`. School migration apply scripts live in `integrations/neon-migrations`. Runtime Better Auth config lives in `apps/api/src/lib/runtime/create-auth.ts`.
 
-Runtime code lives in `apps/api/src/lib/runtime/`.
+Runtime code lives in `apps/api/src/lib/runtime/` (database, auth, Hyperdrive bindings, request-scoped Worker runtime cache, Node process registry). Hono dependency injection lives in `apps/api/src/lib/http/dependency-injection.ts`.
 
 ### Runtime registry
 
