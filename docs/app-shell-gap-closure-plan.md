@@ -8,7 +8,7 @@ Living plan to align `apps/webapp` with [`specs/app-shell-spec.md`](../specs/app
 - [Webapp mock → API migration plan](./done/webapp-mock-migration-plan.md) — read/write API wiring (coupled with mutation work below)
 - Cursor rule: `.cursor/rules/app-shell.mdc`
 
-**Last updated:** 2026-06-11
+**Last updated:** 2026-06-13
 
 ---
 
@@ -171,19 +171,20 @@ Keep and extend these patterns — they are the foundation every migration shoul
 
 ## 5. Phased closure plan
 
-### Phase 0 — Shared foundations (1 sprint)
+### Phase 0a — Shared foundations (drawer shell contract)
 
 Establish patterns once; every entity migration reuses them.
 
 1. **`DetailDrawer` shell refactor**
    - Remove global Save/Cancel footer
-   - Footer: entity-specific action buttons (passed from detail body) + Close only
+   - Footer: Close only in the shared shell
+   - Entity-specific actions live in the detail body until a stronger cross-component action API is justified
    - Add responsive width: `w-full md:w-1/2`, full-screen on mobile
    - Escape closes drawer; `prefers-reduced-motion` guard
 
 2. **Shared modal primitives**
    - `DrawerActionBar` — footer slot for `[Edit profile] [Change class] [Close]`
-   - `FormModal.svelte` — title, body slot, Cancel/Save, focus trap, Escape
+   - `FormModal.svelte` — app-level layout/chrome on top of existing Bits UI `Dialog`; do not rebuild focus trapping
    - `ConfirmModal.svelte` — destructive confirm
    - `PickerModal.svelte` — link/assign (pattern from `ActivityDetail`)
 
@@ -200,7 +201,19 @@ Establish patterns once; every entity migration reuses them.
    - `ListPageHeader.svelte`: title, description, primary CTA slot, search, filter, more menu
    - Reference implementation on `SchoolStudentsView`
 
-**Exit criteria:** One entity (Student) fully migrated end-to-end using only new primitives.
+**Exit criteria:** The drawer shell no longer exposes global mutation controls, and the primitives have one documented usage path.
+
+### Phase 0b — Student reference migration
+
+Use Student as the first complete entity migration after the shell contract is stable.
+
+- Profile tab → read-only `DrawerField` rows
+- `StudentEditModal` for multi-field profile edits
+- Guardian link + note add/edit actions open modals
+- Keep `ChangeClassButton` as the reference action → modal → mutation pattern
+- All write actions use real API commands or are hidden/disabled until a command exists
+
+**Exit criteria:** Student is fully migrated end-to-end using the Phase 0a primitives.
 
 ---
 
@@ -214,7 +227,7 @@ read-only Detail/Tabs → footer actions → modals → remove Form from drawer
 
 | Sprint | Entities | Work |
 |--------|----------|------|
-| 1a | **Student** | Profile tab → read-only `DrawerField` rows; `StudentEditModal`; wire guardian link + note modals; keep `ChangeClassButton` |
+| 1a | **Student** | Covered by Phase 0b; keep as the reference pattern for later entities |
 | 1b | **Guardian**, **Staff** | `GuardianDetail` + `GuardianFormModal`; `StaffTabs` (profile read-only + permissions tab as sub-collection with toggles only where boolean) + `StaffEditModal` |
 | 1c | **Evaluation** | Read-only header; gradebook as read-only sub-list; `GradeEntryModal` per student or batch modal |
 | 1d | **Fee**, **Planning**, **Subject** | `*Detail` + `*FormModal`; subject chapters tab stays read-only sub-list |
@@ -276,11 +289,11 @@ Map each write action to a grant in `permissions.ts`:
 
 | Action | Suggested gate |
 |--------|----------------|
-| Add/edit student | `students:write` |
-| Transfer class | `enrollments:write` |
+| Add/edit student | `STUDENT_CREATE` / `STUDENT_UPDATE` |
+| Transfer class | `ENROLLMENT_UPDATE` |
 | Edit grades | `canEditGrades()` |
-| Finance mutations | finance grants |
-| Staff/role edits | director-level |
+| Finance mutations | `PAYMENT_RECORD`, `PAYMENT_CANCEL`, `PAYMENT_REVERSE`, `FINANCIAL_CONFIG_UPDATE` |
+| Staff/role edits | `STAFF_UPDATE`, `ACCESS_CONTROL_CONFIGURE`, `ACCESS_CONTROL_ASSIGN` |
 | School life (incidents, events) | `canEditSchoolLife()` |
 
 Apply `PermissionGate` to every CTA identified in Phases 1–2. Denied actions: disabled + tooltip (e.g. "Requires director role").
@@ -295,10 +308,11 @@ UI conformance and API migration are coupled. From [webapp-mock-migration-plan.m
 - Only 4 mutation modules exist today: `student`, `academic`, `report-cards`, `run-mutation`
 - Drawer forms currently have no real save path anyway
 
-**Recommendation:** Run Phase 0 + Phase 1a (Student) UI refactor **in parallel** with API command endpoints. For entities without API writes yet:
+**Recommendation:** Run Phase 0a + Phase 0b (Student) UI refactor **in parallel** with API command endpoints. For entities without API writes yet:
 
-- Modal + toast + optimistic local update is acceptable for demo
-- Mark modals with `// TODO: wire to commands/*` and gate behind `hasSession`
+- Production path: hide or disable edit CTAs until a real command exists
+- Demo-only local optimistic updates must be isolated and clearly labeled
+- Never show a success toast for a mutation that did not persist
 - Do not block drawer read-only migration on API — that is pure UI
 
 **Mutation module backlog** (add alongside each entity phase):
