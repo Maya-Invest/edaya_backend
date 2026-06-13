@@ -7,19 +7,23 @@
 
 	const { item, onClose }: { item: DrawerItem | null; onClose: () => void } = $props();
 
-	const nonSaveKinds = new Set(['role', 'level', 'activity', 'reportCardDefinition', 'reportCardResult']);
-
-	const showSave = $derived(item !== null && !nonSaveKinds.has(item.kind));
+	function handleKeydown(event: KeyboardEvent) {
+		if (item && event.key === 'Escape')
+			onClose();
+	}
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if item}
 	<div
 		role="presentation"
 		onclick={onClose}
-		class="fixed inset-0 z-40 animate-fade-in bg-primary/5"
+		class="fixed inset-0 z-40 bg-primary/5 motion-safe:animate-fade-in"
 	></div>
 	<aside
-		class="fixed right-0 top-0 z-50 flex h-full w-1/2 animate-slide-in-right flex-col border-l border-border bg-card shadow-panel"
+		class="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-border bg-card shadow-panel motion-safe:animate-slide-in-right md:w-1/2"
+		aria-label={$t(kindLabelKey[item.kind])}
 	>
 		<header class="flex items-center justify-between border-b border-border px-6 py-4">
 			<span
@@ -61,10 +65,10 @@
 					<EvaluationForm s={item.data} />
 				{/await}
 			{:else if item.kind === 'guardian'}
-				{#await import('./GuardianForm.svelte')}
+				{#await import('./GuardianDetail.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: GuardianForm }}
-					<GuardianForm g={item.data} />
+				{:then { default: GuardianDetail }}
+					<GuardianDetail g={item.data} />
 				{/await}
 			{:else if item.kind === 'staff'}
 				{#await import('./StaffForm.svelte')}
@@ -136,17 +140,7 @@
 		</div>
 
 		<footer class="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
-			{#if item.kind === 'student'}
-				{#await import('./StudentDetailsDialog.svelte')}
-					<span></span>
-				{:then { default: StudentDetailsDialog }}
-					<StudentDetailsDialog s={item.data} />
-				{/await}
-			{/if}
-			<Button variant="ghost" onclick={onClose} class="rounded-full">{$t('common.cancel')}</Button>
-			{#if showSave}
-				<Button class="rounded-full">{$t('common.save')}</Button>
-			{/if}
+			<Button variant="ghost" onclick={onClose} class="rounded-full">{$t('common.close')}</Button>
 		</footer>
 	</aside>
 {/if}

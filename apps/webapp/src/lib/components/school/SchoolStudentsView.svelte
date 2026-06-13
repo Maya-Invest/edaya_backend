@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
 	import { Mail, MoreHorizontal, Plus, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
@@ -55,16 +56,11 @@
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('students.schoolRoster')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('students.countLabel', { n: list.length })}
-			</h2>
-		</div>
-		<div class="flex flex-wrap items-center gap-2">
+	<ListPageHeader
+		eyebrow={$t('students.schoolRoster')}
+		title={$t('students.countLabel', { n: list.length })}
+	>
+		{#snippet search()}
 			<div class="relative">
 				<Search
 					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -75,6 +71,8 @@
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
 			</div>
+		{/snippet}
+		{#snippet filters()}
 			<FilterSelect
 				bind:value={classFilter}
 				class="h-9 w-48 rounded-full text-xs"
@@ -97,12 +95,14 @@
 					</button>
 				{/each}
 			</div>
+		{/snippet}
+		{#snippet primary()}
 			<Button size="sm" class="rounded-full">
 				<Plus class="mr-1 h-4 w-4" />
 				{$t('students.newStudent')}
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		<div

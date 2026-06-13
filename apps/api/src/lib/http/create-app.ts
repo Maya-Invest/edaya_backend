@@ -18,13 +18,14 @@ export function createRouter() {
 export default function createApp() {
   const app = createRouter();
 
-  app.use(dependenciesInjection);
+  // CORS first so error responses from later middleware still include ACAO headers.
   app.use(cors({
     origin: (origin, c) => resolveCorsOrigin(origin, c.env),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Cookie", "X-Academic-Year-Id"],
     credentials: true,
   }));
+  app.use(dependenciesInjection);
 
   app.use(serveEmojiFavicon("📝"));
   app.use(pinoLogger());

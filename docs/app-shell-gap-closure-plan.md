@@ -173,33 +173,38 @@ Keep and extend these patterns — they are the foundation every migration shoul
 
 ### Phase 0a — Shared foundations (drawer shell contract)
 
+**Status:** complete. Drawer shell refactor is implemented; shared modal/gate primitives are added with `ChangeClassButton.svelte` as the first usage path.
+
 Establish patterns once; every entity migration reuses them.
 
 1. **`DetailDrawer` shell refactor**
-   - Remove global Save/Cancel footer
-   - Footer: Close only in the shared shell
-   - Entity-specific actions live in the detail body until a stronger cross-component action API is justified
-   - Add responsive width: `w-full md:w-1/2`, full-screen on mobile
-   - Escape closes drawer; `prefers-reduced-motion` guard
+   - [x] Remove global Save/Cancel footer
+   - [x] Footer: Close only in the shared shell
+   - [x] Entity-specific actions live in the detail body until a stronger cross-component action API is justified
+   - [x] Add responsive width: `w-full md:w-1/2`, full-screen on mobile
+   - [x] Escape closes drawer; `prefers-reduced-motion` guard
 
 2. **Shared modal primitives**
-   - `DrawerActionBar` — footer slot for `[Edit profile] [Change class] [Close]`
-   - `FormModal.svelte` — app-level layout/chrome on top of existing Bits UI `Dialog`; do not rebuild focus trapping
-   - `ConfirmModal.svelte` — destructive confirm
-   - `PickerModal.svelte` — link/assign (pattern from `ActivityDetail`)
+   - [x] `DrawerActionBar` — entity-local action grouping in drawer bodies
+   - [x] `FormModal.svelte` — app-level layout/chrome on top of existing Bits UI `Dialog`; do not rebuild focus trapping
+   - [x] `ConfirmModal.svelte` — destructive confirm
+   - [x] `PickerModal.svelte` — link/assign (pattern from `ActivityDetail`)
+   - [x] First documented usage path: `ChangeClassButton.svelte`
 
 3. **`runMutation` enhancement** (`apps/webapp/src/lib/api/mutations/run-mutation.ts`)
-   - Add `successMessage?: string` → auto success toast
-   - Add `onSuccess?: () => void` for drawer/tab invalidation without full shell reset
-   - Document when to use `refresh: false` + targeted query invalidation
+   - [x] Add `successMessage?: string` → auto success toast
+   - [x] Add `onSuccess?: () => void` for drawer/tab invalidation without full shell reset
+   - [x] Document when to use `refresh: false` + targeted query invalidation
+
+   Default to the full shell refresh after command mutations. Use `refresh: false` only when the caller owns a narrower invalidation path and passes `onSuccess` to update or invalidate the affected drawer/tab data.
 
 4. **`PermissionGate` component**
-   - `permission` + `tooltip` props → hide or disable with title
+   - [x] `permission` + `tooltip` props → hide or disable with title
    - Apply to all action buttons going forward
 
 5. **List toolbar primitive**
-   - `ListPageHeader.svelte`: title, description, primary CTA slot, search, filter, more menu
-   - Reference implementation on `SchoolStudentsView`
+   - [x] `ListPageHeader.svelte`: title, description, primary CTA slot, search, filter, more menu
+   - [x] Reference implementation on `SchoolStudentsView`
 
 **Exit criteria:** The drawer shell no longer exposes global mutation controls, and the primitives have one documented usage path.
 
@@ -207,9 +212,16 @@ Establish patterns once; every entity migration reuses them.
 
 Use Student as the first complete entity migration after the shell contract is stable.
 
-- Profile tab → read-only `DrawerField` rows
-- `StudentEditModal` for multi-field profile edits
-- Guardian link + note add/edit actions open modals
+**Status:** complete. Student profile, class transfer, guardian link, pedagogical notes, grade entry, absence declaration, and incident logging are all read-only drawer actions that open modal-backed mutations.
+
+- [x] Profile tab → read-only `DrawerField` rows
+- [x] `StudentProfileEditModal` for profile fields backed by `updateStudentProfile`
+- [x] Guardian link action opens modal and uses `linkGuardianToStudent`
+- [x] Note add action opens modal and uses `createStudentNote`
+- [x] Note edit action opens modal and uses `updateStudentNote`
+- [x] Grade entry opens modal and uses `recordAssessmentResult`
+- [x] Absence declaration opens modal and uses `recordDailyAttendance`
+- [x] Incident logging opens modal and uses `recordIncident` + `addStudentInvolvement`
 - Keep `ChangeClassButton` as the reference action → modal → mutation pattern
 - All write actions use real API commands or are hidden/disabled until a command exists
 
@@ -227,8 +239,8 @@ read-only Detail/Tabs → footer actions → modals → remove Form from drawer
 
 | Sprint | Entities | Work |
 |--------|----------|------|
-| 1a | **Student** | Covered by Phase 0b; keep as the reference pattern for later entities |
-| 1b | **Guardian**, **Staff** | `GuardianDetail` + `GuardianFormModal`; `StaffTabs` (profile read-only + permissions tab as sub-collection with toggles only where boolean) + `StaffEditModal` |
+| 1a | **Student** | Done — covered by Phase 0b; keep as the reference pattern for later entities |
+| 1b | **Guardian**, **Staff** | Guardian done — `GuardianDetail` + `GuardianEditModal`; Staff next — `StaffTabs` (profile read-only + permissions tab as sub-collection with toggles only where boolean) + `StaffEditModal` |
 | 1c | **Evaluation** | Read-only header; gradebook as read-only sub-list; `GradeEntryModal` per student or batch modal |
 | 1d | **Fee**, **Planning**, **Subject** | `*Detail` + `*FormModal`; subject chapters tab stays read-only sub-list |
 

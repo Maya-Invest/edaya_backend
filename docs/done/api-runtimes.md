@@ -41,7 +41,7 @@ cd apps/api && bun run dev:worker
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
 - In-memory `pglite` is rejected on the Worker runtime; use a real Postgres connection string
 
-Deploy with `wrangler deploy` once secrets and `DATABASE_URL` are configured in the target environment.
+Deploy with `bun run deploy:worker` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB.
 
 ## Architecture
 

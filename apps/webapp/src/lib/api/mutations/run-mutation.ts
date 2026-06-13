@@ -20,6 +20,8 @@ export async function runMutation<T>(
 	options?: {
 		refresh?: boolean;
 		errorMessage?: string;
+		successMessage?: string;
+		onSuccess?: () => void | Promise<void>;
 	},
 ): Promise<T | null> {
 	try {
@@ -27,6 +29,10 @@ export async function runMutation<T>(
 		if (options?.refresh !== false) {
 			resetAppShellBootstrap();
 			await bootstrapAppShell();
+		}
+		await options?.onSuccess?.();
+		if (options?.successMessage) {
+			toast.success(options.successMessage);
 		}
 		return result;
 	}

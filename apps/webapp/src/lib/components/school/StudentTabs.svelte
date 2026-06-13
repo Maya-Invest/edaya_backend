@@ -2,9 +2,8 @@
 	import type { Student, PedagogicalNote } from '$lib/types/school';
 	import type { SubjectGroupItem } from './drawer-types';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import {
@@ -13,7 +12,6 @@
 		Phone,
 		Mail,
 		FileText,
-		Plus,
 		Droplet,
 		Activity,
 		Clock,
@@ -23,9 +21,16 @@
 	import { cn } from '$lib/utils';
 	import ChangeClassButton from './ChangeClassButton.svelte';
 	import { relationKey, fmtDateFr } from './drawer-constants';
+	import DrawerActionBar from './DrawerActionBar.svelte';
 	import DrawerEmptyState from './DrawerEmptyState.svelte';
 	import DrawerField from './DrawerField.svelte';
+	import StudentAbsenceModal from './StudentAbsenceModal.svelte';
 	import StudentAvatar from './StudentAvatar.svelte';
+	import StudentGradeEntryModal from './StudentGradeEntryModal.svelte';
+	import StudentGuardianLinkModal from './StudentGuardianLinkModal.svelte';
+	import StudentIncidentModal from './StudentIncidentModal.svelte';
+	import StudentNoteModal from './StudentNoteModal.svelte';
+	import StudentProfileEditModal from './StudentProfileEditModal.svelte';
 	import StudentReportCardPanel from './StudentReportCardPanel.svelte';
 	import SubjectGroup from './SubjectGroup.svelte';
 
@@ -216,20 +221,51 @@
 					{/if}
 				</div>
 			</div>
+			{#if health?.medications?.length || health?.lastVisit || health?.notes}
+				<div class="grid gap-2 rounded-xl bg-secondary/40 p-3 text-xs sm:grid-cols-2">
+					{#if health?.medications?.length}
+						<div>
+							<span class="text-muted-foreground">Traitements :</span> {health.medications.join(', ')}
+						</div>
+					{/if}
+					{#if health?.lastVisit}
+						<div><span class="text-muted-foreground">Dernière visite :</span> {fmtDateFr(health.lastVisit)}</div>
+					{/if}
+					{#if health?.notes}
+						<div class="sm:col-span-2">
+							<span class="text-muted-foreground">Notes santé :</span> {health.notes}
+						</div>
+					{/if}
+				</div>
+			{/if}
 			<DrawerField label={$t('guardian.fullName')}>
-				<Input value={s.name} />
+				<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">{s.name}</div>
 			</DrawerField>
 			<DrawerField label={$t('common.email')}>
-				<Input value={s.email} />
+				<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">{s.email}</div>
 			</DrawerField>
 			<div class="grid grid-cols-2 gap-3">
 				<DrawerField label={$t('drawer.birthDate')}>
-					<Input type="date" value={s.birthdate} />
+					<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">
+						{fmtDateFr(s.birthdate)}
+					</div>
 				</DrawerField>
 				<DrawerField label={$t('drawer.guardianLabel')}>
-					<Input value={s.guardian} />
+					<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">
+						{s.guardian}
+					</div>
 				</DrawerField>
 			</div>
+			<div class="rounded-xl bg-secondary/40 px-3 py-2 text-xs">
+				<span class="text-muted-foreground">Statut :</span> {$t(`studentStatus.${s.status}`)}
+			</div>
+			<DrawerActionBar>
+				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
+					{#snippet children({ disabled, title })}
+						<StudentProfileEditModal {s} {disabled} {title} />
+					{/snippet}
+				</PermissionGate>
+			</DrawerActionBar>
 
 			<div class="space-y-2 border-t border-border pt-4">
 				<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Tuteurs</Label>
@@ -296,9 +332,11 @@
 						</ul>
 					</div>
 				{/if}
-				<Button variant="ghost" class="w-full rounded-full border border-dashed border-border">
-					{$t('drawer.linkGuardian')}
-				</Button>
+				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
+					{#snippet children({ disabled, title })}
+						<StudentGuardianLinkModal {s} {disabled} {title} />
+					{/snippet}
+				</PermissionGate>
 			</div>
 
 			<div class="space-y-2 border-t border-border pt-4">
@@ -325,7 +363,18 @@
 									>
 										{n.category}
 									</span>
-									<span class="font-mono text-[10px] text-muted-foreground">{fmtDateFr(n.date)}</span>
+									<div class="flex items-center gap-2">
+										<span class="font-mono text-[10px] text-muted-foreground">{fmtDateFr(n.date)}</span>
+										<PermissionGate
+											permission="STUDENT_UPDATE"
+											mode="disable"
+											tooltip="Droit STUDENT_UPDATE requis."
+										>
+											{#snippet children({ disabled, title })}
+												<StudentNoteModal {s} note={n} {disabled} {title} />
+											{/snippet}
+										</PermissionGate>
+									</div>
 								</div>
 								<p class="mt-1.5 text-sm">{n.content}</p>
 								<p class="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -345,9 +394,11 @@
 						{/each}
 					</ul>
 				{/if}
-				<Button variant="ghost" class="w-full rounded-full border border-dashed border-border">
-					<Plus class="mr-1 h-4 w-4" /> Ajouter une note
-				</Button>
+				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
+					{#snippet children({ disabled, title })}
+						<StudentNoteModal {s} {disabled} {title} />
+					{/snippet}
+				</PermissionGate>
 			</div>
 		</div>
 	{:else if tab === 'notes'}
@@ -392,9 +443,16 @@
 					{/if}
 				</div>
 			</div>
-			<Button variant="ghost" class="w-full rounded-full border border-dashed border-border">
-				<Plus class="mr-1 h-4 w-4" /> Saisir une note
-			</Button>
+			<PermissionGate
+				permission="GRADE_INPUT"
+				classId={s.classId}
+				mode="disable"
+				tooltip="Droit GRADE_INPUT requis."
+			>
+				{#snippet children({ disabled, title })}
+					<StudentGradeEntryModal {s} {disabled} {title} />
+				{/snippet}
+			</PermissionGate>
 		</div>
 	{:else if tab === 'absence'}
 		<div class="space-y-4">
@@ -444,9 +502,16 @@
 					{/if}
 				</div>
 			</div>
-			<Button variant="ghost" class="w-full rounded-full border border-dashed border-border">
-				<Plus class="mr-1 h-4 w-4" /> Déclarer une absence
-			</Button>
+			<PermissionGate
+				permission="ATTENDANCE_RECORD"
+				classId={s.classId}
+				mode="disable"
+				tooltip="Droit ATTENDANCE_RECORD requis."
+			>
+				{#snippet children({ disabled, title })}
+					<StudentAbsenceModal {s} {disabled} {title} />
+				{/snippet}
+			</PermissionGate>
 		</div>
 	{:else if tab === 'incidents'}
 		<div class="space-y-4">
@@ -500,9 +565,16 @@
 					{/if}
 				</div>
 			</div>
-			<Button variant="ghost" class="w-full rounded-full border border-dashed border-border">
-				{$t('drawer.logIncident')}
-			</Button>
+			<PermissionGate
+				permission="DISCIPLINE_CREATE"
+				classId={s.classId}
+				mode="disable"
+				tooltip="Droit DISCIPLINE_CREATE requis."
+			>
+				{#snippet children({ disabled, title })}
+					<StudentIncidentModal {s} {disabled} {title} />
+				{/snippet}
+			</PermissionGate>
 		</div>
 	{:else if tab === 'finances'}
 		<div class="space-y-4">

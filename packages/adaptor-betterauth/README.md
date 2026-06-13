@@ -36,7 +36,7 @@ bun db:generate:auth
 bun db:migrate:auth
 ```
 
-Auth migrations use a dedicated Drizzle journal table (`__drizzle_migrations_betterauth`) so they can coexist with school migrations from `@edaya/adaptor-postgres` on the same database.
+Auth and school migrations share the default Drizzle journal (`drizzle.__drizzle_migrations`) on the same database — use `bun db:migrate:auth` or `runMigrations()` interchangeably.
 
 ## Usage
 

@@ -3,7 +3,7 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { transferStudentMutation } from '$lib/api/mutations/student.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { Users } from '$lib/icons';
@@ -31,6 +31,7 @@
 			enrollmentId: s.enrollmentId,
 			studentId: s.id,
 			nextClassGroupId: target,
+			successMessage: `${s.name} a été transféré(e) vers ${targetClass?.name ?? 'la nouvelle classe'}.`,
 		});
 		busy = false;
 		if (ok) {
@@ -39,53 +40,41 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Trigger>
-		{#snippet child({ props })}
-			<Button {...props} variant="outline" size="sm" class="gap-2 rounded-full">
-				<Users class="h-3.5 w-3.5" />
-				Changer de classe
-			</Button>
-		{/snippet}
-	</Dialog.Trigger>
-	<Dialog.Content>
-		<Dialog.Header>
-			<Dialog.Title>Changer la classe de {s.name}</Dialog.Title>
-			<Dialog.Description>
-				Classe actuelle : {currentClass?.name ?? '—'} · {currentClass?.level ?? ''}
-			</Dialog.Description>
-		</Dialog.Header>
-		<div class="space-y-2 py-2">
-			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-				Nouvelle classe
-			</Label>
-			<Select.Root type="single" value={target} onValueChange={v => v && (target = v)}>
-				<Select.Trigger>
-					<Select.Value />
-				</Select.Trigger>
-				<Select.Content>
-					{#each academicContext.classes as c (c.id)}
-						<Select.Item value={c.id}>
-							{c.name}
-							<span class="ml-1 text-muted-foreground">· {c.level}</span>
-						</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
-			{#if targetClass && target !== s.classId}
-				<p class="text-xs text-muted-foreground">
-					{s.name} sera transféré(e) vers {targetClass.name}.
-				</p>
-			{/if}
-		</div>
-		<Dialog.Footer>
-			<Button variant="ghost" onclick={() => (open = false)} disabled={busy}>Annuler</Button>
-			<Button
-				onclick={confirmTransfer}
-				disabled={busy || target === s.classId || !s.enrollmentId}
-			>
-				Confirmer
-			</Button>
-		</Dialog.Footer>
-	</Dialog.Content>
-</Dialog.Root>
+<Button variant="outline" size="sm" class="gap-2 rounded-full" onclick={() => (open = true)}>
+	<Users class="h-3.5 w-3.5" />
+	Changer de classe
+</Button>
+
+<FormModal
+	bind:open
+	title={`Changer la classe de ${s.name}`}
+	description={`Classe actuelle : ${currentClass?.name ?? '—'} · ${currentClass?.level ?? ''}`}
+	submitLabel="Confirmer"
+	busy={busy}
+	submitDisabled={target === s.classId || !s.enrollmentId}
+	onSubmit={confirmTransfer}
+>
+	<div class="space-y-2 py-2">
+		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+			Nouvelle classe
+		</Label>
+		<Select.Root type="single" value={target} onValueChange={v => v && (target = v)}>
+			<Select.Trigger>
+				<Select.Value />
+			</Select.Trigger>
+			<Select.Content>
+				{#each academicContext.classes as c (c.id)}
+					<Select.Item value={c.id}>
+						{c.name}
+						<span class="ml-1 text-muted-foreground">· {c.level}</span>
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
+		{#if targetClass && target !== s.classId}
+			<p class="text-xs text-muted-foreground">
+				{s.name} sera transféré(e) vers {targetClass.name}.
+			</p>
+		{/if}
+	</div>
+</FormModal>

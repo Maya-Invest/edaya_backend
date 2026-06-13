@@ -8,6 +8,9 @@ const config = {
 		},
 	},
 	kit: {
+		paths: {
+			relative: false,
+		},
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',

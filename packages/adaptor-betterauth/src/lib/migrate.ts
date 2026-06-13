@@ -5,8 +5,6 @@ import { migrate as migratePostgresJs } from 'drizzle-orm/postgres-js/migrator'
 
 export type MigrationDriver = 'pglite' | 'postgres-js'
 
-const MIGRATIONS_TABLE = '__drizzle_migrations_betterauth'
-
 function getPackageRoot(): string {
   if (typeof import.meta.url !== 'string' || import.meta.url.length === 0) {
     throw new Error('Cannot resolve Better Auth migrations folder in this runtime')
@@ -26,8 +24,6 @@ export async function runMigrations(
 ): Promise<void> {
   const migrationsFolder = getMigrationsFolder()
   const migrate = options.driver === 'pglite' ? migratePglite : migratePostgresJs
-  await migrate(db as never, {
-    migrationsFolder,
-    migrationsTable: MIGRATIONS_TABLE,
-  })
+  // Same default journal as `drizzle-kit migrate` (shared with school migrations on one DB).
+  await migrate(db as never, { migrationsFolder })
 }

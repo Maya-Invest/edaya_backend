@@ -27,6 +27,13 @@ Default `DATABASE_URL=pglite` uses in-memory Postgres on Node only (no Docker). 
 | Target | Command | Output |
 |--------|---------|--------|
 | **Node** | `bun run build` then `bun start` | `dist/node.js` (bundles workspace packages) |
-| **Worker** | `bun run deploy:worker` | Wrangler bundles `src/entries/worker.ts` |
+| **Worker** | `bun run deploy:worker` | Wrangler bundles `src/entries/worker.ts` → `api.edaya.softilab.dev` |
+
+Before first production deploy:
+
+1. Apply migrations to the Hyperdrive origin DB: `bun run db:migrate:dev`
+2. Set `BETTER_AUTH_SECRET`: `wrangler secret put BETTER_AUTH_SECRET --env production`
+3. Dry-run: `bun run deploy:worker:dry-run`
+4. Deploy: `bun run deploy:worker`
 
 See [docs/local-dev.md](../../docs/local-dev.md) and [docs/done/api-runtimes.md](../../docs/done/api-runtimes.md).
