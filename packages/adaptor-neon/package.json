@@ -1,5 +1,5 @@
 {
-  "name": "@edaya/adaptor-postgres",
+  "name": "@edaya/adaptor-neon",
   "type": "module",
   "version": "0.0.1",
   "private": true,
@@ -14,6 +14,8 @@
     "quality": "bun run lint && bun run check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:all": "bun ./scripts/migrate-all.ts",
+    "db:migrate:dev": "bun ./scripts/migrate-dev-database.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint src",
@@ -25,6 +27,8 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
+    "dotenv": "^16.5.0",
+    "dotenv-expand": "^11.0.7",
     "drizzle-kit": "^0.30.4"
   }
 }

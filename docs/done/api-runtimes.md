@@ -48,12 +48,10 @@ Deploy with `bun run deploy:worker` (`wrangler deploy --env production`) once `B
 ```
 Request
   └─ Hono app.fetch(request, bindings)
-       └─ env middleware → parseRuntimeEnv(bindings)
-       └─ schoolApp / auth middleware → getApiRuntime(env)
-            └─ createDatabase(env)
-            └─ runAuthMigrations ( @edaya/adaptor-betterauth )
-            └─ createAuth (Better Auth + authSchema)
-            └─ getSchoolApplication → repos.init ( @edaya/adaptor-postgres )
+       └─ env middleware → parseRuntimeEnv(prepareRuntimeBindings) via @edaya/adaptor-cloudflare
+       └─ createAuthDatabase(env) → D1 on Worker, SQLite file on Node
+       └─ createDatabase(env) → Neon/Hyperdrive school DB
+            └─ getSchoolApplication → repos.init ( @edaya/adaptor-neon )
 ```
 
 Auth schema and SQL migrations live in `packages/adaptor-betterauth`. Runtime Better Auth config lives in `apps/api/src/lib/runtime/create-auth.ts`.

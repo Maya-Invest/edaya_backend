@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/entries/node.ts",
     "dev:worker": "wrangler dev --env-file .dev.vars",
-    "db:migrate:dev": "bun ./scripts/migrate-dev-database.ts",
+    "db:migrate:dev": "bun --filter @edaya/adaptor-neon db:migrate:dev",
     "seed": "tsx src/scripts/seed.ts",
     "start": "node dist/node.js",
     "deploy:worker": "wrangler deploy --env production",
@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@edaya/adaptor-betterauth": "workspace:*",
-    "@edaya/adaptor-postgres": "workspace:*",
+    "@edaya/adaptor-cloudflare": "workspace:*",
+    "@edaya/adaptor-neon": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/dev-fixtures": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",

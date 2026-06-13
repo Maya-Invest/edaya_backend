@@ -1,7 +1,8 @@
 import { resolveApiRuntime } from "@/lib/runtime/resolve-api-runtime";
-import type { DependencyModule } from ".";
+import type { AppBindings } from "@/lib/http/types";
+import type { DependencyModule } from "@edaya/adaptor-cloudflare";
 
-export const authDependency: DependencyModule = {
+export const authDependency: DependencyModule<AppBindings> = {
   name: "auth",
   async resolve(c) {
     const runtime = await resolveApiRuntime(c);

@@ -1,9 +1,8 @@
+import type { RuntimeBindings, RuntimeKind } from "@edaya/adaptor-cloudflare";
 import type { Environment } from "@/lib/runtime/env";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 
-export type RuntimeKind = Environment["RUNTIME"];
-
-export type RuntimeBindings = Record<string, unknown>;
+export type { RuntimeBindings, RuntimeKind };
 
 export interface AuthService {
   handler: (request: Request) => Promise<Response>;
@@ -15,6 +14,7 @@ export interface AuthService {
 export interface ApiRuntime {
   readonly env: Environment;
   readonly db: unknown;
+  readonly authDb: unknown;
   readonly sqlClient: unknown | null;
   getSchoolApplication: () => Promise<ApiSchoolApplication>;
   getAuth: () => AuthService;

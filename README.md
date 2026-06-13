@@ -24,8 +24,9 @@ flowchart TB
   end
 
   subgraph infra["Infrastructure"]
-  PG["@edaya/adaptor-postgres<br/>Drizzle + repositories"]
+  PG["@edaya/adaptor-neon<br/>Drizzle + repositories"]
   Auth["@edaya/adaptor-betterauth<br/>auth schema + migrations"]
+  CF["@edaya/adaptor-cloudflare<br/>Worker DI + Hyperdrive"]
   end
 
   Webapp --> Client
@@ -70,8 +71,9 @@ More detail: [docs/done/api-folder-structure.md](./docs/done/api-folder-structur
 | `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, dev seed |
 | `@edaya/webapp` | `apps/webapp` | SvelteKit UI (Cloudflare Pages adapter) |
 | `@edaya/core` | `packages/core` | Domain model, business services, authorization, repository ports |
-| `@edaya/adaptor-postgres` | `packages/adaptor-postgres` | Drizzle schema, migrations, Postgres repository implementations |
+| `@edaya/adaptor-neon` | `packages/adaptor-neon` | Drizzle schema, migrations, Neon Postgres repository implementations |
 | `@edaya/adaptor-betterauth` | `packages/adaptor-betterauth` | Better Auth Drizzle schema and SQL migrations |
+| `@edaya/adaptor-cloudflare` | `packages/adaptor-cloudflare` | Hono DI middleware, Hyperdrive binding resolution, Worker request runtime lifecycle |
 | `@edaya/api-client` | `packages/api-client` | Type-safe client for entities, commands, queries (generated bindings) |
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/integration-tests` | `testing/integration-tests` | Cross-package integration tests (auth, Postgres, core services) |
@@ -140,18 +142,21 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 | Command | Description |
 |---------|-------------|
-| `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-postgres`) |
+| `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-neon`) |
 | `bun run db:migrate` | Apply school schema migrations |
+| `bun run db:migrate:all` | Apply school + auth schema migrations |
+| `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate the Hyperdrive origin DB |
 | `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/adaptor-betterauth`) |
-| `bun run db:migrate:auth` | Apply auth schema migrations |
+| `bun run db:migrate:auth` | Apply Better Auth migrations to local D1 |
+| `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 |
 | `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI config |
 
 Package-level extras (run from adaptor package or with `bun --filter`):
 
 | Command | Description |
 |---------|-------------|
-| `bun --filter @edaya/adaptor-postgres db:push` | Push schema to database (drizzle-kit) |
-| `bun --filter @edaya/adaptor-postgres db:studio` | Open Drizzle Studio |
+| `bun --filter @edaya/adaptor-neon db:push` | Push schema to database (drizzle-kit) |
+| `bun --filter @edaya/adaptor-neon db:studio` | Open Drizzle Studio |
 | `bun --filter @edaya/adaptor-betterauth db:push` | Push auth schema |
 | `bun --filter @edaya/adaptor-betterauth db:studio` | Drizzle Studio for auth schema |
 

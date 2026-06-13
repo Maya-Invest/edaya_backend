@@ -17,7 +17,7 @@ TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 # Production (`wrangler deploy --env production`):
 #   Required secret: BETTER_AUTH_SECRET
 #   Optional secrets: SYSTEM_ACTOR_SECRET
-#   Before first deploy: run `bun run db:migrate:dev` against the Hyperdrive origin DB
+#   Before first deploy: run `bun run db:migrate:dev` (Neon school DB) and `bun run db:migrate:auth:remote` (Better Auth D1)
 # Optional: DATABASE_URL (Node / wrangler fallback), GRANTS_CACHE_TTL_MS, SEED_ON_START
 #
 # Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
@@ -27,6 +27,12 @@ TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 binding = "HYPERDRIVE"
 id = "62c00eeda7d047fc9951daf7db430070"
 # Do not commit credentials here. Set localConnectionString via the env var above or `.dev.vars`.
+
+[[d1_databases]]
+binding = "AUTH_DB"
+database_name = "edaya-auth"
+database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
+migrations_dir = "../../packages/adaptor-betterauth/drizzle"
 
 [env.production]
 name = "edaya-api"
@@ -44,6 +50,12 @@ ALLOW_DEMO_LOGIN_ACCOUNTS = "true"
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "62c00eeda7d047fc9951daf7db430070"
+
+[[env.production.d1_databases]]
+binding = "AUTH_DB"
+database_name = "edaya-auth"
+database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
+migrations_dir = "../../packages/adaptor-betterauth/drizzle"
 
 [[env.production.routes]]
 pattern = "api.edaya.softilab.dev"

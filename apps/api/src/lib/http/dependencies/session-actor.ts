@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
 import type { AppBindings } from "@/lib/http/types";
 import type { Context } from "hono";
-import type { DependencyModule } from ".";
+import type { DependencyModule } from "@edaya/adaptor-cloudflare";
 
 export interface AuthSession {
   user: {
@@ -243,7 +243,7 @@ function resolveAcademicYearId(headerValue: string | undefined): string | undefi
 
 export function createSessionActorDependency(
   resolveAuth?: (c: Context<AppBindings>) => Promise<AuthSessionProvider> | AuthSessionProvider,
-): DependencyModule {
+): DependencyModule<AppBindings> {
   return {
     name: "sessionActor",
     async resolve(c) {

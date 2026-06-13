@@ -12,8 +12,12 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # Optional Node / wrangler fallback when Hyperdrive binding is unavailable
 # DATABASE_URL=postgres://admin:admin@localhost:5432/edaya
 
-# Optional: run once before first wrangler dev (creates school + auth tables)
-# bun run db:migrate:dev
+# Optional local SQLite file for Better Auth on the Node runtime
+# AUTH_DATABASE_PATH=.data/auth.sqlite
+
+# Optional: run once before first wrangler dev
+# bun run db:migrate:dev        # Neon school DB + local D1 auth
+# bun run db:migrate:auth:remote # production D1 auth only
 
 # Dev bootstrap — enabled by default when NODE_ENV=development.
 # POST /core/onboarding/register-school (authenticated, unlinked users only)

@@ -9,7 +9,7 @@ import { createBetterAuthLogger } from "../http/middleware/logger";
 export function createAuth(db: unknown, env: Environment): AuthService {
   return betterAuth({
     database: drizzleAdapter(db as never, {
-      provider: "pg",
+      provider: "sqlite",
       schema: authSchema,
     }),
     secret: env.BETTER_AUTH_SECRET,

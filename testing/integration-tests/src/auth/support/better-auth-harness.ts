@@ -1,24 +1,24 @@
-import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
+import type { PostgresTransactionalDb } from '@edaya/adaptor-neon'
 import type { AuthSessionProvider, SessionActorBindings } from './session-actor-harness'
 import { authSchema, runMigrations as runAuthMigrations } from '@edaya/adaptor-betterauth'
 import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
-
-} from '@edaya/adaptor-postgres'
+} from '@edaya/adaptor-neon'
 import {
   createRepositoryAuthorizationPolicy,
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
+import { Database } from 'bun:sqlite'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/pglite'
+import { drizzle as drizzleBunSqlite } from 'drizzle-orm/bun-sqlite'
+import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { Hono } from 'hono'
 import {
-
   createSessionActorMiddleware,
 } from './session-actor-harness'
 
@@ -39,9 +39,14 @@ export interface AuthService {
   api: AuthSessionProvider['api']
 }
 
+export type AuthDb = ReturnType<typeof drizzleBunSqlite>
+export type SchoolDb = ReturnType<typeof drizzlePglite>
+
 export interface AuthIntegrationContext {
   pglite: PGlite
-  db: ReturnType<typeof drizzle>
+  authSqlite: Database
+  db: SchoolDb
+  authDb: AuthDb
   repositories: PostgresSchoolRepositories
   application: SchoolApplication
   auth: AuthService
@@ -51,7 +56,7 @@ export interface AuthIntegrationContext {
 function createAuth(db: unknown, env: AuthTestEnv): AuthService {
   return betterAuth({
     database: drizzleAdapter(db as never, {
-      provider: 'pg',
+      provider: 'sqlite',
       schema: authSchema,
     }),
     secret: env.BETTER_AUTH_SECRET,
@@ -76,10 +81,12 @@ export function collectSetCookieHeaders(response: Response): string[] {
 
 export async function createAuthIntegrationContext(): Promise<AuthIntegrationContext> {
   const pglite = new PGlite()
-  const db = drizzle(pglite)
+  const db = drizzlePglite(pglite)
+  const authSqlite = new Database(':memory:')
+  const authDb = drizzleBunSqlite(authSqlite)
   const repositories = new PostgresSchoolRepositories(db)
 
-  await runAuthMigrations(db, { driver: 'pglite' })
+  await runAuthMigrations(authDb, { driver: 'sqlite' })
   await repositories.init({ driver: 'pglite' })
 
   const application = new SchoolApplication({
@@ -95,11 +102,13 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
     }),
   })
 
-  const auth = createAuth(db, PG_LITE_AUTH_ENV)
+  const auth = createAuth(authDb, PG_LITE_AUTH_ENV)
 
   return {
     pglite,
+    authSqlite,
     db,
+    authDb,
     repositories,
     application,
     auth,
@@ -110,7 +119,7 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
 export async function ensureAuthUser(
   auth: AuthService,
   env: AuthTestEnv,
-  db: ReturnType<typeof drizzle>,
+  authDb: AuthDb,
   account: { email: string, password: string, name: string },
 ): Promise<string> {
   const signInResponse = await auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-in/email`, {
@@ -145,7 +154,7 @@ export async function ensureAuthUser(
   }
 
   const signUpBody = await signUpResponse.json() as { user?: { id?: string } }
-  const userId = signUpBody.user?.id ?? (await findUserByEmail(db, account.email))?.id
+  const userId = signUpBody.user?.id ?? (await findUserByEmail(authDb, account.email))?.id
   if (!userId) {
     throw new Error(`Better Auth sign-up for ${account.email} did not return a user id`)
   }
@@ -231,29 +240,31 @@ export function mountEffectiveGrantsRoute(app: ReturnType<typeof createSessionAc
 }
 
 export async function countAuthTableRows(
-  db: ReturnType<typeof drizzle>,
+  authDb: AuthDb,
   table: 'user' | 'account' | 'session',
 ): Promise<number> {
-  const result = await db.execute(sql.raw(`SELECT COUNT(*)::int AS count FROM "${table}"`))
-  const [row] = result.rows as Array<{ count: number }>
+  const row = await authDb.get<{ count: number }>(sql.raw(`SELECT COUNT(*) AS count FROM "${table}"`))
   return row?.count ?? 0
 }
 
 export async function findUserByEmail(
-  db: ReturnType<typeof drizzle>,
+  authDb: AuthDb,
   email: string,
 ): Promise<{ id: string, email: string } | null> {
-  const result = await db.execute(
+  const row = await authDb.get<{ id: string, email: string }>(
     sql`SELECT id, email FROM "user" WHERE email = ${email}`,
   )
-  const [row] = result.rows as Array<{ id: string, email: string }>
   return row ?? null
 }
 
-export async function countAccountRowsForUser(db: ReturnType<typeof drizzle>, userId: string): Promise<number> {
-  const result = await db.execute(
-    sql`SELECT COUNT(*)::int AS count FROM "account" WHERE user_id = ${userId}`,
+export async function countAccountRowsForUser(authDb: AuthDb, userId: string): Promise<number> {
+  const row = await authDb.get<{ count: number }>(
+    sql`SELECT COUNT(*) AS count FROM "account" WHERE user_id = ${userId}`,
   )
-  const [row] = result.rows as Array<{ count: number }>
   return row?.count ?? 0
+}
+
+export async function closeAuthIntegrationContext(context: AuthIntegrationContext): Promise<void> {
+  context.authSqlite.close()
+  await context.pglite.close()
 }

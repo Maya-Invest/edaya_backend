@@ -1,8 +1,15 @@
 # @edaya/adaptor-betterauth
 
-Better Auth persistence for EDAYA: Drizzle schema, SQL migrations, and migration helpers.
+Better Auth persistence for EDAYA: SQLite/D1 Drizzle schema, SQL migrations, and migration helpers.
 
 Runtime Better Auth configuration (secrets, `baseURL`, plugins) lives in `apps/api`.
+
+Auth data is stored separately from the school database:
+
+| Runtime | Auth storage |
+|---------|----------------|
+| **Worker** | Cloudflare D1 (`AUTH_DB` binding) |
+| **Node dev** | Local SQLite file (default `.data/auth.sqlite`) |
 
 ## Tables
 
@@ -13,7 +20,7 @@ Runtime Better Auth configuration (secrets, `baseURL`, plugins) lives in `apps/a
 | `account` | Credential / OAuth provider links |
 | `verification` | Email verification and password-reset tokens |
 
-**Naming note:** `@edaya/adaptor-postgres` also has a `sessions` table for **class scheduling**. That is unrelated to Better Auth's `session` table.
+**Naming note:** `@edaya/adaptor-neon` also has a `sessions` table for **class scheduling**. That is unrelated to Better Auth's `session` table.
 
 ## Scripts
 
@@ -24,8 +31,11 @@ bun run auth:generate-schema
 # Generate SQL migration from schema changes
 bun run db:generate
 
-# Apply migrations to DATABASE_URL (Postgres only)
-DATABASE_URL=postgres://... bun run db:migrate
+# Apply migrations to local D1 (wrangler dev)
+bun run db:migrate:local
+
+# Apply migrations to remote D1 (production database)
+bun run db:migrate:remote
 ```
 
 From the monorepo root:
@@ -33,10 +43,11 @@ From the monorepo root:
 ```sh
 bun auth:generate-schema
 bun db:generate:auth
-bun db:migrate:auth
+bun db:migrate:auth          # local D1
+bun db:migrate:auth:remote   # remote D1
 ```
 
-Auth and school migrations share the default Drizzle journal (`drizzle.__drizzle_migrations`) on the same database — use `bun db:migrate:auth` or `runMigrations()` interchangeably.
+School data migrations stay in `@edaya/adaptor-neon`. `bun db:migrate:dev` applies Neon school migrations plus local D1 auth migrations.
 
 ## Usage
 
@@ -44,11 +55,12 @@ Auth and school migrations share the default Drizzle journal (`drizzle.__drizzle
 import { authSchema, runMigrations } from '@edaya/adaptor-betterauth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 
-await runMigrations(db, { driver: 'pglite' })
+await runMigrations(db, { driver: 'sqlite' }) // Node local file
+// or { driver: 'd1' } with drizzle-orm/d1
 
 betterAuth({
   database: drizzleAdapter(db, {
-    provider: 'pg',
+    provider: 'sqlite',
     schema: authSchema,
   }),
   // ...
@@ -62,4 +74,5 @@ When bumping `better-auth`:
 1. Update the dependency version
 2. Run `bun run auth:generate-schema` and review `src/schema.ts`
 3. Run `bun run db:generate` and review the new SQL migration
-4. Commit schema + migration together
+4. Apply with `db:migrate:local` / `db:migrate:remote`
+5. Commit schema + migration together

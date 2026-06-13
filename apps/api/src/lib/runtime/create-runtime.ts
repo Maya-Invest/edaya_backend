@@ -1,13 +1,11 @@
-import type { Environment } from "@/lib/runtime/env";
+import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver, type PostgresTransactionalDb } from "@edaya/adaptor-neon";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
-import { isEphemeralDatabase } from "@/lib/runtime/database-url";
-import { runMigrations as runAuthMigrations } from "@edaya/adaptor-betterauth";
-import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb } from "@edaya/adaptor-postgres";
-import { createRepositoryAuthorizationPolicy } from "@edaya/core";
+import { createAuthDatabase } from "@/lib/runtime/create-auth-database";
 import { createAuth } from "@/lib/runtime/create-auth";
 import { createDatabase } from "@/lib/runtime/database";
-import { resolveMigrationDriver } from "@/lib/runtime/migration-driver";
+import type { Environment } from "@/lib/runtime/env";
 import type { ApiRuntime } from "@/lib/runtime/types";
+import { createRepositoryAuthorizationPolicy } from "@edaya/core";
 
 async function buildSchoolApplication(
   db: PostgresTransactionalDb,
@@ -17,7 +15,7 @@ async function buildSchoolApplication(
   const repos = new PostgresSchoolRepositories(db);
   if (runtime !== "worker") {
     await repos.init({
-      driver: isEphemeralDatabase(databaseUrl) ? "pglite" : "postgres-js",
+      driver: resolveMigrationDriver(databaseUrl),
     });
   }
 
@@ -38,26 +36,36 @@ async function buildSchoolApplication(
 
 /** Use {@link getApiRuntime} so callers share the cached runtime. */
 export async function buildApiRuntime(env: Environment): Promise<ApiRuntime> {
-  const { db, sqlClient, dispose } = await createDatabase(env);
-  if (env.RUNTIME !== "worker") {
-    await runAuthMigrations(db, { driver: resolveMigrationDriver(env.DATABASE_URL) });
-  }
+  const [schoolHandle, authHandle] = await Promise.all([
+    createDatabase(env),
+    createAuthDatabase(env),
+  ]);
   let schoolApp: ApiSchoolApplication | null = null;
-  const auth = createAuth(db, env);
+  const auth = createAuth(authHandle.db, env);
 
   return {
     env,
-    db,
-    sqlClient,
+    db: schoolHandle.db,
+    authDb: authHandle.db,
+    sqlClient: schoolHandle.sqlClient,
     async getSchoolApplication() {
       if (!schoolApp) {
-        schoolApp = await buildSchoolApplication(db as PostgresTransactionalDb, env.DATABASE_URL, env.RUNTIME);
+        schoolApp = await buildSchoolApplication(
+          schoolHandle.db as PostgresTransactionalDb,
+          env.DATABASE_URL,
+          env.RUNTIME,
+        );
       }
       return schoolApp;
     },
     getAuth() {
       return auth;
     },
-    close: dispose,
+    close: async () => {
+      await Promise.all([
+        schoolHandle.dispose(),
+        authHandle.dispose(),
+      ]);
+    },
   };
 }

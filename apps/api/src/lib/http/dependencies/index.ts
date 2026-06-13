@@ -1,29 +1,23 @@
-import type { AppBindings } from "@/lib/http/types";
-import type { Context, MiddlewareHandler } from "hono";
+import {
+  createDependenciesInjection as createHonoDependenciesInjection,
+  type DependencyModule,
+} from "@edaya/adaptor-cloudflare";
+import type { MiddlewareHandler } from "hono";
 import { closeRequestApiRuntime } from "@/lib/runtime/resolve-api-runtime";
+import type { AppBindings } from "@/lib/http/types";
 import { authDependency } from "./auth";
 import { sessionActorDependency } from "./session-actor";
 import { envDependency } from "./env";
 import { createSchoolAppDependency } from "./school-app";
 
-export interface DependencyModule {
-  name: string;
-  resolve: (c: Context<AppBindings>) => Promise<void> | void;
-}
+export type { DependencyModule };
 
-export function createDependenciesInjection(dependencies: readonly DependencyModule[]): MiddlewareHandler<AppBindings> {
-  return async (c, next) => {
-    for (const dependency of dependencies) {
-      await dependency.resolve(c);
-    }
-
-    try {
-      await next();
-    }
-    finally {
-      await closeRequestApiRuntime(c);
-    }
-  };
+export function createDependenciesInjection(
+  dependencies: readonly DependencyModule<AppBindings>[],
+): MiddlewareHandler<AppBindings> {
+  return createHonoDependenciesInjection(dependencies, {
+    onRequestComplete: closeRequestApiRuntime,
+  });
 }
 
 export const dependenciesInjection = createDependenciesInjection([

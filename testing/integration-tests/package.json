@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@edaya/adaptor-betterauth": "workspace:*",
-    "@edaya/adaptor-postgres": "workspace:*",
+    "@edaya/adaptor-neon": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/dev-fixtures": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",

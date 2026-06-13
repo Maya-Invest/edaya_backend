@@ -28,6 +28,7 @@ describe('Better Auth session integration', () => {
     while (contexts.length > 0) {
       const context = contexts.pop()
       if (context) {
+        context.authSqlite.close()
         await context.pglite.close()
       }
     }
@@ -40,10 +41,10 @@ describe('Better Auth session integration', () => {
   }
 
   it('sign-up creates rows in auth tables', async () => {
-    const { db, auth, env } = await openContext()
+    const { authDb, auth, env } = await openContext()
 
-    expect(await countAuthTableRows(db, 'user')).toBe(0)
-    expect(await countAuthTableRows(db, 'account')).toBe(0)
+    expect(await countAuthTableRows(authDb, 'user')).toBe(0)
+    expect(await countAuthTableRows(authDb, 'account')).toBe(0)
 
     const signUpResponse = await signUpEmail(auth, env, {
       email: 'teacher@school.edu',
@@ -53,12 +54,12 @@ describe('Better Auth session integration', () => {
 
     expect(signUpResponse.status).toBe(200)
 
-    const user = await findUserByEmail(db, 'teacher@school.edu')
+    const user = await findUserByEmail(authDb, 'teacher@school.edu')
     expect(user).toBeTruthy()
     expect(user?.email).toBe('teacher@school.edu')
 
-    expect(await countAuthTableRows(db, 'user')).toBe(1)
-    expect(await countAccountRowsForUser(db, user!.id)).toBe(1)
+    expect(await countAuthTableRows(authDb, 'user')).toBe(1)
+    expect(await countAccountRowsForUser(authDb, user!.id)).toBe(1)
   }, 30_000)
 
   it('sign-in sets a session cookie', async () => {
@@ -80,10 +81,10 @@ describe('Better Auth session integration', () => {
   }, 30_000)
 
   it('resolves a linked staff actor from the session cookie', async () => {
-    const { db, application, auth, env } = await openContext()
+    const { authDb, application, auth, env } = await openContext()
 
     await seedMinimalSchoolFixtures(application)
-    const subjectId = await ensureAuthUser(auth, env, db, {
+    const subjectId = await ensureAuthUser(auth, env, authDb, {
       email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       password: DEV_AUTH_PASSWORD,
       name: 'Camille Moreau',
@@ -147,7 +148,7 @@ describe('Better Auth session integration', () => {
   }, 30_000)
 
   it('returns 401 on a protected route when subjectId is ambiguous', async () => {
-    const { db, application, auth, env } = await openContext()
+    const { authDb, application, auth, env } = await openContext()
 
     await seedMinimalSchoolFixtures(application)
 
@@ -158,7 +159,7 @@ describe('Better Auth session integration', () => {
     })
     const cookies = collectSetCookieHeaders(signUpResponse)
 
-    const user = await findUserByEmail(db, 'ambiguous@school.edu')
+    const user = await findUserByEmail(authDb, 'ambiguous@school.edu')
     expect(user).toBeTruthy()
 
     const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID)

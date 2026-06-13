@@ -1,5 +1,5 @@
 import type { Environment } from "@/lib/runtime/env";
-import { isEphemeralDatabase } from "@/lib/runtime/database-url";
+import { isEphemeralDatabase } from "@edaya/adaptor-neon";
 
 export interface DatabaseHandle {
   db: unknown;

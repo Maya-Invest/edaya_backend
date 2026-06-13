@@ -1,9 +1,9 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator'
-import { migrate as migratePostgresJs } from 'drizzle-orm/postgres-js/migrator'
+import { migrate as migrateBunSqlite } from 'drizzle-orm/bun-sqlite/migrator'
+import { migrate as migrateD1 } from 'drizzle-orm/d1/migrator'
 
-export type MigrationDriver = 'pglite' | 'postgres-js'
+export type MigrationDriver = 'd1' | 'sqlite'
 
 function getPackageRoot(): string {
   if (typeof import.meta.url !== 'string' || import.meta.url.length === 0) {
@@ -23,7 +23,6 @@ export async function runMigrations(
   options: { driver: MigrationDriver },
 ): Promise<void> {
   const migrationsFolder = getMigrationsFolder()
-  const migrate = options.driver === 'pglite' ? migratePglite : migratePostgresJs
-  // Same default journal as `drizzle-kit migrate` (shared with school migrations on one DB).
+  const migrate = options.driver === 'd1' ? migrateD1 : migrateBunSqlite
   await migrate(db as never, { migrationsFolder })
 }
