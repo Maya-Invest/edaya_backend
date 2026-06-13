@@ -361,23 +361,23 @@ Legend: ✅ done · ⚠️ partial · ❌ missing · — N/A
 
 ```mermaid
 flowchart TD
-    P0[Phase 0: Primitives\nDetailDrawer shell, FormModal, runMutation, PermissionGate]
-    P1a[Phase 1a: Student\nreference entity]
+    P0a[Phase 0a: Drawer shell contract\nClose-only shell, responsive, Escape]
+    P0b[Phase 0b: Student reference entity\nread-only tabs, modals, real writes]
     P1b[Phase 1b-d: Guardian, Staff, Evaluation, Fee...]
     P2[Phase 2: Remaining drawers + config screens]
     P3[Phase 3: List infrastructure\nURL filters, infinite loading, More menu]
     P4[Phase 4: Shell polish\nmobile, a11y]
     P5[Phase 5: Permissions pass\nparallel with 1-3]
 
-    P0 --> P1a
-    P1a --> P1b
+    P0a --> P0b
+    P0b --> P1b
     P1b --> P2
-    P1a --> P3
-    P0 --> P5
+    P0b --> P3
+    P0a --> P5
     P2 --> P4
 ```
 
-**Fastest visible win:** Phase 0 + Student — removes the misleading Save button, makes the most-used drawer read-only, and establishes patterns every other entity copies.
+**Fastest visible win:** Phase 0a + Phase 0b — removes the misleading Save button, makes the most-used drawer read-only, and establishes patterns every other entity copies.
 
 **Highest risk if skipped:** Leaving `DetailDrawer` Save footer in place while migrating individual entities — users will see mixed patterns (spec UX risk #1).
 
