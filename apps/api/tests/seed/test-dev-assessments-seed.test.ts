@@ -4,7 +4,6 @@ import {
   SEED_ASSESSMENT_RESULT_SCORES,
   SEED_ASSESSMENTS,
 } from "@edaya/dev-fixtures";
-import { parseEnv } from "@/lib/runtime/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
@@ -31,15 +30,7 @@ function unwrapEntityList<T>(values: unknown): T[] {
 const expectedAssessmentResultCount = Object.values(SEED_ASSESSMENT_RESULT_SCORES)
   .reduce((total, scores) => total + Object.keys(scores).length, 0);
 
-const pgliteEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "development",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
+import { pgliteEnv } from "../support/pglite-env";
 
 describe("dev assessments seed", () => {
   afterEach(async () => {

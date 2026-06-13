@@ -1,5 +1,4 @@
 import indexRouter from "@/app-router";
-import { parseEnv } from "@/lib/runtime/env";
 import { dependenciesInjection } from "@/lib/http/dependencies";
 import type { AppBindings } from "@/lib/http/types";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
@@ -14,17 +13,9 @@ import {
   StaffRoleAssignment,
 } from "@edaya/core";
 import { Hono } from "hono";
+import { pgliteEnv } from "./pglite-env";
 
-export const pgliteEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "development",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  AUTH_DATABASE_PATH: ":memory:",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
+export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 
 export function collectSetCookieHeaders(response: Response): string[] {
   const headers = response.headers as Headers & { getSetCookie?: () => string[] };

@@ -5,7 +5,6 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
   SEED_STAFF,
 } from "@edaya/dev-fixtures";
-import { parseEnv } from "@/lib/runtime/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
@@ -15,17 +14,8 @@ import {
   createAppRequest,
   createCoreRouteTestApp,
 } from "../support/better-auth-route-harness";
+import { pgliteEnv } from "../support/pglite-env";
 import { afterEach, describe, expect, it } from "bun:test";
-
-const pgliteEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "development",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
 
 describe("dev access seed", () => {
   afterEach(async () => {

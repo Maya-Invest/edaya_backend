@@ -4,7 +4,6 @@ import {
   SEED_ACTIVITY_ENROLLMENTS,
   SEED_EXTRACURRICULAR_ACTIVITIES,
 } from "@edaya/dev-fixtures";
-import { parseEnv } from "@/lib/runtime/env";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
@@ -13,6 +12,7 @@ import {
   collectSetCookieHeaders,
   createAppRequest,
   createCoreRouteTestApp,
+  createPgliteTestEnv,
   pgliteEnv,
 } from "../support/better-auth-route-harness";
 import indexRouter from "@/app-router";
@@ -38,7 +38,7 @@ describe("demo login accounts route", () => {
     await resetApiRuntimesForTests();
   });
 
-  async function createAppWithEnv(env: ReturnType<typeof parseEnv>) {
+  async function createAppWithEnv(env: ReturnType<typeof createPgliteTestEnv>) {
     await resetApiRuntimesForTests();
     await getApiRuntime(env);
 
@@ -81,14 +81,8 @@ describe("demo login accounts route", () => {
   }, 30_000);
 
   it("returns 503 when demo login accounts are disabled in production", async () => {
-    const productionEnv = parseEnv({
-      RUNTIME: "node",
+    const productionEnv = createPgliteTestEnv({
       NODE_ENV: "production",
-      PORT: 9999,
-      LOG_LEVEL: "silent",
-      DATABASE_URL: "pglite",
-      BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-      BETTER_AUTH_URL: "http://localhost:9999",
       ALLOW_DEMO_LOGIN_ACCOUNTS: false,
     });
 

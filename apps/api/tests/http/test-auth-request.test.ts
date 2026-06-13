@@ -1,17 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
-import { parseEnv } from "@/lib/runtime/env";
 import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
 import type { AppBindings } from "@/lib/http/types";
+import { createPgliteTestEnv } from "../support/pglite-env";
 
-const env = parseEnv({
-  RUNTIME: "node",
+const env = createPgliteTestEnv({
   NODE_ENV: "test",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
   BETTER_AUTH_SECRET: "test-secret",
-  BETTER_AUTH_URL: "http://localhost:9999",
 });
 
 describe("toBetterAuthHandlerRequest", () => {

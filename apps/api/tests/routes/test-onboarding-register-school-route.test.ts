@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
-import { parseEnv } from "@/lib/runtime/env";
 import { dependenciesInjection } from "@/lib/http/dependencies";
 import type { AppBindings } from "@/lib/http/types";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
@@ -8,7 +7,7 @@ import { Hono } from "hono";
 import {
   createAppRequest,
   createCoreRouteTestApp,
-  pgliteEnv,
+  createPgliteTestEnv,
   signInThroughApp,
   signUpAuthUser,
 } from "../support/better-auth-route-harness";
@@ -75,8 +74,7 @@ describe("onboarding register-school route", () => {
     const email = "blocked@school.edu";
     await signUpAuthUser(runtime, { email, name: "Blocked Owner" });
 
-    const disabledEnv = parseEnv({
-      ...pgliteEnv,
+    const disabledEnv = createPgliteTestEnv({
       ALLOW_PUBLIC_SCHOOL_REGISTRATION: false,
     });
     const app = new Hono<AppBindings>();

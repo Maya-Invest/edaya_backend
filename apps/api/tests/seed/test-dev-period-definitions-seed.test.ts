@@ -3,7 +3,6 @@ import {
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_PERIOD_DEFINITIONS,
 } from "@edaya/dev-fixtures";
-import { parseEnv } from "@/lib/runtime/env";
 import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { runDevAccessSeed } from "@/lib/seed/run-dev-access-seed";
 import { runDevAuthSeed } from "@/lib/seed/run-dev-auth-seed";
@@ -27,15 +26,7 @@ function unwrapEntityList<T>(values: unknown): T[] {
   });
 }
 
-const pgliteEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "development",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
+import { pgliteEnv } from "../support/pglite-env";
 
 describe("dev period definitions seed", () => {
   afterEach(async () => {

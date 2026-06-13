@@ -1,18 +1,8 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import { parseEnv } from "@/lib/runtime/env";
 import type { AppBindings } from "@/lib/http/types";
 import indexRouter from "@/app-router";
-
-const testEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "test",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
+import { pgliteEnv } from "../support/pglite-env";
 
 describe("auth route proxy", () => {
   const authHandler = mock();
@@ -24,7 +14,7 @@ describe("auth route proxy", () => {
   const setupTestApp = () => {
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {
-      c.env = testEnv;
+      c.env = pgliteEnv;
       c.set("auth", {
         handler: authHandler,
         api: {

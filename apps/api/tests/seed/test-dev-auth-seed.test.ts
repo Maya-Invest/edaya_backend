@@ -1,4 +1,3 @@
-import { parseEnv } from "@/lib/runtime/env";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/lib/runtime/registry";
 import { createDependenciesInjection } from "@/lib/http/dependencies";
 import { type AuthSessionProvider, createSessionActorDependency } from "@/lib/http/dependencies/session-actor";
@@ -15,16 +14,7 @@ import { runDevSeed } from "@/lib/seed/run-dev-seed";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it } from "bun:test";
 import type { AppBindings } from "@/lib/http/types";
-
-const pgliteEnv = parseEnv({
-  RUNTIME: "node",
-  NODE_ENV: "development",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
-});
+import { pgliteEnv } from "../support/pglite-env";
 
 function collectSetCookieHeaders(response: Response): string[] {
   const headers = response.headers as Headers & { getSetCookie?: () => string[] };
