@@ -18,6 +18,8 @@ export const CLEAR_TABLE_ORDER = [
   'assessment_results',
   'homework_submissions',
   'homework_assignments',
+  'activity_enrollments',
+  'extracurricular_activities',
   'class_logbook_entries',
   'class_subject_progress',
   'class_subject_matters',

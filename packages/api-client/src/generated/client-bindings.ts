@@ -158,6 +158,16 @@ export const clientBindings = {
       "schemaName": "HomeworkSubmission",
       "allowDirectSave": true
     },
+    "activities": {
+      "publicName": "activities",
+      "schemaName": "ExtracurricularActivity",
+      "allowDirectSave": true
+    },
+    "activityEnrollments": {
+      "publicName": "activity-enrollments",
+      "schemaName": "ActivityEnrollment",
+      "allowDirectSave": true
+    },
     "assessments": {
       "publicName": "assessments",
       "schemaName": "Assessment",

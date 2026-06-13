@@ -3,6 +3,7 @@ import {
   academicPeriodSchema,
   academicYearSchema,
   accessRoleSchema,
+  activityEnrollmentSchema,
   announcementSchema,
   announcementTargetSchema,
   assessmentResultSchema,
@@ -22,6 +23,7 @@ import {
   reportCardResultSectionSchema as coreReportCardResultSectionSchema,
   studentFeeInstallmentSchema as coreStudentFeeInstallmentSchema,
   disciplinaryActionSchema,
+  extracurricularActivitySchema,
   feeSchema,
   gradeLevelSchema,
   gradeScaleSchema,
@@ -61,6 +63,7 @@ import type {
   AcademicPeriodInput,
   AcademicYearInput,
   AccessRoleInput,
+  ActivityEnrollmentInput,
   AnnouncementInput,
   AnnouncementTargetInput,
   AssessmentInput,
@@ -75,6 +78,7 @@ import type {
   ClassSubjectMatterInput,
   ClassSubjectProgressInput,
   DisciplinaryActionInput,
+  ExtracurricularActivityInput,
   FeeInput,
   FeeInstallmentTemplate,
   GradeLevelInput,
@@ -160,6 +164,8 @@ export const homeworkAssignmentResponseSchema = responseSchema<HomeworkAssignmen
   attachments: z.array(homeworkAttachmentResponseSchema),
 });
 export const homeworkSubmissionResponseSchema = responseSchema<HomeworkSubmissionInput>("HomeworkSubmission", unwrapShape(homeworkSubmissionSchema));
+export const extracurricularActivityResponseSchema = responseSchema<ExtracurricularActivityInput>("ExtracurricularActivity", unwrapShape(extracurricularActivitySchema));
+export const activityEnrollmentResponseSchema = responseSchema<ActivityEnrollmentInput>("ActivityEnrollment", unwrapShape(activityEnrollmentSchema));
 export const assessmentResponseSchema = responseSchema<AssessmentInput>("Assessment", unwrapShape(assessmentSchema));
 export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>("AssessmentResult", unwrapShape(assessmentResultSchema));
 export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema));
@@ -408,6 +414,21 @@ export const homeworkAssignmentQuerySchema = createQueryOptionsSchema({
 export const homeworkSubmissionQuerySchema = createQueryOptionsSchema({
   id: field.uuid(),
   homeworkAssignmentId: field.uuid(),
+  studentId: field.uuid(),
+  status: field.string(),
+});
+
+export const extracurricularActivityQuerySchema = createQueryOptionsSchema({
+  id: field.uuid(),
+  schoolId: field.uuid(),
+  name: field.string(),
+  category: field.string(),
+  coach: field.string(),
+});
+
+export const activityEnrollmentQuerySchema = createQueryOptionsSchema({
+  id: field.uuid(),
+  activityId: field.uuid(),
   studentId: field.uuid(),
   status: field.string(),
 });

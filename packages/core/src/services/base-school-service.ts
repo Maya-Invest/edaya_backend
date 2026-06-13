@@ -3,6 +3,7 @@ import type {
   AcademicPeriod,
   AcademicYear,
   AccessRole,
+  ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -16,6 +17,7 @@ import type {
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
+  ExtracurricularActivity,
   Fee,
   GradeLevel,
   GradeScale,
@@ -55,6 +57,7 @@ import {
   academicPeriodConfig,
   academicYearConfig,
   accessRoleConfig,
+  activityEnrollmentConfig,
   announcementConfig,
   announcementTargetConfig,
   assessmentConfig,
@@ -68,6 +71,7 @@ import {
   classSubjectMatterConfig,
   classSubjectProgressConfig,
   disciplinaryActionConfig,
+  extracurricularActivityConfig,
   feeConfig,
   gradeLevelConfig,
   gradeScaleConfig,
@@ -144,6 +148,8 @@ export class BaseSchoolService {
   readonly classLogbookEntries: ManagedEntityService<ClassLogbookEntry>
   readonly homeworkAssignments: ManagedEntityService<HomeworkAssignment>
   readonly homeworkSubmissions: ManagedEntityService<HomeworkSubmission>
+  readonly activities: ManagedEntityService<ExtracurricularActivity>
+  readonly activityEnrollments: ManagedEntityService<ActivityEnrollment>
 
   readonly assessments: ManagedEntityService<Assessment>
   readonly assessmentResults: ManagedEntityService<AssessmentResult>
@@ -215,6 +221,8 @@ export class BaseSchoolService {
     this.classLogbookEntries = new ManagedEntityService({ ...serviceArgs, config: classLogbookEntryConfig(input) })
     this.homeworkAssignments = new ManagedEntityService({ ...serviceArgs, config: homeworkAssignmentConfig(input) })
     this.homeworkSubmissions = new ManagedEntityService({ ...serviceArgs, config: homeworkSubmissionConfig(input) })
+    this.activities = new ManagedEntityService({ ...serviceArgs, config: extracurricularActivityConfig(input) })
+    this.activityEnrollments = new ManagedEntityService({ ...serviceArgs, config: activityEnrollmentConfig(input) })
 
     this.assessments = new ManagedEntityService({ ...serviceArgs, config: assessmentConfig(input) })
     this.assessmentResults = new ManagedEntityService({ ...serviceArgs, config: assessmentResultConfig(input) })

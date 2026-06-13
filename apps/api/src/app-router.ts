@@ -6,10 +6,6 @@ import {
   listDemoLoginAccountsHandler,
   listDemoLoginAccountsRoute,
 } from "@/routes/auth.routes";
-import {
-  listPrototypeActivitiesHandler,
-  listPrototypeActivitiesRoute,
-} from "@/routes/prototype.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import {
   onboardingRegisterSchoolHandler,
@@ -47,7 +43,6 @@ const router = createRouter()
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(listDemoLoginAccountsRoute, listDemoLoginAccountsHandler)
-  .openapi(listPrototypeActivitiesRoute, listPrototypeActivitiesHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 

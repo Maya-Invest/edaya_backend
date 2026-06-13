@@ -3,6 +3,7 @@ import type {
   AcademicPeriod,
   AcademicYear,
   AccessRole,
+  ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -16,6 +17,7 @@ import type {
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
+  ExtracurricularActivity,
   Fee,
   GradeLevel,
   GradeScale,
@@ -95,6 +97,8 @@ export interface SchoolRepositories {
   readonly classLogbookEntries: BaseRepositoryInterface<ClassLogbookEntry>
   readonly homeworkAssignments: BaseRepositoryInterface<HomeworkAssignment>
   readonly homeworkSubmissions: BaseRepositoryInterface<HomeworkSubmission>
+  readonly activities: BaseRepositoryInterface<ExtracurricularActivity>
+  readonly activityEnrollments: BaseRepositoryInterface<ActivityEnrollment>
 
   // AssessmentRepositories
   readonly assessments: BaseRepositoryInterface<Assessment>

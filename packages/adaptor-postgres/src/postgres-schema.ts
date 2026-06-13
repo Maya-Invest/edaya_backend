@@ -393,7 +393,32 @@ export const homeworkSubmissions = pgTable('homework_submissions', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
-// 27. Class Subject Matter Table
+// 28. Extracurricular Activity Table
+export const extracurricularActivities = pgTable('extracurricular_activities', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  coach: text('coach').notNull(),
+  schedule: text('schedule').notNull(),
+  participants: integer('participants').notNull(),
+  capacity: integer('capacity').notNull(),
+  description: text('description').notNull(),
+  startDate: timestamp('start_date', { mode: 'date' }).notNull(),
+  endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+// 29. Activity Enrollment Table
+export const activityEnrollments = pgTable('activity_enrollments', {
+  id: text('id').primaryKey(),
+  activityId: text('activity_id').notNull(),
+  studentId: text('student_id').notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+// 30. Class Subject Matter Table
 export const classSubjectMatters = pgTable('class_subject_matters', {
   id: text('id').primaryKey(),
   classSubjectId: text('class_subject_id').notNull(),

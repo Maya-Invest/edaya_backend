@@ -3,6 +3,7 @@ import type {
   AcademicPeriod,
   AcademicYear,
   AccessRole,
+  ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -16,6 +17,7 @@ import type {
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
+  ExtracurricularActivity,
   Fee,
   GradeLevel,
   GradeScale,
@@ -229,6 +231,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const classLogbookEntries = createStore<ClassLogbookEntry>(transactionParticipants)
   const homeworkAssignments = createStore<HomeworkAssignment>(transactionParticipants)
   const homeworkSubmissions = createStore<HomeworkSubmission>(transactionParticipants)
+  const activities = createStore<ExtracurricularActivity>(transactionParticipants)
+  const activityEnrollments = createStore<ActivityEnrollment>(transactionParticipants)
   const sessions = createStore<Session>(transactionParticipants)
   const assessments = createStore<Assessment>(transactionParticipants)
   const attendance = createStore<AttendanceRecord>(transactionParticipants)
@@ -319,6 +323,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     classLogbookEntries,
     homeworkAssignments,
     homeworkSubmissions,
+    activities,
+    activityEnrollments,
 
     // assessments
     assessments,

@@ -11,7 +11,7 @@
 - Une tâche **implémentation** est finie quand : champ exposé par l'API + seed à jour + mapper webapp sans fallback par ID.
 - Une tâche **test UI** est finie quand : parcours manuel validé avec `bun run dev` (API + webapp démarrées, seed appliqué).
 
-**Dernière mise à jour :** juin 2026
+**Dernière mise à jour :** 12 juin 2026 — **implémentation 17/17 terminée** ; tests UI partiels (voir tableau).
 
 ---
 
@@ -20,19 +20,18 @@
 Trois niveaux de branchement :
 
 
-| Niveau                | Signification                                                   | Exemple                                          |
-| --------------------- | --------------------------------------------------------------- | ------------------------------------------------ |
-| ✅ **API complète**    | HTTP + tous les champs UI viennent de la réponse                | Élèves, classes, finance                         |
-| 🟡 **API partielle**  | HTTP oui, mais le mapper complète en local                      | Incidents (catégorie), bulletins (appréciations) |
-| ⚠️ **Stub prototype** | HTTP oui, mais pas d'entité domaine (route `/core/prototype/`*) | Activités, devoirs, carnet de cours              |
+| Niveau                | Signification                                                   | Exemple                               |
+| --------------------- | --------------------------------------------------------------- | ------------------------------------- |
+| ✅ **API complète**    | HTTP + tous les champs UI viennent de la réponse                | Élèves, classes, finance, activités   |
+| 🟡 **API partielle**  | HTTP oui, mais le mapper complète en local (fallback documenté) | Notes pédagogiques (fallback `title`) |
+| ~~⚠️ Stub prototype~~ | *(plus aucun stub — routes `/core/prototype/*` supprimées)*     | —                                     |
 
 
 ```
 dev-fixtures  →  seed API  →  endpoint HTTP  →  mapper webapp  →  écran UI
-                    ↑              ↑                  ↑
-              parfois champs    parfois stub      parfois *_UI_META
-               non persistés
 ```
+
+**État global (juin 2026) :** plus de `*_UI_META`, plus de routes prototype, tous les mappers dans `src/lib/api/` lisent les entités HTTP.
 
 ---
 
@@ -49,36 +48,40 @@ Ces domaines chargent via `client.entities.*` ou auth, **sans** `*_UI_META`.
 | Évaluations                               | `assessments-data.ts`                  | `/classes/…/evaluations`                                       |
 | Finance (frais, facturation, paiements)   | `finance-data.ts`                      | `/finance/fees`, `/finance/billing`, `/finance/payment`        |
 | Absences (données brutes)                 | `school-life-data.ts`                  | `/school/events` (onglet absences)                             |
+| Activités extrascolaires                  | `activities-data.ts`                   | `/school/activities`                                           |
+| Devoirs                                   | `homework-data.ts`                     | `/classes/…/homework`                                          |
+| Carnet de cours                           | `teaching-log-data.ts`                 | `/classes/…/teaching`                                          |
+| Comptes démo (login)                      | `/core/auth/demo-login-accounts/list`  | `/login`                                                       |
 | Auth & session                            | `bootstrap.ts`                         | Toute l'app                                                    |
 | Permissions effectives                    | `/core/authorization/effective-grants` | Boutons conditionnels                                          |
 
 
 ---
 
-## Ce qui n'est PAS encore 100 % branché — vue d'ensemble
+## Items du plan — vue d'ensemble
 
-Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **Test UI**.
+**Impl. : 17/17 ✅** — Cocher **Test UI** quand tous les tests manuels de la section détail sont validés.
 
 
-| #   | Domaine                                      | Problème                                  | Fichier(s)             | Impl. | Test UI |
-| --- | -------------------------------------------- | ----------------------------------------- | ---------------------- | ----- | ------- |
-| 1   | Incidents — catégorie / gravité              | `INCIDENT_UI_META` par ID                 | `school-life-data.ts`  | [x]   | [ ]     |
-| 2   | Calendrier — descriptions                    | Textes génériques hardcodés               | `school-life-data.ts`  | [x]   | [ ]     |
-| 3   | Santé élève                                  | `HEALTH_UI_META` (lastVisit, meds, notes) | `student-360-data.ts`  | [x]   | [ ]     |
-| 4   | Notes pédagogiques — catégorie               | Stockée dans `title`, pas enum API        | `student-360-data.ts`  | [x]   | [ ]     |
-| 5   | Barèmes — passingScore, description          | `GRADE_SCALE_UI_META`                     | `report-cards-data.ts` | [x]   | [ ]     |
-| 6   | Définitions bulletins — gradeScaleId, status | `DEFINITION_UI_META`                      | `report-cards-data.ts` | [x]   | [ ]     |
-| 7   | Sections bulletins — kind UI                 | `SECTION_UI_META`                         | `report-cards-data.ts` | [x]   | [ ]     |
-| 8   | Résultats bulletins — appréciations          | `MARK_UI_META`                            | `report-cards-data.ts` | [x]   | [ ]     |
-| 9   | Résolution subject → classSubject            | `SUBJECT_TO_CLASS_SUBJECT_6A`             | `report-cards-data.ts` | [x]   | [ ]     |
-| 10  | Staff — rôle / département / matières        | Fallbacks `st1`, `st3`, `st5`, `st7`      | `staff-data.ts`        | [x]   | [ ]     |
-| 11  | Login — rôle compte démo                     | `DEMO_STAFF_ROLES` dans l'API             | `prototype.routes.ts`  | [x]   | [ ]     |
-| 12  | Matrice permissions                          | `ROLE_PERMISSIONS` statique               | `drawer-constants.ts`  | [x]   | [ ]     |
-| 13  | Matières — couleur / catégorie               | Inférence locale (regex)                  | `subjects-data.ts`     | [x]   | [ ]     |
-| 14  | Activités extrascolaires                     | Stub `/prototype/activities`              | `prototype-data.ts`    | [ ]   | [ ]     |
-| 15  | Devoirs / deadlines                          | Stub `/prototype/deadlines`               | `prototype-data.ts`    | [x]   | [ ]     |
-| 16  | Carnet de cours                              | Stub `/prototype/teaching-log`            | `prototype-data.ts`    | [x]   | [ ]     |
-| 17  | Comptes démo login                           | Stub `/prototype/demo-accounts`           | `login/+page.svelte`   | [ ]   | [ ]     |
+| #   | Domaine                                      | Fichier(s) principal(aux)     | Impl. | Test UI |
+| --- | -------------------------------------------- | ----------------------------- | ----- | ------- |
+| 1   | Incidents — catégorie / gravité              | `school-life-data.ts`         | [x]   | [ ]     |
+| 2   | Calendrier — descriptions                    | `school-life-data.ts`         | [x]   | [x]     |
+| 3   | Santé élève                                  | `student-360-data.ts`         | [x]   | [ ]     |
+| 4   | Notes pédagogiques — catégorie               | `student-360-data.ts`         | [x]   | [x]     |
+| 5   | Barèmes — passingScore, description          | `report-cards-data.ts`        | [x]   | [x]     |
+| 6   | Définitions bulletins — gradeScaleId, status | `report-cards-data.ts`        | [x]   | [ ]     |
+| 7   | Sections bulletins — kind UI                 | `report-cards-data.ts`        | [x]   | [x]     |
+| 8   | Résultats bulletins — appréciations          | `report-cards-data.ts`        | [x]   | [ ]     |
+| 9   | Résolution subject → classSubject            | `report-cards-data.ts`        | [x]   | [x]     |
+| 10  | Staff — rôle / département / matières        | `staff-data.ts`               | [x]   | [x]     |
+| 11  | Login — rôle compte démo                     | `auth.routes.ts`, `demo-accounts.ts` | [x]   | [ ]     |
+| 12  | Matrice permissions                          | `access-roles-data.ts`        | [x]   | [ ]     |
+| 13  | Matières — couleur / catégorie               | `subjects-data.ts`            | [x]   | [ ]     |
+| 14  | Activités extrascolaires                     | `activities-data.ts`          | [x]   | [x]     |
+| 15  | Devoirs / deadlines                          | `homework-data.ts`            | [x]   | [ ]     |
+| 16  | Carnet de cours                              | `teaching-log-data.ts`        | [x]   | [x]     |
+| 17  | Comptes démo login                           | `login/+page.svelte`          | [x]   | [x]     |
 
 
 ---
@@ -293,13 +296,14 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 ### 11 — Login : rôle compte démo
 
-**Écart :** `DEMO_STAFF_ROLES` hardcodé dans `apps/api/src/routes/prototype.routes.ts` au lieu de lire `staffRoleAssignments`.
+**Écart (résolu) :** rôles hardcodés → lus depuis `staffRoleAssignments` ; route déplacée hors prototype.
 
 **Implémentation**
 
-- [x] `buildDemoLoginAccounts()` — rôles depuis `staffRoleAssignments` (`role-director` → directeur, etc.)
-- [x] `listPrototypeDemoAccountsHandler` lit les assignments en base
-- [x] Supprimer `DEMO_STAFF_ROLES` et `LOGIN_DEMO_STAFF_IDS` ; filtre dynamique (comptes auth + 1 prof)
+- [x] `buildDemoLoginAccounts()` — staff avec `subjectId` + `staffRoleAssignments` (plus `DEV_AUTH_STAFF_ACCOUNTS` côté handler)
+- [x] Route `POST /core/auth/demo-login-accounts/list` (publique en dev, `503` en production)
+- [x] `shouldAllowDemoLoginAccounts()` — même logique que `ALLOW_PUBLIC_SCHOOL_REGISTRATION`
+- [x] Supprimer `DEMO_STAFF_ROLES`, route `/core/prototype/demo-accounts/list`
 - [x] Tests : `test-demo-accounts.test.ts`, `test-prototype-routes.test.ts`
 
 **Test UI**
@@ -354,22 +358,24 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 ### 14 — Activités extrascolaires (stub → domaine)
 
-**Écart :** `POST /core/prototype/activities/list` sert `SEED_ACTIVITIES` sans entité domaine ni DB.
+**Écart (résolu) :** stub prototype → entités domaine persistées.
 
 **Implémentation**
 
-- [ ] Créer entité domaine + workflows dans `@edaya/core`
-- [ ] Exposer `client.entities.activities.list()` (ou nom final)
-- [ ] Seed dans `run-dev-seed.ts`
-- [ ] Remplacer `fetchActivities()` dans `prototype-data.ts`
-- [ ] Supprimer route prototype
+- [x] Entités `ExtracurricularActivity` + `ActivityEnrollment` (`@edaya/core`, migration `0011`)
+- [x] `client.entities.activities.list()` + `client.entities.activityEnrollments.list()`
+- [x] Seed `SEED_EXTRACURRICULAR_ACTIVITIES` / `SEED_ACTIVITY_ENROLLMENTS` dans `run-dev-seed.ts`
+- [x] `activities-data.ts` : `fetchActivities()` via entités HTTP
+- [x] Route prototype `/prototype/activities/list` supprimée (`prototype.routes.ts` supprimé)
+- [x] Tests : `activities-data.test.ts`, `test-prototype-routes.test.ts` (seed activities)
+- [x] OpenAPI régénéré
 
 **Test UI**
 
-- [ ] `/school/activities` — 4+ activités (Robotique, Chorale, …)
-- [ ] `/school/activities/act-robot` → coach, horaire, capacité 24, 18 participants
-- [ ] Inscriptions élèves : statuts approved / pending / denied
-- [ ] Drawer activité depuis liste
+- [x] `/school/activities` — 6 activités (Robotique, Chorale, …)
+- [x] `/school/activities/act-robot` → coach, horaire, capacité 24, 18 participants
+- [x] Inscriptions élèves : statuts approved / pending / denied
+- [x] Drawer activité depuis liste
 
 ---
 
@@ -381,7 +387,7 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 - [x] Entités `HomeworkAssignment` + `HomeworkSubmission` (domaine core + migration `0009`)
 - [x] Seed `SEED_HOMEWORK_ASSIGNMENTS` / `SEED_HOMEWORK_SUBMISSIONS` dans `run-dev-seed.ts`
-- [x] `homework-data.ts` : `fetchDeadlines()` via `client.entities.homework`*
+- [x] `homework-data.ts` : `fetchDeadlines()` via `client.entities.homeworkAssignments` / `homeworkSubmissions`
 - [x] Route prototype `/prototype/deadlines/list` supprimée
 - [x] Tests : `homework-data.test.ts`, `test-dev-homework-seed.test.ts`
 - [x] OpenAPI régénéré
@@ -419,20 +425,20 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 ---
 
-### 17 — Comptes démo (stub → query staff)
+### 17 — Comptes démo login (route auth)
 
-**Écart :** `POST /core/prototype/demo-accounts/list` au lieu d'une query sur staff + auth.
+**Écart (résolu) :** voir item 11 — fusionné avec la route auth dédiée.
 
 **Implémentation**
 
-- [ ] Nouvel endpoint ou query `staffMembers` filtrable pour login
-- [ ] Adapter `login/+page.svelte`
-- [ ] Supprimer route prototype demo-accounts
+- [x] Endpoint `POST /core/auth/demo-login-accounts/list` (staff DB + rôles, dev-only)
+- [x] `login/+page.svelte` adapté (plus de route prototype)
+- [x] Route prototype demo-accounts supprimée
 
 **Test UI**
 
-- [ ] `/login` sans route prototype : comptes toujours listés
-- [ ] Mêmes 4 comptes, emails et initiales corrects
+- [x] `/login` sans route prototype : comptes listés via `/core/auth/demo-login-accounts/list`
+- [x] Mêmes 4 comptes, emails et initiales corrects
 
 ---
 
@@ -440,12 +446,14 @@ Cocher la colonne **Impl.** quand l'API + mapper sont prêts, puis la colonne **
 
 ### Nettoyage code
 
-- [ ] Zéro `*_UI_META` dans `src/lib/api/` (vérifier : `rg '_UI_META' apps/webapp/src/lib/api`)
-- [ ] Zéro fallback `member.id === 'st` dans `staff-data.ts`
-- [ ] Routes `/core/prototype/`* supprimées (si items 14–17 faits)
-- [ ] `schema.d.ts` / `openapi.json` régénérés
+- [x] Zéro `*_UI_META` dans `src/lib/api/` (`rg '_UI_META' apps/webapp/src/lib/api` → aucun résultat)
+- [x] Zéro fallback `member.id === 'st` dans `staff-data.ts` (uniquement assertions de tests)
+- [x] Routes `/core/prototype/*` supprimées
+- [x] `schema.d.ts` / `openapi.json` régénérés
 
-### Smoke test complet (après toutes les cases Impl. cochées)
+### Smoke test complet
+
+À cocher lors d'une passe manuelle globale (plusieurs items ont déjà des tests UI partiels validés ci-dessus).
 
 
 | Parcours         | Route(s)                                                     | Test UI                                |
@@ -488,15 +496,10 @@ Mot de passe comptes démo : voir `DEV_AUTH_PASSWORD` dans `@edaya/dev-fixtures`
 ## Ordre recommandé
 
 ```
-1 Incidents          ← rapide, gros impact visuel
-2 Calendrier
-3 Staff + Login (10, 11)   ← seed access déjà partiel
-4 Santé + Notes (3, 4)
-5 Bulletins (5–9)    ← le plus lourd (core)
-6 Permissions (12)
-7 Prototype → domaine (14–17)
-8 Matières (13)      ← optionnel
-9 Validation globale
+✅ 1–17  Implémentation terminée
+⬜ Tests UI restants : 1 (network), 3 (network), 6 (liste config), 8 (appréciations bulletins),
+   11 (connexion par rôle), 12 (boutons prof), 13 (config subjects), 15 (multi-classes devoirs)
+⬜ Smoke test global (table ci-dessous)
 ```
 
 ---
@@ -511,5 +514,10 @@ Mot de passe comptes démo : voir `DEV_AUTH_PASSWORD` dans `@edaya/dev-fixtures`
 | 2026-06-11 | 1       | Incidents : seed kinds + mapper `mapIncidentCategory/Severity`, tests bun       |
 | 2026-06-11 | 2       | Calendrier : champ `description` core + seed + mapper, OpenAPI regen, tests     |
 | 2026-06-11 | 3       | Santé : `lastVisit`, `medications`, `clinicalNotes` core + seed + mapper, tests |
+| 2026-06-12 | 4–13    | Bulletins, staff, permissions, matières — impl + tests UI partiels             |
+| 2026-06-12 | 15–16   | Devoirs + carnet : entités domaine, seed, mappers, tests                        |
+| 2026-06-12 | 17      | Login : `/core/auth/demo-login-accounts/list`, dev-only, DB-driven              |
+| 2026-06-12 | 14      | Activités : `ExtracurricularActivity` + enrollments, `activities-data.ts`       |
+| 2026-06-12 | Final   | Plan à jour : impl 17/17, prototype supprimé, `_UI_META` éliminés               |
 
 

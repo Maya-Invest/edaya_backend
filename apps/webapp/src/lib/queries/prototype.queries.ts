@@ -1,9 +1,9 @@
+import { fetchActivities } from '$lib/api/activities-data';
 import { fetchDeadlines } from '$lib/api/homework-data';
-import { fetchActivities } from '$lib/api/prototype-data';
 import { resolvePageLoad } from '$lib/queries/page-status';
 
+export { fetchActivities } from '$lib/api/activities-data';
 export { fetchDeadlines } from '$lib/api/homework-data';
-export { fetchActivities } from '$lib/api/prototype-data';
 export { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 
 export function querySchoolActivitiesPage() {

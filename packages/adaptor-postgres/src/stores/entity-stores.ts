@@ -1,6 +1,7 @@
 import type {
   AcademicPeriod,
   AcademicYear,
+  ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
   Assessment,
@@ -14,6 +15,7 @@ import type {
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
+  ExtracurricularActivity,
   Fee,
   GradeLevel,
   GradeScale,
@@ -50,6 +52,7 @@ import type { PostgresStore } from '../postgres-store'
 import {
   AcademicPeriod as AcademicPeriodCtor,
   AcademicYear as AcademicYearCtor,
+  ActivityEnrollment as ActivityEnrollmentCtor,
   Announcement as AnnouncementCtor,
   AnnouncementTarget as AnnouncementTargetCtor,
   Assessment as AssessmentCtor,
@@ -64,6 +67,7 @@ import {
   ClassSubjectMatter as ClassSubjectMatterCtor,
   ClassSubjectProgress as ClassSubjectProgressCtor,
   DisciplinaryAction as DisciplinaryActionCtor,
+  ExtracurricularActivity as ExtracurricularActivityCtor,
   Fee as FeeCtor,
   GradeLevel as GradeLevelCtor,
   GradeScale as GradeScaleCtor,
@@ -183,6 +187,8 @@ export interface EntityStores {
   classLogbookEntries: PostgresStore<ClassLogbookEntry>
   homeworkAssignments: PostgresStore<HomeworkAssignment>
   homeworkSubmissions: PostgresStore<HomeworkSubmission>
+  activities: PostgresStore<ExtracurricularActivity>
+  activityEnrollments: PostgresStore<ActivityEnrollment>
   assessments: PostgresStore<Assessment>
   assessmentResults: PostgresStore<AssessmentResult>
   gradeScales: PostgresStore<GradeScale>
@@ -720,6 +726,41 @@ export function createEntityStores(db: any): EntityStores {
     ),
 
     homeworkSubmissions: defaultStore(db, schema.homeworkSubmissions, HomeworkSubmissionCtor),
+
+    activities: customStore(
+      db,
+      schema.extracurricularActivities,
+      (entity: ExtracurricularActivity) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        name: entity.name,
+        category: entity.category,
+        coach: entity.coach,
+        schedule: entity.schedule,
+        participants: entity.participants,
+        capacity: entity.capacity,
+        description: entity.description,
+        startDate: entity.startDate,
+        endDate: entity.endDate,
+        createdAt: entity.createdAt,
+      }),
+      row => new ExtracurricularActivityCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        name: row.name,
+        category: row.category as ExtracurricularActivity['category'],
+        coach: row.coach,
+        schedule: row.schedule,
+        participants: row.participants,
+        capacity: row.capacity,
+        description: row.description,
+        startDate: row.startDate,
+        endDate: row.endDate,
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    activityEnrollments: defaultStore(db, schema.activityEnrollments, ActivityEnrollmentCtor),
 
     assessments: customStore(
       db,

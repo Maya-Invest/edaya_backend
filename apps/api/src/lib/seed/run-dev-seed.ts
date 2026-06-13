@@ -8,6 +8,7 @@ import {
   SEED_ABSENCE_RECORDS,
   SEED_ACADEMIC_PERIODS,
   SEED_ACADEMIC_YEAR_ID,
+  SEED_ACTIVITY_ENROLLMENTS,
   SEED_ASSESSMENT_RESULT_SCORES,
   SEED_ASSESSMENTS,
   SEED_CALENDAR_EVENTS,
@@ -15,6 +16,7 @@ import {
   SEED_CLASS_SUBJECTS,
   SEED_CLASSES,
   SEED_CURRENCY,
+  SEED_EXTRACURRICULAR_ACTIVITIES,
   SEED_FEES,
   SEED_FINANCE_REFERENCE_DATE,
   SEED_GRADE_LEVELS,
@@ -41,13 +43,17 @@ import {
   splitDisplayName,
 } from "@edaya/dev-fixtures";
 import type {
-  FeeCategory,
+  ExtracurricularActivityCategory,
 
+  FeeCategory,
   SubjectCategory,
+
   SubjectColor,
 } from "@edaya/core";
 import {
   AcademicPeriodType,
+  ActivityEnrollment,
+  ActivityEnrollmentStatus,
   AssessmentKind,
   AttendanceStatus,
   CalendarEventKind,
@@ -56,6 +62,7 @@ import {
   ClassSubjectMatterStatus,
   createSystemActorMetadata,
   DayOfWeek,
+  ExtracurricularActivity,
   GradeLevel,
   HomeworkAssignment,
   HomeworkAssignmentType,
@@ -107,6 +114,8 @@ export type DevSeedResult =
     assessmentResults: number;
     homeworkAssignments: number;
     homeworkSubmissions: number;
+    activities: number;
+    activityEnrollments: number;
     classLogbookEntries: number;
     calendarEvents: number;
     incidents: number;
@@ -450,6 +459,37 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     }), { moduleChecked: true });
   }
 
+  const enrollmentStatusBySeed = {
+    approved: ActivityEnrollmentStatus.Approved,
+    pending: ActivityEnrollmentStatus.Pending,
+    denied: ActivityEnrollmentStatus.Denied,
+  } as const;
+
+  for (const activity of SEED_EXTRACURRICULAR_ACTIVITIES) {
+    await service.baseService.activities.save(new ExtracurricularActivity({
+      id: activity.id,
+      schoolId: activity.schoolId,
+      name: activity.name,
+      category: activity.category as ExtracurricularActivityCategory,
+      coach: activity.coach,
+      schedule: activity.schedule,
+      participants: activity.participants,
+      capacity: activity.capacity,
+      description: activity.description,
+      startDate: parseSeedDate(activity.startDate),
+      endDate: parseSeedDate(activity.endDate),
+    }), { moduleChecked: true });
+  }
+
+  for (const enrollment of SEED_ACTIVITY_ENROLLMENTS) {
+    await service.baseService.activityEnrollments.save(new ActivityEnrollment({
+      id: enrollment.id,
+      activityId: enrollment.activityId,
+      studentId: enrollment.studentId,
+      status: enrollmentStatusBySeed[enrollment.status],
+    }), { moduleChecked: true });
+  }
+
   for (const entry of SEED_TEACHING_LOG_ENTRIES) {
     await service.baseService.classLogbookEntries.save(new ClassLogbookEntry({
       id: entry.id,
@@ -645,6 +685,8 @@ export async function runDevSeed(application: ApiSchoolApplication): Promise<Dev
     assessmentResults: assessmentResultCount,
     homeworkAssignments: SEED_HOMEWORK_ASSIGNMENTS.length,
     homeworkSubmissions: SEED_HOMEWORK_SUBMISSIONS.length,
+    activities: SEED_EXTRACURRICULAR_ACTIVITIES.length,
+    activityEnrollments: SEED_ACTIVITY_ENROLLMENTS.length,
     classLogbookEntries: SEED_TEACHING_LOG_ENTRIES.length,
     calendarEvents: calendarEventCount,
     incidents: SEED_INCIDENTS.length,

@@ -215,100 +215,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/prototype/activities/list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** List extracurricular activities (stub — no domain entity yet) */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            /** @description Prototype activities list request */
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["PrototypeListRequest"];
-                };
-            };
-            responses: {
-                /** @description Stub extracurricular activities */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PrototypeActivitiesListResponse"];
-                    };
-                };
-                /** @description Invalid request payload */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Missing or invalid authorization session */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Access denied due to authorization policies */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Business rule violation */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                    };
-                };
-                /** @description Internal server error occurred */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/core/onboarding/register-school": {
         parameters: {
             query?: never;
@@ -33251,6 +33157,1656 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/activities/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_32"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Listed Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExtracurricularActivity"][];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_32"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Found Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExtracurricularActivity"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Extracurricular Activities not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_32"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Counted Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Extracurricular Activities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Fetched Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExtracurricularActivity"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Extracurricular Activities not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities entity */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ExtracurricularActivity"];
+                };
+            };
+            responses: {
+                /** @description Saved Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExtracurricularActivity"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityDelete"];
+                };
+            };
+            responses: {
+                /** @description Deleted Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities batch save request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ExtracurricularActivitiesBatchSave"];
+                };
+            };
+            responses: {
+                /** @description Batch saved Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ids: string[];
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activities/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Extracurricular Activities */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Extracurricular Activities batch delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityBatchDelete"];
+                };
+            };
+            responses: {
+                /** @description Batch deleted Extracurricular Activities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_33"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Listed Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivityEnrollment"][];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_33"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Found Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivityEnrollment"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Activity Enrollments not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_33"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Counted Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity Enrollments */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Fetched Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivityEnrollment"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Activity Enrollments not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments entity */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActivityEnrollment"];
+                };
+            };
+            responses: {
+                /** @description Saved Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivityEnrollment"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityDelete"];
+                };
+            };
+            responses: {
+                /** @description Deleted Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments batch save request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActivityEnrollmentsBatchSave"];
+                };
+            };
+            responses: {
+                /** @description Batch saved Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ids: string[];
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/activity-enrollments/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Activity Enrollments */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Activity Enrollments batch delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityBatchDelete"];
+                };
+            };
+            responses: {
+                /** @description Batch deleted Activity Enrollments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/assessments/list": {
         parameters: {
             query?: never;
@@ -33271,7 +34827,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33373,7 +34929,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33486,7 +35042,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34096,7 +35652,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34198,7 +35754,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34311,7 +35867,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34921,7 +36477,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35023,7 +36579,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35136,7 +36692,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35746,7 +37302,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35848,7 +37404,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35961,7 +37517,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36571,7 +38127,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36673,7 +38229,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36786,7 +38342,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37396,7 +38952,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37498,7 +39054,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37611,7 +39167,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38221,7 +39777,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38323,7 +39879,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38436,7 +39992,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39046,7 +40602,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39148,7 +40704,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39261,7 +40817,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39871,7 +41427,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39973,7 +41529,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40086,7 +41642,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40696,7 +42252,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40798,7 +42354,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40911,7 +42467,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41521,7 +43077,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41623,7 +43179,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41736,7 +43292,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42346,7 +43902,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42448,7 +44004,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42561,7 +44117,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43171,7 +44727,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43273,7 +44829,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43386,7 +44942,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43996,7 +45552,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_45"] & {
+                    "application/json": components["schemas"]["Filter_47"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44098,7 +45654,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_45"] & {
+                    "application/json": components["schemas"]["Filter_47"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44211,7 +45767,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_45"] & {
+                    "application/json": components["schemas"]["Filter_47"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44821,7 +46377,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_46"] & {
+                    "application/json": components["schemas"]["Filter_48"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44923,7 +46479,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_46"] & {
+                    "application/json": components["schemas"]["Filter_48"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45036,7 +46592,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_46"] & {
+                    "application/json": components["schemas"]["Filter_48"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45646,7 +47202,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_47"] & {
+                    "application/json": components["schemas"]["Filter_49"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45748,7 +47304,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_47"] & {
+                    "application/json": components["schemas"]["Filter_49"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45861,7 +47417,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_47"] & {
+                    "application/json": components["schemas"]["Filter_49"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -46490,26 +48046,6 @@ export interface components {
             code: string;
         };
         DemoLoginAccountsListRequest: Record<string, never>;
-        PrototypeActivity: {
-            id: string;
-            name: string;
-            /** @enum {string} */
-            category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
-            coach: string;
-            schedule: string;
-            participants: number;
-            capacity: number;
-            description: string;
-            startDate: string;
-            endDate: string;
-            enrollments: {
-                studentId: string;
-                /** @enum {string} */
-                status: "approved" | "pending" | "denied";
-            }[];
-        };
-        PrototypeActivitiesListResponse: components["schemas"]["PrototypeActivity"][];
-        PrototypeListRequest: Record<string, never>;
         School: {
             id: string;
             name: string;
@@ -48170,55 +49706,86 @@ export interface components {
         HomeworkSubmissionsBatchSave: {
             entities: components["schemas"]["HomeworkSubmission"][];
         };
+        ExtracurricularActivity: {
+            id: string;
+            schoolId: string;
+            name: string;
+            /** @enum {string} */
+            category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
+            coach: string;
+            schedule: string;
+            participants: number;
+            capacity: number;
+            description: string;
+            startDate: unknown;
+            endDate: unknown;
+            createdAt?: unknown;
+        };
         Filter_32: Record<string, never>;
+        ExtracurricularActivitiesBatchSave: {
+            entities: components["schemas"]["ExtracurricularActivity"][];
+        };
+        ActivityEnrollment: {
+            id: string;
+            activityId: string;
+            studentId: string;
+            /** @enum {string} */
+            status: "approved" | "pending" | "denied";
+            createdAt?: unknown;
+        };
+        Filter_33: Record<string, never>;
+        ActivityEnrollmentsBatchSave: {
+            entities: components["schemas"]["ActivityEnrollment"][];
+        };
+        Filter_34: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_33: Record<string, never>;
+        Filter_35: Record<string, never>;
         AssessmentResultsBatchSave: {
             entities: components["schemas"]["AssessmentResult"][];
         };
-        Filter_34: Record<string, never>;
+        Filter_36: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_35: Record<string, never>;
+        Filter_37: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_36: Record<string, never>;
+        Filter_38: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
-        Filter_37: Record<string, never>;
+        Filter_39: Record<string, never>;
         ReportCardResultsBatchSave: {
             entities: components["schemas"]["ReportCardResult"][];
         };
-        Filter_38: Record<string, never>;
+        Filter_40: Record<string, never>;
         StudentsBatchSave: {
             entities: components["schemas"]["Student"][];
         };
-        Filter_39: Record<string, never>;
+        Filter_41: Record<string, never>;
         StudentEnrollmentsBatchSave: {
             entities: components["schemas"]["StudentClassEnrollment"][];
         };
-        Filter_40: Record<string, never>;
+        Filter_42: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_41: Record<string, never>;
+        Filter_43: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_42: Record<string, never>;
+        Filter_44: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_43: Record<string, never>;
+        Filter_45: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_44: Record<string, never>;
+        Filter_46: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
@@ -48236,15 +49803,15 @@ export interface components {
             description?: string | null;
             createdAt?: unknown;
         };
-        Filter_45: Record<string, never>;
+        Filter_47: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_46: Record<string, never>;
+        Filter_48: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_47: Record<string, never>;
+        Filter_49: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };

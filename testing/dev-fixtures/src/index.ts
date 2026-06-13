@@ -3,6 +3,10 @@ export {
   SEED_DEADLINES,
 } from './activities-deadlines-seed'
 export {
+  SEED_ACTIVITY_ENROLLMENTS,
+  SEED_EXTRACURRICULAR_ACTIVITIES,
+} from './activities-seed'
+export {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
