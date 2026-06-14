@@ -3,14 +3,21 @@ import {
   createAppRequest,
   createCoreRouteTestApp,
   createSessionActorDependency,
+  grantServiceAccountCreate,
   provisionServiceAccountForTests,
   resetApiRuntimesForTests,
   seedDevSchoolAndAuthLinks,
   signInDirector,
+  signInThroughApp,
   wrapAuthWithVerifiedAssurance,
 } from "../support/core-route-harness";
 import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
-import { DEV_AUTH_STAFF_ACCESS_ROLE_IDS, SEED_SCHOOL_ID } from "@edaya/dev-fixtures";
+import {
+  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
+  DEV_AUTH_STAFF_ACCOUNTS,
+  SEED_SCHOOL_ID,
+} from "@edaya/dev-fixtures";
+import { MessageDeliveryChannel, Permission, TEACHER_PERMISSIONS } from "@edaya/core";
 
 describe("service account routes", () => {
   afterEach(async () => {
@@ -154,6 +161,122 @@ describe("service account routes", () => {
     }));
 
     expect(listResponse.status).toBe(200);
+  }, 30_000);
+
+  it("returns 403 when the creator delegates permissions they do not hold", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp({
+      sessionActor: createSessionActorDependency(async c =>
+        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+    });
+    await seedDevSchoolAndAuthLinks(application, runtime);
+
+    const teacherStaffId = DEV_AUTH_STAFF_ACCOUNTS[1].staffId;
+    await grantServiceAccountCreate(application, teacherStaffId, [
+      Permission.SERVICE_ACCOUNT_CREATE,
+      ...TEACHER_PERMISSIONS,
+    ]);
+
+    const cookies = await signInThroughApp(app, {
+      email: DEV_AUTH_STAFF_ACCOUNTS[1].email,
+    });
+
+    const response = await app.request(createAppRequest("/core/service-accounts", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "cookie": cookies.join("; "),
+      },
+      body: JSON.stringify({
+        serviceId: "over-privileged-bot",
+        displayName: "Over Privileged Bot",
+        roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+      }),
+    }));
+
+    expect(response.status).toBe(403);
+  }, 30_000);
+
+  it("returns 403 when the service account lacks permission for a protected command", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    await seedDevSchoolAndAuthLinks(application, runtime);
+
+    const { apiKey } = await provisionServiceAccountForTests(application, {
+      serviceId: "teacher-command-bot",
+      displayName: "Teacher Command Bot",
+      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
+    });
+
+    const response = await app.request(createAppRequest("/core/commands/create-academic-year", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        id: "academic-year-403-test",
+        schoolId: SEED_SCHOOL_ID,
+        name: "2028",
+        startDate: "2028-09-01",
+        endDate: "2029-06-30",
+      }),
+    }));
+
+    expect(response.status).toBe(403);
+  }, 30_000);
+
+  it("returns 403 when a human calls a service-only command", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp({
+      sessionActor: createSessionActorDependency(async c =>
+        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+    });
+    await seedDevSchoolAndAuthLinks(application, runtime);
+
+    const cookies = await signInDirector(app);
+    const response = await app.request(createAppRequest("/core/commands/materialize-deliveries", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "cookie": cookies.join("; "),
+      },
+      body: JSON.stringify({
+        announcementId: "announcement-1",
+        channel: MessageDeliveryChannel.Email,
+      }),
+    }));
+
+    expect(response.status).toBe(403);
+  }, 30_000);
+
+  it("updates a service account through the HTTP API", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp({
+      sessionActor: createSessionActorDependency(async c =>
+        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+    });
+    await seedDevSchoolAndAuthLinks(application, runtime);
+
+    const { staffMember } = await provisionServiceAccountForTests(application, {
+      serviceId: "updatable-bot",
+      displayName: "Updatable Bot",
+      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
+    });
+
+    const cookies = await signInDirector(app);
+    const response = await app.request(createAppRequest(`/core/service-accounts/${staffMember.id}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        "cookie": cookies.join("; "),
+      },
+      body: JSON.stringify({
+        displayName: "Renamed Integration Bot",
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+
+    const body = await response.json() as { displayName: string; serviceId: string };
+    expect(body.serviceId).toBe("updatable-bot");
+    expect(body.displayName).toBe("Renamed Integration Bot");
   }, 30_000);
 
   it("rejects service account management when session and API key are both present", async () => {

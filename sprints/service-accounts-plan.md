@@ -22,9 +22,6 @@ Replace god-mode **system actor** routes (`/core/system/*` + `X-System-Actor-Sec
 
 **Minor gaps (optional, not blocking):**
 
-- HTTP integration test for create-service-account **403** when creator delegates permissions they lack (covered by core unit tests in `service-account-delegation.test.ts`)
-- HTTP test for **403 on a protected command** (entity-route 403 is covered; command path not explicitly asserted)
-- `serviceOnly` command registry flag (§5) — not implemented
 - Webapp admin UI for service accounts — still API-only
 - `SystemActorMetadata` type remains for metadata/tests; data paths use `createBootstrapStaffActorMetadata` or interactive actors
 
@@ -49,7 +46,7 @@ Replace god-mode **system actor** routes (`/core/system/*` + `X-System-Actor-Sec
 - OAuth2 / OpenID Connect — **out of scope**; API keys are the machine-auth mechanism
 - Cross-school workflows except **billing** (platform scope defined separately)
 - Webapp admin UI for service account management (API + seed first)
-- `serviceOnly` command registry flag (optional; not built)
+- Additional `serviceOnly` commands beyond `materialize-deliveries` (flag is implemented; extend per integration)
 
 ### Locked product decisions
 
@@ -221,7 +218,7 @@ Example `PERMISSION_ASSURANCE` additions:
 // Service accounts skip human assurance ranks via accountKind check
 ```
 
-Registry flag on commands (optional — **not implemented**):
+Registry flag on commands (optional — **`materialize-deliveries` uses `serviceOnly: true`**):
 
 ```ts
 { methodName: 'bulkImportStudents', serviceOnly: true }
@@ -282,6 +279,7 @@ Platform billing integrations use a **platform-scoped** service account (separat
 | `GET` | `/core/service-accounts` | List (no secrets) |
 | `POST` | `/core/service-accounts/{id}/rotate-key` | Rotate API key |
 | `POST` | `/core/service-accounts/{id}/revoke` | Revoke |
+| `PATCH` | `/core/service-accounts/{id}` | Update display name, roles, or scope grants |
 
 Implement orchestration in `packages/core/authorization/service-accounts/provision.ts`; API routes in `routes/service-accounts.routes.ts` + `lib/service-accounts/schemas.ts`.
 

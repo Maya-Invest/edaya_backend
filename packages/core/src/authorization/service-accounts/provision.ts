@@ -27,6 +27,12 @@ export interface CreateServiceAccountResult {
   apiKey: string
 }
 
+export interface UpdateServiceAccountInput {
+  displayName?: string
+  roleIds?: readonly string[]
+  scopeGrants?: readonly ScopeGrant[]
+}
+
 export async function createServiceAccount(
   repositories: SchoolRepositories,
   actor: StaffActorMetadata,
@@ -48,20 +54,12 @@ export async function createServiceAccount(
     }
   }
 
-  const roles = await repositories.accessRoles.findByIds([...input.roleIds])
-  if (roles.length !== input.roleIds.length || roles.some(role => role.schoolId !== schoolId)) {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_ROLE_NOT_FOUND',
-      'One or more access roles are missing for this school',
-    )
-  }
-
-  const requestedPermissions = [...new Set(roles.flatMap(role => [...role.permissions]))]
-  assertDelegatedPermissionsSubset(actor.effectiveGrants, requestedPermissions)
-  assertDelegatedScopeGrantsSubset(
-    actor.effectiveGrants,
-    input.scopeGrants ?? [],
+  await assertServiceAccountRoleDelegation(
+    repositories,
+    actor,
     schoolId,
+    input.roleIds,
+    input.scopeGrants ?? [],
   )
 
   const existingService = await repositories.staffMembers.findOne({
@@ -76,12 +74,12 @@ export async function createServiceAccount(
     )
   }
 
-  const [firstName, ...rest] = input.displayName.trim().split(/\s+/)
+  const { firstName, lastName } = splitDisplayName(input.displayName || input.serviceId)
   const staffMember = new StaffMemberEntity({
     id: randomUUID(),
     schoolId,
-    firstName: firstName || input.serviceId,
-    lastName: rest.join(' ') || 'Integration',
+    firstName,
+    lastName,
     accountKind: 'service',
     serviceId: input.serviceId,
     createdBySubjectId: actor.subjectId,
@@ -116,6 +114,133 @@ export async function createServiceAccount(
     staffMember,
     apiKey: generated.plaintext,
   }
+}
+
+async function assertServiceAccountRoleDelegation(
+  repositories: SchoolRepositories,
+  actor: StaffActorMetadata,
+  schoolId: string,
+  roleIds: readonly string[],
+  scopeGrants: readonly ScopeGrant[],
+): Promise<void> {
+  const roles = await repositories.accessRoles.findByIds([...roleIds])
+  if (roles.length !== roleIds.length || roles.some(role => role.schoolId !== schoolId)) {
+    throw new BusinessRuleViolationError(
+      'SERVICE_ACCOUNT_ROLE_NOT_FOUND',
+      'One or more access roles are missing for this school',
+    )
+  }
+
+  const requestedPermissions = [...new Set(roles.flatMap(role => [...role.permissions]))]
+  assertDelegatedPermissionsSubset(actor.effectiveGrants, requestedPermissions)
+  assertDelegatedScopeGrantsSubset(actor.effectiveGrants, scopeGrants, schoolId)
+}
+
+function splitDisplayName(displayName: string): { firstName: string, lastName: string } {
+  const [firstName, ...rest] = displayName.trim().split(/\s+/)
+  return {
+    firstName: firstName || 'Service',
+    lastName: rest.join(' ') || 'Integration',
+  }
+}
+
+export async function updateServiceAccount(
+  repositories: SchoolRepositories,
+  actor: StaffActorMetadata,
+  staffMemberId: string,
+  input: UpdateServiceAccountInput,
+): Promise<StaffMember> {
+  await permissionAction(Permission.SERVICE_ACCOUNT_UPDATE)(actor)
+
+  if (
+    input.displayName === undefined
+    && input.roleIds === undefined
+    && input.scopeGrants === undefined
+  ) {
+    throw new BusinessRuleViolationError(
+      'SERVICE_ACCOUNT_UPDATE_EMPTY',
+      'At least one field must be provided',
+    )
+  }
+
+  const existing = await repositories.staffMembers.findById(staffMemberId)
+  if (
+    !existing
+    || existing.schoolId !== actor.schoolId
+    || existing.accountKind !== 'service'
+    || !existing.isActive
+  ) {
+    throw new BusinessRuleViolationError(
+      'SERVICE_ACCOUNT_NOT_FOUND',
+      'Active service account not found for this school',
+    )
+  }
+
+  const assignments = await repositories.staffRoleAssignments.list({
+    staffId: staffMemberId,
+    schoolId: actor.schoolId,
+    status: 'active',
+  })
+  const activeAssignment = assignments[0]
+  if (!activeAssignment) {
+    throw new BusinessRuleViolationError(
+      'SERVICE_ACCOUNT_NOT_FOUND',
+      'Active service account not found for this school',
+    )
+  }
+
+  const nextRoleIds = input.roleIds ?? activeAssignment.roleIds
+  const nextScopeGrants = input.scopeGrants ?? activeAssignment.scopeGrants
+
+  if (input.roleIds !== undefined || input.scopeGrants !== undefined) {
+    await assertServiceAccountRoleDelegation(
+      repositories,
+      actor,
+      actor.schoolId,
+      nextRoleIds,
+      nextScopeGrants,
+    )
+  }
+
+  let updatedStaffMember = existing
+  if (input.displayName !== undefined) {
+    const { firstName, lastName } = splitDisplayName(input.displayName)
+    updatedStaffMember = new StaffMemberEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName,
+      lastName,
+      email: existing.email,
+      accountKind: existing.accountKind,
+      serviceId: existing.serviceId,
+      createdBySubjectId: existing.createdBySubjectId,
+      serviceElevated: existing.serviceElevated,
+      isActive: existing.isActive,
+      createdAt: existing.createdAt,
+    })
+  }
+
+  if (input.roleIds !== undefined || input.scopeGrants !== undefined) {
+    const updatedAssignment = new StaffRoleAssignment({
+      id: activeAssignment.id,
+      staffId: activeAssignment.staffId,
+      schoolId: activeAssignment.schoolId,
+      academicYearId: activeAssignment.academicYearId,
+      roleIds: [...nextRoleIds],
+      scopeGrants: [...nextScopeGrants],
+      status: activeAssignment.status,
+      startsAt: activeAssignment.startsAt,
+      endsAt: activeAssignment.endsAt,
+      createdAt: activeAssignment.createdAt,
+    })
+    await repositories.staffRoleAssignments.save(updatedAssignment)
+  }
+
+  if (input.displayName !== undefined) {
+    await repositories.staffMembers.save(updatedStaffMember)
+  }
+
+  return updatedStaffMember
 }
 
 export async function listServiceAccounts(

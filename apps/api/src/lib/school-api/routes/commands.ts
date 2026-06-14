@@ -2,6 +2,7 @@ import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
+import { assertCommandActorKind } from "@edaya/core";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -30,6 +31,13 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
       const actor = c.get("actor");
       if (!actor) {
         return unauthorizedResponse(c);
+      }
+
+      try {
+        assertCommandActorKind(actor, { serviceOnly: commandConfig.serviceOnly });
+      }
+      catch (err) {
+        return routeErrorResponse(c, err);
       }
 
       const service = c.get("schoolApp").forActor(actor);

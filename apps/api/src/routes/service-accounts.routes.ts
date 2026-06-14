@@ -6,6 +6,7 @@ import {
   rotateServiceAccountKeyResponseSchema,
   serializeServiceAccount,
   serviceAccountResponseSchema,
+  updateServiceAccountRequestSchema,
 } from "@/lib/service-accounts/schemas";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
@@ -14,6 +15,7 @@ import {
   listServiceAccounts,
   revokeServiceAccount,
   rotateServiceAccountKey,
+  updateServiceAccount,
 } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -40,6 +42,21 @@ export const listServiceAccountsRoute = createRoute({
   summary: "List service accounts for the current school",
   responses: {
     [HttpStatusCodes.OK]: jsonContent(z.array(serviceAccountResponseSchema), "Service accounts"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const updateServiceAccountRoute = createRoute({
+  method: "patch",
+  path: schoolApiPath("service-accounts", "{id}"),
+  tags: ["Core Service Accounts"],
+  summary: "Update a service account display name, roles, or scope grants",
+  request: {
+    params: z.object({ id: z.string().trim().min(1) }),
+    body: jsonContent(updateServiceAccountRequestSchema, "Service account update payload"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(serviceAccountResponseSchema, "Updated service account"),
     ...coreRouteErrorResponses,
   },
 });
@@ -107,6 +124,28 @@ export const listServiceAccountsHandler: AppRouteHandler<typeof listServiceAccou
   try {
     const accounts = await listServiceAccounts(c.get("schoolApp").repositories, actor);
     return c.json(accounts.map(serializeServiceAccount), HttpStatusCodes.OK);
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
+
+export const updateServiceAccountHandler: AppRouteHandler<typeof updateServiceAccountRoute> = async (c) => {
+  const actor = c.get("actor");
+  if (!actor || actor.kind !== "staff") {
+    return unauthorizedResponse(c);
+  }
+
+  try {
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const updated = await updateServiceAccount(c.get("schoolApp").repositories, actor, id, {
+      ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
+      ...(body.roleIds !== undefined ? { roleIds: body.roleIds } : {}),
+      ...(body.scopeGrants !== undefined ? { scopeGrants: body.scopeGrants } : {}),
+    });
+
+    return c.json(serializeServiceAccount(updated), HttpStatusCodes.OK);
   }
   catch (err) {
     return routeErrorResponse(c, err);

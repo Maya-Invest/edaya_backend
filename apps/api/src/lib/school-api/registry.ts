@@ -60,6 +60,7 @@ export interface CoreCommandConfig {
   methodName: string;
   requestSchema: AnySchema;
   responseSchema: AnySchema;
+  serviceOnly?: boolean;
 }
 
 export interface CoreQueryConfig {
@@ -154,7 +155,7 @@ export const coreCommands = [
   command("add-target", "addTarget", commandSchemas.addTargetCommandSchema),
   command("publish-announcement", "publishAnnouncement", commandSchemas.publishAnnouncementCommandSchema),
   command("record-delivery", "recordDelivery", commandSchemas.recordDeliveryCommandSchema),
-  command("materialize-deliveries", "materializeDeliveries", commandSchemas.materializeDeliveriesCommandSchema),
+  command("materialize-deliveries", "materializeDeliveries", commandSchemas.materializeDeliveriesCommandSchema, { serviceOnly: true }),
 ] satisfies CoreCommandConfig[];
 
 export const coreQueries = [
@@ -224,12 +225,18 @@ export const coreEntities = [
   entity("incidents", "incidents", "Incidents", entitySchemas.incidentQuerySchema, entitySchemas.incidentResponseSchema, Incident),
 ] satisfies CoreEntityConfig[];
 
-function command(publicName: string, methodName: string, requestSchema: AnySchema): CoreCommandConfig {
+function command(
+  publicName: string,
+  methodName: string,
+  requestSchema: AnySchema,
+  options: { serviceOnly?: boolean } = {},
+): CoreCommandConfig {
   return {
     publicName,
     methodName,
     requestSchema,
     responseSchema: commandResponseSchemas.resolveCommandResponseSchema(methodName),
+    ...(options.serviceOnly ? { serviceOnly: true } : {}),
   };
 }
 

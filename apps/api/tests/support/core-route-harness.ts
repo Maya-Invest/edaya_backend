@@ -177,6 +177,28 @@ export async function grantAccessControlAssign(application: ApiSchoolApplication
   }));
 }
 
+export async function grantServiceAccountCreate(
+  application: ApiSchoolApplication,
+  staffId: string,
+  permissions: readonly Permission[] = [Permission.SERVICE_ACCOUNT_CREATE],
+) {
+  await application.repositories.accessRoles.save(new AccessRole({
+    id: `role-service-account-create-${staffId}`,
+    schoolId: SEED_SCHOOL_ID,
+    name: "Service account provisioner",
+    permissions: [...permissions],
+  }));
+
+  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: `assignment-service-account-create-${staffId}`,
+    staffId,
+    schoolId: SEED_SCHOOL_ID,
+    roleIds: [`role-service-account-create-${staffId}`],
+    scopeGrants: [],
+    status: "active",
+  }));
+}
+
 export function createAppRequest(path: string, init?: RequestInit): Request {
   return new Request(`${pgliteEnv.BETTER_AUTH_URL}${path}`, init);
 }

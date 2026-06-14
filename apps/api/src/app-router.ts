@@ -11,6 +11,8 @@ import {
   revokeServiceAccountRoute,
   rotateServiceAccountKeyHandler,
   rotateServiceAccountKeyRoute,
+  updateServiceAccountHandler,
+  updateServiceAccountRoute,
 } from "@/routes/service-accounts.routes";
 import {
   onboardingRegisterSchoolHandler,
@@ -50,6 +52,7 @@ router
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(createServiceAccountRoute, createServiceAccountHandler)
   .openapi(listServiceAccountsRoute, listServiceAccountsHandler)
+  .openapi(updateServiceAccountRoute, updateServiceAccountHandler)
   .openapi(revokeServiceAccountRoute, revokeServiceAccountHandler)
   .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler);
 

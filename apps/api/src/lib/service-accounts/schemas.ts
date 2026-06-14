@@ -9,6 +9,17 @@ export const createServiceAccountRequestSchema = z.object({
   elevated: z.boolean().optional(),
 }).openapi("CreateServiceAccountRequest");
 
+export const updateServiceAccountRequestSchema = z.object({
+  displayName: z.string().trim().min(1).optional(),
+  roleIds: z.array(z.string().trim().min(1)).min(1).optional(),
+  scopeGrants: z.array(scopeGrantResponseSchema).optional(),
+}).refine(
+  data => data.displayName !== undefined
+    || data.roleIds !== undefined
+    || data.scopeGrants !== undefined,
+  { message: "At least one field must be provided" },
+).openapi("UpdateServiceAccountRequest");
+
 export const serviceAccountResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
