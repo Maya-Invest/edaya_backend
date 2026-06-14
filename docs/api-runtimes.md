@@ -20,7 +20,7 @@ Same schema for both runtimes (`apps/api/src/runtime/env/schema.ts`):
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
 | `COOKIE_DOMAIN` | optional `.env` | `[vars]` (production split-domain) |
-| `SYSTEM_ACTOR_SECRET` | `.env` (HTTP seed / system routes) | Worker secret |
+| `SERVICE_ACCOUNT_API_KEY` | optional `.env` — HTTP seeding via `/core/*` | Worker secret |
 | `GRANTS_CACHE_TTL_MS` | optional `.env` | optional secret / `[vars]` |
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
 

@@ -1,9 +1,9 @@
-import { describe, expect, it, mock } from "bun:test";
-import { Hono } from "hono";
+import { describe, expect, it } from "bun:test";
 import { parseEnv } from "@/runtime";
 import { ActorAssuranceLevel, Permission } from "@edaya/core";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
+import { Hono } from "hono";
 
 const baseEnv = parseEnv({
   RUNTIME: "node",
@@ -18,6 +18,7 @@ const baseEnv = parseEnv({
 describe("authorization routes", () => {
   const mockActor = {
     kind: "staff" as const,
+    accountKind: "human" as const,
     actorId: "staff-1",
     subjectId: "admin-user",
     schoolId: "school-1",
@@ -77,98 +78,5 @@ describe("authorization routes", () => {
 
     const res = await app.request("/core/authorization/effective-grants");
     expect(res.status).toBe(401);
-  });
-});
-
-describe("system actor routes", () => {
-  it("returns 503 when system actor routes are disabled", async () => {
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = baseEnv;
-      c.set("schoolApp", { forActor: () => ({ registerSchool: mock().mockResolvedValue({ id: "school-1" }) }) } as any);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/system/commands/register-school", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        schoolId: "school-1",
-        systemId: "migration",
-        reason: "bootstrap",
-        payload: {},
-      }),
-    });
-
-    expect(res.status).toBe(503);
-  });
-
-  it("executes a command when the system actor secret is valid", async () => {
-    const registerSchool = mock().mockResolvedValue({ id: "school-1", name: "Demo School" });
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = {
-        ...baseEnv,
-        SYSTEM_ACTOR_SECRET: "test-system-secret",
-      };
-      c.set("schoolApp", { forActor: () => ({ registerSchool }) } as any);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/system/commands/register-school", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-System-Actor-Secret": "test-system-secret",
-      },
-      body: JSON.stringify({
-        schoolId: "school-1",
-        systemId: "migration",
-        reason: "bootstrap",
-        payload: { id: "school-1", name: "Demo School" },
-      }),
-    });
-
-    expect(res.status).toBe(200);
-    expect(registerSchool).toHaveBeenCalled();
-  });
-
-  it("lists schools through the system entity route", async () => {
-    const list = mock().mockResolvedValue([{ id: "school-1", name: "Demo School" }]);
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = {
-        ...baseEnv,
-        SYSTEM_ACTOR_SECRET: "test-system-secret",
-      };
-      c.set("schoolApp", {
-        forActor: () => ({
-          baseService: {
-            schools: { list, findOne: mock(), count: mock(), findById: mock(), findByIds: mock() },
-          },
-        }),
-      } as any);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/system/entities/schools/list", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-System-Actor-Secret": "test-system-secret",
-      },
-      body: JSON.stringify({
-        schoolId: "school-1",
-        systemId: "migration",
-        reason: "bootstrap",
-        query: {},
-      }),
-    });
-
-    expect(res.status).toBe(200);
-    expect(list).toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
 import { PostgresAccessRoleStore } from './stores/access-role-store'
 import { createEntityStores } from './stores/entity-stores'
+import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffRoleAssignmentStore } from './stores/staff-role-assignment-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
@@ -17,6 +18,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly gradeLevels: PostgresStore<GradeLevel>
   public readonly staffMembers: PostgresStore<StaffMember>
   public readonly staffAssignments: PostgresStore<StaffAssignment>
+  public readonly serviceApiKeys: PostgresServiceApiKeyStore
   public readonly accessRoles: PostgresStore<AccessRole>
   public readonly staffRoleAssignments: PostgresStore<StaffRoleAssignment>
   public readonly attachments: PostgresStore<Attachment>
@@ -70,6 +72,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.gradeLevels = stores.gradeLevels
     this.staffMembers = stores.staffMembers
     this.staffAssignments = stores.staffAssignments
+    this.serviceApiKeys = new PostgresServiceApiKeyStore(db)
     this.attachments = stores.attachments
     this.resources = stores.resources
     this.resourceAssignments = stores.resourceAssignments

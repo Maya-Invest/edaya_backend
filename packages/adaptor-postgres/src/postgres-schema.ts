@@ -67,8 +67,25 @@ export const staffMembers = pgTable('staff_members', {
   lastName: text('last_name').notNull(),
   email: text('email'),
   subjectId: text('subject_id'),
+  accountKind: text('account_kind').notNull().default('human'),
+  serviceId: text('service_id'),
+  createdBySubjectId: text('created_by_subject_id'),
+  serviceElevated: boolean('service_elevated').notNull().default(false),
   isActive: boolean('is_active').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
+export const serviceApiKeys = pgTable('service_api_keys', {
+  id: text('id').primaryKey(),
+  staffMemberId: text('staff_member_id').notNull(),
+  schoolId: text('school_id').notNull(),
+  keyPrefix: text('key_prefix').notNull(),
+  keyHash: text('key_hash').notNull(),
+  createdBySubjectId: text('created_by_subject_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }),
+  revokedAt: timestamp('revoked_at', { mode: 'date' }),
+  lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
 })
 
 export const staffAssignments = pgTable('staff_assignments', {

@@ -10,7 +10,7 @@ export async function checkFeeAccess(
   feeIds: readonly string[],
   _repos: SchoolRepositories,
 ): Promise<void> {
-  if (feeIds.length === 0 || actor.kind === 'system') {
+  if (feeIds.length === 0) {
     return
   }
 
@@ -26,7 +26,7 @@ export async function checkStudentFeeAccess(
   studentFeeIds: readonly string[],
   repos: SchoolRepositories,
 ): Promise<void> {
-  if (studentFeeIds.length === 0 || actor.kind === 'system') {
+  if (studentFeeIds.length === 0) {
     return
   }
 

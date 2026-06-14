@@ -62,6 +62,7 @@ export function applyAllSaveFailureWraps(repos: any, getSaveFailure: () => any, 
 export function createDefaultTestActor(actor?: ActorMetadata): ActorMetadata {
   return actor ?? {
     kind: 'staff',
+    accountKind: 'human',
     actorId: 'admin',
     subjectId: 'admin-user',
     staffMemberId: 'admin',

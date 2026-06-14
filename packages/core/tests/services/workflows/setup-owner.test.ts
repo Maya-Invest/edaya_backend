@@ -1,15 +1,10 @@
 import { describe, expect, test } from 'bun:test'
-import { createSystemActorMetadata } from '../../../src/authorization'
 import { createTestApp } from '../../support/create-test-app'
+import { createPlatformRegisterTestActor } from '../../support/elevated-test-actor'
 
 describe('Setup owner workflow', () => {
   test('registers a school with ownerSubjectId before staff exists', async () => {
-    const { app, repositories } = createTestApp(createSystemActorMetadata({
-      systemId: 'setup',
-      schoolId: 'school',
-      requestId: 'request',
-      reason: 'bootstrap',
-    }))
+    const { app, repositories } = createTestApp(createPlatformRegisterTestActor('school'))
 
     await app.registerSchool({
       id: 'school',
@@ -22,12 +17,7 @@ describe('Setup owner workflow', () => {
   })
 
   test('does not auto-assign owner when registering staff after school creation', async () => {
-    const { app, repositories } = createTestApp(createSystemActorMetadata({
-      systemId: 'setup',
-      schoolId: 'school',
-      requestId: 'request',
-      reason: 'bootstrap',
-    }))
+    const { app, repositories } = createTestApp(createPlatformRegisterTestActor('school'))
 
     await app.registerSchool({
       id: 'school',

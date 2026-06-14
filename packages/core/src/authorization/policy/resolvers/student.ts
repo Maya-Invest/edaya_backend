@@ -16,7 +16,7 @@ export async function checkStudentAccess(
   studentIds: readonly string[],
   repos: SchoolRepositories,
 ): Promise<void> {
-  if (studentIds.length === 0 || actor.kind === 'system') {
+  if (studentIds.length === 0) {
     return
   }
 
@@ -68,7 +68,7 @@ export async function checkGuardianAccess(
   guardianIds: readonly string[],
   _repos: SchoolRepositories,
 ): Promise<void> {
-  if (guardianIds.length === 0 || actor.kind === 'system') {
+  if (guardianIds.length === 0) {
     return
   }
 
@@ -96,7 +96,7 @@ export async function checkStudentNoteAccess(
   noteIds: readonly string[],
   repos: SchoolRepositories,
 ): Promise<void> {
-  if (noteIds.length === 0 || actor.kind === 'system') {
+  if (noteIds.length === 0) {
     return
   }
 
@@ -129,7 +129,7 @@ export async function checkStudentHealthAccess(
   profileIds: readonly string[],
   _repos: SchoolRepositories,
 ): Promise<void> {
-  if (profileIds.length === 0 || actor.kind === 'system') {
+  if (profileIds.length === 0) {
     return
   }
 

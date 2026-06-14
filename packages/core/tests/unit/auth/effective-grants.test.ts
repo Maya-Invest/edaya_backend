@@ -8,7 +8,7 @@ import {
   resolveEffectiveGrants,
   scopeGrantCovers,
 } from '../../../src/authorization'
-import { AccessRole, School, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
+import { AccessRole, School, StaffMember, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
 
 function createRepos(assignments: unknown[] = [], ownerSubjectId?: string, staffSubjectId?: string): SchoolRepositories {
   const roleStore = new Map<string, AccessRole>()
@@ -67,6 +67,30 @@ describe('resolveEffectiveGrants', () => {
     expect(grants.permissions.has(Permission.SCHOOL_LIFECYCLE_MANAGE)).toBe(true)
     expect(grants.permissions.has(Permission.PLATFORM_REGISTER_SCHOOL)).toBe(false)
     expect(grants.permissions.size).toBe(ELEVATED_STAFF_PERMISSIONS.length)
+  })
+
+  test('grants elevated access to owner-level service accounts', async () => {
+    const repositories = createRepos()
+    repositories.staffMembers.findById = mock(async () => new StaffMember({
+      id: 'staff-service-1',
+      schoolId: 'school-1',
+      firstName: 'Seeding',
+      lastName: 'Integration',
+      accountKind: 'service',
+      serviceId: 'seeding',
+      serviceElevated: true,
+      isActive: true,
+    }))
+
+    const grants = await resolveEffectiveGrants({
+      staffMemberId: 'staff-service-1',
+      schoolId: 'school-1',
+      repositories,
+    })
+
+    expect(grants.isElevated).toBe(true)
+    expect(grants.permissions.has(Permission.STUDENT_CREATE)).toBe(true)
+    expect(grants.permissions.has(Permission.PLATFORM_REGISTER_SCHOOL)).toBe(false)
   })
 
   test('grants staff permissions with school scope', async () => {

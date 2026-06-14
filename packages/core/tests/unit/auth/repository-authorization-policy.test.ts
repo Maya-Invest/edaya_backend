@@ -2,7 +2,7 @@ import type { ActorMetadata, EffectiveGrants } from '../../../src/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, mock, test } from 'bun:test'
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/authorization'
 import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
   checkClassGroupAccess as checkAcademicClassGroupAccess,
@@ -99,15 +99,6 @@ function guardianActor(guardianId = 'guardian-1', studentId = 'student-1', class
       ],
       isElevated: false,
     },
-  })
-}
-
-function systemActor(): ActorMetadata {
-  return createSystemActorMetadata({
-    systemId: 'system-1',
-    schoolId: 'school-1',
-    requestId: 'request-1',
-    reason: 'test',
   })
 }
 
@@ -257,14 +248,12 @@ async function expectForbidden(operation: Promise<void>): Promise<void> {
 }
 
 describe('createRepositoryAuthorizationPolicy', () => {
-  test('allows system actors and empty resource checks without repository access', async () => {
+  test('allows empty resource checks without repository access', async () => {
     const repos = createRepos()
     const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
-    await policy.checkStudentAccess(systemActor(), ['student-1'])
     await policy.checkClassGroupAccess(studentActor(), [])
-    await policy.checkSessionAccess(systemActor(), ['missing-session'])
-    await policy.checkFeeAccess(systemActor(), ['fee-1'])
+    await policy.checkSessionAccess(studentActor(), [])
 
     expect(repos.staffMembers.findById).not.toHaveBeenCalled()
   })
@@ -364,12 +353,12 @@ describe('createRepositoryAuthorizationPolicy', () => {
   })
 
   test('covers academic resolver elevated paths and teacher relationship denials', async () => {
-    await checkAcademicClassGroupAccess(systemActor(), ['missing-class'], createRepos())
+    const reposAdmin = createRepos({}, ['admin'])
+    await checkAcademicClassGroupAccess(await staffActor(['admin'], reposAdmin), ['missing-class'], reposAdmin)
 
     const reposCoord = createRepos({}, ['coordinator'])
     await checkAcademicClassGroupAccess(await staffActor(['coordinator'], reposCoord), ['unassigned-class'], reposCoord)
 
-    const reposAdmin = createRepos({}, ['admin'])
     await checkAcademicAssessmentAccess(await staffActor(['admin'], reposAdmin), ['missing-assessment'], reposAdmin)
 
     const reposTeacher = createRepos()
@@ -403,8 +392,9 @@ describe('createRepositoryAuthorizationPolicy', () => {
   })
 
   test('covers scheduling resolver empty, elevated, and denied relationship paths', async () => {
-    await checkSchedulingSessionAccess(systemActor(), ['missing-session'], createRepos())
-    await checkSchedulingAttendanceAccess(systemActor(), [], ['session-1'], createRepos())
+    const reposPrincipal = createRepos({}, ['principal'])
+    await checkSchedulingSessionAccess(await staffActor(['principal'], reposPrincipal), ['missing-session'], reposPrincipal)
+    await checkSchedulingAttendanceAccess(await staffActor(['principal'], reposPrincipal), [], ['session-1'], reposPrincipal)
 
     const reposPrincipal2 = createRepos({}, ['principal'])
     await checkSchedulingSessionAccess(await staffActor(['principal'], reposPrincipal2), ['missing-session'], reposPrincipal2)

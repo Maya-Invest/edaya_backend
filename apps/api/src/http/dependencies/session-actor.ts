@@ -1,9 +1,11 @@
 import {
-  ActorAssuranceLevel,
   createGuardianActorMetadata,
+  createServiceStaffActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
   type EffectiveGrants,
+  hashApiKey,
+  parseBearerApiKey,
   type SchoolRepositories,
 } from "@edaya/core";
 import { randomUUID } from "node:crypto";
@@ -11,6 +13,7 @@ import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/aut
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
+import { ActorAssuranceLevel } from "@edaya/core";
 
 export interface AuthSession {
   user: {
@@ -60,6 +63,8 @@ type ActorIdentity =
     schoolId: string;
     staffMemberId: string;
     effectiveGrants?: EffectiveGrants;
+    accountKind?: "human" | "service";
+    requestId?: string;
   }
   | {
     kind: "guardian";
@@ -210,9 +215,62 @@ async function resolveActorIdentity(
   }
 }
 
+async function resolveServiceActorIdentity(
+  repos: SchoolRepositories,
+  apiKey: string,
+  academicYearId: string | undefined,
+  ttlMs: number,
+  requestId: string,
+): Promise<Extract<ActorIdentity, { kind: "staff" }> | null> {
+  const keyRecord = await repos.serviceApiKeys.findActiveByHash(hashApiKey(apiKey));
+  if (!keyRecord) {
+    return null;
+  }
+
+  const staffMember = await repos.staffMembers.findById(keyRecord.staffMemberId);
+  if (!staffMember || staffMember.accountKind !== "service" || !staffMember.isActive) {
+    return null;
+  }
+
+  try {
+    const effectiveGrants = await resolveCachedEffectiveGrants({
+      actorId: staffMember.id,
+      actorType: "staff",
+      schoolId: staffMember.schoolId,
+      ...(academicYearId ? { academicYearId } : {}),
+      subjectId: `service:${staffMember.id}`,
+      authenticatedAt: new Date(),
+      repositories: repos,
+      ttlMs,
+    });
+
+    return {
+      kind: "staff",
+      schoolId: staffMember.schoolId,
+      staffMemberId: staffMember.id,
+      effectiveGrants,
+      accountKind: "service" as const,
+      requestId,
+    };
+  }
+  catch {
+    return null;
+  }
+}
+
 function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentityContext) {
   switch (identity.kind) {
     case "staff":
+      if (identity.accountKind === "service") {
+        return createServiceStaffActorMetadata({
+          subjectId: context.subjectId,
+          schoolId: identity.schoolId,
+          requestId: context.requestId,
+          authenticatedAt: context.authenticatedAt,
+          staffMemberId: identity.staffMemberId,
+          effectiveGrants: identity.effectiveGrants!,
+        });
+      }
       return createStaffActorMetadata({
         ...context,
         schoolId: identity.schoolId,
@@ -252,31 +310,60 @@ export function createSessionActorDependency(
         headers: c.req.raw.headers,
       }) as AuthSession | null | undefined);
 
-      if (!session) {
+      const requestId = resolveRequestId(c.req.header("x-request-id"));
+      const academicYearId = resolveAcademicYearId(c.req.header("x-academic-year-id"));
+      const ttlMs = resolveGrantsCacheTtlMs(c.env);
+      const repos = c.var.schoolApp.repositories;
+      const bearerApiKey = parseBearerApiKey(c.req.header("authorization"));
+
+      if (session && bearerApiKey) {
         c.set("actor", null);
         return;
       }
 
-      const { user } = session;
-      const repos = c.var.schoolApp.repositories;
-      const interactiveContext = {
-        subjectId: user.id,
-        requestId: resolveRequestId(c.req.header("x-request-id")),
-        ...(session.session.id ? { sessionId: session.session.id } : {}),
-        authenticatedAt: session.session.createdAt,
-        assuranceLevel: session.session.assuranceLevel,
-      };
+      if (session) {
+        const { user } = session;
+        const interactiveContext = {
+          subjectId: user.id,
+          requestId,
+          ...(session.session.id ? { sessionId: session.session.id } : {}),
+          authenticatedAt: session.session.createdAt,
+          assuranceLevel: session.session.assuranceLevel,
+        };
 
-      const identity = await resolveActorIdentity(
-        repos,
-        user.id,
-        session.session,
-        resolveAcademicYearId(c.req.header("x-academic-year-id")),
-        resolveGrantsCacheTtlMs(c.env),
-      );
-      if (identity) {
-        c.set("actor", createActorFromIdentity(identity, interactiveContext));
+        const identity = await resolveActorIdentity(
+          repos,
+          user.id,
+          session.session,
+          academicYearId,
+          ttlMs,
+        );
+        if (identity) {
+          c.set("actor", createActorFromIdentity(identity, interactiveContext));
+          return;
+        }
+
+        c.set("actor", null);
         return;
+      }
+
+      if (bearerApiKey) {
+        const identity = await resolveServiceActorIdentity(
+          repos,
+          bearerApiKey,
+          academicYearId,
+          ttlMs,
+          requestId,
+        );
+        if (identity) {
+          c.set("actor", createActorFromIdentity(identity, {
+            subjectId: `service:${identity.staffMemberId}`,
+            requestId,
+            authenticatedAt: new Date(),
+            assuranceLevel: ActorAssuranceLevel.Service,
+          }));
+          return;
+        }
       }
 
       c.set("actor", null);

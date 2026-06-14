@@ -16,8 +16,7 @@ src/
 ├── routes/                    # Hand-written OpenAPI route modules
 │   ├── effective-grants.route.ts
 │   ├── onboarding.routes.ts   # School registration bootstrap
-│   ├── system.routes.ts       # System-actor commands
-│   └── system-entity.routes.ts
+│   └── service-accounts.routes.ts
 │
 ├── http/                      # App factory, CORS, DI, middleware, responses
 │   ├── create-app.ts

@@ -17,7 +17,7 @@ import {
   CalendarEventScopeKind,
   ClassLogbookEntry,
   ClassSubjectMatterStatus,
-  createSystemActorMetadata,
+  createBootstrapStaffActorMetadata,
   DayOfWeek,
   ExtracurricularActivity,
   GradeLevel,
@@ -146,11 +146,10 @@ export async function runDevSchoolSeed(
     return { status: 'skipped', reason: 'already-seeded', schoolCount: existingSchools.length }
   }
 
-  const actor = createSystemActorMetadata({
-    systemId: 'dev-seed',
+  const actor = createBootstrapStaffActorMetadata({
     schoolId: SEED_SCHOOL_ID,
     requestId: 'dev-seed',
-    reason: 'Local development database seed',
+    staffMemberId: 'dev-seed',
   })
   const service = application.forActor(actor)
 

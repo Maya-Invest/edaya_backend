@@ -1,7 +1,8 @@
+#!/usr/bin/env bun
+
 import type { HttpDevSeedScope } from '../src/http/index.ts'
 import process from 'node:process'
 import {
-
   HttpSeedClient,
   logHttpDevSeedResults,
   parseHttpDevSeedScope,
@@ -13,12 +14,12 @@ export function resolveSeedHttpConfig() {
   loadSeedEnvFiles()
   return {
     baseUrl: process.env.SEED_API_URL ?? process.env.BETTER_AUTH_URL ?? 'http://localhost:9999',
-    systemActorSecret: process.env.SYSTEM_ACTOR_SECRET?.trim(),
+    serviceAccountApiKey: process.env.SERVICE_ACCOUNT_API_KEY?.trim(),
   }
 }
 
 export async function runSeedHttpCli(argv: string[]): Promise<number> {
-  const { baseUrl, systemActorSecret } = resolveSeedHttpConfig()
+  const { baseUrl, serviceAccountApiKey } = resolveSeedHttpConfig()
 
   let scope: HttpDevSeedScope
   try {
@@ -29,18 +30,20 @@ export async function runSeedHttpCli(argv: string[]): Promise<number> {
     return 1
   }
 
-  if (scope !== 'auth' && !systemActorSecret) {
-    console.error(`Scope "${scope}" requires SYSTEM_ACTOR_SECRET (must match the running API).`)
-    console.error('Auth-only seed: bun seed:auth')
-    console.error('Full seed: set SYSTEM_ACTOR_SECRET in apps/api/.env, then bun seed or bun seed:init')
-    return 1
+  if (!serviceAccountApiKey && scope !== 'auth' && scope !== 'service-account') {
+    console.warn(
+      'No SERVICE_ACCOUNT_API_KEY configured. '
+      + 'Using director session bootstrap for /core/* seeding. '
+      + 'After seed:init, add the printed key to apps/api/.env.',
+    )
   }
 
   const client = new HttpSeedClient({ baseUrl })
   const results = await runHttpDevSeeds({
     client,
     scope,
-    systemActorSecret,
+    ...(serviceAccountApiKey ? { serviceAccountApiKey } : {}),
+    provisionServiceAccount: scope === 'all',
   })
 
   logHttpDevSeedResults(results)

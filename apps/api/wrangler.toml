@@ -19,9 +19,9 @@ TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 # Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
 # Production (`wrangler deploy --env production`):
 #   Required secret: BETTER_AUTH_SECRET
-#   Optional secrets: SYSTEM_ACTOR_SECRET
+#   Optional secrets: SERVICE_ACCOUNT_API_KEY
 #   Before first deploy: run `bun run db:migrate:dev` (Neon school DB) and `bun run db:migrate:auth:remote` (Better Auth D1)
-# Optional: DATABASE_URL (Node / wrangler fallback), GRANTS_CACHE_TTL_MS, SYSTEM_ACTOR_SECRET
+# Optional: DATABASE_URL (Node / wrangler fallback), GRANTS_CACHE_TTL_MS, SERVICE_ACCOUNT_API_KEY
 #
 # Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
 # CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://...

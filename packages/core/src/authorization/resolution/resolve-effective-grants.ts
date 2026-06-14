@@ -38,6 +38,14 @@ export async function tryResolveEffectiveGrantsFromPersistence(
     return undefined
   }
 
+  if (staffMember.accountKind === 'service' && staffMember.serviceElevated) {
+    return {
+      permissions: new Set(ELEVATED_STAFF_PERMISSIONS),
+      scopeGrants: [],
+      isElevated: true,
+    }
+  }
+
   const school = await args.repositories.schools?.findById?.(args.schoolId)
   if (school?.ownerSubjectId && staffMember.subjectId === school.ownerSubjectId) {
     return {

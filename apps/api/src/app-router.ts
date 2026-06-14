@@ -2,8 +2,16 @@ import { toBetterAuthHandlerRequest } from "@/http/auth-request";
 import { createRouter } from "@/http/create-app";
 import type { AppBindings } from "@/http/types";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
-import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
-import { buildSystemEntityRoutes } from "@/routes/system-entity.routes";
+import {
+  createServiceAccountHandler,
+  createServiceAccountRoute,
+  listServiceAccountsHandler,
+  listServiceAccountsRoute,
+  revokeServiceAccountHandler,
+  revokeServiceAccountRoute,
+  rotateServiceAccountKeyHandler,
+  rotateServiceAccountKeyRoute,
+} from "@/routes/service-accounts.routes";
 import {
   onboardingRegisterSchoolHandler,
   onboardingRegisterSchoolRoute,
@@ -40,11 +48,10 @@ const router = createRouter()
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
-  .openapi(systemCommandRoute, systemCommandHandler);
-
-buildSystemEntityRoutes().forEach(({ route, handler }) => {
-  router.openapi(route, handler);
-});
+  .openapi(createServiceAccountRoute, createServiceAccountHandler)
+  .openapi(listServiceAccountsRoute, listServiceAccountsHandler)
+  .openapi(revokeServiceAccountRoute, revokeServiceAccountHandler)
+  .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

@@ -8,6 +8,7 @@ import type { AppBindings } from "@/http/types";
 describe("core entity and command routes", () => {
   const mockActor = {
     kind: "staff" as const,
+    accountKind: "human" as const,
     actorId: "staff-1",
     subjectId: "admin-user",
     schoolId: "school-1",

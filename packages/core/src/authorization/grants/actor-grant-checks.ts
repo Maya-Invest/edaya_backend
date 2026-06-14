@@ -1,14 +1,15 @@
 import type { ActorMetadata } from '../model/actor'
 import type { Permission } from '../permissions/permission'
 import type { ScopeType } from '../permissions/scope-type'
+import { isInteractiveActor } from '../model/actor'
 import { scopeGrantCovers } from './scope-grant-covers'
 
 export function actorHasAnyPermission(
   actor: ActorMetadata,
   permissions: readonly Permission[],
 ): boolean {
-  if (actor.kind === 'system') {
-    return true
+  if (!isInteractiveActor(actor)) {
+    return false
   }
 
   const grants = actor.effectiveGrants
@@ -29,8 +30,8 @@ export function actorGrantCoversAny(
   scopeType: ScopeType,
   scopeEntityId: string,
 ): boolean {
-  if (actor.kind === 'system') {
-    return true
+  if (!isInteractiveActor(actor)) {
+    return false
   }
 
   const grants = actor.effectiveGrants

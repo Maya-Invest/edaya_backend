@@ -68,17 +68,17 @@ Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also und
 
 ## Dev database seed
 
-Seeding is **HTTP-only** via `@edaya/seeding` — the API exposes system routes; seed logic lives in `testing/seeding/`. School data persists under `.data/` when using `DATABASE_URL=pglite:.data/school`; seed once after a fresh clone or `rm -rf apps/api/.data`.
+Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/seeding/`. School data persists under `.data/` when using `DATABASE_URL=pglite:.data/school`; seed once after a fresh clone or `rm -rf apps/api/.data`.
 
 | Command | Purpose |
 |---------|---------|
-| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `auth:link` → `access`) |
-| `bun seed` | Same as `seed:all` — full demo data via HTTP + system actor |
-| `bun seed:auth` | Better Auth accounts only (no `SYSTEM_ACTOR_SECRET`) |
+| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `auth:link` → `access`), then provision seeding service account |
+| `bun seed` | Same as `seed:all` — full demo data via HTTP |
+| `bun seed:auth` | Better Auth accounts only (no service account or system secret) |
 | `bun seed:smoke` | Sign in + verify `/core/authorization/effective-grants` |
 | `bun seed:remote` | Full seed against `SEED_API_URL` (staging / remote API) |
 
-Requires `SYSTEM_ACTOR_SECRET=dev-system-secret` in `apps/api/.env` (must match the running API) for all scopes except `auth`.
+**Credentials:** prefer `SERVICE_ACCOUNT_API_KEY` in `apps/api/.env` for `/core/*` seeding. First `bun seed:init` bootstraps via director session cookies, then prints a `SERVICE_ACCOUNT_API_KEY` to add for subsequent runs.
 
 ```sh
 # Terminal 1

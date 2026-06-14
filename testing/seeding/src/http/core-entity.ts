@@ -1,37 +1,17 @@
-import type { ActorMetadata } from '@edaya/core'
 import type { HttpSeedClient } from './client'
+import { executeCoreCommand } from './core-command'
 import { commandMethodToPublicName, entityPublicName } from './names'
-import { executeSystemCommand } from './system-command'
 
-export interface SystemActorContext {
-  schoolId: string
-  systemId: string
-  reason: string
-}
-
-export interface SystemHttpRequestOptions {
+export interface CoreHttpRequestOptions {
   client: HttpSeedClient
-  systemActorSecret: string
-  actor: ActorMetadata
+  serviceAccountApiKey?: string
   requestId?: string
 }
 
-function actorContext(actor: ActorMetadata): SystemActorContext {
-  if (actor.kind !== 'system') {
-    throw new Error('System HTTP requests require a system actor')
-  }
-
-  return {
-    schoolId: actor.schoolId,
-    systemId: actor.systemId,
-    reason: actor.reason,
-  }
-}
-
-function systemHeaders(systemActorSecret: string, requestId?: string): Record<string, string> {
+function coreHeaders(serviceAccountApiKey: string | undefined, requestId?: string): Record<string, string> {
   return {
     'content-type': 'application/json',
-    'x-system-actor-secret': systemActorSecret,
+    ...(serviceAccountApiKey ? { authorization: `Bearer ${serviceAccountApiKey}` } : {}),
     ...(requestId ? { 'x-request-id': requestId } : {}),
   }
 }
@@ -80,44 +60,36 @@ function entityPayload(entity: unknown): Record<string, unknown> {
     return serializePlainObject(entity as Record<string, unknown>)
   }
 
-  throw new Error('Cannot serialize entity for HTTP system save')
+  throw new Error('Cannot serialize entity for HTTP core save')
 }
 
-export async function postSystemCommand(
-  options: SystemHttpRequestOptions,
+export async function postCoreCommand(
+  options: CoreHttpRequestOptions,
   methodName: string,
   payload: unknown,
 ): Promise<unknown> {
-  const context = actorContext(options.actor)
-  const { body } = await executeSystemCommand<Record<string, unknown>>({
+  const { body } = await executeCoreCommand<Record<string, unknown>>({
     client: options.client,
-    systemActorSecret: options.systemActorSecret,
+    serviceAccountApiKey: options.serviceAccountApiKey,
     commandName: commandMethodToPublicName(methodName),
-    requestId: options.requestId ?? options.actor.requestId,
-    body: {
-      ...context,
-      payload: payload as Record<string, unknown>,
-    },
+    requestId: options.requestId,
+    payload: payload as Record<string, unknown>,
   })
 
   return body
 }
 
-export async function postSystemEntityList(
-  options: SystemHttpRequestOptions,
+export async function postEntityList(
+  options: CoreHttpRequestOptions,
   serviceName: string,
   query: Record<string, unknown> = {},
 ): Promise<unknown[]> {
-  const context = actorContext(options.actor)
   const { response, body } = await options.client.jsonRequest<unknown[]>(
-    `/core/system/entities/${entityPublicName(serviceName)}/list`,
+    `/core/entities/${entityPublicName(serviceName)}/list`,
     {
       method: 'POST',
-      headers: systemHeaders(options.systemActorSecret, options.requestId ?? options.actor.requestId),
-      body: JSON.stringify({
-        ...context,
-        query,
-      }),
+      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
+      body: JSON.stringify(query),
     },
   )
 
@@ -125,28 +97,22 @@ export async function postSystemEntityList(
     const message = typeof body === 'object' && body && 'message' in body
       ? String((body as { message?: string }).message)
       : `HTTP ${response.status}`
-    throw new Error(`System entity list failed for ${serviceName}: ${response.status} ${message}`)
+    throw new Error(`Entity list failed for ${serviceName}: ${response.status} ${message}`)
   }
 
   return body ?? []
 }
 
-export async function postSystemEntityFindById(
-  options: SystemHttpRequestOptions,
+export async function postEntityFindById(
+  options: CoreHttpRequestOptions,
   serviceName: string,
   id: string,
 ): Promise<unknown | undefined> {
-  const context = actorContext(options.actor)
-  const query = new URLSearchParams({
-    schoolId: context.schoolId,
-    systemId: context.systemId,
-    reason: context.reason,
-  })
   const { response, body } = await options.client.jsonRequest(
-    `/core/system/entities/${entityPublicName(serviceName)}/${encodeURIComponent(id)}?${query.toString()}`,
+    `/core/entities/${entityPublicName(serviceName)}/${encodeURIComponent(id)}`,
     {
       method: 'GET',
-      headers: systemHeaders(options.systemActorSecret, options.requestId ?? options.actor.requestId),
+      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
     },
   )
 
@@ -155,27 +121,23 @@ export async function postSystemEntityFindById(
   }
 
   if (!response.ok) {
-    throw new Error(`System entity get failed for ${serviceName}/${id}: ${response.status}`)
+    throw new Error(`Entity get failed for ${serviceName}/${id}: ${response.status}`)
   }
 
   return body ?? undefined
 }
 
-export async function postSystemEntityFindOne(
-  options: SystemHttpRequestOptions,
+export async function postEntityFindOne(
+  options: CoreHttpRequestOptions,
   serviceName: string,
   query: Record<string, unknown>,
 ): Promise<unknown | undefined> {
-  const context = actorContext(options.actor)
   const { response, body } = await options.client.jsonRequest(
-    `/core/system/entities/${entityPublicName(serviceName)}/one`,
+    `/core/entities/${entityPublicName(serviceName)}/one`,
     {
       method: 'POST',
-      headers: systemHeaders(options.systemActorSecret, options.requestId ?? options.actor.requestId),
-      body: JSON.stringify({
-        ...context,
-        query,
-      }),
+      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
+      body: JSON.stringify(query),
     },
   )
 
@@ -184,27 +146,23 @@ export async function postSystemEntityFindOne(
   }
 
   if (!response.ok) {
-    throw new Error(`System entity one failed for ${serviceName}: ${response.status}`)
+    throw new Error(`Entity one failed for ${serviceName}: ${response.status}`)
   }
 
   return body ?? undefined
 }
 
-export async function postSystemEntitySave(
-  options: SystemHttpRequestOptions,
+export async function postEntitySave(
+  options: CoreHttpRequestOptions,
   serviceName: string,
   entity: unknown,
 ): Promise<void> {
-  const context = actorContext(options.actor)
   const { response, body } = await options.client.jsonRequest(
-    `/core/system/entities/${entityPublicName(serviceName)}/save`,
+    `/core/entities/${entityPublicName(serviceName)}/save`,
     {
       method: 'POST',
-      headers: systemHeaders(options.systemActorSecret, options.requestId ?? options.actor.requestId),
-      body: JSON.stringify({
-        ...context,
-        entity: entityPayload(entity),
-      }),
+      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
+      body: JSON.stringify(entityPayload(entity)),
     },
   )
 
@@ -212,6 +170,6 @@ export async function postSystemEntitySave(
     const message = typeof body === 'object' && body && 'message' in body
       ? String((body as { message?: string }).message)
       : `HTTP ${response.status}`
-    throw new Error(`System entity save failed for ${serviceName}: ${response.status} ${message}`)
+    throw new Error(`Entity save failed for ${serviceName}: ${response.status} ${message}`)
   }
 }

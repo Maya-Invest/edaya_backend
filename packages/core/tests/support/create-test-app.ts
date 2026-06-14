@@ -36,6 +36,7 @@ import type {
   ResourceAssignment,
   Schedule,
   School,
+  ServiceApiKey,
   Session,
   StaffAssignment,
   StaffRoleAssignment,
@@ -221,6 +222,18 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const guardianLinks = createStore<GuardianStudentLink>(transactionParticipants)
   const staffMembers = createStore<StaffMember>(transactionParticipants)
   const staffAssignments = createStore<StaffAssignment>(transactionParticipants)
+  const serviceApiKeyStore = createStore<ServiceApiKey>(transactionParticipants)
+  const serviceApiKeys = {
+    ...serviceApiKeyStore,
+    findActiveByHash: async (keyHash: string, now: Date = new Date()) => {
+      const keys = await serviceApiKeyStore.list()
+      return keys.find(key => key.keyHash === keyHash && key.isActive(now))
+    },
+    countActiveElevatedServiceAccounts: async (schoolId: string) => {
+      const staff = await staffMembers.list({ schoolId, accountKind: 'service', serviceElevated: true, isActive: true })
+      return staff.length
+    },
+  }
   const accessRoles = createStore<AccessRole>(transactionParticipants)
   const staffRoleAssignments = createStore<StaffRoleAssignment>(transactionParticipants)
   const subjects = createStore<Subject>(transactionParticipants)
@@ -285,6 +298,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     gradeLevels,
     staffMembers,
     staffAssignments,
+    serviceApiKeys,
     accessRoles,
     staffRoleAssignments,
     attachments,

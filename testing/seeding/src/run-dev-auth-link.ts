@@ -1,5 +1,5 @@
 import type { AuthProvisioner, SeedApplication } from './types'
-import { createSystemActorMetadata } from '@edaya/core'
+import { createBootstrapStaffActorMetadata } from '@edaya/core'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
@@ -26,11 +26,10 @@ export async function runDevAuthLink(
     return { status: 'skipped', reason: 'school-not-seeded', linkedStaff: 0, linkedGuardians: 0 }
   }
 
-  const actor = createSystemActorMetadata({
-    systemId: 'dev-auth-seed',
+  const actor = createBootstrapStaffActorMetadata({
     schoolId: SEED_SCHOOL_ID,
     requestId: 'dev-auth-link',
-    reason: 'Link Better Auth users to seeded domain entities',
+    staffMemberId: 'dev-auth-link',
   })
   const service = application.forActor(actor)
   const linkedAccounts: Array<{ email: string, kind: 'staff' | 'guardian', entityId: string }> = []

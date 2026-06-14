@@ -3,7 +3,7 @@ import type { AuthorizationRequest } from '../model/request'
 import { scopeGrantCovers } from '../grants/scope-grant-covers'
 import { isInteractiveActor } from '../model/actor'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
-import { assertPermissionAssurance } from '../permissions/permission-assurance'
+import { assertHumanOnlyPermission, assertPermissionAssurance } from '../permissions/permission-assurance'
 import { permissionDefinitions } from '../permissions/permission-definitions'
 
 export interface AuthorizeArgs {
@@ -54,15 +54,24 @@ function assertGrantsCapability(
   actor: ActorMetadata,
   request: AuthorizationRequest,
 ): void {
-  if (actor.kind === 'system') {
-    return
-  }
-
   if (!isInteractiveActor(actor)) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
-  assertPermissionAssurance(actor.assuranceLevel, request.permission)
+  assertPermissionAssurance(
+    actor.assuranceLevel,
+    request.permission,
+    actor.kind === 'staff' ? actor.accountKind : 'human',
+    actor.kind === 'staff' ? actor.effectiveGrants.isElevated : false,
+  )
+
+  if (actor.kind === 'staff') {
+    assertHumanOnlyPermission(
+      actor.accountKind,
+      request.permission,
+      actor.effectiveGrants.isElevated,
+    )
+  }
 
   const grants = actor.effectiveGrants
 

@@ -37,4 +37,36 @@ describe('StaffMember entity', () => {
       new StaffMember({ ...baseArgs, firstName: '' })
     }).toThrow('firstName')
   })
+
+  test('service accounts require serviceId and reject subjectId', () => {
+    expect(() => new StaffMember({
+      ...baseArgs,
+      accountKind: 'service',
+      serviceId: 'seeding',
+    })).not.toThrow()
+
+    expect(() => new StaffMember({
+      ...baseArgs,
+      accountKind: 'service',
+    })).toThrow('serviceId')
+
+    expect(() => new StaffMember({
+      ...baseArgs,
+      accountKind: 'service',
+      serviceId: 'seeding',
+      subjectId: 'subject-1',
+    })).toThrow('subjectId')
+  })
+
+  test('human staff cannot carry serviceId or serviceElevated', () => {
+    expect(() => new StaffMember({
+      ...baseArgs,
+      serviceId: 'seeding',
+    })).toThrow('serviceId')
+
+    expect(() => new StaffMember({
+      ...baseArgs,
+      serviceElevated: true,
+    })).toThrow('serviceElevated')
+  })
 })

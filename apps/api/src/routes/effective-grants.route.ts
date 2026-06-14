@@ -14,7 +14,7 @@ const effectiveGrantsResponseSchema = z.object({
   kind: z.enum(["staff", "guardian", "student"]),
   actorId: z.string(),
   schoolId: z.string(),
-  assuranceLevel: z.enum(["standard", "verified", "strong"]),
+  assuranceLevel: z.enum(["standard", "verified", "strong", "service"]),
   effectiveGrants: z.object({
     permissions: z.array(z.string()),
     scopeGrants: z.array(scopeGrantResponseSchema),

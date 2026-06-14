@@ -1,6 +1,6 @@
 import type { SeedApplication } from './types'
 import {
-  createSystemActorMetadata,
+  createBootstrapStaffActorMetadata,
   Guardian,
 } from '@edaya/core'
 import {
@@ -36,11 +36,10 @@ export async function seedMinimalSchool(application: SeedApplication): Promise<v
     return
   }
 
-  const actor = createSystemActorMetadata({
-    systemId: 'auth-integration-seed',
+  const actor = createBootstrapStaffActorMetadata({
     schoolId: SEED_SCHOOL_ID,
     requestId: 'auth-integration-seed',
-    reason: 'Seed minimal school fixtures for Better Auth integration tests',
+    staffMemberId: 'auth-integration-seed',
   })
   const service = application.forActor(actor)
 

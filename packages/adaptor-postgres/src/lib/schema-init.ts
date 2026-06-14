@@ -7,6 +7,7 @@ export const CLEAR_TABLE_ORDER = [
   'staff_role_assignment_scope_grants',
   'staff_role_assignments',
   'access_roles',
+  'service_api_keys',
   'student_incident_involvements',
   'student_disciplinary_actions',
   'student_notes',

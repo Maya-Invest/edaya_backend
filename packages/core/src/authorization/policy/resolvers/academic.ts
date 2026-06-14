@@ -13,7 +13,7 @@ export async function checkClassGroupAccess(
   classGroupIds: readonly string[],
   _repos: SchoolRepositories,
 ): Promise<void> {
-  if (classGroupIds.length === 0 || actor.kind === 'system') {
+  if (classGroupIds.length === 0) {
     return
   }
 
@@ -36,7 +36,7 @@ export async function checkAssessmentAccess(
   assessmentIds: readonly string[],
   repos: SchoolRepositories,
 ): Promise<void> {
-  if (assessmentIds.length === 0 || actor.kind === 'system') {
+  if (assessmentIds.length === 0) {
     return
   }
 
@@ -62,7 +62,7 @@ export async function checkReportCardResultAccess(
   reportCardResultIds: readonly string[],
   repos: SchoolRepositories,
 ): Promise<void> {
-  if (reportCardResultIds.length === 0 || actor.kind === 'system') {
+  if (reportCardResultIds.length === 0) {
     return
   }
 

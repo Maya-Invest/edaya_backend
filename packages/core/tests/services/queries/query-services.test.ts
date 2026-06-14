@@ -1,8 +1,9 @@
-import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorization'
+import type { AuthorizationPolicy } from '../../../src/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import { SchoolService } from '../../../src'
 import { AuthorizationError } from '../../../src/authorization'
+import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 
 describe('SchoolService query operations', () => {
   const mockRepos = {
@@ -12,13 +13,7 @@ describe('SchoolService query operations', () => {
   const mockPolicy = {
   } as unknown as AuthorizationPolicy
 
-  const actor: ActorMetadata = {
-    kind: 'system',
-    systemId: 'user1',
-    schoolId: 'school1',
-    requestId: 'req1',
-    reason: 'test',
-  }
+  const actor = createElevatedTestStaffActor('school1', 'staff-test')
   const mockAtomic = { execute: mock(async (op: () => Promise<any>) => op()) }
 
   const service = new SchoolService({

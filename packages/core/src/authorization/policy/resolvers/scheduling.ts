@@ -14,7 +14,7 @@ export async function checkSessionAccess(
   sessionIds: readonly string[],
   repos: SchoolRepositories,
 ): Promise<void> {
-  if (sessionIds.length === 0 || actor.kind === 'system') {
+  if (sessionIds.length === 0) {
     return
   }
 

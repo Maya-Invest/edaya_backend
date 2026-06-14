@@ -1,3 +1,4 @@
+import type { StaffAccountKind } from '../../domains/school/staff-account-kind'
 import type { EffectiveGrants } from './effective-grants'
 import { DomainValidationError } from '../../domains/utils'
 
@@ -5,6 +6,7 @@ export enum ActorAssuranceLevel {
   Standard = 'standard',
   Verified = 'verified',
   Strong = 'strong',
+  Service = 'service',
 }
 
 export interface InteractiveActorContext {
@@ -22,6 +24,7 @@ export interface InteractiveActorContext {
 export interface StaffActorMetadata extends InteractiveActorContext {
   readonly kind: 'staff'
   readonly staffMemberId: string
+  readonly accountKind: StaffAccountKind
   readonly effectiveGrants: EffectiveGrants
 }
 
@@ -58,6 +61,7 @@ interface InteractiveActorContextInput {
 
 export interface StaffActorMetadataInput extends InteractiveActorContextInput {
   staffMemberId: string
+  accountKind?: StaffAccountKind
 }
 
 export interface GuardianActorMetadataInput extends InteractiveActorContextInput {
@@ -76,12 +80,29 @@ export interface SystemActorMetadataInput {
 }
 
 export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffActorMetadata {
-  const context = normalizeInteractiveContext(input)
+  const accountKind = input.accountKind ?? 'human'
+  const context = normalizeInteractiveContext({
+    ...input,
+    assuranceLevel: input.assuranceLevel ?? (accountKind === 'service'
+      ? ActorAssuranceLevel.Service
+      : ActorAssuranceLevel.Standard),
+  })
   return Object.freeze({
     ...context,
     kind: 'staff',
     actorId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
     staffMemberId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
+    accountKind,
+  })
+}
+
+export function createServiceStaffActorMetadata(
+  input: Omit<StaffActorMetadataInput, 'accountKind' | 'assuranceLevel'>,
+): StaffActorMetadata {
+  return createStaffActorMetadata({
+    ...input,
+    accountKind: 'service',
+    assuranceLevel: ActorAssuranceLevel.Service,
   })
 }
 

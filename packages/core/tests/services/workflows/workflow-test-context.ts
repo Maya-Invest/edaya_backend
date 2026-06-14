@@ -1,4 +1,4 @@
-import type { ActorMetadata, AuthorizationPolicy } from '../../../src/authorization'
+import type { AuthorizationPolicy } from '../../../src/authorization'
 import type {
   AttendanceRecord,
   MessageDelivery,
@@ -34,14 +34,9 @@ import {
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/domains'
 import { SchoolService } from '../../../src/services'
+import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 
-export const actor: ActorMetadata = {
-  kind: 'system',
-  systemId: 'user1',
-  schoolId: 'sch1',
-  requestId: 'req1',
-  reason: 'test',
-}
+export const actor = createElevatedTestStaffActor('sch1', 'user1')
 
 export function createContext({
   existingProgress,

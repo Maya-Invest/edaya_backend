@@ -281,7 +281,7 @@ Tests are split by layer. Run everything with `bun run test` (Turbo across all p
 | `BETTER_AUTH_SECRET` | Auth signing secret |
 | `BETTER_AUTH_URL` | Public API URL for auth callbacks |
 | `TRUSTED_ORIGINS` | CORS / auth origins (e.g. webapp URL) |
-| `SYSTEM_ACTOR_SECRET` | Dev default `dev-system-secret` — required for HTTP seed (non-auth scopes) |
+| `SERVICE_ACCOUNT_API_KEY` | Optional — `/core/*` HTTP seeding after first `bun seed:init` |
 
 **Webapp** (`apps/webapp/.env`):
 

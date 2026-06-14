@@ -179,6 +179,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(body.actor).toEqual({
       ...mockInteractiveContext("auth-user-999", createdAt, "req-fixed"),
       kind: "staff",
+      accountKind: "human",
       actorId: "staff-1",
       schoolId: "school-1",
       sessionId: "session-999",

@@ -51,6 +51,7 @@ import type {
   SubjectMatter,
 } from '../domains'
 import type { BaseRepositoryInterface } from './base-repository'
+import type { ServiceApiKeyRepository } from './service-api-key-repository'
 
 export interface SchoolRepositories {
   readonly authorization: AuthorizationRepository
@@ -65,6 +66,7 @@ export interface SchoolRepositories {
   readonly gradeLevels: BaseRepositoryInterface<GradeLevel>
   readonly staffMembers: BaseRepositoryInterface<StaffMember>
   readonly staffAssignments: BaseRepositoryInterface<StaffAssignment>
+  readonly serviceApiKeys: ServiceApiKeyRepository
   readonly accessRoles: BaseRepositoryInterface<AccessRole>
   readonly staffRoleAssignments: BaseRepositoryInterface<StaffRoleAssignment>
   readonly attachments: BaseRepositoryInterface<Attachment>

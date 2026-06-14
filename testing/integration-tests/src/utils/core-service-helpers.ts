@@ -14,7 +14,7 @@ import {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectMatterStatus,
-  createSystemActorMetadata,
+  createBootstrapStaffActorMetadata,
   Fee,
   FeeStatus,
   Guardian,
@@ -75,11 +75,10 @@ export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School
     ...input,
     ownerSubjectId: input.ownerSubjectId ?? (actor.kind === 'staff' ? actor.subjectId : undefined),
   })
-  const registrationActor = createSystemActorMetadata({
-    systemId: 'integration-fixture',
+  const registrationActor = createBootstrapStaffActorMetadata({
     schoolId: school.id,
     requestId: 'integration-school-registration',
-    reason: 'Seed school fixture',
+    staffMemberId: 'integration-fixture',
   })
   authorize({
     actor: registrationActor,

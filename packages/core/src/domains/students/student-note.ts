@@ -107,10 +107,6 @@ export async function validateStudentNoteSave(
   repositories: SchoolRepositories,
   actor: ActorMetadata,
 ): Promise<void> {
-  if (actor.kind === 'system') {
-    return
-  }
-
   const student = await repositories.students.findById(note.studentId)
   if (!student || student.schoolId !== note.schoolId) {
     denyResourceAccess()

@@ -1,7 +1,7 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import {
   BusinessRuleViolationError,
-  createSystemActorMetadata,
+  createBootstrapStaffActorMetadata,
   type School,
   type SchoolRepositories,
   type SchoolType,
@@ -75,11 +75,10 @@ export async function registerSchoolWithOwner(
   const schoolId = randomUUID();
   const owner = resolveOwnerProfile(session);
 
-  const actor = createSystemActorMetadata({
+  const actor = createBootstrapStaffActorMetadata({
     schoolId,
-    systemId: "public-school-registration",
     requestId: input.requestId,
-    reason: "Authenticated user onboarding",
+    staffMemberId: "public-school-registration",
   });
   const service = application.forActor(actor);
 

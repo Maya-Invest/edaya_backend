@@ -1,4 +1,4 @@
-import { createSystemActorMetadata } from '@edaya/core'
+import { createBootstrapStaffActorMetadata } from '@edaya/core'
 import {
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -28,13 +28,12 @@ describe('link-actor-subject command route', () => {
     await seedDevSchoolAndAuthLinks(application, runtime)
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
-    const systemActor = createSystemActorMetadata({
-      systemId: 'link-actor-subject-test',
+    const bootstrapActor = createBootstrapStaffActorMetadata({
       schoolId: SEED_SCHOOL_ID,
       requestId: 'link-actor-subject-test',
-      reason: 'Register staff for link-actor-subject route test',
+      staffMemberId: 'link-actor-subject-test',
     })
-    const service = application.forActor(systemActor)
+    const service = application.forActor(bootstrapActor)
 
     await service.registerStaffMember({
       id: UNLINKED_STAFF_ID,

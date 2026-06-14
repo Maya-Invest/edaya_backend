@@ -1,30 +1,34 @@
 import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from '../run-dev-seeds'
 import type { AuthProvisioner, SeedApplication } from '../types'
 import type { HttpSeedClient } from './client'
-import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/dev-fixtures'
 import { runDevAuthProvision } from '../run-dev-auth-provision'
 import {
-
   logDevSeedResults,
-
   runDevSeeds,
-
 } from '../run-dev-seeds'
 import { HttpAuthProvisioner, signInViaHttp } from './auth'
-import { postSystemEntityList } from './system-entity'
-import { createSystemHttpSeedApplication } from './system-seed-application'
+import { postEntityList } from './core-entity'
+import { createCoreHttpSeedApplication } from './core-seed-application'
+import {
+  logProvisionedServiceAccountKey,
+  provisionSeedingServiceAccountHttp,
+  provisionSeedingServiceAccountInProcess,
+} from './provision-seeding-service-account'
 
-export type HttpDevSeedScope = DevSeedScope | 'smoke'
+export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account'
 
 export interface RunHttpDevSeedsOptions {
   client: HttpSeedClient
   scope: HttpDevSeedScope
-  /** Direct database access for domain loaders. Omit when using `systemActorSecret`. */
+  /** Direct database access for domain loaders. */
   application?: SeedApplication
-  /** Remote staging: seed domain data through `/core/system/*` routes. */
-  systemActorSecret?: string
+  /** Seed domain data through `/core/*` routes with a service account API key. */
+  serviceAccountApiKey?: string
   /** Override the default HTTP auth provisioner (for tests). */
   auth?: AuthProvisioner
+  /** After `all`, provision a seeding service account when no API key is configured. */
+  provisionServiceAccount?: boolean
   log?: LogDevSeedResultsOptions
 }
 
@@ -46,79 +50,111 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
     return 'all'
   }
 
-  if (arg === 'school' || arg === 'auth' || arg === 'auth:link' || arg === 'access' || arg === 'smoke') {
+  if (
+    arg === 'school'
+    || arg === 'auth'
+    || arg === 'auth:link'
+    || arg === 'access'
+    || arg === 'smoke'
+    || arg === 'service-account'
+  ) {
     return arg
   }
 
-  throw new Error(`Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|smoke|all]`)
+  throw new Error(
+    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|service-account|smoke|all]`,
+  )
 }
 
-function resolveSeedApplication(options: RunHttpDevSeedsOptions): SeedApplication | undefined {
-  if (options.application) {
-    return options.application
-  }
-
-  if (options.systemActorSecret) {
-    return createSystemHttpSeedApplication({
-      client: options.client,
-      systemActorSecret: options.systemActorSecret,
-    })
-  }
-
-  return undefined
-}
-
-function assertSeedApplication(scope: HttpDevSeedScope, application: SeedApplication | undefined): SeedApplication {
-  if (!application) {
-    throw new Error(
-      `HTTP seed scope "${scope}" requires SYSTEM_ACTOR_SECRET. `
-      + 'Set SYSTEM_ACTOR_SECRET in apps/api/.env, then run `bun seed` or `bun seed:init`.',
-    )
-  }
-
-  return application
-}
-
-async function hasSeededSchools(
-  client: HttpSeedClient,
-  application: SeedApplication | undefined,
-  systemActorSecret: string | undefined,
-): Promise<boolean> {
-  if (application && !systemActorSecret) {
-    return (await application.repositories.schools.list()).length > 0
-  }
-
-  if (systemActorSecret) {
-    const schools = await postSystemEntityList(
-      {
-        client,
-        systemActorSecret,
-        actor: {
-          kind: 'system',
-          systemId: 'http-seed-smoke',
-          schoolId: SEED_SCHOOL_ID,
-          requestId: 'http-seed-smoke',
-          reason: 'HTTP smoke seed school check',
-        },
-      },
-      'schools',
-    )
-    return schools.length > 0
-  }
-
-  return false
-}
-
-async function runHttpSmokeSeed(
-  client: HttpSeedClient,
-  options: Pick<RunHttpDevSeedsOptions, 'application' | 'systemActorSecret'>,
-): Promise<HttpSmokeSeedResult> {
+async function createSessionHttpSeedApplication(client: HttpSeedClient): Promise<SeedApplication> {
   await signInViaHttp(client, {
     email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
     password: DEV_AUTH_PASSWORD,
   })
 
-  const hasSchools = await hasSeededSchools(client, options.application, options.systemActorSecret)
+  return createCoreHttpSeedApplication({ client })
+}
+
+async function resolveSeedApplication(options: RunHttpDevSeedsOptions): Promise<SeedApplication> {
+  if (options.application) {
+    return options.application
+  }
+
+  if (options.serviceAccountApiKey) {
+    return createCoreHttpSeedApplication({
+      client: options.client,
+      serviceAccountApiKey: options.serviceAccountApiKey,
+    })
+  }
+
+  return createSessionHttpSeedApplication(options.client)
+}
+
+async function hasSeededSchools(
+  client: HttpSeedClient,
+  application: SeedApplication | undefined,
+  serviceAccountApiKey: string | undefined,
+): Promise<boolean> {
+  if (application) {
+    return (await application.repositories.schools.list()).length > 0
+  }
+
+  const schools = await postEntityList(
+    {
+      client,
+      serviceAccountApiKey,
+      requestId: 'http-seed-smoke',
+    },
+    'schools',
+  )
+  return schools.length > 0
+}
+
+async function runHttpSmokeSeed(
+  client: HttpSeedClient,
+  options: Pick<RunHttpDevSeedsOptions, 'application' | 'serviceAccountApiKey'>,
+): Promise<HttpSmokeSeedResult> {
+  if (options.serviceAccountApiKey) {
+    const hasSchools = await hasSeededSchools(
+      client,
+      options.application,
+      options.serviceAccountApiKey,
+    )
+    if (!hasSchools) {
+      return {
+        status: 'failed',
+        signInStatus: 0,
+        reason: 'School database is empty; run school seed first',
+      }
+    }
+
+    const grants = await client.jsonRequest('/core/authorization/effective-grants', {
+      headers: {
+        authorization: `Bearer ${options.serviceAccountApiKey}`,
+      },
+    })
+    if (!grants.response.ok) {
+      return {
+        status: 'failed',
+        signInStatus: 0,
+        effectiveGrantsStatus: grants.response.status,
+        reason: 'Effective grants request failed for seeding service account',
+      }
+    }
+
+    return {
+      status: 'passed',
+      signInStatus: 0,
+      effectiveGrantsStatus: grants.response.status,
+    }
+  }
+
+  await signInViaHttp(client, {
+    email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+    password: DEV_AUTH_PASSWORD,
+  })
+
+  const hasSchools = await hasSeededSchools(client, options.application, undefined)
   if (!hasSchools) {
     return {
       status: 'failed',
@@ -142,6 +178,23 @@ async function runHttpSmokeSeed(
     signInStatus: 200,
     effectiveGrantsStatus: grants.response.status,
   }
+}
+
+async function maybeProvisionSeedingServiceAccount(
+  options: RunHttpDevSeedsOptions,
+): Promise<void> {
+  if (options.serviceAccountApiKey || options.provisionServiceAccount === false) {
+    return
+  }
+
+  if (options.application) {
+    const result = await provisionSeedingServiceAccountInProcess(options.application)
+    logProvisionedServiceAccountKey(result)
+    return
+  }
+
+  const result = await provisionSeedingServiceAccountHttp(options.client)
+  logProvisionedServiceAccountKey(result)
 }
 
 export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<RunHttpDevSeedsResults> {
@@ -169,7 +222,19 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     return results
   }
 
-  const application = assertSeedApplication(scope, resolveSeedApplication(options))
+  if (scope === 'service-account') {
+    if (options.application) {
+      const result = await provisionSeedingServiceAccountInProcess(options.application)
+      logProvisionedServiceAccountKey(result)
+      return results
+    }
+
+    const result = await provisionSeedingServiceAccountHttp(client)
+    logProvisionedServiceAccountKey(result)
+    return results
+  }
+
+  const application = await resolveSeedApplication(options)
   const domainResults = await runDevSeeds({
     scope,
     application,
@@ -180,6 +245,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   results.authProvision = domainResults.authProvision
   results.authLink = domainResults.authLink
   results.access = domainResults.access
+
+  if (scope === 'all') {
+    await maybeProvisionSeedingServiceAccount(options)
+  }
 
   if (log) {
     logDevSeedResults(domainResults, log)

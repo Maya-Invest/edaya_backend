@@ -1,27 +1,20 @@
-import type { AppBindings } from '@/http/types'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
 import {
   HttpSeedClient,
+  provisionSeedingServiceAccountInProcess,
   runHttpDevSeeds,
 } from '@edaya/seeding/http'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { Hono } from 'hono'
-import indexRouter from '@/app-router'
-import { dependenciesInjection } from '@/http/dependencies'
-import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime'
+import { resetApiRuntimesForTests } from '@/runtime'
 import {
   apiPgliteEnv,
-  createApiPgliteTestEnv,
   createCoreRouteTestApp,
 } from '../support/api-route-harness'
-
-const SYSTEM_ACTOR_SECRET = 'test-system-secret'
 
 function createHttpClientForApp(app: Awaited<ReturnType<typeof createCoreRouteTestApp>>['app']): HttpSeedClient {
   return new HttpSeedClient({
@@ -100,32 +93,40 @@ describe('runHttpDevSeeds', () => {
     expect(smoke.smoke?.status).toBe('passed')
   }, 60_000)
 
-  it('seeds the full demo school through system HTTP routes', async () => {
-    await resetApiRuntimesForTests()
-    const env = createApiPgliteTestEnv({ SYSTEM_ACTOR_SECRET })
-    const runtime = await getApiRuntime(env)
-    const app = new Hono<AppBindings>()
-    app.use(async (c, next) => {
-      c.env = env
-      await next()
-    })
-    app.use(dependenciesInjection)
-    app.route('/', indexRouter)
-    const client = createHttpClientForApp(app)
+  it('seeds the full demo school through service account HTTP routes', async () => {
+    const { app, application } = await createCoreRouteTestApp()
 
+    const bootstrap = await runHttpDevSeeds({
+      client: createHttpClientForApp(app),
+      scope: 'all',
+      application,
+      provisionServiceAccount: false,
+    })
+
+    expect(bootstrap.authProvision?.status).toBe('seeded')
+    expect(bootstrap.school?.status).toBe('seeded')
+    expect(bootstrap.authLink?.status).toBe('seeded')
+    expect(bootstrap.access?.status).toBe('seeded')
+
+    const provisioned = await provisionSeedingServiceAccountInProcess(application)
+    expect(provisioned.status).toBe('created')
+    expect(provisioned.apiKey?.startsWith('sk_live_')).toBe(true)
+
+    const client = createHttpClientForApp(app)
     const results = await runHttpDevSeeds({
       client,
-      scope: 'all',
-      systemActorSecret: SYSTEM_ACTOR_SECRET,
+      scope: 'access',
+      serviceAccountApiKey: provisioned.apiKey,
+      provisionServiceAccount: false,
     })
 
-    expect(results.authProvision?.status).toBe('seeded')
-    expect(results.school?.status).toBe('seeded')
-    expect(results.authLink?.status).toBe('seeded')
     expect(results.access?.status).toBe('seeded')
 
-    const application = await runtime.getSchoolApplication()
-    const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
-    expect(school?.id).toBe(SEED_SCHOOL_ID)
+    const schools = await runHttpDevSeeds({
+      client,
+      scope: 'smoke',
+      serviceAccountApiKey: provisioned.apiKey,
+    })
+    expect(schools.smoke?.status).toBe('passed')
   }, 120_000)
 })

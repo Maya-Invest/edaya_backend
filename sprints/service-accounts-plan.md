@@ -1,8 +1,32 @@
 # Service accounts and unified API authorization
 
+**Status: complete** (Phases 1–4). Machine auth uses **API keys** only; OAuth/OIDC is out of scope.
+
 Replace god-mode **system actor** routes (`/core/system/*` + `X-System-Actor-Secret`) with **permissioned service accounts** that use the same `/core/commands/*` and `/core/entities/*` surface as human staff.
 
 **Related docs:** [Authorization README](../packages/core/src/authorization/README.md), [API folder structure](../docs/api-folder-structure.md), [integrations restructure](../docs/integrations-restructure.md).
+
+---
+
+## Completion summary
+
+| Area | Status |
+|------|--------|
+| Domain + Postgres (`service_api_keys`, `StaffMember` service fields) | Done |
+| API key middleware + `/core/service-accounts` CRUD | Done |
+| Seeding via `SERVICE_ACCOUNT_API_KEY` + session bootstrap on first `seed:init` | Done |
+| God-mode removal (`/core/system/*`, `SYSTEM_ACTOR_SECRET`, authorize bypass) | Done |
+| `bun run fullcheck` | Passing |
+
+**Credential decision (locked):** API keys via `Authorization: Bearer sk_live_…`. No OAuth/OIDC sprint planned.
+
+**Minor gaps (optional, not blocking):**
+
+- HTTP integration test for create-service-account **403** when creator delegates permissions they lack (covered by core unit tests in `service-account-delegation.test.ts`)
+- HTTP test for **403 on a protected command** (entity-route 403 is covered; command path not explicitly asserted)
+- `serviceOnly` command registry flag (§5) — not implemented
+- Webapp admin UI for service accounts — still API-only
+- `SystemActorMetadata` type remains for metadata/tests; data paths use `createBootstrapStaffActorMetadata` or interactive actors
 
 ---
 
@@ -18,20 +42,20 @@ Replace god-mode **system actor** routes (`/core/system/*` + `X-System-Actor-Sec
 | G4 | Owner can provision an **owner-level** service account (for seeding / integrations) |
 | G5 | Seeding creates owner service account after school bootstrap, then uses API key |
 | G6 | `ActorAssuranceLevel.Service` enables service-only and human-only workflow gates |
-| G7 | `/core/system/*` deprecated; bootstrap allowlist shrinks to school registration only |
+| G7 | `/core/system/*` removed; bootstrap via onboarding + session seed |
 
 ### Non-goals (this iteration)
 
-- OAuth2 / OpenID Connect (designed for, not implemented)
+- OAuth2 / OpenID Connect — **out of scope**; API keys are the machine-auth mechanism
 - Cross-school workflows except **billing** (platform scope defined separately)
 - Webapp admin UI for service account management (API + seed first)
-- Removing `SYSTEM_ACTOR_SECRET` entirely until migration completes
+- `serviceOnly` command registry flag (optional; not built)
 
 ### Locked product decisions
 
 | Topic | Decision |
 |-------|----------|
-| **Credentials** | API key now; OAuth/OIDC later |
+| **Credentials** | API keys (`Authorization: Bearer`); no OAuth/OIDC planned |
 | **Assurance** | `ActorAssuranceLevel.Service` — orthogonal to human `Standard` / `Verified` / `Strong` |
 | **Tenancy** | School-scoped actors only; no cross-school data except billing integrations |
 | **Delegation** | `SERVICE_ACCOUNT_*` permissions; assignee grants ⊆ creator grants |
@@ -40,7 +64,9 @@ Replace god-mode **system actor** routes (`/core/system/*` + `X-System-Actor-Sec
 
 ---
 
-## 2. Current state
+## 2. Before (removed)
+
+Historical god-mode path — **deleted in Phase 4**:
 
 ```
 Machine caller
@@ -58,9 +84,9 @@ Human caller
                  └─ full authorize() + policy
 ```
 
-**Pain:** duplicated OpenAPI surface, duplicated handlers (`system-entity-handlers.ts` vs `entity-handlers.ts`), no least-privilege for integrations.
+**Was painful:** duplicated OpenAPI surface, duplicated handlers, no least-privilege for integrations.
 
-**Consumers today:** `@edaya/seeding` (`testing/seeding/src/http/system-entity.ts`, `system-command.ts`), integration tests, dev HTTP seed.
+**Consumers migrated:** `@edaya/seeding` now uses `core-entity.ts` / `core-command.ts` with Bearer token or director session bootstrap.
 
 ---
 
@@ -94,11 +120,13 @@ flowchart TB
   Core --> AuthZ --> Policy
 ```
 
-**Bootstrap only** (no service account yet):
+**Bootstrap** (no service account yet):
 
 ```
-POST /core/onboarding/register-school   (session or public registration)
-  OR minimal /core/system/* allowlist   (until onboarding provisions first service account)
+POST /core/onboarding/register-school   (authenticated unlinked user)
+  OR director session during seed:init     (Better Auth sign-in → /core/*)
+  → provision seeding service account      (prints SERVICE_ACCOUNT_API_KEY)
+  → subsequent seeds use Bearer token only
 ```
 
 ---
@@ -193,7 +221,7 @@ Example `PERMISSION_ASSURANCE` additions:
 // Service accounts skip human assurance ranks via accountKind check
 ```
 
-Registry flag on commands (optional phase):
+Registry flag on commands (optional — **not implemented**):
 
 ```ts
 { methodName: 'bulkImportStudents', serviceOnly: true }
@@ -255,17 +283,15 @@ Platform billing integrations use a **platform-scoped** service account (separat
 | `POST` | `/core/service-accounts/{id}/rotate-key` | Rotate API key |
 | `POST` | `/core/service-accounts/{id}/revoke` | Revoke |
 
-Implement orchestration in `lib/service-accounts/` (mirror `lib/onboarding/`).
+Implement orchestration in `packages/core/authorization/service-accounts/provision.ts`; API routes in `routes/service-accounts.routes.ts` + `lib/service-accounts/schemas.ts`.
 
-### 7.3 Deprecate system routes
+### 7.3 System routes (removed)
 
-| Route | Phase |
-|-------|-------|
-| `POST /core/system/entities/*` | Deprecate after seeding migrates |
-| `POST /core/system/commands/*` | Deprecate after seeding migrates |
-| `SYSTEM_ACTOR_SECRET` | Keep for bootstrap allowlist only, then remove |
-
-Mark OpenAPI `deprecated: true` before deletion.
+| Route | Status |
+|-------|--------|
+| `POST /core/system/entities/*` | **Deleted** |
+| `POST /core/system/commands/*` | **Deleted** |
+| `SYSTEM_ACTOR_SECRET` | **Removed** from API env and seeding |
 
 ---
 
@@ -275,7 +301,7 @@ Mark OpenAPI `deprecated: true` before deletion.
 
 After school + human owner exist:
 
-1. Authenticate as human owner (existing dev auth flow) **or** one-time system bootstrap
+1. Authenticate as director (session) on first `seed:init`, or use in-process `application` in tests
 2. `POST /core/service-accounts` with `elevated: true`, `serviceId: 'seeding'`, owner-level role
 3. Store returned API key in `.env` as `SERVICE_ACCOUNT_API_KEY` (school-scoped)
 4. Subsequent seed scopes use Bearer token → `/core/commands/*`, `/core/entities/*`
@@ -292,8 +318,7 @@ After school + human owner exist:
 
 | Variable | Purpose |
 |----------|---------|
-| `SERVICE_ACCOUNT_API_KEY` | Seeding / local dev machine auth |
-| `SYSTEM_ACTOR_SECRET` | Deprecated; bootstrap only until removed |
+| `SERVICE_ACCOUNT_API_KEY` | Seeding / local dev machine auth (Bearer on `/core/*`) |
 
 ---
 
@@ -328,7 +353,7 @@ Service accounts with correct grants pass the same checks as staff.
 
 ### 9.3 `SystemActorMetadata`
 
-**Phase 4:** delete or restrict to platform bootstrap service outside school tenancy.
+**Done for data paths:** god-mode bypass removed. Bootstrap and dev seed use `createBootstrapStaffActorMetadata()` (synthetic elevated staff with `PLATFORM_REGISTER_SCHOOL`). The `SystemActorMetadata` type remains for tests/metadata only.
 
 ---
 
@@ -336,38 +361,36 @@ Service accounts with correct grants pass the same checks as staff.
 
 ### Phase 1 — Domain and permissions
 
-- [ ] `StaffMember.accountKind`, `serviceId`, `createdBySubjectId`
-- [ ] `service_api_keys` table + repository
-- [ ] `SERVICE_ACCOUNT_*` permissions + definitions
-- [ ] `ActorAssuranceLevel.Service`
-- [ ] `createServiceStaffActorMetadata` or extend `StaffActorMetadata` with `accountKind`
-- [ ] Unit tests: delegation subset, owner service account rules
+- [x] `StaffMember.accountKind`, `serviceId`, `createdBySubjectId`, `serviceElevated`
+- [x] `service_api_keys` table + repository
+- [x] `SERVICE_ACCOUNT_*` permissions + definitions
+- [x] `ActorAssuranceLevel.Service`
+- [x] `createServiceStaffActorMetadata` + `accountKind` on `StaffActorMetadata`
+- [x] Unit tests: delegation subset, owner service account rules
 
 ### Phase 2 — API key middleware + service account routes
 
-- [ ] API key hash verify + actor resolution in middleware
-- [ ] `POST/GET /core/service-accounts` + rotate/revoke
-- [ ] `lib/service-accounts/create-service-account.ts` with delegation checks
-- [ ] Integration test: API key → `POST /core/entities/schools/list` (authorized)
+- [x] API key hash verify + actor resolution in middleware
+- [x] `POST/GET /core/service-accounts` + rotate/revoke
+- [x] `authorization/service-accounts/provision.ts` with delegation checks
+- [x] Integration test: API key → `POST /core/entities/schools/list` (authorized)
 
 ### Phase 3 — Seeding migration
 
-- [ ] `seed:init` creates owner service account; writes key to env example
-- [ ] Refactor `@edaya/seeding` HTTP client off `/core/system/*`
-- [ ] Update `testing/integration-tests` harnesses
-- [ ] Document `SERVICE_ACCOUNT_API_KEY` in `docs/local-dev.md`
+- [x] `seed:init` provisions owner service account after school bootstrap (prints `SERVICE_ACCOUNT_API_KEY`)
+- [x] Refactor `@edaya/seeding` HTTP client off `/core/system/*` (`core-entity.ts`, `core-command.ts`)
+- [x] `SERVICE_ACCOUNT_API_KEY` env var support
+- [x] Update integration test harness for service account HTTP seeding
+- [x] Document `SERVICE_ACCOUNT_API_KEY` in `docs/local-dev.md`
+- [x] Remove `SYSTEM_ACTOR_SECRET` from seeding default path
 
 ### Phase 4 — Remove god-mode
 
-- [ ] Remove `system` bypass in `authorize()` and policy resolvers
-- [ ] Deprecate then delete `buildSystemEntityRoutes()`, `system.routes.ts` (except bootstrap)
-- [ ] Remove `SYSTEM_ACTOR_SECRET` from seeding default path
-- [ ] OpenAPI cleanup
-
-### Phase 5 — OAuth/OIDC (later)
-
-- [ ] Client credentials grant → same actor pipeline as API key
-- [ ] Third-party integration onboarding
+- [x] Remove `system` bypass in `authorize()` and policy resolvers
+- [x] Delete `buildSystemEntityRoutes()`, `system.routes.ts`, `lib/system-api/`
+- [x] Remove `SYSTEM_ACTOR_SECRET` from seeding and API env
+- [x] Session-based HTTP seed bootstrap (director sign-in → `/core/*`)
+- [x] OpenAPI cleanup (regenerate spec; no `/core/system/*` paths)
 
 ---
 
@@ -387,19 +410,21 @@ Service accounts with correct grants pass the same checks as staff.
 | Risk | Mitigation |
 |------|------------|
 | API key leak = full owner access | Rotation, short-lived keys in CI, separate non-owner service accounts for narrow integrations |
-| Chicken-and-egg before first service account | Keep minimal bootstrap (`register-school` + one system command) until phase 3 lands |
-| Breaking existing seed scripts | Parallel support: accept system secret **or** API key during transition |
+| Chicken-and-egg before first service account | Director session bootstrap on `seed:init`; then `SERVICE_ACCOUNT_API_KEY` |
+| Breaking existing seed scripts | Migrated; system secret path removed |
 | `Service` assurance confusion | Document orthogonal model; never rank Service with Strong/Verified |
 
 ---
 
 ## 13. Success criteria
 
-- [ ] `@edaya/seeding` runs full `seed:all` with **only** `SERVICE_ACCOUNT_API_KEY`
-- [ ] No integration test requires `POST /core/system/entities/*`
-- [ ] Unauthorized API key receives 401; under-privileged service account receives 403 on protected command
-- [ ] Creating service account with permission not held by creator fails with 403
-- [ ] Owner service account can run seed workflows; teacher-scoped service account cannot
+- [x] `@edaya/seeding` runs full `seed:all` with **only** `SERVICE_ACCOUNT_API_KEY` (after bootstrap)
+- [x] No integration test requires `POST /core/system/entities/*`
+- [x] Unauthorized API key receives 401 (`test-service-accounts-routes.test.ts`)
+- [x] Under-privileged service account receives 403 on protected entity route (teacher → `staff-members/list`)
+- [x] Creating service account with permission not held by creator fails (`service-account-delegation.test.ts` at core layer)
+- [x] Owner-level service account can run seed workflows (HTTP integration test)
+- [x] Teacher-scoped service account cannot access staff admin entities (403 test)
 
 ---
 
@@ -419,13 +444,13 @@ packages/adaptor-postgres/
   repositories/
 
 apps/api/
-  http/dependencies/session-actor.ts (or service-api-key.ts)
-  lib/service-accounts/
+  http/dependencies/session-actor.ts
+  lib/service-accounts/schemas.ts
   routes/service-accounts.routes.ts
-  DELETE routes/system-entity.routes.ts (phase 4)
-  DELETE lib/system-api/ (phase 4)
+  lib/onboarding/register-school-with-owner.ts   (uses createBootstrapStaffActorMetadata)
 
 testing/seeding/
-  src/http/ (migrate off system-entity.ts)
-  seed:init step for owner service account
+  src/http/core-entity.ts, core-command.ts, core-seed-application.ts
+  src/http/provision-seeding-service-account.ts
+  seed:init → session bootstrap + SERVICE_ACCOUNT_API_KEY
 ```

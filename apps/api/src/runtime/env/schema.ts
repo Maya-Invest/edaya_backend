@@ -14,7 +14,6 @@ export const EnvSchema = z.object({
   BETTER_AUTH_URL: z.string().url().default("http://localhost:9999"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   COOKIE_DOMAIN: z.string().optional(),
-  SYSTEM_ACTOR_SECRET: z.string().min(1).optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
