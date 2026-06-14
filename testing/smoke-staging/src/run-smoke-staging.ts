@@ -88,23 +88,24 @@ async function checkCorsAllow(client: HttpSeedClient, appOrigin: string): Promis
   }
 }
 
-async function checkCorsDeny(client: HttpSeedClient, trustedOrigin: string): Promise<SmokeCheckResult> {
+async function checkCorsDeny(client: HttpSeedClient): Promise<SmokeCheckResult> {
+  const evilOrigin = 'https://evil.example.com'
   const response = await client.request('/core/entities/schools/list', {
     method: 'OPTIONS',
     headers: {
-      Origin: 'https://evil.example.com',
+      Origin: evilOrigin,
       'Access-Control-Request-Method': 'POST',
       'Access-Control-Request-Headers': 'content-type',
     },
   })
 
   const allowOrigin = response.headers.get('access-control-allow-origin')
-  if (allowOrigin === trustedOrigin || allowOrigin === 'https://evil.example.com') {
+  if (allowOrigin === evilOrigin) {
     return {
       id: 'S4',
       label: 'CORS unknown origin rejected',
       status: 'failed',
-      detail: `unexpected allow-origin=${allowOrigin}`,
+      detail: `evil origin was reflected in allow-origin=${allowOrigin}`,
     }
   }
 
@@ -197,8 +198,12 @@ async function checkServiceAccount(apiUrl: string, apiKey: string): Promise<Smok
   return { id: 'S7', label: 'Service account entity access', status: 'passed' }
 }
 
+function schoolIdFromListItem(school: { id?: string, data?: { id?: string } }): string | undefined {
+  return school.id ?? school.data?.id
+}
+
 async function checkSeededSchool(client: HttpSeedClient): Promise<SmokeCheckResult> {
-  const { response, body } = await client.jsonRequest<Array<{ id?: string }>>('/core/entities/schools/list', {
+  const { response, body } = await client.jsonRequest<Array<{ id?: string, data?: { id?: string } }>>('/core/entities/schools/list', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -216,7 +221,7 @@ async function checkSeededSchool(client: HttpSeedClient): Promise<SmokeCheckResu
   }
 
   const schools = body ?? []
-  if (!schools.some(school => school.id === SEED_SCHOOL_ID)) {
+  if (!schools.some(school => schoolIdFromListItem(school) === SEED_SCHOOL_ID)) {
     return {
       id: 'S8',
       label: 'Hyperdrive seeded data',
@@ -238,7 +243,7 @@ export async function runSmokeStaging(): Promise<SmokeStagingResult> {
   checks.push(await checkHealth(client))
   checks.push(await checkDocs(client))
   checks.push(await checkCorsAllow(client, env.appOrigin))
-  checks.push(await checkCorsDeny(client, env.appOrigin))
+  checks.push(await checkCorsDeny(client))
 
   const signInResult = await checkSignIn(client, env.appOrigin, staffEmail, staffPassword)
   checks.push(signInResult)

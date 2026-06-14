@@ -32,8 +32,9 @@ export function loadSeedEnvFiles(): void {
     }
   }
 
+  const seedTarget = process.env['SEED_API_URL'] ?? process.env['BETTER_AUTH_URL'] ?? 'http://localhost:9999'
   const stagingEnvFile = path.join(repoRoot, 'testing/seeding/.env.staging')
-  if (existsSync(stagingEnvFile)) {
+  if (seedTarget.includes('api-staging.') && existsSync(stagingEnvFile)) {
     expand(config({ path: stagingEnvFile }))
   }
 }

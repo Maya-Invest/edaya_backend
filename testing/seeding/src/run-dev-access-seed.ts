@@ -104,10 +104,11 @@ export type DevAccessSeedResult
   = | { status: 'skipped', reason: 'school-not-seeded' }
     | { status: 'seeded', roles: number, assignments: number, staffAssignments: number }
 
-export async function runDevAccessSeed(application: SeedApplication): Promise<DevAccessSeedResult> {
+/** Access roles only — used before service-account provisioning in HTTP bootstrap. */
+export async function runDevAccessRolesSeed(application: SeedApplication): Promise<void> {
   const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
   if (!school) {
-    return { status: 'skipped', reason: 'school-not-seeded' }
+    throw new Error('Cannot seed access roles before school exists')
   }
 
   await application.repositories.accessRoles.save(new AccessRole({
@@ -179,6 +180,14 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
       DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
   }))
+}
+
+/** Staff role + class assignments — run after school structure exists. */
+export async function runDevAccessAssignmentsSeed(application: SeedApplication): Promise<DevAccessSeedResult> {
+  const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
+  if (!school) {
+    return { status: 'skipped', reason: 'school-not-seeded' }
+  }
 
   await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
     id: 'sra-st1',
@@ -308,4 +317,9 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
     assignments: 7,
     staffAssignments: 3 + SEED_CLASS_SUBJECTS.length,
   }
+}
+
+export async function runDevAccessSeed(application: SeedApplication): Promise<DevAccessSeedResult> {
+  await runDevAccessRolesSeed(application)
+  return runDevAccessAssignmentsSeed(application)
 }

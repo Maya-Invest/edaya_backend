@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { DemoAccount } from '$lib/types/demo-account';
-	import { browser, dev } from '$app/environment';
+	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
+	import { isDemoLoginEnabled, isLocalDevApi } from '$lib/env/app-env';
 	import { bootstrapSession } from '$lib/auth/bootstrap';
 	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authClient } from '$lib/auth/client';
@@ -47,7 +48,7 @@
 		void (async () => {
 			const health = await checkBrowserApiHealth();
 			apiConnected = health.connected;
-			if (!health.connected || !dev) {
+			if (!health.connected || !isDemoLoginEnabled()) {
 				demoAccounts = [];
 				devAuthPassword = '';
 				return;
@@ -112,7 +113,11 @@
 				<p class="mb-4 text-xs text-muted-foreground">{$t('auth.demoHint')}</p>
 				{#if !apiConnected}
 					<p class="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
-						API locale indisponible — attendez quelques secondes que le serveur termine son initialisation.
+						{#if isLocalDevApi()}
+							API locale indisponible — attendez quelques secondes que le serveur termine son initialisation.
+						{:else}
+							API indisponible — attendez quelques secondes et réessayez.
+						{/if}
 					</p>
 				{/if}
 

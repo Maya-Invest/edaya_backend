@@ -4,7 +4,9 @@ import { buildNodeApiRuntime } from "@/runtime/node/create-runtime";
 import type { Environment } from "@/runtime/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
 
-const DEFAULT_AUTH_DATABASE_PATH = ".data/auth.sqlite";
+import { resolveRepoLocalDataPath } from "@/runtime/env/repo-root";
+
+const DEFAULT_AUTH_DATABASE_PATH = resolveRepoLocalDataPath(".data/auth.sqlite");
 
 const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
   buildRuntime: buildNodeApiRuntime,

@@ -68,15 +68,42 @@ export async function postCoreCommand(
   methodName: string,
   payload: unknown,
 ): Promise<unknown> {
-  const { body } = await executeCoreCommand<Record<string, unknown>>({
+  const serializedPayload = payload && typeof payload === 'object'
+    ? serializePlainObject(payload as Record<string, unknown>)
+    : payload
+
+  const { response, body } = await executeCoreCommand<Record<string, unknown>>({
     client: options.client,
     serviceAccountApiKey: options.serviceAccountApiKey,
     commandName: commandMethodToPublicName(methodName),
     requestId: options.requestId,
-    payload: payload as Record<string, unknown>,
+    payload: serializedPayload as Record<string, unknown>,
   })
 
+  if (!response.ok) {
+    const message = typeof body === 'object' && body && 'message' in body
+      ? String((body as { message?: string }).message)
+      : typeof body === 'object' && body
+        ? JSON.stringify(body)
+        : `HTTP ${response.status}`
+    throw new Error(`Core command failed for ${methodName}: ${response.status} ${message}`)
+  }
+
   return body
+}
+
+function unwrapHttpEntity(entity: unknown): unknown {
+  if (entity && typeof entity === 'object' && 'data' in entity && entity.data && typeof entity.data === 'object') {
+    return entity.data
+  }
+  return entity
+}
+
+function unwrapHttpEntityList(body: unknown): unknown[] {
+  if (!Array.isArray(body)) {
+    return []
+  }
+  return body.map(unwrapHttpEntity)
 }
 
 export async function postEntityList(
@@ -100,7 +127,7 @@ export async function postEntityList(
     throw new Error(`Entity list failed for ${serviceName}: ${response.status} ${message}`)
   }
 
-  return body ?? []
+  return unwrapHttpEntityList(body)
 }
 
 export async function postEntityFindById(
@@ -124,7 +151,7 @@ export async function postEntityFindById(
     throw new Error(`Entity get failed for ${serviceName}/${id}: ${response.status}`)
   }
 
-  return body ?? undefined
+  return unwrapHttpEntity(body ?? undefined)
 }
 
 export async function postEntityFindOne(
@@ -149,7 +176,7 @@ export async function postEntityFindOne(
     throw new Error(`Entity one failed for ${serviceName}: ${response.status}`)
   }
 
-  return body ?? undefined
+  return unwrapHttpEntity(body ?? undefined)
 }
 
 export async function postEntitySave(
@@ -169,7 +196,9 @@ export async function postEntitySave(
   if (!response.ok) {
     const message = typeof body === 'object' && body && 'message' in body
       ? String((body as { message?: string }).message)
-      : `HTTP ${response.status}`
+      : typeof body === 'object' && body
+        ? JSON.stringify(body)
+        : `HTTP ${response.status}`
     throw new Error(`Entity save failed for ${serviceName}: ${response.status} ${message}`)
   }
 }

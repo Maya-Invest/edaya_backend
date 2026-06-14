@@ -10,7 +10,7 @@ Run the API and webapp together on your machine. The webapp is a **static SPA** 
 ## First-time setup
 
 ```sh
-# API — persisted PGlite + auth SQLite under apps/api/.data/
+# API — persisted PGlite + auth SQLite under repo-root .data/
 cp apps/api/.env.example apps/api/.env
 
 # Webapp — Vite proxy target + optional production API URL
@@ -60,15 +60,15 @@ The API runs on **Node** locally (`bun dev`) and is also packaged for **Cloudfla
 
 | `DATABASE_URL` | Use case |
 |----------------|----------|
-| `pglite:.data/school` | Default local dev — PGlite persisted under `apps/api/.data/` (gitignored) |
+| `pglite:.data/school` | Default local dev — PGlite persisted under repo-root `.data/` (gitignored) |
 | `pglite` | Ephemeral in-memory Postgres (tests, CI) |
 | `postgres://…` | Real Postgres (Docker, Neon, staging) |
 
-Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under `.data/`.
+Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under repo-root `.data/`.
 
 ## Dev database seed
 
-Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/seeding/`. School data persists under `.data/` when using `DATABASE_URL=pglite:.data/school`; seed once after a fresh clone or `rm -rf apps/api/.data`.
+Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/seeding/`. School data persists under repo-root `.data/` when using `DATABASE_URL=pglite:.data/school`; seed once after a fresh clone or `rm -rf .data`.
 
 | Command | Purpose |
 |---------|---------|

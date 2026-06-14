@@ -6,12 +6,12 @@ export async function checkBrowserApiHealth(): Promise<
 > {
 	try {
 		const base = PUBLIC_API_URL || '';
-		const response = await fetch(resolveApiUrl(base, '/'), { credentials: 'omit' });
+		// In local dev, Vite proxies /auth to the API — not GET / (that serves the SPA).
+		const response = await fetch(resolveApiUrl(base, '/auth/get-session'), { credentials: 'omit' });
 		if (!response.ok) {
 			return { connected: false };
 		}
-		const health = (await response.json()) as { message: string };
-		return { connected: true, message: health.message };
+		return { connected: true, message: 'Edaya Core API' };
 	}
 	catch {
 		return { connected: false };

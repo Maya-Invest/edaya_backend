@@ -20,9 +20,10 @@ export interface SmokeStagingEnv {
   serviceAccountApiKey?: string
 }
 
-export function loadSmokeStagingEnv(): SmokeStagingEnv {
+export function loadSmokeStagingEnv(options?: { loadEnvFile?: boolean }): SmokeStagingEnv {
+  const loadEnvFile = options?.loadEnvFile ?? process.env['SMOKE_STAGING_LOAD_ENV_FILE'] !== '0'
   const stagingEnvPath = path.join(repoRoot, 'testing/seeding/.env.staging')
-  if (existsSync(stagingEnvPath)) {
+  if (loadEnvFile && existsSync(stagingEnvPath)) {
     expand(config({ path: stagingEnvPath }))
   }
 

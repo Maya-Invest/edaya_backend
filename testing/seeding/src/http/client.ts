@@ -168,7 +168,8 @@ export class HttpSeedClient {
     const url = path.startsWith('http') ? path : `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`
     const headers = new Headers(init.headers)
     const cookieHeader = this.cookieHeader()
-    if (cookieHeader && !headers.has('cookie')) {
+    const hasBearerAuth = headers.get('authorization')?.toLowerCase().startsWith('bearer ') ?? false
+    if (cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
       headers.set('cookie', cookieHeader)
     }
     if (this.appOrigin && !headers.has('origin')) {

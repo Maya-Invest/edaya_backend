@@ -23,6 +23,7 @@ export const ENTITY_SERVICE_TO_PUBLIC_NAME: Record<string, string> = {
 /** Maps top-level `SeedApplication.repositories` keys to entity route segments. */
 export const REPOSITORY_SERVICE_TO_PUBLIC_NAME: Record<string, string> = {
   schools: 'schools',
+  students: 'students',
   staffMembers: 'staff-members',
   guardians: 'guardians',
   accessRoles: 'access-roles',

@@ -32,6 +32,8 @@ describe('loadSmokeStagingEnv', () => {
 
 describe('runSmokeStaging', () => {
   it('passes tier-1 checks against a mocked healthy staging API', async () => {
+    process.env.SMOKE_STAGING_LOAD_ENV_FILE = '0'
+    delete process.env.SERVICE_ACCOUNT_API_KEY
     process.env.STAGING_API_URL = 'https://api-staging.test'
     process.env.STAGING_APP_ORIGIN = 'https://app-staging.test'
 
@@ -79,7 +81,7 @@ describe('runSmokeStaging', () => {
       }
 
       if (url.endsWith('/core/entities/schools/list') && method === 'POST') {
-        return new Response(JSON.stringify([{ id: SEED_SCHOOL_ID }]), { status: 200 })
+        return new Response(JSON.stringify([{ data: { id: SEED_SCHOOL_ID } }]), { status: 200 })
       }
 
       return new Response('not found', { status: 404 })

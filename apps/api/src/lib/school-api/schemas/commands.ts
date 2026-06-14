@@ -520,6 +520,7 @@ export const createFeeCommandSchema = z.object(unwrapShape(feeSchema) as any)
 
 export const assignFeeToStudentCommandSchema = z.object(unwrapShape(studentFeeSchema) as any)
   .omit({
+    academicYearId: true,
     adjustmentAmount: true,
     adjustmentReason: true,
     adjustedById: true,

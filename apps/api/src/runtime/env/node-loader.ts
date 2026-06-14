@@ -5,9 +5,21 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { parseRuntimeEnv } from "@/runtime/env/schema";
 import type { Environment } from "@/runtime/env/schema";
+import {
+  resolveRepoLocalDataPath,
+  resolveRepoLocalDatabaseUrl,
+} from "@/runtime/env/repo-root";
 
 function resolveApiRoot(): string {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+}
+
+function normalizeLocalDataPaths(env: Environment): Environment {
+  return {
+    ...env,
+    AUTH_DATABASE_PATH: resolveRepoLocalDataPath(env.AUTH_DATABASE_PATH),
+    DATABASE_URL: resolveRepoLocalDatabaseUrl(env.DATABASE_URL),
+  };
 }
 
 export function loadDotenvFiles(): void {
@@ -26,5 +38,5 @@ export function loadNodeProcessEnv(): Environment {
     loadDotenvFiles();
   }
 
-  return parseRuntimeEnv(process.env, "node");
+  return normalizeLocalDataPaths(parseRuntimeEnv(process.env, "node"));
 }

@@ -220,7 +220,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       sectionResults,
       attendanceSummary,
       assessmentResultCount: periodAssessmentResults.length,
-      overallAverage,
+      overallAverage: overallAverage === undefined ? undefined : Math.round(overallAverage),
       status: existing?.status ?? ReportCardResultStatus.Draft,
       generatedAt: existing?.generatedAt ?? generatedAt,
       publishedAt: existing?.publishedAt,

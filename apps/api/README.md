@@ -20,7 +20,7 @@ bun run dev:worker
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
-Default `DATABASE_URL=pglite:.data/school` uses persisted PGlite on Node (no Docker). School data and auth SQLite live under `apps/api/.data/` (gitignored). Use `DATABASE_URL=pglite` for ephemeral in-memory (tests). Workers require a real Postgres URL.
+Default `DATABASE_URL=pglite:.data/school` uses persisted PGlite on Node (no Docker). School data and auth SQLite live under repo-root `.data/` (gitignored). Use `DATABASE_URL=pglite` for ephemeral in-memory (tests). Workers require a real Postgres URL.
 
 ## Build & deploy
 

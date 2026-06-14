@@ -1,14 +1,10 @@
 import type { SchoolService } from '@edaya/core'
 import type { SeedApplication } from './types'
 import {
-  AttendanceSummary,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
   ReportCardDefinitionSectionRole,
   ReportCardDefinitionStatus,
-  ReportCardResult,
-  ReportCardResultSection,
-  ReportCardResultStatus,
 } from '@edaya/core'
 import {
   parseSeedDate,
@@ -31,65 +27,8 @@ function mapDefinitionStatus(mockStatus: 'published' | 'draft'): ReportCardDefin
     : ReportCardDefinitionStatus.Draft
 }
 
-const CLASS_SUBJECT_BY_SUBJECT: Record<string, string> = {
-  'subj-math': 'cs-6a-math',
-  'subj-fr': 'cs-6a-fr',
-  'subj-hist': 'cs-6a-hist',
-  'subj-sci': 'cs-6a-sci',
-  'subj-en': 'cs-6a-en',
-  'subj-eps': 'cs-6a-eps',
-  'subj-advmath': 'cs-term-advmath',
-  'subj-phys': 'cs-term-phys',
-}
-
-function mapResultStatus(mockStatus: 'published' | 'generated'): ReportCardResultStatus {
-  return mockStatus === 'published'
-    ? ReportCardResultStatus.Published
-    : ReportCardResultStatus.Draft
-}
-
-function buildSectionResults(
-  definition: (typeof SEED_REPORT_CARD_DEFINITIONS)[number],
-  sectionMarks: Record<string, readonly {
-    subjectId: string
-    average: number
-    coefficient: number
-    appreciation: string
-  }[]>,
-): ReportCardResultSection[] {
-  return definition.sections
-    .filter(section => section.mockKind === 'matieres')
-    .map((section) => {
-      const marks = sectionMarks[section.id] ?? []
-      const subResults = marks.map(mark => new ReportCardResultSection({
-        sectionId: `${section.id}-${mark.subjectId}`,
-        sectionKind: ReportCardDefinitionSectionKind.Subject,
-        name: mark.subjectId,
-        average: mark.average,
-        weight: mark.coefficient,
-        comment: mark.appreciation,
-        parentSectionId: section.id,
-        classSubjectId: CLASS_SUBJECT_BY_SUBJECT[mark.subjectId],
-        subResults: [],
-      }))
-      const sectionAverage = marks.length > 0
-        ? Math.round(marks.reduce((sum, mark) => sum + mark.average * mark.coefficient, 0)
-          / marks.reduce((sum, mark) => sum + mark.coefficient, 0))
-        : 0
-
-      return new ReportCardResultSection({
-        sectionId: section.id,
-        sectionKind: ReportCardDefinitionSectionKind.Group,
-        name: section.name,
-        average: sectionAverage,
-        weight: section.weight,
-        subResults,
-      })
-    })
-}
-
 export async function seedReportCards(
-  application: SeedApplication,
+  _application: SeedApplication,
   service: SchoolService,
 ): Promise<{ gradeScales: number, definitions: number, sections: number, results: number }> {
   for (const scale of SEED_GRADE_SCALES) {
@@ -152,35 +91,23 @@ export async function seedReportCards(
   }
 
   for (const result of SEED_REPORT_CARD_RESULTS) {
-    const definition = SEED_REPORT_CARD_DEFINITIONS.find(entry => entry.id === result.definitionId)
-    if (!definition) {
-      continue
-    }
-
-    const status = mapResultStatus(result.mockStatus)
-    await application.repositories.results.save(new ReportCardResult({
+    await service.generateReportCardResult({
       id: result.id,
-      reportCardDefinitionId: result.definitionId,
       studentId: result.studentId,
-      classGroupId: result.classGroupId,
       periodId: result.periodId,
-      attendanceSummary: new AttendanceSummary({
-        presentCount: 0,
-        absenceCount: 0,
-        excusedAbsenceCount: 0,
-        lateCount: 0,
-      }),
-      assessmentResultCount: 0,
-      overallAverage: Math.round(result.overallAverage),
-      rank: result.classRank,
-      classSize: result.classSize,
-      teacherComment: result.homeroomComment,
-      principalComment: 'principalComment' in result ? result.principalComment : undefined,
-      status,
+      reportCardDefinitionId: result.definitionId,
       generatedAt: parseSeedDate(result.generatedAt),
-      publishedAt: 'publishedAt' in result ? parseSeedDate(result.publishedAt) : undefined,
-      sectionResults: buildSectionResults(definition, result.sectionMarks),
-    }))
+    })
+
+    if (result.mockStatus === 'published') {
+      await service.publishReportCardResult({
+        id: result.id,
+        studentId: result.studentId,
+        periodId: result.periodId,
+        reportCardDefinitionId: result.definitionId,
+        publishedAt: 'publishedAt' in result ? parseSeedDate(result.publishedAt) : undefined,
+      })
+    }
   }
 
   return {

@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { browser, dev } from '$app/environment';
+	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
+	import { isLocalDevApi } from '$lib/env/app-env';
 
 	type ApiStatus = { connected: true; message: string } | { connected: false };
 
 	let status = $state<ApiStatus>({ connected: false });
 
 	$effect(() => {
-		if (!browser || !dev)
+		if (!browser || !isLocalDevApi())
 			return;
 
 		let cancelled = false;
@@ -27,7 +28,7 @@
 		};
 	});
 
-	const show = $derived(dev && !status.connected);
+	const show = $derived(isLocalDevApi() && !status.connected);
 </script>
 
 {#if show}

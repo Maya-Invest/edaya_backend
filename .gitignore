@@ -34,6 +34,9 @@ build/
 .env.*.local
 !.env.example
 
+# Local dev databases (PGlite + auth SQLite)
+.data/
+
 # IDE / Editors
 .idea/
 *.suo

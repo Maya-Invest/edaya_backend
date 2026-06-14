@@ -275,6 +275,8 @@ export async function runDevSchoolSeed(
       id: `enr-${student.id}`,
       studentId: student.id,
       classGroupId: student.classId,
+      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      enrollmentIndex: 1,
     })
   }
 
@@ -438,7 +440,8 @@ export async function runDevSchoolSeed(
       kind: assessmentKindBySeed[assessment.kind],
       maxScore: assessment.maxScore,
       coefficient: assessment.coefficient,
-      date: parseSeedDate(assessment.date),
+      date: assessment.date,
+      dueAt: assessment.date,
     })
 
     const scores = SEED_ASSESSMENT_RESULT_SCORES[assessment.id] ?? {}

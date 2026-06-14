@@ -3,10 +3,13 @@ import type { AuthProvisioner, SeedApplication } from '../types'
 import type { HttpSeedClient } from './client'
 import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/dev-fixtures'
 import { runDevAuthProvision } from '../run-dev-auth-provision'
+import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed } from '../run-dev-access-seed'
+import { runDevAuthLink } from '../run-dev-auth-link'
 import {
   logDevSeedResults,
   runDevSeeds,
 } from '../run-dev-seeds'
+import { runDevSchoolSeed } from '../run-dev-school-seed'
 import { HttpAuthProvisioner, signInViaHttp } from './auth'
 import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
 import { postEntityList } from './core-entity'
@@ -239,8 +242,39 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     && !options.serviceAccountApiKey
     && !options.application
   ) {
+    results.authProvision = await runDevAuthProvision(auth)
     await bootstrapHttpCoreSession(client)
-    application = createCoreHttpSeedApplication({ client })
+
+    const sessionApp = createCoreHttpSeedApplication({ client })
+    await runDevAccessRolesSeed(sessionApp)
+
+    const provision = await provisionSeedingServiceAccountHttp(client)
+    logProvisionedServiceAccountKey(provision)
+
+    const serviceAccountApiKey = provision.apiKey
+    if (!serviceAccountApiKey) {
+      throw new Error(
+        'Seeding service account already exists but SERVICE_ACCOUNT_API_KEY is not set. '
+        + 'Add the key to apps/api/.env or rotate the account.',
+      )
+    }
+
+    application = createCoreHttpSeedApplication({ client, serviceAccountApiKey })
+
+    results.school = await runDevSchoolSeed(application)
+    results.authLink = await runDevAuthLink(application, auth)
+    results.access = await runDevAccessAssignmentsSeed(application)
+
+    if (log) {
+      logDevSeedResults({
+        school: results.school,
+        authProvision: results.authProvision,
+        authLink: results.authLink,
+        access: results.access,
+      }, log)
+    }
+
+    return results
   }
   else {
     application = await resolveSeedApplication(options)
