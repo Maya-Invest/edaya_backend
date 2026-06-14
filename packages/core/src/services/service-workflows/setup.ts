@@ -89,8 +89,8 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
     await permissionAction(Permission.PLATFORM_REGISTER_SCHOOL)(this.baseService.actor)
     const school = new SchoolEntity(input)
-    if (school.ownerStaffId) {
-      await this.validateOwnerCandidate(school.id, school.ownerStaffId)
+    if (school.ownerSubjectId) {
+      await this.validateOwnerSubject(school.id, school.ownerSubjectId)
     }
     await this.baseService.schools.save(school, { moduleChecked: true })
     return school
@@ -99,15 +99,15 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async updateSchoolConfiguration({ schoolId, ...changes }: UpdateSchoolConfigurationInput): Promise<School> {
     const existing = await this.requireEntity(this.baseService.schools, schoolId)
     await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
-    const ownerStaffId = changes.ownerStaffId === undefined ? existing.ownerStaffId : changes.ownerStaffId
-    if (ownerStaffId !== existing.ownerStaffId) {
-      await this.validateOwnerTransfer(existing, ownerStaffId)
+    const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
+    if (ownerSubjectId !== existing.ownerSubjectId) {
+      await this.validateOwnerTransfer(existing, ownerSubjectId)
     }
     const school = new SchoolEntity({
       id: existing.id,
       name: changes.name ?? existing.name,
       timeZone: changes.timeZone ?? existing.timeZone,
-      ownerStaffId,
+      ownerSubjectId,
       type: changes.type === undefined ? existing.type : changes.type,
       country: changes.country === undefined ? existing.country : changes.country,
       city: changes.city === undefined ? existing.city : changes.city,
@@ -205,58 +205,31 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
-    const staffMember = await this.saveConstructed(
+    return this.saveConstructed(
       this.baseService.staffMembers,
       new StaffMemberEntity(staffMemberInput),
     )
-    await this.assignInitialSchoolOwner(staffMember)
-    return staffMember
   }
 
-  private async assignInitialSchoolOwner(staffMember: StaffMember): Promise<void> {
-    const school = await this.baseService.repositories.schools.findById(staffMember.schoolId)
-    if (!school) {
-      denyResourceAccess()
-    }
-    if (school.ownerStaffId) {
-      return
-    }
-    const schoolStaff = await this.baseService.repositories.staffMembers.list({ schoolId: staffMember.schoolId })
-    if (schoolStaff.length !== 1 || schoolStaff[0]?.id !== staffMember.id) {
-      return
-    }
-
-    await this.baseService.schools.save(new SchoolEntity({
-      id: school.id,
-      name: school.name,
-      timeZone: school.timeZone,
-      ownerStaffId: staffMember.id,
-      type: school.type,
-      country: school.country,
-      city: school.city,
-      createdAt: school.createdAt,
-    }), { moduleChecked: true })
-  }
-
-  private async validateOwnerTransfer(existing: School, ownerStaffId: string | null | undefined): Promise<void> {
-    if (!ownerStaffId) {
+  private async validateOwnerTransfer(existing: School, ownerSubjectId: string | null | undefined): Promise<void> {
+    if (!ownerSubjectId) {
       denyResourceAccess()
     }
 
     if (
-      existing.ownerStaffId
+      existing.ownerSubjectId
       && this.baseService.actor.kind !== 'system'
-      && !(this.baseService.actor.kind === 'staff' && this.baseService.actor.staffMemberId === existing.ownerStaffId)
+      && !(this.baseService.actor.kind === 'staff' && this.baseService.actor.subjectId === existing.ownerSubjectId)
     ) {
       denyResourceAccess()
     }
 
-    await this.validateOwnerCandidate(existing.id, ownerStaffId)
+    await this.validateOwnerSubject(existing.id, ownerSubjectId)
   }
 
-  private async validateOwnerCandidate(schoolId: string, ownerStaffId: string): Promise<void> {
-    const owner = await this.baseService.repositories.staffMembers.findById(ownerStaffId)
-    if (!owner || !owner.isActive || owner.schoolId !== schoolId) {
+  private async validateOwnerSubject(schoolId: string, ownerSubjectId: string): Promise<void> {
+    const ownedSchool = await this.baseService.repositories.schools.findOne({ ownerSubjectId })
+    if (ownedSchool && ownedSchool.id !== schoolId) {
       denyResourceAccess()
     }
   }

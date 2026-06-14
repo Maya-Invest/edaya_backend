@@ -4,8 +4,8 @@ import {
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-  seedMinimalSchoolFixtures,
 } from '@edaya/dev-fixtures'
+import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import {
   collectSetCookieHeaders,
@@ -83,7 +83,7 @@ describe('Better Auth session integration', () => {
   it('resolves a linked staff actor from the session cookie', async () => {
     const { authDb, application, auth, env } = await openContext()
 
-    await seedMinimalSchoolFixtures(application)
+    await seedMinimalSchool(application)
     const subjectId = await ensureAuthUser(auth, env, authDb, {
       email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       password: DEV_AUTH_PASSWORD,
@@ -126,7 +126,7 @@ describe('Better Auth session integration', () => {
   it('returns 401 on a protected route when subjectId is not linked', async () => {
     const { application, auth, env } = await openContext()
 
-    await seedMinimalSchoolFixtures(application)
+    await seedMinimalSchool(application)
 
     const signUpResponse = await signUpEmail(auth, env, {
       email: 'unlinked@school.edu',
@@ -150,7 +150,7 @@ describe('Better Auth session integration', () => {
   it('returns 401 on a protected route when subjectId is ambiguous', async () => {
     const { authDb, application, auth, env } = await openContext()
 
-    await seedMinimalSchoolFixtures(application)
+    await seedMinimalSchool(application)
 
     const signUpResponse = await signUpEmail(auth, env, {
       email: 'ambiguous@school.edu',

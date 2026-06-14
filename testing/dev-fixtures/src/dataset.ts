@@ -67,6 +67,9 @@ export const SEED_STAFF = [
   { id: 'st7', name: 'Tom Évrard', email: 't.evrard@school.edu' },
 ] as const
 
+/** Staff member id designated as school owner in dev fixtures (Camille Moreau / st5). */
+export const SEED_SCHOOL_OWNER_STAFF_ID = SEED_STAFF[0].id
+
 export const SEED_STUDENTS = [
   { id: 's1', classId: '6a', name: 'Amélie Laurent', birthDate: '2014-03-12' },
   { id: 's2', classId: '6a', name: 'Noah Bennett', birthDate: '2014-07-22' },

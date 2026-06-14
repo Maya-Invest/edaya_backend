@@ -43,14 +43,14 @@ describe("onboarding register-school route", () => {
     const school = await response.json() as {
       id: string;
       name: string;
-      ownerStaffId?: string;
+      ownerSubjectId?: string;
     };
 
     expect(school.id).toBeTruthy();
     expect(school.name).toBe("Bootstrap School");
-    expect(school.ownerStaffId).toBeTruthy();
+    expect(school.ownerSubjectId).toBe(subjectId);
 
-    const ownerStaff = await application.repositories.staffMembers.findById(school.ownerStaffId!);
+    const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
     expect(ownerStaff?.subjectId).toBe(subjectId);
     expect(ownerStaff?.schoolId).toBe(school.id);
 

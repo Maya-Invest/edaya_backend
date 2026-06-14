@@ -70,7 +70,7 @@ function createAccessControlContext(actor = actorWithPermissions([Permission.ACC
 
   const mockRepos = {
     schools: {
-      findById: mock(async (id: string) => id === 'sch1' ? { id: 'sch1', ownerStaffId: undefined } : undefined),
+      findById: mock(async (id: string) => id === 'sch1' ? { id: 'sch1', ownerSubjectId: undefined } : undefined),
     },
     staffMembers: {
       findById: mock(async (id: string) => id === 'st1' ? staffMember : undefined),

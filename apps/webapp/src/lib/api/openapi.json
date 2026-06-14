@@ -281,7 +281,7 @@
             "type": "string",
             "minLength": 1
           },
-          "ownerStaffId": {
+          "ownerSubjectId": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -403,7 +403,7 @@
             "type": "string",
             "minLength": 1
           },
-          "ownerStaffId": {
+          "ownerSubjectId": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -446,7 +446,7 @@
             "type": "string",
             "minLength": 1
           },
-          "ownerStaffId": {
+          "ownerSubjectId": {
             "type": "string",
             "nullable": true,
             "minLength": 1

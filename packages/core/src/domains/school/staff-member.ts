@@ -71,7 +71,9 @@ export async function validateStaffMemberSave(
   actor: ActorMetadata,
 ): Promise<void> {
   const school = await repositories.schools.findById(staffMember.schoolId)
-  if (existing?.isActive && !staffMember.isActive && school?.ownerStaffId === staffMember.id) {
+  const ownerSubjectId = school?.ownerSubjectId
+  const subjectId = staffMember.subjectId ?? existing?.subjectId
+  if (existing?.isActive && !staffMember.isActive && ownerSubjectId && subjectId === ownerSubjectId) {
     throw new BusinessRuleViolationError('SCHOOL_OWNER_DEACTIVATION_BLOCKED', 'Transfer school ownership before deactivating the owner')
   }
 
@@ -90,7 +92,7 @@ async function validateStaffMemberDelete(
   repositories: SchoolRepositories,
 ): Promise<void> {
   const school = await repositories.schools.findById(staffMember.schoolId)
-  if (school?.ownerStaffId === staffMember.id) {
+  if (school?.ownerSubjectId && staffMember.subjectId === school.ownerSubjectId) {
     throw new BusinessRuleViolationError('SCHOOL_OWNER_DELETE_BLOCKED', 'Transfer school ownership before deleting the owner')
   }
 

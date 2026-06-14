@@ -17,8 +17,6 @@ export const EnvSchema = z.object({
   COOKIE_DOMAIN: z.string().optional(),
   SYSTEM_ACTOR_SECRET: z.string().min(1).optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
-  /** When true, run dev seed on startup. When unset, seeds automatically in development with pglite/memory. */
-  SEED_ON_START: z.coerce.boolean().optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
   /** When true, allow POST /core/auth/demo-login-accounts/list for the login screen. */

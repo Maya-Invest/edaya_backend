@@ -85,6 +85,20 @@
       "when": 1781104996413,
       "tag": "0011_extracurricular_activities",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781104996414,
+      "tag": "0012_owner_subject_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781104996415,
+      "tag": "0013_backfill_owner_subject_id",
+      "breakpoints": true
     }
   ]
 }

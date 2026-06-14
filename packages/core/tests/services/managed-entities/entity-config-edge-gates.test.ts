@@ -275,13 +275,13 @@ describe('entity config edge gates', () => {
 
     const systemContext = createTestApp(actor)
     await systemContext.repositories.studentRepository.save(student)
-    await expect(systemContext.app.baseService.studentNotes.save(new StudentNote({
+    await systemContext.app.baseService.studentNotes.save(new StudentNote({
       id: 'system-note',
       schoolId: 'school',
       studentId: student.id,
-      authorStaffId: 'system',
-      body: 'System cannot author notes',
-    }))).rejects.toBeInstanceOf(AuthorizationError)
+      authorStaffId: 'seed-staff',
+      body: 'System seeding may author notes with explicit staff id',
+    }))
 
     const teacherActor = createStaffActorMetadata({
       subjectId: 'teacher-user',

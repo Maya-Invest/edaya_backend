@@ -3,7 +3,7 @@
 **Stratégie :** construire d'abord **tous les écrans manquants** avec les **mocks du front** (`src/lib/data/school.ts`).  
 **Pas de connexion API** dans ce plan — le branchement back-end viendra **après**, dans la phase Z.  
 **Référence métier :** [rapport-comparaison-ui-api.md](./rapport-comparaison-ui-api.md) (section 4 — ce que l'API prévoit)  
-**Convention :** cocher `- [x]` au fur et à mesure. Une tâche = finie quand l'écran fonctionne en `npm run dev` **sans `.env`**.
+**Convention :** cocher `- [x]` au fur et à mesure. Une tâche = finie quand l'écran fonctionne en `bun dev` **sans `.env`**.
 
 **Dernière mise à jour :** juin 2026
 
@@ -84,7 +84,7 @@ Pour chaque feature :
 - [ ] **i18n** — clés FR + EN dans `dictionaries.ts`
 - [ ] **Actions UI** — boutons / formulaires mettent à jour l'état local ou simulent l'action (toast « enregistré »)
 - [ ] **Permissions mock** — `permissions.ts` : afficher / masquer selon rôle simulé
-- [ ] **Test manuel** — parcours complet en `npm run dev`, sans `.env`
+- [ ] **Test manuel** — parcours complet en `bun dev`, sans `.env`
 
 **Hors scope immédiat :** `resources/`, `mappers/`, `createApiClient`, Better Auth, `.env`.
 
@@ -371,7 +371,7 @@ Pour chaque feature :
 
 > **Ne pas commencer** tant que les phases 0–9 mock ne sont pas suffisamment avancées.
 
-- [ ] Réimporter la spec OpenAPI (`openapi/edaya_open_api.json`) + `npm run generate:api`
+- [ ] Réimporter la spec OpenAPI (`openapi/edaya_open_api.json`) + `bun run openapi:generate`
 - [ ] Recréer `src/lib/api/` (client, resources, mappers)
 - [ ] `.env` + auth Better Auth
 - [ ] Remplacer mocks par `+page.server.ts` écran par écran

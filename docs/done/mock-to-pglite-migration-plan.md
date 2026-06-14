@@ -68,7 +68,7 @@ Une ligne = un domaine mock. Cocher **toutes** les colonnes d'une ligne avant de
 | Colonne | Fichier / action |
 |---------|------------------|
 | `SEED_*` | Constantes dans `testing/dev-fixtures/src/dataset.ts` |
-| `run-dev-seed` | Insertion via commandes métier dans `apps/api/src/lib/seed/run-dev-seed.ts` |
+| `run-dev-school-seed` | Insertion via commandes métier dans `testing/seeding/src/run-dev-school-seed.ts` |
 | Permissions | `apps/api/src/lib/seed/run-dev-access-seed.ts` |
 | Test seed | Assertion liste non vide dans `apps/api/tests/seed/` |
 
@@ -411,7 +411,7 @@ school.ts (mock)          testing/dev-fixtures/dataset.ts
 | Mocks webapp | `apps/webapp/src/lib/data/school.ts` |
 | Mocks bulletins | `apps/webapp/src/lib/data/report-cards.ts` |
 | Dataset seed | `testing/dev-fixtures/src/dataset.ts` |
-| Seed entités | `apps/api/src/lib/seed/run-dev-seed.ts` |
+| Seed entités | `testing/seeding/src/run-dev-school-seed.ts` |
 | Seed permissions | `apps/api/src/lib/seed/run-dev-access-seed.ts` |
 | Seed auth | `apps/api/src/lib/seed/run-dev-auth-seed.ts` |
 | Tests seed | `apps/api/tests/seed/` |

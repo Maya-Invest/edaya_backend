@@ -1,20 +1,20 @@
 import { unlinkSync } from "node:fs";
 import { createRuntimeRegistry } from "@/lib/runtime/process-registry";
-import { buildApiRuntime } from "@/lib/runtime/create-runtime";
+import { buildNodeApiRuntime } from "@/lib/runtime/create-runtime-node";
 import type { Environment } from "@/lib/runtime/env";
 import type { ApiRuntime } from "@/lib/runtime/types";
 
 const DEFAULT_AUTH_DATABASE_PATH = ".data/auth.sqlite";
 
 const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
-  buildRuntime: buildApiRuntime,
+  buildRuntime: buildNodeApiRuntime,
   closeRuntime: runtime => runtime.close(),
   workerErrorMessage: "getApiRuntime() must not be used on the worker runtime; use resolveApiRuntime(c) per request.",
 });
 
 /**
  * Returns the shared API runtime for the given env (database + auth + school app).
- * Always use this entry point — do not call `buildApiRuntime` directly or you
+ * Always use this entry point — do not call `buildNodeApiRuntime` directly or you
  * risk creating a second database handle that middleware will not see.
  */
 export const getApiRuntime = runtimeRegistry.get;

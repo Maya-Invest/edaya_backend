@@ -26,7 +26,7 @@ export const schoolSchema = z.object({
       return false
     }
   }, val => ({ message: `Invalid IANA time zone: ${val}` })),
-  ownerStaffId: z.string().trim().min(1, 'ownerStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  ownerSubjectId: z.string().trim().min(1, 'ownerSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   type: z.nativeEnum(SchoolType).nullable().optional().transform(v => v === null ? undefined : v),
   country: z.string().trim().min(1, 'country must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   city: z.string().trim().min(1, 'city must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -53,7 +53,7 @@ export class School {
   get id() { return this.data.id }
   get name() { return this.data.name }
   get timeZone() { return this.data.timeZone }
-  get ownerStaffId() { return this.data.ownerStaffId }
+  get ownerSubjectId() { return this.data.ownerSubjectId }
   get type() { return this.data.type }
   get country() { return this.data.country }
   get city() { return this.data.city }

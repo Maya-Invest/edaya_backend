@@ -82,7 +82,7 @@ flowchart TB
 | **Node** | `apps/api/src/entries/node.ts` | `.env` (dotenv) | `cd apps/api && bun dev` |
 | **Worker** | `apps/api/src/entries/worker.ts` | `wrangler.toml` + `.dev.vars` | `cd apps/api && bun run dev:worker` |
 
-Node supports in-memory Postgres (`DATABASE_URL=pglite`). Workers require a real Postgres URL.
+Node supports persisted PGlite (`DATABASE_URL=pglite:.data/school`) or in-memory (`pglite`) on Node. Workers require a real Postgres URL.
 
 ### API layout
 
@@ -175,17 +175,23 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | Command | Description |
 |---------|-------------|
 | `bun dev` | Start API + webapp in watch mode |
-| `bun seed` | Run dev database seed (API) |
+| `bun seed` | Run all dev seeds (`auth` → `school` → `auth:link` → `access`) |
+| `bun run seed:school` | Seed school Postgres data only |
+| `bun run seed:auth` | Provision Better Auth user accounts only |
+| `bun run seed:auth:link` | Link auth users to staff/guardians and set school owner |
+| `bun run seed:access` | Seed roles and staff permission assignments |
 | `cd apps/api && bun dev` | API only (Node, port 9999) |
-| `cd apps/api && bun run dev:worker` | API only (Cloudflare Worker) |
+| `bun run dev:worker` | API only (Cloudflare Worker) |
 | `cd apps/webapp && bun dev` | Webapp only (port 5173) |
 | `cd apps/webapp && bun run preview` | Preview production build |
-| `cd apps/webapp && bun run preview:cloudflare` | Preview on Cloudflare Pages locally |
-| `cd apps/webapp && bun run deploy` | Build and deploy webapp to Cloudflare Pages |
+| `cd apps/webapp && bun run preview:worker` | Preview webapp on Cloudflare Workers locally |
+| `bun run deploy:webapp` | Build and deploy webapp to Cloudflare Workers |
 | `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
-| `cd apps/api && bun run deploy:worker` | Deploy API to Cloudflare Workers |
+| `bun run deploy:api` | Deploy API to Cloudflare Workers |
 
 ### Database
+
+Root scripts use the `db:*` prefix. Integration packages expose the underlying `migrate:*` scripts (e.g. `bun --filter @edaya/neon-migrations migrate:dev`).
 
 | Command | Description |
 |---------|-------------|
@@ -225,9 +231,10 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run check` | TypeScript / Svelte type checks |
 | `bun run quality` | `lint` + `check` per package |
 | `bun run test` | Unit and integration tests |
+| `bun run test:remote` | Integration tests against a real Postgres database |
 | `bun run test:coverage` | Tests with coverage (where supported) |
 | `bun run build` | Build deployable apps (webapp + API Node bundle) |
-| `bun run fullcheck` | `lint:fix` → `quality` → `build` → `test` (full gate) |
+| `bun run fullcheck` | `lint:fix` → `check` → `build` → `test` (full gate) |
 
 ### Per-package shortcuts
 
@@ -245,11 +252,11 @@ bun --filter @edaya/api-client check
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | `pglite` (in-memory dev) or `postgres://…` |
+| `DATABASE_URL` | `pglite:.data/school` (persisted dev), `pglite` (in-memory tests), or `postgres://…` |
 | `BETTER_AUTH_SECRET` | Auth signing secret |
 | `BETTER_AUTH_URL` | Public API URL for auth callbacks |
 | `TRUSTED_ORIGINS` | CORS / auth origins (e.g. webapp URL) |
-| `SEED_ON_START` | Auto-seed on startup (`true` / `false`; default on with `pglite` in dev) |
+| `SYSTEM_ACTOR_SECRET` | Dev default `dev-system-secret` — required for HTTP seed (non-auth scopes) |
 
 **Webapp** (`apps/webapp/.env`):
 

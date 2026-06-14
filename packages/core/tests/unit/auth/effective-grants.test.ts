@@ -10,7 +10,7 @@ import {
 } from '../../../src/authorization'
 import { AccessRole, School, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
 
-function createRepos(assignments: unknown[] = [], ownerStaffId?: string): SchoolRepositories {
+function createRepos(assignments: unknown[] = [], ownerSubjectId?: string, staffSubjectId?: string): SchoolRepositories {
   const roleStore = new Map<string, AccessRole>()
   const assignmentStore = new Map<string, StaffRoleAssignment>()
 
@@ -20,13 +20,14 @@ function createRepos(assignments: unknown[] = [], ownerStaffId?: string): School
         id: 'school-1',
         name: 'School',
         timeZone: 'UTC',
-        ownerStaffId,
+        ownerSubjectId,
       })),
     },
     staffMembers: {
       findById: mock(async () => ({
         id: 'staff-1',
         schoolId: 'school-1',
+        subjectId: staffSubjectId,
         isActive: true,
       })),
     },
@@ -54,7 +55,7 @@ function createRepos(assignments: unknown[] = [], ownerStaffId?: string): School
 
 describe('resolveEffectiveGrants', () => {
   test('grants school owner full school-scoped access without role assignments', async () => {
-    const repositories = createRepos([], 'staff-1')
+    const repositories = createRepos([], 'subject-owner', 'subject-owner')
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-1',

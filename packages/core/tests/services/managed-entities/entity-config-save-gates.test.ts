@@ -565,13 +565,14 @@ describe('Entity config save gates', () => {
       id: 'school',
       name: 'School',
       timeZone: 'UTC',
-      ownerStaffId: 'owner',
+      ownerSubjectId: 'subject-owner',
     }))
     const owner = new StaffMember({
       id: 'owner',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Owner',
+      subjectId: 'subject-owner',
     })
     await repositories.staffMemberRepository.save(owner)
 

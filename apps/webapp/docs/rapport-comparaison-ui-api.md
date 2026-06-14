@@ -345,4 +345,4 @@ src/lib/auth/client.ts     # Better Auth (non utilisé en UI)
 
 ---
 
-*Document généré pour le projet EDAYA. Regénérer les types API après mise à jour de la spec : `npm run generate:api`.*
+*Document généré pour le projet EDAYA. Regénérer les types API après mise à jour de la spec : `bun run openapi:generate`.*

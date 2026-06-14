@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
 import { existsSync } from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'

@@ -4,10 +4,8 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "tsx watch src/entries/node.ts",
+    "dev": "bun --watch src/entries/node.ts",
     "dev:worker": "wrangler dev --env-file .dev.vars",
-    "db:migrate:dev": "bun --filter @edaya/neon-migrations migrate:dev",
-    "seed": "tsx src/scripts/seed.ts",
     "start": "node dist/node.js",
     "deploy:worker": "wrangler deploy --env production",
     "deploy:worker:dry-run": "wrangler deploy --env production --dry-run",
@@ -15,10 +13,10 @@
     "quality": "bun run lint && bun run check",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
-    "test": "cross-env NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
+    "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
     "build": "tsup",
-    "export-openapi": "tsx src/scripts/export-openapi.ts",
-    "generate-api-client": "tsx src/scripts/generate-api-client.ts"
+    "export-openapi": "bun src/scripts/export-openapi.ts",
+    "generate-api-client": "bun src/scripts/generate-api-client.ts"
   },
   "dependencies": {
     "@edaya/betterauth-d1-migrations": "workspace:*",
@@ -46,9 +44,6 @@
     "@types/bun": "^1.3.14",
     "bun-types": "^1.3.14",
     "@types/node": "^25.9.2",
-    "cross-env": "^7.0.3",
-    "drizzle-kit": "^0.24.2",
-    "tsx": "^4.19.4",
     "typescript": "^6.0.2",
     "wrangler": "^4.99.0"
   }

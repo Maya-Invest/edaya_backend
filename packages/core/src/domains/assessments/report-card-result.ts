@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { AttendanceSummary } from '../../value_object/attendance-summary'
+import { AttendanceSummary, attendanceSummarySchema } from '../../value_object/attendance-summary'
 import { parseDomain, roundTo2, zodDate } from '../utils'
 import { reportCardResultSectionSchema } from './report-card-result-section'
 
@@ -22,7 +22,7 @@ export const reportCardResultBaseSchema = z.object({
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   periodId: z.string().trim().min(1, 'periodId must not be blank'),
-  attendanceSummary: z.instanceof(AttendanceSummary),
+  attendanceSummary: attendanceSummarySchema.transform(data => new AttendanceSummary(data)),
   assessmentResultCount: z.number().int().nonnegative('assessmentResultCount must be a non-negative integer'),
   overallAverage: z.number().finite().nonnegative('overallAverage must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
   rank: z.number().int().nonnegative('rank must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),

@@ -10,7 +10,7 @@ Run the API and webapp together on your machine. The webapp talks to the API thr
 ## First-time setup
 
 ```sh
-# API — in-memory Postgres, no Docker required
+# API — persisted PGlite + auth SQLite under apps/api/.data/
 cp apps/api/.env.example apps/api/.env
 
 # Webapp — points SSR / server handlers at the local API
@@ -57,27 +57,37 @@ The API runs on **Node** locally (`bun dev`) and is also packaged for **Cloudfla
 
 | `DATABASE_URL` | Use case |
 |----------------|----------|
-| `pglite` | Default local dev — ephemeral in-memory Postgres |
-| `postgres://…` | Persistent data (e.g. local Postgres on port 5432) |
+| `pglite:.data/school` | Default local dev — PGlite persisted under `apps/api/.data/` (gitignored) |
+| `pglite` | Ephemeral in-memory Postgres (tests, CI) |
+| `postgres://…` | Real Postgres (Docker, Neon, staging) |
+
+Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under `.data/`.
 
 ## Dev database seed
 
-With `DATABASE_URL=pglite`, the API **auto-seeds on startup** in development (school, year, classes, staff, students, guardians). IDs match the webapp mocks in `apps/webapp/src/lib/data/school.ts` for future API wiring.
+Seeding is **HTTP-only** via `@edaya/seeding` — the API has no seed logic. School data persists under `.data/` when using `DATABASE_URL=pglite:.data/school`; seed once after a fresh clone or `rm -rf apps/api/.data`.
 
 | Command | Purpose |
 |---------|---------|
-| `bun seed` (repo root) | Run seed manually |
-| `cd apps/api && bun run seed` | Same, API package only |
+| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `auth:link` → `access`) |
+| `bun seed` | Same as `seed:all` — full demo data via HTTP + system actor |
+| `bun seed:auth` | Better Auth accounts only (no `SYSTEM_ACTOR_SECRET`) |
+| `bun seed:smoke` | Sign in + verify `/core/authorization/effective-grants` |
+| `bun seed:remote` | Full seed against `SEED_API_URL` (staging) |
 
-Fixture data lives in `testing/dev-fixtures/`. API seed orchestration stays in `apps/api/src/lib/seed/`. Extend the fixtures package and `run-dev-seed.ts` as you connect more pages to the API.
+Requires `SYSTEM_ACTOR_SECRET=dev-system-secret` in `apps/api/.env` (must match the running API) for all scopes except `auth`.
 
-| Env | Behavior |
-|-----|----------|
-| `SEED_ON_START=true` | Always seed on API startup (skips if data exists) |
-| `SEED_ON_START=false` | Never auto-seed |
-| *(unset)* + `pglite` in dev | Auto-seed on startup |
+```sh
+# Terminal 1
+bun dev
 
-With persistent Postgres, auto-seed is off by default — run `bun seed` once after creating the database.
+# Terminal 2 — first time or after wiping .data/
+bun seed:init
+```
+
+Fixture data lives in `testing/dev-fixtures/`. Loaders and orchestration live in `testing/seeding/`.
+
+Seed and route integration tests (require seeded DB) live in `testing/integration-tests/src/seed/` and `src/routes/`. API unit tests in `apps/api/tests/` use mocks only.
 
 ## Troubleshooting
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')

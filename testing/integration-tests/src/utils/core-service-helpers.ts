@@ -49,6 +49,21 @@ async function ensureActorStaffMember(app: SchoolService): Promise<void> {
       schoolId: actor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
+      subjectId: actor.subjectId,
+    }))
+    return
+  }
+
+  if (!existing.subjectId) {
+    await app.baseService.repositories.staffMembers.save(new StaffMember({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      email: existing.email,
+      isActive: existing.isActive,
+      createdAt: existing.createdAt,
+      subjectId: actor.subjectId,
     }))
   }
 }
@@ -58,7 +73,7 @@ export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School
   const actor = app.baseService.actor
   const school = new School({
     ...input,
-    ownerStaffId: input.ownerStaffId ?? (actor.kind === 'staff' && actor.schoolId === input.id ? actor.staffMemberId : undefined),
+    ownerSubjectId: input.ownerSubjectId ?? (actor.kind === 'staff' ? actor.subjectId : undefined),
   })
   const registrationActor = createSystemActorMetadata({
     systemId: 'integration-fixture',
@@ -86,7 +101,7 @@ export async function updateSchool(app: SchoolService, input: { schoolId: string
     id: existing.id,
     name: input.name ?? existing.name,
     timeZone: input.timeZone ?? existing.timeZone,
-    ownerStaffId: input.ownerStaffId ?? existing.ownerStaffId,
+    ownerSubjectId: input.ownerSubjectId ?? existing.ownerSubjectId,
     type: input.type ?? existing.type,
     country: input.country ?? existing.country,
     city: input.city ?? existing.city,

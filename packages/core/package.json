@@ -13,7 +13,6 @@
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "test": "bun test",
-    "test:coverage": "bun test --coverage",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix"
   },

@@ -5,9 +5,12 @@
   "private": true,
   "scripts": {
     "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
     "migrate": "drizzle-kit migrate",
     "migrate:all": "bun ./scripts/migrate-all.ts",
-    "migrate:dev": "bun ./scripts/migrate-dev.ts"
+    "migrate:dev": "bun ./scripts/migrate-dev.ts",
+    "lint": "eslint scripts drizzle.config.ts",
+    "lint:fix": "eslint scripts drizzle.config.ts --fix"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

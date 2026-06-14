@@ -7,6 +7,7 @@ import {
   listDemoLoginAccountsRoute,
 } from "@/routes/auth.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
+import { buildSystemEntityRoutes } from "@/routes/system-entity.routes";
 import {
   onboardingRegisterSchoolHandler,
   onboardingRegisterSchoolRoute,
@@ -45,6 +46,10 @@ router
   .openapi(listDemoLoginAccountsRoute, listDemoLoginAccountsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
+
+buildSystemEntityRoutes().forEach(({ route, handler }) => {
+  router.openapi(route, handler);
+});
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

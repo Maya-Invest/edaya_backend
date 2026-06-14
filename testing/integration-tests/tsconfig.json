@@ -1,13 +1,12 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../apps/api/tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "types": [
-      "bun"
-    ]
+    "rootDir": "../..",
+    "noEmit": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "../../apps/api/src/**/*"
   ],
   "exclude": [
     "node_modules"

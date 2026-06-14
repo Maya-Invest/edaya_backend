@@ -7,6 +7,7 @@ import {
 import { authSchema, runMigrations as runAuthMigrations } from '@edaya/betterauth-d1-migrations'
 import {
   createRepositoryAuthorizationPolicy,
+  School,
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
@@ -182,6 +183,20 @@ export async function linkStaffMemberToAuthUser(
     createdAt: staff.createdAt,
     subjectId,
   }))
+
+  const school = await application.repositories.schools.findById(staff.schoolId)
+  if (school && !school.ownerSubjectId) {
+    await application.repositories.schools.save(new School({
+      id: school.id,
+      name: school.name,
+      timeZone: school.timeZone,
+      ownerSubjectId: subjectId,
+      type: school.type,
+      country: school.country,
+      city: school.city,
+      createdAt: school.createdAt,
+    }))
+  }
 }
 
 export async function signUpEmail(

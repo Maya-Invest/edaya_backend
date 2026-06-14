@@ -20,7 +20,7 @@ bun run dev:worker
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
-Default `DATABASE_URL=pglite` uses in-memory Postgres on Node only (no Docker). Dev data is auto-seeded on startup; run `bun run seed` to seed manually.
+Default `DATABASE_URL=pglite:.data/school` uses persisted PGlite on Node (no Docker). School data and auth SQLite live under `apps/api/.data/` (gitignored). Use `DATABASE_URL=pglite` for ephemeral in-memory (tests). Workers require a real Postgres URL.
 
 ## Build & deploy
 
@@ -31,7 +31,7 @@ Default `DATABASE_URL=pglite` uses in-memory Postgres on Node only (no Docker). 
 
 Before first production deploy:
 
-1. Apply school migrations to the Hyperdrive origin DB: `bun run db:migrate:dev`
+1. Apply school migrations to the Hyperdrive origin DB: `bun run db:migrate:dev` (from repo root)
 2. Apply Better Auth migrations to D1: `bun run db:migrate:auth:remote`
 3. Set `BETTER_AUTH_SECRET`: `wrangler secret put BETTER_AUTH_SECRET --env production`
 4. Dry-run: `bun run deploy:worker:dry-run`

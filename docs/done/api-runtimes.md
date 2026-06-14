@@ -14,10 +14,10 @@ Same schema for both runtimes (`apps/api/src/lib/school-api/schemas/openapi/env.
 | Variable | Node | Worker |
 |----------|------|--------|
 | `RUNTIME` | `node` (default) | `worker` |
-| `DATABASE_URL` | `pglite` for in-memory dev, or `postgres://…` | Postgres URL or Hyperdrive connection string |
+| `DATABASE_URL` | `pglite:.data/school` (persisted dev), `pglite` (in-memory), or `postgres://…` | Postgres URL or Hyperdrive connection string |
 | `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
-| `SEED_ON_START` | Auto on `pglite` in dev | Off by default (`pglite` not supported on Worker) |
+| `SYSTEM_ACTOR_SECRET` | `.env` (HTTP seed / system routes) | Worker secret |
 
 `dotenv` is **only** used by the Node runtime in non-production environments.
 
@@ -39,7 +39,7 @@ cd apps/api && bun run dev:worker
 
 - **`wrangler.toml`** — non-secret `[vars]` (`RUNTIME`, `LOG_LEVEL`, …)
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
-- In-memory `pglite` is rejected on the Worker runtime; use a real Postgres connection string
+- Any `pglite` / `file://` `DATABASE_URL` is rejected on the Worker runtime; use a real Postgres connection string
 
 Deploy with `bun run deploy:worker` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB.
 

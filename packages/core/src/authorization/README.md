@@ -165,7 +165,7 @@ Resolution lives in `resolution/` and is exposed through `SchoolRepositories.aut
 ### Staff (`resolveEffectiveGrants`)
 
 1. Load active `StaffMember` for the school.
-2. **School owner** (`school.ownerStaffId`) → `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`, empty scope grants.
+2. **School owner** (`school.ownerSubjectId` matches staff `subjectId`) → `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`, empty scope grants.
 3. Load active `StaffRoleAssignment` rows (optionally filtered by `academicYearId` and validity window).
 4. Union permissions from linked active `AccessRole` records.
 5. Build scope grants from:

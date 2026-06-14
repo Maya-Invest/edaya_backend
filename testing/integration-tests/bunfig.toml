@@ -1,2 +1,6 @@
 [test]
 preload = ["./src/support/bootstrap.ts"]
+root = "./src"
+
+[test.path]
+"@/*" = "../../apps/api/src/*"

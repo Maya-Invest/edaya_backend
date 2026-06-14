@@ -40,6 +40,7 @@ export {
   SEED_SCHOOL_ID,
   SEED_SCHOOL_NORD_ID,
   SEED_SCHOOL_NORD_PROFILE,
+  SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_SCHOOL_PROFILE,
   SEED_SESSION_PROGRESS,
   SEED_STAFF,
@@ -68,7 +69,6 @@ export {
 export {
   SEED_SCHOOL_PROFILES,
 } from './school-profiles-seed'
-export { seedMinimalSchoolFixtures } from './seed-minimal-school'
 export {
   SEED_TEACHING_LOG_ENTRIES,
   type TeachingLogSeedEntry,

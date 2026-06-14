@@ -48050,7 +48050,7 @@ export interface components {
             id: string;
             name: string;
             timeZone: string;
-            ownerStaffId?: string | null;
+            ownerSubjectId?: string | null;
             /** @enum {string|null} */
             type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
@@ -48080,7 +48080,7 @@ export interface components {
             id: string;
             name: string;
             timeZone: string;
-            ownerStaffId?: string | null;
+            ownerSubjectId?: string | null;
             /** @enum {string|null} */
             type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
@@ -48090,7 +48090,7 @@ export interface components {
         UpdateSchoolConfigurationCommand: {
             name?: string;
             timeZone?: string;
-            ownerStaffId?: string | null;
+            ownerSubjectId?: string | null;
             /** @enum {string|null} */
             type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;

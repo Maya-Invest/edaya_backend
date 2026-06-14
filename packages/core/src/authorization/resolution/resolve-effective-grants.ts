@@ -39,7 +39,7 @@ export async function tryResolveEffectiveGrantsFromPersistence(
   }
 
   const school = await args.repositories.schools?.findById?.(args.schoolId)
-  if (school?.ownerStaffId === args.staffMemberId) {
+  if (school?.ownerSubjectId && staffMember.subjectId === school.ownerSubjectId) {
     return {
       permissions: new Set(ELEVATED_STAFF_PERMISSIONS),
       scopeGrants: [],

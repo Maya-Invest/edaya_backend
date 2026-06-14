@@ -134,4 +134,41 @@ describe("system actor routes", () => {
     expect(res.status).toBe(200);
     expect(registerSchool).toHaveBeenCalled();
   });
+
+  it("lists schools through the system entity route", async () => {
+    const list = mock().mockResolvedValue([{ id: "school-1", name: "Demo School" }]);
+    const app = new Hono<AppBindings>();
+    app.use(async (c, next) => {
+      c.env = {
+        ...baseEnv,
+        SYSTEM_ACTOR_SECRET: "test-system-secret",
+      };
+      c.set("schoolApp", {
+        forActor: () => ({
+          baseService: {
+            schools: { list, findOne: mock(), count: mock(), findById: mock(), findByIds: mock() },
+          },
+        }),
+      } as any);
+      await next();
+    });
+    app.route("/", indexRouter);
+
+    const res = await app.request("/core/system/entities/schools/list", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-System-Actor-Secret": "test-system-secret",
+      },
+      body: JSON.stringify({
+        schoolId: "school-1",
+        systemId: "migration",
+        reason: "bootstrap",
+        query: {},
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(list).toHaveBeenCalled();
+  });
 });

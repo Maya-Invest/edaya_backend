@@ -80,6 +80,7 @@ export async function registerSchoolWithOwner(
     id: schoolId,
     name: input.name,
     timeZone: input.timeZone,
+    ownerSubjectId: subjectId,
     ...(input.type ? { type: input.type } : {}),
     ...(input.country ? { country: input.country } : {}),
     ...(input.city ? { city: input.city } : {}),
@@ -95,7 +96,7 @@ export async function registerSchoolWithOwner(
   });
 
   const persistedSchool = await application.repositories.schools.findById(schoolId);
-  if (!persistedSchool?.ownerStaffId) {
+  if (!persistedSchool?.ownerSubjectId) {
     throw new BusinessRuleViolationError(
       "ONBOARDING_OWNER_ASSIGNMENT_FAILED",
       "Failed to assign the caller as school owner",

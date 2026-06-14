@@ -7,19 +7,23 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./schema": {
+      "types": "./src/schema.ts",
+      "import": "./src/schema.ts"
     }
   },
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "auth:generate-schema": "bunx @better-auth/cli@latest generate --config ./src/cli/auth-config.ts --output ./src/schema.ts --yes",
+    "auth:generate-schema": "bunx @better-auth/cli@1.6.16 generate --config ./src/cli/auth-config.ts --output ./src/schema.ts --yes",
     "db:generate": "drizzle-kit generate",
-    "migrate:local": "bun ./scripts/migrate-local.ts",
-    "migrate:remote": "bun ./scripts/migrate-remote.ts",
+    "migrate:local": "bun ./scripts/migrate.ts local",
+    "migrate:remote": "bun ./scripts/migrate.ts remote",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "eslint src scripts",
+    "lint:fix": "eslint src scripts --fix",
     "test": "bun test"
   },
   "dependencies": {

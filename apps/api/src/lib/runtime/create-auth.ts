@@ -1,4 +1,4 @@
-import { authSchema } from "@edaya/betterauth-d1-migrations";
+import * as authSchema from "@edaya/betterauth-d1-migrations/schema";
 import { betterAuth } from "better-auth";
 import { openAPI } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

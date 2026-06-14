@@ -25,10 +25,21 @@ Apply migrations with `@edaya/neon-migrations` (`bun db:migrate`, `bun db:migrat
 
 ## Runtime usage
 
+`DATABASE_URL` forms:
+
+| Value | PGlite mode |
+|-------|-------------|
+| `pglite`, `memory`, `memory://` | In-memory (tests) |
+| `pglite:.data/school`, `file://…` | Persisted filesystem directory |
+| `postgres://…` | Real Postgres via `postgres-js` |
+
 ```ts
 import {
   PostgresSchoolRepositories,
+  isEphemeralDatabase,
+  isPgliteDatabase,
   resolveMigrationDriver,
+  resolvePgliteDataDir,
   runMigrations,
 } from '@edaya/adaptor-postgres'
 
