@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import app from "@/app";
-import { loadNodeProcessEnv } from "@/lib/runtime/node";
+import { loadNodeProcessEnv } from "@/runtime";
 
 const env = loadNodeProcessEnv();
 

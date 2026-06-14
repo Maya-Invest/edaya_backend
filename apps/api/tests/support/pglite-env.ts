@@ -1,4 +1,4 @@
-import { type Environment, parseEnv } from "@/lib/runtime/env";
+import { type Environment, parseEnv } from "@/runtime/env";
 
 export const pgliteTestEnvInput = {
   RUNTIME: "node",

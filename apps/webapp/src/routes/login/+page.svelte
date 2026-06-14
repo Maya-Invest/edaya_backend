@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { DemoAccount } from '$lib/types/demo-account';
-	import { browser } from '$app/environment';
-	import { browserFetch } from '$lib/api/browser-fetch';
+	import { browser, dev } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 	import { bootstrapSession } from '$lib/auth/bootstrap';
 	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
@@ -13,9 +12,8 @@
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { toast } from '$lib/toast.svelte';
 
-	const DEV_AUTH_PASSWORD = 'DevPassword1!';
-
 	let demoAccounts = $state<DemoAccount[]>([]);
+	let devAuthPassword = $state('');
 	let loading = $state(false);
 	let apiConnected = $state(false);
 
@@ -49,19 +47,15 @@
 		void (async () => {
 			const health = await checkBrowserApiHealth();
 			apiConnected = health.connected;
-			if (!health.connected) {
+			if (!health.connected || !dev) {
+				demoAccounts = [];
+				devAuthPassword = '';
 				return;
 			}
 
-			try {
-				demoAccounts = await browserFetch<DemoAccount[]>('/core/auth/demo-login-accounts/list', {
-					method: 'POST',
-					body: JSON.stringify({}),
-				});
-			}
-			catch {
-				demoAccounts = [];
-			}
+			const { DEV_DEMO_LOGIN_ACCOUNTS, DEV_AUTH_PASSWORD } = await import('@edaya/dev-fixtures/demo-login');
+			demoAccounts = DEV_DEMO_LOGIN_ACCOUNTS;
+			devAuthPassword = DEV_AUTH_PASSWORD;
 		})();
 	});
 
@@ -73,7 +67,7 @@
 
 		loading = true;
 		try {
-			const error = await signInWithRetry(account.email, DEV_AUTH_PASSWORD);
+			const error = await signInWithRetry(account.email, devAuthPassword);
 
 			if (error) {
 				toast.error(`Connexion échouée: ${error.message}`);

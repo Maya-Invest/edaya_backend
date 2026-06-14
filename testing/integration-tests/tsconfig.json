@@ -2,11 +2,16 @@
   "extends": "../../apps/api/tsconfig.json",
   "compilerOptions": {
     "rootDir": "../..",
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@/*": ["../../apps/api/src/*"],
+      "@api-tests/*": ["../../apps/api/tests/*"]
+    }
   },
   "include": [
     "src/**/*",
-    "../../apps/api/src/**/*"
+    "../../apps/api/src/**/*",
+    "../../apps/api/tests/**/*"
   ],
   "exclude": [
     "node_modules"

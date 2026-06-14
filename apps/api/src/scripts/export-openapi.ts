@@ -1,9 +1,9 @@
 /* eslint-disable node/no-process-env */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { loadNodeProcessEnv } from "@/lib/runtime/node";
-
-import app from "../app";
+import app from "@/app";
+import { loadNodeProcessEnv } from "@/runtime/env";
+import { resetApiRuntimesForTests } from "@/runtime";
 
 // Load environment variables before importing app to ensure all dependencies initialize properly
 loadNodeProcessEnv();
@@ -27,6 +27,7 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(`OpenAPI schema successfully exported to ${outputPath}`);
+  await resetApiRuntimesForTests();
 }
 
 main().catch((err) => {

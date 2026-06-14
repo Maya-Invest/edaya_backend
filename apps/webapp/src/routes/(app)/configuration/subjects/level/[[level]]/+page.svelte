@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ConfigSubjectsView from '$lib/components/school/ConfigSubjectsView.svelte';
+	import ConfigSubjectsView from '$lib/components/school/academics/ConfigSubjectsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';

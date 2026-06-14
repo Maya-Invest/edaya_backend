@@ -1,3 +1,4 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapClassSubjects } from './subjects-data';
 
@@ -10,11 +11,11 @@ const sources = {
 		{ id: 'cs-6a-eps', classGroupId: '6a', subjectId: 'subj-eps', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3, category: 'Scientifique', color: 'mint' },
-		{ id: 'subj-fr', schoolId: 'sch-edaya-central', name: 'French Literature', code: 'FR', defaultCoefficient: 2, category: 'Littéraire', color: 'warm' },
-		{ id: 'subj-hist', schoolId: 'sch-edaya-central', name: 'History & Geography', code: 'HIST', defaultCoefficient: 2, category: 'Sciences humaines', color: 'sky' },
-		{ id: 'subj-en', schoolId: 'sch-edaya-central', name: 'English', code: 'EN', defaultCoefficient: 2, category: 'Langues', color: 'sky' },
-		{ id: 'subj-eps', schoolId: 'sch-edaya-central', name: 'Physical Education', code: 'EPS', defaultCoefficient: 1, category: 'Sport', color: 'mint' },
+		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3, category: 'Scientifique', color: 'mint' },
+		{ id: 'subj-fr', schoolId: SEED_SCHOOL_ID, name: 'French Literature', code: 'FR', defaultCoefficient: 2, category: 'Littéraire', color: 'warm' },
+		{ id: 'subj-hist', schoolId: SEED_SCHOOL_ID, name: 'History & Geography', code: 'HIST', defaultCoefficient: 2, category: 'Sciences humaines', color: 'sky' },
+		{ id: 'subj-en', schoolId: SEED_SCHOOL_ID, name: 'English', code: 'EN', defaultCoefficient: 2, category: 'Langues', color: 'sky' },
+		{ id: 'subj-eps', schoolId: SEED_SCHOOL_ID, name: 'Physical Education', code: 'EPS', defaultCoefficient: 1, category: 'Sport', color: 'mint' },
 	],
 	subjectMattersRaw: [
 		{ id: 'sm-math', subjectId: 'subj-math', name: 'Core programme', description: 'Algebra fundamentals.', sequenceOrder: 1, estimatedHours: 5 },
@@ -24,7 +25,7 @@ const sources = {
 		{ id: 'sm-eps', subjectId: 'subj-eps', name: 'Core programme', description: 'Team sports and fitness.', sequenceOrder: 1, estimatedHours: 2 },
 	],
 	staffMembersRaw: [
-		{ id: 'st1', schoolId: 'sch-edaya-central', firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
+		{ id: 'st1', schoolId: SEED_SCHOOL_ID, firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
 	],
 	staffAssignmentsRaw: [
 		{ id: 'sa-st1-math', staffId: 'st1', responsibility: 'Teacher', classSubjectId: 'cs-6a-math' },
@@ -59,7 +60,7 @@ describe('mapClassSubjects', () => {
 				{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 			],
 			subjectsRaw: [
-				{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3, category: 'Scientifique', color: 'mint' },
+				{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3, category: 'Scientifique', color: 'mint' },
 			],
 			subjectMattersRaw: [],
 			staffMembersRaw: [],
@@ -76,7 +77,7 @@ describe('mapClassSubjects', () => {
 				{ id: 'cs-6a-sci', classGroupId: '6a', subjectId: 'subj-sci', completedPercentage: 0 },
 			],
 			subjectsRaw: [
-				{ id: 'subj-sci', schoolId: 'sch-edaya-central', name: 'Natural Sciences', code: 'SCI', defaultCoefficient: 2 },
+				{ id: 'subj-sci', schoolId: SEED_SCHOOL_ID, name: 'Natural Sciences', code: 'SCI', defaultCoefficient: 2 },
 			],
 			subjectMattersRaw: [],
 			staffMembersRaw: [],

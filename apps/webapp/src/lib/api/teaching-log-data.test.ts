@@ -1,3 +1,4 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapTeachingLogEntries } from './teaching-log-data';
 
@@ -5,7 +6,7 @@ const sources = {
 	classLogbookEntriesRaw: [
 		{
 			id: 'tle-cs-6a-math-0',
-			schoolId: 'sch-edaya-central',
+			schoolId: SEED_SCHOOL_ID,
 			classGroupId: '6a',
 			classSubjectId: 'cs-6a-math',
 			date: '2026-05-22',
@@ -18,7 +19,7 @@ const sources = {
 		},
 		{
 			id: 'tle-cs-6b-math-0',
-			schoolId: 'sch-edaya-central',
+			schoolId: SEED_SCHOOL_ID,
 			classGroupId: '6b',
 			classSubjectId: 'cs-6b-math',
 			date: '2026-05-21',
@@ -33,10 +34,10 @@ const sources = {
 		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
+		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
 	],
 	staffMembersRaw: [
-		{ id: 'st1', schoolId: 'sch-edaya-central', firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
+		{ id: 'st1', schoolId: SEED_SCHOOL_ID, firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
 	],
 	staffAssignmentsRaw: [
 		{ id: 'sa-st1-math', staffId: 'st1', responsibility: 'Teacher', classSubjectId: 'cs-6a-math' },

@@ -20,6 +20,7 @@ maya_school_core/
 │   └── betterauth-d1-migrations/         @edaya/betterauth-d1-migrations — auth schema + D1 deploy
 └── testing/
     ├── dev-fixtures/
+    ├── seeding/
     └── integration-tests/
 ```
 
@@ -38,7 +39,7 @@ flowchart TB
   subgraph api_layer["API"]
     API["@edaya/api<br/>Hono · Node + Worker"]
     Client["@edaya/api-client"]
-    WorkerHost["lib/runtime + http/di<br/>Hyperdrive · DI · request cache"]
+    WorkerHost["runtime + http/di<br/>Hyperdrive · DI · request cache"]
   end
 
   subgraph domain["Domain"]
@@ -88,11 +89,11 @@ Node supports persisted PGlite (`DATABASE_URL=pglite:.data/school`) or in-memory
 
 - `apps/api/src/routes/` — OpenAPI route modules (thin HTTP surface)
 - `apps/api/src/lib/school-api/` — registry, schemas, dispatch, entity handlers
-- `apps/api/src/lib/runtime/` — database, auth, Worker bindings, Hyperdrive, runtime registry
-- `apps/api/src/lib/http/` — Hono app, dependency injection middleware
+- `apps/api/src/runtime/` — database, auth, Worker bindings, Hyperdrive, runtime registry
+- `apps/api/src/http/` — Hono app, dependency injection middleware
 - `packages/core/src/` — domains, entities, authorization, services, ports
 
-More detail: [docs/done/api-folder-structure.md](./docs/done/api-folder-structure.md), [docs/done/api-runtimes.md](./docs/done/api-runtimes.md).
+More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [docs/api-runtimes.md](./docs/api-runtimes.md).
 
 ## Workspace packages
 
@@ -123,6 +124,7 @@ More detail: [docs/done/api-folder-structure.md](./docs/done/api-folder-structur
 | Package | Path | Role |
 |---------|------|------|
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
+| `@edaya/seeding` | `testing/seeding` | HTTP seed orchestration (`seed:all`, `seed:init`, …) |
 | `@edaya/integration-tests` | `testing/integration-tests` | Cross-package integration tests (auth, Postgres, core services) |
 
 ## Prerequisites
@@ -164,7 +166,7 @@ cp apps/api/.dev.vars.example apps/api/.dev.vars
 cd apps/api && bun run dev:worker
 ```
 
-See [docs/done/local-dev.md](./docs/done/local-dev.md) for database options, dev seed, troubleshooting, and how the webapp connects to the API.
+See [docs/local-dev.md](./docs/local-dev.md) for database options, dev seed, troubleshooting, and how the webapp connects to the API.
 
 ## Commands
 
@@ -175,11 +177,11 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | Command | Description |
 |---------|-------------|
 | `bun dev` | Start API + webapp in watch mode |
-| `bun seed` | Run all dev seeds (`auth` → `school` → `auth:link` → `access`) |
-| `bun run seed:school` | Seed school Postgres data only |
+| `bun seed` | Run all dev seeds via HTTP (`@edaya/seeding seed:all`) |
+| `bun run seed:init` | Bootstrap school + auth DBs and run initial seed |
 | `bun run seed:auth` | Provision Better Auth user accounts only |
-| `bun run seed:auth:link` | Link auth users to staff/guardians and set school owner |
-| `bun run seed:access` | Seed roles and staff permission assignments |
+| `bun run seed:smoke` | Minimal smoke seed for quick verification |
+| `bun run seed:remote` | Seed a remote API instance |
 | `cd apps/api && bun dev` | API only (Node, port 9999) |
 | `bun run dev:worker` | API only (Cloudflare Worker) |
 | `cd apps/webapp && bun dev` | Webapp only (port 5173) |
@@ -218,6 +220,8 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | Command | Description |
 |---------|-------------|
 | `bun run openapi:generate` | Export OpenAPI from API → regenerate webapp types + API client bindings |
+| `bun run openapi:check` | Regenerate OpenAPI artifacts and fail if committed files drift |
+| `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/integrations) |
 | `cd apps/api && bun run export-openapi` | Export OpenAPI JSON only |
 | `cd apps/api && bun run generate-api-client` | Regenerate `@edaya/api-client` bindings only |
 | `cd apps/webapp && bun run openapi:generate` | Regenerate `schema.d.ts` from local OpenAPI JSON |
@@ -242,9 +246,30 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 bun --filter @edaya/core test
 bun --filter @edaya/api test
 bun --filter @edaya/integration-tests test
+bun --filter @edaya/webapp test
 bun --filter @edaya/webapp check
 bun --filter @edaya/api-client check
 ```
+
+## Testing
+
+Tests are split by layer. Run everything with `bun run test` (Turbo across all packages that define a `test` script).
+
+| Layer | Package / path | What to test here |
+|-------|----------------|-------------------|
+| Domain | `packages/core/tests/` | Entities, authorization, service workflows |
+| API unit | `apps/api/tests/` | HTTP helpers, runtime, route builders, thin route tests |
+| API harness | `apps/api/tests/support/core-route-harness.ts` | Shared PGlite app + auth helpers (also used by integration-tests) |
+| Cross-package | `testing/integration-tests/src/` | Seeds, auth flows, PGlite persistence, full route scenarios |
+| Webapp mappers | `apps/webapp/src/lib/api/*.test.ts` | OpenAPI → UI type mapping logic |
+
+**Conventions**
+
+- Put pure domain tests in `@edaya/core`.
+- Put API transport/runtime tests in `apps/api/tests/`, mirroring `src/` layout (`http/`, `runtime/`, `routes/`, `lib/`).
+- Put scenarios that span seeding, auth, and Postgres in `@edaya/integration-tests`.
+- Colocate webapp mapper tests next to `*-data.ts` files; they run via `bun --filter @edaya/webapp test`.
+- Integration-tests import the canonical route harness from `@api-tests/support/core-route-harness` (resolved to `apps/api/tests/support/`).
 
 ## Environment
 

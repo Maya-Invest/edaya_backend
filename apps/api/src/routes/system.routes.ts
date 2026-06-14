@@ -3,12 +3,12 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { randomUUID } from "node:crypto";
-import type { AppRouteHandler } from "@/lib/http/types";
-import { badRequestResponse, routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
+import type { AppRouteHandler } from "@/http/types";
+import { badRequestResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import {
   isValidSystemActorSecret,
   resolveSystemActorSecret,
-} from "@/lib/http/system-actor-auth";
+} from "@/http/system-actor-auth";
 import { dispatchCoreCommand } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";

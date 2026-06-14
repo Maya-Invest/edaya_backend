@@ -2,7 +2,7 @@
   "name": "@edaya/solution",
   "type": "module",
   "private": true,
-  "packageManager": "bun@1.2.13",
+  "packageManager": "bun@1.3.14",
   "workspaces": [
     "apps/*",
     "packages/*",
@@ -25,7 +25,7 @@
     "test:coverage": "turbo run test -- --coverage",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "fullcheck": "bun run lint:fix && bun run check && bun run build && turbo run test -- --dots",
+    "fullcheck": "bun run lint:fix && bun run check && bun run build && bun run check:boundaries && turbo run test -- --dots",
     "deploy:api": "bun --filter @edaya/api deploy:worker",
     "deploy:webapp": "bun --filter @edaya/webapp deploy",
     "db:generate": "bun --filter @edaya/adaptor-postgres db:generate",
@@ -36,7 +36,9 @@
     "db:migrate:auth": "bun --filter @edaya/betterauth-d1-migrations migrate:local",
     "db:migrate:auth:remote": "bun --filter @edaya/betterauth-d1-migrations migrate:remote",
     "auth:generate-schema": "bun --filter @edaya/betterauth-d1-migrations auth:generate-schema",
-    "openapi:generate": "bun run --cwd apps/api export-openapi && bun run --cwd apps/webapp openapi:generate && bun run --cwd apps/api generate-api-client"
+    "openapi:generate": "bun run --cwd apps/api export-openapi && bun run --cwd apps/webapp openapi:generate && bun run --cwd apps/api generate-api-client",
+    "openapi:check": "bun run openapi:generate && bun scripts/check-openapi-drift.ts",
+    "check:boundaries": "bash scripts/check-import-boundaries.sh"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

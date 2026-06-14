@@ -1,4 +1,4 @@
-import type { AppBindings, AppRouteHandler } from "@/lib/http/types";
+import type { AppBindings, AppRouteHandler } from "@/http/types";
 import type { Context } from "hono";
 import type { RouteConfig } from "@hono/zod-openapi";
 import { z } from "@hono/zod-openapi";

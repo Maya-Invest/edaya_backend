@@ -1,4 +1,3 @@
-import type { AppBindings } from '@/lib/http/types'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
@@ -7,14 +6,10 @@ import {
 } from '@edaya/dev-fixtures'
 import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { Hono } from 'hono'
-import indexRouter from '@/app-router'
-import { dependenciesInjection } from '@/lib/http/dependencies'
-import { getApiRuntime, resetApiRuntimesForTests } from '@/lib/runtime/registry'
+import { resetApiRuntimesForTests } from '@/runtime'
 import {
   apiPgliteEnv,
   collectSetCookieHeaders,
-  createApiPgliteTestEnv,
   createAppRequest,
   createCoreRouteTestApp,
 } from '../support/api-route-harness'
@@ -30,71 +25,6 @@ function unwrapEntityList<T>(values: unknown): T[] {
     return entry as T
   })
 }
-
-describe('demo login accounts route', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
-  async function createAppWithEnv(env: ReturnType<typeof createApiPgliteTestEnv>) {
-    await resetApiRuntimesForTests()
-    await getApiRuntime(env)
-
-    const app = new Hono<AppBindings>()
-    app.use(async (c, next) => {
-      c.env = env
-      await next()
-    })
-    app.use(dependenciesInjection)
-    app.route('/', indexRouter)
-
-    return app
-  }
-
-  it('returns linked staff demo accounts without authentication in development', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    await runDevSchoolSeed(application)
-    await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))
-    await runDevAccessSeed(application)
-
-    const response = await app.request(createAppRequest('/core/auth/demo-login-accounts/list', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({}),
-    }))
-
-    expect(response.status).toBe(200)
-
-    const demoAccounts = await response.json() as Array<{
-      staffId: string
-      email: string
-      role: string
-    }>
-
-    expect(demoAccounts).toHaveLength(4)
-    expect(demoAccounts.find(account => account.staffId === 'st5')).toMatchObject({
-      email: 'c.moreau@school.edu',
-      role: 'directeur',
-    })
-  }, 30_000)
-
-  it('returns 503 when demo login accounts are disabled in production', async () => {
-    const productionEnv = createApiPgliteTestEnv({
-      NODE_ENV: 'production',
-      ALLOW_DEMO_LOGIN_ACCOUNTS: false,
-    })
-
-    const app = await createAppWithEnv(productionEnv)
-
-    const response = await app.request(createAppRequest('/core/auth/demo-login-accounts/list', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({}),
-    }))
-
-    expect(response.status).toBe(503)
-  })
-})
 
 describe('dev activities seed', () => {
   afterEach(async () => {

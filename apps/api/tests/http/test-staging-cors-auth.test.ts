@@ -2,9 +2,8 @@ import indexRouter from "@/app-router";
 import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
-import createApp from "@/lib/http/create-app";
-import { parseEnv } from "@/lib/runtime/env";
-import { createAuth } from "@/lib/runtime/create-auth";
+import createApp from "@/http/create-app";
+import { createAuth, parseEnv } from "@/runtime";
 import { runMigrations as runAuthMigrations } from "@edaya/betterauth-d1-migrations";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 

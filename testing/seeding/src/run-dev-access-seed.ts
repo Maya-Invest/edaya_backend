@@ -9,6 +9,7 @@ import {
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
 import {
+  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   SEED_ACADEMIC_YEAR_ID,
   SEED_CLASS_SUBJECTS,
   SEED_SCHOOL_ID,
@@ -184,7 +185,7 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
     staffId: 'st1',
     schoolId: SEED_SCHOOL_ID,
     academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-teacher'],
+    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
     scopeGrants: [],
     status: 'active',
   }))
@@ -194,7 +195,7 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
     staffId: 'st2',
     schoolId: SEED_SCHOOL_ID,
     academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-teacher'],
+    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st2],
     scopeGrants: [],
     status: 'active',
   }))
@@ -204,7 +205,7 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
     staffId: 'st3',
     schoolId: SEED_SCHOOL_ID,
     academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-coordinator'],
+    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st3],
     scopeGrants: [],
     status: 'active',
   }))
@@ -224,7 +225,7 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
     staffId: 'st5',
     schoolId: SEED_SCHOOL_ID,
     academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-director'],
+    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
     scopeGrants: [],
     status: 'active',
   }))
@@ -255,7 +256,7 @@ export async function runDevAccessSeed(application: SeedApplication): Promise<De
     staffId: 'st7',
     schoolId: SEED_SCHOOL_ID,
     academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-educator'],
+    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st7],
     scopeGrants: [
       {
         permission: Permission.DISCIPLINE_CREATE,

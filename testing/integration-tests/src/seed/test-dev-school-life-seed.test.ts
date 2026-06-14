@@ -7,7 +7,7 @@ import {
 } from '@edaya/dev-fixtures'
 import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/lib/runtime/registry'
+import { resetApiRuntimesForTests } from '@/runtime'
 import { apiPgliteEnv } from '../support/api-pglite-env'
 
 import {

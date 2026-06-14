@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import type { AppBindings } from "@/lib/http/types";
+import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { pgliteEnv } from "../support/pglite-env";
 

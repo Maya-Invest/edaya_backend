@@ -6,7 +6,7 @@ import {
   SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/lib/runtime/registry'
+import { resetApiRuntimesForTests } from '@/runtime'
 import {
   createAppRequest,
   createCoreRouteTestApp,

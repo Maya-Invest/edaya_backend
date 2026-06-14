@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { StaffRole } from '$lib/types/school';
 	import { page } from '$app/stores';
-	import RolesMatrixView from '$lib/components/school/RolesMatrixView.svelte';
+	import RolesMatrixView from '$lib/components/school/configuration/RolesMatrixView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';

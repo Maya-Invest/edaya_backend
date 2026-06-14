@@ -9,6 +9,7 @@ export {
 export {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
+  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -52,6 +53,14 @@ export {
   seedPeriodIdForDate,
   splitDisplayName,
 } from './dataset'
+export {
+  buildDevDemoLoginAccounts,
+  DEV_DEMO_LOGIN_ACCOUNTS,
+  type DevDemoLoginAccount,
+  type DevDemoLoginRole,
+  initialsForName,
+  resolveDevDemoStaffRole,
+} from './dev-demo-login'
 export {
   SEED_HOMEWORK_ASSIGNMENTS,
   SEED_HOMEWORK_SUBMISSIONS,

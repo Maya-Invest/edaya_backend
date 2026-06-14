@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SchoolCalendarView from '$lib/components/school/SchoolCalendarView.svelte';
+	import SchoolCalendarView from '$lib/components/school/scheduling/SchoolCalendarView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';

@@ -1,11 +1,7 @@
-import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
-import { createRouter } from "@/lib/http/create-app";
-import type { AppBindings } from "@/lib/http/types";
+import { toBetterAuthHandlerRequest } from "@/http/auth-request";
+import { createRouter } from "@/http/create-app";
+import type { AppBindings } from "@/http/types";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
-import {
-  listDemoLoginAccountsHandler,
-  listDemoLoginAccountsRoute,
-} from "@/routes/auth.routes";
 import { systemCommandHandler, systemCommandRoute } from "@/routes/system.routes";
 import { buildSystemEntityRoutes } from "@/routes/system-entity.routes";
 import {
@@ -43,7 +39,6 @@ const router = createRouter()
 // Mount routes from route builders
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
-  .openapi(listDemoLoginAccountsRoute, listDemoLoginAccountsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(systemCommandRoute, systemCommandHandler);
 

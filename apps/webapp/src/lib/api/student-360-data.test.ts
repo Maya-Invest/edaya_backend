@@ -1,10 +1,11 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapHealthProfiles, mapNoteCategory, mapPedagogicalNotes } from './student-360-data';
 
 const seedHealthProfiles = [
 	{
 		id: 'hp-s1',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		studentId: 's1',
 		bloodType: 'A+',
 		allergies: 'Pollen',
@@ -17,7 +18,7 @@ const seedHealthProfiles = [
 	},
 	{
 		id: 'hp-s3',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		studentId: 's3',
 		bloodType: 'O-',
 		allergies: 'Peanuts, Shellfish',
@@ -33,7 +34,7 @@ const seedHealthProfiles = [
 const seedPedagogicalNotes = [
 	{
 		id: 'pn1',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		studentId: 's1',
 		authorStaffId: 'st1',
 		category: 'progress',
@@ -43,7 +44,7 @@ const seedPedagogicalNotes = [
 	},
 	{
 		id: 'pn4',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		studentId: 's2',
 		authorStaffId: 'st1',
 		category: 'behavior',

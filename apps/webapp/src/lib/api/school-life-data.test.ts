@@ -1,3 +1,4 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import {
 	mapCalendarEventDescription,
@@ -10,7 +11,7 @@ import {
 const seedIncidents = [
 	{
 		id: 'i1',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		title: 'Repeated tardiness',
 		description: 'Late to class 3 times this month.',
 		date: '2026-04-12',
@@ -23,7 +24,7 @@ const seedIncidents = [
 	},
 	{
 		id: 'i2',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		title: 'Class disruption',
 		description: 'Disruption during English class.',
 		date: '2026-03-22',
@@ -36,7 +37,7 @@ const seedIncidents = [
 	},
 	{
 		id: 'i3',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		title: 'Recess conflict',
 		description: 'Argument with classmate during recess.',
 		date: '2026-04-26',
@@ -58,7 +59,7 @@ const seedInvolvements = [
 const seedCalendarEvents = [
 	{
 		id: 'yc3',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		academicYearId: '2025',
 		title: 'Vacances de printemps',
 		description: 'Vacances scolaires de printemps. Réouverture le 4 mai.',
@@ -71,7 +72,7 @@ const seedCalendarEvents = [
 	},
 	{
 		id: 'yc10',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		academicYearId: '2025',
 		title: 'Cérémonie de remise des prix',
 		description: 'Cérémonie de fin d\'année et remise des prix au tableau d\'honneur.',

@@ -1,25 +1,23 @@
-import { randomUUID } from "node:crypto";
-import { createRoute, z } from "@hono/zod-openapi";
-import * as HttpStatusCodes from "stoker/http-status-codes";
-import { jsonContent } from "stoker/openapi/helpers";
-import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import type { AppRouteHandler } from "@/lib/http/types";
+import type { AuthenticatedSession, AuthSessionProvider } from "@/http/dependencies/session-actor";
+import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import {
   conflictResponse,
   routeErrorResponse,
   unauthorizedResponse,
-} from "@/lib/http/responses";
-import {
-  type AuthSessionProvider,
-  resolveAuthenticatedSession,
-} from "@/lib/http/dependencies/session-actor";
+} from "@/http/responses";
+import type { AppRouteHandler } from "@/http/types";
 import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
+import { shouldAllowPublicSchoolRegistration } from "@/runtime/feature-flags";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
-import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import { shouldAllowPublicSchoolRegistration } from "@/lib/runtime/env";
-import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
+import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolResponseSchema } from "@/lib/school-api/schemas/entities";
+import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
+import { createRoute, z } from "@hono/zod-openapi";
+import { randomUUID } from "node:crypto";
+import * as HttpStatusCodes from "stoker/http-status-codes";
+import { jsonContent } from "stoker/openapi/helpers";
+import { createMessageObjectSchema } from "stoker/openapi/schemas";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -73,7 +71,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
 
   try {
-    const result = await registerSchoolWithOwner(c.get("schoolApp"), session, {
+    const result = await registerSchoolWithOwner(c.get("schoolApp"), toOwnerSession(session), {
       name: body.name,
       timeZone: body.timeZone,
       ...(body.type ? { type: body.type } : {}),
@@ -91,3 +89,13 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
     return routeErrorResponse(c, err);
   }
 };
+
+function toOwnerSession(session: AuthenticatedSession) {
+  return {
+    user: {
+      id: session.user.id,
+      ...(session.user.email ? { email: session.user.email } : {}),
+      ...(session.user.name ? { name: session.user.name } : {}),
+    },
+  };
+}

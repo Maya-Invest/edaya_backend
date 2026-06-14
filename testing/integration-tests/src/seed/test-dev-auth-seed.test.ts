@@ -1,5 +1,5 @@
-import type { AuthSessionProvider } from '@/lib/http/dependencies/session-actor'
-import type { AppBindings } from '@/lib/http/types'
+import type { AuthSessionProvider } from '@/http/dependencies/session-actor'
+import type { AppBindings } from '@/http/types'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
@@ -11,9 +11,9 @@ import {
 import { createHandlerAuthProvisioner, runDevAuthLink, runDevAuthProvision, runDevSchoolSeed, runDevSeeds } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { Hono } from 'hono'
-import { createDependenciesInjection } from '@/lib/http/dependencies'
-import { createSessionActorDependency } from '@/lib/http/dependencies/session-actor'
-import { getApiRuntime, resetApiRuntimesForTests } from '@/lib/runtime/registry'
+import { createDependenciesInjection } from '@/http/dependencies'
+import { createSessionActorDependency } from '@/http/dependencies/session-actor'
+import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime'
 import { apiPgliteEnv } from '../support/api-pglite-env'
 
 function collectSetCookieHeaders(response: Response): string[] {

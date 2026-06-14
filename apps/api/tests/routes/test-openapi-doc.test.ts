@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import configureOpenAPI from "@/lib/http/openapi";
-import { createRouter } from "@/lib/http/create-app";
+import configureOpenAPI from "@/http/openapi";
+import { createRouter } from "@/http/create-app";
 import indexRouter from "@/app-router";
 
 describe("OpenAPI document", () => {

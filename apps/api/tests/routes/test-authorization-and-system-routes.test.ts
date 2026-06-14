@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
-import { parseEnv } from "@/lib/runtime/env";
+import { parseEnv } from "@/runtime";
 import { ActorAssuranceLevel, Permission } from "@edaya/core";
-import type { AppBindings } from "@/lib/http/types";
+import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 
 const baseEnv = parseEnv({

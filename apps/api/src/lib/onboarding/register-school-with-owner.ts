@@ -1,6 +1,4 @@
-import { randomUUID } from "node:crypto";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { AuthenticatedSession } from "@/lib/http/dependencies/session-actor";
 import {
   BusinessRuleViolationError,
   createSystemActorMetadata,
@@ -8,6 +6,15 @@ import {
   type SchoolRepositories,
   type SchoolType,
 } from "@edaya/core";
+import { randomUUID } from "node:crypto";
+
+export interface RegisterSchoolOwnerSession {
+  user: {
+    id: string;
+    email?: string;
+    name?: string;
+  };
+}
 
 export interface RegisterSchoolWithOwnerInput {
   name: string;
@@ -40,7 +47,7 @@ export async function assertSubjectUnlinked(
   }
 }
 
-export function resolveOwnerProfile(session: AuthenticatedSession): {
+export function resolveOwnerProfile(session: RegisterSchoolOwnerSession): {
   firstName: string;
   lastName: string;
   email?: string;
@@ -59,7 +66,7 @@ export function resolveOwnerProfile(session: AuthenticatedSession): {
 
 export async function registerSchoolWithOwner(
   application: ApiSchoolApplication,
-  session: AuthenticatedSession,
+  session: RegisterSchoolOwnerSession,
   input: RegisterSchoolWithOwnerInput,
 ): Promise<RegisterSchoolWithOwnerResult> {
   const subjectId = session.user.id;

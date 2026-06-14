@@ -1,4 +1,4 @@
-import type { Crud } from '$lib/components/school/drawer-constants';
+import type { Crud } from '$lib/components/school/shared/drawer-constants';
 import type {
 	AbsenceRecord,
 	Activity,

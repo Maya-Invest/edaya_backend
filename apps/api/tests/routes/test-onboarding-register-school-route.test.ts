@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
-import { dependenciesInjection } from "@/lib/http/dependencies";
-import type { AppBindings } from "@/lib/http/types";
-import { resetApiRuntimesForTests } from "@/lib/runtime/registry";
+import { dependenciesInjection } from "@/http/dependencies";
+import type { AppBindings } from "@/http/types";
+import { resetApiRuntimesForTests } from "@/runtime";
 import { Hono } from "hono";
 import {
   createAppRequest,
@@ -10,7 +10,7 @@ import {
   createPgliteTestEnv,
   signInThroughApp,
   signUpAuthUser,
-} from "../support/better-auth-route-harness";
+} from "../support/core-route-harness";
 
 describe("onboarding register-school route", () => {
   afterEach(async () => {

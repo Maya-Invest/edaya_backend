@@ -1,5 +1,5 @@
-import configureOpenAPI from "@/lib/http/openapi";
-import createApp from "@/lib/http/create-app";
+import configureOpenAPI from "@/http/openapi";
+import createApp from "@/http/create-app";
 import appRouter from "@/app-router";
 
 const app = createApp();

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { getApiRuntime, resetApiRuntimesForTests } from '@/lib/runtime/registry'
+import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime'
 import { createApiPgliteTestEnv } from '../support/api-pglite-env'
 
 describe('persisted PGlite runtime', () => {

@@ -1,3 +1,4 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import {
 	derivePassingScore,
@@ -14,7 +15,7 @@ import {
 const seedGradeScalesRaw = [
 	{
 		id: 'gs-20',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		name: 'Sur 20',
 		minScore: 0,
 		maxScore: 20,
@@ -30,7 +31,7 @@ const seedGradeScalesRaw = [
 	},
 	{
 		id: 'gs-100',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		name: 'Sur 100',
 		minScore: 0,
 		maxScore: 100,
@@ -46,7 +47,7 @@ const seedGradeScalesRaw = [
 	},
 	{
 		id: 'gs-lettres',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		name: 'Appréciations (A–D)',
 		minScore: 0,
 		maxScore: 4,
@@ -97,7 +98,7 @@ describe('report cards grade scale mapping', () => {
 const seedDefinitionsRaw = [
 	{
 		id: 'rcd-ms-6',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		academicYearId: '2025',
 		gradeLevelId: 'gl-6',
 		gradeScaleId: 'gs-20',
@@ -107,7 +108,7 @@ const seedDefinitionsRaw = [
 	},
 	{
 		id: 'rcd-ms-draft',
-		schoolId: 'sch-edaya-central',
+		schoolId: SEED_SCHOOL_ID,
 		academicYearId: '2025',
 		gradeLevelId: 'gl-6',
 		gradeScaleId: 'gs-20',
@@ -179,8 +180,8 @@ const classSubjectsSources = {
 		{ id: 'cs-term-advmath', classGroupId: 'term-s', subjectId: 'subj-advmath', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', defaultCoefficient: 3 },
-		{ id: 'subj-advmath', schoolId: 'sch-edaya-central', name: 'Advanced Mathematics', defaultCoefficient: 3 },
+		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', defaultCoefficient: 3 },
+		{ id: 'subj-advmath', schoolId: SEED_SCHOOL_ID, name: 'Advanced Mathematics', defaultCoefficient: 3 },
 	],
 	subjectMattersRaw: [],
 	staffAssignmentsRaw: [],
@@ -314,7 +315,7 @@ describe('report cards result mapping', () => {
 			}],
 			[{
 				id: 'rcd-ms-6',
-				schoolId: 'sch-edaya-central',
+				schoolId: SEED_SCHOOL_ID,
 				academicYearId: '2025',
 				gradeLevelId: 'gl-6',
 				gradeScaleId: 'gs-20',

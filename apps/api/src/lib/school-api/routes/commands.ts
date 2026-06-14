@@ -1,5 +1,5 @@
-import type { AppRouteHandler } from "@/lib/http/types";
-import { routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
+import type { AppRouteHandler } from "@/http/types";
+import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
 import { createRoute } from "@hono/zod-openapi";

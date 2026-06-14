@@ -1,4 +1,4 @@
-import type { DrawerItem } from '$lib/components/school/drawer-types';
+import type { DrawerItem } from '$lib/components/school/shared/drawer-types';
 
 export class DrawerState {
 	item = $state<DrawerItem>(null);

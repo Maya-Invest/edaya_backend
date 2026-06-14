@@ -1,3 +1,4 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapDeadlines } from './homework-data';
 
@@ -5,7 +6,7 @@ const sources = {
 	homeworkAssignmentsRaw: [
 		{
 			id: 'd1',
-			schoolId: 'sch-edaya-central',
+			schoolId: SEED_SCHOOL_ID,
 			classGroupId: '6a',
 			classSubjectId: 'cs-6a-math',
 			title: 'Algebra exercise sheet #4',
@@ -17,7 +18,7 @@ const sources = {
 		},
 		{
 			id: 'd2',
-			schoolId: 'sch-edaya-central',
+			schoolId: SEED_SCHOOL_ID,
 			classGroupId: '6b',
 			classSubjectId: 'cs-6b-math',
 			title: 'Other class homework',
@@ -37,7 +38,7 @@ const sources = {
 		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
+		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
 	],
 } as const;
 

@@ -1,4 +1,4 @@
-import type { AppBindings } from '@/lib/http/types'
+import type { AppBindings } from '@/http/types'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
@@ -13,8 +13,8 @@ import {
 import { afterEach, describe, expect, it } from 'bun:test'
 import { Hono } from 'hono'
 import indexRouter from '@/app-router'
-import { dependenciesInjection } from '@/lib/http/dependencies'
-import { getApiRuntime, resetApiRuntimesForTests } from '@/lib/runtime/registry'
+import { dependenciesInjection } from '@/http/dependencies'
+import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime'
 import {
   apiPgliteEnv,
   createApiPgliteTestEnv,

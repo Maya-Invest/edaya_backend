@@ -1,0 +1,287 @@
+import {
+  ActorAssuranceLevel,
+  createGuardianActorMetadata,
+  createStaffActorMetadata,
+  createStudentActorMetadata,
+  type EffectiveGrants,
+  type SchoolRepositories,
+} from "@edaya/core";
+import { randomUUID } from "node:crypto";
+import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
+import type { AppBindings } from "@/http/types";
+import type { Context } from "hono";
+import type { DependencyModule } from "@/http/dependency-injection";
+
+export interface AuthSession {
+  user: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+  };
+  session: {
+    id?: string;
+    createdAt: string | Date;
+    assuranceLevel?: ActorAssuranceLevel | string;
+  };
+}
+
+export interface AuthenticatedSession {
+  user: {
+    id: string;
+    email?: string;
+    name?: string;
+  };
+  session: {
+    id?: string;
+    createdAt: Date;
+    assuranceLevel: ActorAssuranceLevel;
+  };
+}
+
+export interface AuthSessionProvider {
+  api: {
+    getSession: (args: { headers: Headers }) => Promise<AuthSession | null | undefined>;
+  };
+}
+
+export type ResolveAuthSessionProvider = () => Promise<AuthSessionProvider> | AuthSessionProvider;
+
+interface ActorIdentityContext {
+  subjectId: string;
+  requestId: string;
+  sessionId?: string;
+  authenticatedAt: Date;
+  assuranceLevel: ActorAssuranceLevel;
+}
+
+type ActorIdentity =
+  | {
+    kind: "staff";
+    schoolId: string;
+    staffMemberId: string;
+    effectiveGrants?: EffectiveGrants;
+  }
+  | {
+    kind: "guardian";
+    schoolId: string;
+    guardianId: string;
+    effectiveGrants?: EffectiveGrants;
+  }
+  | {
+    kind: "student";
+    schoolId: string;
+    studentId: string;
+    effectiveGrants?: EffectiveGrants;
+  };
+
+type NormalizedAuthSession = AuthenticatedSession;
+
+function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
+  if (input === ActorAssuranceLevel.Verified || input === ActorAssuranceLevel.Strong) {
+    return input;
+  }
+  return ActorAssuranceLevel.Standard;
+}
+
+export function normalizeAuthSession(input: AuthSession | null | undefined): AuthenticatedSession | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  if (!input.user || typeof input.user.id !== "string" || input.user.id.trim() === "") {
+    return null;
+  }
+
+  if (!input.session || !("createdAt" in input.session)) {
+    return null;
+  }
+
+  const authenticatedAt = new Date(input.session.createdAt);
+  if (Number.isNaN(authenticatedAt.getTime())) {
+    return null;
+  }
+
+  return {
+    user: {
+      id: input.user.id,
+      ...(typeof input.user.email === "string" && input.user.email.trim() !== ""
+        ? { email: input.user.email.trim() }
+        : {}),
+      ...(typeof input.user.name === "string" && input.user.name.trim() !== ""
+        ? { name: input.user.name.trim() }
+        : {}),
+    },
+    session: {
+      ...(input.session.id ? { id: input.session.id } : {}),
+      createdAt: authenticatedAt,
+      assuranceLevel: normalizeAssuranceLevel(input.session.assuranceLevel),
+    },
+  };
+}
+
+export async function resolveAuthenticatedSession(
+  auth: AuthSessionProvider,
+  headers: Headers,
+): Promise<AuthenticatedSession | null> {
+  const session = await auth.api.getSession({ headers });
+  return normalizeAuthSession(session as AuthSession | null | undefined);
+}
+
+function resolveRequestId(headerValue: string | undefined): string {
+  const trimmed = headerValue?.trim();
+  return trimmed || randomUUID();
+}
+
+async function resolveActorIdentity(
+  repos: SchoolRepositories,
+  subjectId: string,
+  session: NormalizedAuthSession["session"],
+  academicYearId: string | undefined,
+  ttlMs: number,
+): Promise<ActorIdentity | null> {
+  const [staff, guardian, student] = await Promise.all([
+    repos.staffMembers.findOne({ subjectId }),
+    repos.guardians.findOne({ subjectId }),
+    repos.students.findOne({ subjectId }),
+  ]);
+
+  const identities: ActorIdentity[] = [];
+
+  if (staff) {
+    identities.push({
+      kind: "staff",
+      schoolId: staff.schoolId,
+      staffMemberId: staff.id,
+    });
+  }
+
+  if (guardian) {
+    identities.push({
+      kind: "guardian",
+      schoolId: guardian.schoolId,
+      guardianId: guardian.id,
+    });
+  }
+
+  if (student) {
+    identities.push({
+      kind: "student",
+      schoolId: student.schoolId,
+      studentId: student.id,
+    });
+  }
+
+  if (identities.length !== 1) {
+    return null;
+  }
+
+  const [identity] = identities;
+  if (!identity) {
+    return null;
+  }
+
+  const actorId
+    = identity.kind === "staff"
+      ? identity.staffMemberId
+      : identity.kind === "guardian"
+        ? identity.guardianId
+        : identity.studentId;
+
+  try {
+    const effectiveGrants = await resolveCachedEffectiveGrants({
+      actorId,
+      actorType: identity.kind,
+      schoolId: identity.schoolId,
+      ...(academicYearId ? { academicYearId } : {}),
+      subjectId,
+      ...(session.id ? { sessionId: session.id } : {}),
+      authenticatedAt: session.createdAt,
+      repositories: repos,
+      ttlMs,
+    });
+
+    return {
+      ...identity,
+      effectiveGrants,
+    };
+  }
+  catch {
+    return null;
+  }
+}
+
+function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentityContext) {
+  switch (identity.kind) {
+    case "staff":
+      return createStaffActorMetadata({
+        ...context,
+        schoolId: identity.schoolId,
+        staffMemberId: identity.staffMemberId,
+        effectiveGrants: identity.effectiveGrants!,
+      });
+    case "guardian":
+      return createGuardianActorMetadata({
+        ...context,
+        schoolId: identity.schoolId,
+        guardianId: identity.guardianId,
+        effectiveGrants: identity.effectiveGrants!,
+      });
+    case "student":
+      return createStudentActorMetadata({
+        ...context,
+        schoolId: identity.schoolId,
+        studentId: identity.studentId,
+        effectiveGrants: identity.effectiveGrants!,
+      });
+  }
+}
+
+function resolveAcademicYearId(headerValue: string | undefined): string | undefined {
+  const trimmed = headerValue?.trim();
+  return trimmed || undefined;
+}
+
+export function createSessionActorDependency(
+  resolveAuth?: (c: Context<AppBindings>) => Promise<AuthSessionProvider> | AuthSessionProvider,
+): DependencyModule<AppBindings> {
+  return {
+    name: "sessionActor",
+    async resolve(c) {
+      const auth = resolveAuth ? await resolveAuth(c) : c.var.auth;
+      const session = normalizeAuthSession(await auth.api.getSession({
+        headers: c.req.raw.headers,
+      }) as AuthSession | null | undefined);
+
+      if (!session) {
+        c.set("actor", null);
+        return;
+      }
+
+      const { user } = session;
+      const repos = c.var.schoolApp.repositories;
+      const interactiveContext = {
+        subjectId: user.id,
+        requestId: resolveRequestId(c.req.header("x-request-id")),
+        ...(session.session.id ? { sessionId: session.session.id } : {}),
+        authenticatedAt: session.session.createdAt,
+        assuranceLevel: session.session.assuranceLevel,
+      };
+
+      const identity = await resolveActorIdentity(
+        repos,
+        user.id,
+        session.session,
+        resolveAcademicYearId(c.req.header("x-academic-year-id")),
+        resolveGrantsCacheTtlMs(c.env),
+      );
+      if (identity) {
+        c.set("actor", createActorFromIdentity(identity, interactiveContext));
+        return;
+      }
+
+      c.set("actor", null);
+    },
+  };
+}
+
+export const sessionActorDependency = createSessionActorDependency();

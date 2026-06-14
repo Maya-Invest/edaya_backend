@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
-import { toBetterAuthHandlerRequest } from "@/lib/http/auth-request";
-import type { AppBindings } from "@/lib/http/types";
+import { toBetterAuthHandlerRequest } from "@/http/auth-request";
+import type { AppBindings } from "@/http/types";
 import { createPgliteTestEnv } from "../support/pglite-env";
 
 const env = createPgliteTestEnv({

@@ -4,7 +4,7 @@ compatibility_date = "2024-09-23"
 compatibility_flags = [ "nodejs_compat" ]
 
 [alias]
-"@/lib/runtime/resolve-api-runtime" = "./src/lib/runtime/resolve-api-runtime.worker.ts"
+"@/runtime/resolve/api-runtime" = "./src/runtime/resolve/api-runtime.worker.ts"
 
 [dev]
 port = 9999
@@ -48,7 +48,6 @@ BETTER_AUTH_URL = "https://api.edaya.softilab.dev"
 TRUSTED_ORIGINS = "https://app.edaya.softilab.dev"
 COOKIE_DOMAIN = "softilab.dev"
 ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
-ALLOW_DEMO_LOGIN_ACCOUNTS = "true"
 
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE"

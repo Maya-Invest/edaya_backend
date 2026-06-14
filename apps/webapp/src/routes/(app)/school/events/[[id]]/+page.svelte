@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import SchoolEventsView from '$lib/components/school/SchoolEventsView.svelte';
+	import SchoolEventsView from '$lib/components/school/school-life/SchoolEventsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';

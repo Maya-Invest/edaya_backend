@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { DrawerItem } from '$lib/components/school/drawer-types';
+	import type { DrawerItem } from '$lib/components/school/shared/drawer-types';
 	import type { Component, Snippet } from 'svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
@@ -78,7 +78,7 @@
 	$effect(() => {
 		if (!needsDrawer || DetailDrawer)
 			return;
-		void import('$lib/components/school/DetailDrawer.svelte').then((module) => {
+		void import('$lib/components/school/shared/DetailDrawer.svelte').then((module) => {
 			DetailDrawer = module.default;
 		});
 	});

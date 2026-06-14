@@ -3,8 +3,7 @@ import { runMigrations as runAuthMigrations } from "@edaya/betterauth-d1-migrati
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { createAuth } from "@/lib/runtime/create-auth";
-import type { Environment } from "@/lib/runtime/env";
+import { createAuth, type Environment } from "@/runtime";
 
 const testEnv = {
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",

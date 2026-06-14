@@ -1,0 +1,44 @@
+import {
+  buildDevDemoLoginAccounts,
+  DEV_DEMO_LOGIN_ACCOUNTS,
+  resolveDevDemoStaffRole,
+} from "@edaya/dev-fixtures/demo-login";
+import { describe, expect, it } from "bun:test";
+
+describe("dev demo login accounts", () => {
+  it("resolves demo staff roles from fixture access role ids", () => {
+    expect(resolveDevDemoStaffRole("st5")).toMatchObject({
+      role: "directeur",
+      accessRoleId: "role-director",
+    });
+    expect(resolveDevDemoStaffRole("st3")).toMatchObject({
+      role: "prof_principal",
+      accessRoleId: "role-coordinator",
+    });
+    expect(resolveDevDemoStaffRole("st7")).toMatchObject({
+      role: "educateur",
+      accessRoleId: "role-educator",
+    });
+    expect(resolveDevDemoStaffRole("st1")).toMatchObject({
+      role: "professeur",
+      accessRoleId: "role-teacher",
+    });
+  });
+
+  it("builds four login accounts with one teacher representative", () => {
+    const accounts = buildDevDemoLoginAccounts();
+
+    expect(accounts).toEqual(DEV_DEMO_LOGIN_ACCOUNTS);
+    expect(accounts).toHaveLength(4);
+    expect(accounts.map(account => account.staffId)).toEqual(["st5", "st1", "st3", "st7"]);
+    expect(accounts.find(account => account.staffId === "st5")).toMatchObject({
+      role: "directeur",
+      email: "c.moreau@school.edu",
+    });
+    expect(accounts.find(account => account.staffId === "st7")).toMatchObject({
+      role: "educateur",
+      email: "t.evrard@school.edu",
+    });
+    expect(accounts.some(account => account.staffId === "st2")).toBe(false);
+  });
+});

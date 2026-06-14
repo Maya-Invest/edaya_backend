@@ -1,5 +1,5 @@
-import type { AppBindings, AppRouteHandler } from "@/lib/http/types";
-import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/lib/http/responses";
+import type { AppBindings, AppRouteHandler } from "@/http/types";
+import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";

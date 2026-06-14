@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PaymentsView from '$lib/components/school/PaymentsView.svelte';
+	import PaymentsView from '$lib/components/school/finance/PaymentsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { t } from '$lib/i18n';

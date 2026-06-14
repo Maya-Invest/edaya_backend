@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { resolveCorsOrigin, trustedOriginsFromEnv } from "@/lib/http/cors";
-import { parseEnv } from "@/lib/runtime/env";
+import { resolveCorsOrigin, trustedOriginsFromEnv } from "@/http/cors";
+import { parseEnv } from "@/runtime";
 
 describe("CORS configuration", () => {
   it("parses comma-separated TRUSTED_ORIGINS", () => {

@@ -374,6 +374,18 @@ export const DEV_AUTH_STAFF_ACCOUNTS = [
   { staffId: 'st7', email: 't.evrard@school.edu', name: 'Tom Évrard' },
 ] as const
 
+/** Access role ids for auth-linked staff — keep in sync with access seed. */
+export const DEV_AUTH_STAFF_ACCESS_ROLE_IDS: Record<
+  (typeof DEV_AUTH_STAFF_ACCOUNTS)[number]['staffId'],
+  string
+> = {
+  st5: 'role-director',
+  st1: 'role-teacher',
+  st2: 'role-teacher',
+  st3: 'role-coordinator',
+  st7: 'role-educator',
+}
+
 /** Guardian accounts provisioned and linked during dev auth seed. */
 export const DEV_AUTH_GUARDIAN_ACCOUNTS = [
   { guardianId: 'g1', email: 'c.laurent@mail.com', name: 'Claire Laurent' },

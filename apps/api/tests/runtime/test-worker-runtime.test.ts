@@ -1,10 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
-import { createDependenciesInjection } from "@/lib/http/dependency-injection";
-import { prepareRuntimeBindings } from "@/lib/runtime/bindings";
-import { resolveDatabaseUrl, usesHyperdriveBinding } from "@/lib/runtime/hyperdrive";
-import { createRuntimeRegistry } from "@/lib/runtime/process-registry";
-import { createWorkerRequestRuntimeResolver } from "@/lib/runtime/request-runtime";
+import { createDependenciesInjection } from "@/http/dependency-injection";
+import {
+  prepareRuntimeBindings,
+  resolveDatabaseUrl,
+  usesHyperdriveBinding,
+} from "@/runtime";
+import { createRuntimeRegistry } from "@/runtime/registry/process-registry";
+import { createWorkerRequestRuntimeResolver } from "@/runtime/resolve/request-runtime";
 
 describe("resolveDatabaseUrl", () => {
   it("prefers Hyperdrive on the worker runtime", () => {

@@ -318,5 +318,5 @@ Integration tests under `packages/integration-tests/src/auth/` exercise persiste
 
 ## Related documentation
 
-- `docs/authorization-cleanup-plan.md` — phased refactor history and performance notes.
+- `sprints/done/authorization-cleanup-plan.md` — phased refactor history and performance notes.
 - `domains/README.md` — how entity configs attach authorization to managed entities.

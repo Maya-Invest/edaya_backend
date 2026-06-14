@@ -6,7 +6,7 @@ import {
   getEffectiveGrantsCacheStore,
   resetEffectiveGrantsCacheStore,
 } from "@/lib/authorization/grants-cache/store";
-import type { Environment } from "@/lib/runtime/env";
+import type { Environment } from "@/runtime";
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 

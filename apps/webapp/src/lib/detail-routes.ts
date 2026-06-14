@@ -1,5 +1,5 @@
 import type { ResolvedPathname } from '$app/types';
-import type { DrawerItem } from '$lib/components/school/drawer-types';
+import type { DrawerItem } from '$lib/components/school/shared/drawer-types';
 import type { StaffRole, Subject } from '$lib/types/school';
 import { academicContext } from '$lib/academic/context.svelte';
 import { detailDataContext } from '$lib/detail-data/context.svelte';

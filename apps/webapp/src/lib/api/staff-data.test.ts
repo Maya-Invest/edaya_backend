@@ -1,3 +1,4 @@
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import {
 	mapDepartment,
@@ -6,21 +7,21 @@ import {
 } from './staff-data';
 
 const staffRaw = [
-	{ id: 'st5', schoolId: 'sch-edaya-central', firstName: 'Camille', lastName: 'Moreau', email: 'c.moreau@school.edu' },
-	{ id: 'st3', schoolId: 'sch-edaya-central', firstName: 'Marie', lastName: 'Léon', email: 'm.leon@school.edu' },
-	{ id: 'st1', schoolId: 'sch-edaya-central', firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
-	{ id: 'st7', schoolId: 'sch-edaya-central', firstName: 'Tom', lastName: 'Évrard', email: 't.evrard@school.edu' },
+	{ id: 'st5', schoolId: SEED_SCHOOL_ID, firstName: 'Camille', lastName: 'Moreau', email: 'c.moreau@school.edu' },
+	{ id: 'st3', schoolId: SEED_SCHOOL_ID, firstName: 'Marie', lastName: 'Léon', email: 'm.leon@school.edu' },
+	{ id: 'st1', schoolId: SEED_SCHOOL_ID, firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
+	{ id: 'st7', schoolId: SEED_SCHOOL_ID, firstName: 'Tom', lastName: 'Évrard', email: 't.evrard@school.edu' },
 ] as const;
 
 const roleAssignmentsRaw = [
-	{ id: 'sra-st5', staffId: 'st5', schoolId: 'sch-edaya-central', academicYearId: '2025', roleIds: ['role-director'], scopeGrants: [], status: 'active' },
-	{ id: 'sra-st3', staffId: 'st3', schoolId: 'sch-edaya-central', academicYearId: '2025', roleIds: ['role-coordinator'], scopeGrants: [], status: 'active' },
-	{ id: 'sra-st1', staffId: 'st1', schoolId: 'sch-edaya-central', academicYearId: '2025', roleIds: ['role-teacher'], scopeGrants: [], status: 'active' },
-	{ id: 'sra-st7', staffId: 'st7', schoolId: 'sch-edaya-central', academicYearId: '2025', roleIds: ['role-educator'], scopeGrants: [], status: 'active' },
+	{ id: 'sra-st5', staffId: 'st5', schoolId: SEED_SCHOOL_ID, academicYearId: '2025', roleIds: ['role-director'], scopeGrants: [], status: 'active' },
+	{ id: 'sra-st3', staffId: 'st3', schoolId: SEED_SCHOOL_ID, academicYearId: '2025', roleIds: ['role-coordinator'], scopeGrants: [], status: 'active' },
+	{ id: 'sra-st1', staffId: 'st1', schoolId: SEED_SCHOOL_ID, academicYearId: '2025', roleIds: ['role-teacher'], scopeGrants: [], status: 'active' },
+	{ id: 'sra-st7', staffId: 'st7', schoolId: SEED_SCHOOL_ID, academicYearId: '2025', roleIds: ['role-educator'], scopeGrants: [], status: 'active' },
 ] as const;
 
 const classGroupsRaw = [
-	{ id: '6a', schoolId: 'sch-edaya-central', academicYearId: '2025', gradeLevelId: 'gl-6', name: '6th — A', homeroomStaffId: 'st3' },
+	{ id: '6a', schoolId: SEED_SCHOOL_ID, academicYearId: '2025', gradeLevelId: 'gl-6', name: '6th — A', homeroomStaffId: 'st3' },
 ] as const;
 
 const assignmentsRaw = [
@@ -38,9 +39,9 @@ const classSubjectsRaw = [
 ] as const;
 
 const subjectsRaw = [
-	{ id: 'subj-math', schoolId: 'sch-edaya-central', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
-	{ id: 'subj-sci', schoolId: 'sch-edaya-central', name: 'Natural Sciences', code: 'SCI', defaultCoefficient: 2 },
-	{ id: 'subj-hist', schoolId: 'sch-edaya-central', name: 'History & Geography', code: 'HIST', defaultCoefficient: 2 },
+	{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
+	{ id: 'subj-sci', schoolId: SEED_SCHOOL_ID, name: 'Natural Sciences', code: 'SCI', defaultCoefficient: 2 },
+	{ id: 'subj-hist', schoolId: SEED_SCHOOL_ID, name: 'History & Geography', code: 'HIST', defaultCoefficient: 2 },
 ] as const;
 
 describe('staff role mapping', () => {

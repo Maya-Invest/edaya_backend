@@ -1,4 +1,5 @@
 import type { ActivitySources } from './activities-data';
+import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapActivities } from './activities-data';
 
@@ -6,7 +7,7 @@ const sources: ActivitySources = {
 	activitiesRaw: [
 		{
 			id: 'act-robot',
-			schoolId: 'sch-edaya-central',
+			schoolId: SEED_SCHOOL_ID,
 			name: 'Club Robotique',
 			category: 'Science',
 			coach: 'M. Adler',

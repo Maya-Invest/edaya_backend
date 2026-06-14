@@ -37,4 +37,4 @@ Before first production deploy:
 4. Dry-run: `bun run deploy:worker:dry-run`
 5. Deploy: `bun run deploy:worker`
 
-See [docs/done/local-dev.md](../../docs/done/local-dev.md) and [docs/done/api-runtimes.md](../../docs/done/api-runtimes.md).
+See [docs/local-dev.md](../../docs/local-dev.md) and [docs/api-runtimes.md](../../docs/api-runtimes.md).

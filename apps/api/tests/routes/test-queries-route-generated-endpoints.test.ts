@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import indexRouter from "@/app-router";
 import type { Permission } from "@edaya/core";
 import { ActorAssuranceLevel } from "@edaya/core";
-import type { AppBindings } from "@/lib/http/types";
+import type { AppBindings } from "@/http/types";
 
 describe("generated core query endpoints", () => {
   const mockActor = {
