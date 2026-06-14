@@ -1,0 +1,22 @@
+{
+  "name": "@edaya/smoke-staging",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "bun test",
+    "smoke": "bun ./scripts/smoke-staging.ts",
+    "smoke:staging": "bun ./scripts/smoke-staging.ts"
+  },
+  "dependencies": {
+    "@edaya/dev-fixtures": "workspace:*",
+    "@edaya/seeding": "workspace:*",
+    "dotenv": "^16.5.0",
+    "dotenv-expand": "^11.0.7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^6.0.2"
+  }
+}

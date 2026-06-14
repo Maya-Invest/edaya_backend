@@ -20,6 +20,7 @@
     "db:generate": "drizzle-kit generate",
     "migrate:local": "bun ./scripts/migrate.ts local",
     "migrate:remote": "bun ./scripts/migrate.ts remote",
+    "migrate:staging": "bun ./scripts/migrate.ts remote staging",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint src scripts",

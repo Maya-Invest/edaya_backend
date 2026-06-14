@@ -54,6 +54,8 @@ cd apps/api && bun run dev:worker
 
 Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB and D1.
 
+**Staging:** `bun run deploy:api:staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive, D1, and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
+
 ## Architecture
 
 ```

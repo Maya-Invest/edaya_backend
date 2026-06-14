@@ -129,7 +129,7 @@ async function ensureAuthUser(
 /** Provision auth users through an in-process Better Auth handler (tests and local tooling). */
 export function createHandlerAuthProvisioner(auth: AuthHandler, baseUrl: string): AuthProvisioner {
   return {
-    ensureUser: async account => ({
+    ensureUser: async (account, _options) => ({
       subjectId: await ensureAuthUser(auth, baseUrl, account),
     }),
     lookupSubjectIdByEmail: (email, password) => lookupAuthUserIdByEmail(auth, baseUrl, email, password),

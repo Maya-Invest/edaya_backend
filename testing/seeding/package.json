@@ -22,7 +22,8 @@
     "seed:auth": "bun scripts/seed-http.ts auth",
     "seed:smoke": "bun scripts/seed-http.ts smoke",
     "seed:init": "bun scripts/seed-init.ts",
-    "seed:remote": "bun scripts/seed-remote.ts"
+    "seed:remote": "bun scripts/seed-remote.ts",
+    "seed:smoke:staging": "bun scripts/seed-smoke-staging.ts"
   },
   "dependencies": {
     "@edaya/core": "workspace:*",

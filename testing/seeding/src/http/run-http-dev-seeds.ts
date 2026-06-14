@@ -8,6 +8,7 @@ import {
   runDevSeeds,
 } from '../run-dev-seeds'
 import { HttpAuthProvisioner, signInViaHttp } from './auth'
+import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
 import { postEntityList } from './core-entity'
 import { createCoreHttpSeedApplication } from './core-seed-application'
 import {
@@ -67,11 +68,7 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
 }
 
 async function createSessionHttpSeedApplication(client: HttpSeedClient): Promise<SeedApplication> {
-  await signInViaHttp(client, {
-    email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-    password: DEV_AUTH_PASSWORD,
-  })
-
+  await bootstrapHttpCoreSession(client)
   return createCoreHttpSeedApplication({ client })
 }
 
@@ -210,7 +207,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   }
 
   if (scope === 'auth') {
-    results.authProvision = await runDevAuthProvision(auth)
+    results.authProvision = await runDevAuthProvision(auth, { baseUrl: client.origin })
     if (log) {
       logDevSeedResults(results, log)
     }
@@ -234,15 +231,32 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     return results
   }
 
-  const application = await resolveSeedApplication(options)
+  const authProvision: Awaited<ReturnType<typeof runDevAuthProvision>> | null = null
+  let application: SeedApplication
+
+  if (
+    scope === 'all'
+    && !options.serviceAccountApiKey
+    && !options.application
+  ) {
+    await bootstrapHttpCoreSession(client)
+    application = createCoreHttpSeedApplication({ client })
+  }
+  else {
+    application = await resolveSeedApplication(options)
+  }
+
   const domainResults = await runDevSeeds({
     scope,
     application,
     auth,
+    ...(scope === 'all' && !options.serviceAccountApiKey && !options.application
+      ? { skipAuthProvision: true }
+      : {}),
   })
 
   results.school = domainResults.school
-  results.authProvision = domainResults.authProvision
+  results.authProvision = authProvision ?? domainResults.authProvision
   results.authLink = domainResults.authLink
   results.access = domainResults.access
 

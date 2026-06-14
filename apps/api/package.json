@@ -9,6 +9,8 @@
     "start": "node dist/node.js",
     "deploy:worker": "wrangler deploy --env production",
     "deploy:worker:dry-run": "wrangler deploy --env production --dry-run",
+    "deploy:worker:staging": "wrangler deploy --env staging",
+    "deploy:worker:staging:dry-run": "wrangler deploy --env staging --dry-run",
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "lint": "eslint src tests",

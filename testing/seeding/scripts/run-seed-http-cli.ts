@@ -10,16 +10,37 @@ import {
 } from '../src/http/index.ts'
 import { loadSeedEnvFiles } from '../src/load-seed-env.ts'
 
+const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
+const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
+
+function resolveAppOrigin(baseUrl: string): string {
+  const explicit = process.env.SEED_APP_ORIGIN?.trim()
+  if (explicit) {
+    return explicit.replace(/\/+$/, '')
+  }
+
+  if (baseUrl.includes('api-staging.')) {
+    return (
+      process.env.STAGING_APP_ORIGIN?.trim().replace(/\/+$/, '')
+      || DEFAULT_STAGING_APP_ORIGIN
+    )
+  }
+
+  return DEFAULT_LOCAL_APP_ORIGIN
+}
+
 export function resolveSeedHttpConfig() {
   loadSeedEnvFiles()
+  const baseUrl = process.env.SEED_API_URL ?? process.env.BETTER_AUTH_URL ?? 'http://localhost:9999'
   return {
-    baseUrl: process.env.SEED_API_URL ?? process.env.BETTER_AUTH_URL ?? 'http://localhost:9999',
+    baseUrl,
+    appOrigin: resolveAppOrigin(baseUrl),
     serviceAccountApiKey: process.env.SERVICE_ACCOUNT_API_KEY?.trim(),
   }
 }
 
 export async function runSeedHttpCli(argv: string[]): Promise<number> {
-  const { baseUrl, serviceAccountApiKey } = resolveSeedHttpConfig()
+  const { baseUrl, appOrigin, serviceAccountApiKey } = resolveSeedHttpConfig()
 
   let scope: HttpDevSeedScope
   try {
@@ -38,7 +59,7 @@ export async function runSeedHttpCli(argv: string[]): Promise<number> {
     )
   }
 
-  const client = new HttpSeedClient({ baseUrl })
+  const client = new HttpSeedClient({ baseUrl, appOrigin })
   const results = await runHttpDevSeeds({
     client,
     scope,

@@ -22,6 +22,7 @@ testing/
   dev-fixtures/                     Shared seed IDs and fixture records
   seeding/                          HTTP seed orchestration (@edaya/seeding)
   integration-tests/                Cross-package integration tests
+  smoke-staging/                    HTTP smoke checks for deployed staging (@edaya/smoke-staging)
 ```
 
 ## Boundary rules
@@ -50,6 +51,7 @@ testing/
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Fixture data |
 | `@edaya/seeding` | `testing/seeding` | HTTP seed CLI |
 | `@edaya/integration-tests` | `testing/integration-tests` | Integration test suite |
+| `@edaya/smoke-staging` | `testing/smoke-staging` | Deployed staging HTTP smoke |
 
 ## Historical renames
 
@@ -65,7 +67,7 @@ testing/
 |--------|------------------|
 | `bun dev` | Turbo — API + webapp watch |
 | `bun dev:worker` | `@edaya/api` `dev:worker` |
-| `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` | `@edaya/seeding` |
+| `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
 | `bun db:generate` | `@edaya/adaptor-postgres` |
 | `bun db:migrate` | `@edaya/neon-migrations` (`migrate`) |
 | `bun db:migrate:all` | `@edaya/neon-migrations` (`migrate:all`) |
@@ -74,9 +76,14 @@ testing/
 | `bun auth:generate-schema` | `@edaya/betterauth-d1-migrations` |
 | `bun db:migrate:auth` | `@edaya/betterauth-d1-migrations` (`migrate:local`) |
 | `bun db:migrate:auth:remote` | `@edaya/betterauth-d1-migrations` (`migrate:remote`) |
+| `bun db:migrate:staging` | `@edaya/neon-migrations` (`migrate:staging`) |
+| `bun db:migrate:auth:staging` | `@edaya/betterauth-d1-migrations` (`migrate:staging`) |
 | `bun openapi:generate` | API export → webapp schema → API client regen |
 | `bun deploy:api` | `@edaya/api` `deploy:worker` |
+| `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
 | `bun deploy:webapp` | `@edaya/webapp` `deploy` |
+| `bun deploy:webapp:staging` | `@edaya/webapp` `deploy:staging` |
+| `bun smoke:staging` | `@edaya/smoke-staging` |
 
 ## Auth schema pipeline
 

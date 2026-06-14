@@ -78,6 +78,8 @@ Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/s
 | `bun seed:smoke` | Sign in + verify `/core/authorization/effective-grants` |
 | `bun seed:remote` | Full seed against `SEED_API_URL` (staging / remote API) |
 
+**Staging:** see [deploy-staging.md](./deploy-staging.md) for isolated Cloudflare deploy, bootstrap, and `bun run smoke:staging`.
+
 **Credentials:** prefer `SERVICE_ACCOUNT_API_KEY` in `apps/api/.env` for `/core/*` seeding. First `bun seed:init` bootstraps via director session cookies, then prints a `SERVICE_ACCOUNT_API_KEY` to add for subsequent runs.
 
 ```sh

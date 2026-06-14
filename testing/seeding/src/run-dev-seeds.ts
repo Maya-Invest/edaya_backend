@@ -15,6 +15,10 @@ export interface RunDevSeedsOptions {
   scope: DevSeedScope
   application: SeedApplication
   auth: AuthProvisioner
+  /** When true, skip auth user sign-up (already done before session bootstrap). */
+  skipAuthProvision?: boolean
+  /** School owner subject id when auth provision ran outside runDevSeeds. */
+  ownerSubjectId?: string
 }
 
 export interface RunDevSeedsResults {
@@ -57,9 +61,13 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
   }
 
   if (scope === 'all') {
-    results.authProvision = await runDevAuthProvision(auth)
+    if (!options.skipAuthProvision) {
+      results.authProvision = await runDevAuthProvision(auth)
+    }
     results.school = await runDevSchoolSeed(application, {
-      ownerSubjectId: ownerSubjectIdFromProvision(results.authProvision),
+      ownerSubjectId: options.ownerSubjectId ?? (
+        results.authProvision ? ownerSubjectIdFromProvision(results.authProvision) : undefined
+      ),
     })
     results.authLink = await runDevAuthLink(application, auth)
     results.access = await runDevAccessSeed(application)

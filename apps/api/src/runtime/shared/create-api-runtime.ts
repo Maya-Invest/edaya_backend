@@ -6,23 +6,34 @@ import type { ApiRuntime, DatabaseHandle } from "@/runtime/types";
 
 export interface CreateApiRuntimeOptions {
   env: Environment;
-  schoolHandle: DatabaseHandle;
   authHandle: DatabaseHandle;
+  resolveSchoolHandle: () => Promise<DatabaseHandle>;
   initSchoolApplication: (db: PostgresTransactionalDb) => Promise<ApiSchoolApplication>;
 }
 
 export async function createApiRuntime(options: CreateApiRuntimeOptions): Promise<ApiRuntime> {
   let schoolApp: ApiSchoolApplication | null = null;
+  let resolvedSchoolHandle: DatabaseHandle | null = null;
   const auth = createAuth(options.authHandle.db, options.env);
+
+  async function getResolvedSchoolHandle(): Promise<DatabaseHandle> {
+    resolvedSchoolHandle ??= await options.resolveSchoolHandle();
+    return resolvedSchoolHandle;
+  }
 
   return {
     env: options.env,
-    db: options.schoolHandle.db,
+    get db() {
+      return resolvedSchoolHandle?.db ?? null;
+    },
     authDb: options.authHandle.db,
-    sqlClient: options.schoolHandle.sqlClient,
+    get sqlClient() {
+      return resolvedSchoolHandle?.sqlClient ?? null;
+    },
     async getSchoolApplication() {
       if (!schoolApp) {
-        schoolApp = await options.initSchoolApplication(options.schoolHandle.db as PostgresTransactionalDb);
+        const handle = await getResolvedSchoolHandle();
+        schoolApp = await options.initSchoolApplication(handle.db as PostgresTransactionalDb);
       }
       return schoolApp;
     },
@@ -30,10 +41,10 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
       return auth;
     },
     close: async () => {
-      await Promise.all([
-        options.schoolHandle.dispose(),
-        options.authHandle.dispose(),
-      ]);
+      await options.authHandle.dispose();
+      if (resolvedSchoolHandle) {
+        await resolvedSchoolHandle.dispose();
+      }
     },
   };
 }

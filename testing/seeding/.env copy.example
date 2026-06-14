@@ -1,0 +1,7 @@
+# Copy to .env (gitignored). `apps/api/.env` is also loaded as a fallback.
+
+# Target API (defaults to BETTER_AUTH_URL from apps/api/.env)
+# SEED_API_URL=http://localhost:9999
+
+# Service account API key for /core/* HTTP seeding (printed after first `bun seed:init`).
+# SERVICE_ACCOUNT_API_KEY=sk_live_...

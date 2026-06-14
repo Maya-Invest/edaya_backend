@@ -31,4 +31,9 @@ export function loadSeedEnvFiles(): void {
       expand(config({ path: envFile }))
     }
   }
+
+  const stagingEnvFile = path.join(repoRoot, 'testing/seeding/.env.staging')
+  if (existsSync(stagingEnvFile)) {
+    expand(config({ path: stagingEnvFile }))
+  }
 }

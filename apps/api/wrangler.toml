@@ -17,6 +17,10 @@ BETTER_AUTH_URL = "http://localhost:9999"
 TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 
 # Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
+# Staging (`wrangler deploy --env staging`):
+#   Replace placeholder Hyperdrive + D1 IDs below before first deploy — see docs/deploy-staging.md
+#   Required secret: BETTER_AUTH_SECRET (unique from production)
+#   Optional secret: SERVICE_ACCOUNT_API_KEY (after `bun seed:init` bootstrap)
 # Production (`wrangler deploy --env production`):
 #   Required secret: BETTER_AUTH_SECRET
 #   Optional secrets: SERVICE_ACCOUNT_API_KEY
@@ -53,6 +57,23 @@ ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
 binding = "HYPERDRIVE"
 id = "62c00eeda7d047fc9951daf7db430070"
 
+[env.staging]
+name = "edaya-api-staging"
+
+# Replace with staging Hyperdrive config ID (Neon staging branch) before first deploy.
+[[env.staging.hyperdrive]]
+binding = "HYPERDRIVE"
+id = "c6b9a94e449647d78f7c49591ba301e6"
+
+[env.staging.vars]
+NODE_ENV = "production"
+LOG_LEVEL = "info"
+RUNTIME = "worker"
+BETTER_AUTH_URL = "https://api-staging.edaya.softilab.dev"
+TRUSTED_ORIGINS = "https://app-staging.edaya.softilab.dev"
+COOKIE_DOMAIN = "softilab.dev"
+ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
+
 [[env.production.d1_databases]]
 binding = "AUTH_DB"
 database_name = "edaya"
@@ -61,4 +82,15 @@ migrations_dir = "../../integrations/betterauth-d1-migrations/drizzle"
 
 [[env.production.routes]]
 pattern = "api.edaya.softilab.dev"
+custom_domain = true
+
+# Replace with staging D1 database ID after `wrangler d1 create edaya-auth-staging`.
+[[env.staging.d1_databases]]
+binding = "AUTH_DB"
+database_name = "edaya-auth-staging"
+database_id = "2e55cf53-1b89-453f-ac17-3aab83fd8488"
+migrations_dir = "../../integrations/betterauth-d1-migrations/drizzle"
+
+[[env.staging.routes]]
+pattern = "api-staging.edaya.softilab.dev"
 custom_domain = true

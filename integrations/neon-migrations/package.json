@@ -9,6 +9,7 @@
     "migrate": "drizzle-kit migrate",
     "migrate:all": "bun ./scripts/migrate-all.ts",
     "migrate:dev": "bun ./scripts/migrate-dev.ts",
+    "migrate:staging": "bun ./scripts/migrate-staging.ts",
     "lint": "eslint scripts drizzle.config.ts",
     "lint:fix": "eslint scripts drizzle.config.ts --fix"
   },

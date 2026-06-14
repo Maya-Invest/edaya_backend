@@ -6,11 +6,13 @@ import path from "node:path";
 import { parseRuntimeEnv } from "@/runtime/env/schema";
 import type { Environment } from "@/runtime/env/schema";
 
-const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+function resolveApiRoot(): string {
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+}
 
 export function loadDotenvFiles(): void {
   expand(config({
-    path: path.resolve(apiRoot, ".env"),
+    path: path.resolve(resolveApiRoot(), ".env"),
   }));
 }
 

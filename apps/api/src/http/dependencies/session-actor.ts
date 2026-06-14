@@ -13,6 +13,7 @@ import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/aut
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
+import { isBetterAuthPath } from "./utils";
 import { ActorAssuranceLevel } from "@edaya/core";
 
 export interface AuthSession {
@@ -305,6 +306,11 @@ export function createSessionActorDependency(
   return {
     name: "sessionActor",
     async resolve(c) {
+      if (isBetterAuthPath(c)) {
+        c.set("actor", null);
+        return;
+      }
+
       const auth = resolveAuth ? await resolveAuth(c) : c.var.auth;
       const session = normalizeAuthSession(await auth.api.getSession({
         headers: c.req.raw.headers,

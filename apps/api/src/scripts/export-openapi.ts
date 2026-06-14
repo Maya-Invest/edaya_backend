@@ -2,7 +2,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import app from "@/app";
-import { loadNodeProcessEnv } from "@/runtime/env";
+import { loadNodeProcessEnv } from "@/runtime/env/node-loader";
 import { resetApiRuntimesForTests } from "@/runtime";
 
 // Load environment variables before importing app to ensure all dependencies initialize properly

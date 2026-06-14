@@ -142,8 +142,24 @@ export async function runDevSchoolSeed(
   options?: RunDevSchoolSeedOptions,
 ): Promise<DevSchoolSeedResult> {
   const existingSchools = await application.repositories.schools.list()
-  if (existingSchools.length > 0) {
-    return { status: 'skipped', reason: 'already-seeded', schoolCount: existingSchools.length }
+  const existingDemoSchool = existingSchools.find(school => school.id === SEED_SCHOOL_ID)
+
+  if (existingDemoSchool) {
+    const existingStudents = await application.repositories.students.list()
+    if (existingStudents.length > 0) {
+      return {
+        status: 'skipped',
+        reason: 'already-seeded',
+        schoolCount: existingSchools.length,
+      }
+    }
+  }
+  else if (existingSchools.length > 0) {
+    return {
+      status: 'skipped',
+      reason: 'already-seeded',
+      schoolCount: existingSchools.length,
+    }
   }
 
   const actor = createBootstrapStaffActorMetadata({
@@ -159,10 +175,12 @@ export async function runDevSchoolSeed(
     ownerSubjectId = await options.auth.lookupSubjectIdByEmail(director.email, DEV_AUTH_PASSWORD)
   }
 
-  await service.registerSchool({
-    ...SEED_SCHOOL_PROFILE,
-    ...(ownerSubjectId ? { ownerSubjectId } : {}),
-  })
+  if (!existingDemoSchool) {
+    await service.registerSchool({
+      ...SEED_SCHOOL_PROFILE,
+      ...(ownerSubjectId ? { ownerSubjectId } : {}),
+    })
+  }
 
   for (const gradeLevel of SEED_GRADE_LEVELS) {
     await service.baseService.gradeLevels.save(new GradeLevel({
@@ -210,13 +228,16 @@ export async function runDevSchoolSeed(
 
   const director = SEED_STAFF[0]
   const directorName = splitDisplayName(director.name)
-  await service.registerStaffMember({
-    id: director.id,
-    schoolId: SEED_SCHOOL_ID,
-    firstName: directorName.firstName,
-    lastName: directorName.lastName,
-    email: director.email,
-  })
+  const existingDirector = await application.repositories.staffMembers.findById(director.id)
+  if (!existingDirector) {
+    await service.registerStaffMember({
+      id: director.id,
+      schoolId: SEED_SCHOOL_ID,
+      firstName: directorName.firstName,
+      lastName: directorName.lastName,
+      email: director.email,
+    })
+  }
 
   for (const member of SEED_STAFF.slice(1)) {
     const { firstName, lastName } = splitDisplayName(member.name)

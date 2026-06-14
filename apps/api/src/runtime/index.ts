@@ -7,14 +7,14 @@
 export {
   type Environment,
   inferRuntimeKind,
-  loadDotenvFiles,
-  loadNodeProcessEnv,
   parseEnv,
   parseRuntimeEnv,
   prepareRuntimeBindings,
   resolveDatabaseUrl,
   usesHyperdriveBinding,
 } from "@/runtime/env";
+
+export { loadDotenvFiles, loadNodeProcessEnv } from "@/runtime/env/node-loader";
 
 export {
   shouldAllowPublicSchoolRegistration,

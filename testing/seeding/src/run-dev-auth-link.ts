@@ -46,7 +46,7 @@ export async function runDevAuthLink(
       email: account.email,
       password: DEV_AUTH_PASSWORD,
       name: account.name,
-    })
+    }, { preserveSession: true })
 
     if (staff.subjectId === subjectId) {
       if (account.staffId === SEED_SCHOOL_OWNER_STAFF_ID && school.ownerSubjectId !== subjectId) {
@@ -91,7 +91,7 @@ export async function runDevAuthLink(
       email: account.email,
       password: DEV_AUTH_PASSWORD,
       name: account.name,
-    })
+    }, { preserveSession: true })
 
     if (guardian.subjectId === subjectId) {
       continue

@@ -13,3 +13,10 @@ name = "edaya-webapp"
 [[env.production.routes]]
 pattern = "app.edaya.softilab.dev"
 custom_domain = true
+
+[env.staging]
+name = "edaya-webapp-staging"
+
+[[env.staging.routes]]
+pattern = "app-staging.edaya.softilab.dev"
+custom_domain = true

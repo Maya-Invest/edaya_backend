@@ -309,6 +309,26 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerStaffId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerFirstName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerLastName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerEmail": {
+            "type": "string",
+            "format": "email"
           }
         },
         "required": [

@@ -27,6 +27,11 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   type: z.nativeEnum(SchoolType).nullable().optional(),
   country: z.string().trim().min(1).nullable().optional(),
   city: z.string().trim().min(1).nullable().optional(),
+  id: z.string().trim().min(1).optional(),
+  ownerStaffId: z.string().trim().min(1).optional(),
+  ownerFirstName: z.string().trim().min(1).optional(),
+  ownerLastName: z.string().trim().min(1).optional(),
+  ownerEmail: z.string().trim().email().optional(),
 }).openapi("OnboardingRegisterSchoolRequest");
 
 export const onboardingRegisterSchoolRoute = createRoute({
@@ -77,6 +82,11 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.type ? { type: body.type } : {}),
       ...(body.country ? { country: body.country } : {}),
       ...(body.city ? { city: body.city } : {}),
+      ...(body.id ? { id: body.id } : {}),
+      ...(body.ownerStaffId ? { ownerStaffId: body.ownerStaffId } : {}),
+      ...(body.ownerFirstName ? { ownerFirstName: body.ownerFirstName } : {}),
+      ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
+      ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
       requestId,
     });
 

@@ -11,7 +11,12 @@ export interface AuthAccountInput {
   name: string
 }
 
+export interface EnsureUserOptions {
+  /** Keep the current HTTP session cookies (director bootstrap) after resolving subjectId. */
+  preserveSession?: boolean
+}
+
 export interface AuthProvisioner {
-  ensureUser: (account: AuthAccountInput) => Promise<{ subjectId: string }>
+  ensureUser: (account: AuthAccountInput, options?: EnsureUserOptions) => Promise<{ subjectId: string }>
   lookupSubjectIdByEmail: (email: string, password: string) => Promise<string | undefined>
 }

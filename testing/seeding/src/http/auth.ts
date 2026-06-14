@@ -1,11 +1,22 @@
-import type { AuthAccountInput, AuthProvisioner } from '../types'
+import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../types'
 import type { HttpSeedClient } from './client'
+import { isTransientHttpStatus } from './client'
+import { repairStagingAuthUser, shouldRepairStaleStagingAuthUsers } from './repair-staging-auth-user'
 
 interface AuthUserResponse {
   user?: {
     id?: string
   }
 }
+
+interface AuthAttemptResult {
+  subjectId?: string
+  status: number
+  code?: string
+}
+
+const MAX_ENSURE_USER_ATTEMPTS = 4
+const TRANSIENT_RETRY_DELAY_MS = 1500
 
 async function readAuthUserId(response: Response): Promise<string | undefined> {
   const bodyText = await response.text()
@@ -17,28 +28,101 @@ async function readAuthUserId(response: Response): Promise<string | undefined> {
   return body.user?.id
 }
 
+function readAuthErrorCode(message: string): string | undefined {
+  try {
+    const body = JSON.parse(message) as { code?: string }
+    return body.code
+  }
+  catch {
+    return undefined
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 export class HttpAuthProvisioner implements AuthProvisioner {
   constructor(private readonly client: HttpSeedClient) {}
 
-  async ensureUser(account: AuthAccountInput): Promise<{ subjectId: string }> {
-    const subjectId = await this.signIn(account)
-    if (subjectId) {
-      return { subjectId }
+  async ensureUser(account: AuthAccountInput, options?: EnsureUserOptions): Promise<{ subjectId: string }> {
+    if (options?.preserveSession) {
+      return this.client.withCookieSnapshot(() => this.ensureUser(account))
     }
 
-    const signedUpSubjectId = await this.signUp(account)
-    if (!signedUpSubjectId) {
-      throw new Error(`Better Auth sign-up for ${account.email} did not return a user id`)
+    const attempts: string[] = []
+
+    for (let round = 0; round < MAX_ENSURE_USER_ATTEMPTS; round++) {
+      const signInResult = await this.signIn(account)
+      if (signInResult.subjectId) {
+        return { subjectId: signInResult.subjectId }
+      }
+
+      if (isTransientHttpStatus(signInResult.status)) {
+        attempts.push(formatSignInFailure(signInResult))
+        await sleep(TRANSIENT_RETRY_DELAY_MS * (round + 1))
+        continue
+      }
+
+      attempts.push(formatSignInFailure(signInResult))
+
+      let signUpResult = await this.signUp(account, attempts)
+      if (!signUpResult.subjectId && this.shouldRepairStaleUser(signInResult, attempts)) {
+        repairStagingAuthUser(account.email)
+        attempts.push('repaired stale staging auth user')
+        signUpResult = await this.signUp(account, attempts)
+      }
+
+      if (signUpResult.subjectId) {
+        return { subjectId: signUpResult.subjectId }
+      }
+
+      if (isTransientHttpStatus(signUpResult.status)) {
+        await sleep(TRANSIENT_RETRY_DELAY_MS * (round + 1))
+        continue
+      }
+
+      const retryResult = await this.signIn(account)
+      if (retryResult.subjectId) {
+        return { subjectId: retryResult.subjectId }
+      }
+
+      if (isTransientHttpStatus(retryResult.status)) {
+        attempts.push(`retry ${formatSignInFailure(retryResult)}`)
+        await sleep(TRANSIENT_RETRY_DELAY_MS * (round + 1))
+        continue
+      }
+
+      attempts.push(`retry ${formatSignInFailure(retryResult)}`)
+      break
     }
 
-    return { subjectId: signedUpSubjectId }
+    throw new Error(
+      `Better Auth could not provision or sign in ${account.email} (${attempts.join('; ')})`,
+    )
+  }
+
+  private shouldRepairStaleUser(
+    signInResult: AuthAttemptResult,
+    attempts: string[],
+  ): boolean {
+    if (!shouldRepairStaleStagingAuthUsers(this.client.origin)) {
+      return false
+    }
+
+    const userAlreadyExists = attempts.some(entry => entry.includes('user already exists'))
+    const invalidCredentials = signInResult.status === 401
+      && signInResult.code === 'INVALID_EMAIL_OR_PASSWORD'
+
+    return userAlreadyExists && invalidCredentials
   }
 
   async lookupSubjectIdByEmail(email: string, password: string): Promise<string | undefined> {
-    return this.signIn({ email, password, name: email })
+    const result = await this.signIn({ email, password, name: email })
+    return result.subjectId
   }
 
-  private async signIn(account: AuthAccountInput): Promise<string | undefined> {
+  private async signIn(account: AuthAccountInput): Promise<AuthAttemptResult> {
     const response = await this.client.request('/auth/sign-in/email', {
       method: 'POST',
       headers: {
@@ -51,13 +135,24 @@ export class HttpAuthProvisioner implements AuthProvisioner {
     })
 
     if (!response.ok) {
-      return undefined
+      const message = await response.text()
+      return {
+        status: response.status,
+        code: readAuthErrorCode(message),
+      }
     }
 
-    return readAuthUserId(response)
+    const subjectId = await readAuthUserId(response)
+    return {
+      status: response.status,
+      ...(subjectId ? { subjectId } : {}),
+    }
   }
 
-  private async signUp(account: AuthAccountInput): Promise<string | undefined> {
+  private async signUp(
+    account: AuthAccountInput,
+    attempts: string[],
+  ): Promise<AuthAttemptResult> {
     const response = await this.client.request('/auth/sign-up/email', {
       method: 'POST',
       headers: {
@@ -72,11 +167,32 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
     if (!response.ok) {
       const message = await response.text()
-      throw new Error(`Failed to provision dev auth user ${account.email}: ${response.status} ${message}`)
+      if (response.status === 422 && message.includes('USER_ALREADY_EXISTS')) {
+        attempts.push('sign-up skipped (user already exists)')
+        return { status: response.status, code: 'USER_ALREADY_EXISTS' }
+      }
+
+      attempts.push(`sign-up ${response.status}`)
+      return {
+        status: response.status,
+        code: readAuthErrorCode(message),
+      }
     }
 
-    return readAuthUserId(response)
+    const subjectId = await readAuthUserId(response)
+    return {
+      status: response.status,
+      ...(subjectId ? { subjectId } : {}),
+    }
   }
+}
+
+function formatSignInFailure(result: AuthAttemptResult): string {
+  if (result.code) {
+    return `sign-in ${result.status} ${result.code}`
+  }
+
+  return `sign-in ${result.status}`
 }
 
 export async function signInViaHttp(

@@ -182,6 +182,9 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | `bun run seed:auth` | Provision Better Auth user accounts only |
 | `bun run seed:smoke` | Minimal smoke seed for quick verification |
 | `bun run seed:remote` | Seed a remote API instance |
+| `bun run deploy:api:staging` | Deploy API to Cloudflare Workers (staging) |
+| `bun run deploy:webapp:staging` | Build + deploy webapp to staging |
+| `bun run seed:smoke:staging` | Sign-in + effective-grants smoke against staging URL |
 | `cd apps/api && bun dev` | API only (Node, port 9999) |
 | `bun run dev:worker` | API only (Cloudflare Worker) |
 | `cd apps/webapp && bun dev` | Webapp only (port 5173) |
@@ -189,7 +192,7 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | `cd apps/webapp && bun run preview:worker` | Preview webapp on Cloudflare Workers locally |
 | `bun run deploy:webapp` | Build and deploy webapp to Cloudflare Workers |
 | `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
-| `bun run deploy:api` | Deploy API to Cloudflare Workers |
+| `bun run deploy:api` | Deploy API to Cloudflare Workers (production) |
 
 ### Database
 
@@ -201,9 +204,11 @@ Root scripts use the `db:*` prefix. Integration packages expose the underlying `
 | `bun run db:migrate` | Apply school schema migrations (`@edaya/neon-migrations`) |
 | `bun run db:migrate:all` | Apply school + local D1 auth migrations (dev bootstrap) |
 | `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate Hyperdrive origin + local D1 auth |
+| `bun run db:migrate:staging` | Apply school migrations to Neon staging branch (`STAGING_DATABASE_URL`) |
 | `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/betterauth-d1-migrations`) |
 | `bun run db:migrate:auth` | Apply Better Auth migrations to local D1 |
-| `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 |
+| `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 (production) |
+| `bun run db:migrate:auth:staging` | Apply Better Auth migrations to remote D1 (staging) |
 | `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI config |
 
 Package-level extras (run from adaptor package or with `bun --filter`):
@@ -238,7 +243,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run test:remote` | Integration tests against a real Postgres database |
 | `bun run test:coverage` | Tests with coverage (where supported) |
 | `bun run build` | Build deployable apps (webapp + API Node bundle) |
-| `bun run fullcheck` | `lint:fix` → `check` → `build` → `test` (full gate) |
+| `bun run fullcheck` | `lint:fix` → `check` → `build` → `openapi:check` → `check:boundaries` → `test` |
 
 ### Per-package shortcuts
 

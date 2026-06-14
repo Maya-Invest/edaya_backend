@@ -23,6 +23,11 @@ export interface RegisterSchoolWithOwnerInput {
   country?: string;
   city?: string;
   requestId: string;
+  id?: string;
+  ownerStaffId?: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  ownerEmail?: string;
 }
 
 export interface RegisterSchoolWithOwnerResult {
@@ -72,8 +77,14 @@ export async function registerSchoolWithOwner(
   const subjectId = session.user.id;
   await assertSubjectUnlinked(application.repositories, subjectId);
 
-  const schoolId = randomUUID();
-  const owner = resolveOwnerProfile(session);
+  const schoolId = input.id ?? randomUUID();
+  const owner = input.ownerFirstName && input.ownerLastName
+    ? {
+        firstName: input.ownerFirstName,
+        lastName: input.ownerLastName,
+        ...(input.ownerEmail ? { email: input.ownerEmail } : {}),
+      }
+    : resolveOwnerProfile(session);
 
   const actor = createBootstrapStaffActorMetadata({
     schoolId,
@@ -93,7 +104,7 @@ export async function registerSchoolWithOwner(
   });
 
   await service.registerStaffMember({
-    id: randomUUID(),
+    id: input.ownerStaffId ?? randomUUID(),
     schoolId,
     firstName: owner.firstName,
     lastName: owner.lastName,

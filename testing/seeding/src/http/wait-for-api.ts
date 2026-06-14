@@ -10,23 +10,29 @@ export async function waitForApi(
 ): Promise<void> {
   const timeoutMs = options.timeoutMs ?? 60_000
   const intervalMs = options.intervalMs ?? 500
-  const path = options.path ?? '/reference'
-  const target = new URL(path, baseUrl)
+  const paths = options.path ? [options.path] : ['/', '/reference', '/doc']
   const deadline = Date.now() + timeoutMs
+  let lastDetail = 'no response'
 
   while (Date.now() < deadline) {
-    try {
-      const response = await fetch(target)
-      if (response.ok) {
-        return
+    for (const path of paths) {
+      const target = new URL(path, baseUrl)
+      try {
+        const response = await fetch(target)
+        if (response.ok) {
+          return
+        }
+        lastDetail = `${path} returned ${response.status}`
       }
-    }
-    catch {
-      // API not ready yet.
+      catch (error) {
+        lastDetail = `${path} failed: ${error instanceof Error ? error.message : String(error)}`
+      }
     }
 
     await Bun.sleep(intervalMs)
   }
 
-  throw new Error(`API at ${baseUrl} did not become ready within ${timeoutMs}ms`)
+  throw new Error(
+    `API at ${baseUrl} did not become ready within ${timeoutMs}ms (last: ${lastDetail})`,
+  )
 }
