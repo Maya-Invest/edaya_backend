@@ -89,8 +89,8 @@ describe("API command schemas cover core create required fields", () => {
 
   test("enrollStudentCommand", () => {
     assertCommandCoversCoreCreate(enrollStudentCommandSchema, studentClassEnrollmentCreateSchema, {
-      // Assigned by enrollment workflow (index in year, default enrolledAt).
-      allowedOmissions: ["enrollmentIndex", "enrolledAt"],
+      // Assigned by enrollment workflow from class group / existing enrollments.
+      allowedOmissions: ["academicYearId", "enrollmentIndex", "enrolledAt"],
     });
   });
 

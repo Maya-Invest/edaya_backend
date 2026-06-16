@@ -221,6 +221,7 @@ export const registerStudentCommandSchema = z.object(unwrapShape(studentSchema) 
 
 export const enrollStudentCommandSchema = z.object(unwrapShape(studentClassEnrollmentSchema) as any)
   .omit({
+    academicYearId: true,
     enrollmentIndex: true,
     status: true,
     endedAt: true,

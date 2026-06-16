@@ -2,14 +2,14 @@ import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from 
 import type { AuthProvisioner, SeedApplication } from '../types'
 import type { HttpSeedClient } from './client'
 import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/dev-fixtures'
-import { runDevAuthProvision } from '../run-dev-auth-provision'
 import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed } from '../run-dev-access-seed'
 import { runDevAuthLink } from '../run-dev-auth-link'
+import { runDevAuthProvision } from '../run-dev-auth-provision'
+import { runDevSchoolSeed } from '../run-dev-school-seed'
 import {
   logDevSeedResults,
   runDevSeeds,
 } from '../run-dev-seeds'
-import { runDevSchoolSeed } from '../run-dev-school-seed'
 import { HttpAuthProvisioner, signInViaHttp } from './auth'
 import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
 import { postEntityList } from './core-entity'

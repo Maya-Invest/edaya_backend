@@ -48664,7 +48664,6 @@ export interface components {
             id: string;
             studentId: string;
             classGroupId: string;
-            academicYearId: string;
             enrolledAt?: unknown;
             createdAt?: unknown;
         };
@@ -49373,7 +49372,6 @@ export interface components {
             id: string;
             studentId: string;
             feeId: string;
-            academicYearId: string;
             expectedAmount?: number;
             dueDate?: string | null;
             createdAt?: unknown;

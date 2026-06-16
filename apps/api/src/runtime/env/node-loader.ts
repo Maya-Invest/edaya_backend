@@ -6,8 +6,8 @@ import path from "node:path";
 import { parseRuntimeEnv } from "@/runtime/env/schema";
 import type { Environment } from "@/runtime/env/schema";
 import {
-  resolveRepoLocalDataPath,
   resolveRepoLocalDatabaseUrl,
+  resolveRepoLocalDataPath,
 } from "@/runtime/env/repo-root";
 
 function resolveApiRoot(): string {

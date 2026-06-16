@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import path from "node:path";
 import {
-  resolveRepoLocalDataPath,
   resolveRepoLocalDatabaseUrl,
+  resolveRepoLocalDataPath,
   resolveRepoRoot,
 } from "@/runtime/env/repo-root";
 

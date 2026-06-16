@@ -2039,18 +2039,13 @@
             "type": "string",
             "minLength": 1
           },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
           "enrolledAt": {},
           "createdAt": {}
         },
         "required": [
           "id",
           "studentId",
-          "classGroupId",
-          "academicYearId"
+          "classGroupId"
         ]
       },
       "GuardianStudentLink": {
@@ -4663,10 +4658,6 @@
             "type": "string",
             "minLength": 1
           },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
           "expectedAmount": {
             "type": "number"
           },
@@ -4683,8 +4674,7 @@
         "required": [
           "id",
           "studentId",
-          "feeId",
-          "academicYearId"
+          "feeId"
         ]
       },
       "Payment": {

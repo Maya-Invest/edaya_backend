@@ -2,12 +2,12 @@
 	import type { DemoAccount } from '$lib/types/demo-account';
 	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
-	import { isDemoLoginEnabled, isLocalDevApi } from '$lib/env/app-env';
 	import { bootstrapSession } from '$lib/auth/bootstrap';
 	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authClient } from '$lib/auth/client';
 	import { authSession } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
+	import { isDemoLoginEnabled, isLocalDevApi } from '$lib/env/app-env';
 	import { t } from '$lib/i18n';
 	import { GraduationCap } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';

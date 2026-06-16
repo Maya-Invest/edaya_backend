@@ -275,8 +275,6 @@ export async function runDevSchoolSeed(
       id: `enr-${student.id}`,
       studentId: student.id,
       classGroupId: student.classId,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
-      enrollmentIndex: 1,
     })
   }
 
