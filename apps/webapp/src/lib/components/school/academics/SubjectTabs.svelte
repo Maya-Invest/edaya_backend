@@ -4,6 +4,8 @@
 	import { Check, FileText, Paperclip } from '$lib/icons';
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { cn } from '$lib/utils';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import SubjectFormModal from './SubjectFormModal.svelte';
 
 	const { s }: { s: Subject } = $props();
 
@@ -20,11 +22,6 @@
 			.join('')
 			.toUpperCase(),
 	);
-
-	const tabLabels: Record<'progression' | 'logbook', string> = {
-		progression: 'Chapitres',
-		logbook: 'Cahier de texte',
-	};
 
 	const chaptersData = $derived.by(() => {
 		const byChapter: Record<string, number> = {};
@@ -65,6 +62,10 @@
 		</div>
 	</div>
 
+	<DrawerActionBar>
+		<SubjectFormModal subject={s} />
+	</DrawerActionBar>
+
 	<div class="flex items-center gap-1 rounded-full border border-border bg-secondary/40 p-1 text-xs">
 		{#each ['progression', 'logbook'] as const as k (k)}
 			<button
@@ -74,7 +75,7 @@
 					tab === k ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground',
 				)}
 			>
-				{tabLabels[k]}
+				{k === 'progression' ? $t('subjects.tab.chapters') : $t('subjects.tab.logbook')}
 			</button>
 		{/each}
 	</div>

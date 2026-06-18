@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { ClassNode, Subject, SubjectCategory } from '$lib/types/school';
-	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
-	import { Clock, Plus, User, Layers, Tag, ChevronRight } from '$lib/icons';
+	import { Clock, User, Layers, Tag, ChevronRight } from '$lib/icons';
 	import { cn } from '$lib/utils';
 
 	const {
@@ -103,16 +103,11 @@
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('subjects.curriculum')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('subjects.count', { n: subjects.length })}
-			</h2>
-		</div>
-		<div class="flex items-center gap-2">
+	<ListPageHeader
+		eyebrow={$t('subjects.curriculum')}
+		title={$t('subjects.count', { n: subjects.length })}
+	>
+		{#snippet filters()}
 			<div class="inline-flex rounded-full border border-border bg-card p-1 shadow-soft">
 				<button
 					type="button"
@@ -141,12 +136,8 @@
 					Par catégorie
 				</button>
 			</div>
-			<Button size="sm" class="rounded-full">
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('subjects.newSubject')}
-			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</ListPageHeader>
 
 	{#if mode === 'level'}
 		<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
@@ -217,7 +208,7 @@
 								class={cn(
 									'flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary',
 									idx !== g.items.length - 1 && 'border-b border-border',
-									active && 'bg-secondary',
+									active && 'bg-primary/10',
 								)}
 							>
 								<div class={cn('h-8 w-1.5 shrink-0 rounded-full', dotColor[s.color])}></div>

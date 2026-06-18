@@ -1,7 +1,7 @@
 import type { DetailDataSnapshot } from '$lib/detail-data/context.svelte';
 import { loadAccessRolesData } from '$lib/api/access-roles-data';
 import { fetchActivities } from '$lib/api/activities-data';
-import { fetchAssessmentsSources, mapAllEvaluations } from '$lib/api/assessments-data';
+import { fetchAssessmentsSources, mapAllEvaluations, mapAssessmentResults } from '$lib/api/assessments-data';
 import { loadFinanceData } from '$lib/api/finance-data';
 import { fetchHomeworkSources, mapDeadlines } from '$lib/api/homework-data';
 import { loadPeopleData } from '$lib/api/people-data';
@@ -51,6 +51,7 @@ export async function getDetailDataSnapshot(classGroupIds: string[]): Promise<De
 		subjects: mapAllClassSubjects(subjectSources),
 		planning: mapAllPlanningEvents(planningSources, classGroupIds),
 		evaluations: mapAllEvaluations(assessmentSources, classGroupIds),
+		assessmentResults: mapAssessmentResults(assessmentSources.resultsRaw),
 		activities,
 		deadlines,
 		incidents,

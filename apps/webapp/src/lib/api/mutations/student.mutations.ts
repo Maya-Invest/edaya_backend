@@ -1,3 +1,4 @@
+import { recordAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 
@@ -12,16 +13,7 @@ export async function recordStudentAssessmentResultMutation(input: {
 	score: number;
 	successMessage?: string;
 }): Promise<boolean> {
-	const client = getBrowserSchoolClient();
-	const id = `ar-${input.assessmentId}-${input.studentId}`;
-	const result = await runMutation(() => client.commands.recordAssessmentResult({
-		id,
-		studentId: input.studentId,
-		assessmentId: input.assessmentId,
-		score: input.score,
-		createdAt: new Date().toISOString(),
-	}), { successMessage: input.successMessage });
-	return result !== null;
+	return recordAssessmentResultMutation(input);
 }
 
 export async function recordStudentDailyAttendanceMutation(input: {

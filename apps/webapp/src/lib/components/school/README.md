@@ -10,7 +10,7 @@ Domain-oriented folders under `components/school/`. Route pages import views fro
 | `academics/` | `HomeworkView`, `SubjectsView`, `ClassReportCardsView` |
 | `scheduling/` | `PlanningView`, `SchoolCalendarView`, `AttendanceFlow` |
 | `finance/` | `FinanceView`, `PaymentsView`, `BillingDetail` |
-| `configuration/` | `PeopleView`, `RolesMatrixView`, report-card definitions |
+| `configuration/` | `StaffView`, `RolesMatrixView`, report-card definitions |
 | `school-life/` | `ActivitiesView`, `SchoolEventsView`, `IncidentDetail` |
 
 Cross-domain imports should stay rare. Prefer lifting shared pieces into `shared/` when two domains need the same UI primitive.

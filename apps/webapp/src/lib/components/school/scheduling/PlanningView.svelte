@@ -1,18 +1,24 @@
 <script lang="ts">
 	import type { PlanningEvent, ClassNode, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { ClipboardCheck, MapPin, Plus } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import AttendanceFlow from './AttendanceFlow.svelte';
+	import PlanningFormModal from './PlanningFormModal.svelte';
 
 	const {
+		classId,
 		events,
 		classes,
 		students,
 		onSelect,
 		selectedId,
 	}: {
+		classId: string;
 		events: PlanningEvent[];
 		classes: ClassNode[];
 		students: Student[];
@@ -23,6 +29,7 @@
 	const DAYS: PlanningEvent['day'][] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 	let attendanceSession = $state<PlanningEvent | null>(null);
+	let createOpen = $state(false);
 
 	const attendanceClass = $derived(
 		attendanceSession ? classes.find(c => c.id === attendanceSession!.classId) : null,
@@ -30,6 +37,10 @@
 	const attendanceStudents = $derived(
 		attendanceSession ? students.filter(s => s.classId === attendanceSession!.classId) : [],
 	);
+
+	function handleCreated(sessionId: string) {
+		appGoto(detailHref.classPlanning(classId, sessionId));
+	}
 
 	function subjectTone(subject: string) {
 		const tones = [
@@ -45,18 +56,19 @@
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex items-center justify-between">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('planning.weeklyBoard')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('planning.title')}</h2>
-		</div>
-		<Button size="sm" class="rounded-full">
-			<Plus class="mr-1 h-4 w-4" />
-			{$t('planning.newSession')}
-		</Button>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('planning.weeklyBoard')}
+		title={$t('planning.title')}
+	>
+		{#snippet primary()}
+			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
+				<Plus class="mr-1 h-4 w-4" />
+				{$t('planning.newSession')}
+			</Button>
+		{/snippet}
+	</ListPageHeader>
+
+	<PlanningFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-5">
 		{#each DAYS as day (day)}
@@ -79,7 +91,7 @@
 							class={cn(
 								'group relative rounded-xl border transition-all hover:-translate-y-0.5 hover:shadow-soft',
 								subjectTone(ev.subject),
-								active && 'ring-2 ring-primary',
+								active && 'border-primary/40 bg-primary/5',
 							)}
 						>
 							<button

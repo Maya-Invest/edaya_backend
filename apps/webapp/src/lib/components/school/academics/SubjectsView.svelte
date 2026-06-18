@@ -1,21 +1,29 @@
 <script lang="ts">
 	import type { Subject, SubjectCategory } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Clock, Plus, User } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import SubjectFormModal from './SubjectFormModal.svelte';
 
 	const {
+		classId,
 		subjects,
 		onSelect,
 		selectedId,
 		getProgress,
 	}: {
+		classId: string;
 		subjects: Subject[];
 		onSelect?: (s: Subject) => void;
 		selectedId?: string;
 		getProgress?: (s: Subject) => number;
 	} = $props();
+
+	let createOpen = $state(false);
 
 	const dotColor: Record<Subject['color'], string> = {
 		mint: 'bg-accent',
@@ -31,23 +39,26 @@
 		'Sport': 'bg-secondary text-foreground/80',
 		'Arts': 'bg-secondary text-foreground/80',
 	};
+
+	function handleCreated(classSubjectId: string) {
+		appGoto(detailHref.classSubject(classId, classSubjectId));
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex items-center justify-between">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('subjects.curriculum')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('subjects.count', { n: subjects.length })}
-			</h2>
-		</div>
-		<Button size="sm" class="rounded-full">
-			<Plus class="mr-1 h-4 w-4" />
-			{$t('subjects.newSubject')}
-		</Button>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('subjects.curriculum')}
+		title={$t('subjects.count', { n: subjects.length })}
+	>
+		{#snippet primary()}
+			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
+				<Plus class="mr-1 h-4 w-4" />
+				{$t('subjects.newSubject')}
+			</Button>
+		{/snippet}
+	</ListPageHeader>
+
+	<SubjectFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		{#each subjects as s, idx (s.id)}
@@ -59,7 +70,7 @@
 				class={cn(
 					'flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary',
 					idx !== subjects.length - 1 && 'border-b border-border',
-					active && 'bg-secondary',
+					active && 'bg-primary/10',
 				)}
 			>
 				<div class={cn('h-8 w-1.5 shrink-0 rounded-full', dotColor[s.color])}></div>

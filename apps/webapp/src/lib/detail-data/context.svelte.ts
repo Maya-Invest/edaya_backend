@@ -2,6 +2,7 @@ import type { Crud } from '$lib/components/school/shared/drawer-constants';
 import type {
 	AbsenceRecord,
 	Activity,
+	AssessmentResultRow,
 	Deadline,
 	Evaluation,
 	Fee,
@@ -26,6 +27,7 @@ export interface DetailDataSnapshot {
 	subjects: Subject[];
 	planning: PlanningEvent[];
 	evaluations: Evaluation[];
+	assessmentResults: AssessmentResultRow[];
 	activities: Activity[];
 	deadlines: Deadline[];
 	incidents: Incident[];
@@ -47,6 +49,7 @@ class DetailDataContext {
 	subjects = $state<Subject[]>([]);
 	planning = $state<PlanningEvent[]>([]);
 	evaluations = $state<Evaluation[]>([]);
+	assessmentResults = $state<AssessmentResultRow[]>([]);
 	activities = $state<Activity[]>([]);
 	deadlines = $state<Deadline[]>([]);
 	incidents = $state<Incident[]>([]);
@@ -68,6 +71,7 @@ class DetailDataContext {
 		this.subjects = snapshot.subjects;
 		this.planning = snapshot.planning;
 		this.evaluations = snapshot.evaluations;
+		this.assessmentResults = snapshot.assessmentResults;
 		this.activities = snapshot.activities;
 		this.deadlines = snapshot.deadlines;
 		this.incidents = snapshot.incidents;
@@ -90,6 +94,7 @@ class DetailDataContext {
 		this.subjects = [];
 		this.planning = [];
 		this.evaluations = [];
+		this.assessmentResults = [];
 		this.activities = [];
 		this.deadlines = [];
 		this.incidents = [];

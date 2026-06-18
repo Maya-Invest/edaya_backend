@@ -22,6 +22,7 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<PlanningView
+				classId={data.classId}
 				events={data.planning}
 				classes={data.classes}
 				students={data.students}

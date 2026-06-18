@@ -47,22 +47,22 @@
 					<StudentTabs s={item.data} />
 				{/await}
 			{:else if item.kind === 'subject'}
-				{#await import('../academics/SubjectForm.svelte')}
+				{#await import('../academics/SubjectTabs.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: SubjectForm }}
-					<SubjectForm s={item.data} />
+				{:then { default: SubjectTabs }}
+					<SubjectTabs s={item.data} />
 				{/await}
 			{:else if item.kind === 'planning'}
-				{#await import('../scheduling/PlanningForm.svelte')}
+				{#await import('../scheduling/PlanningDetail.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: PlanningForm }}
-					<PlanningForm s={item.data} />
+				{:then { default: PlanningDetail }}
+					<PlanningDetail s={item.data} />
 				{/await}
 			{:else if item.kind === 'evaluation'}
-				{#await import('../academics/EvaluationForm.svelte')}
+				{#await import('../academics/EvaluationDetail.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: EvaluationForm }}
-					<EvaluationForm s={item.data} />
+				{:then { default: EvaluationDetail }}
+					<EvaluationDetail s={item.data} />
 				{/await}
 			{:else if item.kind === 'guardian'}
 				{#await import('../guardians/GuardianDetail.svelte')}
@@ -71,10 +71,10 @@
 					<GuardianDetail g={item.data} />
 				{/await}
 			{:else if item.kind === 'staff'}
-				{#await import('../configuration/StaffForm.svelte')}
+				{#await import('../configuration/StaffTabs.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: StaffForm }}
-					<StaffForm s={item.data} />
+				{:then { default: StaffTabs }}
+					<StaffTabs s={item.data} />
 				{/await}
 			{:else if item.kind === 'deadline'}
 				{#await import('../academics/DeadlineDetail.svelte')}
@@ -89,10 +89,10 @@
 					<BillingDetail b={item.data} />
 				{/await}
 			{:else if item.kind === 'fee'}
-				{#await import('../finance/FeeForm.svelte')}
+				{#await import('../finance/FeeDetail.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: FeeForm }}
-					<FeeForm f={item.data} />
+				{:then { default: FeeDetail }}
+					<FeeDetail f={item.data} />
 				{/await}
 			{:else if item.kind === 'schoolYearEvent'}
 				{#await import('../school-life/SchoolYearEventForm.svelte')}

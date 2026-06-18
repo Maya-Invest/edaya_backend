@@ -74,6 +74,7 @@
 
 	<div class="mb-6">
 		<SubjectsView
+			{classId}
 			subjects={classSubjects}
 			onSelect={s => onSelectSubject?.(s)}
 			selectedId={selectedSubjectId}

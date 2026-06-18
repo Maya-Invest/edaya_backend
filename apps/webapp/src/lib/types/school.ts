@@ -50,6 +50,13 @@ export interface PlanningEvent {
 	teacher: string;
 }
 
+export interface AssessmentResultRow {
+	id: string;
+	studentId: string;
+	assessmentId: string;
+	score: number | null;
+}
+
 export interface Evaluation {
 	id: string;
 	classId: string;
@@ -87,6 +94,7 @@ export interface StaffMember {
 	mainClassId?: string;
 	subjectsTaught?: string[];
 	subjectLabels?: string[];
+	isActive: boolean;
 }
 
 export type ChronicCondition = 'Asthme' | 'Epilepsie' | 'Diabete';

@@ -44,14 +44,8 @@ export function querySchoolGuardiansPage() {
 
 export function querySchoolStaffPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ staff: [], guardians: [], students: [] }),
-		load: async () => {
-			const [staff, { guardians, students }] = await Promise.all([
-				getSchoolStaffData(),
-				getSchoolGuardiansData(),
-			]);
-			return { staff, guardians, students };
-		},
+		empty: () => ({ staff: [] }),
+		load: async () => ({ staff: await getSchoolStaffData() }),
 		hasItems: data => data.staff.length > 0,
 	});
 }
