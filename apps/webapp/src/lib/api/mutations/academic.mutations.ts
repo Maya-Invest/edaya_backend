@@ -91,20 +91,26 @@ export async function createAcademicYearMutation(
 		}
 
 		return yearId;
-	});
+	}, { refresh: true });
 
 	return created;
 }
 
 export async function activateAcademicYearMutation(yearId: string): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const result = await runMutation(() => client.commands.activateAcademicYear({ academicYearId: yearId }));
+	const result = await runMutation(
+		() => client.commands.activateAcademicYear({ academicYearId: yearId }),
+		{ refresh: true },
+	);
 	return result !== null;
 }
 
 export async function publishAcademicPeriodMutation(periodId: string): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const result = await runMutation(() => client.commands.publishAcademicPeriod({ academicPeriodId: periodId }));
+	const result = await runMutation(
+		() => client.commands.publishAcademicPeriod({ academicPeriodId: periodId }),
+		{ refresh: true },
+	);
 	return result !== null;
 }
 
@@ -118,7 +124,7 @@ export async function createClassGroupMutation(name: string, gradeLevelId: strin
 		gradeLevelId,
 		name: name.trim(),
 		attendanceMode: 'session',
-	}));
+	}), { refresh: true });
 	return result !== null;
 }
 
@@ -132,6 +138,6 @@ export async function updateClassGroupMutation(
 		name: patch.name,
 		capacity: patch.capacity,
 		attendanceMode: 'session',
-	}));
+	}), { refresh: true });
 	return result !== null;
 }

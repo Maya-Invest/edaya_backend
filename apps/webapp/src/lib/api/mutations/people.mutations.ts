@@ -1,5 +1,6 @@
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 
 export async function updateGuardianContactMutation(input: {
 	guardianId: string;
@@ -10,10 +11,17 @@ export async function updateGuardianContactMutation(input: {
 	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
+	const previous = detailDataContext.guardians.find(guardian => guardian.id === input.guardianId);
+	const patch = {
+		name: `${input.firstName.trim()} ${input.lastName.trim()}`.trim(),
+		email: input.email?.trim() ?? '',
+		phone: input.phone?.trim() ?? '',
+	};
+
 	const result = await runMutation(async () => {
 		const existing = await client.entities.guardians.get(input.guardianId);
-		const email = input.email?.trim() ?? '';
-		const phone = input.phone?.trim() ?? '';
+		const email = patch.email;
+		const phone = patch.phone;
 		const contactMethods = [
 			email
 				? {
@@ -45,6 +53,18 @@ export async function updateGuardianContactMutation(input: {
 			hasAccess: existing.hasAccess,
 			premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
 		});
-	}, { successMessage: input.successMessage });
+	}, {
+		apply: () => detailDataContext.patchGuardian(input.guardianId, patch),
+		rollback: () => {
+			if (previous) {
+				detailDataContext.patchGuardian(input.guardianId, {
+					name: previous.name,
+					email: previous.email,
+					phone: previous.phone,
+				});
+			}
+		},
+		successMessage: input.successMessage,
+	});
 	return result !== null;
 }

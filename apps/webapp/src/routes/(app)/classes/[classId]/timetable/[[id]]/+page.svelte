@@ -2,32 +2,44 @@
 	import { page } from '$app/stores';
 	import PlanningView from '$lib/components/school/scheduling/PlanningView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
-	import PageQuery from '$lib/components/ui/PageQuery.svelte';
+	import { academicContext } from '$lib/academic/context.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
+	import { LoaderCircle } from '$lib/icons';
 	import { appGoto } from '$lib/navigation/app-navigation';
-	import { queryClassTimetablePage } from '$lib/queries/planning.queries';
 
 	const selectedId = $derived($page.params.id);
 	const classId = $derived($page.params.classId ?? '6a');
-	const query = $derived(queryClassTimetablePage(classId));
+	const events = $derived(detailDataContext.planning.filter(event => event.classId === classId));
+	const students = $derived(detailDataContext.students.filter(student => student.classId === classId));
+	const status = $derived(
+		!detailDataContext.ready ? 'loading' : events.length === 0 ? 'empty' : 'ready',
+	);
 </script>
 
-<PageQuery {query} loadingTitle={$t('tab.timetable')}>
-	{#snippet children(data)}
-		<DataState
-			status={data.status}
-			errorMessage={data.errorMessage}
-			emptyTitle={$t('tab.timetable')}
-			emptyDescription={$t('dataState.emptyDescription')}
-		>
-			<PlanningView
-				events={data.planning}
-				classes={data.classes}
-				students={data.students}
-				onSelect={ev => appGoto(detailHref.classPlanning(data.classId, ev.id))}
-				{selectedId}
-			/>
-		</DataState>
-	{/snippet}
-</PageQuery>
+{#if !detailDataContext.ready}
+	<div
+		class="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 animate-fade-in"
+		role="status"
+		aria-live="polite"
+	>
+		<LoaderCircle class="h-8 w-8 animate-spin text-primary" />
+		<p class="text-sm text-muted-foreground">{$t('tab.timetable')}</p>
+	</div>
+{:else}
+	<DataState
+		{status}
+		emptyTitle={$t('tab.timetable')}
+		emptyDescription={$t('dataState.emptyDescription')}
+	>
+		<PlanningView
+			{classId}
+			{events}
+			classes={academicContext.classes}
+			{students}
+			onSelect={ev => appGoto(detailHref.classPlanning(classId, ev.id))}
+			{selectedId}
+		/>
+	</DataState>
+{/if}

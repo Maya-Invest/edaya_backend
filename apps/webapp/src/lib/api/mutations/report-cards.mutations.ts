@@ -2,6 +2,7 @@ import { academicContext } from '$lib/academic/context.svelte';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
+import { refreshReportCardsLayout } from '$lib/queries/report-cards.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 function schoolId(): string {
@@ -86,7 +87,7 @@ export async function createGradeScaleMutation(input: {
 		decimalPlaces: 2,
 		isDefault: false,
 		ranges: buildGradeScaleRanges(input.minScore, input.maxScore, input.passingScore),
-	}));
+	}), { onSuccess: () => refreshReportCardsLayout() });
 	return result !== null;
 }
 
@@ -98,6 +99,12 @@ export async function publishReportCardDefinitionMutation(definitionId: string):
 			...definition,
 			status: 'published',
 		});
+	}, {
+		onSuccess: () => {
+			reportCardsContext.definitions = reportCardsContext.definitions.map(entry =>
+				entry.id === definitionId ? { ...entry, status: 'published' as const } : entry,
+			);
+		},
 	});
 	return result !== null;
 }
@@ -132,7 +139,10 @@ export async function generateReportCardResultMutation(
 			throw new Error('Aucun modèle de bulletin publié pour cette classe.');
 		}
 		return true;
-	}, { errorMessage: 'Impossible de générer le bulletin.' });
+	}, {
+		errorMessage: 'Impossible de générer le bulletin.',
+		onSuccess: () => refreshReportCardsLayout(),
+	});
 	return result !== null;
 }
 
@@ -150,7 +160,13 @@ export async function publishReportCardResultMutation(
 		periodId,
 		reportCardDefinitionId: resolvedDefinitionId,
 		publishedAt: new Date().toISOString(),
-	}));
+	}), {
+		onSuccess: () => {
+			reportCardsContext.results = reportCardsContext.results.map(entry =>
+				entry.id === resultId ? { ...entry, status: 'published' as const } : entry,
+			);
+		},
+	});
 	return result !== null;
 }
 
@@ -177,7 +193,10 @@ export async function generateReportCardsForClassMutation(
 			}
 		}
 		return count;
-	}, { errorMessage: 'Impossible de générer les bulletins.' });
+	}, {
+		errorMessage: 'Impossible de générer les bulletins.',
+		onSuccess: () => refreshReportCardsLayout(),
+	});
 
 	return result;
 }

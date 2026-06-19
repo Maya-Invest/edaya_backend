@@ -61,6 +61,44 @@ class DetailDataContext {
 	roleEnabledPermissions = $state<Partial<Record<StaffRole, Record<string, boolean>>>>({});
 	ready = $state(false);
 
+	private replaceById<T extends { id: string }>(items: readonly T[], id: string, patch: Partial<T>): T[] {
+		const index = items.findIndex(item => item.id === id);
+		if (index === -1) {
+			return [...items];
+		}
+		const next = items.slice() as T[];
+		next[index] = { ...next[index]!, ...patch };
+		return next;
+	}
+
+	patchPlanningEvent(id: string, patch: Partial<PlanningEvent>) {
+		this.planning = this.replaceById(this.planning, id, patch);
+	}
+
+	patchStudent(id: string, patch: Partial<Student>) {
+		this.students = this.replaceById(this.students, id, patch);
+	}
+
+	patchGuardian(id: string, patch: Partial<Guardian>) {
+		this.guardians = this.replaceById(this.guardians, id, patch);
+	}
+
+	patchPedagogicalNote(id: string, patch: Partial<PedagogicalNote>) {
+		this.pedagogicalNotes = this.replaceById(this.pedagogicalNotes, id, patch);
+	}
+
+	appendPedagogicalNote(note: PedagogicalNote) {
+		this.pedagogicalNotes = [...this.pedagogicalNotes, note];
+	}
+
+	appendIncident(incident: Incident) {
+		this.incidents = [...this.incidents, incident];
+	}
+
+	appendAbsence(absence: AbsenceRecord) {
+		this.absences = [...this.absences, absence];
+	}
+
 	hydrate(snapshot: DetailDataSnapshot) {
 		this.students = snapshot.students;
 		this.guardians = snapshot.guardians;

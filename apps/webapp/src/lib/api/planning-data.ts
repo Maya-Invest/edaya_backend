@@ -94,6 +94,7 @@ export function mapPlanningEvents(
 			return {
 				id: session.id,
 				classId: session.classGroupId,
+				scheduleId: session.scheduleId ?? undefined,
 				title: session.title,
 				subject: subject?.name ?? session.title,
 				day: dayLabel(session.startsAt),

@@ -13,6 +13,7 @@ const P = {
 	CLASS_LOGBOOK_CREATE: 'CLASS_LOGBOOK_CREATE',
 	REPORT_CARD_CONFIGURE: 'REPORT_CARD_CONFIGURE',
 	REPORT_CARD_GENERATE: 'REPORT_CARD_GENERATE',
+	TIMETABLE_UPDATE: 'TIMETABLE_UPDATE',
 } as const satisfies Record<string, PermissionCode>;
 
 function scopeGrantCovers(
@@ -115,6 +116,10 @@ export function canEditSchoolLife(_ctx: Ctx = {}): boolean {
 
 export function canEditReportsAndOrientation(ctx: Ctx = {}): boolean {
 	return hasAnyPermission([P.REPORT_CARD_CONFIGURE, P.REPORT_CARD_GENERATE], ctx);
+}
+
+export function canEditTimetable(ctx: Ctx = {}): boolean {
+	return hasPermission(P.TIMETABLE_UPDATE, ctx);
 }
 
 export const ROLE_LABEL_FR: Record<StaffRole, string> = {

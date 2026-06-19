@@ -15,28 +15,40 @@ function messageFromApiError(error: ApiError): string | undefined {
 	return undefined;
 }
 
+/** Reloads sidebar shell data and all detail collections (heavy — opt in only). */
+export async function refreshAppShellData(): Promise<void> {
+	resetAppShellBootstrap();
+	await bootstrapAppShell();
+}
+
 export async function runMutation<T>(
 	fn: () => Promise<T>,
 	options?: {
+		/** When true, reloads the full app shell after success. Defaults to false. */
 		refresh?: boolean;
+		/** Apply an optimistic local patch before the request. */
+		apply?: () => void;
+		/** Revert the optimistic patch when the request fails. */
+		rollback?: () => void;
 		errorMessage?: string;
 		successMessage?: string;
-		onSuccess?: () => void | Promise<void>;
+		onSuccess?: (result: T) => void | Promise<void>;
 	},
 ): Promise<T | null> {
+	options?.apply?.();
 	try {
 		const result = await fn();
-		if (options?.refresh !== false) {
-			resetAppShellBootstrap();
-			await bootstrapAppShell();
+		if (options?.refresh === true) {
+			await refreshAppShellData();
 		}
-		await options?.onSuccess?.();
+		await options?.onSuccess?.(result);
 		if (options?.successMessage) {
 			toast.success(options.successMessage);
 		}
 		return result;
 	}
 	catch (error) {
+		options?.rollback?.();
 		const message = error instanceof ApiError
 			? messageFromApiError(error) ?? options?.errorMessage ?? 'La requête a échoué.'
 			: options?.errorMessage ?? 'La requête a échoué.';

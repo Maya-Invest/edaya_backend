@@ -41,6 +41,7 @@ export interface Subject {
 export interface PlanningEvent {
 	id: string;
 	classId: string;
+	scheduleId?: string;
 	title: string;
 	subject: string;
 	day: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri';
