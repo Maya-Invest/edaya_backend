@@ -15,12 +15,15 @@
 		onSelect,
 		selectedId,
 		getProgress,
+		embedded = false,
 	}: {
 		classId: string;
 		subjects: Subject[];
 		onSelect?: (s: Subject) => void;
 		selectedId?: string;
 		getProgress?: (s: Subject) => number;
+		/** Hide list header and create CTA when nested inside TeachingLogView */
+		embedded?: boolean;
 	} = $props();
 
 	let createOpen = $state(false);
@@ -45,20 +48,22 @@
 	}
 </script>
 
-<div class="animate-fade-in">
-	<ListPageHeader
-		eyebrow={$t('subjects.curriculum')}
-		title={$t('subjects.count', { n: subjects.length })}
-	>
-		{#snippet primary()}
-			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('subjects.newSubject')}
-			</Button>
-		{/snippet}
-	</ListPageHeader>
+<div class={embedded ? undefined : 'animate-fade-in'}>
+	{#if !embedded}
+		<ListPageHeader
+			eyebrow={$t('subjects.curriculum')}
+			title={$t('subjects.count', { n: subjects.length })}
+		>
+			{#snippet primary()}
+				<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
+					<Plus class="mr-1 h-4 w-4" />
+					{$t('subjects.newSubject')}
+				</Button>
+			{/snippet}
+		</ListPageHeader>
 
-	<SubjectFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />
+		<SubjectFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />
+	{/if}
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		{#each subjects as s, idx (s.id)}

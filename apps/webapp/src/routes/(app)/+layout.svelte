@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { ResolvedPathname } from '$app/types';
 	import type { DrawerItem } from '$lib/components/school/shared/drawer-types';
 	import type { Component, Snippet } from 'svelte';
 	import { browser } from '$app/environment';
@@ -52,6 +53,7 @@
 		const pathname = $page.url.pathname;
 		const detailReady = detailDataContext.ready;
 		const reportCardsReady = reportCardsContext.ready;
+		const dataGeneration = detailDataContext.dataGeneration;
 
 		if (!isLikelyDetailPath(pathname)) {
 			drawer.close();
@@ -94,8 +96,10 @@
 	async function closeDetail() {
 		const { getListPathForDetail } = await import('$lib/detail-routes');
 		const listPath = getListPathForDetail($page.url.pathname);
-		if (listPath)
-			appGoto(listPath);
+		if (listPath) {
+			const href = `${listPath}${$page.url.search}` as ResolvedPathname;
+			appGoto(href);
+		}
 		else drawer.close();
 	}
 

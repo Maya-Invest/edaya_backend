@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { page } from '$app/stores';
 	import ReportCardDefinitionsView from '$lib/components/school/configuration/ReportCardDefinitionsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -10,6 +11,11 @@
 
 	const selectedId = $derived($page.params.id);
 	const query = queryReportCardDefinitionsPage();
+
+	function selectDefinition(definition: ReportCardDefinition) {
+		const path = detailHref.configReportCard(definition.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('reportCards.subtitle')}>
@@ -22,7 +28,7 @@
 		>
 			<ReportCardDefinitionsView
 				definitions={data.definitions}
-				onSelect={d => appGoto(detailHref.configReportCard(d.id))}
+				onSelect={selectDefinition}
 				{selectedId}
 			/>
 		</DataState>

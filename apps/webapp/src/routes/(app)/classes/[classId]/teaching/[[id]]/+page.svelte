@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Subject } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import TeachingLogView from '$lib/components/school/academics/TeachingLogView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -11,6 +12,11 @@
 	const selectedSubjectId = $derived($page.params.id);
 	const classId = $derived($page.params.classId ?? '6a');
 	const query = $derived(queryClassTeachingPage(classId));
+
+	function selectSubject(subject: Subject) {
+		const path = detailHref.classTeachingSubject(classId, subject.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('tab.teaching')}>
@@ -24,7 +30,7 @@
 			<TeachingLogView
 				classId={data.classId}
 				subjects={data.subjects}
-				onSelectSubject={s => appGoto(detailHref.classTeachingSubject(data.classId, s.id))}
+				onSelectSubject={selectSubject}
 				{selectedSubjectId}
 			/>
 		</DataState>

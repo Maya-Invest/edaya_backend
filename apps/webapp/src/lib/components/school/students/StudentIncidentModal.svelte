@@ -8,6 +8,8 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+	import { t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	const {
 		s,
@@ -21,12 +23,16 @@
 
 	type IncidentKind = 'positive' | 'minor_infraction' | 'major_infraction' | 'emergency';
 
+	const INCIDENT_KINDS: IncidentKind[] = ['positive', 'minor_infraction', 'major_infraction', 'emergency'];
+
 	let open = $state(false);
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let incidentTitle = $state('');
 	let description = $state('');
 	let kind = $state<IncidentKind>('minor_infraction');
 
+	const kindLabel = $derived($t(`events.kind.${kind}`));
 	const studentClass = $derived(academicContext.classes.find(entry => entry.id === s.classId));
 	const schoolId = $derived(studentClass?.schoolId ?? academicContext.schools[0]?.id ?? '');
 	const canSubmit = $derived(
@@ -38,6 +44,12 @@
 		description = '';
 		kind = 'minor_infraction';
 	}
+
+	$effect(() => {
+		if (open && !wasOpen)
+			resetForm();
+		wasOpen = open;
+	});
 
 	async function submit() {
 		if (!canSubmit)
@@ -52,7 +64,7 @@
 				title: incidentTitle,
 				description,
 				kind,
-				successMessage: `Incident enregistré pour ${s.name}.`,
+				successMessage: get(t)('student.incidentSuccess', { name: s.name }),
 			});
 			if (incidentId) {
 				open = false;
@@ -93,13 +105,16 @@
 		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Type</Label>
 		<Select.Root type="single" value={kind} onValueChange={v => v && (kind = v as IncidentKind)}>
 			<Select.Trigger>
-				<Select.Value />
+				<Select.Value placeholder={$t('events.kindLabel')}>
+					{kindLabel}
+				</Select.Value>
 			</Select.Trigger>
-			<Select.Content>
-				<Select.Item value="positive">Positif</Select.Item>
-				<Select.Item value="minor_infraction">Infraction mineure</Select.Item>
-				<Select.Item value="major_infraction">Infraction majeure</Select.Item>
-				<Select.Item value="emergency">Urgence</Select.Item>
+			<Select.Content class="z-[100]">
+				{#each INCIDENT_KINDS as entry (entry)}
+					<Select.Item value={entry} label={$t(`events.kind.${entry}`)}>
+						{$t(`events.kind.${entry}`)}
+					</Select.Item>
+				{/each}
 			</Select.Content>
 		</Select.Root>
 	</div>

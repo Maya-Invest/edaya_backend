@@ -1,5 +1,6 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
+import { formatDateInput } from '$lib/date/format';
 import type { Guardian, Student } from '$lib/types/school';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
@@ -205,9 +206,7 @@ export function mapStudents(
 			name: `${student.firstName} ${student.lastName}`,
 			initials: initialsFor(student.firstName, student.lastName),
 			email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@school.edu`,
-			birthdate: typeof student.birthDate === 'string'
-				? student.birthDate
-				: String(student.birthDate || ''),
+			birthdate: formatDateInput(student.birthDate),
 			guardian: guardianDisplayName(guardian),
 			attendance: computeAttendancePercent(student.id, metrics.attendanceRaw),
 			average,

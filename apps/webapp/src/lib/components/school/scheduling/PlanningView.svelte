@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { PlanningEvent, ClassNode, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
+	import { readPlanningListFilters, writePlanningListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
-	import { ClipboardCheck, MapPin, Plus } from '$lib/icons';
+	import { ClipboardCheck, MapPin, Plus, Search } from '$lib/icons';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import AttendanceFlow from './AttendanceFlow.svelte';
@@ -28,8 +32,24 @@
 
 	const DAYS: PlanningEvent['day'][] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
+	const initialFilters = $derived(readPlanningListFilters($page.url));
+
+	let q = $state('');
+	let filtersReady = $state(false);
 	let attendanceSession = $state<PlanningEvent | null>(null);
 	let createOpen = $state(false);
+
+	const filteredEvents = $derived(
+		events.filter((ev) => {
+			const needle = q.trim().toLowerCase();
+			if (!needle)
+				return true;
+			return ev.title.toLowerCase().includes(needle)
+				|| ev.subject.toLowerCase().includes(needle)
+				|| ev.teacher.toLowerCase().includes(needle)
+				|| ev.room.toLowerCase().includes(needle);
+		}),
+	);
 
 	const attendanceClass = $derived(
 		attendanceSession ? classes.find(c => c.id === attendanceSession!.classId) : null,
@@ -39,7 +59,27 @@
 	);
 
 	function handleCreated(sessionId: string) {
-		appGoto(detailHref.classPlanning(classId, sessionId));
+		const path = detailHref.classPlanning(classId, sessionId);
+		appGoto(`${path}${$page.url.search}`);
+	}
+
+	function syncFiltersToUrl() {
+		const href = writePlanningListFilters($page.url, { q });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
 	}
 
 	function subjectTone(subject: string) {
@@ -60,11 +100,38 @@
 		eyebrow={$t('planning.weeklyBoard')}
 		title={$t('planning.title')}
 	>
+		{#snippet search()}
+			<div class="relative">
+				<Search
+					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					bind:value={q}
+					oninput={scheduleFilterSync}
+					placeholder={$t('common.search')}
+					class="h-9 w-56 rounded-full pl-9 text-sm"
+				/>
+			</div>
+		{/snippet}
 		{#snippet primary()}
-			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('planning.newSession')}
-			</Button>
+			<PermissionGate
+				permission="TIMETABLE_UPDATE"
+				mode="disable"
+				tooltip={$t('calendar.permissionUpdate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('planning.newSession')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
 		{/snippet}
 	</ListPageHeader>
 
@@ -72,7 +139,7 @@
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-5">
 		{#each DAYS as day (day)}
-			{@const items = events
+			{@const items = filteredEvents
 				.filter(e => e.day === day)
 				.sort((a, b) => a.start.localeCompare(b.start))}
 			<div class="flex flex-col rounded-2xl border border-border bg-card/50 p-3">

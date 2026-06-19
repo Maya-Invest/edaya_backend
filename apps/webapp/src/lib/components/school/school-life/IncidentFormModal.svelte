@@ -42,6 +42,7 @@
 	} = $props();
 
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let studentId = $state('');
 	let incidentTitle = $state('');
 	let description = $state('');
@@ -52,6 +53,8 @@
 	const schoolId = $derived(academicContext.schools[0]?.id ?? '');
 
 	const selectedStudent = $derived(students.find(entry => entry.id === studentId));
+	const selectedStudentLabel = $derived(selectedStudent?.name ?? '');
+	const kindLabel = $derived($t(`events.kind.${kind}`));
 	const studentClass = $derived(
 		selectedStudent
 			? classes.find(entry => entry.id === selectedStudent.classId)
@@ -82,9 +85,9 @@
 	}
 
 	$effect(() => {
-		if (open) {
+		if (open && !wasOpen)
 			resetForm();
-		}
+		wasOpen = open;
 	});
 
 	async function submit() {
@@ -162,9 +165,11 @@
 			</Label>
 			<Select.Root type="single" value={studentId} onValueChange={v => v && (studentId = v)}>
 				<Select.Trigger>
-					<Select.Value placeholder={$t('events.selectStudent')} />
+					<Select.Value placeholder={$t('events.selectStudent')}>
+						{selectedStudentLabel}
+					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each students as student (student.id)}
 						<Select.Item value={student.id} label={student.name}>{student.name}</Select.Item>
 					{/each}
@@ -194,9 +199,11 @@
 			</Label>
 			<Select.Root type="single" value={kind} onValueChange={v => v && (kind = v as IncidentKind)}>
 				<Select.Trigger>
-					<Select.Value>{$t(`events.kind.${kind}`)}</Select.Value>
+					<Select.Value placeholder={$t('events.kindLabel')}>
+						{kindLabel}
+					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each INCIDENT_KINDS as entry (entry)}
 						<Select.Item value={entry} label={$t(`events.kind.${entry}`)}>
 							{$t(`events.kind.${entry}`)}

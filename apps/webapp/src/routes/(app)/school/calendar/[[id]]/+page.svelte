@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { SchoolYearEvent } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import SchoolCalendarView from '$lib/components/school/scheduling/SchoolCalendarView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -10,6 +11,11 @@
 
 	const query = querySchoolCalendarPage();
 	const selectedId = $derived($page.params.id);
+
+	function selectEvent(ev: SchoolYearEvent) {
+		const path = detailHref.schoolCalendarEvent(ev.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('school.calendar')}>
@@ -24,7 +30,7 @@
 				events={data.events}
 				classes={data.classes}
 				{selectedId}
-				onSelect={ev => appGoto(detailHref.schoolCalendarEvent(ev.id))}
+				onSelect={selectEvent}
 			/>
 		</DataState>
 	{/snippet}

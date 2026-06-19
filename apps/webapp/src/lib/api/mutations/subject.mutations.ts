@@ -1,6 +1,7 @@
 import type { Subject, SubjectCategory } from '$lib/types/school';
 import { authSession } from '$lib/auth/session.svelte';
 import { runMutation } from '$lib/api/mutations/run-mutation';
+import { buildSubjectSavePayload } from '$lib/api/subject-save-payload';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { toast } from '$lib/toast.svelte';
 import { get } from 'svelte/store';
@@ -14,24 +15,24 @@ export async function updateSubjectMutation(input: {
 	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const classSubject = await client.entities.classSubjects.one({ id: input.classSubjectId });
-	if (!classSubject) {
+	let classSubject;
+	let subject;
+	try {
+		classSubject = await client.entities.classSubjects.get(input.classSubjectId);
+		subject = await client.entities.subjects.get(classSubject.subjectId);
+	}
+	catch {
 		toast.error(get(t)('dataState.errorDescription'));
 		return false;
 	}
 
-	const subject = await client.entities.subjects.one({ id: classSubject.subjectId });
-	if (!subject) {
-		toast.error(get(t)('dataState.errorDescription'));
-		return false;
-	}
-
-	const result = await runMutation(() => client.entities.subjects.save({
-		...subject,
-		name: input.name.trim(),
-		category: input.category,
-		color: input.color,
-	}), { successMessage: input.successMessage });
+	const result = await runMutation(() => client.entities.subjects.save(
+		buildSubjectSavePayload(subject, {
+			name: input.name,
+			category: input.category,
+			color: input.color,
+		}),
+	), { successMessage: input.successMessage });
 	return result !== null;
 }
 

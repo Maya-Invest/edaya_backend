@@ -3,7 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { t } from '$lib/i18n';
-	import { AlertCircle, Inbox, LoaderCircle } from '$lib/icons';
+	import { AlertCircle, Inbox } from '$lib/icons';
 
 	const {
 		status,
@@ -25,16 +25,7 @@
 	}
 </script>
 
-{#if status === 'loading'}
-	<div
-		class="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 animate-fade-in"
-		role="status"
-		aria-live="polite"
-	>
-		<LoaderCircle class="h-8 w-8 animate-spin text-primary" />
-		<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-	</div>
-{:else if status === 'error'}
+{#if status === 'error'}
 	<div
 		class="flex min-h-[40vh] items-center justify-center p-8 animate-fade-in"
 		role="alert"

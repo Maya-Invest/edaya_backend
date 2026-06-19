@@ -114,6 +114,47 @@ describe('school-life calendar mapping', () => {
 			description: 'Cérémonie de fin d\'année et remise des prix au tableau d\'honneur.',
 		});
 	});
+
+	it('groups class-scoped events with the same schedule into one UI entry', () => {
+		const events = mapCalendarEvents([
+			{
+				id: 'cal-greve-6a',
+				schoolId: SEED_SCHOOL_ID,
+				academicYearId: '2025',
+				title: 'greve',
+				description: 'greve',
+				startDate: '2026-06-20',
+				endDate: '2026-06-24',
+				kind: 'holiday',
+				isNonSchoolDay: true,
+				scopeKind: 'class_group',
+				scopeId: '6a',
+				createdAt: '2026-06-20',
+			},
+			{
+				id: 'cal-greve-6b',
+				schoolId: SEED_SCHOOL_ID,
+				academicYearId: '2025',
+				title: 'greve',
+				description: 'greve',
+				startDate: '2026-06-20',
+				endDate: '2026-06-24',
+				kind: 'holiday',
+				isNonSchoolDay: true,
+				scopeKind: 'class_group',
+				scopeId: '6b',
+				createdAt: '2026-06-20',
+			},
+		]);
+
+		expect(events).toHaveLength(1);
+		expect(events[0]).toMatchObject({
+			id: 'cal-greve-6a',
+			title: 'greve',
+			scope: ['6a', '6b'],
+			linkedIds: ['cal-greve-6a', 'cal-greve-6b'],
+		});
+	});
 });
 
 describe('school-life incident mapping', () => {

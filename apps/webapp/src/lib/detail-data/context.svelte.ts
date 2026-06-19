@@ -63,6 +63,8 @@ class DetailDataContext {
 	roleCrudMatrix = $state<Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>>({});
 	roleEnabledPermissions = $state<Partial<Record<StaffRole, Record<string, boolean>>>>({});
 	ready = $state(false);
+	/** Bumped on each hydrate so open drawers can re-bind fresh entity data. */
+	dataGeneration = $state(0);
 
 	hydrate(snapshot: DetailDataSnapshot) {
 		this.students = snapshot.students;
@@ -85,6 +87,7 @@ class DetailDataContext {
 		this.roleCrudMatrix = snapshot.roleCrudMatrix;
 		this.roleEnabledPermissions = snapshot.roleEnabledPermissions;
 		this.ready = true;
+		this.dataGeneration++;
 	}
 
 	reset() {

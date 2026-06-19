@@ -1,12 +1,55 @@
+import { dateInputToIso } from '$lib/date/format';
 import { recordAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
 import { recordIncidentMutation } from '$lib/api/mutations/incident.mutations';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { authSession } from '$lib/auth/session.svelte';
 
 type StudentNoteCategory = 'behavior' | 'work' | 'progress' | 'encouragement';
 type StudentNoteVisibility = 'staff' | 'admin_only' | 'guardian_visible';
 type AttendanceStatus = 'absent' | 'late';
 type IncidentKind = 'positive' | 'minor_infraction' | 'major_infraction' | 'emergency';
+
+function schoolId(): string {
+	return authSession.schoolId ?? academicContext.schools[0]?.id ?? '';
+}
+
+export async function createStudentMutation(input: {
+	firstName: string;
+	lastName: string;
+	classGroupId: string;
+	birthDate?: string;
+	successMessage?: string;
+}): Promise<string | null> {
+	const client = getBrowserSchoolClient();
+	const resolvedSchoolId = schoolId();
+	if (!resolvedSchoolId)
+		return null;
+
+	const studentId = `stu-${Date.now().toString(36)}`;
+	const enrollmentId = `enr-${studentId}`;
+	const now = new Date().toISOString();
+	const birthDate = dateInputToIso(input.birthDate ?? '');
+
+	const result = await runMutation(async () => {
+		await client.commands.registerStudent({
+			id: studentId,
+			schoolId: resolvedSchoolId,
+			firstName: input.firstName.trim(),
+			lastName: input.lastName.trim(),
+			birthDate,
+			createdAt: now,
+		});
+		return client.commands.enrollStudent({
+			id: enrollmentId,
+			studentId,
+			classGroupId: input.classGroupId,
+			createdAt: now,
+		});
+	}, { successMessage: input.successMessage });
+
+	return result ? studentId : null;
+}
 
 export async function recordStudentAssessmentResultMutation(input: {
 	studentId: string;
@@ -129,7 +172,7 @@ export async function updateStudentProfileMutation(input: {
 		studentId: input.studentId,
 		firstName: input.firstName.trim(),
 		lastName: input.lastName.trim(),
-		birthDate: input.birthDate || null,
+		birthDate: dateInputToIso(input.birthDate ?? '') ?? null,
 	}), { successMessage: input.successMessage });
 	return result !== null;
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { PlanningEvent } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import PlanningView from '$lib/components/school/scheduling/PlanningView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -11,6 +12,11 @@
 	const selectedId = $derived($page.params.id);
 	const classId = $derived($page.params.classId ?? '6a');
 	const query = $derived(queryClassTimetablePage(classId));
+
+	function selectSession(ev: PlanningEvent) {
+		const path = detailHref.classPlanning(classId, ev.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('tab.timetable')}>
@@ -26,7 +32,7 @@
 				events={data.planning}
 				classes={data.classes}
 				students={data.students}
-				onSelect={ev => appGoto(detailHref.classPlanning(data.classId, ev.id))}
+				onSelect={selectSession}
 				{selectedId}
 			/>
 		</DataState>

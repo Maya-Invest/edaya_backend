@@ -2,9 +2,11 @@
 	import { page } from '$app/stores';
 	import type { SchoolYearEvent, ClassNode } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
+	import { readCalendarListFilters, writeCalendarListFilters } from '$lib/list/list-url-filters';
 	import { locale, t } from '$lib/i18n';
 	import {
 		CalendarDays,
@@ -57,8 +59,11 @@
 		},
 	};
 
-	let query = $state('');
+	const initialFilters = $derived(readCalendarListFilters($page.url));
+
+	let q = $state('');
 	let typeFilter = $state<'all' | SchoolYearEvent['type']>('all');
+	let filtersReady = $state(false);
 	let createOpen = $state(false);
 
 	const typeFilterKeys = ['all', 'holiday', 'vacation', 'closure', 'ceremony'] as const;
@@ -68,15 +73,19 @@
 		return d.toLocaleDateString(loc, { month: 'long', year: 'numeric' });
 	}
 
+	function typeLabel(k: (typeof typeFilterKeys)[number]) {
+		return k === 'all' ? $t('filter.all') : $t(typeConfig[k].labelKey);
+	}
+
 	const filtered = $derived.by(() => {
 		let list = events.slice().sort((a, b) => a.date.localeCompare(b.date));
 		if (typeFilter !== 'all') {
 			list = list.filter(e => e.type === typeFilter);
 		}
-		if (query.trim()) {
-			const q = query.toLowerCase();
+		if (q.trim()) {
+			const needle = q.toLowerCase();
 			list = list.filter(
-				e => e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q),
+				e => e.title.toLowerCase().includes(needle) || e.description.toLowerCase().includes(needle),
 			);
 		}
 		return list;
@@ -102,15 +111,74 @@
 	}
 
 	function handleCreated(eventId: string) {
-		appGoto(detailHref.schoolCalendarEvent(eventId));
+		const path = detailHref.schoolCalendarEvent(eventId);
+		appGoto(`${path}${$page.url.search}`);
+	}
+
+	function syncFiltersToUrl() {
+		const href = writeCalendarListFilters($page.url, { q, type: typeFilter });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		typeFilter = (typeFilterKeys.includes(next.type as (typeof typeFilterKeys)[number])
+			? next.type
+			: 'all') as typeof typeFilter;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
+
+	function applyTypeFilter(next: (typeof typeFilterKeys)[number]) {
+		typeFilter = next;
+		scheduleFilterSync();
 	}
 </script>
 
 <div class="animate-fade-in space-y-6">
 	<ListPageHeader
 		eyebrow={$t('calendar.year')}
-		title={$t('school.calendar')}
+		title={$t('calendar.eventCount', { n: filtered.length })}
 	>
+		{#snippet search()}
+			<div class="relative">
+				<Search
+					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					bind:value={q}
+					oninput={scheduleFilterSync}
+					placeholder={$t('common.search')}
+					class="h-9 w-56 rounded-full pl-9 text-sm"
+				/>
+			</div>
+		{/snippet}
+		{#snippet filters()}
+			<div class="flex flex-wrap items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+				{#each typeFilterKeys as k (k)}
+					<button
+						type="button"
+						onclick={() => applyTypeFilter(k)}
+						class={cn(
+							'rounded-full px-3 py-1 text-[11px] font-medium transition',
+							typeFilter === k
+								? 'bg-primary text-primary-foreground'
+								: 'text-muted-foreground hover:text-foreground',
+						)}
+					>
+						{typeLabel(k)}
+					</button>
+				{/each}
+			</div>
+		{/snippet}
 		{#snippet primary()}
 			<PermissionGate
 				permission="TIMETABLE_UPDATE"
@@ -134,37 +202,6 @@
 	</ListPageHeader>
 
 	<SchoolYearEventFormModal bind:open={createOpen} onCreated={handleCreated} />
-
-	<div class="flex flex-wrap items-center gap-3">
-		<div class="relative min-w-[200px] flex-1">
-			<Search class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-			<input
-				bind:value={query}
-				placeholder={$t('common.search')}
-				class="h-9 w-full rounded-full border border-border bg-card pl-9 pr-4 text-sm shadow-soft focus:outline-none focus:ring-1 focus:ring-ring"
-			/>
-		</div>
-		<div class="flex items-center gap-1.5 rounded-full border border-border bg-card p-1 shadow-soft">
-			{#each typeFilterKeys as k (k)}
-				<button
-					type="button"
-					onclick={() => (typeFilter = k)}
-					class={cn(
-						'rounded-full px-3 py-1.5 text-[11px] font-medium transition',
-						typeFilter === k
-							? 'bg-primary text-primary-foreground'
-							: 'text-muted-foreground hover:text-foreground',
-					)}
-				>
-					{k === 'all' ? $t('common.allClasses') : $t(typeConfig[k].labelKey)}
-				</button>
-			{/each}
-		</div>
-	</div>
-
-	<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-		{$t('calendar.eventCount', { n: filtered.length })}
-	</p>
 
 	<div class="space-y-8">
 		{#each Object.entries(grouped) as [month, monthEvents] (month)}

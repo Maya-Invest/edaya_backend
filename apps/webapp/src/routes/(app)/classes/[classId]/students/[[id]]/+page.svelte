@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Student } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import StudentsView from '$lib/components/school/students/StudentsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -11,6 +12,11 @@
 	const selectedId = $derived($page.params.id);
 	const classId = $derived($page.params.classId ?? '6a');
 	const query = $derived(queryClassStudentsPage(classId));
+
+	function selectStudent(student: Student) {
+		const path = detailHref.classStudent(classId, student.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('tab.students')}>
@@ -24,9 +30,10 @@
 			{#if data.currentClass}
 				<StudentsView
 					students={data.students}
+					classId={data.classId}
 					className={data.currentClass.name}
 					classLevel={data.currentClass.level}
-					onSelect={s => appGoto(detailHref.classStudent(data.classId, s.id))}
+					onSelect={selectStudent}
 					{selectedId}
 				/>
 			{/if}

@@ -29,6 +29,7 @@
 	} = $props();
 
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let sessionTitle = $state('');
 	let classSubjectId = $state('');
 	let day = $state<PlanningEvent['day']>('Mon');
@@ -73,15 +74,9 @@
 	}
 
 	$effect(() => {
-		if (open && !classSubjectId && classSubjects[0]) {
-			classSubjectId = classSubjects[0].id;
-		}
-	});
-
-	$effect(() => {
-		if (open) {
+		if (open && !wasOpen)
 			resetForm();
-		}
+		wasOpen = open;
 	});
 
 	async function submit() {
@@ -164,7 +159,7 @@
 						{selectedSubjectName}
 					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each classSubjects as subject (subject.id)}
 						<Select.Item value={subject.id} label={subject.name}>{subject.name}</Select.Item>
 					{/each}
@@ -178,11 +173,11 @@
 		</Label>
 		<Select.Root type="single" value={day} onValueChange={v => v && (day = v as PlanningEvent['day'])}>
 			<Select.Trigger>
-				<Select.Value>
+				<Select.Value placeholder={$t('planning.day')}>
 					{$t(`day.full.${day}`)}
 				</Select.Value>
 			</Select.Trigger>
-			<Select.Content>
+			<Select.Content class="z-[100]">
 				{#each DAYS as d (d)}
 					<Select.Item value={d} label={$t(`day.full.${d}`)}>{$t(`day.full.${d}`)}</Select.Item>
 				{/each}

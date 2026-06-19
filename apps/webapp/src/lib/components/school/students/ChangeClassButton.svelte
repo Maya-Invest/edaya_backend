@@ -12,11 +12,25 @@
 	const { s }: { s: Student } = $props();
 
 	let open = $state(false);
-	let target = $derived(s.classId);
+	let target = $state('');
 	let busy = $state(false);
+	let wasOpen = $state(false);
 
 	const currentClass = $derived(academicContext.classes.find(c => c.id === s.classId));
 	const targetClass = $derived(academicContext.classes.find(c => c.id === target));
+	const targetClassLabel = $derived(
+		targetClass ? `${targetClass.name} · ${targetClass.level}` : '',
+	);
+
+	function resetForm() {
+		target = s.classId;
+	}
+
+	$effect(() => {
+		if (open && !wasOpen)
+			resetForm();
+		wasOpen = open;
+	});
 
 	async function confirmTransfer() {
 		if (target === s.classId || !s.enrollmentId) {
@@ -60,11 +74,13 @@
 		</Label>
 		<Select.Root type="single" value={target} onValueChange={v => v && (target = v)}>
 			<Select.Trigger>
-				<Select.Value />
+				<Select.Value placeholder="Nouvelle classe">
+					{targetClassLabel}
+				</Select.Value>
 			</Select.Trigger>
-			<Select.Content>
+			<Select.Content class="z-[100]">
 				{#each academicContext.classes as c (c.id)}
-					<Select.Item value={c.id}>
+					<Select.Item value={c.id} label={c.name}>
 						{c.name}
 						<span class="ml-1 text-muted-foreground">· {c.level}</span>
 					</Select.Item>

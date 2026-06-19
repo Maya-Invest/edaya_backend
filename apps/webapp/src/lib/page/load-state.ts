@@ -1,5 +1,8 @@
-/** État de chargement d'une page. */
-export type PageLoadState = 'loading' | 'ready' | 'empty' | 'error';
+/** État de chargement d'une page (après résolution PageQuery — pas de `loading` ici). */
+export type PageLoadState = 'ready' | 'empty' | 'error';
+
+/** ?demo= — preview dev ; `loading` simule le délai via PageQuery, pas DataState. */
+export type DemoPreviewState = PageLoadState | 'loading';
 
 export interface PageLoadMeta {
 	status: PageLoadState;
@@ -7,7 +10,7 @@ export interface PageLoadMeta {
 }
 
 /** ?demo=loading|empty|error — preview des états UI en dev. */
-export function resolveDemoState(url: URL): PageLoadState {
+export function resolveDemoState(url: URL): DemoPreviewState {
 	const demo = url.searchParams.get('demo');
 	if (demo === 'loading' || demo === 'empty' || demo === 'error') {
 		return demo;

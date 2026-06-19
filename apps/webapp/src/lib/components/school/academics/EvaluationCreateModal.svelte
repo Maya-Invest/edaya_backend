@@ -21,6 +21,7 @@
 	} = $props();
 
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let title = $state('');
 	let classSubjectId = $state('');
 	let maxScore = $state('20');
@@ -34,6 +35,7 @@
 	const selectedSubjectName = $derived(
 		classSubjects.find(subject => subject.id === classSubjectId)?.name ?? '',
 	);
+	const kindLabel = $derived($t(`eval.kind.${kind}`));
 
 	const numericMax = $derived(Number.parseFloat(maxScore));
 	const numericCoef = $derived(Number.parseFloat(coefficient));
@@ -55,9 +57,9 @@
 	}
 
 	$effect(() => {
-		if (open && !classSubjectId && classSubjects[0]) {
-			classSubjectId = classSubjects[0].id;
-		}
+		if (open && !wasOpen)
+			resetForm();
+		wasOpen = open;
 	});
 
 	async function submit() {
@@ -108,7 +110,7 @@
 						{selectedSubjectName}
 					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each classSubjects as subject (subject.id)}
 						<Select.Item value={subject.id} label={subject.name}>{subject.name}</Select.Item>
 					{/each}
@@ -145,11 +147,13 @@
 				onValueChange={v => v && (kind = v as (typeof ASSESSMENT_KINDS)[number])}
 			>
 				<Select.Trigger>
-					<Select.Value />
+					<Select.Value placeholder={$t('eval.kind')}>
+						{kindLabel}
+					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each ASSESSMENT_KINDS as k (k)}
-						<Select.Item value={k}>{$t(`eval.kind.${k}`)}</Select.Item>
+						<Select.Item value={k} label={$t(`eval.kind.${k}`)}>{$t(`eval.kind.${k}`)}</Select.Item>
 					{/each}
 				</Select.Content>
 			</Select.Root>

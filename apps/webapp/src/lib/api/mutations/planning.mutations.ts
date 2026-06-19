@@ -1,6 +1,7 @@
 import type { PlanningEvent } from '$lib/types/school';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { buildSessionSavePayload } from '$lib/api/session-save-payload';
 import { toast } from '$lib/toast.svelte';
 import { get } from 'svelte/store';
 import { t } from '$lib/i18n';
@@ -56,18 +57,22 @@ export async function updateSessionMutation(input: {
 	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const existing = await client.entities.sessions.one({ id: input.sessionId });
-	if (!existing) {
+	let existing;
+	try {
+		existing = await client.entities.sessions.get(input.sessionId);
+	}
+	catch {
 		toast.error(get(t)('dataState.errorDescription'));
 		return false;
 	}
 
-	const result = await runMutation(() => client.entities.sessions.save({
-		...existing,
-		title: input.title.trim(),
-		classSubjectId: input.classSubjectId ?? null,
-		startsAt: sessionIso(input.day, input.start),
-		endsAt: sessionIso(input.day, input.end),
-	}), { successMessage: input.successMessage });
+	const result = await runMutation(() => client.entities.sessions.save(
+		buildSessionSavePayload(existing, {
+			title: input.title,
+			classSubjectId: input.classSubjectId,
+			startsAt: sessionIso(input.day, input.start),
+			endsAt: sessionIso(input.day, input.end),
+		}),
+	), { successMessage: input.successMessage });
 	return result !== null;
 }

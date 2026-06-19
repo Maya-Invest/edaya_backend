@@ -7,6 +7,8 @@
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import ActivityFormModal from './ActivityFormModal.svelte';
 	import {
 		ENROLL_STATUS_STYLE,
 		ENROLL_STATUS_LABEL,
@@ -60,6 +62,10 @@
 </script>
 
 <div class="space-y-5">
+	<DrawerActionBar>
+		<ActivityFormModal activity={a} />
+	</DrawerActionBar>
+
 	<div>
 		<h3 class="font-display text-xl font-semibold">{a.name}</h3>
 		<p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">

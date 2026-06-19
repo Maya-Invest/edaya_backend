@@ -12,7 +12,7 @@ Living plan to align `apps/webapp` with:
 - [Webapp mock → API migration plan](./done/webapp-mock-migration-plan.md) — read/write API wiring (coupled with mutation work below)
 - Cursor rule: `.cursor/rules/app-shell.mdc`
 
-**Last updated:** 2026-06-17 (1e approuvé — Billing livré, Phase 1 & 2 closes)
+**Last updated:** 2026-06-17 (Phase 3 — rollout `ListPageHeader` routé complet ; infra double-loading + tones ; Phase 3b orphelins)
 
 ### Progress tracker
 
@@ -27,7 +27,8 @@ Check boxes when a phase (or sub-phase) exit criteria are met. Entity-level boxe
   - [x] 1d Evaluation
   - [x] 1e Fee, Planning, Subject — **UI + revue métier approuvée**
 - [x] **Phase 2** — Remaining drawers + config screens (Billing inclus)
-- [ ] **Phase 3** — List infrastructure + `ListPageHeader` rollout
+- [ ] **Phase 3** — List infrastructure + `ListPageHeader` rollout routé (**en cours** — infra restante : cursor API BFF)
+- [ ] **Phase 3b** — Vues orphelines (composant prêt, **pas de route**)
 - [ ] **Phase 4** — Shell polish + accessibility
 - [ ] **Phase 5** — Permissions pass
 
@@ -43,7 +44,7 @@ The **infrastructure layer is largely spec-aligned**; the **interaction layer is
 | Design tokens / typography | ~85% | Tokens exist; per-screen application uneven |
 | URL-backed detail routes | ~90% | Filter params not in URL |
 | List page template (interaction) | ~55% | Inert CTAs, no More menu, URL filters, infinite loading |
-| List page template (visual) | ~40% | `ListPageHeader` on 4/23 views |
+| List page template (visual) | ~95% | `ListPageHeader` sur toutes les vues **routées** ; 2 orphelins en Phase 3b |
 | Detail drawer (interaction) | ~65% | 3 `*Form` bodies remain; some partial entities |
 | Detail drawer (visual) | ~80% | Drawer shell matches design spec; tab/field styling mostly OK |
 | Mutation modals | ~40% | Naming drift (`*Form` vs `*FormModal`); inert list CTAs |
@@ -480,7 +481,7 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 | Créer séance | `commands.createSession` | Chemin commande domaine ✅ |
 | Modifier séance | `entities.sessions.one` + `entities.sessions.save` | Save direct ; même pattern fragile que frais (spread entité API) |
 | Créer matière (classe) | `entities.subjects.save` puis `commands.offerSubjectToClass` | Deux étapes ; IDs générés côté client |
-| Modifier matière | `entities.classSubjects.one` → `entities.subjects.one` → `entities.subjects.save` | Met à jour l’entité **Subject globale** (pas seulement l’offre classe) |
+| Modifier matière | `entities.classSubjects.get` → `entities.subjects.get` → `entities.subjects.save` (`buildSubjectSavePayload`) | IDs seed non-UUID → **`get` pas `one`** ; payload sans `code: ""` ni `defaultCoefficient: 0` |
 
 ##### Points à valider avec le collègue (règles métier)
 
@@ -501,14 +502,16 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 - [ ] **Édition session** : save direct sur `Session` — règles d’assignation staff / ressources / chevauchements respectées par le domaine ?
 - [ ] **IDs client** : `sess-${Date.now().toString(36)}`.
 - [ ] **Horaires** : conversion jour UI (`Mon`…) + heure locale → ISO via semaine de référence fixe `2026-01-05` (lundi).
-- [ ] **Même risque technique que frais (avant fix)** : `sessions.one({ id })` peut échouer si l’ID n’est pas UUID — à tester / aligner sur `sessions.get(id)` si besoin.
+- [x] **Fix technique édition** — `sessions.get(id)` + `buildSessionSavePayload` (évite 422 spread) ; `PlanningFormModal` Select/`wasOpen`/`z-[100]`
+- [x] **Phase 3 liste** — `PlanningView` recherche URL `q`, `PermissionGate` création, drawer préserve `search`
 
 **Matières**
 
+- [x] **Édition matière (technique)** — `get` + `buildSubjectSavePayload` (fix 422) ; `SubjectFormModal` Select/`wasOpen`
 - [ ] **Édition d’un `Subject` global** depuis le drawer classe — impact sur toutes les classes qui partagent le même `subjectId` ?
 - [ ] **Création** : `subjects.save` direct (pas `registerSubject` command) puis `offerSubjectToClass` — ordre et atomicité OK ?
 - [ ] **Champs modifiables** : nom, catégorie, couleur — description / heures / enseignant affichés read-only dans `SubjectTabs` (données dérivées UI, pas persistées ici).
-- [ ] **PermissionGate absent** sur matières / planning — création toujours visible (Phase 5).
+- [ ] **PermissionGate absent** sur matières — création toujours visible (Phase 5) ; planning : gate création ✅
 
 **Hors périmètre 1e (traité post-validation)**
 
@@ -531,8 +534,9 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 ##### Prochaines actions
 
-1. **Phase 3** — `SchoolStudentsView` référence (infinite scroll, URL filters, More menu) puis rollout `ListPageHeader`.
-2. **Dette documentée** — save direct frais/sessions, mapping catégories, bypass dev `session-actor.ts` → tickets avant prod.
+1. **Phase 3 (suite)** — cursor API sur `/school/students` ; badge audit lot 2 ; create modals restants.
+2. **Phase 3b** — routes `ResourcesView` + `EducatorDashboardView`.
+3. **Dette documentée** — save direct frais/sessions, mapping catégories, bypass dev `session-actor.ts` → tickets avant prod.
 
 ##### Décision attendue après revue
 
@@ -551,7 +555,7 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 - [x] **School year event** — `SchoolYearEventDetail` + `SchoolYearEventFormModal`; `calendar.mutations.ts`; `SchoolCalendarView` + `ListPageHeader`
 - [x] **Incident** — read-only `IncidentDetail` + `IncidentFormModal`; `incident.mutations.ts`; `SchoolEventsView` → `ListPageHeader`
 - [x] **Deadline** — read-only `DeadlineDetail` + `DeadlineFormModal`; `homework.mutations.ts`; `HomeworkView` + `ListPageHeader`
-- [x] **Billing** — `PaymentFormModal` + `AssignFeeFormModal` + `billing.mutations.ts` ; drawer + liste `FinanceView` → `ListPageHeader`
+- [x] **Billing** — `PaymentFormModal` + `AssignFeeFormModal` + `billing.mutations.ts` ; drawer + liste `FinanceView` → `ListPageHeader` ; correctifs Select (`select-value.svelte`) + UX modal facture
 - [x] **Role** — toggles persist via `access-roles.mutations.ts`; `RolesMatrixView` → `ListPageHeader`
 - [x] **`AcademicAdminView`** — `AcademicYearCreateModal`; route `PageQuery`/`DataState`
 - [x] **`ClassGroupsView`** — `ClassGroupFormModal`; route `PageQuery`/`DataState`
@@ -561,52 +565,76 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 ---
 
-### Phase 3 — List infrastructure + visual rollout (1–2 sprints)
+### Phase 3 — List infrastructure + visual rollout (routed views)
 
 - [ ] **Phase 3 complete**
 
-Target `SchoolStudentsView` as the gold-standard list (interaction + visual), then roll out.
+Target `SchoolStudentsView` as the gold-standard list (interaction + visual), then roll out on **routes existantes** only.
 
 **Infrastructure**
 
-- [ ] Shared `useInfiniteList` / `InfiniteList.svelte` primitive
-- [ ] URL filter sync — `class`, `status`, `q` in search params; preserve on drawer open/close
-- [ ] Infinite loading on school students (see [§4](#4-infinite-loading))
-- [ ] More menu — export stub, view toggle, column visibility; remove decorative icons
-- [ ] Eliminate double loading — `PageQuery` owns initial load; `DataState` for empty/error/ready only
-- [ ] Badge / tone audit — `drawer-constants` / `ui-tones` across views
+- [x] Shared `useInfiniteList` (`use-infinite-list.svelte.ts`) + `InfiniteList.svelte` primitive (client-side windowing)
+- [x] `useCursorInfiniteList` + types `CursorPage` / `CursorFetcher` — stub prêt ; brancher quand BFF expose `nextCursor`
+- [x] URL filter sync — `list-url-filters.ts` sur les vues migrées ; préservés à l’ouverture drawer
+- [x] Correctifs Select modals — `Select.Value` + `label` + `z-[100]` + reset à l’ouverture (`wasOpen`)
+- [x] Infinite loading on school students (batch 30, sentinel `IntersectionObserver`)
+- [x] More menu — `ListMoreMenu.svelte` (export stub, vue tableau/cartes) sur `SchoolStudentsView`
+- [x] Eliminate double loading — `PageQuery` owns initial load ; `DataState` = empty/error/ready only (plus de branche `loading`)
+- [x] Badge / tone audit (lot 1) — `RESOURCE_STATUS_TONE`, `INCIDENT_SEVERITY_TONE` dans `ui-tones.ts` ; `ROLE_TINT.owner` ; vues récentes alignées
+- [ ] API cursor pagination — remplacer windowing client sur `/school/students` quand BFF expose `nextCursor`
+- [ ] Badge / tone audit (lot 2) — statuts élève, paiements, calendrier, `drawer-constants` i18n (labels FR hard-codés)
 
 **Wire create modals (inert `+ Add` today)**
 
-- [ ] Students — `SchoolStudentsView` + class-scoped `StudentsView`
-- [ ] Guardians
-- [ ] Staff (`PeopleView`)
-- [ ] Evaluations, subjects, activities, events (remaining modules)
+- [ ] Students — [x] `StudentCreateModal` + `SchoolStudentsView` / `StudentsView` CTA ; [ ] API enrollment edge cases
+- [x] Guardians — `GuardianCreateModal` sur `GuardiansView`
+- [ ] Staff (`StaffView`)
+- [ ] Evaluations, subjects, events — [x] activités (`ActivityFormModal` create + edit) ; reste staff / éval / events
 
-**`ListPageHeader` rollout** — tick when migrated:
+**`ListPageHeader` rollout (routed views only)** — ✅ complet :
 
-- [ ] `StudentsView`
+- [x] `SchoolStudentsView` — référence Phase 3 (URL filters, infinite list, More menu, vue cartes)
+- [x] `StudentsView` (classe) — `ListPageHeader`, filtres URL `q`/`status`, `InfiniteList`, More menu, vue cartes
 - [x] `GuardiansView`
-- [ ] `ActivitiesView`
-- [ ] `SchoolEventsView`
-- [ ] `SchoolCalendarView`
-- [ ] `SubjectsView`
-- [ ] `ConfigSubjectsView`
-- [ ] `PlanningView`
-- [ ] `TeachingLogView`
-- [ ] `HomeworkView`
-- [ ] `EvaluationsView`
-- [ ] `ClassReportCardsView`
-- [ ] `FinanceView`
-- [ ] `PaymentsView`
+- [x] `ActivitiesView` — `ListPageHeader`, filtres URL `q`/`category`, `InfiniteList`, `ActivityFormModal`
+- [x] `SchoolEventsView`
+- [x] `SchoolCalendarView` — recherche + filtres type dans `ListPageHeader`, URL `q`/`type`, drawer préserve search
+- [x] `ConfigSubjectsView` — recherche URL `q`, mode `level`/`category` en URL, i18n
+- [x] `PlanningView` — `ListPageHeader`, recherche URL `q`, `PermissionGate`, payload session explicite
+- [x] `TeachingLogView` — `ListPageHeader`, recherche URL `q`, progression globale, `SubjectsView` embedded
+- [x] `HomeworkView`
+- [x] `EvaluationsView`
+- [x] `ClassReportCardsView` — `ListPageHeader`, filtres URL `q`/`status`, `PermissionGate` génération
+- [x] `FinanceView` (onglets facturation + frais)
+- [x] `PaymentsView` — `ListPageHeader`, filtres URL `q`/`status`/`class`, KPI tiles
 - [x] `StaffView`
-- [ ] `RolesMatrixView`
-- [ ] `GradeScalesView`
-- [ ] `ClassGroupsView`
-- [ ] `AcademicAdminView`
-- [ ] `ReportCardDefinitionsView`
-- [ ] `ResourcesView`
-- [ ] `EducatorDashboardView` (dashboard variant — partial header slots)
+- [x] `RolesMatrixView` — i18n, recherche URL `q`, drawer préserve search
+- [x] `GradeScalesView` — recherche URL `q`
+- [x] `ClassGroupsView` — recherche URL `q`
+- [x] `AcademicAdminView` — recherche URL `q`
+- [x] `ReportCardDefinitionsView` — recherche URL `q`, filtre statut `draft`/`published`
+
+> **Hors périmètre Phase 3** — vues sans route → [Phase 3b](#phase-3b--orphan-views-route-wiring).
+
+---
+
+### Phase 3b — Orphan views (route wiring)
+
+Composants migrés (`ListPageHeader` + filtres URL) mais **non montés** dans `apps/webapp/src/routes` — à brancher avant test E2E et prod.
+
+- [ ] **Phase 3b complete**
+
+| Vue | Composant | Route proposée | Dépendances |
+|-----|-----------|----------------|-------------|
+| Ressources | `ResourcesView.svelte` | `/configuration/resources` ou `/school/resources` | `PageQuery` + query resources BFF ; `ResourceFormModal` (create) |
+| Tableau éducateur | `EducatorDashboardView.svelte` | `/school/educator` ou rôle-based home | `PageQuery` agrégat vie scolaire ; CTAs absence/incident → modals Phase 2 |
+
+**Exit criteria Phase 3b**
+
+- [ ] Route SvelteKit + entrée navigation (`navigation.ts`)
+- [ ] `PageQuery` / `DataState` sur la route
+- [ ] Drawer/search URL testés en conditions réelles (pas seulement composant isolé)
+- [ ] CTAs primaires branchés ou explicitement defer avec ticket
 
 ---
 
@@ -713,7 +741,8 @@ flowchart TD
     P1c[Phase 1c: Staff ✅]
     P1e[Phase 1e: Fee, Planning, Subject ✅]
     P2[Phase 2: Remaining drawers + config screens]
-    P3[Phase 3: List infra + ListPageHeader rollout]
+    P3[Phase 3: List infra + ListPageHeader routed ✅]
+    P3b[Phase 3b: Orphan views route wiring]
     P4[Phase 4: Shell polish + a11y]
     P5[Phase 5: Permissions pass — parallel]
 
@@ -724,9 +753,10 @@ flowchart TD
     P1d --> P2
     P0b --> P3
     P2 --> P3
+    P3 --> P3b
     P0a --> P5
     P2 --> P4
-    P3 --> P4
+    P3b --> P4
 ```
 
 **Fastest visible win:** Phase 1b Guardian — drawer is done; migrating `GuardiansView` to `ListPageHeader` + wiring create modal gives a second full reference route.
@@ -785,25 +815,25 @@ Quick lookup for redesign work. **D** = drawer interaction · **L** = list visua
 
 | Route | View component | D | L | M | Notes |
 |-------|----------------|---|---|---|-------|
-| `/school/students/[[id]]` | `SchoolStudentsView` | ✅ | ⚠️ CTA/More | ⚠️ create | Gold standard; finish Phase 3 |
+| `/school/students/[[id]]` | `SchoolStudentsView` | ✅ | ✅ create + More + URL filters | ✅ create | Référence Phase 3 ✅ |
 | `/school/guardians/[[id]]` | `GuardiansView` | ✅ | ✅ | ✅ | Second full reference route |
-| `/school/calendar/[[id]]` | `SchoolCalendarView` | ❌ event form | ❌ | ❌ | Calendar variant |
+| `/school/calendar/[[id]]` | `SchoolCalendarView` | ✅ | ✅ | ✅ | Calendar variant |
 | `/school/activities/[[id]]` | `ActivitiesView` | ✅ | ❌ | ⚠️ | |
 | `/school/events/[[id]]` | `SchoolEventsView` | ❌ | ❌ | ❌ | |
 | `/classes/…/students/[[id]]` | `StudentsView` | ✅ | ❌ | ⚠️ | Class-scoped cards |
 | `/classes/…/subjects/[[id]]` | `SubjectsView` | ✅ | ✅ | ✅ | |
 | `/classes/…/timetable/[[id]]` | `PlanningView` | ✅ | ✅ | ✅ | Timetable variant |
-| `/classes/…/teaching/[[id]]` | `TeachingLogView` | ⚠️ | ❌ | ❌ | |
+| `/classes/…/teaching/[[id]]` | `TeachingLogView` | ✅ | — | ✅ | Pas de CTA création (onglet matières) |
 | `/classes/…/homework/[[id]]` | `HomeworkView` | ⚠️ | ❌ | ❌ | Card-list variant |
 | `/classes/…/evaluations/[[id]]` | `EvaluationsView` | ✅ | ✅ | ✅ | Card-list variant; fourth reference route |
-| `/classes/…/report-cards/[[id]]` | `ClassReportCardsView` | ✅ | ❌ | ⚠️ | |
+| `/classes/…/report-cards/[[id]]` | `ClassReportCardsView` | ✅ | ✅ | ✅ | Filtres URL `q`/`status` |
 | `/finance/billing/[[id]]` | `FinanceView` | ⚠️ | ⚠️ KPI | ❌ | Dashboard + table variant |
 | `/finance/fees/[[id]]` | `FinanceView` | ✅ | ✅ | ✅ | Fees tab; `ListPageHeader` |
-| `/finance/payment` | `PaymentsView` | — | ❌ | — | No drawer |
+| `/finance/payment` | `PaymentsView` | — | ✅ | — | Filtres URL `q`/`status`/`class` |
 | `/configuration/academic` | `AcademicAdminView` | — | ❌ | ⚠️ inline | No DataState |
 | `/configuration/classes` | `ClassGroupsView` | — | ❌ | ⚠️ inline | |
-| `/configuration/subjects/[[id]]` | `ConfigSubjectsView` | ✅ | ✅ | ⚠️ create class-scoped | `ListPageHeader` |
+| `/configuration/subjects/[[id]]` | `ConfigSubjectsView` | ✅ | ✅ | ✅ | URL `q`/`mode`, recherche |
 | `/configuration/staff/[[id]]` | `StaffView` | ✅ | ✅ | ✅ | Third full reference route |
 | `/configuration/roles/[[role]]` | `RolesMatrixView` | ⚠️ | ⚠️ | ❌ | Matrix variant |
 | `/configuration/grade-scales` | `GradeScalesView` | — | ❌ | ⚠️ inline | |
-| `/configuration/report-cards/[[id]]` | `ReportCardDefinitionsView` | ✅ | ❌ | ⚠️ | No DataState |
+| `/configuration/report-cards/[[id]]` | `ReportCardDefinitionsView` | ✅ | ✅ | ✅ | Filtres URL `q`/`status` |

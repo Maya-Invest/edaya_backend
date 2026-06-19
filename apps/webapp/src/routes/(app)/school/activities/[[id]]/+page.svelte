@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Activity } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import ActivitiesView from '$lib/components/school/school-life/ActivitiesView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -10,6 +11,11 @@
 
 	const selectedId = $derived($page.params.id);
 	const query = querySchoolActivitiesPage();
+
+	function selectActivity(activity: Activity) {
+		const path = detailHref.schoolActivity(activity.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('school.activities')}>
@@ -22,7 +28,7 @@
 		>
 			<ActivitiesView
 				activities={data.activities}
-				onSelect={a => appGoto(detailHref.schoolActivity(a.id))}
+				onSelect={selectActivity}
 				{selectedId}
 			/>
 		</DataState>

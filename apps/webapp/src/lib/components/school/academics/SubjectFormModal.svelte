@@ -19,6 +19,12 @@
 	];
 	const COLORS: Subject['color'][] = ['mint', 'sky', 'warm'];
 
+	const COLOR_LABELS: Record<Subject['color'], string> = {
+		mint: 'Mint',
+		sky: 'Sky',
+		warm: 'Warm',
+	};
+
 	let {
 		subject,
 		classId,
@@ -36,11 +42,13 @@
 	} = $props();
 
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let name = $state('');
 	let category = $state<SubjectCategory>('Scientifique');
 	let color = $state<Subject['color']>('mint');
 
 	const isEdit = $derived(subject !== undefined);
+	const colorLabel = $derived(COLOR_LABELS[color]);
 	const canSubmit = $derived(name.trim().length > 0 && (isEdit || (classId?.length ?? 0) > 0));
 
 	function resetForm() {
@@ -57,9 +65,9 @@
 	}
 
 	$effect(() => {
-		if (open) {
+		if (open && !wasOpen)
 			resetForm();
-		}
+		wasOpen = open;
 	});
 
 	async function submit() {
@@ -137,9 +145,11 @@
 			</Label>
 			<Select.Root type="single" value={category} onValueChange={v => v && (category = v as SubjectCategory)}>
 				<Select.Trigger>
-					<Select.Value>{category}</Select.Value>
+					<Select.Value placeholder={$t('subjects.category')}>
+						{category}
+					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each CATEGORIES as cat (cat)}
 						<Select.Item value={cat} label={cat}>{cat}</Select.Item>
 					{/each}
@@ -152,11 +162,13 @@
 			</Label>
 			<Select.Root type="single" value={color} onValueChange={v => v && (color = v as Subject['color'])}>
 				<Select.Trigger>
-					<Select.Value>{color}</Select.Value>
+					<Select.Value placeholder={$t('subjects.color')}>
+						{colorLabel}
+					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each COLORS as c (c)}
-						<Select.Item value={c} label={c}>{c}</Select.Item>
+						<Select.Item value={c} label={COLOR_LABELS[c]}>{COLOR_LABELS[c]}</Select.Item>
 					{/each}
 				</Select.Content>
 			</Select.Root>

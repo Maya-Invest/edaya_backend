@@ -208,6 +208,8 @@ export interface School {
 
 export interface SchoolYearEvent {
 	id: string;
+	/** API record ids when one logical event spans multiple class scopes */
+	linkedIds?: string[];
 	title: string;
 	date: string;
 	endDate?: string;

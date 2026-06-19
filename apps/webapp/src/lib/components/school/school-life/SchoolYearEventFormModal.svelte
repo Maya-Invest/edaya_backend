@@ -97,6 +97,7 @@
 			if (event) {
 				const ok = await updateCalendarEventMutation({
 					eventId: event.id,
+					linkedIds: event.linkedIds,
 					title: eventTitle,
 					description,
 					date,
