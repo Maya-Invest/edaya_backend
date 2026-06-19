@@ -6,6 +6,7 @@ When working on `apps/webapp` screens, layouts, drawers, or modals, follow:
 
 - **[specs/app-shell-spec.md](specs/app-shell-spec.md)** — interaction patterns (list, drawer, modals)
 - **[specs/design-language-spec.md](specs/design-language-spec.md)** — visual design (colors, typography, components)
+- **[specs/data-loading-spec.md](specs/data-loading-spec.md)** — route-scoped loading, entity store, optimistic mutations
 
 Key rules (summary):
 
