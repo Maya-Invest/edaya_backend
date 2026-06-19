@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Student } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { recordStudentIncidentMutation } from '$lib/api/mutations/student.mutations';
+	import { recordIncidentMutation } from '$lib/api/mutations/incident.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -44,19 +44,23 @@
 			return;
 
 		busy = true;
-		const ok = await recordStudentIncidentMutation({
-			schoolId,
-			studentId: s.id,
-			classGroupId: s.classId,
-			title: incidentTitle,
-			description,
-			kind,
-			successMessage: `Incident enregistré pour ${s.name}.`,
-		});
-		busy = false;
-		if (ok) {
-			open = false;
-			resetForm();
+		try {
+			const incidentId = await recordIncidentMutation({
+				schoolId,
+				studentId: s.id,
+				classGroupId: s.classId,
+				title: incidentTitle,
+				description,
+				kind,
+				successMessage: `Incident enregistré pour ${s.name}.`,
+			});
+			if (incidentId) {
+				open = false;
+				resetForm();
+			}
+		}
+		finally {
+			busy = false;
 		}
 	}
 </script>

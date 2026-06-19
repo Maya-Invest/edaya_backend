@@ -108,7 +108,7 @@ export async function provisionSeedingServiceAccountHttp(
     body: JSON.stringify({
       serviceId: SEEDING_SERVICE_ID,
       displayName: 'Seeding Integration',
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS[MINIMAL_AUTH_FIXTURE_STAFF_ID]],
       elevated: true,
     }),
   })

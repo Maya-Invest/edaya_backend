@@ -72,7 +72,7 @@ Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/s
 
 | Command | Purpose |
 |---------|---------|
-| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `auth:link` → `access`), then provision seeding service account |
+| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `access`), then provision seeding service account |
 | `bun seed` | Same as `seed:all` — full demo data via HTTP |
 | `bun seed:auth` | Better Auth accounts only (no service account or system secret) |
 | `bun seed:smoke` | Sign in + verify `/core/authorization/effective-grants` |
@@ -91,6 +91,8 @@ bun seed:init
 ```
 
 Fixture data lives in `testing/dev-fixtures/`. Loaders and orchestration live in `testing/seeding/`.
+
+Staff auth linking and school owner assignment (Koussi Yann / `st8`) run automatically during **school** and **access** seed — no separate `auth:link` step.
 
 ### Demo login
 

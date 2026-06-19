@@ -74,6 +74,9 @@ export async function createGradeScaleMutation(input: {
 	minScore: number;
 	maxScore: number;
 	passingScore: number;
+	decimalPlaces?: number;
+	description?: string;
+	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const id = `gs-${Date.now().toString(36)}`;
@@ -83,10 +86,10 @@ export async function createGradeScaleMutation(input: {
 		name: input.name.trim(),
 		minScore: input.minScore,
 		maxScore: input.maxScore,
-		decimalPlaces: 2,
+		decimalPlaces: input.decimalPlaces ?? 2,
 		isDefault: false,
 		ranges: buildGradeScaleRanges(input.minScore, input.maxScore, input.passingScore),
-	}));
+	}), { successMessage: input.successMessage });
 	return result !== null;
 }
 

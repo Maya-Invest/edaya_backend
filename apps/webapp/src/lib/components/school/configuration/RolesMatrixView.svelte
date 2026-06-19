@@ -2,6 +2,7 @@
 	import type { StaffMember, StaffRole } from '$lib/types/school';
 	import { authSession } from '$lib/auth/session.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import {
 		ShieldCheck,
 		Search,
@@ -69,16 +70,11 @@
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				RBAC · Rôles & permissions
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{list.length} rôle{list.length > 1 ? 's' : ''}
-			</h2>
-		</div>
-		<div class="flex items-center gap-2">
+	<ListPageHeader
+		eyebrow="RBAC · Rôles & permissions"
+		title="{list.length} rôle{list.length > 1 ? 's' : ''}"
+	>
+		{#snippet search()}
 			<div class="relative">
 				<Search
 					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -89,6 +85,8 @@
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
 			</div>
+		{/snippet}
+		{#snippet filters()}
 			{#if me}
 				<div
 					class="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] text-muted-foreground shadow-soft"
@@ -101,8 +99,8 @@
 					<span class="font-mono uppercase tracking-wider">{ROLE_LABEL_FR[me.role]}</span>
 				</div>
 			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		<div

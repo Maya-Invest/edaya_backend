@@ -3,9 +3,14 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { AlertTriangle, Plus, Search } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import IncidentFormModal from './IncidentFormModal.svelte';
 
 	const {
 		incidents,
@@ -38,6 +43,7 @@
 
 	let classFilter = $state('all');
 	let searchQuery = $state('');
+	let createOpen = $state(false);
 
 	$effect.pre(() => {
 		if (classId)
@@ -70,41 +76,66 @@
 		{ value: 'all', label: $t('common.allClasses') },
 		...classes.map(c => ({ value: c.id, label: c.name })),
 	]);
+
+	function handleCreated(incidentId: string) {
+		appGoto(detailHref.schoolIncident(incidentId));
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('events.schoolLife')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('events.count', { n: list.length })}</h2>
-		</div>
-		<Button size="sm" class="rounded-full">
-			<Plus class="mr-1 h-4 w-4" />
-			{$t('events.log')}
-		</Button>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('events.schoolLife')}
+		title={$t('events.count', { n: list.length })}
+	>
+		{#snippet search()}
+			<div class="relative min-w-[200px] max-w-sm">
+				<Search
+					class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					placeholder={$t('common.searchStudent')}
+					bind:value={searchQuery}
+					class="h-9 rounded-lg pl-9 text-sm"
+				/>
+			</div>
+		{/snippet}
+		{#snippet filters()}
+			{#if !classId}
+				<FilterSelect
+					bind:value={classFilter}
+					class="h-9 w-[220px] rounded-lg text-sm"
+					options={classFilterOptions}
+				/>
+			{/if}
+		{/snippet}
+		{#snippet primary()}
+			<PermissionGate
+				permission="DISCIPLINE_CREATE"
+				mode="disable"
+				tooltip={$t('events.permissionCreate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('events.log')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
+	</ListPageHeader>
 
-	<div class="mb-4 flex flex-wrap items-center gap-3">
-		{#if !classId}
-			<FilterSelect
-				bind:value={classFilter}
-				class="h-9 w-[220px] rounded-lg text-sm"
-				options={classFilterOptions}
-			/>
-		{/if}
-		<div class="relative min-w-[200px] max-w-sm flex-1">
-			<Search
-				class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-			/>
-			<Input
-				placeholder={$t('common.searchStudent')}
-				bind:value={searchQuery}
-				class="h-9 rounded-lg pl-9 text-sm"
-			/>
-		</div>
-	</div>
+	<IncidentFormModal
+		{students}
+		{classes}
+		bind:open={createOpen}
+		onCreated={handleCreated}
+	/>
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		<div
@@ -126,7 +157,7 @@
 						onclick={() => onSelect?.(i)}
 						class={cn(
 							'grid w-full grid-cols-12 gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0 hover:bg-secondary',
-							selectedId === i.id && 'bg-secondary/60',
+							selectedId === i.id && 'border-primary/40 bg-primary/5',
 						)}
 					>
 						<div class="col-span-2 font-mono text-xs text-muted-foreground">

@@ -2,10 +2,14 @@
 	import type { Crud } from '$lib/api/access-roles-data';
 	import type { StaffRole } from '$lib/types/school';
 	import { emptyCrudMatrix, PERMISSION_CATALOG } from '$lib/api/access-roles-data';
+	import { updateRolePermissionMutation } from '$lib/api/mutations/access-roles.mutations';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { t } from '$lib/i18n';
 	import { ShieldCheck, Crown, GraduationCap, HeartHandshake } from '$lib/icons';
 	import { ROLE_LABEL_FR } from '$lib/permissions';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import {
 		SCOPE_LABEL,
 		SCOPE_TONE,
@@ -21,6 +25,11 @@
 	const liveCrudMatrix = $derived(
 		detailDataContext.roleCrudMatrix[role] ?? emptyCrudMatrix(),
 	);
+
+	let optimisticMatrix = $state<Record<string, Record<Crud, boolean>> | null>(null);
+	let toggleBusy = $state(false);
+
+	const perms = $derived(optimisticMatrix ?? liveCrudMatrix);
 
 	const ROLE_ICON = {
 		directeur: Crown,
@@ -40,13 +49,36 @@
 		return acc;
 	});
 
-	let perms = $derived(liveCrudMatrix);
+	async function toggle(permKey: string, op: Crud) {
+		if (toggleBusy)
+			return;
 
-	function toggle(permKey: string, op: Crud) {
-		perms = {
-			...perms,
-			[permKey]: { ...perms[permKey], [op]: !perms[permKey][op] },
+		const previous = perms;
+		const enabled = !previous[permKey][op];
+		const nextMatrix = {
+			...previous,
+			[permKey]: { ...previous[permKey], [op]: enabled },
 		};
+		const catalogEntry = PERMISSION_CATALOG.find(entry => entry.key === permKey);
+
+		optimisticMatrix = nextMatrix;
+		toggleBusy = true;
+		const ok = await updateRolePermissionMutation({
+			role,
+			matrix: nextMatrix,
+			successMessage: get(t)('roles.permissionUpdated', {
+				permission: catalogEntry?.label ?? permKey,
+				op: CRUD_LABEL[op],
+			}),
+		});
+		toggleBusy = false;
+
+		if (ok) {
+			optimisticMatrix = null;
+		}
+		else {
+			optimisticMatrix = previous;
+		}
 	}
 </script>
 
@@ -120,23 +152,32 @@
 										</div>
 									{/if}
 								</div>
-								<div class="flex shrink-0 items-center gap-1">
-									{#each CRUD_KEYS as op (op)}
-										{@const on = current[op]}
-										<button
-											type="button"
-											data-on={on}
-											onclick={() => toggle(p.key, op)}
-											title="{CRUD_LABEL[op]}{on ? ' · activé' : ' · désactivé'}"
-											class={cn(
-												'flex h-7 w-7 items-center justify-center rounded-full border border-border bg-muted/40 font-mono text-[11px] font-semibold text-muted-foreground transition hover:bg-secondary',
-												CRUD_TONE[op],
-											)}
-										>
-											{op}
-										</button>
-									{/each}
-								</div>
+								<PermissionGate
+									permission="ACCESS_CONTROL_CONFIGURE"
+									mode="disable"
+									tooltip={$t('roles.permissionConfigure')}
+								>
+									{#snippet children({ disabled, title })}
+										<div class="flex shrink-0 items-center gap-1">
+											{#each CRUD_KEYS as op (op)}
+												{@const on = current[op]}
+												<button
+													type="button"
+													data-on={on}
+													disabled={disabled || toggleBusy}
+													title={title ?? `${CRUD_LABEL[op]}${on ? ' · activé' : ' · désactivé'}`}
+													onclick={() => toggle(p.key, op)}
+													class={cn(
+														'flex h-7 w-7 items-center justify-center rounded-full border border-border bg-muted/40 font-mono text-[11px] font-semibold text-muted-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50',
+														on && CRUD_TONE[op],
+													)}
+												>
+													{op}
+												</button>
+											{/each}
+										</div>
+									{/snippet}
+								</PermissionGate>
 							</li>
 						{/each}
 					</ul>

@@ -38,6 +38,7 @@ import {
 } from '@edaya/core'
 import {
   DEV_AUTH_PASSWORD,
+  DEV_AUTH_STAFF_ACCOUNTS,
   parseSeedDate,
 
   parseSeedDateTime,
@@ -67,6 +68,7 @@ import {
   SEED_PLANNING_SLOTS,
   SEED_RESOURCES,
   SEED_SCHOOL_ID,
+  SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_SCHOOL_PROFILE,
   SEED_SESSION_PROGRESS,
   SEED_STAFF,
@@ -79,6 +81,7 @@ import {
   seedPeriodIdForDate,
   splitDisplayName,
 } from '@edaya/dev-fixtures'
+import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 import { seedReportCards } from './seed-report-cards'
 
 const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
@@ -171,8 +174,12 @@ export async function runDevSchoolSeed(
 
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
-    const director = SEED_STAFF[0]
-    ownerSubjectId = await options.auth.lookupSubjectIdByEmail(director.email, DEV_AUTH_PASSWORD)
+    const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
+      account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+    )
+    if (ownerAccount) {
+      ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
+    }
   }
 
   if (!existingDemoSchool) {
@@ -691,6 +698,10 @@ export async function runDevSchoolSeed(
       method: PaymentMethod.BankTransfer,
       referenceDate: financeReferenceDate,
     })
+  }
+
+  if (options?.auth) {
+    await syncDevStaffAuthAndOwner(application, options.auth, ownerSubjectId)
   }
 
   return {

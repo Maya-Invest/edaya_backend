@@ -1,4 +1,4 @@
-import type { SeedApplication } from './types'
+import type { AuthProvisioner, SeedApplication } from './types'
 import {
   AccessRole,
   COORDINATOR_PERMISSIONS,
@@ -14,6 +14,7 @@ import {
   SEED_CLASS_SUBJECTS,
   SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
+import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 
 /** Entity list endpoints used by the webapp shell loaders. */
 const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [
@@ -104,6 +105,11 @@ export type DevAccessSeedResult
   = | { status: 'skipped', reason: 'school-not-seeded' }
     | { status: 'seeded', roles: number, assignments: number, staffAssignments: number }
 
+export interface RunDevAccessSeedOptions {
+  auth?: AuthProvisioner
+  ownerSubjectId?: string
+}
+
 /** Access roles only — used before service-account provisioning in HTTP bootstrap. */
 export async function runDevAccessRolesSeed(application: SeedApplication): Promise<void> {
   const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
@@ -183,10 +189,17 @@ export async function runDevAccessRolesSeed(application: SeedApplication): Promi
 }
 
 /** Staff role + class assignments — run after school structure exists. */
-export async function runDevAccessAssignmentsSeed(application: SeedApplication): Promise<DevAccessSeedResult> {
+export async function runDevAccessAssignmentsSeed(
+  application: SeedApplication,
+  options?: RunDevAccessSeedOptions,
+): Promise<DevAccessSeedResult> {
   const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
   if (!school) {
     return { status: 'skipped', reason: 'school-not-seeded' }
+  }
+
+  if (options?.auth) {
+    await syncDevStaffAuthAndOwner(application, options.auth, options.ownerSubjectId)
   }
 
   await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
@@ -225,6 +238,16 @@ export async function runDevAccessAssignmentsSeed(application: SeedApplication):
     schoolId: SEED_SCHOOL_ID,
     academicYearId: SEED_ACADEMIC_YEAR_ID,
     roleIds: ['role-teacher'],
+    scopeGrants: [],
+    status: 'active',
+  }))
+
+  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
+    id: 'sra-st8',
+    staffId: 'st8',
+    schoolId: SEED_SCHOOL_ID,
+    academicYearId: SEED_ACADEMIC_YEAR_ID,
+    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st8],
     scopeGrants: [],
     status: 'active',
   }))
@@ -319,7 +342,10 @@ export async function runDevAccessAssignmentsSeed(application: SeedApplication):
   }
 }
 
-export async function runDevAccessSeed(application: SeedApplication): Promise<DevAccessSeedResult> {
+export async function runDevAccessSeed(
+  application: SeedApplication,
+  options?: RunDevAccessSeedOptions,
+): Promise<DevAccessSeedResult> {
   await runDevAccessRolesSeed(application)
-  return runDevAccessAssignmentsSeed(application)
+  return runDevAccessAssignmentsSeed(application, options)
 }

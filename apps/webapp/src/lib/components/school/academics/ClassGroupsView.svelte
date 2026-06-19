@@ -1,134 +1,44 @@
 <script lang="ts">
+	import type { ClassNode } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import {
-		createClassGroupMutation,
-		updateClassGroupMutation,
-	} from '$lib/api/mutations/academic.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
 	import { Layers, Pencil, Plus, Trash2 } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
 	import { get } from 'svelte/store';
+	import ClassGroupFormModal from './ClassGroupFormModal.svelte';
 
-	let showForm = $state(false);
-	let editingId = $state<string | null>(null);
-	let name = $state('');
-	let gradeLevelId = $state(academicContext.gradeLevels[0]?.id ?? 'gl-6');
-	let studentCount = $state('0');
+	let createOpen = $state(false);
+	let editingClass = $state<ClassNode | undefined>(undefined);
 
-	const sortedLevels = $derived([...academicContext.gradeLevels].sort((a, b) => a.order - b.order));
-
-	function resetForm() {
-		editingId = null;
-		name = '';
-		gradeLevelId = academicContext.gradeLevels[0]?.id ?? 'gl-6';
-		studentCount = '0';
-		showForm = false;
+	function openCreate() {
+		editingClass = undefined;
+		createOpen = true;
 	}
 
-	function startEdit(classId: string) {
-		const entry = academicContext.classes.find(c => c.id === classId);
-		if (!entry)
-			return;
-		editingId = classId;
-		name = entry.name;
-		gradeLevelId = entry.gradeLevelId;
-		studentCount = String(entry.studentCount);
-		showForm = true;
-	}
-
-	async function handleSubmit() {
-		if (!name.trim())
-			return;
-		if (editingId) {
-			const ok = await updateClassGroupMutation(editingId, {
-				name: name.trim(),
-				capacity: Number(studentCount) || null,
-			});
-			if (ok) {
-				toast.success(get(t)('classGroups.toastUpdated', { name: name.trim() }));
-				resetForm();
-			}
-			return;
-		}
-
-		const ok = await createClassGroupMutation(name.trim(), gradeLevelId);
-		if (ok) {
-			toast.success(get(t)('classGroups.toastCreated', { name: name.trim() }));
-			resetForm();
-		}
+	function openEdit(classId: string) {
+		editingClass = academicContext.classes.find(entry => entry.id === classId);
+		createOpen = true;
 	}
 
 	function handleDelete(_classId: string) {
 		toast.error(get(t)('classGroups.deleteUnsupported'));
-		if (editingId === _classId)
-			resetForm();
 	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('classGroups.subtitle')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('classGroups.title', { n: academicContext.classes.length })}
-			</h2>
-		</div>
-		<Button
-			class="rounded-full"
-			onclick={() => {
-				resetForm();
-				showForm = true;
-			}}
-		>
-			<Plus class="h-4 w-4" />
-			{$t('classGroups.add')}
-		</Button>
-	</div>
-
-	{#if showForm}
-		<form
-			class="mb-6 rounded-2xl border border-border bg-card p-5 shadow-soft"
-			onsubmit={(e) => {
-				e.preventDefault();
-				handleSubmit();
-			}}
-		>
-			<p class="mb-4 font-display text-sm font-semibold">
-				{editingId ? $t('classGroups.edit') : $t('classGroups.add')}
-			</p>
-			<div class="grid gap-4 sm:grid-cols-3">
-				<label class="space-y-1.5 text-sm">
-					<span class="text-muted-foreground">{$t('classGroups.name')}</span>
-					<Input bind:value={name} placeholder="6th — C" class="rounded-xl" required />
-				</label>
-				<label class="space-y-1.5 text-sm">
-					<span class="text-muted-foreground">{$t('classGroups.gradeLevel')}</span>
-					<select
-						bind:value={gradeLevelId}
-						class="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-					>
-						{#each sortedLevels as level (level.id)}
-							<option value={level.id}>{level.name} · {level.cycle}</option>
-						{/each}
-					</select>
-				</label>
-				<label class="space-y-1.5 text-sm">
-					<span class="text-muted-foreground">{$t('classGroups.studentCount')}</span>
-					<Input type="number" min="0" bind:value={studentCount} class="rounded-xl" />
-				</label>
-			</div>
-			<div class="mt-4 flex justify-end gap-2">
-				<Button type="button" variant="outline" class="rounded-full" onclick={resetForm}>
-					{$t('academic.cancel')}
-				</Button>
-				<Button type="submit" class="rounded-full">{$t('academic.save')}</Button>
-			</div>
-		</form>
-	{/if}
+	<ListPageHeader
+		eyebrow={$t('classGroups.subtitle')}
+		title={$t('classGroups.title', { n: academicContext.classes.length })}
+	>
+		{#snippet primary()}
+			<Button size="sm" class="rounded-full" onclick={openCreate}>
+				<Plus class="mr-1 h-4 w-4" />
+				{$t('classGroups.add')}
+			</Button>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="space-y-6">
 		{#each academicContext.hierarchy as group (group.level)}
@@ -163,7 +73,7 @@
 												type="button"
 												class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground"
 												title={$t('classGroups.edit')}
-												onclick={() => startEdit(cls.id)}
+												onclick={() => openEdit(cls.id)}
 											>
 												<Pencil class="h-3.5 w-3.5" />
 											</button>
@@ -186,3 +96,5 @@
 		{/each}
 	</div>
 </div>
+
+<ClassGroupFormModal bind:open={createOpen} classGroup={editingClass} />

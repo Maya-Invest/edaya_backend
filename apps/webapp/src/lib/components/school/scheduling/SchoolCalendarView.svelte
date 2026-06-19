@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { SchoolYearEvent, ClassNode } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import {
 		CalendarDays,
@@ -11,16 +15,20 @@
 		AlertCircle,
 		PartyPopper,
 	} from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import SchoolYearEventFormModal from '../school-life/SchoolYearEventFormModal.svelte';
 
 	const {
 		events,
 		classes,
 		onSelect,
+		selectedId,
 	}: {
 		events: SchoolYearEvent[];
 		classes: ClassNode[];
 		onSelect?: (e: SchoolYearEvent) => void;
+		selectedId?: string;
 	} = $props();
 
 	const typeConfig: Record<
@@ -51,6 +59,7 @@
 
 	let query = $state('');
 	let typeFilter = $state<'all' | SchoolYearEvent['type']>('all');
+	let createOpen = $state(false);
 
 	const typeFilterKeys = ['all', 'holiday', 'vacation', 'closure', 'ceremony'] as const;
 
@@ -61,8 +70,9 @@
 
 	const filtered = $derived.by(() => {
 		let list = events.slice().sort((a, b) => a.date.localeCompare(b.date));
-		if (typeFilter !== 'all')
+		if (typeFilter !== 'all') {
 			list = list.filter(e => e.type === typeFilter);
+		}
 		if (query.trim()) {
 			const q = query.toLowerCase();
 			list = list.filter(
@@ -76,35 +86,54 @@
 		const map: Record<string, SchoolYearEvent[]> = {};
 		for (const ev of filtered) {
 			const key = formatMonthYear(ev.date, $locale);
-			if (!map[key])
+			if (!map[key]) {
 				map[key] = [];
+			}
 			map[key].push(ev);
 		}
 		return map;
 	});
 
 	function scopeLabel(scope: SchoolYearEvent['scope']) {
-		if (scope === 'all')
+		if (scope === 'all') {
 			return $t('cal.scopeAll');
+		}
 		return scope.map(id => classes.find(c => c.id === id)?.name ?? id).join(', ');
+	}
+
+	function handleCreated(eventId: string) {
+		appGoto(detailHref.schoolCalendarEvent(eventId));
 	}
 </script>
 
 <div class="animate-fade-in space-y-6">
-	<div class="flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('calendar.year')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('school.calendar')}</h2>
-		</div>
-		<div class="flex items-center gap-2">
-			<Button size="sm" class="rounded-full">
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('calendar.newEvent')}
-			</Button>
-		</div>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('calendar.year')}
+		title={$t('school.calendar')}
+	>
+		{#snippet primary()}
+			<PermissionGate
+				permission="TIMETABLE_UPDATE"
+				mode="disable"
+				tooltip={$t('calendar.permissionUpdate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('calendar.newEvent')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
+	</ListPageHeader>
+
+	<SchoolYearEventFormModal bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="flex flex-wrap items-center gap-3">
 		<div class="relative min-w-[200px] flex-1">
@@ -138,7 +167,7 @@
 	</p>
 
 	<div class="space-y-8">
-		{#each Object.entries(grouped) as [month, events] (month)}
+		{#each Object.entries(grouped) as [month, monthEvents] (month)}
 			<div>
 				<div class="mb-3 flex items-center gap-3">
 					<div class="h-px flex-1 bg-border"></div>
@@ -146,12 +175,16 @@
 					<div class="h-px flex-1 bg-border"></div>
 				</div>
 				<div class="space-y-2.5">
-					{#each events as ev (ev.id)}
+					{#each monthEvents as ev (ev.id)}
 						{@const cfg = typeConfig[ev.type]}
+						{@const active = selectedId === ev.id}
 						<button
 							type="button"
 							onclick={() => onSelect?.(ev)}
-							class="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition hover:border-accent/40 hover:shadow-md"
+							class={cn(
+								'group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition hover:border-accent/40 hover:shadow-md',
+								active && 'border-primary/40 bg-primary/5',
+							)}
 						>
 							<div
 								class="flex w-28 shrink-0 flex-col items-center justify-center rounded-xl bg-secondary/50 py-2"

@@ -81,7 +81,7 @@ export interface Guardian {
 	preferredContact: 'email' | 'phone' | 'sms';
 }
 
-export type StaffRole = 'directeur' | 'prof_principal' | 'professeur' | 'educateur';
+export type StaffRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur';
 
 export interface StaffMember {
 	id: string;

@@ -12,7 +12,7 @@ Living plan to align `apps/webapp` with:
 - [Webapp mock → API migration plan](./done/webapp-mock-migration-plan.md) — read/write API wiring (coupled with mutation work below)
 - Cursor rule: `.cursor/rules/app-shell.mdc`
 
-**Last updated:** 2026-06-17 (Phase 1e checkpoint — review with domain owner before Phase 2)
+**Last updated:** 2026-06-17 (1e approuvé — Billing livré, Phase 1 & 2 closes)
 
 ### Progress tracker
 
@@ -25,9 +25,9 @@ Check boxes when a phase (or sub-phase) exit criteria are met. Entity-level boxe
   - [x] 1b Guardian
   - [x] 1c Staff
   - [x] 1d Evaluation
-  - [x] 1e Fee, Planning, Subject
-- [ ] **Phase 2** — Remaining drawers + config screens
-- [ ] **Phase 3** — List infrastructure + visual rollout
+  - [x] 1e Fee, Planning, Subject — **UI + revue métier approuvée**
+- [x] **Phase 2** — Remaining drawers + config screens (Billing inclus)
+- [ ] **Phase 3** — List infrastructure + `ListPageHeader` rollout
 - [ ] **Phase 4** — Shell polish + accessibility
 - [ ] **Phase 5** — Permissions pass
 
@@ -145,7 +145,7 @@ Keep and extend these patterns — they are the foundation every migration shoul
 | Activity | `ActivityDetail` | Done — enrollment modal | Done | — |
 | Level | `LevelDetail` | Done | Done | — |
 | Report card def/result | `*Detail` | Done | Done | — |
-| Billing | `BillingDetail` | Mostly OK — payment needs modal | OK | P2 |
+| Billing | `BillingDetail` | `PaymentFormModal` + `billing.mutations.ts` | OK | P2 ✅ |
 | Deadline | `DeadlineDetail` | Partial — read-only list + inline edit | OK | P2 |
 | Incident | `IncidentDetail` | Violates — textarea/inputs | Partial | P1 |
 | Role | `RoleDetail` | Partial — inline toggles, no persist | OK (matrix variant) | P2 |
@@ -296,7 +296,7 @@ Copy this block under each sprint; check items as they land.
 
 ### Phase 1 — Drawer migration: high-traffic entities (2–3 sprints)
 
-- [ ] **Phase 1 complete**
+- [x] **Phase 1 complete**
 
 Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actions → modals → remove `Form` from drawer + `ListPageHeader` on the paired list view.
 
@@ -395,7 +395,7 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 #### Sprint 1e — Fee, Planning, Subject
 
-- [x] **1e complete**
+- [x] **1e clos** — revue métier approuvée avec le collègue domaine (2026-06-17)
 
 <details>
 <summary>Fee checklist</summary>
@@ -428,7 +428,7 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 > **Objectif :** valider avec le propriétaire domaine (`packages/core`) que la migration app-shell **n’a pas contourné** les règles métier finance / emploi du temps / matières. Phase 1e est **UI + câblage API** ; ce checkpoint liste tout ce qui touche au domaine.
 >
-> **Statut :** livré côté UI, **revue métier en attente** avant de considérer 1e définitivement clos pour la prod.
+> **Statut :** ✅ **approuvé** — 1e clos métier + UI ; Billing livré ; enchaîner Phase 3.
 
 ##### Livré (interaction + visuel)
 
@@ -466,9 +466,10 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 - `apps/api/src/http/dependencies/session-actor.ts` — en **non-production**, comptes staff `isElevated` passent de `standard` → `verified` pour débloquer `FINANCIAL_CONFIG_CONFIGURE` en dev (step-up auth pas encore implémenté).
 
-**Fichiers legacy encore présents (non branchés au drawer)**
+**Fichiers legacy supprimés**
 
-- `FeeForm.svelte`, `PlanningForm.svelte`, `SubjectForm.svelte` — orphelins ; suppression possible après revue.
+- `FeeForm.svelte`, `PlanningForm.svelte`, `SubjectForm.svelte` — déjà absents
+- `SchoolYearEventForm.svelte` — supprimé (remplacé par `SchoolYearEventDetail` + `SchoolYearEventFormModal`)
 
 ##### Chemins d’écriture API — ce que fait chaque mutation
 
@@ -509,10 +510,9 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 - [ ] **Champs modifiables** : nom, catégorie, couleur — description / heures / enseignant affichés read-only dans `SubjectTabs` (données dérivées UI, pas persistées ici).
 - [ ] **PermissionGate absent** sur matières / planning — création toujours visible (Phase 5).
 
-**Hors périmètre 1e (inchangé)**
+**Hors périmètre 1e (traité post-validation)**
 
-- `student-fees`, `payments` : `allowDirectSave: false` — toujours commandes domaine.
-- Facturation (`BillingDetail`) : read-only, pas de mutation paiement dans 1e.
+- Facturation (`BillingDetail`) : `PaymentFormModal` + `AssignFeeFormModal` ; `commands.recordPayment` et `assignFeeToStudent` via `billing.mutations.ts` ; `PermissionGate` `PAYMENT_RECORD`.
 
 ##### Correctifs post-livraison (frais — testés manuellement ✅)
 
@@ -529,9 +529,14 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 | `/classes/{id}/subjects` | + Nouvelle matière | onglets chapitres / cahier | Modifier (modal) | — |
 | `/configuration/subjects` | — (liste config) | même drawer `SubjectTabs` | via drawer | — |
 
+##### Prochaines actions
+
+1. **Phase 3** — `SchoolStudentsView` référence (infinite scroll, URL filters, More menu) puis rollout `ListPageHeader`.
+2. **Dette documentée** — save direct frais/sessions, mapping catégories, bypass dev `session-actor.ts` → tickets avant prod.
+
 ##### Décision attendue après revue
 
-- [ ] **Approuvé** — 1e clos métier + UI ; on enchaîne Phase 2.
+- [x] **Approuvé** — 1e clos métier + UI ; Phase 1 & 2 closes ; Billing livré ; enchaîner Phase 3.
 - [ ] **Ajustements domaine requis** — lister commandes manquantes (`updateFee`, etc.) avant prod.
 - [ ] **Dette acceptée** — documenter écarts (save direct, mapping catégories, bypass dev) avec ticket de suivi.
 
@@ -539,18 +544,20 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 ### Phase 2 — Remaining drawer entities + config screens (1–2 sprints)
 
-- [ ] **Phase 2 complete**
+> **Périmètre :** Phase 2 complète, y compris **Billing**.
 
-- [ ] **School year event** — `SchoolYearEventDetail` + modal; calendar drawer fixed; `SchoolCalendarView` header
-- [ ] **Incident** — read-only `IncidentDetail` + edit modal; `SchoolEventsView` → `ListPageHeader`
-- [ ] **Deadline** — read-only fields; attach file → modal; `HomeworkView` selection tones
-- [ ] **Billing** — "Record payment" → form modal; `FinanceView` KPI tile normalization
-- [ ] **Role** — read-only matrix in drawer; boolean toggles with API + toast (Pattern B); badge tone audit on `RolesMatrixView`
-- [ ] **`AcademicAdminView`** — inline creates → modals; route wrapped in `PageQuery`/`DataState`
-- [ ] **`ClassGroupsView`** — inline create → modal
-- [ ] **`GradeScalesView`** — inline create → modal; `ListPageHeader` + table wrapper
-- [ ] **`ReportCardDefinitionsView`** — `PageQuery`/`DataState` on route; card list selection tones
-- [ ] **`incident.mutations.ts`** (and any remaining API modules for Phase 2 entities)
+- [x] **Phase 2 complete**
+
+- [x] **School year event** — `SchoolYearEventDetail` + `SchoolYearEventFormModal`; `calendar.mutations.ts`; `SchoolCalendarView` + `ListPageHeader`
+- [x] **Incident** — read-only `IncidentDetail` + `IncidentFormModal`; `incident.mutations.ts`; `SchoolEventsView` → `ListPageHeader`
+- [x] **Deadline** — read-only `DeadlineDetail` + `DeadlineFormModal`; `homework.mutations.ts`; `HomeworkView` + `ListPageHeader`
+- [x] **Billing** — `PaymentFormModal` + `AssignFeeFormModal` + `billing.mutations.ts` ; drawer + liste `FinanceView` → `ListPageHeader`
+- [x] **Role** — toggles persist via `access-roles.mutations.ts`; `RolesMatrixView` → `ListPageHeader`
+- [x] **`AcademicAdminView`** — `AcademicYearCreateModal`; route `PageQuery`/`DataState`
+- [x] **`ClassGroupsView`** — `ClassGroupFormModal`; route `PageQuery`/`DataState`
+- [x] **`GradeScalesView`** — `GradeScaleFormModal`; route `PageQuery`/`DataState`
+- [x] **`ReportCardDefinitionsView`** — route `PageQuery`/`DataState` + `ListPageHeader`
+- [x] **`incident.mutations.ts`**, **`calendar.mutations.ts`**, **`homework.mutations.ts`**, **`access-roles.mutations.ts`**
 
 ---
 
@@ -659,7 +666,11 @@ UI conformance and API migration are coupled. From [webapp-mock-migration-plan.m
 - [x] `evaluation.mutations.ts`
 - [x] `fee.mutations.ts`
 - [x] `planning.mutations.ts`
-- [ ] `incident.mutations.ts`
+- [x] `subject.mutations.ts`
+- [x] `incident.mutations.ts`
+- [x] `calendar.mutations.ts`
+- [x] `homework.mutations.ts`
+- [x] `access-roles.mutations.ts`
 
 ---
 
@@ -676,17 +687,17 @@ Tracking board. Status reflects **current** state as of 2026-06-17.
 | Fee | ✅ | ✅ | ✅ | ✅ | — | ✅ | ❌ |
 | Subject | ✅ | ✅ | ✅ | ✅ | — read-only chapters | ✅ | ❌ |
 | Planning | ✅ | ✅ | ✅ | ✅ | — | ✅ | ❌ |
-| Billing | — | — | ✅ | ❌ | — | ❌ | ❌ |
-| School year event | ❌ | ❌ | ❌ | ❌ | — | ❌ | ❌ |
-| Incident | ❌ | ❌ | ❌ | ❌ | — | ❌ | ❌ |
-| Deadline | ❌ | ❌ | ⚠️ | ❌ | — | ❌ | ❌ |
+| Billing | `PaymentFormModal` + `AssignFeeFormModal` | `billing.mutations.ts` | ✅ | ✅ | — | ✅ | ✅ |
+| School year event | ✅ | ✅ | ✅ | ✅ | — | ✅ | ❌ |
+| Incident | ✅ | ✅ | ✅ | ✅ | — | ✅ | ❌ |
+| Deadline | ✅ | ✅ | ✅ | ✅ | — | ✅ | ❌ |
 | Activity | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Role | ❌ | — | ⚠️ | ❌ | — | ❌ | ❌ |
+| Role | ✅ | — | ⚠️ toggles | — | — | ✅ | ❌ |
 | Level | — | — | ✅ | — | — | — | — |
 | Report card def/result | ❌ | ❌ | ✅ | ✅ | — | ✅ | ❌ |
-| Class groups | ❌ | ⚠️ inline | — | ❌ | — | ✅ | ❌ |
-| Grade scales | ❌ | ⚠️ inline | — | ❌ | — | ✅ | ❌ |
-| Academic years | ❌ | ⚠️ inline | — | ❌ | — | ✅ | ❌ |
+| Class groups | ✅ | ✅ | — | ✅ | — | ✅ | ❌ |
+| Grade scales | ✅ | ✅ | — | ✅ | — | ✅ | ❌ |
+| Academic years | ✅ | ✅ | — | ✅ | — | ✅ | ❌ |
 
 Legend: ✅ done · ⚠️ partial · ❌ missing · — N/A
 

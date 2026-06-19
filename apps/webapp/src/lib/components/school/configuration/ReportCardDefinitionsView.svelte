@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
 	import { ChevronRight } from '$lib/icons';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -15,18 +16,13 @@
 		onSelect?: (d: ReportCardDefinition) => void;
 		selectedId?: string;
 	} = $props();
-
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5">
-		<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-			{$t('reportCards.subtitle')}
-		</p>
-		<h2 class="font-display text-2xl font-semibold">
-			{$t('reportCards.modelsTitle', { n: definitions.length })}
-		</h2>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('reportCards.subtitle')}
+		title={$t('reportCards.modelsTitle', { n: definitions.length })}
+	/>
 
 	<div class="space-y-2">
 		{#each definitions as def (def.id)}

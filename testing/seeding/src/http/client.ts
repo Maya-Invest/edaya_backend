@@ -109,6 +109,10 @@ export class HttpSeedClient {
     return this.baseUrl
   }
 
+  clearCookies(): void {
+    this.cookies.clear()
+  }
+
   private isStaging(): boolean {
     return this.baseUrl.includes('api-staging.')
   }

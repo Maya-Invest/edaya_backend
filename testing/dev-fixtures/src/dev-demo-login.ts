@@ -2,11 +2,12 @@ import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  SEED_SCHOOL_OWNER_STAFF_ID,
 } from './dataset'
 
 export { DEV_AUTH_PASSWORD }
 
-export type DevDemoLoginRole = 'directeur' | 'prof_principal' | 'professeur' | 'educateur'
+export type DevDemoLoginRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur'
 
 export interface DevDemoLoginAccount {
   staffId: string
@@ -24,6 +25,7 @@ const ACCESS_ROLE_TO_DEMO_ROLE: Record<string, DevDemoLoginRole> = {
 }
 
 const DEMO_ROLE_DISPLAY_ORDER: Record<DevDemoLoginRole, number> = {
+  owner: -1,
   directeur: 0,
   professeur: 1,
   prof_principal: 2,
@@ -40,6 +42,15 @@ export function initialsForName(name: string): string {
 export function resolveDevDemoStaffRole(
   staffId: string,
 ): { role: DevDemoLoginRole, accessRoleId?: string } {
+  if (staffId === SEED_SCHOOL_OWNER_STAFF_ID) {
+    return {
+      role: 'owner',
+      accessRoleId: DEV_AUTH_STAFF_ACCESS_ROLE_IDS[
+        staffId as keyof typeof DEV_AUTH_STAFF_ACCESS_ROLE_IDS
+      ],
+    }
+  }
+
   const accessRoleId = DEV_AUTH_STAFF_ACCESS_ROLE_IDS[
     staffId as keyof typeof DEV_AUTH_STAFF_ACCESS_ROLE_IDS
   ]

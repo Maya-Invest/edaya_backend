@@ -7,6 +7,10 @@ import { describe, expect, it } from "bun:test";
 
 describe("dev demo login accounts", () => {
   it("resolves demo staff roles from fixture access role ids", () => {
+    expect(resolveDevDemoStaffRole("st8")).toMatchObject({
+      role: "owner",
+      accessRoleId: "role-director",
+    });
     expect(resolveDevDemoStaffRole("st5")).toMatchObject({
       role: "directeur",
       accessRoleId: "role-director",
@@ -25,12 +29,17 @@ describe("dev demo login accounts", () => {
     });
   });
 
-  it("builds four login accounts with one teacher representative", () => {
+  it("builds five login accounts with one teacher representative", () => {
     const accounts = buildDevDemoLoginAccounts();
 
     expect(accounts).toEqual(DEV_DEMO_LOGIN_ACCOUNTS);
-    expect(accounts).toHaveLength(4);
-    expect(accounts.map(account => account.staffId)).toEqual(["st5", "st1", "st3", "st7"]);
+    expect(accounts).toHaveLength(5);
+    expect(accounts.map(account => account.staffId)).toEqual(["st8", "st5", "st1", "st3", "st7"]);
+    expect(accounts.find(account => account.staffId === "st8")).toMatchObject({
+      role: "owner",
+      email: "k.yann@school.edu",
+      initials: "KY",
+    });
     expect(accounts.find(account => account.staffId === "st5")).toMatchObject({
       role: "directeur",
       email: "c.moreau@school.edu",

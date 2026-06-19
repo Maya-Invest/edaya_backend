@@ -207,12 +207,18 @@ describe('runDevAuthLink', () => {
 
     expect(results.authProvision?.status).toBe('seeded')
     expect(results.school?.status).toBe('seeded')
-    expect(results.authLink?.status).toBe('seeded')
+    expect(results.access?.status).toBe('seeded')
 
     const school = await application.repositories.schools.findById('sch-edaya-central')
-    const director = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === 'st5')
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === 'st8')
     expect(school?.ownerSubjectId).toBeTruthy()
-    expect(director).toBeTruthy()
+    expect(owner).toBeTruthy()
+
+    const ownerStaff = await application.repositories.staffMembers.findById('st8')
+    expect(school?.ownerSubjectId).toBe(ownerStaff?.subjectId)
+
+    const camille = await application.repositories.staffMembers.findById('st5')
+    expect(school?.ownerSubjectId).not.toBe(camille?.subjectId)
 
     const signInResponse = await runtime.getAuth().handler(new Request(`${apiPgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
       method: 'POST',
@@ -220,7 +226,7 @@ describe('runDevAuthLink', () => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        email: director!.email,
+        email: owner!.email,
         password: DEV_AUTH_PASSWORD,
       }),
     }))

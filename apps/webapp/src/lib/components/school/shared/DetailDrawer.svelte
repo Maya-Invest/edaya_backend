@@ -95,10 +95,10 @@
 					<FeeDetail f={item.data} />
 				{/await}
 			{:else if item.kind === 'schoolYearEvent'}
-				{#await import('../school-life/SchoolYearEventForm.svelte')}
+				{#await import('../school-life/SchoolYearEventDetail.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
-				{:then { default: SchoolYearEventForm }}
-					<SchoolYearEventForm ev={item.data} />
+				{:then { default: SchoolYearEventDetail }}
+					<SchoolYearEventDetail ev={item.data} />
 				{/await}
 			{:else if item.kind === 'incident'}
 				{#await import('../school-life/IncidentDetail.svelte')}

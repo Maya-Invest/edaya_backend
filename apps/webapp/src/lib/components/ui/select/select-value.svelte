@@ -1,7 +1,14 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { Select as SelectPrimitive } from 'bits-ui';
 
-	const { placeholder, ...restProps }: SelectPrimitive.ValueProps = $props();
+	const {
+		placeholder,
+		children,
+		...restProps
+	}: SelectPrimitive.ValueProps & { children?: Snippet } = $props();
 </script>
 
-<SelectPrimitive.Value {placeholder} {...restProps} />
+<SelectPrimitive.Value {placeholder} {...restProps}>
+	{@render children?.()}
+</SelectPrimitive.Value>
