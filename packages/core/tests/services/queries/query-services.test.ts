@@ -7,7 +7,32 @@ import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 
 describe('SchoolService query operations', () => {
   const mockRepos = {
-    schools: { getOverdueFeeCount: mock(async () => 5), getPublishedReportCardCount: mock(async () => 10) },
+    schools: {
+      getOverdueFeeCount: mock(async () => 5),
+      getPublishedReportCardCount: mock(async () => 10),
+      getSchoolOverview: mock(async () => ({
+        schoolId: 'school1',
+        academicYearId: 'year1',
+        academicPeriodId: 'period1',
+        referenceDate: '2026-06-14',
+        kpis: {
+          studentCount: 100,
+          staffCount: 12,
+          overdueFeeCount: 5,
+          overdueFeeAmount: 5000,
+          publishedReportCardCount: 10,
+          unpublishedReportCardCount: 90,
+          attendanceRateToday: 95,
+          absencesToday: 2,
+          openIncidentCount: 1,
+          highSeverityIncidentCount: 0,
+          pendingJustificationCount: 3,
+          incompleteGradingClassCount: 2,
+        },
+        actionItems: [],
+        upcoming: [],
+      })),
+    },
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
@@ -37,5 +62,21 @@ describe('SchoolService query operations', () => {
 
   test('aggregate queries reject cross-tenant school ids before repository access', async () => {
     await expect(service.getOverdueFeeCount('other-school')).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.getSchoolOverview({
+      schoolId: 'other-school',
+      academicYearId: 'year1',
+      academicPeriodId: 'period1',
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('getSchoolOverview checks permission and delegates to repo', async () => {
+    const input = {
+      schoolId: 'school1',
+      academicYearId: 'year1',
+      academicPeriodId: 'period1',
+    }
+    const result = await service.getSchoolOverview(input)
+    expect(mockRepos.schools.getSchoolOverview).toHaveBeenCalledWith(input)
+    expect(result.kpis.studentCount).toBe(100)
   })
 })

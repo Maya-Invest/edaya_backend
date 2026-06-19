@@ -7804,6 +7804,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/queries/get-school-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-school-overview */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description get-school-overview payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GetSchoolOverviewQuery"];
+                };
+            };
+            responses: {
+                /** @description Resolved get-school-overview */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SchoolOverviewResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/schools/list": {
         parameters: {
             query?: never;
@@ -48310,6 +48404,7 @@ export interface components {
                 scopeEntityIds: string[];
             }[];
             elevated?: boolean;
+            apiKey?: string;
         };
         UpdateServiceAccountRequest: {
             displayName?: string;
@@ -49705,6 +49800,96 @@ export interface components {
         };
         GetPublishedReportCardCountQuery: {
             schoolId: string;
+        };
+        SchoolOverviewKpis: {
+            studentCount: number;
+            staffCount: number;
+            overdueFeeCount: number;
+            overdueFeeAmount: number;
+            publishedReportCardCount: number;
+            unpublishedReportCardCount: number;
+            attendanceRateToday: number | null;
+            absencesToday: number;
+            openIncidentCount: number;
+            highSeverityIncidentCount: number;
+            pendingJustificationCount: number;
+            incompleteGradingClassCount: number;
+        };
+        DashboardActionItem: {
+            /** @enum {string} */
+            key: "overdue_fees" | "unpublished_report_cards" | "pending_justifications" | "high_severity_incidents" | "incomplete_grading";
+            count: number;
+            amount?: number;
+        };
+        DashboardUpcomingItem: {
+            id: string;
+            /** Format: date */
+            date: string;
+            title: string;
+            /** @enum {string} */
+            kind: "calendar" | "fee_due" | "report_card_deadline" | "exam" | "holiday";
+            highlight: boolean;
+        };
+        DashboardAreaHealthStudents: {
+            attendanceRateToday: number | null;
+            absencesToday: number;
+            pendingJustifications: number;
+        };
+        DashboardAreaHealthAcademics: {
+            gradingCompletionPercent: number | null;
+            publishedReportCards: number;
+            totalReportCards: number;
+            incompleteGradingClassCount: number;
+        };
+        DashboardAreaHealthFinance: {
+            overdueAmount: number;
+            studentsWithBalance: number;
+            recentPaymentCount: number;
+            recentPaymentAmount: number;
+        };
+        DashboardAreaHealthSchoolLife: {
+            openIncidentCount: number;
+            highSeverityIncidentCount: number;
+            activeActivityCount: number;
+            unresolvedDisciplineCount: number;
+        };
+        DashboardAreaHealth: {
+            students: components["schemas"]["DashboardAreaHealthStudents"];
+            academics: components["schemas"]["DashboardAreaHealthAcademics"];
+            finance: components["schemas"]["DashboardAreaHealthFinance"];
+            schoolLife: components["schemas"]["DashboardAreaHealthSchoolLife"];
+        };
+        DashboardClassRiskRow: {
+            classGroupId: string;
+            className: string;
+            coordinatorName: string | null;
+            attendanceRateToday: number | null;
+            openIncidentCount: number;
+            gradingCompletionPercent: number | null;
+            overdueFeeCount: number;
+            /** @enum {string} */
+            riskLevel: "normal" | "watch" | "needs_action";
+        };
+        SchoolOverviewResponse: {
+            schoolId: string;
+            academicYearId: string;
+            academicPeriodId: string;
+            /** Format: date */
+            referenceDate: string;
+            /** Format: date-time */
+            generatedAt: string;
+            kpis: components["schemas"]["SchoolOverviewKpis"];
+            actionItems: components["schemas"]["DashboardActionItem"][];
+            upcoming: components["schemas"]["DashboardUpcomingItem"][];
+            areaHealth: components["schemas"]["DashboardAreaHealth"];
+            classRiskRows: components["schemas"]["DashboardClassRiskRow"][];
+        };
+        GetSchoolOverviewQuery: {
+            schoolId: string;
+            academicYearId: string;
+            academicPeriodId: string;
+            /** Format: date */
+            referenceDate?: string;
         };
         Filter_1: Record<string, never>;
         CoreEntityDelete: {

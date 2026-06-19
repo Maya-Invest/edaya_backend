@@ -1,7 +1,7 @@
 import type { AcademicPeriod, AcademicYear, AccessRole, ActivityEnrollment, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, AttendanceRecord, CalendarEvent, ClassGroup, ClassLogbookEntry, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, ExtracurricularActivity, Fee, GradeLevel, GradeScale, Guardian, GuardianStudentLink, HomeworkAssignment, HomeworkSubmission, Incident, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, Session, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
-import { DefaultAuthorizationRepository } from '@edaya/core'
+import { buildSchoolOverview, DefaultAuthorizationRepository } from '@edaya/core'
 import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
 import { PostgresAccessRoleStore } from './stores/access-role-store'
@@ -140,6 +140,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
         const rcs = await this.results.list()
         return rcs.filter(rc => studentIds.has(rc.studentId) && rc.status === 'published').length
       },
+      getSchoolOverview: input => buildSchoolOverview(this, input),
     }
   }
 

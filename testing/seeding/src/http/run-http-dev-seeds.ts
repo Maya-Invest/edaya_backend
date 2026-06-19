@@ -1,7 +1,8 @@
 import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from '../run-dev-seeds'
 import type { AuthProvisioner, SeedApplication } from '../types'
 import type { HttpSeedClient } from './client'
-import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/dev-fixtures'
+import type { HttpSeedValidationResult } from './seed-validation'
+import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
 import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed } from '../run-dev-access-seed'
 import { runDevAuthLink } from '../run-dev-auth-link'
 import { runDevAuthProvision } from '../run-dev-auth-provision'
@@ -19,8 +20,9 @@ import {
   provisionSeedingServiceAccountHttp,
   provisionSeedingServiceAccountInProcess,
 } from './provision-seeding-service-account'
+import { runHttpSeedValidation } from './seed-validation'
 
-export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account'
+export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account' | 'validate'
 
 export interface RunHttpDevSeedsOptions {
   client: HttpSeedClient
@@ -45,6 +47,7 @@ export interface HttpSmokeSeedResult {
 
 export interface RunHttpDevSeedsResults extends RunDevSeedsResults {
   smoke: HttpSmokeSeedResult | null
+  validation: HttpSeedValidationResult | null
 }
 
 export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
@@ -61,12 +64,13 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
     || arg === 'access'
     || arg === 'smoke'
     || arg === 'service-account'
+    || arg === 'validate'
   ) {
     return arg
   }
 
   throw new Error(
-    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|service-account|smoke|all]`,
+    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|service-account|smoke|validate|all]`,
   )
 }
 
@@ -180,6 +184,18 @@ async function runHttpSmokeSeed(
   }
 }
 
+async function canUseSeedingServiceAccount(
+  client: HttpSeedClient,
+  apiKey: string,
+): Promise<boolean> {
+  const grants = await client.jsonRequest('/core/authorization/effective-grants', {
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+    },
+  })
+  return grants.response.ok
+}
+
 async function maybeProvisionSeedingServiceAccount(
   options: RunHttpDevSeedsOptions,
 ): Promise<void> {
@@ -207,10 +223,35 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     authLink: null,
     access: null,
     smoke: null,
+    validation: null,
+  }
+
+  if (scope === 'validate') {
+    results.validation = await runHttpSeedValidation({ client })
+    if (log) {
+      logHttpDevSeedResults(results, log)
+    }
+    return results
   }
 
   if (scope === 'auth') {
     results.authProvision = await runDevAuthProvision(auth, { baseUrl: client.origin })
+
+    const seedingApiKey = options.serviceAccountApiKey ?? resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID)
+    const canListSchoolsViaHttp = Boolean(options.application)
+      || Boolean(options.serviceAccountApiKey)
+      || await canUseSeedingServiceAccount(client, seedingApiKey)
+    const hasSchools = canListSchoolsViaHttp
+      ? await hasSeededSchools(client, options.application, seedingApiKey)
+      : false
+    if (hasSchools) {
+      const application = options.application
+        ?? (await canUseSeedingServiceAccount(client, seedingApiKey)
+          ? createCoreHttpSeedApplication({ client, serviceAccountApiKey: seedingApiKey })
+          : await resolveSeedApplication({ ...options, serviceAccountApiKey: seedingApiKey }))
+      results.authLink = await runDevAuthLink(application, auth)
+    }
+
     if (log) {
       logDevSeedResults(results, log)
     }
@@ -236,11 +277,12 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
 
   const authProvision: Awaited<ReturnType<typeof runDevAuthProvision>> | null = null
   let application: SeedApplication
+  const seedingApiKey = options.serviceAccountApiKey ?? resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID)
 
   if (
     scope === 'all'
-    && !options.serviceAccountApiKey
     && !options.application
+    && !(await canUseSeedingServiceAccount(client, seedingApiKey))
   ) {
     results.authProvision = await runDevAuthProvision(auth)
     await bootstrapHttpCoreSession(client)
@@ -248,18 +290,13 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     const sessionApp = createCoreHttpSeedApplication({ client })
     await runDevAccessRolesSeed(sessionApp)
 
-    const provision = await provisionSeedingServiceAccountHttp(client)
+    const provision = await provisionSeedingServiceAccountHttp(client, {
+      schoolId: SEED_SCHOOL_ID,
+      apiKey: seedingApiKey,
+    })
     logProvisionedServiceAccountKey(provision)
 
-    const serviceAccountApiKey = provision.apiKey
-    if (!serviceAccountApiKey) {
-      throw new Error(
-        'Seeding service account already exists but SERVICE_ACCOUNT_API_KEY is not set. '
-        + 'Add the key to apps/api/.env or rotate the account.',
-      )
-    }
-
-    application = createCoreHttpSeedApplication({ client, serviceAccountApiKey })
+    application = createCoreHttpSeedApplication({ client, serviceAccountApiKey: seedingApiKey })
 
     results.school = await runDevSchoolSeed(application)
     results.authLink = await runDevAuthLink(application, auth)
@@ -277,7 +314,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     return results
   }
   else {
-    application = await resolveSeedApplication(options)
+    application = await resolveSeedApplication({
+      ...options,
+      serviceAccountApiKey: seedingApiKey,
+    })
   }
 
   const domainResults = await runDevSeeds({
@@ -316,6 +356,23 @@ export function logHttpDevSeedResults(results: RunHttpDevSeedsResults, log: LogD
     else {
       // eslint-disable-next-line no-console
       console.log(`HTTP smoke seed failed: ${results.smoke.reason ?? 'unknown reason'}`)
+    }
+  }
+
+  if (results.validation) {
+    const passedEntities = results.validation.entities.filter(entry => entry.status === 'passed').length
+    const passedQueries = results.validation.queries.filter(entry => entry.status === 'passed').length
+    if (results.validation.status === 'passed') {
+      // eslint-disable-next-line no-console
+      console.log(`HTTP seed validation passed (${passedEntities} entities, ${passedQueries} queries).`)
+    }
+    else {
+      // eslint-disable-next-line no-console
+      console.log(`HTTP seed validation failed (${results.validation.failures.length} issues).`)
+      for (const failure of results.validation.failures) {
+        // eslint-disable-next-line no-console
+        console.log(`  - ${failure}`)
+      }
     }
   }
 }

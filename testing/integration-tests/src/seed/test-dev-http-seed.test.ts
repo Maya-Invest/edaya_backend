@@ -3,6 +3,8 @@ import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  resolveSeedingApiKeyForSchool,
+  SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
 import {
   HttpSeedClient,
@@ -110,7 +112,7 @@ describe('runHttpDevSeeds', () => {
 
     const provisioned = await provisionSeedingServiceAccountInProcess(application)
     expect(provisioned.status).toBe('created')
-    expect(provisioned.apiKey?.startsWith('sk_live_')).toBe(true)
+    expect(provisioned.apiKey).toBe(resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID))
 
     const client = createHttpClientForApp(app)
     const results = await runHttpDevSeeds({

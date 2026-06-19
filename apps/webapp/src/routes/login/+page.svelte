@@ -36,7 +36,10 @@
 
 	$effect(() => {
 		if (authSession.ready && authSession.isLoggedIn) {
-			appGoto(appPath('/(app)/school/students/[[id]]'), { replaceState: true });
+			const target = authSession.user?.role === 'directeur'
+				? appPath('/(app)/dashboard')
+				: appPath('/(app)/school/students/[[id]]');
+			appGoto(target, { replaceState: true });
 		}
 	});
 
@@ -76,9 +79,17 @@
 			}
 
 			resetAppShellBootstrap();
-			await bootstrapSession();
+			const { session } = await bootstrapSession();
+			if (!session) {
+				toast.error('Session API indisponible — exécutez bun seed:auth:link puis réessayez.');
+				return;
+			}
+
 			toast.success(`Bienvenue, ${account.name}`);
-			appGoto(appPath('/(app)/school/students/[[id]]'));
+			const target = session.kind === 'staff' && authSession.user?.role === 'directeur'
+				? appPath('/(app)/dashboard')
+				: appPath('/(app)/school/students/[[id]]');
+			appGoto(target);
 		}
 		catch (err: unknown) {
 			const message = err instanceof Error ? err.message : String(err);

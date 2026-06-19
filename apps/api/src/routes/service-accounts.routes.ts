@@ -103,6 +103,7 @@ export const createServiceAccountHandler: AppRouteHandler<typeof createServiceAc
       roleIds: body.roleIds,
       ...(body.scopeGrants ? { scopeGrants: body.scopeGrants } : {}),
       ...(body.elevated !== undefined ? { elevated: body.elevated } : {}),
+      ...(body.apiKey ? { apiKey: body.apiKey } : {}),
     });
 
     return c.json({

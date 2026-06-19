@@ -36,6 +36,7 @@ import type {
   StudentIncidentInvolvement,
   StudentNote,
 } from '../domains'
+import type { GetSchoolOverviewInput, SchoolOverview } from '../queries/school-overview'
 import type { ServiceArgs } from '../shared/service-args'
 import type {
   AssignMatterToClassSubjectInput,
@@ -175,6 +176,12 @@ export class SchoolService {
     this.checkActorSchool(schoolId)
     permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ)(this.baseService.actor)
     return this.baseService.repositories.schools.getPublishedReportCardCount(schoolId)
+  }
+
+  async getSchoolOverview(input: GetSchoolOverviewInput): Promise<SchoolOverview> {
+    this.checkActorSchool(input.schoolId)
+    permissionAction(Permission.QUERY_OVERVIEW_READ)(this.baseService.actor)
+    return this.baseService.repositories.schools.getSchoolOverview(input)
   }
 
   // SETUP ENDPOINTS

@@ -5,14 +5,16 @@
 	import { authSession } from '$lib/auth/session.svelte';
 	import ClassSelector from '$lib/components/layout/ClassSelector.svelte';
 	import { t } from '$lib/i18n';
-	import { GraduationCap, ChevronDown } from '$lib/icons';
+	import { Crown, GraduationCap, ChevronDown } from '$lib/icons';
 	import {
 		MODULES,
 		SCHOOL_ITEMS,
 		CLASS_ITEMS,
 		FINANCE_ITEMS,
 		CONFIG_ITEMS,
+		DASHBOARD_HREF,
 		getModuleFromPath,
+		isDashboardPath,
 		classItemHref,
 
 	} from '$lib/navigation';
@@ -26,7 +28,7 @@
 		studentCount: number;
 	} = $props();
 
-	const MODULE_ITEMS: Record<ModuleKey, ContextItem[]> = {
+	const MODULE_ITEMS: Record<Exclude<ModuleKey, 'dashboard'>, ContextItem[]> = {
 		school: SCHOOL_ITEMS,
 		classes: CLASS_ITEMS,
 		finance: FINANCE_ITEMS,
@@ -36,13 +38,13 @@
 	const activeModule = $derived(getModuleFromPath($page.url.pathname));
 	const classId = $derived($page.params.classId ?? '6a');
 
-	const expanded = $state<Partial<Record<ModuleKey, boolean>>>({});
+	const expanded = $state<Partial<Record<Exclude<ModuleKey, 'dashboard'>, boolean>>>({});
 
-	function isExpanded(key: ModuleKey): boolean {
+	function isExpanded(key: Exclude<ModuleKey, 'dashboard'>): boolean {
 		return key === activeModule || (expanded[key] ?? false);
 	}
 
-	function toggleModule(key: ModuleKey) {
+	function toggleModule(key: Exclude<ModuleKey, 'dashboard'>) {
 		if (key === activeModule)
 			return;
 		expanded[key] = !isExpanded(key);
@@ -52,7 +54,7 @@
 		return $page.url.pathname === href || $page.url.pathname.startsWith(`${href}/`);
 	}
 
-	function resolveItems(key: ModuleKey) {
+	function resolveItems(key: Exclude<ModuleKey, 'dashboard'>) {
 		const items = MODULE_ITEMS[key];
 		return items.map(it => ({
 			key: it.key,
@@ -81,6 +83,27 @@
 
 	<nav class="scrollbar-thin flex-1 overflow-y-auto px-3 py-4">
 		<ul class="space-y-1">
+			<li>
+				<a
+					href={DASHBOARD_HREF}
+					class={cn(
+						'group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+						isDashboardPath($page.url.pathname)
+							? 'bg-primary/10 text-primary'
+							: 'text-foreground/80 hover:bg-secondary',
+					)}
+				>
+					<Crown
+						class={cn(
+							'h-4 w-4 shrink-0',
+							isDashboardPath($page.url.pathname)
+								? 'text-primary'
+								: 'text-muted-foreground group-hover:text-foreground',
+						)}
+					/>
+					<span class="min-w-0 flex-1 truncate text-left">{$t('dashboard.nav')}</span>
+				</a>
+			</li>
 			{#each MODULES as mod (mod.key)}
 				{@const open = isExpanded(mod.key)}
 				{@const moduleActive = activeModule === mod.key}

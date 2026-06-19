@@ -7,6 +7,7 @@ import {
   assertDelegatedPermissionsSubset,
   assertDelegatedScopeGrantsSubset,
   assertOwnerServiceAccountAllowed,
+  encodeApiKey,
   generateApiKey,
   Permission,
 } from '../../authorization'
@@ -20,6 +21,8 @@ export interface CreateServiceAccountInput {
   roleIds: readonly string[]
   scopeGrants?: readonly ScopeGrant[]
   elevated?: boolean
+  /** When set, stores this key instead of generating a random one (dev/seeding only). */
+  apiKey?: string
 }
 
 export interface CreateServiceAccountResult {
@@ -96,7 +99,9 @@ export async function createServiceAccount(
     status: 'active',
   })
 
-  const generated = generateApiKey()
+  const generated = input.apiKey
+    ? encodeApiKey(input.apiKey)
+    : generateApiKey()
   const serviceApiKey = new ServiceApiKey({
     id: randomUUID(),
     staffMemberId: staffMember.id,

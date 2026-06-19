@@ -27,10 +27,12 @@ import { appPath } from '$lib/navigation/app-navigation';
 
 export type { LucideIcon };
 
-export type ModuleKey = 'school' | 'classes' | 'finance' | 'configuration';
+export const DASHBOARD_HREF = appPath('/(app)/dashboard');
+
+export type ModuleKey = 'dashboard' | 'school' | 'classes' | 'finance' | 'configuration';
 
 export const MODULES: {
-	key: ModuleKey;
+	key: Exclude<ModuleKey, 'dashboard'>;
 	tKey: string;
 	icon: LucideIcon;
 	href: ResolvedPathname;
@@ -83,7 +85,13 @@ export const CONFIG_ITEMS: ContextItem[] = [
 	{ key: 'reportCards', labelKey: 'config.reportCards', icon: FileSpreadsheet, href: appPath('/(app)/configuration/report-cards/[[id]]') },
 ];
 
+export function isDashboardPath(pathname: string): boolean {
+	return pathname === '/dashboard' || pathname.startsWith('/dashboard/');
+}
+
 export function getModuleFromPath(pathname: string): ModuleKey {
+	if (isDashboardPath(pathname))
+		return 'dashboard';
 	if (pathname.startsWith('/classes'))
 		return 'classes';
 	if (pathname.startsWith('/finance'))

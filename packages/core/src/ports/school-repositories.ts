@@ -50,6 +50,7 @@ import type {
   Subject,
   SubjectMatter,
 } from '../domains'
+import type { GetSchoolOverviewInput, SchoolOverview } from '../queries/school-overview'
 import type { BaseRepositoryInterface } from './base-repository'
 import type { ServiceApiKeyRepository } from './service-api-key-repository'
 
@@ -59,6 +60,7 @@ export interface SchoolRepositories {
   readonly schools: BaseRepositoryInterface<School> & {
     getOverdueFeeCount: (schoolId: string) => Promise<number>
     getPublishedReportCardCount: (schoolId: string) => Promise<number>
+    getSchoolOverview: (input: GetSchoolOverviewInput) => Promise<SchoolOverview>
   }
   readonly academicYears: BaseRepositoryInterface<AcademicYear>
   readonly academicPeriods: BaseRepositoryInterface<AcademicPeriod>

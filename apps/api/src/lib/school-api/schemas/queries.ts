@@ -1,0 +1,101 @@
+import { z } from "@hono/zod-openapi";
+
+export const getSchoolOverviewQuerySchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  academicPeriodId: z.string().min(1),
+  referenceDate: z.string().date().optional(),
+}).openapi("GetSchoolOverviewQuery");
+
+export const dashboardActionItemSchema = z.object({
+  key: z.enum([
+    "overdue_fees",
+    "unpublished_report_cards",
+    "pending_justifications",
+    "high_severity_incidents",
+    "incomplete_grading",
+  ]),
+  count: z.number().int().nonnegative(),
+  amount: z.number().int().nonnegative().optional(),
+}).openapi("DashboardActionItem");
+
+export const dashboardUpcomingItemSchema = z.object({
+  id: z.string().min(1),
+  date: z.string().date(),
+  title: z.string().min(1),
+  kind: z.enum(["calendar", "fee_due", "report_card_deadline", "exam", "holiday"]),
+  highlight: z.boolean(),
+}).openapi("DashboardUpcomingItem");
+
+export const dashboardClassRiskRowSchema = z.object({
+  classGroupId: z.string().min(1),
+  className: z.string().min(1),
+  coordinatorName: z.string().nullable(),
+  attendanceRateToday: z.number().nullable(),
+  openIncidentCount: z.number().int().nonnegative(),
+  gradingCompletionPercent: z.number().nullable(),
+  overdueFeeCount: z.number().int().nonnegative(),
+  riskLevel: z.enum(["normal", "watch", "needs_action"]),
+}).openapi("DashboardClassRiskRow");
+
+export const dashboardAreaHealthStudentsSchema = z.object({
+  attendanceRateToday: z.number().nullable(),
+  absencesToday: z.number().int().nonnegative(),
+  pendingJustifications: z.number().int().nonnegative(),
+}).openapi("DashboardAreaHealthStudents");
+
+export const dashboardAreaHealthAcademicsSchema = z.object({
+  gradingCompletionPercent: z.number().nullable(),
+  publishedReportCards: z.number().int().nonnegative(),
+  totalReportCards: z.number().int().nonnegative(),
+  incompleteGradingClassCount: z.number().int().nonnegative(),
+}).openapi("DashboardAreaHealthAcademics");
+
+export const dashboardAreaHealthFinanceSchema = z.object({
+  overdueAmount: z.number().int().nonnegative(),
+  studentsWithBalance: z.number().int().nonnegative(),
+  recentPaymentCount: z.number().int().nonnegative(),
+  recentPaymentAmount: z.number().int().nonnegative(),
+}).openapi("DashboardAreaHealthFinance");
+
+export const dashboardAreaHealthSchoolLifeSchema = z.object({
+  openIncidentCount: z.number().int().nonnegative(),
+  highSeverityIncidentCount: z.number().int().nonnegative(),
+  activeActivityCount: z.number().int().nonnegative(),
+  unresolvedDisciplineCount: z.number().int().nonnegative(),
+}).openapi("DashboardAreaHealthSchoolLife");
+
+export const dashboardAreaHealthSchema = z.object({
+  students: dashboardAreaHealthStudentsSchema,
+  academics: dashboardAreaHealthAcademicsSchema,
+  finance: dashboardAreaHealthFinanceSchema,
+  schoolLife: dashboardAreaHealthSchoolLifeSchema,
+}).openapi("DashboardAreaHealth");
+
+export const schoolOverviewKpisSchema = z.object({
+  studentCount: z.number().int().nonnegative(),
+  staffCount: z.number().int().nonnegative(),
+  overdueFeeCount: z.number().int().nonnegative(),
+  overdueFeeAmount: z.number().int().nonnegative(),
+  publishedReportCardCount: z.number().int().nonnegative(),
+  unpublishedReportCardCount: z.number().int().nonnegative(),
+  attendanceRateToday: z.number().nullable(),
+  absencesToday: z.number().int().nonnegative(),
+  openIncidentCount: z.number().int().nonnegative(),
+  highSeverityIncidentCount: z.number().int().nonnegative(),
+  pendingJustificationCount: z.number().int().nonnegative(),
+  incompleteGradingClassCount: z.number().int().nonnegative(),
+}).openapi("SchoolOverviewKpis");
+
+export const schoolOverviewResponseSchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  academicPeriodId: z.string().min(1),
+  referenceDate: z.string().date(),
+  generatedAt: z.string().datetime(),
+  kpis: schoolOverviewKpisSchema,
+  actionItems: z.array(dashboardActionItemSchema),
+  upcoming: z.array(dashboardUpcomingItemSchema),
+  areaHealth: dashboardAreaHealthSchema,
+  classRiskRows: z.array(dashboardClassRiskRowSchema),
+}).openapi("SchoolOverviewResponse");

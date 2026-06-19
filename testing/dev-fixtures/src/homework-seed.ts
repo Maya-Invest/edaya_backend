@@ -1,12 +1,18 @@
 import { SEED_DEADLINES } from './activities-deadlines-seed'
 import { SEED_SCHOOL_ID } from './dataset'
 
-const SUBJECT_TO_CLASS_SUBJECT_6A = {
-  'Mathematics': 'cs-6a-math',
-  'French Literature': 'cs-6a-fr',
-  'Natural Sciences': 'cs-6a-sci',
-  'History & Geography': 'cs-6a-hist',
-} as const
+const SUBJECT_TO_CLASS_SUBJECT: Record<string, Record<string, string>> = {
+  '6a': {
+    'Mathematics': 'cs-6a-math',
+    'French Literature': 'cs-6a-fr',
+    'Natural Sciences': 'cs-6a-sci',
+    'History & Geography': 'cs-6a-hist',
+  },
+  '6b': {
+    'Mathematics': 'cs-6b-math',
+    'French Literature': 'cs-6b-fr',
+  },
+}
 
 const DEADLINE_TYPE_TO_HOMEWORK_TYPE = {
   Homework: 'homework',
@@ -15,18 +21,25 @@ const DEADLINE_TYPE_TO_HOMEWORK_TYPE = {
   Lab: 'lab',
 } as const
 
-export const SEED_HOMEWORK_ASSIGNMENTS = SEED_DEADLINES.map(deadline => ({
-  id: deadline.id,
-  schoolId: SEED_SCHOOL_ID,
-  classGroupId: deadline.classGroupId,
-  classSubjectId: SUBJECT_TO_CLASS_SUBJECT_6A[deadline.subject as keyof typeof SUBJECT_TO_CLASS_SUBJECT_6A],
-  title: deadline.title,
-  description: deadline.description,
-  dueDate: deadline.dueDate,
-  assignedDate: deadline.assignedDate,
-  type: DEADLINE_TYPE_TO_HOMEWORK_TYPE[deadline.type],
-  attachments: deadline.attachments.map(attachment => ({ ...attachment })),
-}))
+export const SEED_HOMEWORK_ASSIGNMENTS = SEED_DEADLINES.map((deadline) => {
+  const classSubjects = SUBJECT_TO_CLASS_SUBJECT[deadline.classGroupId]
+  const classSubjectId = classSubjects?.[deadline.subject]
+  if (!classSubjectId) {
+    throw new Error(`No class subject for ${deadline.classGroupId} / ${deadline.subject}`)
+  }
+  return {
+    id: deadline.id,
+    schoolId: SEED_SCHOOL_ID,
+    classGroupId: deadline.classGroupId,
+    classSubjectId,
+    title: deadline.title,
+    description: deadline.description,
+    dueDate: deadline.dueDate,
+    assignedDate: deadline.assignedDate,
+    type: DEADLINE_TYPE_TO_HOMEWORK_TYPE[deadline.type],
+    attachments: deadline.attachments.map(attachment => ({ ...attachment })),
+  }
+})
 
 export const SEED_HOMEWORK_SUBMISSIONS = SEED_DEADLINES.flatMap(deadline =>
   deadline.submissions.map(submission => ({
@@ -37,3 +50,7 @@ export const SEED_HOMEWORK_SUBMISSIONS = SEED_DEADLINES.flatMap(deadline =>
     submittedAt: 'date' in submission ? submission.date : undefined,
   })),
 )
+
+export function countSeedHomeworkAssignments(): number {
+  return SEED_HOMEWORK_ASSIGNMENTS.length
+}

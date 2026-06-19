@@ -17,7 +17,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>Scholaria — School Management</title>
+	<title>Edaya — School Management</title>
 </svelte:head>
 
 <ApiDevBanner />

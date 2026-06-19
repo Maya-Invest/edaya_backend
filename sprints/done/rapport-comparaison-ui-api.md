@@ -1,6 +1,6 @@
 # Rapport de comparaison — Interface SvelteKit vs API Edaya
 
-**Projet :** EDAYA / Scholaria  
+**Projet :** EDAYA / Edaya  
 **Spec API :** `openapi/edaya_open_api.json` (Edaya Core API v1.0.0)  
 **Données UI :** `src/lib/data/school.ts` + composants Svelte  
 **Date :** juin 2026

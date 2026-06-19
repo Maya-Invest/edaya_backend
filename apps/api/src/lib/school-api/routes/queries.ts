@@ -1,3 +1,4 @@
+import type { GetSchoolOverviewInput } from "@edaya/core";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";
@@ -32,10 +33,23 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
       }
 
       const service = c.get("schoolApp").forActor(actor);
-      const { schoolId } = validatedJson(c) as { schoolId: string };
+      const payload = validatedJson(c) as Record<string, unknown>;
 
       try {
-        const count = await service[queryConfig.methodName](schoolId);
+        if (queryConfig.methodName === "getSchoolOverview") {
+          const input: GetSchoolOverviewInput = {
+            schoolId: payload.schoolId as string,
+            academicYearId: payload.academicYearId as string,
+            academicPeriodId: payload.academicPeriodId as string,
+            referenceDate: payload.referenceDate
+              ? new Date(`${payload.referenceDate as string}T00:00:00.000Z`)
+              : undefined,
+          };
+          const overview = await service.getSchoolOverview(input);
+          return c.json(overview, HttpStatusCodes.OK);
+        }
+
+        const count = await service[queryConfig.methodName](payload.schoolId as string);
         return c.json({ count }, HttpStatusCodes.OK);
       }
       catch (err) {

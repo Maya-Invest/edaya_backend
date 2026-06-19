@@ -1,4 +1,5 @@
 import {
+  countSeedPlanningSlots,
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   SEED_PLANNING_SLOTS,
@@ -38,8 +39,8 @@ describe('dev scheduling seed', () => {
     expect(seedResult.status).toBe('seeded')
     if (seedResult.status === 'seeded') {
       expect(seedResult.resources).toBe(SEED_RESOURCES.length)
-      expect(seedResult.schedules).toBe(SEED_PLANNING_SLOTS.length)
-      expect(seedResult.sessions).toBe(SEED_PLANNING_SLOTS.length)
+      expect(seedResult.schedules).toBe(countSeedPlanningSlots())
+      expect(seedResult.sessions).toBe(countSeedPlanningSlots())
     }
 
     await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))

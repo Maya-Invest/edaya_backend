@@ -3,6 +3,7 @@ import type { AnySchema } from "@/lib/school-api/schemas/helpers";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
 import * as commandSchemas from "@/lib/school-api/schemas/commands";
 import * as entitySchemas from "@/lib/school-api/schemas/entities";
+import * as querySchemas from "@/lib/school-api/schemas/queries";
 import {
   AcademicPeriod,
   AcademicYear,
@@ -65,9 +66,10 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
+  responseShape?: "count" | "body";
 }
 
 export interface CoreEntityConfig {
@@ -164,12 +166,21 @@ export const coreQueries = [
     methodName: "getOverdueFeeCount",
     requestSchema: z.object({ schoolId: z.string().min(1) }).openapi("GetOverdueFeeCountQuery"),
     responseSchema: z.object({ count: z.number() }).openapi("CountResponse"),
+    responseShape: "count",
   },
   {
     publicName: "get-published-report-card-count",
     methodName: "getPublishedReportCardCount",
     requestSchema: z.object({ schoolId: z.string().min(1) }).openapi("GetPublishedReportCardCountQuery"),
     responseSchema: z.object({ count: z.number() }).openapi("CountResponse"),
+    responseShape: "count",
+  },
+  {
+    publicName: "get-school-overview",
+    methodName: "getSchoolOverview",
+    requestSchema: querySchemas.getSchoolOverviewQuerySchema,
+    responseSchema: querySchemas.schoolOverviewResponseSchema,
+    responseShape: "body",
   },
 ] satisfies CoreQueryConfig[];
 

@@ -1,5 +1,11 @@
+import type { Guardian as GuardianEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
 import type { AuthProvisioner, SeedApplication } from './types'
-import { createBootstrapStaffActorMetadata } from '@edaya/core'
+import {
+  createBootstrapStaffActorMetadata,
+  Guardian,
+  School,
+  StaffMember,
+} from '@edaya/core'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
@@ -16,6 +22,72 @@ export type DevAuthLinkResult
       linkedGuardians: number
       accounts: Array<{ email: string, kind: 'staff' | 'guardian', entityId: string }>
     }
+
+async function relinkStaffSubject(
+  application: SeedApplication,
+  staff: StaffMemberEntity,
+  subjectId: string,
+): Promise<void> {
+  await application.repositories.staffMembers.save(new StaffMember({
+    id: staff.id,
+    schoolId: staff.schoolId,
+    firstName: staff.firstName,
+    lastName: staff.lastName,
+    email: staff.email,
+    subjectId,
+    accountKind: staff.accountKind,
+    ...(staff.serviceId ? { serviceId: staff.serviceId } : {}),
+    ...(staff.createdBySubjectId ? { createdBySubjectId: staff.createdBySubjectId } : {}),
+    serviceElevated: staff.serviceElevated,
+    isActive: staff.isActive,
+    createdAt: staff.createdAt,
+  }))
+}
+
+async function relinkGuardianSubject(
+  application: SeedApplication,
+  guardian: GuardianEntity,
+  subjectId: string,
+): Promise<void> {
+  await application.repositories.guardians.save(new Guardian({
+    id: guardian.id,
+    schoolId: guardian.schoolId,
+    firstName: guardian.firstName,
+    lastName: guardian.lastName,
+    email: guardian.email,
+    phone: guardian.phone,
+    subjectId,
+    hasAccess: guardian.hasAccess,
+    premiumNotificationsEnabled: guardian.premiumNotificationsEnabled,
+    createdAt: guardian.createdAt,
+  }))
+}
+
+async function ensureOwnerSubjectId(
+  application: SeedApplication,
+  staffId: string,
+  subjectId: string,
+): Promise<void> {
+  if (staffId !== SEED_SCHOOL_OWNER_STAFF_ID) {
+    return
+  }
+
+  const currentSchool = await application.repositories.schools.findById(SEED_SCHOOL_ID)
+  if (!currentSchool || currentSchool.ownerSubjectId === subjectId) {
+    return
+  }
+
+  await application.repositories.schools.save(new School({
+    id: currentSchool.id,
+    name: currentSchool.name,
+    timeZone: currentSchool.timeZone,
+    ownerSubjectId: subjectId,
+    ...(currentSchool.type ? { type: currentSchool.type } : {}),
+    ...(currentSchool.country ? { country: currentSchool.country } : {}),
+    ...(currentSchool.city ? { city: currentSchool.city } : {}),
+    createdAt: currentSchool.createdAt,
+  }))
+}
 
 export async function runDevAuthLink(
   application: SeedApplication,
@@ -49,29 +121,21 @@ export async function runDevAuthLink(
     }, { preserveSession: true })
 
     if (staff.subjectId === subjectId) {
-      if (account.staffId === SEED_SCHOOL_OWNER_STAFF_ID && school.ownerSubjectId !== subjectId) {
-        await service.updateSchoolConfiguration({
-          schoolId: SEED_SCHOOL_ID,
-          ownerSubjectId: subjectId,
-        })
-      }
+      await ensureOwnerSubjectId(application, account.staffId, subjectId)
       continue
     }
 
-    await service.linkActorSubject({
-      subjectId,
-      staffMemberId: account.staffId,
-    })
-
-    if (account.staffId === SEED_SCHOOL_OWNER_STAFF_ID) {
-      const currentSchool = await application.repositories.schools.findById(SEED_SCHOOL_ID)
-      if (currentSchool && currentSchool.ownerSubjectId !== subjectId) {
-        await service.updateSchoolConfiguration({
-          schoolId: SEED_SCHOOL_ID,
-          ownerSubjectId: subjectId,
-        })
-      }
+    if (staff.subjectId) {
+      await relinkStaffSubject(application, staff, subjectId)
     }
+    else {
+      await service.linkActorSubject({
+        subjectId,
+        staffMemberId: account.staffId,
+      })
+    }
+
+    await ensureOwnerSubjectId(application, account.staffId, subjectId)
 
     linkedStaff++
     linkedAccounts.push({
@@ -97,10 +161,15 @@ export async function runDevAuthLink(
       continue
     }
 
-    await service.linkActorSubject({
-      subjectId,
-      guardianId: account.guardianId,
-    })
+    if (guardian.subjectId) {
+      await relinkGuardianSubject(application, guardian, subjectId)
+    }
+    else {
+      await service.linkActorSubject({
+        subjectId,
+        guardianId: account.guardianId,
+      })
+    }
 
     linkedGuardians++
     linkedAccounts.push({

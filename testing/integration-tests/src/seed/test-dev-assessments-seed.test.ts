@@ -1,8 +1,8 @@
 import {
+  countSeedAssessmentResults,
+  countSeedAssessments,
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  SEED_ASSESSMENT_RESULT_SCORES,
-  SEED_ASSESSMENTS,
 } from '@edaya/dev-fixtures'
 import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
@@ -27,8 +27,7 @@ function unwrapEntityList<T>(values: unknown): T[] {
   })
 }
 
-const expectedAssessmentResultCount = Object.values(SEED_ASSESSMENT_RESULT_SCORES)
-  .reduce((total, scores) => total + Object.keys(scores).length, 0)
+const expectedAssessmentResultCount = countSeedAssessmentResults()
 
 describe('dev assessments seed', () => {
   afterEach(async () => {
@@ -40,7 +39,7 @@ describe('dev assessments seed', () => {
     const seedResult = await runDevSchoolSeed(application)
     expect(seedResult.status).toBe('seeded')
     if (seedResult.status === 'seeded') {
-      expect(seedResult.assessments).toBe(SEED_ASSESSMENTS.length)
+      expect(seedResult.assessments).toBe(countSeedAssessments())
       expect(seedResult.assessmentResults).toBe(expectedAssessmentResultCount)
     }
 
@@ -77,7 +76,7 @@ describe('dev assessments seed', () => {
     const assessments = unwrapEntityList<{ id: string, title: string, classGroupId: string }>(await assessmentsResponse.json())
     const results = unwrapEntityList<{ assessmentId: string, studentId: string, score?: number }>(await resultsResponse.json())
 
-    expect(assessments.length).toBeGreaterThanOrEqual(SEED_ASSESSMENTS.length)
+    expect(assessments.length).toBeGreaterThanOrEqual(countSeedAssessments())
     expect(results.length).toBeGreaterThanOrEqual(expectedAssessmentResultCount)
     expect(assessments.some(assessment => assessment.id === 'e1' && assessment.classGroupId === '6a')).toBe(true)
     expect(assessments.some(assessment => assessment.id === 'e5' && assessment.classGroupId === 'term-s')).toBe(true)

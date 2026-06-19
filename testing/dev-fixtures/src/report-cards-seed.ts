@@ -185,6 +185,73 @@ export const SEED_REPORT_CARD_DEFINITIONS = [
   SEED_REPORT_CARD_DEFINITION_MS_DRAFT,
 ] as const
 
+const STUDENTS_6A = ['s1', 's2', 's3', 's4', 's5', 's6'] as const
+
+function make6aReportCard(
+  studentId: string,
+  periodId: '2025-t1' | '2025-t2' | '2025-t3',
+  overallAverage: number,
+  classRank: number,
+  mockStatus: 'published' | 'generated',
+  homeroomComment: string,
+  generatedAt: string,
+  publishedAt?: string,
+) {
+  const id = `rcr-${studentId}-${periodId.replace('2025-', '')}`
+  return {
+    id,
+    studentId,
+    classGroupId: '6a' as const,
+    periodId,
+    definitionId: 'rcd-ms-6' as const,
+    gradeScaleId: 'gs-20' as const,
+    mockStatus,
+    overallAverage,
+    classRank,
+    classSize: 6,
+    homeroomComment,
+    generatedAt,
+    ...(publishedAt ? { publishedAt } : {}),
+    sectionMarks: {
+      'rcs-ms-fond': [
+        { subjectId: 'subj-math', average: overallAverage - 0.5, coefficient: 2, appreciation: 'Progression régulière.' },
+        { subjectId: 'subj-fr', average: overallAverage - 1, coefficient: 2, appreciation: 'Travail satisfaisant.' },
+      ],
+      'rcs-ms-sci': [
+        { subjectId: 'subj-sci', average: overallAverage, coefficient: 1.5, appreciation: 'Participation en TP.' },
+      ],
+    },
+  }
+}
+
+/** Class 6a report card results — trimestre 1 (all students published). */
+export const SEED_REPORT_CARD_RESULTS_6A_T1 = STUDENTS_6A.map((studentId, index) =>
+  make6aReportCard(
+    studentId,
+    '2025-t1',
+    16 - index * 0.8,
+    index + 1,
+    'published',
+    'Bon début d\'année scolaire.',
+    '2025-12-15',
+    '2025-12-19',
+  ),
+)
+
+/** Class 6a report card results — trimestre 2 (all students published). */
+export const SEED_REPORT_CARD_RESULTS_6A_T2 = STUDENTS_6A.map((studentId, index) =>
+  make6aReportCard(
+    studentId,
+    '2025-t2',
+    15.5 - index * 0.7,
+    index + 1,
+    'published',
+    'Progression continue au second trimestre.',
+    '2026-03-28',
+    '2026-04-03',
+  ),
+)
+
 /** Class 6a report card results for period 2025-t3 (from mock `reportCardResults[]`). */
 export const SEED_REPORT_CARD_RESULTS_6A = [
   {
@@ -309,6 +376,46 @@ export const SEED_REPORT_CARD_RESULTS_6A = [
 
 export const SEED_REPORT_CARD_RESULTS_TERM = [
   {
+    id: 'rcr-s9-t1',
+    studentId: 's9',
+    classGroupId: 'term-s',
+    periodId: '2025-t1',
+    definitionId: 'rcd-term',
+    gradeScaleId: 'gs-20',
+    mockStatus: 'published' as const,
+    overallAverage: 15.8,
+    classRank: 2,
+    classSize: 2,
+    homeroomComment: 'Bon démarrage en spécialité maths.',
+    generatedAt: '2025-12-14',
+    publishedAt: '2025-12-19',
+    sectionMarks: {
+      'rcs-term-spé': [
+        { subjectId: 'subj-advmath', average: 16.0, coefficient: 3, appreciation: 'Solides bases.' },
+      ],
+    },
+  },
+  {
+    id: 'rcr-s10-t1',
+    studentId: 's10',
+    classGroupId: 'term-s',
+    periodId: '2025-t1',
+    definitionId: 'rcd-term',
+    gradeScaleId: 'gs-20',
+    mockStatus: 'published' as const,
+    overallAverage: 16.5,
+    classRank: 1,
+    classSize: 2,
+    homeroomComment: 'Excellente assiduité.',
+    generatedAt: '2025-12-14',
+    publishedAt: '2025-12-19',
+    sectionMarks: {
+      'rcs-term-spé': [
+        { subjectId: 'subj-advmath', average: 17.0, coefficient: 3, appreciation: 'Très bon niveau.' },
+      ],
+    },
+  },
+  {
     id: 'rcr-s9-t3',
     studentId: 's9',
     classGroupId: 'term-s',
@@ -333,6 +440,8 @@ export const SEED_REPORT_CARD_RESULTS_TERM = [
 ] as const
 
 export const SEED_REPORT_CARD_RESULTS = [
+  ...SEED_REPORT_CARD_RESULTS_6A_T1,
+  ...SEED_REPORT_CARD_RESULTS_6A_T2,
   ...SEED_REPORT_CARD_RESULTS_6A,
   ...SEED_REPORT_CARD_RESULTS_TERM,
 ] as const

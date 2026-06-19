@@ -163,6 +163,49 @@ describe("service account routes", () => {
     expect(listResponse.status).toBe(200);
   }, 30_000);
 
+  it("creates a service account with a caller-provided API key", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    await seedDevSchoolAndAuthLinks(application, runtime);
+
+    const cookies = await signInDirector(app);
+    const customApiKey = "sk_live_custom-key-for-route-test-only";
+
+    const response = await app.request(createAppRequest("/core/service-accounts", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "cookie": cookies.join("; "),
+      },
+      body: JSON.stringify({
+        serviceId: "custom-key-bot",
+        displayName: "Custom Key Bot",
+        roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+        apiKey: customApiKey,
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+
+    const body = await response.json() as {
+      serviceId: string;
+      apiKey: string;
+    };
+
+    expect(body.serviceId).toBe("custom-key-bot");
+    expect(body.apiKey).toBe(customApiKey);
+
+    const listResponse = await app.request(createAppRequest("/core/entities/students/list", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${customApiKey}`,
+      },
+      body: JSON.stringify({}),
+    }));
+
+    expect(listResponse.status).toBe(200);
+  }, 30_000);
+
   it("returns 403 when the creator delegates permissions they do not hold", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>

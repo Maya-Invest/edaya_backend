@@ -58,6 +58,7 @@ import {
   DefaultAuthorizationRepository,
 } from '../../src/authorization'
 import { StaffMember } from '../../src/domains'
+import { buildSchoolOverview } from '../../src/queries/school-overview'
 import { SchoolApplication } from '../../src/services'
 import { effectiveGrantsForRoles } from './effective-grants'
 import { matchesFilter } from './filter-matcher'
@@ -291,6 +292,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
         const rcs = await results.list()
         return rcs.filter(rc => studentIds.has(rc.studentId) && rc.status === 'published').length
       },
+      getSchoolOverview: input => buildSchoolOverview(schoolRepositories, input),
     },
     academicYears,
     academicPeriods,

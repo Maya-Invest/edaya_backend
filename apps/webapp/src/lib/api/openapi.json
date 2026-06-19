@@ -568,6 +568,10 @@
           },
           "elevated": {
             "type": "boolean"
+          },
+          "apiKey": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -5944,6 +5948,401 @@
         },
         "required": [
           "schoolId"
+        ]
+      },
+      "SchoolOverviewKpis": {
+        "type": "object",
+        "properties": {
+          "studentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "staffCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overdueFeeCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overdueFeeAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "publishedReportCardCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unpublishedReportCardCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "attendanceRateToday": {
+            "type": "number",
+            "nullable": true
+          },
+          "absencesToday": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "openIncidentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "highSeverityIncidentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pendingJustificationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "incompleteGradingClassCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "studentCount",
+          "staffCount",
+          "overdueFeeCount",
+          "overdueFeeAmount",
+          "publishedReportCardCount",
+          "unpublishedReportCardCount",
+          "attendanceRateToday",
+          "absencesToday",
+          "openIncidentCount",
+          "highSeverityIncidentCount",
+          "pendingJustificationCount",
+          "incompleteGradingClassCount"
+        ]
+      },
+      "DashboardActionItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "overdue_fees",
+              "unpublished_report_cards",
+              "pending_justifications",
+              "high_severity_incidents",
+              "incomplete_grading"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "key",
+          "count"
+        ]
+      },
+      "DashboardUpcomingItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "calendar",
+              "fee_due",
+              "report_card_deadline",
+              "exam",
+              "holiday"
+            ]
+          },
+          "highlight": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "title",
+          "kind",
+          "highlight"
+        ]
+      },
+      "DashboardAreaHealthStudents": {
+        "type": "object",
+        "properties": {
+          "attendanceRateToday": {
+            "type": "number",
+            "nullable": true
+          },
+          "absencesToday": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pendingJustifications": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "attendanceRateToday",
+          "absencesToday",
+          "pendingJustifications"
+        ]
+      },
+      "DashboardAreaHealthAcademics": {
+        "type": "object",
+        "properties": {
+          "gradingCompletionPercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "publishedReportCards": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalReportCards": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "incompleteGradingClassCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "gradingCompletionPercent",
+          "publishedReportCards",
+          "totalReportCards",
+          "incompleteGradingClassCount"
+        ]
+      },
+      "DashboardAreaHealthFinance": {
+        "type": "object",
+        "properties": {
+          "overdueAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "studentsWithBalance": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "recentPaymentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "recentPaymentAmount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "overdueAmount",
+          "studentsWithBalance",
+          "recentPaymentCount",
+          "recentPaymentAmount"
+        ]
+      },
+      "DashboardAreaHealthSchoolLife": {
+        "type": "object",
+        "properties": {
+          "openIncidentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "highSeverityIncidentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "activeActivityCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unresolvedDisciplineCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "openIncidentCount",
+          "highSeverityIncidentCount",
+          "activeActivityCount",
+          "unresolvedDisciplineCount"
+        ]
+      },
+      "DashboardAreaHealth": {
+        "type": "object",
+        "properties": {
+          "students": {
+            "$ref": "#/components/schemas/DashboardAreaHealthStudents"
+          },
+          "academics": {
+            "$ref": "#/components/schemas/DashboardAreaHealthAcademics"
+          },
+          "finance": {
+            "$ref": "#/components/schemas/DashboardAreaHealthFinance"
+          },
+          "schoolLife": {
+            "$ref": "#/components/schemas/DashboardAreaHealthSchoolLife"
+          }
+        },
+        "required": [
+          "students",
+          "academics",
+          "finance",
+          "schoolLife"
+        ]
+      },
+      "DashboardClassRiskRow": {
+        "type": "object",
+        "properties": {
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "className": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coordinatorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "attendanceRateToday": {
+            "type": "number",
+            "nullable": true
+          },
+          "openIncidentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "gradingCompletionPercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "overdueFeeCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "riskLevel": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "watch",
+              "needs_action"
+            ]
+          }
+        },
+        "required": [
+          "classGroupId",
+          "className",
+          "coordinatorName",
+          "attendanceRateToday",
+          "openIncidentCount",
+          "gradingCompletionPercent",
+          "overdueFeeCount",
+          "riskLevel"
+        ]
+      },
+      "SchoolOverviewResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "referenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/SchoolOverviewKpis"
+          },
+          "actionItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardActionItem"
+            }
+          },
+          "upcoming": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardUpcomingItem"
+            }
+          },
+          "areaHealth": {
+            "$ref": "#/components/schemas/DashboardAreaHealth"
+          },
+          "classRiskRows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardClassRiskRow"
+            }
+          }
+        },
+        "required": [
+          "schoolId",
+          "academicYearId",
+          "academicPeriodId",
+          "referenceDate",
+          "generatedAt",
+          "kpis",
+          "actionItems",
+          "upcoming",
+          "areaHealth",
+          "classRiskRows"
+        ]
+      },
+      "GetSchoolOverviewQuery": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "referenceDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "schoolId",
+          "academicYearId",
+          "academicPeriodId"
         ]
       },
       "Filter_1": {
@@ -17917,6 +18316,130 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-school-overview": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-school-overview",
+        "requestBody": {
+          "description": "get-school-overview payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSchoolOverviewQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-school-overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolOverviewResponse"
                 }
               }
             }

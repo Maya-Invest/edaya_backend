@@ -27,4 +27,10 @@ export {
   type RunHttpDevSeedsOptions,
   type RunHttpDevSeedsResults,
 } from './run-http-dev-seeds'
+export {
+  type HttpSeedValidationResult,
+  runHttpSeedValidation,
+  type SeedEntityValidationResult,
+  type SeedQueryValidationResult,
+} from './seed-validation'
 export { waitForApi, type WaitForApiOptions } from './wait-for-api'

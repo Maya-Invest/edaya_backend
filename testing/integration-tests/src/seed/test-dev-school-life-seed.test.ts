@@ -1,8 +1,8 @@
 import {
+  countSeedAttendanceRecords,
+  countSeedCalendarEvents,
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  SEED_ABSENCE_RECORDS,
-  SEED_CALENDAR_EVENTS,
   SEED_INCIDENTS,
 } from '@edaya/dev-fixtures'
 import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
@@ -28,9 +28,7 @@ function unwrapEntityList<T>(values: unknown): T[] {
   })
 }
 
-const expectedCalendarEvents = SEED_CALENDAR_EVENTS.reduce((total, event) => {
-  return total + (event.scope === 'all' ? 1 : event.scope.length)
-}, 0)
+const expectedCalendarEvents = countSeedCalendarEvents()
 
 describe('dev school life seed', () => {
   afterEach(async () => {
@@ -44,7 +42,7 @@ describe('dev school life seed', () => {
     if (seedResult.status === 'seeded') {
       expect(seedResult.calendarEvents).toBe(expectedCalendarEvents)
       expect(seedResult.incidents).toBe(SEED_INCIDENTS.length)
-      expect(seedResult.attendanceRecords).toBe(SEED_ABSENCE_RECORDS.length)
+      expect(seedResult.attendanceRecords).toBe(countSeedAttendanceRecords())
     }
 
     await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))
@@ -89,7 +87,7 @@ describe('dev school life seed', () => {
 
     expect(calendarEvents.length).toBeGreaterThanOrEqual(expectedCalendarEvents)
     expect(incidents.length).toBeGreaterThanOrEqual(SEED_INCIDENTS.length)
-    expect(attendance.length).toBeGreaterThanOrEqual(SEED_ABSENCE_RECORDS.length)
+    expect(attendance.length).toBeGreaterThanOrEqual(countSeedAttendanceRecords())
     expect(calendarEvents.some(event => event.title === 'Fête du Travail')).toBe(true)
     expect(calendarEvents.find(event => event.id === 'yc3')?.description).toBe(
       'Vacances scolaires de printemps. Réouverture le 4 mai.',

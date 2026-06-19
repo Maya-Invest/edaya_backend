@@ -120,4 +120,54 @@ describe("generated core query endpoints", () => {
     expect(body.count).toBe(3);
     expect(mockGetOverdueFeeCount).toHaveBeenCalledWith("school-1");
   });
+
+  it("executes get-school-overview query route", async () => {
+    const mockGetSchoolOverview = mock().mockResolvedValue({
+      schoolId: "school-1",
+      academicYearId: "year-1",
+      academicPeriodId: "period-1",
+      referenceDate: "2026-06-14",
+      kpis: {
+        studentCount: 42,
+        staffCount: 8,
+        overdueFeeCount: 0,
+        overdueFeeAmount: 0,
+        publishedReportCardCount: 10,
+        unpublishedReportCardCount: 32,
+        attendanceRateToday: 96.5,
+        absencesToday: 1,
+        openIncidentCount: 0,
+        highSeverityIncidentCount: 0,
+        pendingJustificationCount: 0,
+        incompleteGradingClassCount: 0,
+      },
+      actionItems: [],
+      upcoming: [],
+    });
+    const app = setupTestApp({
+      baseService: {},
+      getSchoolOverview: mockGetSchoolOverview,
+    });
+
+    const res = await app.request("/core/queries/get-school-overview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        schoolId: "school-1",
+        academicYearId: "year-1",
+        academicPeriodId: "period-1",
+        referenceDate: "2026-06-14",
+      }),
+    });
+
+    const body = await res.json() as { kpis: { studentCount: number } };
+    expect(res.status).toBe(200);
+    expect(body.kpis.studentCount).toBe(42);
+    expect(mockGetSchoolOverview).toHaveBeenCalledWith({
+      schoolId: "school-1",
+      academicYearId: "year-1",
+      academicPeriodId: "period-1",
+      referenceDate: new Date("2026-06-14T00:00:00.000Z"),
+    });
+  });
 });

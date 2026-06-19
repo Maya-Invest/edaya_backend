@@ -2,6 +2,7 @@
 
 import type { HttpDevSeedScope } from '../src/http/index.ts'
 import process from 'node:process'
+import { resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
 import {
   HttpSeedClient,
   logHttpDevSeedResults,
@@ -35,7 +36,8 @@ export function resolveSeedHttpConfig() {
   return {
     baseUrl,
     appOrigin: resolveAppOrigin(baseUrl),
-    serviceAccountApiKey: process.env.SERVICE_ACCOUNT_API_KEY?.trim(),
+    serviceAccountApiKey: process.env.SERVICE_ACCOUNT_API_KEY?.trim()
+      || resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID),
   }
 }
 
@@ -51,11 +53,9 @@ export async function runSeedHttpCli(argv: string[]): Promise<number> {
     return 1
   }
 
-  if (!serviceAccountApiKey && scope !== 'auth' && scope !== 'service-account') {
+  if (!process.env.SERVICE_ACCOUNT_API_KEY?.trim() && scope !== 'auth' && scope !== 'service-account') {
     console.warn(
-      'No SERVICE_ACCOUNT_API_KEY configured. '
-      + 'Using director session bootstrap for /core/* seeding. '
-      + 'After seed:init, add the printed key to apps/api/.env.',
+      'No SERVICE_ACCOUNT_API_KEY in .env; using seeding API key from school profile in @edaya/dev-fixtures.',
     )
   }
 
@@ -63,13 +63,13 @@ export async function runSeedHttpCli(argv: string[]): Promise<number> {
   const results = await runHttpDevSeeds({
     client,
     scope,
-    ...(serviceAccountApiKey ? { serviceAccountApiKey } : {}),
+    serviceAccountApiKey,
     provisionServiceAccount: scope === 'all',
   })
 
   logHttpDevSeedResults(results)
 
-  if (results.smoke?.status === 'failed') {
+  if (results.smoke?.status === 'failed' || results.validation?.status === 'failed') {
     return 1
   }
 

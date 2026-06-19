@@ -1,6 +1,7 @@
 export * from './authorization'
 export * from './domains'
 export * from './ports'
+export * from './queries'
 export * from './services'
 export * from './shared/business-rule-error'
 export * from './value_object'

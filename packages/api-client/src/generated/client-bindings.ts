@@ -631,6 +631,11 @@ export const clientBindings = {
       "publicName": "get-published-report-card-count",
       "requestSchemaName": "GetPublishedReportCardCountQuery",
       "responseSchemaName": "CountResponse"
+    },
+    "getSchoolOverview": {
+      "publicName": "get-school-overview",
+      "requestSchemaName": "GetSchoolOverviewQuery",
+      "responseSchemaName": "SchoolOverviewResponse"
     }
   },
 } as const

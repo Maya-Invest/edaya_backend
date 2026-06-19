@@ -7,6 +7,7 @@ export const createServiceAccountRequestSchema = z.object({
   roleIds: z.array(z.string().trim().min(1)).min(1),
   scopeGrants: z.array(scopeGrantResponseSchema).optional(),
   elevated: z.boolean().optional(),
+  apiKey: z.string().trim().min(1).optional(),
 }).openapi("CreateServiceAccountRequest");
 
 export const updateServiceAccountRequestSchema = z.object({

@@ -99,13 +99,13 @@ export async function seedReportCards(
       generatedAt: parseSeedDate(result.generatedAt),
     })
 
-    if (result.mockStatus === 'published') {
+    if (result.mockStatus === 'published' && result.publishedAt) {
       await service.publishReportCardResult({
         id: result.id,
         studentId: result.studentId,
         periodId: result.periodId,
         reportCardDefinitionId: result.definitionId,
-        publishedAt: 'publishedAt' in result ? parseSeedDate(result.publishedAt) : undefined,
+        publishedAt: parseSeedDate(result.publishedAt),
       })
     }
   }

@@ -62,18 +62,24 @@ export const SEED_EXTENDED_SUBJECT_MATTERS = [
 export const SEED_EXTENDED_CLASS_SUBJECTS = [
   { id: 'cs-term-advmath', classGroupId: 'term-s', subjectId: 'subj-advmath', coefficient: 3, teacherId: 'st4' },
   { id: 'cs-term-phys', classGroupId: 'term-s', subjectId: 'subj-phys', coefficient: 3, teacherId: 'st4' },
+  { id: 'cs-4a-math', classGroupId: '4a', subjectId: 'subj-math', coefficient: 3, teacherId: 'st1' },
+  { id: 'cs-3a-math', classGroupId: '3a', subjectId: 'subj-math', coefficient: 3, teacherId: 'st1' },
 ] as const
 
 export const SEED_EXTENDED_ASSESSMENTS = [
   { id: 'e5', classGroupId: 'term-s', classSubjectId: 'cs-term-advmath', title: 'Calculus test', date: '2026-04-20', coefficient: 3, maxScore: 20, kind: 'other' as const },
   { id: 'e5b', classGroupId: 'term-s', classSubjectId: 'cs-term-advmath', title: 'Linear algebra', date: '2026-03-18', coefficient: 2, maxScore: 20, kind: 'other' as const },
   { id: 'e5c', classGroupId: 'term-s', classSubjectId: 'cs-term-advmath', title: 'Mock exam', date: '2026-05-10', coefficient: 4, maxScore: 20, kind: 'other' as const },
+  { id: 'e5-t1', classGroupId: 'term-s', classSubjectId: 'cs-term-advmath', title: 'Derivatives intro', date: '2025-11-25', coefficient: 2, maxScore: 20, kind: 'other' as const },
+  { id: 'e5-t2', classGroupId: 'term-s', classSubjectId: 'cs-term-advmath', title: 'Integrals test', date: '2026-02-14', coefficient: 2, maxScore: 20, kind: 'other' as const },
 ] as const
 
 export const SEED_EXTENDED_ASSESSMENT_RESULT_SCORES: Record<string, Partial<Record<'s9' | 's10', number>>> = {
-  e5: { s9: 15, s10: 17 },
-  e5b: { s9: 14, s10: 16 },
-  e5c: { s9: 13, s10: 15 },
+  'e5': { s9: 15, s10: 17 },
+  'e5b': { s9: 14, s10: 16 },
+  'e5c': { s9: 13, s10: 15 },
+  'e5-t1': { s9: 14, s10: 16 },
+  'e5-t2': { s9: 15, s10: 17 },
 }
 
 export const SEED_EXTENDED_STUDENT_FEES = [

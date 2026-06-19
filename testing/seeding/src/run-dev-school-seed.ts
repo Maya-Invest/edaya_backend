@@ -12,7 +12,6 @@ import {
   ActivityEnrollment,
   ActivityEnrollmentStatus,
   AssessmentKind,
-  AttendanceStatus,
   CalendarEventKind,
   CalendarEventScopeKind,
   ClassLogbookEntry,
@@ -37,25 +36,26 @@ import {
   SubjectMatter,
 } from '@edaya/core'
 import {
+  countSeedAssessmentResults,
+  countSeedAssessments,
+  countSeedPlanningSlots,
   DEV_AUTH_PASSWORD,
   parseSeedDate,
-
   parseSeedDateTime,
   planningSessionDate,
-  SEED_ABSENCE_RECORDS,
+  resolveSeedReferenceDate,
   SEED_ACADEMIC_PERIODS,
   SEED_ACADEMIC_YEAR_ID,
   SEED_ACTIVITY_ENROLLMENTS,
+  SEED_ALL_CALENDAR_EVENTS,
   SEED_ASSESSMENT_RESULT_SCORES,
   SEED_ASSESSMENTS,
-  SEED_CALENDAR_EVENTS,
   SEED_CLASS_SUBJECT_MATTERS,
   SEED_CLASS_SUBJECTS,
   SEED_CLASSES,
   SEED_CURRENCY,
   SEED_EXTRACURRICULAR_ACTIVITIES,
   SEED_FEES,
-  SEED_FINANCE_REFERENCE_DATE,
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
   SEED_HOMEWORK_ASSIGNMENTS,
@@ -79,6 +79,10 @@ import {
   seedPeriodIdForDate,
   splitDisplayName,
 } from '@edaya/dev-fixtures'
+import { seedAttachments } from './seed-attachments'
+import { seedAttendanceRecords } from './seed-attendance'
+import { seedCommunications } from './seed-communications'
+import { seedDiscipline } from './seed-discipline'
 import { seedReportCards } from './seed-report-cards'
 
 const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
@@ -126,6 +130,12 @@ export type DevSchoolSeedResult
       reportCardDefinitions: number
       reportCardSections: number
       reportCardResults: number
+      disciplinaryActions: number
+      studentDisciplinaryActions: number
+      announcements: number
+      announcementTargets: number
+      messageDeliveries: number
+      attachments: number
     }
 
 function joinHealthList(values: readonly string[]): string | undefined {
@@ -258,7 +268,7 @@ export async function runDevSchoolSeed(
       gradeLevelId: classGroup.gradeLevelId,
       name: classGroup.name,
       capacity: classGroup.capacity,
-      homeroomStaffId: classGroup.id === '6a' ? 'st3' : undefined,
+      homeroomStaffId: 'homeroomStaffId' in classGroup ? classGroup.homeroomStaffId : undefined,
     })
   }
 
@@ -426,8 +436,6 @@ export async function runDevSchoolSeed(
     other: AssessmentKind.Other,
   } as const
 
-  let assessmentResultCount = 0
-
   for (const assessment of SEED_ASSESSMENTS) {
     await service.createAssessment({
       id: assessment.id,
@@ -450,7 +458,6 @@ export async function runDevSchoolSeed(
         studentId,
         score,
       })
-      assessmentResultCount += 1
     }
   }
 
@@ -548,7 +555,7 @@ export async function runDevSchoolSeed(
 
   let calendarEventCount = 0
 
-  for (const event of SEED_CALENDAR_EVENTS) {
+  for (const event of SEED_ALL_CALENDAR_EVENTS) {
     const isNonSchoolDay = event.mockType === 'holiday'
       || event.mockType === 'vacation'
       || event.mockType === 'closure'
@@ -609,23 +616,9 @@ export async function runDevSchoolSeed(
     })
   }
 
-  for (const absence of SEED_ABSENCE_RECORDS) {
-    await service.createSession({
-      id: absence.sessionId,
-      classGroupId: absence.classGroupId,
-      classSubjectId: absence.classSubjectId,
-      title: 'Absence session',
-      kind: SessionKind.Course,
-      startsAt: parseSeedDateTime(absence.date, absence.startTime),
-      endsAt: parseSeedDateTime(absence.date, absence.endTime),
-    })
-    await service.recordAttendance({
-      id: absence.id,
-      studentId: absence.studentId,
-      sessionId: absence.sessionId,
-      status: AttendanceStatus.Absent,
-    })
-  }
+  const disciplineCounts = await seedDiscipline(service)
+
+  const attendanceRecordCount = await seedAttendanceRecords(application, service)
 
   for (const profile of SEED_STUDENT_HEALTH_PROFILES) {
     await service.upsertStudentHealthProfile({
@@ -651,7 +644,7 @@ export async function runDevSchoolSeed(
     })
   }
 
-  const financeReferenceDate = parseSeedDate(SEED_FINANCE_REFERENCE_DATE)
+  const financeReferenceDate = parseSeedDate(resolveSeedReferenceDate())
   const reportCardCounts = await seedReportCards(application, service)
 
   for (const fee of SEED_FEES) {
@@ -693,6 +686,9 @@ export async function runDevSchoolSeed(
     })
   }
 
+  const communicationsCounts = await seedCommunications(service)
+  const attachmentCounts = await seedAttachments(service)
+
   return {
     status: 'seeded',
     schoolId: SEED_SCHOOL_ID,
@@ -711,10 +707,10 @@ export async function runDevSchoolSeed(
     payments: SEED_PAYMENTS.length,
     classSubjectMatters: SEED_CLASS_SUBJECT_MATTERS.length,
     resources: SEED_RESOURCES.length,
-    schedules: SEED_PLANNING_SLOTS.length,
-    sessions: SEED_PLANNING_SLOTS.length,
-    assessments: SEED_ASSESSMENTS.length,
-    assessmentResults: assessmentResultCount,
+    schedules: countSeedPlanningSlots(),
+    sessions: countSeedPlanningSlots(),
+    assessments: countSeedAssessments(),
+    assessmentResults: countSeedAssessmentResults(),
     homeworkAssignments: SEED_HOMEWORK_ASSIGNMENTS.length,
     homeworkSubmissions: SEED_HOMEWORK_SUBMISSIONS.length,
     activities: SEED_EXTRACURRICULAR_ACTIVITIES.length,
@@ -722,12 +718,18 @@ export async function runDevSchoolSeed(
     classLogbookEntries: SEED_TEACHING_LOG_ENTRIES.length,
     calendarEvents: calendarEventCount,
     incidents: SEED_INCIDENTS.length,
-    attendanceRecords: SEED_ABSENCE_RECORDS.length,
+    attendanceRecords: attendanceRecordCount,
     studentHealthProfiles: SEED_STUDENT_HEALTH_PROFILES.length,
     studentNotes: SEED_PEDAGOGICAL_NOTES.length,
     gradeScales: reportCardCounts.gradeScales,
     reportCardDefinitions: reportCardCounts.definitions,
     reportCardSections: reportCardCounts.sections,
     reportCardResults: reportCardCounts.results,
+    disciplinaryActions: disciplineCounts.disciplinaryActions,
+    studentDisciplinaryActions: disciplineCounts.studentDisciplinaryActions,
+    announcements: communicationsCounts.announcements,
+    announcementTargets: communicationsCounts.announcementTargets,
+    messageDeliveries: communicationsCounts.messageDeliveries,
+    attachments: attachmentCounts.attachments,
   }
 }

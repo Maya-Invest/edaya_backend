@@ -21,6 +21,8 @@ const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [
   Permission.QUERY_CLASS_DIRECTORY_READ,
   Permission.QUERY_ENROLLMENT_HISTORY_READ,
   Permission.QUERY_CLASS_CURRICULUM_READ,
+  Permission.QUERY_OVERVIEW_READ,
+  Permission.QUERY_OVERDUE_FEES_READ,
 ] as const
 
 /** Entity list endpoints used by students/guardians pages. */
@@ -302,6 +304,20 @@ export async function runDevAccessAssignmentsSeed(application: SeedApplication):
     classGroupId: '6a',
   }))
 
+  await application.repositories.staffAssignments.save(new StaffAssignment({
+    id: 'sa-st2-6b',
+    staffId: 'st2',
+    responsibility: 'Homeroom',
+    classGroupId: '6b',
+  }))
+
+  await application.repositories.staffAssignments.save(new StaffAssignment({
+    id: 'sa-st3-5a',
+    staffId: 'st3',
+    responsibility: 'Homeroom',
+    classGroupId: '5a',
+  }))
+
   for (const offering of SEED_CLASS_SUBJECTS) {
     await application.repositories.staffAssignments.save(new StaffAssignment({
       id: `sa-${offering.teacherId}-${offering.id}`,
@@ -315,7 +331,7 @@ export async function runDevAccessAssignmentsSeed(application: SeedApplication):
     status: 'seeded',
     roles: 4,
     assignments: 7,
-    staffAssignments: 3 + SEED_CLASS_SUBJECTS.length,
+    staffAssignments: 5 + SEED_CLASS_SUBJECTS.length,
   }
 }
 
