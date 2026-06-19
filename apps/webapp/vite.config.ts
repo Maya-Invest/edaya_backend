@@ -11,6 +11,8 @@ export default defineConfig({
 			'/auth': { target: apiOrigin, changeOrigin: true },
 			'/doc': { target: apiOrigin, changeOrigin: true },
 			'/reference': { target: apiOrigin, changeOrigin: true },
+			'/graphql': { target: apiOrigin, changeOrigin: true },
+			'/graphiql': { target: apiOrigin, changeOrigin: true },
 		},
 	},
 });

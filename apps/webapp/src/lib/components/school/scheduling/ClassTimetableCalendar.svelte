@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { setContext } from 'svelte';
-	import { Calendar, Willow, type CalendarInstanceApi } from '@svar-ui/svelte-calendar';
-	import type { EventCss } from '@svar-ui/svelte-calendar';
-	import { reschedulePlanningSlotMutation } from '$lib/api/mutations/planning.mutations';
 	import type { PlanningEvent } from '$lib/types/school';
+	import type { EventCss, CalendarInstanceApi } from '@svar-ui/svelte-calendar';
+	import type { PlanningSlotFromDates } from './planning-calendar';
+	import type { PlanningTimetableContext } from './planning-timetable-context';
+	import { browser } from '$app/environment';
+	import { reschedulePlanningSlotMutation } from '$lib/api/mutations/planning.mutations';
 	import { lang, t } from '$lib/i18n';
-	import PlanningEventContent from './PlanningEventContent.svelte';
-	import PlanningRescheduleConfirmModal from './PlanningRescheduleConfirmModal.svelte';
-	import SvarCalendarLocale from './SvarCalendarLocale.svelte';
+	import { Calendar, Willow } from '@svar-ui/svelte-calendar';
+	import { setContext } from 'svelte';
 	import {
 		calendarSlotFromDates,
 		formatPlanningSlotLabel,
@@ -17,12 +16,15 @@
 		planningSlotSignature,
 		subjectToneClass,
 		timetableHours,
-		type PlanningSlotFromDates,
+
 	} from './planning-calendar';
 	import {
 		PLANNING_TIMETABLE_CONTEXT,
-		type PlanningTimetableContext,
+
 	} from './planning-timetable-context';
+	import PlanningEventContent from './PlanningEventContent.svelte';
+	import PlanningRescheduleConfirmModal from './PlanningRescheduleConfirmModal.svelte';
+	import SvarCalendarLocale from './SvarCalendarLocale.svelte';
 
 	const {
 		events,
@@ -87,7 +89,8 @@
 	setContext<PlanningTimetableContext>(PLANNING_TIMETABLE_CONTEXT, {
 		onAttendance: (eventId) => {
 			const planningEvent = events.find(event => event.id === eventId);
-			if (planningEvent) onAttendance?.(planningEvent);
+			if (planningEvent)
+				onAttendance?.(planningEvent);
 		},
 	});
 
@@ -103,30 +106,37 @@
 	};
 
 	function handleSelectEvent(payload: unknown) {
-		if (!payload || typeof payload !== 'object' || !('id' in payload)) return;
+		if (!payload || typeof payload !== 'object' || !('id' in payload))
+			return;
 		const id = payload.id;
-		if (id == null) return;
+		if (id == null)
+			return;
 		const planningEvent = events.find(event => event.id === String(id));
-		if (planningEvent) onSelect?.(planningEvent);
+		if (planningEvent)
+			onSelect?.(planningEvent);
 	}
 
 	function handleUpdateEvent(payload: unknown) {
-		if (!editable) return false;
+		if (!editable)
+			return false;
 		if (!payload || typeof payload !== 'object' || !('id' in payload) || !('event' in payload)) {
 			return false;
 		}
 
 		const id = payload.id;
 		const update = payload.event;
-		if (id == null || !update || typeof update !== 'object') return false;
+		if (id == null || !update || typeof update !== 'object')
+			return false;
 
 		const planningEvent = events.find(event => event.id === String(id));
-		if (!planningEvent) return false;
+		if (!planningEvent)
+			return false;
 
 		const [baseline] = mapPlanningToCalendarEvents([planningEvent], anchorDate);
 		const start = 'start' in update && update.start instanceof Date ? update.start : baseline.start;
 		const end = 'end' in update && update.end instanceof Date ? update.end : baseline.end;
-		if (!start || !end || end <= start) return false;
+		if (!start || !end || end <= start)
+			return false;
 
 		const slot = calendarSlotFromDates(start, end);
 		const nextSignature = planningSlotSignature({
@@ -158,13 +168,15 @@
 	}
 
 	function closeConfirm() {
-		if (confirmBusy) return;
+		if (confirmBusy)
+			return;
 		confirmOpen = false;
 		pendingReschedule = null;
 	}
 
 	async function confirmReschedule() {
-		if (!pendingReschedule) return;
+		if (!pendingReschedule)
+			return;
 
 		confirmBusy = true;
 		const { event, slot } = pendingReschedule;
@@ -180,7 +192,8 @@
 		});
 
 		confirmBusy = false;
-		if (!ok) return;
+		if (!ok)
+			return;
 
 		confirmOpen = false;
 		pendingReschedule = null;

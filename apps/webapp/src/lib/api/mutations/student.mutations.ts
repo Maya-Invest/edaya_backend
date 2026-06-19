@@ -1,7 +1,7 @@
+import type { PedagogicalNote } from '$lib/types/school';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
-import type { PedagogicalNote } from '$lib/types/school';
 
 type StudentNoteCategory = 'behavior' | 'work' | 'progress' | 'encouragement';
 type StudentNoteVisibility = 'staff' | 'admin_only' | 'guardian_visible';

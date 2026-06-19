@@ -10,14 +10,14 @@ export const TIMETABLE_DAY_OFFSET: Record<PlanningEvent['day'], number> = {
 
 export const TIMETABLE_DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
-export type ScheduleDayOfWeek =
-	| 'monday'
-	| 'tuesday'
-	| 'wednesday'
-	| 'thursday'
-	| 'friday'
-	| 'saturday'
-	| 'sunday';
+export type ScheduleDayOfWeek
+	= | 'monday'
+		| 'tuesday'
+		| 'wednesday'
+		| 'thursday'
+		| 'friday'
+		| 'saturday'
+		| 'sunday';
 
 const DAY_LABEL_TO_SCHEDULE: Record<PlanningEvent['day'], ScheduleDayOfWeek> = {
 	Mon: 'monday',
@@ -164,13 +164,14 @@ export function mapPlanningToCalendarEvents(
 }
 
 export function timetableHours(events: PlanningEvent[]): { startHour: number; endHour: number } {
-	if (events.length === 0) return { startHour: 7, endHour: 18 };
+	if (events.length === 0)
+		return { startHour: 7, endHour: 18 };
 
 	let minHour = 24;
 	let maxMinutes = 0;
 
 	for (const event of events) {
-		const [startHour = 0, startMinute = 0] = event.start.split(':').map(Number);
+		const [startHour = 0] = event.start.split(':').map(Number);
 		const [endHour = 0, endMinute = 0] = event.end.split(':').map(Number);
 		minHour = Math.min(minHour, startHour);
 		maxMinutes = Math.max(maxMinutes, endHour * 60 + endMinute);

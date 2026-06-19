@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { setContext, type Snippet } from 'svelte';
+	import type { Lang } from '$lib/i18n';
+	import type { Snippet } from 'svelte';
 	import { en as calendarEn } from '@svar-ui/calendar-locales';
 	import calendarFr from '@svar-ui/calendar-locales/fr.js';
 	import { en as coreEn, fr as coreFr } from '@svar-ui/core-locales';
 	import { locale as createLocale } from '@svar-ui/lib-dom';
-	import type { Lang } from '$lib/i18n';
+	import { setContext } from 'svelte';
 
 	const { lang, children }: { lang: Lang; children: Snippet } = $props();
 

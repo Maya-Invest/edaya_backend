@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { PlanningEvent, ClassNode, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { canEditTimetable } from '$lib/permissions';
 	import { t } from '$lib/i18n';
 	import { Plus } from '$lib/icons';
+	import { canEditTimetable } from '$lib/permissions';
 	import AttendanceFlow from './AttendanceFlow.svelte';
 	import ClassTimetableCalendar from './ClassTimetableCalendar.svelte';
 

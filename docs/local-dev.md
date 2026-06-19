@@ -42,12 +42,13 @@ cd apps/webapp && bun dev
 | Webapp | http://localhost:5173 |
 | API | http://localhost:9999 |
 | OpenAPI reference | http://localhost:9999/reference |
+| GraphiQL (entity API) | http://localhost:9999/graphiql |
 
 ## How the webapp reaches the API
 
 - **Browser client** — `$lib/api/school-client.ts` wraps `@edaya/api-client` with `createBrowserTransport()`. Requests use `credentials: 'include'` for Better Auth session cookies and send `X-Academic-Year-Id` from shell context.
 - **API base URL** — `PUBLIC_API_URL` in `apps/webapp/.env`. Leave **empty** in local dev so requests are same-origin (`/core/...`, `/auth/...`). Set to the API origin in production builds (e.g. `https://api.edaya.softilab.dev`).
-- **Vite proxy (dev)** — `vite.config.ts` forwards `/core`, `/auth`, `/doc`, and `/reference` to `API_URL` (default `http://localhost:9999`).
+- **Vite proxy (dev)** — `vite.config.ts` forwards `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` to `API_URL` (default `http://localhost:9999`).
 - **Bootstrap** — `bootstrapSession()` loads Better Auth session + `/core/authorization/effective-grants` on app start. List/read data flows through `$lib/api/*-data.ts` and `$lib/queries/*`.
 
 See [webapp-migration-plan.md](../sprints/done/webapp-migration-plan.md) for the completed mock → API migration.

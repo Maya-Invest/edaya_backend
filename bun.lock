@@ -23,6 +23,7 @@
         "@edaya/betterauth-d1-migrations": "workspace:*",
         "@edaya/core": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
+        "@hono/graphql-server": "^0.7.0",
         "@hono/node-server": "^1.14.1",
         "@hono/zod-openapi": "^0.16.4",
         "@scalar/hono-api-reference": "^0.8.8",
@@ -30,6 +31,7 @@
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
         "drizzle-orm": "^0.39.0",
+        "graphql": "^16.9.0",
         "hono": "^4.7.9",
         "hono-pino": "^0.3.0",
         "pino": "^9.6.0",
@@ -382,6 +384,8 @@
     "@floating-ui/dom": ["@floating-ui/dom@1.7.6", "", { "dependencies": { "@floating-ui/core": "^1.7.5", "@floating-ui/utils": "^0.2.11" } }, "sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
+
+    "@hono/graphql-server": ["@hono/graphql-server@0.7.0", "", { "dependencies": { "graphql": "^16.5.0" }, "peerDependencies": { "hono": ">=3.0.0" } }, "sha512-TZIqVmcG/ULefzJtKNcNB9LKv3ZNfszwkrKNYjZD9ZSdhfglE3VEEYU6D0kNUlfjKmrhbksiHtp3G2mfMnUf1g=="],
 
     "@hono/node-server": ["@hono/node-server@1.19.14", "", { "peerDependencies": { "hono": "^4" } }, "sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw=="],
 
@@ -1062,6 +1066,8 @@
     "globrex": ["globrex@0.1.2", "", {}, "sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg=="],
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
+
+    "graphql": ["graphql@16.14.2", "", {}, "sha512-Chq1s4CY7jmh8gO2qvLIJyfCDIN+EHLFW/9iShnp1z8FjBQMoodWP1kDC36VAMXXIvAjj4ARa7ntfAV2BrjsbA=="],
 
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 

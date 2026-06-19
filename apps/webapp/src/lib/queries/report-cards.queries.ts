@@ -6,8 +6,8 @@ import type {
 import { academicContext } from '$lib/academic/context.svelte';
 import { loadReportCardsData } from '$lib/api/report-cards-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
-import { reportCardsContext } from '$lib/report-cards/context.svelte';
 import { resolvePageLoad } from '$lib/queries/page-status';
+import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 export async function refreshReportCardsLayout(): Promise<void> {
 	const data = await getReportCardsLayoutData();

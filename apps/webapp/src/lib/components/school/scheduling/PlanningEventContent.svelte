@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
-	import { ClipboardCheck, MapPin } from '$lib/icons';
+	import type { PlanningTimetableContext } from './planning-timetable-context';
 	import { t } from '$lib/i18n';
+	import { ClipboardCheck, MapPin } from '$lib/icons';
+	import { getContext } from 'svelte';
 	import {
 		PLANNING_TIMETABLE_CONTEXT,
-		type PlanningTimetableContext,
+
 	} from './planning-timetable-context';
 
 	const { event }: { event: Record<string, unknown>; mode?: string } = $props();
@@ -12,17 +13,21 @@
 	const actions = getContext<PlanningTimetableContext>(PLANNING_TIMETABLE_CONTEXT);
 
 	function formatTime(value: unknown) {
-		if (!(value instanceof Date)) return '';
+		if (!(value instanceof Date))
+			return '';
 		return value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
 
 	function handleAttendance(clickEvent: MouseEvent) {
 		clickEvent.stopPropagation();
-		if (typeof actions?.onAttendance !== 'function') return;
+		if (typeof actions?.onAttendance !== 'function')
+			return;
 		const target = clickEvent.currentTarget;
-		if (!(target instanceof HTMLElement)) return;
+		if (!(target instanceof HTMLElement))
+			return;
 		const id = target.dataset.eventId;
-		if (id) actions.onAttendance(id);
+		if (id)
+			actions.onAttendance(id);
 	}
 </script>
 

@@ -72,9 +72,14 @@ export const field = {
 };
 
 const queryOptionFields = new WeakMap<z.ZodTypeAny, readonly string[]>();
+const queryOptionFieldSchemas = new WeakMap<z.ZodTypeAny, Record<string, z.ZodTypeAny>>();
 
 export function getQueryOptionFields(schema: z.ZodTypeAny): readonly string[] {
   return queryOptionFields.get(schema) ?? [];
+}
+
+export function getQueryOptionFieldSchemas(schema: z.ZodTypeAny): Record<string, z.ZodTypeAny> {
+  return queryOptionFieldSchemas.get(schema) ?? {};
 }
 
 function createFieldFilterSchema(valueSchema: z.ZodTypeAny) {
@@ -130,6 +135,7 @@ export function createQueryOptionsSchema<T extends Record<string, any>>(
   );
 
   queryOptionFields.set(queryOptionsSchema, Object.keys(allowedFields));
+  queryOptionFieldSchemas.set(queryOptionsSchema, allowedFields as Record<string, z.ZodTypeAny>);
 
   return queryOptionsSchema;
 }

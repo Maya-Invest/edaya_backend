@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import PlanningView from '$lib/components/school/scheduling/PlanningView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
-	import { academicContext } from '$lib/academic/context.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';

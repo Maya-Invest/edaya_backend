@@ -1,11 +1,12 @@
+import type { ScheduleDayOfWeek } from '$lib/components/school/scheduling/planning-calendar';
+import type { PlanningEvent } from '$lib/types/school';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import {
 	sessionInstantsForSlot,
-	type ScheduleDayOfWeek,
+
 } from '$lib/components/school/scheduling/planning-calendar';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
-import type { PlanningEvent } from '$lib/types/school';
 
 export async function reschedulePlanningSlotMutation(input: {
 	sessionId: string;

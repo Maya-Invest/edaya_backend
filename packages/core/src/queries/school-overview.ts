@@ -581,7 +581,7 @@ export async function buildSchoolOverview(
     && payment.paymentDate >= recentPaymentStart
     && payment.paymentDate <= referenceDate,
   )
-  const recentPaymentAmount = recentPayments.reduce((sum, payment) => sum + payment.amount, 0)
+  const recentPaymentAmount = recentPayments.reduce((sum, payment) => sum + payment.amount.amount, 0)
 
   const unresolvedDisciplineCount = studentDisciplinaryActions.filter(
     action => action.status === StudentDisciplinaryActionStatus.Active,
