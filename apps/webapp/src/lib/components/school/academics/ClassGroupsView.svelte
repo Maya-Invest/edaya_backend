@@ -5,6 +5,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { readClassGroupListFilters, writeClassGroupListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
 	import { Layers, Pencil, Plus, Search, Trash2 } from '$lib/icons';
@@ -95,10 +96,18 @@
 			</div>
 		{/snippet}
 		{#snippet primary()}
-			<Button size="sm" class="rounded-full" onclick={openCreate}>
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('classGroups.add')}
-			</Button>
+			<PermissionGate
+				permission="SCHOOL_STRUCTURE_CONFIGURE"
+				mode="disable"
+				tooltip={$t('classGroups.permissionConfigure')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button size="sm" class="rounded-full" {disabled} {title} onclick={openCreate}>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('classGroups.add')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
 		{/snippet}
 	</ListPageHeader>
 
@@ -131,22 +140,32 @@
 									<td class="px-4 py-3 font-mono">{cls.studentCount}</td>
 									<td class="px-4 py-3">
 										<div class="flex justify-end gap-1">
-											<button
-												type="button"
-												class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-												title={$t('classGroups.edit')}
-												onclick={() => openEdit(cls.id)}
+											<PermissionGate
+												permission="SCHOOL_STRUCTURE_CONFIGURE"
+												mode="disable"
+												tooltip={$t('classGroups.permissionConfigure')}
 											>
-												<Pencil class="h-3.5 w-3.5" />
-											</button>
-											<button
-												type="button"
-												class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-												title={$t('classGroups.delete')}
-												onclick={() => handleDelete(cls.id)}
-											>
-												<Trash2 class="h-3.5 w-3.5" />
-											</button>
+												{#snippet children({ disabled, title })}
+													<button
+														type="button"
+														class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+														title={title ?? $t('classGroups.edit')}
+														{disabled}
+														onclick={() => openEdit(cls.id)}
+													>
+														<Pencil class="h-3.5 w-3.5" />
+													</button>
+													<button
+														type="button"
+														class="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+														title={title ?? $t('classGroups.delete')}
+														{disabled}
+														onclick={() => handleDelete(cls.id)}
+													>
+														<Trash2 class="h-3.5 w-3.5" />
+													</button>
+												{/snippet}
+											</PermissionGate>
 										</div>
 									</td>
 								</tr>

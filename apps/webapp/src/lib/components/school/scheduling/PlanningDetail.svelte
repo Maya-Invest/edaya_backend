@@ -4,6 +4,7 @@
 	import { MapPin } from '$lib/icons';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import PlanningFormModal from './PlanningFormModal.svelte';
 
 	const { s }: { s: PlanningEvent } = $props();
@@ -44,6 +45,15 @@
 	</div>
 
 	<DrawerActionBar>
-		<PlanningFormModal event={s} />
+		<PermissionGate
+			permission="TIMETABLE_UPDATE"
+			classId={s.classId}
+			mode="disable"
+			tooltip={$t('calendar.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<PlanningFormModal event={s} {disabled} {title} />
+			{/snippet}
+		</PermissionGate>
 	</DrawerActionBar>
 </div>

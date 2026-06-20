@@ -8,6 +8,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { readAcademicAdminListFilters, writeAcademicAdminListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
 	import { CalendarRange, ChevronDown, Plus, Search } from '$lib/icons';
@@ -111,10 +112,18 @@
 			</div>
 		{/snippet}
 		{#snippet primary()}
-			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('academic.createYear')}
-			</Button>
+			<PermissionGate
+				permission="SCHOOL_LIFECYCLE_MANAGE"
+				mode="disable"
+				tooltip={$t('academic.permissionLifecycle')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button size="sm" class="rounded-full" {disabled} {title} onclick={() => (createOpen = true)}>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('academic.createYear')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
 		{/snippet}
 	</ListPageHeader>
 
@@ -154,13 +163,23 @@
 					<div class="border-t border-border px-5 py-4">
 						{#if year.status === 'draft'}
 							<div class="mb-4 flex justify-end">
-								<Button
-									size="sm"
-									class="rounded-full"
-									onclick={() => handlePublishYear(year.id)}
+								<PermissionGate
+									permission="SCHOOL_LIFECYCLE_MANAGE"
+									mode="disable"
+									tooltip={$t('academic.permissionLifecycle')}
 								>
-									{$t('academic.publishYear')}
-								</Button>
+									{#snippet children({ disabled, title })}
+										<Button
+											size="sm"
+											class="rounded-full"
+											{disabled}
+											{title}
+											onclick={() => handlePublishYear(year.id)}
+										>
+											{$t('academic.publishYear')}
+										</Button>
+									{/snippet}
+								</PermissionGate>
 							</div>
 						{/if}
 
@@ -198,14 +217,24 @@
 												: $t('academic.draft')}
 										</span>
 										{#if period.status === 'draft'}
-											<Button
-												size="sm"
-												variant="outline"
-												class="rounded-full"
-												onclick={() => handlePublishPeriod(period.id)}
+											<PermissionGate
+												permission="SCHOOL_LIFECYCLE_MANAGE"
+												mode="disable"
+												tooltip={$t('academic.permissionLifecycle')}
 											>
-												{$t('academic.publishPeriod')}
-											</Button>
+												{#snippet children({ disabled, title })}
+													<Button
+														size="sm"
+														variant="outline"
+														class="rounded-full"
+														{disabled}
+														{title}
+														onclick={() => handlePublishPeriod(period.id)}
+													>
+														{$t('academic.publishPeriod')}
+													</Button>
+												{/snippet}
+											</PermissionGate>
 										{/if}
 									</div>
 								</li>

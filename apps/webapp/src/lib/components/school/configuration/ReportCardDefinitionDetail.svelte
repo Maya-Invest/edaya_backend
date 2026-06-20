@@ -3,6 +3,7 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { publishReportCardDefinitionMutation } from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { t } from '$lib/i18n';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { toast } from '$lib/toast.svelte';
@@ -53,9 +54,17 @@
 
 	{#if live.status === 'draft'}
 		<div class="flex justify-end">
-			<Button size="sm" class="rounded-full" onclick={publish}>
-				{$t('reportCards.publishModel')}
-			</Button>
+			<PermissionGate
+				permission="REPORT_CARD_PUBLISH"
+				mode="disable"
+				tooltip={$t('reportCards.permissionPublish')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button size="sm" class="rounded-full" {disabled} {title} onclick={publish}>
+						{$t('reportCards.publishModel')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
 		</div>
 	{/if}
 

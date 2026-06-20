@@ -2,6 +2,7 @@
 	import type { Subject, SubjectCategory } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Clock, Plus, User } from '$lib/icons';
@@ -55,11 +56,20 @@
 			title={$t('subjects.count', { n: subjects.length })}
 		>
 			{#snippet primary()}
-				<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
-					<Plus class="mr-1 h-4 w-4" />
-					{$t('subjects.newSubject')}
-				</Button>
-			{/snippet}
+			<PermissionGate
+				permission="ACADEMIC_PROGRAM_CREATE"
+				classId={classId}
+				mode="disable"
+				tooltip={$t('subjects.permissionCreate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button size="sm" class="rounded-full" {disabled} {title} onclick={() => (createOpen = true)}>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('subjects.newSubject')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
 		</ListPageHeader>
 
 		<SubjectFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />

@@ -260,7 +260,7 @@
 				<span class="text-muted-foreground">Statut :</span> {$t(`studentStatus.${s.status}`)}
 			</div>
 			<DrawerActionBar>
-				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
+				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip={$t('student.permissionUpdate')}>
 					{#snippet children({ disabled, title })}
 						<StudentProfileEditModal {s} {disabled} {title} />
 					{/snippet}
@@ -332,7 +332,7 @@
 						</ul>
 					</div>
 				{/if}
-				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
+				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip={$t('student.permissionUpdate')}>
 					{#snippet children({ disabled, title })}
 						<StudentGuardianLinkModal {s} {disabled} {title} />
 					{/snippet}
@@ -368,7 +368,7 @@
 										<PermissionGate
 											permission="STUDENT_UPDATE"
 											mode="disable"
-											tooltip="Droit STUDENT_UPDATE requis."
+											tooltip={$t('student.permissionUpdate')}
 										>
 											{#snippet children({ disabled, title })}
 												<StudentNoteModal {s} note={n} {disabled} {title} />
@@ -394,7 +394,7 @@
 						{/each}
 					</ul>
 				{/if}
-				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
+				<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip={$t('student.permissionUpdate')}>
 					{#snippet children({ disabled, title })}
 						<StudentNoteModal {s} {disabled} {title} />
 					{/snippet}

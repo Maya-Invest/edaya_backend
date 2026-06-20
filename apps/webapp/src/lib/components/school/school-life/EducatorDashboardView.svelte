@@ -6,6 +6,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { readEducatorDashboardListFilters, writeEducatorDashboardListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
@@ -342,17 +343,33 @@
 </div>
 
 {#snippet absencesAction()}
-	<Button size="sm" class="rounded-full">
-		<Plus class="mr-1 h-3.5 w-3.5" />
-		{$t('educator.logAbsence')}
-	</Button>
+	<PermissionGate
+		permission="ATTENDANCE_RECORD"
+		mode="disable"
+		tooltip={$t('educator.permissionAbsence')}
+	>
+		{#snippet children({ disabled, title })}
+			<Button size="sm" class="rounded-full" {disabled} {title}>
+				<Plus class="mr-1 h-3.5 w-3.5" />
+				{$t('educator.logAbsence')}
+			</Button>
+		{/snippet}
+	</PermissionGate>
 {/snippet}
 
 {#snippet incidentsAction()}
-	<Button size="sm" class="rounded-full">
-		<Plus class="mr-1 h-3.5 w-3.5" />
-		{$t('educator.logIncident')}
-	</Button>
+	<PermissionGate
+		permission="DISCIPLINE_CREATE"
+		mode="disable"
+		tooltip={$t('educator.permissionIncident')}
+	>
+		{#snippet children({ disabled, title })}
+			<Button size="sm" class="rounded-full" {disabled} {title}>
+				<Plus class="mr-1 h-3.5 w-3.5" />
+				{$t('educator.logIncident')}
+			</Button>
+		{/snippet}
+	</PermissionGate>
 {/snippet}
 
 {#snippet absencesList()}

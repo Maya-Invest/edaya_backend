@@ -5,9 +5,11 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { t } from '$lib/i18n';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import ActivityFormModal from './ActivityFormModal.svelte';
 	import {
 		ENROLL_STATUS_STYLE,
@@ -63,7 +65,15 @@
 
 <div class="space-y-5">
 	<DrawerActionBar>
-		<ActivityFormModal activity={a} />
+		<PermissionGate
+			permission="DISCIPLINE_UPDATE"
+			mode="disable"
+			tooltip={$t('activities.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<ActivityFormModal activity={a} {disabled} {title} />
+			{/snippet}
+		</PermissionGate>
 	</DrawerActionBar>
 
 	<div>
@@ -88,14 +98,27 @@
 	<div class="rounded-2xl border border-border bg-card">
 		<div class="flex items-center justify-between border-b border-border px-4 py-2.5">
 			<p class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Étudiants inscrits</p>
-			<Dialog.Root bind:open={openAdd}>
-				<Dialog.Trigger>
-					{#snippet child({ props })}
-						<Button {...props} size="sm" variant="outline" class="h-7 rounded-full text-xs">
-							<Plus class="mr-1 h-3.5 w-3.5" /> Ajouter un étudiant
-						</Button>
-					{/snippet}
-				</Dialog.Trigger>
+			<PermissionGate
+				permission="DISCIPLINE_CREATE"
+				mode="disable"
+				tooltip={$t('activities.permissionCreate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Dialog.Root bind:open={openAdd}>
+						<Dialog.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									size="sm"
+									variant="outline"
+									class="h-7 rounded-full text-xs"
+									{disabled}
+									title={title}
+								>
+									<Plus class="mr-1 h-3.5 w-3.5" /> Ajouter un étudiant
+								</Button>
+							{/snippet}
+						</Dialog.Trigger>
 				<Dialog.Content class="w-[50vw] max-w-[50vw] sm:max-w-[50vw]">
 					<Dialog.Header>
 						<Dialog.Title>Ajouter un étudiant à « {a.name} »</Dialog.Title>
@@ -206,7 +229,9 @@
 						<Button variant="outline" class="rounded-full" onclick={() => (openAdd = false)}>Fermer</Button>
 					</Dialog.Footer>
 				</Dialog.Content>
-			</Dialog.Root>
+					</Dialog.Root>
+				{/snippet}
+			</PermissionGate>
 		</div>
 		{#if enrollments.length === 0}
 			<p class="px-4 py-6 text-center text-sm text-muted-foreground">Aucun étudiant inscrit.</p>

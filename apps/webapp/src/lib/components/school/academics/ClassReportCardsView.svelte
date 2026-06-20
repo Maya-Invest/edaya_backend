@@ -183,7 +183,7 @@
 			<PermissionGate
 				permission="REPORT_CARD_GENERATE"
 				mode="disable"
-				tooltip={$t('reportCards.generateAll')}
+				tooltip={$t('reportCards.permissionGenerate')}
 			>
 				{#snippet children({ disabled, title })}
 					<Button class="rounded-full" {disabled} {title} onclick={generateAll}>

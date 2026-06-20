@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { readGradeScaleListFilters, writeGradeScaleListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
 	import { Plus, Search } from '$lib/icons';
@@ -65,10 +66,18 @@
 			</div>
 		{/snippet}
 		{#snippet primary()}
-			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('gradeScales.add')}
-			</Button>
+			<PermissionGate
+				permission="REPORT_CARD_CONFIGURE"
+				mode="disable"
+				tooltip={$t('gradeScales.permissionConfigure')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button size="sm" class="rounded-full" {disabled} {title} onclick={() => (createOpen = true)}>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('gradeScales.add')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
 		{/snippet}
 	</ListPageHeader>
 

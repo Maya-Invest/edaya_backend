@@ -2,6 +2,7 @@
 	import type { ReportCardResult } from '$lib/types/report-cards';
 	import { publishReportCardResultMutation } from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -120,7 +121,17 @@
 
 	{#if live.status === 'generated'}
 		<div class="flex justify-end">
-			<Button class="rounded-full" onclick={publish}>{$t('reportCards.publish')}</Button>
+			<PermissionGate
+				permission="REPORT_CARD_PUBLISH"
+				mode="disable"
+				tooltip={$t('reportCards.permissionPublish')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button class="rounded-full" {disabled} {title} onclick={publish}>
+						{$t('reportCards.publish')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
 		</div>
 	{/if}
 </div>

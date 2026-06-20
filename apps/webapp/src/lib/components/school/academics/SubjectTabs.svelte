@@ -5,6 +5,7 @@
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { cn } from '$lib/utils';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import SubjectFormModal from './SubjectFormModal.svelte';
 
 	const { s }: { s: Subject } = $props();
@@ -63,7 +64,16 @@
 	</div>
 
 	<DrawerActionBar>
-		<SubjectFormModal subject={s} />
+		<PermissionGate
+			permission="ACADEMIC_PROGRAM_UPDATE"
+			classId={s.classId}
+			mode="disable"
+			tooltip={$t('subjects.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<SubjectFormModal subject={s} {disabled} {title} />
+			{/snippet}
+		</PermissionGate>
 	</DrawerActionBar>
 
 	<div class="flex items-center gap-1 rounded-full border border-border bg-secondary/40 p-1 text-xs">

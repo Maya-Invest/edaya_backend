@@ -12,7 +12,7 @@ Living plan to align `apps/webapp` with:
 - [Webapp mock → API migration plan](./done/webapp-mock-migration-plan.md) — read/write API wiring (coupled with mutation work below)
 - Cursor rule: `.cursor/rules/app-shell.mdc`
 
-**Last updated:** 2026-06-17 (Phase 3 — rollout `ListPageHeader` routé complet ; infra double-loading + tones ; Phase 3b orphelins)
+**Last updated:** 2026-06-17 (Phase 5 lot 1 — PermissionGate rollout)
 
 ### Progress tracker
 
@@ -30,7 +30,7 @@ Check boxes when a phase (or sub-phase) exit criteria are met. Entity-level boxe
 - [ ] **Phase 3** — List infrastructure + `ListPageHeader` rollout routé (**en cours** — infra restante : cursor API BFF)
 - [ ] **Phase 3b** — Vues orphelines (composant prêt, **pas de route**)
 - [ ] **Phase 4** — Shell polish + accessibility
-- [ ] **Phase 5** — Permissions pass
+- [ ] **Phase 5** — Permissions pass (**en cours** — lot 1 listes + drawers config)
 
 ---
 
@@ -658,13 +658,31 @@ Composants migrés (`ListPageHeader` + filtres URL) mais **non montés** dans `a
 
 Map each write action to a grant in `permissions.ts`; apply `PermissionGate` to every CTA from Phases 1–3. Denied actions: disabled + tooltip (e.g. "Requires director role").
 
-- [ ] Student — `STUDENT_CREATE`, `STUDENT_UPDATE`, `ENROLLMENT_UPDATE`
-- [ ] Guardian — create/update gates
-- [ ] Grades — `canEditGrades()` on all grade entry paths
-- [ ] Finance — `PAYMENT_RECORD`, `PAYMENT_CANCEL`, `PAYMENT_REVERSE`, `FINANCIAL_CONFIG_UPDATE`
-- [ ] Staff / roles — `STAFF_UPDATE`, `ACCESS_CONTROL_CONFIGURE`, `ACCESS_CONTROL_ASSIGN`
-- [ ] School life — `canEditSchoolLife()` on incidents, events
-- [ ] List primary CTAs gated (not only drawer actions)
+**Infrastructure (lot 0)**
+
+- [x] `Permissions` catalogue export + helpers (`canCreateStudent`, `canUpdateTimetable`, …) dans `permissions.ts`
+- [x] `PermissionGate` — support `permissions[]` + `match: 'any' | 'all'` en plus de `permission` seul
+
+**Entity gates**
+
+- [x] Student — `STUDENT_CREATE` listes ; `STUDENT_UPDATE` / `GRADE_INPUT` / `ATTENDANCE_RECORD` / `DISCIPLINE_CREATE` drawer (`StudentTabs`) ; i18n tooltips
+- [x] Guardian — `PARENT_CREATE` liste ; `PARENT_UPDATE` drawer
+- [ ] Grades — `GRADE_INPUT` sur toutes les entrées (éval drawer footer si manquant)
+- [x] Finance — `PAYMENT_RECORD` / `FINANCIAL_CONFIG_CONFIGURE` (`FinanceView`, `BillingDetail`, `FeeDetail`)
+- [x] Staff / roles — `STAFF_CREATE` liste ; `STAFF_UPDATE` drawer ; `ACCESS_CONTROL_CONFIGURE` matrix
+- [x] School life — `DISCIPLINE_CREATE` events/activities/educator ; `DISCIPLINE_UPDATE` activity drawer ; `ATTENDANCE_RECORD` educator
+- [x] Config — `SCHOOL_STRUCTURE_CONFIGURE` classes ; `SCHOOL_LIFECYCLE_MANAGE` academic ; `REPORT_CARD_CONFIGURE` barèmes ; `REPORT_CARD_PUBLISH` modèles/résultats ; `ACADEMIC_PROGRAM_*` matières ; `TIMETABLE_UPDATE` planning drawer ; `RESOURCE_CONFIGURE` ressources (orphelin)
+- [x] List primary CTAs gated — lot 1 (vues sans gate avant ce sprint)
+
+**Reste Phase 5**
+
+- [ ] `EvaluationDetail` — action saisie notes si bouton hors modal
+- [ ] `ActivityDetail` — toggle statut inscription gated
+- [ ] `PAYMENT_CANCEL` / `PAYMENT_REVERSE` sur actions annulation facture
+- [ ] `ACCESS_CONTROL_ASSIGN` sur affectations staff
+- [ ] `ENROLLMENT_UPDATE` explicite (transfert classe élève)
+- [ ] Audit complet drawer footers + sous-collection `+ Add`
+- [ ] Test matrix par rôle dev (directeur / prof / éducateur)
 
 ---
 
