@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { ClassNode, Subject, SubjectCategory } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
-	import { readConfigSubjectListFilters, writeConfigSubjectListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
 	import { Clock, User, Layers, Tag, ChevronRight, Search } from '$lib/icons';
+	import { readConfigSubjectListFilters, writeConfigSubjectListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 
@@ -99,6 +99,7 @@
 					key: y,
 					label: y,
 					subtitle: byYear[y].subtitle,
+					count: byYear[y].items.length,
 					items: byYear[y].items,
 				}));
 		}
@@ -119,6 +120,7 @@
 			.map(c => ({
 				key: c,
 				label: c,
+				subtitle: '',
 				count: byCat[c].length,
 				items: byCat[c],
 			}));

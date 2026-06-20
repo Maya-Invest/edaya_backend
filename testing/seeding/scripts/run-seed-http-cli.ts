@@ -9,8 +9,8 @@ import {
   parseHttpDevSeedScope,
   runHttpDevSeeds,
 } from '../src/http/index.ts'
-import { loadSeedEnvFiles } from '../src/load-seed-env.ts'
 import { waitForApi } from '../src/http/wait-for-api.ts'
+import { loadSeedEnvFiles } from '../src/load-seed-env.ts'
 
 const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
 const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'

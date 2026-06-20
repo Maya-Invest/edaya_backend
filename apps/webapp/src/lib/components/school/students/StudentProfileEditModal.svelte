@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { Student } from '$lib/types/school';
 	import { updateStudentProfileMutation } from '$lib/api/mutations/student.mutations';
-	import { formatDateInput } from '$lib/date/format';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import { formatDateInput } from '$lib/date/format';
 	import { t } from '$lib/i18n';
 	import { get } from 'svelte/store';
 

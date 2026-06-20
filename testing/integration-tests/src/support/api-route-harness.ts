@@ -9,6 +9,7 @@ export {
   grantAccessControlAssign,
   pgliteEnv,
   resetApiRuntimesForTests,
+  resetCoreRouteTestHarness,
   seedDevSchoolAndAuthLinks,
   signInThroughApp,
   signUpAuthUser,

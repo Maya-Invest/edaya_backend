@@ -81,11 +81,11 @@ import {
   seedPeriodIdForDate,
   splitDisplayName,
 } from '@edaya/dev-fixtures'
+import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 import { seedAttachments } from './seed-attachments'
 import { seedAttendanceRecords } from './seed-attendance'
 import { seedCommunications } from './seed-communications'
 import { seedDiscipline } from './seed-discipline'
-import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 import { seedReportCards } from './seed-report-cards'
 
 const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
@@ -97,49 +97,49 @@ const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
 
 export type DevSchoolSeedResult
   = | { status: 'skipped', reason: 'already-seeded', schoolCount: number }
-  | {
-    status: 'seeded'
-    schoolId: string
-    academicYearId: string
-    gradeLevels: number
-    classes: number
-    staff: number
-    students: number
-    guardians: number
-    academicPeriods: number
-    subjects: number
-    classSubjects: number
-    periodDefinitions: number
-    fees: number
-    studentFees: number
-    payments: number
-    classSubjectMatters: number
-    resources: number
-    schedules: number
-    sessions: number
-    assessments: number
-    assessmentResults: number
-    homeworkAssignments: number
-    homeworkSubmissions: number
-    activities: number
-    activityEnrollments: number
-    classLogbookEntries: number
-    calendarEvents: number
-    incidents: number
-    attendanceRecords: number
-    studentHealthProfiles: number
-    studentNotes: number
-    gradeScales: number
-    reportCardDefinitions: number
-    reportCardSections: number
-    reportCardResults: number
-    disciplinaryActions: number
-    studentDisciplinaryActions: number
-    announcements: number
-    announcementTargets: number
-    messageDeliveries: number
-    attachments: number
-  }
+    | {
+      status: 'seeded'
+      schoolId: string
+      academicYearId: string
+      gradeLevels: number
+      classes: number
+      staff: number
+      students: number
+      guardians: number
+      academicPeriods: number
+      subjects: number
+      classSubjects: number
+      periodDefinitions: number
+      fees: number
+      studentFees: number
+      payments: number
+      classSubjectMatters: number
+      resources: number
+      schedules: number
+      sessions: number
+      assessments: number
+      assessmentResults: number
+      homeworkAssignments: number
+      homeworkSubmissions: number
+      activities: number
+      activityEnrollments: number
+      classLogbookEntries: number
+      calendarEvents: number
+      incidents: number
+      attendanceRecords: number
+      studentHealthProfiles: number
+      studentNotes: number
+      gradeScales: number
+      reportCardDefinitions: number
+      reportCardSections: number
+      reportCardResults: number
+      disciplinaryActions: number
+      studentDisciplinaryActions: number
+      announcements: number
+      announcementTargets: number
+      messageDeliveries: number
+      attachments: number
+    }
 
 function joinHealthList(values: readonly string[]): string | undefined {
   return values.length > 0 ? values.join(', ') : undefined
@@ -160,6 +160,9 @@ export async function runDevSchoolSeed(
   if (existingDemoSchool) {
     const existingStudents = await application.repositories.students.list()
     if (existingStudents.length > 0) {
+      if (options?.auth) {
+        await syncDevStaffAuthAndOwner(application, options.auth, options.ownerSubjectId)
+      }
       return {
         status: 'skipped',
         reason: 'already-seeded',

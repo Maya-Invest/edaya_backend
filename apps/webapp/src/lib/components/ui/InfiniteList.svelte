@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { t } from '$lib/i18n';
 
-	let {
+	const {
 		hasMore = false,
 		loading = false,
 		total = 0,

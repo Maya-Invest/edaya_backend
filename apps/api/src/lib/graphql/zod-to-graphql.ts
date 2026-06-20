@@ -2,13 +2,13 @@ import {
   GraphQLBoolean,
   GraphQLFloat,
   GraphQLInputObjectType,
+  type GraphQLInputType,
   GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
-  GraphQLString,
-  type GraphQLInputType,
   type GraphQLOutputType,
+  GraphQLString,
 } from "graphql";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
 import { unwrapShape } from "@/lib/school-api/schemas/helpers";

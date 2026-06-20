@@ -7,14 +7,14 @@
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
-	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
-	import ActivityFormModal from './ActivityFormModal.svelte';
 	import {
 		ENROLL_STATUS_STYLE,
 		ENROLL_STATUS_LABEL,
 		ENROLL_NEXT,
 		fmtActivityDate,
 	} from '../shared/drawer-constants.ts';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import ActivityFormModal from './ActivityFormModal.svelte';
 
 	const { a }: { a: Activity } = $props();
 

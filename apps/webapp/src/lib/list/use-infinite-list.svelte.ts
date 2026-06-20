@@ -1,10 +1,10 @@
 const DEFAULT_PAGE_SIZE = 50;
 
 /** Réponse paginée cursor — à brancher sur le BFF quand `nextCursor` est exposé. */
-export type CursorPage<T> = {
+export interface CursorPage<T> {
 	items: T[];
 	nextCursor: string | null;
-};
+}
 
 export type CursorFetcher<T> = (cursor: string | null) => Promise<CursorPage<T>>;
 
@@ -20,7 +20,7 @@ export function useInfiniteList<T>(source: () => T[], pageSize = DEFAULT_PAGE_SI
 	const hasMore = $derived(limit < items.length);
 
 	$effect(() => {
-		items.length;
+		void items.length;
 		limit = pageSize;
 	});
 

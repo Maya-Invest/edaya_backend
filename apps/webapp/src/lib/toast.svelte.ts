@@ -26,6 +26,10 @@ class ToastStore {
 		this.push(message, 'error');
 	}
 
+	info(message: string) {
+		this.push(message, 'info');
+	}
+
 	dismiss(id: number) {
 		this.items = this.items.filter(t => t.id !== id);
 	}

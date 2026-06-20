@@ -1,70 +1,29 @@
 import {
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_DEADLINES,
   SEED_HOMEWORK_ASSIGNMENTS,
   SEED_HOMEWORK_SUBMISSIONS,
 } from '@edaya/dev-fixtures'
-import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
-import { apiPgliteEnv } from '../support/api-pglite-env'
+import { expect, it } from 'bun:test'
+import { createAppRequest } from '../support/api-route-harness'
+import { describeWithSeededSchool, unwrapEntityList } from '../support/seeded-route-test-context'
 
-import {
-  collectSetCookieHeaders,
-  createAppRequest,
-  createCoreRouteTestApp,
-} from '../support/api-route-harness'
-
-function unwrapEntityList<T>(values: unknown): T[] {
-  if (!Array.isArray(values)) {
-    return []
-  }
-  return values.map((entry) => {
-    if (entry && typeof entry === 'object' && 'data' in entry && Object.keys(entry).length === 1) {
-      return (entry as { data: T }).data
-    }
-    return entry as T
-  })
-}
-
-describe('dev homework seed', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
+describeWithSeededSchool('dev homework seed', (getContext) => {
   it('seeds homework assignments and submissions and exposes them via entity routes', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    const seedResult = await runDevSchoolSeed(application)
-    expect(seedResult.status).toBe('seeded')
-    if (seedResult.status === 'seeded') {
-      expect(seedResult.homeworkAssignments).toBe(SEED_HOMEWORK_ASSIGNMENTS.length)
-      expect(seedResult.homeworkSubmissions).toBe(SEED_HOMEWORK_SUBMISSIONS.length)
-    }
+    const { app, seedResult, authHeaders } = getContext()
+    expect(seedResult.homeworkAssignments).toBe(SEED_HOMEWORK_ASSIGNMENTS.length)
+    expect(seedResult.homeworkSubmissions).toBe(SEED_HOMEWORK_SUBMISSIONS.length)
 
-    await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))
-    await runDevAccessSeed(application)
-
-    const signIn = await app.request(createAppRequest('/auth/sign-in/email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: DEV_AUTH_STAFF_ACCOUNTS[1].email, password: DEV_AUTH_PASSWORD }),
-    }))
-    const cookies = collectSetCookieHeaders(signIn)
-    const authHeaders = {
-      'content-type': 'application/json',
-      'cookie': cookies.join('; '),
-    }
-
+    const headers = await authHeaders(DEV_AUTH_STAFF_ACCOUNTS[1].email)
     const [assignmentsResponse, submissionsResponse] = await Promise.all([
       app.request(createAppRequest('/core/entities/homework-assignments/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/homework-submissions/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
     ])
@@ -83,5 +42,5 @@ describe('dev homework seed', () => {
     expect(assignments.some(assignment => assignment.id === 'd1')).toBe(true)
     expect(submissions.some(submission => submission.homeworkAssignmentId === 'd1' && submission.status === 'submitted')).toBe(true)
     expect(submissions.some(submission => submission.homeworkAssignmentId === 'd1' && submission.status === 'missing')).toBe(true)
-  }, 30_000)
+  })
 })

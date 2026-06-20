@@ -5,7 +5,7 @@
 	import { FileSpreadsheet, Layers, LayoutGrid, MoreHorizontal } from '$lib/icons';
 	import { toast } from '$lib/toast.svelte';
 
-	let {
+	const {
 		view = 'table',
 		onViewChange,
 	}: {

@@ -366,7 +366,7 @@ export function createSessionActorDependency(
             assuranceLevel: resolveInteractiveAssuranceLevel(
               session.session.assuranceLevel,
               identity,
-              c.env.NODE_ENV !== "production",
+              c.env?.NODE_ENV !== "production",
             ),
           };
           c.set("actor", createActorFromIdentity(identity, interactiveContext));

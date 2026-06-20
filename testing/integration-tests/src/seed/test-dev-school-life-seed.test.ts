@@ -1,78 +1,37 @@
 import {
   countSeedAttendanceRecords,
   countSeedCalendarEvents,
-  DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   SEED_INCIDENTS,
 } from '@edaya/dev-fixtures'
-import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
-import { apiPgliteEnv } from '../support/api-pglite-env'
-
-import {
-  collectSetCookieHeaders,
-  createAppRequest,
-  createCoreRouteTestApp,
-} from '../support/api-route-harness'
-
-function unwrapEntityList<T>(values: unknown): T[] {
-  if (!Array.isArray(values)) {
-    return []
-  }
-  return values.map((entry) => {
-    if (entry && typeof entry === 'object' && 'data' in entry && Object.keys(entry).length === 1) {
-      return (entry as { data: T }).data
-    }
-    return entry as T
-  })
-}
+import { expect, it } from 'bun:test'
+import { createAppRequest } from '../support/api-route-harness'
+import { describeWithSeededSchool, unwrapEntityList } from '../support/seeded-route-test-context'
 
 const expectedCalendarEvents = countSeedCalendarEvents()
 
-describe('dev school life seed', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
+describeWithSeededSchool('dev school life seed', (getContext) => {
   it('seeds calendar, incidents, attendance and lets staff list school-life entities', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    const seedResult = await runDevSchoolSeed(application)
-    expect(seedResult.status).toBe('seeded')
-    if (seedResult.status === 'seeded') {
-      expect(seedResult.calendarEvents).toBe(expectedCalendarEvents)
-      expect(seedResult.incidents).toBe(SEED_INCIDENTS.length)
-      expect(seedResult.attendanceRecords).toBe(countSeedAttendanceRecords())
-    }
+    const { app, seedResult, authHeaders } = getContext()
+    expect(seedResult.calendarEvents).toBe(expectedCalendarEvents)
+    expect(seedResult.incidents).toBe(SEED_INCIDENTS.length)
+    expect(seedResult.attendanceRecords).toBe(countSeedAttendanceRecords())
 
-    await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))
-    await runDevAccessSeed(application)
-
-    const signIn = await app.request(createAppRequest('/auth/sign-in/email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, password: DEV_AUTH_PASSWORD }),
-    }))
-    const cookies = collectSetCookieHeaders(signIn)
-    const authHeaders = {
-      'content-type': 'application/json',
-      'cookie': cookies.join('; '),
-    }
-
+    const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
     const [calendarResponse, incidentsResponse, attendanceResponse] = await Promise.all([
       app.request(createAppRequest('/core/entities/calendar-events/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/incidents/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/attendance/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
     ])
@@ -97,5 +56,5 @@ describe('dev school life seed', () => {
     expect(incidents.find(incident => incident.id === 'i2')?.kind).toBe('minor_infraction')
     expect(incidents.find(incident => incident.id === 'i3')?.kind).toBe('major_infraction')
     expect(attendance.some(record => record.id === 'a1' && record.studentId === 's1')).toBe(true)
-  }, 30_000)
+  })
 })

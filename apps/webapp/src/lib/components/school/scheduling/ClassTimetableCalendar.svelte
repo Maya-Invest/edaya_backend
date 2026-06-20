@@ -16,12 +16,8 @@
 		planningSlotSignature,
 		subjectToneClass,
 		timetableHours,
-
 	} from './planning-calendar';
-	import {
-		PLANNING_TIMETABLE_CONTEXT,
-
-	} from './planning-timetable-context';
+	import { PLANNING_TIMETABLE_CONTEXT } from './planning-timetable-context';
 	import PlanningEventContent from './PlanningEventContent.svelte';
 	import PlanningRescheduleConfirmModal from './PlanningRescheduleConfirmModal.svelte';
 	import SvarCalendarLocale from './SvarCalendarLocale.svelte';

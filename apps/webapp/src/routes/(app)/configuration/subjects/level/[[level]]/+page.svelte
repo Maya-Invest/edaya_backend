@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Subject } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import ConfigSubjectsView from '$lib/components/school/academics/ConfigSubjectsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -7,7 +8,6 @@
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { queryConfigSubjectsPage } from '$lib/queries/subjects.queries';
-	import type { Subject } from '$lib/types/school';
 
 	const query = queryConfigSubjectsPage();
 

@@ -29,6 +29,13 @@ export function createAuth(db: unknown, env: Environment): AuthService {
     emailAndPassword: {
       enabled: true,
     },
+    session: {
+      // Avoid split session_data / session_token cookies that can make client getSession
+      // succeed while /core requests miss the session token (Better Auth #7008).
+      cookieCache: {
+        enabled: false,
+      },
+    },
     plugins: [
       openAPI({
         disableDefaultReference: true,

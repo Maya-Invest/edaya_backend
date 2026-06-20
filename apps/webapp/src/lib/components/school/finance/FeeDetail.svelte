@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Fee } from '$lib/types/school';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
-	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import FeeFormModal from './FeeFormModal.svelte';
 
 	const { f }: { f: Fee } = $props();

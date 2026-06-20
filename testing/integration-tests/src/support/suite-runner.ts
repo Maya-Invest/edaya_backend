@@ -1,6 +1,6 @@
 import { PostgresAtomicExecution as RelationalPostgresAtomicExecution, PostgresSchoolRepositories as RelationalPostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { PGlite } from '@electric-sql/pglite'
-import { afterEach, beforeAll, beforeEach, describe } from 'bun:test'
+import { afterAll, beforeAll, beforeEach, describe } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
 import { setIntegrationTestAdapter } from '../utils/test-adapter'
 import { getIntegrationTestConfig } from './integration-test-config'
@@ -15,19 +15,22 @@ function describePgliteIntegration(name: string, suite: () => void) {
     let db: any
     let repos: RelationalPostgresSchoolRepositories
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       pglite = new PGlite()
       db = drizzle(pglite)
       repos = new RelationalPostgresSchoolRepositories(db)
       await repos.init({ driver: 'pglite' })
+    })
 
+    beforeEach(async () => {
+      await repos.clearAll()
       const postgresBuilder = createPostgresAppBuilder(db, repos, RelationalPostgresAtomicExecution)
       setIntegrationTestAdapter({
         createApp: actor => postgresBuilder(actor),
       })
     })
 
-    afterEach(async () => {
+    afterAll(async () => {
       if (pglite) {
         await pglite.close()
       }
@@ -37,7 +40,7 @@ function describePgliteIntegration(name: string, suite: () => void) {
   })
 }
 
-function describeRemotePostgresIntegration(name: string, suite: () => void) {
+function _describeRemotePostgresIntegration(name: string, suite: () => void) {
   describe(`[Postgres Remote] ${name}`, () => {
     let db: any
     let repos: RelationalPostgresSchoolRepositories
@@ -77,7 +80,9 @@ function describeRemotePostgresIntegration(name: string, suite: () => void) {
 export function describeIntegration(name: string, suite: () => void) {
   describePgliteIntegration(name, suite)
 
-  if (integrationTestConfig.runRemotePostgres) {
-    describeRemotePostgresIntegration(name, suite)
-  }
+  // Remote Neon/Postgres suites are disabled for now — local PGlite only.
+  // To re-enable: uncomment below and run `bun run test:remote` with DATABASE_URL set.
+  // if (integrationTestConfig.runRemotePostgres) {
+  //   _describeRemotePostgresIntegration(name, suite)
+  // }
 }

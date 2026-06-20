@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { StaffMember } from '$lib/types/school';
-	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';

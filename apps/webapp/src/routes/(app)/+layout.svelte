@@ -53,7 +53,7 @@
 		const pathname = $page.url.pathname;
 		const detailReady = detailDataContext.ready;
 		const reportCardsReady = reportCardsContext.ready;
-		const dataGeneration = detailDataContext.dataGeneration;
+		void detailDataContext.dataGeneration;
 
 		if (!isLikelyDetailPath(pathname)) {
 			drawer.close();
@@ -100,7 +100,9 @@
 			const href = `${listPath}${$page.url.search}` as ResolvedPathname;
 			appGoto(href);
 		}
-		else drawer.close();
+		else {
+			drawer.close();
+		}
 	}
 
 	function logout() {

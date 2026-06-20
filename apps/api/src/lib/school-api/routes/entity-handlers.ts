@@ -36,7 +36,7 @@ function mapEntityOperationError(c: Context<AppBindings>, err: unknown) {
   return routeErrorResponse(c, err);
 }
 
-export function resolveServices(c: Context<AppBindings>, serviceName: string) {
+export function resolveServices(c: Context<AppBindings>, _serviceName: string) {
   const actor = c.get("actor");
   if (!actor) {
     return { actor: null, schoolApp: null };

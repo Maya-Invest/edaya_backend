@@ -1,3 +1,4 @@
+/* eslint-disable node/no-process-env */
 const GRAPHIQL_ENDPOINT = "/graphql";
 const DEFAULT_WEBAPP_ORIGIN = "http://localhost:5173";
 const DEFAULT_DEV_EMAIL = "c.moreau@school.edu";

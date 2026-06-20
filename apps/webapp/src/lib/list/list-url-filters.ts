@@ -1,7 +1,7 @@
-export type CalendarListFilters = {
+export interface CalendarListFilters {
 	q: string;
 	type: string;
-};
+}
 
 const CALENDAR_DEFAULTS: CalendarListFilters = {
 	q: '',
@@ -31,10 +31,10 @@ export function writeCalendarListFilters(url: URL, filters: CalendarListFilters)
 	return `${next.pathname}${next.search}`;
 }
 
-export type ConfigSubjectListFilters = {
+export interface ConfigSubjectListFilters {
 	q: string;
 	mode: string;
-};
+}
 
 const CONFIG_SUBJECT_DEFAULTS: ConfigSubjectListFilters = {
 	q: '',
@@ -65,9 +65,9 @@ export function writeConfigSubjectListFilters(url: URL, filters: ConfigSubjectLi
 	return `${next.pathname}${next.search}`;
 }
 
-export type TeachingListFilters = {
+export interface TeachingListFilters {
 	q: string;
-};
+}
 
 const TEACHING_DEFAULTS: TeachingListFilters = {
 	q: '',
@@ -90,9 +90,9 @@ export function writeTeachingListFilters(url: URL, filters: TeachingListFilters)
 	return `${next.pathname}${next.search}`;
 }
 
-export type PlanningListFilters = {
+export interface PlanningListFilters {
 	q: string;
-};
+}
 
 const PLANNING_DEFAULTS: PlanningListFilters = {
 	q: '',
@@ -115,10 +115,10 @@ export function writePlanningListFilters(url: URL, filters: PlanningListFilters)
 	return `${next.pathname}${next.search}`;
 }
 
-export type ClassStudentListFilters = {
+export interface ClassStudentListFilters {
 	q: string;
 	status: string;
-};
+}
 
 const CLASS_DEFAULTS: ClassStudentListFilters = {
 	q: '',
@@ -148,10 +148,10 @@ export function writeClassStudentListFilters(url: URL, filters: ClassStudentList
 	return `${next.pathname}${next.search}`;
 }
 
-export type ActivityListFilters = {
+export interface ActivityListFilters {
 	q: string;
 	category: string;
-};
+}
 
 const ACTIVITY_DEFAULTS: ActivityListFilters = {
 	q: '',
@@ -181,11 +181,11 @@ export function writeActivityListFilters(url: URL, filters: ActivityListFilters)
 	return `${next.pathname}${next.search}`;
 }
 
-export type StudentListFilters = {
+export interface StudentListFilters {
 	q: string;
 	class: string;
 	status: string;
-};
+}
 
 const DEFAULTS: StudentListFilters = {
 	q: '',
@@ -222,10 +222,10 @@ export function writeStudentListFilters(url: URL, filters: StudentListFilters): 
 	return `${next.pathname}${next.search}`;
 }
 
-export type ClassReportCardListFilters = {
+export interface ClassReportCardListFilters {
 	q: string;
 	status: string;
-};
+}
 
 const CLASS_REPORT_CARD_DEFAULTS: ClassReportCardListFilters = {
 	q: '',
@@ -255,11 +255,11 @@ export function writeClassReportCardListFilters(url: URL, filters: ClassReportCa
 	return `${next.pathname}${next.search}`;
 }
 
-export type PaymentListFilters = {
+export interface PaymentListFilters {
 	q: string;
 	status: string;
 	class: string;
-};
+}
 
 const PAYMENT_DEFAULTS: PaymentListFilters = {
 	q: '',
@@ -296,10 +296,10 @@ export function writePaymentListFilters(url: URL, filters: PaymentListFilters): 
 	return `${next.pathname}${next.search}`;
 }
 
-export type ReportCardDefinitionListFilters = {
+export interface ReportCardDefinitionListFilters {
 	q: string;
 	status: string;
-};
+}
 
 const REPORT_CARD_DEF_DEFAULTS: ReportCardDefinitionListFilters = {
 	q: '',
@@ -329,9 +329,9 @@ export function writeReportCardDefinitionListFilters(url: URL, filters: ReportCa
 	return `${next.pathname}${next.search}`;
 }
 
-export type RoleListFilters = {
+export interface RoleListFilters {
 	q: string;
-};
+}
 
 const ROLE_DEFAULTS: RoleListFilters = {
 	q: '',
@@ -354,9 +354,9 @@ export function writeRoleListFilters(url: URL, filters: RoleListFilters): string
 	return `${next.pathname}${next.search}`;
 }
 
-export type GradeScaleListFilters = {
+export interface GradeScaleListFilters {
 	q: string;
-};
+}
 
 const GRADE_SCALE_DEFAULTS: GradeScaleListFilters = {
 	q: '',
@@ -379,9 +379,9 @@ export function writeGradeScaleListFilters(url: URL, filters: GradeScaleListFilt
 	return `${next.pathname}${next.search}`;
 }
 
-export type ClassGroupListFilters = {
+export interface ClassGroupListFilters {
 	q: string;
-};
+}
 
 const CLASS_GROUP_DEFAULTS: ClassGroupListFilters = {
 	q: '',
@@ -404,9 +404,9 @@ export function writeClassGroupListFilters(url: URL, filters: ClassGroupListFilt
 	return `${next.pathname}${next.search}`;
 }
 
-export type AcademicAdminListFilters = {
+export interface AcademicAdminListFilters {
 	q: string;
-};
+}
 
 const ACADEMIC_ADMIN_DEFAULTS: AcademicAdminListFilters = {
 	q: '',
@@ -429,10 +429,10 @@ export function writeAcademicAdminListFilters(url: URL, filters: AcademicAdminLi
 	return `${next.pathname}${next.search}`;
 }
 
-export type ResourceListFilters = {
+export interface ResourceListFilters {
 	q: string;
 	status: string;
-};
+}
 
 const RESOURCE_DEFAULTS: ResourceListFilters = {
 	q: '',
@@ -462,10 +462,10 @@ export function writeResourceListFilters(url: URL, filters: ResourceListFilters)
 	return `${next.pathname}${next.search}`;
 }
 
-export type EducatorDashboardListFilters = {
+export interface EducatorDashboardListFilters {
 	q: string;
 	tab: string;
-};
+}
 
 const EDUCATOR_DASHBOARD_DEFAULTS: EducatorDashboardListFilters = {
 	q: '',

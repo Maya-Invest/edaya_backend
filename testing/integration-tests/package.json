@@ -6,7 +6,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "bun test",
+    "test": "INTEGRATION_TEST_FAST=1 bun test --parallel=1",
+    "test:full": "bun test --parallel=1",
     "test:remote": "bun ./scripts/run-tests.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"

@@ -1,10 +1,12 @@
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import type { AuthProvisioner, SeedApplication } from './types'
-import { createHandlerAuthProvisioner } from './auth/handler-auth-provisioner.ts'
-import { loadSeedEnvFiles } from './load-seed-env.ts'
-import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed.ts'
-import { runDevAuthProvision } from './run-dev-auth-provision.ts'
+import path from 'node:path'
+import process from 'node:process'
+import { fileURLToPath } from 'node:url'
+import { createHandlerAuthProvisioner } from './auth/handler-auth-provisioner'
+import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
+import { loadSeedEnvFiles } from './load-seed-env'
+import { runDevAuthProvision } from './run-dev-auth-provision'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = path.resolve(packageRoot, '../..')

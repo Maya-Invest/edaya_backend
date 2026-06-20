@@ -92,27 +92,20 @@ export async function createAcademicYearMutation(
 		}
 
 		return yearId;
-	}, { refresh: true });
-}, { successMessage: options?.successMessage });
+	}, { successMessage: options?.successMessage });
 
-return created;
+	return created;
 }
 
 export async function activateAcademicYearMutation(yearId: string): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const result = await runMutation(
-		() => client.commands.activateAcademicYear({ academicYearId: yearId }),
-		{ refresh: true },
-	);
+	const result = await runMutation(() => client.commands.activateAcademicYear({ academicYearId: yearId }));
 	return result !== null;
 }
 
 export async function publishAcademicPeriodMutation(periodId: string): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const result = await runMutation(
-		() => client.commands.publishAcademicPeriod({ academicPeriodId: periodId }),
-		{ refresh: true },
-	);
+	const result = await runMutation(() => client.commands.publishAcademicPeriod({ academicPeriodId: periodId }));
 	return result !== null;
 }
 
@@ -130,9 +123,8 @@ export async function createClassGroupMutation(
 		gradeLevelId,
 		name: name.trim(),
 		attendanceMode: 'session',
-	}), { refresh: true });
-}), { successMessage: options?.successMessage });
-return result !== null;
+	}), { successMessage: options?.successMessage });
+	return result !== null;
 }
 
 export async function updateClassGroupMutation(
@@ -146,7 +138,6 @@ export async function updateClassGroupMutation(
 		name: patch.name,
 		capacity: patch.capacity,
 		attendanceMode: 'session',
-	}), { refresh: true });
-}), { successMessage: options?.successMessage });
-return result !== null;
+	}), { successMessage: options?.successMessage });
+	return result !== null;
 }

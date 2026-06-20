@@ -52,11 +52,7 @@
 	const effectiveAmount = $derived(numericCustomAmount ?? defaultAmount);
 
 	const canSubmit = $derived(
-		studentId.length > 0
-			&& feeId.length > 0
-			&& availableFees.some(entry => entry.id === feeId)
-			&& Number.isFinite(effectiveAmount)
-			&& effectiveAmount > 0,
+		studentId.length > 0 && feeId.length > 0 && availableFees.some(entry => entry.id === feeId) && Number.isFinite(effectiveAmount) && effectiveAmount > 0,
 	);
 
 	function firstAvailableFeeFor(student: string) {

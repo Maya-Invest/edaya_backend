@@ -6,8 +6,8 @@ import type { AuthProvisioner, SeedApplication } from './types'
 import {
   DEV_AUTH_PASSWORD,
 } from '@edaya/dev-fixtures'
-import { runDevAccessSeed } from './run-dev-access-seed'
 import { ownerSubjectIdFromAuthProvision } from './dev-staff-auth-seed'
+import { runDevAccessSeed } from './run-dev-access-seed'
 import { runDevAuthLink } from './run-dev-auth-link'
 import { runDevAuthProvision } from './run-dev-auth-provision'
 import { runDevSchoolSeed } from './run-dev-school-seed'

@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { SchoolYearEvent, ClassNode } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
-	import { readCalendarListFilters, writeCalendarListFilters } from '$lib/list/list-url-filters';
 	import { locale, t } from '$lib/i18n';
 	import {
 		CalendarDays,
@@ -17,6 +16,7 @@
 		AlertCircle,
 		PartyPopper,
 	} from '$lib/icons';
+	import { readCalendarListFilters, writeCalendarListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import SchoolYearEventFormModal from '../school-life/SchoolYearEventFormModal.svelte';

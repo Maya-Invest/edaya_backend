@@ -1,11 +1,10 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
   createCoreRouteTestApp,
   createSessionActorDependency,
   grantServiceAccountCreate,
   provisionServiceAccountForTests,
-  resetApiRuntimesForTests,
   seedDevSchoolAndAuthLinks,
   signInDirector,
   signInThroughApp,
@@ -20,10 +19,6 @@ import {
 import { MessageDeliveryChannel, Permission, TEACHER_PERMISSIONS } from "@edaya/core";
 
 describe("service account routes", () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests();
-  });
-
   it("authenticates service accounts with API keys against /core/entities/schools/list", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
@@ -213,14 +208,15 @@ describe("service account routes", () => {
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const teacherStaffId = DEV_AUTH_STAFF_ACCOUNTS[1].staffId;
+    const teacherAccount = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "st2")!;
+    const teacherStaffId = teacherAccount.staffId;
     await grantServiceAccountCreate(application, teacherStaffId, [
       Permission.SERVICE_ACCOUNT_CREATE,
       ...TEACHER_PERMISSIONS,
     ]);
 
     const cookies = await signInThroughApp(app, {
-      email: DEV_AUTH_STAFF_ACCOUNTS[1].email,
+      email: teacherAccount.email,
     });
 
     const response = await app.request(createAppRequest("/core/service-accounts", {

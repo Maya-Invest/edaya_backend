@@ -62,9 +62,7 @@
 	);
 
 	const canSubmit = $derived(
-		incidentTitle.trim().length > 0
-		&& description.trim().length > 0
-		&& (isEdit || (studentId.length > 0 && schoolId.length > 0)),
+		incidentTitle.trim().length > 0 && description.trim().length > 0 && (isEdit || (studentId.length > 0 && schoolId.length > 0)),
 	);
 
 	function resetForm() {

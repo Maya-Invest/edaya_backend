@@ -1,22 +1,17 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
-import { dependenciesInjection } from "@/http/dependencies";
 import type { AppBindings } from "@/http/types";
-import { resetApiRuntimesForTests } from "@/runtime";
+import type { Environment } from "@/runtime/env/schema";
 import { Hono } from "hono";
 import {
   createAppRequest,
   createCoreRouteTestApp,
-  createPgliteTestEnv,
+  createCoreRouteTestDependencies,
   signInThroughApp,
   signUpAuthUser,
 } from "../support/core-route-harness";
 
 describe("onboarding register-school route", () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests();
-  });
-
   it("registers a school and links the signed-in user as owner", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     const email = "owner@school.edu";
@@ -70,19 +65,20 @@ describe("onboarding register-school route", () => {
   });
 
   it("returns 503 when public school registration is disabled", async () => {
-    const { runtime } = await createCoreRouteTestApp();
+    const { runtime, env } = await createCoreRouteTestApp();
     const email = "blocked@school.edu";
     await signUpAuthUser(runtime, { email, name: "Blocked Owner" });
 
-    const disabledEnv = createPgliteTestEnv({
+    const disabledEnv: Environment = {
+      ...env,
       ALLOW_PUBLIC_SCHOOL_REGISTRATION: false,
-    });
+    };
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {
       c.env = disabledEnv;
       await next();
     });
-    app.use(dependenciesInjection);
+    app.use(createCoreRouteTestDependencies(runtime));
     app.route("/", indexRouter);
 
     const cookies = await signInThroughApp(app, { email });

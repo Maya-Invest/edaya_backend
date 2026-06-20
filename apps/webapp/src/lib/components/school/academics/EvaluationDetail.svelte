@@ -4,6 +4,7 @@
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
+	import { SvelteMap } from 'svelte/reactivity';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import EvaluationGradeEntryModal from './EvaluationGradeEntryModal.svelte';
 
@@ -16,7 +17,7 @@
 	);
 
 	const scoresByStudent = $derived.by(() => {
-		const map = new Map<string, number>();
+		const map = new SvelteMap<string, number>();
 		for (const result of detailDataContext.assessmentResults) {
 			if (result.assessmentId === s.id && result.score !== null) {
 				map.set(result.studentId, result.score);
@@ -28,10 +29,10 @@
 	const formattedDate = $derived(
 		s.date
 			? new Date(s.date).toLocaleDateString($locale, {
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric',
-				})
+				day: 'numeric',
+				month: 'long',
+				year: 'numeric',
+			})
 			: '—',
 	);
 </script>

@@ -1,7 +1,7 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import { formatDateInput } from '$lib/date/format';
 import type { Guardian, Student } from '$lib/types/school';
+import { formatDateInput } from '$lib/date/format';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 

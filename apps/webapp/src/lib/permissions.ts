@@ -123,6 +123,7 @@ export function canEditTimetable(ctx: Ctx = {}): boolean {
 }
 
 export const ROLE_LABEL_FR: Record<StaffRole, string> = {
+	owner: 'Propriétaire',
 	directeur: 'Directeur',
 	prof_principal: 'Professeur principal',
 	professeur: 'Professeur',
@@ -130,6 +131,7 @@ export const ROLE_LABEL_FR: Record<StaffRole, string> = {
 };
 
 export const ROLE_LABEL_EN: Record<StaffRole, string> = {
+	owner: 'Owner',
 	directeur: 'Principal',
 	prof_principal: 'Lead teacher',
 	professeur: 'Teacher',

@@ -1,11 +1,11 @@
 import type { Activity } from '$lib/types/school';
-import { authSession } from '$lib/auth/session.svelte';
 import { buildActivitySavePayload, DEFAULT_ACTIVITY_SCHEDULE } from '$lib/api/activity-save-payload';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { authSession } from '$lib/auth/session.svelte';
+import { t } from '$lib/i18n';
 import { toast } from '$lib/toast.svelte';
 import { get } from 'svelte/store';
-import { t } from '$lib/i18n';
 
 export async function createActivityMutation(input: {
 	name: string;

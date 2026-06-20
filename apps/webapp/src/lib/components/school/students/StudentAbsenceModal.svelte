@@ -7,8 +7,8 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { t } from '$lib/i18n';
-	import { get } from 'svelte/store';
 	import { Plus } from '$lib/icons';
+	import { get } from 'svelte/store';
 
 	const {
 		s,

@@ -4,12 +4,16 @@ import { authDependency } from "@/http/dependencies/auth";
 import { envDependency } from "@/http/dependencies/env";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSchoolAppDependency } from "@/http/dependencies/school-app";
+import { isBetterAuthPath } from "@/http/dependencies/utils";
+import type { DependencyModule } from "@/http/dependency-injection";
 import {
   type AuthSessionProvider,
   createSessionActorDependency,
 } from "@/http/dependencies/session-actor";
+import type { Environment } from "@/runtime/env/schema";
+import { buildNodeApiRuntime } from "@/runtime/node/create-runtime";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { type ApiRuntime, getApiRuntime, resetApiRuntimesForTests } from "@/runtime";
+import { type ApiRuntime, resetApiRuntimesForTests } from "@/runtime";
 import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from "@edaya/seeding";
 import {
   DEV_AUTH_PASSWORD,
@@ -26,7 +30,11 @@ import {
   StaffRoleAssignment,
 } from "@edaya/core";
 import { Hono } from "hono";
+import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
+
+const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
+setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
 
 export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency } from "@/http/dependencies/session-actor";
@@ -49,10 +57,54 @@ export interface AuthenticatedRouteContext {
   app: Hono<AppBindings>;
   runtime: ApiRuntime;
   application: ApiSchoolApplication;
+  env: Environment;
+}
+
+const activeTestRuntimes = new Set<ApiRuntime>();
+
+function createIsolatedPgliteTestEnv(): Environment {
+  return createPgliteTestEnv({
+    DATABASE_URL: "pglite",
+    AUTH_DATABASE_PATH: ":memory:",
+  });
+}
+
+function registerTestRuntimeCleanup(runtime: ApiRuntime): void {
+  activeTestRuntimes.add(runtime);
+
+  onTestFinished(async () => {
+    activeTestRuntimes.delete(runtime);
+
+    try {
+      await runtime.close();
+    }
+    catch {
+      // Ignore teardown errors in tests.
+    }
+  });
+}
+
+/** Clears any runtimes still tracked by the harness (e.g. aborted tests). */
+export async function resetCoreRouteTestHarness(): Promise<void> {
+  await Promise.all(
+    [...activeTestRuntimes].map(async (runtime) => {
+      try {
+        await runtime.close();
+      }
+      catch {
+        // Ignore teardown errors in tests.
+      }
+    }),
+  );
+  activeTestRuntimes.clear();
+
+  await resetApiRuntimesForTests();
 }
 
 export interface CoreRouteTestAppOptions {
   sessionActor?: ReturnType<typeof createSessionActorDependency>;
+  /** When false, caller must close the runtime (e.g. shared beforeAll fixtures). */
+  autoCleanup?: boolean;
 }
 
 export function wrapAuthWithVerifiedAssurance(auth: AuthSessionProvider): AuthSessionProvider {
@@ -77,13 +129,41 @@ export function wrapAuthWithVerifiedAssurance(auth: AuthSessionProvider): AuthSe
   };
 }
 
+function createTestAuthDependency(runtime: ApiRuntime): DependencyModule<AppBindings> {
+  return {
+    name: "auth",
+    async resolve(c) {
+      if (isBetterAuthPath(c)) {
+        c.set("auth", runtime.getAuth());
+        return;
+      }
+
+      c.set("auth", runtime.getAuth());
+    },
+  };
+}
+
+function createTestSchoolAppDependency(runtime: ApiRuntime): DependencyModule<AppBindings> {
+  return {
+    name: "schoolApp",
+    async resolve(c) {
+      if (isBetterAuthPath(c)) {
+        return;
+      }
+
+      c.set("schoolApp", await runtime.getSchoolApplication());
+    },
+  };
+}
+
 export function createCoreRouteTestDependencies(
+  runtime: ApiRuntime,
   sessionActor = createSessionActorDependency(),
 ) {
   return createDependenciesInjection([
     envDependency,
-    createSchoolAppDependency(),
-    authDependency,
+    createTestSchoolAppDependency(runtime),
+    createTestAuthDependency(runtime),
     sessionActor,
   ]);
 }
@@ -91,25 +171,34 @@ export function createCoreRouteTestDependencies(
 export async function createCoreRouteTestApp(
   options: CoreRouteTestAppOptions = {},
 ): Promise<AuthenticatedRouteContext> {
-  await resetApiRuntimesForTests();
-  const runtime = await getApiRuntime(pgliteEnv);
+  const env = createIsolatedPgliteTestEnv();
+  const runtime = await buildNodeApiRuntime(env);
+  if (options.autoCleanup !== false) {
+    registerTestRuntimeCleanup(runtime);
+  }
   const application = await runtime.getSchoolApplication();
 
   const app = new Hono<AppBindings>();
   app.use(async (c, next) => {
-    c.env = pgliteEnv;
+    c.env = env;
     await next();
   });
   app.use(createCoreRouteTestDependencies(
+    runtime,
     options.sessionActor ?? createSessionActorDependency(),
   ));
   app.route("/", indexRouter);
 
-  return { app, runtime, application };
+  return { app, runtime, application, env };
 }
 
-/** @deprecated Use createCoreRouteTestDependencies() when customizing middleware. */
-export const dependenciesInjection = createCoreRouteTestDependencies();
+/** @deprecated Pass a test runtime to createCoreRouteTestDependencies(runtime). */
+export const dependenciesInjection = createDependenciesInjection([
+  envDependency,
+  createSchoolAppDependency(),
+  authDependency,
+  createSessionActorDependency(),
+]);
 
 export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, runtime: ApiRuntime) {
   const auth = createHandlerAuthProvisioner(runtime.getAuth(), pgliteEnv.BETTER_AUTH_URL);

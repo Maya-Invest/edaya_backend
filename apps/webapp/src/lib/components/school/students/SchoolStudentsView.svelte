@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { ClassNode, Student } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
@@ -9,10 +9,10 @@
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
-	import { readStudentListFilters, writeStudentListFilters } from '$lib/list/list-url-filters';
-	import { useInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { t } from '$lib/i18n';
 	import { Plus, Search } from '$lib/icons';
+	import { readStudentListFilters, writeStudentListFilters } from '$lib/list/list-url-filters';
+	import { useInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import StudentCreateModal from './StudentCreateModal.svelte';

@@ -3,11 +3,11 @@ import {
   GraphQLEnumType,
   GraphQLFloat,
   GraphQLInputObjectType,
+  type GraphQLInputType,
   GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
-  type GraphQLInputType,
 } from "graphql";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
 import { getQueryOptionFieldSchemas } from "@/lib/school-api/schemas/helpers";
@@ -139,9 +139,8 @@ export class GraphQLFilterTypeRegistry {
     }
 
     const fieldSchemas = getQueryOptionFieldSchemas(querySchema);
-    let filterType!: GraphQLInputObjectType;
 
-    filterType = new GraphQLInputObjectType({
+    const filterType = new GraphQLInputObjectType({
       name: filterName,
       fields: () => {
         const fields: Record<string, { type: GraphQLInputType }> = {};

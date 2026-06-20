@@ -32,6 +32,7 @@
 	const perms = $derived(optimisticMatrix ?? liveCrudMatrix);
 
 	const ROLE_ICON = {
+		owner: Crown,
 		directeur: Crown,
 		prof_principal: ShieldCheck,
 		professeur: GraduationCap,

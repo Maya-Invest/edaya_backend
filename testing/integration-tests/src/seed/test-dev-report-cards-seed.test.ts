@@ -1,20 +1,12 @@
 import {
-  DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   SEED_GRADE_SCALES,
   SEED_REPORT_CARD_DEFINITIONS,
   SEED_REPORT_CARD_RESULTS,
 } from '@edaya/dev-fixtures'
-import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
-import { apiPgliteEnv } from '../support/api-pglite-env'
-
-import {
-  collectSetCookieHeaders,
-  createAppRequest,
-  createCoreRouteTestApp,
-} from '../support/api-route-harness'
+import { expect, it } from 'bun:test'
+import { createAppRequest } from '../support/api-route-harness'
+import { describeWithSeededSchool } from '../support/seeded-route-test-context'
 
 function unwrapEntity<T>(value: unknown): T {
   if (Array.isArray(value)) {
@@ -50,55 +42,34 @@ const expectedSectionCount = SEED_REPORT_CARD_DEFINITIONS.reduce((total, definit
   }, 0)
 }, 0)
 
-describe('dev report cards seed', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
+describeWithSeededSchool('dev report cards seed', (getContext) => {
   it('seeds grade scales, report card definitions and results and lets staff list report-card entities', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    const seedResult = await runDevSchoolSeed(application)
-    expect(seedResult.status).toBe('seeded')
-    if (seedResult.status === 'seeded') {
-      expect(seedResult.gradeScales).toBe(SEED_GRADE_SCALES.length)
-      expect(seedResult.reportCardDefinitions).toBe(SEED_REPORT_CARD_DEFINITIONS.length)
-      expect(seedResult.reportCardSections).toBe(expectedSectionCount)
-      expect(seedResult.reportCardResults).toBe(SEED_REPORT_CARD_RESULTS.length)
-    }
+    const { app, seedResult, authHeaders } = getContext()
+    expect(seedResult.gradeScales).toBe(SEED_GRADE_SCALES.length)
+    expect(seedResult.reportCardDefinitions).toBe(SEED_REPORT_CARD_DEFINITIONS.length)
+    expect(seedResult.reportCardSections).toBe(expectedSectionCount)
+    expect(seedResult.reportCardResults).toBe(SEED_REPORT_CARD_RESULTS.length)
 
-    await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))
-    await runDevAccessSeed(application)
-
-    const signIn = await app.request(createAppRequest('/auth/sign-in/email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, password: DEV_AUTH_PASSWORD }),
-    }))
-    const cookies = collectSetCookieHeaders(signIn)
-    const authHeaders = {
-      'content-type': 'application/json',
-      'cookie': cookies.join('; '),
-    }
-
+    const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
     const [gradeScalesResponse, definitionsResponse, sectionsResponse, resultsResponse] = await Promise.all([
       app.request(createAppRequest('/core/entities/grade-scales/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/definitions/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/sections/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/results/list', {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       })),
     ])
@@ -182,5 +153,5 @@ describe('dev report cards seed', () => {
       ?.subResults
       ?.find(mark => mark.classSubjectId === 'cs-6a-math')
     expect(s2MathMark?.average).toBeGreaterThan(0)
-  }, 30_000)
+  })
 })

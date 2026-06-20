@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { StaffMember, StaffRole } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import { authSession } from '$lib/auth/session.svelte';
+	import { ROLE_TINT } from '$lib/components/school/shared/drawer-constants';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
-	import { readRoleListFilters, writeRoleListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
 	import {
 		ShieldCheck,
@@ -15,7 +15,7 @@
 		ChevronRight,
 		Users,
 	} from '$lib/icons';
-	import { ROLE_TINT } from '$lib/components/school/shared/drawer-constants';
+	import { readRoleListFilters, writeRoleListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 

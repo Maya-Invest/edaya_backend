@@ -47,10 +47,7 @@
 	);
 
 	const canSubmit = $derived(
-		title.trim().length > 0
-		&& classSubjectId.length > 0
-		&& assignedDate.length > 0
-		&& dueDate.length > 0,
+		title.trim().length > 0 && classSubjectId.length > 0 && assignedDate.length > 0 && dueDate.length > 0,
 	);
 
 	function resetForm() {

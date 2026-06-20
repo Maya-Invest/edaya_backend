@@ -11,12 +11,13 @@ import {
   provisionSeedingServiceAccountInProcess,
   runHttpDevSeeds,
 } from '@edaya/seeding/http'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
+import { afterAll, beforeAll, expect, it } from 'bun:test'
 import {
   apiPgliteEnv,
   createCoreRouteTestApp,
+  resetCoreRouteTestHarness,
 } from '../support/api-route-harness'
+import { describeSlowIntegration } from '../support/seeded-route-test-context'
 
 function createHttpClientForApp(app: Awaited<ReturnType<typeof createCoreRouteTestApp>>['app']): HttpSeedClient {
   return new HttpSeedClient({
@@ -28,9 +29,18 @@ function createHttpClientForApp(app: Awaited<ReturnType<typeof createCoreRouteTe
   })
 }
 
-describe('runHttpDevSeeds', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
+describeSlowIntegration('runHttpDevSeeds', () => {
+  let sharedApp: Awaited<ReturnType<typeof createCoreRouteTestApp>>
+
+  beforeAll(async () => {
+    sharedApp = await createCoreRouteTestApp({ autoCleanup: false })
+  }, 60_000)
+
+  afterAll(async () => {
+    if (sharedApp?.runtime) {
+      await sharedApp.runtime.close()
+    }
+    await resetCoreRouteTestHarness()
   })
 
   it('provisions Better Auth users through HTTP sign-up/sign-in', async () => {
@@ -61,7 +71,7 @@ describe('runHttpDevSeeds', () => {
   }, 30_000)
 
   it('seeds the full demo school when auth goes through HTTP', async () => {
-    const { app, application } = await createCoreRouteTestApp()
+    const { app, application } = sharedApp
     const client = createHttpClientForApp(app)
 
     const results = await runHttpDevSeeds({
@@ -72,19 +82,12 @@ describe('runHttpDevSeeds', () => {
 
     expect(results.authProvision?.status).toBe('seeded')
     expect(results.school?.status).toBe('seeded')
-    expect(results.authLink?.status).toBe('seeded')
     expect(results.access?.status).toBe('seeded')
   }, 60_000)
 
   it('passes smoke checks after HTTP auth and domain seed', async () => {
-    const { app, application } = await createCoreRouteTestApp()
+    const { app, application } = sharedApp
     const client = createHttpClientForApp(app)
-
-    await runHttpDevSeeds({
-      client,
-      scope: 'all',
-      application,
-    })
 
     const smoke = await runHttpDevSeeds({
       client,
@@ -107,7 +110,6 @@ describe('runHttpDevSeeds', () => {
 
     expect(bootstrap.authProvision?.status).toBe('seeded')
     expect(bootstrap.school?.status).toBe('seeded')
-    expect(bootstrap.authLink?.status).toBe('seeded')
     expect(bootstrap.access?.status).toBe('seeded')
 
     const provisioned = await provisionSeedingServiceAccountInProcess(application)

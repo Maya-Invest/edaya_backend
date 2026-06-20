@@ -1,9 +1,9 @@
 import { academicContext } from '$lib/academic/context.svelte';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { t } from '$lib/i18n';
 import { toast } from '$lib/toast.svelte';
 import { get } from 'svelte/store';
-import { t } from '$lib/i18n';
 
 export async function createAssessmentMutation(input: {
 	classGroupId: string;

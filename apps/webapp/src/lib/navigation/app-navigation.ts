@@ -4,10 +4,10 @@ import { resolve } from '$app/paths';
 
 type AppGotoOptions = NonNullable<Parameters<typeof kitGoto>[1]>;
 
-export function appGoto(href: ResolvedPathname, opts?: AppGotoOptions) {
+export function appGoto(href: ResolvedPathname | string, opts?: AppGotoOptions) {
 	// href is already resolved via appPath(); kitGoto receives a ResolvedPathname.
 	// eslint-disable-next-line svelte/no-navigation-without-resolve -- central navigation wrapper
-	return kitGoto(href, opts);
+	return kitGoto(href as ResolvedPathname, opts);
 }
 
 const resolvePath = resolve as (

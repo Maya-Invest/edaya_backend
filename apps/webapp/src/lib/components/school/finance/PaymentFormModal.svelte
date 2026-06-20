@@ -41,10 +41,7 @@
 	const remaining = $derived(billing.total - billing.paid);
 	const numericAmount = $derived(Number.parseFloat(amount));
 	const canSubmit = $derived(
-		Number.isFinite(numericAmount)
-			&& numericAmount > 0
-			&& numericAmount <= remaining
-			&& paymentDate.trim().length > 0,
+		Number.isFinite(numericAmount) && numericAmount > 0 && numericAmount <= remaining && paymentDate.trim().length > 0,
 	);
 
 	function resetForm() {

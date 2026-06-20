@@ -3,26 +3,24 @@ import type { AuthProvisioner, SeedApplication } from '../types'
 import type { HttpSeedClient } from './client'
 import type { HttpSeedValidationResult } from './seed-validation'
 import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
-import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed } from '../run-dev-access-seed'
-import { runDevAuthLink } from '../run-dev-auth-link'
-import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/dev-fixtures'
-import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed, runDevAccessSeed } from '../run-dev-access-seed'
 import { ownerSubjectIdFromAuthProvision } from '../dev-staff-auth-seed'
+import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed, runDevAccessSeed } from '../run-dev-access-seed'
+import { runDevAuthLink } from '../run-dev-auth-link'
 import { runDevAuthProvision } from '../run-dev-auth-provision'
 import { runDevSchoolSeed } from '../run-dev-school-seed'
 import {
   logDevSeedResults,
   runDevSeeds,
 } from '../run-dev-seeds'
-import { HttpAuthProvisioner, signInViaHttp } from './auth'
-import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
-import { postEntityList } from './core-entity'
-import { createCoreHttpSeedApplication } from './core-seed-application'
 import {
   createLocalInProcessSeedContext,
   isLocalPersistedPgliteDev,
   runLocalInProcessStaffAuthSync,
 } from '../run-local-in-process-repair'
+import { HttpAuthProvisioner, signInViaHttp } from './auth'
+import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
+import { postEntityList } from './core-entity'
+import { createCoreHttpSeedApplication } from './core-seed-application'
 import {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
@@ -97,7 +95,6 @@ async function bootstrapHttpCoreSessionWithLocalRepair(client: HttpSeedClient): 
       throw error
     }
 
-    // eslint-disable-next-line no-console
     console.warn(
       'HTTP /core bootstrap failed; repairing dev auth links in-process against local PGlite...',
     )
@@ -248,7 +245,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   if (serviceAccountApiKey && scope !== 'auth') {
     const valid = await isServiceAccountApiKeyValid(client, serviceAccountApiKey)
     if (!valid) {
-      // eslint-disable-next-line no-console
       console.warn(
         'SERVICE_ACCOUNT_API_KEY was rejected by the API (401). '
         + 'Falling back to session bootstrap for /core/* seeding. '
@@ -337,7 +333,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
         throw error
       }
 
-      // eslint-disable-next-line no-console
       console.warn(
         'HTTP /core bootstrap failed; completing seed in-process against local PGlite...',
       )
@@ -409,7 +404,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   else {
     application = await resolveSeedApplication({
       ...options,
-      serviceAccountApiKey: seedingApiKey,
       serviceAccountApiKey,
     })
   }
@@ -433,6 +427,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       ...options,
       serviceAccountApiKey,
     })
+
+    if (isLocalPersistedPgliteDev()) {
+      await runLocalInProcessStaffAuthSync()
+    }
   }
 
   if (log) {

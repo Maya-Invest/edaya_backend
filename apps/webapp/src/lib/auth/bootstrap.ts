@@ -25,6 +25,12 @@ export async function bootstrapSession() {
 	}
 	catch (error) {
 		if (error instanceof ApiError && error.status === 401) {
+			try {
+				await authClient.signOut();
+			}
+			catch {
+				// Ignore sign-out errors while clearing a stale session.
+			}
 			authSession.clear();
 			return { session: null, staffProfile: null };
 		}

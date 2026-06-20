@@ -1,7 +1,7 @@
-import { academicContext } from '$lib/academic/context.svelte';
 import type { ReportCardDefinition } from '$lib/types/report-cards';
-import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
+import { academicContext } from '$lib/academic/context.svelte';
 import { resolvePageLoad } from '$lib/queries/page-status';
+import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 export function queryClassGroupsPage() {

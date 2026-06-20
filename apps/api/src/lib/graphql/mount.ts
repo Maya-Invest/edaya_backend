@@ -6,6 +6,7 @@ import { handleGraphiQLLogin, handleGraphiQLLogout } from "@/lib/graphql/graphiq
 import { handleGraphiQLSession } from "@/lib/graphql/graphiql-session";
 import { buildGraphQLEntitySchema } from "@/lib/graphql/routes/entities";
 
+/* eslint-disable node/no-process-env */
 const graphQLEntitySchema = buildGraphQLEntitySchema();
 const graphiqlEnabled = isGraphiQLEnabled();
 
@@ -19,7 +20,7 @@ export function mountGraphQLRoute(app: Hono<AppBindings>) {
     app.get("/graphiql/session", handleGraphiQLSession);
     app.post("/graphiql/login", handleGraphiQLLogin);
     app.post("/graphiql/logout", handleGraphiQLLogout);
-    app.get("/graphiql", (c) => c.html(renderGraphiQLPage({
+    app.get("/graphiql", c => c.html(renderGraphiQLPage({
       devApiKey: resolveGraphiQLDevApiKey(),
       webappOrigin: process.env.GRAPHIQL_WEBAPP_ORIGIN,
       defaultEmail: process.env.GRAPHIQL_DEFAULT_EMAIL,
@@ -27,4 +28,4 @@ export function mountGraphQLRoute(app: Hono<AppBindings>) {
   }
 }
 
-export { graphQLEntitySchema, graphiqlEnabled };
+export { graphiqlEnabled, graphQLEntitySchema };

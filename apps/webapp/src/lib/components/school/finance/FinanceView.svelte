@@ -8,8 +8,8 @@
 	import { Plus, TrendingUp, AlertCircle, Wallet } from '$lib/icons';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
-	import FeeFormModal from './FeeFormModal.svelte';
 	import AssignFeeFormModal from './AssignFeeFormModal.svelte';
+	import FeeFormModal from './FeeFormModal.svelte';
 
 	const {
 		fees,

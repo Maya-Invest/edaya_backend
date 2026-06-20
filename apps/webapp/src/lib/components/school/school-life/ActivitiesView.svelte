@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { Activity } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
-	import { readActivityListFilters, writeActivityListFilters } from '$lib/list/list-url-filters';
-	import { useInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { t } from '$lib/i18n';
 	import { CalendarRange, Plus, Search, Users } from '$lib/icons';
+	import { readActivityListFilters, writeActivityListFilters } from '$lib/list/list-url-filters';
+	import { useInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import ActivityFormModal from './ActivityFormModal.svelte';
@@ -45,7 +45,7 @@
 	const filtered = $derived(
 		activities
 			.filter(a => category === 'all' || a.category === category)
-			.filter(a => {
+			.filter((a) => {
 				const needle = q.toLowerCase();
 				return a.name.toLowerCase().includes(needle)
 					|| a.coach.toLowerCase().includes(needle)

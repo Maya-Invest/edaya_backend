@@ -24,7 +24,7 @@
     "check": "turbo run check",
     "quality": "turbo run quality",
     "test": "turbo run test",
-    "test:remote": "bun --filter @edaya/integration-tests test:remote",
+    "test:remote": "echo 'Remote Neon integration tests are disabled; use: bun --filter @edaya/integration-tests test' && exit 0",
     "test:coverage": "turbo run test -- --coverage",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",

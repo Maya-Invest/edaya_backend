@@ -40,12 +40,7 @@
 	const numericMax = $derived(Number.parseFloat(maxScore));
 	const numericCoef = $derived(Number.parseFloat(coefficient));
 	const canSubmit = $derived(
-		title.trim().length > 0
-		&& classSubjectId.length > 0
-		&& Number.isFinite(numericMax)
-		&& numericMax > 0
-		&& Number.isFinite(numericCoef)
-		&& numericCoef > 0,
+		title.trim().length > 0 && classSubjectId.length > 0 && Number.isFinite(numericMax) && numericMax > 0 && Number.isFinite(numericCoef) && numericCoef > 0,
 	);
 
 	function resetForm() {

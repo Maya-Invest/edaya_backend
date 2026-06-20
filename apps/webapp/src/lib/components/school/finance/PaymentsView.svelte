@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
-	import { readPaymentListFilters, writePaymentListFilters } from '$lib/list/list-url-filters';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, Search } from '$lib/icons';
+	import { readPaymentListFilters, writePaymentListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 

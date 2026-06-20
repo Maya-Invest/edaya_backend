@@ -41,9 +41,7 @@
 	);
 
 	const canSubmit = $derived(
-		firstName.trim().length > 0
-			&& lastName.trim().length > 0
-			&& classGroupId.length > 0,
+		firstName.trim().length > 0 && lastName.trim().length > 0 && classGroupId.length > 0,
 	);
 
 	function defaultClassId() {

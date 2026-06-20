@@ -42,9 +42,7 @@
 
 	const isEdit = $derived(event !== undefined);
 	const canSubmit = $derived(
-		eventTitle.trim().length > 0
-			&& date.trim().length > 0
-			&& (!scoped || selectedClasses.length > 0),
+		eventTitle.trim().length > 0 && date.trim().length > 0 && (!scoped || selectedClasses.length > 0),
 	);
 
 	function resetForm() {

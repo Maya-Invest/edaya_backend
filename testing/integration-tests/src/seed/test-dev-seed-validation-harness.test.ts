@@ -2,27 +2,19 @@ import {
   assertSeedManifestComplete,
   buildSeedValidationTargets,
   countSeedStudents,
-  DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   resolveSeedExpectedCounts,
   seedManifestEntitiesByStatus,
 } from '@edaya/dev-fixtures'
-import {
-  createHandlerAuthProvisioner,
-  runDevAccessSeed,
-  runDevAuthLink,
-  runDevSchoolSeed,
-} from '@edaya/seeding'
 import { HttpSeedClient, runHttpDevSeeds } from '@edaya/seeding/http'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
+import { describe, expect, it } from 'bun:test'
 import { apiPgliteEnv } from '../support/api-pglite-env'
-
+import { createAppRequest, createCoreRouteTestApp } from '../support/api-route-harness'
 import {
-  collectSetCookieHeaders,
-  createAppRequest,
-  createCoreRouteTestApp,
-} from '../support/api-route-harness'
+  describeSlowIntegration,
+  describeWithSeededSchool,
+  unwrapEntityList,
+} from '../support/seeded-route-test-context'
 
 function createHttpClientForApp(app: Awaited<ReturnType<typeof createCoreRouteTestApp>>['app']): HttpSeedClient {
   return new HttpSeedClient({
@@ -34,23 +26,7 @@ function createHttpClientForApp(app: Awaited<ReturnType<typeof createCoreRouteTe
   })
 }
 
-function unwrapEntityList(values: unknown): unknown[] {
-  if (!Array.isArray(values)) {
-    return []
-  }
-  return values.map((entry) => {
-    if (entry && typeof entry === 'object' && 'data' in entry && Object.keys(entry).length === 1) {
-      return (entry as { data: unknown }).data
-    }
-    return entry
-  })
-}
-
 describe('dev seed validation harness', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
   it('has no missing entities in the manifest', () => {
     expect(seedManifestEntitiesByStatus('missing')).toHaveLength(0)
     expect(() => assertSeedManifestComplete()).not.toThrow()
@@ -65,31 +41,18 @@ describe('dev seed validation harness', () => {
     expect(targets.find(target => target.entity === 'students')?.minCount).toBe(30)
     expect(targets.find(target => target.entity === 'guardians')?.minCount).toBeGreaterThanOrEqual(20)
   })
+})
 
+describeWithSeededSchool('dev seed validation harness — HTTP entity coverage', (getContext) => {
   it('lists all seeded entities through staff HTTP routes after full seed', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    const seedResult = await runDevSchoolSeed(application)
-    expect(seedResult.status).toBe('seeded')
-
-    await runDevAuthLink(application, createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL))
-    await runDevAccessSeed(application)
-
-    const signIn = await app.request(createAppRequest('/auth/sign-in/email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, password: DEV_AUTH_PASSWORD }),
-    }))
-    const cookies = collectSetCookieHeaders(signIn)
-    const authHeaders = {
-      'content-type': 'application/json',
-      'cookie': cookies.join('; '),
-    }
+    const { app, authHeaders } = getContext()
+    const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
 
     const failures: string[] = []
     for (const target of buildSeedValidationTargets()) {
       const response = await app.request(createAppRequest(`/core/entities/${target.entity}/list`, {
         method: 'POST',
-        headers: authHeaders,
+        headers,
         body: JSON.stringify({}),
       }))
       if (response.status !== 200) {
@@ -103,8 +66,10 @@ describe('dev seed validation harness', () => {
     }
 
     expect(failures).toEqual([])
-  }, 60_000)
+  })
+})
 
+describeSlowIntegration('dev seed validation harness — HTTP validate scope', () => {
   it('runs HTTP validate scope after full seed', async () => {
     const { app, application } = await createCoreRouteTestApp()
     const client = createHttpClientForApp(app)

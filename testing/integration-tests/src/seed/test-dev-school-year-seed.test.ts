@@ -5,23 +5,13 @@ import {
   SEED_REPORT_CARD_RESULTS,
   seedPeriodIdForDate,
 } from '@edaya/dev-fixtures'
-import { runDevSchoolSeed } from '@edaya/seeding'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
-import { createCoreRouteTestApp } from '../support/api-route-harness'
+import { expect, it } from 'bun:test'
+import { describeWithSeededSchoolData } from '../support/seeded-route-test-context'
 
-describe('dev school year seed', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
+describeWithSeededSchoolData('dev school year seed', (getContext) => {
   it('covers all three trimesters with assessments and report cards', async () => {
-    const { application } = await createCoreRouteTestApp()
-    const seedResult = await runDevSchoolSeed(application)
-    expect(seedResult.status).toBe('seeded')
-    if (seedResult.status === 'seeded') {
-      expect(seedResult.assessments).toBe(countSeedAssessments())
-    }
+    const { seedResult } = getContext()
+    expect(seedResult.assessments).toBe(countSeedAssessments())
 
     const assessmentsByPeriod = Object.fromEntries(
       SEED_ACADEMIC_PERIODS.map(period => [period.id, 0]),
@@ -47,5 +37,5 @@ describe('dev school year seed', () => {
     expect(reportCardsByPeriod['2025-t1']).toBeGreaterThanOrEqual(6)
     expect(reportCardsByPeriod['2025-t2']).toBeGreaterThanOrEqual(6)
     expect(reportCardsByPeriod['2025-t3']).toBeGreaterThanOrEqual(4)
-  }, 30_000)
+  })
 })

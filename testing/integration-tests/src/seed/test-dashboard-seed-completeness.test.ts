@@ -6,20 +6,12 @@ import {
   SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
   SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
-import { runDevSchoolSeed } from '@edaya/seeding'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
-import { createCoreRouteTestApp } from '../support/api-route-harness'
+import { expect, it } from 'bun:test'
+import { describeWithSeededSchoolData } from '../support/seeded-route-test-context'
 
-describe('dev dashboard seed completeness', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
+describeWithSeededSchoolData('dev dashboard seed completeness', (getContext) => {
   it('populates executive dashboard KPIs at the narrative reference date', async () => {
-    const { application } = await createCoreRouteTestApp()
-    const seedResult = await runDevSchoolSeed(application)
-    expect(seedResult.status).toBe('seeded')
+    const { application } = getContext()
 
     const referenceDate = parseSeedDate(resolveSeedReferenceDate())
     const overview = await buildSchoolOverview(application.repositories, {
@@ -46,5 +38,5 @@ describe('dev dashboard seed completeness', () => {
 
     expect(overview.upcoming.some(item => item.kind === 'calendar')).toBe(true)
     expect(overview.upcoming.some(item => item.kind === 'fee_due')).toBe(true)
-  }, 30_000)
+  })
 })

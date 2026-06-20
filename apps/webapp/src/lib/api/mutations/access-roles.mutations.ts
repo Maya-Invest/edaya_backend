@@ -1,12 +1,12 @@
-import type { components } from '$lib/api/schema';
 import type { Crud } from '$lib/api/access-roles-data';
+import type { components } from '$lib/api/schema';
+import type { StaffRole } from '$lib/types/school';
 import {
 	buildPermissionsFromCrudMatrix,
 	STAFF_ROLE_TO_ACCESS_ROLE_ID,
 } from '$lib/api/access-roles-data';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { StaffRole } from '$lib/types/school';
 
 type ApiAccessRole = components['schemas']['AccessRole'];
 

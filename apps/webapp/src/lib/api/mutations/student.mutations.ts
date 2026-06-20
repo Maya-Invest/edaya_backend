@@ -1,27 +1,17 @@
-import type { PedagogicalNote } from '$lib/types/school';
-import { runMutation } from '$lib/api/mutations/run-mutation';
-import { getBrowserSchoolClient } from '$lib/api/school-client';
-import { detailDataContext } from '$lib/detail-data/context.svelte';
-import { dateInputToIso } from '$lib/date/format';
 import { recordAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
 import { recordIncidentMutation } from '$lib/api/mutations/incident.mutations';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { authSession } from '$lib/auth/session.svelte';
+import { dateInputToIso } from '$lib/date/format';
 
 type StudentNoteCategory = 'behavior' | 'work' | 'progress' | 'encouragement';
 type StudentNoteVisibility = 'staff' | 'admin_only' | 'guardian_visible';
 type AttendanceStatus = 'absent' | 'late';
 type IncidentKind = 'positive' | 'minor_infraction' | 'major_infraction' | 'emergency';
 
-const NOTE_CATEGORY_LABEL: Record<StudentNoteCategory, PedagogicalNote['category']> = {
-	behavior: 'Comportement',
-	work: 'Travail',
-	progress: 'Progression',
-	encouragement: 'Encouragement',
-};
 function schoolId(): string {
-	return authSession.schoolId ?? academicContext.schools[0]?.id ?? '';
+	return authSession.schoolId ?? '';
 }
 
 export async function createStudentMutation(input: {
@@ -111,7 +101,6 @@ export async function linkGuardianToStudentMutation(input: {
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const id = `gl-${input.guardianId}-${input.studentId}`;
-
 	const result = await runMutation(() => client.commands.linkGuardianToStudent({
 		id,
 		guardianId: input.guardianId,
@@ -127,17 +116,7 @@ export async function linkGuardianToStudentMutation(input: {
 		contactRestrictions: null,
 		notes: null,
 		createdAt: new Date().toISOString(),
-	}), {
-		apply: () => {
-			const guardian = detailDataContext.guardians.find(entry => entry.id === input.guardianId);
-			if (guardian && !guardian.studentIds.includes(input.studentId)) {
-				detailDataContext.patchGuardian(input.guardianId, {
-					studentIds: [...guardian.studentIds, input.studentId],
-				});
-			}
-		},
-		successMessage: input.successMessage,
-	});
+	}), { successMessage: input.successMessage });
 	return result !== null;
 }
 
@@ -151,15 +130,6 @@ export async function createStudentNoteMutation(input: {
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const id = `note-${input.studentId}-${Date.now().toString(36)}`;
-	const optimisticNote: PedagogicalNote = {
-		id,
-		studentId: input.studentId,
-		date: new Date().toISOString().slice(0, 10),
-		authorId: 'staff-self',
-		category: NOTE_CATEGORY_LABEL[input.category],
-		content: input.body.trim(),
-	};
-
 	const result = await runMutation(() => client.commands.createStudentNote({
 		id,
 		studentId: input.studentId,
@@ -168,15 +138,7 @@ export async function createStudentNoteMutation(input: {
 		body: input.body.trim(),
 		visibility: input.visibility ?? 'staff',
 		createdAt: new Date().toISOString(),
-	}), {
-		apply: () => detailDataContext.appendPedagogicalNote(optimisticNote),
-		rollback: () => {
-			detailDataContext.pedagogicalNotes = detailDataContext.pedagogicalNotes.filter(
-				note => note.id !== id,
-			);
-		},
-		successMessage: input.successMessage,
-	});
+	}), { successMessage: input.successMessage });
 	return result !== null;
 }
 
@@ -188,30 +150,13 @@ export async function updateStudentNoteMutation(input: {
 	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const previous = detailDataContext.pedagogicalNotes.find(note => note.id === input.noteId);
-	const patch = {
-		category: NOTE_CATEGORY_LABEL[input.category],
-		content: input.body.trim(),
-	};
-
 	const result = await runMutation(() => client.commands.updateStudentNote({
 		noteId: input.noteId,
 		category: input.category,
 		body: input.body.trim(),
 		visibility: input.visibility ?? 'staff',
 		updatedAt: new Date().toISOString(),
-	}), {
-		apply: () => detailDataContext.patchPedagogicalNote(input.noteId, patch),
-		rollback: () => {
-			if (previous) {
-				detailDataContext.patchPedagogicalNote(input.noteId, {
-					category: previous.category,
-					content: previous.content,
-				});
-			}
-		},
-		successMessage: input.successMessage,
-	});
+	}), { successMessage: input.successMessage });
 	return result !== null;
 }
 
@@ -223,33 +168,13 @@ export async function updateStudentProfileMutation(input: {
 	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const previous = detailDataContext.students.find(student => student.id === input.studentId);
-	const fullName = `${input.firstName.trim()} ${input.lastName.trim()}`.trim();
-	const patch = {
-		name: fullName,
-		birthdate: input.birthDate ?? previous?.birthdate ?? '',
-	};
-
 	const result = await runMutation(() => client.commands.updateStudentProfile({
 		studentId: input.studentId,
 		firstName: input.firstName.trim(),
 		lastName: input.lastName.trim(),
-		birthDate: input.birthDate || null,
-	}), {
-		apply: () => detailDataContext.patchStudent(input.studentId, patch),
-		rollback: () => {
-			if (previous) {
-				detailDataContext.patchStudent(input.studentId, {
-					name: previous.name,
-					birthdate: previous.birthdate,
-				});
-			}
-		},
-		successMessage: input.successMessage,
-	});
-	birthDate: dateInputToIso(input.birthDate ?? '') ?? null,
+		birthDate: dateInputToIso(input.birthDate ?? '') ?? null,
 	}), { successMessage: input.successMessage });
-return result !== null;
+	return result !== null;
 }
 
 export async function transferStudentMutation(input: {
@@ -260,21 +185,11 @@ export async function transferStudentMutation(input: {
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const nextEnrollmentId = `enr-${input.studentId}-${Date.now().toString(36)}`;
-	const previousClassId = detailDataContext.students.find(student => student.id === input.studentId)?.classId;
-
 	const result = await runMutation(() => client.commands.transferStudent({
 		enrollmentId: input.enrollmentId,
 		nextEnrollmentId,
 		nextClassGroupId: input.nextClassGroupId,
 		effectiveAt: new Date().toISOString().slice(0, 10),
-	}), {
-		apply: () => detailDataContext.patchStudent(input.studentId, { classId: input.nextClassGroupId }),
-		rollback: () => {
-			if (previousClassId) {
-				detailDataContext.patchStudent(input.studentId, { classId: previousClassId });
-			}
-		},
-		successMessage: input.successMessage,
-	});
+	}), { successMessage: input.successMessage });
 	return result !== null;
 }

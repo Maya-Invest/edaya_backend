@@ -1,16 +1,16 @@
 <script lang="ts">
 	import type { Incident } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import { resolveIncidentMutation } from '$lib/api/mutations/incident.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-	import { academicContext } from '$lib/academic/context.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
-	import { get } from 'svelte/store';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import { incidentSevTone, incidentCatTone } from '../shared/drawer-constants.ts';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';

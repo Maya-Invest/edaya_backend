@@ -48,11 +48,7 @@
 	);
 
 	const canSubmit = $derived(
-		sessionTitle.trim().length > 0
-		&& resolvedClassId.length > 0
-		&& start.length > 0
-		&& end.length > 0
-		&& start < end,
+		sessionTitle.trim().length > 0 && resolvedClassId.length > 0 && start.length > 0 && end.length > 0 && start < end,
 	);
 
 	function resetForm() {

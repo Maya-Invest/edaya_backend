@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { SchoolYearEvent } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { locale, t } from '$lib/i18n';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
-	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import SchoolYearEventFormModal from './SchoolYearEventFormModal.svelte';
 
 	const { ev }: { ev: SchoolYearEvent } = $props();

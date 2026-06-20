@@ -107,6 +107,7 @@ export const ACCESS_ROLE_ID_TO_STAFF_ROLE: Record<string, StaffRole> = {
 };
 
 export const STAFF_ROLE_TO_ACCESS_ROLE_ID: Record<StaffRole, string> = {
+	owner: 'role-director',
 	directeur: 'role-director',
 	prof_principal: 'role-coordinator',
 	professeur: 'role-teacher',

@@ -5,27 +5,19 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
   SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
-import { afterEach, describe, expect, it } from 'bun:test'
-import { resetApiRuntimesForTests } from '@/runtime'
+import { expect, it } from 'bun:test'
 import {
   createAppRequest,
-  createCoreRouteTestApp,
   grantAccessControlAssign,
-  seedDevSchoolAndAuthLinks,
-  signInThroughApp,
   signUpAuthUser,
 } from '../support/api-route-harness'
+import { describeWithSeededSchool } from '../support/seeded-route-test-context'
 
 const UNLINKED_STAFF_ID = 'st9'
 
-describe('link-actor-subject command route', () => {
-  afterEach(async () => {
-    await resetApiRuntimesForTests()
-  })
-
+describeWithSeededSchool('link-actor-subject command route', (getContext) => {
   it('links a staff member to a Better Auth subject through the command route', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    await seedDevSchoolAndAuthLinks(application, runtime)
+    const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
     const bootstrapActor = createBootstrapStaffActorMetadata({
@@ -48,14 +40,9 @@ describe('link-actor-subject command route', () => {
       name: 'Paul Martin',
     })
 
-    const cookies = await signInThroughApp(app, { email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL })
-
     const response = await app.request(createAppRequest('/core/commands/link-actor-subject', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'cookie': cookies.join('; '),
-      },
+      headers: await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL),
       body: JSON.stringify({
         subjectId,
         staffMemberId: UNLINKED_STAFF_ID,
@@ -78,11 +65,10 @@ describe('link-actor-subject command route', () => {
 
     const linkedStaff = await application.repositories.staffMembers.findById(UNLINKED_STAFF_ID)
     expect(linkedStaff?.subjectId).toBe(subjectId)
-  }, 30_000)
+  })
 
   it('returns 401 when the caller is not authenticated', async () => {
-    const { app, runtime, application } = await createCoreRouteTestApp()
-    await seedDevSchoolAndAuthLinks(application, runtime)
+    const { app } = getContext()
 
     const response = await app.request(createAppRequest('/core/commands/link-actor-subject', {
       method: 'POST',
@@ -96,5 +82,5 @@ describe('link-actor-subject command route', () => {
     }))
 
     expect(response.status).toBe(401)
-  }, 30_000)
-})
+  })
+}, { isolate: true })
