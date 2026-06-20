@@ -44,12 +44,27 @@ export interface EntityBusinessGates<T> {
   ) => Promise<void>
 }
 
+export interface EntityBusinessHooks<T> {
+  postSave?: (
+    entity: T,
+    existing: T | undefined,
+    repositories: SchoolRepositories,
+    actor: ActorMetadata,
+  ) => Promise<void>
+  postDelete?: (
+    entity: T,
+    repositories: SchoolRepositories,
+    actor: ActorMetadata,
+  ) => Promise<void>
+}
+
 export interface ManagedEntityServiceConfig<T> {
   repository: BaseRepositoryInterface<T>
   tenant: EntityTenantResolver<T>
   read: EntityReadAuthorization<T>
   write: EntityWriteAuthorization<T>
   gates?: EntityBusinessGates<T>
+  hooks?: EntityBusinessHooks<T>
   atomicExecution?: AtomicExecutionPort
 }
 
@@ -135,6 +150,7 @@ export class ManagedEntityService<T> {
       await this.config.write.authorizeSave(this.actor, entity, existing, this.repositories)
       await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
       await this.config.repository.save(entity)
+      await this.config.hooks?.postSave?.(entity, existing, this.repositories, this.actor)
     })
   }
 
@@ -156,7 +172,15 @@ export class ManagedEntityService<T> {
         await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
       }
 
-      return this.config.repository.batchSave(entities)
+      const savedIds = await this.config.repository.batchSave(entities)
+
+      for (const entity of entities) {
+        const id = getEntityId(entity)
+        const existing = id ? existingById.get(id) : undefined
+        await this.config.hooks?.postSave?.(entity, existing, this.repositories, this.actor)
+      }
+
+      return savedIds
     })
   }
 
@@ -172,6 +196,7 @@ export class ManagedEntityService<T> {
       await this.config.write.authorizeDelete(this.actor, entity, this.repositories)
       await this.config.gates?.preDelete?.(entity, this.repositories)
       await this.config.repository.delete(id)
+      await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
     })
   }
 
@@ -191,6 +216,10 @@ export class ManagedEntityService<T> {
 
       const existingIds = entities.map(getEntityId).filter((id): id is string => id !== undefined)
       await this.config.repository.batchDelete(existingIds)
+
+      for (const entity of entities) {
+        await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
+      }
     })
   }
 
