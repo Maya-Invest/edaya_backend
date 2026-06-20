@@ -51,6 +51,13 @@ export interface PlanningEvent {
 	teacher: string;
 }
 
+export interface AssessmentResultRow {
+	id: string;
+	studentId: string;
+	assessmentId: string;
+	score: number | null;
+}
+
 export interface Evaluation {
 	id: string;
 	classId: string;
@@ -75,7 +82,7 @@ export interface Guardian {
 	preferredContact: 'email' | 'phone' | 'sms';
 }
 
-export type StaffRole = 'directeur' | 'prof_principal' | 'professeur' | 'educateur';
+export type StaffRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur';
 
 export interface StaffMember {
 	id: string;
@@ -88,6 +95,7 @@ export interface StaffMember {
 	mainClassId?: string;
 	subjectsTaught?: string[];
 	subjectLabels?: string[];
+	isActive: boolean;
 }
 
 export type ChronicCondition = 'Asthme' | 'Epilepsie' | 'Diabete';
@@ -201,6 +209,8 @@ export interface School {
 
 export interface SchoolYearEvent {
 	id: string;
+	/** API record ids when one logical event spans multiple class scopes */
+	linkedIds?: string[];
 	title: string;
 	date: string;
 	endDate?: string;

@@ -2,6 +2,7 @@ import type { Crud } from '$lib/components/school/shared/drawer-constants';
 import type {
 	AbsenceRecord,
 	Activity,
+	AssessmentResultRow,
 	Deadline,
 	Evaluation,
 	Fee,
@@ -26,6 +27,7 @@ export interface DetailDataSnapshot {
 	subjects: Subject[];
 	planning: PlanningEvent[];
 	evaluations: Evaluation[];
+	assessmentResults: AssessmentResultRow[];
 	activities: Activity[];
 	deadlines: Deadline[];
 	incidents: Incident[];
@@ -47,6 +49,7 @@ class DetailDataContext {
 	subjects = $state<Subject[]>([]);
 	planning = $state<PlanningEvent[]>([]);
 	evaluations = $state<Evaluation[]>([]);
+	assessmentResults = $state<AssessmentResultRow[]>([]);
 	activities = $state<Activity[]>([]);
 	deadlines = $state<Deadline[]>([]);
 	incidents = $state<Incident[]>([]);
@@ -60,6 +63,8 @@ class DetailDataContext {
 	roleCrudMatrix = $state<Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>>({});
 	roleEnabledPermissions = $state<Partial<Record<StaffRole, Record<string, boolean>>>>({});
 	ready = $state(false);
+	/** Bumped on each hydrate so open drawers can re-bind fresh entity data. */
+	dataGeneration = $state(0);
 
 	private replaceById<T extends { id: string }>(items: readonly T[], id: string, patch: Partial<T>): T[] {
 		const index = items.findIndex(item => item.id === id);
@@ -106,6 +111,7 @@ class DetailDataContext {
 		this.subjects = snapshot.subjects;
 		this.planning = snapshot.planning;
 		this.evaluations = snapshot.evaluations;
+		this.assessmentResults = snapshot.assessmentResults;
 		this.activities = snapshot.activities;
 		this.deadlines = snapshot.deadlines;
 		this.incidents = snapshot.incidents;
@@ -119,6 +125,7 @@ class DetailDataContext {
 		this.roleCrudMatrix = snapshot.roleCrudMatrix;
 		this.roleEnabledPermissions = snapshot.roleEnabledPermissions;
 		this.ready = true;
+		this.dataGeneration++;
 	}
 
 	reset() {
@@ -128,6 +135,7 @@ class DetailDataContext {
 		this.subjects = [];
 		this.planning = [];
 		this.evaluations = [];
+		this.assessmentResults = [];
 		this.activities = [];
 		this.deadlines = [];
 		this.incidents = [];

@@ -101,7 +101,7 @@ export const SEED_CLASSES = [
   ...SEED_EXTENDED_CLASSES,
 ] as const
 
-/** All staff from `apps/webapp/src/lib/data/school.ts` — st5 first (school owner). */
+/** All staff from `apps/webapp/src/lib/data/school.ts` — st5 first (director bootstrap). */
 export const SEED_STAFF = [
   { id: 'st5', name: 'Camille Moreau', email: 'c.moreau@school.edu' },
   { id: 'st3', name: 'Mme Léon', email: 'm.leon@school.edu' },
@@ -110,10 +110,11 @@ export const SEED_STAFF = [
   { id: 'st4', name: 'M. Cheng', email: 'm.cheng@school.edu' },
   { id: 'st6', name: 'Sarah Klein', email: 's.klein@school.edu' },
   { id: 'st7', name: 'Tom Évrard', email: 't.evrard@school.edu' },
+  { id: 'st8', name: 'Koussi Yann', email: 'k.yann@school.edu' },
 ] as const
 
-/** Staff member id designated as school owner in dev fixtures (Camille Moreau / st5). */
-export const SEED_SCHOOL_OWNER_STAFF_ID = SEED_STAFF[0].id
+/** Staff member id designated as school owner in dev fixtures (elevated grants). */
+export const SEED_SCHOOL_OWNER_STAFF_ID = 'st8'
 
 export const SEED_STUDENTS = [
   { id: 's1', classId: '6a', name: 'Amélie Laurent', birthDate: '2014-03-12' },
@@ -343,6 +344,7 @@ export const DEV_AUTH_PASSWORD = 'DevPassword1!'
 
 /** Staff accounts provisioned and linked during dev auth seed. */
 export const DEV_AUTH_STAFF_ACCOUNTS = [
+  { staffId: 'st8', email: 'k.yann@school.edu', name: 'Koussi Yann' },
   { staffId: 'st5', email: 'c.moreau@school.edu', name: 'Camille Moreau' },
   { staffId: 'st1', email: 'm.dupont@school.edu', name: 'Mme Dupont' },
   { staffId: 'st2', email: 'm.garnier@school.edu', name: 'M. Garnier' },
@@ -355,6 +357,7 @@ export const DEV_AUTH_STAFF_ACCESS_ROLE_IDS: Record<
   (typeof DEV_AUTH_STAFF_ACCOUNTS)[number]['staffId'],
   string
 > = {
+  st8: 'role-director',
   st5: 'role-director',
   st1: 'role-teacher',
   st2: 'role-teacher',

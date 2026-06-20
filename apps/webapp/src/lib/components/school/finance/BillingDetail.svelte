@@ -1,11 +1,13 @@
 <script lang="ts">
 	import type { StudentBilling } from '$lib/types/school';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import PaymentFormModal from './PaymentFormModal.svelte';
 
 	const { b }: { b: StudentBilling } = $props();
 
@@ -13,6 +15,7 @@
 	const fee = $derived(detailDataContext.fees.find(f => f.id === b.feeId));
 	const remaining = $derived(b.total - b.paid);
 	const pct = $derived((b.paid / b.total) * 100);
+	const canRecordPayment = $derived(remaining > 0 && b.status !== 'paid');
 </script>
 
 {#if student && fee}
@@ -102,6 +105,24 @@
 			</div>
 		</div>
 
-		<Button class="w-full rounded-full"><span class="mr-1">💳</span> {$t('finance.recordPayment')}</Button>
+		{#if canRecordPayment}
+			<DrawerActionBar>
+				<PermissionGate
+					permission="PAYMENT_RECORD"
+					mode="disable"
+					tooltip={$t('payment.permissionRecord')}
+				>
+					{#snippet children({ disabled, title })}
+						<PaymentFormModal
+							billing={b}
+							studentName={student.name}
+							feeName={fee.name}
+							{disabled}
+							{title}
+						/>
+					{/snippet}
+				</PermissionGate>
+			</DrawerActionBar>
+		{/if}
 	</div>
 {/if}

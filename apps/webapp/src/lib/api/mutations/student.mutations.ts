@@ -2,6 +2,12 @@ import type { PedagogicalNote } from '$lib/types/school';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
+import { dateInputToIso } from '$lib/date/format';
+import { recordAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
+import { recordIncidentMutation } from '$lib/api/mutations/incident.mutations';
+import { runMutation } from '$lib/api/mutations/run-mutation';
+import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { authSession } from '$lib/auth/session.svelte';
 
 type StudentNoteCategory = 'behavior' | 'work' | 'progress' | 'encouragement';
 type StudentNoteVisibility = 'staff' | 'admin_only' | 'guardian_visible';
@@ -14,6 +20,46 @@ const NOTE_CATEGORY_LABEL: Record<StudentNoteCategory, PedagogicalNote['category
 	progress: 'Progression',
 	encouragement: 'Encouragement',
 };
+function schoolId(): string {
+	return authSession.schoolId ?? academicContext.schools[0]?.id ?? '';
+}
+
+export async function createStudentMutation(input: {
+	firstName: string;
+	lastName: string;
+	classGroupId: string;
+	birthDate?: string;
+	successMessage?: string;
+}): Promise<string | null> {
+	const client = getBrowserSchoolClient();
+	const resolvedSchoolId = schoolId();
+	if (!resolvedSchoolId)
+		return null;
+
+	const studentId = `stu-${Date.now().toString(36)}`;
+	const enrollmentId = `enr-${studentId}`;
+	const now = new Date().toISOString();
+	const birthDate = dateInputToIso(input.birthDate ?? '');
+
+	const result = await runMutation(async () => {
+		await client.commands.registerStudent({
+			id: studentId,
+			schoolId: resolvedSchoolId,
+			firstName: input.firstName.trim(),
+			lastName: input.lastName.trim(),
+			birthDate,
+			createdAt: now,
+		});
+		return client.commands.enrollStudent({
+			id: enrollmentId,
+			studentId,
+			classGroupId: input.classGroupId,
+			createdAt: now,
+		});
+	}, { successMessage: input.successMessage });
+
+	return result ? studentId : null;
+}
 
 export async function recordStudentAssessmentResultMutation(input: {
 	studentId: string;
@@ -21,16 +67,7 @@ export async function recordStudentAssessmentResultMutation(input: {
 	score: number;
 	successMessage?: string;
 }): Promise<boolean> {
-	const client = getBrowserSchoolClient();
-	const id = `ar-${input.assessmentId}-${input.studentId}`;
-	const result = await runMutation(() => client.commands.recordAssessmentResult({
-		id,
-		studentId: input.studentId,
-		assessmentId: input.assessmentId,
-		score: input.score,
-		createdAt: new Date().toISOString(),
-	}), { successMessage: input.successMessage });
-	return result !== null;
+	return recordAssessmentResultMutation(input);
 }
 
 export async function recordStudentDailyAttendanceMutation(input: {
@@ -62,32 +99,8 @@ export async function recordStudentIncidentMutation(input: {
 	kind: IncidentKind;
 	successMessage?: string;
 }): Promise<boolean> {
-	const client = getBrowserSchoolClient();
-	const now = new Date().toISOString();
-	const incidentId = `inc-${input.studentId}-${Date.now().toString(36)}`;
-	const involvementId = `involv-${incidentId}-${input.studentId}`;
-	const result = await runMutation(async () => {
-		await client.commands.recordIncident({
-			id: incidentId,
-			schoolId: input.schoolId,
-			title: input.title.trim(),
-			description: input.description.trim(),
-			date: now,
-			kind: input.kind,
-			classGroupId: input.classGroupId ?? null,
-			sessionId: null,
-			createdAt: now,
-		});
-		return client.commands.addStudentInvolvement({
-			id: involvementId,
-			incidentId,
-			studentId: input.studentId,
-			role: 'subject',
-			notes: null,
-			createdAt: now,
-		});
-	}, { successMessage: input.successMessage });
-	return result !== null;
+	const incidentId = await recordIncidentMutation(input);
+	return incidentId !== null;
 }
 
 export async function linkGuardianToStudentMutation(input: {
@@ -234,7 +247,9 @@ export async function updateStudentProfileMutation(input: {
 		},
 		successMessage: input.successMessage,
 	});
-	return result !== null;
+	birthDate: dateInputToIso(input.birthDate ?? '') ?? null,
+	}), { successMessage: input.successMessage });
+return result !== null;
 }
 
 export async function transferStudentMutation(input: {

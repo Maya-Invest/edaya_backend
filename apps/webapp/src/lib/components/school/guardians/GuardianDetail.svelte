@@ -53,7 +53,7 @@
 	</div>
 
 	<DrawerActionBar>
-		<PermissionGate permission="PARENT_UPDATE" mode="disable" tooltip="Droit PARENT_UPDATE requis.">
+		<PermissionGate permission="PARENT_UPDATE" mode="disable" tooltip={$t('guardian.permissionUpdate')}>
 			{#snippet children({ disabled, title })}
 				<GuardianEditModal {g} {disabled} {title} />
 			{/snippet}

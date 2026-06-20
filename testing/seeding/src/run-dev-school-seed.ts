@@ -40,6 +40,7 @@ import {
   countSeedAssessments,
   countSeedPlanningSlots,
   DEV_AUTH_PASSWORD,
+  DEV_AUTH_STAFF_ACCOUNTS,
   parseSeedDate,
   parseSeedDateTime,
   planningSessionDate,
@@ -67,6 +68,7 @@ import {
   SEED_PLANNING_SLOTS,
   SEED_RESOURCES,
   SEED_SCHOOL_ID,
+  SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_SCHOOL_PROFILE,
   SEED_SESSION_PROGRESS,
   SEED_STAFF,
@@ -83,6 +85,7 @@ import { seedAttachments } from './seed-attachments'
 import { seedAttendanceRecords } from './seed-attendance'
 import { seedCommunications } from './seed-communications'
 import { seedDiscipline } from './seed-discipline'
+import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 import { seedReportCards } from './seed-report-cards'
 
 const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
@@ -94,49 +97,49 @@ const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
 
 export type DevSchoolSeedResult
   = | { status: 'skipped', reason: 'already-seeded', schoolCount: number }
-    | {
-      status: 'seeded'
-      schoolId: string
-      academicYearId: string
-      gradeLevels: number
-      classes: number
-      staff: number
-      students: number
-      guardians: number
-      academicPeriods: number
-      subjects: number
-      classSubjects: number
-      periodDefinitions: number
-      fees: number
-      studentFees: number
-      payments: number
-      classSubjectMatters: number
-      resources: number
-      schedules: number
-      sessions: number
-      assessments: number
-      assessmentResults: number
-      homeworkAssignments: number
-      homeworkSubmissions: number
-      activities: number
-      activityEnrollments: number
-      classLogbookEntries: number
-      calendarEvents: number
-      incidents: number
-      attendanceRecords: number
-      studentHealthProfiles: number
-      studentNotes: number
-      gradeScales: number
-      reportCardDefinitions: number
-      reportCardSections: number
-      reportCardResults: number
-      disciplinaryActions: number
-      studentDisciplinaryActions: number
-      announcements: number
-      announcementTargets: number
-      messageDeliveries: number
-      attachments: number
-    }
+  | {
+    status: 'seeded'
+    schoolId: string
+    academicYearId: string
+    gradeLevels: number
+    classes: number
+    staff: number
+    students: number
+    guardians: number
+    academicPeriods: number
+    subjects: number
+    classSubjects: number
+    periodDefinitions: number
+    fees: number
+    studentFees: number
+    payments: number
+    classSubjectMatters: number
+    resources: number
+    schedules: number
+    sessions: number
+    assessments: number
+    assessmentResults: number
+    homeworkAssignments: number
+    homeworkSubmissions: number
+    activities: number
+    activityEnrollments: number
+    classLogbookEntries: number
+    calendarEvents: number
+    incidents: number
+    attendanceRecords: number
+    studentHealthProfiles: number
+    studentNotes: number
+    gradeScales: number
+    reportCardDefinitions: number
+    reportCardSections: number
+    reportCardResults: number
+    disciplinaryActions: number
+    studentDisciplinaryActions: number
+    announcements: number
+    announcementTargets: number
+    messageDeliveries: number
+    attachments: number
+  }
 
 function joinHealthList(values: readonly string[]): string | undefined {
   return values.length > 0 ? values.join(', ') : undefined
@@ -181,8 +184,12 @@ export async function runDevSchoolSeed(
 
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
-    const director = SEED_STAFF[0]
-    ownerSubjectId = await options.auth.lookupSubjectIdByEmail(director.email, DEV_AUTH_PASSWORD)
+    const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
+      account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+    )
+    if (ownerAccount) {
+      ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
+    }
   }
 
   if (!existingDemoSchool) {
@@ -688,6 +695,9 @@ export async function runDevSchoolSeed(
 
   const communicationsCounts = await seedCommunications(service)
   const attachmentCounts = await seedAttachments(service)
+  if (options?.auth) {
+    await syncDevStaffAuthAndOwner(application, options.auth, ownerSubjectId)
+  }
 
   return {
     status: 'seeded',

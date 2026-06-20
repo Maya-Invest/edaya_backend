@@ -1,8 +1,13 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { readReportCardDefinitionListFilters, writeReportCardDefinitionListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
-	import { ChevronRight } from '$lib/icons';
+	import { ChevronRight, Search } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { cn } from '$lib/utils';
 
@@ -16,20 +21,103 @@
 		selectedId?: string;
 	} = $props();
 
+	const initialFilters = $derived(readReportCardDefinitionListFilters($page.url));
+
+	let q = $state('');
+	let status = $state<'all' | ReportCardDefinition['status']>('all');
+	let filtersReady = $state(false);
+
+	const statusKeys = ['all', 'draft', 'published'] as const;
+
+	const filteredDefinitions = $derived(
+		definitions.filter((def) => {
+			if (status !== 'all' && def.status !== status)
+				return false;
+			const needle = q.trim().toLowerCase();
+			if (!needle)
+				return true;
+			const level = academicContext.gradeLevelById(def.gradeLevelId);
+			const scale = reportCardsContext.scales.find(s => s.id === def.gradeScaleId);
+			return def.name.toLowerCase().includes(needle)
+				|| (level?.name.toLowerCase().includes(needle) ?? false)
+				|| (scale?.name.toLowerCase().includes(needle) ?? false);
+		}),
+	);
+
+	function statusLabel(k: (typeof statusKeys)[number]) {
+		if (k === 'all')
+			return $t('filter.all');
+		return k === 'published' ? $t('academic.published') : $t('academic.draft');
+	}
+
+	function syncFiltersToUrl() {
+		const href = writeReportCardDefinitionListFilters($page.url, { q, status });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		status = (statusKeys.includes(next.status as (typeof statusKeys)[number])
+			? next.status
+			: 'all') as typeof status;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
+
+	function applyStatus(next: (typeof statusKeys)[number]) {
+		status = next;
+		scheduleFilterSync();
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5">
-		<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-			{$t('reportCards.subtitle')}
-		</p>
-		<h2 class="font-display text-2xl font-semibold">
-			{$t('reportCards.modelsTitle', { n: definitions.length })}
-		</h2>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('reportCards.subtitle')}
+		title={$t('reportCards.modelsTitle', { n: filteredDefinitions.length })}
+	>
+		{#snippet search()}
+			<div class="relative">
+				<Search
+					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					bind:value={q}
+					oninput={scheduleFilterSync}
+					placeholder={$t('common.search')}
+					class="h-9 w-56 rounded-full pl-9 text-sm"
+				/>
+			</div>
+		{/snippet}
+		{#snippet filters()}
+			<div class="flex flex-wrap items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+				{#each statusKeys as k (k)}
+					<button
+						type="button"
+						onclick={() => applyStatus(k)}
+						class={cn(
+							'rounded-full px-3 py-1 text-[11px] font-medium transition',
+							status === k
+								? 'bg-primary text-primary-foreground'
+								: 'text-muted-foreground hover:text-foreground',
+						)}
+					>
+						{statusLabel(k)}
+					</button>
+				{/each}
+			</div>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="space-y-2">
-		{#each definitions as def (def.id)}
+		{#each filteredDefinitions as def (def.id)}
 			{@const level = academicContext.gradeLevelById(def.gradeLevelId)}
 			{@const scale = reportCardsContext.scales.find(s => s.id === def.gradeScaleId)}
 			<button
@@ -55,11 +143,15 @@
 						</span>
 					</div>
 					<p class="mt-1 text-sm text-muted-foreground">
-						{level?.name ?? '—'} · {scale?.name ?? '—'} · {def.sections.length} section{def.sections.length > 1 ? 's' : ''}
+						{level?.name ?? '—'} · {scale?.name ?? '—'} · {$t('reportCards.sectionCount', { n: def.sections.length })}
 					</p>
 				</div>
 				<ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
 			</button>
+		{:else}
+			<p class="py-10 text-center text-sm text-muted-foreground">
+				{$t('dataState.emptyDescription')}
+			</p>
 		{/each}
 	</div>
 </div>

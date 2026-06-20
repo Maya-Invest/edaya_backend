@@ -21,6 +21,7 @@
 
 	let open = $state(false);
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let assessmentId = $state('');
 	let score = $state('');
 
@@ -30,6 +31,11 @@
 			.sort((left, right) => right.date.localeCompare(left.date)),
 	);
 	const selectedEvaluation = $derived(evaluations.find(evaluation => evaluation.id === assessmentId));
+	const assessmentLabel = $derived(
+		selectedEvaluation
+			? `${selectedEvaluation.title} · ${selectedEvaluation.subject}`
+			: '',
+	);
 	const numericScore = $derived(Number.parseFloat(score));
 	const canSubmit = $derived.by(() => {
 		if (!assessmentId || !Number.isFinite(numericScore) || numericScore < 0) {
@@ -39,13 +45,13 @@
 	});
 
 	$effect(() => {
-		if (open && !assessmentId && evaluations[0]) {
-			assessmentId = evaluations[0].id;
-		}
+		if (open && !wasOpen)
+			resetForm();
+		wasOpen = open;
 	});
 
 	function resetForm() {
-		assessmentId = '';
+		assessmentId = evaluations[0]?.id ?? '';
 		score = '';
 	}
 
@@ -97,11 +103,13 @@
 			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Évaluation</Label>
 			<Select.Root type="single" value={assessmentId} onValueChange={v => v && (assessmentId = v)}>
 				<Select.Trigger>
-					<Select.Value />
+					<Select.Value placeholder="Évaluation">
+						{assessmentLabel}
+					</Select.Value>
 				</Select.Trigger>
-				<Select.Content>
+				<Select.Content class="z-[100]">
 					{#each evaluations as evaluation (evaluation.id)}
-						<Select.Item value={evaluation.id}>
+						<Select.Item value={evaluation.id} label={evaluation.title}>
 							{evaluation.title}
 							<span class="ml-1 text-muted-foreground">· {evaluation.subject}</span>
 						</Select.Item>

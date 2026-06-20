@@ -3,8 +3,11 @@ import type { DevAuthLinkResult } from './run-dev-auth-link'
 import type { DevAuthProvisionResult } from './run-dev-auth-provision'
 import type { DevSchoolSeedResult } from './run-dev-school-seed'
 import type { AuthProvisioner, SeedApplication } from './types'
-import { DEV_AUTH_PASSWORD, SEED_STAFF } from '@edaya/dev-fixtures'
+import {
+  DEV_AUTH_PASSWORD,
+} from '@edaya/dev-fixtures'
 import { runDevAccessSeed } from './run-dev-access-seed'
+import { ownerSubjectIdFromAuthProvision } from './dev-staff-auth-seed'
 import { runDevAuthLink } from './run-dev-auth-link'
 import { runDevAuthProvision } from './run-dev-auth-provision'
 import { runDevSchoolSeed } from './run-dev-school-seed'
@@ -46,11 +49,6 @@ export function parseDevSeedScope(argv: string[]): DevSeedScope {
   throw new Error(`Unknown seed scope: ${arg}. Usage: bun seed.ts [school|auth|auth:link|access|all]`)
 }
 
-function ownerSubjectIdFromProvision(provision: DevAuthProvisionResult): string | undefined {
-  const directorEmail = SEED_STAFF[0].email
-  return provision.accounts.find(account => account.email === directorEmail)?.subjectId
-}
-
 export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSeedsResults> {
   const { scope, application, auth } = options
   const results: RunDevSeedsResults = {
@@ -64,13 +62,14 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     if (!options.skipAuthProvision) {
       results.authProvision = await runDevAuthProvision(auth)
     }
+    const ownerSubjectId = options.ownerSubjectId ?? (
+      results.authProvision ? ownerSubjectIdFromAuthProvision(results.authProvision) : undefined
+    )
     results.school = await runDevSchoolSeed(application, {
-      ownerSubjectId: options.ownerSubjectId ?? (
-        results.authProvision ? ownerSubjectIdFromProvision(results.authProvision) : undefined
-      ),
+      ownerSubjectId,
+      auth,
     })
-    results.authLink = await runDevAuthLink(application, auth)
-    results.access = await runDevAccessSeed(application)
+    results.access = await runDevAccessSeed(application, { auth, ownerSubjectId })
     return results
   }
 
@@ -87,7 +86,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
   }
 
   if (scope === 'access') {
-    results.access = await runDevAccessSeed(application)
+    results.access = await runDevAccessSeed(application, { auth })
   }
 
   return results

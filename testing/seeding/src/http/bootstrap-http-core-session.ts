@@ -1,9 +1,10 @@
 import type { HttpSeedClient } from './client'
 import {
   DEV_AUTH_PASSWORD,
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
   SEED_SCHOOL_ID,
+  SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_SCHOOL_PROFILE,
   SEED_STAFF,
   splitDisplayName,
@@ -11,47 +12,7 @@ import {
 import { HttpAuthProvisioner, signInViaHttp } from './auth'
 import { isTransientHttpStatus } from './client'
 
-async function ensureDirectorSignedIn(client: HttpSeedClient): Promise<void> {
-  const director = SEED_STAFF[0]
-
-  const response = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-      password: DEV_AUTH_PASSWORD,
-    }),
-  })
-
-  if (response.ok) {
-    return
-  }
-
-  if (response.status === 401 || response.status === 422) {
-    const provisioner = new HttpAuthProvisioner(client)
-    await provisioner.ensureUser({
-      email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-      password: DEV_AUTH_PASSWORD,
-      name: director.name,
-    })
-    await signInViaHttp(client, {
-      email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-      password: DEV_AUTH_PASSWORD,
-    })
-    return
-  }
-
-  const message = await response.text()
-  if (isTransientHttpStatus(response.status)) {
-    throw new Error(
-      `Director sign-in failed with transient HTTP ${response.status} after retries: ${message}`,
-    )
-  }
-
-  throw new Error(`Director sign-in failed: ${response.status} ${message}`)
-}
+const BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st1', 'st3', 'st7'] as const
 
 async function probeCoreAccess(client: HttpSeedClient): Promise<'authorized' | 'unauthorized'> {
   const { response } = await client.jsonRequest('/core/entities/schools/list', {
@@ -74,16 +35,95 @@ async function probeCoreAccess(client: HttpSeedClient): Promise<'authorized' | '
   return 'authorized'
 }
 
+async function trySignIn(client: HttpSeedClient, email: string): Promise<boolean> {
+  client.clearCookies()
+  const response = await client.request('/auth/sign-in/email', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      password: DEV_AUTH_PASSWORD,
+    }),
+  })
+
+  if (response.ok) {
+    return true
+  }
+
+  const message = await response.text()
+  if (isTransientHttpStatus(response.status)) {
+    throw new Error(
+      `Staff sign-in failed with transient HTTP ${response.status} after retries: ${message}`,
+    )
+  }
+
+  return false
+}
+
+/** Try dev staff accounts until one has an authorized /core session. */
+async function ensureLinkedStaffSignedIn(client: HttpSeedClient): Promise<void> {
+  const bootstrapAccounts = BOOTSTRAP_SIGN_IN_STAFF_IDS.flatMap((staffId) => {
+    const account = DEV_AUTH_STAFF_ACCOUNTS.find(entry => entry.staffId === staffId)
+    return account ? [account] : []
+  })
+
+  for (const account of bootstrapAccounts) {
+    if (!await trySignIn(client, account.email)) {
+      continue
+    }
+
+    if (await probeCoreAccess(client) === 'authorized') {
+      return
+    }
+  }
+
+  const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
+    account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+  )
+  const ownerMember = SEED_STAFF.find(member => member.id === SEED_SCHOOL_OWNER_STAFF_ID)
+  if (ownerAccount && ownerMember) {
+    client.clearCookies()
+    const provisioner = new HttpAuthProvisioner(client)
+    await provisioner.ensureUser({
+      email: ownerAccount.email,
+      password: DEV_AUTH_PASSWORD,
+      name: ownerMember.name,
+    })
+    await signInViaHttp(client, {
+      email: ownerAccount.email,
+      password: DEV_AUTH_PASSWORD,
+    })
+
+    if (await probeCoreAccess(client) === 'authorized') {
+      return
+    }
+  }
+
+  throw new Error(
+    'No dev staff account could establish an authorized /core session. '
+    + 'Run `bun seed:auth` then `bun seed` with the API running.',
+  )
+}
+
 /** Establish a linked staff actor for session-backed /core/* seeding via onboarding. */
 export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<void> {
-  await ensureDirectorSignedIn(client)
+  await ensureLinkedStaffSignedIn(client)
 
   if (await probeCoreAccess(client) === 'authorized') {
     return
   }
 
-  const director = SEED_STAFF[0]
-  const directorName = splitDisplayName(director.name)
+  const ownerMember = SEED_STAFF.find(member => member.id === MINIMAL_AUTH_FIXTURE_STAFF_ID)
+  const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
+    account => account.staffId === MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  )
+  if (!ownerMember || !ownerAccount) {
+    throw new Error('Dev owner fixture is missing from seed data')
+  }
+
+  const ownerName = splitDisplayName(ownerMember.name)
   const { response, body } = await client.jsonRequest('/core/onboarding/register-school', {
     method: 'POST',
     headers: {
@@ -97,9 +137,9 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
       country: SEED_SCHOOL_PROFILE.country,
       city: SEED_SCHOOL_PROFILE.city,
       ownerStaffId: MINIMAL_AUTH_FIXTURE_STAFF_ID,
-      ownerFirstName: directorName.firstName,
-      ownerLastName: directorName.lastName,
-      ownerEmail: director.email,
+      ownerFirstName: ownerName.firstName,
+      ownerLastName: ownerName.lastName,
+      ownerEmail: ownerAccount.email,
     }),
   })
 

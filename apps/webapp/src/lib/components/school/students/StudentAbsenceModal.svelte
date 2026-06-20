@@ -6,6 +6,8 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
+	import { t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 	import { Plus } from '$lib/icons';
 
 	const {
@@ -20,10 +22,15 @@
 
 	type AttendanceStatus = 'absent' | 'late';
 
+	const STATUS_OPTIONS: AttendanceStatus[] = ['absent', 'late'];
+
 	let open = $state(false);
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let date = $state(new Date().toISOString().slice(0, 10));
 	let status = $state<AttendanceStatus>('absent');
+
+	const statusLabel = $derived($t(`attendance.${status}`));
 
 	const canSubmit = $derived(date.length > 0);
 
@@ -31,6 +38,12 @@
 		date = new Date().toISOString().slice(0, 10);
 		status = 'absent';
 	}
+
+	$effect(() => {
+		if (open && !wasOpen)
+			resetForm();
+		wasOpen = open;
+	});
 
 	async function submit() {
 		if (!canSubmit)
@@ -42,7 +55,7 @@
 			classGroupId: s.classId,
 			date,
 			status,
-			successMessage: `Présence mise à jour pour ${s.name}.`,
+			successMessage: get(t)('student.absenceSuccess', { name: s.name }),
 		});
 		busy = false;
 		if (ok) {
@@ -80,11 +93,16 @@
 		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Statut</Label>
 		<Select.Root type="single" value={status} onValueChange={v => v && (status = v as AttendanceStatus)}>
 			<Select.Trigger>
-				<Select.Value />
+				<Select.Value placeholder={$t('students.status')}>
+					{statusLabel}
+				</Select.Value>
 			</Select.Trigger>
-			<Select.Content>
-				<Select.Item value="absent">Absent</Select.Item>
-				<Select.Item value="late">En retard</Select.Item>
+			<Select.Content class="z-[100]">
+				{#each STATUS_OPTIONS as entry (entry)}
+					<Select.Item value={entry} label={$t(`attendance.${entry}`)}>
+						{$t(`attendance.${entry}`)}
+					</Select.Item>
+				{/each}
 			</Select.Content>
 		</Select.Root>
 	</div>

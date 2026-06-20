@@ -113,6 +113,7 @@ export const SCOPE_TONE: Record<Scope, string> = {
 };
 
 export const ROLE_TINT: Record<StaffRole, string> = {
+	owner: 'bg-primary/10 text-primary',
 	directeur: 'bg-primary/10 text-primary',
 	prof_principal: 'bg-primary/10 text-primary',
 	professeur: 'bg-secondary text-foreground/80',

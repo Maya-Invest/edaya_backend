@@ -1,6 +1,6 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { Evaluation } from '$lib/types/school';
+import type { AssessmentResultRow, Evaluation } from '$lib/types/school';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -29,6 +29,17 @@ function formatDate(value: unknown): string {
 		return value.slice(0, 10);
 	}
 	return String(value).slice(0, 10);
+}
+
+export function mapAssessmentResults(
+	resultsRaw: AssessmentsSources['resultsRaw'],
+): AssessmentResultRow[] {
+	return (resultsRaw ?? []).map(result => ({
+		id: result.id,
+		studentId: result.studentId,
+		assessmentId: result.assessmentId,
+		score: typeof result.score === 'number' ? result.score : null,
+	}));
 }
 
 export async function fetchAssessmentsSources(client: SchoolClient): Promise<AssessmentsSources> {

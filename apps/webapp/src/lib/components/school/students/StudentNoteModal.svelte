@@ -9,7 +9,9 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+	import { t } from '$lib/i18n';
 	import { Plus } from '$lib/icons';
+	import { get } from 'svelte/store';
 
 	const {
 		s,
@@ -24,6 +26,9 @@
 	} = $props();
 
 	type Category = 'behavior' | 'work' | 'progress' | 'encouragement';
+
+	const CATEGORIES: Category[] = ['work', 'behavior', 'progress', 'encouragement'];
+
 	const uiToApiCategory: Record<PedagogicalNote['category'], Category> = {
 		Comportement: 'behavior',
 		Travail: 'work',
@@ -33,9 +38,11 @@
 
 	let open = $state(false);
 	let busy = $state(false);
+	let wasOpen = $state(false);
 	let category = $state<Category>('work');
 	let body = $state('');
 
+	const categoryLabel = $derived($t(`note.category.${category}`));
 	const canSubmit = $derived(body.trim().length > 0);
 
 	function resetForm() {
@@ -44,7 +51,9 @@
 	}
 
 	$effect(() => {
-		resetForm();
+		if (open && !wasOpen)
+			resetForm();
+		wasOpen = open;
 	});
 
 	async function submit() {
@@ -57,18 +66,17 @@
 				noteId: note.id,
 				category,
 				body,
-				successMessage: `Note mise à jour pour ${s.name}.`,
+				successMessage: get(t)('note.updateSuccess', { name: s.name }),
 			})
 			: await createStudentNoteMutation({
 				studentId: s.id,
 				category,
 				body,
-				successMessage: `Note ajoutée pour ${s.name}.`,
+				successMessage: get(t)('note.createSuccess', { name: s.name }),
 			});
 		busy = false;
 		if (ok) {
 			open = false;
-			resetForm();
 		}
 	}
 </script>
@@ -81,38 +89,46 @@
 	onclick={() => (open = true)}
 >
 	{#if note}
-		Modifier
+		{$t('common.edit')}
 	{:else}
-		<Plus class="mr-1 h-4 w-4" /> Ajouter une note
+		<Plus class="mr-1 h-4 w-4" />
+		{$t('note.add')}
 	{/if}
 </Button>
 
 <FormModal
 	bind:open
-	title={note ? `Modifier la note de ${s.name}` : `Ajouter une note pour ${s.name}`}
-	description="La note sera visible dans le dossier pédagogique de l’élève."
-	submitLabel={note ? 'Enregistrer' : 'Ajouter'}
+	title={note ? $t('note.editTitle', { name: s.name }) : $t('note.createTitle', { name: s.name })}
+	description={$t('note.createDescription')}
+	submitLabel={note ? $t('common.save') : $t('note.add')}
 	busy={busy}
 	submitDisabled={!canSubmit}
 	onCancel={resetForm}
 	onSubmit={submit}
 >
 	<div class="space-y-1.5">
-		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Catégorie</Label>
+		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+			{$t('note.categoryLabel')}
+		</Label>
 		<Select.Root type="single" value={category} onValueChange={v => v && (category = v as Category)}>
 			<Select.Trigger>
-				<Select.Value />
+				<Select.Value placeholder={$t('note.selectCategory')}>
+					{categoryLabel}
+				</Select.Value>
 			</Select.Trigger>
-			<Select.Content>
-				<Select.Item value="work">Travail</Select.Item>
-				<Select.Item value="behavior">Comportement</Select.Item>
-				<Select.Item value="progress">Progression</Select.Item>
-				<Select.Item value="encouragement">Encouragement</Select.Item>
+			<Select.Content class="z-[100]">
+				{#each CATEGORIES as cat (cat)}
+					<Select.Item value={cat} label={$t(`note.category.${cat}`)}>
+						{$t(`note.category.${cat}`)}
+					</Select.Item>
+				{/each}
 			</Select.Content>
 		</Select.Root>
 	</div>
 	<div class="space-y-1.5">
-		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Note</Label>
+		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+			{$t('note.bodyLabel')}
+		</Label>
 		<Textarea bind:value={body} rows={5} />
 	</div>
 </FormModal>

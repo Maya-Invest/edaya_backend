@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { ReportCardResult } from '$lib/types/report-cards';
 	import { page } from '$app/stores';
 	import ClassReportCardsView from '$lib/components/school/academics/ClassReportCardsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
@@ -11,6 +12,11 @@
 	const selectedId = $derived($page.params.id);
 	const classId = $derived($page.params.classId ?? '6a');
 	const query = $derived(queryClassReportCardsPage(classId));
+
+	function selectResult(result: ReportCardResult) {
+		const path = detailHref.classReportCard(classId, result.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('reportCards.classTitle')}>
@@ -23,7 +29,7 @@
 		>
 			<ClassReportCardsView
 				classId={data.classId}
-				onSelect={r => appGoto(detailHref.classReportCard(data.classId, r.id))}
+				onSelect={selectResult}
 				{selectedId}
 			/>
 		</DataState>

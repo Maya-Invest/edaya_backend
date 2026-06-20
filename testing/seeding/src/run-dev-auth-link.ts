@@ -13,15 +13,16 @@ import {
   SEED_SCHOOL_ID,
   SEED_SCHOOL_OWNER_STAFF_ID,
 } from '@edaya/dev-fixtures'
+import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 
 export type DevAuthLinkResult
   = | { status: 'skipped', reason: 'school-not-seeded' | 'already-linked', linkedStaff: number, linkedGuardians: number }
-    | {
-      status: 'seeded'
-      linkedStaff: number
-      linkedGuardians: number
-      accounts: Array<{ email: string, kind: 'staff' | 'guardian', entityId: string }>
-    }
+  | {
+    status: 'seeded'
+    linkedStaff: number
+    linkedGuardians: number
+    accounts: Array<{ email: string, kind: 'staff' | 'guardian', entityId: string }>
+  }
 
 async function relinkStaffSubject(
   application: SeedApplication,
@@ -89,12 +90,13 @@ async function ensureOwnerSubjectId(
   }))
 }
 
+/** @deprecated Prefer `syncDevStaffAuthAndOwner` via school/access seed. Kept for integration tests. */
 export async function runDevAuthLink(
   application: SeedApplication,
   auth: AuthProvisioner,
 ): Promise<DevAuthLinkResult> {
-  const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
-  if (!school) {
+  const sync = await syncDevStaffAuthAndOwner(application, auth)
+  if (!sync) {
     return { status: 'skipped', reason: 'school-not-seeded', linkedStaff: 0, linkedGuardians: 0 }
   }
 
@@ -180,13 +182,14 @@ export async function runDevAuthLink(
   }
 
   if (linkedStaff === 0 && linkedGuardians === 0) {
-    return { status: 'skipped', reason: 'already-linked', linkedStaff: 0, linkedGuardians: 0 }
-  }
+    if (sync.linkedStaff === 0 && sync.linkedGuardians === 0) {
+      return { status: 'skipped', reason: 'already-linked', linkedStaff: 0, linkedGuardians: 0 }
+    }
 
-  return {
-    status: 'seeded',
-    linkedStaff,
-    linkedGuardians,
-    accounts: linkedAccounts,
+    return {
+      status: 'seeded',
+      linkedStaff: sync.linkedStaff,
+      linkedGuardians: sync.linkedGuardians,
+      accounts: [],
+    }
   }
-}

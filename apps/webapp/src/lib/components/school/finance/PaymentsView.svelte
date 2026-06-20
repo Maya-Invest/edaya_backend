@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/types/school';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { readPaymentListFilters, writePaymentListFilters } from '$lib/list/list-url-filters';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, Search } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 
 	const {
@@ -26,6 +30,13 @@
 		status: 'paid' | 'pending';
 	};
 
+	const initialFilters = $derived(readPaymentListFilters($page.url));
+
+	let q = $state('');
+	let status = $state<'all' | 'paid' | 'pending'>('all');
+	let classFilter = $state('all');
+	let filtersReady = $state(false);
+
 	const rows: PaymentRow[] = $derived.by(() => {
 		const out: PaymentRow[] = [];
 		billing.forEach((b) => {
@@ -42,10 +53,6 @@
 		});
 		return out.sort((a, b) => b.date.localeCompare(a.date));
 	});
-
-	let q = $state('');
-	let status = $state<'all' | 'paid' | 'pending'>('all');
-	let classFilter = $state('all');
 
 	const list = $derived(
 		rows.filter((r) => {
@@ -70,6 +77,7 @@
 	);
 
 	const statusKeys = ['all', 'paid', 'pending'] as const;
+	const classFilterKeys = $derived(['all', ...classes.map(c => c.id)] as const);
 
 	function statusLabel(k: (typeof statusKeys)[number]) {
 		return k === 'all'
@@ -78,54 +86,102 @@
 			? $t('installment.paid')
 			: $t('installment.pending');
 	}
+
+	function classLabel(classId: string) {
+		if (classId === 'all')
+			return $t('common.allClasses');
+		return classes.find(c => c.id === classId)?.name ?? classId;
+	}
+
+	function syncFiltersToUrl() {
+		const href = writePaymentListFilters($page.url, { q, status, class: classFilter });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		status = (statusKeys.includes(next.status as (typeof statusKeys)[number])
+			? next.status
+			: 'all') as typeof status;
+		classFilter = next.class;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
+
+	function applyStatus(next: (typeof statusKeys)[number]) {
+		status = next;
+		scheduleFilterSync();
+	}
+
+	function applyClass(next: string) {
+		classFilter = next;
+		scheduleFilterSync();
+	}
 </script>
 
 <div class="animate-fade-in space-y-6">
-	<div class="flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('finance.treasury')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('finance.payments')}</h2>
-		</div>
-		<div class="flex flex-wrap items-center gap-2">
+	<ListPageHeader
+		eyebrow={$t('finance.treasury')}
+		title={$t('finance.payments')}
+	>
+		{#snippet search()}
 			<div class="relative">
 				<Search
 					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
 				/>
 				<Input
 					bind:value={q}
+					oninput={scheduleFilterSync}
 					placeholder={$t('common.searchStudent')}
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
 			</div>
-			<select
-				bind:value={classFilter}
-				class="h-9 rounded-full border border-border bg-card px-3 text-xs"
-			>
-				<option value="all">{$t('common.allClasses')}</option>
-				{#each classes as c (c.id)}
-					<option value={c.id}>{c.name}</option>
-				{/each}
-			</select>
-			<div class="flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
-				{#each statusKeys as k (k)}
-					<button
-						type="button"
-						onclick={() => (status = k)}
-						class={cn(
-							'rounded-full px-3 py-1 text-[11px] font-medium',
-							status === k
-								? 'bg-primary text-primary-foreground'
-								: 'text-muted-foreground hover:text-foreground',
-						)}
-					>
-						{statusLabel(k)}
-					</button>
-				{/each}
+		{/snippet}
+		{#snippet filters()}
+			<div class="flex flex-wrap items-center gap-2">
+				<div class="flex flex-wrap items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+					{#each classFilterKeys as classId (classId)}
+						<button
+							type="button"
+							onclick={() => applyClass(classId)}
+							class={cn(
+								'rounded-full px-3 py-1 text-[11px] font-medium transition',
+								classFilter === classId
+									? 'bg-primary text-primary-foreground'
+									: 'text-muted-foreground hover:text-foreground',
+							)}
+						>
+							{classLabel(classId)}
+						</button>
+					{/each}
+				</div>
+				<div class="flex flex-wrap items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+					{#each statusKeys as k (k)}
+						<button
+							type="button"
+							onclick={() => applyStatus(k)}
+							class={cn(
+								'rounded-full px-3 py-1 text-[11px] font-medium transition',
+								status === k
+									? 'bg-primary text-primary-foreground'
+									: 'text-muted-foreground hover:text-foreground',
+							)}
+						>
+							{statusLabel(k)}
+						</button>
+					{/each}
+				</div>
 			</div>
-		</div>
-	</div>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="grid gap-3 sm:grid-cols-2">
 		<div class="rounded-2xl border border-border bg-card p-5 shadow-soft">

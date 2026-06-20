@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import {
+	buildPermissionsFromCrudMatrix,
 	buildRoleCrudMatrix,
 	buildRoleEnabledPermissions,
 } from './access-roles-data';
@@ -68,5 +69,14 @@ describe('access roles data mapping', () => {
 		expect(matrix['staff.manage']).toEqual({ C: true, R: true, U: true, D: true });
 		expect(matrix['config.school']).toEqual({ C: true, R: true, U: true, D: true });
 		expect(matrix['grades.edit']).toEqual({ C: true, R: true, U: true, D: true });
+	});
+
+	it('rebuilds API permissions as superset of mapped CRUD matrix', () => {
+		const matrix = buildRoleCrudMatrix(teacherPermissions);
+		const rebuilt = buildPermissionsFromCrudMatrix(matrix);
+
+		for (const permission of teacherPermissions) {
+			expect(rebuilt).toContain(permission);
+		}
 	});
 });

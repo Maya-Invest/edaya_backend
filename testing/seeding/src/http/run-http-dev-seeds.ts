@@ -5,6 +5,9 @@ import type { HttpSeedValidationResult } from './seed-validation'
 import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
 import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed } from '../run-dev-access-seed'
 import { runDevAuthLink } from '../run-dev-auth-link'
+import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/dev-fixtures'
+import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed, runDevAccessSeed } from '../run-dev-access-seed'
+import { ownerSubjectIdFromAuthProvision } from '../dev-staff-auth-seed'
 import { runDevAuthProvision } from '../run-dev-auth-provision'
 import { runDevSchoolSeed } from '../run-dev-school-seed'
 import {
@@ -16,11 +19,17 @@ import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
 import { postEntityList } from './core-entity'
 import { createCoreHttpSeedApplication } from './core-seed-application'
 import {
+  createLocalInProcessSeedContext,
+  isLocalPersistedPgliteDev,
+  runLocalInProcessStaffAuthSync,
+} from '../run-local-in-process-repair'
+import {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
   provisionSeedingServiceAccountInProcess,
 } from './provision-seeding-service-account'
 import { runHttpSeedValidation } from './seed-validation'
+import { isServiceAccountApiKeyValid } from './verify-service-account'
 
 export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account' | 'validate'
 
@@ -75,8 +84,26 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
 }
 
 async function createSessionHttpSeedApplication(client: HttpSeedClient): Promise<SeedApplication> {
-  await bootstrapHttpCoreSession(client)
+  await bootstrapHttpCoreSessionWithLocalRepair(client)
   return createCoreHttpSeedApplication({ client })
+}
+
+async function bootstrapHttpCoreSessionWithLocalRepair(client: HttpSeedClient): Promise<void> {
+  try {
+    await bootstrapHttpCoreSession(client)
+  }
+  catch (error) {
+    if (!isLocalPersistedPgliteDev()) {
+      throw error
+    }
+
+    // eslint-disable-next-line no-console
+    console.warn(
+      'HTTP /core bootstrap failed; repairing dev auth links in-process against local PGlite...',
+    )
+    await runLocalInProcessStaffAuthSync()
+    await bootstrapHttpCoreSession(client)
+  }
 }
 
 async function resolveSeedApplication(options: RunHttpDevSeedsOptions): Promise<SeedApplication> {
@@ -217,6 +244,20 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   const { client, scope, log } = options
   const auth = options.auth ?? new HttpAuthProvisioner(client)
 
+  let serviceAccountApiKey = options.serviceAccountApiKey
+  if (serviceAccountApiKey && scope !== 'auth') {
+    const valid = await isServiceAccountApiKeyValid(client, serviceAccountApiKey)
+    if (!valid) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        'SERVICE_ACCOUNT_API_KEY was rejected by the API (401). '
+        + 'Falling back to session bootstrap for /core/* seeding. '
+        + 'Update apps/api/.env after `bun seed:init` prints a new key.',
+      )
+      serviceAccountApiKey = undefined
+    }
+  }
+
   const results: RunHttpDevSeedsResults = {
     school: null,
     authProvision: null,
@@ -281,11 +322,55 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
 
   if (
     scope === 'all'
+    && !serviceAccountApiKey
     && !options.application
     && !(await canUseSeedingServiceAccount(client, seedingApiKey))
   ) {
     results.authProvision = await runDevAuthProvision(auth)
-    await bootstrapHttpCoreSession(client)
+
+    let useInProcessFallback = false
+    try {
+      await bootstrapHttpCoreSession(client)
+    }
+    catch (error) {
+      if (!isLocalPersistedPgliteDev()) {
+        throw error
+      }
+
+      // eslint-disable-next-line no-console
+      console.warn(
+        'HTTP /core bootstrap failed; completing seed in-process against local PGlite...',
+      )
+      await runLocalInProcessStaffAuthSync()
+      useInProcessFallback = true
+    }
+
+    const ownerSubjectId = results.authProvision
+      ? ownerSubjectIdFromAuthProvision(results.authProvision)
+      : undefined
+
+    if (useInProcessFallback) {
+      const local = await createLocalInProcessSeedContext()
+      results.school = await runDevSchoolSeed(local.application, {
+        auth: local.auth,
+        ownerSubjectId,
+      })
+      results.access = await runDevAccessSeed(local.application, {
+        auth: local.auth,
+        ownerSubjectId,
+      })
+
+      if (log) {
+        logDevSeedResults({
+          school: results.school,
+          authProvision: results.authProvision,
+          authLink: results.authLink,
+          access: results.access,
+        }, log)
+      }
+
+      return results
+    }
 
     const sessionApp = createCoreHttpSeedApplication({ client })
     await runDevAccessRolesSeed(sessionApp)
@@ -297,10 +382,18 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     logProvisionedServiceAccountKey(provision)
 
     application = createCoreHttpSeedApplication({ client, serviceAccountApiKey: seedingApiKey })
+    const serviceAccountApiKeyFromProvision = provision.apiKey
+    if (!serviceAccountApiKeyFromProvision) {
+      throw new Error(
+        'Seeding service account already exists but SERVICE_ACCOUNT_API_KEY is not set. '
+        + 'Add the key to apps/api/.env or rotate the account.',
+      )
+    }
 
-    results.school = await runDevSchoolSeed(application)
-    results.authLink = await runDevAuthLink(application, auth)
-    results.access = await runDevAccessAssignmentsSeed(application)
+    application = createCoreHttpSeedApplication({ client, serviceAccountApiKey: serviceAccountApiKeyFromProvision })
+
+    results.school = await runDevSchoolSeed(application, { auth, ownerSubjectId })
+    results.access = await runDevAccessAssignmentsSeed(application, { auth, ownerSubjectId })
 
     if (log) {
       logDevSeedResults({
@@ -317,6 +410,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     application = await resolveSeedApplication({
       ...options,
       serviceAccountApiKey: seedingApiKey,
+      serviceAccountApiKey,
     })
   }
 
@@ -324,7 +418,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     scope,
     application,
     auth,
-    ...(scope === 'all' && !options.serviceAccountApiKey && !options.application
+    ...(scope === 'all' && !serviceAccountApiKey && !options.application
       ? { skipAuthProvision: true }
       : {}),
   })
@@ -335,7 +429,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   results.access = domainResults.access
 
   if (scope === 'all') {
-    await maybeProvisionSeedingServiceAccount(options)
+    await maybeProvisionSeedingServiceAccount({
+      ...options,
+      serviceAccountApiKey,
+    })
   }
 
   if (log) {

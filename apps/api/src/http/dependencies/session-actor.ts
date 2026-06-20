@@ -300,6 +300,26 @@ function resolveAcademicYearId(headerValue: string | undefined): string | undefi
   return trimmed || undefined;
 }
 
+/**
+ * Finance and other sensitive writes require `verified` assurance.
+ * Dev sign-in uses `standard` until step-up auth exists; elevate school owners locally.
+ */
+function resolveInteractiveAssuranceLevel(
+  assuranceLevel: ActorAssuranceLevel,
+  identity: ActorIdentity,
+  isDevelopment: boolean,
+): ActorAssuranceLevel {
+  if (
+    isDevelopment
+    && identity.kind === "staff"
+    && identity.effectiveGrants?.isElevated
+    && assuranceLevel === ActorAssuranceLevel.Standard
+  ) {
+    return ActorAssuranceLevel.Verified;
+  }
+  return assuranceLevel;
+}
+
 export function createSessionActorDependency(
   resolveAuth?: (c: Context<AppBindings>) => Promise<AuthSessionProvider> | AuthSessionProvider,
 ): DependencyModule<AppBindings> {
@@ -329,13 +349,6 @@ export function createSessionActorDependency(
 
       if (session) {
         const { user } = session;
-        const interactiveContext = {
-          subjectId: user.id,
-          requestId,
-          ...(session.session.id ? { sessionId: session.session.id } : {}),
-          authenticatedAt: session.session.createdAt,
-          assuranceLevel: session.session.assuranceLevel,
-        };
 
         const identity = await resolveActorIdentity(
           repos,
@@ -345,6 +358,17 @@ export function createSessionActorDependency(
           ttlMs,
         );
         if (identity) {
+          const interactiveContext = {
+            subjectId: user.id,
+            requestId,
+            ...(session.session.id ? { sessionId: session.session.id } : {}),
+            authenticatedAt: session.session.createdAt,
+            assuranceLevel: resolveInteractiveAssuranceLevel(
+              session.session.assuranceLevel,
+              identity,
+              c.env.NODE_ENV !== "production",
+            ),
+          };
           c.set("actor", createActorFromIdentity(identity, interactiveContext));
           return;
         }

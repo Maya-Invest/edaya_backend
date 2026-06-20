@@ -1,18 +1,47 @@
 <script lang="ts">
 	import type { Incident } from '$lib/types/school';
-	import { academicContext } from '$lib/academic/context.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
+	import { resolveIncidentMutation } from '$lib/api/mutations/incident.mutations';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 	import { cn } from '$lib/utils';
 	import { incidentSevTone, incidentCatTone } from '../shared/drawer-constants.ts';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import IncidentFormModal from './IncidentFormModal.svelte';
 
 	const { i }: { i: Incident } = $props();
 
+	let resolveOpen = $state(false);
+	let resolveBusy = $state(false);
+	let resolutionNotes = $state('');
+
 	const student = $derived(detailDataContext.students.find(s => s.id === i.studentId));
 	const cls = $derived(academicContext.classes.find(c => c.id === student?.classId));
+
+	async function submitResolve() {
+		resolveBusy = true;
+		try {
+			const ok = await resolveIncidentMutation({
+				incidentId: i.id,
+				resolutionNotes,
+				successMessage: get(t)('events.resolveSuccess'),
+			});
+			if (ok) {
+				resolveOpen = false;
+				resolutionNotes = '';
+			}
+		}
+		finally {
+			resolveBusy = false;
+		}
+	}
 </script>
 
 <div class="space-y-5">
@@ -51,23 +80,75 @@
 	{/if}
 
 	<DrawerField label={$t('events.summary')}>
-		<Textarea value={i.summary} rows={3} />
+		<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm whitespace-pre-wrap">
+			{i.summary}
+		</div>
 	</DrawerField>
 	<div class="grid grid-cols-2 gap-3">
 		<DrawerField label={$t('events.date')}>
-			<Input type="date" value={i.date} />
+			<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">{i.date}</div>
 		</DrawerField>
 		<DrawerField label={$t('events.category')}>
-			<Input value={$t(`events.cat.${i.category}`)} />
+			<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">
+				{$t(`events.cat.${i.category}`)}
+			</div>
 		</DrawerField>
 	</div>
 	<DrawerField label={$t('events.severity')}>
-		<Input value={$t(`events.severity.${i.severity}`)} />
+		<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">
+			{$t(`events.severity.${i.severity}`)}
+		</div>
 	</DrawerField>
-	<DrawerField label={$locale === 'fr' ? 'Détails' : 'Details'}>
-		<Textarea
-			rows={4}
-			placeholder={$locale === 'fr' ? 'Ajouter des détails complémentaires…' : 'Add additional details…'}
-		/>
-	</DrawerField>
+
+	<DrawerActionBar>
+		<PermissionGate
+			permission="DISCIPLINE_UPDATE"
+			mode="disable"
+			tooltip={$t('events.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<IncidentFormModal
+					incident={i}
+					students={detailDataContext.students}
+					classes={academicContext.classes}
+					{disabled}
+					title={title}
+				/>
+			{/snippet}
+		</PermissionGate>
+		<PermissionGate
+			permission="DISCIPLINE_UPDATE"
+			mode="disable"
+			tooltip={$t('events.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<Button
+					variant="outline"
+					size="sm"
+					class="rounded-full"
+					{disabled}
+					{title}
+					onclick={() => (resolveOpen = true)}
+				>
+					{$t('events.resolveAction')}
+				</Button>
+			{/snippet}
+		</PermissionGate>
+	</DrawerActionBar>
 </div>
+
+<FormModal
+	bind:open={resolveOpen}
+	title={$t('events.resolveTitle')}
+	description={$t('events.resolveDescription')}
+	submitLabel={$t('events.resolveAction')}
+	busy={resolveBusy}
+	onSubmit={submitResolve}
+>
+	<div class="space-y-1.5">
+		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+			{$t('events.resolveNotes')}
+		</Label>
+		<Textarea bind:value={resolutionNotes} rows={4} />
+	</div>
+</FormModal>

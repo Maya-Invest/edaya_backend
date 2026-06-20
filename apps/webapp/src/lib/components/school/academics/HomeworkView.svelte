@@ -1,9 +1,14 @@
 <script lang="ts">
 	import type { Deadline } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import DeadlineFormModal from './DeadlineFormModal.svelte';
 
 	const {
 		classId,
@@ -18,6 +23,7 @@
 	} = $props();
 
 	let filter = $state<'all' | 'open' | 'overdue' | 'done'>('all');
+	let createOpen = $state(false);
 	const today = new Date('2026-05-22');
 
 	const list = $derived(deadlines.filter(d => d.classId === classId));
@@ -56,17 +62,18 @@
 	});
 
 	const filterKeys = ['all', 'open', 'overdue', 'done'] as const;
+
+	function handleCreated(deadlineId: string) {
+		appGoto(detailHref.classDeadline(classId, deadlineId));
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('hw.eyebrow')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('hw.active', { n: list.length })}</h2>
-		</div>
-		<div class="flex items-center gap-2">
+	<ListPageHeader
+		eyebrow={$t('hw.eyebrow')}
+		title={$t('hw.active', { n: list.length })}
+	>
+		{#snippet filters()}
 			<div class="flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
 				{#each filterKeys as k (k)}
 					<button
@@ -93,12 +100,26 @@
 					</button>
 				{/each}
 			</div>
-			<Button size="sm" class="rounded-full">
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('hw.newDeadline')}
-			</Button>
-		</div>
-	</div>
+		{/snippet}
+		{#snippet primary()}
+			<PermissionGate permission="GRADE_INPUT" mode="disable" tooltip={$t('hw.permissionCreate')}>
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('hw.newDeadline')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
+	</ListPageHeader>
+
+	<DeadlineFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="space-y-3">
 		{#each filtered as { d, submitted, late, missing, total, overdue, done, due } (d.id)}
@@ -109,7 +130,7 @@
 				onclick={() => onSelect?.(d)}
 				class={cn(
 					'group grid w-full grid-cols-12 items-center gap-4 rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-					active && 'ring-2 ring-accent',
+					active && 'border-primary/40 bg-primary/5',
 					overdue && 'border-l-4 border-l-highlight',
 				)}
 			>

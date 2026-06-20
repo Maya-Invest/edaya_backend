@@ -1,36 +1,62 @@
 <script lang="ts">
 	import type { Evaluation } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarDays, Plus } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import EvaluationCreateModal from './EvaluationCreateModal.svelte';
 
 	const {
+		classId,
 		evaluations,
 		onSelect,
 		selectedId,
 	}: {
+		classId: string;
 		evaluations: Evaluation[];
 		onSelect?: (e: Evaluation) => void;
 		selectedId?: string;
 	} = $props();
+
+	let createOpen = $state(false);
+
+	function handleCreated(assessmentId: string) {
+		appGoto(detailHref.classEvaluation(classId, assessmentId));
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex items-center justify-between">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('eval.marksBook')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('eval.count', { n: evaluations.length })}
-			</h2>
-		</div>
-		<Button size="sm" class="rounded-full">
-			<Plus class="mr-1 h-4 w-4" />
-			{$t('eval.newEvaluation')}
-		</Button>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('eval.marksBook')}
+		title={$t('eval.count', { n: evaluations.length })}
+	>
+		{#snippet primary()}
+			<PermissionGate
+				permission="GRADE_INPUT"
+				mode="disable"
+				tooltip={$t('eval.permissionCreate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('eval.newEvaluation')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
+	</ListPageHeader>
+
+	<EvaluationCreateModal {classId} bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="space-y-3">
 		{#each evaluations as ev (ev.id)}
@@ -42,7 +68,7 @@
 				onclick={() => onSelect?.(ev)}
 				class={cn(
 					'group grid w-full grid-cols-12 items-center gap-4 rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-					active && 'ring-2 ring-accent',
+					active && 'border-primary/40 bg-primary/5',
 				)}
 			>
 				<div class="col-span-5">
@@ -60,7 +86,7 @@
 					</p>
 				</div>
 				<div class="col-span-2">
-					<p class="text-[11px] uppercase tracking-wider text-muted-foreground">
+					<p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 						{$t('eval.average')}
 					</p>
 					<p class="font-display text-2xl font-semibold tabular-nums">
@@ -69,7 +95,7 @@
 					</p>
 				</div>
 				<div class="col-span-2">
-					<p class="text-[11px] uppercase tracking-wider text-muted-foreground">
+					<p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 						{$t('eval.coefficient')}
 					</p>
 					<p class="font-mono text-base">×{ev.coefficient}</p>

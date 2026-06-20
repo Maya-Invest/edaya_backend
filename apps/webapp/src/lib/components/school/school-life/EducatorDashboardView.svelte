@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { Snippet } from 'svelte';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { authSession } from '$lib/auth/session.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { readEducatorDashboardListFilters, writeEducatorDashboardListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
 	import {
 		Lock,
@@ -18,7 +21,9 @@
 		Plus,
 		Search,
 	} from '$lib/icons';
-	import { canEditGrades, ROLE_LABEL_FR } from '$lib/permissions';
+	import { appGoto } from '$lib/navigation/app-navigation';
+	import { canEditGrades } from '$lib/permissions';
+	import { INCIDENT_SEVERITY_TONE } from '$lib/ui-tones';
 	import { cn } from '$lib/utils';
 
 	type Tab = 'schoollife' | 'grades';
@@ -30,8 +35,12 @@
 	const classes = $derived(academicContext.classes);
 
 	const me = $derived(authSession.user);
+
+	const initialFilters = $derived(readEducatorDashboardListFilters($page.url));
+
 	let tab = $state<Tab>('schoollife');
 	let q = $state('');
+	let filtersReady = $state(false);
 
 	const studentsBySearch = $derived.by(() => {
 		const term = q.trim().toLowerCase();
@@ -71,6 +80,31 @@
 	}
 
 	const editable = canEditGrades();
+
+	function syncFiltersToUrl() {
+		const href = writeEducatorDashboardListFilters($page.url, { q, tab });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		tab = next.tab as Tab;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
+
+	function applyTab(next: Tab) {
+		tab = next;
+		scheduleFilterSync();
+	}
 </script>
 
 {#snippet panel(title: string, subtitle: string | undefined, action: Snippet | undefined, children: Snippet)}
@@ -96,28 +130,51 @@
 {/snippet}
 
 <div class="animate-fade-in space-y-6">
-	<div
-		class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft"
+	<ListPageHeader
+		eyebrow={$t('educator.dashboard')}
+		title={me?.name ?? $t('educator.dashboard')}
+		description={me ? `${$t(`staff.role.${me.role}`)} · ${me.department}` : undefined}
 	>
-		<div class="flex items-center gap-4">
-			{#if me}
-				<div
-					class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary font-display text-base font-semibold text-primary-foreground"
-				>
-					{me.initials}
-				</div>
-				<div>
-					<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-						{$t('educator.dashboard')}
-					</p>
-					<h1 class="font-display text-xl font-semibold leading-tight">{me.name}</h1>
-					<p class="text-xs text-muted-foreground">
-						{ROLE_LABEL_FR[me.role]} · {me.department}
-					</p>
+		{#snippet search()}
+			{#if tab === 'grades'}
+				<div class="relative">
+					<Search
+						class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+					/>
+					<Input
+						bind:value={q}
+						oninput={scheduleFilterSync}
+						placeholder={$t('common.search')}
+						class="h-9 w-56 rounded-full pl-9 text-sm"
+					/>
 				</div>
 			{/if}
-		</div>
-		<div class="flex flex-wrap gap-2">
+		{/snippet}
+		{#snippet filters()}
+			<div class="flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+				{#each tabItems as x (x.k)}
+					{@const active = tab === x.k}
+					<button
+						type="button"
+						onclick={() => applyTab(x.k)}
+						class={cn(
+							'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition',
+							active
+								? 'bg-primary text-primary-foreground shadow-soft'
+								: 'text-muted-foreground hover:text-foreground',
+						)}
+					>
+						{#if x.k === 'schoollife'}
+							<ShieldCheck class="h-3.5 w-3.5" />
+						{:else}
+							<Eye class="h-3.5 w-3.5" />
+						{/if}
+						{$t(x.labelKey)}
+					</button>
+				{/each}
+			</div>
+		{/snippet}
+		{#snippet more()}
 			<span
 				class="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/80"
 			>
@@ -130,8 +187,8 @@
 				<Lock class="h-3.5 w-3.5" />
 				{$t('educator.viewOnly')} — {$t('educator.gradesReadOnly')}
 			</span>
-		</div>
-	</div>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 		<div class="rounded-2xl border border-border bg-card p-4 shadow-soft">
@@ -200,31 +257,6 @@
 		</div>
 	</div>
 
-	<div
-		class="flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft"
-	>
-		{#each tabItems as x (x.k)}
-			{@const active = tab === x.k}
-			<button
-				type="button"
-				onclick={() => (tab = x.k)}
-				class={cn(
-					'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition',
-					active
-						? 'bg-primary text-primary-foreground shadow-soft'
-						: 'text-muted-foreground hover:text-foreground',
-				)}
-			>
-				{#if x.k === 'schoollife'}
-					<ShieldCheck class="h-3.5 w-3.5" />
-				{:else}
-					<Eye class="h-3.5 w-3.5" />
-				{/if}
-				{$t(x.labelKey)}
-			</button>
-		{/each}
-	</div>
-
 	{#if tab === 'schoollife'}
 		<div class="grid gap-4 lg:grid-cols-2">
 			{@render panel($t('educator.absences'), $t('educator.fullAccess'), absencesAction, absencesList)}
@@ -244,28 +276,14 @@
 				<p>{$t('educator.readOnlyHint')}</p>
 			</div>
 
-			<div class="flex items-center justify-between gap-3">
-				<h3 class="font-display text-base font-semibold">{$t('educator.gradesReadOnly')}</h3>
-				<div class="relative">
-					<Search
-						class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-					/>
-					<Input
-						bind:value={q}
-						placeholder={$t('common.search')}
-						class="h-9 w-56 rounded-full pl-9 text-sm"
-					/>
-				</div>
-			</div>
-
 			<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 				<div
 					class="grid grid-cols-12 gap-4 border-b border-border bg-secondary/40 px-5 py-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
 				>
-					<div class="col-span-4">{$t('people.name') || 'Élève'}</div>
-					<div class="col-span-3">Classe</div>
+					<div class="col-span-4">{$t('people.name')}</div>
+					<div class="col-span-3">{$t('educator.class')}</div>
 					<div class="col-span-2">{$t('educator.average')}</div>
-					<div class="col-span-3 text-right">Évaluations</div>
+					<div class="col-span-3 text-right">{$t('educator.evaluations')}</div>
 				</div>
 				<ul>
 					{#each studentsBySearch as s (s.id)}
@@ -376,9 +394,7 @@
 				<span
 					class={cn(
 						'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
-						i.severity === 'high' && 'bg-destructive/15 text-destructive',
-						i.severity === 'medium' && 'bg-highlight-soft text-highlight',
-						i.severity === 'low' && 'bg-secondary text-muted-foreground',
+						INCIDENT_SEVERITY_TONE[i.severity],
 					)}
 				>
 					{i.severity}

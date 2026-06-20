@@ -73,7 +73,7 @@ Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/s
 
 | Command | Purpose |
 |---------|---------|
-| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `auth:link` → `access`), then provision seeding service account |
+| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `access`), then provision seeding service account |
 | `bun seed` | Same as `seed:all` — full demo data via HTTP |
 | `bun seed:auth` | Better Auth accounts; also re-links staff/guardians when school data exists |
 | `bun seed:auth:link` | Re-link Better Auth users to seeded staff/guardian records only |
@@ -109,6 +109,7 @@ bun seed:init    # terminal 2
 If auth returns 500 (`SQLiteError: disk I/O error`) after a wipe, restart the API — do not wipe again without stopping it first.
 
 See `testing/dev-fixtures/src/seed-entity-manifest.ts` for entity coverage status.
+Staff auth linking and school owner assignment (Koussi Yann / `st8`) run automatically during **school** and **access** seed — no separate `auth:link` step.
 
 ### Demo login
 

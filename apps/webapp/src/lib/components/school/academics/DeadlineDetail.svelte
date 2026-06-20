@@ -1,15 +1,19 @@
 <script lang="ts">
 	import type { Deadline } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/label/label.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, AlertCircle, FileText, Paperclip } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import DeadlineFormModal from './DeadlineFormModal.svelte';
 
 	const { d }: { d: Deadline } = $props();
+
+	let attachOpen = $state(false);
 
 	const subStatusStyle = {
 		submitted: { icon: Check, cls: 'text-accent' },
@@ -32,17 +36,21 @@
 
 	<div class="grid grid-cols-2 gap-3">
 		<DrawerField label={$t('drawer.assigned')}>
-			<Input type="date" value={d.assignedDate} />
+			<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">
+				{d.assignedDate}
+			</div>
 		</DrawerField>
 		<DrawerField label={$t('hw.due')}>
-			<Input type="date" value={d.dueDate} />
+			<div class="min-h-10 rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm">
+				{d.dueDate}
+			</div>
 		</DrawerField>
 	</div>
 
 	<div>
-		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+		<p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 			{$t('drawer.attachments')}
-		</Label>
+		</p>
 		<div class="mt-2 space-y-2">
 			{#each d.attachments as a (a.name)}
 				<div class="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
@@ -55,7 +63,12 @@
 					</div>
 				</div>
 			{/each}
-			<Button variant="ghost" size="sm" class="w-full rounded-full border border-dashed border-border">
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-full rounded-full border border-dashed border-border"
+				onclick={() => (attachOpen = true)}
+			>
 				<Paperclip class="mr-1 h-3 w-3" />
 				{$t('drawer.attachFile')}
 			</Button>
@@ -63,9 +76,9 @@
 	</div>
 
 	<div>
-		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+		<p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 			{$t('drawer.submissions')}
-		</Label>
+		</p>
 		<div class="mt-2 overflow-hidden rounded-xl border border-border">
 			{#each d.submissions as sub, i (sub.studentId)}
 				{@const st = detailDataContext.students.find(s => s.id === sub.studentId)}
@@ -94,4 +107,24 @@
 			{/each}
 		</div>
 	</div>
+
+	<DrawerActionBar>
+		<PermissionGate permission="GRADE_INPUT" mode="disable" tooltip={$t('hw.permissionCreate')}>
+			{#snippet children({ disabled, title })}
+				<DeadlineFormModal deadline={d} classId={d.classId} {disabled} title={title} />
+			{/snippet}
+		</PermissionGate>
+	</DrawerActionBar>
 </div>
+
+<FormModal
+	bind:open={attachOpen}
+	title={$t('hw.attachTitle')}
+	description={$t('hw.attachDescription')}
+	submitLabel={$t('common.close')}
+	onSubmit={() => {
+		attachOpen = false;
+	}}
+>
+	<p class="text-sm text-muted-foreground">{$t('hw.attachStub')}</p>
+</FormModal>

@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import type { ClassNode, Subject, SubjectCategory } from '$lib/types/school';
-	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { readConfigSubjectListFilters, writeConfigSubjectListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
-	import { Clock, Plus, User, Layers, Tag, ChevronRight } from '$lib/icons';
+	import { Clock, User, Layers, Tag, ChevronRight, Search } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 
 	const {
@@ -21,7 +25,11 @@
 
 	type Mode = 'level' | 'category';
 
+	const initialFilters = $derived(readConfigSubjectListFilters($page.url));
+
+	let q = $state('');
 	let mode = $state<Mode>('level');
+	let filtersReady = $state(false);
 
 	const dotColor: Record<Subject['color'], string> = {
 		mint: 'bg-accent',
@@ -57,11 +65,26 @@
 
 	const classById = $derived(Object.fromEntries(classes.map(c => [c.id, c])));
 
+	function matchesSearch(s: Subject, needle: string) {
+		if (!needle)
+			return true;
+		const cls = classById[s.classId];
+		return s.name.toLowerCase().includes(needle)
+			|| s.teacher.toLowerCase().includes(needle)
+			|| s.category.toLowerCase().includes(needle)
+			|| s.description.toLowerCase().includes(needle)
+			|| (cls?.name.toLowerCase().includes(needle) ?? false);
+	}
+
+	const filteredSubjects = $derived(
+		subjects.filter(s => matchesSearch(s, q.trim().toLowerCase())),
+	);
+
 	const groups = $derived.by(() => {
 		if (mode === 'level') {
 			const order = ['6ème', '5ème', '4ème', '3ème', '2nde', '1ère', 'Terminale'];
 			const byYear: Record<string, { subtitle: string; items: Subject[] }> = {};
-			for (const s of subjects) {
+			for (const s of filteredSubjects) {
 				const cls = classById[s.classId];
 				if (!cls)
 					continue;
@@ -71,7 +94,7 @@
 				byYear[y].items.push(s);
 			}
 			return order
-				.filter(y => byYear[y])
+				.filter(y => byYear[y]?.items.length)
 				.map(y => ({
 					key: y,
 					label: y,
@@ -88,35 +111,68 @@
 			'Arts',
 		];
 		const byCat: Record<string, Subject[]> = {};
-		for (const s of subjects) {
+		for (const s of filteredSubjects) {
 			(byCat[s.category] ||= []).push(s);
 		}
 		return order
-			.filter(c => byCat[c])
+			.filter(c => byCat[c]?.length)
 			.map(c => ({
 				key: c,
 				label: c,
-				subtitle: `${byCat[c].length} matière${byCat[c].length > 1 ? 's' : ''}`,
+				count: byCat[c].length,
 				items: byCat[c],
 			}));
 	});
+
+	function syncFiltersToUrl() {
+		const href = writeConfigSubjectListFilters($page.url, { q, mode });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		mode = next.mode === 'category' ? 'category' : 'level';
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
+
+	function applyMode(next: Mode) {
+		mode = next;
+		scheduleFilterSync();
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('subjects.curriculum')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('subjects.count', { n: subjects.length })}
-			</h2>
-		</div>
-		<div class="flex items-center gap-2">
+	<ListPageHeader
+		eyebrow={$t('subjects.curriculum')}
+		title={$t('subjects.count', { n: filteredSubjects.length })}
+	>
+		{#snippet search()}
+			<div class="relative">
+				<Search
+					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					bind:value={q}
+					oninput={scheduleFilterSync}
+					placeholder={$t('common.search')}
+					class="h-9 w-56 rounded-full pl-9 text-sm"
+				/>
+			</div>
+		{/snippet}
+		{#snippet filters()}
 			<div class="inline-flex rounded-full border border-border bg-card p-1 shadow-soft">
 				<button
 					type="button"
-					onclick={() => (mode = 'level')}
+					onclick={() => applyMode('level')}
 					class={cn(
 						'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition',
 						mode === 'level'
@@ -125,11 +181,11 @@
 					)}
 				>
 					<Layers class="h-3.5 w-3.5" />
-					Par niveau
+					{$t('subjects.viewByLevel')}
 				</button>
 				<button
 					type="button"
-					onclick={() => (mode = 'category')}
+					onclick={() => applyMode('category')}
 					class={cn(
 						'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition',
 						mode === 'category'
@@ -138,15 +194,11 @@
 					)}
 				>
 					<Tag class="h-3.5 w-3.5" />
-					Par catégorie
+					{$t('subjects.viewByCategory')}
 				</button>
 			</div>
-			<Button size="sm" class="rounded-full">
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('subjects.newSubject')}
-			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</ListPageHeader>
 
 	{#if mode === 'level'}
 		<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
@@ -177,14 +229,16 @@
 					</div>
 					<div class="flex shrink-0 items-center gap-4 text-xs text-muted-foreground">
 						<span class="rounded-full bg-secondary px-2 py-0.5 font-mono tabular-nums">
-							{g.items.length} matière{g.items.length > 1 ? 's' : ''}
+							{$t('subjects.count', { n: g.items.length })}
 						</span>
-						<span class="font-mono tabular-nums">{totalHours}h / sem.</span>
+						<span class="font-mono tabular-nums">{$t('subjects.hoursPerWeek', { h: totalHours })}</span>
 						<ChevronRight
 							class="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-accent"
 						/>
 					</div>
 				</button>
+			{:else}
+				<p class="px-5 py-10 text-center text-sm text-muted-foreground">{$t('subjects.none')}</p>
 			{/each}
 		</div>
 	{:else}
@@ -196,14 +250,11 @@
 						<div class="flex items-baseline gap-3">
 							<h3 class="font-display text-lg font-semibold">{g.label}</h3>
 							<span class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-								{g.subtitle}
+								{$t('subjects.count', { n: g.count })}
 							</span>
 						</div>
 						<div class="flex items-center gap-3 text-xs text-muted-foreground">
-							<span class="rounded-full bg-secondary px-2 py-0.5 font-mono tabular-nums">
-								{g.items.length} matière{g.items.length > 1 ? 's' : ''}
-							</span>
-							<span class="font-mono tabular-nums">{totalHours}h / sem.</span>
+							<span class="font-mono tabular-nums">{$t('subjects.hoursPerWeek', { h: totalHours })}</span>
 						</div>
 					</div>
 
@@ -217,7 +268,7 @@
 								class={cn(
 									'flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary',
 									idx !== g.items.length - 1 && 'border-b border-border',
-									active && 'bg-secondary',
+									active && 'bg-primary/10',
 								)}
 							>
 								<div class={cn('h-8 w-1.5 shrink-0 rounded-full', dotColor[s.color])}></div>
@@ -254,6 +305,8 @@
 						{/each}
 					</div>
 				</section>
+			{:else}
+				<p class="py-10 text-center text-sm text-muted-foreground">{$t('subjects.none')}</p>
 			{/each}
 		</div>
 	{/if}

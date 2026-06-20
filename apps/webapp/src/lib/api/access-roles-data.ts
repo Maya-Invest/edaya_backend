@@ -106,6 +106,13 @@ export const ACCESS_ROLE_ID_TO_STAFF_ROLE: Record<string, StaffRole> = {
 	'role-educator': 'educateur',
 };
 
+export const STAFF_ROLE_TO_ACCESS_ROLE_ID: Record<StaffRole, string> = {
+	directeur: 'role-director',
+	prof_principal: 'role-coordinator',
+	professeur: 'role-teacher',
+	educateur: 'role-educator',
+};
+
 const UI_PERMISSION_API_RULES: Record<string, Partial<Record<Crud, string[]>>> = {
 	'grades.edit': {
 		C: ['GRADE_INPUT'],
@@ -179,6 +186,28 @@ export function emptyCrudMatrix(): Record<string, Record<Crud, boolean>> {
 			{ C: false, R: false, U: false, D: false },
 		]),
 	);
+}
+
+const CRUD_OPS: Crud[] = ['C', 'R', 'U', 'D'];
+
+export function buildPermissionsFromCrudMatrix(
+	matrix: Record<string, Record<Crud, boolean>>,
+): string[] {
+	const granted = new Set<string>();
+
+	for (const permission of PERMISSION_CATALOG) {
+		const rules = UI_PERMISSION_API_RULES[permission.key] ?? {};
+		for (const op of CRUD_OPS) {
+			if (!matrix[permission.key]?.[op]) {
+				continue;
+			}
+			for (const apiPermission of rules[op] ?? []) {
+				granted.add(apiPermission);
+			}
+		}
+	}
+
+	return [...granted];
 }
 
 export function buildRoleCrudMatrix(permissions: readonly string[]): Record<string, Record<Crud, boolean>> {

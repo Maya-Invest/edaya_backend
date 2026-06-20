@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import ConfigSubjectsView from '$lib/components/school/academics/ConfigSubjectsView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
@@ -6,8 +7,19 @@
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { queryConfigSubjectsPage } from '$lib/queries/subjects.queries';
+	import type { Subject } from '$lib/types/school';
 
 	const query = queryConfigSubjectsPage();
+
+	function selectSubject(subject: Subject) {
+		const path = detailHref.configSubject(subject.id);
+		appGoto(`${path}${$page.url.search}`);
+	}
+
+	function selectLevel(group: { label: string }) {
+		const path = detailHref.configSubjectLevel(group.label);
+		appGoto(`${path}${$page.url.search}`);
+	}
 </script>
 
 <PageQuery {query} loadingTitle={$t('config.subjects')}>
@@ -21,8 +33,8 @@
 			<ConfigSubjectsView
 				subjects={data.subjects}
 				classes={data.classes}
-				onSelect={s => appGoto(detailHref.configSubject(s.id))}
-				onSelectLevel={g => appGoto(detailHref.configSubjectLevel(g.label))}
+				onSelect={selectSubject}
+				onSelectLevel={selectLevel}
 			/>
 		</DataState>
 	{/snippet}

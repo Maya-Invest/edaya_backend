@@ -1,26 +1,43 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import {
 		activateAcademicYearMutation,
-		createAcademicYearMutation,
 		publishAcademicPeriodMutation,
 	} from '$lib/api/mutations/academic.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { readAcademicAdminListFilters, writeAcademicAdminListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
-	import { CalendarRange, ChevronDown, Plus } from '$lib/icons';
+	import { CalendarRange, ChevronDown, Plus, Search } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { toast } from '$lib/toast.svelte';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
+	import AcademicYearCreateModal from './AcademicYearCreateModal.svelte';
 
-	let showCreate = $state(false);
-	let label = $state('');
-	let startDate = $state('2027-09-01');
-	let endDate = $state('2028-07-02');
+	const initialFilters = $derived(readAcademicAdminListFilters($page.url));
+
+	let q = $state('');
+	let filtersReady = $state(false);
+	let createOpen = $state(false);
 	let expandedYear = $state<string | null>(academicContext.yearId);
 
 	const sortedYears = $derived(
 		[...academicContext.years].sort((a, b) => b.startDate.localeCompare(a.startDate)),
+	);
+
+	const filteredYears = $derived(
+		sortedYears.filter((year) => {
+			const needle = q.trim().toLowerCase();
+			if (!needle)
+				return true;
+			return year.label.toLowerCase().includes(needle)
+				|| year.startDate.includes(needle)
+				|| year.endDate.includes(needle)
+				|| year.status.toLowerCase().includes(needle);
+		}),
 	);
 
 	function periodsFor(yearId: string) {
@@ -29,16 +46,8 @@
 			.sort((a, b) => a.startDate.localeCompare(b.startDate));
 	}
 
-	async function handleCreate() {
-		const yearId = await createAcademicYearMutation(label, startDate, endDate);
-		if (!yearId) {
-			return;
-		}
-		const year = academicContext.years.find(entry => entry.id === yearId);
-		showCreate = false;
-		label = '';
+	function handleYearCreated(yearId: string) {
 		expandedYear = yearId;
-		toast.success(get(t)('academic.toastYearCreated', { label: year?.label ?? yearId }));
 	}
 
 	async function handlePublishYear(yearId: string) {
@@ -62,56 +71,55 @@
 			toast.success(get(t)('academic.toastPeriodPublished', { label: period.label }));
 		}
 	}
+
+	function syncFiltersToUrl() {
+		const href = writeAcademicAdminListFilters($page.url, { q });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('academic.subtitle')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('academic.title')}</h2>
-		</div>
-		<Button class="rounded-full" onclick={() => (showCreate = !showCreate)}>
-			<Plus class="h-4 w-4" />
-			{$t('academic.createYear')}
-		</Button>
-	</div>
-
-	{#if showCreate}
-		<form
-			class="mb-6 rounded-2xl border border-border bg-card p-5 shadow-soft"
-			onsubmit={(e) => {
-				e.preventDefault();
-				handleCreate();
-			}}
-		>
-			<p class="mb-4 font-display text-sm font-semibold">{$t('academic.createYear')}</p>
-			<div class="grid gap-4 sm:grid-cols-3">
-				<label class="space-y-1.5 text-sm">
-					<span class="text-muted-foreground">{$t('academic.yearLabel')}</span>
-					<Input bind:value={label} placeholder="2027 — 2028" class="rounded-xl" />
-				</label>
-				<label class="space-y-1.5 text-sm">
-					<span class="text-muted-foreground">{$t('academic.startDate')}</span>
-					<Input type="date" bind:value={startDate} class="rounded-xl" />
-				</label>
-				<label class="space-y-1.5 text-sm">
-					<span class="text-muted-foreground">{$t('academic.endDate')}</span>
-					<Input type="date" bind:value={endDate} class="rounded-xl" />
-				</label>
+	<ListPageHeader
+		eyebrow={$t('academic.subtitle')}
+		title={$t('academic.title')}
+	>
+		{#snippet search()}
+			<div class="relative">
+				<Search
+					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					bind:value={q}
+					oninput={scheduleFilterSync}
+					placeholder={$t('common.search')}
+					class="h-9 w-56 rounded-full pl-9 text-sm"
+				/>
 			</div>
-			<div class="mt-4 flex justify-end gap-2">
-				<Button type="button" variant="outline" class="rounded-full" onclick={() => (showCreate = false)}>
-					{$t('academic.cancel')}
-				</Button>
-				<Button type="submit" class="rounded-full">{$t('academic.save')}</Button>
-			</div>
-		</form>
-	{/if}
+		{/snippet}
+		{#snippet primary()}
+			<Button size="sm" class="rounded-full" onclick={() => (createOpen = true)}>
+				<Plus class="mr-1 h-4 w-4" />
+				{$t('academic.createYear')}
+			</Button>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="space-y-3">
-		{#each sortedYears as year (year.id)}
+		{#each filteredYears as year (year.id)}
 			{@const open = expandedYear === year.id}
 			{@const yearPeriods = periodsFor(year.id)}
 			<section class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
@@ -209,3 +217,5 @@
 		{/each}
 	</div>
 </div>
+
+<AcademicYearCreateModal bind:open={createOpen} onCreated={handleYearCreated} />

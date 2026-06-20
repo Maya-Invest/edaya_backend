@@ -58,6 +58,7 @@ export async function createAcademicYearMutation(
 	label: string,
 	startDate: string,
 	endDate: string,
+	options?: { successMessage?: string },
 ): Promise<string | null> {
 	const numericIds = academicContext.years
 		.map(y => Number.parseInt(y.id, 10))
@@ -92,8 +93,9 @@ export async function createAcademicYearMutation(
 
 		return yearId;
 	}, { refresh: true });
+}, { successMessage: options?.successMessage });
 
-	return created;
+return created;
 }
 
 export async function activateAcademicYearMutation(yearId: string): Promise<boolean> {
@@ -114,7 +116,11 @@ export async function publishAcademicPeriodMutation(periodId: string): Promise<b
 	return result !== null;
 }
 
-export async function createClassGroupMutation(name: string, gradeLevelId: string): Promise<boolean> {
+export async function createClassGroupMutation(
+	name: string,
+	gradeLevelId: string,
+	options?: { successMessage?: string },
+): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const id = nextClassId(gradeLevelId);
 	const result = await runMutation(() => client.commands.createClassGroup({
@@ -125,12 +131,14 @@ export async function createClassGroupMutation(name: string, gradeLevelId: strin
 		name: name.trim(),
 		attendanceMode: 'session',
 	}), { refresh: true });
-	return result !== null;
+}), { successMessage: options?.successMessage });
+return result !== null;
 }
 
 export async function updateClassGroupMutation(
 	classGroupId: string,
 	patch: { name?: string; capacity?: number | null },
+	options?: { successMessage?: string },
 ): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const result = await runMutation(() => client.commands.updateClassGroupConfiguration({
@@ -139,5 +147,6 @@ export async function updateClassGroupMutation(
 		capacity: patch.capacity,
 		attendanceMode: 'session',
 	}), { refresh: true });
-	return result !== null;
+}), { successMessage: options?.successMessage });
+return result !== null;
 }

@@ -99,25 +99,72 @@ export async function fetchSchoolLifeSources(client: SchoolClient): Promise<Scho
 }
 
 export function mapCalendarEvents(eventsRaw: CalendarEventRaw[]): SchoolYearEvent[] {
-	return eventsRaw
-		.map((event) => {
-			const type = mapCalendarEventType(event.kind);
-			const scope = event.scopeKind === 'school' || !event.scopeId
-				? 'all'
-				: [event.scopeId];
+	const schoolEvents: SchoolYearEvent[] = [];
+	const classGroups = new Map<string, {
+		primary: CalendarEventRaw;
+		classIds: string[];
+		linkedIds: string[];
+	}>();
 
-			return {
+	for (const event of eventsRaw) {
+		const type = mapCalendarEventType(event.kind);
+		const start = formatDate(event.startDate);
+		const end = formatDate(event.endDate);
+
+		if (event.scopeKind === 'school' || !event.scopeId) {
+			schoolEvents.push({
 				id: event.id,
 				title: event.title,
-				date: formatDate(event.startDate),
-				endDate: formatDate(event.endDate) !== formatDate(event.startDate)
-					? formatDate(event.endDate)
-					: undefined,
+				date: start,
+				endDate: end !== start ? end : undefined,
 				type,
 				description: mapCalendarEventDescription(event),
-				scope,
-			} satisfies SchoolYearEvent;
-		})
+				scope: 'all',
+			});
+			continue;
+		}
+
+		const classId = String(event.scopeId);
+		const key = [
+			event.title.trim(),
+			start,
+			end,
+			event.kind,
+			mapCalendarEventDescription(event),
+		].join('|');
+
+		const bucket = classGroups.get(key);
+		if (bucket) {
+			if (!bucket.classIds.includes(classId)) {
+				bucket.classIds.push(classId);
+				bucket.linkedIds.push(event.id);
+			}
+		}
+		else {
+			classGroups.set(key, {
+				primary: event,
+				classIds: [classId],
+				linkedIds: [event.id],
+			});
+		}
+	}
+
+	const groupedClassEvents = [...classGroups.values()].map(({ primary, classIds, linkedIds }) => {
+		const start = formatDate(primary.startDate);
+		const end = formatDate(primary.endDate);
+		return {
+			id: primary.id,
+			linkedIds: linkedIds.length > 1 ? linkedIds : undefined,
+			title: primary.title,
+			date: start,
+			endDate: end !== start ? end : undefined,
+			type: mapCalendarEventType(primary.kind),
+			description: mapCalendarEventDescription(primary),
+			scope: classIds.sort(),
+		} satisfies SchoolYearEvent;
+	});
+
+	return [...schoolEvents, ...groupedClassEvents]
 		.sort((left, right) => left.date.localeCompare(right.date));
 }
 

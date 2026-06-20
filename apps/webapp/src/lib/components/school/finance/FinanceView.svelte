@@ -1,9 +1,15 @@
 <script lang="ts">
 	import type { Fee, Student, StudentBilling } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { Plus, TrendingUp, AlertCircle, Wallet } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import FeeFormModal from './FeeFormModal.svelte';
+	import AssignFeeFormModal from './AssignFeeFormModal.svelte';
 
 	const {
 		fees,
@@ -33,6 +39,16 @@
 	let internalTab = $state<'fees' | 'billing'>('billing');
 	const tab = $derived(forcedTab ?? internalTab);
 	const tabKeys = ['billing', 'fees'] as const;
+	let createFeeOpen = $state(false);
+	let assignFeeOpen = $state(false);
+
+	function handleFeeCreated(feeId: string) {
+		appGoto(detailHref.financeFee(feeId));
+	}
+
+	function handleBillingCreated(studentFeeId: string) {
+		appGoto(detailHref.financeBilling(studentFeeId));
+	}
 
 	const totals = $derived.by(() => {
 		const totalDue = billing.reduce((sum, b) => sum + (b.total - b.paid), 0);
@@ -49,38 +65,96 @@
 </script>
 
 <div class="animate-fade-in space-y-6">
-	<div class="flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('finance.financeEyebrow')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">{$t('finance.title')}</h2>
-		</div>
-		<div class="flex items-center gap-2">
-			{#if !forcedTab}
-				<div class="flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
-					{#each tabKeys as k (k)}
-						<button
-							type="button"
-							onclick={() => (internalTab = k)}
-							class={cn(
-								'rounded-full px-3.5 py-1.5 text-xs font-medium transition',
-								tab === k
-									? 'bg-primary text-primary-foreground shadow-soft'
-									: 'text-muted-foreground hover:text-foreground',
-							)}
+	{#snippet tabSwitcher()}
+		{#if !forcedTab}
+			<div class="flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+				{#each tabKeys as k (k)}
+					<button
+						type="button"
+						onclick={() => (internalTab = k)}
+						class={cn(
+							'rounded-full px-3.5 py-1.5 text-xs font-medium transition',
+							tab === k
+								? 'bg-primary text-primary-foreground shadow-soft'
+								: 'text-muted-foreground hover:text-foreground',
+						)}
+					>
+						{$t(`finance.${k}`)}
+					</button>
+				{/each}
+			</div>
+		{/if}
+	{/snippet}
+
+	{#if tab === 'fees'}
+		<ListPageHeader
+			eyebrow={$t('finance.feesCatalog')}
+			title={$t('finance.fees')}
+		>
+			{#snippet filters()}
+				{@render tabSwitcher()}
+			{/snippet}
+			{#snippet primary()}
+				<PermissionGate
+					permission="FINANCIAL_CONFIG_CONFIGURE"
+					mode="disable"
+					tooltip={$t('fee.permissionConfigure')}
+				>
+					{#snippet children({ disabled, title })}
+						<Button
+							size="sm"
+							class="rounded-full"
+							{disabled}
+							{title}
+							onclick={() => (createFeeOpen = true)}
 						>
-							{$t(`finance.${k}`)}
-						</button>
-					{/each}
-				</div>
-			{/if}
-			<Button size="sm" class="rounded-full">
-				<Plus class="mr-1 h-4 w-4" />
-				{tab === 'fees' ? $t('finance.newFee') : $t('finance.newInvoice')}
-			</Button>
-		</div>
-	</div>
+							<Plus class="mr-1 h-4 w-4" />
+							{$t('finance.newFee')}
+						</Button>
+					{/snippet}
+				</PermissionGate>
+			{/snippet}
+		</ListPageHeader>
+		<FeeFormModal bind:open={createFeeOpen} onCreated={handleFeeCreated} />
+	{:else}
+		<ListPageHeader
+			eyebrow={$t('finance.financeEyebrow')}
+			title={$t('finance.title')}
+		>
+			{#snippet filters()}
+				{@render tabSwitcher()}
+			{/snippet}
+			{#snippet primary()}
+				<PermissionGate
+					permission="PAYMENT_RECORD"
+					mode="disable"
+					tooltip={$t('payment.permissionRecord')}
+				>
+					{#snippet children({ disabled, title })}
+						<Button
+							size="sm"
+							class="rounded-full"
+							{disabled}
+							{title}
+							onclick={() => (assignFeeOpen = true)}
+						>
+							<Plus class="mr-1 h-4 w-4" />
+							{$t('finance.newInvoice')}
+						</Button>
+					{/snippet}
+				</PermissionGate>
+			{/snippet}
+		</ListPageHeader>
+		{#if assignFeeOpen}
+			<AssignFeeFormModal
+				bind:open={assignFeeOpen}
+				{students}
+				{fees}
+				{billing}
+				onCreated={handleBillingCreated}
+			/>
+		{/if}
+	{/if}
 
 	<div class="grid gap-3 sm:grid-cols-3">
 		<div class="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
@@ -219,7 +293,7 @@
 					onclick={() => onSelectFee?.(f)}
 					class={cn(
 						'rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-						active && 'ring-2 ring-accent',
+						active && 'border-primary/40 bg-primary/5',
 					)}
 				>
 					<div class="flex items-start justify-between">

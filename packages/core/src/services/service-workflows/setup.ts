@@ -216,11 +216,13 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
 
-    if (
-      existing.ownerSubjectId
-      && this.baseService.actor.kind !== 'system'
-      && !(this.baseService.actor.kind === 'staff' && this.baseService.actor.subjectId === existing.ownerSubjectId)
-    ) {
+    const actor = this.baseService.actor
+    const isCurrentOwner = actor.kind === 'staff' && actor.subjectId === existing.ownerSubjectId
+    const canTransferOwner = actor.kind === 'system'
+      || isCurrentOwner
+      || (actor.kind === 'staff' && actor.effectiveGrants?.isElevated === true)
+
+    if (existing.ownerSubjectId && !canTransferOwner) {
       denyResourceAccess()
     }
 

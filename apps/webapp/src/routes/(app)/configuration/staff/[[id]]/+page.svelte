@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import PeopleView from '$lib/components/school/configuration/PeopleView.svelte';
+	import StaffView from '$lib/components/school/configuration/StaffView.svelte';
 	import DataState from '$lib/components/ui/DataState.svelte';
 	import PageQuery from '$lib/components/ui/PageQuery.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
@@ -20,13 +20,9 @@
 			emptyTitle={$t('config.staff')}
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
-			<PeopleView
+			<StaffView
 				staff={data.staff}
-				guardians={data.guardians}
-				students={data.students}
-				forcedTab="staff"
-				onSelectGuardian={g => appGoto(detailHref.configStaffGuardian(g.id))}
-				onSelectStaff={s => appGoto(detailHref.configStaffMember(s.id))}
+				onSelect={s => appGoto(detailHref.configStaffMember(s.id))}
 				{selectedId}
 			/>
 		</DataState>

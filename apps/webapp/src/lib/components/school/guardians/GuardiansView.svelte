@@ -2,9 +2,14 @@
 	import type { Guardian, Student } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import GuardianCreateModal from './GuardianCreateModal.svelte';
 
 	const {
 		guardians,
@@ -25,23 +30,23 @@
 	};
 
 	let q = $state('');
+	let createOpen = $state(false);
 
 	const list = $derived(
 		guardians.filter(g => g.name.toLowerCase().includes(q.toLowerCase())),
 	);
+
+	function handleCreated(guardianId: string) {
+		appGoto(detailHref.schoolGuardian(guardianId));
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('school.guardians')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('people.guardiansCount', { n: list.length })}
-			</h2>
-		</div>
-		<div class="flex flex-wrap items-center gap-2">
+	<ListPageHeader
+		eyebrow={$t('school.guardians')}
+		title={$t('people.guardiansCount', { n: list.length })}
+	>
+		{#snippet search()}
 			<div class="relative">
 				<Search
 					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -52,12 +57,30 @@
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
 			</div>
-			<Button size="sm" class="rounded-full">
-				<Plus class="mr-1 h-4 w-4" />
-				{$t('common.add')}
-			</Button>
-		</div>
-	</div>
+		{/snippet}
+		{#snippet primary()}
+			<PermissionGate
+				permission="PARENT_CREATE"
+				mode="disable"
+				tooltip={$t('guardian.permissionCreate')}
+			>
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('guardian.addGuardian')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
+	</ListPageHeader>
+
+	<GuardianCreateModal bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		<div

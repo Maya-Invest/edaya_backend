@@ -1,26 +1,116 @@
 <script lang="ts">
+	import { page } from '$app/stores';
+	import type { Resource } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { readResourceListFilters, writeResourceListFilters } from '$lib/list/list-url-filters';
 	import { t } from '$lib/i18n';
-	import { Plus } from '$lib/icons';
+	import { Plus, Search } from '$lib/icons';
+	import { appGoto } from '$lib/navigation/app-navigation';
+	import { RESOURCE_STATUS_TONE } from '$lib/ui-tones';
 	import { cn } from '$lib/utils';
+
+	const statusKeys = ['all', 'available', 'booked', 'maintenance'] as const;
+
+	const initialFilters = $derived(readResourceListFilters($page.url));
+
+	let q = $state('');
+	let status = $state<(typeof statusKeys)[number]>('all');
+	let filtersReady = $state(false);
+
+	const filteredResources = $derived(
+		detailDataContext.resources.filter((r: Resource) => {
+			if (status !== 'all' && r.status !== status)
+				return false;
+			const needle = q.trim().toLowerCase();
+			if (!needle)
+				return true;
+			return r.name.toLowerCase().includes(needle)
+				|| r.location.toLowerCase().includes(needle)
+				|| r.type.toLowerCase().includes(needle);
+		}),
+	);
+
+	function statusLabel(k: (typeof statusKeys)[number]) {
+		if (k === 'all')
+			return $t('filter.all');
+		return $t(`resourceStatus.${k}`);
+	}
+
+	function syncFiltersToUrl() {
+		const href = writeResourceListFilters($page.url, { q, status });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		status = (statusKeys.includes(next.status as (typeof statusKeys)[number])
+			? next.status
+			: 'all') as typeof status;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
+	}
+
+	function applyStatus(next: (typeof statusKeys)[number]) {
+		status = next;
+		scheduleFilterSync();
+	}
 </script>
 
 <div class="animate-fade-in">
-	<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-				{$t('resources.eyebrow')}
-			</p>
-			<h2 class="font-display text-2xl font-semibold">
-				{$t('resources.count', { n: detailDataContext.resources.length })}
-			</h2>
-		</div>
-		<Button size="sm" class="rounded-full">
-			<Plus class="mr-1 h-4 w-4" />
-			{$t('resources.newResource')}
-		</Button>
-	</div>
+	<ListPageHeader
+		eyebrow={$t('resources.eyebrow')}
+		title={$t('resources.count', { n: filteredResources.length })}
+	>
+		{#snippet search()}
+			<div class="relative">
+				<Search
+					class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+				/>
+				<Input
+					bind:value={q}
+					oninput={scheduleFilterSync}
+					placeholder={$t('common.search')}
+					class="h-9 w-56 rounded-full pl-9 text-sm"
+				/>
+			</div>
+		{/snippet}
+		{#snippet filters()}
+			<div class="flex flex-wrap items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+				{#each statusKeys as k (k)}
+					{@const active = status === k}
+					<button
+						type="button"
+						onclick={() => applyStatus(k)}
+						class={cn(
+							'rounded-full px-3 py-1.5 text-xs font-medium transition',
+							active
+								? 'bg-primary text-primary-foreground shadow-soft'
+								: 'text-muted-foreground hover:text-foreground',
+						)}
+					>
+						{statusLabel(k)}
+					</button>
+				{/each}
+			</div>
+		{/snippet}
+		{#snippet primary()}
+			<Button size="sm" class="rounded-full">
+				<Plus class="mr-1 h-4 w-4" />
+				{$t('resources.newResource')}
+			</Button>
+		{/snippet}
+	</ListPageHeader>
 
 	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
 		<div
@@ -33,7 +123,7 @@
 			<div class="col-span-1 text-right">{$t('resources.status')}</div>
 		</div>
 		<ul>
-			{#each detailDataContext.resources as r (r.id)}
+			{#each filteredResources as r (r.id)}
 				<li
 					class="grid grid-cols-12 items-center gap-4 border-b border-border px-5 py-3.5 last:border-b-0 hover:bg-secondary"
 				>
@@ -53,9 +143,7 @@
 						<span
 							class={cn(
 								'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase',
-								r.status === 'available' && 'bg-secondary text-foreground/80',
-								r.status === 'booked' && 'bg-secondary text-foreground/80',
-								r.status === 'maintenance' && 'bg-destructive/10 text-destructive',
+								RESOURCE_STATUS_TONE[r.status],
 							)}
 						>
 							{$t(`resourceStatus.${r.status}`)}
