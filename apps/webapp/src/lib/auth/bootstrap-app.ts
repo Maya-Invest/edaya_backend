@@ -1,9 +1,7 @@
 import { academicContext } from '$lib/academic/context.svelte';
 import { configureBrowserSchoolClient } from '$lib/api/school-client';
-import { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
-import { getDetailDataSnapshot } from '$lib/queries/detail-data.queries';
-import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
+import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 import { getAppShellData } from '$lib/queries/shell.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 import { teachingLogContext } from '$lib/teaching-log/context.svelte';
@@ -23,6 +21,7 @@ export function resetAppShellBootstrap() {
 	detailDataContext.reset();
 	reportCardsContext.reset();
 	teachingLogContext.reset();
+	pageQueryStatus.reset();
 }
 
 async function runBootstrapAppShell() {
@@ -30,16 +29,6 @@ async function runBootstrapAppShell() {
 		getYearId: () => academicContext.yearId,
 	});
 
-	const [shell, reportCards, teachingLogEntries] = await Promise.all([
-		getAppShellData(),
-		getReportCardsLayoutData(),
-		fetchTeachingLogEntries(),
-	]);
-
+	const shell = await getAppShellData();
 	academicContext.initFromShell(shell);
-
-	const detailData = await getDetailDataSnapshot(shell.classes.map(entry => entry.id));
-	detailDataContext.hydrate(detailData);
-	reportCardsContext.hydrateFromServer(reportCards);
-	teachingLogContext.hydrateFromServer(teachingLogEntries);
 }

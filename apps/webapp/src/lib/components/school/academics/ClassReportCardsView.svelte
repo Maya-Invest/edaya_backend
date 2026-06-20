@@ -40,7 +40,7 @@
 
 	const results = $derived(reportCardsContext.resultsForClass(classId));
 	const period = $derived(academicContext.period);
-	const classStudents = $derived(detailDataContext.students.filter(s => s.classId === classId));
+	const classStudents = $derived(detailDataContext.studentsForClass(classId));
 
 	const statusKeys = ['all', 'none', 'draft', 'generated', 'published'] as const;
 

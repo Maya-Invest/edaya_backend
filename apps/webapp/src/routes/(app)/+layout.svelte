@@ -11,12 +11,12 @@
 	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import SchoolSelector from '$lib/components/layout/SchoolSelector.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
-	import { isLikelyDetailPath } from '$lib/detail-route-patterns';
+	import { isLikelyDetailPath, listRouteCacheKey } from '$lib/detail-route-patterns';
 	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';
 	import { LogOut, LoaderCircle } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { setContext } from 'svelte';
 
@@ -36,6 +36,11 @@
 
 	let drawerSyncVersion = 0;
 
+	function isReportCardDetailPath(pathname: string): boolean {
+		return /^\/configuration\/report-cards\/[^/]+$/.test(pathname)
+			|| /^\/classes\/[^/]+\/report-cards\/[^/]+$/.test(pathname);
+	}
+
 	$effect(() => {
 		if (authSession.ready && !authSession.isLoggedIn) {
 			appGoto(appPath('/login'), { replaceState: true });
@@ -51,17 +56,20 @@
 
 	$effect(() => {
 		const pathname = $page.url.pathname;
-		const detailReady = detailDataContext.ready;
-		const reportCardsReady = reportCardsContext.ready;
-		void detailDataContext.dataGeneration;
+		const cacheKey = listRouteCacheKey($page.url);
+		const routeQueryReady = pageQueryStatus.isReady(cacheKey);
+		void reportCardsContext.ready;
 
 		if (!isLikelyDetailPath(pathname)) {
 			drawer.close();
 			return;
 		}
 
-		// Detail URLs on refresh: wait for bootstrap before parsing entity ids.
-		if (!detailReady || !reportCardsReady) {
+		if (!routeQueryReady) {
+			return;
+		}
+
+		if (isReportCardDetailPath(pathname) && !reportCardsContext.ready) {
 			return;
 		}
 

@@ -32,8 +32,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<ConfigSubjectsView
-				subjects={data.subjects}
-				classes={data.classes}
 				onSelect={selectSubject}
 				{selectedId}
 				onSelectLevel={selectLevel}

@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Clock, Plus, User } from '$lib/icons';
 	import { appGoto } from '$lib/navigation/app-navigation';
@@ -11,20 +12,22 @@
 
 	const {
 		classId,
-		subjects,
+		subjects: subjectsOverride,
 		onSelect,
 		selectedId,
 		getProgress,
 		embedded = false,
 	}: {
 		classId: string;
-		subjects: Subject[];
+		subjects?: Subject[];
 		onSelect?: (s: Subject) => void;
 		selectedId?: string;
 		getProgress?: (s: Subject) => number;
 		/** Hide list header and create CTA when nested inside TeachingLogView */
 		embedded?: boolean;
 	} = $props();
+
+	const subjects = $derived(subjectsOverride ?? detailDataContext.subjectsForClass(classId));
 
 	let createOpen = $state(false);
 

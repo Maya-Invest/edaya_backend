@@ -1,26 +1,25 @@
-import { fetchActivities } from '$lib/api/activities-data';
 import { fetchDeadlines } from '$lib/api/homework-data';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { resolvePageLoad } from '$lib/queries/page-status';
+import { getClassSubjects } from '$lib/queries/subjects.queries';
 
 export { fetchActivities } from '$lib/api/activities-data';
 export { fetchDeadlines } from '$lib/api/homework-data';
 export { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
-
-export function querySchoolActivitiesPage() {
-	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ activities: [] }),
-		load: async () => ({ activities: await fetchActivities() }),
-		hasItems: data => data.activities.length > 0,
-	});
-}
+export { querySchoolActivitiesPage } from '$lib/queries/school-life.queries';
 
 export function queryClassHomeworkPage(classId: string) {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ classId, deadlines: [] }),
-		load: async () => ({
-			classId,
-			deadlines: await fetchDeadlines(classId),
-		}),
-		hasItems: data => data.deadlines.length > 0,
+		empty: () => ({ classId }),
+		load: async () => {
+			const [deadlines, subjects] = await Promise.all([
+				fetchDeadlines(classId),
+				getClassSubjects(classId),
+			]);
+			detailDataContext.seedDeadlines(deadlines, { classId });
+			detailDataContext.seedSubjects(subjects, { classId });
+			return { classId };
+		},
+		hasItems: () => detailDataContext.deadlinesForClass(classId).length > 0,
 	});
 }

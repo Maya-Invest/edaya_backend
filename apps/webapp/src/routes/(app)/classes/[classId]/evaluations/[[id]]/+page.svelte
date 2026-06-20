@@ -23,7 +23,6 @@
 		>
 			<EvaluationsView
 				classId={data.classId}
-				evaluations={data.evaluations}
 				onSelect={ev => appGoto(detailHref.classEvaluation(data.classId, ev.id))}
 				{selectedId}
 			/>

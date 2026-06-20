@@ -23,7 +23,6 @@
 		>
 			<HomeworkView
 				classId={data.classId}
-				deadlines={data.deadlines}
 				onSelect={d => appGoto(detailHref.classDeadline(data.classId, d.id))}
 				{selectedId}
 			/>

@@ -29,7 +29,6 @@
 		>
 			<TeachingLogView
 				classId={data.classId}
-				subjects={data.subjects}
 				onSelectSubject={selectSubject}
 				{selectedSubjectId}
 			/>

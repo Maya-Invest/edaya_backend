@@ -4,6 +4,7 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Mail, Plus, Search } from '$lib/icons';
@@ -12,14 +13,14 @@
 	import StaffCreateModal from './StaffCreateModal.svelte';
 
 	const {
-		staff,
 		onSelect,
 		selectedId,
 	}: {
-		staff: StaffMember[];
 		onSelect?: (s: StaffMember) => void;
 		selectedId?: string;
 	} = $props();
+
+	const staff = $derived(detailDataContext.staff);
 
 	let q = $state('');
 	let createOpen = $state(false);

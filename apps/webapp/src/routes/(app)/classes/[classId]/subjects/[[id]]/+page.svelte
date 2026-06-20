@@ -23,7 +23,6 @@
 		>
 			<SubjectsView
 				classId={data.classId}
-				subjects={data.subjects}
 				onSelect={s => appGoto(detailHref.classSubject(data.classId, s.id))}
 				{selectedId}
 			/>

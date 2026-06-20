@@ -1,42 +1,37 @@
-import { academicContext } from '$lib/academic/context.svelte';
-import { loadFinanceData } from '$lib/api/finance-data';
 import { loadPeopleData } from '$lib/api/people-data';
+import { loadFinanceData } from '$lib/api/finance-data';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 
-export async function getFinanceData() {
-	return loadFinanceData(queryClient());
+async function seedFinancePageData() {
+	const [{ fees, billing }, { students }] = await Promise.all([
+		loadFinanceData(queryClient()),
+		loadPeopleData(queryClient()),
+	]);
+	detailDataContext.seedFees(fees);
+	detailDataContext.seedBilling(billing);
+	detailDataContext.seedStudents(students);
 }
 
 export function queryFinancePage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ fees: [], billing: [], students: [] }),
+		empty: () => ({}),
 		load: async () => {
-			const [{ fees, billing }, { students }] = await Promise.all([
-				getFinanceData(),
-				loadPeopleData(queryClient()),
-			]);
-			return { fees, billing, students };
+			await seedFinancePageData();
+			return {};
 		},
-		hasItems: data => data.fees.length > 0 || data.billing.length > 0,
+		hasItems: () => detailDataContext.fees.length > 0 || detailDataContext.billing.length > 0,
 	});
 }
 
 export function queryPaymentsPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ billing: [], students: [], fees: [], classes: [] }),
+		empty: () => ({}),
 		load: async () => {
-			const [{ billing, fees }, { students }] = await Promise.all([
-				getFinanceData(),
-				loadPeopleData(queryClient()),
-			]);
-			return {
-				billing,
-				fees,
-				students,
-				classes: academicContext.classes,
-			};
+			await seedFinancePageData();
+			return {};
 		},
-		hasItems: data => data.billing.length > 0,
+		hasItems: () => detailDataContext.billing.length > 0,
 	});
 }

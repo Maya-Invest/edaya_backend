@@ -21,7 +21,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<StaffView
-				staff={data.staff}
 				onSelect={s => appGoto(detailHref.configStaffMember(s.id))}
 				{selectedId}
 			/>

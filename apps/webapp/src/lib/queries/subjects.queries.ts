@@ -1,43 +1,73 @@
 import { academicContext } from '$lib/academic/context.svelte';
+import { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 import { fetchClassSubjectsSources, loadClassSubjects, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
+import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 
 export async function getClassSubjects(classId: string) {
 	return loadClassSubjects(queryClient(), classId);
 }
 
 export async function getAllSubjects() {
-	if (detailDataContext.ready) {
+	if (detailDataContext.subjects.length > 0) {
 		return detailDataContext.subjects;
 	}
 	const sources = await fetchClassSubjectsSources(queryClient());
-	return mapAllClassSubjects(sources);
+	const subjects = mapAllClassSubjects(sources);
+	const classIds = [...new Set(subjects.map(subject => subject.classId))];
+	for (const classId of classIds) {
+		detailDataContext.seedSubjects(
+			subjects.filter(subject => subject.classId === classId),
+			{ classId },
+		);
+	}
+	return subjects;
+}
+
+async function ensureTeachingLogLoaded() {
+	if (teachingLogContext.ready) {
+		return;
+	}
+	const entries = await fetchTeachingLogEntries(undefined, queryClient());
+	teachingLogContext.hydrateFromServer(entries);
 }
 
 export function queryClassSubjectsPage(classId: string) {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ classId, subjects: [] }),
-		load: async () => ({
-			classId,
-			subjects: await getClassSubjects(classId),
-		}),
-		hasItems: data => data.subjects.length > 0,
+		empty: () => ({ classId }),
+		load: async () => {
+			const subjects = await getClassSubjects(classId);
+			detailDataContext.seedSubjects(subjects, { classId });
+			return { classId };
+		},
+		hasItems: () => detailDataContext.subjectsForClass(classId).length > 0,
 	});
 }
 
 export function queryClassTeachingPage(classId: string) {
-	return queryClassSubjectsPage(classId);
+	return (url: URL) => resolvePageLoad(url, {
+		empty: () => ({ classId }),
+		load: async () => {
+			const [subjects] = await Promise.all([
+				getClassSubjects(classId),
+				ensureTeachingLogLoaded(),
+			]);
+			detailDataContext.seedSubjects(subjects, { classId });
+			return { classId };
+		},
+		hasItems: () => detailDataContext.subjectsForClass(classId).length > 0,
+	});
 }
 
 export function queryConfigSubjectsPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ subjects: [], classes: academicContext.classes }),
-		load: async () => ({
-			subjects: await getAllSubjects(),
-			classes: academicContext.classes,
-		}),
-		hasItems: data => data.subjects.length > 0,
+		empty: () => ({}),
+		load: async () => {
+			await getAllSubjects();
+			return {};
+		},
+		hasItems: () => detailDataContext.subjects.length > 0,
 	});
 }

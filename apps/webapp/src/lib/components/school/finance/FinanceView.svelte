@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type { Fee, Student, StudentBilling } from '$lib/types/school';
+	import type { Fee, StudentBilling } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { Plus, TrendingUp, AlertCircle, Wallet } from '$lib/icons';
@@ -12,22 +13,20 @@
 	import FeeFormModal from './FeeFormModal.svelte';
 
 	const {
-		fees,
-		billing,
-		students,
 		onSelectFee,
 		onSelectBilling,
 		selectedId,
 		forcedTab,
 	}: {
-		fees: Fee[];
-		billing: StudentBilling[];
-		students: Student[];
 		onSelectFee?: (f: Fee) => void;
 		onSelectBilling?: (b: StudentBilling) => void;
 		selectedId?: string;
 		forcedTab?: 'fees' | 'billing';
 	} = $props();
+
+	const fees = $derived(detailDataContext.fees);
+	const billing = $derived(detailDataContext.billing);
+	const students = $derived(detailDataContext.students);
 
 	const statusStyle: Record<StudentBilling['status'], string> = {
 		paid: 'bg-secondary text-foreground/80',

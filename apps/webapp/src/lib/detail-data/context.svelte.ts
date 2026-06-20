@@ -19,30 +19,32 @@ import type {
 	StudentBilling,
 	Subject,
 } from '$lib/types/school';
+import {
+	seedAbsencesCollection,
+	seedActivitiesCollection,
+	seedAssessmentResultsCollection,
+	seedBillingCollection,
+	seedDeadlinesCollection,
+	seedEvaluationsCollection,
+	seedFeesCollection,
+	seedGuardiansCollection,
+	seedIncidentsCollection,
+	seedPlanningCollection,
+	seedResourcesCollection,
+	seedRolePermissionsCollection,
+	seedSchoolYearEventsCollection,
+	seedStaffCollection,
+	seedStudentsCollection,
+	seedSubjectsCollection,
+	mergeById,
+} from './seed-policies';
 
-export interface DetailDataSnapshot {
-	students: Student[];
-	guardians: Guardian[];
-	staff: StaffMember[];
-	subjects: Subject[];
-	planning: PlanningEvent[];
-	evaluations: Evaluation[];
-	assessmentResults: AssessmentResultRow[];
-	activities: Activity[];
-	deadlines: Deadline[];
-	incidents: Incident[];
-	schoolYearEvents: SchoolYearEvent[];
-	billing: StudentBilling[];
-	fees: Fee[];
-	healthRecords: Record<string, HealthRecord>;
-	pedagogicalNotes: PedagogicalNote[];
-	absences: AbsenceRecord[];
-	resources: Resource[];
+type RolePermissionsSnapshot = {
 	roleCrudMatrix: Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>;
 	roleEnabledPermissions: Partial<Record<StaffRole, Record<string, boolean>>>;
-}
+};
 
-class DetailDataContext {
+export class DetailDataContext {
 	students = $state<Student[]>([]);
 	guardians = $state<Guardian[]>([]);
 	staff = $state<StaffMember[]>([]);
@@ -62,9 +64,6 @@ class DetailDataContext {
 	resources = $state<Resource[]>([]);
 	roleCrudMatrix = $state<Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>>({});
 	roleEnabledPermissions = $state<Partial<Record<StaffRole, Record<string, boolean>>>>({});
-	ready = $state(false);
-	/** Bumped on each hydrate so open drawers can re-bind fresh entity data. */
-	dataGeneration = $state(0);
 
 	private replaceById<T extends { id: string }>(items: readonly T[], id: string, patch: Partial<T>): T[] {
 		const index = items.findIndex(item => item.id === id);
@@ -76,8 +75,200 @@ class DetailDataContext {
 		return next;
 	}
 
+	// --- Seed policies (see specs/data-loading-spec.md) ---
+	// Merge by id: students (school-wide), guardians, staff, incidents, activities, billing, fees, absences, resources
+	// Replace class slice: students (class scope), planning, evaluations, deadlines, subjects
+	// Replace all: role permissions
+
+	/** Merge by id school-wide; replace class slice when `scope.classId` is set. */
+	seedStudents(students: Student[], scope?: { classId?: string }) {
+		this.students = seedStudentsCollection(this.students, students, scope);
+	}
+
+	/** Merge by id. */
+	seedGuardians(guardians: Guardian[]) {
+		this.guardians = seedGuardiansCollection(this.guardians, guardians);
+	}
+
+	/** Merge by id. */
+	seedStaff(staff: StaffMember[]) {
+		this.staff = seedStaffCollection(this.staff, staff);
+	}
+
+	/** Replace the class slice. */
+	seedSubjects(subjects: Subject[], scope: { classId: string }) {
+		this.subjects = seedSubjectsCollection(this.subjects, subjects, scope);
+	}
+
+	/** Replace the class slice. */
+	seedPlanning(events: PlanningEvent[], scope: { classId: string }) {
+		this.planning = seedPlanningCollection(this.planning, events, scope);
+	}
+
+	/** Replace the class slice. */
+	seedEvaluations(evaluations: Evaluation[], scope: { classId: string }) {
+		this.evaluations = seedEvaluationsCollection(this.evaluations, evaluations, scope);
+	}
+
+	/** Replace the class slice. */
+	seedDeadlines(deadlines: Deadline[], scope: { classId: string }) {
+		this.deadlines = seedDeadlinesCollection(this.deadlines, deadlines, scope);
+	}
+
+	/** Merge by id. */
+	seedIncidents(incidents: Incident[]) {
+		this.incidents = seedIncidentsCollection(this.incidents, incidents);
+	}
+
+	/** Merge by id. */
+	seedActivities(activities: Activity[]) {
+		this.activities = seedActivitiesCollection(this.activities, activities);
+	}
+
+	/** Merge by id. */
+	seedBilling(billing: StudentBilling[]) {
+		this.billing = seedBillingCollection(this.billing, billing);
+	}
+
+	/** Merge by id. */
+	seedFees(fees: Fee[]) {
+		this.fees = seedFeesCollection(this.fees, fees);
+	}
+
+	/** Merge by id. */
+	seedAbsences(absences: AbsenceRecord[]) {
+		this.absences = seedAbsencesCollection(this.absences, absences);
+	}
+
+	/** Merge by id. */
+	seedResources(resources: Resource[]) {
+		this.resources = seedResourcesCollection(this.resources, resources);
+	}
+
+	/** Merge by id. */
+	seedSchoolYearEvents(events: SchoolYearEvent[]) {
+		this.schoolYearEvents = seedSchoolYearEventsCollection(this.schoolYearEvents, events);
+	}
+
+	/** Replace the full role-permission matrices. */
+	seedRolePermissions(snapshot: RolePermissionsSnapshot) {
+		const next = seedRolePermissionsCollection(snapshot);
+		this.roleCrudMatrix = next.roleCrudMatrix;
+		this.roleEnabledPermissions = next.roleEnabledPermissions;
+	}
+
+	studentsForClass(classId: string): Student[] {
+		return this.students.filter(student => student.classId === classId);
+	}
+
+	planningForClass(classId: string): PlanningEvent[] {
+		return this.planning.filter(event => event.classId === classId);
+	}
+
+	evaluationsForClass(classId: string): Evaluation[] {
+		return this.evaluations.filter(evaluation => evaluation.classId === classId);
+	}
+
+	deadlinesForClass(classId: string): Deadline[] {
+		return this.deadlines.filter(deadline => deadline.classId === classId);
+	}
+
+	subjectsForClass(classId: string): Subject[] {
+		return this.subjects.filter(subject => subject.classId === classId);
+	}
+
 	patchPlanningEvent(id: string, patch: Partial<PlanningEvent>) {
 		this.planning = this.replaceById(this.planning, id, patch);
+	}
+
+	appendPlanningEvent(event: PlanningEvent) {
+		this.planning = mergeById(this.planning, [event]);
+	}
+
+	removePlanningEvent(id: string) {
+		this.planning = this.planning.filter(event => event.id !== id);
+	}
+
+	appendEvaluation(evaluation: Evaluation) {
+		this.evaluations = mergeById(this.evaluations, [evaluation]);
+	}
+
+	removeEvaluation(id: string) {
+		this.evaluations = this.evaluations.filter(evaluation => evaluation.id !== id);
+	}
+
+	appendDeadline(deadline: Deadline) {
+		this.deadlines = mergeById(this.deadlines, [deadline]);
+	}
+
+	removeDeadline(id: string) {
+		this.deadlines = this.deadlines.filter(deadline => deadline.id !== id);
+	}
+
+	patchDeadline(id: string, patch: Partial<Deadline>) {
+		this.deadlines = this.replaceById(this.deadlines, id, patch);
+	}
+
+	appendActivity(activity: Activity) {
+		this.activities = mergeById(this.activities, [activity]);
+	}
+
+	removeActivity(id: string) {
+		this.activities = this.activities.filter(activity => activity.id !== id);
+	}
+
+	patchActivity(id: string, patch: Partial<Activity>) {
+		this.activities = this.replaceById(this.activities, id, patch);
+	}
+
+	patchIncident(id: string, patch: Partial<Incident>) {
+		this.incidents = this.replaceById(this.incidents, id, patch);
+	}
+
+	appendSchoolYearEvent(event: SchoolYearEvent) {
+		this.schoolYearEvents = mergeById(this.schoolYearEvents, [event]);
+	}
+
+	removeSchoolYearEvent(id: string) {
+		this.schoolYearEvents = this.schoolYearEvents.filter(event => event.id !== id);
+	}
+
+	patchSchoolYearEvent(id: string, patch: Partial<SchoolYearEvent>) {
+		this.schoolYearEvents = this.replaceById(this.schoolYearEvents, id, patch);
+	}
+
+	appendFee(fee: Fee) {
+		this.fees = mergeById(this.fees, [fee]);
+	}
+
+	removeFee(id: string) {
+		this.fees = this.fees.filter(fee => fee.id !== id);
+	}
+
+	patchFee(id: string, patch: Partial<Fee>) {
+		this.fees = this.replaceById(this.fees, id, patch);
+	}
+
+	appendBilling(record: StudentBilling) {
+		this.billing = mergeById(this.billing, [record]);
+	}
+
+	removeBilling(id: string) {
+		this.billing = this.billing.filter(record => record.id !== id);
+	}
+
+	patchBilling(id: string, patch: Partial<StudentBilling>) {
+		this.billing = this.replaceById(this.billing, id, patch);
+	}
+
+	patchRoleCrudMatrix(role: StaffRole, matrix: Record<string, Record<Crud, boolean>>) {
+		this.roleCrudMatrix = { ...this.roleCrudMatrix, [role]: matrix };
+		this.roleEnabledPermissions = {
+			...this.roleEnabledPermissions,
+			[role]: Object.fromEntries(
+				Object.entries(matrix).map(([key, crud]) => [key, Object.values(crud).some(Boolean)]),
+			),
+		};
 	}
 
 	patchStudent(id: string, patch: Partial<Student>) {
@@ -86,6 +277,18 @@ class DetailDataContext {
 
 	patchGuardian(id: string, patch: Partial<Guardian>) {
 		this.guardians = this.replaceById(this.guardians, id, patch);
+	}
+
+	patchStaff(id: string, patch: Partial<StaffMember>) {
+		this.staff = this.replaceById(this.staff, id, patch);
+	}
+
+	removeGuardian(id: string) {
+		this.guardians = this.guardians.filter(guardian => guardian.id !== id);
+	}
+
+	removeStaff(id: string) {
+		this.staff = this.staff.filter(member => member.id !== id);
 	}
 
 	patchPedagogicalNote(id: string, patch: Partial<PedagogicalNote>) {
@@ -100,32 +303,24 @@ class DetailDataContext {
 		this.incidents = [...this.incidents, incident];
 	}
 
+	removeIncident(id: string) {
+		this.incidents = this.incidents.filter(incident => incident.id !== id);
+	}
+
 	appendAbsence(absence: AbsenceRecord) {
 		this.absences = [...this.absences, absence];
 	}
 
-	hydrate(snapshot: DetailDataSnapshot) {
-		this.students = snapshot.students;
-		this.guardians = snapshot.guardians;
-		this.staff = snapshot.staff;
-		this.subjects = snapshot.subjects;
-		this.planning = snapshot.planning;
-		this.evaluations = snapshot.evaluations;
-		this.assessmentResults = snapshot.assessmentResults;
-		this.activities = snapshot.activities;
-		this.deadlines = snapshot.deadlines;
-		this.incidents = snapshot.incidents;
-		this.schoolYearEvents = snapshot.schoolYearEvents;
-		this.billing = snapshot.billing;
-		this.fees = snapshot.fees;
-		this.healthRecords = snapshot.healthRecords;
-		this.pedagogicalNotes = snapshot.pedagogicalNotes;
-		this.absences = snapshot.absences;
-		this.resources = snapshot.resources;
-		this.roleCrudMatrix = snapshot.roleCrudMatrix;
-		this.roleEnabledPermissions = snapshot.roleEnabledPermissions;
-		this.ready = true;
-		this.dataGeneration++;
+	removeAbsence(id: string) {
+		this.absences = this.absences.filter(absence => absence.id !== id);
+	}
+
+	appendAssessmentResult(result: AssessmentResultRow) {
+		this.assessmentResults = seedAssessmentResultsCollection(this.assessmentResults, [result]);
+	}
+
+	removeAssessmentResult(id: string) {
+		this.assessmentResults = this.assessmentResults.filter(result => result.id !== id);
 	}
 
 	reset() {
@@ -148,8 +343,10 @@ class DetailDataContext {
 		this.resources = [];
 		this.roleCrudMatrix = {};
 		this.roleEnabledPermissions = {};
-		this.ready = false;
 	}
 }
 
 export const detailDataContext = new DetailDataContext();
+
+/** Spec alias — same singleton as `detailDataContext`. */
+export const entityStore = detailDataContext;

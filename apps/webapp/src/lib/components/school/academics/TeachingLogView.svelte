@@ -7,17 +7,16 @@
 	import { Search, Sparkles } from '$lib/icons';
 	import { readTeachingListFilters, writeTeachingListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import SubjectsView from './SubjectsView.svelte';
 
 	const {
 		classId,
-		subjects,
 		onSelectSubject,
 		selectedSubjectId,
 	}: {
 		classId: string;
-		subjects: Subject[];
 		onSelectSubject?: (s: Subject) => void;
 		selectedSubjectId?: string;
 	} = $props();
@@ -27,7 +26,7 @@
 	let q = $state('');
 	let filtersReady = $state(false);
 
-	const classSubjects = $derived(subjects.filter(s => s.classId === classId));
+	const classSubjects = $derived(detailDataContext.subjectsForClass(classId));
 	const filteredSubjects = $derived(
 		classSubjects.filter((s) => {
 			const needle = q.trim().toLowerCase();

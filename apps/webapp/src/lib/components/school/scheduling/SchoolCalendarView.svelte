@@ -1,10 +1,12 @@
 <script lang="ts">
-	import type { SchoolYearEvent, ClassNode } from '$lib/types/school';
+	import type { SchoolYearEvent } from '$lib/types/school';
 	import { page } from '$app/stores';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import {
@@ -22,16 +24,15 @@
 	import SchoolYearEventFormModal from '../school-life/SchoolYearEventFormModal.svelte';
 
 	const {
-		events,
-		classes,
 		onSelect,
 		selectedId,
 	}: {
-		events: SchoolYearEvent[];
-		classes: ClassNode[];
 		onSelect?: (e: SchoolYearEvent) => void;
 		selectedId?: string;
 	} = $props();
+
+	const events = $derived(detailDataContext.schoolYearEvents);
+	const classes = $derived(academicContext.classes);
 
 	const typeConfig: Record<
 		SchoolYearEvent['type'],

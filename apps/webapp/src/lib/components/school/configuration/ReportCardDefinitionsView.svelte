@@ -12,14 +12,14 @@
 	import { cn } from '$lib/utils';
 
 	const {
-		definitions,
 		onSelect,
 		selectedId,
 	}: {
-		definitions: ReportCardDefinition[];
 		onSelect?: (d: ReportCardDefinition) => void;
 		selectedId?: string;
 	} = $props();
+
+	const definitions = $derived(reportCardsContext.definitions);
 
 	const initialFilters = $derived(readReportCardDefinitionListFilters($page.url));
 

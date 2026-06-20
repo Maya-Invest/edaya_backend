@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { Guardian, Student } from '$lib/types/school';
+	import type { Guardian } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Mail, Phone, Plus, Search, Users } from '$lib/icons';
@@ -12,16 +13,15 @@
 	import GuardianCreateModal from './GuardianCreateModal.svelte';
 
 	const {
-		guardians,
-		students,
 		onSelect,
 		selectedId,
 	}: {
-		guardians: Guardian[];
-		students: Student[];
 		onSelect?: (g: Guardian) => void;
 		selectedId?: string;
 	} = $props();
+
+	const guardians = $derived(detailDataContext.guardians);
+	const students = $derived(detailDataContext.students);
 
 	const relationKey: Record<Guardian['relation'], string> = {
 		'Mother': 'guardian.relation.Mother',

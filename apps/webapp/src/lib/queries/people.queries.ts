@@ -1,6 +1,7 @@
 import { academicContext } from '$lib/academic/context.svelte';
 import { loadPeopleData } from '$lib/api/people-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 
@@ -20,33 +21,38 @@ export async function getSchoolStaffData() {
 
 export function querySchoolStudentsPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({
-			students: [],
-			classes: academicContext.classes,
-			hierarchy: academicContext.hierarchy,
-		}),
-		load: async () => ({
-			students: await getSchoolStudentsData(),
-			classes: academicContext.classes,
-			hierarchy: academicContext.hierarchy,
-		}),
-		hasItems: data => data.students.length > 0,
+		empty: () => ({}),
+		load: async () => {
+			const students = await getSchoolStudentsData();
+			detailDataContext.seedStudents(students);
+			return {};
+		},
+		hasItems: () => detailDataContext.students.length > 0,
 	});
 }
 
 export function querySchoolGuardiansPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ guardians: [], students: [] }),
-		load: async () => getSchoolGuardiansData(),
-		hasItems: data => data.guardians.length > 0,
+		empty: () => ({}),
+		load: async () => {
+			const { guardians, students } = await getSchoolGuardiansData();
+			detailDataContext.seedGuardians(guardians);
+			detailDataContext.seedStudents(students);
+			return {};
+		},
+		hasItems: () => detailDataContext.guardians.length > 0,
 	});
 }
 
 export function querySchoolStaffPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ staff: [] }),
-		load: async () => ({ staff: await getSchoolStaffData() }),
-		hasItems: data => data.staff.length > 0,
+		empty: () => ({}),
+		load: async () => {
+			const staff = await getSchoolStaffData();
+			detailDataContext.seedStaff(staff);
+			return {};
+		},
+		hasItems: () => detailDataContext.staff.length > 0,
 	});
 }
 
@@ -55,18 +61,15 @@ export function queryClassStudentsPage(classId: string) {
 		empty: () => ({
 			classId,
 			currentClass: academicContext.classes.find(entry => entry.id === classId) ?? academicContext.classes[0],
-			students: [],
 		}),
 		load: async () => {
 			const classList = academicContext.classes;
 			const currentClass = classList.find(entry => entry.id === classId) ?? classList[0];
 			const { students } = await loadPeopleData(queryClient());
-			return {
-				classId,
-				currentClass,
-				students: students.filter(student => student.classId === classId),
-			};
+			const classStudents = students.filter(student => student.classId === classId);
+			detailDataContext.seedStudents(classStudents, { classId });
+			return { classId, currentClass };
 		},
-		hasItems: data => data.students.length > 0,
+		hasItems: () => detailDataContext.studentsForClass(classId).length > 0,
 	});
 }

@@ -1,10 +1,12 @@
 <script lang="ts">
-	import type { PlanningEvent, ClassNode, Student } from '$lib/types/school';
+	import type { PlanningEvent } from '$lib/types/school';
 	import { page } from '$app/stores';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Plus, Search } from '$lib/icons';
@@ -17,19 +19,17 @@
 
 	const {
 		classId,
-		events,
-		classes,
-		students,
 		onSelect,
 		selectedId,
 	}: {
 		classId: string;
-		events: PlanningEvent[];
-		classes: ClassNode[];
-		students: Student[];
 		onSelect?: (e: PlanningEvent) => void;
 		selectedId?: string;
 	} = $props();
+
+	const events = $derived(detailDataContext.planningForClass(classId));
+	const classes = $derived(academicContext.classes);
+	const students = $derived(detailDataContext.studentsForClass(classId));
 
 	const initialFilters = $derived(readPlanningListFilters($page.url));
 
@@ -61,7 +61,11 @@
 
 	function handleCreated(sessionId: string) {
 		const path = detailHref.classPlanning(classId, sessionId);
-		appGoto(`${path}${$page.url.search}`);
+		const href = `${path}${$page.url.search}`;
+		if ($page.url.pathname === path) {
+			return;
+		}
+		appGoto(href);
 	}
 
 	function syncFiltersToUrl() {

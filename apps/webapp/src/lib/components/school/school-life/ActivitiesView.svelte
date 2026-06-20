@@ -6,6 +6,7 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { CalendarRange, Plus, Search, Users } from '$lib/icons';
@@ -16,14 +17,14 @@
 	import ActivityFormModal from './ActivityFormModal.svelte';
 
 	const {
-		activities,
 		onSelect,
 		selectedId,
 	}: {
-		activities: Activity[];
 		onSelect?: (a: Activity) => void;
 		selectedId?: string;
 	} = $props();
+
+	const activities = $derived(detailDataContext.activities);
 
 	const catTone: Record<Activity['category'], string> = {
 		Sport: 'bg-secondary text-foreground/80',

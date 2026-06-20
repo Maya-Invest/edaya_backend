@@ -16,12 +16,7 @@
 			emptyTitle={$t('finance.payments')}
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
-			<PaymentsView
-				billing={data.billing}
-				students={data.students}
-				fees={data.fees}
-				classes={data.classes}
-			/>
+			<PaymentsView />
 		</DataState>
 	{/snippet}
 </PageQuery>

@@ -27,8 +27,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<SchoolCalendarView
-				events={data.events}
-				classes={data.classes}
 				{selectedId}
 				onSelect={selectEvent}
 			/>

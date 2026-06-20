@@ -1,6 +1,7 @@
 <script lang="ts">
-	import type { ClassNode, Student } from '$lib/types/school';
+	import type { Student } from '$lib/types/school';
 	import { page } from '$app/stores';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
@@ -8,6 +9,7 @@
 	import ListMoreMenu from '$lib/components/ui/ListMoreMenu.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Plus, Search } from '$lib/icons';
@@ -18,18 +20,16 @@
 	import StudentCreateModal from './StudentCreateModal.svelte';
 
 	const {
-		students,
-		classes,
-		hierarchy,
 		onSelect,
 		selectedId,
 	}: {
-		students: Student[];
-		classes: ClassNode[];
-		hierarchy: { level: string; classes: ClassNode[] }[];
 		onSelect?: (s: Student) => void;
 		selectedId?: string;
 	} = $props();
+
+	const students = $derived(detailDataContext.students);
+	const classes = $derived(academicContext.classes);
+	const hierarchy = $derived(academicContext.hierarchy);
 
 	const statusStyle: Record<Student['status'], string> = {
 		honor: 'bg-secondary text-foreground/80',

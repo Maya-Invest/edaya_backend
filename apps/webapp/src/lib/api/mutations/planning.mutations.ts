@@ -28,6 +28,10 @@ function sessionIso(day: PlanningEvent['day'], time: string): string {
 	return date.toISOString();
 }
 
+function planningSnapshot(sessionId: string): PlanningEvent | undefined {
+	return detailDataContext.planning.find(event => event.id === sessionId);
+}
+
 export async function createSessionMutation(input: {
 	classGroupId: string;
 	title: string;
@@ -39,6 +43,21 @@ export async function createSessionMutation(input: {
 }): Promise<string | null> {
 	const client = getBrowserSchoolClient();
 	const id = `sess-${Date.now().toString(36)}`;
+	const subject = input.classSubjectId
+		? detailDataContext.subjects.find(entry => entry.id === input.classSubjectId)
+		: undefined;
+	const optimistic: PlanningEvent = {
+		id,
+		classId: input.classGroupId,
+		title: input.title.trim(),
+		subject: subject?.name ?? input.title.trim(),
+		day: input.day,
+		start: input.start,
+		end: input.end,
+		room: '—',
+		teacher: 'Non assigné',
+	};
+
 	const result = await runMutation(() => client.commands.createSession({
 		id,
 		classGroupId: input.classGroupId,
@@ -48,7 +67,15 @@ export async function createSessionMutation(input: {
 		endsAt: sessionIso(input.day, input.end),
 		classSubjectId: input.classSubjectId ?? null,
 		createdAt: new Date().toISOString(),
-	}), { successMessage: input.successMessage });
+	}), {
+		successMessage: input.successMessage,
+		apply: () => {
+			detailDataContext.appendPlanningEvent(optimistic);
+		},
+		rollback: () => {
+			detailDataContext.removePlanningEvent(id);
+		},
+	});
 	return result ? id : null;
 }
 
@@ -62,6 +89,18 @@ export async function updateSessionMutation(input: {
 	successMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
+	const previous = planningSnapshot(input.sessionId);
+	const subject = input.classSubjectId
+		? detailDataContext.subjects.find(entry => entry.id === input.classSubjectId)
+		: undefined;
+	const patch = {
+		title: input.title.trim(),
+		subject: subject?.name ?? input.title.trim(),
+		day: input.day,
+		start: input.start,
+		end: input.end,
+	};
+
 	let existing;
 	try {
 		existing = await client.entities.sessions.get(input.sessionId);
@@ -78,7 +117,17 @@ export async function updateSessionMutation(input: {
 			startsAt: sessionIso(input.day, input.start),
 			endsAt: sessionIso(input.day, input.end),
 		}),
-	), { successMessage: input.successMessage });
+	), {
+		successMessage: input.successMessage,
+		apply: () => {
+			detailDataContext.patchPlanningEvent(input.sessionId, patch);
+		},
+		rollback: () => {
+			if (previous) {
+				detailDataContext.patchPlanningEvent(input.sessionId, previous);
+			}
+		},
+	});
 	return result !== null;
 }
 
@@ -93,7 +142,7 @@ export async function reschedulePlanningSlotMutation(input: {
 	errorMessage?: string;
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const previous = detailDataContext.planning.find(event => event.id === input.sessionId);
+	const previous = planningSnapshot(input.sessionId);
 	const patch = {
 		day: input.day,
 		start: input.startTime,

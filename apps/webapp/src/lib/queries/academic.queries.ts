@@ -1,7 +1,6 @@
-import type { ReportCardDefinition } from '$lib/types/report-cards';
 import { academicContext } from '$lib/academic/context.svelte';
 import { resolvePageLoad } from '$lib/queries/page-status';
-import { getReportCardsLayoutData } from '$lib/queries/report-cards.queries';
+import { refreshReportCardsLayout } from '$lib/queries/report-cards.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 export function queryClassGroupsPage() {
@@ -22,28 +21,26 @@ export function queryAcademicAdminPage() {
 
 export function queryGradeScalesPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ scaleCount: 0 }),
+		empty: () => ({}),
 		load: async () => {
-			if (reportCardsContext.ready) {
-				return { scaleCount: reportCardsContext.scales.length };
+			if (!reportCardsContext.ready) {
+				await refreshReportCardsLayout();
 			}
-			const { gradeScales } = await getReportCardsLayoutData();
-			return { scaleCount: gradeScales.length };
+			return {};
 		},
-		hasItems: data => data.scaleCount > 0,
+		hasItems: () => reportCardsContext.scales.length > 0,
 	});
 }
 
 export function queryReportCardDefinitionsPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({ definitions: [] as ReportCardDefinition[] }),
+		empty: () => ({}),
 		load: async () => {
-			if (reportCardsContext.ready) {
-				return { definitions: reportCardsContext.definitions };
+			if (!reportCardsContext.ready) {
+				await refreshReportCardsLayout();
 			}
-			const { reportCardDefinitions } = await getReportCardsLayoutData();
-			return { definitions: reportCardDefinitions };
+			return {};
 		},
-		hasItems: data => data.definitions.length > 0,
+		hasItems: () => reportCardsContext.definitions.length > 0,
 	});
 }

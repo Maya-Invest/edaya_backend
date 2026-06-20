@@ -15,7 +15,11 @@
 
 	function selectSession(ev: PlanningEvent) {
 		const path = detailHref.classPlanning(classId, ev.id);
-		appGoto(`${path}${$page.url.search}`);
+		const href = `${path}${$page.url.search}`;
+		if ($page.url.pathname === path) {
+			return;
+		}
+		appGoto(href);
 	}
 </script>
 
@@ -29,9 +33,6 @@
 		>
 			<PlanningView
 				classId={data.classId}
-				events={data.planning}
-				classes={data.classes}
-				students={data.students}
 				onSelect={selectSession}
 				{selectedId}
 			/>

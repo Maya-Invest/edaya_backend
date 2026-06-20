@@ -21,8 +21,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<GuardiansView
-				guardians={data.guardians}
-				students={data.students}
 				onSelect={g => appGoto(detailHref.schoolGuardian(g.id))}
 				{selectedId}
 			/>

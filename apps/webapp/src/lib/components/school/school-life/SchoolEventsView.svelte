@@ -1,10 +1,12 @@
 <script lang="ts">
-	import type { ClassNode, Incident, Student } from '$lib/types/school';
+	import type { Incident, Student } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { AlertTriangle, Plus, Search } from '$lib/icons';
@@ -13,20 +15,18 @@
 	import IncidentFormModal from './IncidentFormModal.svelte';
 
 	const {
-		incidents,
-		students,
-		classes,
 		classId,
 		onSelect,
 		selectedId,
 	}: {
-		incidents: Incident[];
-		students: Student[];
-		classes: ClassNode[];
 		classId?: string;
 		onSelect?: (i: Incident) => void;
 		selectedId?: string;
 	} = $props();
+
+	const incidents = $derived(detailDataContext.incidents);
+	const students = $derived(detailDataContext.students);
+	const classes = $derived(academicContext.classes);
 
 	const sevTone: Record<Incident['severity'], string> = {
 		low: 'bg-secondary text-foreground/70',

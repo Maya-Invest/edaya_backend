@@ -1,27 +1,24 @@
 import { loadAccessRolesData } from '$lib/api/access-roles-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
+import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 
-export async function getAccessRolesData() {
-	return loadAccessRolesData(queryClient());
-}
-
 export function queryRolesPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({
-			staff: [],
-			accessRoles: [],
-			roleCrudMatrix: {},
-			roleEnabledPermissions: {},
-		}),
+		empty: () => ({}),
 		load: async () => {
 			const [staff, accessRolesData] = await Promise.all([
 				fetchStaffMembers(queryClient()),
-				getAccessRolesData(),
+				loadAccessRolesData(queryClient()),
 			]);
-			return { staff, ...accessRolesData };
+			detailDataContext.seedStaff(staff);
+			detailDataContext.seedRolePermissions({
+				roleCrudMatrix: accessRolesData.roleCrudMatrix,
+				roleEnabledPermissions: accessRolesData.roleEnabledPermissions,
+			});
+			return {};
 		},
-		hasItems: data => data.staff.length > 0,
+		hasItems: () => detailDataContext.staff.length > 0,
 	});
 }

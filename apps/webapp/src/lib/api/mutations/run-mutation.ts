@@ -15,7 +15,7 @@ function messageFromApiError(error: ApiError): string | undefined {
 	return undefined;
 }
 
-/** Reloads sidebar shell data and all detail collections (heavy — opt in only). */
+/** Resets session stores and reloads the app shell (Tier 3 — academic structure changes only). */
 export async function refreshAppShellData(): Promise<void> {
 	resetAppShellBootstrap();
 	await bootstrapAppShell();

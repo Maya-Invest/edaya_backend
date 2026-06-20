@@ -8,6 +8,7 @@
 	import ListMoreMenu from '$lib/components/ui/ListMoreMenu.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Mail, Plus, Search } from '$lib/icons';
@@ -18,20 +19,20 @@
 	import StudentCreateModal from './StudentCreateModal.svelte';
 
 	const {
-		students,
 		classId,
 		onSelect,
 		selectedId,
 		className: classLabel,
 		classLevel,
 	}: {
-		students: Student[];
 		classId: string;
 		onSelect?: (s: Student) => void;
 		selectedId?: string;
 		className?: string;
 		classLevel?: string;
 	} = $props();
+
+	const students = $derived(detailDataContext.studentsForClass(classId));
 
 	const statusStyle: Record<Student['status'], string> = {
 		honor: 'bg-secondary text-foreground/80',

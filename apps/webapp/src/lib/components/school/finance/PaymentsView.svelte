@@ -1,25 +1,20 @@
 <script lang="ts">
-	import type { ClassNode, Fee, Student, StudentBilling } from '$lib/types/school';
+	import type { Fee, StudentBilling } from '$lib/types/school';
 	import { page } from '$app/stores';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, Search } from '$lib/icons';
 	import { readPaymentListFilters, writePaymentListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 
-	const {
-		billing,
-		students,
-		fees,
-		classes,
-	}: {
-		billing: StudentBilling[];
-		students: Student[];
-		fees: Fee[];
-		classes: ClassNode[];
-	} = $props();
+	const billing = $derived(detailDataContext.billing);
+	const students = $derived(detailDataContext.students);
+	const fees = $derived(detailDataContext.fees);
+	const classes = $derived(academicContext.classes);
 
 	type PaymentRow = {
 		id: string;

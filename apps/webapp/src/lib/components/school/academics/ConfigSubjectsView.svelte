@@ -1,8 +1,10 @@
 <script lang="ts">
-	import type { ClassNode, Subject, SubjectCategory } from '$lib/types/school';
+	import type { Subject, SubjectCategory } from '$lib/types/school';
 	import { page } from '$app/stores';
+	import { academicContext } from '$lib/academic/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Clock, User, Layers, Tag, ChevronRight, Search } from '$lib/icons';
 	import { readConfigSubjectListFilters, writeConfigSubjectListFilters } from '$lib/list/list-url-filters';
@@ -10,18 +12,17 @@
 	import { cn } from '$lib/utils';
 
 	const {
-		subjects,
-		classes,
 		onSelect,
 		selectedId,
 		onSelectLevel,
 	}: {
-		subjects: Subject[];
-		classes: ClassNode[];
 		onSelect?: (s: Subject) => void;
 		selectedId?: string;
 		onSelectLevel?: (group: { label: string; subtitle: string; items: Subject[] }) => void;
 	} = $props();
+
+	const subjects = $derived(detailDataContext.subjects);
+	const classes = $derived(academicContext.classes);
 
 	type Mode = 'level' | 'category';
 

@@ -81,7 +81,9 @@
 			resetAppShellBootstrap();
 			const { session } = await bootstrapSession();
 			if (!session) {
-				toast.error('Compte non lié à un profil staff — exécutez bun seed puis reconnectez-vous.');
+				toast.error(
+					'Session API indisponible — redémarrez bun dev (surtout après bun seed), puis reconnectez-vous.',
+				);
 				return;
 			}
 

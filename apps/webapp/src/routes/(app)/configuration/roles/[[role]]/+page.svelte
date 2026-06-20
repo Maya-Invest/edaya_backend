@@ -22,7 +22,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<RolesMatrixView
-				staff={data.staff}
 				onSelect={role => appGoto(`${detailHref.configRole(role)}${$page.url.search}`)}
 				{selectedRole}
 			/>

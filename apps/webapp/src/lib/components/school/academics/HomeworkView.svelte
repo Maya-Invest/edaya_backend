@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarClock, FileText, Paperclip, Plus } from '$lib/icons';
@@ -12,21 +13,21 @@
 
 	const {
 		classId,
-		deadlines = [],
 		onSelect,
 		selectedId,
 	}: {
 		classId: string;
-		deadlines?: Deadline[];
 		onSelect?: (d: Deadline) => void;
 		selectedId?: string;
 	} = $props();
+
+	const deadlines = $derived(detailDataContext.deadlinesForClass(classId));
 
 	let filter = $state<'all' | 'open' | 'overdue' | 'done'>('all');
 	let createOpen = $state(false);
 	const today = new Date('2026-05-22');
 
-	const list = $derived(deadlines.filter(d => d.classId === classId));
+	const list = $derived(deadlines);
 
 	const enriched = $derived(
 		list.map((d) => {

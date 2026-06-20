@@ -21,9 +21,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<SchoolEventsView
-				incidents={data.incidents}
-				students={data.students}
-				classes={data.classes}
 				onSelect={i => appGoto(detailHref.schoolIncident(i.id))}
 				{selectedId}
 			/>

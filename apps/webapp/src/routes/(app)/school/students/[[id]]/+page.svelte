@@ -27,9 +27,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<SchoolStudentsView
-				students={data.students}
-				classes={data.classes}
-				hierarchy={data.hierarchy}
 				onSelect={selectStudent}
 				{selectedId}
 			/>

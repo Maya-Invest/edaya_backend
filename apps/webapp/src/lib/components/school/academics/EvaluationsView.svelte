@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { locale, t } from '$lib/i18n';
 	import { CalendarDays, Plus } from '$lib/icons';
@@ -12,15 +13,15 @@
 
 	const {
 		classId,
-		evaluations,
 		onSelect,
 		selectedId,
 	}: {
 		classId: string;
-		evaluations: Evaluation[];
 		onSelect?: (e: Evaluation) => void;
 		selectedId?: string;
 	} = $props();
+
+	const evaluations = $derived(detailDataContext.evaluationsForClass(classId));
 
 	let createOpen = $state(false);
 

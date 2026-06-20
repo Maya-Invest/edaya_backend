@@ -86,6 +86,9 @@ async function createSessionHttpSeedApplication(client: HttpSeedClient): Promise
   return createCoreHttpSeedApplication({ client })
 }
 
+const RESTART_API_AFTER_IN_PROCESS_REPAIR
+  = 'Restart the API (`bun dev`) so it picks up auth/staff links written directly to PGlite.'
+
 async function bootstrapHttpCoreSessionWithLocalRepair(client: HttpSeedClient): Promise<void> {
   try {
     await bootstrapHttpCoreSession(client)
@@ -99,6 +102,7 @@ async function bootstrapHttpCoreSessionWithLocalRepair(client: HttpSeedClient): 
       'HTTP /core bootstrap failed; repairing dev auth links in-process against local PGlite...',
     )
     await runLocalInProcessStaffAuthSync()
+    console.warn(RESTART_API_AFTER_IN_PROCESS_REPAIR)
     await bootstrapHttpCoreSession(client)
   }
 }
@@ -337,6 +341,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
         'HTTP /core bootstrap failed; completing seed in-process against local PGlite...',
       )
       await runLocalInProcessStaffAuthSync()
+      console.warn(RESTART_API_AFTER_IN_PROCESS_REPAIR)
       useInProcessFallback = true
     }
 

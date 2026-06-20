@@ -29,7 +29,6 @@
 		>
 			{#if data.currentClass}
 				<StudentsView
-					students={data.students}
 					classId={data.classId}
 					className={data.currentClass.name}
 					classLevel={data.currentClass.level}

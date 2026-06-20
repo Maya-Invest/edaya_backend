@@ -27,7 +27,6 @@
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
 			<ReportCardDefinitionsView
-				definitions={data.definitions}
 				onSelect={selectDefinition}
 				{selectedId}
 			/>

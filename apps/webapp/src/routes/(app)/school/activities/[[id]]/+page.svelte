@@ -7,7 +7,7 @@
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
-	import { querySchoolActivitiesPage } from '$lib/queries/prototype.queries';
+	import { querySchoolActivitiesPage } from '$lib/queries/school-life.queries';
 
 	const selectedId = $derived($page.params.id);
 	const query = querySchoolActivitiesPage();
@@ -26,11 +26,7 @@
 			emptyTitle={$t('school.activities')}
 			emptyDescription={$t('dataState.emptyDescription')}
 		>
-			<ActivitiesView
-				activities={data.activities}
-				onSelect={selectActivity}
-				{selectedId}
-			/>
+			<ActivitiesView onSelect={selectActivity} {selectedId} />
 		</DataState>
 	{/snippet}
 </PageQuery>

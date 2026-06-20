@@ -3,9 +3,10 @@
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/stores';
 	import { listRouteCacheKey } from '$lib/detail-route-patterns';
+	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { t } from '$lib/i18n';
 	import { LoaderCircle } from '$lib/icons';
-	import { get } from 'svelte/store';
+	import { untrack } from 'svelte';
 
 	const {
 		query,
@@ -18,20 +19,44 @@
 	} = $props();
 
 	let result = $state<T | null>(null);
+	let loadedKey = $state<string | null>(null);
+	let inFlightKey = $state<string | null>(null);
 	let loadVersion = 0;
 
-	const cacheKey = $derived(listRouteCacheKey($page.url));
-
 	$effect(() => {
-		void cacheKey;
-		const runQuery = query;
+		const url = $page.url;
+		const key = listRouteCacheKey(url);
+
+		if (key === loadedKey && result !== null) {
+			return;
+		}
+		if (key === inFlightKey) {
+			return;
+		}
+
+		inFlightKey = key;
 		const version = ++loadVersion;
-		result = null;
-		void runQuery(get(page).url).then((data) => {
-			if (version === loadVersion) {
+		if (key !== loadedKey) {
+			result = null;
+		}
+		pageQueryStatus.markPending(key);
+
+		const runQuery = untrack(() => query);
+		void runQuery(url)
+			.then((data) => {
+				if (version !== loadVersion) {
+					return;
+				}
 				result = data;
-			}
-		});
+				loadedKey = key;
+				inFlightKey = null;
+				pageQueryStatus.markReady(key);
+			})
+			.catch(() => {
+				if (version === loadVersion) {
+					inFlightKey = null;
+				}
+			});
 	});
 </script>
 

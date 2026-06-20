@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type { StaffMember, StaffRole } from '$lib/types/school';
+	import type { StaffRole } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import { authSession } from '$lib/auth/session.svelte';
 	import { ROLE_TINT } from '$lib/components/school/shared/drawer-constants';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
@@ -20,14 +21,14 @@
 	import { cn } from '$lib/utils';
 
 	const {
-		staff,
 		onSelect,
 		selectedRole,
 	}: {
-		staff: StaffMember[];
 		onSelect?: (role: StaffRole) => void;
 		selectedRole?: StaffRole;
 	} = $props();
+
+	const staff = $derived(detailDataContext.staff);
 
 	const ROLE_KEYS: StaffRole[] = ['directeur', 'prof_principal', 'professeur', 'educateur'];
 
