@@ -12,6 +12,7 @@ import {
 } from "graphql";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
 import { unwrapShape } from "@/lib/school-api/schemas/helpers";
+import { GraphQLJSON } from "@/lib/graphql/scalars/json";
 
 interface UnwrappedZodField {
   inner: AnySchema;
@@ -80,7 +81,11 @@ export class GraphQLTypeRegistry {
       return existing;
     }
 
-    const fields = () => this.buildOutputFields(typeName, schema);
+    const { inner } = unwrapZodField(schema);
+    const zodTypeName = getZodTypeName(inner);
+    const fields = zodTypeName === "ZodDiscriminatedUnion" || zodTypeName === "ZodUnion"
+      ? () => this.buildUnionOutputFields(inner)
+      : () => this.buildOutputFields(typeName, inner);
     const type = new GraphQLObjectType({ name: typeName, fields });
     this.outputTypes.set(typeName, type);
     return type;
@@ -109,6 +114,43 @@ export class GraphQLTypeRegistry {
     for (const [key, fieldSchema] of Object.entries(shape)) {
       fields[key] = {
         type: this.zodToOutputType(fieldSchema as AnySchema, parentTypeName, key),
+      };
+    }
+
+    return fields;
+  }
+
+  private buildUnionOutputFields(schema: AnySchema) {
+    const options = (schema as { _def: { options?: AnySchema[] } })._def.options ?? [];
+    const objectOptions = options
+      .map(option => unwrapZodField(option).inner)
+      .filter(option => getZodTypeName(option) === "ZodObject");
+
+    if (objectOptions.length === 0) {
+      return {
+        value: { type: GraphQLJSON },
+      };
+    }
+
+    const mergedKeys = new Set<string>();
+    for (const option of objectOptions) {
+      for (const key of Object.keys(unwrapShape(option))) {
+        mergedKeys.add(key);
+      }
+    }
+
+    const fields: Record<string, { type: GraphQLOutputType }> = {};
+    for (const key of mergedKeys) {
+      const fieldSchemas = objectOptions
+        .map(option => unwrapShape(option)[key] as AnySchema | undefined)
+        .filter((fieldSchema): fieldSchema is AnySchema => fieldSchema !== undefined);
+
+      const serializedTypes = new Set(fieldSchemas.map(fieldSchema =>
+        this.zodToOutputType(fieldSchema, "Union", key).toString()));
+      fields[key] = {
+        type: serializedTypes.size === 1
+          ? this.zodToOutputType(fieldSchemas[0]!, "Union", key)
+          : GraphQLJSON,
       };
     }
 
@@ -215,6 +257,42 @@ export function buildEntityGraphQLTypes(
     outputType: registry.getOrCreateOutputType(typeName, responseSchema),
     inputType: registry.getOrCreateInputType(`${typeName}Input`, saveSchema),
   };
+}
+
+function resolveTopLevelOutputType(registry: GraphQLTypeRegistry, schema: AnySchema, typeName: string): GraphQLOutputType {
+  const { inner } = unwrapZodField(schema);
+  const zodTypeName = getZodTypeName(inner);
+
+  if (zodTypeName === "ZodArray") {
+    const itemType = (inner as { _def: { type: AnySchema } })._def.type;
+    return new GraphQLList(resolveTopLevelOutputType(registry, itemType, `${typeName}Item`));
+  }
+
+  if (zodTypeName === "ZodDiscriminatedUnion" || zodTypeName === "ZodUnion") {
+    return registry.getOrCreateOutputType(typeName, inner);
+  }
+
+  if (zodTypeName === "ZodObject") {
+    return registry.getOrCreateOutputType(typeName, inner);
+  }
+
+  return GraphQLString;
+}
+
+export function resolveGraphQLOutputType(
+  registry: GraphQLTypeRegistry,
+  schema: AnySchema,
+  typeName: string,
+): GraphQLOutputType {
+  return resolveTopLevelOutputType(registry, schema, typeName);
+}
+
+export function resolveGraphQLInputType(
+  registry: GraphQLTypeRegistry,
+  schema: AnySchema,
+  typeName: string,
+): GraphQLInputType {
+  return registry.getOrCreateInputType(typeName, schema);
 }
 
 export const GraphQLBatchSaveResultType = new GraphQLObjectType({

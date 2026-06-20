@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { GraphQLInputObjectType } from "graphql";
-import { buildGraphQLEntitySchema } from "@/lib/graphql/routes/entities";
+import { coreCommands, coreQueries } from "@/lib/school-api/registry";
+import { buildGraphQLSchema } from "@/lib/graphql/routes/entities";
 
-describe("buildGraphQLEntitySchema", () => {
+describe("buildGraphQLSchema", () => {
   it("mirrors core entity routes with query and mutation fields", () => {
-    const schema = buildGraphQLEntitySchema();
+    const schema = buildGraphQLSchema();
     const queryFields = schema.getQueryType()!.getFields();
     const mutationFields = schema.getMutationType()!.getFields();
 
@@ -18,8 +19,34 @@ describe("buildGraphQLEntitySchema", () => {
     expect(mutationFields.deleteStudent).toBeDefined();
   });
 
+  it("mirrors core query routes", () => {
+    const schema = buildGraphQLSchema();
+    const queryFields = schema.getQueryType()!.getFields();
+
+    for (const queryConfig of coreQueries) {
+      expect(queryFields[queryConfig.methodName]).toBeDefined();
+    }
+
+    expect(queryFields.getOverdueFeeCount.args.find(arg => arg.name === "input")?.type.toString())
+      .toBe("GetOverdueFeeCountQueryInput!");
+    expect(queryFields.getSchoolOverview.type.toString()).toBe("SchoolOverviewResponse!");
+  });
+
+  it("mirrors core command routes", () => {
+    const schema = buildGraphQLSchema();
+    const mutationFields = schema.getMutationType()!.getFields();
+
+    for (const commandConfig of coreCommands) {
+      expect(mutationFields[commandConfig.methodName]).toBeDefined();
+    }
+
+    expect(mutationFields.registerStudent.args.find(arg => arg.name === "input")?.type.toString())
+      .toBe("RegisterStudentCommandInput!");
+    expect(mutationFields.registerStudent.type.toString()).toBe("Student!");
+  });
+
   it("exposes typed StudentFilter input for entity list queries", () => {
-    const schema = buildGraphQLEntitySchema();
+    const schema = buildGraphQLSchema();
     const studentFilter = schema.getType("StudentFilter");
     expect(studentFilter).toBeInstanceOf(GraphQLInputObjectType);
 

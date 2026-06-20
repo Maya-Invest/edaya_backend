@@ -4,10 +4,10 @@ import type { AppBindings } from "@/http/types";
 import { isGraphiQLEnabled, renderGraphiQLPage, resolveGraphiQLDevApiKey } from "@/lib/graphql/graphiql";
 import { handleGraphiQLLogin, handleGraphiQLLogout } from "@/lib/graphql/graphiql-login";
 import { handleGraphiQLSession } from "@/lib/graphql/graphiql-session";
-import { buildGraphQLEntitySchema } from "@/lib/graphql/routes/entities";
+import { buildGraphQLSchema } from "@/lib/graphql/routes/entities";
 
 /* eslint-disable node/no-process-env */
-const graphQLEntitySchema = buildGraphQLEntitySchema();
+const graphQLEntitySchema = buildGraphQLSchema();
 const graphiqlEnabled = isGraphiQLEnabled();
 
 export function mountGraphQLRoute(app: Hono<AppBindings>) {

@@ -1,8 +1,4 @@
-import { GraphQLError } from "graphql";
-import type { Context } from "hono";
-import type { AppBindings } from "@/http/types";
 import {
-  EntityOperationError,
   executeEntityBatchDelete,
   executeEntityBatchSave,
   executeEntityCount,
@@ -14,43 +10,10 @@ import {
 } from "@/lib/school-api/entities/operations";
 import type { CoreEntityConfig } from "@/lib/school-api/registry";
 import { normalizeGraphQLFilter } from "@/lib/graphql/normalize-graphql-filter";
-
-type GraphQLResolverContext = Context<AppBindings>;
+import { wrapResolver } from "@/lib/graphql/resolver-utils";
 
 function normalizeFilterArgs(args: { filter?: unknown }) {
   return normalizeGraphQLFilter(args.filter);
-}
-
-function toGraphQLError(error: unknown): GraphQLError {
-  if (error instanceof EntityOperationError) {
-    return new GraphQLError(error.message, {
-      extensions: { code: error.code },
-    });
-  }
-  if (error instanceof GraphQLError) {
-    return error;
-  }
-  if (error instanceof Error) {
-    return new GraphQLError(error.message, {
-      extensions: { code: "INTERNAL_SERVER_ERROR" },
-    });
-  }
-  return new GraphQLError("Unknown error", {
-    extensions: { code: "INTERNAL_SERVER_ERROR" },
-  });
-}
-
-function wrapResolver<TArgs>(
-  resolver: (context: GraphQLResolverContext, args: TArgs) => Promise<unknown> | unknown,
-) {
-  return async (_parent: unknown, args: TArgs, context: GraphQLResolverContext) => {
-    try {
-      return await resolver(context, args);
-    }
-    catch (error) {
-      throw toGraphQLError(error);
-    }
-  };
 }
 
 export function createEntityQueryResolvers(entityConfig: CoreEntityConfig) {

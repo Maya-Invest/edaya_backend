@@ -11,6 +11,9 @@ import type { Context } from "hono";
 import { coreEntities } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 import type { AppBindings } from "@/http/types";
+import { appendGraphQLCommandFields } from "@/lib/graphql/routes/commands";
+import { createEntityMutationResolvers, createEntityQueryResolvers } from "@/lib/graphql/routes/entity-resolvers";
+import { appendGraphQLCoreQueryFields } from "@/lib/graphql/routes/queries";
 import { entityFieldNames } from "@/lib/graphql/utils/naming";
 import {
   buildEntityGraphQLTypes,
@@ -24,7 +27,7 @@ import {
   GraphQLFilterTypeRegistry,
   GraphQLSortDirectionEnum,
 } from "@/lib/graphql/zod-filter-to-graphql";
-import { createEntityMutationResolvers, createEntityQueryResolvers } from "@/lib/graphql/routes/entity-resolvers";
+import { GraphQLJSON } from "@/lib/graphql/scalars/json";
 
 type GraphQLContext = Context<AppBindings>;
 
@@ -32,16 +35,12 @@ const idArg: GraphQLFieldConfigArgumentMap = {
   id: { type: new GraphQLNonNull(GraphQLString) },
 };
 
-/**
- * Registry-driven GraphQL mirror of `buildEntityRoutes()`.
- * Exposes core entity reads and direct writes only — no command routes.
- */
-export function buildGraphQLEntitySchema(): GraphQLSchema {
-  const typeRegistry = new GraphQLTypeRegistry();
-  const filterRegistry = new GraphQLFilterTypeRegistry();
-  const queryFields: GraphQLFieldConfigMap<unknown, GraphQLContext> = {};
-  const mutationFields: GraphQLFieldConfigMap<unknown, GraphQLContext> = {};
-
+function appendGraphQLEntityFields(
+  queryFields: GraphQLFieldConfigMap<unknown, GraphQLContext>,
+  mutationFields: GraphQLFieldConfigMap<unknown, GraphQLContext>,
+  typeRegistry: GraphQLTypeRegistry,
+  filterRegistry: GraphQLFilterTypeRegistry,
+) {
   for (const entityConfig of coreEntities) {
     const typeName = getOpenApiSchemaName(entityConfig.responseSchema);
     const names = entityFieldNames(typeName, entityConfig.serviceName);
@@ -109,6 +108,21 @@ export function buildGraphQLEntitySchema(): GraphQLSchema {
       resolve: mutationResolvers.batchDelete,
     };
   }
+}
+
+/**
+ * Registry-driven GraphQL mirror of `buildCoreRoutes()` (entities, queries, commands).
+ * Manual routes (auth, onboarding, service accounts, effective grants) are excluded.
+ */
+export function buildGraphQLSchema(): GraphQLSchema {
+  const typeRegistry = new GraphQLTypeRegistry();
+  const filterRegistry = new GraphQLFilterTypeRegistry();
+  const queryFields: GraphQLFieldConfigMap<unknown, GraphQLContext> = {};
+  const mutationFields: GraphQLFieldConfigMap<unknown, GraphQLContext> = {};
+
+  appendGraphQLEntityFields(queryFields, mutationFields, typeRegistry, filterRegistry);
+  appendGraphQLCoreQueryFields(queryFields, typeRegistry);
+  appendGraphQLCommandFields(mutationFields, typeRegistry);
 
   return new GraphQLSchema({
     types: [
@@ -119,6 +133,7 @@ export function buildGraphQLEntitySchema(): GraphQLSchema {
       GraphQLBatchSaveResultType,
       GraphQLCountResultType,
       GraphQLDeleteResultType,
+      GraphQLJSON,
     ],
     query: new GraphQLObjectType({
       name: "Query",
@@ -129,4 +144,9 @@ export function buildGraphQLEntitySchema(): GraphQLSchema {
       fields: mutationFields,
     }),
   });
+}
+
+/** @deprecated Use `buildGraphQLSchema()` */
+export function buildGraphQLEntitySchema(): GraphQLSchema {
+  return buildGraphQLSchema();
 }
