@@ -88,6 +88,21 @@ async function linkDevAuthStaffAndGuardians(
       continue
     }
 
+    if (staff.subjectId) {
+      await application.repositories.staffMembers.save({
+        id: staff.id,
+        schoolId: staff.schoolId,
+        firstName: staff.firstName,
+        lastName: staff.lastName,
+        email: staff.email,
+        subjectId,
+        isActive: staff.isActive,
+        createdAt: staff.createdAt,
+      })
+      linkedStaff++
+      continue
+    }
+
     await service.linkActorSubject({
       subjectId,
       staffMemberId: account.staffId,
@@ -108,6 +123,24 @@ async function linkDevAuthStaffAndGuardians(
     }, { preserveSession: true })
 
     if (guardian.subjectId === subjectId) {
+      continue
+    }
+
+    if (guardian.subjectId) {
+      await application.repositories.guardians.save({
+        id: guardian.id,
+        schoolId: guardian.schoolId,
+        firstName: guardian.firstName,
+        lastName: guardian.lastName,
+        email: guardian.email,
+        phone: guardian.phone,
+        subjectId,
+        contactMethods: guardian.contactMethods,
+        hasAccess: guardian.hasAccess,
+        premiumNotificationsEnabled: guardian.premiumNotificationsEnabled,
+        createdAt: guardian.createdAt,
+      })
+      linkedGuardians++
       continue
     }
 

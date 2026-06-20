@@ -9,10 +9,13 @@ export async function isServiceAccountApiKeyValid(
     return false
   }
 
-  const { response } = await client.jsonRequest('/core/authorization/effective-grants', {
+  const { response } = await client.jsonRequest('/core/entities/schools/list', {
+    method: 'POST',
     headers: {
+      'content-type': 'application/json',
       authorization: `Bearer ${serviceAccountApiKey}`,
     },
+    body: JSON.stringify({}),
   })
 
   return response.ok
