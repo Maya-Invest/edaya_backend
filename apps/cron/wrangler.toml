@@ -1,0 +1,55 @@
+name = "edaya-cron"
+main = "src/entries/worker.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = [ "nodejs_compat" ]
+
+[dev]
+port = 9998
+
+[vars]
+NODE_ENV = "development"
+LOG_LEVEL = "info"
+RUNTIME = "worker"
+
+# Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
+# Optional: NOVU_SECRET_KEY, NOVU_API_URL (Novu Cloud notification dispatch)
+# Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
+# CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://...
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "62c00eeda7d047fc9951daf7db430070"
+
+# Daily at 06:00 UTC — process due notification jobs
+[[triggers]]
+crons = ["0 6 * * *"]
+
+[env.production]
+name = "edaya-cron"
+
+[env.production.vars]
+NODE_ENV = "production"
+LOG_LEVEL = "info"
+RUNTIME = "worker"
+
+[[env.production.hyperdrive]]
+binding = "HYPERDRIVE"
+id = "62c00eeda7d047fc9951daf7db430070"
+
+[[env.production.triggers]]
+crons = ["0 6 * * *"]
+
+[env.staging]
+name = "edaya-cron-staging"
+
+[[env.staging.hyperdrive]]
+binding = "HYPERDRIVE"
+id = "c6b9a94e449647d78f7c49591ba301e6"
+
+[env.staging.vars]
+NODE_ENV = "production"
+LOG_LEVEL = "info"
+RUNTIME = "worker"
+
+[[env.staging.triggers]]
+crons = ["0 6 * * *"]

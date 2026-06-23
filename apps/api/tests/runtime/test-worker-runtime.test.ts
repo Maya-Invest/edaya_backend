@@ -2,12 +2,14 @@ import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
 import { createDependenciesInjection } from "@/http/dependency-injection";
 import {
+  parseEnv,
   prepareRuntimeBindings,
   resolveDatabaseUrl,
   usesHyperdriveBinding,
 } from "@/runtime";
 import { createRuntimeRegistry } from "@/runtime/registry/process-registry";
 import { createWorkerRequestRuntimeResolver } from "@/runtime/resolve/request-runtime";
+import { shouldRunStartupMigrations } from "@/runtime/node/startup-migrations";
 
 describe("resolveDatabaseUrl", () => {
   it("prefers Hyperdrive on the worker runtime", () => {
@@ -57,6 +59,29 @@ describe("prepareRuntimeBindings", () => {
     expect(bindings.RUNTIME).toBe("worker");
     expect(bindings.DATABASE_URL).toBe("postgres://direct");
     expect(bindings.LOG_LEVEL).toBe("info");
+  });
+});
+
+describe("shouldRunStartupMigrations", () => {
+  it("defaults on for local PGlite databases", () => {
+    const env = parseEnv({ DATABASE_URL: "pglite:.data/school" });
+    expect(shouldRunStartupMigrations(env)).toBe(true);
+  });
+
+  it("defaults off for Postgres databases", () => {
+    const env = parseEnv({ DATABASE_URL: "postgres://admin:admin@localhost:5432/edaya" });
+    expect(shouldRunStartupMigrations(env)).toBe(false);
+  });
+
+  it("uses the explicit env flag over the database default", () => {
+    expect(shouldRunStartupMigrations(parseEnv({
+      DATABASE_URL: "pglite:.data/school",
+      RUN_MIGRATIONS_ON_STARTUP: "false",
+    }))).toBe(false);
+    expect(shouldRunStartupMigrations(parseEnv({
+      DATABASE_URL: "postgres://admin:admin@localhost:5432/edaya",
+      RUN_MIGRATIONS_ON_STARTUP: "true",
+    }))).toBe(true);
   });
 });
 

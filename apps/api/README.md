@@ -32,7 +32,7 @@ GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authori
 
 Default dev credentials (after `bun run seed:auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 
-Default `DATABASE_URL=pglite:.data/school` uses persisted PGlite on Node (no Docker). School data and auth SQLite live under repo-root `.data/` (gitignored). Use `DATABASE_URL=pglite` for ephemeral in-memory (tests). Workers require a real Postgres URL.
+Default `DATABASE_URL=pglite:.data/school` uses persisted PGlite on Node (no Docker). School data and auth SQLite live under repo-root `.data/` (gitignored). Startup migrations are automatic for PGlite, and Postgres startup migrations require explicit `RUN_MIGRATIONS_ON_STARTUP=true`. Use `DATABASE_URL=pglite` for ephemeral in-memory (tests). Workers require a real Postgres URL.
 
 ## Build & deploy
 

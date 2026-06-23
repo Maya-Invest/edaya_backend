@@ -4,7 +4,7 @@
 
 Replace god-mode **system actor** routes (`/core/system/*` + `X-System-Actor-Secret`) with **permissioned service accounts** that use the same `/core/commands/*` and `/core/entities/*` surface as human staff.
 
-**Related docs:** [Authorization README](../packages/core/src/authorization/README.md), [API folder structure](../docs/api-folder-structure.md), [integrations restructure](../docs/integrations-restructure.md).
+**Related docs:** [Authorization README](../package/domain-core/src/authorization/README.md), [API folder structure](../docs/api-folder-structure.md), [integrations restructure](../docs/integrations-restructure.md).
 
 ---
 
@@ -189,7 +189,7 @@ When creator is school owner (`isElevated`) and explicitly requests `elevated: t
 
 ## 5. `ActorAssuranceLevel.Service`
 
-Extend enum in `packages/core/src/authorization/model/actor.ts`:
+Extend enum in `package/domain-core/src/authorization/model/actor.ts`:
 
 ```ts
 export enum ActorAssuranceLevel {
@@ -281,7 +281,7 @@ Platform billing integrations use a **platform-scoped** service account (separat
 | `POST` | `/core/service-accounts/{id}/revoke` | Revoke |
 | `PATCH` | `/core/service-accounts/{id}` | Update display name, roles, or scope grants |
 
-Implement orchestration in `packages/core/authorization/service-accounts/provision.ts`; API routes in `routes/service-accounts.routes.ts` + `lib/service-accounts/schemas.ts`.
+Implement orchestration in `package/domain-core/authorization/service-accounts/provision.ts`; API routes in `routes/service-accounts.routes.ts` + `lib/service-accounts/schemas.ts`.
 
 ### 7.3 System routes (removed)
 
@@ -429,7 +429,7 @@ Service accounts with correct grants pass the same checks as staff.
 ## 14. File touch map (anticipated)
 
 ```
-packages/core/
+package/domain-core/
   authorization/model/actor.ts
   authorization/engine/authorize.ts
   authorization/permissions/permission.ts
@@ -437,7 +437,7 @@ packages/core/
   domains/school/staff-member.ts
   services/… (createServiceAccount workflow)
 
-packages/adaptor-postgres/
+package/adaptor-postgres/
   schema (service_api_keys)
   repositories/
 

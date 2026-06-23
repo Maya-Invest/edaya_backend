@@ -1,0 +1,18 @@
+import type {
+  NotificationEnqueueInput,
+  NotificationGatewayPort,
+} from "@edaya/core";
+import type { Logger } from "pino";
+
+export function createLoggingNotificationGateway(logger: Logger): NotificationGatewayPort {
+  const notificationLogger = logger.child({ module: "notifications" });
+
+  return {
+    enqueue: async (input: NotificationEnqueueInput) => {
+      notificationLogger.info({ notification: input }, "notification enqueued");
+    },
+    cancel: async (idempotencyKey: string) => {
+      notificationLogger.info({ idempotencyKey }, "notification cancelled");
+    },
+  };
+}

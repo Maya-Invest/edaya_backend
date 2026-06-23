@@ -2,7 +2,7 @@
 
 This document crosschecks `apps/webapp` (SvelteKit UI) against the current monorepo — especially `apps/api` and `@edaya/core` — and outlines how to wire them together using **SvelteKit remote functions** as the client–server boundary.
 
-**Related docs:** [API folder structure](../../docs/api-folder-structure.md), [API improvement plan](./api-improvement-plan.md), [Authorization README](../../packages/core/src/authorization/README.md), [SvelteKit remote functions](https://svelte.dev/docs/kit/remote-functions).
+**Related docs:** [API folder structure](../../docs/api-folder-structure.md), [API improvement plan](./api-improvement-plan.md), [Authorization README](../../package/domain-core/src/authorization/README.md), [SvelteKit remote functions](https://svelte.dev/docs/kit/remote-functions).
 
 ---
 
@@ -421,7 +421,7 @@ Suggested order:
 
 - [ ] Add `@edaya/core` workspace dependency for shared types / Zod schemas
 - [ ] Align remote input schemas with OpenAPI (`/doc`) or core command schemas
-- [ ] Consider `packages/api-client` for reuse between webapp BFF and tests
+- [ ] Consider `package/generated-api-client` for reuse between webapp BFF and tests
 - [ ] Add webapp `lint` stub; Cloudflare `API_URL` binding in `wrangler.jsonc`
 - [ ] Pin `@sveltejs/kit`; document remote-functions upgrade checklist
 

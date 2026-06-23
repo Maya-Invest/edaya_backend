@@ -206,7 +206,7 @@ Current policy only disables `save` and `batchSave`; delete endpoints remain ava
 - [x] Add compile-time tests proving `students.save`, `payments.save`, and other command-only saves fail type checking.
 - [x] Prove mutable resources such as `subjects.save` still type-check.
 - [x] Prove delete remains available where the current API allows it.
-- [x] Add runtime tests for paths and payload envelopes in `packages/api-client`.
+- [x] Add runtime tests for paths and payload envelopes in `package/generated-api-client`.
 - [x] Add a `test` script to `@edaya/api-client` and include it in Turbo.
 
 ### Exit criteria
@@ -582,7 +582,7 @@ Phase 3 is complete. Entity keys, API decorations, command catalogs, and workflo
 
 ### 4.1 Split schema definitions
 
-- [ ] Create `packages/adaptor-postgres/src/schema/` modules:
+- [ ] Create `package/adaptor-postgres/src/schema/` modules:
   - `school.ts`
   - `access.ts`
   - `students.ts`

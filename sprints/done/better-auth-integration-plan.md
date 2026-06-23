@@ -1,10 +1,10 @@
 # Better Auth integration plan
 
-> **Note:** Auth persistence now lives in `integrations/betterauth-d1-migrations` (`@edaya/betterauth-d1-migrations`), not `packages/adaptor-betterauth`. See [integrations restructure](../../docs/integrations-restructure.md).
+> **Note:** Auth persistence now lives in `package/integration-betterauth-d1-migrations` (`@edaya/betterauth-d1-migrations`), not `packages/adaptor-betterauth`. See [integrations restructure](../../docs/integrations-restructure.md).
 
 Complete the API-side Better Auth integration so a real email/password sign-in produces a session, resolves to an `ActorMetadata`, and authorizes core routes. **Webapp work is explicitly out of scope.**
 
-**Related docs:** [API runtimes](../../docs/api-runtimes.md), [Authorization README](../../packages/core/src/authorization/README.md), [Webapp integration plan](./webapp-api-integration-plan.md) (Phase 1 deferred).
+**Related docs:** [API runtimes](../../docs/api-runtimes.md), [Authorization README](../../package/domain-core/src/authorization/README.md), [Webapp integration plan](./webapp-api-integration-plan.md) (Phase 1 deferred).
 
 ---
 
@@ -38,7 +38,7 @@ apps/api
   auth.route.ts           → proxies /auth/* to auth.handler
   session-actor.ts        → getSession() → findOne({ subjectId }) → effectiveGrants
 
-packages/adaptor-postgres
+package/adaptor-postgres
   drizzle/                → school domain tables only (no user/session/account)
   repos.init()            → runs school migrations lazily
 
@@ -86,7 +86,7 @@ Gap: Better Auth has no schema. Dev seed creates domain entities without subject
 
 ## 4. New package: `@edaya/adaptor-betterauth`
 
-Mirror `packages/adaptor-postgres` conventions (name uses **adaptor**, not adapter).
+Mirror `package/adaptor-postgres` conventions (name uses **adaptor**, not adapter).
 
 ### 4.1 Package layout
 
@@ -289,7 +289,7 @@ Extend `maybeSeedDatabase` signature or call `runDevAuthSeed` from `node.ts` ent
   - Permission: `ACCESS_CONTROL_ASSIGN` (or `STAFF_UPDATE` for staff-only MVP)
   - Validates: entity exists, `subjectId` not already bound to another entity of same kind
 - [ ] Register command in API registry + OpenAPI schema
-- [ ] Unit test in `packages/core`
+- [ ] Unit test in `package/domain-core`
 
 **Done when:** admin can link an existing Better Auth user to a staff record without system actor.
 
@@ -323,7 +323,7 @@ Extend `maybeSeedDatabase` signature or call `runDevAuthSeed` from `node.ts` ent
 | Auth API | sign-up / sign-in / session | `apps/api` route test or integration test |
 | Actor resolution | `subjectId` → grants | existing `test-session-middleware-resolves-actors.test.ts` + new integration test |
 | Seed | idempotent re-run | `apps/api` seed script test |
-| Link command | permission + validation | `packages/core` unit test |
+| Link command | permission + validation | `package/domain-core` unit test |
 
 ---
 

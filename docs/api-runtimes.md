@@ -2,6 +2,8 @@
 
 The API supports two execution runtimes. Configuration is always validated through the same `EnvSchema`; only **how** env values are loaded differs.
 
+Scheduled cron jobs use a separate app: see [cron-runtimes.md](./cron-runtimes.md).
+
 | Runtime | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
 | **Node** | `src/entries/node.ts` | `process.env` + optional `.env` (dotenv) | `cd apps/api && bun dev` |
@@ -16,6 +18,7 @@ Same schema for both runtimes (`apps/api/src/runtime/env/schema.ts`):
 | `RUNTIME` | `node` (default) | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` (persisted dev), `pglite` (in-memory), or `postgres://…` | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `AUTH_DATABASE_PATH` | `.data/auth.sqlite` (default) | N/A — uses `AUTH_DB` D1 binding |
+| `RUN_MIGRATIONS_ON_STARTUP` | Optional; defaults on for PGlite, off for Postgres | N/A — migrations are pre-applied |
 | `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
@@ -34,8 +37,8 @@ cp apps/api/.env.example apps/api/.env
 cd apps/api && bun dev
 ```
 
-- **School DB** — PGlite (persisted or in-memory) or Postgres via `@edaya/adaptor-postgres`; migrations run on startup.
-- **Auth DB** — local SQLite at `AUTH_DATABASE_PATH`; migrations from `@edaya/betterauth-d1-migrations` run on startup.
+- **School DB** — PGlite (persisted or in-memory) or Postgres via `@edaya/adaptor-postgres`; startup migrations run automatically for PGlite and only by explicit `RUN_MIGRATIONS_ON_STARTUP=true` for Postgres.
+- **Auth DB** — local SQLite at `AUTH_DATABASE_PATH`; startup migrations follow the same `RUN_MIGRATIONS_ON_STARTUP` decision.
 
 Production Node containers should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 
@@ -49,7 +52,7 @@ cd apps/api && bun run dev:worker
 - **`wrangler.toml`** — non-secret `[vars]` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive + D1 bindings
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
 - **School DB** — Postgres connection via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev)
-- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `integrations/betterauth-d1-migrations/drizzle/`
+- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/integration-betterauth-d1-migrations/drizzle/`
 
 Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB and D1.
 
@@ -70,11 +73,11 @@ Request
 
 | Concern | Node | Worker |
 |---------|------|--------|
-| School DB | PGlite or Postgres (`node/database.ts`; migrations on startup) | Postgres via Hyperdrive (`worker/database.ts`; migrations pre-applied) |
+| School DB | PGlite or Postgres (`node/database.ts`; startup migrations only for PGlite or explicit opt-in) | Postgres via Hyperdrive (`worker/database.ts`; migrations pre-applied) |
 | Auth DB | SQLite file (`node/auth-database.ts`) | D1 (`worker/auth-database.ts`) |
 | Runtime cache | Process registry — `getApiRuntime(env)` | Per-request — `resolveApiRuntime(c)` |
 
-Auth schema and SQL migrations live in `integrations/betterauth-d1-migrations`. School migration apply scripts live in `integrations/neon-migrations`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
+Auth schema and SQL migrations live in `package/integration-betterauth-d1-migrations`. School migration apply scripts live in `package/integration-neon-migrations`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
 
 Folder map: `apps/api/src/runtime/README.md`.
 

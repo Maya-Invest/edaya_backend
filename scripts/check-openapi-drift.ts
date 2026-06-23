@@ -33,7 +33,7 @@ const artifacts = [
   },
   {
     generated: generatedClientBindings,
-    tracked: resolve(repoRoot, 'packages/api-client/src/generated/client-bindings.ts'),
+    tracked: resolve(repoRoot, 'package/generated-api-client/src/generated/client-bindings.ts'),
   },
 ]
 

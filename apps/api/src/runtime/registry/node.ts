@@ -1,6 +1,7 @@
 import { unlinkSync } from "node:fs";
 import { createRuntimeRegistry } from "@/runtime/registry/process-registry";
 import { buildNodeApiRuntime } from "@/runtime/node/create-runtime";
+import { shouldRunStartupMigrations } from "@/runtime/node/startup-migrations";
 import type { Environment } from "@/runtime/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
 
@@ -11,6 +12,12 @@ const DEFAULT_AUTH_DATABASE_PATH = resolveRepoLocalDataPath(".data/auth.sqlite")
 const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
   buildRuntime: buildNodeApiRuntime,
   closeRuntime: runtime => runtime.close(),
+  cacheKey: env => [
+    env.RUNTIME,
+    env.DATABASE_URL,
+    env.AUTH_DATABASE_PATH,
+    shouldRunStartupMigrations(env),
+  ].join(":"),
   workerErrorMessage: "getApiRuntime() must not be used on the worker runtime; use resolveApiRuntime(c) per request.",
 });
 

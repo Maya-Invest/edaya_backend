@@ -1,6 +1,6 @@
 # Edaya Core
 
-Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared **domain core** (`packages/core`), portable persistence adaptors, platform **integrations**, and a generated **API client**.
+Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`testing/`** harnesses.
 
 Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build).
 
@@ -10,25 +10,26 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 maya_school_core/
 ├── apps/
 │   ├── api/                              @edaya/api — Hono API (Node + Cloudflare Worker)
+│   ├── cron/                             @edaya/cron — scheduled jobs (Node + Worker)
 │   └── webapp/                           @edaya/webapp — SvelteKit UI (Cloudflare Pages)
-├── packages/
-│   ├── core/                             @edaya/core — domain, services, ports
+├── package/
+│   ├── domain-core/                      @edaya/core — domain, services, ports
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
-│   └── api-client/                       @edaya/api-client — typed API SDK
-├── integrations/
-│   ├── neon-migrations/                  @edaya/neon-migrations — apply school migrations (Neon/Hyperdrive)
-│   └── betterauth-d1-migrations/         @edaya/betterauth-d1-migrations — auth schema + D1 deploy
+│   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
+│   ├── generated-api-client/             @edaya/api-client — typed API SDK
+│   ├── integration-neon-migrations/      @edaya/neon-migrations — apply school migrations
+│   └── integration-betterauth-d1-migrations/  @edaya/betterauth-d1-migrations — auth schema + D1
 └── testing/
     ├── dev-fixtures/
     ├── seeding/
     └── integration-tests/
 ```
 
-**Boundary rule:** `packages/*` are vendor-agnostic persistence; `integrations/*` are platform-specific migration/deploy orchestration; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` stay vendor-agnostic; `package/integration-*` folders own platform-specific migration/deploy orchestration; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; platform migrations live in `integrations/*`; the API wires runtime and HTTP; the webapp consumes the API through `@edaya/api-client`.
+The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; platform migrations live in `package/integration-*`; the API wires runtime and HTTP; the webapp consumes the API through `@edaya/api-client`.
 
 ```mermaid
 flowchart TB
@@ -42,15 +43,9 @@ flowchart TB
     WorkerHost["runtime + http/di<br/>Hyperdrive · DI · request cache"]
   end
 
-  subgraph domain["Domain"]
+  subgraph package["package/"]
     Core["@edaya/core"]
-  end
-
-  subgraph packages["Packages"]
     PG["@edaya/adaptor-postgres"]
-  end
-
-  subgraph integrations["Integrations"]
     Auth["@edaya/betterauth-d1-migrations"]
     NeonM["@edaya/neon-migrations"]
   end
@@ -90,7 +85,7 @@ Node supports persisted PGlite (`DATABASE_URL=pglite:.data/school`) or in-memory
 - `apps/api/src/lib/school-api/` — registry, schemas, dispatch, entity handlers
 - `apps/api/src/runtime/` — database, auth, Worker bindings, Hyperdrive, runtime registry
 - `apps/api/src/http/` — Hono app, dependency injection middleware
-- `packages/core/src/` — domains, entities, authorization, services, ports
+- `package/domain-core/src/` — domains, entities, authorization, services, ports
 
 More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [docs/api-runtimes.md](./docs/api-runtimes.md).
 
@@ -103,20 +98,16 @@ More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [do
 | `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, dev seed, Worker host wiring |
 | `@edaya/webapp` | `apps/webapp` | SvelteKit UI (Cloudflare Pages adapter) |
 
-### Packages
+### Package workspace
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/core` | `packages/core` | Domain model, business services, authorization, repository ports |
-| `@edaya/adaptor-postgres` | `packages/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
-| `@edaya/api-client` | `packages/api-client` | Type-safe client for entities, commands, queries (generated bindings) |
-
-### Integrations
-
-| Package | Path | Role |
-|---------|------|------|
-| `@edaya/neon-migrations` | `integrations/neon-migrations` | Apply school migrations on Neon / Hyperdrive origin |
-| `@edaya/betterauth-d1-migrations` | `integrations/betterauth-d1-migrations` | Better Auth schema, SQL migrations, D1 deploy scripts |
+| `@edaya/core` | `package/domain-core` | Domain model, business services, authorization, repository ports |
+| `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
+| `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
+| `@edaya/api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
+| `@edaya/neon-migrations` | `package/integration-neon-migrations` | Apply school migrations on Neon / Hyperdrive origin |
+| `@edaya/betterauth-d1-migrations` | `package/integration-betterauth-d1-migrations` | Better Auth schema, SQL migrations, D1 deploy scripts |
 
 ### Testing
 
@@ -273,7 +264,7 @@ Tests are split by layer. Run everything with `bun run test` (repository tooling
 
 | Layer | Package / path | What to test here |
 |-------|----------------|-------------------|
-| Domain | `packages/core/tests/` | Entities, authorization, service workflows |
+| Domain | `package/domain-core/tests/` | Entities, authorization, service workflows |
 | API unit | `apps/api/tests/` | HTTP helpers, runtime, route builders, thin route tests |
 | API harness | `apps/api/tests/support/core-route-harness.ts` | Shared PGlite app + auth helpers (also used by integration-tests) |
 | Cross-package | `testing/integration-tests/src/` | Seeds, auth flows, PGlite persistence, full route scenarios |

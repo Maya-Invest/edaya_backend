@@ -1,5 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { relative } from 'node:path'
+#!/usr/bin/env bun
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, relative } from 'node:path'
+import { afterEach, describe, expect, test } from 'bun:test'
 
 export interface GeneratedArtifact {
   generated: string
@@ -19,4 +22,58 @@ export function findDriftedArtifacts(
   return artifacts
     .filter(({ generated, tracked }) => !filesMatch(generated, tracked))
     .map(({ tracked }) => relative(repoRoot, tracked))
+}
+
+function registerTests(): void {
+  const temporaryDirectories: string[] = []
+
+  afterEach(() => {
+    for (const directory of temporaryDirectories.splice(0)) {
+      rmSync(directory, { recursive: true, force: true })
+    }
+  })
+
+  function createPaths(): { root: string, generated: string, tracked: string } {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-generated-test-'))
+    temporaryDirectories.push(root)
+    return {
+      root,
+      generated: join(root, 'generated.txt'),
+      tracked: join(root, 'tracked.txt'),
+    }
+  }
+
+  describe('findDriftedArtifacts', () => {
+    test('accepts byte-identical generated and tracked files', () => {
+      const paths = createPaths()
+      writeFileSync(paths.generated, 'same bytes')
+      writeFileSync(paths.tracked, 'same bytes')
+
+      expect(findDriftedArtifacts([paths], paths.root)).toEqual([])
+    })
+
+    test('reports changed generated output using its tracked path', () => {
+      const paths = createPaths()
+      writeFileSync(paths.generated, 'new bytes')
+      writeFileSync(paths.tracked, 'committed bytes')
+
+      expect(findDriftedArtifacts([paths], paths.root)).toEqual(['tracked.txt'])
+    })
+
+    test('reports drift when generated output is missing', () => {
+      const paths = createPaths()
+      writeFileSync(paths.tracked, 'committed bytes')
+
+      expect(findDriftedArtifacts([paths], paths.root)).toEqual(['tracked.txt'])
+    })
+  })
+}
+
+if (import.meta.main) {
+  try {
+    registerTests()
+  }
+  catch {
+    // Library module; no CLI entry point.
+  }
 }

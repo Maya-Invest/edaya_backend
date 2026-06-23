@@ -3,6 +3,23 @@ import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/env/bindings
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 import { z } from "zod";
 
+const envBooleanSchema = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  switch (value.trim().toLowerCase()) {
+    case "1":
+    case "true":
+      return true;
+    case "0":
+    case "false":
+      return false;
+    default:
+      return value;
+  }
+}, z.boolean());
+
 export const EnvSchema = z.object({
   RUNTIME: z.enum(["node", "worker"]).default("node"),
   NODE_ENV: z.string().default("development"),
@@ -10,11 +27,16 @@ export const EnvSchema = z.object({
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   DATABASE_URL: z.string(),
   AUTH_DATABASE_PATH: z.string().default(".data/auth.sqlite"),
+  RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   BETTER_AUTH_SECRET: z.string().default("super-secret-placeholder-key-for-local-testing"),
   BETTER_AUTH_URL: z.string().url().default("http://localhost:9999"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   COOKIE_DOMAIN: z.string().optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
+  /** Novu Cloud secret key — when set, notifications dispatch via @edaya/adaptor-novu */
+  NOVU_SECRET_KEY: z.string().min(1).optional(),
+  /** Optional Novu API base URL (e.g. https://eu.api.novu.co) */
+  NOVU_API_URL: z.string().url().optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
 });

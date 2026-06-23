@@ -50,7 +50,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 
 ---
 
-The repo has a coherent architecture. The intended ports-and-adapters split is documented in `README.md`: `@edaya/core` owns business rules, `@edaya/adaptor-postgres` owns portable persistence, `integrations/*` owns platform deployment/migration orchestration, and `apps/api` wires runtime and HTTP.
+The repo has a coherent architecture. The intended ports-and-adapters split is documented in `README.md`: `@edaya/core` owns business rules, `@edaya/adaptor-postgres` owns portable persistence, `package/integration-*` owns platform deployment/migration orchestration, and `apps/api` wires runtime and HTTP.
 
 The main issue is not architectural confusion. The main issue is that the same concepts are manually repeated across multiple layers: core services, repositories, API registry, schemas, adapter stores, and generated client bindings. This creates drift risk and makes new entity or command work feel larger than it should.
 
@@ -72,7 +72,7 @@ Relevant pre-existing dirty files included API schema/runtime tests, webapp gene
 
 ## Current strengths
 
-- The monorepo shape is understandable: `apps/api`, `apps/webapp`, `packages/core`, `packages/adaptor-postgres`, `packages/api-client`, `integrations/*`, and `testing/*`.
+- The monorepo shape is understandable: `apps/api`, `apps/webapp`, `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, `package/integration-*`, and `testing/*`.
 - The high-level boundary rule is documented in `README.md`.
 - API runtime documentation exists in `apps/api/src/runtime/README.md`.
 - The webapp has a concrete app shell/design spec and broad `DataState` usage in route pages.
@@ -83,11 +83,11 @@ Relevant pre-existing dirty files included API schema/runtime tests, webapp gene
 
 ### Evidence
 
-- `packages/core/src/services/base-school-service.ts` imports every domain type and config, declares one `ManagedEntityService` property per entity, then manually instantiates each service.
-- `packages/core/src/ports/school-repositories.ts` declares one wide `SchoolRepositories` interface with every repository.
+- `package/domain-core/src/services/base-school-service.ts` imports every domain type and config, declares one `ManagedEntityService` property per entity, then manually instantiates each service.
+- `package/domain-core/src/ports/school-repositories.ts` declares one wide `SchoolRepositories` interface with every repository.
 - `apps/api/src/lib/school-api/registry.ts` repeats entity names, public route names, display names, schemas, constructors, and `allowDirectSave`.
-- `packages/adaptor-postgres/src/postgres-school-repositories.ts` and `packages/adaptor-postgres/src/stores/entity-stores.ts` mirror the same entity set in persistence wiring.
-- `packages/api-client/src/generated/client-bindings.ts` derives from the API registry, but only after the API has repeated core concepts.
+- `package/adaptor-postgres/src/postgres-school-repositories.ts` and `package/adaptor-postgres/src/stores/entity-stores.ts` mirror the same entity set in persistence wiring.
+- `package/generated-api-client/src/generated/client-bindings.ts` derives from the API registry, but only after the API has repeated core concepts.
 
 ### Impact
 
@@ -121,7 +121,7 @@ Keep special cases explicit through per-entity overrides rather than parallel ha
 
 ### Evidence
 
-- `packages/core/src/services/school-service.ts` constructs workflow objects, then exposes many methods that directly delegate to workflow methods.
+- `package/domain-core/src/services/school-service.ts` constructs workflow objects, then exposes many methods that directly delegate to workflow methods.
 - The facade does add value for reports/queries and for a stable public command surface, but much of it is mechanical.
 
 ### Impact
@@ -139,7 +139,7 @@ If `SchoolService` is not needed as a public facade, expose workflow namespaces 
 
 ### Evidence
 
-- `packages/core/src/ports/school-repositories.ts` exposes every repository to every service/config that receives `SchoolRepositories`.
+- `package/domain-core/src/ports/school-repositories.ts` exposes every repository to every service/config that receives `SchoolRepositories`.
 - Managed entity authorization/gates receive the full repository bag.
 
 ### Impact
@@ -173,7 +173,7 @@ Add an authorized count path to repository ports. Use repository-level counts fo
 
 ### Evidence
 
-- `scripts/check-import-boundaries.sh` only checks:
+- `scripts/check-import-boundaries.ts` only checks:
   - runtime importing HTTP
   - core importing integrations
   - core importing app aliases
@@ -193,8 +193,8 @@ Move boundary rules into either ESLint `no-restricted-imports` or a dependency g
 
 Rules worth encoding:
 
-- `packages/core` must not import apps, integrations, runtime, or adapters unless intentionally allowed.
-- `packages/*` must not import `integrations/*`.
+- `package/domain-core` must not import apps, integrations, runtime, or adapters unless intentionally allowed.
+- `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` must not import `package/integration-*`.
 - Runtime internals may only be imported by runtime files plus a short explicit allowlist.
 - API route modules should depend on `lib/school-api` and HTTP helpers, not runtime internals directly.
 - Webapp routes should go through query/data modules rather than raw generated client calls, except in tests or explicitly allowed integration points.
@@ -204,9 +204,9 @@ Rules worth encoding:
 
 ### Evidence
 
-- `packages/api-client/src/entity-resource.ts` exposes `save`, `batchSave`, `delete`, and `batchDelete` for all entities.
+- `package/generated-api-client/src/entity-resource.ts` exposes `save`, `batchSave`, `delete`, and `batchDelete` for all entities.
 - `apps/api/src/lib/school-api/registry.ts` marks several entities as `allowDirectSave: false`, including students, enrollments, student fees, payments, assessment results, and report card results.
-- `packages/api-client/README.md` states that the client still exposes `.save()` and the API will reject direct saves with `405`.
+- `package/generated-api-client/README.md` states that the client still exposes `.save()` and the API will reject direct saves with `405`.
 
 ### Impact
 
@@ -399,16 +399,16 @@ Update root README and API client README to match current browser SPA behavior:
 
 - `README.md`
 - `docs/local-dev.md`
-- `scripts/check-import-boundaries.sh`
+- `scripts/check-import-boundaries.ts`
 - `apps/api/src/runtime/README.md`
-- `packages/core/src/services/base-school-service.ts`
-- `packages/core/src/services/school-service.ts`
-- `packages/core/src/services/managed-entity-service.ts`
-- `packages/core/src/ports/school-repositories.ts`
+- `package/domain-core/src/services/base-school-service.ts`
+- `package/domain-core/src/services/school-service.ts`
+- `package/domain-core/src/services/managed-entity-service.ts`
+- `package/domain-core/src/ports/school-repositories.ts`
 - `apps/api/src/lib/school-api/registry.ts`
-- `packages/api-client/src/entity-resource.ts`
-- `packages/api-client/src/create-client.ts`
-- `packages/api-client/README.md`
+- `package/generated-api-client/src/entity-resource.ts`
+- `package/generated-api-client/src/create-client.ts`
+- `package/generated-api-client/README.md`
 - `apps/webapp/src/lib/auth/bootstrap-app.ts`
 - `apps/webapp/src/lib/queries/detail-data.queries.ts`
 - `apps/webapp/src/lib/api/mutations/run-mutation.ts`

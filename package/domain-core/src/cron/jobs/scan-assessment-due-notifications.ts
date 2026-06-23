@@ -1,0 +1,71 @@
+import type { Assessment } from '../../domains'
+import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
+import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
+import {
+  ASSESSMENT_DUE_SOON_EVENT_KEY,
+  assessmentDueSoonDeliverAfter,
+  assessmentDueSoonIdempotencyKey,
+} from '../../notifications/triggers/assessment-due-soon'
+import { isInJobNotificationWindow } from '../due-window'
+
+export async function scanAssessmentDueNotifications(
+  context: SchoolCronJobContext,
+): Promise<CronJobResult> {
+  const assessments = await context.service.baseService.repositories.assessments.list({})
+  let processed = 0
+  let skipped = 0
+
+  for (const assessment of assessments) {
+    if (!shouldNotifyAssessmentDueSoon(assessment, context.asOf)) {
+      skipped += 1
+      continue
+    }
+
+    const classGroup = await context.service.baseService.repositories.classGroups.findById(assessment.classGroupId)
+    if (!classGroup || classGroup.schoolId !== context.actor.schoolId) {
+      skipped += 1
+      continue
+    }
+
+    const enrollments = await context.service.baseService.repositories.enrollments.list({
+      classGroupId: assessment.classGroupId,
+      status: StudentClassEnrollmentStatus.Active,
+    })
+    if (enrollments.length === 0) {
+      skipped += 1
+      continue
+    }
+
+    await context.service.baseService.notificationGateway.enqueue({
+      idempotencyKey: assessmentDueSoonIdempotencyKey(assessment.id),
+      schoolId: classGroup.schoolId,
+      kind: 'job',
+      eventKey: ASSESSMENT_DUE_SOON_EVENT_KEY,
+      title: `Assessment due soon: ${assessment.title}`,
+      body: `${assessment.title} is due on ${assessment.dueAt!.toISOString().slice(0, 10)}.`,
+      recipients: enrollments.map(enrollment => ({
+        kind: MessageDeliveryRecipientKind.Student,
+        id: enrollment.studentId,
+      })),
+      deliverAfter: assessmentDueSoonDeliverAfter(assessment.dueAt!),
+      metadata: {
+        assessmentId: assessment.id,
+        classGroupId: assessment.classGroupId,
+      },
+    })
+    processed += 1
+  }
+
+  return { processed, skipped }
+}
+
+function shouldNotifyAssessmentDueSoon(assessment: Assessment, asOf: Date): boolean {
+  if (!assessment.dueAt || assessment.metAt) {
+    return false
+  }
+  return isInJobNotificationWindow(
+    assessmentDueSoonDeliverAfter(assessment.dueAt),
+    assessment.dueAt,
+    asOf,
+  )
+}

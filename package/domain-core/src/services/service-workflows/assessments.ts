@@ -1,0 +1,436 @@
+import type {
+  Assessment,
+  AssessmentInput,
+  AssessmentResult,
+  AssessmentResultInput,
+  GradeScale,
+  GradeScaleInput,
+  ReportCardDefinitionInput,
+  ReportCardDefinitionSection,
+  ReportCardDefinitionSectionInput,
+  StudentClassEnrollment,
+} from '../../domains'
+import type { BaseSchoolService } from '../base-school-service'
+import { denyResourceAccess, Permission } from '../../authorization'
+import {
+  Assessment as AssessmentEntity,
+  AssessmentResult as AssessmentResultEntity,
+  AttendanceJustificationStatus,
+  AttendanceStatus,
+  GradeScale as GradeScaleEntity,
+  ReportCardDefinition,
+  ReportCardDefinitionSection as ReportCardDefinitionSectionEntity,
+  ReportCardDefinitionSectionKind,
+  ReportCardResult,
+  ReportCardResultSection,
+  ReportCardResultStatus,
+} from '../../domains'
+import { normalizeDate, roundTo2 } from '../../domains/utils'
+import {
+  REPORT_CARD_PUBLISHED_EVENT_KEY,
+  runWorkflowNotifications,
+} from '../../notifications'
+import { permissionAction } from '../../shared'
+import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { AttendanceSummary } from '../../value_object/attendance-summary'
+import { BaseServiceWorkflow } from './base-service-workflow'
+
+export interface PublishReportCardResultInput {
+  id: string
+  studentId: string
+  periodId: string
+  reportCardDefinitionId?: string
+  publishedAt?: Date
+}
+
+export interface GenerateReportCardResultInput {
+  id: string
+  studentId: string
+  periodId: string
+  reportCardDefinitionId?: string
+  generatedAt?: Date
+}
+
+export type CreateGradeScaleInput = GradeScaleInput
+export type CreateReportCardDefinitionInput = ReportCardDefinitionInput
+export type CreateReportCardDefinitionSectionInput = ReportCardDefinitionSectionInput
+export type CreateAssessmentInput = AssessmentInput
+
+export interface CompleteAssessmentInput {
+  assessmentId: string
+  metAt?: Date
+}
+
+export type RecordAssessmentResultInput = AssessmentResultInput
+
+export interface ListClassSubjectAssessmentResultsForPeriodInput {
+  classSubjectId: string
+  periodId: string
+}
+
+export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
+  constructor(base: BaseSchoolService) {
+    super(base)
+  }
+
+  async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
+    const gradeScale = new GradeScaleEntity(input)
+    await this.baseService.entities.gradeScales.save(gradeScale)
+    return gradeScale
+  }
+
+  async createReportCardDefinition(input: CreateReportCardDefinitionInput): Promise<ReportCardDefinition> {
+    const definition = new ReportCardDefinition(input)
+    await this.baseService.entities.definitions.save(definition)
+    return definition
+  }
+
+  async createReportCardDefinitionSection(input: CreateReportCardDefinitionSectionInput): Promise<ReportCardDefinitionSection> {
+    const section = new ReportCardDefinitionSectionEntity(input)
+    await this.baseService.entities.sections.save(section)
+    return section
+  }
+
+  async createAssessment(input: CreateAssessmentInput): Promise<Assessment> {
+    const assessment = new AssessmentEntity(input)
+    await this.baseService.entities.assessments.save(assessment)
+    return assessment
+  }
+
+  async completeAssessment({ assessmentId, metAt }: CompleteAssessmentInput): Promise<Assessment> {
+    const existing = await this.requireEntity(this.baseService.entities.assessments, assessmentId)
+    const assessment = new AssessmentEntity({ ...existing.data, metAt: metAt ?? new Date() })
+    await this.baseService.entities.assessments.save(assessment)
+    return assessment
+  }
+
+  async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
+    const result = new AssessmentResultEntity(input)
+    await this.baseService.entities.assessmentResults.save(result)
+    return result
+  }
+
+  async recordAssessmentResultCompliance(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
+    return this.recordAssessmentResult(input)
+  }
+
+  async listClassSubjectAssessmentResultsForPeriod({
+    classSubjectId,
+    periodId,
+  }: ListClassSubjectAssessmentResultsForPeriodInput): Promise<AssessmentResult[]> {
+    await this.requireEntity(this.baseService.entities.classSubjects, classSubjectId)
+    await this.requireEntity(this.baseService.entities.academicPeriods, periodId)
+    const assessments = await this.baseService.entities.assessments.list({ classSubjectId, periodId })
+    const results: AssessmentResult[] = []
+    for (const assessment of assessments) {
+      results.push(...await this.baseService.entities.assessmentResults.list({ assessmentId: assessment.id }))
+    }
+    return results
+  }
+
+  async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
+    const student = await this.requireStudent(input.studentId)
+    this.checkActorSchool(student.schoolId)
+    await permissionAction(Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+    await this.requireReportCardNotPublished(input.studentId, input.periodId)
+    const reportCard = await this.buildReportCardResult(input)
+    await this.baseService.entities.results.save(reportCard, { moduleChecked: true })
+    return reportCard
+  }
+
+  async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
+    const student = await this.requireStudent(input.studentId)
+    this.checkActorSchool(student.schoolId)
+    await permissionAction(Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [input.id])
+    await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.requireReportCardNotPublished(input.studentId, input.periodId)
+      const generated = await this.buildReportCardResult(input)
+      const published = generated.copyWith({
+        status: ReportCardResultStatus.Published,
+        publishedAt: input.publishedAt ?? new Date(),
+      })
+      await this.baseService.entities.results.save(published, { moduleChecked: true })
+      await runWorkflowNotifications(this.baseService, REPORT_CARD_PUBLISHED_EVENT_KEY, {
+        result: published,
+        student,
+      })
+      return published
+    })
+  }
+
+  private async requireReportCardResources(
+    periodId: string,
+    reportCardDefinitionId: string | undefined,
+    schoolId: string,
+  ): Promise<void> {
+    const period = await this.baseService.repositories.academicPeriods.findById(periodId)
+    const definition = reportCardDefinitionId
+      ? await this.baseService.repositories.definitions.findById(reportCardDefinitionId)
+      : undefined
+    if (!period || period.schoolId !== schoolId || (reportCardDefinitionId && !definition)) {
+      denyResourceAccess()
+    }
+    if (definition && definition.schoolId !== schoolId) {
+      denyResourceAccess()
+    }
+  }
+
+  private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
+    const reportCard = await this.baseService.repositories.results.findOne({ studentId, periodId })
+    if (reportCard?.status === ReportCardResultStatus.Published) {
+      throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
+    }
+  }
+
+  private async buildReportCardResult({
+    id,
+    studentId,
+    periodId,
+    reportCardDefinitionId,
+    generatedAt,
+  }: GenerateReportCardResultInput): Promise<ReportCardResult> {
+    const period = await this.requirePeriod(periodId)
+    const enrollment = await this.requireEnrollmentForPeriod({
+      studentId,
+      academicYearId: period.academicYearId,
+    })
+    const classGroup = await this.requireClassGroup(enrollment.classGroupId)
+    const definition = reportCardDefinitionId
+      ? await this.requireReportCardDefinition(reportCardDefinitionId)
+      : await this.requireDefaultReportCardDefinition({
+          gradeLevelId: classGroup.gradeLevelId,
+          academicYearId: period.academicYearId,
+        })
+    const { sectionResults, overallAverage } = await this.buildReportCardResults({
+      studentId,
+      periodId,
+      classGroupId: classGroup.id,
+      reportCardDefinitionId: definition.id,
+    })
+    const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
+    const attendanceSummary = await this.buildAttendanceSummary({
+      studentId,
+      startDate: period.startDate,
+      endDate: period.endDate,
+    })
+    const existing = await this.baseService.repositories.results.findOne({ studentId, periodId })
+    return new ReportCardResult({
+      id: existing?.id ?? id,
+      reportCardDefinitionId: definition.id,
+      studentId,
+      classGroupId: classGroup.id,
+      periodId,
+      sectionResults,
+      attendanceSummary,
+      assessmentResultCount: periodAssessmentResults.length,
+      overallAverage: overallAverage === undefined ? undefined : Math.round(overallAverage),
+      status: existing?.status ?? ReportCardResultStatus.Draft,
+      generatedAt: existing?.generatedAt ?? generatedAt,
+      publishedAt: existing?.publishedAt,
+    })
+  }
+
+  private async buildReportCardResults({
+    studentId,
+    periodId,
+    classGroupId,
+    reportCardDefinitionId,
+  }: {
+    studentId: string
+    periodId: string
+    classGroupId: string
+    reportCardDefinitionId: string
+  }): Promise<{ sectionResults: ReportCardResultSection[], overallAverage?: number }> {
+    await this.requirePeriod(periodId)
+    const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
+    const assessmentResultsByClassSubject = new Map<string, Array<{ result: AssessmentResult, assessment: Assessment }>>()
+    for (const { result, assessment } of periodAssessmentResults) {
+      assessmentResultsByClassSubject.set(assessment.classSubjectId, [
+        ...(assessmentResultsByClassSubject.get(assessment.classSubjectId) ?? []),
+        { result, assessment },
+      ])
+    }
+    const classSubjects = await this.baseService.repositories.classSubjects.list({ classGroupId })
+    const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
+    const allSections = (await this.baseService.repositories.sections.list({ reportCardDefinitionId }))
+      .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+
+    const computeNode = async (
+      section: ReportCardDefinitionSection,
+      visited = new Set<string>(),
+    ): Promise<ReportCardResultSection | null> => {
+      if (visited.has(section.id)) {
+        throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
+      }
+      const nextVisited = new Set(visited).add(section.id)
+      const childSections = allSections.filter(item => item.parentSectionId === section.id)
+      if (section.kind === ReportCardDefinitionSectionKind.Subject) {
+        const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
+        if (!classSubject)
+          return null
+        const leafResults = (assessmentResultsByClassSubject.get(classSubject.id) ?? [])
+          .filter(({ result }) => result.score !== undefined)
+        if (leafResults.length === 0)
+          return null
+        const totalWeight = leafResults.reduce((sum, { assessment }) => sum + assessment.coefficient, 0)
+        const weightedPoints = leafResults.reduce((sum, { result, assessment }) => {
+          const normalizedScore = ((result.score ?? 0) / assessment.maxScore) * 20
+          return sum + normalizedScore * assessment.coefficient
+        }, 0)
+        return new ReportCardResultSection({
+          sectionId: section.id,
+          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          name: section.name,
+          average: totalWeight === 0 ? 0 : weightedPoints / totalWeight,
+          weight: section.weight,
+          parentSectionId: section.parentSectionId,
+          classSubjectId: classSubject.id,
+          subResults: [],
+        })
+      }
+
+      const childResults: ReportCardResultSection[] = []
+      let sumWeights = 0
+      let sumWeightedPoints = 0
+      for (const child of childSections) {
+        const childResult = await computeNode(child, nextVisited)
+        if (childResult) {
+          childResults.push(childResult)
+          sumWeights += child.weight
+          sumWeightedPoints += childResult.average * child.weight
+        }
+      }
+      if (childResults.length === 0)
+        return null
+      return new ReportCardResultSection({
+        sectionId: section.id,
+        sectionKind: ReportCardDefinitionSectionKind.Group,
+        name: section.name,
+        average: sumWeights === 0 ? 0 : sumWeightedPoints / sumWeights,
+        weight: section.weight,
+        parentSectionId: section.parentSectionId,
+        subResults: childResults,
+      })
+    }
+
+    const sectionResults: ReportCardResultSection[] = []
+    let rootSumWeights = 0
+    let rootSumWeightedPoints = 0
+    for (const root of allSections.filter(section => !section.parentSectionId)) {
+      const result = await computeNode(root)
+      if (result) {
+        sectionResults.push(result)
+        rootSumWeights += root.weight
+        rootSumWeightedPoints += result.average * root.weight
+      }
+    }
+    const overallAverage = rootSumWeights > 0 ? roundTo2(rootSumWeightedPoints / rootSumWeights) : undefined
+    return { sectionResults, overallAverage }
+  }
+
+  private async requireEnrollmentForPeriod({
+    studentId,
+    academicYearId,
+  }: {
+    studentId: string
+    academicYearId: string
+  }): Promise<StudentClassEnrollment> {
+    const enrollments = await this.baseService.repositories.enrollments.list({ studentId })
+    for (const enrollment of enrollments) {
+      const classGroup = await this.baseService.repositories.classGroups.findById(enrollment.classGroupId)
+      if (classGroup?.academicYearId === academicYearId) {
+        return enrollment
+      }
+    }
+    throw new BusinessRuleViolationError('STUDENT_NOT_ENROLLED_IN_YEAR', `Student ${studentId} is not enrolled in academic year ${academicYearId}`)
+  }
+
+  private async requireReportCardDefinition(reportCardDefinitionId: string) {
+    const definition = await this.baseService.repositories.definitions.findById(reportCardDefinitionId)
+    if (!definition) {
+      throw new BusinessRuleViolationError('UNKNOWN_REPORT_CARD_DEFINITION', `Unknown report card definition: ${reportCardDefinitionId}`)
+    }
+    return definition
+  }
+
+  private async requireDefaultReportCardDefinition({
+    gradeLevelId,
+    academicYearId,
+  }: {
+    gradeLevelId: string
+    academicYearId: string
+  }) {
+    const definition = await this.baseService.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
+    if (!definition) {
+      throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
+    }
+    return definition
+  }
+
+  private async buildAttendanceSummary({
+    studentId,
+    startDate,
+    endDate,
+  }: {
+    studentId: string
+    startDate: Date
+    endDate: Date
+  }): Promise<AttendanceSummary> {
+    const records = await this.baseService.repositories.attendance.list({
+      studentId,
+      date: { $gte: normalizeDate(startDate), $lte: normalizeDate(endDate) },
+    })
+    let presentCount = 0
+    let absenceCount = 0
+    let excusedAbsenceCount = 0
+    let lateCount = 0
+    for (const record of records) {
+      switch (record.status) {
+        case AttendanceStatus.Present:
+          presentCount += 1
+          break
+        case AttendanceStatus.Absent:
+          absenceCount += 1
+          if (record.justificationStatus === AttendanceJustificationStatus.Excused) {
+            excusedAbsenceCount += 1
+          }
+          break
+        case AttendanceStatus.Late:
+          lateCount += 1
+          break
+      }
+    }
+    return new AttendanceSummary({ presentCount, absenceCount, excusedAbsenceCount, lateCount })
+  }
+
+  private async listResultsForStudentAndPeriod(
+    studentId: string,
+    periodId: string,
+  ): Promise<Array<{ result: AssessmentResult, assessment: Assessment }>> {
+    const results = await this.baseService.repositories.assessmentResults.list({ studentId })
+    const resolved: Array<{ result: AssessmentResult, assessment: Assessment }> = []
+    for (const result of results) {
+      const assessment = await this.baseService.repositories.assessments.findById(result.assessmentId)
+      if (assessment?.periodId === periodId) {
+        resolved.push({ result, assessment })
+      }
+    }
+    return resolved
+  }
+
+  private async requireEntity<T>(
+    managedService: { findById: (id: string) => Promise<T | undefined> },
+    id: string,
+  ): Promise<T> {
+    const entity = await managedService.findById(id)
+    if (!entity) {
+      denyResourceAccess()
+    }
+    return entity
+  }
+}

@@ -21,6 +21,7 @@
     "generate-api-client": "bun src/scripts/generate-api-client.ts"
   },
   "dependencies": {
+    "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/betterauth-d1-migrations": "workspace:*",
     "@edaya/core": "workspace:*",

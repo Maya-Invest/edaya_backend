@@ -1,5 +1,6 @@
 import {
   AcademicPeriodType,
+  AnnouncementStatus,
   AnnouncementTargetKind,
   AttendanceStatus,
   AuthorizationErrorCode,
@@ -308,18 +309,20 @@ describeIntegration('atomic workflow safeguards', () => {
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
     await saveGuardian(app, { id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba' })
     await saveGuardian(app, { id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba' })
+    const publishedAt = new Date('2026-01-15T10:00:00Z')
     await saveAnnouncement(app, {
       id: 'announcement',
       schoolId: 'school',
       title: 'Reminder',
       content: 'Administrative reminder.',
+      status: AnnouncementStatus.Published,
+      publishedAt,
     })
     await saveAnnouncementTarget(app, {
       id: 'all-guardians',
       announcementId: 'announcement',
       targetKind: AnnouncementTargetKind.AllGuardians,
     })
-    await app.communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement' })
     failSaveOnAttempt('messageDeliveryRepository', 2)
     await expect(app.communicationsWorkflow.materializeDeliveries({
       announcementId: 'announcement',

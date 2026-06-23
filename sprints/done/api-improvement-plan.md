@@ -2,7 +2,7 @@
 
 This document outlines improvements to `apps/api` so the HTTP layer fully leverages the Zod entity schema model and two-layer authorization system in `@edaya/core`.
 
-**Related docs:** [Zod entity migration plan](./zod-entity-migration-plan.md), [Value object candidates](../../docs/value-object-candidates.md), [Authorization README](../../packages/core/src/authorization/README.md).
+**Related docs:** [Zod entity migration plan](./zod-entity-migration-plan.md), [Value object candidates](../../docs/value-object-candidates.md), [Authorization README](../../package/domain-core/src/authorization/README.md).
 
 ---
 
@@ -77,7 +77,7 @@ HTTP → Better Auth session → ActorMetadata + EffectiveGrants
 **Core exports:**
 
 ```typescript
-// packages/core/src/index.ts
+// package/domain-core/src/index.ts
 export { BusinessRuleViolationError } from './shared/business-rule-error'
 // DomainValidationError already exported via domains
 ```

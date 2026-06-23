@@ -19,6 +19,7 @@
       "name": "@edaya/api",
       "version": "0.0.1",
       "dependencies": {
+        "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/betterauth-d1-migrations": "workspace:*",
         "@edaya/core": "workspace:*",
@@ -44,6 +45,30 @@
         "@cloudflare/workers-types": "^4.20260610.0",
         "@edaya/dev-fixtures": "workspace:*",
         "@edaya/seeding": "workspace:*",
+        "@types/bun": "^1.3.14",
+        "@types/node": "^25.9.2",
+        "typescript": "^6.0.2",
+        "wrangler": "^4.99.0",
+      },
+    },
+    "apps/cron": {
+      "name": "@edaya/cron",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/adaptor-novu": "workspace:*",
+        "@edaya/adaptor-postgres": "workspace:*",
+        "@edaya/core": "workspace:*",
+        "@electric-sql/pglite": "^0.4.6",
+        "dotenv": "^16.5.0",
+        "dotenv-expand": "^11.0.7",
+        "drizzle-orm": "^0.39.0",
+        "pino": "^9.6.0",
+        "pino-pretty": "^11.3.0",
+        "postgres": "^3.4.4",
+        "zod": "^3.24.4",
+      },
+      "devDependencies": {
+        "@cloudflare/workers-types": "^4.20260610.0",
         "@types/bun": "^1.3.14",
         "@types/node": "^25.9.2",
         "typescript": "^6.0.2",
@@ -86,7 +111,48 @@
         "wrangler": "^4.99.0",
       },
     },
-    "integrations/betterauth-d1-migrations": {
+    "package/adaptor-novu": {
+      "name": "@edaya/adaptor-novu",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/core": "workspace:*",
+        "@novu/api": "^3.17.0",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+      },
+    },
+    "package/adaptor-postgres": {
+      "name": "@edaya/adaptor-postgres",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/core": "workspace:*",
+        "drizzle-orm": "^0.39.0",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "drizzle-kit": "^0.30.4",
+      },
+    },
+    "package/domain-core": {
+      "name": "@edaya/core",
+      "version": "0.0.1",
+      "dependencies": {
+        "zod": "^3.24.4",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+      },
+    },
+    "package/generated-api-client": {
+      "name": "@edaya/api-client",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^6.0.2",
+      },
+    },
+    "package/integration-betterauth-d1-migrations": {
       "name": "@edaya/betterauth-d1-migrations",
       "version": "0.0.1",
       "dependencies": {
@@ -99,7 +165,7 @@
         "wrangler": "^4.99.0",
       },
     },
-    "integrations/neon-migrations": {
+    "package/integration-neon-migrations": {
       "name": "@edaya/neon-migrations",
       "version": "0.0.1",
       "devDependencies": {
@@ -107,36 +173,6 @@
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
         "drizzle-kit": "^0.30.4",
-      },
-    },
-    "packages/adaptor-postgres": {
-      "name": "@edaya/adaptor-postgres",
-      "version": "0.0.1",
-      "dependencies": {
-        "@edaya/core": "workspace:*",
-        "drizzle-orm": "^0.39.0",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "drizzle-kit": "^0.30.4",
-      },
-    },
-    "packages/api-client": {
-      "name": "@edaya/api-client",
-      "version": "0.0.1",
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
-      },
-    },
-    "packages/core": {
-      "name": "@edaya/core",
-      "version": "0.0.1",
-      "dependencies": {
-        "zod": "^3.24.4",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
       },
     },
     "testing/dev-fixtures": {
@@ -253,21 +289,25 @@
 
     "@e18e/eslint-plugin": ["@e18e/eslint-plugin@0.4.1", "", { "dependencies": { "empathic": "^2.0.0", "module-replacements": "^3.0.0-beta.7", "semver": "^7.7.4" }, "peerDependencies": { "eslint": "^9.0.0 || ^10.0.0", "oxlint": "^1.61.0" }, "optionalPeers": ["eslint", "oxlint"] }, "sha512-Re00N8ad1HsNrzpuIX7Bhdr8RSaFWp6VgwJUEJF+47+D1CMcXoS7VNRkIG23e46pddhgxWU0cWk4wYiQIuMHqQ=="],
 
-    "@edaya/adaptor-postgres": ["@edaya/adaptor-postgres@workspace:packages/adaptor-postgres"],
+    "@edaya/adaptor-novu": ["@edaya/adaptor-novu@workspace:package/adaptor-novu"],
+
+    "@edaya/adaptor-postgres": ["@edaya/adaptor-postgres@workspace:package/adaptor-postgres"],
 
     "@edaya/api": ["@edaya/api@workspace:apps/api"],
 
-    "@edaya/api-client": ["@edaya/api-client@workspace:packages/api-client"],
+    "@edaya/api-client": ["@edaya/api-client@workspace:package/generated-api-client"],
 
-    "@edaya/betterauth-d1-migrations": ["@edaya/betterauth-d1-migrations@workspace:integrations/betterauth-d1-migrations"],
+    "@edaya/betterauth-d1-migrations": ["@edaya/betterauth-d1-migrations@workspace:package/integration-betterauth-d1-migrations"],
 
-    "@edaya/core": ["@edaya/core@workspace:packages/core"],
+    "@edaya/core": ["@edaya/core@workspace:package/domain-core"],
+
+    "@edaya/cron": ["@edaya/cron@workspace:apps/cron"],
 
     "@edaya/dev-fixtures": ["@edaya/dev-fixtures@workspace:testing/dev-fixtures"],
 
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:testing/integration-tests"],
 
-    "@edaya/neon-migrations": ["@edaya/neon-migrations@workspace:integrations/neon-migrations"],
+    "@edaya/neon-migrations": ["@edaya/neon-migrations@workspace:package/integration-neon-migrations"],
 
     "@edaya/seeding": ["@edaya/seeding@workspace:testing/seeding"],
 
@@ -462,6 +502,8 @@
     "@nodelib/fs.stat": ["@nodelib/fs.stat@2.0.5", "", {}, "sha512-RkhPPp2zrqDAQA/2jNhnztcPAlv64XdhIp7a7454A5ovI7Bukxgt7MX7udwAu3zg1DcpPU0rz3VV1SeaqvY4+A=="],
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
+
+    "@novu/api": ["@novu/api@3.17.0", "", { "dependencies": { "zod": "^3.25.0 || ^4.0.0" } }, "sha512-94a81yA+Dv3wzHiQqBp/0sp3haJoMHaPtXcOhhRqyTvT/y/prOOf8jX/P/GyFaAIi+nV3gIjvcYLdcreeO+dQA=="],
 
     "@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.41.1", "", {}, "sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA=="],
 
@@ -1664,6 +1706,8 @@
     "@eslint/markdown/@eslint/core": ["@eslint/core@1.2.1", "", { "dependencies": { "@types/json-schema": "^7.0.15" } }, "sha512-MwcE1P+AZ4C6DWlpin/OmOA54mmIZ/+xZuJiQd4SyB29oAJjN30UW9wkKNptW2ctp4cEsvhlLY/CsQ1uoHDloQ=="],
 
     "@eslint/markdown/@eslint/plugin-kit": ["@eslint/plugin-kit@0.7.2", "", { "dependencies": { "@eslint/core": "^1.2.1", "levn": "^0.4.1" } }, "sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A=="],
+
+    "@novu/api/zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "@redocly/ajv/json-schema-traverse": ["json-schema-traverse@1.0.0", "", {}, "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug=="],
 

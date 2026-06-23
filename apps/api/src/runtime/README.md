@@ -9,10 +9,9 @@ See [docs/api-runtimes.md](../../../../docs/api-runtimes.md) for env vars and co
 Import from **`@/runtime`** everywhere outside this folder:
 
 ```typescript
+import type { ApiRuntime, Environment } from "@/runtime";
 import {
-  type ApiRuntime,
   createAuth,
-  type Environment,
   getApiRuntime,
   loadNodeProcessEnv,
   parseEnv,
@@ -48,11 +47,9 @@ runtime/
 
 ## Node vs Worker
 
-| Concern        | Node                                                                    | Worker                                                       |
-| -------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
-| School DB      | `node/database.ts` — PGlite or Postgres; **runs migrations on startup** | `worker/database.ts` — Postgres only; migrations pre-applied |
-| Auth DB        | `node/auth-database.ts` — SQLite file                                   | `worker/auth-database.ts` — D1 `AUTH_DB` binding             |
-| Runtime access | `getApiRuntime(env)` — process cache                                    | `resolveApiRuntime(c)` — per request                         |
-| Env loading    | `loadNodeProcessEnv()` + `.env`                                         | Wrangler bindings + `parseRuntimeEnv`                        |
+- School DB: Node uses `node/database.ts` with automatic PGlite migrations and explicit Postgres opt-in. Worker uses `worker/database.ts` with pre-applied Postgres migrations.
+- Auth DB: Node uses `node/auth-database.ts` with the same startup migration gate. Worker uses the D1 `AUTH_DB` binding through `worker/auth-database.ts`.
+- Runtime access: Node uses the process cache through `getApiRuntime(env)`. Worker uses `resolveApiRuntime(c)` per request.
+- Env loading: Node uses `loadNodeProcessEnv()` and `.env`. Worker uses Wrangler bindings and `parseRuntimeEnv`.
 
 Always obtain the Node runtime through `getApiRuntime`. Do not call `buildNodeApiRuntime` directly.

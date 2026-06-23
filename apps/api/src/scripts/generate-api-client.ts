@@ -8,7 +8,7 @@ function resolveOutputPath(): string {
   if (outputIndex === -1) {
     return resolve(
       import.meta.dirname,
-      "../../../../packages/api-client/src/generated/client-bindings.ts",
+      "../../../../package/generated-api-client/src/generated/client-bindings.ts",
     );
   }
 

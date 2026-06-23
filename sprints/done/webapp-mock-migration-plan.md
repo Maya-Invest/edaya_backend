@@ -6,7 +6,7 @@ Living plan for replacing `apps/webapp` mock data (`$lib/data/school.ts`, `repor
 
 - [Webapp ↔ API integration plan](./webapp-api-integration-plan.md) — architecture, remote functions, domain mapping
 - [Rapport comparaison UI ↔ API](../../apps/webapp/docs/rapport-comparaison-ui-api.md) — screen-by-screen gap analysis
-- [`@edaya/api-client` README](../../packages/api-client/README.md) — typed client usage
+- [`@edaya/api-client` README](../../package/generated-api-client/README.md) — typed client usage
 - [Better Auth integration plan](./better-auth-integration-plan.md) — auth backend
 - [API runtimes](../../docs/api-runtimes.md) — headers, session semantics
 

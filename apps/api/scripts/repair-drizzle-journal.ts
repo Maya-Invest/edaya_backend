@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-const migrationsFolder = path.resolve(repoRoot, 'packages/adaptor-postgres/drizzle')
+const migrationsFolder = path.resolve(repoRoot, 'package/adaptor-postgres/drizzle')
 
 interface JournalEntry {
   tag: string

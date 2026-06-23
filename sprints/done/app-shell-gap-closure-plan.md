@@ -427,7 +427,7 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 #### Checkpoint Phase 1e — revue collègue (règles métier)
 
-> **Objectif :** valider avec le propriétaire domaine (`packages/core`) que la migration app-shell **n’a pas contourné** les règles métier finance / emploi du temps / matières. Phase 1e est **UI + câblage API** ; ce checkpoint liste tout ce qui touche au domaine.
+> **Objectif :** valider avec le propriétaire domaine (`package/domain-core`) que la migration app-shell **n’a pas contourné** les règles métier finance / emploi du temps / matières. Phase 1e est **UI + câblage API** ; ce checkpoint liste tout ce qui touche au domaine.
 >
 > **Statut :** ✅ **approuvé** — 1e clos métier + UI ; Billing livré ; enchaîner Phase 3.
 
@@ -485,7 +485,7 @@ Migrate in traffic order. Per entity: read-only `Detail`/`Tabs` → footer actio
 
 ##### Points à valider avec le collègue (règles métier)
 
-**Frais (`packages/core/src/domains/finances/fee.ts`)**
+**Frais (`package/domain-core/src/domains/finances/fee.ts`)**
 
 - [ ] **Création via commande** — OK métier ? (`createFee` workflow + `FINANCIAL_CONFIG_CONFIGURE` + assurance `verified`).
 - [ ] **Édition via `entities.fees.save`** — acceptable ou faut-il une commande dédiée (ex. interdire changement de montant si `studentFees` existants) ?

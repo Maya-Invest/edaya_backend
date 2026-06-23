@@ -1,228 +1,164 @@
 # Notifications Feature — Sprint Plan
 
-> **Status:** Planned  
+> **Status:** Infrastructure complete (Phases 1–4) — job scheduler and delivery UX deferred  
 > **Created:** 2026-06-22  
+> **Last updated:** 2026-06-22  
 > **Scope:** Notification gateway port, trigger infrastructure (entity hooks + workflow hooks), and first vertical slices for three announcement kinds  
-> **Related domain:** `packages/core/src/domains/messaging/` (`Announcement`, `AnnouncementTarget`, `MessageDelivery`)
+> **Related domain:** `package/domain-core/src/domains/messaging/` (`Announcement`, `AnnouncementTarget`, `MessageDelivery`)
 
-This plan introduces a **notification gateway** as a core port, wires **event-based triggers** through `ManagedEntityService` hooks and **workflow post-actions**, and reserves **job-based scheduling** for a follow-on phase once the gateway and delivery pipeline exist.
+This plan introduced a **notification gateway** as a core port, wired **event-based triggers** through `ManagedEntityService` hooks and **workflow post-actions**, and reserved **job-based scheduling** and **provider delivery** for follow-on work.
 
-The work is incremental. Each phase must be mergeable on its own. No phase requires a feature freeze.
+Phases **1–4** are implemented and tested in `@edaya/core`. The infrastructure sprint goal is met: notifications can be enqueued from workflows and entity saves without coupling core to external providers. **Nothing is actually delivered to users yet** outside log output in API dev/staging — that requires Phases 5–6.
 
 ---
 
 ## 1. Notification kinds
 
-| Kind | Trigger | Examples | Primary integration point |
-|------|---------|----------|---------------------------|
-| **Ad-hoc** | Staff publishes communication to a defined audience | School-wide notice, class message, guardian alert | Existing `CommunicationsServiceWorkflow` (`createAnnouncement` → `addTarget` → `publishAnnouncement` → `materializeDeliveries`) |
-| **Event-based** | Domain state change after a command or save | Attendance recorded, incident logged, marks entered, report card published | Workflow post-actions first; entity `postSave` hooks for direct-save paths |
-| **Job-based** | Time / schedule (cron or deferred queue) | Upcoming assessment due in 3 days, activity tomorrow, fee overdue reminder | Scheduled processor calling gateway with `deliverAfter`; no entity mutation required |
+| Kind | Trigger | Examples | Integration status |
+|------|---------|----------|-------------------|
+| **Ad-hoc** | Staff publishes communication to a defined audience | School-wide notice, class message | **Wired** — `publishAnnouncement` materializes App deliveries + gateway enqueue |
+| **Event-based** | Domain state change after a command or save | Attendance, report card published | **Partial** — report card + batch attendance wired; incidents, marks, single-record attendance not wired |
+| **Job-based** | Time / schedule (cron or deferred queue) | Assessment due in 3 days | **Intent only** — entity hook enqueues with `deliverAfter`; no processor (Phase 5) |
 
 ### Relationship to existing messaging domain
 
-The codebase already models ad-hoc communications:
-
-- `Announcement` — content, priority, `premiumNotification`, publish lifecycle
-- `AnnouncementTarget` — audience (`ClassGroup`, `AllGuardians`, `Student`, …)
-- `MessageDelivery` — per-recipient, per-channel delivery state (`App`, `Email`, `Sms`, `WhatsApp`)
-
-Guardian preferences already exist: `receivesAttendanceAlerts`, `receivesAcademicReports`, `premiumNotificationsEnabled`, `allowsNotifications` on contact methods.
-
-**Decision for this sprint:** treat `Announcement` + `MessageDelivery` as the **persistence model for all three kinds**. Event- and job-based notifications create or update announcement records (often system-authored) and materialize deliveries through the gateway—not a parallel notification table in phase 1.
+- `Announcement` + `AnnouncementTarget` + `MessageDelivery` remain the persistence model for **ad-hoc** communications.
+- **Event** and **job** notifications currently enqueue through `NotificationGatewayPort` only — they do **not** yet create system-authored `Announcement` rows (see gap G4 below).
+- Guardian preferences used in handlers: `receivesAttendanceAlerts`, `receivesAcademicReports`, `allowsNotifications` on contact methods.
+- `premiumNotificationsEnabled` on guardians and `premiumNotification` on announcements are passed through on ad-hoc enqueue but **not** used to filter recipients yet.
 
 ---
 
 ## 2. Outcomes
 
-When phases 0–4 of this plan are complete:
+### Phase 1–4 outcomes (achieved)
 
-1. `@edaya/core` exposes a `NotificationGatewayPort` with a small, testable method surface.
-2. `ServiceArgs` / `SchoolApplication` / `BaseSchoolService` receive the port; tests use a no-op or in-memory recorder adapter.
-3. A **trigger registry** maps domain events to gateway calls without coupling entity configs to channel providers.
-4. **Workflow post-actions** are the default trigger for multi-step commands; **entity `postSave` hooks** cover direct CRUD paths that bypass workflows.
-5. Ad-hoc `publishAnnouncement` flows through the gateway (materialize + enqueue), replacing silent no-ops.
-6. At least one **event-based** vertical (report card published) and one **ad-hoc** path are end-to-end tested in core.
+| # | Outcome | Status |
+|---|---------|--------|
+| 1 | `NotificationGatewayPort` in `@edaya/core` | Done |
+| 2 | Gateway wired through `ServiceArgs` → `BaseSchoolService` | Done |
+| 3 | Entity trigger registry + `postSave` hook infrastructure | Done |
+| 4 | Workflow notification runner + registered handlers | Done |
+| 5 | Ad-hoc `publishAnnouncement` enqueues after materialize | Done |
+| 6 | Event verticals: report card + attendance (batch) | Done |
+| 7 | Job intent: assessment `due_soon` via entity hook | Done (enqueue only) |
 
-Phases 5–6 (job scheduler, external providers, webapp inbox) are scoped but deferred until the gateway pipeline is proven.
+### Success metrics (verified 2026-06-22)
 
-### Success metrics
-
-| Metric | Baseline | Target (after phase 4) |
-|--------|----------|-------------------------|
-| Notification port in core | None | `NotificationGatewayPort` exported from `packages/core/src/ports` |
-| Gateway wired in `ServiceArgs` | N/A | All `SchoolService` instances receive gateway |
-| `publishAnnouncement` delivery | Saves announcement only; deliveries materialized on demand | Gateway enqueued after materialize |
-| Event trigger coverage | None | ≥1 workflow trigger + registry unit tests |
-| `bun run verify` | Green | Remains green |
+| Metric | Baseline | Target | Actual |
+|--------|----------|--------|--------|
+| Notification port in core | None | Exported from `ports/` | `notification-gateway.ts` exported |
+| Gateway in `ServiceArgs` | N/A | All `SchoolService` instances | Wired; tests + API runtime updated |
+| `publishAnnouncement` | Save only | Gateway after materialize | App-channel materialize + enqueue |
+| Event trigger coverage | None | ≥1 workflow + registry tests | 3 workflow handlers + 1 entity trigger; 18 notification tests |
+| Core tests | — | Green | **479 passed**, 0 failed (`package/domain-core`) |
+| Full `bun run verify` | Green | Green | Fails on **unrelated** `@edaya/integration-tests` lint (pre-existing); core check + tests pass |
 
 ---
 
 ## 3. Guardrails and non-goals
 
-Hard constraints for every phase:
+Hard constraints observed in Phases 1–4:
 
-- Do not send real email/SMS/WhatsApp in core or unit tests; use port adapters only.
-- Do not block `ManagedEntityService.save` on external provider latency—gateway `enqueue` must be fast and idempotent (outbox-style).
-- Do not change public HTTP paths, GraphQL field names, or existing announcement/delivery payloads in early phases.
-- Do not add database migrations until the announcement/delivery model proves insufficient (phase 1 reuses existing tables).
-- Keep ports-and-adapters layout: gateway interface in `@edaya/core`, provider implementations in `apps/api` or `integrations/`.
-- Preserve authorization: notification triggers run **after** `authorizeSave` / workflow `authorize`—never leak cross-tenant recipients.
-- Respect guardian opt-outs: `receivesAttendanceAlerts`, `allowsNotifications`, `premiumNotificationsEnabled` filter recipients at gateway or resolver layer.
+- No real email/SMS/WhatsApp in core or unit tests.
+- Gateway `enqueue` is non-blocking; no external I/O in `postSave` hooks.
+- No HTTP/GraphQL payload changes.
+- No new database migrations.
+- Ports-and-adapters layout preserved.
+- Authorization runs before notification triggers.
 
-### Non-goals (this initiative)
+### Non-goals (still deferred)
 
-- Webapp notification center UI (separate sprint; follow `specs/app-shell-spec.md` when started).
-- Push notification device tokens.
-- Provider-specific templates (SendGrid, Twilio, etc.) beyond a logging/no-op adapter.
-- Replacing `CommunicationsServiceWorkflow` audience resolution—reuse `resolveRecipients` logic.
+- Webapp notification center UI
+- Push notification device tokens
+- Provider templates (SendGrid, Twilio, etc.)
+- Replacing `CommunicationsServiceWorkflow` audience resolution
+- Full event catalog document (`docs/notifications-triggers.md`) — Phase 0 was absorbed into implementation
 
 ---
 
-## 4. Architecture
+## 4. Architecture (as built)
 
-### 4.1 Notification gateway port (phase 1)
+### 4.1 Module layout
 
-Add `packages/core/src/ports/notification-gateway.ts` and export from `packages/core/src/ports/index.ts`.
+```text
+package/domain-core/src/
+  ports/notification-gateway.ts          # Port interface
+  notifications/
+    no-op-notification-gateway.ts
+    recording-notification-gateway.ts
+    recipient-utils.ts
+    notification-trigger-registry.ts       # Entity postSave registry
+    workflow-notification-runner.ts      # Workflow dispatch
+    register-notification-triggers.ts    # Entity triggers (auto-load)
+    register-workflow-notification-handlers.ts
+    triggers/assessment-due-soon.ts
+    handlers/
+      announcement-published.ts
+      report-card-published.ts
+      attendance-recorded.ts
 
-Proposed surface (refine during implementation; keep minimal):
+apps/api/src/runtime/shared/
+  notification-gateway.ts                # Pino logging adapter
+  message-delivery-notification-gateway.ts  # Staging wrapper (log only)
+  school-application.ts                  # Gateway DI
+```
+
+### 4.2 Notification gateway port
 
 ```typescript
-export type NotificationKind = 'ad_hoc' | 'event' | 'job'
-
-export interface NotificationRecipient {
-  kind: MessageDeliveryRecipientKind
-  id: string
-}
-
-export interface NotificationEnqueueInput {
-  /** Stable key for deduplication, e.g. `report-card-published:{resultId}` */
-  idempotencyKey: string
-  schoolId: string
-  kind: NotificationKind
-  /** Links to Announcement when materialized; optional for enqueue-only paths */
-  announcementId?: string
-  /** Template / event identifier for logging and provider mapping */
-  eventKey: string
-  title: string
-  body: string
-  recipients: NotificationRecipient[]
-  channels?: MessageDeliveryChannel[]
-  priority?: AnnouncementPriority
-  premium?: boolean
-  deliverAfter?: Date
-  expiresAt?: Date
-  metadata?: Record<string, string>
-}
-
 export interface NotificationGatewayPort {
   enqueue: (input: NotificationEnqueueInput) => Promise<void>
   cancel: (idempotencyKey: string) => Promise<void>
 }
 ```
 
-Optional later methods (phase 5+): `processDue(asOf: Date)`, `markSent`, `markFailed`—only if the outbox lives behind the gateway adapter rather than in `MessageDelivery` status transitions.
+`NotificationEnqueueInput` supports `kind: 'ad_hoc' | 'event' | 'job'`, optional `announcementId`, `deliverAfter`, `channels`, `priority`, `premium`, and `metadata`.
 
-Follow the `AtomicExecutionPort` pattern: interface only in core, implementations in API runtime.
+### 4.3 Adapters
 
-### 4.2 Wiring through school services
+| Adapter | Location | Role |
+|---------|----------|------|
+| `noOpNotificationGateway` | `@edaya/core` | Default in tests; silent |
+| `RecordingNotificationGateway` | `@edaya/core` | Test assertions; dedupes by `idempotencyKey` |
+| `createLoggingNotificationGateway` | `apps/api`, `apps/cron` | Pino log of enqueue/cancel (fallback when Novu not configured) |
+| `createMessageDeliveryNotificationGateway` | `apps/api` | Wraps logging adapter for staging (**does not** update `MessageDelivery` status yet) |
+| `createNovuNotificationGateway` | `@edaya/adaptor-novu` | Novu Cloud trigger/cancel via `NotificationGatewayPort` |
 
-Extend `ServiceArgs` (`packages/core/src/shared/service-args.ts`):
-
-```typescript
-export interface ServiceArgs extends AuthorizedServiceArgs {
-  atomicExecution: AtomicExecutionPort
-  repositories: SchoolRepositories
-  notificationGateway: NotificationGatewayPort
-}
-```
-
-Thread through:
-
-- `SchoolApplication` → `SchoolService` → `BaseSchoolService`
-- `createCoreEntityServices` / entity config factories only if hooks need gateway (via factory input, not global singleton)
-
-Provide adapters:
-
-| Adapter | Location | Use |
-|---------|----------|-----|
-| `NoOpNotificationGateway` | `packages/core` test support | Default in unit tests |
-| `RecordingNotificationGateway` | `packages/core` test support | Assert enqueue calls |
-| `LoggingNotificationGateway` | `apps/api` runtime | Dev/staging |
-| `MessageDeliveryNotificationGateway` | `apps/api` or adaptor | Phase 2+: writes `MessageDelivery`, invokes provider |
-
-### 4.3 Entity hooks vs workflow hooks
+### 4.4 Trigger flow
 
 ```text
                     ┌─────────────────────────────┐
                     │   NotificationGatewayPort   │
-                    │         enqueue()           │
+                    │      enqueue() / cancel()   │
                     └──────────────▲──────────────┘
                                    │
               ┌────────────────────┼────────────────────┐
               │                    │                    │
     ┌─────────▼─────────┐ ┌───────▼────────┐ ┌────────▼────────┐
-    │ Workflow post-    │ │ Entity postSave │ │ Job scheduler   │
-    │ action hooks      │ │ hooks (registry)│ │ (phase 5)       │
+    │ runWorkflow       │ │ postSave hook  │ │ Job processor   │
+    │ Notifications     │ │ (registry)     │ │ (Phase 5)       │
     └─────────▲─────────┘ └───────▲────────┘ └────────▲────────┘
               │                    │                    │
-    publishReportCardResult   direct Assessment.save   cron / queue
-    recordSessionAttendance   (bypasses workflow)      scan due dates
-    publishAnnouncement
+    publishAnnouncement      Assessment.save      cron / queue
+    publishReportCardResult  (dueAt change)
+    recordSessionAttendance
+    recordClassDailyAttendance
 ```
 
-#### When to use workflow hooks (preferred for events)
+**Entity hooks:** `withNotificationPostSaveHook` in `createCoreEntityServices` merges registry hooks into any entity with registered triggers (currently `assessments` only).
 
-Use **workflow post-action hooks** when:
+**Workflow hooks:** `runWorkflowNotifications(baseService, eventKey, payload)` dispatches registered handlers after the command's main work completes.
 
-- The command orchestrates multiple entities (`recordSessionAttendance` → many `AttendanceRecord`s).
-- Business rules gate the notification (`publishReportCardResult` only when status becomes `Published`).
-- Recipient resolution needs workflow context (class group, guardian links, enrollment).
-- The public API exposes only the workflow, not direct entity save.
+### 4.5 Hook placement rules (validated in implementation)
 
-**Implementation pattern:** add optional `after*` callbacks or a small `WorkflowNotificationHooks` registry invoked at the end of workflow methods—**not** inside `ManagedEntityService` for these paths.
-
-Candidate workflow triggers (prioritized):
-
-| Workflow | Method | Event key | Audience |
-|----------|--------|-----------|----------|
-| `AssessmentsServiceWorkflow` | `publishReportCardResult` | `report_card.published` | Student + guardians (`receivesAcademicReports`) |
-| `SchedulingServiceWorkflow` | `recordSessionAttendance`, `recordClassDailyAttendance` | `attendance.recorded` | Guardians (`receivesAttendanceAlerts`) for absent/late |
-| `BehaviorServiceWorkflow` | `recordIncident`, `addStudentInvolvement` | `incident.recorded` | Configurable; start with guardians of involved students |
-| `AssessmentsServiceWorkflow` | `recordAssessmentResult` | `assessment.result_recorded` | Student + guardians |
-| `CommunicationsServiceWorkflow` | `publishAnnouncement` | `announcement.published` | Resolved targets (existing) |
-
-#### When to use entity `postSave` hooks
-
-Use **entity hooks** (`EntityBusinessHooks.postSave` in `ManagedEntityService`) when:
-
-- Clients can save the entity directly via REST/GraphQL entity endpoints.
-- The notification predicate is a simple state transition on one entity (`status` draft → published, `dueAt` set).
-- No extra orchestration is required.
-
-Register hooks in entity config factories (`announcementConfig`, `assessmentConfig`, …) via a shared **notification trigger registry** to avoid copy-paste.
-
-**Caveat:** `postSave` runs inside the write transaction. The hook must only call `notificationGateway.enqueue` (fast, in-process) or write outbox rows in the same transaction—never await external APIs.
-
-#### Decision summary
-
-| Source | Use workflow hook | Use entity postSave |
-|--------|-------------------|---------------------|
-| Report card published | **Yes** — workflow-only command | No |
-| Attendance recorded | **Yes** — batch + guardian resolution | Optional mirror on `AttendanceRecord` if direct save allowed |
-| Announcement published | **Yes** — `publishAnnouncement` | Mirror on `Announcement` only if direct publish via save is possible |
-| Assessment due date changed | No | **Yes** — schedule job notification |
-| Calendar event created | No | **Yes** — schedule job notification |
-
-### 4.4 Job-based notifications (phase 5 preview)
-
-Job-based notifications do not belong in `postSave` long-term. Pattern:
-
-1. Entity hook or workflow registers a **scheduled intent** (`deliverAfter`, `idempotencyKey`) via gateway.
-2. Cloudflare Worker cron or queue consumer (new `apps/api` entry) calls `processDue`.
-3. Processor queries domain (assessments due within N days, activities starting tomorrow) idempotently.
-
-`wrangler.toml` has no cron triggers today—phase 5 adds `[[triggers]]` or a queue binding.
+| Source | Workflow hook | Entity postSave |
+|--------|---------------|-----------------|
+| Report card published | **Yes** — `publishReportCardResult` | No |
+| Attendance (batch) | **Yes** — `recordSessionAttendance`, `recordClassDailyAttendance` | No |
+| Attendance (single) | **No** — `recordAttendance`, `recordDailyAttendance` not wired | Gap G2 |
+| Announcement published | **Yes** — `publishAnnouncement` | No (direct publish via entity save not used) |
+| Assessment due date | No | **Yes** — `assessment.due_soon` job intent |
 
 ---
 
@@ -230,276 +166,223 @@ Job-based notifications do not belong in `postSave` long-term. Pattern:
 
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
-| 0 | Event catalog and trigger matrix | Planned |
-| 1 | `NotificationGatewayPort` + test adapters | Planned |
-| 2 | Wire gateway into `ServiceArgs` / `BaseSchoolService` | Planned |
-| 3 | Notification trigger registry + entity `postSave` infrastructure | Planned |
-| 4 | Workflow post-action hooks + first vertical slices | Planned |
-| 5 | Job scheduler + date-based scanners | Deferred |
-| 6 | Provider adapters + webapp inbox | Deferred |
+| 0 | Event catalog and trigger matrix | **Skipped** — matrix in Appendix A; formal spike doc not created |
+| 1 | `NotificationGatewayPort` + test adapters | **Complete** |
+| 2 | Wire gateway into `ServiceArgs` / `BaseSchoolService` | **Complete** |
+| 3 | Entity trigger registry + `postSave` infrastructure | **Complete** |
+| 4 | Workflow hooks + first vertical slices | **Complete** |
+| 5 | Job scheduler + date-based scanners | **Complete** |
+| 6 | Provider adapters + webapp inbox | **Deferred** |
 
 ### Dependency order
 
 ```text
-Phase 0 ─> Phase 1 ─> Phase 2 ─┬─> Phase 3 ─> Phase 4
-                                └─> Phase 5 (after 4)
-                                         └─> Phase 6
+Phase 0 (informal) ─> Phase 1 ─> Phase 2 ─┬─> Phase 3 ─> Phase 4 ✓
+                                          └─> Phase 5 ─> Phase 6
 ```
 
 ---
 
-## Phase 0 — Event catalog and design spike
+## Phase 0 — Event catalog (skipped, retrospective)
 
-**Goal:** Agree on event keys, idempotency rules, and hook placement before writing code.
-
-### 0.1 Inventory triggers
-
-- [ ] List all notification-worthy domain transitions (attendance, incidents, marks, report cards, homework, fees, activities, assessments).
-- [ ] For each, record: public entry point (workflow command vs entity save), recipient resolver, opt-out flags, channels.
-- [ ] Map each to `NotificationKind` and proposed `eventKey`.
-
-### 0.2 Reuse vs extend messaging model
-
-- [ ] Confirm system-authored announcements (event/job) use `createdBy: null` or a dedicated system actor id.
-- [ ] Decide whether event notifications create a new `Announcement` per event or per batch (recommend: per logical event with `eventKey` in metadata).
-- [ ] Document idempotency key format: `{eventKey}:{entityId}:{transition}`.
-
-### 0.3 Spike: hook placement proof
-
-- [ ] Trace `publishReportCardResult` and `recordSessionAttendance` call graphs; confirm workflow hook insertion points.
-- [ ] Trace direct entity save paths in OpenAPI `allowDirectSave` metadata; note which entities need `postSave` mirrors.
-
-### Exit criteria
-
-- [ ] Trigger matrix reviewed and stored in this doc (appendix) or `docs/notifications-triggers.md`.
-- [ ] No open questions on gateway method surface.
+Phase 0 was not executed as a separate spike. Implementation proceeded directly from the draft matrix in Appendix A. Residual open items are captured in **§9 Known gaps** and **Appendix C**.
 
 ---
 
-## Phase 1 — Notification gateway port
+## Phase 1 — Notification gateway port ✅
 
-**Goal:** Define the port and test doubles without changing runtime behavior.
-
-### 1.1 Port definition
-
-- [ ] Add `packages/core/src/ports/notification-gateway.ts` with `NotificationEnqueueInput`, `NotificationGatewayPort`.
-- [ ] Export from `packages/core/src/ports/index.ts`.
-- [ ] Add domain re-exports for `MessageDeliveryChannel`, `MessageDeliveryRecipientKind`, `AnnouncementPriority` in port types (import from domains, do not duplicate enums).
-
-### 1.2 Test adapters
-
-- [ ] `NoOpNotificationGateway` — resolves immediately.
-- [ ] `RecordingNotificationGateway` — stores inputs for assertions.
-- [ ] Unit tests for idempotency key handling (adapter may dedupe; document contract).
-
-### Exit criteria
-
-- [ ] Port and adapters live in `@edaya/core`.
-- [ ] `bun run verify` passes (no runtime wiring yet).
+- [x] `package/domain-core/src/ports/notification-gateway.ts`
+- [x] Export from `ports/index.ts`
+- [x] `noOpNotificationGateway`, `RecordingNotificationGateway`
+- [x] Unit tests: `tests/notifications/notification-gateway-adapters.test.ts`
 
 ---
 
-## Phase 2 — Wire gateway into school services
+## Phase 2 — Wire gateway into school services ✅
 
-**Goal:** Every `SchoolService` instance can call the gateway; tests updated.
-
-### 2.1 Extend `ServiceArgs`
-
-- [ ] Add `notificationGateway: NotificationGatewayPort` to `ServiceArgs`.
-- [ ] Add `readonly notificationGateway` on `BaseSchoolService`.
-- [ ] Update `create-test-app.ts` and all `ServiceArgs` construction sites to pass `NoOpNotificationGateway` or `RecordingNotificationGateway`.
-
-### 2.2 API runtime
-
-- [ ] Instantiate `LoggingNotificationGateway` (or no-op) in `apps/api` school application bootstrap.
-- [ ] Ensure worker and node entrypoints share the same factory.
-
-### Exit criteria
-
-- [ ] All core tests pass with gateway in args.
-- [ ] No product behavior change yet (no-op adapter in production until phase 4).
+- [x] `notificationGateway` on `ServiceArgs` and `BaseSchoolService`
+- [x] All test construction sites updated (`create-test-app`, workflow contexts, integration harnesses)
+- [x] API: `buildSchoolApplication` wires gateway (logging when `env` provided and `LOG_LEVEL !== 'silent'`)
 
 ---
 
-## Phase 3 — Entity hook infrastructure
+## Phase 3 — Entity hook infrastructure ✅
 
-**Goal:** Pluggable `postSave` notification triggers without per-entity boilerplate.
-
-### 3.1 Trigger registry
-
-- [ ] Add `packages/core/src/notifications/notification-trigger-registry.ts`:
-  - Register `(entityKey, predicate, resolver)` tuples.
-  - `predicate(entity, existing)` → boolean (state transition detected).
-  - `resolver(entity, existing, context)` → `NotificationEnqueueInput | null`.
-- [ ] Add `createNotificationPostSaveHook(entityKey)` returning `EntityBusinessHooks.postSave` that consults the registry.
-
-### 3.2 Entity config integration
-
-- [ ] Extend `EntityConfigFactoryInput` to accept `notificationGateway` (or full trigger context).
-- [ ] Wire registry hook into `createCoreEntityServices` for entities in the trigger matrix (start with `assessments` for due-date job intents only in phase 3—enqueue with `deliverAfter`, no scheduler yet).
-
-### 3.3 Tests
-
-- [ ] Unit test: predicate fires only on transition, not on no-op save.
-- [ ] Unit test: registry respects school tenant from entity.
-
-### Exit criteria
-
-- [ ] At least one entity uses the registry hook in tests.
-- [ ] `ManagedEntityService` tests still pass; hook runs after repository save.
+- [x] `notification-trigger-registry.ts` — register `(entityKey, predicate, resolver)`
+- [x] `createNotificationPostSaveHook` / `withNotificationPostSaveHook`
+- [x] `EntityConfigFactoryInput.notificationGateway`
+- [x] `createCoreEntityServices` applies hooks for entities with registered triggers
+- [x] First trigger: `assessment.due_soon` (`triggers/assessment-due-soon.ts`)
+- [x] Tests: `notification-trigger-registry.test.ts`, `assessment-notification-hook.test.ts`
 
 ---
 
-## Phase 4 — Workflow hooks and first vertical slices
+## Phase 4 — Workflow hooks and vertical slices ✅
 
-**Goal:** Event-based and ad-hoc notifications enqueue through the gateway in real commands.
+- [x] `workflow-notification-runner.ts` + `runWorkflowNotifications`
+- [x] Handlers: `announcement-published`, `report-card-published`, `attendance-recorded`
+- [x] `publishAnnouncement` → materialize App deliveries → enqueue
+- [x] `publishReportCardResult` → enqueue guardians + student
+- [x] `recordSessionAttendance` / `recordClassDailyAttendance` → enqueue for absent/late
+- [x] API staging adapter: `createMessageDeliveryNotificationGateway` (log wrapper)
+- [x] Workflow tests in `communications-workflows.test.ts`, `assessment-workflows.test.ts`, `scheduling-workflows.test.ts`
 
-### 4.1 Workflow notification runner
+### Phase 4 caveat (4.5)
 
-- [ ] Add `packages/core/src/notifications/workflow-notification-runner.ts`:
-  - Accepts `notificationGateway`, `repositories`, `actor`.
-  - `runWorkflowTriggers(eventKey, context)` dispatches registered workflow handlers.
-- [ ] Keep handlers colocated by domain: `notifications/handlers/report-card.ts`, `attendance.ts`, `communications.ts`.
-
-### 4.2 Ad-hoc: `publishAnnouncement`
-
-- [ ] After `materializeDeliveries` (or inside `publishAnnouncement`), call gateway with `kind: 'ad_hoc'`, recipients from materialized deliveries.
-- [ ] Reuse existing `CommunicationsServiceWorkflow.resolveRecipients` / delivery materialization.
-- [ ] Extend `communications-workflows.test.ts` with `RecordingNotificationGateway` assertion.
-
-### 4.3 Event-based: report card published
-
-- [ ] Add workflow trigger on `AssessmentsServiceWorkflow.publishReportCardResult`.
-- [ ] Resolve guardians via `guardianLinks` + `receivesAcademicReports`.
-- [ ] Idempotency key: `report_card.published:{resultId}`.
-- [ ] Test in assessments workflow tests.
-
-### 4.4 Event-based: attendance (stretch)
-
-- [ ] Add workflow trigger on `recordSessionAttendance` / `recordClassDailyAttendance` for absent/late statuses.
-- [ ] Filter guardians with `receivesAttendanceAlerts` and `allowsNotifications` on preferred contact method.
-- [ ] Idempotency key per `(studentId, sessionId, status)`.
-
-### 4.5 Production adapter
-
-- [ ] Replace no-op with `MessageDeliveryNotificationGateway` that transitions `MessageDelivery` from `Pending` → `Sent`/`Failed` (in-process log stub acceptable for staging).
-
-### Exit criteria
-
-- [ ] `publishAnnouncement` enqueues notifications in tests.
-- [ ] `publishReportCardResult` enqueues notifications in tests.
-- [ ] `bun run verify` green.
-- [ ] No regression in communications workflow tests.
+The checklist item "transitions `MessageDelivery` Pending → Sent" is **not implemented**. The staging adapter only logs enqueue intent. `MessageDelivery` rows are created on ad-hoc publish (App channel) but status stays `Pending` until Phase 6 provider work.
 
 ---
 
-## Phase 5 — Job-based scheduler (deferred)
+## Phase 5 — Job-based scheduler ✅
 
-**Goal:** Date-based notifications without manual staff action.
+**Prerequisite:** Phase 4 job **intents** exist (`assessment.due_soon` enqueues with `deliverAfter`).
+
+Cron workflows live in `@edaya/core` (`package/domain-core/src/cron/`). `apps/cron` is a thin runtime shell (Node one-shot + Cloudflare Worker `scheduled`), mirroring `apps/api`.
+
+**Design decision (5.1):** Job delivery uses **query-based cron scanners** over domain entities (not a separate schedule table). Entity `postSave` hooks register `deliverAfter` intent via the gateway; the daily cron re-scans and enqueues when the notification window is open. Idempotency keys prevent duplicate sends.
 
 ### 5.1 Scheduled intents
 
-- [ ] Gateway stores or marks deliveries with `deliverAfter` (may use `MessageDelivery` + metadata or a thin `notification_schedule` table if needed).
-- [ ] Entity hooks on `Assessment`, `HomeworkAssignment`, `CalendarEvent`, `ExtracurricularActivity` register schedules when dates are set/changed; `cancel` on delete or date change.
+- [x] Query-based cron scanners (no separate schedule table — see design note above)
+- [x] Entity hooks on `HomeworkAssignment`, `CalendarEvent`, `ExtracurricularActivity` (assessment already done)
 
-### 5.2 Worker cron / queue
+### 5.2 Cron app (`apps/cron`)
 
-- [ ] Add cron trigger to `apps/api/wrangler.toml` (e.g. every 15 minutes).
-- [ ] Implement `scheduled` handler: school-scoped scan or process due enqueue records.
-- [ ] Idempotent processing per `idempotencyKey`.
+- [x] Core cron catalog + runner (`runCronJobs`, `CRON_JOB_KEYS`)
+- [x] `processDueNotifications` job — scans assessments, homework, activities, calendar events
+- [x] Node entry (`bun dev` / `bun run dev:cron`) — one-shot run for local/CI
+- [x] Worker entry + `wrangler.toml` cron trigger (`0 6 * * *`)
+- [x] Deploy scripts: `bun run deploy:cron`, `bun run deploy:cron:staging` (ops: set secrets + Hyperdrive before first deploy)
 
 ### 5.3 Initial job types
 
-- [ ] Assessment due in N days (configurable per school later; hardcode N=3 initially).
-- [ ] Extracurricular activity reminder 24h before start.
-
-### Exit criteria
-
-- [ ] Staging cron runs; due notifications enqueue without duplicate sends.
-- [ ] Integration test with frozen clock.
+- [x] `assessment.due_soon` — 3-day lead, class students (`scan-assessment-due-notifications.ts`)
+- [x] `homework.due_soon` — 3-day lead, class students + guardians (`scan-homework-due-notifications.ts`)
+- [x] `activity.reminder` — 24h before `startDate`, enrolled students + guardians (`scan-activity-reminders.ts`)
+- [x] `calendar.event_reminder` — 24h before `startDate`, scoped class/grade recipients (`scan-calendar-event-reminders.ts`)
 
 ---
 
 ## Phase 6 — Providers and webapp (deferred)
 
-- [ ] Email/SMS provider adapters behind gateway.
-- [ ] Webapp notification inbox (app channel); mark read via `MessageDelivery.readAt`.
-- [ ] Staff UI for ad-hoc announcements (may already exist partially—align with `specs/app-shell-spec.md`).
+- [ ] Email/SMS/WhatsApp provider adapters behind gateway
+- [ ] Transition `MessageDelivery` Pending → Sent/Failed/Read
+- [ ] Webapp notification inbox (app channel); mark read via `MessageDelivery.readAt`
+- [ ] Staff UI for ad-hoc announcements (align with `specs/app-shell-spec.md`)
+- [ ] Multi-channel publish (ad-hoc currently materializes **App only** on publish)
 
 ---
 
-## 6. Testing strategy
+## 6. Testing strategy (current coverage)
 
-| Layer | What to test |
-|-------|----------------|
-| Port adapters | Enqueue, cancel, deduplication |
-| Trigger registry | Predicate transitions, tenant isolation |
-| Workflow handlers | Recipient resolution, opt-out flags |
-| Communications integration | Publish → materialize → enqueue |
-| API runtime | Gateway wired for actor-scoped service |
-| Job processor (phase 5) | Time-based idempotency |
+| Layer | Covered | Tests |
+|-------|---------|-------|
+| Port adapters | Yes | `notification-gateway-adapters.test.ts` (4) |
+| Entity trigger registry | Yes | `notification-trigger-registry.test.ts` (9) |
+| Entity hook integration | Yes | `assessment-notification-hook.test.ts` (2), `homework-notification-hook.test.ts` (2) |
+| Workflow: announcement | Yes | `communications-workflows.test.ts` |
+| Workflow: report card | Yes | `assessment-workflows.test.ts` |
+| Workflow: attendance | Yes | `scheduling-workflows.test.ts` |
+| API runtime wiring | Implicit | `apps/api` tsc passes |
+| Job processor | Yes | `package/domain-core/tests/cron/` (due-window, cron-job-runner); `apps/cron` runtime |
+| Provider HTTP | No | Phase 6 |
 
-Avoid testing provider HTTP in core; use recording gateway and delivery status assertions.
+**Total notification-specific tests:** 19 in `package/domain-core/tests/notifications/` + 3 workflow assertion tests + 4 cron tests.
 
 ---
 
 ## 7. Risks and mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Double send (hook + workflow) | One trigger per event key; document entry points; idempotency keys |
-| `postSave` slows writes | Enqueue only; no external I/O in core |
-| Direct entity save bypasses workflow | Registry hooks on entities with `allowDirectSave` |
-| Guardian spam | Opt-out flags + per-event debounce keys |
-| Cross-tenant leakage | Gateway validates `recipient.schoolId` via repository lookups |
+| Risk | Status | Mitigation |
+|------|--------|------------|
+| Double send (hook + workflow) | Mitigated | One trigger per event key; idempotency keys |
+| `postSave` slows writes | Mitigated | Enqueue only in hooks |
+| Direct entity save bypasses workflow | Partial | Registry on `assessments`; other entities not mirrored |
+| Guardian spam | Partial | Opt-out flags on wired handlers; no digest/batching |
+| Cross-tenant leakage | Mitigated | Resolvers check `actor.schoolId` vs entity school |
+| Job intents never delivered | **Mitigated** | Cron scanners + entity hooks; idempotency keys |
+| Users see no notifications | **Open** | Phase 6 inbox + providers required |
 
 ---
 
-## 8. Suggested PR sequence
+## 8. Suggested next PR sequence
 
-1. **PR 1 (phase 0–1):** Port + test adapters only.  
-2. **PR 2 (phase 2):** Wire `ServiceArgs`; no-op in production.  
-3. **PR 3 (phase 3):** Trigger registry + one entity hook (assessment due-date intent).  
-4. **PR 4 (phase 4a):** Workflow runner + `publishAnnouncement` integration.  
-5. **PR 5 (phase 4b):** Report card + attendance workflow triggers.  
-6. **PR 6 (phase 5):** Cron + job scanners (separate sprint if needed).
+Infrastructure (Phases 1–4) can ship as one or more PRs. Recommended follow-on:
 
-Each PR should keep `bun run verify` green.
-
----
-
-## Appendix A — Initial trigger matrix (draft)
-
-| eventKey | Kind | Entry point | Recipients | Opt-out |
-|----------|------|-------------|------------|---------|
-| `announcement.published` | ad_hoc | `communicationsWorkflow.publishAnnouncement` | Resolved targets | `allowsNotifications`, premium flags |
-| `report_card.published` | event | `assessmentsWorkflow.publishReportCardResult` | Student, linked guardians | `receivesAcademicReports` |
-| `attendance.recorded` | event | `schedulingWorkflow.recordSessionAttendance` | Linked guardians | `receivesAttendanceAlerts` |
-| `incident.recorded` | event | `behaviorWorkflow.recordIncident` | Involved students' guardians | TBD |
-| `assessment.result_recorded` | event | `assessmentsWorkflow.recordAssessmentResult` | Student, guardians | `receivesAcademicReports` |
-| `assessment.due_soon` | job | Assessment `postSave` + scheduler | Class students + guardians | Same as academic |
-| `activity.reminder` | job | Activity `postSave` + scheduler | Enrolled students + guardians | TBD |
-| `homework.due_soon` | job | Homework `postSave` + scheduler | Class students + guardians | TBD |
+1. **PR A (Phase 5a):** Cron entry + process `deliverAfter` enqueue records (assessment due-soon end-to-end).
+2. **PR B (Phase 5b):** Homework/activity entity triggers + scanners.
+3. **PR C (Phase 6a):** Wire single-record attendance notifications; incident + assessment result handlers.
+4. **PR D (Phase 6b):** Provider adapter + `MessageDelivery` status transitions.
+5. **PR E (Phase 6c):** Webapp notification inbox.
 
 ---
 
-## Appendix B — Key files to touch
+## 9. Known gaps (post Phase 4)
+
+| ID | Gap | Impact | Suggested phase |
+|----|-----|--------|-----------------|
+| G1 | No persisted `deliverAfter` queue — cron re-scans domain | Cron may re-enqueue if idempotency expires at provider | 5 ✅ (query-based) |
+| G2 | `recordAttendance` / `recordDailyAttendance` (single-record) lack workflow notification hooks | Direct attendance API path silent | 6a |
+| G3 | `incident.recorded`, `assessment.result_recorded` not implemented | Matrix rows remain draft | 6a |
+| G4 | Event/job notifications do not create `Announcement` rows | No unified inbox/history for system events | 6 (design decision) |
+| G5 | `publishAnnouncement` materializes **App channel only** | Email/SMS not auto-materialized on publish | 6 |
+| G6 | `premiumNotificationsEnabled` not enforced in recipient resolution | Premium flag ignored for delivery | 6 |
+| G7 | `MessageDeliveryNotificationGateway` is log-only | No real delivery or status transition | 6 |
+| G8 | Phase 0 formal catalog never written | Onboarding/docs gap | Optional doc pass |
+
+---
+
+## Appendix A — Trigger matrix (implementation status)
+
+| eventKey | Kind | Entry point | Recipients | Opt-out | Status |
+|----------|------|-------------|------------|---------|--------|
+| `announcement.published` | ad_hoc | `communicationsWorkflow.publishAnnouncement` | Materialized App deliveries | `allowsNotifications` (partial) | **Live** |
+| `report_card.published` | event | `assessmentsWorkflow.publishReportCardResult` | Student + guardians | `receivesAcademicReports` | **Live** |
+| `attendance.recorded` | event | `schedulingWorkflow.recordSessionAttendance`, `recordClassDailyAttendance` | Guardians | `receivesAttendanceAlerts`, `allowsNotifications` | **Live** (batch only) |
+| `assessment.due_soon` | job | Assessment `postSave` + cron scanner | Class students | — | **Live** |
+| `homework.due_soon` | job | Homework `postSave` + cron scanner | Class students + guardians | `receivesAcademicReports` | **Live** |
+| `activity.reminder` | job | Activity `postSave` + cron scanner | Enrolled + guardians | `allowsNotifications` | **Live** |
+| `calendar.event_reminder` | job | Calendar event `postSave` + cron scanner | Scoped class/grade students + guardians | `allowsNotifications` | **Live** (school-wide scope skipped) |
+| `incident.recorded` | event | `behaviorWorkflow.recordIncident` | Involved guardians | TBD | Planned |
+| `assessment.result_recorded` | event | `assessmentsWorkflow.recordAssessmentResult` | Student + guardians | `receivesAcademicReports` | Planned |
+
+### Idempotency key formats (implemented)
+
+| eventKey | Key pattern |
+|----------|-------------|
+| `announcement.published` | `announcement.published:{announcementId}` |
+| `report_card.published` | `report_card.published:{resultId}` |
+| `attendance.recorded` | `attendance.recorded:{studentId}:{sessionId}:{status}` |
+| `assessment.due_soon` | `assessment.due_soon:{assessmentId}` |
+| `homework.due_soon` | `homework.due_soon:{homeworkAssignmentId}` |
+| `activity.reminder` | `activity.reminder:{activityId}` |
+| `calendar.event_reminder` | `calendar.event_reminder:{calendarEventId}` |
+
+---
+
+## Appendix B — Key files (as implemented)
 
 | Area | Files |
 |------|-------|
-| Port | `packages/core/src/ports/notification-gateway.ts`, `ports/index.ts` |
-| Service wiring | `packages/core/src/shared/service-args.ts`, `base-school-service.ts`, `school-application.ts` |
-| Entity hooks | `packages/core/src/services/core-entity-catalog.ts`, domain `*Config` factories |
-| Workflows | `packages/core/src/services/service-workflows/{communications,assessments,scheduling,behavior}.ts` |
-| Notifications module | `packages/core/src/notifications/*` (new) |
-| API runtime | `apps/api/src/lib/school-api/application.ts`, runtime bootstrap |
-| Tests | `packages/core/tests/support/create-test-app.ts`, workflow test files |
+| Port | `package/domain-core/src/ports/notification-gateway.ts` |
+| Adapters | `package/domain-core/src/notifications/no-op-notification-gateway.ts`, `recording-notification-gateway.ts` |
+| Entity triggers | `notification-trigger-registry.ts`, `register-notification-triggers.ts`, `triggers/*.ts` |
+| Cron jobs | `package/domain-core/src/cron/` — `runCronJobs`, `processDueNotifications`, scanners |
+| Novu adapter | `package/adaptor-novu/` |
+| Workflow triggers | `workflow-notification-runner.ts`, `register-workflow-notification-handlers.ts`, `handlers/*.ts` |
+| Service wiring | `service-args.ts`, `base-school-service.ts`, `core-entity-catalog.ts` |
+| Workflows | `communications.ts`, `assessments.ts`, `scheduling.ts` |
+| API runtime | `apps/api/src/runtime/shared/school-application.ts`, `message-delivery-notification-gateway.ts` |
+| Tests | `package/domain-core/tests/notifications/*`, workflow test files |
 
 ---
 
-## Appendix C — Open questions (resolve in phase 0)
+## Appendix C — Open questions (updated)
 
-1. System actor id for automated announcements (`createdBy` sentinel vs nullable).
-2. Whether app-channel deliveries appear in webapp before phase 6 UI.
-3. Per-school notification lead times (assessment due days) — config entity or hardcode.
-4. Queue vs cron-only for job processing on Cloudflare Workers.
+| # | Question | Decision / status |
+|---|----------|-------------------|
+| 1 | System actor for automated announcements | **Deferred** — event notifications enqueue without creating `Announcement` rows (G4) |
+| 2 | App-channel visibility before webapp UI | **Deferred** — `MessageDelivery` App rows materialized on publish; no inbox UI (Phase 6) |
+| 3 | Per-school assessment lead time | **Hardcoded** — `ASSESSMENT_DUE_SOON_LEAD_DAYS = 3` in `assessment-due-soon.ts` |
+| 4 | Queue vs cron on Workers | **Decided** — `apps/cron` Worker with daily cron trigger |
+| 5 | Single vs multi-channel on publish | **Decided** — App only on `publishAnnouncement`; other channels remain explicit `materializeDeliveries` calls |

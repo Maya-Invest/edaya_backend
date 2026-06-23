@@ -1,8 +1,8 @@
 # Zod Entity Schema Migration Plan
 
-This document outlines the step-by-step action plan for migrating the domain model in `packages/core` to a Zod-wrapped schema design. The migration unifies schema definitions, type inference, creation/update DTOs, and runtime validation into a single source of truth across the core domain, API route validations, and database adaptors.
+This document outlines the step-by-step action plan for migrating the domain model in `package/domain-core` to a Zod-wrapped schema design. The migration unifies schema definitions, type inference, creation/update DTOs, and runtime validation into a single source of truth across the core domain, API route validations, and database adaptors.
 
-**Canonical location:** `packages/core/src/domains/` (replaces the former `packages/core/src/entities/` tree). Entity configs (`*Config`) are co-located in the same domain files.
+**Canonical location:** `package/domain-core/src/domains/` (replaces the former `package/domain-core/src/entities/` tree). Entity configs (`*Config`) are co-located in the same domain files.
 
 ---
 
@@ -17,7 +17,7 @@ This document outlines the step-by-step action plan for migrating the domain mod
 
 ## 2. Architecture
 
-Each domain entity lives in `packages/core/src/domains/<area>/<name>.ts` with schema, class, and (where applicable) `*Config` in one file:
+Each domain entity lives in `package/domain-core/src/domains/<area>/<name>.ts` with schema, class, and (where applicable) `*Config` in one file:
 
 ```typescript
 import { z } from 'zod'
@@ -65,8 +65,8 @@ export class ClassSubject {
 
 ### Phase 1: Core foundation — Done
 
-- [x] Add `zod` to `packages/core/package.json`.
-- [x] `DomainValidationError`, `formatZodError`, `zodDate()` in `packages/core/src/domains/utils.ts`.
+- [x] Add `zod` to `package/domain-core/package.json`.
+- [x] `DomainValidationError`, `formatZodError`, `zodDate()` in `package/domain-core/src/domains/utils.ts`.
 
 ### Phase 2: Pilot entity — Done
 
@@ -88,7 +88,7 @@ export class ClassSubject {
 - [x] **Group C (Finances):** Fee, StudentFee, Payment (+ nested installment templates).
 - [x] **Group D (Scheduling & Assessments):** Session, Assessment, AssessmentResult, AttendanceRecord, CalendarEvent, PeriodDefinition, Schedule, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResultSection, ReportCardResult.
 - [x] **Group E (Messaging & System):** Announcement, AnnouncementTarget, MessageDelivery, Attachment, StaffMember, DisciplinaryAction, Incident, StudentDisciplinaryAction, StudentIncidentInvolvement, StudentNote, StudentHealthProfile, AccessRole, GradeScale, Resource, ResourceAssignment, StaffAssignment, StaffRoleAssignment.
-- [x] Remove `packages/core/src/entities/`; export from `packages/core/src/domains/`.
+- [x] Remove `package/domain-core/src/entities/`; export from `package/domain-core/src/domains/`.
 - [x] Co-locate `*Config` factories in domain files (remove `services/entity-configs/`).
 
 ### Phase 6: Downstream API integration — Done
@@ -116,7 +116,7 @@ Phases 1–6 delivered a working Zod-first domain. Phase 7 removes remaining dup
 
 **Constructor typing convention:** Use `z.input<typeof fooSchema>` for pre-parse constructor args (accepts coercions/defaults) and `z.infer<typeof fooSchema>` (or a narrowed `FooData`) for `readonly data` after `parseDomain`.
 
-**Exit criteria:** No raw `safeParse` in `packages/core/src/domains/` except inside `parseDomain`. ✅
+**Exit criteria:** No raw `safeParse` in `package/domain-core/src/domains/` except inside `parseDomain`. ✅
 
 ### 7.2 Remove redundant `*Args` interfaces
 
@@ -130,7 +130,7 @@ Phases 1–6 delivered a working Zod-first domain. Phase 7 removes remaining dup
 
 **Naming convention:** `FooInput` = pre-parse constructor/command args (`z.input<typeof fooSchema>`); `FooData` = post-parse entity `data` (often `z.infer`, sometimes narrowed e.g. `Money` fields).
 
-**Exit criteria:** `rg 'export interface \\w+Args' packages/core/src/domains` returns empty. ✅
+**Exit criteria:** `rg 'export interface \\w+Args' package/domain-core/src/domains` returns empty. ✅
 
 ### 7.3 Value objects & computed types
 
@@ -146,7 +146,7 @@ Phases 1–6 delivered a working Zod-first domain. Phase 7 removes remaining dup
 - [x] Export schemas from `@edaya/core` if referenced by `entities.schemas.ts` (`moneySchema`, `attendanceSummarySchema`).
 - [x] Remove `requireNonBlank` / `requireNonNegativeInt` usage from value objects once Zod covers those rules.
 
-**Exit criteria:** `packages/core/src/value_object/` has no manual field validators except domain methods that are not schema concerns. ✅
+**Exit criteria:** `package/domain-core/src/value_object/` has no manual field validators except domain methods that are not schema concerns. ✅
 
 ### 7.4 Retire legacy validation helpers
 
@@ -178,11 +178,11 @@ Phases 1–6 delivered a working Zod-first domain. Phase 7 removes remaining dup
 
 **Goal:** Repo layout matches mental model (`domains`, not `entities`).
 
-- [x] Rename `packages/core/tests/unit/entities/` → `packages/core/tests/unit/domains/` (update imports only if paths change).
+- [x] Rename `package/domain-core/tests/unit/entities/` → `package/domain-core/tests/unit/domains/` (update imports only if paths change).
 - [x] Rename `utils.test.ts` to live beside `domains/utils.ts` or under `tests/unit/domains/`.
-- [x] Delete stale artifacts (`packages/core/test_output.txt` and any CI logs referencing `src/entities`).
+- [x] Delete stale artifacts (`package/domain-core/test_output.txt` and any CI logs referencing `src/entities`).
 - [ ] Update internal docs (`sevice_model_improvement.md`, README snippets) that still say `entities/`.
-- [x] Add a short `packages/core/src/domains/README.md` describing: schema → class → config → exports.
+- [x] Add a short `package/domain-core/src/domains/README.md` describing: schema → class → config → exports.
 
 **Exit criteria:** No references to `src/entities` in docs or active test paths (migration plan history lines excepted).
 
@@ -239,8 +239,8 @@ bun run fullcheck   # lint:fix + check + test
 
 Additional gates before closing Phase 7:
 
-- [x] `rg 'export interface \\w+Args' packages/core/src/domains` — empty.
-- [x] `rg 'safeParse' packages/core/src/domains` — only inside `parseDomain`.
+- [x] `rg 'export interface \\w+Args' package/domain-core/src/domains` — empty.
+- [x] `rg 'safeParse' package/domain-core/src/domains` — only inside `parseDomain`.
 - [x] `rg 'src/entities' docs packages` — only migration-plan history lines.
 - [x] OpenAPI generation (if applicable) still produces valid spec from derived schemas.
 
@@ -253,7 +253,7 @@ Additional gates before closing Phase 7:
 
 ## 6. Definition of done (entire migration)
 
-- [x] All persisted domain types live under `packages/core/src/domains/` with Zod schemas.
+- [x] All persisted domain types live under `package/domain-core/src/domains/` with Zod schemas.
 - [x] API validation derives from `@edaya/core` schemas.
 - [x] Postgres adaptor reconstructs entities through constructors (Zod on read).
 - [x] No redundant `*Args` interfaces; constructors use `parseDomain` + `z.input`.

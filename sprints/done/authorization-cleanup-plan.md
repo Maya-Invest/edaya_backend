@@ -1,6 +1,6 @@
 # Authorization Cleanup Plan
 
-Assessment of the authorization model in `packages/core/src/authorization/` and related ports. This document tracks phased cleanup work.
+Assessment of the authorization model in `package/domain-core/src/authorization/` and related ports. This document tracks phased cleanup work.
 
 ## Current Architecture
 
@@ -115,6 +115,6 @@ authorization/
 ## Test Plan
 
 ```bash
-cd packages/core && bun test tests/unit/auth
+cd package/domain-core && bun test tests/unit/auth
 cd packages/integration-tests && bun test src/auth
 ```

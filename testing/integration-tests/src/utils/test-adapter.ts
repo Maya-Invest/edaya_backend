@@ -5,6 +5,7 @@ import type {
 import {
   ActorAssuranceLevel,
   createRepositoryAuthorizationPolicy,
+  noOpNotificationGateway,
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
@@ -82,6 +83,7 @@ export function buildSchoolApplication(opts: {
   return new SchoolApplication({
     atomicExecution: opts.atomicExecution,
     repositories: opts.repositories,
+    notificationGateway: noOpNotificationGateway,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories: opts.repositories,
       staffAssignmentRepository: opts.repositories.staffAssignments,

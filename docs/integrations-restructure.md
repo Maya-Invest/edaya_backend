@@ -1,22 +1,22 @@
 # Monorepo layout
 
-Vendor-agnostic **packages**, platform-specific **integrations**, and **apps** that wire them together.
+Shared libraries live under **`package/`**; **apps** wire them at runtime; **testing/** holds harnesses.
 
 ## Layout
 
 ```text
 apps/
   api/                              Hono HTTP, OpenAPI, runtime, Worker host wiring
+  cron/                             Scheduled jobs (Node + Worker)
   webapp/                           SvelteKit static SPA (Cloudflare Pages)
 
-packages/
-  core/                             Domain, services, authorization, ports
+package/
+  domain-core/                      Domain, services, authorization, ports
   adaptor-postgres/                 School Drizzle schema, SQL, repos, runMigrations()
-  api-client/                       Typed client generated from OpenAPI
-
-integrations/
-  neon-migrations/                  Apply school migrations (Neon / Hyperdrive)
-  betterauth-d1-migrations/         Auth schema, SQL, D1 deploy, auth runMigrations()
+  adaptor-novu/                     Novu notification gateway adapter
+  generated-api-client/             Typed client generated from OpenAPI
+  integration-neon-migrations/      Apply school migrations (Neon / Hyperdrive)
+  integration-betterauth-d1-migrations/  Auth schema, SQL, D1 deploy, auth runMigrations()
 
 testing/
   dev-fixtures/                     Shared seed IDs and fixture records
@@ -28,25 +28,27 @@ testing/
 
 | Layer | Owns | Does not own |
 |-------|------|--------------|
-| `packages/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
-| `integrations/neon-migrations` | `drizzle-kit migrate`, Hyperdrive dev bootstrap, `migrate:all` orchestration | SQL source files |
-| `integrations/betterauth-d1-migrations` | Auth schema, SQL, D1 Wrangler apply, auth `runMigrations()` | School data |
+| `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
+| `package/integration-neon-migrations` | `drizzle-kit migrate`, Hyperdrive dev bootstrap, `migrate:all` orchestration | SQL source files |
+| `package/integration-betterauth-d1-migrations` | Auth schema, SQL, D1 Wrangler apply, auth `runMigrations()` | School data |
 | `testing/seeding` | HTTP seed scripts against running API (`seed:init`, `seed:all`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Platform migration scripts, seed data |
 
-**Dependency direction:** `packages` never depend on `integrations`. `apps/api` depends on both. `testing/seeding` calls the API over HTTP. Integration packages may reference adaptor paths for migration SQL only.
+**Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` never depend on `package/integration-*`. `apps/api` depends on both. `testing/seeding` calls the API over HTTP. Integration packages may reference adaptor paths for migration SQL only.
 
 ## Package map
 
 | Package | Path | Role |
 |---------|------|------|
 | `@edaya/api` | `apps/api` | Hono API (Node + Worker) |
+| `@edaya/cron` | `apps/cron` | Cron runtime (Node + Worker) |
 | `@edaya/webapp` | `apps/webapp` | SvelteKit UI |
-| `@edaya/core` | `packages/core` | Domain + ports |
-| `@edaya/adaptor-postgres` | `packages/adaptor-postgres` | School persistence |
-| `@edaya/api-client` | `packages/api-client` | Typed API SDK |
-| `@edaya/neon-migrations` | `integrations/neon-migrations` | School DB migration apply |
-| `@edaya/betterauth-d1-migrations` | `integrations/betterauth-d1-migrations` | Auth schema + D1 deploy |
+| `@edaya/core` | `package/domain-core` | Domain + ports |
+| `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
+| `@edaya/api-client` | `package/generated-api-client` | Typed API SDK |
+| `@edaya/neon-migrations` | `package/integration-neon-migrations` | School DB migration apply |
+| `@edaya/betterauth-d1-migrations` | `package/integration-betterauth-d1-migrations` | Auth schema + D1 deploy |
+| `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Fixture data |
 | `@edaya/seeding` | `testing/seeding` | HTTP seed CLI |
 | `@edaya/integration-tests` | `testing/integration-tests` | Integration test suite + staging smoke |
@@ -56,8 +58,9 @@ testing/
 | Before | After |
 |--------|-------|
 | `@edaya/adaptor-cloudflare` | Inlined into `apps/api/src/runtime/` and `apps/api/src/http/` |
-| `@edaya/adaptor-betterauth` | `@edaya/betterauth-d1-migrations` in `integrations/` |
-| `@edaya/adaptor-neon` | `@edaya/adaptor-postgres` in `packages/` + `@edaya/neon-migrations` in `integrations/` |
+| `@edaya/adaptor-betterauth` | `@edaya/betterauth-d1-migrations` in `package/integration-betterauth-d1-migrations` |
+| `@edaya/adaptor-neon` | `@edaya/adaptor-postgres` + `@edaya/neon-migrations` (split across `package/`) |
+| `packages/` + `integrations/` | Unified under `package/` (folder renames only; npm names unchanged) |
 
 ## Root scripts
 
@@ -85,8 +88,8 @@ testing/
 
 ## Auth schema pipeline
 
-1. `auth:generate-schema` — Better Auth CLI → `integrations/betterauth-d1-migrations/src/schema.ts`
-2. `db:generate:auth` — Drizzle Kit → `integrations/betterauth-d1-migrations/drizzle/*.sql`
+1. `auth:generate-schema` — Better Auth CLI → `package/integration-betterauth-d1-migrations/src/schema.ts`
+2. `db:generate:auth` — Drizzle Kit → `package/integration-betterauth-d1-migrations/drizzle/*.sql`
 3. Node runtime — `runMigrations()` on API startup (SQLite file)
 4. Worker deploy — D1 migrations via `migrate:local` / `migrate:remote` (Wrangler)
 

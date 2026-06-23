@@ -415,7 +415,7 @@ school.ts (mock)          testing/dev-fixtures/dataset.ts
 | Seed permissions | `apps/api/src/lib/seed/run-dev-access-seed.ts` |
 | Seed auth | `apps/api/src/lib/seed/run-dev-auth-seed.ts` |
 | Tests seed | `apps/api/tests/seed/` |
-| Commandes métier | `packages/core/src/services/school-service.ts` |
+| Commandes métier | `package/domain-core/src/services/school-service.ts` |
 | Plan branchement webapp | [webapp-mock-migration-plan.md](./webapp-mock-migration-plan.md) |
 | PGLite & comptes dev | [local-dev.md](../../docs/local-dev.md) |
 

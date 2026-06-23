@@ -1,0 +1,104 @@
+import type { ActorMetadata } from '../authorization'
+import type { CoreEntityKey } from '../core-entity-map'
+import type { SchoolRepositories } from '../ports'
+import type { NotificationEnqueueInput, NotificationGatewayPort } from '../ports/notification-gateway'
+import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../services/managed-entity-service'
+
+export interface NotificationTriggerContext {
+  notificationGateway: NotificationGatewayPort
+  repositories: SchoolRepositories
+  actor: ActorMetadata
+}
+
+export type NotificationTriggerPredicate<T> = (
+  entity: T,
+  existing: T | undefined,
+) => boolean
+
+export type NotificationTriggerResolver<T> = (
+  entity: T,
+  existing: T | undefined,
+  context: NotificationTriggerContext,
+) => Promise<NotificationEnqueueInput | null> | NotificationEnqueueInput | null
+
+export interface NotificationTriggerRegistration<T = unknown> {
+  entityKey: CoreEntityKey
+  predicate: NotificationTriggerPredicate<T>
+  resolver: NotificationTriggerResolver<T>
+}
+
+export class NotificationTriggerRegistry {
+  private readonly triggers = new Map<CoreEntityKey, NotificationTriggerRegistration[]>()
+
+  register<T>(registration: NotificationTriggerRegistration<T>): void {
+    const existing = this.triggers.get(registration.entityKey) ?? []
+    existing.push(registration as NotificationTriggerRegistration)
+    this.triggers.set(registration.entityKey, existing)
+  }
+
+  getTriggers(entityKey: CoreEntityKey): readonly NotificationTriggerRegistration[] {
+    return this.triggers.get(entityKey) ?? []
+  }
+
+  hasTriggers(entityKey: CoreEntityKey): boolean {
+    return (this.triggers.get(entityKey)?.length ?? 0) > 0
+  }
+
+  clear(): void {
+    this.triggers.clear()
+  }
+}
+
+export const notificationTriggerRegistry = new NotificationTriggerRegistry()
+
+export function createNotificationPostSaveHook(
+  entityKey: CoreEntityKey,
+  notificationGateway: NotificationGatewayPort,
+): NonNullable<EntityBusinessHooks<unknown>['postSave']> {
+  return async (entity, existing, repositories, actor) => {
+    const triggers = notificationTriggerRegistry.getTriggers(entityKey)
+    if (triggers.length === 0) {
+      return
+    }
+
+    const context: NotificationTriggerContext = {
+      notificationGateway,
+      repositories,
+      actor,
+    }
+
+    for (const trigger of triggers) {
+      if (!trigger.predicate(entity, existing)) {
+        continue
+      }
+      const input = await trigger.resolver(entity, existing, context)
+      if (input) {
+        await notificationGateway.enqueue(input)
+      }
+    }
+  }
+}
+
+export function withNotificationPostSaveHook<T>(
+  entityKey: CoreEntityKey,
+  config: ManagedEntityServiceConfig<T>,
+  notificationGateway: NotificationGatewayPort,
+): ManagedEntityServiceConfig<T> {
+  if (!notificationTriggerRegistry.hasTriggers(entityKey)) {
+    return config
+  }
+
+  const notificationPostSave = createNotificationPostSaveHook(entityKey, notificationGateway)
+  const existingPostSave = config.hooks?.postSave
+
+  return {
+    ...config,
+    hooks: {
+      ...config.hooks,
+      postSave: async (entity, existing, repositories, actor) => {
+        await existingPostSave?.(entity, existing, repositories, actor)
+        await notificationPostSave(entity, existing, repositories, actor)
+      },
+    },
+  }
+}

@@ -7,6 +7,7 @@ import {
 import { authSchema, runMigrations as runAuthMigrations } from '@edaya/betterauth-d1-migrations'
 import {
   createRepositoryAuthorizationPolicy,
+  noOpNotificationGateway,
   School,
   SchoolApplication,
   StaffMember,
@@ -93,6 +94,7 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
   const application = new SchoolApplication({
     atomicExecution: new PostgresAtomicExecution(db as PostgresTransactionalDb),
     repositories,
+    notificationGateway: noOpNotificationGateway,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories,
       staffAssignmentRepository: repositories.staffAssignments,

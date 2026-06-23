@@ -5,13 +5,14 @@
   "packageManager": "bun@1.3.14",
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "integrations/*",
+    "package/*",
     "testing/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
     "dev:worker": "bun --filter @edaya/api dev:worker",
+    "dev:cron": "bun --filter @edaya/cron dev",
+    "dev:cron:worker": "bun --filter @edaya/cron dev:worker",
     "seed": "bun --filter @edaya/seeding seed:all",
     "seed:auth": "bun --filter @edaya/seeding seed:auth",
     "seed:auth:link": "bun --filter @edaya/seeding seed:auth:link",
@@ -23,7 +24,7 @@
     "build": "turbo run build",
     "check": "turbo run check",
     "quality": "turbo run quality",
-    "test:repo": "bun test scripts --dots",
+    "test:repo": "bun test ./scripts/check-import-boundaries.ts ./scripts/generated-artifacts.ts --dots",
     "test": "bun run test:repo && turbo run test",
     "test:remote": "echo 'Remote Neon integration tests are disabled; use: bun --filter @edaya/integration-tests test' && exit 0",
     "test:coverage": "turbo run test -- --coverage",
@@ -35,6 +36,8 @@
     "fullcheck": "bun run verify",
     "deploy:api": "bun --filter @edaya/api deploy:worker",
     "deploy:api:staging": "bun --filter @edaya/api deploy:worker:staging",
+    "deploy:cron": "bun --filter @edaya/cron deploy:worker",
+    "deploy:cron:staging": "bun --filter @edaya/cron deploy:worker:staging",
     "deploy:webapp": "bun --filter @edaya/webapp deploy",
     "deploy:webapp:staging": "bun --filter @edaya/webapp deploy:staging",
     "smoke:staging": "bun --filter @edaya/integration-tests smoke:staging",
@@ -52,7 +55,7 @@
     "generated:update": "bun run openapi:generate",
     "generated:check": "bun scripts/check-openapi-drift.ts",
     "openapi:check": "bun run generated:check",
-    "check:boundaries": "bash scripts/check-import-boundaries.sh"
+    "check:boundaries": "bun scripts/check-import-boundaries.ts"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

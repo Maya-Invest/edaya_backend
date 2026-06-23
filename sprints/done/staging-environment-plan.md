@@ -376,10 +376,10 @@ docs/
   api-runtimes.md                        # staging section
   local-dev.md                           # link to staging
 
-integrations/betterauth-d1-migrations/
+package/integration-betterauth-d1-migrations/
   scripts/migrate.ts                     # may need --env staging flag docs
 
-integrations/neon-migrations/
+package/integration-neon-migrations/
   README or docs                       # staging DATABASE_URL usage
 ```
 
