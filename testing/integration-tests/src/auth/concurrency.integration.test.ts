@@ -34,14 +34,14 @@ async function createConcurrencyFixture() {
 
   // Setup standard tenant school context using 'school' matching the default actor
   await saveSchool(app, { id: 'school', name: 'Concurrent Academy', timeZone: 'UTC' })
-  await app.createAcademicYear({
+  await app.setupWorkflow.createAcademicYear({
     id: 'year',
     schoolId: 'school',
     name: '2026-2027',
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.baseService.gradeLevels.save(
+  await app.baseService.entities.gradeLevels.save(
     new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
   await createClassGroup(app, {
@@ -119,12 +119,12 @@ async function createConcurrencyFixture() {
 
   // Register student and guardian
   await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
-  await app.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
+  await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
   await saveGuardian(app, { id: 'guardian', schoolId: 'school', firstName: 'Nadia', lastName: 'Diallo' })
-  await app.linkGuardianToStudent({ id: 'guardian-link', guardianId: 'guardian', studentId: 'student' })
+  await app.studentWorkflow.linkGuardianToStudent({ id: 'guardian-link', guardianId: 'guardian', studentId: 'student' })
 
   // Offer subject and class details
-  await app.baseService.subjects.save(
+  await app.baseService.entities.subjects.save(
     new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
   )
   const classSubject = await saveClassSubject(app, {
@@ -172,7 +172,7 @@ async function createConcurrencyFixture() {
     defaultAmount: 90000,
     currency: 'XAF',
   })
-  const studentFee = await app.assignFeeToStudent({
+  const studentFee = await app.financeWorkflow.assignFeeToStudent({
     id: 'student-fee',
     studentId: 'student',
     feeId: 'tuition',
@@ -259,20 +259,20 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       }
     }
     const [attendanceRecord, paymentRecord, _studentDetailResult, feeSummaryResult] = await Promise.all([
-      label('teacher attendance', teacherApp.recordAttendance({
+      label('teacher attendance', teacherApp.schedulingWorkflow.recordAttendance({
         id: 'concurrent-attendance',
         studentId: 'student',
         sessionId: session.id,
         status: AttendanceStatus.Present,
       })),
-      label('accountant payment', accountantApp.recordPayment({
+      label('accountant payment', accountantApp.financeWorkflow.recordPayment({
         id: 'concurrent-payment',
         studentFeeId: studentFee.id,
         amount: 5000,
         paymentDate: new Date(),
         method: PaymentMethod.Cash,
       })),
-      label('student attendance list', studentApp.baseService.attendance.list({ studentId: 'student' })),
+      label('student attendance list', studentApp.baseService.entities.attendance.list({ studentId: 'student' })),
       label('guardian fee summary', buildFeeSummary(guardianApp, 'student')),
     ])
 

@@ -1,6 +1,5 @@
-import { academicContext } from '$lib/academic/context.svelte';
+import { fetchSchoolSubjectsSources, loadClassSubjects, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
-import { fetchClassSubjectsSources, loadClassSubjects, mapAllClassSubjects } from '$lib/api/subjects-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
@@ -14,7 +13,7 @@ export async function getAllSubjects() {
 	if (detailDataContext.subjects.length > 0) {
 		return detailDataContext.subjects;
 	}
-	const sources = await fetchClassSubjectsSources(queryClient());
+	const sources = await fetchSchoolSubjectsSources(queryClient());
 	const subjects = mapAllClassSubjects(sources);
 	const classIds = [...new Set(subjects.map(subject => subject.classId))];
 	for (const classId of classIds) {
@@ -24,14 +23,6 @@ export async function getAllSubjects() {
 		);
 	}
 	return subjects;
-}
-
-async function ensureTeachingLogLoaded() {
-	if (teachingLogContext.ready) {
-		return;
-	}
-	const entries = await fetchTeachingLogEntries(undefined, queryClient());
-	teachingLogContext.hydrateFromServer(entries);
 }
 
 export function queryClassSubjectsPage(classId: string) {
@@ -50,11 +41,12 @@ export function queryClassTeachingPage(classId: string) {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({ classId }),
 		load: async () => {
-			const [subjects] = await Promise.all([
+			const [subjects, entries] = await Promise.all([
 				getClassSubjects(classId),
-				ensureTeachingLogLoaded(),
+				fetchTeachingLogEntries({ classGroupId: classId }, queryClient()),
 			]);
 			detailDataContext.seedSubjects(subjects, { classId });
+			teachingLogContext.hydrateFromServer(entries);
 			return { classId };
 		},
 		hasItems: () => detailDataContext.subjectsForClass(classId).length > 0,

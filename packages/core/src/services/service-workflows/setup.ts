@@ -92,12 +92,12 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     if (school.ownerSubjectId) {
       await this.validateOwnerSubject(school.id, school.ownerSubjectId)
     }
-    await this.baseService.schools.save(school, { moduleChecked: true })
+    await this.baseService.entities.schools.save(school, { moduleChecked: true })
     return school
   }
 
   async updateSchoolConfiguration({ schoolId, ...changes }: UpdateSchoolConfigurationInput): Promise<School> {
-    const existing = await this.requireEntity(this.baseService.schools, schoolId)
+    const existing = await this.requireEntity(this.baseService.entities.schools, schoolId)
     await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
     const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
     if (ownerSubjectId !== existing.ownerSubjectId) {
@@ -113,7 +113,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       city: changes.city === undefined ? existing.city : changes.city,
       createdAt: existing.createdAt,
     })
-    await this.baseService.schools.save(school, { moduleChecked: true })
+    await this.baseService.entities.schools.save(school, { moduleChecked: true })
     return school
   }
 
@@ -140,7 +140,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         createdAt,
       })
       await this.deactivateOtherAcademicYears(schoolId, academicYear.id)
-      await this.baseService.academicYears.save(academicYear, { moduleChecked: true })
+      await this.baseService.entities.academicYears.save(academicYear, { moduleChecked: true })
       return academicYear
     })
   }
@@ -164,19 +164,19 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         isActive: true,
         createdAt: academicYear.createdAt,
       })
-      await this.baseService.academicYears.save(activated, { moduleChecked: true })
+      await this.baseService.entities.academicYears.save(activated, { moduleChecked: true })
       return activated
     })
   }
 
   async createAcademicPeriod(input: CreateAcademicPeriodInput): Promise<AcademicPeriod> {
     const period = new AcademicPeriodEntity(input)
-    await this.baseService.academicPeriods.save(period)
+    await this.baseService.entities.academicPeriods.save(period)
     return period
   }
 
   async publishAcademicPeriod({ academicPeriodId }: PublishAcademicPeriodInput): Promise<AcademicPeriod> {
-    const existing = await this.requireEntity(this.baseService.academicPeriods, academicPeriodId)
+    const existing = await this.requireEntity(this.baseService.entities.academicPeriods, academicPeriodId)
     await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
     const period = new AcademicPeriodEntity({
       id: existing.id,
@@ -189,24 +189,24 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       isPublished: true,
       createdAt: existing.createdAt,
     })
-    await this.baseService.academicPeriods.save(period, { moduleChecked: true })
+    await this.baseService.entities.academicPeriods.save(period, { moduleChecked: true })
     return period
   }
 
   async createClassGroup(input: CreateClassGroupInput): Promise<ClassGroup> {
-    return this.saveConstructed(this.baseService.classGroups, new ClassGroup(input))
+    return this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
   }
 
   async updateClassGroupConfiguration({ classGroupId, ...changes }: UpdateClassGroupConfigurationInput): Promise<ClassGroup> {
-    const existing = await this.requireEntity(this.baseService.classGroups, classGroupId)
+    const existing = await this.requireEntity(this.baseService.entities.classGroups, classGroupId)
     const classGroup = existing.copyWith(changes)
-    await this.baseService.classGroups.save(classGroup)
+    await this.baseService.entities.classGroups.save(classGroup)
     return classGroup
   }
 
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
     return this.saveConstructed(
-      this.baseService.staffMembers,
+      this.baseService.entities.staffMembers,
       new StaffMemberEntity(staffMemberInput),
     )
   }
@@ -237,8 +237,8 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateStaffMemberStatus({ staffId, isActive }: UpdateStaffMemberStatusInput): Promise<StaffMember> {
-    const existing = await this.requireEntity(this.baseService.staffMembers, staffId)
-    const staffMember = await this.saveConstructed(this.baseService.staffMembers, new StaffMemberEntity({
+    const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
+    const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
       id: existing.id,
       schoolId: existing.schoolId,
       firstName: existing.firstName,
@@ -264,24 +264,24 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async assignResourceToClass(input: AssignResourceInput): Promise<ResourceAssignment> {
-    return this.saveConstructed(this.baseService.resourceAssignments, new ResourceAssignment(input))
+    return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
   }
 
   async assignResourceToSession(input: AssignResourceInput): Promise<ResourceAssignment> {
-    return this.saveConstructed(this.baseService.resourceAssignments, new ResourceAssignment(input))
+    return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
   }
 
   async removeResourceAssignment({ resourceAssignmentId, id }: RemoveResourceAssignmentInput): Promise<void> {
-    await this.baseService.resourceAssignments.delete(resourceAssignmentId ?? id ?? '')
+    await this.baseService.entities.resourceAssignments.delete(resourceAssignmentId ?? id ?? '')
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    return this.saveConstructed(this.baseService.attachments, new Attachment(input))
+    return this.saveConstructed(this.baseService.entities.attachments, new Attachment(input))
   }
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
-    const existing = await this.requireEntity(this.baseService.attachments, attachmentId ?? id ?? '')
-    await this.baseService.attachments.delete(existing.id)
+    const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
+    await this.baseService.entities.attachments.delete(existing.id)
   }
 
   private async deactivateOtherAcademicYears(schoolId: string, activeAcademicYearId: string): Promise<void> {
@@ -290,7 +290,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       if (academicYear.id === activeAcademicYearId) {
         continue
       }
-      await this.baseService.academicYears.save(new AcademicYearEntity({
+      await this.baseService.entities.academicYears.save(new AcademicYearEntity({
         id: academicYear.id,
         schoolId: academicYear.schoolId,
         name: academicYear.name,
@@ -303,7 +303,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async saveStaffAssignment(input: AssignStaffInput): Promise<StaffAssignment> {
-    const assignment = await this.saveConstructed(this.baseService.staffAssignments, new StaffAssignmentEntity(input))
+    const assignment = await this.saveConstructed(this.baseService.entities.staffAssignments, new StaffAssignmentEntity(input))
     return assignment
   }
 

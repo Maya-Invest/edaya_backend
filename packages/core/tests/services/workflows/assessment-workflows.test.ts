@@ -15,7 +15,7 @@ describe('SchoolService assessment workflows', () => {
     const { mockPolicy, mockRepos, savedReportCards, service } = createReportCardContext()
     const generatedAt = new Date('2026-04-01T00:00:00Z')
 
-    const result = await service.generateReportCardResult({
+    const result = await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
@@ -51,7 +51,7 @@ describe('SchoolService assessment workflows', () => {
       },
     })
 
-    const result = await service.generateReportCardResult({
+    const result = await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc-new',
       studentId: 'stu1',
       periodId: 'per1',
@@ -76,7 +76,7 @@ describe('SchoolService assessment workflows', () => {
       },
     })
 
-    await expect(service.generateReportCardResult({
+    await expect(service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
@@ -87,7 +87,7 @@ describe('SchoolService assessment workflows', () => {
   test('publishReportCardResult publishes generated report cards through managed service', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createReportCardContext()
 
-    const result = await service.publishReportCardResult({
+    const result = await service.assessmentsWorkflow.publishReportCardResult({
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
@@ -117,7 +117,7 @@ describe('SchoolService assessment workflows', () => {
       },
     })
 
-    await expect(service.publishReportCardResult({
+    await expect(service.assessmentsWorkflow.publishReportCardResult({
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',

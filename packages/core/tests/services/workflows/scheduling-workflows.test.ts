@@ -44,7 +44,7 @@ describe('SchoolService scheduling workflows', () => {
       ],
     })
 
-    const result = await service.generateSessions({
+    const result = await service.schedulingWorkflow.generateSessions({
       classGroupId: 'cg_daily',
       startDate: new Date('2026-05-28T00:00:00Z'),
       endDate: new Date('2026-05-29T00:00:00Z'),
@@ -100,7 +100,7 @@ describe('SchoolService scheduling workflows', () => {
       ],
     })
 
-    const result = await service.generateSessions({
+    const result = await service.schedulingWorkflow.generateSessions({
       classGroupId: 'cg_daily',
       startDate: new Date('2026-05-28T00:00:00Z'),
       endDate: new Date('2026-05-29T00:00:00Z'),
@@ -114,7 +114,7 @@ describe('SchoolService scheduling workflows', () => {
   test('recordDailyAttendance creates a daily session and attendance through managed services', async () => {
     const { mockAtomic, mockPolicy, mockRepos, savedSessions, service } = createSchedulingContext()
 
-    const result = await service.recordDailyAttendance({
+    const result = await service.schedulingWorkflow.recordDailyAttendance({
       id: 'att1',
       classGroupId: 'cg_daily',
       studentId: 'stu1',
@@ -138,7 +138,7 @@ describe('SchoolService scheduling workflows', () => {
   test('recordDailyAttendance reuses an existing daily session', async () => {
     const { mockRepos, service } = createSchedulingContext({ existingDailySession: true })
 
-    const result = await service.recordDailyAttendance({
+    const result = await service.schedulingWorkflow.recordDailyAttendance({
       id: 'att1',
       classGroupId: 'cg_daily',
       studentId: 'stu1',
@@ -154,7 +154,7 @@ describe('SchoolService scheduling workflows', () => {
   test('recordDailyAttendance rejects non-daily class groups', async () => {
     const { service } = createSchedulingContext({ classGroupAttendanceMode: AttendanceMode.Session })
 
-    await expect(service.recordDailyAttendance({
+    await expect(service.schedulingWorkflow.recordDailyAttendance({
       id: 'att1',
       classGroupId: 'cg_daily',
       studentId: 'stu1',
@@ -177,7 +177,7 @@ describe('SchoolService scheduling workflows', () => {
       }),
     })
 
-    await expect(service.recordAttendance({
+    await expect(service.schedulingWorkflow.recordAttendance({
       id: 'stu1-ses1',
       studentId: 'stu1',
       sessionId: 'ses1',
@@ -188,7 +188,7 @@ describe('SchoolService scheduling workflows', () => {
   test('recordSessionAttendance records each student through managed attendance', async () => {
     const { mockRepos, service } = createSchedulingContext()
 
-    const result = await service.recordSessionAttendance({
+    const result = await service.schedulingWorkflow.recordSessionAttendance({
       sessionId: 'ses1',
       attendanceByStudent: { stu1: AttendanceStatus.Late },
     })
@@ -202,7 +202,7 @@ describe('SchoolService scheduling workflows', () => {
   test('recordClassDailyAttendance records class attendance through a daily session', async () => {
     const { mockRepos, service } = createSchedulingContext()
 
-    const result = await service.recordClassDailyAttendance({
+    const result = await service.schedulingWorkflow.recordClassDailyAttendance({
       classGroupId: 'cg_daily',
       date: new Date('2026-05-28T12:00:00Z'),
       attendanceByStudent: { stu1: AttendanceStatus.Absent },

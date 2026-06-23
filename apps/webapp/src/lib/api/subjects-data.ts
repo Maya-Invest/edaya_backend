@@ -1,6 +1,15 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { Subject, SubjectCategory } from '$lib/types/school';
+import {
+	assignmentsForClassSubjects,
+	classGroupScope,
+	entitiesByIds,
+	schoolSubjectsCatalogList,
+	staffMembersByIds,
+	subjectMattersForSubjects,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -102,7 +111,7 @@ function descriptionForSubject(
 	return subject.name;
 }
 
-export async function fetchClassSubjectsSources(client: SchoolClient): Promise<ClassSubjectsSources> {
+export async function fetchSchoolSubjectsSources(client: SchoolClient): Promise<ClassSubjectsSources> {
 	const [
 		classSubjectsRaw,
 		subjectsRaw,
@@ -110,15 +119,53 @@ export async function fetchClassSubjectsSources(client: SchoolClient): Promise<C
 		staffMembersRaw,
 		staffAssignmentsRaw,
 	] = await Promise.all([
-		client.entities.classSubjects.list({}),
-		client.entities.subjects.list({}),
-		client.entities.subjectMatters.list({}),
-		client.entities.staffMembers.list({}),
-		client.entities.staffAssignments.list({}),
+		client.entities.classSubjects.list(schoolSubjectsCatalogList()),
+		client.entities.subjects.list(schoolSubjectsCatalogList()),
+		client.entities.subjectMatters.list(schoolSubjectsCatalogList()),
+		client.entities.staffMembers.list(schoolSubjectsCatalogList()),
+		client.entities.staffAssignments.list(schoolSubjectsCatalogList()),
 	]);
 
 	return {
 		classSubjectsRaw: classSubjectsRaw ?? [],
+		subjectsRaw: subjectsRaw ?? [],
+		subjectMattersRaw: subjectMattersRaw ?? [],
+		staffMembersRaw: staffMembersRaw ?? [],
+		staffAssignmentsRaw: staffAssignmentsRaw ?? [],
+	};
+}
+
+export async function fetchClassSubjectsSources(
+	client: SchoolClient,
+	classGroupId: string,
+): Promise<ClassSubjectsSources> {
+	const classSubjectsRaw = (await client.entities.classSubjects.list(classGroupScope(classGroupId))) ?? [];
+	const classSubjectIds = uniqueIds(classSubjectsRaw.map(classSubject => classSubject.id));
+	const subjectIds = uniqueIds(classSubjectsRaw.map(classSubject => classSubject.subjectId));
+
+	const [
+		subjectsRaw,
+		subjectMattersRaw,
+		staffAssignmentsRaw,
+	] = await Promise.all([
+		subjectIds.length > 0
+			? client.entities.subjects.list(entitiesByIds(subjectIds))
+			: Promise.resolve([]),
+		subjectIds.length > 0
+			? client.entities.subjectMatters.list(subjectMattersForSubjects(subjectIds))
+			: Promise.resolve([]),
+		classSubjectIds.length > 0
+			? client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds))
+			: Promise.resolve([]),
+	]);
+
+	const staffIds = uniqueIds((staffAssignmentsRaw ?? []).map(assignment => assignment.staffId));
+	const staffMembersRaw = staffIds.length > 0
+		? await client.entities.staffMembers.list(staffMembersByIds(staffIds))
+		: [];
+
+	return {
+		classSubjectsRaw,
 		subjectsRaw: subjectsRaw ?? [],
 		subjectMattersRaw: subjectMattersRaw ?? [],
 		staffMembersRaw: staffMembersRaw ?? [],
@@ -165,6 +212,6 @@ export function mapAllClassSubjects(sources: ClassSubjectsSources): Subject[] {
 }
 
 export async function loadClassSubjects(client: SchoolClient, classGroupId: string): Promise<Subject[]> {
-	const sources = await fetchClassSubjectsSources(client);
+	const sources = await fetchClassSubjectsSources(client, classGroupId);
 	return mapClassSubjects(classGroupId, sources);
 }

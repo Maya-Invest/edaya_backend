@@ -1,4 +1,5 @@
 export * from './authorization'
+export * from './core-entity-map'
 export * from './domains'
 export * from './ports'
 export * from './queries'

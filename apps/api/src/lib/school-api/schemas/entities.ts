@@ -201,49 +201,49 @@ export const incidentResponseSchema = responseSchema<IncidentInput>("Incident", 
 // ==========================================================
 
 export const schoolQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
+  id: field.id(),
   name: field.string(),
 });
 
 export const academicYearQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
 });
 
 export const academicPeriodQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  academicYearId: field.uuid(),
+  id: field.id(),
+  academicYearId: field.id(),
   name: field.string(),
 });
 
 export const periodDefinitionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
 });
 
 export const gradeLevelQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
 });
 
 export const staffMemberQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
   isActive: field.boolean(),
 });
 
 export const staffAssignmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  staffId: field.uuid(),
-  classGroupId: field.uuid(),
-  classSubjectId: field.uuid(),
-  sessionId: field.uuid(),
-  role: field.string(),
+  id: field.id(),
+  staffId: field.id(),
+  classGroupId: field.id(),
+  classSubjectId: field.id(),
+  sessionId: field.id(),
+  responsibility: field.string(),
 });
 
 export const accessRoleQuerySchema = createQueryOptionsSchema({
@@ -262,225 +262,227 @@ export const staffRoleAssignmentQuerySchema = createQueryOptionsSchema({
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   fileName: field.string(),
   mimeType: field.string(),
 });
 
 export const resourceQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
   kind: field.string(),
 });
 
 export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  resourceId: field.uuid(),
-  sessionId: field.uuid(),
-  classGroupId: field.uuid(),
+  id: field.id(),
+  resourceId: field.id(),
+  sessionId: field.id(),
+  classGroupId: field.id(),
 });
 
 export const feeQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
 });
 
 export const studentFeeQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  studentId: field.uuid(),
-  feeId: field.uuid(),
+  id: field.id(),
+  studentId: field.id(),
+  feeId: field.id(),
   status: field.string(),
 });
 
 export const paymentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  studentFeeId: field.uuid(),
+  id: field.id(),
+  studentFeeId: field.id(),
   method: field.string(),
   status: field.string(),
 });
 
 export const scheduleQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  classGroupId: field.uuid(),
-  classSubjectId: field.uuid(),
+  id: field.id(),
+  classGroupId: field.id(),
+  classSubjectId: field.id(),
   title: field.string(),
 });
 
 export const sessionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  scheduleId: field.uuid(),
-  classGroupId: field.uuid(),
-  classSubjectId: field.uuid(),
+  id: field.id(),
+  scheduleId: field.id(),
+  classGroupId: field.id(),
+  classSubjectId: field.id(),
   title: field.string(),
   kind: field.string(),
 });
 
 export const calendarEventQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  academicYearId: field.id(),
   title: field.string(),
 });
 
 export const attendanceQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  studentId: field.uuid(),
-  sessionId: field.uuid(),
+  id: field.id(),
+  studentId: field.id(),
+  sessionId: field.id(),
   status: field.string(),
 });
 
 export const announcementQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   title: field.string(),
   status: field.string(),
 });
 
 export const announcementTargetQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  announcementId: field.uuid(),
+  id: field.id(),
+  announcementId: field.id(),
   targetKind: field.string(),
-  targetId: field.uuid(),
+  targetId: field.id(),
 });
 
 export const messageDeliveryQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  announcementId: field.uuid(),
+  id: field.id(),
+  announcementId: field.id(),
   recipientKind: field.string(),
-  recipientId: field.uuid(),
+  recipientId: field.id(),
   channel: field.string(),
   status: field.string(),
 });
 
 export const subjectQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
   code: field.string(),
 });
 
 export const subjectMatterQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  subjectId: field.uuid(),
+  id: field.id(),
+  subjectId: field.id(),
   name: field.string(),
 });
 
 export const classGroupQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  gradeLevelId: field.uuid(),
-  academicYearId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  gradeLevelId: field.id(),
+  academicYearId: field.id(),
+  homeroomStaffId: field.id(),
   name: field.string(),
 });
 
 export const classSubjectQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  classGroupId: field.uuid(),
-  subjectId: field.uuid(),
+  id: field.id(),
+  classGroupId: field.id(),
+  subjectId: field.id(),
 });
 
 export const classSubjectMatterQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  classSubjectId: field.uuid(),
-  subjectMatterId: field.uuid(),
+  id: field.id(),
+  classSubjectId: field.id(),
+  subjectMatterId: field.id(),
   status: field.string(),
 });
 
 export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  classSubjectMatterId: field.uuid(),
-  sessionId: field.uuid(),
+  id: field.id(),
+  classSubjectMatterId: field.id(),
+  sessionId: field.id(),
 });
 
 export const classLogbookEntryQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  classGroupId: field.uuid(),
-  classSubjectId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  classGroupId: field.id(),
+  classSubjectId: field.id(),
   chapter: field.string(),
 });
 
 export const homeworkAssignmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  classGroupId: field.uuid(),
-  classSubjectId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  classGroupId: field.id(),
+  classSubjectId: field.id(),
   title: field.string(),
   type: field.string(),
 });
 
 export const homeworkSubmissionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  homeworkAssignmentId: field.uuid(),
-  studentId: field.uuid(),
+  id: field.id(),
+  homeworkAssignmentId: field.id(),
+  studentId: field.id(),
   status: field.string(),
 });
 
 export const extracurricularActivityQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
   category: field.string(),
   coach: field.string(),
 });
 
 export const activityEnrollmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  activityId: field.uuid(),
-  studentId: field.uuid(),
+  id: field.id(),
+  activityId: field.id(),
+  studentId: field.id(),
   status: field.string(),
 });
 
 export const assessmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  classSubjectId: field.uuid(),
-  classGroupId: field.uuid(),
-  periodId: field.uuid(),
+  id: field.id(),
+  classSubjectId: field.id(),
+  classGroupId: field.id(),
+  periodId: field.id(),
   title: field.string(),
   kind: field.string(),
 });
 
 export const assessmentResultQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  assessmentId: field.uuid(),
-  studentId: field.uuid(),
+  id: field.id(),
+  assessmentId: field.id(),
+  studentId: field.id(),
   status: field.string(),
 });
 
 export const gradeScaleQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
   isDefault: field.boolean(),
 });
 
 export const definitionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  academicYearId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  academicYearId: field.id(),
   name: field.string(),
 });
 
 export const sectionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  reportCardDefinitionId: field.uuid(),
+  id: field.id(),
+  reportCardDefinitionId: field.id(),
   name: field.string(),
 });
 
 export const resultQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  studentId: field.uuid(),
-  reportCardDefinitionId: field.uuid(),
-  classGroupId: field.uuid(),
-  periodId: field.uuid(),
+  id: field.id(),
+  studentId: field.id(),
+  reportCardDefinitionId: field.id(),
+  classGroupId: field.id(),
+  periodId: field.id(),
   status: field.string(),
 });
 
 export const studentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
   status: field.string(),
@@ -488,64 +490,64 @@ export const studentQuerySchema = createQueryOptionsSchema({
 });
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  studentId: field.uuid(),
-  classGroupId: field.uuid(),
-  academicYearId: field.uuid(),
+  id: field.id(),
+  studentId: field.id(),
+  classGroupId: field.id(),
+  academicYearId: field.id(),
   status: field.string(),
 });
 
 export const guardianQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
   email: field.string(),
 });
 
 export const guardianLinkQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  guardianId: field.uuid(),
-  studentId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  guardianId: field.id(),
+  studentId: field.id(),
   relationship: field.string(),
 });
 
 export const studentNoteQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  studentId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  studentId: field.id(),
   title: field.string(),
 });
 
 export const studentHealthProfileQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  studentId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  studentId: field.id(),
 });
 
 export const studentDisciplinaryActionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
-  studentId: field.uuid(),
-  disciplinaryActionId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
+  studentId: field.id(),
+  disciplinaryActionId: field.id(),
 });
 
 export const disciplinaryActionQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   name: field.string(),
 });
 
 export const studentIncidentInvolvementQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  studentId: field.uuid(),
-  incidentId: field.uuid(),
+  id: field.id(),
+  studentId: field.id(),
+  incidentId: field.id(),
   role: field.string(),
 });
 
 export const incidentQuerySchema = createQueryOptionsSchema({
-  id: field.uuid(),
-  schoolId: field.uuid(),
+  id: field.id(),
+  schoolId: field.id(),
   title: field.string(),
 });

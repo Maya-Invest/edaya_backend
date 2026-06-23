@@ -1,6 +1,6 @@
+import { academicContext } from '$lib/academic/context.svelte';
 import { fetchActivities } from '$lib/api/activities-data';
-import { loadPeopleData } from '$lib/api/people-data';
-import { loadAbsences, loadCalendarEvents, loadIncidents } from '$lib/api/school-life-data';
+import { loadAbsences, loadCalendarEvents, loadIncidentRouteData } from '$lib/api/school-life-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
@@ -9,7 +9,10 @@ export function querySchoolActivitiesPage() {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({}),
 		load: async () => {
-			const activities = await fetchActivities();
+			const activities = await fetchActivities(
+				queryClient(),
+				academicContext.schools[0]?.id ?? '',
+			);
 			detailDataContext.seedActivities(activities);
 			return {};
 		},
@@ -22,8 +25,8 @@ export function querySchoolCalendarPage() {
 		empty: () => ({}),
 		load: async () => {
 			const [events, absences] = await Promise.all([
-				loadCalendarEvents(queryClient()),
-				loadAbsences(queryClient()),
+				loadCalendarEvents(queryClient(), academicContext.yearId),
+				loadAbsences(queryClient(), academicContext.classes.map(entry => entry.id)),
 			]);
 			detailDataContext.seedSchoolYearEvents(events);
 			detailDataContext.seedAbsences(absences);
@@ -37,10 +40,10 @@ export function querySchoolEventsPage() {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({}),
 		load: async () => {
-			const [incidents, { students }] = await Promise.all([
-				loadIncidents(queryClient()),
-				loadPeopleData(queryClient()),
-			]);
+			const { incidents, students } = await loadIncidentRouteData(queryClient(), {
+				schoolId: academicContext.schools[0]?.id ?? '',
+				academicYearId: academicContext.yearId,
+			});
 			detailDataContext.seedIncidents(incidents);
 			detailDataContext.seedStudents(students);
 			return {};

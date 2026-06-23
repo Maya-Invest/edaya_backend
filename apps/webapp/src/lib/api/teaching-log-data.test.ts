@@ -1,8 +1,10 @@
+import type { TeachingLogSources } from './teaching-log-data';
+import { staffMember, subject } from '$lib/test/openapi-fixtures';
 import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapTeachingLogEntries } from './teaching-log-data';
 
-const sources = {
+const sources: TeachingLogSources = {
 	classLogbookEntriesRaw: [
 		{
 			id: 'tle-cs-6a-math-0',
@@ -26,6 +28,7 @@ const sources = {
 			chapter: 'Other class session',
 			content: 'Should not appear when filtering 6a.',
 			objectives: ['Other'],
+			attachments: [],
 			progress: 40,
 		},
 	],
@@ -34,15 +37,15 @@ const sources = {
 		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
+		subject({ id: 'subj-math', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 }),
 	],
 	staffMembersRaw: [
-		{ id: 'st1', schoolId: SEED_SCHOOL_ID, firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' },
+		staffMember({ id: 'st1', firstName: 'Marie', lastName: 'Dupont', email: 'm.dupont@school.edu' }),
 	],
 	staffAssignmentsRaw: [
 		{ id: 'sa-st1-math', staffId: 'st1', responsibility: 'Teacher', classSubjectId: 'cs-6a-math' },
 	],
-} as const;
+};
 
 describe('mapTeachingLogEntries', () => {
 	it('maps logbook entries with subject and teacher labels', () => {
@@ -82,8 +85,13 @@ describe('mapTeachingLogEntries', () => {
 	it('sorts entries by date descending', () => {
 		const entries = mapTeachingLogEntries({
 			classLogbookEntriesRaw: [
-				{ ...sources.classLogbookEntriesRaw[0], date: '2026-05-18' },
-				{ ...sources.classLogbookEntriesRaw[0], id: 'tle-cs-6a-math-1', date: '2026-05-22' },
+				{ ...sources.classLogbookEntriesRaw[0], date: '2026-05-18', objectives: ['Mettre au même dénominateur'] },
+				{
+					...sources.classLogbookEntriesRaw[0],
+					id: 'tle-cs-6a-math-1',
+					date: '2026-05-22',
+					objectives: ['Mettre au même dénominateur'],
+				},
 			],
 			classSubjectsRaw: [...sources.classSubjectsRaw],
 			subjectsRaw: [...sources.subjectsRaw],

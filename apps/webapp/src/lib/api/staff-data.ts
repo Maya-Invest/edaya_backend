@@ -1,6 +1,12 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { StaffMember, StaffRole, SubjectCategory } from '$lib/types/school';
+import {
+	entitiesByIds,
+	staffAssignmentsForStaff,
+	staffRoleAssignmentsForStaff,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -183,28 +189,85 @@ export function mapStaffMembers(
 	});
 }
 
-export async function fetchStaffMembers(client: SchoolClient): Promise<StaffMember[]> {
-	const [staffRaw, roleAssignmentsRaw, classGroupsRaw, assignmentsRaw, classSubjectsRaw, subjectsRaw]
-		= await Promise.all([
-			client.entities.staffMembers.list({}),
-			client.entities.staffRoleAssignments.list({}),
-			client.entities.classGroups.list({}),
-			client.entities.staffAssignments.list({}),
-			client.entities.classSubjects.list({}),
-			client.entities.subjects.list({}),
-		]);
+async function fetchStaffRelations(client: SchoolClient, staffIds: readonly string[]) {
+	const [roleAssignmentsRaw, assignmentsRaw] = await Promise.all([
+		client.entities.staffRoleAssignments.list(staffRoleAssignmentsForStaff(staffIds)),
+		client.entities.staffAssignments.list(staffAssignmentsForStaff(staffIds)),
+	]);
+	const classSubjectIds = uniqueIds(
+		(assignmentsRaw ?? [])
+			.map(assignment => assignment.classSubjectId)
+			.filter((id): id is string => Boolean(id)),
+	);
+	const classSubjectsRaw = classSubjectIds.length > 0
+		? await client.entities.classSubjects.list(entitiesByIds(classSubjectIds))
+		: [];
+	const subjectIds = uniqueIds((classSubjectsRaw ?? []).map(classSubject => classSubject.subjectId));
+	const subjectsRaw = subjectIds.length > 0
+		? await client.entities.subjects.list(entitiesByIds(subjectIds))
+		: [];
+
+	return {
+		roleAssignmentsRaw: roleAssignmentsRaw ?? [],
+		assignmentsRaw: assignmentsRaw ?? [],
+		classSubjectsRaw: classSubjectsRaw ?? [],
+		subjectsRaw: subjectsRaw ?? [],
+	};
+}
+
+export async function fetchStaffMembers(
+	client: SchoolClient,
+	scope: { schoolId: string; academicYearId: string },
+): Promise<StaffMember[]> {
+	const [staffRaw, classGroupsRaw] = await Promise.all([
+		client.entities.staffMembers.list({ schoolId: scope.schoolId }),
+		client.entities.classGroups.list({
+			schoolId: scope.schoolId,
+			academicYearId: scope.academicYearId,
+		}),
+	]);
+	const staffIds = uniqueIds((staffRaw ?? []).map(member => member.id));
+	if (staffIds.length === 0) {
+		return [];
+	}
+	const relations = await fetchStaffRelations(client, staffIds);
 
 	return mapStaffMembers(
 		staffRaw ?? [],
-		roleAssignmentsRaw ?? [],
+		relations.roleAssignmentsRaw,
 		classGroupsRaw ?? [],
-		assignmentsRaw ?? [],
-		classSubjectsRaw ?? [],
-		subjectsRaw ?? [],
+		relations.assignmentsRaw,
+		relations.classSubjectsRaw,
+		relations.subjectsRaw,
 	);
 }
 
-export async function fetchStaffMemberById(client: SchoolClient, staffId: string): Promise<StaffMember | null> {
-	const members = await fetchStaffMembers(client);
+export async function fetchStaffMemberById(
+	client: SchoolClient,
+	staffId: string,
+	schoolId: string,
+): Promise<StaffMember | null> {
+	const staff = await client.entities.staffMembers.get(staffId);
+	const relations = await fetchStaffRelations(client, [staffId]);
+	const assignedClassIds = uniqueIds(
+		relations.assignmentsRaw
+			.map(assignment => assignment.classGroupId)
+			.filter((id): id is string => Boolean(id)),
+	);
+	const classGroupsRaw = await client.entities.classGroups.list({
+		schoolId,
+		$or: [
+			{ homeroomStaffId: staffId },
+			...(assignedClassIds.length > 0 ? [entitiesByIds(assignedClassIds)] : []),
+		],
+	});
+	const members = mapStaffMembers(
+		[staff],
+		relations.roleAssignmentsRaw,
+		classGroupsRaw ?? [],
+		relations.assignmentsRaw,
+		relations.classSubjectsRaw,
+		relations.subjectsRaw,
+	);
 	return members.find(member => member.id === staffId) ?? null;
 }

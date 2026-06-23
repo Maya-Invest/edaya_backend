@@ -1,6 +1,15 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { AbsenceRecord, Incident, SchoolYearEvent } from '$lib/types/school';
+import type { AbsenceRecord, Incident, SchoolYearEvent, Student } from '$lib/types/school';
+import {
+	attendanceForSessions,
+	enrollmentsForStudentsInYear,
+	entitiesByIds,
+	involvementsForIncidents,
+	sessionsForClasses,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
+import { mapPeopleData } from '$lib/api/people-data';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -66,36 +75,6 @@ function formatTime(value: unknown): string {
 	const hours = `${date.getUTCHours()}`.padStart(2, '0');
 	const minutes = `${date.getUTCMinutes()}`.padStart(2, '0');
 	return `${hours}:${minutes}`;
-}
-
-export async function fetchSchoolLifeSources(client: SchoolClient): Promise<SchoolLifeSources> {
-	const [
-		calendarEventsRaw,
-		incidentsRaw,
-		involvementsRaw,
-		attendanceRaw,
-		sessionsRaw,
-		classSubjectsRaw,
-		subjectsRaw,
-	] = await Promise.all([
-		client.entities.calendarEvents.list({}),
-		client.entities.incidents.list({}),
-		client.entities.studentIncidentInvolvements.list({}),
-		client.entities.attendance.list({}),
-		client.entities.sessions.list({}),
-		client.entities.classSubjects.list({}),
-		client.entities.subjects.list({}),
-	]);
-
-	return {
-		calendarEventsRaw: calendarEventsRaw ?? [],
-		incidentsRaw: incidentsRaw ?? [],
-		involvementsRaw: involvementsRaw ?? [],
-		attendanceRaw: attendanceRaw ?? [],
-		sessionsRaw: sessionsRaw ?? [],
-		classSubjectsRaw: classSubjectsRaw ?? [],
-		subjectsRaw: subjectsRaw ?? [],
-	};
 }
 
 export function mapCalendarEvents(eventsRaw: CalendarEventRaw[]): SchoolYearEvent[] {
@@ -268,30 +247,78 @@ export function mapAbsences(sources: SchoolLifeSources): AbsenceRecord[] {
 		.sort((left, right) => `${right.date}${right.time}`.localeCompare(`${left.date}${left.time}`));
 }
 
-export async function loadSchoolLifeData(client: SchoolClient): Promise<{
-	calendarEvents: SchoolYearEvent[];
-	incidents: Incident[];
-	absences: AbsenceRecord[];
-}> {
-	const sources = await fetchSchoolLifeSources(client);
+export async function loadCalendarEvents(
+	client: SchoolClient,
+	academicYearId: string,
+): Promise<SchoolYearEvent[]> {
+	const eventsRaw = await client.entities.calendarEvents.list({ academicYearId });
+	return mapCalendarEvents(eventsRaw ?? []);
+}
+
+export async function loadIncidentRouteData(
+	client: SchoolClient,
+	scope: { schoolId: string; academicYearId: string },
+): Promise<{ incidents: Incident[]; students: Student[] }> {
+	const incidentsRaw = (await client.entities.incidents.list({ schoolId: scope.schoolId })) ?? [];
+	const incidentIds = uniqueIds(incidentsRaw.map(incident => incident.id));
+	const involvementsRaw = incidentIds.length > 0
+		? await client.entities.studentIncidentInvolvements.list(involvementsForIncidents(incidentIds))
+		: [];
+	const studentIds = uniqueIds((involvementsRaw ?? []).map(involvement => involvement.studentId));
+	const [studentsRaw, enrollmentsRaw] = studentIds.length > 0
+		? await Promise.all([
+				client.entities.students.list(entitiesByIds(studentIds)),
+				client.entities.enrollments.list(
+					enrollmentsForStudentsInYear(studentIds, scope.academicYearId),
+				),
+			])
+		: [[], []];
+	const { students } = mapPeopleData({
+		studentsRaw: studentsRaw ?? [],
+		enrollmentsRaw: enrollmentsRaw ?? [],
+		guardiansRaw: [],
+		linksRaw: [],
+	});
+
 	return {
-		calendarEvents: mapCalendarEvents(sources.calendarEventsRaw),
-		incidents: mapIncidents(sources.incidentsRaw, sources.involvementsRaw),
-		absences: mapAbsences(sources),
+		incidents: mapIncidents(incidentsRaw, involvementsRaw ?? []),
+		students,
 	};
 }
 
-export async function loadCalendarEvents(client: SchoolClient): Promise<SchoolYearEvent[]> {
-	const sources = await fetchSchoolLifeSources(client);
-	return mapCalendarEvents(sources.calendarEventsRaw);
-}
+export async function loadAbsences(
+	client: SchoolClient,
+	classGroupIds: readonly string[],
+): Promise<AbsenceRecord[]> {
+	if (classGroupIds.length === 0) {
+		return [];
+	}
 
-export async function loadIncidents(client: SchoolClient): Promise<Incident[]> {
-	const sources = await fetchSchoolLifeSources(client);
-	return mapIncidents(sources.incidentsRaw, sources.involvementsRaw);
-}
+	const sessionsRaw = (await client.entities.sessions.list(sessionsForClasses(classGroupIds))) ?? [];
+	const sessionIds = uniqueIds(sessionsRaw.map(session => session.id));
+	const classSubjectIds = uniqueIds(
+		sessionsRaw.map(session => session.classSubjectId).filter((id): id is string => Boolean(id)),
+	);
+	const [attendanceRaw, classSubjectsRaw] = await Promise.all([
+		sessionIds.length > 0
+			? client.entities.attendance.list(attendanceForSessions(sessionIds))
+			: Promise.resolve([]),
+		classSubjectIds.length > 0
+			? client.entities.classSubjects.list(entitiesByIds(classSubjectIds))
+			: Promise.resolve([]),
+	]);
+	const subjectIds = uniqueIds((classSubjectsRaw ?? []).map(classSubject => classSubject.subjectId));
+	const subjectsRaw = subjectIds.length > 0
+		? await client.entities.subjects.list(entitiesByIds(subjectIds))
+		: [];
 
-export async function loadAbsences(client: SchoolClient): Promise<AbsenceRecord[]> {
-	const sources = await fetchSchoolLifeSources(client);
-	return mapAbsences(sources);
+	return mapAbsences({
+		calendarEventsRaw: [],
+		incidentsRaw: [],
+		involvementsRaw: [],
+		attendanceRaw: attendanceRaw ?? [],
+		sessionsRaw,
+		classSubjectsRaw: classSubjectsRaw ?? [],
+		subjectsRaw: subjectsRaw ?? [],
+	});
 }

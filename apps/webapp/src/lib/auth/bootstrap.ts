@@ -18,7 +18,11 @@ export async function bootstrapSession() {
 		const session = await browserFetch<SessionSnapshot>('/core/authorization/effective-grants');
 		let staffProfile = null;
 		if (session?.kind === 'staff') {
-			staffProfile = await fetchStaffMemberById(getBrowserSchoolClient(), session.actorId);
+			staffProfile = await fetchStaffMemberById(
+				getBrowserSchoolClient(),
+				session.actorId,
+				session.schoolId,
+			);
 		}
 		authSession.setFromServer(session, staffProfile);
 		return { session, staffProfile };

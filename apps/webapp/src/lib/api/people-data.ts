@@ -1,9 +1,32 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { Guardian, Student } from '$lib/types/school';
+import {
+	activeEnrollmentsForClass,
+	assessmentResultsForScope,
+	assessmentResultsForStudents,
+	assessmentsForClassPeriod,
+	attendanceForStudents,
+	enrollmentsForStudents,
+	guardianLinksForGuardians,
+	guardianLinksForStudents,
+	guardiansByIds,
+	schoolWideEntityList,
+	studentsByIds,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 import { formatDateInput } from '$lib/date/format';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
+
+const SCHOOL_ROSTER_SCOPE
+	= 'School students administration route loads the full school roster intentionally until pagination is added.';
+
+const SCHOOL_GUARDIANS_SCOPE
+	= 'School guardians administration lists all guardians; only guardian-linked students and enrollments are fetched by id.';
+
+const SCHOOL_STUDENT_METRICS_SCOPE
+	= 'School student list metrics (attendance and grades) still load school-wide until a dedicated aggregate query exists.';
 
 type StudentRaw = components['schemas']['Student'];
 type EnrollmentRaw = components['schemas']['StudentClassEnrollment'];
@@ -149,10 +172,10 @@ export async function fetchPeopleSources(client: SchoolClient): Promise<PeopleSo
 		guardiansRaw,
 		linksRaw,
 	] = await Promise.all([
-		client.entities.students.list({}),
-		client.entities.enrollments.list({}),
-		client.entities.guardians.list({}),
-		client.entities.guardianLinks.list({}),
+		client.entities.students.list(schoolWideEntityList(SCHOOL_ROSTER_SCOPE)),
+		client.entities.enrollments.list(schoolWideEntityList(SCHOOL_ROSTER_SCOPE)),
+		client.entities.guardians.list(schoolWideEntityList(SCHOOL_ROSTER_SCOPE)),
+		client.entities.guardianLinks.list(schoolWideEntityList(SCHOOL_ROSTER_SCOPE)),
 	]);
 
 	return {
@@ -160,6 +183,127 @@ export async function fetchPeopleSources(client: SchoolClient): Promise<PeopleSo
 		enrollmentsRaw: enrollmentsRaw ?? [],
 		guardiansRaw: guardiansRaw ?? [],
 		linksRaw: linksRaw ?? [],
+	};
+}
+
+export async function fetchGuardiansPeopleSources(client: SchoolClient): Promise<PeopleSources> {
+	const guardiansRaw = (await client.entities.guardians.list(
+		schoolWideEntityList(SCHOOL_GUARDIANS_SCOPE),
+	)) ?? [];
+	const guardianIds = uniqueIds(guardiansRaw.map(guardian => guardian.id));
+
+	if (guardianIds.length === 0) {
+		return {
+			studentsRaw: [],
+			enrollmentsRaw: [],
+			guardiansRaw,
+			linksRaw: [],
+		};
+	}
+
+	const linksRaw = (await client.entities.guardianLinks.list(
+		guardianLinksForGuardians(guardianIds),
+	)) ?? [];
+	const studentIds = uniqueIds(linksRaw.map(link => link.studentId));
+
+	if (studentIds.length === 0) {
+		return {
+			studentsRaw: [],
+			enrollmentsRaw: [],
+			guardiansRaw,
+			linksRaw,
+		};
+	}
+
+	const [
+		studentsRaw,
+		enrollmentsRaw,
+	] = await Promise.all([
+		client.entities.students.list(studentsByIds(studentIds)),
+		client.entities.enrollments.list(enrollmentsForStudents(studentIds)),
+	]);
+
+	return {
+		studentsRaw: studentsRaw ?? [],
+		enrollmentsRaw: enrollmentsRaw ?? [],
+		guardiansRaw,
+		linksRaw,
+	};
+}
+
+export async function fetchClassPeopleSources(
+	client: SchoolClient,
+	classGroupId: string,
+): Promise<PeopleSources> {
+	const enrollmentsRaw = (await client.entities.enrollments.list(
+		activeEnrollmentsForClass(classGroupId),
+	)) ?? [];
+	const studentIds = uniqueIds(enrollmentsRaw.map(enrollment => enrollment.studentId));
+
+	if (studentIds.length === 0) {
+		return {
+			studentsRaw: [],
+			enrollmentsRaw,
+			guardiansRaw: [],
+			linksRaw: [],
+		};
+	}
+
+	const [
+		studentsRaw,
+		linksRaw,
+	] = await Promise.all([
+		client.entities.students.list(studentsByIds(studentIds)),
+		client.entities.guardianLinks.list(guardianLinksForStudents(studentIds)),
+	]);
+
+	const guardianIds = uniqueIds((linksRaw ?? []).map(link => link.guardianId));
+	const guardiansRaw = guardianIds.length > 0
+		? await client.entities.guardians.list(guardiansByIds(guardianIds))
+		: [];
+
+	return {
+		studentsRaw: studentsRaw ?? [],
+		enrollmentsRaw,
+		guardiansRaw: guardiansRaw ?? [],
+		linksRaw: linksRaw ?? [],
+	};
+}
+
+async function fetchStudentMetricsSources(
+	client: SchoolClient,
+	studentIds: readonly string[],
+	classScope?: { classGroupId: string; periodId: string },
+): Promise<StudentMetricsSources> {
+	if (studentIds.length === 0) {
+		return {
+			attendanceRaw: [],
+			assessmentsRaw: [],
+			resultsRaw: [],
+		};
+	}
+
+	const [attendanceRaw, assessmentsRaw] = await Promise.all([
+		client.entities.attendance.list(attendanceForStudents(studentIds)),
+		classScope
+			? client.entities.assessments.list(
+					assessmentsForClassPeriod(classScope.classGroupId, classScope.periodId),
+				)
+			: client.entities.assessments.list(schoolWideEntityList(SCHOOL_STUDENT_METRICS_SCOPE)),
+	]);
+	const assessmentIds = uniqueIds((assessmentsRaw ?? []).map(assessment => assessment.id));
+	const resultsRaw = classScope
+		? assessmentIds.length > 0
+			? await client.entities.assessmentResults.list(
+					assessmentResultsForScope(assessmentIds, studentIds),
+				)
+			: []
+		: await client.entities.assessmentResults.list(assessmentResultsForStudents(studentIds));
+
+	return {
+		attendanceRaw: attendanceRaw ?? [],
+		assessmentsRaw: assessmentsRaw ?? [],
+		resultsRaw: resultsRaw ?? [],
 	};
 }
 
@@ -243,21 +387,24 @@ export function mapGuardians(
 }
 
 export async function loadPeopleData(client: SchoolClient): Promise<PeopleData> {
-	const [
-		sources,
-		attendanceRaw,
-		assessmentsRaw,
-		resultsRaw,
-	] = await Promise.all([
-		fetchPeopleSources(client),
-		client.entities.attendance.list({}),
-		client.entities.assessments.list({}),
-		client.entities.assessmentResults.list({}),
-	]);
+	const sources = await fetchPeopleSources(client);
+	const studentIds = uniqueIds(sources.studentsRaw.map(student => student.id));
+	const metrics = await fetchStudentMetricsSources(client, studentIds);
+	return mapPeopleData(sources, metrics);
+}
 
-	return mapPeopleData(sources, {
-		attendanceRaw: attendanceRaw ?? [],
-		assessmentsRaw: assessmentsRaw ?? [],
-		resultsRaw: resultsRaw ?? [],
-	});
+export async function loadGuardiansPeopleData(client: SchoolClient): Promise<PeopleData> {
+	const sources = await fetchGuardiansPeopleSources(client);
+	return mapPeopleData(sources);
+}
+
+export async function loadClassPeopleData(
+	client: SchoolClient,
+	classGroupId: string,
+	periodId: string,
+): Promise<PeopleData> {
+	const sources = await fetchClassPeopleSources(client, classGroupId);
+	const studentIds = uniqueIds(sources.studentsRaw.map(student => student.id));
+	const metrics = await fetchStudentMetricsSources(client, studentIds, { classGroupId, periodId });
+	return mapPeopleData(sources, metrics);
 }

@@ -8,7 +8,21 @@ export type EntityQuery = Record<string, unknown> & {
   $offset?: number
 }
 
-export class EntityResource<TEntity> {
+export interface BaseEntityResource<TEntity> {
+  list: (query?: EntityQuery) => Promise<TEntity[]>
+  one: (query: EntityQuery) => Promise<TEntity>
+  count: (query?: EntityQuery) => Promise<{ count: number }>
+  get: (id: string) => Promise<TEntity>
+  delete: (input: { id: string }) => Promise<{ message: string }>
+  batchDelete: (input: { ids: string[] }) => Promise<{ message: string }>
+}
+
+export interface DirectSaveEntityResource<TEntity> extends BaseEntityResource<TEntity> {
+  save: (entity: TEntity) => Promise<TEntity>
+  batchSave: (input: { entities: TEntity[] }) => Promise<{ ids: string[] }>
+}
+
+export class EntityResource<TEntity> implements DirectSaveEntityResource<TEntity> {
   constructor(
     private readonly transport: Transport,
     private readonly publicName: string,

@@ -33,14 +33,14 @@ describeIntegration('setup lifecycle journey', () => {
     expect(school.name).toBe('Edaya International School')
     expect(school.type).toBe(SchoolType.K12)
 
-    await app.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year-1',
       schoolId: 'school',
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    const activeYear = await app.createAcademicYear({
+    const activeYear = await app.setupWorkflow.createAcademicYear({
       id: 'year-2',
       schoolId: 'school',
       name: '2027-2028',
@@ -49,7 +49,7 @@ describeIntegration('setup lifecycle journey', () => {
     })
     expect(activeYear.isActive).toBe(true)
     expect((await repositories.academicYearRepository.findById('year-1'))?.isActive).toBe(false)
-    const reactivatedYear = await app.activateAcademicYear({ academicYearId: 'year-1' })
+    const reactivatedYear = await app.setupWorkflow.activateAcademicYear({ academicYearId: 'year-1' })
     expect(reactivatedYear.isActive).toBe(true)
     expect((await repositories.academicYearRepository.findById('year-2'))?.isActive).toBe(false)
 
@@ -65,7 +65,7 @@ describeIntegration('setup lifecycle journey', () => {
     expect(period.isPublished).toBe(false)
     expect((await publishAcademicPeriod(app, 'term')).isPublished).toBe(true)
 
-    await app.baseService.gradeLevels.save(
+    await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await saveStaffMember(app, {
@@ -83,7 +83,7 @@ describeIntegration('setup lifecycle journey', () => {
       capacity: 2,
     })
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
-    await app.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
+    await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
     await expect(updateClassGroup(app, {
       classGroupId: 'class',
       capacity: 0,

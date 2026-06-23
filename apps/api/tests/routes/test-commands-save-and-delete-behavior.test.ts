@@ -55,7 +55,9 @@ describe("core entity and command routes", () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
-        gradeLevels: mockEntityService({ save: mockSave }),
+        entities: {
+          gradeLevels: mockEntityService({ save: mockSave }),
+        },
       },
     });
 
@@ -82,7 +84,9 @@ describe("core entity and command routes", () => {
     const mockDelete = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
-        gradeLevels: mockEntityService({ delete: mockDelete }),
+        entities: {
+          gradeLevels: mockEntityService({ delete: mockDelete }),
+        },
       },
     });
 
@@ -100,7 +104,9 @@ describe("core entity and command routes", () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
-        students: mockEntityService({ save: mockSave }),
+        entities: {
+          students: mockEntityService({ save: mockSave }),
+        },
       },
     });
 
@@ -124,7 +130,9 @@ describe("core entity and command routes", () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
-        gradeLevels: mockEntityService({ save: mockSave }),
+        entities: {
+          gradeLevels: mockEntityService({ save: mockSave }),
+        },
       },
     });
 
@@ -147,7 +155,9 @@ describe("core entity and command routes", () => {
     const mockBatchSave = mock().mockResolvedValue(["grade-level-6", "grade-level-7"]);
     const app = setupTestApp({
       baseService: {
-        gradeLevels: mockEntityService({ batchSave: mockBatchSave }),
+        entities: {
+          gradeLevels: mockEntityService({ batchSave: mockBatchSave }),
+        },
       },
     });
 
@@ -175,7 +185,9 @@ describe("core entity and command routes", () => {
     const mockBatchDelete = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
-        gradeLevels: mockEntityService({ batchDelete: mockBatchDelete }),
+        entities: {
+          gradeLevels: mockEntityService({ batchDelete: mockBatchDelete }),
+        },
       },
     });
 
@@ -197,7 +209,9 @@ describe("core entity and command routes", () => {
     });
     const app = setupTestApp({
       baseService: {},
-      createAcademicYear: mockCreateAcademicYear,
+      commands: {
+        createAcademicYear: mockCreateAcademicYear,
+      },
     });
 
     const res = await app.request("/core/commands/create-academic-year", {
@@ -223,7 +237,9 @@ describe("core entity and command routes", () => {
     const mockCreateAcademicYear = mock().mockResolvedValue({});
     const app = setupTestApp({
       baseService: {},
-      createAcademicYear: mockCreateAcademicYear,
+      commands: {
+        createAcademicYear: mockCreateAcademicYear,
+      },
     });
 
     const res = await app.request("/core/commands/create-academic-year", {

@@ -297,6 +297,8 @@ lib/
 ## 8. Testing expectations
 
 - **Route queries** — unit-test `load`, `hasItems`, and store seeding with mocked API.
+- **Loading contracts** — use `createRecordingSchoolClient` in `*.loading.test.ts` to assert list payloads and request counts per route; class routes live in `class-route-loading.test.ts`.
+- **Intentional school-wide reads** — use `schoolWideEntityList(reason)` from `entity-list-filters.ts` so unscoped catalogs are explicit and grep-able.
 - **Mutations** — test `apply` / `rollback` pairs update store correctly.
 - **Detail routing** — test `parseDetailPath` lookup from seeded store and missing-id handling.
 - **Integration** — mutation on open drawer updates visible list without navigation.

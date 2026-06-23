@@ -1,6 +1,15 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { AssessmentResultRow, Evaluation } from '$lib/types/school';
+import {
+	activeEnrollmentsForClass,
+	assessmentResultsForScope,
+	assessmentsForClassPeriod,
+	classGroupScope,
+	entitiesByIds,
+	schoolWideEntityList,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -9,6 +18,9 @@ type AssessmentResultRaw = components['schemas']['AssessmentResult'];
 type ClassSubjectRaw = components['schemas']['ClassSubject'];
 type SubjectRaw = components['schemas']['Subject'];
 type EnrollmentRaw = components['schemas']['StudentClassEnrollment'];
+
+const SCHOOL_EVALUATIONS_SCOPE
+	= 'School-wide evaluation exports are not routed yet; keep unscoped reads only behind explicit callers.';
 
 export interface AssessmentsSources {
 	assessmentsRaw: AssessmentRaw[];
@@ -50,11 +62,51 @@ export async function fetchAssessmentsSources(client: SchoolClient): Promise<Ass
 		subjectsRaw,
 		enrollmentsRaw,
 	] = await Promise.all([
-		client.entities.assessments.list({}),
-		client.entities.assessmentResults.list({}),
-		client.entities.classSubjects.list({}),
-		client.entities.subjects.list({}),
-		client.entities.enrollments.list({}),
+		client.entities.assessments.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
+		client.entities.assessmentResults.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
+		client.entities.classSubjects.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
+		client.entities.subjects.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
+		client.entities.enrollments.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
+	]);
+
+	return {
+		assessmentsRaw: assessmentsRaw ?? [],
+		resultsRaw: resultsRaw ?? [],
+		classSubjectsRaw: classSubjectsRaw ?? [],
+		subjectsRaw: subjectsRaw ?? [],
+		enrollmentsRaw: enrollmentsRaw ?? [],
+	};
+}
+
+export async function fetchClassAssessmentsSources(
+	client: SchoolClient,
+	classGroupId: string,
+	periodId: string,
+): Promise<AssessmentsSources> {
+	const [
+		assessmentsRaw,
+		classSubjectsRaw,
+		enrollmentsRaw,
+	] = await Promise.all([
+		client.entities.assessments.list(assessmentsForClassPeriod(classGroupId, periodId)),
+		client.entities.classSubjects.list(classGroupScope(classGroupId)),
+		client.entities.enrollments.list(activeEnrollmentsForClass(classGroupId)),
+	]);
+
+	const assessmentIds = uniqueIds((assessmentsRaw ?? []).map(assessment => assessment.id));
+	const studentIds = uniqueIds((enrollmentsRaw ?? []).map(enrollment => enrollment.studentId));
+	const subjectIds = uniqueIds((classSubjectsRaw ?? []).map(classSubject => classSubject.subjectId));
+
+	const [
+		resultsRaw,
+		subjectsRaw,
+	] = await Promise.all([
+		assessmentIds.length > 0 && studentIds.length > 0
+			? client.entities.assessmentResults.list(assessmentResultsForScope(assessmentIds, studentIds))
+			: Promise.resolve([]),
+		subjectIds.length > 0
+			? client.entities.subjects.list(entitiesByIds(subjectIds))
+			: Promise.resolve([]),
 	]);
 
 	return {
@@ -107,7 +159,11 @@ export function mapAllEvaluations(sources: AssessmentsSources, classGroupIds: st
 	return classGroupIds.flatMap(classId => mapClassEvaluations(classId, sources));
 }
 
-export async function loadClassEvaluations(client: SchoolClient, classGroupId: string): Promise<Evaluation[]> {
-	const sources = await fetchAssessmentsSources(client);
+export async function loadClassEvaluations(
+	client: SchoolClient,
+	classGroupId: string,
+	periodId: string,
+): Promise<Evaluation[]> {
+	const sources = await fetchClassAssessmentsSources(client, classGroupId, periodId);
 	return mapClassEvaluations(classGroupId, sources);
 }

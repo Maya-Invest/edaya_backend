@@ -39,7 +39,7 @@ describe('Entity config tenant and access gates', () => {
       kind: ResourceKind.Location,
     }))
 
-    await expect(app.baseService.resourceAssignments.save(new ResourceAssignment({
+    await expect(app.baseService.entities.resourceAssignments.save(new ResourceAssignment({
       id: 'assignment-1',
       resourceId: 'resource-1',
       classGroupId: 'class-1',
@@ -97,7 +97,7 @@ describe('Entity config tenant and access gates', () => {
       endsAt: new Date('2026-05-01T09:00:00Z'),
     }))
 
-    await expect(app.baseService.classSubjectProgress.save(new ClassSubjectProgress({
+    await expect(app.baseService.entities.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-unassigned-1',
       classSubjectMatterId: 'class-subject-matter-unassigned-1',
       sessionId: 'session-unassigned-1',
@@ -137,7 +137,7 @@ describe('Entity config tenant and access gates', () => {
       enrollmentIndex: 1,
     }))
 
-    await expect(app.baseService.studentNotes.save(new StudentNote({
+    await expect(app.baseService.entities.studentNotes.save(new StudentNote({
       id: 'note-1',
       schoolId: 'school',
       studentId: 'student-unassigned',
@@ -149,7 +149,7 @@ describe('Entity config tenant and access gates', () => {
   test('uses managed proposed-state authorization for subject matters', async () => {
     const { app, repositories } = createTestApp(actor)
 
-    await expect(app.baseService.subjectMatters.save(new SubjectMatter({
+    await expect(app.baseService.entities.subjectMatters.save(new SubjectMatter({
       id: 'matter-1',
       subjectId: 'missing-subject',
       name: 'Algebra',
@@ -168,7 +168,7 @@ describe('Entity config tenant and access gates', () => {
       sequenceOrder: 1,
     })
 
-    await app.baseService.subjectMatters.save(subjectMatter)
+    await app.baseService.entities.subjectMatters.save(subjectMatter)
 
     await expect(repositories.subjectMatterRepository.findById('matter-1')).resolves.toEqual(subjectMatter)
   })

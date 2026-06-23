@@ -1,12 +1,22 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { CORE_ENTITY_KEYS } from "@edaya/core";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { commandMessageResponseSchema, commandResponseByMethod } from "@/lib/school-api/schemas/command-responses";
 import { getQueryOptionFields } from "@/lib/school-api/schemas/helpers";
 import { buildCoreRoutes } from "@/lib/school-api/routes";
 
 const coreRoutePairs = buildCoreRoutes();
+
+function keyDifference(actual: readonly string[], expected: readonly string[]) {
+  const actualKeys = new Set(actual);
+  const expectedKeys = new Set(expected);
+  return {
+    missing: expected.filter(key => !actualKeys.has(key)),
+    extra: actual.filter(key => !expectedKeys.has(key)),
+  };
+}
 
 function fieldsFor(entityName: string): readonly string[] {
   const entity = coreEntities.find(candidate => candidate.serviceName === entityName);
@@ -32,6 +42,35 @@ function listSourceFiles(dir: string): string[] {
 }
 
 describe("core route registry contracts", () => {
+  it("covers every core managed entity exactly once", () => {
+    const serviceNames = coreEntities.map(entity => entity.serviceName);
+
+    expect(keyDifference(serviceNames, CORE_ENTITY_KEYS)).toEqual({
+      missing: [],
+      extra: [],
+    });
+    expect(new Set(serviceNames).size).toBe(serviceNames.length);
+  });
+
+  it("defines complete route policy metadata for every entity", () => {
+    const incomplete = coreEntities
+      .filter(entity =>
+        !entity.publicName
+        || !entity.displayName
+        || !entity.querySchema
+        || !entity.responseSchema
+        || !entity.saveSchema
+        || typeof entity.allowDirectSave !== "boolean"
+        || typeof entity.createEntity !== "function",
+      )
+      .map(entity => entity.serviceName);
+
+    expect(incomplete).toEqual([]);
+    for (const entity of coreEntities) {
+      expect(entity.saveSchema).toBe(entity.responseSchema);
+    }
+  });
+
   it("generates command, query, and eight entity endpoints for every core registry entry", () => {
     expect(coreRoutePairs).toHaveLength(
       coreCommands.length + coreQueries.length + coreEntities.length * 8,

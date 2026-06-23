@@ -21,6 +21,8 @@ import {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
+  CORE_ENTITY_KEYS,
+  type CoreEntityKey,
   DisciplinaryAction,
   ExtracurricularActivity,
   Fee,
@@ -41,6 +43,7 @@ import {
   ResourceAssignment,
   Schedule,
   School,
+  type SchoolCommandKey,
   Session,
   StaffAssignment,
   StaffMember,
@@ -58,7 +61,7 @@ import {
 
 export interface CoreCommandConfig {
   publicName: string;
-  methodName: string;
+  methodName: SchoolCommandKey;
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   serviceOnly?: boolean;
@@ -74,7 +77,7 @@ export interface CoreQueryConfig {
 
 export interface CoreEntityConfig {
   publicName: string;
-  serviceName: string;
+  serviceName: CoreEntityKey;
   displayName: string;
   querySchema: AnySchema;
   responseSchema: AnySchema;
@@ -82,6 +85,109 @@ export interface CoreEntityConfig {
   allowDirectSave: boolean;
   createEntity: (body: Record<string, unknown>) => unknown;
 }
+
+interface ApiEntityDecoration {
+  publicName: string;
+  displayName: string;
+  querySchema: AnySchema;
+  responseSchema: AnySchema;
+  EntityClass: new (args: any) => unknown;
+  allowDirectSave?: boolean;
+}
+
+interface EntityOptions {
+  allowDirectSave?: boolean;
+}
+
+function decoration(
+  publicName: string,
+  displayName: string,
+  querySchema: AnySchema,
+  responseSchema: AnySchema,
+  EntityClass: new (args: any) => unknown,
+  options: EntityOptions = {},
+): ApiEntityDecoration {
+  return {
+    publicName,
+    displayName,
+    querySchema,
+    responseSchema,
+    EntityClass,
+    ...(options.allowDirectSave === false ? { allowDirectSave: false } : {}),
+  };
+}
+
+const apiEntityDecorations = {
+  schools: decoration("schools", "Schools", entitySchemas.schoolQuerySchema, entitySchemas.schoolResponseSchema, School),
+  academicYears: decoration("academic-years", "Academic Years", entitySchemas.academicYearQuerySchema, entitySchemas.academicYearResponseSchema, AcademicYear),
+  academicPeriods: decoration("academic-periods", "Academic Periods", entitySchemas.academicPeriodQuerySchema, entitySchemas.academicPeriodResponseSchema, AcademicPeriod),
+  periodDefinitions: decoration("period-definitions", "Period Definitions", entitySchemas.periodDefinitionQuerySchema, entitySchemas.periodDefinitionResponseSchema, PeriodDefinition),
+  gradeLevels: decoration("grade-levels", "Grade Levels", entitySchemas.gradeLevelQuerySchema, entitySchemas.gradeLevelResponseSchema, GradeLevel),
+  staffMembers: decoration("staff-members", "Staff Members", entitySchemas.staffMemberQuerySchema, entitySchemas.staffMemberResponseSchema, StaffMember),
+  staffAssignments: decoration("staff-assignments", "Staff Assignments", entitySchemas.staffAssignmentQuerySchema, entitySchemas.staffAssignmentResponseSchema, StaffAssignment),
+  accessRoles: decoration("access-roles", "Access Roles", entitySchemas.accessRoleQuerySchema, entitySchemas.accessRoleResponseSchema, AccessRole),
+  staffRoleAssignments: decoration("staff-role-assignments", "Staff Role Assignments", entitySchemas.staffRoleAssignmentQuerySchema, entitySchemas.staffRoleAssignmentResponseSchema, StaffRoleAssignment),
+  attachments: decoration("attachments", "Attachments", entitySchemas.attachmentQuerySchema, entitySchemas.attachmentResponseSchema, Attachment),
+  resources: decoration("resources", "Resources", entitySchemas.resourceQuerySchema, entitySchemas.resourceResponseSchema, Resource),
+  resourceAssignments: decoration("resource-assignments", "Resource Assignments", entitySchemas.resourceAssignmentQuerySchema, entitySchemas.resourceAssignmentResponseSchema, ResourceAssignment),
+  fees: decoration("fees", "Fees", entitySchemas.feeQuerySchema, entitySchemas.feeResponseSchema, Fee),
+  studentFees: decoration("student-fees", "Student Fees", entitySchemas.studentFeeQuerySchema, entitySchemas.studentFeeResponseSchema, StudentFee, { allowDirectSave: false }),
+  payments: decoration("payments", "Payments", entitySchemas.paymentQuerySchema, entitySchemas.paymentResponseSchema, Payment, { allowDirectSave: false }),
+  schedules: decoration("schedules", "Schedules", entitySchemas.scheduleQuerySchema, entitySchemas.scheduleResponseSchema, Schedule),
+  sessions: decoration("sessions", "Sessions", entitySchemas.sessionQuerySchema, entitySchemas.sessionResponseSchema, Session),
+  calendarEvents: decoration("calendar-events", "Calendar Events", entitySchemas.calendarEventQuerySchema, entitySchemas.calendarEventResponseSchema, CalendarEvent),
+  attendance: decoration("attendance", "Attendance Records", entitySchemas.attendanceQuerySchema, entitySchemas.attendanceResponseSchema, AttendanceRecord),
+  announcements: decoration("announcements", "Announcements", entitySchemas.announcementQuerySchema, entitySchemas.announcementResponseSchema, Announcement),
+  announcementTargets: decoration("announcement-targets", "Announcement Targets", entitySchemas.announcementTargetQuerySchema, entitySchemas.announcementTargetResponseSchema, AnnouncementTarget),
+  messageDeliveries: decoration("message-deliveries", "Message Deliveries", entitySchemas.messageDeliveryQuerySchema, entitySchemas.messageDeliveryResponseSchema, MessageDelivery),
+  subjects: decoration("subjects", "Subjects", entitySchemas.subjectQuerySchema, entitySchemas.subjectResponseSchema, Subject),
+  subjectMatters: decoration("subject-matters", "Subject Matters", entitySchemas.subjectMatterQuerySchema, entitySchemas.subjectMatterResponseSchema, SubjectMatter),
+  classGroups: decoration("class-groups", "Class Groups", entitySchemas.classGroupQuerySchema, entitySchemas.classGroupResponseSchema, ClassGroup),
+  classSubjects: decoration("class-subjects", "Class Subjects", entitySchemas.classSubjectQuerySchema, entitySchemas.classSubjectResponseSchema, ClassSubject),
+  classSubjectMatters: decoration("class-subject-matters", "Class Subject Matters", entitySchemas.classSubjectMatterQuerySchema, entitySchemas.classSubjectMatterResponseSchema, ClassSubjectMatter),
+  classSubjectProgress: decoration("class-subject-progress", "Class Subject Progress", entitySchemas.classSubjectProgressQuerySchema, entitySchemas.classSubjectProgressResponseSchema, ClassSubjectProgress),
+  classLogbookEntries: decoration("class-logbook-entries", "Class Logbook Entries", entitySchemas.classLogbookEntryQuerySchema, entitySchemas.classLogbookEntryResponseSchema, ClassLogbookEntry),
+  homeworkAssignments: decoration("homework-assignments", "Homework Assignments", entitySchemas.homeworkAssignmentQuerySchema, entitySchemas.homeworkAssignmentResponseSchema, HomeworkAssignment),
+  homeworkSubmissions: decoration("homework-submissions", "Homework Submissions", entitySchemas.homeworkSubmissionQuerySchema, entitySchemas.homeworkSubmissionResponseSchema, HomeworkSubmission),
+  activities: decoration("activities", "Extracurricular Activities", entitySchemas.extracurricularActivityQuerySchema, entitySchemas.extracurricularActivityResponseSchema, ExtracurricularActivity),
+  activityEnrollments: decoration("activity-enrollments", "Activity Enrollments", entitySchemas.activityEnrollmentQuerySchema, entitySchemas.activityEnrollmentResponseSchema, ActivityEnrollment),
+  assessments: decoration("assessments", "Assessments", entitySchemas.assessmentQuerySchema, entitySchemas.assessmentResponseSchema, Assessment),
+  assessmentResults: decoration("assessment-results", "Assessment Results", entitySchemas.assessmentResultQuerySchema, entitySchemas.assessmentResultResponseSchema, AssessmentResult, { allowDirectSave: false }),
+  gradeScales: decoration("grade-scales", "Grade Scales", entitySchemas.gradeScaleQuerySchema, entitySchemas.gradeScaleResponseSchema, GradeScale),
+  definitions: decoration("definitions", "Report Card Definitions", entitySchemas.definitionQuerySchema, entitySchemas.definitionResponseSchema, ReportCardDefinition),
+  sections: decoration("sections", "Report Card Sections", entitySchemas.sectionQuerySchema, entitySchemas.sectionResponseSchema, ReportCardDefinitionSection),
+  results: decoration("results", "Report Card Results", entitySchemas.resultQuerySchema, entitySchemas.resultResponseSchema, ReportCardResult, { allowDirectSave: false }),
+  students: decoration("students", "Students", entitySchemas.studentQuerySchema, entitySchemas.studentResponseSchema, Student, { allowDirectSave: false }),
+  enrollments: decoration("enrollments", "Student Enrollments", entitySchemas.enrollmentQuerySchema, entitySchemas.enrollmentResponseSchema, StudentClassEnrollment, { allowDirectSave: false }),
+  guardians: decoration("guardians", "Guardians", entitySchemas.guardianQuerySchema, entitySchemas.guardianResponseSchema, Guardian),
+  guardianLinks: decoration("guardian-links", "Guardian Student Links", entitySchemas.guardianLinkQuerySchema, entitySchemas.guardianLinkResponseSchema, GuardianStudentLink),
+  studentNotes: decoration("student-notes", "Student Notes", entitySchemas.studentNoteQuerySchema, entitySchemas.studentNoteResponseSchema, StudentNote),
+  studentHealthProfiles: decoration("student-health-profiles", "Student Health Profiles", entitySchemas.studentHealthProfileQuerySchema, entitySchemas.studentHealthProfileResponseSchema, StudentHealthProfile),
+  studentDisciplinaryActions: decoration("student-disciplinary-actions", "Student Disciplinary Actions", entitySchemas.studentDisciplinaryActionQuerySchema, entitySchemas.studentDisciplinaryActionResponseSchema, StudentDisciplinaryAction),
+  disciplinaryActions: decoration("disciplinary-actions", "Disciplinary Actions", entitySchemas.disciplinaryActionQuerySchema, entitySchemas.disciplinaryActionResponseSchema, DisciplinaryAction),
+  studentIncidentInvolvements: decoration("student-incident-involvements", "Student Incident Involvements", entitySchemas.studentIncidentInvolvementQuerySchema, entitySchemas.studentIncidentInvolvementResponseSchema, StudentIncidentInvolvement),
+  incidents: decoration("incidents", "Incidents", entitySchemas.incidentQuerySchema, entitySchemas.incidentResponseSchema, Incident),
+} satisfies Record<CoreEntityKey, ApiEntityDecoration>;
+
+function buildCoreEntityConfig<Key extends CoreEntityKey>(
+  serviceName: Key,
+  entry: ApiEntityDecoration,
+): CoreEntityConfig & { serviceName: Key } {
+  return {
+    publicName: entry.publicName,
+    serviceName,
+    displayName: entry.displayName,
+    querySchema: entry.querySchema,
+    responseSchema: entry.responseSchema,
+    saveSchema: entry.responseSchema,
+    allowDirectSave: entry.allowDirectSave ?? true,
+    createEntity: body => new entry.EntityClass(body),
+  };
+}
+
+export const coreEntities = CORE_ENTITY_KEYS.map(key =>
+  buildCoreEntityConfig(key, apiEntityDecorations[key]),
+) satisfies CoreEntityConfig[];
 
 export const coreCommands = [
   command("register-school", "registerSchool", commandSchemas.registerSchoolCommandSchema),
@@ -184,61 +290,9 @@ export const coreQueries = [
   },
 ] satisfies CoreQueryConfig[];
 
-export const coreEntities = [
-  entity("schools", "schools", "Schools", entitySchemas.schoolQuerySchema, entitySchemas.schoolResponseSchema, School),
-  entity("academic-years", "academicYears", "Academic Years", entitySchemas.academicYearQuerySchema, entitySchemas.academicYearResponseSchema, AcademicYear),
-  entity("academic-periods", "academicPeriods", "Academic Periods", entitySchemas.academicPeriodQuerySchema, entitySchemas.academicPeriodResponseSchema, AcademicPeriod),
-  entity("period-definitions", "periodDefinitions", "Period Definitions", entitySchemas.periodDefinitionQuerySchema, entitySchemas.periodDefinitionResponseSchema, PeriodDefinition),
-  entity("grade-levels", "gradeLevels", "Grade Levels", entitySchemas.gradeLevelQuerySchema, entitySchemas.gradeLevelResponseSchema, GradeLevel),
-  entity("staff-members", "staffMembers", "Staff Members", entitySchemas.staffMemberQuerySchema, entitySchemas.staffMemberResponseSchema, StaffMember),
-  entity("staff-assignments", "staffAssignments", "Staff Assignments", entitySchemas.staffAssignmentQuerySchema, entitySchemas.staffAssignmentResponseSchema, StaffAssignment),
-  entity("access-roles", "accessRoles", "Access Roles", entitySchemas.accessRoleQuerySchema, entitySchemas.accessRoleResponseSchema, AccessRole),
-  entity("staff-role-assignments", "staffRoleAssignments", "Staff Role Assignments", entitySchemas.staffRoleAssignmentQuerySchema, entitySchemas.staffRoleAssignmentResponseSchema, StaffRoleAssignment),
-  entity("attachments", "attachments", "Attachments", entitySchemas.attachmentQuerySchema, entitySchemas.attachmentResponseSchema, Attachment),
-  entity("resources", "resources", "Resources", entitySchemas.resourceQuerySchema, entitySchemas.resourceResponseSchema, Resource),
-  entity("resource-assignments", "resourceAssignments", "Resource Assignments", entitySchemas.resourceAssignmentQuerySchema, entitySchemas.resourceAssignmentResponseSchema, ResourceAssignment),
-  entity("fees", "fees", "Fees", entitySchemas.feeQuerySchema, entitySchemas.feeResponseSchema, Fee),
-  entity("student-fees", "studentFees", "Student Fees", entitySchemas.studentFeeQuerySchema, entitySchemas.studentFeeResponseSchema, StudentFee, { allowDirectSave: false }),
-  entity("payments", "payments", "Payments", entitySchemas.paymentQuerySchema, entitySchemas.paymentResponseSchema, Payment, { allowDirectSave: false }),
-  entity("schedules", "schedules", "Schedules", entitySchemas.scheduleQuerySchema, entitySchemas.scheduleResponseSchema, Schedule),
-  entity("sessions", "sessions", "Sessions", entitySchemas.sessionQuerySchema, entitySchemas.sessionResponseSchema, Session),
-  entity("calendar-events", "calendarEvents", "Calendar Events", entitySchemas.calendarEventQuerySchema, entitySchemas.calendarEventResponseSchema, CalendarEvent),
-  entity("attendance", "attendance", "Attendance Records", entitySchemas.attendanceQuerySchema, entitySchemas.attendanceResponseSchema, AttendanceRecord),
-  entity("announcements", "announcements", "Announcements", entitySchemas.announcementQuerySchema, entitySchemas.announcementResponseSchema, Announcement),
-  entity("announcement-targets", "announcementTargets", "Announcement Targets", entitySchemas.announcementTargetQuerySchema, entitySchemas.announcementTargetResponseSchema, AnnouncementTarget),
-  entity("message-deliveries", "messageDeliveries", "Message Deliveries", entitySchemas.messageDeliveryQuerySchema, entitySchemas.messageDeliveryResponseSchema, MessageDelivery),
-  entity("subjects", "subjects", "Subjects", entitySchemas.subjectQuerySchema, entitySchemas.subjectResponseSchema, Subject),
-  entity("subject-matters", "subjectMatters", "Subject Matters", entitySchemas.subjectMatterQuerySchema, entitySchemas.subjectMatterResponseSchema, SubjectMatter),
-  entity("class-groups", "classGroups", "Class Groups", entitySchemas.classGroupQuerySchema, entitySchemas.classGroupResponseSchema, ClassGroup),
-  entity("class-subjects", "classSubjects", "Class Subjects", entitySchemas.classSubjectQuerySchema, entitySchemas.classSubjectResponseSchema, ClassSubject),
-  entity("class-subject-matters", "classSubjectMatters", "Class Subject Matters", entitySchemas.classSubjectMatterQuerySchema, entitySchemas.classSubjectMatterResponseSchema, ClassSubjectMatter),
-  entity("class-subject-progress", "classSubjectProgress", "Class Subject Progress", entitySchemas.classSubjectProgressQuerySchema, entitySchemas.classSubjectProgressResponseSchema, ClassSubjectProgress),
-  entity("class-logbook-entries", "classLogbookEntries", "Class Logbook Entries", entitySchemas.classLogbookEntryQuerySchema, entitySchemas.classLogbookEntryResponseSchema, ClassLogbookEntry),
-  entity("homework-assignments", "homeworkAssignments", "Homework Assignments", entitySchemas.homeworkAssignmentQuerySchema, entitySchemas.homeworkAssignmentResponseSchema, HomeworkAssignment),
-  entity("homework-submissions", "homeworkSubmissions", "Homework Submissions", entitySchemas.homeworkSubmissionQuerySchema, entitySchemas.homeworkSubmissionResponseSchema, HomeworkSubmission),
-  entity("activities", "activities", "Extracurricular Activities", entitySchemas.extracurricularActivityQuerySchema, entitySchemas.extracurricularActivityResponseSchema, ExtracurricularActivity),
-  entity("activity-enrollments", "activityEnrollments", "Activity Enrollments", entitySchemas.activityEnrollmentQuerySchema, entitySchemas.activityEnrollmentResponseSchema, ActivityEnrollment),
-  entity("assessments", "assessments", "Assessments", entitySchemas.assessmentQuerySchema, entitySchemas.assessmentResponseSchema, Assessment),
-  entity("assessment-results", "assessmentResults", "Assessment Results", entitySchemas.assessmentResultQuerySchema, entitySchemas.assessmentResultResponseSchema, AssessmentResult, { allowDirectSave: false }),
-  entity("grade-scales", "gradeScales", "Grade Scales", entitySchemas.gradeScaleQuerySchema, entitySchemas.gradeScaleResponseSchema, GradeScale),
-  entity("definitions", "definitions", "Report Card Definitions", entitySchemas.definitionQuerySchema, entitySchemas.definitionResponseSchema, ReportCardDefinition),
-  entity("sections", "sections", "Report Card Sections", entitySchemas.sectionQuerySchema, entitySchemas.sectionResponseSchema, ReportCardDefinitionSection),
-  entity("results", "results", "Report Card Results", entitySchemas.resultQuerySchema, entitySchemas.resultResponseSchema, ReportCardResult, { allowDirectSave: false }),
-  entity("students", "students", "Students", entitySchemas.studentQuerySchema, entitySchemas.studentResponseSchema, Student, { allowDirectSave: false }),
-  entity("enrollments", "enrollments", "Student Enrollments", entitySchemas.enrollmentQuerySchema, entitySchemas.enrollmentResponseSchema, StudentClassEnrollment, { allowDirectSave: false }),
-  entity("guardians", "guardians", "Guardians", entitySchemas.guardianQuerySchema, entitySchemas.guardianResponseSchema, Guardian),
-  entity("guardian-links", "guardianLinks", "Guardian Student Links", entitySchemas.guardianLinkQuerySchema, entitySchemas.guardianLinkResponseSchema, GuardianStudentLink),
-  entity("student-notes", "studentNotes", "Student Notes", entitySchemas.studentNoteQuerySchema, entitySchemas.studentNoteResponseSchema, StudentNote),
-  entity("student-health-profiles", "studentHealthProfiles", "Student Health Profiles", entitySchemas.studentHealthProfileQuerySchema, entitySchemas.studentHealthProfileResponseSchema, StudentHealthProfile),
-  entity("student-disciplinary-actions", "studentDisciplinaryActions", "Student Disciplinary Actions", entitySchemas.studentDisciplinaryActionQuerySchema, entitySchemas.studentDisciplinaryActionResponseSchema, StudentDisciplinaryAction),
-  entity("disciplinary-actions", "disciplinaryActions", "Disciplinary Actions", entitySchemas.disciplinaryActionQuerySchema, entitySchemas.disciplinaryActionResponseSchema, DisciplinaryAction),
-  entity("student-incident-involvements", "studentIncidentInvolvements", "Student Incident Involvements", entitySchemas.studentIncidentInvolvementQuerySchema, entitySchemas.studentIncidentInvolvementResponseSchema, StudentIncidentInvolvement),
-  entity("incidents", "incidents", "Incidents", entitySchemas.incidentQuerySchema, entitySchemas.incidentResponseSchema, Incident),
-] satisfies CoreEntityConfig[];
-
 function command(
   publicName: string,
-  methodName: string,
+  methodName: SchoolCommandKey,
   requestSchema: AnySchema,
   options: { serviceOnly?: boolean } = {},
 ): CoreCommandConfig {
@@ -248,30 +302,5 @@ function command(
     requestSchema,
     responseSchema: commandResponseSchemas.resolveCommandResponseSchema(methodName),
     ...(options.serviceOnly ? { serviceOnly: true } : {}),
-  };
-}
-
-interface EntityOptions {
-  allowDirectSave?: boolean;
-}
-
-function entity(
-  publicName: string,
-  serviceName: string,
-  displayName: string,
-  querySchema: AnySchema,
-  responseSchema: AnySchema,
-  EntityClass: new (args: any) => unknown,
-  options: EntityOptions = {},
-): CoreEntityConfig {
-  return {
-    publicName,
-    serviceName,
-    displayName,
-    querySchema,
-    responseSchema,
-    saveSchema: responseSchema,
-    allowDirectSave: options.allowDirectSave ?? true,
-    createEntity: body => new EntityClass(body),
   };
 }

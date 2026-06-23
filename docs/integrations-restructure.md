@@ -21,8 +21,7 @@ integrations/
 testing/
   dev-fixtures/                     Shared seed IDs and fixture records
   seeding/                          HTTP seed orchestration (@edaya/seeding)
-  integration-tests/                Cross-package integration tests
-  smoke-staging/                    HTTP smoke checks for deployed staging (@edaya/smoke-staging)
+  integration-tests/                Cross-package integration tests + staging HTTP smoke
 ```
 
 ## Boundary rules
@@ -50,8 +49,7 @@ testing/
 | `@edaya/betterauth-d1-migrations` | `integrations/betterauth-d1-migrations` | Auth schema + D1 deploy |
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Fixture data |
 | `@edaya/seeding` | `testing/seeding` | HTTP seed CLI |
-| `@edaya/integration-tests` | `testing/integration-tests` | Integration test suite |
-| `@edaya/smoke-staging` | `testing/smoke-staging` | Deployed staging HTTP smoke |
+| `@edaya/integration-tests` | `testing/integration-tests` | Integration test suite + staging smoke |
 
 ## Historical renames
 
@@ -83,7 +81,7 @@ testing/
 | `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
 | `bun deploy:webapp` | `@edaya/webapp` `deploy` |
 | `bun deploy:webapp:staging` | `@edaya/webapp` `deploy:staging` |
-| `bun smoke:staging` | `@edaya/smoke-staging` |
+| `bun smoke:staging` | `@edaya/integration-tests` |
 
 ## Auth schema pipeline
 

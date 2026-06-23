@@ -13,7 +13,7 @@ export async function isServiceAccountApiKeyValid(
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${serviceAccountApiKey}`,
+      'authorization': `Bearer ${serviceAccountApiKey}`,
     },
     body: JSON.stringify({}),
   })

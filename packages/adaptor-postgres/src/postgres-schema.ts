@@ -1,4 +1,5 @@
 import { boolean, integer, jsonb, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
+import { definePerformanceIndexes } from './postgres-indexes'
 
 // 1. School Table
 export const schools = pgTable('schools', {
@@ -21,7 +22,7 @@ export const academicYears = pgTable('academic_years', {
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   isActive: boolean('is_active').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('academic_years', table))
 
 // 3. Academic Period Table
 export const academicPeriods = pgTable('academic_periods', {
@@ -34,7 +35,7 @@ export const academicPeriods = pgTable('academic_periods', {
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   isPublished: boolean('is_published').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('academic_periods', table))
 
 // 4. Period Definition Table
 export const periodDefinitions = pgTable('period_definitions', {
@@ -47,7 +48,7 @@ export const periodDefinitions = pgTable('period_definitions', {
   endTime: text('end_time').notNull(),
   isBreak: boolean('is_break').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('period_definitions', table))
 
 // 5. Grade Level Table
 export const gradeLevels = pgTable('grade_levels', {
@@ -57,7 +58,7 @@ export const gradeLevels = pgTable('grade_levels', {
   order: integer('order_val').notNull(),
   cycle: text('cycle'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('grade_levels', table))
 
 // 6. Staff Member Table
 export const staffMembers = pgTable('staff_members', {
@@ -73,7 +74,7 @@ export const staffMembers = pgTable('staff_members', {
   serviceElevated: boolean('service_elevated').notNull().default(false),
   isActive: boolean('is_active').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('staff_members', table))
 
 export const serviceApiKeys = pgTable('service_api_keys', {
   id: text('id').primaryKey(),
@@ -86,7 +87,7 @@ export const serviceApiKeys = pgTable('service_api_keys', {
   expiresAt: timestamp('expires_at', { mode: 'date' }),
   revokedAt: timestamp('revoked_at', { mode: 'date' }),
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
-})
+}, table => definePerformanceIndexes('service_api_keys', table))
 
 export const staffAssignments = pgTable('staff_assignments', {
   id: text('id').primaryKey(),
@@ -96,7 +97,7 @@ export const staffAssignments = pgTable('staff_assignments', {
   classSubjectId: text('class_subject_id'),
   sessionId: text('session_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('staff_assignments', table))
 
 export const accessRoles = pgTable('access_roles', {
   id: text('id').primaryKey(),
@@ -106,12 +107,12 @@ export const accessRoles = pgTable('access_roles', {
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('access_roles', table))
 
 export const accessRolePermissions = pgTable('access_role_permissions', {
   roleId: text('role_id').notNull(),
   permission: text('permission').notNull(),
-})
+}, table => definePerformanceIndexes('access_role_permissions', table))
 
 export const staffRoleAssignments = pgTable('staff_role_assignments', {
   id: text('id').primaryKey(),
@@ -123,12 +124,12 @@ export const staffRoleAssignments = pgTable('staff_role_assignments', {
   endsAt: timestamp('ends_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('staff_role_assignments', table))
 
 export const staffRoleAssignmentRoles = pgTable('staff_role_assignment_roles', {
   assignmentId: text('assignment_id').notNull(),
   roleId: text('role_id').notNull(),
-})
+}, table => definePerformanceIndexes('staff_role_assignment_roles', table))
 
 export const staffRoleAssignmentScopeGrants = pgTable('staff_role_assignment_scope_grants', {
   assignmentId: text('assignment_id').notNull(),
@@ -149,7 +150,7 @@ export const attachments = pgTable('attachments', {
   sizeBytes: integer('size_bytes'),
   uploadedById: text('uploaded_by_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('attachments', table))
 
 // 9. Resource Table
 export const resources = pgTable('resources', {
@@ -160,7 +161,7 @@ export const resources = pgTable('resources', {
   kind: text('kind').notNull(),
   capacity: integer('capacity'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('resources', table))
 
 export const resourceAssignments = pgTable('resource_assignments', {
   id: text('id').primaryKey(),
@@ -168,7 +169,7 @@ export const resourceAssignments = pgTable('resource_assignments', {
   sessionId: text('session_id'),
   classGroupId: text('class_group_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('resource_assignments', table))
 
 // 11. Fee Table
 export const fees = pgTable('fees', {
@@ -182,7 +183,7 @@ export const fees = pgTable('fees', {
   currency: text('currency').notNull(),
   installments: jsonb('installments').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('fees', table))
 
 // 12. Student Fee Table
 export const studentFees = pgTable('student_fees', {
@@ -205,7 +206,7 @@ export const studentFees = pgTable('student_fees', {
   installments: jsonb('installments').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }),
-})
+}, table => definePerformanceIndexes('student_fees', table))
 
 // 13. Payment Table
 export const payments = pgTable('payments', {
@@ -224,7 +225,7 @@ export const payments = pgTable('payments', {
   cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
   cancelledById: text('cancelled_by_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('payments', table))
 
 // 14. Schedule Table
 export const schedules = pgTable('schedules', {
@@ -238,7 +239,7 @@ export const schedules = pgTable('schedules', {
   endTime: text('end_time').notNull(),
   specificDate: timestamp('specific_date', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('schedules', table))
 
 export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
@@ -250,7 +251,7 @@ export const sessions = pgTable('sessions', {
   classSubjectId: text('class_subject_id'),
   scheduleId: text('schedule_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('sessions', table))
 
 // 16. Calendar Event Table
 export const calendarEvents = pgTable('calendar_events', {
@@ -266,7 +267,7 @@ export const calendarEvents = pgTable('calendar_events', {
   scopeKind: text('scope_kind').notNull(),
   scopeId: text('scope_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('calendar_events', table))
 
 // 17. Attendance Record Table
 export const attendanceRecords = pgTable('attendance_records', {
@@ -285,7 +286,7 @@ export const attendanceRecords = pgTable('attendance_records', {
   createdBy: text('created_by'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('attendance_records', table))
 
 // 18. Announcement Table
 export const announcements = pgTable('announcements', {
@@ -300,7 +301,7 @@ export const announcements = pgTable('announcements', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   publishedAt: timestamp('published_at', { mode: 'date' }),
   expiresAt: timestamp('expires_at', { mode: 'date' }),
-})
+}, table => definePerformanceIndexes('announcements', table))
 
 export const announcementTargets = pgTable('announcement_targets', {
   id: text('id').primaryKey(),
@@ -308,7 +309,7 @@ export const announcementTargets = pgTable('announcement_targets', {
   targetKind: text('target_kind').notNull(),
   targetId: text('target_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('announcement_targets', table))
 
 // 20. Message Delivery Table
 export const messageDeliveries = pgTable('message_deliveries', {
@@ -324,7 +325,7 @@ export const messageDeliveries = pgTable('message_deliveries', {
   readAt: timestamp('read_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('message_deliveries', table))
 
 // 21. Subject Table
 export const subjects = pgTable('subjects', {
@@ -336,7 +337,7 @@ export const subjects = pgTable('subjects', {
   category: text('category').notNull().default('Scientifique'),
   color: text('color').notNull().default('mint'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('subjects', table))
 
 // 22. Subject Matter Table
 export const subjectMatters = pgTable('subject_matters', {
@@ -347,7 +348,7 @@ export const subjectMatters = pgTable('subject_matters', {
   sequenceOrder: integer('sequence_order').notNull(),
   estimatedHours: integer('estimated_hours'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('subject_matters', table))
 
 // 23. Class Group Table
 export const classGroups = pgTable('class_groups', {
@@ -357,7 +358,7 @@ export const classGroups = pgTable('class_groups', {
   name: text('name').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('class_groups', table))
 
 // 24. Class Subject Table
 export const classSubjects = pgTable('class_subjects', {
@@ -367,7 +368,7 @@ export const classSubjects = pgTable('class_subjects', {
   coefficient: integer('coefficient'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),
-})
+}, table => definePerformanceIndexes('class_subjects', table))
 
 // 25. Homework Assignment Table
 export const homeworkAssignments = pgTable('homework_assignments', {
@@ -382,7 +383,7 @@ export const homeworkAssignments = pgTable('homework_assignments', {
   type: text('type').notNull(),
   attachments: jsonb('attachments').notNull().default([]),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('homework_assignments', table))
 
 // 26. Class Logbook Entry Table
 export const classLogbookEntries = pgTable('class_logbook_entries', {
@@ -398,7 +399,7 @@ export const classLogbookEntries = pgTable('class_logbook_entries', {
   attachments: jsonb('attachments').notNull().default([]),
   progress: integer('progress').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('class_logbook_entries', table))
 
 // 27. Homework Submission Table
 export const homeworkSubmissions = pgTable('homework_submissions', {
@@ -408,7 +409,7 @@ export const homeworkSubmissions = pgTable('homework_submissions', {
   status: text('status').notNull(),
   submittedAt: timestamp('submitted_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('homework_submissions', table))
 
 // 28. Extracurricular Activity Table
 export const extracurricularActivities = pgTable('extracurricular_activities', {
@@ -424,7 +425,7 @@ export const extracurricularActivities = pgTable('extracurricular_activities', {
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('extracurricular_activities', table))
 
 // 29. Activity Enrollment Table
 export const activityEnrollments = pgTable('activity_enrollments', {
@@ -433,7 +434,7 @@ export const activityEnrollments = pgTable('activity_enrollments', {
   studentId: text('student_id').notNull(),
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('activity_enrollments', table))
 
 // 30. Class Subject Matter Table
 export const classSubjectMatters = pgTable('class_subject_matters', {
@@ -447,7 +448,7 @@ export const classSubjectMatters = pgTable('class_subject_matters', {
   completedAt: timestamp('completed_at', { mode: 'date' }),
   notes: text('notes'),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('class_subject_matters', table))
 
 // 26. Class Subject Progress Table
 export const classSubjectProgress = pgTable('class_subject_progress', {
@@ -475,7 +476,7 @@ export const assessments = pgTable('assessments', {
   metAt: timestamp('met_at', { mode: 'date' }),
   date: timestamp('date', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('assessments', table))
 
 // 28. Assessment Result Table
 export const assessmentResults = pgTable('assessment_results', {
@@ -487,7 +488,7 @@ export const assessmentResults = pgTable('assessment_results', {
   notes: text('notes'),
   createdBy: text('created_by'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('assessment_results', table))
 
 // 29. Grade Scale Table
 export const gradeScales = pgTable('grade_scales', {
@@ -501,7 +502,7 @@ export const gradeScales = pgTable('grade_scales', {
   description: text('description'),
   isDefault: boolean('is_default').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('grade_scales', table))
 
 export const reportCardDefinitions = pgTable('report_card_definitions', {
   id: text('id').primaryKey(),
@@ -515,7 +516,7 @@ export const reportCardDefinitions = pgTable('report_card_definitions', {
   isDefault: boolean('is_default').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('report_card_definitions', table))
 
 // 31. Report Card Definition Section Table
 export const reportCardDefinitionSections = pgTable('report_card_definition_sections', {
@@ -529,7 +530,7 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
   parentSectionId: text('parent_section_id'),
   subjectId: text('subject_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('report_card_definition_sections', table))
 
 // 32. Report Card Result Table
 export const reportCardResults = pgTable('report_card_results', {
@@ -550,7 +551,7 @@ export const reportCardResults = pgTable('report_card_results', {
   status: text('status').notNull(),
   generatedAt: timestamp('generated_at', { mode: 'date' }).notNull(),
   publishedAt: timestamp('published_at', { mode: 'date' }),
-})
+}, table => definePerformanceIndexes('report_card_results', table))
 
 // 33. Student Table
 export const students = pgTable('students', {
@@ -568,7 +569,7 @@ export const students = pgTable('students', {
   status: text('status').notNull(),
   enrollmentDate: timestamp('enrollment_date', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('students', table))
 
 // 34. Student Class Enrollment Table
 export const studentClassEnrollments = pgTable('student_class_enrollments', {
@@ -588,7 +589,7 @@ export const studentClassEnrollments = pgTable('student_class_enrollments', {
   progressionDecidedBy: text('progression_decided_by'),
   progressionNotes: text('progression_notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('student_class_enrollments', table))
 
 // 35. Guardian Table
 export const guardians = pgTable('guardians', {
@@ -601,7 +602,7 @@ export const guardians = pgTable('guardians', {
   subjectId: text('subject_id'),
   contactMethods: jsonb('contact_methods').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('guardians', table))
 
 // 36. Guardian Student Link Table
 export const guardianStudentLinks = pgTable('guardian_student_links', {
@@ -612,7 +613,7 @@ export const guardianStudentLinks = pgTable('guardian_student_links', {
   relationship: text('relationship').notNull(),
   isPrimary: boolean('is_primary').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('guardian_student_links', table))
 
 // 37. Student Note Table
 export const studentNotes = pgTable('student_notes', {
@@ -626,7 +627,7 @@ export const studentNotes = pgTable('student_notes', {
   visibility: text('visibility').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('student_notes', table))
 
 // 38. Student Health Profile Table
 export const studentHealthProfiles = pgTable('student_health_profiles', {
@@ -640,7 +641,7 @@ export const studentHealthProfiles = pgTable('student_health_profiles', {
   clinicalNotes: text('clinical_notes'),
   lastVisit: timestamp('last_visit', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('student_health_profiles', table))
 
 // 39. Student Disciplinary Action Table
 export const studentDisciplinaryActions = pgTable('student_disciplinary_actions', {
@@ -656,7 +657,7 @@ export const studentDisciplinaryActions = pgTable('student_disciplinary_actions'
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('student_disciplinary_actions', table))
 
 // 40. Disciplinary Action Table
 export const disciplinaryActions = pgTable('disciplinary_actions', {
@@ -665,7 +666,7 @@ export const disciplinaryActions = pgTable('disciplinary_actions', {
   name: text('name').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('disciplinary_actions', table))
 
 // 41. Student Incident Involvement Table
 export const studentIncidentInvolvements = pgTable('student_incident_involvements', {
@@ -675,7 +676,7 @@ export const studentIncidentInvolvements = pgTable('student_incident_involvement
   role: text('role').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('student_incident_involvements', table))
 
 // 42. Incident Table
 export const incidents = pgTable('incidents', {
@@ -694,4 +695,4 @@ export const incidents = pgTable('incidents', {
   resolvedByStaffId: text('resolved_by_staff_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-})
+}, table => definePerformanceIndexes('incidents', table))

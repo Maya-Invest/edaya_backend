@@ -1,6 +1,16 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { PlanningEvent, Resource } from '$lib/types/school';
+import {
+	assignmentsForClassSubjects,
+	assignmentsForSessions,
+	classGroupScope,
+	dedupeById,
+	entitiesByIds,
+	resourcesByIds,
+	staffMembersByIds,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -40,23 +50,69 @@ function dayLabel(value: unknown): PlanningEvent['day'] {
 	return label;
 }
 
-export async function fetchPlanningSources(client: SchoolClient): Promise<PlanningSources> {
+export async function fetchClassPlanningSources(
+	client: SchoolClient,
+	classGroupId: string,
+): Promise<PlanningSources> {
 	const [
 		sessionsRaw,
 		classSubjectsRaw,
+		classGroupStaffAssignmentsRaw,
+		classGroupResourceAssignmentsRaw,
+	] = await Promise.all([
+		client.entities.sessions.list(classGroupScope(classGroupId)),
+		client.entities.classSubjects.list(classGroupScope(classGroupId)),
+		client.entities.staffAssignments.list(classGroupScope(classGroupId)),
+		client.entities.resourceAssignments.list(classGroupScope(classGroupId)),
+	]);
+
+	const sessionIds = uniqueIds((sessionsRaw ?? []).map(session => session.id));
+	const classSubjectIds = uniqueIds((classSubjectsRaw ?? []).map(classSubject => classSubject.id));
+	const subjectIds = uniqueIds((classSubjectsRaw ?? []).map(classSubject => classSubject.subjectId));
+
+	const [
+		sessionStaffAssignmentsRaw,
+		classSubjectStaffAssignmentsRaw,
+		sessionResourceAssignmentsRaw,
+	] = await Promise.all([
+		sessionIds.length > 0
+			? client.entities.staffAssignments.list(assignmentsForSessions(sessionIds))
+			: Promise.resolve([]),
+		classSubjectIds.length > 0
+			? client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds))
+			: Promise.resolve([]),
+		sessionIds.length > 0
+			? client.entities.resourceAssignments.list(assignmentsForSessions(sessionIds))
+			: Promise.resolve([]),
+	]);
+
+	const staffAssignmentsRaw = dedupeById([
+		...(classGroupStaffAssignmentsRaw ?? []),
+		...(sessionStaffAssignmentsRaw ?? []),
+		...(classSubjectStaffAssignmentsRaw ?? []),
+	]);
+	const resourceAssignmentsRaw = dedupeById([
+		...(classGroupResourceAssignmentsRaw ?? []),
+		...(sessionResourceAssignmentsRaw ?? []),
+	]);
+
+	const staffIds = uniqueIds(staffAssignmentsRaw.map(assignment => assignment.staffId));
+	const resourceIds = uniqueIds(resourceAssignmentsRaw.map(assignment => assignment.resourceId));
+
+	const [
 		subjectsRaw,
 		staffMembersRaw,
-		staffAssignmentsRaw,
 		resourcesRaw,
-		resourceAssignmentsRaw,
 	] = await Promise.all([
-		client.entities.sessions.list({}),
-		client.entities.classSubjects.list({}),
-		client.entities.subjects.list({}),
-		client.entities.staffMembers.list({}),
-		client.entities.staffAssignments.list({}),
-		client.entities.resources.list({}),
-		client.entities.resourceAssignments.list({}),
+		subjectIds.length > 0
+			? client.entities.subjects.list(entitiesByIds(subjectIds))
+			: Promise.resolve([]),
+		staffIds.length > 0
+			? client.entities.staffMembers.list(staffMembersByIds(staffIds))
+			: Promise.resolve([]),
+		resourceIds.length > 0
+			? client.entities.resources.list(resourcesByIds(resourceIds))
+			: Promise.resolve([]),
 	]);
 
 	return {
@@ -64,9 +120,9 @@ export async function fetchPlanningSources(client: SchoolClient): Promise<Planni
 		classSubjectsRaw: classSubjectsRaw ?? [],
 		subjectsRaw: subjectsRaw ?? [],
 		staffMembersRaw: staffMembersRaw ?? [],
-		staffAssignmentsRaw: staffAssignmentsRaw ?? [],
+		staffAssignmentsRaw,
 		resourcesRaw: resourcesRaw ?? [],
-		resourceAssignmentsRaw: resourceAssignmentsRaw ?? [],
+		resourceAssignmentsRaw,
 	};
 }
 
@@ -136,6 +192,6 @@ export function mapResources(resourcesRaw: ResourceRaw[]): Resource[] {
 }
 
 export async function loadClassPlanning(client: SchoolClient, classGroupId: string): Promise<PlanningEvent[]> {
-	const sources = await fetchPlanningSources(client);
+	const sources = await fetchClassPlanningSources(client, classGroupId);
 	return mapPlanningEvents(classGroupId, sources);
 }

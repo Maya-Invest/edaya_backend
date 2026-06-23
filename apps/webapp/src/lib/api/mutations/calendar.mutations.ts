@@ -8,6 +8,7 @@ import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { t } from '$lib/i18n';
 import { toast } from '$lib/toast.svelte';
 import { get } from 'svelte/store';
+
 type ApiCalendarEvent = components['schemas']['CalendarEvent'];
 type ApiKind = ApiCalendarEvent['kind'];
 type ApiScopeKind = ApiCalendarEvent['scopeKind'];

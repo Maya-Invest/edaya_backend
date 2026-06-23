@@ -9,8 +9,12 @@ import type {
 	School,
 } from '$lib/types/school';
 import { buildClassHierarchy } from '$lib/academic/hierarchy';
+import { activeEnrollmentCountForClass, schoolWideEntityList } from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
+
+const SHELL_ACADEMIC_STRUCTURE_SCOPE
+	= 'Shell bootstrap loads school-wide academic structure selectors (school, years, periods, grade levels, classes).';
 
 export interface AppShellData {
 	schools: School[];
@@ -23,6 +27,24 @@ export interface AppShellData {
 	studentCount: number;
 }
 
+export async function fetchActiveEnrollmentCountsByClass(
+	client: SchoolClient,
+	classGroupIds: readonly string[],
+): Promise<Record<string, number>> {
+	if (classGroupIds.length === 0) {
+		return {};
+	}
+
+	const entries = await Promise.all(classGroupIds.map(async (classGroupId) => {
+		const { count } = await client.entities.enrollments.count(
+			activeEnrollmentCountForClass(classGroupId),
+		);
+		return [classGroupId, count] as const;
+	}));
+
+	return Object.fromEntries(entries);
+}
+
 export async function fetchAppShellData(client: SchoolClient): Promise<AppShellData> {
 	const [
 		schoolsRaw,
@@ -31,16 +53,19 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 		gradeLevelsRaw,
 		periodDefsRaw,
 		classGroupsRaw,
-		enrollmentsRaw,
 	] = await Promise.all([
-		client.entities.schools.list({}),
-		client.entities.academicYears.list({}),
-		client.entities.academicPeriods.list({}),
-		client.entities.gradeLevels.list({}),
-		client.entities.periodDefinitions.list({}),
-		client.entities.classGroups.list({}),
-		client.entities.enrollments.list({}),
+		client.entities.schools.list(schoolWideEntityList(SHELL_ACADEMIC_STRUCTURE_SCOPE)),
+		client.entities.academicYears.list(schoolWideEntityList(SHELL_ACADEMIC_STRUCTURE_SCOPE)),
+		client.entities.academicPeriods.list(schoolWideEntityList(SHELL_ACADEMIC_STRUCTURE_SCOPE)),
+		client.entities.gradeLevels.list(schoolWideEntityList(SHELL_ACADEMIC_STRUCTURE_SCOPE)),
+		client.entities.periodDefinitions.list(schoolWideEntityList(SHELL_ACADEMIC_STRUCTURE_SCOPE)),
+		client.entities.classGroups.list(schoolWideEntityList(SHELL_ACADEMIC_STRUCTURE_SCOPE)),
 	]);
+
+	const studentCountByClass = await fetchActiveEnrollmentCountsByClass(
+		client,
+		(classGroupsRaw ?? []).map(classGroup => classGroup.id),
+	);
 
 	const schools: School[] = (schoolsRaw ?? [])
 		.filter((school): school is NonNullable<typeof schoolsRaw[number]> & { id: string; name: string } =>
@@ -92,13 +117,6 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 		order: gl.order,
 	}));
 
-	const studentCountByClass: Record<string, number> = {};
-	for (const enr of enrollmentsRaw ?? []) {
-		if (enr.status === 'active') {
-			studentCountByClass[enr.classGroupId] = (studentCountByClass[enr.classGroupId] ?? 0) + 1;
-		}
-	}
-
 	const classesList: ClassNode[] = (classGroupsRaw ?? []).map((cg) => {
 		const gradeLevel = gradeLevels.find(gl => gl.id === cg.gradeLevelId);
 		return {
@@ -113,7 +131,7 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 	});
 
 	const hierarchy = buildClassHierarchy(classesList, gradeLevels);
-	const activeStudentCount = Object.values(studentCountByClass).reduce((a, b) => a + b, 0);
+	const activeStudentCount = Object.values(studentCountByClass).reduce((total, count) => total + count, 0);
 
 	return {
 		schools,

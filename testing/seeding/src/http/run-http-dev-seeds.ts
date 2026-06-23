@@ -3,24 +3,56 @@ import type { AuthProvisioner, SeedApplication } from '../types'
 import type { HttpSeedClient } from './client'
 import type { HttpSeedValidationResult } from './seed-validation'
 import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { createHttpAccessSeedPort } from '../access/http'
+import { createInProcessAccessSeedPort } from '../access/in-process'
+import { createHttpActivitiesSeedPort } from '../activities/http'
+import { createInProcessActivitiesSeedPort } from '../activities/in-process'
+import { createHttpAssessmentsSeedPort } from '../assessments/http'
+import { createInProcessAssessmentsSeedPort } from '../assessments/in-process'
+import { createHttpAttachmentsSeedPort } from '../attachments/http'
+import { createInProcessAttachmentsSeedPort } from '../attachments/in-process'
+import { createHttpAttendanceSeedPort } from '../attendance/http'
+import { createInProcessAttendanceSeedPort } from '../attendance/in-process'
+import { createHttpAuthLinkSeedPort } from '../auth-link/http'
+import { createInProcessAuthLinkSeedPort } from '../auth-link/in-process'
+import { createHttpCommunicationsSeedPort } from '../communications/http'
+import { createInProcessCommunicationsSeedPort } from '../communications/in-process'
+import { createHttpCurriculumSeedPort } from '../curriculum/http'
+import { createInProcessCurriculumSeedPort } from '../curriculum/in-process'
 import { ownerSubjectIdFromAuthProvision } from '../dev-staff-auth-seed'
-import { runDevAccessAssignmentsSeed, runDevAccessRolesSeed, runDevAccessSeed } from '../run-dev-access-seed'
-import { runDevAuthLink } from '../run-dev-auth-link'
+import { createHttpDisciplineSeedPort } from '../discipline/http'
+import { createInProcessDisciplineSeedPort } from '../discipline/in-process'
+import { createHttpFinanceSeedPort } from '../finance/http'
+import { createInProcessFinanceSeedPort } from '../finance/in-process'
+import { createHttpLearningContentSeedPort } from '../learning-content/http'
+import { createInProcessLearningContentSeedPort } from '../learning-content/in-process'
+import { createHttpPopulationSeedPort } from '../population/http'
+import { createInProcessPopulationSeedPort } from '../population/in-process'
+import { createHttpReportCardsSeedPort } from '../report-cards/http'
+import { createInProcessReportCardsSeedPort } from '../report-cards/in-process'
+import {
+  runDevAccessAssignmentsSeedWithPort,
+  runDevAccessRolesSeedWithPort,
+} from '../run-dev-access-seed'
+import { runDevAuthLinkWithPort } from '../run-dev-auth-link'
 import { runDevAuthProvision } from '../run-dev-auth-provision'
 import { runDevSchoolSeed } from '../run-dev-school-seed'
 import {
   logDevSeedResults,
   runDevSeeds,
 } from '../run-dev-seeds'
-import {
-  createLocalInProcessSeedContext,
-  isLocalPersistedPgliteDev,
-  runLocalInProcessStaffAuthSync,
-} from '../run-local-in-process-repair'
+import { createHttpSchedulingSeedPort } from '../scheduling/http'
+import { createInProcessSchedulingSeedPort } from '../scheduling/in-process'
+import { createHttpSchoolLifeSeedPort } from '../school-life/http'
+import { createInProcessSchoolLifeSeedPort } from '../school-life/in-process'
+import { createHttpSchoolStructureSeedPort } from '../school-structure/http'
+import { createInProcessSchoolStructureSeedPort } from '../school-structure/in-process'
+import { createHttpStudentSupportSeedPort } from '../student-support/http'
+import { createInProcessStudentSupportSeedPort } from '../student-support/in-process'
 import { HttpAuthProvisioner, signInViaHttp } from './auth'
 import { bootstrapHttpCoreSession } from './bootstrap-http-core-session'
 import { postEntityList } from './core-entity'
-import { createCoreHttpSeedApplication } from './core-seed-application'
+import { throwHttpBootstrapFailure } from './local-dev-http-bootstrap-error'
 import {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
@@ -79,47 +111,6 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
   throw new Error(
     `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|service-account|smoke|validate|all]`,
   )
-}
-
-async function createSessionHttpSeedApplication(client: HttpSeedClient): Promise<SeedApplication> {
-  await bootstrapHttpCoreSessionWithLocalRepair(client)
-  return createCoreHttpSeedApplication({ client })
-}
-
-const RESTART_API_AFTER_IN_PROCESS_REPAIR
-  = 'Restart the API (`bun dev`) so it picks up auth/staff links written directly to PGlite.'
-
-async function bootstrapHttpCoreSessionWithLocalRepair(client: HttpSeedClient): Promise<void> {
-  try {
-    await bootstrapHttpCoreSession(client)
-  }
-  catch (error) {
-    if (!isLocalPersistedPgliteDev()) {
-      throw error
-    }
-
-    console.warn(
-      'HTTP /core bootstrap failed; repairing dev auth links in-process against local PGlite...',
-    )
-    await runLocalInProcessStaffAuthSync()
-    console.warn(RESTART_API_AFTER_IN_PROCESS_REPAIR)
-    await bootstrapHttpCoreSession(client)
-  }
-}
-
-async function resolveSeedApplication(options: RunHttpDevSeedsOptions): Promise<SeedApplication> {
-  if (options.application) {
-    return options.application
-  }
-
-  if (options.serviceAccountApiKey) {
-    return createCoreHttpSeedApplication({
-      client: options.client,
-      serviceAccountApiKey: options.serviceAccountApiKey,
-    })
-  }
-
-  return createSessionHttpSeedApplication(options.client)
 }
 
 async function hasSeededSchools(
@@ -245,14 +236,14 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   const { client, scope, log } = options
   const auth = options.auth ?? new HttpAuthProvisioner(client)
 
-  let serviceAccountApiKey = options.serviceAccountApiKey
+  const profileSeedingApiKey = resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID)
+  let serviceAccountApiKey: string | undefined = options.serviceAccountApiKey ?? profileSeedingApiKey
   if (serviceAccountApiKey && scope !== 'auth') {
     const valid = await isServiceAccountApiKeyValid(client, serviceAccountApiKey)
     if (!valid) {
       console.warn(
-        'SERVICE_ACCOUNT_API_KEY was rejected by the API (401). '
-        + 'Falling back to session bootstrap for /core/* seeding. '
-        + 'Update apps/api/.env after `bun seed:init` prints a new key.',
+        'Seeding API key from the school profile in @edaya/dev-fixtures was rejected by the API (401). '
+        + 'Using session bootstrap to register the school and provision the seeding service account.',
       )
       serviceAccountApiKey = undefined
     }
@@ -278,7 +269,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   if (scope === 'auth') {
     results.authProvision = await runDevAuthProvision(auth, { baseUrl: client.origin })
 
-    const seedingApiKey = options.serviceAccountApiKey ?? resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID)
+    const seedingApiKey = profileSeedingApiKey
     const canListSchoolsViaHttp = Boolean(options.application)
       || Boolean(options.serviceAccountApiKey)
       || await canUseSeedingServiceAccount(client, seedingApiKey)
@@ -286,11 +277,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       ? await hasSeededSchools(client, options.application, seedingApiKey)
       : false
     if (hasSchools) {
-      const application = options.application
-        ?? (await canUseSeedingServiceAccount(client, seedingApiKey)
-          ? createCoreHttpSeedApplication({ client, serviceAccountApiKey: seedingApiKey })
-          : await resolveSeedApplication({ ...options, serviceAccountApiKey: seedingApiKey }))
-      results.authLink = await runDevAuthLink(application, auth)
+      const authLinkPort = options.application
+        ? createInProcessAuthLinkSeedPort(options.application)
+        : createHttpAuthLinkSeedPort({ client, serviceAccountApiKey: seedingApiKey })
+      results.authLink = await runDevAuthLinkWithPort(authLinkPort, auth)
     }
 
     if (log) {
@@ -300,7 +290,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   }
 
   if (scope === 'smoke') {
-    results.smoke = await runHttpSmokeSeed(client, options)
+    results.smoke = await runHttpSmokeSeed(client, {
+      application: options.application,
+      serviceAccountApiKey,
+    })
     return results
   }
 
@@ -317,8 +310,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   }
 
   const authProvision: Awaited<ReturnType<typeof runDevAuthProvision>> | null = null
-  let application: SeedApplication
-  const seedingApiKey = options.serviceAccountApiKey ?? resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID)
+  const seedingApiKey = profileSeedingApiKey
 
   if (
     scope === 'all'
@@ -328,52 +320,18 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   ) {
     results.authProvision = await runDevAuthProvision(auth)
 
-    let useInProcessFallback = false
     try {
       await bootstrapHttpCoreSession(client)
     }
     catch (error) {
-      if (!isLocalPersistedPgliteDev()) {
-        throw error
-      }
-
-      console.warn(
-        'HTTP /core bootstrap failed; completing seed in-process against local PGlite...',
-      )
-      await runLocalInProcessStaffAuthSync()
-      console.warn(RESTART_API_AFTER_IN_PROCESS_REPAIR)
-      useInProcessFallback = true
+      throwHttpBootstrapFailure(error)
     }
 
     const ownerSubjectId = results.authProvision
       ? ownerSubjectIdFromAuthProvision(results.authProvision)
       : undefined
 
-    if (useInProcessFallback) {
-      const local = await createLocalInProcessSeedContext()
-      results.school = await runDevSchoolSeed(local.application, {
-        auth: local.auth,
-        ownerSubjectId,
-      })
-      results.access = await runDevAccessSeed(local.application, {
-        auth: local.auth,
-        ownerSubjectId,
-      })
-
-      if (log) {
-        logDevSeedResults({
-          school: results.school,
-          authProvision: results.authProvision,
-          authLink: results.authLink,
-          access: results.access,
-        }, log)
-      }
-
-      return results
-    }
-
-    const sessionApp = createCoreHttpSeedApplication({ client })
-    await runDevAccessRolesSeed(sessionApp)
+    await runDevAccessRolesSeedWithPort(createHttpAccessSeedPort({ client }))
 
     const provision = await provisionSeedingServiceAccountHttp(client, {
       schoolId: SEED_SCHOOL_ID,
@@ -381,19 +339,107 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     })
     logProvisionedServiceAccountKey(provision)
 
-    application = createCoreHttpSeedApplication({ client, serviceAccountApiKey: seedingApiKey })
-    const serviceAccountApiKeyFromProvision = provision.apiKey
+    const serviceAccountApiKeyFromProvision = provision.apiKey ?? seedingApiKey
     if (!serviceAccountApiKeyFromProvision) {
       throw new Error(
-        'Seeding service account already exists but SERVICE_ACCOUNT_API_KEY is not set. '
-        + 'Add the key to apps/api/.env or rotate the account.',
+        'Seeding service account already exists but the profile API key is not available. '
+        + 'Run `bun seed:service-account` or wipe `.data` and run `bun seed:init`.',
       )
     }
 
-    application = createCoreHttpSeedApplication({ client, serviceAccountApiKey: serviceAccountApiKeyFromProvision })
+    const authLinkPort = createHttpAuthLinkSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const accessSeedPort = createHttpAccessSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const schoolStructurePort = createHttpSchoolStructureSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const populationPort = createHttpPopulationSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const curriculumPort = createHttpCurriculumSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const schedulingPort = createHttpSchedulingSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const attendancePort = createHttpAttendanceSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const assessmentsPort = createHttpAssessmentsSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const reportCardsPort = createHttpReportCardsSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const financePort = createHttpFinanceSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const learningContentPort = createHttpLearningContentSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const activitiesPort = createHttpActivitiesSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const schoolLifePort = createHttpSchoolLifeSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const studentSupportPort = createHttpStudentSupportSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const disciplinePort = createHttpDisciplineSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const communicationsPort = createHttpCommunicationsSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
+    const attachmentsPort = createHttpAttachmentsSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
 
-    results.school = await runDevSchoolSeed(application, { auth, ownerSubjectId })
-    results.access = await runDevAccessAssignmentsSeed(application, { auth, ownerSubjectId })
+    results.school = await runDevSchoolSeed(undefined, {
+      auth,
+      ownerSubjectId,
+      authLinkPort,
+      schoolStructurePort,
+      populationPort,
+      curriculumPort,
+      schedulingPort,
+      attendancePort,
+      assessmentsPort,
+      reportCardsPort,
+      financePort,
+      learningContentPort,
+      activitiesPort,
+      schoolLifePort,
+      studentSupportPort,
+      disciplinePort,
+      communicationsPort,
+      attachmentsPort,
+    })
+    results.access = await runDevAccessAssignmentsSeedWithPort(
+      accessSeedPort,
+      { auth, ownerSubjectId, authLinkPort },
+    )
 
     if (log) {
       logDevSeedResults({
@@ -406,17 +452,70 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
 
     return results
   }
-  else {
-    application = await resolveSeedApplication({
-      ...options,
-      serviceAccountApiKey,
-    })
+  if (!options.application && !serviceAccountApiKey) {
+    try {
+      await bootstrapHttpCoreSession(client)
+    }
+    catch (error) {
+      throwHttpBootstrapFailure(error)
+    }
   }
 
   const domainResults = await runDevSeeds({
     scope,
-    application,
+    application: options.application,
     auth,
+    authLinkPort: options.application
+      ? createInProcessAuthLinkSeedPort(options.application)
+      : createHttpAuthLinkSeedPort({ client, serviceAccountApiKey }),
+    accessSeedPort: options.application
+      ? createInProcessAccessSeedPort(options.application)
+      : createHttpAccessSeedPort({ client, serviceAccountApiKey }),
+    schoolStructurePort: options.application
+      ? createInProcessSchoolStructureSeedPort(options.application)
+      : createHttpSchoolStructureSeedPort({ client, serviceAccountApiKey }),
+    populationPort: options.application
+      ? createInProcessPopulationSeedPort(options.application)
+      : createHttpPopulationSeedPort({ client, serviceAccountApiKey }),
+    curriculumPort: options.application
+      ? createInProcessCurriculumSeedPort(options.application)
+      : createHttpCurriculumSeedPort({ client, serviceAccountApiKey }),
+    schedulingPort: options.application
+      ? createInProcessSchedulingSeedPort(options.application)
+      : createHttpSchedulingSeedPort({ client, serviceAccountApiKey }),
+    attendancePort: options.application
+      ? createInProcessAttendanceSeedPort(options.application)
+      : createHttpAttendanceSeedPort({ client, serviceAccountApiKey }),
+    assessmentsPort: options.application
+      ? createInProcessAssessmentsSeedPort(options.application)
+      : createHttpAssessmentsSeedPort({ client, serviceAccountApiKey }),
+    reportCardsPort: options.application
+      ? createInProcessReportCardsSeedPort(options.application)
+      : createHttpReportCardsSeedPort({ client, serviceAccountApiKey }),
+    financePort: options.application
+      ? createInProcessFinanceSeedPort(options.application)
+      : createHttpFinanceSeedPort({ client, serviceAccountApiKey }),
+    learningContentPort: options.application
+      ? createInProcessLearningContentSeedPort(options.application)
+      : createHttpLearningContentSeedPort({ client, serviceAccountApiKey }),
+    activitiesPort: options.application
+      ? createInProcessActivitiesSeedPort(options.application)
+      : createHttpActivitiesSeedPort({ client, serviceAccountApiKey }),
+    schoolLifePort: options.application
+      ? createInProcessSchoolLifeSeedPort(options.application)
+      : createHttpSchoolLifeSeedPort({ client, serviceAccountApiKey }),
+    studentSupportPort: options.application
+      ? createInProcessStudentSupportSeedPort(options.application)
+      : createHttpStudentSupportSeedPort({ client, serviceAccountApiKey }),
+    disciplinePort: options.application
+      ? createInProcessDisciplineSeedPort(options.application)
+      : createHttpDisciplineSeedPort({ client, serviceAccountApiKey }),
+    communicationsPort: options.application
+      ? createInProcessCommunicationsSeedPort(options.application)
+      : createHttpCommunicationsSeedPort({ client, serviceAccountApiKey }),
+    attachmentsPort: options.application
+      ? createInProcessAttachmentsSeedPort(options.application)
+      : createHttpAttachmentsSeedPort({ client, serviceAccountApiKey }),
     ...(scope === 'all' && !serviceAccountApiKey && !options.application
       ? { skipAuthProvision: true }
       : {}),
@@ -432,10 +531,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       ...options,
       serviceAccountApiKey,
     })
-
-    if (isLocalPersistedPgliteDev()) {
-      await runLocalInProcessStaffAuthSync()
-    }
   }
 
   if (log) {

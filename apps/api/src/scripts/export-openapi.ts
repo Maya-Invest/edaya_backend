@@ -8,6 +8,19 @@ import { resetApiRuntimesForTests } from "@/runtime";
 // Load environment variables before importing app to ensure all dependencies initialize properly
 loadNodeProcessEnv();
 
+function resolveOutputPath(): string {
+  const outputIndex = process.argv.indexOf("--output");
+  if (outputIndex === -1) {
+    return resolve(import.meta.dirname, "../../../webapp/src/lib/api/openapi.json");
+  }
+
+  const requestedPath = process.argv[outputIndex + 1];
+  if (!requestedPath) {
+    throw new Error("--output requires a file path");
+  }
+  return resolve(process.cwd(), requestedPath);
+}
+
 async function main() {
   const res = await app.request("/doc", undefined, process.env);
   if (!res.ok) {
@@ -16,8 +29,7 @@ async function main() {
   }
   const schema = await res.json();
 
-  // Resolve path to the webapp src/lib/api folder
-  const outputPath = resolve(import.meta.dirname, "../../../webapp/src/lib/api/openapi.json");
+  const outputPath = resolveOutputPath();
 
   // Ensure the directory exists
   mkdirSync(dirname(outputPath), { recursive: true });

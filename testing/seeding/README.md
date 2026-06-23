@@ -1,0 +1,33 @@
+# @edaya/seeding
+
+HTTP seed orchestration for local dev, staging, and integration tests.
+
+## Commands
+
+| Script | Purpose |
+|--------|---------|
+| `bun seed:all` / `bun seed:init` | Full demo seed through `/core/*` (same entry point) |
+| `bun seed:auth` | Better Auth accounts only |
+| `bun seed:auth:link` | Re-link auth subjects to staff/guardian records |
+| `bun seed:smoke` | Sign-in + `/core/authorization/effective-grants` |
+| `bun seed:validate` | Manifest entity counts + dashboard queries |
+| `bun seed:remote` | Full seed against `SEED_API_URL` |
+
+From the repo root: `bun seed`, `bun seed:init`, etc.
+
+## Local dev flow
+
+1. Start the API: `bun dev`
+2. Seed: `bun seed` (or `bun seed:init` — identical)
+3. Log in at http://localhost:5173/login
+
+After `rm -rf .data`, **stop `bun dev` first**, then restart before seeding. See [docs/local-dev.md](../../docs/local-dev.md).
+
+## Architecture
+
+- **HTTP adapters** (`src/*/http.ts`) — call `/core/*` routes; used by CLI and staging.
+- **In-process adapters** (`src/*/in-process.ts`) — used only when tests pass a `SeedApplication` directly (faster/isolated integration tests). Not used for local dev CLI.
+- **Ports** (`src/*/port.ts`) — shared workflow contracts between HTTP and in-process adapters.
+- **Bootstrap** (`src/http/bootstrap-http-core-session.ts`) — signs in as the school owner, calls `register-school` when needed, then provisions the seeding service account.
+
+Seeding API keys come from `@edaya/dev-fixtures` school profiles (`seedingApiKey`). No `.env` secret required for local dev.

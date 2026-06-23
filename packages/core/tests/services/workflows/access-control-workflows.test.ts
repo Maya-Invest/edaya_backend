@@ -106,7 +106,7 @@ describe('SchoolService access-control workflows', () => {
   test('linkActorSubject links a staff member when caller has ACCESS_CONTROL_ASSIGN', async () => {
     const { mockRepos, service } = createAccessControlContext()
 
-    const result = await service.linkActorSubject({
+    const result = await service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
       staffMemberId: 'st1',
     })
@@ -121,7 +121,7 @@ describe('SchoolService access-control workflows', () => {
       actorWithPermissions([Permission.ACCESS_CONTROL_READ]),
     )
 
-    await expect(service.linkActorSubject({
+    await expect(service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
       staffMemberId: 'st1',
     })).rejects.toBeInstanceOf(AuthorizationError)
@@ -130,7 +130,7 @@ describe('SchoolService access-control workflows', () => {
   test('linkActorSubject rejects ambiguous targets', async () => {
     const { service } = createAccessControlContext()
 
-    await expect(service.linkActorSubject({
+    await expect(service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
       staffMemberId: 'st1',
       guardianId: 'g1',
@@ -149,7 +149,7 @@ describe('SchoolService access-control workflows', () => {
       createdAt: new Date('2026-01-01T00:00:00Z'),
     }))
 
-    await expect(service.linkActorSubject({
+    await expect(service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
       staffMemberId: 'st1',
     })).rejects.toMatchObject({
@@ -169,7 +169,7 @@ describe('SchoolService access-control workflows', () => {
       createdAt: new Date('2026-01-01T00:00:00Z'),
     }))
 
-    const result = await service.linkActorSubject({
+    const result = await service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
       staffMemberId: 'st1',
     })

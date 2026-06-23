@@ -63,7 +63,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       ...input,
       reporterId: input.reporterId ?? resolveAuditActorId(this.baseService.actor),
     })
-    await this.baseService.incidents.save(incident)
+    await this.baseService.entities.incidents.save(incident)
     return incident
   }
 
@@ -88,7 +88,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       throw new BusinessRuleViolationError('STUDENT_ALREADY_LINKED_TO_INCIDENT', `Student ${studentId} is already linked to incident ${incidentId}`)
     }
     const involvement = new StudentIncidentInvolvement({ id, incidentId, studentId, role, notes, createdAt })
-    await this.baseService.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
+    await this.baseService.entities.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
     return involvement
   }
 
@@ -129,7 +129,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       notes,
       createdAt,
     })
-    await this.baseService.studentDisciplinaryActions.save(applied, { moduleChecked: true })
+    await this.baseService.entities.studentDisciplinaryActions.save(applied, { moduleChecked: true })
     return applied
   }
 
@@ -139,7 +139,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     status,
   }: UpdateStudentDisciplinaryActionStatusInput): Promise<StudentDisciplinaryAction> {
     const existing = await this.requireEntity(
-      this.baseService.studentDisciplinaryActions,
+      this.baseService.entities.studentDisciplinaryActions,
       studentDisciplinaryActionId ?? actionId ?? '',
     )
     const action = new StudentDisciplinaryAction({
@@ -156,12 +156,12 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     })
-    await this.baseService.studentDisciplinaryActions.save(action)
+    await this.baseService.entities.studentDisciplinaryActions.save(action)
     return action
   }
 
   async resolveIncident({ incidentId, resolutionNotes }: ResolveIncidentInput): Promise<Incident> {
-    const existing = await this.requireEntity(this.baseService.incidents, incidentId)
+    const existing = await this.requireEntity(this.baseService.entities.incidents, incidentId)
     const incident = new IncidentEntity({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -179,7 +179,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     })
-    await this.baseService.incidents.save(incident)
+    await this.baseService.entities.incidents.save(incident)
     return incident
   }
 

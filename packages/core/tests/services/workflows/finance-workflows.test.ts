@@ -18,7 +18,7 @@ describe('SchoolService finance workflows', () => {
   test('assignFeeToStudent materializes installments through managed service', async () => {
     const { mockPolicy, mockRepos, service } = createFinanceContext()
 
-    const result = await service.assignFeeToStudent({
+    const result = await service.financeWorkflow.assignFeeToStudent({
       id: 'sf-new',
       studentId: 'stu1',
       feeId: 'fee1',
@@ -37,7 +37,7 @@ describe('SchoolService finance workflows', () => {
   test('recordPayment records payment and updates paid amount atomically', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createFinanceContext()
 
-    const result = await service.recordPayment({
+    const result = await service.financeWorkflow.recordPayment({
       id: 'pay-new',
       studentFeeId: 'sf1',
       amount: 600,
@@ -61,7 +61,7 @@ describe('SchoolService finance workflows', () => {
   test('reversePayment reverses payment and decreases paid amount', async () => {
     const { mockRepos, service } = createFinanceContext()
 
-    const result = await service.reversePayment({
+    const result = await service.financeWorkflow.reversePayment({
       paymentId: 'pay1',
       reversedAt: new Date('2026-03-03T00:00:00Z'),
       referenceDate: new Date('2026-03-03T00:00:00Z'),
@@ -79,7 +79,7 @@ describe('SchoolService finance workflows', () => {
   test('cancelPayment cancels payment and decreases paid amount', async () => {
     const { mockRepos, service } = createFinanceContext()
 
-    const result = await service.cancelPayment({
+    const result = await service.financeWorkflow.cancelPayment({
       paymentId: 'pay1',
       cancelledAt: new Date('2026-03-03T00:00:00Z'),
       referenceDate: new Date('2026-03-03T00:00:00Z'),
@@ -97,7 +97,7 @@ describe('SchoolService finance workflows', () => {
   test('recordPayment rejects cancelled student fees', async () => {
     const { service } = createFinanceContext({ studentFeeStatus: FeeStatus.Cancelled })
 
-    await expect(service.recordPayment({
+    await expect(service.financeWorkflow.recordPayment({
       id: 'pay-new',
       studentFeeId: 'sf1',
       amount: 100,
@@ -109,7 +109,7 @@ describe('SchoolService finance workflows', () => {
   test('reversePayment rejects non-recorded payments', async () => {
     const { service } = createFinanceContext({ paymentStatus: PaymentStatus.Reversed })
 
-    await expect(service.reversePayment({
+    await expect(service.financeWorkflow.reversePayment({
       paymentId: 'pay1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })

@@ -253,12 +253,12 @@ export function mapAccessRolesToStaffRoles(
 	return mapped;
 }
 
-export async function loadAccessRolesData(client: SchoolClient): Promise<{
+export async function loadAccessRolesData(client: SchoolClient, schoolId: string): Promise<{
 	accessRoles: AccessRoleRaw[];
 	roleCrudMatrix: Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>;
 	roleEnabledPermissions: Partial<Record<StaffRole, Record<string, boolean>>>;
 }> {
-	const accessRoles = await client.entities.accessRoles.list({});
+	const accessRoles = await client.entities.accessRoles.list({ schoolId });
 
 	const roleCrudMatrix: Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>> = {};
 	const roleEnabledPermissions: Partial<Record<StaffRole, Record<string, boolean>>> = {};

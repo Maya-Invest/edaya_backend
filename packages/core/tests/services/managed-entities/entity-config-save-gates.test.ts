@@ -64,7 +64,7 @@ describe('Entity config save gates', () => {
   test('rejects orphan class subject progress before save', async () => {
     const { app } = createTestApp(actor)
 
-    await expect(app.baseService.classSubjectProgress.save(new ClassSubjectProgress({
+    await expect(app.baseService.entities.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-orphan',
       classSubjectMatterId: 'missing-matter',
       sessionId: 'missing-session',
@@ -89,7 +89,7 @@ describe('Entity config save gates', () => {
       isDefault: true,
     }))
 
-    await expect(app.baseService.gradeScales.save(new GradeScale({
+    await expect(app.baseService.entities.gradeScales.save(new GradeScale({
       id: 'scale-new',
       schoolId: 'school',
       name: 'Other default',
@@ -138,7 +138,7 @@ describe('Entity config save gates', () => {
       isDefault: true,
     }))
 
-    await expect(app.baseService.definitions.save(new ReportCardDefinition({
+    await expect(app.baseService.entities.definitions.save(new ReportCardDefinition({
       id: 'definition-missing-year',
       schoolId: 'school',
       academicYearId: 'missing-year',
@@ -147,7 +147,7 @@ describe('Entity config save gates', () => {
       name: 'Invalid',
     }))).rejects.toBeInstanceOf(AuthorizationError)
 
-    await expect(app.baseService.definitions.save(new ReportCardDefinition({
+    await expect(app.baseService.entities.definitions.save(new ReportCardDefinition({
       id: 'definition-new',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -174,7 +174,7 @@ describe('Entity config save gates', () => {
       name: 'Definition',
     }))
 
-    await expect(app.baseService.sections.save(new ReportCardDefinitionSection({
+    await expect(app.baseService.entities.sections.save(new ReportCardDefinitionSection({
       id: 'section-self',
       reportCardDefinitionId: 'definition-1',
       name: 'Self',
@@ -192,7 +192,7 @@ describe('Entity config save gates', () => {
       weight: 1,
       subjectId: 'subject-1',
     }))
-    await expect(app.baseService.sections.save(new ReportCardDefinitionSection({
+    await expect(app.baseService.entities.sections.save(new ReportCardDefinitionSection({
       id: 'section-child',
       reportCardDefinitionId: 'definition-1',
       name: 'Child',
@@ -217,7 +217,7 @@ describe('Entity config save gates', () => {
       weight: 1,
       parentSectionId: child.id,
     }))
-    await expect(app.baseService.sections.save(child.copyWith({
+    await expect(app.baseService.entities.sections.save(child.copyWith({
       parentSectionId: 'section-cycle-parent',
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
@@ -255,7 +255,7 @@ describe('Entity config save gates', () => {
       classSubjectId: 'other-class-subject',
     }))
 
-    await expect(app.baseService.assessments.save(new Assessment({
+    await expect(app.baseService.entities.assessments.save(new Assessment({
       id: 'assessment-bad-period',
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
@@ -276,7 +276,7 @@ describe('Entity config save gates', () => {
       endDate: new Date('2026-03-31T00:00:00Z'),
     }))
 
-    await expect(app.baseService.assessments.save(new Assessment({
+    await expect(app.baseService.entities.assessments.save(new Assessment({
       id: 'assessment-bad-session',
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
@@ -329,7 +329,7 @@ describe('Entity config save gates', () => {
       score: 18,
     }))
 
-    await expect(app.baseService.assessments.save(new Assessment({
+    await expect(app.baseService.entities.assessments.save(new Assessment({
       id: assessment.id,
       classGroupId: assessment.classGroupId,
       classSubjectId: assessment.classSubjectId,
@@ -375,7 +375,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.StudentClassEnrollmentRepository.save(staleEnrollment)
 
-    await expect(app.baseService.enrollments.save(new StudentClassEnrollment({
+    await expect(app.baseService.entities.enrollments.save(new StudentClassEnrollment({
       id: staleEnrollment.id,
       studentId: staleEnrollment.studentId,
       classGroupId: staleEnrollment.classGroupId,
@@ -422,7 +422,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.attendanceRepository.save(attendance)
 
-    await expect(app.baseService.attendance.save(attendance.copyWith({
+    await expect(app.baseService.entities.attendance.save(attendance.copyWith({
       justificationStatus: AttendanceJustificationStatus.Excused,
       reason: 'Medical',
       justifiedAt: new Date('2026-05-02T08:00:00Z'),
@@ -450,14 +450,14 @@ describe('Entity config save gates', () => {
     })
     await repositories.studentFeeRepository.save(studentFee)
 
-    await expect(app.baseService.studentFees.save(studentFee.copyWith({
+    await expect(app.baseService.entities.studentFees.save(studentFee.copyWith({
       adjustmentAmount: 30,
       adjustmentReason: 'Discount',
       adjustedById: 'staff-1',
       adjustedAt: new Date('2026-05-01T00:00:00Z'),
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    await expect(app.baseService.studentFees.save(studentFee.copyWith({
+    await expect(app.baseService.entities.studentFees.save(studentFee.copyWith({
       status: FeeStatus.Cancelled,
       cancellationReason: 'Cancelled',
       cancelledById: 'staff-1',
@@ -467,7 +467,7 @@ describe('Entity config save gates', () => {
 
   test('incident preSave rejects invalid scope and non-open resolution', async () => {
     const { app, repositories } = createTestApp(actor)
-    await expect(app.baseService.incidents.save(new Incident({
+    await expect(app.baseService.entities.incidents.save(new Incident({
       id: 'incident-invalid-scope',
       schoolId: 'school',
       title: 'Incident',
@@ -490,7 +490,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.incidentRepository.save(cancelledIncident)
 
-    await expect(app.baseService.incidents.save(new Incident({
+    await expect(app.baseService.entities.incidents.save(new Incident({
       id: cancelledIncident.id,
       schoolId: cancelledIncident.schoolId,
       title: cancelledIncident.title,
@@ -518,7 +518,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.studentDisciplinaryActionRepository.save(completedAction)
 
-    await expect(app.baseService.studentDisciplinaryActions.save(new StudentDisciplinaryAction({
+    await expect(app.baseService.entities.studentDisciplinaryActions.save(new StudentDisciplinaryAction({
       id: completedAction.id,
       schoolId: completedAction.schoolId,
       incidentId: completedAction.incidentId,
@@ -549,7 +549,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.staffMemberRepository.save(staffMember)
 
-    await expect(app.baseService.staffMembers.save(new StaffMember({
+    await expect(app.baseService.entities.staffMembers.save(new StaffMember({
       id: staffMember.id,
       schoolId: staffMember.schoolId,
       firstName: staffMember.firstName,
@@ -576,7 +576,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.staffMemberRepository.save(owner)
 
-    await expect(app.baseService.staffMembers.save(new StaffMember({
+    await expect(app.baseService.entities.staffMembers.save(new StaffMember({
       id: owner.id,
       schoolId: owner.schoolId,
       firstName: owner.firstName,
@@ -585,7 +585,7 @@ describe('Entity config save gates', () => {
       createdAt: owner.createdAt,
     }))).rejects.toThrow('Transfer school ownership before deactivating the owner')
 
-    await expect(app.baseService.staffMembers.delete(owner.id))
+    await expect(app.baseService.entities.staffMembers.delete(owner.id))
       .rejects
       .toThrow('Transfer school ownership before deleting the owner')
   })
@@ -627,7 +627,7 @@ describe('Entity config save gates', () => {
       sessionId: 'session-1',
     }))
 
-    await expect(app.baseService.resourceAssignments.save(new ResourceAssignment({
+    await expect(app.baseService.entities.resourceAssignments.save(new ResourceAssignment({
       id: 'assignment-new',
       resourceId: 'resource-1',
       sessionId: 'session-2',
@@ -693,7 +693,7 @@ describe('Entity config save gates', () => {
       publishedAt: new Date('2026-03-31T00:00:00Z'),
     }))
 
-    await expect(app.baseService.assessmentResults.save(new AssessmentResult({
+    await expect(app.baseService.entities.assessmentResults.save(new AssessmentResult({
       id: 'assessment-result-1',
       studentId: 'student-1',
       assessmentId: 'assessment-1',
@@ -717,7 +717,7 @@ describe('Entity config save gates', () => {
       order: 1,
     }))
 
-    await expect(app.baseService.announcementTargets.save(new AnnouncementTarget({
+    await expect(app.baseService.entities.announcementTargets.save(new AnnouncementTarget({
       id: 'target-1',
       announcementId: 'announcement-1',
       targetKind: AnnouncementTargetKind.GradeLevel,
@@ -740,7 +740,7 @@ describe('Entity config save gates', () => {
       endDate: new Date('2026-12-31T00:00:00Z'),
     }))
 
-    await expect(app.baseService.fees.save(new Fee({
+    await expect(app.baseService.entities.fees.save(new Fee({
       id: 'fee-1',
       schoolId: 'school',
       academicYearId: 'year-other',
@@ -771,7 +771,7 @@ describe('Entity config save gates', () => {
       cancelledAt: new Date('2026-02-01T00:00:00Z'),
     }))
 
-    await expect(app.baseService.payments.save(new Payment({
+    await expect(app.baseService.entities.payments.save(new Payment({
       id: 'payment-new',
       studentFeeId: 'student-fee-cancelled',
       amount: 100,
@@ -802,7 +802,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.paymentRepository.save(reversed)
 
-    await expect(app.baseService.payments.save(new Payment({
+    await expect(app.baseService.entities.payments.save(new Payment({
       id: reversed.id,
       studentFeeId: reversed.studentFeeId,
       amount: reversed.amount.amount,
@@ -862,7 +862,7 @@ describe('Entity config save gates', () => {
     })
     await repositories.reportCardResultRepository.save(published)
 
-    await expect(app.baseService.results.save(new ReportCardResult({
+    await expect(app.baseService.entities.results.save(new ReportCardResult({
       id: published.id,
       reportCardDefinitionId: published.reportCardDefinitionId,
       studentId: published.studentId,

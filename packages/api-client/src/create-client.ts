@@ -1,3 +1,4 @@
+import type { BaseEntityResource, DirectSaveEntityResource } from './entity-resource.ts'
 import type { Transport } from './transport.ts'
 import { EntityResource } from './entity-resource.ts'
 import { clientBindings } from './generated/client-bindings.ts'
@@ -6,9 +7,17 @@ import { schoolApiPath } from './paths.ts'
 type SchemaName<TSchemas extends Record<string, unknown>, TName extends string>
   = TName extends keyof TSchemas ? TSchemas[TName] : never
 
+type EntityClient<
+  TSchemas extends Record<string, unknown>,
+  TBinding extends { schemaName: string, allowDirectSave: boolean },
+> = TBinding['allowDirectSave'] extends true
+  ? DirectSaveEntityResource<SchemaName<TSchemas, TBinding['schemaName']>>
+  : BaseEntityResource<SchemaName<TSchemas, TBinding['schemaName']>>
+
 type EntityClients<TSchemas extends Record<string, unknown>> = {
-  [K in keyof typeof clientBindings.entities]: EntityResource<
-    SchemaName<TSchemas, typeof clientBindings.entities[K]['schemaName']>
+  [K in keyof typeof clientBindings.entities]: EntityClient<
+    TSchemas,
+    typeof clientBindings.entities[K]
   >
 }
 
@@ -41,7 +50,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
       key,
       new EntityResource(transport, binding.publicName),
     ]),
-  ) as EntityClients<TSchemas>
+  ) as unknown as EntityClients<TSchemas>
 
   const commands = Object.fromEntries(
     Object.entries(clientBindings.commands).map(([key, binding]) => [

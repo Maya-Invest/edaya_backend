@@ -12,6 +12,13 @@ import type {
 	ReportCardSectionResult,
 	ReportCardSubjectMark,
 } from '$lib/types/report-cards';
+import {
+	entitiesByIds,
+	recordsForFieldIds,
+	reportCardResultsForClassPeriod,
+	schoolWideEntityList,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 import { fetchClassSubjectsSources } from '$lib/api/subjects-data';
 
 type GradeScaleRaw = components['schemas']['GradeScale'];
@@ -20,6 +27,12 @@ type ReportCardDefinitionSectionRaw = components['schemas']['ReportCardDefinitio
 type ReportCardResultRaw = components['schemas']['ReportCardResult'];
 
 const DEMO_SCHOOL_ID = 'sch-edaya-central';
+
+const REPORT_CARD_CATALOG_SCOPE
+	= 'Report-card definitions and grade scales are small configuration catalogs cached in the report-card domain store.';
+
+const REPORT_CARD_SUBJECT_CATALOG_SCOPE
+	= 'Report-card definition sections reference the school subject catalog by id.';
 
 type GradeScaleRangeRaw = GradeScaleRaw['ranges'][number];
 
@@ -35,7 +48,7 @@ export function resolveClassSubjectId(
 
 export function subjectLabelForCatalogId(
 	catalogSubjectId: string,
-	sources: ClassSubjectsSources,
+	sources: Pick<ClassSubjectsSources, 'subjectsRaw'>,
 ): string {
 	return sources.subjectsRaw.find(entry => entry.id === catalogSubjectId)?.name ?? catalogSubjectId;
 }
@@ -125,7 +138,7 @@ export function mapSectionRole(
 function mapDefinitionSections(
 	definitionId: string,
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
-	sources: ClassSubjectsSources,
+	sources: Pick<ClassSubjectsSources, 'subjectsRaw'>,
 ): ReportCardSection[] {
 	const definitionSections = sectionsRaw.filter(section => section.reportCardDefinitionId === definitionId);
 	const topLevelSections = definitionSections.filter(section => !section.parentSectionId);
@@ -166,7 +179,7 @@ export function mapDefinitionStatus(
 export function mapReportCardDefinitions(
 	definitionsRaw: ReportCardDefinitionRaw[],
 	sectionsRaw: ReportCardDefinitionSectionRaw[],
-	sources: ClassSubjectsSources,
+	sources: Pick<ClassSubjectsSources, 'subjectsRaw'>,
 ): ReportCardDefinition[] {
 	return definitionsRaw.map(definition => ({
 		id: definition.id,
@@ -241,10 +254,13 @@ function mapSectionResults(
 
 export function mapReportCardResults(
 	resultsRaw: ReportCardResultRaw[],
-	definitionsRaw: ReportCardDefinitionRaw[],
+	definitions: readonly Pick<
+		ReportCardDefinition,
+		'id' | 'schoolId' | 'academicYearId' | 'gradeScaleId'
+	>[],
 	sources: ClassSubjectsSources,
 ): ReportCardResult[] {
-	const definitionById = new Map(definitionsRaw.map(definition => [definition.id, definition]));
+	const definitionById = new Map(definitions.map(definition => [definition.id, definition]));
 
 	return resultsRaw.map((result) => {
 		const definition = definitionById.get(result.reportCardDefinitionId);
@@ -276,22 +292,58 @@ export function mapReportCardResults(
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
-export async function loadReportCardsData(client: SchoolClient): Promise<{
+export async function loadReportCardCatalogData(client: SchoolClient): Promise<{
 	gradeScales: GradeScale[];
 	definitions: ReportCardDefinition[];
-	results: ReportCardResult[];
 }> {
-	const [gradeScalesRaw, definitionsRaw, sectionsRaw, resultsRaw, subjectsSources] = await Promise.all([
-		client.entities.gradeScales.list({}),
-		client.entities.definitions.list({}),
-		client.entities.sections.list({}),
-		client.entities.results.list({}),
-		fetchClassSubjectsSources(client),
+	const [gradeScalesRaw, definitionsRaw, subjectsRaw] = await Promise.all([
+		client.entities.gradeScales.list(schoolWideEntityList(REPORT_CARD_CATALOG_SCOPE)),
+		client.entities.definitions.list(schoolWideEntityList(REPORT_CARD_CATALOG_SCOPE)),
+		client.entities.subjects.list(schoolWideEntityList(REPORT_CARD_SUBJECT_CATALOG_SCOPE)),
 	]);
+	const definitionIds = uniqueIds((definitionsRaw ?? []).map(definition => definition.id));
+	const sectionsRaw = definitionIds.length > 0
+		? await client.entities.sections.list(recordsForFieldIds('reportCardDefinitionId', definitionIds))
+		: [];
 
 	return {
 		gradeScales: mapGradeScales(gradeScalesRaw ?? []),
-		definitions: mapReportCardDefinitions(definitionsRaw ?? [], sectionsRaw ?? [], subjectsSources),
-		results: mapReportCardResults(resultsRaw ?? [], definitionsRaw ?? [], subjectsSources),
+		definitions: mapReportCardDefinitions(
+			definitionsRaw ?? [],
+			sectionsRaw ?? [],
+			{ subjectsRaw: subjectsRaw ?? [] },
+		),
 	};
+}
+
+export async function loadClassReportCardResultsData(
+	client: SchoolClient,
+	classGroupId: string,
+	periodId: string,
+	definitions: readonly ReportCardDefinition[],
+): Promise<ReportCardResult[]> {
+	const [resultsRaw, subjectsSources] = await Promise.all([
+		client.entities.results.list(reportCardResultsForClassPeriod(classGroupId, periodId)),
+		fetchClassSubjectsSources(client, classGroupId),
+	]);
+	const referencedDefinitionIds = uniqueIds(
+		(resultsRaw ?? []).map(result => result.reportCardDefinitionId),
+	);
+	const missingDefinitionIds = referencedDefinitionIds.filter(
+		id => !definitions.some(definition => definition.id === id),
+	);
+	const missingDefinitionsRaw = missingDefinitionIds.length > 0
+		? await client.entities.definitions.list(entitiesByIds(missingDefinitionIds))
+		: [];
+	const definitionReferences = [
+		...definitions,
+		...(missingDefinitionsRaw ?? []).map(definition => ({
+			id: definition.id,
+			schoolId: definition.schoolId,
+			academicYearId: definition.academicYearId,
+			gradeScaleId: definition.gradeScaleId,
+		})),
+	];
+
+	return mapReportCardResults(resultsRaw ?? [], definitionReferences, subjectsSources);
 }

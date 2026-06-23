@@ -2,8 +2,8 @@
 	import type { Subject, SubjectCategory } from '$lib/types/school';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
-	import { detailHref } from '$lib/detail-hrefs';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Clock, Plus, User } from '$lib/icons';
 	import { appGoto } from '$lib/navigation/app-navigation';

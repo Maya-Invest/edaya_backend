@@ -1,3 +1,4 @@
+import { studentNote } from '$lib/test/openapi-fixtures';
 import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapHealthProfiles, mapNoteCategory, mapPedagogicalNotes } from './student-360-data';
@@ -29,30 +30,27 @@ const seedHealthProfiles = [
 		createdAt: '2026-04-08',
 		updatedAt: '2026-04-08',
 	},
-] as const;
+];
 
 const seedPedagogicalNotes = [
-	{
+	studentNote({
 		id: 'pn1',
-		schoolId: SEED_SCHOOL_ID,
 		studentId: 's1',
 		authorStaffId: 'st1',
-		category: 'progress',
 		body: 'Très bonne progression en algèbre, raisonnement clair.',
 		createdAt: '2026-05-12',
 		updatedAt: '2026-05-12',
-	},
-	{
+	}),
+	studentNote({
 		id: 'pn4',
-		schoolId: SEED_SCHOOL_ID,
 		studentId: 's2',
 		authorStaffId: 'st1',
 		category: 'behavior',
 		body: 'Bavardages réguliers en classe, vigilance demandée.',
 		createdAt: '2026-05-05',
 		updatedAt: '2026-05-05',
-	},
-] as const;
+	}),
+];
 
 describe('student 360 pedagogical notes mapping', () => {
 	it('maps API category enum to UI labels', () => {

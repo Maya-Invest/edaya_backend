@@ -3,9 +3,9 @@
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/stores';
 	import { listRouteCacheKey } from '$lib/detail-route-patterns';
-	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { t } from '$lib/i18n';
 	import { LoaderCircle } from '$lib/icons';
+	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { untrack } from 'svelte';
 
 	const {

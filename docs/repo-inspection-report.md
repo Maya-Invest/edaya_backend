@@ -3,7 +3,51 @@
 Date: 2026-06-16  
 Scope: over-engineering, boundary definition/enforcement, and developer experience for the `maya_school_core` monorepo.
 
-## Executive summary
+**Closure audit:** 2026-06-22 — see [Simplification initiative closure](#simplification-initiative-closure-2026-06-22) below. Tracked work: `sprints/done/repository-simplification-plan.md`.
+
+## Simplification initiative closure (2026-06-22)
+
+Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun run verify` is green and idempotent.
+
+| Finding | Status | Resolution |
+|---------|--------|------------|
+| 1 — Entity metadata repeated across layers | **Resolved** | `CoreEntityMap`, `CORE_ENTITY_KEYS`, keyed API decorations, parity tests (Phase 3) |
+| 2 — `SchoolService` pass-through facade | **Resolved** | Workflow namespaces + typed `commands` map; mechanical delegates removed (Phase 3) |
+| 3 — `SchoolRepositories` wide dependency bag | **Partial** | `WORKFLOW_REPOSITORY_KEYS` + narrowed deps for access-control; full split deferred with Phase 4 |
+| 4 — Managed `count()` lists all rows | **Partial** | Shell sidebar uses authorized `count` queries (Phase 5); generic `ManagedEntityService.count` unchanged |
+| 5 — Boundary enforcement too narrow | **Deferred** | Shell `check:boundaries` remains; ESLint rules planned in Phase 7 |
+| 6 — API client exposes rejected saves | **Resolved** | `DirectSaveEntityResource` / compile-time guards + contract tests (Phase 1) |
+| 7 — API/command schema drift surfaces | **Resolved** | Registry parity tests across core, API, client, adapter (Phase 3) |
+| 8 — Webapp refresh boundary too broad | **Partial** | Route-scoped loading + targeted report-card refresh (Phase 5–6); domain `invalidate[]` still a future improvement |
+| 9 — Unpaginated `list({})` fan-out | **Resolved** | Zero raw `.list({})`; intentional catalogs use `schoolWideEntityList(reason)` (Phase 5) |
+| 10 — Verification scripts mutate by default | **Resolved** | `verify` / `fix` split, non-mutating `generated:check`, CI workflow (Phase 0) |
+| 11 — Documentation drift (SPA vs SSR) | **Resolved** | README, `docs/local-dev.md`, API client README aligned (Phase 0–1) |
+| 12 — Environment file hygiene | **Resolved** | `doctor` script, `.env.staging` untracked, duplicate example removed (Phase 0) |
+
+### Post-initiative metrics (2026-06-22)
+
+| Metric | Baseline (audit) | Current |
+|--------|------------------|---------|
+| `bun run verify` | Failing / mutating | Passes twice idempotently; used in CI |
+| Package tests | 688 passed | **826 passed**, 7 integration skips |
+| Webapp tests | Not typechecked | **141** runtime tests, typechecked via `tsconfig.test.json` |
+| Raw `.list({})` in webapp | 65 / 65 loaders | **0** (37 documented `schoolWideEntityList` call sites) |
+| `StudentTabs.svelte` | 670 lines | **112** lines + 5 tab components |
+| `list-url-filters.ts` | 497 lines | **228** lines + shared codec |
+| Entity registration | 5+ manual layers | Core catalog + API decoration + parity tests |
+| `entity-stores.ts` | 1,006 lines | 1,006 lines (**Phase 4 deferred**) |
+| `postgres-schema.ts` | 697 lines | 698 lines (**Phase 4 deferred**) |
+| Tracked OpenAPI (`schema.d.ts` + `openapi.json`) | ~129k lines | ~129k lines (retained; 26 schema consumers verified) |
+| Production `any` / `as any` | Not measured | api: 72, adaptor-postgres: 52, core: 32, webapp: 0, api-client: 0 |
+| Deprecated internal wrappers | Several | **0** in production source (Phase 2–3 cleanup) |
+
+### Deferred follow-ups
+
+- **Phase 4:** Split `postgres-schema.ts` and `entity-stores.ts` by bounded context without migration drift.
+- **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points, rename `prototype.queries.ts` → `homework.queries.ts`.
+- **Product:** Domain-scoped mutation invalidation buckets (Finding 8), pagination for school-wide admin lists (Finding 9).
+
+---
 
 The repo has a coherent architecture. The intended ports-and-adapters split is documented in `README.md`: `@edaya/core` owns business rules, `@edaya/adaptor-postgres` owns portable persistence, `integrations/*` owns platform deployment/migration orchestration, and `apps/api` wires runtime and HTTP.
 

@@ -9,6 +9,7 @@
     "test": "INTEGRATION_TEST_FAST=1 bun test --parallel=1",
     "test:full": "bun test --parallel=1",
     "test:remote": "bun ./scripts/run-tests.ts",
+    "smoke:staging": "bun ./scripts/smoke-staging.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
   },

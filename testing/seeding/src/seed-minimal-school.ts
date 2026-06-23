@@ -43,11 +43,11 @@ export async function seedMinimalSchool(application: SeedApplication): Promise<v
   })
   const service = application.forActor(actor)
 
-  await service.registerSchool(SEED_SCHOOL_PROFILE)
+  await service.setupWorkflow.registerSchool(SEED_SCHOOL_PROFILE)
 
   const staffFixture = findSeedStaff(DEV_AUTH_STAFF_ACCOUNTS[0].staffId)
   const { firstName: staffFirstName, lastName: staffLastName } = splitDisplayName(staffFixture.name)
-  await service.registerStaffMember({
+  await service.setupWorkflow.registerStaffMember({
     id: staffFixture.id,
     schoolId: SEED_SCHOOL_ID,
     firstName: staffFirstName,

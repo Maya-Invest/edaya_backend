@@ -127,13 +127,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
 
   async registerStudent(input: RegisterStudentInput): Promise<Student> {
     const student = new Student(input)
-    await this.baseService.students.save(student)
+    await this.baseService.entities.students.save(student)
     return student
   }
 
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
     const guardian = new Guardian(input)
-    await this.baseService.guardians.save(guardian)
+    await this.baseService.entities.guardians.save(guardian)
     return guardian
   }
 
@@ -179,7 +179,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       enrollmentIndex: nextEnrollmentIndex,
       createdAt,
     })
-    await this.baseService.enrollments.save(enrollment, { moduleChecked: true })
+    await this.baseService.entities.enrollments.save(enrollment, { moduleChecked: true })
     return enrollment
   }
 
@@ -231,7 +231,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       notes,
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.baseService.guardianLinks.save(link, { moduleChecked: true })
+    await this.baseService.entities.guardianLinks.save(link, { moduleChecked: true })
     return link
   }
 
@@ -272,8 +272,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.baseService.enrollments.save(completed, { moduleChecked: true })
-      await this.baseService.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(completed, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(successor, { moduleChecked: true })
       return successor
     })
   }
@@ -299,8 +299,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.baseService.enrollments.save(transferred, { moduleChecked: true })
-      await this.baseService.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(transferred, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(successor, { moduleChecked: true })
       return successor
     })
   }
@@ -341,8 +341,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         enrollmentDate: student.enrollmentDate,
         createdAt: student.createdAt,
       })
-      await this.baseService.enrollments.save(graduatedEnrollment, { moduleChecked: true })
-      await this.baseService.students.save(graduatedStudent, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(graduatedEnrollment, { moduleChecked: true })
+      await this.baseService.entities.students.save(graduatedStudent, { moduleChecked: true })
       return graduatedEnrollment
     })
   }
@@ -354,7 +354,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       endReason,
       closedBy: resolveAuditActorId(this.baseService.actor),
     })
-    await this.baseService.enrollments.save(closed)
+    await this.baseService.entities.enrollments.save(closed)
     return closed
   }
 
@@ -371,47 +371,47 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       decidedBy: resolveAuditActorId(this.baseService.actor),
       notes,
     })
-    await this.baseService.enrollments.save(decided)
+    await this.baseService.entities.enrollments.save(decided)
     return decided
   }
 
   async updateStudentProfile({ studentId, ...changes }: UpdateStudentProfileInput): Promise<Student> {
-    const existing = await this.requireEntity(this.baseService.students, studentId)
+    const existing = await this.requireEntity(this.baseService.entities.students, studentId)
     const student = existing.copyWith(changes)
-    await this.baseService.students.save(student)
+    await this.baseService.entities.students.save(student)
     return student
   }
 
   async updateStudentStatus({ studentId, status }: UpdateStudentStatusInput): Promise<Student> {
-    const existing = await this.requireEntity(this.baseService.students, studentId)
+    const existing = await this.requireEntity(this.baseService.entities.students, studentId)
     const student = existing.copyWith({ status })
-    await this.baseService.students.save(student)
+    await this.baseService.entities.students.save(student)
     return student
   }
 
   async upsertStudentHealthProfile(input: UpsertStudentHealthProfileInput): Promise<StudentHealthProfile> {
-    const student = await this.requireEntity(this.baseService.students, input.studentId)
+    const student = await this.requireEntity(this.baseService.entities.students, input.studentId)
     const healthProfile = new StudentHealthProfileEntity({
       ...input,
       schoolId: input.schoolId ?? student.schoolId,
     })
-    await this.baseService.studentHealthProfiles.save(healthProfile)
+    await this.baseService.entities.studentHealthProfiles.save(healthProfile)
     return healthProfile
   }
 
   async createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote> {
-    const student = await this.requireEntity(this.baseService.students, input.studentId)
+    const student = await this.requireEntity(this.baseService.entities.students, input.studentId)
     const note = new StudentNoteEntity({
       ...input,
       schoolId: input.schoolId ?? student.schoolId,
       authorStaffId: input.authorStaffId ?? resolveAuditActorId(this.baseService.actor),
     })
-    await this.baseService.studentNotes.save(note)
+    await this.baseService.entities.studentNotes.save(note)
     return note
   }
 
   async updateStudentNote({ noteId, ...changes }: UpdateStudentNoteInput): Promise<StudentNote> {
-    const existing = await this.requireEntity(this.baseService.studentNotes, noteId)
+    const existing = await this.requireEntity(this.baseService.entities.studentNotes, noteId)
     const note = new StudentNoteEntity({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -423,12 +423,12 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     })
-    await this.baseService.studentNotes.save(note)
+    await this.baseService.entities.studentNotes.save(note)
     return note
   }
 
   async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
-    const existing = await this.requireEntity(this.baseService.guardians, guardianId)
+    const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
     const guardian = new Guardian({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -440,7 +440,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       premiumNotificationsEnabled: changes.premiumNotificationsEnabled ?? existing.premiumNotificationsEnabled,
       createdAt: existing.createdAt,
     })
-    await this.baseService.guardians.save(guardian)
+    await this.baseService.entities.guardians.save(guardian)
     return guardian
   }
 
@@ -449,7 +449,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     ...changes
   }: UpdateGuardianStudentLinkInput): Promise<GuardianStudentLinkType> {
-    const existing = await this.requireOne(this.baseService.guardianLinks, { guardianId, studentId })
+    const existing = await this.requireOne(this.baseService.entities.guardianLinks, { guardianId, studentId })
     const link = new GuardianStudentLink({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -467,7 +467,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       notes: changes.notes ?? existing.notes,
       createdAt: existing.createdAt,
     })
-    await this.baseService.guardianLinks.save(link)
+    await this.baseService.entities.guardianLinks.save(link)
     return link
   }
 

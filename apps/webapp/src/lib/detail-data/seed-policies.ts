@@ -7,7 +7,9 @@ import type {
 	Evaluation,
 	Fee,
 	Guardian,
+	HealthRecord,
 	Incident,
+	PedagogicalNote,
 	PlanningEvent,
 	Resource,
 	SchoolYearEvent,
@@ -49,6 +51,30 @@ export function seedStudentsCollection(
 
 export function seedGuardiansCollection(existing: readonly Guardian[], guardians: readonly Guardian[]): Guardian[] {
 	return mergeById(existing, guardians);
+}
+
+export function seedStudent360Collections(
+	healthRecords: Readonly<Record<string, HealthRecord>>,
+	allNotes: readonly PedagogicalNote[],
+	studentId: string,
+	healthRecord: HealthRecord | undefined,
+	studentNotes: readonly PedagogicalNote[],
+) {
+	const nextHealthRecords = { ...healthRecords };
+	if (healthRecord) {
+		nextHealthRecords[studentId] = healthRecord;
+	}
+	else {
+		delete nextHealthRecords[studentId];
+	}
+
+	return {
+		healthRecords: nextHealthRecords,
+		pedagogicalNotes: mergeById(
+			allNotes.filter(note => note.studentId !== studentId),
+			studentNotes,
+		),
+	};
 }
 
 export function seedStaffCollection(existing: readonly StaffMember[], staff: readonly StaffMember[]): StaffMember[] {
@@ -103,8 +129,8 @@ export function seedFeesCollection(existing: readonly Fee[], fees: readonly Fee[
 	return mergeById(existing, fees);
 }
 
-export function seedAbsencesCollection(existing: readonly AbsenceRecord[], absences: readonly AbsenceRecord[]): AbsenceRecord[] {
-	return mergeById(existing, absences);
+export function seedAbsencesCollection(_existing: readonly AbsenceRecord[], absences: readonly AbsenceRecord[]): AbsenceRecord[] {
+	return mergeById([], absences);
 }
 
 export function seedResourcesCollection(existing: readonly Resource[], resources: readonly Resource[]): Resource[] {
@@ -112,10 +138,10 @@ export function seedResourcesCollection(existing: readonly Resource[], resources
 }
 
 export function seedSchoolYearEventsCollection(
-	existing: readonly SchoolYearEvent[],
+	_existing: readonly SchoolYearEvent[],
 	events: readonly SchoolYearEvent[],
 ): SchoolYearEvent[] {
-	return mergeById(existing, events);
+	return mergeById([], events);
 }
 
 export function seedAssessmentResultsCollection(

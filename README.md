@@ -56,13 +56,12 @@ flowchart TB
   end
 
   Webapp --> Client
-  Webapp -->|SSR / dev proxy| API
-  Client --> API
+  Client -->|Browser HTTP / Vite proxy| API
   API --> WorkerHost
   API --> Core
   API --> PG
   API --> Auth
-  Core --> PG
+  PG -.->|implements ports| Core
   NeonM --> PG
   NeonM -.->|migrate:all| Auth
   PG --> SchoolDB[(Postgres / PGlite)]
@@ -71,7 +70,7 @@ flowchart TB
 
 ### Request flow
 
-1. **Webapp** — Server code calls the API via `API_URL` (`@edaya/api-client`). In dev, Vite proxies `/api`, `/doc`, and `/reference` to the API.
+1. **Webapp** — The static browser SPA calls the API through `@edaya/api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
 3. **Runtime** — Opens the school Postgres DB and auth store (D1 or local SQLite), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
 4. **Core** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
@@ -129,7 +128,7 @@ More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [do
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) 1.2+ (see `packageManager` in root `package.json`)
+- [Bun](https://bun.sh) 1.3+ (see `packageManager` in root `package.json`)
 
 ## First-time setup
 
@@ -178,7 +177,7 @@ All root scripts run across the monorepo via Turborepo unless noted.
 |---------|-------------|
 | `bun dev` | Start API + webapp in watch mode |
 | `bun seed` | Run all dev seeds via HTTP (`@edaya/seeding seed:all`) |
-| `bun run seed:init` | Bootstrap school + auth DBs and run initial seed |
+| `bun run seed:init` | Alias for `bun seed` — full HTTP demo seed (fresh clone / after `rm -rf .data`) |
 | `bun run seed:auth` | Provision Better Auth user accounts only |
 | `bun run seed:smoke` | Minimal smoke seed for quick verification |
 | `bun run seed:remote` | Seed a remote API instance |
@@ -224,8 +223,10 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 
 | Command | Description |
 |---------|-------------|
-| `bun run openapi:generate` | Export OpenAPI from API → regenerate webapp types + API client bindings |
-| `bun run openapi:check` | Regenerate OpenAPI artifacts and fail if committed files drift |
+| `bun run generated:update` | Export OpenAPI and update tracked webapp types + API client bindings |
+| `bun run generated:check` | Generate in a temporary directory and fail if tracked artifacts drift |
+| `bun run openapi:generate` | Compatibility alias for updating all tracked OpenAPI artifacts |
+| `bun run openapi:check` | Compatibility alias for `generated:check` |
 | `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/integrations) |
 | `cd apps/api && bun run export-openapi` | Export OpenAPI JSON only |
 | `cd apps/api && bun run generate-api-client` | Regenerate `@edaya/api-client` bindings only |
@@ -235,30 +236,40 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 
 | Command | Description |
 |---------|-------------|
-| `bun run lint` | ESLint all packages |
-| `bun run lint:fix` | ESLint with auto-fix |
+| `bun run doctor` | Check environment-file tracking and required examples |
+| `bun run lint` | ESLint repository scripts and all packages |
+| `bun run lint:fix` | ESLint repository scripts and all packages with auto-fix |
+| `bun run fix` | Alias for `lint:fix`; this command mutates files |
 | `bun run check` | TypeScript / Svelte type checks |
 | `bun run quality` | `lint` + `check` per package |
-| `bun run test` | Unit and integration tests |
+| `bun run test` | Repository-tooling, unit, and integration tests |
 | `bun run test:remote` | Integration tests against a real Postgres database |
 | `bun run test:coverage` | Tests with coverage (where supported) |
 | `bun run build` | Build deployable apps (webapp + API Node bundle) |
-| `bun run fullcheck` | `lint:fix` → `check` → `build` → `openapi:check` → `check:boundaries` → `test` |
+| `bun run verify` | Complete non-mutating CI verification path |
+| `bun run fullcheck` | Compatibility alias for `verify` |
 
 ### Per-package shortcuts
 
+Use package-scoped commands during local iteration, then run `bun run verify` before opening a pull request:
+
 ```sh
+bun --filter @edaya/core lint
+bun --filter @edaya/core check
 bun --filter @edaya/core test
+
+bun --filter @edaya/api lint
+bun --filter @edaya/api check
 bun --filter @edaya/api test
-bun --filter @edaya/integration-tests test
-bun --filter @edaya/webapp test
+
+bun --filter @edaya/webapp lint
 bun --filter @edaya/webapp check
-bun --filter @edaya/api-client check
+bun --filter @edaya/webapp test
 ```
 
 ## Testing
 
-Tests are split by layer. Run everything with `bun run test` (Turbo across all packages that define a `test` script).
+Tests are split by layer. Run everything with `bun run test` (repository tooling plus Turbo across packages that define a `test` script).
 
 | Layer | Package / path | What to test here |
 |-------|----------------|-------------------|
@@ -286,11 +297,12 @@ Tests are split by layer. Run everything with `bun run test` (Turbo across all p
 | `BETTER_AUTH_SECRET` | Auth signing secret |
 | `BETTER_AUTH_URL` | Public API URL for auth callbacks |
 | `TRUSTED_ORIGINS` | CORS / auth origins (e.g. webapp URL) |
-| `SERVICE_ACCOUNT_API_KEY` | Optional — `/core/*` HTTP seeding after first `bun seed:init` |
+
+Seeding uses per-school `seedingApiKey` values from `@edaya/dev-fixtures` — no API env key required.
 
 **Webapp** (`apps/webapp/.env`):
 
 | Variable | Purpose |
 |----------|---------|
-| `API_URL` | Server-side API base URL (SSR, remote handlers) |
-| `PUBLIC_API_URL` | Browser-facing API URL |
+| `API_URL` | Vite development proxy target; defaults to `http://localhost:9999` |
+| `PUBLIC_API_URL` | Browser-facing API origin; leave empty locally to use the same-origin proxy |

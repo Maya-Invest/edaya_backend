@@ -69,53 +69,71 @@ Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also und
 
 ## Dev database seed
 
-Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/seeding/`. School data persists under repo-root `.data/` when using `DATABASE_URL=pglite:.data/school`; seed once after a fresh clone or `rm -rf .data`.
+Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/seeding/`. School data persists under repo-root `.data/` when using `DATABASE_URL=pglite:.data/school`.
 
-| Command | Purpose |
-|---------|---------|
-| `bun seed:init` | Wait for API, then full HTTP seed (`auth` → `school` → `access`), then provision seeding service account |
-| `bun seed` | Same as `seed:all` — full demo data via HTTP |
-| `bun seed:auth` | Better Auth accounts; also re-links staff/guardians when school data exists |
-| `bun seed:auth:link` | Re-link Better Auth users to seeded staff/guardian records only |
-| `bun seed:smoke` | Sign in + verify `/core/authorization/effective-grants` |
-| `bun seed:validate` | List all manifest-seeded entities + dashboard queries via HTTP; fails if counts are below fixture minimums |
-| `bun seed:remote` | Full seed against `SEED_API_URL` (staging / remote API) |
+### Fresh clone or after wiping `.data/`
 
-**Staging:** see [deploy-staging.md](./deploy-staging.md) for isolated Cloudflare deploy, bootstrap, and `bun run smoke:staging`.
-
-**Credentials:** seeding uses the `seedingApiKey` from the school profile in `@edaya/dev-fixtures` — no `.env` entry required for the default school. Override with `SERVICE_ACCOUNT_API_KEY` in `apps/api/.env` when you need a custom key (e.g. staging or after key rotation).
+**Order matters.** Never delete `.data` while `bun dev` is running — open PGlite/SQLite handles will corrupt the files.
 
 ```sh
-# Terminal 1
-bun dev
+# 1. Stop bun dev (Ctrl+C)
 
-# Terminal 2 — first time or after wiping .data/
+# 2. Wipe local databases
+rm -rf .data
+
+# 3. Start API + webapp
+bun dev          # terminal 1 — wait until http://localhost:9999/ returns 200
+
+# 4. Seed through HTTP (terminal 2)
 bun seed:init
 ```
 
+`bun seed:init` and `bun seed` run the same full HTTP seed. On a fresh database the flow is:
+
+1. Provision Better Auth users (`/auth/sign-up`)
+2. Sign in and call `POST /core/onboarding/register-school` when no school exists yet
+3. Seed access roles, provision the seeding service account with the school profile API key
+4. Load demo school data through `/core/*` routes
+
+**Credentials:** seeding uses the `seedingApiKey` from the school profile in `@edaya/dev-fixtures` — no `.env` API key required. For GraphiQL Bearer auto-injection, set `GRAPHQL_DEV_API_KEY` to the same profile key.
+
+| Command | Purpose |
+|---------|---------|
+| `bun seed:init` | Alias for `bun seed` — full HTTP demo seed (use after fresh clone or `rm -rf .data`) |
+| `bun seed` | Full demo data via HTTP |
+| `bun seed:auth` | Better Auth accounts only |
+| `bun seed:auth:link` | Re-link Better Auth users to seeded staff/guardian records |
+| `bun seed:smoke` | Sign in + verify `/core/authorization/effective-grants` |
+| `bun seed:validate` | Manifest entity counts + dashboard queries via HTTP |
+| `bun seed:remote` | Full seed against `SEED_API_URL` (staging / remote API) |
+
+**Staging:** see [deploy-staging.md](./deploy-staging.md).
+
 Fixture data lives in `testing/dev-fixtures/`. Loaders and orchestration live in `testing/seeding/`.
 
-**Reference date:** rolling dashboard data (today's attendance, upcoming events, fee due dates) anchors to `SEED_REFERENCE_DATE` in `testing/dev-fixtures/src/dates.ts` (default `2026-06-16`). Override at seed time with `SEED_REFERENCE_DATE=YYYY-MM-DD` in `apps/api/.env` or `testing/seeding/.env`.
-
-**Re-seed after a DB wipe:**
-
-```sh
-# Stop bun dev first — wiping .data while the API is running breaks the open SQLite/PGlite handles
-rm -rf .data
-bun dev          # terminal 1 — recreates .data/auth.sqlite and .data/school
-bun seed:init    # terminal 2
-```
-
-If auth returns 500 (`SQLiteError: disk I/O error`) after a wipe, restart the API — do not wipe again without stopping it first.
+**Reference date:** rolling dashboard data anchors to `SEED_REFERENCE_DATE` in `testing/dev-fixtures/src/dates.ts` (default `2026-06-16`). Override at seed time in `apps/api/.env` or `testing/seeding/.env`.
 
 See `testing/dev-fixtures/src/seed-entity-manifest.ts` for entity coverage status.
-Staff auth linking and school owner assignment (Koussi Yann / `st8`) run automatically during **school** and **access** seed — no separate `auth:link` step.
 
 ### Demo login
 
-In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/dev-fixtures/demo-login` (derived from `DEV_AUTH_STAFF_ACCOUNTS` + access roles) — no API route. Sign-in still uses Better Auth. Authenticated users without a school can register one via `POST /core/onboarding/register-school` (`ALLOW_PUBLIC_SCHOOL_REGISTRATION` defaults on in development).
+In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/dev-fixtures/demo-login`. Sign-in uses Better Auth with password `DevPassword1!`.
 
 ## Testing
+
+Use package-scoped commands for fast local feedback:
+
+```sh
+bun --filter @edaya/core lint
+bun --filter @edaya/core check
+bun --filter @edaya/core test
+
+bun --filter @edaya/webapp lint
+bun --filter @edaya/webapp check
+bun --filter @edaya/webapp test
+```
+
+Before opening a pull request, run `bun run verify`.
 
 | Location | Scope |
 |----------|-------|
@@ -125,7 +143,23 @@ In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/d
 
 ## Troubleshooting
 
-- **API won't start** — Ensure `apps/api/.env` exists and `DATABASE_URL` is set.
-- **Webapp shows API unreachable** — Confirm the API is running on port 9999. In dev, leave `PUBLIC_API_URL` empty and check the Vite proxy target (`API_URL` in `apps/webapp/.env`, default `http://localhost:9999`).
-- **401 after login** — Usually the auth user is not linked to a staff record. Run `bun seed:auth:link` (or `bun seed:init` after wiping `.data/`). Also verify `BETTER_AUTH_URL` matches the API origin and `TRUSTED_ORIGINS` includes `http://localhost:5173`.
+| Symptom | Likely cause | Fix |
+|---------|----------------|-----|
+| `seed:init` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun dev`, `rm -rf .data`, restart, `bun seed:init` |
+| `POST /auth/sign-in/email` → 401 `Invalid email or password` | Auth DB empty (seed not run after wipe) | Run `bun seed:init` while API is up |
+| Sign-in succeeds but app shows “Session API indisponible” | Auth user exists but staff actor is not linked | `rm -rf .data` + full reseed, or `bun seed:auth:link` |
+| `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun dev` |
+| Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; leave `PUBLIC_API_URL` empty in dev |
+| `SQLiteError: disk I/O error` on auth | API still running during a wipe | Stop API before `rm -rf .data`, then restart |
+
+Quick health checks:
+
+```sh
+curl -s http://localhost:9999/            # expect {"message":"Edaya Core API"}
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 200
+sqlite3 .data/auth.sqlite 'select count(*) from user;'               # expect 27 after seed
+bun seed:smoke                                                       # sign-in + effective-grants
+```
+
 - **Port in use** — Change `PORT` in `apps/api/.env`; update `API_URL` in the webapp `.env` to match.
+- **401 after login** — Verify `BETTER_AUTH_URL` matches the API origin and `TRUSTED_ORIGINS` includes `http://localhost:5173`.

@@ -1,6 +1,8 @@
+import type { SeedCommandKey, SeedEntityKey } from './catalog'
 import type { HttpSeedClient } from './client'
+import { unwrapEntity, unwrapEntityList } from '@edaya/api-client'
+import { seedCommandPublicName, seedEntityPublicName } from './catalog'
 import { executeCoreCommand } from './core-command'
-import { commandMethodToPublicName, entityPublicName } from './names'
 
 export interface CoreHttpRequestOptions {
   client: HttpSeedClient
@@ -25,8 +27,8 @@ function serializeValue(value: unknown): unknown {
     return value.map(serializeValue)
   }
 
-  if (value && typeof value === 'object' && 'data' in value && value.data && typeof value.data === 'object') {
-    return serializePlainObject(value.data as Record<string, unknown>)
+  if (value && typeof value === 'object') {
+    return serializePlainObject(value as Record<string, unknown>)
   }
 
   return value
@@ -41,31 +43,16 @@ function serializePlainObject(value: Record<string, unknown>): Record<string, un
 }
 
 function entityPayload(entity: unknown): Record<string, unknown> {
-  if (entity && typeof entity === 'object' && 'sectionResults' in entity && 'data' in entity) {
-    const reportCardResult = entity as {
-      data: Record<string, unknown>
-      sectionResults: readonly unknown[]
-    }
-    return {
-      ...serializePlainObject(reportCardResult.data),
-      sectionResults: reportCardResult.sectionResults.map(item => serializeValue(item)),
-    }
+  if (!entity || typeof entity !== 'object' || Array.isArray(entity)) {
+    throw new Error('Cannot serialize entity for HTTP core save')
   }
 
-  if (entity && typeof entity === 'object' && 'data' in entity && entity.data && typeof entity.data === 'object') {
-    return serializePlainObject(entity.data as Record<string, unknown>)
-  }
-
-  if (entity && typeof entity === 'object') {
-    return serializePlainObject(entity as Record<string, unknown>)
-  }
-
-  throw new Error('Cannot serialize entity for HTTP core save')
+  return serializePlainObject(entity as Record<string, unknown>)
 }
 
 export async function postCoreCommand(
   options: CoreHttpRequestOptions,
-  methodName: string,
+  methodName: SeedCommandKey,
   payload: unknown,
 ): Promise<unknown> {
   const serializedPayload = payload && typeof payload === 'object'
@@ -75,7 +62,7 @@ export async function postCoreCommand(
   const { response, body } = await executeCoreCommand<Record<string, unknown>>({
     client: options.client,
     serviceAccountApiKey: options.serviceAccountApiKey,
-    commandName: commandMethodToPublicName(methodName),
+    commandName: seedCommandPublicName(methodName),
     requestId: options.requestId,
     payload: serializedPayload as Record<string, unknown>,
   })
@@ -92,27 +79,13 @@ export async function postCoreCommand(
   return body
 }
 
-function unwrapHttpEntity(entity: unknown): unknown {
-  if (entity && typeof entity === 'object' && 'data' in entity && entity.data && typeof entity.data === 'object') {
-    return entity.data
-  }
-  return entity
-}
-
-function unwrapHttpEntityList(body: unknown): unknown[] {
-  if (!Array.isArray(body)) {
-    return []
-  }
-  return body.map(unwrapHttpEntity)
-}
-
 export async function postEntityList(
   options: CoreHttpRequestOptions,
-  serviceName: string,
+  serviceName: SeedEntityKey,
   query: Record<string, unknown> = {},
 ): Promise<unknown[]> {
   const { response, body } = await options.client.jsonRequest<unknown[]>(
-    `/core/entities/${entityPublicName(serviceName)}/list`,
+    `/core/entities/${seedEntityPublicName(serviceName)}/list`,
     {
       method: 'POST',
       headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
@@ -127,16 +100,16 @@ export async function postEntityList(
     throw new Error(`Entity list failed for ${serviceName}: ${response.status} ${message}`)
   }
 
-  return unwrapHttpEntityList(body)
+  return unwrapEntityList(body)
 }
 
 export async function postEntityFindById(
   options: CoreHttpRequestOptions,
-  serviceName: string,
+  serviceName: SeedEntityKey,
   id: string,
 ): Promise<unknown | undefined> {
   const { response, body } = await options.client.jsonRequest(
-    `/core/entities/${entityPublicName(serviceName)}/${encodeURIComponent(id)}`,
+    `/core/entities/${seedEntityPublicName(serviceName)}/${encodeURIComponent(id)}`,
     {
       method: 'GET',
       headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
@@ -151,16 +124,16 @@ export async function postEntityFindById(
     throw new Error(`Entity get failed for ${serviceName}/${id}: ${response.status}`)
   }
 
-  return unwrapHttpEntity(body ?? undefined)
+  return body === undefined ? undefined : unwrapEntity(body)
 }
 
 export async function postEntityFindOne(
   options: CoreHttpRequestOptions,
-  serviceName: string,
+  serviceName: SeedEntityKey,
   query: Record<string, unknown>,
 ): Promise<unknown | undefined> {
   const { response, body } = await options.client.jsonRequest(
-    `/core/entities/${entityPublicName(serviceName)}/one`,
+    `/core/entities/${seedEntityPublicName(serviceName)}/one`,
     {
       method: 'POST',
       headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
@@ -176,16 +149,16 @@ export async function postEntityFindOne(
     throw new Error(`Entity one failed for ${serviceName}: ${response.status}`)
   }
 
-  return unwrapHttpEntity(body ?? undefined)
+  return body === undefined ? undefined : unwrapEntity(body)
 }
 
 export async function postEntitySave(
   options: CoreHttpRequestOptions,
-  serviceName: string,
+  serviceName: SeedEntityKey,
   entity: unknown,
 ): Promise<void> {
   const { response, body } = await options.client.jsonRequest(
-    `/core/entities/${entityPublicName(serviceName)}/save`,
+    `/core/entities/${seedEntityPublicName(serviceName)}/save`,
     {
       method: 'POST',
       headers: coreHeaders(options.serviceAccountApiKey, options.requestId),

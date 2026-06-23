@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { Fee, StudentBilling } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';

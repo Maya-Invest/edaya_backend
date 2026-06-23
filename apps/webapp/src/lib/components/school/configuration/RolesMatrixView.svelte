@@ -3,9 +3,9 @@
 	import { page } from '$app/stores';
 	import { authSession } from '$lib/auth/session.svelte';
 	import { ROLE_TINT } from '$lib/components/school/shared/drawer-constants';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import {
 		ShieldCheck,

@@ -11,7 +11,7 @@ describe('SchoolService setup workflows', () => {
   test('createAcademicYear creates an active year and deactivates existing active years through managed service', async () => {
     const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
 
-    const result = await service.createAcademicYear({
+    const result = await service.setupWorkflow.createAcademicYear({
       id: 'ay-new',
       schoolId: 'sch1',
       name: '2027-2028',
@@ -35,7 +35,7 @@ describe('SchoolService setup workflows', () => {
   test('activateAcademicYear activates an existing year and deactivates other active years through managed service', async () => {
     const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
 
-    const result = await service.activateAcademicYear({
+    const result = await service.setupWorkflow.activateAcademicYear({
       academicYearId: 'ay-next',
     })
 

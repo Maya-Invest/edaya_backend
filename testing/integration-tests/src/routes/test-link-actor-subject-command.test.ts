@@ -27,7 +27,7 @@ describeWithSeededSchool('link-actor-subject command route', (getContext) => {
     })
     const service = application.forActor(bootstrapActor)
 
-    await service.registerStaffMember({
+    await service.setupWorkflow.registerStaffMember({
       id: UNLINKED_STAFF_ID,
       schoolId: SEED_SCHOOL_ID,
       firstName: 'Paul',

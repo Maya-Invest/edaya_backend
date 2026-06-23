@@ -22,7 +22,7 @@ describe('SchoolService student workflows', () => {
       activeEnrollmentId: '',
     })
 
-    const result = await service.enrollStudent({
+    const result = await service.studentWorkflow.enrollStudent({
       id: 'enr-new',
       studentId: 'stu1',
       classGroupId: 'cg1',
@@ -46,7 +46,7 @@ describe('SchoolService student workflows', () => {
       existingEnrollmentClassGroupId: 'cg1',
     })
 
-    const result = await service.enrollStudent({
+    const result = await service.studentWorkflow.enrollStudent({
       id: 'enr-new',
       studentId: 'stu1',
       classGroupId: 'cg1',
@@ -63,7 +63,7 @@ describe('SchoolService student workflows', () => {
       existingEnrollmentClassGroupId: 'cg2',
     })
 
-    await expect(service.enrollStudent({
+    await expect(service.studentWorkflow.enrollStudent({
       id: 'enr-new',
       studentId: 'stu1',
       classGroupId: 'cg1',
@@ -74,7 +74,7 @@ describe('SchoolService student workflows', () => {
     await expect(createStudentTransitionContext({
       activeEnrollmentId: '',
       studentStatus: StudentStatus.Inactive,
-    }).service.enrollStudent({
+    }).service.studentWorkflow.enrollStudent({
       id: 'enr-new',
       studentId: 'stu1',
       classGroupId: 'cg1',
@@ -84,7 +84,7 @@ describe('SchoolService student workflows', () => {
       activeEnrollmentId: '',
       targetCapacity: 1,
       targetActiveEnrollmentCount: 1,
-    }).service.enrollStudent({
+    }).service.studentWorkflow.enrollStudent({
       id: 'enr-new',
       studentId: 'stu1',
       classGroupId: 'cg2',
@@ -94,7 +94,7 @@ describe('SchoolService student workflows', () => {
   test('linkGuardianToStudent creates a guardian link through managed service', async () => {
     const { mockPolicy, mockRepos, savedLinks, service } = createGuardianLinkContext()
 
-    const result = await service.linkGuardianToStudent({
+    const result = await service.studentWorkflow.linkGuardianToStudent({
       id: 'link-new',
       guardianId: 'gua1',
       studentId: 'stu1',
@@ -121,7 +121,7 @@ describe('SchoolService student workflows', () => {
   test('linkGuardianToStudent reuses existing link id and createdAt', async () => {
     const { existingCreatedAt, mockRepos, service } = createGuardianLinkContext({ existingLink: true })
 
-    const result = await service.linkGuardianToStudent({
+    const result = await service.studentWorkflow.linkGuardianToStudent({
       id: 'link-new',
       guardianId: 'gua1',
       studentId: 'stu1',
@@ -140,7 +140,7 @@ describe('SchoolService student workflows', () => {
   test('linkGuardianToStudent rejects missing school enrollment context and school mismatch', async () => {
     await expect(createGuardianLinkContext({
       enrolledInSchool: false,
-    }).service.linkGuardianToStudent({
+    }).service.studentWorkflow.linkGuardianToStudent({
       id: 'link-new',
       guardianId: 'gua1',
       studentId: 'stu1',
@@ -149,7 +149,7 @@ describe('SchoolService student workflows', () => {
     await expect(createGuardianLinkContext({
       guardianSchoolId: 'sch1',
       studentSchoolId: 'other-school',
-    }).service.linkGuardianToStudent({
+    }).service.studentWorkflow.linkGuardianToStudent({
       id: 'link-new',
       guardianId: 'gua1',
       studentId: 'stu1',
@@ -159,7 +159,7 @@ describe('SchoolService student workflows', () => {
   test('graduateStudent closes enrollment and graduates the student through managed services', async () => {
     const { mockAtomic, mockRepos, service } = createStudentTransitionContext()
 
-    const result = await service.graduateStudent({
+    const result = await service.studentWorkflow.graduateStudent({
       enrollmentId: 'enr1',
       effectiveAt: new Date('2026-07-01T00:00:00Z'),
       notes: 'Completed program',
@@ -179,7 +179,7 @@ describe('SchoolService student workflows', () => {
   test('graduateStudent rejects inactive current enrollments', async () => {
     const { service } = createStudentTransitionContext({ activeEnrollmentId: 'other-enrollment' })
 
-    await expect(service.graduateStudent({
+    await expect(service.studentWorkflow.graduateStudent({
       enrollmentId: 'enr1',
       effectiveAt: new Date('2026-07-01T00:00:00Z'),
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
@@ -188,7 +188,7 @@ describe('SchoolService student workflows', () => {
   test('promoteStudent closes the current enrollment and creates a successor through managed service', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createStudentTransitionContext()
 
-    const result = await service.promoteStudent({
+    const result = await service.studentWorkflow.promoteStudent({
       enrollmentId: 'enr1',
       nextEnrollmentId: 'enr2',
       nextClassGroupId: 'cg2',
@@ -216,7 +216,7 @@ describe('SchoolService student workflows', () => {
   test('transferStudent closes the current enrollment and creates a successor through managed service', async () => {
     const { mockRepos, service } = createStudentTransitionContext()
 
-    const result = await service.transferStudent({
+    const result = await service.studentWorkflow.transferStudent({
       enrollmentId: 'enr1',
       nextEnrollmentId: 'enr2',
       nextClassGroupId: 'cg2',
@@ -237,7 +237,7 @@ describe('SchoolService student workflows', () => {
   test('transferStudent rejects inactive current enrollments', async () => {
     const { service } = createStudentTransitionContext({ activeEnrollmentId: 'other-enrollment' })
 
-    await expect(service.transferStudent({
+    await expect(service.studentWorkflow.transferStudent({
       enrollmentId: 'enr1',
       nextEnrollmentId: 'enr2',
       nextClassGroupId: 'cg2',
@@ -248,7 +248,7 @@ describe('SchoolService student workflows', () => {
   test('transferStudent rejects same class group successors', async () => {
     const { service } = createStudentTransitionContext({ nextClassGroupId: 'cg1' })
 
-    await expect(service.transferStudent({
+    await expect(service.studentWorkflow.transferStudent({
       enrollmentId: 'enr1',
       nextEnrollmentId: 'enr2',
       nextClassGroupId: 'cg1',
@@ -259,7 +259,7 @@ describe('SchoolService student workflows', () => {
   test('promoteStudent rejects non-advancing grade targets', async () => {
     const { service } = createStudentTransitionContext({ nextGradeOrder: 1 })
 
-    await expect(service.promoteStudent({
+    await expect(service.studentWorkflow.promoteStudent({
       enrollmentId: 'enr1',
       nextEnrollmentId: 'enr2',
       nextClassGroupId: 'cg2',
@@ -273,7 +273,7 @@ describe('SchoolService student workflows', () => {
       targetActiveEnrollmentCount: 1,
     })
 
-    await expect(service.promoteStudent({
+    await expect(service.studentWorkflow.promoteStudent({
       enrollmentId: 'enr1',
       nextEnrollmentId: 'enr2',
       nextClassGroupId: 'cg2',

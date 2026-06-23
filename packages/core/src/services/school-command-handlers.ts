@@ -1,0 +1,206 @@
+import type { SchoolCommandKey } from './school-command-catalog'
+import type {
+  AcademicsServiceWorkflow,
+  AssignMatterToClassSubjectInput,
+  OfferSubjectToClassInput,
+  RecordSessionProgressInput,
+} from './service-workflows/academics'
+import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from './service-workflows/access-control'
+import type {
+  AssessmentsServiceWorkflow,
+  CompleteAssessmentInput,
+  CreateAssessmentInput,
+  CreateGradeScaleInput,
+  CreateReportCardDefinitionInput,
+  CreateReportCardDefinitionSectionInput,
+  GenerateReportCardResultInput,
+  ListClassSubjectAssessmentResultsForPeriodInput,
+  PublishReportCardResultInput,
+  RecordAssessmentResultInput,
+} from './service-workflows/assessments'
+import type {
+  AddStudentInvolvementInput,
+  ApplyDisciplinaryActionInput,
+  BehaviorServiceWorkflow,
+  RecordIncidentInput,
+  ResolveIncidentInput,
+  UpdateStudentDisciplinaryActionStatusInput,
+} from './service-workflows/behavior'
+import type {
+  AddAnnouncementTargetInput,
+  CommunicationsServiceWorkflow,
+  CreateAnnouncementInput,
+  MaterializeDeliveriesInput,
+  PublishAnnouncementInput,
+  RecordDeliveryInput,
+} from './service-workflows/communications'
+import type {
+  AdjustStudentFeeInput,
+  AssignFeeToStudentInput,
+  CancelStudentFeeInput,
+  CreateFeeInput,
+  FinanceServiceWorkflow,
+  RecordPaymentInput,
+  UpdatePaymentStatusInput,
+} from './service-workflows/finance'
+import type {
+  CreateCalendarEventInput,
+  CreateScheduleInput,
+  CreateSessionInput,
+  GenerateSessionsInput,
+  RecordAttendanceInput,
+  RecordClassDailyAttendanceInput,
+  RecordDailyAttendanceInput,
+  RecordSessionAttendanceInput,
+  ReviewAttendanceJustificationInput,
+  SchedulingServiceWorkflow,
+} from './service-workflows/scheduling'
+import type {
+  ActivateAcademicYearInput,
+  AssignResourceInput,
+  AssignStaffInput,
+  CreateAcademicPeriodInput,
+  CreateAcademicYearInput,
+  CreateClassGroupInput,
+  PublishAcademicPeriodInput,
+  RegisterAttachmentInput,
+  RegisterSchoolInput,
+  RegisterStaffMemberInput,
+  RemoveAttachmentInput,
+  RemoveResourceAssignmentInput,
+  SetupServiceWorkflow,
+  UpdateClassGroupConfigurationInput,
+  UpdateSchoolConfigurationInput,
+  UpdateStaffMemberStatusInput,
+} from './service-workflows/setup'
+import type {
+  CloseEnrollmentInput,
+  CreateStudentNoteInput,
+  EnrollStudentInput,
+  GraduateStudentInput,
+  LinkGuardianToStudentInput,
+  PromoteStudentInput,
+  RecordProgressionDecisionInput,
+  RegisterGuardianInput,
+  RegisterStudentInput,
+  StudentServiceWorkflow,
+  TransferStudentInput,
+  UpdateGuardianContactMethodsInput,
+  UpdateGuardianStudentLinkInput,
+  UpdateStudentNoteInput,
+  UpdateStudentProfileInput,
+  UpdateStudentStatusInput,
+  UpsertStudentHealthProfileInput,
+} from './service-workflows/student'
+
+export interface SchoolWorkflowHandlers {
+  readonly setup: SetupServiceWorkflow
+  readonly accessControl: AccessControlServiceWorkflow
+  readonly academics: AcademicsServiceWorkflow
+  readonly assessments: AssessmentsServiceWorkflow
+  readonly student: StudentServiceWorkflow
+  readonly scheduling: SchedulingServiceWorkflow
+  readonly communications: CommunicationsServiceWorkflow
+  readonly behavior: BehaviorServiceWorkflow
+  readonly finance: FinanceServiceWorkflow
+}
+
+export type SchoolCommandHandlerMap = {
+  readonly [Key in SchoolCommandKey]: (payload: unknown) => Promise<unknown>
+}
+
+export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): SchoolCommandHandlerMap {
+  return {
+    // setup
+    registerSchool: payload => workflows.setup.registerSchool(payload as RegisterSchoolInput),
+    updateSchoolConfiguration: payload => workflows.setup.updateSchoolConfiguration(payload as UpdateSchoolConfigurationInput),
+    createAcademicYear: payload => workflows.setup.createAcademicYear(payload as CreateAcademicYearInput),
+    activateAcademicYear: payload => workflows.setup.activateAcademicYear(payload as ActivateAcademicYearInput),
+    createAcademicPeriod: payload => workflows.setup.createAcademicPeriod(payload as CreateAcademicPeriodInput),
+    publishAcademicPeriod: payload => workflows.setup.publishAcademicPeriod(payload as PublishAcademicPeriodInput),
+    createClassGroup: payload => workflows.setup.createClassGroup(payload as CreateClassGroupInput),
+    updateClassGroupConfiguration: payload => workflows.setup.updateClassGroupConfiguration(payload as UpdateClassGroupConfigurationInput),
+    registerStaffMember: payload => workflows.setup.registerStaffMember(payload as RegisterStaffMemberInput),
+    updateStaffMemberStatus: payload => workflows.setup.updateStaffMemberStatus(payload as UpdateStaffMemberStatusInput),
+    assignStaffToClass: payload => workflows.setup.assignStaffToClass(payload as AssignStaffInput),
+    assignStaffToClassSubject: payload => workflows.setup.assignStaffToClassSubject(payload as AssignStaffInput),
+    assignStaffToSession: payload => workflows.setup.assignStaffToSession(payload as AssignStaffInput),
+    assignResourceToClass: payload => workflows.setup.assignResourceToClass(payload as AssignResourceInput),
+    assignResourceToSession: payload => workflows.setup.assignResourceToSession(payload as AssignResourceInput),
+    removeResourceAssignment: payload => workflows.setup.removeResourceAssignment(payload as RemoveResourceAssignmentInput),
+    registerAttachment: payload => workflows.setup.registerAttachment(payload as RegisterAttachmentInput),
+    removeAttachment: payload => workflows.setup.removeAttachment(payload as RemoveAttachmentInput),
+    // accessControl
+    linkActorSubject: payload => workflows.accessControl.linkActorSubject(payload as LinkActorSubjectInput),
+    // academics
+    offerSubjectToClass: payload => workflows.academics.offerSubjectToClass(payload as OfferSubjectToClassInput),
+    assignMatterToClassSubject: payload => workflows.academics.assignMatterToClassSubject(payload as AssignMatterToClassSubjectInput),
+    recordSessionProgress: payload => workflows.academics.recordSessionProgress(payload as RecordSessionProgressInput),
+    // assessments
+    createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),
+    createReportCardDefinition: payload => workflows.assessments.createReportCardDefinition(payload as CreateReportCardDefinitionInput),
+    createReportCardDefinitionSection: payload => workflows.assessments.createReportCardDefinitionSection(payload as CreateReportCardDefinitionSectionInput),
+    createAssessment: payload => workflows.assessments.createAssessment(payload as CreateAssessmentInput),
+    completeAssessment: payload => workflows.assessments.completeAssessment(payload as CompleteAssessmentInput),
+    recordAssessmentResult: payload => workflows.assessments.recordAssessmentResult(payload as RecordAssessmentResultInput),
+    recordAssessmentResultCompliance: payload => workflows.assessments.recordAssessmentResultCompliance(payload as RecordAssessmentResultInput),
+    listClassSubjectAssessmentResultsForPeriod: payload => workflows.assessments.listClassSubjectAssessmentResultsForPeriod(payload as ListClassSubjectAssessmentResultsForPeriodInput),
+    generateReportCardResult: payload => workflows.assessments.generateReportCardResult(payload as GenerateReportCardResultInput),
+    publishReportCardResult: payload => workflows.assessments.publishReportCardResult(payload as PublishReportCardResultInput),
+    // student
+    registerStudent: payload => workflows.student.registerStudent(payload as RegisterStudentInput),
+    enrollStudent: payload => workflows.student.enrollStudent(payload as EnrollStudentInput),
+    linkGuardianToStudent: payload => workflows.student.linkGuardianToStudent(payload as LinkGuardianToStudentInput),
+    registerGuardian: payload => workflows.student.registerGuardian(payload as RegisterGuardianInput),
+    promoteStudent: payload => workflows.student.promoteStudent(payload as PromoteStudentInput),
+    transferStudent: payload => workflows.student.transferStudent(payload as TransferStudentInput),
+    graduateStudent: payload => workflows.student.graduateStudent(payload as GraduateStudentInput),
+    closeEnrollment: payload => workflows.student.closeEnrollment(payload as CloseEnrollmentInput),
+    recordProgressionDecision: payload => workflows.student.recordProgressionDecision(payload as RecordProgressionDecisionInput),
+    updateStudentProfile: payload => workflows.student.updateStudentProfile(payload as UpdateStudentProfileInput),
+    updateStudentStatus: payload => workflows.student.updateStudentStatus(payload as UpdateStudentStatusInput),
+    upsertStudentHealthProfile: payload => workflows.student.upsertStudentHealthProfile(payload as UpsertStudentHealthProfileInput),
+    createStudentNote: payload => workflows.student.createStudentNote(payload as CreateStudentNoteInput),
+    updateStudentNote: payload => workflows.student.updateStudentNote(payload as UpdateStudentNoteInput),
+    updateGuardianContactMethods: payload => workflows.student.updateGuardianContactMethods(payload as UpdateGuardianContactMethodsInput),
+    updateGuardianStudentLink: payload => workflows.student.updateGuardianStudentLink(payload as UpdateGuardianStudentLinkInput),
+    // scheduling
+    createSchedule: payload => workflows.scheduling.createSchedule(payload as CreateScheduleInput),
+    createCalendarEvent: payload => workflows.scheduling.createCalendarEvent(payload as CreateCalendarEventInput),
+    createSession: payload => workflows.scheduling.createSession(payload as CreateSessionInput),
+    generateSessions: payload => workflows.scheduling.generateSessions(payload as GenerateSessionsInput),
+    recordAttendance: payload => workflows.scheduling.recordAttendance(payload as RecordAttendanceInput),
+    recordDailyAttendance: payload => workflows.scheduling.recordDailyAttendance(payload as RecordDailyAttendanceInput),
+    recordSessionAttendance: payload => workflows.scheduling.recordSessionAttendance(payload as RecordSessionAttendanceInput),
+    recordClassDailyAttendance: payload => workflows.scheduling.recordClassDailyAttendance(payload as RecordClassDailyAttendanceInput),
+    reviewAttendanceJustification: payload => workflows.scheduling.reviewAttendanceJustification(payload as ReviewAttendanceJustificationInput),
+    // communications
+    createAnnouncement: payload => workflows.communications.createAnnouncement(payload as CreateAnnouncementInput),
+    addTarget: payload => workflows.communications.addTarget(payload as AddAnnouncementTargetInput),
+    publishAnnouncement: payload => workflows.communications.publishAnnouncement(payload as PublishAnnouncementInput),
+    recordDelivery: payload => workflows.communications.recordDelivery(payload as RecordDeliveryInput),
+    materializeDeliveries: payload => workflows.communications.materializeDeliveries(payload as MaterializeDeliveriesInput),
+    // behavior
+    recordIncident: payload => workflows.behavior.recordIncident(payload as RecordIncidentInput),
+    addStudentInvolvement: payload => workflows.behavior.addStudentInvolvement(payload as AddStudentInvolvementInput),
+    applyDisciplinaryAction: payload => workflows.behavior.applyDisciplinaryAction(payload as ApplyDisciplinaryActionInput),
+    updateStudentDisciplinaryActionStatus: payload => workflows.behavior.updateStudentDisciplinaryActionStatus(payload as UpdateStudentDisciplinaryActionStatusInput),
+    resolveIncident: payload => workflows.behavior.resolveIncident(payload as ResolveIncidentInput),
+    // finance
+    createFee: payload => workflows.finance.createFee(payload as CreateFeeInput),
+    assignFeeToStudent: payload => workflows.finance.assignFeeToStudent(payload as AssignFeeToStudentInput),
+    recordPayment: payload => workflows.finance.recordPayment(payload as RecordPaymentInput),
+    reversePayment: payload => workflows.finance.reversePayment(payload as UpdatePaymentStatusInput),
+    cancelPayment: payload => workflows.finance.cancelPayment(payload as UpdatePaymentStatusInput),
+    adjustStudentFee: payload => workflows.finance.adjustStudentFee(payload as AdjustStudentFeeInput),
+    cancelStudentFee: payload => workflows.finance.cancelStudentFee(payload as CancelStudentFeeInput),
+  }
+}
+
+export function dispatchSchoolCommand(
+  handlers: SchoolCommandHandlerMap,
+  methodName: SchoolCommandKey,
+  payload: unknown,
+): Promise<unknown> {
+  return handlers[methodName](payload)
+}

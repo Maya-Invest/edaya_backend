@@ -1,9 +1,11 @@
 import type { Guardian, StaffMember, Student } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
+import type { AccessControlWorkflowRepositories } from '../workflow-repository-catalog'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity } from '../../domains'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { pickWorkflowRepositories } from '../workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface LinkActorSubjectInput {
@@ -19,8 +21,11 @@ export type LinkActorSubjectResult
     | { kind: 'student', entity: Student }
 
 export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: AccessControlWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('accessControl', base.repositories)
   }
 
   async linkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
@@ -49,7 +54,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
         isActive: existing.isActive,
         createdAt: existing.createdAt,
       })
-      await this.baseService.staffMembers.save(staffMember, { moduleChecked: true })
+      await this.baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
       return { kind: 'staff', entity: staffMember }
     }
 
@@ -69,14 +74,14 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
         premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
         createdAt: existing.createdAt,
       })
-      await this.baseService.guardians.save(guardian, { moduleChecked: true })
+      await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
       return { kind: 'guardian', entity: guardian }
     }
 
     const existing = await this.requireStudentInSchool(input.studentId!)
     this.assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
     const student = existing.copyWith({ subjectId: input.subjectId })
-    await this.baseService.students.save(student, { moduleChecked: true })
+    await this.baseService.entities.students.save(student, { moduleChecked: true })
     return { kind: 'student', entity: student }
   }
 
@@ -94,9 +99,9 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
     input: LinkActorSubjectInput,
   ): Promise<void> {
     const [staff, guardian, student] = await Promise.all([
-      this.baseService.repositories.staffMembers.findOne({ subjectId }),
-      this.baseService.repositories.guardians.findOne({ subjectId }),
-      this.baseService.repositories.students.findOne({ subjectId }),
+      this.repositories.staffMembers.findOne({ subjectId }),
+      this.repositories.guardians.findOne({ subjectId }),
+      this.repositories.students.findOne({ subjectId }),
     ])
 
     const conflicts = [
@@ -115,7 +120,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireStaffMemberInSchool(staffMemberId: string): Promise<StaffMember> {
-    const staffMember = await this.baseService.repositories.staffMembers.findById(staffMemberId)
+    const staffMember = await this.repositories.staffMembers.findById(staffMemberId)
     if (!staffMember || staffMember.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -123,7 +128,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireGuardianInSchool(guardianId: string): Promise<Guardian> {
-    const guardian = await this.baseService.repositories.guardians.findById(guardianId)
+    const guardian = await this.repositories.guardians.findById(guardianId)
     if (!guardian || guardian.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -131,7 +136,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireStudentInSchool(studentId: string): Promise<Student> {
-    const student = await this.baseService.repositories.students.findById(studentId)
+    const student = await this.repositories.students.findById(studentId)
     if (!student || student.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }

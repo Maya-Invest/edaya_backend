@@ -1,16 +1,43 @@
+export { createInProcessAccessSeedPort } from './access/in-process'
+export type { AccessSeedPort } from './access/port'
+export { createInProcessActivitiesSeedPort } from './activities/in-process'
+export type { ActivitiesSeedPort } from './activities/port'
+export { createInProcessAssessmentsSeedPort } from './assessments/in-process'
+export type { AssessmentsSeedPort } from './assessments/port'
+export { createInProcessAttachmentsSeedPort } from './attachments/in-process'
+export type { AttachmentsSeedPort } from './attachments/port'
+export { createInProcessAttendanceSeedPort } from './attendance/in-process'
+export type { AttendanceSeedPort } from './attendance/port'
+export { createInProcessAuthLinkSeedPort } from './auth-link/in-process'
+
+export type { AuthLinkSeedPort } from './auth-link/port'
 export { type AuthHandler, createHandlerAuthProvisioner } from './auth/handler-auth-provisioner'
+export { createInProcessCommunicationsSeedPort } from './communications/in-process'
+export type { CommunicationsSeedPort } from './communications/port'
+export { createInProcessCurriculumSeedPort } from './curriculum/in-process'
+export type { CurriculumSeedPort } from './curriculum/port'
+export { createInProcessDisciplineSeedPort } from './discipline/in-process'
+export type { DisciplineSeedPort } from './discipline/port'
+export { createInProcessFinanceSeedPort } from './finance/in-process'
+export type { FinanceSeedPort } from './finance/port'
+export { createInProcessLearningContentSeedPort } from './learning-content/in-process'
+export type { LearningContentSeedPort } from './learning-content/port'
+
+export { createInProcessPopulationSeedPort } from './population/in-process'
+export type { PopulationSeedPort } from './population/port'
+export { createInProcessReportCardsSeedPort } from './report-cards/in-process'
+export type { ReportCardsSeedPort } from './report-cards/port'
 
 export type { DevAccessSeedResult } from './run-dev-access-seed'
+export { runDevAccessSeed, runDevAccessSeedWithPort } from './run-dev-access-seed'
 
-export { runDevAccessSeed } from './run-dev-access-seed'
 export type { DevAuthLinkResult } from './run-dev-auth-link'
+export { runDevAuthLinkWithPort } from './run-dev-auth-link'
 
-export { runDevAuthLink } from './run-dev-auth-link'
 export type { DevAuthProvisionResult } from './run-dev-auth-provision'
-
 export { runDevAuthProvision } from './run-dev-auth-provision'
-export type { DevSchoolSeedResult, RunDevSchoolSeedOptions } from './run-dev-school-seed'
 
+export type { DevSchoolSeedResult, RunDevSchoolSeedOptions } from './run-dev-school-seed'
 export { runDevSchoolSeed } from './run-dev-school-seed'
 export type {
   DevSeedScope,
@@ -18,8 +45,15 @@ export type {
   RunDevSeedsOptions,
   RunDevSeedsResults,
 } from './run-dev-seeds'
-
 export { logDevSeedResults, parseDevSeedScope, runDevSeeds } from './run-dev-seeds'
+export { createInProcessSchedulingSeedPort } from './scheduling/in-process'
+export type { SchedulingSeedPort } from './scheduling/port'
+export { createInProcessSchoolLifeSeedPort } from './school-life/in-process'
+export type { SchoolLifeSeedPort } from './school-life/port'
+export { createInProcessSchoolStructureSeedPort } from './school-structure/in-process'
+export type { SchoolStructureSeedPort } from './school-structure/port'
 export { seedMinimalSchool } from './seed-minimal-school'
-
+export { SeedPortError } from './seed-port-error'
+export { createInProcessStudentSupportSeedPort } from './student-support/in-process'
+export type { StudentSupportSeedPort } from './student-support/port'
 export type { AuthAccountInput, AuthProvisioner, SeedApplication } from './types'

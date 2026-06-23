@@ -39,14 +39,14 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back curriculum progress when a later aggregate write fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await app.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.baseService.gradeLevels.save(
+    await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -56,7 +56,7 @@ describeIntegration('atomic workflow safeguards', () => {
       gradeLevelId: 'level',
       name: 'Grade 6 A',
     })
-    await app.baseService.subjects.save(
+    await app.baseService.entities.subjects.save(
       new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
     )
     const classSubject = await saveClassSubject(app, {
@@ -64,7 +64,7 @@ describeIntegration('atomic workflow safeguards', () => {
       classGroupId: 'class',
       subjectId: 'math',
     })
-    await app.baseService.subjectMatters.save(
+    await app.baseService.entities.subjectMatters.save(
       new SubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }),
     )
     const classMatter = await saveClassSubjectMatter(app, {
@@ -83,7 +83,7 @@ describeIntegration('atomic workflow safeguards', () => {
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })
     failSaveOnAttempt('classSubjectMatterRepository')
-    await expect(app.recordSessionProgress({
+    await expect(app.academicsWorkflow.recordSessionProgress({
       id: 'progress',
       classSubjectMatterId: classMatter.id,
       sessionId: 'lesson',
@@ -97,7 +97,7 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back payment and fee lifecycle changes when balance writes fail', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await app.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
       name: '2026-2027',
@@ -113,14 +113,14 @@ describeIntegration('atomic workflow safeguards', () => {
       defaultAmount: 90000,
       currency: 'XAF',
     })
-    const studentFee = await app.assignFeeToStudent({
+    const studentFee = await app.financeWorkflow.assignFeeToStudent({
       id: 'student-tuition',
       studentId: 'student',
       feeId: 'tuition',
       referenceDate: new Date('2026-09-01T00:00:00Z'),
     })
     failSaveOnAttempt('studentFeeRepository')
-    await expect(app.recordPayment({
+    await expect(app.financeWorkflow.recordPayment({
       id: 'payment',
       studentFeeId: studentFee.id,
       amount: 30000,
@@ -130,7 +130,7 @@ describeIntegration('atomic workflow safeguards', () => {
     })).rejects.toThrow('Simulated studentFeeRepository save failure')
     expect(await repositories.paymentRepository.findById('payment')).toBeUndefined()
     expect((await repositories.studentFeeRepository.findById(studentFee.id))?.paidAmount.amount).toBe(0)
-    await app.recordPayment({
+    await app.financeWorkflow.recordPayment({
       id: 'payment',
       studentFeeId: studentFee.id,
       amount: 30000,
@@ -139,12 +139,12 @@ describeIntegration('atomic workflow safeguards', () => {
     })
     failSaveOnAttempt('studentFeeRepository')
     await expect(
-      app.reversePayment({ paymentId: 'payment' }),
+      app.financeWorkflow.reversePayment({ paymentId: 'payment' }),
     ).rejects.toThrow('Simulated studentFeeRepository save failure')
     expect((await repositories.paymentRepository.findById('payment'))?.status).toBe(PaymentStatus.Recorded)
     expect((await repositories.studentFeeRepository.findById(studentFee.id))?.paidAmount.amount).toBe(30000)
     failSaveOnAttempt('studentFeeRepository')
-    await expect(app.cancelPayment({ paymentId: 'payment' }))
+    await expect(app.financeWorkflow.cancelPayment({ paymentId: 'payment' }))
       .rejects
       .toThrow('Simulated studentFeeRepository save failure')
     expect((await repositories.paymentRepository.findById('payment'))?.status).toBe(PaymentStatus.Recorded)
@@ -155,7 +155,7 @@ describeIntegration('atomic workflow safeguards', () => {
       reason: 'Adjustment',
     })).rejects.toThrow('Simulated studentFeeRepository save failure')
     expect((await repositories.studentFeeRepository.findById(studentFee.id))?.adjustmentAmount.amount).toBe(0)
-    await app.cancelPayment({ paymentId: 'payment' })
+    await app.financeWorkflow.cancelPayment({ paymentId: 'payment' })
     failSaveOnAttempt('studentFeeRepository')
     await expect(cancelStudentFee(app, {
       studentFeeId: studentFee.id,
@@ -167,7 +167,7 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back report-card publication when the published result cannot be saved', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await app.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
       name: '2026-2027',
@@ -183,7 +183,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    await app.baseService.gradeLevels.save(
+    await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -194,8 +194,8 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 A',
     })
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
-    await app.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
-    await app.baseService.gradeScales.save(new GradeScale({
+    await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
+    await app.baseService.entities.gradeScales.save(new GradeScale({
       id: 'gs-test',
       schoolId: 'school',
       name: 'Standard',
@@ -213,7 +213,7 @@ describeIntegration('atomic workflow safeguards', () => {
       isDefault: true,
     })
     failSaveOnAttempt('reportCardResultRepository')
-    await expect(app.publishReportCardResult({
+    await expect(app.assessmentsWorkflow.publishReportCardResult({
       id: 'report-card',
       studentId: 'student',
       periodId: 'term',
@@ -224,14 +224,14 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back bulk attendance capture when a later roster entry is invalid', async () => {
     const { app, repositories } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await app.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.baseService.gradeLevels.save(
+    await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -242,7 +242,7 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 A',
     })
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
-    await app.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
+    await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
     await saveSession(app, {
       id: 'lesson',
       schoolId: 'school',
@@ -252,7 +252,7 @@ describeIntegration('atomic workflow safeguards', () => {
       startsAt: new Date('2026-09-01T08:00:00Z'),
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })
-    await expect(app.recordSessionAttendance({
+    await expect(app.schedulingWorkflow.recordSessionAttendance({
       sessionId: 'lesson',
       attendanceByStudent: { student: AttendanceStatus.Present, missing: AttendanceStatus.Absent },
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -262,14 +262,14 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back generated sessions when materializing a later schedule fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await app.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    await app.baseService.gradeLevels.save(
+    await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
     )
     await createClassGroup(app, {
@@ -295,7 +295,7 @@ describeIntegration('atomic workflow safeguards', () => {
       })
     }
     failSaveOnAttempt('sessionRepository', 2)
-    await expect(app.generateSessions({
+    await expect(app.schedulingWorkflow.generateSessions({
       classGroupId: 'class',
       startDate: sessionDate,
       endDate: sessionDate,
@@ -319,9 +319,9 @@ describeIntegration('atomic workflow safeguards', () => {
       announcementId: 'announcement',
       targetKind: AnnouncementTargetKind.AllGuardians,
     })
-    await app.publishAnnouncement({ announcementId: 'announcement' })
+    await app.communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement' })
     failSaveOnAttempt('messageDeliveryRepository', 2)
-    await expect(app.materializeDeliveries({
+    await expect(app.communicationsWorkflow.materializeDeliveries({
       announcementId: 'announcement',
       channel: MessageDeliveryChannel.App,
     })).rejects.toThrow('Simulated messageDeliveryRepository save failure')

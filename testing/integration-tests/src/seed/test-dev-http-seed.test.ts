@@ -98,6 +98,29 @@ describeSlowIntegration('runHttpDevSeeds', () => {
     expect(smoke.smoke?.status).toBe('passed')
   }, 60_000)
 
+  it('seeds the full demo school through HTTP session bootstrap without in-process application access', async () => {
+    const { app } = await createCoreRouteTestApp()
+    const client = createHttpClientForApp(app)
+
+    const results = await runHttpDevSeeds({
+      client,
+      scope: 'all',
+      provisionServiceAccount: true,
+    })
+
+    expect(results.authProvision?.status).toBe('seeded')
+    expect(results.school?.status).toBe('seeded')
+    expect(results.access?.status).toBe('seeded')
+
+    const smoke = await runHttpDevSeeds({
+      client,
+      scope: 'smoke',
+      serviceAccountApiKey: resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID),
+      provisionServiceAccount: false,
+    })
+    expect(smoke.smoke?.status).toBe('passed')
+  }, 120_000)
+
   it('seeds the full demo school through service account HTTP routes', async () => {
     const { app, application } = await createCoreRouteTestApp()
 

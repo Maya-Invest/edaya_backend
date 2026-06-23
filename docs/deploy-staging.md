@@ -63,8 +63,6 @@ Routes are declared in `wrangler.toml`; DNS/custom domains are configured in the
 ```sh
 cd apps/api
 bunx wrangler secret put BETTER_AUTH_SECRET --env staging
-# After bootstrap (step 7 below):
-bunx wrangler secret put SERVICE_ACCOUNT_API_KEY --env staging
 ```
 
 Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value).
@@ -90,14 +88,10 @@ cp testing/seeding/.env.staging.example testing/seeding/.env.staging
 # 5. Bootstrap school + seeding service account (director session on first run)
 SEED_API_URL=https://api-staging.edaya.softilab.dev bun run seed:init
 
-# 6. Store printed SERVICE_ACCOUNT_API_KEY as Wrangler secret (see above)
+# 6. Full remote seed (uses school profile API key from @edaya/dev-fixtures)
+SEED_API_URL=https://api-staging.edaya.softilab.dev bun run seed:remote
 
-# 7. Full remote seed
-SEED_API_URL=https://api-staging.edaya.softilab.dev \
-SERVICE_ACCOUNT_API_KEY=sk_live_… \
-bun run seed:remote
-
-# 4. Verify
+# 7. Verify
 bun run smoke:staging
 # or lighter auth-only check:
 bun run seed:smoke:staging
@@ -142,7 +136,6 @@ Reads `testing/seeding/.env.staging` when present, or env vars:
 |----------|---------|
 | `STAGING_API_URL` | `https://api-staging.edaya.softilab.dev` |
 | `STAGING_APP_ORIGIN` | `https://app-staging.edaya.softilab.dev` |
-| `SERVICE_ACCOUNT_API_KEY` | optional (skips S7 if unset) |
 | `SMOKE_STAFF_EMAIL` | dev fixture director email |
 | `SMOKE_STAFF_PASSWORD` | dev fixture password |
 
@@ -154,7 +147,7 @@ Reads `testing/seeding/.env.staging` when present, or env vars:
 | S4 | CORS rejects unknown origin |
 | S5 | Better Auth sign-in + session cookie |
 | S6 | `GET /core/authorization/effective-grants` |
-| S7 | Service account Bearer → entity list (optional) |
+| S7 | Service account Bearer → entity list (school profile key) |
 | S8 | Seeded school visible via Hyperdrive |
 
 **Tier 2 (manual):** browser login on `app-staging…`, demo data in UI, Safari cross-subdomain cookies.

@@ -1,9 +1,10 @@
+import type { Evaluation, HealthRecord, PedagogicalNote, PlanningEvent, Student } from '$lib/types/school';
 import { describe, expect, it } from 'bun:test';
-import type { Evaluation, PlanningEvent, Student } from '$lib/types/school';
 import {
 	seedEvaluationsCollection,
 	seedPlanningCollection,
 	seedRolePermissionsCollection,
+	seedStudent360Collections,
 	seedStudentsCollection,
 } from './seed-policies';
 
@@ -32,6 +33,7 @@ function planningEvent(id: string, classId: string): PlanningEvent {
 		start: '08:00',
 		end: '09:00',
 		room: 'A1',
+		teacher: 'Teacher',
 	};
 }
 
@@ -51,6 +53,38 @@ function evaluation(id: string, classId: string): Evaluation {
 }
 
 describe('entity store seed policies', () => {
+	it('replaces the selected student 360 slice and removes stale records', () => {
+		const healthRecord: HealthRecord = {
+			studentId: 's1',
+			bloodType: 'A+',
+			allergies: [],
+			medications: [],
+			chronicConditions: [],
+			lastVisit: '2026-06-01',
+			notes: '',
+		};
+		const note: PedagogicalNote = {
+			id: 'n1',
+			studentId: 's1',
+			date: '2026-06-01',
+			authorId: 'staff-1',
+			category: 'Progression',
+			content: 'Progress',
+		};
+
+		const seeded = seedStudent360Collections({}, [], 's1', healthRecord, [note]);
+		const cleared = seedStudent360Collections(
+			seeded.healthRecords,
+			seeded.pedagogicalNotes,
+			's1',
+			undefined,
+			[],
+		);
+
+		expect(cleared.healthRecords.s1).toBeUndefined();
+		expect(cleared.pedagogicalNotes.filter(entry => entry.studentId === 's1')).toEqual([]);
+	});
+
 	it('merges students school-wide by id', () => {
 		let students = seedStudentsCollection([], [student('s1', '6a'), student('s2', '6b')]);
 		students = seedStudentsCollection(students, [
@@ -90,16 +124,16 @@ describe('entity store seed policies', () => {
 
 	it('replaces role permission matrices entirely', () => {
 		let permissions = seedRolePermissionsCollection({
-			roleCrudMatrix: { owner: { students: { read: true, create: true, update: true, delete: true } } },
+			roleCrudMatrix: { owner: { students: { C: true, R: true, U: true, D: true } } },
 			roleEnabledPermissions: { owner: { students: true } },
 		});
 		permissions = seedRolePermissionsCollection({
-			roleCrudMatrix: { professeur: { students: { read: true, create: false, update: false, delete: false } } },
+			roleCrudMatrix: { professeur: { students: { C: false, R: true, U: false, D: false } } },
 			roleEnabledPermissions: { professeur: { students: true } },
 		});
 
 		expect(permissions.roleCrudMatrix.owner).toBeUndefined();
-		expect(permissions.roleCrudMatrix.professeur?.students?.read).toBe(true);
+		expect(permissions.roleCrudMatrix.professeur?.students?.R).toBe(true);
 		expect(permissions.roleEnabledPermissions.professeur?.students).toBe(true);
 	});
 });

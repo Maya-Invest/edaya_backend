@@ -32,7 +32,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
 
   async offerSubjectToClass(input: OfferSubjectToClassInput): Promise<ClassSubject> {
     const classSubject = new ClassSubject(input)
-    await this.baseService.classSubjects.save(classSubject)
+    await this.baseService.entities.classSubjects.save(classSubject)
     return classSubject
   }
 
@@ -42,7 +42,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       status: input.status ?? ClassSubjectMatterStatus.NotStarted,
       completedPercentage: input.completedPercentage ?? 0,
     })
-    await this.baseService.classSubjectMatters.save(matter)
+    await this.baseService.entities.classSubjectMatters.save(matter)
     return matter
   }
 
@@ -102,8 +102,8 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         updatedAt: snapshot.recordedAt,
       })
 
-      await this.baseService.classSubjectProgress.save(snapshot, { moduleChecked: true })
-      await this.baseService.classSubjectMatters.save(updatedMatter, { moduleChecked: true })
+      await this.baseService.entities.classSubjectProgress.save(snapshot, { moduleChecked: true })
+      await this.baseService.entities.classSubjectMatters.save(updatedMatter, { moduleChecked: true })
       await this.updateClassSubjectAggregate(classSubject, updatedMatter)
       return snapshot
     })
@@ -148,7 +148,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     }
     const total = normalizedMatters.reduce((sum, matter) => sum + matter.completedPercentage, 0)
     const completedPercentage = roundTo2(total / normalizedMatters.length)
-    await this.baseService.classSubjects.save(new ClassSubject({
+    await this.baseService.entities.classSubjects.save(new ClassSubject({
       id: classSubject.id,
       classGroupId: classSubject.classGroupId,
       subjectId: classSubject.subjectId,

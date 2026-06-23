@@ -9,7 +9,7 @@ import {
   SEED_STAFF,
   splitDisplayName,
 } from '@edaya/dev-fixtures'
-import { HttpAuthProvisioner, signInViaHttp } from './auth'
+import { HttpAuthProvisioner } from './auth'
 import { isTransientHttpStatus } from './client'
 
 const BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st1', 'st3', 'st7'] as const
@@ -62,19 +62,23 @@ async function trySignIn(client: HttpSeedClient, email: string): Promise<boolean
   return false
 }
 
-/** Try dev staff accounts until one has an authorized /core session. */
-async function ensureLinkedStaffSignedIn(client: HttpSeedClient): Promise<void> {
-  const bootstrapAccounts = BOOTSTRAP_SIGN_IN_STAFF_IDS.flatMap((staffId) => {
-    const account = DEV_AUTH_STAFF_ACCOUNTS.find(entry => entry.staffId === staffId)
-    return account ? [account] : []
-  })
+/** Sign in with the dev owner account that will register the school. */
+async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
+  const onboardingStaffIds = [
+    MINIMAL_AUTH_FIXTURE_STAFF_ID,
+    SEED_SCHOOL_OWNER_STAFF_ID,
+    ...BOOTSTRAP_SIGN_IN_STAFF_IDS,
+  ]
 
-  for (const account of bootstrapAccounts) {
-    if (!await trySignIn(client, account.email)) {
+  const seen = new Set<string>()
+  for (const staffId of onboardingStaffIds) {
+    if (seen.has(staffId)) {
       continue
     }
+    seen.add(staffId)
 
-    if (await probeCoreAccess(client) === 'authorized') {
+    const account = DEV_AUTH_STAFF_ACCOUNTS.find(entry => entry.staffId === staffId)
+    if (account && await trySignIn(client, account.email)) {
       return
     }
   }
@@ -91,25 +95,20 @@ async function ensureLinkedStaffSignedIn(client: HttpSeedClient): Promise<void> 
       password: DEV_AUTH_PASSWORD,
       name: ownerMember.name,
     })
-    await signInViaHttp(client, {
-      email: ownerAccount.email,
-      password: DEV_AUTH_PASSWORD,
-    })
-
-    if (await probeCoreAccess(client) === 'authorized') {
+    if (await trySignIn(client, ownerAccount.email)) {
       return
     }
   }
 
   throw new Error(
-    'No dev staff account could establish an authorized /core session. '
-    + 'Run `bun seed:auth` then `bun seed` with the API running.',
+    'Could not sign in with the dev school owner account. '
+    + 'Run `bun seed:auth` with the API running, then retry `bun seed:init`.',
   )
 }
 
 /** Establish a linked staff actor for session-backed /core/* seeding via onboarding. */
 export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<void> {
-  await ensureLinkedStaffSignedIn(client)
+  await signInForOnboarding(client)
 
   if (await probeCoreAccess(client) === 'authorized') {
     return

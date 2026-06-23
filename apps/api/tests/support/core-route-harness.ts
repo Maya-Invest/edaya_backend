@@ -14,7 +14,7 @@ import type { Environment } from "@/runtime/env/schema";
 import { buildNodeApiRuntime } from "@/runtime/node/create-runtime";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { type ApiRuntime, resetApiRuntimesForTests } from "@/runtime";
-import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from "@edaya/seeding";
+import { createHandlerAuthProvisioner, createInProcessAuthLinkSeedPort, runDevAccessSeed, runDevAuthLinkWithPort, runDevSchoolSeed } from "@edaya/seeding";
 import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -203,7 +203,7 @@ export const dependenciesInjection = createDependenciesInjection([
 export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, runtime: ApiRuntime) {
   const auth = createHandlerAuthProvisioner(runtime.getAuth(), pgliteEnv.BETTER_AUTH_URL);
   await runDevSchoolSeed(application);
-  await runDevAuthLink(application, auth);
+  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth);
   await runDevAccessSeed(application);
 }
 

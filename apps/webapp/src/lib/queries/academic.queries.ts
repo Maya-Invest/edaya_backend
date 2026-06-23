@@ -1,6 +1,6 @@
 import { academicContext } from '$lib/academic/context.svelte';
 import { resolvePageLoad } from '$lib/queries/page-status';
-import { refreshReportCardsLayout } from '$lib/queries/report-cards.queries';
+import { refreshReportCardCatalog } from '$lib/queries/report-cards.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 export function queryClassGroupsPage() {
@@ -24,7 +24,7 @@ export function queryGradeScalesPage() {
 		empty: () => ({}),
 		load: async () => {
 			if (!reportCardsContext.ready) {
-				await refreshReportCardsLayout();
+				await refreshReportCardCatalog();
 			}
 			return {};
 		},
@@ -37,7 +37,7 @@ export function queryReportCardDefinitionsPage() {
 		empty: () => ({}),
 		load: async () => {
 			if (!reportCardsContext.ready) {
-				await refreshReportCardsLayout();
+				await refreshReportCardCatalog();
 			}
 			return {};
 		},

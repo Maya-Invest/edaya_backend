@@ -13,7 +13,7 @@ describe('SchoolService academics workflows', () => {
   test('recordSessionProgress records progress and updates aggregates through managed services', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createContext()
 
-    const result = await service.recordSessionProgress({
+    const result = await service.academicsWorkflow.recordSessionProgress({
       id: 'csp1',
       classSubjectMatterId: 'csm1',
       sessionId: 'sess1',
@@ -41,7 +41,7 @@ describe('SchoolService academics workflows', () => {
   test('recordSessionProgress rejects duplicate progress records', async () => {
     const { service } = createContext({ existingProgress: { id: 'existing-progress' } })
 
-    await expect(service.recordSessionProgress({
+    await expect(service.academicsWorkflow.recordSessionProgress({
       id: 'csp1',
       classSubjectMatterId: 'csm1',
       sessionId: 'sess1',
@@ -52,7 +52,7 @@ describe('SchoolService academics workflows', () => {
   test('recordSessionProgress rejects progress decreases', async () => {
     const { service } = createContext({ matterCompletedPercentage: 80 })
 
-    await expect(service.recordSessionProgress({
+    await expect(service.academicsWorkflow.recordSessionProgress({
       id: 'csp1',
       classSubjectMatterId: 'csm1',
       sessionId: 'sess1',

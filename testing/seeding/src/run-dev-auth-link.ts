@@ -1,4 +1,5 @@
-import type { AuthProvisioner, SeedApplication } from './types'
+import type { AuthLinkSeedPort } from './auth-link/port'
+import type { AuthProvisioner } from './types'
 import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 
 export type DevAuthLinkResult
@@ -10,12 +11,11 @@ export type DevAuthLinkResult
       accounts: Array<{ email: string, kind: 'staff' | 'guardian', entityId: string }>
     }
 
-/** @deprecated Prefer `syncDevStaffAuthAndOwner` via school/access seed. Kept for integration tests. */
-export async function runDevAuthLink(
-  application: SeedApplication,
+export async function runDevAuthLinkWithPort(
+  port: AuthLinkSeedPort,
   auth: AuthProvisioner,
 ): Promise<DevAuthLinkResult> {
-  const sync = await syncDevStaffAuthAndOwner(application, auth)
+  const sync = await syncDevStaffAuthAndOwner(port, auth)
   if (!sync) {
     return { status: 'skipped', reason: 'school-not-seeded', linkedStaff: 0, linkedGuardians: 0 }
   }

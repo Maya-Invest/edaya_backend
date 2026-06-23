@@ -1,9 +1,20 @@
 import { academicContext } from '$lib/academic/context.svelte';
-import { loadPeopleData } from '$lib/api/people-data';
+import { loadClassPeopleData, loadGuardiansPeopleData, loadPeopleData } from '$lib/api/people-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
+import { getStudent360Data, studentDetailIdFromUrl } from '$lib/queries/student-360.queries';
+
+async function seedStudent360ForUrl(url: URL) {
+	const studentId = studentDetailIdFromUrl(url);
+	if (!studentId) {
+		return;
+	}
+
+	const { healthRecord, pedagogicalNotes } = await getStudent360Data(studentId);
+	detailDataContext.seedStudent360Data(studentId, healthRecord, pedagogicalNotes);
+}
 
 export async function getSchoolStudentsData() {
 	const { students } = await loadPeopleData(queryClient());
@@ -11,12 +22,15 @@ export async function getSchoolStudentsData() {
 }
 
 export async function getSchoolGuardiansData() {
-	const { guardians, students } = await loadPeopleData(queryClient());
+	const { guardians, students } = await loadGuardiansPeopleData(queryClient());
 	return { guardians, students };
 }
 
 export async function getSchoolStaffData() {
-	return fetchStaffMembers(queryClient());
+	return fetchStaffMembers(queryClient(), {
+		schoolId: academicContext.schools[0]?.id ?? '',
+		academicYearId: academicContext.yearId,
+	});
 }
 
 export function querySchoolStudentsPage() {
@@ -25,6 +39,7 @@ export function querySchoolStudentsPage() {
 		load: async () => {
 			const students = await getSchoolStudentsData();
 			detailDataContext.seedStudents(students);
+			await seedStudent360ForUrl(url);
 			return {};
 		},
 		hasItems: () => detailDataContext.students.length > 0,
@@ -65,9 +80,13 @@ export function queryClassStudentsPage(classId: string) {
 		load: async () => {
 			const classList = academicContext.classes;
 			const currentClass = classList.find(entry => entry.id === classId) ?? classList[0];
-			const { students } = await loadPeopleData(queryClient());
-			const classStudents = students.filter(student => student.classId === classId);
-			detailDataContext.seedStudents(classStudents, { classId });
+			const { students } = await loadClassPeopleData(
+				queryClient(),
+				classId,
+				academicContext.periodId,
+			);
+			detailDataContext.seedStudents(students, { classId });
+			await seedStudent360ForUrl(url);
 			return { classId, currentClass };
 		},
 		hasItems: () => detailDataContext.studentsForClass(classId).length > 0,

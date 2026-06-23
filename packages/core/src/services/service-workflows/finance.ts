@@ -56,7 +56,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
 
   async createFee(input: CreateFeeInput): Promise<Fee> {
     const fee = new FeeEntity(input)
-    await this.baseService.fees.save(fee)
+    await this.baseService.entities.fees.save(fee)
     return fee
   }
 
@@ -97,7 +97,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       }),
       createdAt,
     })
-    await this.baseService.studentFees.save(studentFee, { moduleChecked: true })
+    await this.baseService.entities.studentFees.save(studentFee, { moduleChecked: true })
     return studentFee
   }
 
@@ -132,7 +132,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         recordedById: resolveAuditActorId(this.baseService.actor),
         createdAt,
       })
-      await this.baseService.payments.save(payment, { moduleChecked: true })
+      await this.baseService.entities.payments.save(payment, { moduleChecked: true })
       await this.savePaidAmount(
         studentFee,
         studentFee.paidAmount.amount + payment.amount.amount,
@@ -214,7 +214,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         cancelledById: status === PaymentStatus.Cancelled ? resolveAuditActorId(this.baseService.actor) : undefined,
         createdAt: payment.createdAt,
       })
-      await this.baseService.payments.save(changedPayment, { moduleChecked: true })
+      await this.baseService.entities.payments.save(changedPayment, { moduleChecked: true })
       await this.savePaidAmount(
         studentFee,
         Math.max(0, studentFee.paidAmount.amount - payment.amount.amount),
@@ -238,7 +238,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       adjustedAt: new Date(),
       updatedAt: new Date(),
     })
-    await this.baseService.studentFees.save(adjusted)
+    await this.baseService.entities.studentFees.save(adjusted)
     return adjusted
   }
 
@@ -251,7 +251,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       cancelledAt: new Date(),
       updatedAt: new Date(),
     })
-    await this.baseService.studentFees.save(cancelled)
+    await this.baseService.entities.studentFees.save(cancelled)
     return cancelled
   }
 
@@ -285,7 +285,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt?: Date,
     referenceDate?: Date,
   ): Promise<void> {
-    await this.baseService.studentFees.save(studentFee.copyWith({
+    await this.baseService.entities.studentFees.save(studentFee.copyWith({
       paidAmount,
       status: this.deriveFeeStatus({
         expectedAmount: studentFee.expectedAmount.amount - studentFee.adjustmentAmount.amount,

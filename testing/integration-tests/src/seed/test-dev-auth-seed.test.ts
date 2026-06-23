@@ -8,7 +8,7 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from '@edaya/dev-fixtures'
-import { createHandlerAuthProvisioner, runDevAuthLink, runDevAuthProvision, runDevSchoolSeed, runDevSeeds } from '@edaya/seeding'
+import { createHandlerAuthProvisioner, createInProcessAuthLinkSeedPort, runDevAuthLinkWithPort, runDevAuthProvision, runDevSchoolSeed, runDevSeeds } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { Hono } from 'hono'
 import { createDependenciesInjection } from '@/http/dependencies'
@@ -26,7 +26,7 @@ function collectSetCookieHeaders(response: Response): string[] {
   return single ? [single] : []
 }
 
-describe('runDevAuthLink', () => {
+describe('auth link seed port', () => {
   afterEach(async () => {
     await resetApiRuntimesForTests()
   })
@@ -60,7 +60,8 @@ describe('runDevAuthLink', () => {
     const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
 
     await runDevSchoolSeed(application)
-    const result = await runDevAuthLink(application, auth)
+    const authLinkPort = createInProcessAuthLinkSeedPort(application)
+    const result = await runDevAuthLinkWithPort(authLinkPort, auth)
 
     expect(result.status).toBe('seeded')
     expect(result.linkedStaff).toBe(DEV_AUTH_STAFF_ACCOUNTS.length)
@@ -127,7 +128,8 @@ describe('runDevAuthLink', () => {
     const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
 
     await runDevSchoolSeed(application)
-    const result = await runDevAuthLink(application, auth)
+    const authLinkPort = createInProcessAuthLinkSeedPort(application)
+    const result = await runDevAuthLinkWithPort(authLinkPort, auth)
     expect(result.status).toBe('seeded')
 
     const st2 = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === 'st2')
@@ -156,10 +158,11 @@ describe('runDevAuthLink', () => {
     const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
 
     await runDevSchoolSeed(application)
-    const firstRun = await runDevAuthLink(application, auth)
+    const authLinkPort = createInProcessAuthLinkSeedPort(application)
+    const firstRun = await runDevAuthLinkWithPort(authLinkPort, auth)
     expect(firstRun.status).toBe('seeded')
 
-    const secondRun = await runDevAuthLink(application, auth)
+    const secondRun = await runDevAuthLinkWithPort(authLinkPort, auth)
     expect(secondRun.status).toBe('skipped')
     if (secondRun.status === 'skipped') {
       expect(secondRun.reason).toBe('already-linked')
@@ -185,9 +188,10 @@ describe('runDevAuthLink', () => {
     const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
 
     await runDevSchoolSeed(application)
-    await runDevAuthLink(application, auth)
+    const authLinkPort = createInProcessAuthLinkSeedPort(application)
+    await runDevAuthLinkWithPort(authLinkPort, auth)
 
-    const secondRun = await runDevAuthLink(application, auth)
+    const secondRun = await runDevAuthLinkWithPort(authLinkPort, auth)
     expect(secondRun.status).toBe('skipped')
     if (secondRun.status === 'skipped') {
       expect(secondRun.reason).toBe('already-linked')

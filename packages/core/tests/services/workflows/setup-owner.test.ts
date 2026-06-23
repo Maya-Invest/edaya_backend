@@ -6,7 +6,7 @@ describe('Setup owner workflow', () => {
   test('registers a school with ownerSubjectId before staff exists', async () => {
     const { app, repositories } = createTestApp(createPlatformRegisterTestActor('school'))
 
-    await app.registerSchool({
+    await app.setupWorkflow.registerSchool({
       id: 'school',
       name: 'Edaya',
       timeZone: 'UTC',
@@ -19,13 +19,13 @@ describe('Setup owner workflow', () => {
   test('does not auto-assign owner when registering staff after school creation', async () => {
     const { app, repositories } = createTestApp(createPlatformRegisterTestActor('school'))
 
-    await app.registerSchool({
+    await app.setupWorkflow.registerSchool({
       id: 'school',
       name: 'Edaya',
       timeZone: 'UTC',
     })
 
-    await app.registerStaffMember({
+    await app.setupWorkflow.registerStaffMember({
       id: 'owner',
       schoolId: 'school',
       firstName: 'Ada',

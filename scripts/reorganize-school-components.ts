@@ -122,11 +122,17 @@ function rewriteSchoolFile(path: string, folder: string) {
 }
 
 for (const folder of readdirSync(root, { withFileTypes: true })) {
-  if (!folder.isDirectory()) continue
+  if (!folder.isDirectory()) {
+    continue
+  }
   const folderPath = join(root, folder.name)
   for (const entry of readdirSync(folderPath, { withFileTypes: true })) {
-    if (!entry.isFile()) continue
-    if (!/\.(svelte|ts)$/.test(entry.name)) continue
+    if (!entry.isFile()) {
+      continue
+    }
+    if (!/\.(?:svelte|ts)$/.test(entry.name)) {
+      continue
+    }
     rewriteSchoolFile(join(folderPath, entry.name), folder.name)
   }
 }
@@ -138,11 +144,15 @@ function walk(dir: string): string[] {
   for (const entry of entries) {
     const full = join(dir, entry.name)
     if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === '.svelte-kit') continue
+      if (entry.name === 'node_modules' || entry.name === '.svelte-kit') {
+        continue
+      }
       files.push(...walk(full))
       continue
     }
-    if (/\.(svelte|ts)$/.test(entry.name)) files.push(full)
+    if (/\.(?:svelte|ts)$/.test(entry.name)) {
+      files.push(full)
+    }
   }
   return files
 }
@@ -154,7 +164,6 @@ for (const file of walk(webappRoot)) {
   for (const [name, folder] of Object.entries(moves)) {
     const base = name.replace(/\.(svelte|ts)$/, '')
     const ext = name.endsWith('.svelte') ? '.svelte' : ''
-    const tsExt = name.endsWith('.ts') ? '' : ''
 
     const svelteFrom = `$lib/components/school/${base}${ext || '.svelte'}`
     const svelteTo = `$lib/components/school/${folder}/${base}${ext || '.svelte'}`
@@ -173,7 +182,9 @@ for (const file of walk(webappRoot)) {
     }
   }
 
-  if (changed) writeFileSync(file, content)
+  if (changed) {
+    writeFileSync(file, content)
+  }
 }
 
 console.log('Reorganized school components into domain folders.')

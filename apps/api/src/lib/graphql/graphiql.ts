@@ -22,7 +22,7 @@ export function isGraphiQLEnabled(nodeEnv = process.env.NODE_ENV): boolean {
 }
 
 export function resolveGraphiQLDevApiKey(): string | undefined {
-  return process.env.GRAPHQL_DEV_API_KEY ?? process.env.SERVICE_ACCOUNT_API_KEY;
+  return process.env.GRAPHQL_DEV_API_KEY;
 }
 
 export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {

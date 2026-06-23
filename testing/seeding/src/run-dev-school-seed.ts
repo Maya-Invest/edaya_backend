@@ -1,99 +1,73 @@
-import type {
-  ExtracurricularActivityCategory,
-
-  FeeCategory,
-  SubjectCategory,
-
-  SubjectColor,
-} from '@edaya/core'
+import type { ActivitiesSeedPort } from './activities/port'
+import type { AssessmentsSeedPort } from './assessments/port'
+import type { AttachmentsSeedPort } from './attachments/port'
+import type { AttendanceSeedPort } from './attendance/port'
+import type { AuthLinkSeedPort } from './auth-link/port'
+import type { CommunicationsSeedPort } from './communications/port'
+import type { CurriculumSeedPort } from './curriculum/port'
+import type { DisciplineSeedPort } from './discipline/port'
+import type { FinanceSeedPort } from './finance/port'
+import type { LearningContentSeedPort } from './learning-content/port'
+import type { PopulationSeedPort } from './population/port'
+import type { ReportCardsSeedPort } from './report-cards/port'
+import type { SchedulingSeedPort } from './scheduling/port'
+import type { SchoolLifeSeedPort } from './school-life/port'
+import type { SchoolStructureSeedPort } from './school-structure/port'
+import type { StudentSupportSeedPort } from './student-support/port'
 import type { AuthProvisioner, SeedApplication } from './types'
-import {
-  AcademicPeriodType,
-  ActivityEnrollment,
-  ActivityEnrollmentStatus,
-  AssessmentKind,
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  ClassLogbookEntry,
-  ClassSubjectMatterStatus,
-  createBootstrapStaffActorMetadata,
-  DayOfWeek,
-  ExtracurricularActivity,
-  GradeLevel,
-  HomeworkAssignment,
-  HomeworkAssignmentType,
-  HomeworkSubmission,
-  HomeworkSubmissionStatus,
-  IncidentInvolvementRole,
-  IncidentKind,
-  PaymentMethod,
-  PeriodDefinition,
-  Resource,
-  ResourceKind,
-  SessionKind,
-  StudentNoteCategory,
-  Subject,
-  SubjectMatter,
-} from '@edaya/core'
 import {
   countSeedAssessmentResults,
   countSeedAssessments,
   countSeedPlanningSlots,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
-  parseSeedDate,
-  parseSeedDateTime,
-  planningSessionDate,
-  resolveSeedReferenceDate,
   SEED_ACADEMIC_PERIODS,
   SEED_ACADEMIC_YEAR_ID,
-  SEED_ACTIVITY_ENROLLMENTS,
-  SEED_ALL_CALENDAR_EVENTS,
-  SEED_ASSESSMENT_RESULT_SCORES,
-  SEED_ASSESSMENTS,
   SEED_CLASS_SUBJECT_MATTERS,
   SEED_CLASS_SUBJECTS,
   SEED_CLASSES,
-  SEED_CURRENCY,
-  SEED_EXTRACURRICULAR_ACTIVITIES,
-  SEED_FEES,
   SEED_GRADE_LEVELS,
   SEED_GUARDIANS,
-  SEED_HOMEWORK_ASSIGNMENTS,
-  SEED_HOMEWORK_SUBMISSIONS,
-  SEED_INCIDENTS,
-  SEED_PAYMENTS,
-  SEED_PEDAGOGICAL_NOTES,
   SEED_PERIOD_DEFINITIONS,
-  SEED_PLANNING_SLOTS,
   SEED_RESOURCES,
   SEED_SCHOOL_ID,
   SEED_SCHOOL_OWNER_STAFF_ID,
-  SEED_SCHOOL_PROFILE,
-  SEED_SESSION_PROGRESS,
   SEED_STAFF,
-  SEED_STUDENT_FEES,
-  SEED_STUDENT_HEALTH_PROFILES,
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
-  SEED_SUBJECT_MATTERS,
-  SEED_TEACHING_LOG_ENTRIES,
-  seedPeriodIdForDate,
-  splitDisplayName,
 } from '@edaya/dev-fixtures'
+import { createInProcessActivitiesSeedPort } from './activities/in-process'
+import { seedDevActivities } from './activities/workflow'
+import { createInProcessAssessmentsSeedPort } from './assessments/in-process'
+import { seedDevAssessments } from './assessments/workflow'
+import { createInProcessAttachmentsSeedPort } from './attachments/in-process'
+import { seedDevAttachments } from './attachments/workflow'
+import { createInProcessAttendanceSeedPort } from './attendance/in-process'
+import { seedDevAttendance } from './attendance/workflow'
+import { createInProcessAuthLinkSeedPort } from './auth-link/in-process'
+import { createInProcessCommunicationsSeedPort } from './communications/in-process'
+import { seedDevCommunications } from './communications/workflow'
+import { createInProcessCurriculumSeedPort } from './curriculum/in-process'
+import { seedDevCurriculum } from './curriculum/workflow'
 import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
-import { seedAttachments } from './seed-attachments'
-import { seedAttendanceRecords } from './seed-attendance'
-import { seedCommunications } from './seed-communications'
-import { seedDiscipline } from './seed-discipline'
-import { seedReportCards } from './seed-report-cards'
-
-const SEED_NOTE_CATEGORY_BY_LABEL: Record<string, StudentNoteCategory> = {
-  Comportement: StudentNoteCategory.Behavior,
-  Travail: StudentNoteCategory.Work,
-  Progression: StudentNoteCategory.Progress,
-  Encouragement: StudentNoteCategory.Encouragement,
-}
+import { createInProcessDisciplineSeedPort } from './discipline/in-process'
+import { seedDevDiscipline } from './discipline/workflow'
+import { createInProcessFinanceSeedPort } from './finance/in-process'
+import { seedDevFinance } from './finance/workflow'
+import { createInProcessLearningContentSeedPort } from './learning-content/in-process'
+import { seedDevLearningContent } from './learning-content/workflow'
+import { createInProcessPopulationSeedPort } from './population/in-process'
+import { seedDevPopulation } from './population/workflow'
+import { createInProcessReportCardsSeedPort } from './report-cards/in-process'
+import { seedDevReportCards } from './report-cards/workflow'
+import { createInProcessSchedulingSeedPort } from './scheduling/in-process'
+import { seedDevScheduling } from './scheduling/workflow'
+import { createInProcessSchoolLifeSeedPort } from './school-life/in-process'
+import { seedDevSchoolLife } from './school-life/workflow'
+import { createInProcessSchoolStructureSeedPort } from './school-structure/in-process'
+import { inspectDevSchoolStructure, seedDevSchoolStructure } from './school-structure/workflow'
+import { createInProcessStudentSupportSeedPort } from './student-support/in-process'
+import { seedDevStudentSupport } from './student-support/workflow'
 
 export type DevSchoolSeedResult
   = | { status: 'skipped', reason: 'already-seeded', schoolCount: number }
@@ -141,49 +115,89 @@ export type DevSchoolSeedResult
       attachments: number
     }
 
-function joinHealthList(values: readonly string[]): string | undefined {
-  return values.length > 0 ? values.join(', ') : undefined
-}
-
 export interface RunDevSchoolSeedOptions {
   ownerSubjectId?: string
   auth?: AuthProvisioner
+  authLinkPort?: AuthLinkSeedPort
+  schoolStructurePort?: SchoolStructureSeedPort
+  populationPort?: PopulationSeedPort
+  curriculumPort?: CurriculumSeedPort
+  schedulingPort?: SchedulingSeedPort
+  attendancePort?: AttendanceSeedPort
+  assessmentsPort?: AssessmentsSeedPort
+  reportCardsPort?: ReportCardsSeedPort
+  financePort?: FinanceSeedPort
+  learningContentPort?: LearningContentSeedPort
+  activitiesPort?: ActivitiesSeedPort
+  schoolLifePort?: SchoolLifeSeedPort
+  studentSupportPort?: StudentSupportSeedPort
+  disciplinePort?: DisciplineSeedPort
+  communicationsPort?: CommunicationsSeedPort
+  attachmentsPort?: AttachmentsSeedPort
+}
+
+function requireSeedApplication(
+  application: SeedApplication | undefined,
+  portName: string,
+): SeedApplication {
+  if (!application) {
+    throw new Error(`${portName} must be provided when no in-process seed application is available`)
+  }
+  return application
 }
 
 export async function runDevSchoolSeed(
-  application: SeedApplication,
+  application: SeedApplication | undefined,
   options?: RunDevSchoolSeedOptions,
 ): Promise<DevSchoolSeedResult> {
-  const existingSchools = await application.repositories.schools.list()
-  const existingDemoSchool = existingSchools.find(school => school.id === SEED_SCHOOL_ID)
+  const schoolStructurePort = options?.schoolStructurePort
+    ?? createInProcessSchoolStructureSeedPort(requireSeedApplication(application, 'schoolStructurePort'))
+  const populationPort = options?.populationPort
+    ?? createInProcessPopulationSeedPort(requireSeedApplication(application, 'populationPort'))
+  const curriculumPort = options?.curriculumPort
+    ?? createInProcessCurriculumSeedPort(requireSeedApplication(application, 'curriculumPort'))
+  const schedulingPort = options?.schedulingPort
+    ?? createInProcessSchedulingSeedPort(requireSeedApplication(application, 'schedulingPort'))
+  const attendancePort = options?.attendancePort
+    ?? createInProcessAttendanceSeedPort(requireSeedApplication(application, 'attendancePort'))
+  const assessmentsPort = options?.assessmentsPort
+    ?? createInProcessAssessmentsSeedPort(requireSeedApplication(application, 'assessmentsPort'))
+  const reportCardsPort = options?.reportCardsPort
+    ?? createInProcessReportCardsSeedPort(requireSeedApplication(application, 'reportCardsPort'))
+  const financePort = options?.financePort
+    ?? createInProcessFinanceSeedPort(requireSeedApplication(application, 'financePort'))
+  const learningContentPort = options?.learningContentPort
+    ?? createInProcessLearningContentSeedPort(requireSeedApplication(application, 'learningContentPort'))
+  const activitiesPort = options?.activitiesPort
+    ?? createInProcessActivitiesSeedPort(requireSeedApplication(application, 'activitiesPort'))
+  const schoolLifePort = options?.schoolLifePort
+    ?? createInProcessSchoolLifeSeedPort(requireSeedApplication(application, 'schoolLifePort'))
+  const studentSupportPort = options?.studentSupportPort
+    ?? createInProcessStudentSupportSeedPort(requireSeedApplication(application, 'studentSupportPort'))
+  const disciplinePort = options?.disciplinePort
+    ?? createInProcessDisciplineSeedPort(requireSeedApplication(application, 'disciplinePort'))
+  const communicationsPort = options?.communicationsPort
+    ?? createInProcessCommunicationsSeedPort(requireSeedApplication(application, 'communicationsPort'))
+  const attachmentsPort = options?.attachmentsPort
+    ?? createInProcessAttachmentsSeedPort(requireSeedApplication(application, 'attachmentsPort'))
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort)
 
-  if (existingDemoSchool) {
-    const existingStudents = await application.repositories.students.list()
-    if (existingStudents.length > 0) {
-      if (options?.auth) {
-        await syncDevStaffAuthAndOwner(application, options.auth, options.ownerSubjectId)
-      }
-      return {
-        status: 'skipped',
-        reason: 'already-seeded',
-        schoolCount: existingSchools.length,
-      }
+  if (structureInspection.status === 'skipped') {
+    if (options?.auth) {
+      await syncDevStaffAuthAndOwner(
+        options.authLinkPort ?? createInProcessAuthLinkSeedPort(
+          requireSeedApplication(application, 'authLinkPort'),
+        ),
+        options.auth,
+        options.ownerSubjectId,
+      )
     }
-  }
-  else if (existingSchools.length > 0) {
     return {
       status: 'skipped',
       reason: 'already-seeded',
-      schoolCount: existingSchools.length,
+      schoolCount: structureInspection.schoolCount,
     }
   }
-
-  const actor = createBootstrapStaffActorMetadata({
-    schoolId: SEED_SCHOOL_ID,
-    requestId: 'dev-seed',
-    staffMemberId: 'dev-seed',
-  })
-  const service = application.forActor(actor)
 
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
@@ -195,511 +209,37 @@ export async function runDevSchoolSeed(
     }
   }
 
-  if (!existingDemoSchool) {
-    await service.registerSchool({
-      ...SEED_SCHOOL_PROFILE,
-      ...(ownerSubjectId ? { ownerSubjectId } : {}),
-    })
-  }
-
-  for (const gradeLevel of SEED_GRADE_LEVELS) {
-    await service.baseService.gradeLevels.save(new GradeLevel({
-      id: gradeLevel.id,
-      schoolId: SEED_SCHOOL_ID,
-      name: gradeLevel.name,
-      order: gradeLevel.order,
-      cycle: gradeLevel.cycle,
-    }), { moduleChecked: true })
-  }
-
-  await service.createAcademicYear({
-    id: SEED_ACADEMIC_YEAR_ID,
-    schoolId: SEED_SCHOOL_ID,
-    name: '2025 — 2026',
-    startDate: parseSeedDate('2025-09-01'),
-    endDate: parseSeedDate('2026-07-03'),
+  await seedDevSchoolStructure(schoolStructurePort, {
+    demoSchoolExists: structureInspection.demoSchoolExists,
+    ownerSubjectId,
   })
 
-  for (const period of SEED_ACADEMIC_PERIODS) {
-    const created = await service.createAcademicPeriod({
-      id: period.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
-      name: period.name,
-      type: AcademicPeriodType.Trimester,
-      startDate: parseSeedDate(period.startDate),
-      endDate: parseSeedDate(period.endDate),
-    })
-    await service.publishAcademicPeriod({ academicPeriodId: created.id })
-  }
+  await seedDevPopulation(populationPort)
+  await seedDevCurriculum(curriculumPort)
+  await seedDevScheduling(schedulingPort)
+  await seedDevAssessments(assessmentsPort)
+  const learningContentCounts = await seedDevLearningContent(learningContentPort)
+  const activitiesCounts = await seedDevActivities(activitiesPort)
+  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort)
 
-  for (const slot of SEED_PERIOD_DEFINITIONS) {
-    await service.baseService.periodDefinitions.save(new PeriodDefinition({
-      id: slot.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
-      label: slot.label,
-      order: slot.order,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      isBreak: slot.isBreak,
-    }), { moduleChecked: true })
-  }
+  const disciplineCounts = await seedDevDiscipline(disciplinePort)
 
-  const director = SEED_STAFF[0]
-  const directorName = splitDisplayName(director.name)
-  const existingDirector = await application.repositories.staffMembers.findById(director.id)
-  if (!existingDirector) {
-    await service.registerStaffMember({
-      id: director.id,
-      schoolId: SEED_SCHOOL_ID,
-      firstName: directorName.firstName,
-      lastName: directorName.lastName,
-      email: director.email,
-    })
-  }
+  const attendanceRecordCount = await seedDevAttendance(attendancePort)
+  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort)
 
-  for (const member of SEED_STAFF.slice(1)) {
-    const { firstName, lastName } = splitDisplayName(member.name)
-    await service.registerStaffMember({
-      id: member.id,
-      schoolId: SEED_SCHOOL_ID,
-      firstName,
-      lastName,
-      email: member.email,
-    })
-  }
+  const reportCardCounts = await seedDevReportCards(reportCardsPort)
+  const financeCounts = await seedDevFinance(financePort)
 
-  for (const classGroup of SEED_CLASSES) {
-    await service.createClassGroup({
-      id: classGroup.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
-      gradeLevelId: classGroup.gradeLevelId,
-      name: classGroup.name,
-      capacity: classGroup.capacity,
-      homeroomStaffId: 'homeroomStaffId' in classGroup ? classGroup.homeroomStaffId : undefined,
-    })
-  }
-
-  for (const student of SEED_STUDENTS) {
-    const { firstName, lastName } = splitDisplayName(student.name)
-    await service.registerStudent({
-      id: student.id,
-      schoolId: SEED_SCHOOL_ID,
-      firstName,
-      lastName,
-      birthDate: parseSeedDate(student.birthDate),
-    })
-    await service.enrollStudent({
-      id: `enr-${student.id}`,
-      studentId: student.id,
-      classGroupId: student.classId,
-    })
-  }
-
-  for (const guardian of SEED_GUARDIANS) {
-    const { firstName, lastName } = splitDisplayName(guardian.name)
-    await service.registerGuardian({
-      id: guardian.id,
-      schoolId: SEED_SCHOOL_ID,
-      firstName,
-      lastName,
-      email: guardian.email,
-      phone: guardian.phone,
-    })
-
-    for (const studentId of guardian.studentIds) {
-      await service.linkGuardianToStudent({
-        id: `link-${guardian.id}-${studentId}`,
-        guardianId: guardian.id,
-        studentId,
-        relationship: guardian.relationship,
-        isPrimary: true,
-        legalGuardian: true,
-      })
-    }
-  }
-
-  for (const subject of SEED_SUBJECT_CATALOG) {
-    await service.baseService.subjects.save(new Subject({
-      id: subject.id,
-      schoolId: SEED_SCHOOL_ID,
-      name: subject.name,
-      code: subject.code,
-      defaultCoefficient: subject.defaultCoefficient,
-      category: subject.category as SubjectCategory,
-      color: subject.color as SubjectColor,
-    }), { moduleChecked: true })
-  }
-
-  for (const matter of SEED_SUBJECT_MATTERS) {
-    await service.baseService.subjectMatters.save(new SubjectMatter({
-      id: matter.id,
-      subjectId: matter.subjectId,
-      name: matter.name,
-      description: matter.description,
-      sequenceOrder: matter.sequenceOrder,
-      estimatedHours: matter.estimatedHours,
-    }), { moduleChecked: true })
-  }
-
-  for (const offering of SEED_CLASS_SUBJECTS) {
-    await service.offerSubjectToClass({
-      id: offering.id,
-      classGroupId: offering.classGroupId,
-      subjectId: offering.subjectId,
-      coefficient: offering.coefficient,
-    })
-  }
-
-  for (const link of SEED_CLASS_SUBJECT_MATTERS) {
-    await service.assignMatterToClassSubject({
-      id: link.id,
-      classSubjectId: link.classSubjectId,
-      subjectMatterId: link.subjectMatterId,
-      status: ClassSubjectMatterStatus.NotStarted,
-      completedPercentage: 0,
-    })
-  }
-
-  const planningDayOfWeek = {
-    Mon: DayOfWeek.Monday,
-    Tue: DayOfWeek.Tuesday,
-    Wed: DayOfWeek.Wednesday,
-    Thu: DayOfWeek.Thursday,
-    Fri: DayOfWeek.Friday,
-  } as const
-
-  const resourceKindBySeed = {
-    location: ResourceKind.Location,
-    equipment: ResourceKind.Equipment,
-    vehicle: ResourceKind.Vehicle,
-  } as const
-
-  for (const resource of SEED_RESOURCES) {
-    await service.baseService.resources.save(new Resource({
-      id: resource.id,
-      schoolId: SEED_SCHOOL_ID,
-      name: resource.name,
-      kind: resourceKindBySeed[resource.kind],
-      capacity: 'capacity' in resource ? resource.capacity : undefined,
-      description: resource.description,
-    }), { moduleChecked: true })
-  }
-
-  for (const slot of SEED_PLANNING_SLOTS) {
-    await service.createSchedule({
-      id: slot.scheduleId,
-      classGroupId: slot.classGroupId,
-      classSubjectId: slot.classSubjectId,
-      title: slot.title,
-      isRecurring: true,
-      dayOfWeek: planningDayOfWeek[slot.day],
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-    })
-  }
-
-  for (const slot of SEED_PLANNING_SLOTS) {
-    const sessionDate = planningSessionDate(slot.day)
-    const session = await service.createSession({
-      id: slot.sessionId,
-      classGroupId: slot.classGroupId,
-      classSubjectId: slot.classSubjectId,
-      scheduleId: slot.scheduleId,
-      title: slot.title,
-      kind: SessionKind.Course,
-      startsAt: parseSeedDateTime(sessionDate, slot.startTime),
-      endsAt: parseSeedDateTime(sessionDate, slot.endTime),
-    })
-
-    await service.assignStaffToSession({
-      id: `sa-${session.id}-${slot.teacherId}`,
-      staffId: slot.teacherId,
-      responsibility: 'Teacher',
-      sessionId: session.id,
-    })
-
-    if ('resourceId' in slot && slot.resourceId) {
-      await service.assignResourceToSession({
-        id: `ra-${session.id}-${slot.resourceId}`,
-        resourceId: slot.resourceId,
-        sessionId: session.id,
-      })
-    }
-  }
-
-  await service.recordSessionProgress({
-    id: SEED_SESSION_PROGRESS.id,
-    classSubjectMatterId: SEED_SESSION_PROGRESS.classSubjectMatterId,
-    sessionId: SEED_SESSION_PROGRESS.sessionId,
-    completedPercentage: SEED_SESSION_PROGRESS.completedPercentage,
-    notes: SEED_SESSION_PROGRESS.notes,
-    recordedAt: parseSeedDateTime(planningSessionDate('Mon'), '09:00'),
-  })
-
-  const assessmentKindBySeed = {
-    quiz: AssessmentKind.Quiz,
-    homework: AssessmentKind.Homework,
-    project: AssessmentKind.Project,
-    other: AssessmentKind.Other,
-  } as const
-
-  for (const assessment of SEED_ASSESSMENTS) {
-    await service.createAssessment({
-      id: assessment.id,
-      classGroupId: assessment.classGroupId,
-      classSubjectId: assessment.classSubjectId,
-      periodId: seedPeriodIdForDate(assessment.date),
-      title: assessment.title,
-      kind: assessmentKindBySeed[assessment.kind],
-      maxScore: assessment.maxScore,
-      coefficient: assessment.coefficient,
-      date: assessment.date,
-      dueAt: assessment.date,
-    })
-
-    const scores = SEED_ASSESSMENT_RESULT_SCORES[assessment.id] ?? {}
-    for (const [studentId, score] of Object.entries(scores)) {
-      await service.recordAssessmentResult({
-        id: `ar-${assessment.id}-${studentId}`,
-        assessmentId: assessment.id,
-        studentId,
-        score,
-      })
-    }
-  }
-
-  const homeworkTypeBySeed = {
-    homework: HomeworkAssignmentType.Homework,
-    project: HomeworkAssignmentType.Project,
-    reading: HomeworkAssignmentType.Reading,
-    lab: HomeworkAssignmentType.Lab,
-  } as const
-
-  const submissionStatusBySeed = {
-    submitted: HomeworkSubmissionStatus.Submitted,
-    late: HomeworkSubmissionStatus.Late,
-    missing: HomeworkSubmissionStatus.Missing,
-  } as const
-
-  for (const assignment of SEED_HOMEWORK_ASSIGNMENTS) {
-    await service.baseService.homeworkAssignments.save(new HomeworkAssignment({
-      id: assignment.id,
-      schoolId: assignment.schoolId,
-      classGroupId: assignment.classGroupId,
-      classSubjectId: assignment.classSubjectId,
-      title: assignment.title,
-      description: assignment.description,
-      dueDate: parseSeedDate(assignment.dueDate),
-      assignedDate: parseSeedDate(assignment.assignedDate),
-      type: homeworkTypeBySeed[assignment.type],
-      attachments: assignment.attachments.map(attachment => ({ ...attachment })),
-    }), { moduleChecked: true })
-  }
-
-  for (const submission of SEED_HOMEWORK_SUBMISSIONS) {
-    await service.baseService.homeworkSubmissions.save(new HomeworkSubmission({
-      id: submission.id,
-      homeworkAssignmentId: submission.homeworkAssignmentId,
-      studentId: submission.studentId,
-      status: submissionStatusBySeed[submission.status],
-      submittedAt: submission.submittedAt ? parseSeedDate(submission.submittedAt) : undefined,
-    }), { moduleChecked: true })
-  }
-
-  const enrollmentStatusBySeed = {
-    approved: ActivityEnrollmentStatus.Approved,
-    pending: ActivityEnrollmentStatus.Pending,
-    denied: ActivityEnrollmentStatus.Denied,
-  } as const
-
-  for (const activity of SEED_EXTRACURRICULAR_ACTIVITIES) {
-    await service.baseService.activities.save(new ExtracurricularActivity({
-      id: activity.id,
-      schoolId: activity.schoolId,
-      name: activity.name,
-      category: activity.category as ExtracurricularActivityCategory,
-      coach: activity.coach,
-      schedule: activity.schedule,
-      participants: activity.participants,
-      capacity: activity.capacity,
-      description: activity.description,
-      startDate: parseSeedDate(activity.startDate),
-      endDate: parseSeedDate(activity.endDate),
-    }), { moduleChecked: true })
-  }
-
-  for (const enrollment of SEED_ACTIVITY_ENROLLMENTS) {
-    await service.baseService.activityEnrollments.save(new ActivityEnrollment({
-      id: enrollment.id,
-      activityId: enrollment.activityId,
-      studentId: enrollment.studentId,
-      status: enrollmentStatusBySeed[enrollment.status],
-    }), { moduleChecked: true })
-  }
-
-  for (const entry of SEED_TEACHING_LOG_ENTRIES) {
-    await service.baseService.classLogbookEntries.save(new ClassLogbookEntry({
-      id: entry.id,
-      schoolId: entry.schoolId,
-      classGroupId: entry.classGroupId,
-      classSubjectId: entry.classSubjectId,
-      date: parseSeedDate(entry.date),
-      chapter: entry.chapter,
-      content: entry.content,
-      objectives: [...entry.objectives],
-      homework: entry.homework,
-      attachments: entry.attachments ? [...entry.attachments] : [],
-      progress: entry.progress,
-    }), { moduleChecked: true })
-  }
-
-  const calendarKindByMock = {
-    holiday: CalendarEventKind.Holiday,
-    vacation: CalendarEventKind.Break,
-    closure: CalendarEventKind.Other,
-    ceremony: CalendarEventKind.Event,
-  } as const
-
-  let calendarEventCount = 0
-
-  for (const event of SEED_ALL_CALENDAR_EVENTS) {
-    const isNonSchoolDay = event.mockType === 'holiday'
-      || event.mockType === 'vacation'
-      || event.mockType === 'closure'
-
-    if (event.scope === 'all') {
-      await service.createCalendarEvent({
-        id: event.id,
-        schoolId: SEED_SCHOOL_ID,
-        academicYearId: SEED_ACADEMIC_YEAR_ID,
-        title: event.title,
-        description: event.description,
-        startDate: parseSeedDate(event.startDate),
-        endDate: parseSeedDate(event.endDate),
-        kind: calendarKindByMock[event.mockType],
-        isNonSchoolDay,
-        scopeKind: CalendarEventScopeKind.School,
-      })
-      calendarEventCount += 1
-      continue
-    }
-
-    for (const classGroupId of event.scope) {
-      await service.createCalendarEvent({
-        id: `${event.id}-${classGroupId}`,
-        schoolId: SEED_SCHOOL_ID,
-        academicYearId: SEED_ACADEMIC_YEAR_ID,
-        title: event.title,
-        description: event.description,
-        startDate: parseSeedDate(event.startDate),
-        endDate: parseSeedDate(event.endDate),
-        kind: calendarKindByMock[event.mockType],
-        isNonSchoolDay,
-        scopeKind: CalendarEventScopeKind.ClassGroup,
-        scopeId: classGroupId,
-      })
-      calendarEventCount += 1
-    }
-  }
-
-  for (const incident of SEED_INCIDENTS) {
-    await service.recordIncident({
-      id: incident.id,
-      schoolId: SEED_SCHOOL_ID,
-      classGroupId: incident.classGroupId,
-      title: incident.title,
-      description: incident.description,
-      date: parseSeedDate(incident.date),
-      kind: incident.kind === 'major_infraction'
-        ? IncidentKind.MajorInfraction
-        : IncidentKind.MinorInfraction,
-      reporterId: 'st7',
-    })
-    await service.addStudentInvolvement({
-      id: `inv-${incident.id}-${incident.studentId}`,
-      incidentId: incident.id,
-      studentId: incident.studentId,
-      role: IncidentInvolvementRole.Subject,
-    })
-  }
-
-  const disciplineCounts = await seedDiscipline(service)
-
-  const attendanceRecordCount = await seedAttendanceRecords(application, service)
-
-  for (const profile of SEED_STUDENT_HEALTH_PROFILES) {
-    await service.upsertStudentHealthProfile({
-      id: profile.id,
-      studentId: profile.studentId,
-      bloodType: profile.bloodType,
-      allergies: joinHealthList(profile.allergies) ?? 'Aucune',
-      medicalConditions: joinHealthList(profile.chronicConditions) ?? 'Aucune',
-      medications: joinHealthList(profile.medications),
-      clinicalNotes: profile.notes,
-      lastVisit: parseSeedDate(profile.lastVisit),
-    })
-  }
-
-  for (const note of SEED_PEDAGOGICAL_NOTES) {
-    await service.createStudentNote({
-      id: note.id,
-      studentId: note.studentId,
-      authorStaffId: note.authorId,
-      category: SEED_NOTE_CATEGORY_BY_LABEL[note.category] ?? StudentNoteCategory.Work,
-      body: note.content,
-      createdAt: parseSeedDate(note.date),
-    })
-  }
-
-  const financeReferenceDate = parseSeedDate(resolveSeedReferenceDate())
-  const reportCardCounts = await seedReportCards(application, service)
-
-  for (const fee of SEED_FEES) {
-    await service.createFee({
-      id: fee.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
-      name: fee.name,
-      category: fee.category as FeeCategory,
-      defaultAmount: fee.defaultAmount,
-      currency: SEED_CURRENCY,
-      installments: fee.installments.map(installment => ({
-        label: installment.label,
-        percentage: installment.percentage,
-        dueDate: installment.dueDate ? parseSeedDate(installment.dueDate) : undefined,
-      })),
-    })
-  }
-
-  for (const studentFee of SEED_STUDENT_FEES) {
-    await service.assignFeeToStudent({
-      id: studentFee.id,
-      studentId: studentFee.studentId,
-      feeId: studentFee.feeId,
-      expectedAmount: studentFee.total,
-      dueDate: parseSeedDate(studentFee.dueDate),
-      referenceDate: financeReferenceDate,
-    })
-  }
-
-  for (const payment of SEED_PAYMENTS) {
-    await service.recordPayment({
-      id: payment.id,
-      studentFeeId: payment.studentFeeId,
-      amount: payment.amount,
-      paymentDate: parseSeedDate(payment.paymentDate),
-      method: PaymentMethod.BankTransfer,
-      referenceDate: financeReferenceDate,
-    })
-  }
-
-  const communicationsCounts = await seedCommunications(service)
-  const attachmentCounts = await seedAttachments(service)
+  const communicationsCounts = await seedDevCommunications(communicationsPort)
+  const attachmentCounts = await seedDevAttachments(attachmentsPort)
   if (options?.auth) {
-    await syncDevStaffAuthAndOwner(application, options.auth, ownerSubjectId)
+    await syncDevStaffAuthAndOwner(
+      options.authLinkPort ?? createInProcessAuthLinkSeedPort(
+        requireSeedApplication(application, 'authLinkPort'),
+      ),
+      options.auth,
+      ownerSubjectId,
+    )
   }
 
   return {
@@ -715,25 +255,25 @@ export async function runDevSchoolSeed(
     subjects: SEED_SUBJECT_CATALOG.length,
     classSubjects: SEED_CLASS_SUBJECTS.length,
     periodDefinitions: SEED_PERIOD_DEFINITIONS.length,
-    fees: SEED_FEES.length,
-    studentFees: SEED_STUDENT_FEES.length,
-    payments: SEED_PAYMENTS.length,
+    fees: financeCounts.fees,
+    studentFees: financeCounts.studentFees,
+    payments: financeCounts.payments,
     classSubjectMatters: SEED_CLASS_SUBJECT_MATTERS.length,
     resources: SEED_RESOURCES.length,
     schedules: countSeedPlanningSlots(),
     sessions: countSeedPlanningSlots(),
     assessments: countSeedAssessments(),
     assessmentResults: countSeedAssessmentResults(),
-    homeworkAssignments: SEED_HOMEWORK_ASSIGNMENTS.length,
-    homeworkSubmissions: SEED_HOMEWORK_SUBMISSIONS.length,
-    activities: SEED_EXTRACURRICULAR_ACTIVITIES.length,
-    activityEnrollments: SEED_ACTIVITY_ENROLLMENTS.length,
-    classLogbookEntries: SEED_TEACHING_LOG_ENTRIES.length,
-    calendarEvents: calendarEventCount,
-    incidents: SEED_INCIDENTS.length,
+    homeworkAssignments: learningContentCounts.homeworkAssignments,
+    homeworkSubmissions: learningContentCounts.homeworkSubmissions,
+    activities: activitiesCounts.activities,
+    activityEnrollments: activitiesCounts.activityEnrollments,
+    classLogbookEntries: learningContentCounts.classLogbookEntries,
+    calendarEvents: schoolLifeCounts.calendarEvents,
+    incidents: schoolLifeCounts.incidents,
     attendanceRecords: attendanceRecordCount,
-    studentHealthProfiles: SEED_STUDENT_HEALTH_PROFILES.length,
-    studentNotes: SEED_PEDAGOGICAL_NOTES.length,
+    studentHealthProfiles: studentSupportCounts.studentHealthProfiles,
+    studentNotes: studentSupportCounts.studentNotes,
     gradeScales: reportCardCounts.gradeScales,
     reportCardDefinitions: reportCardCounts.definitions,
     reportCardSections: reportCardCounts.sections,

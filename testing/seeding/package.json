@@ -16,6 +16,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
+    "test": "bun test src --dots",
     "lint": "eslint src scripts",
     "lint:fix": "eslint src scripts --fix",
     "seed:all": "bun scripts/seed-http.ts all",
@@ -23,11 +24,12 @@
     "seed:auth:link": "bun scripts/seed-http.ts auth:link",
     "seed:smoke": "bun scripts/seed-http.ts smoke",
     "seed:validate": "bun scripts/seed-http.ts validate",
-    "seed:init": "bun scripts/seed-init.ts",
+    "seed:init": "bun scripts/seed-http.ts all",
     "seed:remote": "bun scripts/seed-remote.ts",
     "seed:smoke:staging": "bun scripts/seed-smoke-staging.ts"
   },
   "dependencies": {
+    "@edaya/api-client": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/dev-fixtures": "workspace:*",
     "dotenv": "^16.5.0",

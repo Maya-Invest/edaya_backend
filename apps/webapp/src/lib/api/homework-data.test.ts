@@ -1,3 +1,4 @@
+import { subject } from '$lib/test/openapi-fixtures';
 import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapDeadlines } from './homework-data';
@@ -13,7 +14,7 @@ const sources = {
 			description: 'Complete exercises 1 to 12.',
 			dueDate: '2026-05-18',
 			assignedDate: '2026-05-11',
-			type: 'homework',
+			type: 'homework' as const,
 			attachments: [{ name: 'exercises_ch4.pdf', size: '320 KB' }],
 		},
 		{
@@ -25,22 +26,22 @@ const sources = {
 			description: 'Should not appear when filtering 6a.',
 			dueDate: '2026-05-20',
 			assignedDate: '2026-05-12',
-			type: 'homework',
+			type: 'homework' as const,
 			attachments: [],
 		},
 	],
 	homeworkSubmissionsRaw: [
-		{ id: 'hs-d1-s1', homeworkAssignmentId: 'd1', studentId: 's1', status: 'submitted', submittedAt: '2026-05-15' },
-		{ id: 'hs-d1-s3', homeworkAssignmentId: 'd1', studentId: 's3', status: 'missing' },
+		{ id: 'hs-d1-s1', homeworkAssignmentId: 'd1', studentId: 's1', status: 'submitted' as const, submittedAt: '2026-05-15' },
+		{ id: 'hs-d1-s3', homeworkAssignmentId: 'd1', studentId: 's3', status: 'missing' as const },
 	],
 	classSubjectsRaw: [
 		{ id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', completedPercentage: 0 },
 		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 },
+		subject({ id: 'subj-math', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 }),
 	],
-} as const;
+};
 
 describe('mapDeadlines', () => {
 	it('maps homework assignments with subject labels and submissions', () => {
@@ -79,8 +80,8 @@ describe('mapDeadlines', () => {
 	it('sorts deadlines by due date', () => {
 		const deadlines = mapDeadlines(undefined, {
 			homeworkAssignmentsRaw: [
-				{ ...sources.homeworkAssignmentsRaw[1], dueDate: '2026-05-25' },
-				{ ...sources.homeworkAssignmentsRaw[0], dueDate: '2026-05-18' },
+				{ ...sources.homeworkAssignmentsRaw[1], dueDate: '2026-05-25', type: 'homework' as const },
+				{ ...sources.homeworkAssignmentsRaw[0], dueDate: '2026-05-18', type: 'homework' as const },
 			],
 			homeworkSubmissionsRaw: [],
 			classSubjectsRaw: [...sources.classSubjectsRaw],

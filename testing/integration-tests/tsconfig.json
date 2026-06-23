@@ -2,6 +2,7 @@
   "extends": "../../apps/api/tsconfig.json",
   "compilerOptions": {
     "rootDir": "../..",
+    "rewriteRelativeImportExtensions": true,
     "noEmit": true,
     "paths": {
       "@/*": ["../../apps/api/src/*"],

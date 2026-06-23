@@ -261,7 +261,7 @@ describe('entity config edge gates', () => {
       status: 'pending',
     } as any)
 
-    await expect(app.baseService.students.delete(student.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.students.delete(student.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('validates student note staff-only authorship and restricted visibility', async () => {
@@ -275,7 +275,7 @@ describe('entity config edge gates', () => {
 
     const systemContext = createTestApp(actor)
     await systemContext.repositories.studentRepository.save(student)
-    await systemContext.app.baseService.studentNotes.save(new StudentNote({
+    await systemContext.app.baseService.entities.studentNotes.save(new StudentNote({
       id: 'system-note',
       schoolId: 'school',
       studentId: student.id,
@@ -309,7 +309,7 @@ describe('entity config edge gates', () => {
       classGroupId: 'teacher-class',
     } as any)
 
-    await expect(teacherContext.app.baseService.studentNotes.save(new StudentNote({
+    await expect(teacherContext.app.baseService.entities.studentNotes.save(new StudentNote({
       id: 'admin-only-note',
       schoolId: 'school',
       studentId: student.id,
@@ -325,9 +325,9 @@ describe('entity config edge gates', () => {
       authorStaffId: 'teacher',
       body: 'Visible note',
     })
-    await teacherContext.app.baseService.studentNotes.save(teacherNote)
+    await teacherContext.app.baseService.entities.studentNotes.save(teacherNote)
 
-    await expect(teacherContext.app.baseService.studentNotes.save(new StudentNote({
+    await expect(teacherContext.app.baseService.entities.studentNotes.save(new StudentNote({
       id: teacherNote.id,
       schoolId: 'school',
       studentId: student.id,
@@ -359,16 +359,16 @@ describe('entity config edge gates', () => {
       studentId: 'student-health',
       allergies: 'Peanuts',
     })
-    await app.baseService.studentHealthProfiles.save(profile)
+    await app.baseService.entities.studentHealthProfiles.save(profile)
 
-    await expect(app.baseService.studentHealthProfiles.save(new StudentHealthProfile({
+    await expect(app.baseService.entities.studentHealthProfiles.save(new StudentHealthProfile({
       id: 'health-profile-duplicate',
       schoolId: 'school',
       studentId: 'student-health',
       medicalConditions: 'Asthma',
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    await expect(app.baseService.studentHealthProfiles.save(new StudentHealthProfile({
+    await expect(app.baseService.entities.studentHealthProfiles.save(new StudentHealthProfile({
       id: profile.id,
       schoolId: 'school',
       studentId: 'student-health-other',
@@ -394,7 +394,7 @@ describe('entity config edge gates', () => {
       enrollmentDate: new Date('2026-01-01'),
     }))
 
-    await expect(standardCoordinator.app.baseService.studentHealthProfiles.save(new StudentHealthProfile({
+    await expect(standardCoordinator.app.baseService.entities.studentHealthProfiles.save(new StudentHealthProfile({
       id: 'health-standard',
       schoolId: 'school',
       studentId: 'student-health-standard',
@@ -418,7 +418,7 @@ describe('entity config edge gates', () => {
       enrollmentDate: new Date('2026-01-01'),
     }))
 
-    await expect(verifiedCoordinator.app.baseService.studentHealthProfiles.save(new StudentHealthProfile({
+    await expect(verifiedCoordinator.app.baseService.entities.studentHealthProfiles.save(new StudentHealthProfile({
       id: 'health-verified',
       schoolId: 'school',
       studentId: 'student-health-verified',
@@ -443,7 +443,7 @@ describe('entity config edge gates', () => {
       targetKind: TargetKind.AllStudents,
     }))
 
-    await expect(app.baseService.announcements.delete(announcement.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.announcements.delete(announcement.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
     const resource = new Resource({
       id: 'resource-delete',
@@ -459,6 +459,6 @@ describe('entity config edge gates', () => {
       classGroupId: 'class-delete',
     }))
 
-    await expect(app.baseService.resources.delete(resource.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.resources.delete(resource.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 })

@@ -55,7 +55,9 @@ describe("generated core query endpoints", () => {
     const mockCount = mock().mockResolvedValue(2);
     const app = setupTestApp({
       baseService: {
-        students: mockReadService({ count: mockCount }),
+        entities: {
+          students: mockReadService({ count: mockCount }),
+        },
       },
     });
 
@@ -86,7 +88,9 @@ describe("generated core query endpoints", () => {
     const mockFindOne = mock().mockResolvedValue(student);
     const app = setupTestApp({
       baseService: {
-        students: mockReadService({ findOne: mockFindOne }),
+        entities: {
+          students: mockReadService({ findOne: mockFindOne }),
+        },
       },
     });
 

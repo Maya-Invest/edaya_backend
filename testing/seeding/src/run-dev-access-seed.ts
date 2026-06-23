@@ -1,11 +1,15 @@
+import type {
+  AccessRoleSeedRecord,
+  AccessSeedPort,
+  StaffAssignmentSeedRecord,
+  StaffRoleAssignmentSeedRecord,
+} from './access/port'
+import type { AuthLinkSeedPort } from './auth-link/port'
 import type { AuthProvisioner, SeedApplication } from './types'
 import {
-  AccessRole,
   COORDINATOR_PERMISSIONS,
   ELEVATED_STAFF_PERMISSIONS,
   Permission,
-  StaffAssignment,
-  StaffRoleAssignment,
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
 import {
@@ -14,7 +18,10 @@ import {
   SEED_CLASS_SUBJECTS,
   SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
+import { createInProcessAccessSeedPort } from './access/in-process'
+import { createInProcessAuthLinkSeedPort } from './auth-link/in-process'
 import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
+import { SeedPortError } from './seed-port-error'
 
 /** Entity list endpoints used by the webapp shell loaders. */
 const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [
@@ -103,23 +110,8 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
   return [...new Set(groups.flat())]
 }
 
-export type DevAccessSeedResult
-  = | { status: 'skipped', reason: 'school-not-seeded' }
-    | { status: 'seeded', roles: number, assignments: number, staffAssignments: number }
-
-export interface RunDevAccessSeedOptions {
-  auth?: AuthProvisioner
-  ownerSubjectId?: string
-}
-
-/** Access roles only — used before service-account provisioning in HTTP bootstrap. */
-export async function runDevAccessRolesSeed(application: SeedApplication): Promise<void> {
-  const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
-  if (!school) {
-    throw new Error('Cannot seed access roles before school exists')
-  }
-
-  await application.repositories.accessRoles.save(new AccessRole({
+const ACCESS_ROLE_RECORDS: readonly AccessRoleSeedRecord[] = [
+  {
     id: 'role-teacher',
     schoolId: SEED_SCHOOL_ID,
     name: 'Teacher',
@@ -136,9 +128,8 @@ export async function runDevAccessRolesSeed(application: SeedApplication): Promi
       DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
       DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
-  }))
-
-  await application.repositories.accessRoles.save(new AccessRole({
+  },
+  {
     id: 'role-coordinator',
     schoolId: SEED_SCHOOL_ID,
     name: 'Lead teacher',
@@ -154,9 +145,8 @@ export async function runDevAccessRolesSeed(application: SeedApplication): Promi
       DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
       DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
-  }))
-
-  await application.repositories.accessRoles.save(new AccessRole({
+  },
+  {
     id: 'role-educator',
     schoolId: SEED_SCHOOL_ID,
     name: 'Educator',
@@ -167,9 +157,8 @@ export async function runDevAccessRolesSeed(application: SeedApplication): Promi
       DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
       DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
-  }))
-
-  await application.repositories.accessRoles.save(new AccessRole({
+  },
+  {
     id: 'role-director',
     schoolId: SEED_SCHOOL_ID,
     name: 'Director',
@@ -187,181 +176,162 @@ export async function runDevAccessRolesSeed(application: SeedApplication): Promi
       DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
       DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
     ),
-  }))
+  },
+]
+
+const SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS = [
+  {
+    permission: Permission.DISCIPLINE_CREATE,
+    scopeType: 'school',
+    scopeEntityIds: [SEED_SCHOOL_ID],
+  },
+  {
+    permission: Permission.ATTENDANCE_RECORD,
+    scopeType: 'school',
+    scopeEntityIds: [SEED_SCHOOL_ID],
+  },
+] as const
+
+function createStaffRoleAssignment(
+  staffId: string,
+  roleId: string,
+  scopeGrants: StaffRoleAssignmentSeedRecord['scopeGrants'] = [],
+): StaffRoleAssignmentSeedRecord {
+  return {
+    id: `sra-${staffId}`,
+    staffId,
+    schoolId: SEED_SCHOOL_ID,
+    academicYearId: SEED_ACADEMIC_YEAR_ID,
+    roleIds: [roleId],
+    scopeGrants,
+    status: 'active',
+  }
+}
+
+const STAFF_ROLE_ASSIGNMENT_RECORDS: readonly StaffRoleAssignmentSeedRecord[] = [
+  createStaffRoleAssignment('st1', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1),
+  createStaffRoleAssignment('st2', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st2),
+  createStaffRoleAssignment('st3', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st3),
+  createStaffRoleAssignment('st4', 'role-teacher'),
+  createStaffRoleAssignment('st8', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st8),
+  createStaffRoleAssignment('st5', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5),
+  createStaffRoleAssignment('st6', 'role-educator', SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS),
+  createStaffRoleAssignment('st7', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st7, SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS),
+]
+
+const BASE_STAFF_ASSIGNMENT_RECORDS: readonly StaffAssignmentSeedRecord[] = [
+  { id: 'sa-st1-6a', staffId: 'st1', responsibility: 'Mathematics', classGroupId: '6a' },
+  { id: 'sa-st1-5a', staffId: 'st1', responsibility: 'Mathematics', classGroupId: '5a' },
+  { id: 'sa-st3-6a', staffId: 'st3', responsibility: 'Homeroom', classGroupId: '6a' },
+  { id: 'sa-st2-6b', staffId: 'st2', responsibility: 'Homeroom', classGroupId: '6b' },
+  { id: 'sa-st3-5a', staffId: 'st3', responsibility: 'Homeroom', classGroupId: '5a' },
+]
+
+export type DevAccessSeedResult
+  = | { status: 'skipped', reason: 'school-not-seeded' }
+    | { status: 'seeded', roles: number, assignments: number, staffAssignments: number }
+
+export interface RunDevAccessSeedOptions {
+  auth?: AuthProvisioner
+  ownerSubjectId?: string
+  authLinkPort?: AuthLinkSeedPort
+}
+
+/** Access roles only — used before service-account provisioning in HTTP bootstrap. */
+export async function runDevAccessRolesSeedWithPort(port: AccessSeedPort): Promise<void> {
+  if (!(await port.schoolExists(SEED_SCHOOL_ID))) {
+    throw new Error('Cannot seed access roles before school exists')
+  }
+
+  for (const role of ACCESS_ROLE_RECORDS) {
+    await port.saveAccessRole(role)
+  }
 }
 
 /** Staff role + class assignments — run after school structure exists. */
-export async function runDevAccessAssignmentsSeed(
-  application: SeedApplication,
+export async function runDevAccessAssignmentsSeedWithPort(
+  port: AccessSeedPort,
   options?: RunDevAccessSeedOptions,
 ): Promise<DevAccessSeedResult> {
-  const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
-  if (!school) {
+  if (!(await port.schoolExists(SEED_SCHOOL_ID))) {
     return { status: 'skipped', reason: 'school-not-seeded' }
   }
 
   if (options?.auth) {
-    await syncDevStaffAuthAndOwner(application, options.auth, options.ownerSubjectId)
+    if (!options.authLinkPort) {
+      throw new SeedPortError('access.authLink', { detail: 'authLinkPort is required when auth is provided' })
+    }
+    await syncDevStaffAuthAndOwner(
+      options.authLinkPort,
+      options.auth,
+      options.ownerSubjectId,
+    )
   }
 
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st1',
-    staffId: 'st1',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
-    scopeGrants: [],
-    status: 'active',
-  }))
+  for (const assignment of STAFF_ROLE_ASSIGNMENT_RECORDS) {
+    await port.saveStaffRoleAssignment(assignment)
+  }
 
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st2',
-    staffId: 'st2',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st2],
-    scopeGrants: [],
-    status: 'active',
-  }))
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st3',
-    staffId: 'st3',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st3],
-    scopeGrants: [],
-    status: 'active',
-  }))
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st4',
-    staffId: 'st4',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-teacher'],
-    scopeGrants: [],
-    status: 'active',
-  }))
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st8',
-    staffId: 'st8',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st8],
-    scopeGrants: [],
-    status: 'active',
-  }))
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st5',
-    staffId: 'st5',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
-    scopeGrants: [],
-    status: 'active',
-  }))
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st6',
-    staffId: 'st6',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: ['role-educator'],
-    scopeGrants: [
-      {
-        permission: Permission.DISCIPLINE_CREATE,
-        scopeType: 'school',
-        scopeEntityIds: [SEED_SCHOOL_ID],
-      },
-      {
-        permission: Permission.ATTENDANCE_RECORD,
-        scopeType: 'school',
-        scopeEntityIds: [SEED_SCHOOL_ID],
-      },
-    ],
-    status: 'active',
-  }))
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'sra-st7',
-    staffId: 'st7',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st7],
-    scopeGrants: [
-      {
-        permission: Permission.DISCIPLINE_CREATE,
-        scopeType: 'school',
-        scopeEntityIds: [SEED_SCHOOL_ID],
-      },
-      {
-        permission: Permission.ATTENDANCE_RECORD,
-        scopeType: 'school',
-        scopeEntityIds: [SEED_SCHOOL_ID],
-      },
-    ],
-    status: 'active',
-  }))
-
-  await application.repositories.staffAssignments.save(new StaffAssignment({
-    id: 'sa-st1-6a',
-    staffId: 'st1',
-    responsibility: 'Mathematics',
-    classGroupId: '6a',
-  }))
-
-  await application.repositories.staffAssignments.save(new StaffAssignment({
-    id: 'sa-st1-5a',
-    staffId: 'st1',
-    responsibility: 'Mathematics',
-    classGroupId: '5a',
-  }))
-
-  await application.repositories.staffAssignments.save(new StaffAssignment({
-    id: 'sa-st3-6a',
-    staffId: 'st3',
-    responsibility: 'Homeroom',
-    classGroupId: '6a',
-  }))
-
-  await application.repositories.staffAssignments.save(new StaffAssignment({
-    id: 'sa-st2-6b',
-    staffId: 'st2',
-    responsibility: 'Homeroom',
-    classGroupId: '6b',
-  }))
-
-  await application.repositories.staffAssignments.save(new StaffAssignment({
-    id: 'sa-st3-5a',
-    staffId: 'st3',
-    responsibility: 'Homeroom',
-    classGroupId: '5a',
-  }))
+  for (const assignment of BASE_STAFF_ASSIGNMENT_RECORDS) {
+    await port.saveStaffAssignment(assignment)
+  }
 
   for (const offering of SEED_CLASS_SUBJECTS) {
-    await application.repositories.staffAssignments.save(new StaffAssignment({
+    await port.saveStaffAssignment({
       id: `sa-${offering.teacherId}-${offering.id}`,
       staffId: offering.teacherId,
       responsibility: 'Teacher',
       classSubjectId: offering.id,
-    }))
+    })
   }
 
   return {
     status: 'seeded',
-    roles: 4,
-    assignments: 7,
-    staffAssignments: 5 + SEED_CLASS_SUBJECTS.length,
+    roles: ACCESS_ROLE_RECORDS.length,
+    assignments: STAFF_ROLE_ASSIGNMENT_RECORDS.length,
+    staffAssignments: BASE_STAFF_ASSIGNMENT_RECORDS.length + SEED_CLASS_SUBJECTS.length,
   }
+}
+
+export function runDevAccessRolesSeed(application: SeedApplication): Promise<void> {
+  return runDevAccessRolesSeedWithPort(createInProcessAccessSeedPort(application))
+}
+
+export function runDevAccessAssignmentsSeed(
+  application: SeedApplication,
+  options?: RunDevAccessSeedOptions,
+): Promise<DevAccessSeedResult> {
+  return runDevAccessAssignmentsSeedWithPort(
+    createInProcessAccessSeedPort(application),
+    options?.auth
+      ? {
+          ...options,
+          authLinkPort: options.authLinkPort ?? createInProcessAuthLinkSeedPort(application),
+        }
+      : options,
+  )
+}
+
+export async function runDevAccessSeedWithPort(
+  port: AccessSeedPort,
+  options?: RunDevAccessSeedOptions,
+): Promise<DevAccessSeedResult> {
+  await runDevAccessRolesSeedWithPort(port)
+  return runDevAccessAssignmentsSeedWithPort(port, options)
 }
 
 export async function runDevAccessSeed(
   application: SeedApplication,
   options?: RunDevAccessSeedOptions,
 ): Promise<DevAccessSeedResult> {
-  await runDevAccessRolesSeed(application)
-  return runDevAccessAssignmentsSeed(application, options)
+  const port = createInProcessAccessSeedPort(application)
+  return runDevAccessSeedWithPort(
+    port,
+    options?.auth
+      ? {
+          ...options,
+          authLinkPort: options.authLinkPort ?? createInProcessAuthLinkSeedPort(application),
+        }
+      : options,
+  )
 }

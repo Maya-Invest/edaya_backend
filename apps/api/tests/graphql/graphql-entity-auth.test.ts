@@ -30,12 +30,14 @@ function createGraphQLTestApp(actor: typeof mockActor | null) {
     c.set("schoolApp", {
       forActor: () => ({
         baseService: {
-          students: {
-            list: listStudents,
-            findOne: mock(async () => undefined),
-            count: mock(async () => 0),
-            findById: mock(async () => undefined),
-            findByIds: mock(async () => []),
+          entities: {
+            students: {
+              list: listStudents,
+              findOne: mock(async () => undefined),
+              count: mock(async () => 0),
+              findById: mock(async () => undefined),
+              findByIds: mock(async () => []),
+            },
           },
         },
       }),

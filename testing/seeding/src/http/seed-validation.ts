@@ -9,6 +9,7 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
 } from '@edaya/dev-fixtures'
 import { signInViaHttp } from './auth'
+import { isSeedEntityKey } from './catalog'
 import { postEntityList } from './core-entity'
 
 export interface SeedEntityValidationResult {
@@ -41,6 +42,9 @@ async function validateEntityTarget(
   target: ReturnType<typeof buildSeedValidationTargets>[number],
 ): Promise<SeedEntityValidationResult> {
   try {
+    if (!isSeedEntityKey(target.serviceName)) {
+      throw new Error(`Generated API bindings do not contain entity key: ${target.serviceName}`)
+    }
     const rows = await postEntityList(options, target.serviceName)
     const actual = rows.length
     const passed = actual >= target.minCount

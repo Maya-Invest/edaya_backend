@@ -2,7 +2,7 @@
 
 Type-safe, domain-shaped HTTP client for the Edaya Core API.
 
-This package provides a **maintainable SDK** for calling `/api/core/*` endpoints from TypeScript consumers (today: the SvelteKit webapp). Instead of hand-writing URL strings and generic `fetch` wrappers, you work with a structured client:
+This package provides a **maintainable SDK** for calling `/core/*` endpoints from TypeScript consumers (today: the SvelteKit webapp). Instead of hand-writing URL strings and generic `fetch` wrappers, you work with a structured client:
 
 ```ts
 const client = getSchoolClient()
@@ -171,14 +171,14 @@ Each entity exposes the same operations, mapped to the API's standard entity rou
 
 | Method | HTTP | Description |
 |--------|------|-------------|
-| `list(query?)` | `POST /api/core/entities/{name}/list` | List entities matching a filter |
-| `one(query)` | `POST /api/core/entities/{name}/one` | Return a single match |
-| `count(query?)` | `POST /api/core/entities/{name}/count` | Count matches |
-| `get(id)` | `GET /api/core/entities/{name}/{id}` | Fetch by ID |
-| `save(entity)` | `POST /api/core/entities/{name}/save` | Create or update |
-| `delete({ id })` | `POST /api/core/entities/{name}/delete` | Delete by ID |
-| `batchSave({ entities })` | `POST /api/core/entities/{name}/batch-save` | Batch upsert |
-| `batchDelete({ ids })` | `POST /api/core/entities/{name}/batch-delete` | Batch delete |
+| `list(query?)` | `POST /core/entities/{name}/list` | List entities matching a filter |
+| `one(query)` | `POST /core/entities/{name}/one` | Return a single match |
+| `count(query?)` | `POST /core/entities/{name}/count` | Count matches |
+| `get(id)` | `GET /core/entities/{name}/{id}` | Fetch by ID |
+| `save(entity)` | `POST /core/entities/{name}/save` | Create or update |
+| `delete({ id })` | `POST /core/entities/{name}/delete` | Delete by ID |
+| `batchSave({ entities })` | `POST /core/entities/{name}/batch-save` | Batch upsert |
+| `batchDelete({ ids })` | `POST /core/entities/{name}/batch-delete` | Batch delete |
 
 #### Query filters
 
@@ -194,7 +194,7 @@ await client.entities.students.list({
 })
 ```
 
-> **Note:** Some entities have `allowDirectSave: false` in the registry (e.g. `students`, `enrollments`, `payments`). The client still exposes `.save()` for those resources, but the API will reject direct saves with `405` — use the appropriate **command** instead.
+> **Note:** Entities with `allowDirectSave: false` in the registry (e.g. `students`, `enrollments`, `payments`) omit `.save()` and `.batchSave()` from their client type. Use the appropriate domain command instead. Read and delete operations remain available under the current server policy.
 
 ### Commands
 
@@ -215,7 +215,7 @@ await client.commands.enrollStudent({
 })
 ```
 
-Each command maps to `POST /api/core/commands/{kebab-case-public-name}`.
+Each command maps to `POST /core/commands/{kebab-case-public-name}`.
 
 ### Queries
 
@@ -226,7 +226,7 @@ const { count } = await client.queries.getOverdueFeeCount({ schoolId })
 const { count: published } = await client.queries.getPublishedReportCardCount({ schoolId })
 ```
 
-Each query maps to `POST /api/core/queries/{kebab-case-public-name}`.
+Each query maps to `POST /core/queries/{kebab-case-public-name}`.
 
 ### Authorization
 
@@ -235,7 +235,7 @@ const session = await client.authorization.effectiveGrants()
 // typed as EffectiveGrantsResponse when using components['schemas']
 ```
 
-Maps to `GET /api/core/authorization/effective-grants`.
+Maps to `GET /core/authorization/effective-grants`.
 
 ---
 
@@ -284,7 +284,7 @@ Responsibilities of a transport implementation:
 - Serialize/deserialize JSON
 - Map non-2xx responses to `ApiError`
 
-The package does **not** ship framework-specific adapters. Each consumer provides its own. The webapp's adapter lives at `apps/webapp/src/lib/server/school-client.ts`.
+The package does **not** ship framework-specific adapters. Each consumer provides its own. The webapp's browser adapter lives at `apps/webapp/src/lib/api/browser-transport.ts`.
 
 ---
 
@@ -394,27 +394,22 @@ packages/api-client/
 
 ## Webapp integration
 
-The SvelteKit webapp wires the client in `apps/webapp/src/lib/server/school-client.ts`:
+The static SvelteKit webapp wires the client in `apps/webapp/src/lib/api/school-client.ts`:
 
 ```ts
-import { getSchoolClient } from '$lib/server/school-client'
+import { getBrowserSchoolClient } from '$lib/api/school-client'
 
-const client = getSchoolClient()
+const client = getBrowserSchoolClient()
 const students = await client.entities.students.list({})
 ```
 
 The webapp transport forwards:
 
-- `Cookie` from the incoming SvelteKit request (session auth)
+- browser cookies through `credentials: 'include'` (session auth)
 - `X-Academic-Year-Id` when present
-- `API_URL` as the base URL
+- `PUBLIC_API_URL` as the browser base URL, or same-origin paths when it is empty
 
-Migrated consumers:
-
-- `apps/webapp/src/lib/remote/shell.remote.ts`
-- `apps/webapp/src/lib/remote/people.remote.ts`
-
-Other files still using raw `apiFetch` (e.g. `staff-data.ts`) can be migrated incrementally.
+In local development, same-origin requests are forwarded by Vite to the private `API_URL` proxy target.
 
 ---
 
@@ -434,17 +429,17 @@ Other files still using raw `apiFetch` (e.g. `staff-data.ts`) can be migrated in
 
 - **Auth routes** (`/auth/*`) are not covered. The webapp uses `better-auth` directly for authentication.
 - **Entity query types** are currently loose (`EntityQuery`). OpenAPI generates opaque `Filter_N` schema names for query bodies; stricter per-entity query typing would require naming those schemas in the API layer.
-- **`allowDirectSave: false`** is recorded in bindings but not enforced at the client type level. Callers should use domain commands for entities like `students` and `enrollments`.
-- **No browser bundle yet.** The current transport is designed for server-side use in SvelteKit. A browser transport would need its own CORS and auth strategy.
+- **Transport policy belongs to consumers.** The webapp supplies its browser-specific base URL, cookie, and academic-year behavior; the package remains runtime-agnostic.
 
 ---
 
 ## Development
 
-Type-check the package:
+Type-check and test the package:
 
 ```bash
 bun run --cwd packages/api-client check
+bun run --cwd packages/api-client test
 ```
 
 Type-check the webapp (includes client usage):

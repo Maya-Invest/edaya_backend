@@ -56,13 +56,13 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async createAnnouncement(input: CreateAnnouncementInput): Promise<Announcement> {
     const announcement = new Announcement(input)
-    await this.baseService.announcements.save(announcement)
+    await this.baseService.entities.announcements.save(announcement)
     return announcement
   }
 
   async addTarget(input: AddAnnouncementTargetInput): Promise<AnnouncementTarget> {
     const target = new AnnouncementTargetEntity(input)
-    await this.baseService.announcementTargets.save(target)
+    await this.baseService.entities.announcementTargets.save(target)
     return target
   }
 
@@ -88,7 +88,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       publishedAt: publishedAt ?? new Date(),
       expiresAt: existing.expiresAt,
     })
-    await this.baseService.announcements.save(announcement, { moduleChecked: true })
+    await this.baseService.entities.announcements.save(announcement, { moduleChecked: true })
     return announcement
   }
 
@@ -127,7 +127,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       createdAt,
       updatedAt,
     })
-    await this.baseService.messageDeliveries.save(delivery, { moduleChecked: true })
+    await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
     return delivery
   }
 
@@ -165,7 +165,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
           createdAt,
           updatedAt: createdAt,
         })
-        await this.baseService.messageDeliveries.save(delivery, { moduleChecked: true })
+        await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
         deliveries.push(delivery)
       }
       return deliveries

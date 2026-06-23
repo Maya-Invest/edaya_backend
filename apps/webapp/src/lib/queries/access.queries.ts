@@ -1,3 +1,4 @@
+import { academicContext } from '$lib/academic/context.svelte';
 import { loadAccessRolesData } from '$lib/api/access-roles-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
@@ -9,8 +10,11 @@ export function queryRolesPage() {
 		empty: () => ({}),
 		load: async () => {
 			const [staff, accessRolesData] = await Promise.all([
-				fetchStaffMembers(queryClient()),
-				loadAccessRolesData(queryClient()),
+				fetchStaffMembers(queryClient(), {
+					schoolId: academicContext.schools[0]?.id ?? '',
+					academicYearId: academicContext.yearId,
+				}),
+				loadAccessRolesData(queryClient(), academicContext.schools[0]?.id ?? ''),
 			]);
 			detailDataContext.seedStaff(staff);
 			detailDataContext.seedRolePermissions({

@@ -11,8 +11,8 @@
 	import { t } from '$lib/i18n';
 	import { Plus, Search } from '$lib/icons';
 	import { readPlanningListFilters, writePlanningListFilters } from '$lib/list/list-url-filters';
-	import { canEditTimetable } from '$lib/permissions';
 	import { appGoto } from '$lib/navigation/app-navigation';
+	import { canEditTimetable } from '$lib/permissions';
 	import AttendanceFlow from './AttendanceFlow.svelte';
 	import ClassTimetableCalendar from './ClassTimetableCalendar.svelte';
 	import PlanningFormModal from './PlanningFormModal.svelte';

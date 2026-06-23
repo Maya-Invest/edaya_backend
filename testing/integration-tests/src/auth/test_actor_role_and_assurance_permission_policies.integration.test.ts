@@ -40,14 +40,14 @@ async function setupBaselineFixture() {
 
   // Standard Admin setup of tenant school
   await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
-  await app.createAcademicYear({
+  await app.setupWorkflow.createAcademicYear({
     id: 'acad-year',
     schoolId: 'school',
     name: '2026-2027',
     startDate: new Date('2026-09-01T00:00:00Z'),
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
-  await app.baseService.gradeLevels.save(
+  await app.baseService.entities.gradeLevels.save(
     new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
   )
   await createClassGroup(app, {
@@ -122,12 +122,12 @@ async function setupBaselineFixture() {
 
   // Create students & guardians
   await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
-  await app.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
+  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
   await saveGuardian(app, { id: 'active-guardian', schoolId: 'school', firstName: 'Eva', lastName: 'Craig' })
-  await app.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
+  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
-  await app.baseService.subjects.save(
+  await app.baseService.entities.subjects.save(
     new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
   )
   const classSubject = await saveClassSubject(app, {
@@ -272,7 +272,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Teachers can record attendance for their sessions
-    const attendance = await teacherApp.recordAttendance({
+    const attendance = await teacherApp.schedulingWorkflow.recordAttendance({
       id: 'attendance-1',
       studentId: 'active-student',
       sessionId: 'active-session',
@@ -394,7 +394,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
 
     const initialAcademicYearCount = await repositories.academicYearRepository.count()
 
-    await expect(unauthorizedTeacherApp.createAcademicYear({
+    await expect(unauthorizedTeacherApp.setupWorkflow.createAcademicYear({
       id: 'illegal-year',
       schoolId: 'school',
       name: '2028-2029',
@@ -420,11 +420,11 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     }))
 
     // Foreign actor attempting to query local school data gets Forbidden
-    await expect(foreignAdminApp.baseService.students.findById('active-student'))
+    await expect(foreignAdminApp.baseService.entities.students.findById('active-student'))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
-    await expect(foreignAdminApp.baseService.classGroups.list({ schoolId: 'school' }))
+    await expect(foreignAdminApp.baseService.entities.classGroups.list({ schoolId: 'school' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })

@@ -24,7 +24,7 @@ describe('SchoolService communications workflows', () => {
       announcementStatus: AnnouncementStatus.Draft,
     })
 
-    const result = await service.publishAnnouncement({
+    const result = await service.communicationsWorkflow.publishAnnouncement({
       announcementId: 'ann1',
       publishedAt: new Date('2026-05-02T00:00:00Z'),
     })
@@ -40,7 +40,7 @@ describe('SchoolService communications workflows', () => {
       targets: [],
     })
 
-    await expect(service.publishAnnouncement({
+    await expect(service.communicationsWorkflow.publishAnnouncement({
       announcementId: 'ann1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
@@ -48,7 +48,7 @@ describe('SchoolService communications workflows', () => {
   test('recordDelivery persists eligible recipients through managed service', async () => {
     const { mockRepos, service } = createCommunicationsContext()
 
-    const result = await service.recordDelivery({
+    const result = await service.communicationsWorkflow.recordDelivery({
       id: 'del1',
       announcementId: 'ann1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -68,7 +68,7 @@ describe('SchoolService communications workflows', () => {
       targets: [{ id: 'target-staff', announcementId: 'ann1', targetKind: TargetKind.StaffMember, targetId: 'staff1' }],
     })
 
-    await expect(service.recordDelivery({
+    await expect(service.communicationsWorkflow.recordDelivery({
       id: 'del1',
       announcementId: 'ann1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -82,7 +82,7 @@ describe('SchoolService communications workflows', () => {
       announcementStatus: AnnouncementStatus.Draft,
     })
 
-    await expect(unpublishedContext.service.recordDelivery({
+    await expect(unpublishedContext.service.communicationsWorkflow.recordDelivery({
       id: 'del-unpublished',
       announcementId: 'ann1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -93,7 +93,7 @@ describe('SchoolService communications workflows', () => {
     const crossSchoolContext = createCommunicationsContext()
     ;(crossSchoolContext.mockRepos as any).students.findById = mock(async () => ({ id: 'stu1', schoolId: 'other-school' }))
 
-    await expect(crossSchoolContext.service.recordDelivery({
+    await expect(crossSchoolContext.service.communicationsWorkflow.recordDelivery({
       id: 'del-cross-school',
       announcementId: 'ann1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -107,7 +107,7 @@ describe('SchoolService communications workflows', () => {
       targets: [{ id: 'target-class', announcementId: 'ann1', targetKind: TargetKind.ClassGroup, targetId: 'cg1' }],
     })
 
-    const result = await service.recordDelivery({
+    const result = await service.communicationsWorkflow.recordDelivery({
       id: 'del-guardian-class',
       announcementId: 'ann1',
       recipientKind: MessageDeliveryRecipientKind.Guardian,
@@ -129,7 +129,7 @@ describe('SchoolService communications workflows', () => {
     })
     const { mockAtomic, mockRepos, service } = createCommunicationsContext({ existingDelivery: existing })
 
-    const result = await service.materializeDeliveries({
+    const result = await service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
       channel: MessageDeliveryChannel.Email,
       createdAt: new Date('2026-05-02T00:00:00Z'),
@@ -155,7 +155,7 @@ describe('SchoolService communications workflows', () => {
       announcementStatus: AnnouncementStatus.Draft,
     })
 
-    await expect(service.materializeDeliveries({
+    await expect(service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
       channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
@@ -176,7 +176,7 @@ describe('SchoolService communications workflows', () => {
       ],
     })
 
-    const result = await service.materializeDeliveries({
+    const result = await service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
       channel: MessageDeliveryChannel.App,
       createdAt: new Date('2026-05-03T00:00:00Z'),
@@ -196,7 +196,7 @@ describe('SchoolService communications workflows', () => {
     })
     ;(crossSchoolTarget.mockRepos as any).classGroups.findById = mock(async () => ({ id: 'cg1', schoolId: 'other-school', gradeLevelId: 'grade1' }))
 
-    await expect(crossSchoolTarget.service.materializeDeliveries({
+    await expect(crossSchoolTarget.service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
       channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(AuthorizationError)
@@ -206,7 +206,7 @@ describe('SchoolService communications workflows', () => {
     })
     ;(crossSchoolLinkedGuardian.mockRepos as any).guardians.findById = mock(async () => ({ id: 'gua1', schoolId: 'other-school' }))
 
-    await expect(crossSchoolLinkedGuardian.service.materializeDeliveries({
+    await expect(crossSchoolLinkedGuardian.service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
       channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(AuthorizationError)

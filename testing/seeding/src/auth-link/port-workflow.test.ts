@@ -1,0 +1,120 @@
+import type { AuthProvisioner } from '../types'
+import type { AuthLinkSeedPort } from './port'
+import {
+  DEV_AUTH_GUARDIAN_ACCOUNTS,
+  DEV_AUTH_STAFF_ACCOUNTS,
+  SEED_SCHOOL_ID,
+  SEED_SCHOOL_OWNER_STAFF_ID,
+} from '@edaya/dev-fixtures'
+import { describe, expect, test } from 'bun:test'
+import { syncDevStaffAuthAndOwner } from '../dev-staff-auth-seed'
+
+function subjectIdForEmail(email: string): string {
+  return `subject:${email}`
+}
+
+function createAuthProvisioner(): AuthProvisioner {
+  return {
+    ensureUser: async account => ({ subjectId: subjectIdForEmail(account.email) }),
+    lookupSubjectIdByEmail: async email => subjectIdForEmail(email),
+  }
+}
+
+function createMemoryPort(): {
+  port: AuthLinkSeedPort
+  registeredStaff: string[]
+  replacedGuardians: string[]
+  replacedStaff: string[]
+  state: {
+    ownerSubjectId?: string
+    guardians: Map<string, string | undefined>
+    staff: Map<string, string | undefined>
+  }
+} {
+  const firstStaff = DEV_AUTH_STAFF_ACCOUNTS[0]
+  const firstGuardian = DEV_AUTH_GUARDIAN_ACCOUNTS[0]
+  const state = {
+    ownerSubjectId: undefined as string | undefined,
+    staff: new Map<string, string | undefined>(
+      DEV_AUTH_STAFF_ACCOUNTS.slice(1, -1).map(account => [account.staffId, undefined]),
+    ),
+    guardians: new Map<string, string | undefined>(
+      DEV_AUTH_GUARDIAN_ACCOUNTS.map(account => [account.guardianId, undefined]),
+    ),
+  }
+  if (firstStaff) {
+    state.staff.set(firstStaff.staffId, 'stale-staff-subject')
+  }
+  if (firstGuardian) {
+    state.guardians.set(firstGuardian.guardianId, 'stale-guardian-subject')
+  }
+
+  const registeredStaff: string[] = []
+  const replacedStaff: string[] = []
+  const replacedGuardians: string[] = []
+
+  const port: AuthLinkSeedPort = {
+    findSchoolById: async id => id === SEED_SCHOOL_ID
+      ? { id, ownerSubjectId: state.ownerSubjectId }
+      : undefined,
+    setSchoolOwnerSubjectId: async (_schoolId, subjectId) => {
+      state.ownerSubjectId = subjectId
+    },
+    findStaffById: async (id) => {
+      if (!state.staff.has(id)) {
+        return undefined
+      }
+      return { id, subjectId: state.staff.get(id) }
+    },
+    registerStaffMember: async (input) => {
+      registeredStaff.push(input.id)
+      state.staff.set(input.id, undefined)
+    },
+    replaceStaffSubjectId: async (staffId, subjectId) => {
+      replacedStaff.push(staffId)
+      state.staff.set(staffId, subjectId)
+    },
+    findGuardianById: async (id) => {
+      if (!state.guardians.has(id)) {
+        return undefined
+      }
+      return { id, subjectId: state.guardians.get(id) }
+    },
+    replaceGuardianSubjectId: async (guardianId, subjectId) => {
+      replacedGuardians.push(guardianId)
+      state.guardians.set(guardianId, subjectId)
+    },
+    linkActorSubject: async (input) => {
+      if (input.staffMemberId) {
+        state.staff.set(input.staffMemberId, input.subjectId)
+      }
+      if (input.guardianId) {
+        state.guardians.set(input.guardianId, input.subjectId)
+      }
+    },
+  }
+
+  return { port, registeredStaff, replacedGuardians, replacedStaff, state }
+}
+
+describe('auth-link seed port workflow', () => {
+  test('registers, links, replaces stale subjects, assigns owner, and stays idempotent', async () => {
+    const memory = createMemoryPort()
+    const auth = createAuthProvisioner()
+
+    const first = await syncDevStaffAuthAndOwner(memory.port, auth)
+
+    expect(first?.linkedStaff).toBe(DEV_AUTH_STAFF_ACCOUNTS.length)
+    expect(first?.linkedGuardians).toBe(DEV_AUTH_GUARDIAN_ACCOUNTS.length)
+    expect(memory.registeredStaff).toHaveLength(1)
+    expect(memory.replacedStaff).toEqual([DEV_AUTH_STAFF_ACCOUNTS[0]?.staffId])
+    expect(memory.replacedGuardians).toEqual([DEV_AUTH_GUARDIAN_ACCOUNTS[0]?.guardianId])
+
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID)
+    expect(memory.state.ownerSubjectId).toBe(owner ? subjectIdForEmail(owner.email) : undefined)
+
+    const second = await syncDevStaffAuthAndOwner(memory.port, auth)
+    expect(second?.linkedStaff).toBe(0)
+    expect(second?.linkedGuardians).toBe(0)
+  })
+})

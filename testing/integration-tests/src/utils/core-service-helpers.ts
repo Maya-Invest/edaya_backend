@@ -87,12 +87,12 @@ export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School
       permission: Permission.PLATFORM_REGISTER_SCHOOL,
     },
   })
-  await app.baseService.schools.save(school, { moduleChecked: true })
+  await app.baseService.entities.schools.save(school, { moduleChecked: true })
   return school
 }
 
 export async function updateSchool(app: SchoolService, input: { schoolId: string } & Partial<Omit<ArgsOf<typeof School>, 'id'>>): Promise<School> {
-  const existing = await app.baseService.schools.findById(input.schoolId)
+  const existing = await app.baseService.entities.schools.findById(input.schoolId)
   if (!existing) {
     throw new Error(`School ${input.schoolId} not found`)
   }
@@ -106,18 +106,18 @@ export async function updateSchool(app: SchoolService, input: { schoolId: string
     city: input.city ?? existing.city,
     createdAt: existing.createdAt,
   })
-  await app.baseService.schools.save(school)
+  await app.baseService.entities.schools.save(school)
   return school
 }
 
 export async function createAcademicPeriod(app: SchoolService, input: ArgsOf<typeof AcademicPeriod>): Promise<AcademicPeriod> {
   const period = new AcademicPeriod(input)
-  await app.baseService.academicPeriods.save(period)
+  await app.baseService.entities.academicPeriods.save(period)
   return period
 }
 
 export async function publishAcademicPeriod(app: SchoolService, academicPeriodId: string): Promise<AcademicPeriod> {
-  const existing = await app.baseService.academicPeriods.findById(academicPeriodId)
+  const existing = await app.baseService.entities.academicPeriods.findById(academicPeriodId)
   if (!existing) {
     throw new Error(`Academic period ${academicPeriodId} not found`)
   }
@@ -133,7 +133,7 @@ export async function publishAcademicPeriod(app: SchoolService, academicPeriodId
     createdAt: existing.createdAt,
   })
   await authorizeCoreServiceHelperPermission(app, Permission.SCHOOL_LIFECYCLE_MANAGE)
-  await app.baseService.academicPeriods.save(period, { moduleChecked: true })
+  await app.baseService.entities.academicPeriods.save(period, { moduleChecked: true })
   return period
 }
 
@@ -152,12 +152,12 @@ async function authorizeCoreServiceHelperPermission(
 
 export async function createClassGroup(app: SchoolService, input: ArgsOf<typeof ClassGroup>): Promise<ClassGroup> {
   const classGroup = new ClassGroup(input)
-  await app.baseService.classGroups.save(classGroup)
+  await app.baseService.entities.classGroups.save(classGroup)
   return classGroup
 }
 
 export async function updateClassGroup(app: SchoolService, input: { classGroupId: string } & Partial<Omit<ArgsOf<typeof ClassGroup>, 'id'>>): Promise<ClassGroup> {
-  const existing = await app.baseService.classGroups.findById(input.classGroupId)
+  const existing = await app.baseService.entities.classGroups.findById(input.classGroupId)
   if (!existing) {
     throw new Error(`Class group ${input.classGroupId} not found`)
   }
@@ -170,18 +170,18 @@ export async function updateClassGroup(app: SchoolService, input: { classGroupId
     attendanceMode: input.attendanceMode ?? existing.attendanceMode,
     homeroomStaffId: input.homeroomStaffId !== undefined ? input.homeroomStaffId : existing.homeroomStaffId,
   })
-  await app.baseService.classGroups.save(classGroup)
+  await app.baseService.entities.classGroups.save(classGroup)
   return classGroup
 }
 
 export async function saveStaffMember(app: SchoolService, input: ArgsOf<typeof StaffMember>): Promise<StaffMember> {
   const staffMember = new StaffMember(input)
-  await app.baseService.staffMembers.save(staffMember)
+  await app.baseService.entities.staffMembers.save(staffMember)
   return staffMember
 }
 
 export async function updateStaffStatus(app: SchoolService, staffId: string, isActive: boolean): Promise<StaffMember> {
-  const existing = await app.baseService.staffMembers.findById(staffId)
+  const existing = await app.baseService.entities.staffMembers.findById(staffId)
   if (!existing) {
     throw new Error(`Staff member ${staffId} not found`)
   }
@@ -195,24 +195,24 @@ export async function updateStaffStatus(app: SchoolService, staffId: string, isA
     isActive,
     createdAt: existing.createdAt,
   })
-  await app.baseService.staffMembers.save(staffMember)
+  await app.baseService.entities.staffMembers.save(staffMember)
   return staffMember
 }
 
 export async function saveStaffAssignment(app: SchoolService, input: ArgsOf<typeof StaffAssignment>): Promise<StaffAssignment> {
   const assignment = new StaffAssignment(input)
-  await app.baseService.staffAssignments.save(assignment)
+  await app.baseService.entities.staffAssignments.save(assignment)
   return assignment
 }
 
 export async function saveStudent(app: SchoolService, input: ArgsOf<typeof Student>): Promise<Student> {
   const student = new Student(input)
-  await app.baseService.students.save(student)
+  await app.baseService.entities.students.save(student)
   return student
 }
 
 export async function updateStudent(app: SchoolService, input: { studentId: string } & Partial<Omit<ArgsOf<typeof Student>, 'id'>>): Promise<Student> {
-  const existing = await app.baseService.students.findById(input.studentId)
+  const existing = await app.baseService.entities.students.findById(input.studentId)
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -230,13 +230,13 @@ export async function updateStudent(app: SchoolService, input: { studentId: stri
     status: input.status ?? existing.status,
     enrollmentDate: input.enrollmentDate !== undefined ? input.enrollmentDate : existing.enrollmentDate,
   })
-  await app.baseService.students.save(student)
+  await app.baseService.entities.students.save(student)
   return student
 }
 
 export async function saveGuardian(app: SchoolService, input: ArgsOf<typeof Guardian>): Promise<Guardian> {
   const guardian = new Guardian(input)
-  await app.baseService.guardians.save(guardian)
+  await app.baseService.entities.guardians.save(guardian)
   return guardian
 }
 
@@ -244,7 +244,7 @@ export async function saveStudentNote(
   app: SchoolService,
   input: Omit<ArgsOf<typeof StudentNote>, 'schoolId' | 'authorStaffId'> & Partial<Pick<ArgsOf<typeof StudentNote>, 'schoolId' | 'authorStaffId'>>,
 ): Promise<StudentNote> {
-  const student = await app.baseService.students.findById(input.studentId)
+  const student = await app.baseService.entities.students.findById(input.studentId)
   if (!student) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -253,13 +253,13 @@ export async function saveStudentNote(
     schoolId: input.schoolId ?? student.schoolId,
     authorStaffId: input.authorStaffId ?? resolveAuditActorId(app.baseService.actor),
   })
-  await app.baseService.studentNotes.save(note)
+  await app.baseService.entities.studentNotes.save(note)
   return note
 }
 
 export async function saveStudentHealthProfile(app: SchoolService, input: ArgsOf<typeof StudentHealthProfile>): Promise<StudentHealthProfile> {
   const profile = new StudentHealthProfile(input)
-  await app.baseService.studentHealthProfiles.save(profile)
+  await app.baseService.entities.studentHealthProfiles.save(profile)
   return profile
 }
 
@@ -267,7 +267,7 @@ export async function saveStudentHealthProfileForStudent(
   app: SchoolService,
   input: Omit<ArgsOf<typeof StudentHealthProfile>, 'schoolId'> & Partial<Pick<ArgsOf<typeof StudentHealthProfile>, 'schoolId'>>,
 ): Promise<StudentHealthProfile> {
-  const student = await app.baseService.students.findById(input.studentId)
+  const student = await app.baseService.entities.students.findById(input.studentId)
   if (!student) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -281,7 +281,7 @@ export async function updateStudentNote(app: SchoolService, input: {
   noteId: string
   body: string
 }): Promise<StudentNote> {
-  const existing = await app.baseService.studentNotes.findById(input.noteId)
+  const existing = await app.baseService.entities.studentNotes.findById(input.noteId)
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -296,7 +296,7 @@ export async function updateStudentNote(app: SchoolService, input: {
     createdAt: existing.createdAt,
     updatedAt: new Date(),
   })
-  await app.baseService.studentNotes.save(note)
+  await app.baseService.entities.studentNotes.save(note)
   return note
 }
 
@@ -304,7 +304,7 @@ export async function updateGuardian(app: SchoolService, input: {
   guardianId: string
   firstName?: string
 }): Promise<Guardian> {
-  const existing = await app.baseService.guardians.findById(input.guardianId)
+  const existing = await app.baseService.entities.guardians.findById(input.guardianId)
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -319,7 +319,7 @@ export async function updateGuardian(app: SchoolService, input: {
     premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
     createdAt: existing.createdAt,
   })
-  await app.baseService.guardians.save(guardian)
+  await app.baseService.entities.guardians.save(guardian)
   return guardian
 }
 
@@ -328,7 +328,7 @@ export async function updateGuardianStudentLink(app: SchoolService, input: {
   studentId: string
   isBillingContact?: boolean
 }): Promise<GuardianStudentLink> {
-  const existing = await app.baseService.guardianLinks.findOne({
+  const existing = await app.baseService.entities.guardianLinks.findOne({
     guardianId: input.guardianId,
     studentId: input.studentId,
   })
@@ -352,13 +352,13 @@ export async function updateGuardianStudentLink(app: SchoolService, input: {
     notes: existing.notes,
     createdAt: existing.createdAt,
   })
-  await app.baseService.guardianLinks.save(link)
+  await app.baseService.entities.guardianLinks.save(link)
   return link
 }
 
 export async function saveClassSubject(app: SchoolService, input: ArgsOf<typeof ClassSubject>): Promise<ClassSubject> {
   const classSubject = new ClassSubject(input)
-  await app.baseService.classSubjects.save(classSubject)
+  await app.baseService.entities.classSubjects.save(classSubject)
   return classSubject
 }
 
@@ -371,36 +371,36 @@ export async function saveClassSubjectMatter(
     status: input.status ?? ClassSubjectMatterStatus.NotStarted,
     completedPercentage: input.completedPercentage ?? 0,
   })
-  await app.baseService.classSubjectMatters.save(matter)
+  await app.baseService.entities.classSubjectMatters.save(matter)
   return matter
 }
 
 export async function listMatterProgress(app: SchoolService, classSubjectMatterId: string) {
-  return app.baseService.classSubjectProgress.list({ classSubjectMatterId })
+  return app.baseService.entities.classSubjectProgress.list({ classSubjectMatterId })
 }
 
 export async function saveSession(app: SchoolService, input: ArgsOf<typeof Session> & { schoolId?: string }): Promise<Session> {
   const { schoolId: _schoolId, ...sessionInput } = input
   const session = new Session(sessionInput)
-  await app.baseService.sessions.save(session)
+  await app.baseService.entities.sessions.save(session)
   return session
 }
 
 export async function saveSchedule(app: SchoolService, input: ArgsOf<typeof Schedule>): Promise<Schedule> {
   const schedule = new Schedule(input)
-  await app.baseService.schedules.save(schedule)
+  await app.baseService.entities.schedules.save(schedule)
   return schedule
 }
 
 export async function saveCalendarEvent(app: SchoolService, input: ArgsOf<typeof CalendarEvent>): Promise<CalendarEvent> {
   const event = new CalendarEvent(input)
-  await app.baseService.calendarEvents.save(event)
+  await app.baseService.entities.calendarEvents.save(event)
   return event
 }
 
 export async function saveFee(app: SchoolService, input: ArgsOf<typeof Fee>): Promise<Fee> {
   const fee = new Fee(input)
-  await app.baseService.fees.save(fee)
+  await app.baseService.entities.fees.save(fee)
   return fee
 }
 
@@ -409,7 +409,7 @@ export async function adjustStudentFee(app: SchoolService, input: {
   adjustmentAmount: number
   reason: string
 }): Promise<StudentFee> {
-  const existing = await app.baseService.studentFees.findById(input.studentFeeId)
+  const existing = await app.baseService.entities.studentFees.findById(input.studentFeeId)
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -420,7 +420,7 @@ export async function adjustStudentFee(app: SchoolService, input: {
     adjustedAt: new Date(),
     updatedAt: new Date(),
   })
-  await app.baseService.studentFees.save(studentFee)
+  await app.baseService.entities.studentFees.save(studentFee)
   return studentFee
 }
 
@@ -428,7 +428,7 @@ export async function cancelStudentFee(app: SchoolService, input: {
   studentFeeId: string
   reason: string
 }): Promise<StudentFee> {
-  const existing = await app.baseService.studentFees.findById(input.studentFeeId)
+  const existing = await app.baseService.entities.studentFees.findById(input.studentFeeId)
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -439,35 +439,35 @@ export async function cancelStudentFee(app: SchoolService, input: {
     cancelledAt: new Date(),
     updatedAt: new Date(),
   })
-  await app.baseService.studentFees.save(studentFee)
+  await app.baseService.entities.studentFees.save(studentFee)
   return studentFee
 }
 
 export async function buildFeeSummary(app: SchoolService, studentId: string) {
-  return buildStudentFeeSummary(await app.baseService.studentFees.list({ studentId }))
+  return buildStudentFeeSummary(await app.baseService.entities.studentFees.list({ studentId }))
 }
 
 export async function saveResourceAssignment(app: SchoolService, input: ArgsOf<typeof ResourceAssignment>): Promise<ResourceAssignment> {
   const assignment = new ResourceAssignment(input)
-  await app.baseService.resourceAssignments.save(assignment)
+  await app.baseService.entities.resourceAssignments.save(assignment)
   return assignment
 }
 
 export async function saveAttachment(app: SchoolService, input: ArgsOf<typeof Attachment>): Promise<Attachment> {
   const attachment = new Attachment(input)
-  await app.baseService.attachments.save(attachment)
+  await app.baseService.entities.attachments.save(attachment)
   return attachment
 }
 
 export async function saveReportCardDefinition(app: SchoolService, input: ArgsOf<typeof ReportCardDefinition>): Promise<ReportCardDefinition> {
   const definition = new ReportCardDefinition(input)
-  await app.baseService.definitions.save(definition)
+  await app.baseService.entities.definitions.save(definition)
   return definition
 }
 
 export async function saveAssessment(app: SchoolService, input: ArgsOf<typeof Assessment>): Promise<Assessment> {
   const assessment = new Assessment(input)
-  await app.baseService.assessments.save(assessment)
+  await app.baseService.entities.assessments.save(assessment)
   return assessment
 }
 
@@ -479,12 +479,12 @@ export async function saveIncident(
     ...input,
     reporterId: input.reporterId ?? resolveAuditActorId(app.baseService.actor),
   })
-  await app.baseService.incidents.save(incident)
+  await app.baseService.entities.incidents.save(incident)
   return incident
 }
 
 export async function resolveIncident(app: SchoolService, incidentId: string): Promise<Incident> {
-  const existing = await app.baseService.incidents.findById(incidentId)
+  const existing = await app.baseService.entities.incidents.findById(incidentId)
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -505,7 +505,7 @@ export async function resolveIncident(app: SchoolService, incidentId: string): P
     createdAt: existing.createdAt,
     updatedAt: new Date(),
   })
-  await app.baseService.incidents.save(incident)
+  await app.baseService.entities.incidents.save(incident)
   return incident
 }
 
@@ -515,7 +515,7 @@ export async function reviewAttendanceJustification(app: SchoolService, input: {
   decision: AttendanceJustificationStatus
   reason?: string
 }) {
-  const existing = await app.baseService.attendance.findOne({
+  const existing = await app.baseService.entities.attendance.findOne({
     studentId: input.studentId,
     sessionId: input.sessionId,
   })
@@ -528,19 +528,19 @@ export async function reviewAttendanceJustification(app: SchoolService, input: {
     justifiedAt: new Date(),
     justifiedByStaffId: resolveAuditActorId(app.baseService.actor),
   })
-  await app.baseService.attendance.save(record)
+  await app.baseService.entities.attendance.save(record)
   return record
 }
 
 export async function saveAnnouncement(app: SchoolService, input: ArgsOf<typeof Announcement>): Promise<Announcement> {
   const announcement = new Announcement(input)
-  await app.baseService.announcements.save(announcement)
+  await app.baseService.entities.announcements.save(announcement)
   return announcement
 }
 
 export async function saveAnnouncementTarget(app: SchoolService, input: ArgsOf<typeof AnnouncementTarget>): Promise<AnnouncementTarget> {
   const target = new AnnouncementTarget(input)
-  await app.baseService.announcementTargets.save(target)
+  await app.baseService.entities.announcementTargets.save(target)
   return target
 }
 
@@ -548,18 +548,18 @@ export async function listClassSubjectAssessmentResultsForPeriod(app: SchoolServ
   classSubjectId: string
   periodId: string
 }) {
-  const classSubject = await app.baseService.classSubjects.findById(input.classSubjectId)
-  const period = await app.baseService.academicPeriods.findById(input.periodId)
+  const classSubject = await app.baseService.entities.classSubjects.findById(input.classSubjectId)
+  const period = await app.baseService.entities.academicPeriods.findById(input.periodId)
   if (!classSubject || !period) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
-  const assessments = await app.baseService.assessments.list({
+  const assessments = await app.baseService.entities.assessments.list({
     classSubjectId: input.classSubjectId,
     periodId: input.periodId,
   })
   const results = []
   for (const assessment of assessments) {
-    results.push(...await app.baseService.assessmentResults.list({ assessmentId: assessment.id }))
+    results.push(...await app.baseService.entities.assessmentResults.list({ assessmentId: assessment.id }))
   }
   return results
 }

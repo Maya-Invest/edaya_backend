@@ -39,7 +39,7 @@ import { countSeedPlanningSlots } from './scheduling-seed'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './seed-entity-manifest'
 import { SEED_TEACHING_LOG_ENTRIES } from './teaching-log-seed'
 
-/** Maps manifest entity slugs to `SchoolService` / repository keys used by HTTP entity routes. */
+/** Maps manifest entity slugs to generated API entity keys used by HTTP validation. */
 export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'schools': 'schools',
   'academic-years': 'academicYears',

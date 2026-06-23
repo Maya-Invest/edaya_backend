@@ -1,12 +1,22 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { Fee, StudentBilling } from '$lib/types/school';
+import type { Fee, Student, StudentBilling } from '$lib/types/school';
+import {
+	activeEnrollmentsForYear,
+	entitiesByIds,
+	paymentsForStudentFees,
+	studentFeesForStudents,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
+import { mapPeopleData } from '$lib/api/people-data';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
 type FeeRaw = components['schemas']['Fee'];
 type StudentFeeRaw = components['schemas']['StudentFee'];
 type PaymentRaw = components['schemas']['Payment'];
+type StudentRaw = components['schemas']['Student'];
+type EnrollmentRaw = components['schemas']['StudentClassEnrollment'];
 
 function moneyAmount(value: unknown): number {
 	if (typeof value === 'number') {
@@ -23,6 +33,8 @@ export interface FinanceSources {
 	feesRaw: FeeRaw[];
 	studentFeesRaw: StudentFeeRaw[];
 	paymentsRaw: PaymentRaw[];
+	studentsRaw: StudentRaw[];
+	enrollmentsRaw: EnrollmentRaw[];
 }
 
 const FEE_CATEGORY_LABELS: Record<string, Fee['category']> = {
@@ -105,17 +117,32 @@ function mapInstallments(studentFee: StudentFeeRaw): StudentBilling['installment
 	});
 }
 
-export async function fetchFinanceSources(client: SchoolClient): Promise<FinanceSources> {
-	const [feesRaw, studentFeesRaw, paymentsRaw] = await Promise.all([
-		client.entities.fees.list({}),
-		client.entities.studentFees.list({}),
-		client.entities.payments.list({}),
+export async function fetchFinanceSources(
+	client: SchoolClient,
+	scope: { schoolId: string; academicYearId: string },
+): Promise<FinanceSources> {
+	const [feesRaw, enrollmentsRaw] = await Promise.all([
+		client.entities.fees.list({ schoolId: scope.schoolId }),
+		client.entities.enrollments.list(activeEnrollmentsForYear(scope.academicYearId)),
 	]);
+	const studentIds = uniqueIds((enrollmentsRaw ?? []).map(enrollment => enrollment.studentId));
+	const [studentsRaw, studentFeesRaw] = studentIds.length > 0
+		? await Promise.all([
+				client.entities.students.list(entitiesByIds(studentIds)),
+				client.entities.studentFees.list(studentFeesForStudents(studentIds)),
+			])
+		: [[], []];
+	const studentFeeIds = uniqueIds((studentFeesRaw ?? []).map(studentFee => studentFee.id));
+	const paymentsRaw = studentFeeIds.length > 0
+		? await client.entities.payments.list(paymentsForStudentFees(studentFeeIds))
+		: [];
 
 	return {
 		feesRaw: feesRaw ?? [],
 		studentFeesRaw: studentFeesRaw ?? [],
 		paymentsRaw: paymentsRaw ?? [],
+		studentsRaw: studentsRaw ?? [],
+		enrollmentsRaw: enrollmentsRaw ?? [],
 	};
 }
 
@@ -146,10 +173,20 @@ export function mapStudentBilling(studentFeesRaw: StudentFeeRaw[]): StudentBilli
 		.sort((left, right) => left.dueDate.localeCompare(right.dueDate));
 }
 
-export async function loadFinanceData(client: SchoolClient): Promise<{ fees: Fee[]; billing: StudentBilling[] }> {
-	const sources = await fetchFinanceSources(client);
+export async function loadFinanceData(
+	client: SchoolClient,
+	scope: { schoolId: string; academicYearId: string },
+): Promise<{ fees: Fee[]; billing: StudentBilling[]; students: Student[] }> {
+	const sources = await fetchFinanceSources(client, scope);
+	const { students } = mapPeopleData({
+		studentsRaw: sources.studentsRaw,
+		enrollmentsRaw: sources.enrollmentsRaw,
+		guardiansRaw: [],
+		linksRaw: [],
+	});
 	return {
 		fees: mapFees(sources.feesRaw),
 		billing: mapStudentBilling(sources.studentFeesRaw),
+		students,
 	};
 }

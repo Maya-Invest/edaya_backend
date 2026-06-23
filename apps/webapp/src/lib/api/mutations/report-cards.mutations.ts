@@ -1,11 +1,22 @@
 import { academicContext } from '$lib/academic/context.svelte';
 import { runMutation } from '$lib/api/mutations/run-mutation';
+import { loadClassReportCardResultsData } from '$lib/api/report-cards-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 function schoolId(): string {
 	return academicContext.schools[0]?.id ?? 'sch-edaya-central';
+}
+
+async function refreshClassPeriodResults(classId: string, periodId: string): Promise<void> {
+	const results = await loadClassReportCardResultsData(
+		getBrowserSchoolClient(),
+		classId,
+		periodId,
+		reportCardsContext.definitions,
+	);
+	reportCardsContext.seedClassPeriodResults(results, { classId, periodId });
 }
 
 function buildGradeScaleRanges(minScore: number, maxScore: number, passingScore: number) {
@@ -130,12 +141,16 @@ export async function generateReportCardResultMutation(
 	studentId: string,
 	periodId = academicContext.periodId,
 ): Promise<boolean> {
+	const classId = detailDataContext.students.find(student => student.id === studentId)?.classId;
 	const result = await runMutation(async () => {
 		if (!await generateReportCardResultCommand(studentId, periodId)) {
 			throw new Error('Aucun modèle de bulletin publié pour cette classe.');
 		}
 		return true;
-	}, { errorMessage: 'Impossible de générer le bulletin.' });
+	}, {
+		errorMessage: 'Impossible de générer le bulletin.',
+		onSuccess: () => classId ? refreshClassPeriodResults(classId, periodId) : undefined,
+	});
 	return result !== null;
 }
 
@@ -146,14 +161,19 @@ export async function publishReportCardResultMutation(
 	definitionId?: string,
 ): Promise<boolean> {
 	const client = getBrowserSchoolClient();
-	const resolvedDefinitionId = definitionId ?? reportCardsContext.results.find(r => r.id === resultId)?.definitionId;
+	const existing = reportCardsContext.results.find(r => r.id === resultId);
+	const resolvedDefinitionId = definitionId ?? existing?.definitionId;
 	const result = await runMutation(() => client.commands.publishReportCardResult({
 		id: resultId,
 		studentId,
 		periodId,
 		reportCardDefinitionId: resolvedDefinitionId,
 		publishedAt: new Date().toISOString(),
-	}));
+	}), {
+		onSuccess: () => existing
+			? refreshClassPeriodResults(existing.classId, periodId)
+			: undefined,
+	});
 	return result !== null;
 }
 
@@ -180,7 +200,10 @@ export async function generateReportCardsForClassMutation(
 			}
 		}
 		return count;
-	}, { errorMessage: 'Impossible de générer les bulletins.' });
+	}, {
+		errorMessage: 'Impossible de générer les bulletins.',
+		onSuccess: () => refreshClassPeriodResults(classId, periodId),
+	});
 
 	return result;
 }

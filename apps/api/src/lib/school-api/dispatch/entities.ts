@@ -1,4 +1,4 @@
-import type { SchoolService } from "@edaya/core";
+import type { CoreEntityKey, SchoolService } from "@edaya/core";
 import {
   clearEffectiveGrantsCache,
   invalidateEffectiveGrantsCacheForActor,
@@ -20,8 +20,8 @@ export interface EntityWriteService {
   batchDelete: (ids: string[]) => Promise<void>;
 }
 
-export type QueryEntityName = string;
-export type ConfigCommandEntityName = string;
+export type QueryEntityName = CoreEntityKey;
+export type ConfigCommandEntityName = CoreEntityKey;
 
 function hasFunction(value: unknown, key: string): boolean {
   return typeof value === "object"
@@ -46,12 +46,12 @@ function isEntityWriteService(value: unknown): value is EntityWriteService {
 }
 
 export function getEntityReadService(service: SchoolService, name: QueryEntityName): EntityReadService | null {
-  const candidate = (service.baseService as unknown as Record<string, unknown>)[name];
+  const candidate = service.baseService.entities?.[name];
   return isEntityReadService(candidate) ? candidate : null;
 }
 
 export function getEntityWriteService(service: SchoolService, name: ConfigCommandEntityName): EntityWriteService | null {
-  const candidate = (service.baseService as unknown as Record<string, unknown>)[name];
+  const candidate = service.baseService.entities?.[name];
   if (!isEntityWriteService(candidate)) {
     return null;
   }

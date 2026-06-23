@@ -71,38 +71,38 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
 
   async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
     const gradeScale = new GradeScaleEntity(input)
-    await this.baseService.gradeScales.save(gradeScale)
+    await this.baseService.entities.gradeScales.save(gradeScale)
     return gradeScale
   }
 
   async createReportCardDefinition(input: CreateReportCardDefinitionInput): Promise<ReportCardDefinition> {
     const definition = new ReportCardDefinition(input)
-    await this.baseService.definitions.save(definition)
+    await this.baseService.entities.definitions.save(definition)
     return definition
   }
 
   async createReportCardDefinitionSection(input: CreateReportCardDefinitionSectionInput): Promise<ReportCardDefinitionSection> {
     const section = new ReportCardDefinitionSectionEntity(input)
-    await this.baseService.sections.save(section)
+    await this.baseService.entities.sections.save(section)
     return section
   }
 
   async createAssessment(input: CreateAssessmentInput): Promise<Assessment> {
     const assessment = new AssessmentEntity(input)
-    await this.baseService.assessments.save(assessment)
+    await this.baseService.entities.assessments.save(assessment)
     return assessment
   }
 
   async completeAssessment({ assessmentId, metAt }: CompleteAssessmentInput): Promise<Assessment> {
-    const existing = await this.requireEntity(this.baseService.assessments, assessmentId)
+    const existing = await this.requireEntity(this.baseService.entities.assessments, assessmentId)
     const assessment = new AssessmentEntity({ ...existing.data, metAt: metAt ?? new Date() })
-    await this.baseService.assessments.save(assessment)
+    await this.baseService.entities.assessments.save(assessment)
     return assessment
   }
 
   async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
     const result = new AssessmentResultEntity(input)
-    await this.baseService.assessmentResults.save(result)
+    await this.baseService.entities.assessmentResults.save(result)
     return result
   }
 
@@ -114,12 +114,12 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     classSubjectId,
     periodId,
   }: ListClassSubjectAssessmentResultsForPeriodInput): Promise<AssessmentResult[]> {
-    await this.requireEntity(this.baseService.classSubjects, classSubjectId)
-    await this.requireEntity(this.baseService.academicPeriods, periodId)
-    const assessments = await this.baseService.assessments.list({ classSubjectId, periodId })
+    await this.requireEntity(this.baseService.entities.classSubjects, classSubjectId)
+    await this.requireEntity(this.baseService.entities.academicPeriods, periodId)
+    const assessments = await this.baseService.entities.assessments.list({ classSubjectId, periodId })
     const results: AssessmentResult[] = []
     for (const assessment of assessments) {
-      results.push(...await this.baseService.assessmentResults.list({ assessmentId: assessment.id }))
+      results.push(...await this.baseService.entities.assessmentResults.list({ assessmentId: assessment.id }))
     }
     return results
   }
@@ -132,7 +132,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     await this.requireReportCardNotPublished(input.studentId, input.periodId)
     const reportCard = await this.buildReportCardResult(input)
-    await this.baseService.results.save(reportCard, { moduleChecked: true })
+    await this.baseService.entities.results.save(reportCard, { moduleChecked: true })
     return reportCard
   }
 
@@ -150,7 +150,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         status: ReportCardResultStatus.Published,
         publishedAt: input.publishedAt ?? new Date(),
       })
-      await this.baseService.results.save(published, { moduleChecked: true })
+      await this.baseService.entities.results.save(published, { moduleChecked: true })
       return published
     })
   }

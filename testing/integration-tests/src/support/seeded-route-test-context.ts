@@ -9,7 +9,13 @@ import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
 } from '@edaya/dev-fixtures'
-import { createHandlerAuthProvisioner, runDevAccessSeed, runDevAuthLink, runDevSchoolSeed } from '@edaya/seeding'
+import {
+  createHandlerAuthProvisioner,
+  createInProcessAuthLinkSeedPort,
+  runDevAccessSeed,
+  runDevAuthLinkWithPort,
+  runDevSchoolSeed,
+} from '@edaya/seeding'
 import { afterAll, beforeAll, describe } from 'bun:test'
 import { apiPgliteEnv } from './api-pglite-env'
 import {
@@ -110,7 +116,7 @@ export async function provisionSeededRouteTestContext(): Promise<SeededRouteTest
   }
 
   const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
-  await runDevAuthLink(application, auth)
+  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth)
   await runDevAccessSeed(application)
 
   return {

@@ -41,7 +41,7 @@ describe('Entity config delete gates', () => {
       name: 'Grade 1',
     }))
 
-    await expect(app.baseService.academicYears.delete('year-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.academicYears.delete('year-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('enrollment direct save rejects capacity bypass and active deletes', async () => {
@@ -75,7 +75,7 @@ describe('Entity config delete gates', () => {
     })
     await repositories.StudentClassEnrollmentRepository.save(existingEnrollment)
 
-    await expect(app.baseService.enrollments.save(new StudentClassEnrollment({
+    await expect(app.baseService.entities.enrollments.save(new StudentClassEnrollment({
       id: 'enrollment-new',
       studentId: 'student-new',
       classGroupId: 'class-capacity',
@@ -83,7 +83,7 @@ describe('Entity config delete gates', () => {
       enrollmentIndex: 1,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    await expect(app.baseService.enrollments.delete(existingEnrollment.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.enrollments.delete(existingEnrollment.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('published report cards and linked assessment results cannot be deleted directly', async () => {
@@ -156,8 +156,8 @@ describe('Entity config delete gates', () => {
       score: 18,
     }))
 
-    await expect(app.baseService.results.delete('report-card-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
-    await expect(app.baseService.assessmentResults.delete('assessment-result-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.results.delete('report-card-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.assessmentResults.delete('assessment-result-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('academic period preDelete rejects dependent assessments and report cards', async () => {
@@ -183,6 +183,6 @@ describe('Entity config delete gates', () => {
       dueAt: new Date('2026-02-01T00:00:00Z'),
     }))
 
-    await expect(app.baseService.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 })

@@ -34,15 +34,16 @@ import {
 	seedRolePermissionsCollection,
 	seedSchoolYearEventsCollection,
 	seedStaffCollection,
+	seedStudent360Collections,
 	seedStudentsCollection,
 	seedSubjectsCollection,
 	mergeById,
 } from './seed-policies';
 
-type RolePermissionsSnapshot = {
+interface RolePermissionsSnapshot {
 	roleCrudMatrix: Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>;
 	roleEnabledPermissions: Partial<Record<StaffRole, Record<string, boolean>>>;
-};
+}
 
 export class DetailDataContext {
 	students = $state<Student[]>([]);
@@ -76,9 +77,9 @@ export class DetailDataContext {
 	}
 
 	// --- Seed policies (see specs/data-loading-spec.md) ---
-	// Merge by id: students (school-wide), guardians, staff, incidents, activities, billing, fees, absences, resources
+	// Merge by id: students (school-wide), guardians, staff, incidents, activities, billing, fees, resources
 	// Replace class slice: students (class scope), planning, evaluations, deadlines, subjects
-	// Replace all: role permissions
+	// Replace all: role permissions, active-year calendar events and absences
 
 	/** Merge by id school-wide; replace class slice when `scope.classId` is set. */
 	seedStudents(students: Student[], scope?: { classId?: string }) {
@@ -88,6 +89,22 @@ export class DetailDataContext {
 	/** Merge by id. */
 	seedGuardians(guardians: Guardian[]) {
 		this.guardians = seedGuardiansCollection(this.guardians, guardians);
+	}
+
+	seedStudent360Data(
+		studentId: string,
+		healthRecord: HealthRecord | undefined,
+		pedagogicalNotes: PedagogicalNote[],
+	) {
+		const next = seedStudent360Collections(
+			this.healthRecords,
+			this.pedagogicalNotes,
+			studentId,
+			healthRecord,
+			pedagogicalNotes,
+		);
+		this.healthRecords = next.healthRecords;
+		this.pedagogicalNotes = next.pedagogicalNotes;
 	}
 
 	/** Merge by id. */

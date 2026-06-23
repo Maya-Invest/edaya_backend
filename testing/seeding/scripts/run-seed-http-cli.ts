@@ -34,11 +34,12 @@ function resolveAppOrigin(baseUrl: string): string {
 export function resolveSeedHttpConfig() {
   loadSeedEnvFiles()
   const baseUrl = process.env.SEED_API_URL ?? process.env.BETTER_AUTH_URL ?? 'http://localhost:9999'
+  const schoolId = process.env.SEED_SCHOOL_ID?.trim() || SEED_SCHOOL_ID
   return {
     baseUrl,
     appOrigin: resolveAppOrigin(baseUrl),
-    serviceAccountApiKey: process.env.SERVICE_ACCOUNT_API_KEY?.trim()
-      || resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID),
+    schoolId,
+    serviceAccountApiKey: resolveSeedingApiKeyForSchool(schoolId),
   }
 }
 
@@ -52,12 +53,6 @@ export async function runSeedHttpCli(argv: string[]): Promise<number> {
   catch (error) {
     console.error(error instanceof Error ? error.message : error)
     return 1
-  }
-
-  if (!process.env.SERVICE_ACCOUNT_API_KEY?.trim() && scope !== 'auth' && scope !== 'service-account') {
-    console.warn(
-      'No SERVICE_ACCOUNT_API_KEY in .env; using seeding API key from school profile in @edaya/dev-fixtures.',
-    )
   }
 
   const client = new HttpSeedClient({ baseUrl, appOrigin })

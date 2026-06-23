@@ -1,4 +1,4 @@
-import type { ActorMetadata } from "@edaya/core";
+import type { ActorMetadata, CoreEntityKey } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
 import type { CoreEntityConfig } from "@/lib/school-api/registry";
@@ -26,7 +26,7 @@ function requireActor(actor: ActorMetadata | null | undefined): ActorMetadata {
   return actor;
 }
 
-function resolveServices(actor: ActorMetadata, schoolApp: ApiSchoolApplication, serviceName: string) {
+function resolveServices(actor: ActorMetadata, schoolApp: ApiSchoolApplication, serviceName: CoreEntityKey) {
   const service = schoolApp.forActor(actor);
   return {
     readService: getEntityReadService(service, serviceName),
@@ -52,7 +52,7 @@ function countFilter(filter: unknown): Record<string, unknown> {
 export async function executeEntityList(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  serviceName: string,
+  serviceName: CoreEntityKey,
   filter: unknown,
 ) {
   const resolvedActor = requireActor(actor);
@@ -66,7 +66,7 @@ export async function executeEntityList(
 export async function executeEntityOne(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  serviceName: string,
+  serviceName: CoreEntityKey,
   displayName: string,
   filter: unknown,
 ) {
@@ -85,7 +85,7 @@ export async function executeEntityOne(
 export async function executeEntityCount(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  serviceName: string,
+  serviceName: CoreEntityKey,
   filter: unknown,
 ) {
   const resolvedActor = requireActor(actor);
@@ -99,7 +99,7 @@ export async function executeEntityCount(
 export async function executeEntityGet(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  serviceName: string,
+  serviceName: CoreEntityKey,
   displayName: string,
   id: string,
 ) {
@@ -148,7 +148,7 @@ export async function executeEntitySave(
 export async function executeEntityDelete(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  serviceName: string,
+  serviceName: CoreEntityKey,
   id: string,
 ) {
   const resolvedActor = requireActor(actor);
@@ -195,7 +195,7 @@ export async function executeEntityBatchSave(
 export async function executeEntityBatchDelete(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  serviceName: string,
+  serviceName: CoreEntityKey,
   ids: readonly string[],
 ) {
   const resolvedActor = requireActor(actor);

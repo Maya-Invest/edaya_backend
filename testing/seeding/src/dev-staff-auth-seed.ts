@@ -1,5 +1,5 @@
-import type { AuthProvisioner, SeedApplication } from './types'
-import { createBootstrapStaffActorMetadata, School } from '@edaya/core'
+import type { AuthLinkSeedPort } from './auth-link/port'
+import type { AuthProvisioner } from './types'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
@@ -18,29 +18,19 @@ export interface DevStaffAuthSyncResult {
 
 /** Dev-only: assign school owner without owner-transfer service gate (bootstrap / seeding). */
 export async function assignDevSchoolOwnerSubjectId(
-  application: SeedApplication,
+  port: AuthLinkSeedPort,
   ownerSubjectId: string,
 ): Promise<void> {
-  const currentSchool = await application.repositories.schools.findById(SEED_SCHOOL_ID)
+  const currentSchool = await port.findSchoolById(SEED_SCHOOL_ID)
   if (!currentSchool || currentSchool.ownerSubjectId === ownerSubjectId) {
     return
   }
 
-  await application.repositories.schools.save(new School({
-    id: currentSchool.id,
-    name: currentSchool.name,
-    timeZone: currentSchool.timeZone,
-    ownerSubjectId,
-    type: currentSchool.type,
-    country: currentSchool.country,
-    city: currentSchool.city,
-    createdAt: currentSchool.createdAt,
-  }))
+  await port.setSchoolOwnerSubjectId(currentSchool.id, ownerSubjectId)
 }
 
 async function ensureDevAuthStaffMembers(
-  application: SeedApplication,
-  service: ReturnType<SeedApplication['forActor']>,
+  port: AuthLinkSeedPort,
 ): Promise<void> {
   for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
     const seedMember = SEED_STAFF.find(member => member.id === account.staffId)
@@ -48,13 +38,13 @@ async function ensureDevAuthStaffMembers(
       continue
     }
 
-    const existingStaff = await application.repositories.staffMembers.findById(account.staffId)
+    const existingStaff = await port.findStaffById(account.staffId)
     if (existingStaff) {
       continue
     }
 
     const { firstName, lastName } = splitDisplayName(seedMember.name)
-    await service.registerStaffMember({
+    await port.registerStaffMember({
       id: account.staffId,
       schoolId: SEED_SCHOOL_ID,
       firstName,
@@ -65,15 +55,14 @@ async function ensureDevAuthStaffMembers(
 }
 
 async function linkDevAuthStaffAndGuardians(
-  application: SeedApplication,
+  port: AuthLinkSeedPort,
   auth: AuthProvisioner,
-  service: ReturnType<SeedApplication['forActor']>,
 ): Promise<Pick<DevStaffAuthSyncResult, 'linkedStaff' | 'linkedGuardians'>> {
   let linkedStaff = 0
   let linkedGuardians = 0
 
   for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
-    const staff = await application.repositories.staffMembers.findById(account.staffId)
+    const staff = await port.findStaffById(account.staffId)
     if (!staff) {
       continue
     }
@@ -89,21 +78,12 @@ async function linkDevAuthStaffAndGuardians(
     }
 
     if (staff.subjectId) {
-      await application.repositories.staffMembers.save({
-        id: staff.id,
-        schoolId: staff.schoolId,
-        firstName: staff.firstName,
-        lastName: staff.lastName,
-        email: staff.email,
-        subjectId,
-        isActive: staff.isActive,
-        createdAt: staff.createdAt,
-      })
+      await port.replaceStaffSubjectId(staff.id, subjectId)
       linkedStaff++
       continue
     }
 
-    await service.linkActorSubject({
+    await port.linkActorSubject({
       subjectId,
       staffMemberId: account.staffId,
     })
@@ -111,7 +91,7 @@ async function linkDevAuthStaffAndGuardians(
   }
 
   for (const account of DEV_AUTH_GUARDIAN_ACCOUNTS) {
-    const guardian = await application.repositories.guardians.findById(account.guardianId)
+    const guardian = await port.findGuardianById(account.guardianId)
     if (!guardian) {
       continue
     }
@@ -127,24 +107,12 @@ async function linkDevAuthStaffAndGuardians(
     }
 
     if (guardian.subjectId) {
-      await application.repositories.guardians.save({
-        id: guardian.id,
-        schoolId: guardian.schoolId,
-        firstName: guardian.firstName,
-        lastName: guardian.lastName,
-        email: guardian.email,
-        phone: guardian.phone,
-        subjectId,
-        contactMethods: guardian.contactMethods,
-        hasAccess: guardian.hasAccess,
-        premiumNotificationsEnabled: guardian.premiumNotificationsEnabled,
-        createdAt: guardian.createdAt,
-      })
+      await port.replaceGuardianSubjectId(guardian.id, subjectId)
       linkedGuardians++
       continue
     }
 
-    await service.linkActorSubject({
+    await port.linkActorSubject({
       subjectId,
       guardianId: account.guardianId,
     })
@@ -155,7 +123,7 @@ async function linkDevAuthStaffAndGuardians(
 }
 
 export async function resolveDevSchoolOwnerSubjectId(
-  application: SeedApplication,
+  port: AuthLinkSeedPort,
   auth: AuthProvisioner,
   ownerSubjectId?: string,
 ): Promise<string | undefined> {
@@ -175,7 +143,7 @@ export async function resolveDevSchoolOwnerSubjectId(
     return fromAuth
   }
 
-  const ownerStaff = await application.repositories.staffMembers.findById(SEED_SCHOOL_OWNER_STAFF_ID)
+  const ownerStaff = await port.findStaffById(SEED_SCHOOL_OWNER_STAFF_ID)
   return ownerStaff?.subjectId
 }
 
@@ -196,28 +164,21 @@ export function ownerSubjectIdFromAuthProvision(
  * Idempotent — safe to run from school seed and access seed.
  */
 export async function syncDevStaffAuthAndOwner(
-  application: SeedApplication,
+  port: AuthLinkSeedPort,
   auth: AuthProvisioner,
   ownerSubjectId?: string,
 ): Promise<DevStaffAuthSyncResult | null> {
-  const school = await application.repositories.schools.findById(SEED_SCHOOL_ID)
+  const school = await port.findSchoolById(SEED_SCHOOL_ID)
   if (!school) {
     return null
   }
 
-  const actor = createBootstrapStaffActorMetadata({
-    schoolId: SEED_SCHOOL_ID,
-    requestId: 'dev-staff-auth-seed',
-    staffMemberId: 'dev-staff-auth-seed',
-  })
-  const service = application.forActor(actor)
+  await ensureDevAuthStaffMembers(port)
+  const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(port, auth)
 
-  await ensureDevAuthStaffMembers(application, service)
-  const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(application, auth, service)
-
-  const resolvedOwnerSubjectId = await resolveDevSchoolOwnerSubjectId(application, auth, ownerSubjectId)
+  const resolvedOwnerSubjectId = await resolveDevSchoolOwnerSubjectId(port, auth, ownerSubjectId)
   if (resolvedOwnerSubjectId) {
-    await assignDevSchoolOwnerSubjectId(application, resolvedOwnerSubjectId)
+    await assignDevSchoolOwnerSubjectId(port, resolvedOwnerSubjectId)
   }
 
   return {

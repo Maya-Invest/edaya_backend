@@ -3,6 +3,7 @@ import {
   AuthorizationError,
   AuthorizationErrorCode,
   BusinessRuleViolationError,
+  type CoreEntityKey,
   DomainValidationError,
 } from "@edaya/core";
 import {
@@ -105,7 +106,7 @@ describe("getEntityWriteService authorization cache invalidation", () => {
   }
 
   async function expectCacheInvalidatedAfterSave(
-    serviceName: string,
+    serviceName: CoreEntityKey,
     entity: Record<string, unknown>,
     actorType: "student" | "guardian" | "staff",
     actorId: string,
@@ -134,7 +135,9 @@ describe("getEntityWriteService authorization cache invalidation", () => {
 
     const writeService = getEntityWriteService({
       baseService: {
-        [serviceName]: createMockEntityService(),
+        entities: {
+          [serviceName]: createMockEntityService(),
+        },
       },
     } as any, serviceName);
 
@@ -188,7 +191,9 @@ describe("getEntityWriteService authorization cache invalidation", () => {
 
     const writeService = getEntityWriteService({
       baseService: {
-        guardianLinks: createMockEntityService(),
+        entities: {
+          guardianLinks: createMockEntityService(),
+        },
       },
     } as any, "guardianLinks");
 

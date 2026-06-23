@@ -1,7 +1,22 @@
+import { LOCAL_DEV_WIPE_AND_RESEED_HINT } from './local-dev-http-bootstrap-error'
+
 export interface WaitForApiOptions {
   timeoutMs?: number
   intervalMs?: number
   path?: string
+}
+
+function formatProbeFailure(path: string, status: number, body: string): string {
+  if (status === 500 && /could not open file|pglite|disk i\/o error/i.test(body)) {
+    return `${path} returned 500 (local PGlite is corrupted — stop bun dev, run \`rm -rf .data\`, restart, then \`bun seed:init\`)`
+  }
+
+  if (body.trim()) {
+    const snippet = body.trim().slice(0, 160)
+    return `${path} returned ${status}: ${snippet}`
+  }
+
+  return `${path} returned ${status}`
 }
 
 export async function waitForApi(
@@ -22,7 +37,8 @@ export async function waitForApi(
         if (response.ok) {
           return
         }
-        lastDetail = `${path} returned ${response.status}`
+        const body = await response.text().catch(() => '')
+        lastDetail = formatProbeFailure(path, response.status, body)
       }
       catch (error) {
         lastDetail = `${path} failed: ${error instanceof Error ? error.message : String(error)}`
@@ -33,6 +49,6 @@ export async function waitForApi(
   }
 
   throw new Error(
-    `API at ${baseUrl} did not become ready within ${timeoutMs}ms (last: ${lastDetail})`,
+    `API at ${baseUrl} did not become ready within ${timeoutMs}ms (last: ${lastDetail}). ${LOCAL_DEV_WIPE_AND_RESEED_HINT}`,
   )
 }

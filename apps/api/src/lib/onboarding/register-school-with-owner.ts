@@ -93,7 +93,7 @@ export async function registerSchoolWithOwner(
   });
   const service = application.forActor(actor);
 
-  const school = await service.registerSchool({
+  const school = await service.setupWorkflow.registerSchool({
     id: schoolId,
     name: input.name,
     timeZone: input.timeZone,
@@ -103,7 +103,7 @@ export async function registerSchoolWithOwner(
     ...(input.city ? { city: input.city } : {}),
   });
 
-  await service.registerStaffMember({
+  await service.setupWorkflow.registerStaffMember({
     id: input.ownerStaffId ?? randomUUID(),
     schoolId,
     firstName: owner.firstName,

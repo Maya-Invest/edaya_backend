@@ -1,3 +1,5 @@
+import type { components } from '$lib/api/schema';
+import { reportCardDefinition, subject } from '$lib/test/openapi-fixtures';
 import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import {
@@ -61,7 +63,7 @@ const seedGradeScalesRaw = [
 			{ letter: 'A', minScore: 3.5, maxScore: 4, isPassing: true, interpretation: 'Très bien' },
 		],
 	},
-] as const;
+];
 
 describe('report cards grade scale mapping', () => {
 	it('derives passingScore from passing ranges', () => {
@@ -96,34 +98,25 @@ describe('report cards grade scale mapping', () => {
 });
 
 const seedDefinitionsRaw = [
-	{
+	reportCardDefinition({
 		id: 'rcd-ms-6',
-		schoolId: SEED_SCHOOL_ID,
-		academicYearId: '2025',
-		gradeLevelId: 'gl-6',
-		gradeScaleId: 'gs-20',
 		name: 'Bulletin trimestriel — Collège (6ème)',
-		status: 'published',
 		isDefault: true,
-	},
-	{
+	}),
+	reportCardDefinition({
 		id: 'rcd-ms-draft',
-		schoolId: SEED_SCHOOL_ID,
-		academicYearId: '2025',
-		gradeLevelId: 'gl-6',
-		gradeScaleId: 'gs-20',
 		name: 'Bulletin trimestriel — Collège (modèle brouillon)',
 		status: 'draft',
-		isDefault: false,
-	},
-] as const;
+	}),
+];
 
 const seedDefinitionSectionsRaw = [
 	{
 		id: 'rcs-ms-fond',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'Matières fondamentales',
-		role: 'matieres',
+		kind: 'group' as const,
+		role: 'matieres' as const,
 		coefficient: 2,
 		order: 1,
 		weight: 2,
@@ -132,7 +125,8 @@ const seedDefinitionSectionsRaw = [
 		id: 'rcs-ms-sci',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'Sciences & langues',
-		role: 'matieres',
+		kind: 'group' as const,
+		role: 'matieres' as const,
 		coefficient: 1.5,
 		order: 2,
 		weight: 2,
@@ -141,7 +135,8 @@ const seedDefinitionSectionsRaw = [
 		id: 'rcs-ms-sport',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'EPS & arts',
-		role: 'matieres',
+		kind: 'group' as const,
+		role: 'matieres' as const,
 		coefficient: 1,
 		order: 3,
 		weight: 1,
@@ -150,7 +145,8 @@ const seedDefinitionSectionsRaw = [
 		id: 'rcs-ms-synth',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'Synthèse trimestrielle',
-		role: 'synthese',
+		kind: 'group' as const,
+		role: 'synthese' as const,
 		order: 4,
 		weight: 1,
 	},
@@ -158,7 +154,8 @@ const seedDefinitionSectionsRaw = [
 		id: 'rcs-ms-appr',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'Appréciations',
-		role: 'appreciation',
+		kind: 'group' as const,
+		role: 'appreciation' as const,
 		order: 5,
 		weight: 1,
 	},
@@ -166,12 +163,13 @@ const seedDefinitionSectionsRaw = [
 		id: 'rcs-ms-fond-subj-math',
 		reportCardDefinitionId: 'rcd-ms-6',
 		name: 'subj-math',
+		kind: 'subject' as const,
 		order: 1,
 		weight: 1,
 		parentSectionId: 'rcs-ms-fond',
 		subjectId: 'subj-math',
 	},
-] as const;
+];
 
 const classSubjectsSources = {
 	classSubjectsRaw: [
@@ -180,13 +178,13 @@ const classSubjectsSources = {
 		{ id: 'cs-term-advmath', classGroupId: 'term-s', subjectId: 'subj-advmath', completedPercentage: 0 },
 	],
 	subjectsRaw: [
-		{ id: 'subj-math', schoolId: SEED_SCHOOL_ID, name: 'Mathematics', defaultCoefficient: 3 },
-		{ id: 'subj-advmath', schoolId: SEED_SCHOOL_ID, name: 'Advanced Mathematics', defaultCoefficient: 3 },
+		subject({ id: 'subj-math', name: 'Mathematics', defaultCoefficient: 3 }),
+		subject({ id: 'subj-advmath', name: 'Advanced Mathematics', defaultCoefficient: 3 }),
 	],
 	subjectMattersRaw: [],
 	staffAssignmentsRaw: [],
 	staffMembersRaw: [],
-} as const;
+};
 
 describe('report cards definition mapping', () => {
 	it('maps definition status from API enum', () => {
@@ -295,6 +293,15 @@ describe('report cards result mapping', () => {
 				overallAverage: 17.2,
 				rank: 1,
 				classSize: 6,
+				attendanceSummary: {
+					presentCount: 20,
+					absenceCount: 1,
+					excusedAbsenceCount: 0,
+					lateCount: 0,
+					total: 21,
+					attendanceRate: 95,
+				},
+				assessmentResultCount: 1,
 				sectionResults: [{
 					sectionId: 'rcs-ms-fond',
 					sectionKind: 'group',
@@ -312,17 +319,12 @@ describe('report cards result mapping', () => {
 						subResults: [],
 					}],
 				}],
-			}],
-			[{
+			} as unknown as components['schemas']['ReportCardResult']],
+			[reportCardDefinition({
 				id: 'rcd-ms-6',
-				schoolId: SEED_SCHOOL_ID,
-				academicYearId: '2025',
-				gradeLevelId: 'gl-6',
-				gradeScaleId: 'gs-20',
 				name: 'Bulletin trimestriel — Collège (6ème)',
-				status: 'published',
 				isDefault: true,
-			}],
+			})],
 			classSubjectsSources,
 		);
 

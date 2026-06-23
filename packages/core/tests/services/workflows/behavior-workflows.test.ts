@@ -14,7 +14,7 @@ describe('SchoolService behavior workflows', () => {
   test('addStudentInvolvement persists eligible students through managed service', async () => {
     const { mockPolicy, mockRepos, service } = createBehaviorContext()
 
-    const result = await service.addStudentInvolvement({
+    const result = await service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
       incidentId: 'inc1',
       studentId: 'stu1',
@@ -32,7 +32,7 @@ describe('SchoolService behavior workflows', () => {
   test('addStudentInvolvement rejects duplicate student links', async () => {
     const { service } = createBehaviorContext({ existingInvolvement: true })
 
-    await expect(service.addStudentInvolvement({
+    await expect(service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
       incidentId: 'inc1',
       studentId: 'stu1',
@@ -43,7 +43,7 @@ describe('SchoolService behavior workflows', () => {
   test('applyDisciplinaryAction requires an incident involvement and saves through managed service', async () => {
     const { mockPolicy, mockRepos, service } = createBehaviorContext({ existingInvolvement: true })
 
-    const result = await service.applyDisciplinaryAction({
+    const result = await service.behaviorWorkflow.applyDisciplinaryAction({
       id: 'sda1',
       incidentId: 'inc1',
       studentId: 'stu1',
@@ -62,7 +62,7 @@ describe('SchoolService behavior workflows', () => {
   test('applyDisciplinaryAction rejects students without an incident involvement', async () => {
     const { service } = createBehaviorContext()
 
-    await expect(service.applyDisciplinaryAction({
+    await expect(service.behaviorWorkflow.applyDisciplinaryAction({
       id: 'sda1',
       incidentId: 'inc1',
       studentId: 'stu1',

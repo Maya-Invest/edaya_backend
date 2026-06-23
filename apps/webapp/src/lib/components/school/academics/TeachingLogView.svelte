@@ -3,11 +3,11 @@
 	import { page } from '$app/stores';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Search, Sparkles } from '$lib/icons';
 	import { readTeachingListFilters, writeTeachingListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import SubjectsView from './SubjectsView.svelte';
 

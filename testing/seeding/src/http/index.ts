@@ -1,4 +1,28 @@
+export { createHttpAccessSeedPort } from '../access/http'
+export { createHttpActivitiesSeedPort } from '../activities/http'
+export { createHttpAssessmentsSeedPort } from '../assessments/http'
+export { createHttpAttachmentsSeedPort } from '../attachments/http'
+export { createHttpAttendanceSeedPort } from '../attendance/http'
+export { createHttpAuthLinkSeedPort } from '../auth-link/http'
+export { createHttpCommunicationsSeedPort } from '../communications/http'
+export { createHttpCurriculumSeedPort } from '../curriculum/http'
+export { createHttpDisciplineSeedPort } from '../discipline/http'
+export { createHttpFinanceSeedPort } from '../finance/http'
+export { createHttpLearningContentSeedPort } from '../learning-content/http'
+export { createHttpPopulationSeedPort } from '../population/http'
+export { createHttpReportCardsSeedPort } from '../report-cards/http'
+export { createHttpSchedulingSeedPort } from '../scheduling/http'
+export { createHttpSchoolLifeSeedPort } from '../school-life/http'
+export { createHttpSchoolStructureSeedPort } from '../school-structure/http'
+export { createHttpStudentSupportSeedPort } from '../student-support/http'
 export { HttpAuthProvisioner, signInViaHttp } from './auth'
+export {
+  isSeedEntityKey,
+  type SeedCommandKey,
+  seedCommandPublicName,
+  type SeedEntityKey,
+  seedEntityPublicName,
+} from './catalog'
 export { type HttpFetch, HttpSeedClient, type HttpSeedClientOptions } from './client'
 export { executeCoreCommand, type ExecuteCoreCommandOptions } from './core-command'
 export {
@@ -9,8 +33,6 @@ export {
   postEntityList,
   postEntitySave,
 } from './core-entity'
-export { createCoreHttpSeedApplication } from './core-seed-application'
-export { commandMethodToPublicName, entityPublicName } from './names'
 export {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,

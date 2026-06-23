@@ -1,6 +1,7 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import type { ChronicCondition, HealthRecord, PedagogicalNote } from '$lib/types/school';
+import type { HealthRecord, PedagogicalNote } from '$lib/types/school';
+import { recordsForStudent } from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -36,6 +37,8 @@ function splitHealthList(value?: string | null | string[]): string[] {
 	}
 	return value.split(',').map(entry => entry.trim()).filter(Boolean);
 }
+
+type ChronicCondition = HealthRecord['chronicConditions'][number];
 
 function mapChronicConditions(values: string[]): ChronicCondition[] {
 	const allowed = new Set<ChronicCondition>(['Asthme', 'Epilepsie', 'Diabete']);
@@ -88,17 +91,26 @@ export function mapPedagogicalNotes(notesRaw: StudentNoteRaw[]): PedagogicalNote
 		.sort((left, right) => right.date.localeCompare(left.date));
 }
 
-export async function loadStudent360Data(client: SchoolClient): Promise<{
-	healthRecords: Record<string, HealthRecord>;
+export async function loadStudent360Data(
+	client: SchoolClient,
+	studentId: string,
+): Promise<{
+	healthRecord: HealthRecord | undefined;
 	pedagogicalNotes: PedagogicalNote[];
 }> {
-	const [profilesRaw, notesRaw] = await Promise.all([
-		client.entities.studentHealthProfiles.list({}),
-		client.entities.studentNotes.list({}),
+	const filter = recordsForStudent(studentId);
+	const [
+		profilesRaw,
+		notesRaw,
+	] = await Promise.all([
+		client.entities.studentHealthProfiles.list(filter),
+		client.entities.studentNotes.list(filter),
 	]);
 
+	const healthRecords = mapHealthProfiles(profilesRaw ?? []);
+
 	return {
-		healthRecords: mapHealthProfiles(profilesRaw ?? []),
+		healthRecord: healthRecords[studentId],
 		pedagogicalNotes: mapPedagogicalNotes(notesRaw ?? []),
 	};
 }

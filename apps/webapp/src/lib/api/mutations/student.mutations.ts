@@ -1,3 +1,4 @@
+import type { AbsenceRecord, Incident, Student } from '$lib/types/school';
 import { recordAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
 import { recordIncidentMutation } from '$lib/api/mutations/incident.mutations';
 import { runMutation } from '$lib/api/mutations/run-mutation';
@@ -5,7 +6,6 @@ import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { authSession } from '$lib/auth/session.svelte';
 import { dateInputToIso, formatDateInput } from '$lib/date/format';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
-import type { AbsenceRecord, Incident, Student } from '$lib/types/school';
 
 type StudentNoteCategory = 'behavior' | 'work' | 'progress' | 'encouragement';
 type StudentNoteVisibility = 'staff' | 'admin_only' | 'guardian_visible';

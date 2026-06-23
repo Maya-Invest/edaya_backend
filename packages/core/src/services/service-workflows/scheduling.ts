@@ -86,19 +86,19 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
 
   async createSchedule(input: CreateScheduleInput): Promise<Schedule> {
     const schedule = new Schedule(input)
-    await this.baseService.schedules.save(schedule)
+    await this.baseService.entities.schedules.save(schedule)
     return schedule
   }
 
   async createCalendarEvent(input: CreateCalendarEventInput): Promise<CalendarEvent> {
     const event = new CalendarEvent(input)
-    await this.baseService.calendarEvents.save(event)
+    await this.baseService.entities.calendarEvents.save(event)
     return event
   }
 
   async createSession(input: CreateSessionInput): Promise<Session> {
     const session = new Session(input)
-    await this.baseService.sessions.save(session)
+    await this.baseService.entities.sessions.save(session)
     return session
   }
 
@@ -156,7 +156,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
               classSubjectId: schedule.classSubjectId,
               scheduleId: schedule.id,
             })
-            await this.baseService.sessions.save(session, { moduleChecked: true })
+            await this.baseService.entities.sessions.save(session, { moduleChecked: true })
             generatedSessions.push(session)
           }
         }
@@ -285,14 +285,14 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     decision,
     reason,
   }: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
-    const existing = await this.requireOne(this.baseService.attendance, { studentId, sessionId })
+    const existing = await this.requireOne(this.baseService.entities.attendance, { studentId, sessionId })
     const record = existing.copyWith({
       justificationStatus: decision ?? AttendanceJustificationStatus.Excused,
       reason,
       justifiedAt: new Date(),
       justifiedByStaffId: resolveAuditActorId(this.baseService.actor),
     })
-    await this.baseService.attendance.save(record)
+    await this.baseService.entities.attendance.save(record)
     return record
   }
 
@@ -334,7 +334,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing?.createdAt ?? createdAt,
       updatedAt,
     })
-    await this.baseService.attendance.save(record, { moduleChecked: true })
+    await this.baseService.entities.attendance.save(record, { moduleChecked: true })
     return record
   }
 
@@ -369,7 +369,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       endsAt,
       createdAt,
     })
-    await this.baseService.sessions.save(session, { moduleChecked: true })
+    await this.baseService.entities.sessions.save(session, { moduleChecked: true })
     return session
   }
 

@@ -1,11 +1,12 @@
 import type { GradeScale, ReportCardDefinition, ReportCardResult } from '$lib/types/report-cards';
 import { academicContext } from '$lib/academic/context.svelte';
+import { seedClassPeriodReportCardResults } from './seed-policies';
 
 function clone<T>(value: T): T {
 	return structuredClone(value);
 }
 
-class ReportCardsContext {
+export class ReportCardsContext {
 	scales = $state<GradeScale[]>([]);
 	definitions = $state<ReportCardDefinition[]>([]);
 	results = $state<ReportCardResult[]>([]);
@@ -21,15 +22,20 @@ class ReportCardsContext {
 		return this.results.filter(r => r.studentId === studentId);
 	}
 
-	hydrateFromServer(input: {
+	hydrateCatalog(input: {
 		gradeScales: GradeScale[];
 		reportCardDefinitions: ReportCardDefinition[];
-		reportCardResults: ReportCardResult[];
 	}) {
 		this.scales = clone(input.gradeScales);
 		this.definitions = clone(input.reportCardDefinitions);
-		this.results = clone(input.reportCardResults);
 		this.ready = true;
+	}
+
+	seedClassPeriodResults(
+		results: ReportCardResult[],
+		scope: { classId: string; periodId: string },
+	) {
+		this.results = clone(seedClassPeriodReportCardResults(this.results, results, scope));
 	}
 
 	reset() {

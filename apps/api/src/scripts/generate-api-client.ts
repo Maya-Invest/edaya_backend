@@ -3,10 +3,23 @@ import { resolve } from "node:path";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 
-const outputPath = resolve(
-  import.meta.dirname,
-  "../../../../packages/api-client/src/generated/client-bindings.ts",
-);
+function resolveOutputPath(): string {
+  const outputIndex = process.argv.indexOf("--output");
+  if (outputIndex === -1) {
+    return resolve(
+      import.meta.dirname,
+      "../../../../packages/api-client/src/generated/client-bindings.ts",
+    );
+  }
+
+  const requestedPath = process.argv[outputIndex + 1];
+  if (!requestedPath) {
+    throw new Error("--output requires a file path");
+  }
+  return resolve(process.cwd(), requestedPath);
+}
+
+const outputPath = resolveOutputPath();
 
 function formatObject(value: unknown, indent = 2): string {
   return JSON.stringify(value, null, indent)

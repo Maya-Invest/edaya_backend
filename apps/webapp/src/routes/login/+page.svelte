@@ -82,7 +82,7 @@
 			const { session } = await bootstrapSession();
 			if (!session) {
 				toast.error(
-					'Session API indisponible — redémarrez bun dev (surtout après bun seed), puis reconnectez-vous.',
+					'Session API indisponible — vérifiez que `bun seed` a réussi, puis reconnectez-vous.',
 				);
 				return;
 			}

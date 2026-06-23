@@ -1,6 +1,7 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { Activity } from '$lib/types/school';
+import { activityEnrollmentsForActivities, uniqueIds } from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -39,11 +40,15 @@ function formatDate(value: unknown): string {
 	return String(value).slice(0, 10);
 }
 
-export async function fetchActivitySources(client: SchoolClient): Promise<ActivitySources> {
-	const [activitiesRaw, activityEnrollmentsRaw] = await Promise.all([
-		client.entities.activities.list({}),
-		client.entities.activityEnrollments.list({}),
-	]);
+export async function fetchActivitySources(
+	client: SchoolClient,
+	schoolId: string,
+): Promise<ActivitySources> {
+	const activitiesRaw = (await client.entities.activities.list({ schoolId })) ?? [];
+	const activityIds = uniqueIds(activitiesRaw.map(activity => activity.id));
+	const activityEnrollmentsRaw = activityIds.length > 0
+		? await client.entities.activityEnrollments.list(activityEnrollmentsForActivities(activityIds))
+		: [];
 
 	return {
 		activitiesRaw: activitiesRaw ?? [],
@@ -77,8 +82,7 @@ export function mapActivities(sources: ActivitySources): Activity[] {
 	}));
 }
 
-export async function fetchActivities(client?: SchoolClient): Promise<Activity[]> {
-	const { getBrowserSchoolClient } = await import('$lib/api/school-client');
-	const sources = await fetchActivitySources(client ?? getBrowserSchoolClient());
+export async function fetchActivities(client: SchoolClient, schoolId: string): Promise<Activity[]> {
+	const sources = await fetchActivitySources(client, schoolId);
 	return mapActivities(sources);
 }

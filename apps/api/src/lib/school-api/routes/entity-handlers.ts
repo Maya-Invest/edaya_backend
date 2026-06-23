@@ -1,4 +1,5 @@
 import type { AppBindings, AppRouteHandler } from "@/http/types";
+import type { CoreEntityKey } from "@edaya/core";
 import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -36,7 +37,7 @@ function mapEntityOperationError(c: Context<AppBindings>, err: unknown) {
   return routeErrorResponse(c, err);
 }
 
-export function resolveServices(c: Context<AppBindings>, _serviceName: string) {
+export function resolveServices(c: Context<AppBindings>, _serviceName: CoreEntityKey) {
   const actor = c.get("actor");
   if (!actor) {
     return { actor: null, schoolApp: null };
@@ -47,7 +48,7 @@ export function resolveServices(c: Context<AppBindings>, _serviceName: string) {
   };
 }
 
-export function entityListHandler(serviceName: string): AppRouteHandler<any> {
+export function entityListHandler(serviceName: CoreEntityKey): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, serviceName);
     try {
@@ -60,7 +61,7 @@ export function entityListHandler(serviceName: string): AppRouteHandler<any> {
   };
 }
 
-export function entityOneHandler(serviceName: string, displayName: string): AppRouteHandler<any> {
+export function entityOneHandler(serviceName: CoreEntityKey, displayName: string): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, serviceName);
     try {
@@ -73,7 +74,7 @@ export function entityOneHandler(serviceName: string, displayName: string): AppR
   };
 }
 
-export function entityCountHandler(serviceName: string): AppRouteHandler<any> {
+export function entityCountHandler(serviceName: CoreEntityKey): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, serviceName);
     try {
@@ -86,7 +87,7 @@ export function entityCountHandler(serviceName: string): AppRouteHandler<any> {
   };
 }
 
-export function entityGetHandler(serviceName: string, displayName: string): AppRouteHandler<any> {
+export function entityGetHandler(serviceName: CoreEntityKey, displayName: string): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, serviceName);
     try {
@@ -116,7 +117,7 @@ export function entitySaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceN
   };
 }
 
-export function entityDeleteHandler(serviceName: string): AppRouteHandler<any> {
+export function entityDeleteHandler(serviceName: CoreEntityKey): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, serviceName);
     try {
@@ -146,7 +147,7 @@ export function entityBatchSaveHandler(entityConfig: Pick<CoreEntityConfig, "ser
   };
 }
 
-export function entityBatchDeleteHandler(serviceName: string): AppRouteHandler<any> {
+export function entityBatchDeleteHandler(serviceName: CoreEntityKey): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, serviceName);
     try {

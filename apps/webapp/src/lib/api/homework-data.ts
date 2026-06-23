@@ -1,6 +1,13 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { Deadline } from '$lib/types/school';
+import {
+	classGroupScope,
+	entitiesByIds,
+	schoolWideEntityList,
+	submissionsForHomeworkAssignments,
+	uniqueIds,
+} from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -8,6 +15,9 @@ type HomeworkAssignmentRaw = components['schemas']['HomeworkAssignment'];
 type HomeworkSubmissionRaw = components['schemas']['HomeworkSubmission'];
 type ClassSubjectRaw = components['schemas']['ClassSubject'];
 type SubjectRaw = components['schemas']['Subject'];
+
+const SCHOOL_HOMEWORK_SCOPE
+	= 'Prototype homework routes without a class scope still load the school-wide homework catalog.';
 
 export interface HomeworkSources {
 	homeworkAssignmentsRaw: HomeworkAssignmentRaw[];
@@ -57,10 +67,45 @@ export async function fetchHomeworkSources(client: SchoolClient): Promise<Homewo
 		classSubjectsRaw,
 		subjectsRaw,
 	] = await Promise.all([
-		client.entities.homeworkAssignments.list({}),
-		client.entities.homeworkSubmissions.list({}),
-		client.entities.classSubjects.list({}),
-		client.entities.subjects.list({}),
+		client.entities.homeworkAssignments.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
+		client.entities.homeworkSubmissions.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
+		client.entities.classSubjects.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
+		client.entities.subjects.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
+	]);
+
+	return {
+		homeworkAssignmentsRaw: homeworkAssignmentsRaw ?? [],
+		homeworkSubmissionsRaw: homeworkSubmissionsRaw ?? [],
+		classSubjectsRaw: classSubjectsRaw ?? [],
+		subjectsRaw: subjectsRaw ?? [],
+	};
+}
+
+export async function fetchClassHomeworkSources(
+	client: SchoolClient,
+	classGroupId: string,
+): Promise<HomeworkSources> {
+	const [
+		homeworkAssignmentsRaw,
+		classSubjectsRaw,
+	] = await Promise.all([
+		client.entities.homeworkAssignments.list(classGroupScope(classGroupId)),
+		client.entities.classSubjects.list(classGroupScope(classGroupId)),
+	]);
+
+	const assignmentIds = uniqueIds((homeworkAssignmentsRaw ?? []).map(assignment => assignment.id));
+	const subjectIds = uniqueIds((classSubjectsRaw ?? []).map(classSubject => classSubject.subjectId));
+
+	const [
+		homeworkSubmissionsRaw,
+		subjectsRaw,
+	] = await Promise.all([
+		assignmentIds.length > 0
+			? client.entities.homeworkSubmissions.list(submissionsForHomeworkAssignments(assignmentIds))
+			: Promise.resolve([]),
+		subjectIds.length > 0
+			? client.entities.subjects.list(entitiesByIds(subjectIds))
+			: Promise.resolve([]),
 	]);
 
 	return {
@@ -116,6 +161,8 @@ export function mapDeadlines(
 
 export async function fetchDeadlines(classGroupId?: string, client?: SchoolClient): Promise<Deadline[]> {
 	const resolvedClient = client ?? (await import('$lib/api/school-client')).getBrowserSchoolClient();
-	const sources = await fetchHomeworkSources(resolvedClient);
+	const sources = classGroupId
+		? await fetchClassHomeworkSources(resolvedClient, classGroupId)
+		: await fetchHomeworkSources(resolvedClient);
 	return mapDeadlines(classGroupId, sources);
 }
