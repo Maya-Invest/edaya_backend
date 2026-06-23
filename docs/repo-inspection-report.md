@@ -3,7 +3,7 @@
 Date: 2026-06-16  
 Scope: over-engineering, boundary definition/enforcement, and developer experience for the `maya_school_core` monorepo.
 
-**Closure audit:** 2026-06-22 — see [Simplification initiative closure](#simplification-initiative-closure-2026-06-22) below. Tracked work: `sprints/done/repository-simplification-plan.md`.
+**Closure audit:** 2026-06-22 — see [Simplification initiative closure](#simplification-initiative-closure-2026-06-22) below. Tracked work: `sprints/repository-simplification-plan.md`.
 
 ## Simplification initiative closure (2026-06-22)
 
@@ -39,13 +39,14 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 | `postgres-schema.ts` | 697 lines | 698 lines (**Phase 4 deferred**) |
 | Tracked OpenAPI (`schema.d.ts` + `openapi.json`) | ~129k lines | ~129k lines (retained; 26 schema consumers verified) |
 | Production `any` / `as any` | Not measured | api: 72, adaptor-postgres: 52, core: 32, webapp: 0, api-client: 0 |
-| Deprecated internal wrappers | Several | **0** in production source (Phase 2–3 cleanup) |
+| Deprecated internal wrappers | Several | **0** in production source (Phase 2–3 cleanup; `prototype.queries.ts` → `homework.queries.ts`, 2026-06-23) |
 
 ### Deferred follow-ups
 
 - **Phase 4:** Split `postgres-schema.ts` and `entity-stores.ts` by bounded context without migration drift.
-- **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points, rename `prototype.queries.ts` → `homework.queries.ts`.
+- **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points. (`prototype.queries.ts` rename completed 2026-06-23.)
 - **Product:** Domain-scoped mutation invalidation buckets (Finding 8), pagination for school-wide admin lists (Finding 9).
+- **Operator:** Staging smoke (`bun run smoke:staging`), manual screen QA checklist (Phase 8.2).
 
 ---
 

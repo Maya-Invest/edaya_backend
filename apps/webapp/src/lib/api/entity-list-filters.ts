@@ -55,9 +55,6 @@ export function entitiesByIds(ids: readonly string[]): EntityQuery {
 	return recordsForFieldIds('id', ids);
 }
 
-/** @deprecated Use entitiesByIds */
-export const studentsByIds = entitiesByIds;
-
 export function guardiansByIds(ids: readonly string[]): EntityQuery {
 	return entitiesByIds(ids);
 }

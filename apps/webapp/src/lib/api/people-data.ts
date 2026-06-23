@@ -7,12 +7,12 @@ import {
 	assessmentResultsForStudents,
 	assessmentsForClassPeriod,
 	attendanceForStudents,
+	entitiesByIds,
 	enrollmentsForStudents,
 	guardianLinksForGuardians,
 	guardianLinksForStudents,
 	guardiansByIds,
 	schoolWideEntityList,
-	studentsByIds,
 	uniqueIds,
 } from '$lib/api/entity-list-filters';
 import { formatDateInput } from '$lib/date/format';
@@ -24,9 +24,6 @@ const SCHOOL_ROSTER_SCOPE
 
 const SCHOOL_GUARDIANS_SCOPE
 	= 'School guardians administration lists all guardians; only guardian-linked students and enrollments are fetched by id.';
-
-const SCHOOL_STUDENT_METRICS_SCOPE
-	= 'School student list metrics (attendance and grades) still load school-wide until a dedicated aggregate query exists.';
 
 type StudentRaw = components['schemas']['Student'];
 type EnrollmentRaw = components['schemas']['StudentClassEnrollment'];
@@ -219,7 +216,7 @@ export async function fetchGuardiansPeopleSources(client: SchoolClient): Promise
 		studentsRaw,
 		enrollmentsRaw,
 	] = await Promise.all([
-		client.entities.students.list(studentsByIds(studentIds)),
+		client.entities.students.list(entitiesByIds(studentIds)),
 		client.entities.enrollments.list(enrollmentsForStudents(studentIds)),
 	]);
 
@@ -253,7 +250,7 @@ export async function fetchClassPeopleSources(
 		studentsRaw,
 		linksRaw,
 	] = await Promise.all([
-		client.entities.students.list(studentsByIds(studentIds)),
+		client.entities.students.list(entitiesByIds(studentIds)),
 		client.entities.guardianLinks.list(guardianLinksForStudents(studentIds)),
 	]);
 
@@ -270,6 +267,51 @@ export async function fetchClassPeopleSources(
 	};
 }
 
+async function fetchClassRosterMetricsSources(
+	client: SchoolClient,
+	studentIds: readonly string[],
+	classScope: { classGroupId: string; periodId: string },
+): Promise<StudentMetricsSources> {
+	const [attendanceRaw, assessmentsRaw] = await Promise.all([
+		client.entities.attendance.list(attendanceForStudents(studentIds)),
+		client.entities.assessments.list(
+			assessmentsForClassPeriod(classScope.classGroupId, classScope.periodId),
+		),
+	]);
+	const assessmentIds = uniqueIds((assessmentsRaw ?? []).map(assessment => assessment.id));
+	const resultsRaw = assessmentIds.length > 0
+		? await client.entities.assessmentResults.list(
+				assessmentResultsForScope(assessmentIds, studentIds),
+			)
+		: [];
+
+	return {
+		attendanceRaw: attendanceRaw ?? [],
+		assessmentsRaw: assessmentsRaw ?? [],
+		resultsRaw: resultsRaw ?? [],
+	};
+}
+
+async function fetchSchoolRosterMetricsSources(
+	client: SchoolClient,
+	studentIds: readonly string[],
+): Promise<StudentMetricsSources> {
+	const [attendanceRaw, resultsRaw] = await Promise.all([
+		client.entities.attendance.list(attendanceForStudents(studentIds)),
+		client.entities.assessmentResults.list(assessmentResultsForStudents(studentIds)),
+	]);
+	const assessmentIds = uniqueIds((resultsRaw ?? []).map(result => result.assessmentId));
+	const assessmentsRaw = assessmentIds.length > 0
+		? await client.entities.assessments.list(entitiesByIds(assessmentIds))
+		: [];
+
+	return {
+		attendanceRaw: attendanceRaw ?? [],
+		assessmentsRaw: assessmentsRaw ?? [],
+		resultsRaw: resultsRaw ?? [],
+	};
+}
+
 async function fetchStudentMetricsSources(
 	client: SchoolClient,
 	studentIds: readonly string[],
@@ -283,28 +325,11 @@ async function fetchStudentMetricsSources(
 		};
 	}
 
-	const [attendanceRaw, assessmentsRaw] = await Promise.all([
-		client.entities.attendance.list(attendanceForStudents(studentIds)),
-		classScope
-			? client.entities.assessments.list(
-					assessmentsForClassPeriod(classScope.classGroupId, classScope.periodId),
-				)
-			: client.entities.assessments.list(schoolWideEntityList(SCHOOL_STUDENT_METRICS_SCOPE)),
-	]);
-	const assessmentIds = uniqueIds((assessmentsRaw ?? []).map(assessment => assessment.id));
-	const resultsRaw = classScope
-		? assessmentIds.length > 0
-			? await client.entities.assessmentResults.list(
-					assessmentResultsForScope(assessmentIds, studentIds),
-				)
-			: []
-		: await client.entities.assessmentResults.list(assessmentResultsForStudents(studentIds));
+	if (classScope) {
+		return fetchClassRosterMetricsSources(client, studentIds, classScope);
+	}
 
-	return {
-		attendanceRaw: attendanceRaw ?? [],
-		assessmentsRaw: assessmentsRaw ?? [],
-		resultsRaw: resultsRaw ?? [],
-	};
+	return fetchSchoolRosterMetricsSources(client, studentIds);
 }
 
 export function mapPeopleData(

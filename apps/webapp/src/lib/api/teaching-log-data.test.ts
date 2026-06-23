@@ -4,7 +4,7 @@ import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapTeachingLogEntries } from './teaching-log-data';
 
-const sources: TeachingLogSources = {
+const classSources: TeachingLogSources = {
 	classLogbookEntriesRaw: [
 		{
 			id: 'tle-cs-6a-math-0',
@@ -19,22 +19,9 @@ const sources: TeachingLogSources = {
 			attachments: ['fiche-fractions.pdf'],
 			progress: 62,
 		},
-		{
-			id: 'tle-cs-6b-math-0',
-			schoolId: SEED_SCHOOL_ID,
-			classGroupId: '6b',
-			classSubjectId: 'cs-6b-math',
-			date: '2026-05-21',
-			chapter: 'Other class session',
-			content: 'Should not appear when filtering 6a.',
-			objectives: ['Other'],
-			attachments: [],
-			progress: 40,
-		},
 	],
 	classSubjectsRaw: [
 		{ id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', completedPercentage: 0 },
-		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 	],
 	subjectsRaw: [
 		subject({ id: 'subj-math', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 }),
@@ -50,12 +37,12 @@ const sources: TeachingLogSources = {
 describe('mapTeachingLogEntries', () => {
 	it('maps logbook entries with subject and teacher labels', () => {
 		const entries = mapTeachingLogEntries({
-			classLogbookEntriesRaw: [...sources.classLogbookEntriesRaw],
-			classSubjectsRaw: [...sources.classSubjectsRaw],
-			subjectsRaw: [...sources.subjectsRaw],
-			staffMembersRaw: [...sources.staffMembersRaw],
-			staffAssignmentsRaw: [...sources.staffAssignmentsRaw],
-		}, { classGroupId: '6a' });
+			classLogbookEntriesRaw: [...classSources.classLogbookEntriesRaw],
+			classSubjectsRaw: [...classSources.classSubjectsRaw],
+			subjectsRaw: [...classSources.subjectsRaw],
+			staffMembersRaw: [...classSources.staffMembersRaw],
+			staffAssignmentsRaw: [...classSources.staffAssignmentsRaw],
+		});
 
 		expect(entries).toHaveLength(1);
 		expect(entries[0]).toMatchObject({
@@ -71,12 +58,12 @@ describe('mapTeachingLogEntries', () => {
 
 	it('filters entries by subject name', () => {
 		const entries = mapTeachingLogEntries({
-			classLogbookEntriesRaw: [...sources.classLogbookEntriesRaw],
-			classSubjectsRaw: [...sources.classSubjectsRaw],
-			subjectsRaw: [...sources.subjectsRaw],
-			staffMembersRaw: [...sources.staffMembersRaw],
-			staffAssignmentsRaw: [...sources.staffAssignmentsRaw],
-		}, { classGroupId: '6a', subjectName: 'Mathematics' });
+			classLogbookEntriesRaw: [...classSources.classLogbookEntriesRaw],
+			classSubjectsRaw: [...classSources.classSubjectsRaw],
+			subjectsRaw: [...classSources.subjectsRaw],
+			staffMembersRaw: [...classSources.staffMembersRaw],
+			staffAssignmentsRaw: [...classSources.staffAssignmentsRaw],
+		}, 'Mathematics');
 
 		expect(entries).toHaveLength(1);
 		expect(entries[0]?.subject).toBe('Mathematics');
@@ -85,16 +72,16 @@ describe('mapTeachingLogEntries', () => {
 	it('sorts entries by date descending', () => {
 		const entries = mapTeachingLogEntries({
 			classLogbookEntriesRaw: [
-				{ ...sources.classLogbookEntriesRaw[0], date: '2026-05-18', objectives: ['Mettre au même dénominateur'] },
+				{ ...classSources.classLogbookEntriesRaw[0], date: '2026-05-18', objectives: ['Mettre au même dénominateur'] },
 				{
-					...sources.classLogbookEntriesRaw[0],
+					...classSources.classLogbookEntriesRaw[0],
 					id: 'tle-cs-6a-math-1',
 					date: '2026-05-22',
 					objectives: ['Mettre au même dénominateur'],
 				},
 			],
-			classSubjectsRaw: [...sources.classSubjectsRaw],
-			subjectsRaw: [...sources.subjectsRaw],
+			classSubjectsRaw: [...classSources.classSubjectsRaw],
+			subjectsRaw: [...classSources.subjectsRaw],
 			staffMembersRaw: [],
 			staffAssignmentsRaw: [],
 		});

@@ -5,7 +5,6 @@ import {
 	assignmentsForClassSubjects,
 	classGroupScope,
 	entitiesByIds,
-	schoolWideEntityList,
 	staffMembersByIds,
 	uniqueIds,
 } from '$lib/api/entity-list-filters';
@@ -17,9 +16,6 @@ type ClassSubjectRaw = components['schemas']['ClassSubject'];
 type SubjectRaw = components['schemas']['Subject'];
 type StaffMemberRaw = components['schemas']['StaffMember'];
 type StaffAssignmentRaw = components['schemas']['StaffAssignment'];
-
-const SCHOOL_TEACHING_LOG_SCOPE
-	= 'Teaching log exports without a class scope still load the school-wide logbook catalog.';
 
 export interface TeachingLogSources {
 	classLogbookEntriesRaw: ClassLogbookEntryRaw[];
@@ -74,30 +70,6 @@ function teacherNameForClassSubject(
 	return `${teacher.firstName} ${teacher.lastName}`;
 }
 
-export async function fetchTeachingLogSources(client: SchoolClient): Promise<TeachingLogSources> {
-	const [
-		classLogbookEntriesRaw,
-		classSubjectsRaw,
-		subjectsRaw,
-		staffMembersRaw,
-		staffAssignmentsRaw,
-	] = await Promise.all([
-		client.entities.classLogbookEntries.list(schoolWideEntityList(SCHOOL_TEACHING_LOG_SCOPE)),
-		client.entities.classSubjects.list(schoolWideEntityList(SCHOOL_TEACHING_LOG_SCOPE)),
-		client.entities.subjects.list(schoolWideEntityList(SCHOOL_TEACHING_LOG_SCOPE)),
-		client.entities.staffMembers.list(schoolWideEntityList(SCHOOL_TEACHING_LOG_SCOPE)),
-		client.entities.staffAssignments.list(schoolWideEntityList(SCHOOL_TEACHING_LOG_SCOPE)),
-	]);
-
-	return {
-		classLogbookEntriesRaw: classLogbookEntriesRaw ?? [],
-		classSubjectsRaw: classSubjectsRaw ?? [],
-		subjectsRaw: subjectsRaw ?? [],
-		staffMembersRaw: staffMembersRaw ?? [],
-		staffAssignmentsRaw: staffAssignmentsRaw ?? [],
-	};
-}
-
 export async function fetchClassTeachingLogSources(
 	client: SchoolClient,
 	classGroupId: string,
@@ -141,24 +113,18 @@ export async function fetchClassTeachingLogSources(
 
 export function mapTeachingLogEntries(
 	sources: TeachingLogSources,
-	filters?: { classGroupId?: string; subjectName?: string },
+	subjectName?: string,
 ): LogEntry[] {
 	return sources.classLogbookEntriesRaw
 		.filter((entry) => {
-			if (filters?.classGroupId && entry.classGroupId !== filters.classGroupId) {
-				return false;
+			if (!subjectName) {
+				return true;
 			}
-			if (filters?.subjectName) {
-				const subjectName = subjectNameForClassSubject(
-					entry.classSubjectId,
-					sources.classSubjectsRaw,
-					sources.subjectsRaw,
-				);
-				if (subjectName !== filters.subjectName) {
-					return false;
-				}
-			}
-			return true;
+			return subjectNameForClassSubject(
+				entry.classSubjectId,
+				sources.classSubjectsRaw,
+				sources.subjectsRaw,
+			) === subjectName;
 		})
 		.map((entry) => {
 			const subject = subjectNameForClassSubject(
@@ -189,12 +155,11 @@ export function mapTeachingLogEntries(
 }
 
 export async function fetchTeachingLogEntries(
-	filters?: { classGroupId?: string; subjectName?: string },
+	classGroupId: string,
 	client?: SchoolClient,
+	options?: { subjectName?: string },
 ): Promise<LogEntry[]> {
 	const resolvedClient = client ?? (await import('$lib/api/school-client')).getBrowserSchoolClient();
-	const sources = filters?.classGroupId
-		? await fetchClassTeachingLogSources(resolvedClient, filters.classGroupId)
-		: await fetchTeachingLogSources(resolvedClient);
-	return mapTeachingLogEntries(sources, filters);
+	const sources = await fetchClassTeachingLogSources(resolvedClient, classGroupId);
+	return mapTeachingLogEntries(sources, options?.subjectName);
 }

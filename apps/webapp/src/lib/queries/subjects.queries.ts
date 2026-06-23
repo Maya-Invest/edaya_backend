@@ -43,7 +43,7 @@ export function queryClassTeachingPage(classId: string) {
 		load: async () => {
 			const [subjects, entries] = await Promise.all([
 				getClassSubjects(classId),
-				fetchTeachingLogEntries({ classGroupId: classId }, queryClient()),
+				fetchTeachingLogEntries(classId, queryClient()),
 			]);
 			detailDataContext.seedSubjects(subjects, { classId });
 			teachingLogContext.hydrateFromServer(entries);

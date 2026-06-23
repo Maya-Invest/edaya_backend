@@ -6,7 +6,7 @@
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { appGoto } from '$lib/navigation/app-navigation';
-	import { queryClassHomeworkPage } from '$lib/queries/prototype.queries';
+	import { queryClassHomeworkPage } from '$lib/queries/homework.queries';
 
 	const selectedId = $derived($page.params.id);
 	const classId = $derived($page.params.classId ?? '6a');

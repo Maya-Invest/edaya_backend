@@ -3,7 +3,7 @@ import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
 import { mapDeadlines } from './homework-data';
 
-const sources = {
+const classSources = {
 	homeworkAssignmentsRaw: [
 		{
 			id: 'd1',
@@ -17,18 +17,6 @@ const sources = {
 			type: 'homework' as const,
 			attachments: [{ name: 'exercises_ch4.pdf', size: '320 KB' }],
 		},
-		{
-			id: 'd2',
-			schoolId: SEED_SCHOOL_ID,
-			classGroupId: '6b',
-			classSubjectId: 'cs-6b-math',
-			title: 'Other class homework',
-			description: 'Should not appear when filtering 6a.',
-			dueDate: '2026-05-20',
-			assignedDate: '2026-05-12',
-			type: 'homework' as const,
-			attachments: [],
-		},
 	],
 	homeworkSubmissionsRaw: [
 		{ id: 'hs-d1-s1', homeworkAssignmentId: 'd1', studentId: 's1', status: 'submitted' as const, submittedAt: '2026-05-15' },
@@ -36,7 +24,6 @@ const sources = {
 	],
 	classSubjectsRaw: [
 		{ id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', completedPercentage: 0 },
-		{ id: 'cs-6b-math', classGroupId: '6b', subjectId: 'subj-math', completedPercentage: 0 },
 	],
 	subjectsRaw: [
 		subject({ id: 'subj-math', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 }),
@@ -45,11 +32,11 @@ const sources = {
 
 describe('mapDeadlines', () => {
 	it('maps homework assignments with subject labels and submissions', () => {
-		const deadlines = mapDeadlines('6a', {
-			homeworkAssignmentsRaw: [...sources.homeworkAssignmentsRaw],
-			homeworkSubmissionsRaw: [...sources.homeworkSubmissionsRaw],
-			classSubjectsRaw: [...sources.classSubjectsRaw],
-			subjectsRaw: [...sources.subjectsRaw],
+		const deadlines = mapDeadlines({
+			homeworkAssignmentsRaw: [...classSources.homeworkAssignmentsRaw],
+			homeworkSubmissionsRaw: [...classSources.homeworkSubmissionsRaw],
+			classSubjectsRaw: [...classSources.classSubjectsRaw],
+			subjectsRaw: [...classSources.subjectsRaw],
 		});
 
 		expect(deadlines).toHaveLength(1);
@@ -66,26 +53,26 @@ describe('mapDeadlines', () => {
 		]);
 	});
 
-	it('filters deadlines by class group', () => {
-		const deadlines = mapDeadlines('6a', {
-			homeworkAssignmentsRaw: [...sources.homeworkAssignmentsRaw],
+	it('maps every deadline from class-scoped sources', () => {
+		const deadlines = mapDeadlines({
+			homeworkAssignmentsRaw: [...classSources.homeworkAssignmentsRaw],
 			homeworkSubmissionsRaw: [],
-			classSubjectsRaw: [...sources.classSubjectsRaw],
-			subjectsRaw: [...sources.subjectsRaw],
+			classSubjectsRaw: [...classSources.classSubjectsRaw],
+			subjectsRaw: [...classSources.subjectsRaw],
 		});
 
 		expect(deadlines.every(deadline => deadline.classId === '6a')).toBe(true);
 	});
 
 	it('sorts deadlines by due date', () => {
-		const deadlines = mapDeadlines(undefined, {
+		const deadlines = mapDeadlines({
 			homeworkAssignmentsRaw: [
-				{ ...sources.homeworkAssignmentsRaw[1], dueDate: '2026-05-25', type: 'homework' as const },
-				{ ...sources.homeworkAssignmentsRaw[0], dueDate: '2026-05-18', type: 'homework' as const },
+				{ ...classSources.homeworkAssignmentsRaw[0], id: 'd-late', dueDate: '2026-05-25' },
+				{ ...classSources.homeworkAssignmentsRaw[0], id: 'd-early', dueDate: '2026-05-18' },
 			],
 			homeworkSubmissionsRaw: [],
-			classSubjectsRaw: [...sources.classSubjectsRaw],
-			subjectsRaw: [...sources.subjectsRaw],
+			classSubjectsRaw: [...classSources.classSubjectsRaw],
+			subjectsRaw: [...classSources.subjectsRaw],
 		});
 
 		expect(deadlines.map(deadline => deadline.dueDate)).toEqual(['2026-05-18', '2026-05-25']);

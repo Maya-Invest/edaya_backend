@@ -7,7 +7,6 @@ import {
 	assessmentsForClassPeriod,
 	classGroupScope,
 	entitiesByIds,
-	schoolWideEntityList,
 	uniqueIds,
 } from '$lib/api/entity-list-filters';
 
@@ -18,9 +17,6 @@ type AssessmentResultRaw = components['schemas']['AssessmentResult'];
 type ClassSubjectRaw = components['schemas']['ClassSubject'];
 type SubjectRaw = components['schemas']['Subject'];
 type EnrollmentRaw = components['schemas']['StudentClassEnrollment'];
-
-const SCHOOL_EVALUATIONS_SCOPE
-	= 'School-wide evaluation exports are not routed yet; keep unscoped reads only behind explicit callers.';
 
 export interface AssessmentsSources {
 	assessmentsRaw: AssessmentRaw[];
@@ -52,30 +48,6 @@ export function mapAssessmentResults(
 		assessmentId: result.assessmentId,
 		score: typeof result.score === 'number' ? result.score : null,
 	}));
-}
-
-export async function fetchAssessmentsSources(client: SchoolClient): Promise<AssessmentsSources> {
-	const [
-		assessmentsRaw,
-		resultsRaw,
-		classSubjectsRaw,
-		subjectsRaw,
-		enrollmentsRaw,
-	] = await Promise.all([
-		client.entities.assessments.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
-		client.entities.assessmentResults.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
-		client.entities.classSubjects.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
-		client.entities.subjects.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
-		client.entities.enrollments.list(schoolWideEntityList(SCHOOL_EVALUATIONS_SCOPE)),
-	]);
-
-	return {
-		assessmentsRaw: assessmentsRaw ?? [],
-		resultsRaw: resultsRaw ?? [],
-		classSubjectsRaw: classSubjectsRaw ?? [],
-		subjectsRaw: subjectsRaw ?? [],
-		enrollmentsRaw: enrollmentsRaw ?? [],
-	};
 }
 
 export async function fetchClassAssessmentsSources(
@@ -153,10 +125,6 @@ export function mapClassEvaluations(
 			} satisfies Evaluation;
 		})
 		.sort((left, right) => right.date.localeCompare(left.date));
-}
-
-export function mapAllEvaluations(sources: AssessmentsSources, classGroupIds: string[]): Evaluation[] {
-	return classGroupIds.flatMap(classId => mapClassEvaluations(classId, sources));
 }
 
 export async function loadClassEvaluations(

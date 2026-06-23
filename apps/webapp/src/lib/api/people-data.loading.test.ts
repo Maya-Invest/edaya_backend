@@ -85,11 +85,10 @@ describe('people data loading', () => {
 		}
 	});
 
-	it('keeps school roster routes on documented school-wide list reads', async () => {
+	it('keeps school roster entity lists documented as school-wide except grade metadata', async () => {
 		const { client, requests } = createRecordingSchoolClient([
 			listEnvelope([student]),
 			listEnvelope([enrollment]),
-			listEnvelope([]),
 			listEnvelope([]),
 			listEnvelope([]),
 			listEnvelope([]),
@@ -103,7 +102,50 @@ describe('people data loading', () => {
 		expect(entityListRequests(requests, 'enrollments')[0]?.body).toEqual({});
 		expect(entityListRequests(requests, 'guardians')[0]?.body).toEqual({});
 		expect(entityListRequests(requests, 'guardian-links')[0]?.body).toEqual({});
-		expect(entityListRequests(requests, 'assessments')[0]?.body).toEqual({});
+		expect(entityListRequests(requests, 'attendance')[0]?.body).toEqual({
+			studentId: { $in: ['student-1'] },
+		});
+		expect(entityListRequests(requests, 'assessment-results')[0]?.body).toEqual({
+			studentId: { $in: ['student-1'] },
+		});
+		expect(entityListRequests(requests, 'assessments')).toHaveLength(0);
+	});
+
+	it('loads school roster assessment metadata only for assessments referenced by student results', async () => {
+		const assessment = {
+			id: 'assessment-1',
+			schoolId: SEED_SCHOOL_ID,
+			classGroupId,
+			classSubjectId: 'cs-math',
+			periodId,
+			title: 'Quiz',
+			maxScore: 20,
+			coefficient: 1,
+		};
+		const result = {
+			id: 'result-1',
+			schoolId: SEED_SCHOOL_ID,
+			assessmentId: 'assessment-1',
+			studentId: 'student-1',
+			score: 16,
+		};
+
+		const { client, requests } = createRecordingSchoolClient([
+			listEnvelope([student]),
+			listEnvelope([enrollment]),
+			listEnvelope([]),
+			listEnvelope([]),
+			listEnvelope([]),
+			listEnvelope([result]),
+			listEnvelope([assessment]),
+		]);
+
+		const { students } = await loadPeopleData(client);
+
+		expect(students[0]?.average).toBe(16);
+		expect(entityListRequests(requests, 'assessments')[0]?.body).toEqual({
+			id: { $in: ['assessment-1'] },
+		});
 	});
 
 	it('loads guardians with linked students only instead of the full school roster', async () => {
@@ -163,7 +205,6 @@ describe('people data loading', () => {
 		const schoolResponses = [
 			listEnvelope([student]),
 			listEnvelope([enrollment]),
-			listEnvelope([]),
 			listEnvelope([]),
 			listEnvelope([]),
 			listEnvelope([]),

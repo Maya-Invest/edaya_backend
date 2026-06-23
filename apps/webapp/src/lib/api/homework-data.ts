@@ -4,7 +4,6 @@ import type { Deadline } from '$lib/types/school';
 import {
 	classGroupScope,
 	entitiesByIds,
-	schoolWideEntityList,
 	submissionsForHomeworkAssignments,
 	uniqueIds,
 } from '$lib/api/entity-list-filters';
@@ -15,9 +14,6 @@ type HomeworkAssignmentRaw = components['schemas']['HomeworkAssignment'];
 type HomeworkSubmissionRaw = components['schemas']['HomeworkSubmission'];
 type ClassSubjectRaw = components['schemas']['ClassSubject'];
 type SubjectRaw = components['schemas']['Subject'];
-
-const SCHOOL_HOMEWORK_SCOPE
-	= 'Prototype homework routes without a class scope still load the school-wide homework catalog.';
 
 export interface HomeworkSources {
 	homeworkAssignmentsRaw: HomeworkAssignmentRaw[];
@@ -60,27 +56,6 @@ function subjectNameForClassSubject(
 	return subject?.name ?? 'Unknown subject';
 }
 
-export async function fetchHomeworkSources(client: SchoolClient): Promise<HomeworkSources> {
-	const [
-		homeworkAssignmentsRaw,
-		homeworkSubmissionsRaw,
-		classSubjectsRaw,
-		subjectsRaw,
-	] = await Promise.all([
-		client.entities.homeworkAssignments.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
-		client.entities.homeworkSubmissions.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
-		client.entities.classSubjects.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
-		client.entities.subjects.list(schoolWideEntityList(SCHOOL_HOMEWORK_SCOPE)),
-	]);
-
-	return {
-		homeworkAssignmentsRaw: homeworkAssignmentsRaw ?? [],
-		homeworkSubmissionsRaw: homeworkSubmissionsRaw ?? [],
-		classSubjectsRaw: classSubjectsRaw ?? [],
-		subjectsRaw: subjectsRaw ?? [],
-	};
-}
-
 export async function fetchClassHomeworkSources(
 	client: SchoolClient,
 	classGroupId: string,
@@ -116,10 +91,7 @@ export async function fetchClassHomeworkSources(
 	};
 }
 
-export function mapDeadlines(
-	classGroupId: string | undefined,
-	sources: HomeworkSources,
-): Deadline[] {
+export function mapDeadlines(sources: HomeworkSources): Deadline[] {
 	const submissionsByAssignment = new Map<string, HomeworkSubmissionRaw[]>();
 	for (const submission of sources.homeworkSubmissionsRaw) {
 		const current = submissionsByAssignment.get(submission.homeworkAssignmentId) ?? [];
@@ -128,7 +100,6 @@ export function mapDeadlines(
 	}
 
 	return sources.homeworkAssignmentsRaw
-		.filter(assignment => !classGroupId || assignment.classGroupId === classGroupId)
 		.map((assignment) => {
 			const submissions = submissionsByAssignment.get(assignment.id) ?? [];
 
@@ -159,10 +130,8 @@ export function mapDeadlines(
 		.sort((left, right) => left.dueDate.localeCompare(right.dueDate));
 }
 
-export async function fetchDeadlines(classGroupId?: string, client?: SchoolClient): Promise<Deadline[]> {
+export async function fetchDeadlines(classGroupId: string, client?: SchoolClient): Promise<Deadline[]> {
 	const resolvedClient = client ?? (await import('$lib/api/school-client')).getBrowserSchoolClient();
-	const sources = classGroupId
-		? await fetchClassHomeworkSources(resolvedClient, classGroupId)
-		: await fetchHomeworkSources(resolvedClient);
-	return mapDeadlines(classGroupId, sources);
+	const sources = await fetchClassHomeworkSources(resolvedClient, classGroupId);
+	return mapDeadlines(sources);
 }

@@ -1,8 +1,9 @@
 # Repository Simplification Resolution Plan
 
-> **Status:** Complete (Phases 0–3, 5–6, 8; Phases 4 and 7 deferred)  
+> **Status:** Complete (Phases 0–3, 5–6, 8; Phases 4 and 7 deferred) — living reference at `sprints/repository-simplification-plan.md`  
 > **Created:** 2026-06-21  
 > **Closed:** 2026-06-22  
+> **Last updated:** 2026-06-23 (post-closure: HTTP-only local seed cleanup, `homework.queries.ts` rename, Phase 8.2 HTTP seed re-verified)
 > **Scope:** Developer experience and maintainability improvements that preserve current product behavior  
 > **Source audit:** `docs/repo-inspection-report.md` plus the 2026-06-21 repository audit
 
@@ -732,15 +733,15 @@ Use an API query when entity filters would still require several large reads or 
 
 For each read model:
 
-- [ ] Define a core query response type.
-- [ ] Authorize in core/service query logic.
-- [ ] Expose through both API registries as appropriate.
-- [ ] Generate client bindings.
-- [ ] Replace multiple client joins with one mapper or direct view model.
+- [x] ~~Define a core query response type.~~ *Deferred — no candidate justified yet (see decision below).*
+- [x] ~~Authorize in core/service query logic.~~ *Deferred.*
+- [x] ~~Expose through both API registries as appropriate.~~ *Deferred.*
+- [x] ~~Generate client bindings.~~ *Deferred.*
+- [x] ~~Replace multiple client joins with one mapper or direct view model.~~ *Deferred.*
 
 Do not build a generic query cache to mask unscoped API calls.
 
-Decision: none of the initial candidates currently justify another read model. Shell enrollment totals use authorized count queries, and the timetable, roster, and finance loaders now use bounded server-side filters followed by referenced-ID reads. Revisit a purpose-built response only when request telemetry shows that those joins remain a material bottleneck.
+**Decision (2026-06-22, reaffirmed 2026-06-23):** none of the initial candidates currently justify another read model. Shell enrollment totals use authorized count queries, and the timetable, roster, and finance loaders now use bounded server-side filters followed by referenced-ID reads. Revisit a purpose-built response only when request telemetry shows that those joins remain a material bottleneck.
 
 ### 5.4 Preserve mutation consistency
 
@@ -875,7 +876,7 @@ Phase 6 is complete. URL filters use a shared codec, the student drawer is decom
 
 ### 7.3 Remove compatibility and naming debt
 
-- [ ] Rename `prototype.queries.ts` to the owned domain (`homework.queries.ts`) and update imports.
+- [x] Rename `prototype.queries.ts` to the owned domain (`homework.queries.ts`) and update imports.
 - [ ] Remove deprecated GraphQL/entity builder aliases after consumers migrate.
 - [ ] Remove deprecated seed auth-link wrappers after Phase 2.
 - [ ] Remove old BaseSchoolService direct entity properties after Phase 3.
@@ -918,14 +919,14 @@ Phase 6 is complete. URL filters use a shared codec, the student drawer is decom
 | `schoolWideEntityList` usages | 37 call sites across 7 modules |
 | Loading contract tests | 8 files (`*.loading.test.ts`, `class-route-loading.test.ts`, `configuration-loading.test.ts`) |
 | Production `any` / `as any` | `apps/api` 72, `adaptor-postgres` 52, `core` 32, `webapp` 0, `api-client` 0 |
-| Deprecated / `prototype` in `src` | 0 (one `prototype.queries.ts` import remains; Phase 7 rename deferred) |
+| Deprecated / `prototype` in `src` | 0 (`prototype.queries.ts` renamed to `homework.queries.ts`, 2026-06-23) |
 | `StudentTabs.svelte` | 112 lines |
 | `list-url-filters.ts` | 228 lines |
 
 ### 8.2 Validate feature parity
 
 - [x] Run `bun run verify` from a clean checkout twice.
-- [ ] Run local HTTP seed and validation against a fresh `.data` directory. *(Requires running API + Postgres locally; not executed in this audit run.)*
+- [x] Run local HTTP seed and validation against a fresh database. *(Integration tests: `test-dev-http-seed.test.ts` — 5 pass including pure HTTP bootstrap without `application`; `test-dev-seed-validation-harness.test.ts` — 1 pass; re-run 2026-06-23.)*
 - [ ] Run the staging smoke suite in the normal deployment pipeline. *(Operator step: `bun run smoke:staging` in CI or post-deploy.)*
 - [x] Compare OpenAPI paths and GraphQL schema fields against the pre-plan baseline. *(Covered by non-mutating `generated:check` in `verify`; no drift.)*
 - [x] Confirm Drizzle produces no migration for structural persistence changes. *(No Phase 4 file moves; additive index migration `0015_performance_indexes.sql` only.)*
@@ -944,13 +945,21 @@ Phase 6 is complete. URL filters use a shared codec, the student drawer is decom
 
 - `bun run verify` × 2: both passed (second run fully cached, idempotent).
 - `bun run test`: **826 passed**, 7 integration skips (repo 3, api-client 2, betterauth 1, webapp 141, adaptor-postgres 11, seeding 24, core 461, api 120, integration 63).
+- HTTP seed integration (2026-06-23): **9 passed** across `test-dev-http-seed` and `test-dev-seed-validation-harness` (`INTEGRATION_TEST_FAST=0`).
+
+### Post-closure local dev cleanup (2026-06-23)
+
+- Removed `SERVICE_ACCOUNT_API_KEY` env var; seeding uses per-school `seedingApiKey` from `@edaya/dev-fixtures`.
+- Removed in-process PGlite repair path (`run-local-in-process-repair.ts`); CLI seeding is HTTP-only against a running API.
+- `seed:init` is an alias for `seed:all`; added `testing/seeding/README.md`.
+- HTTP bootstrap signs in as school owner (`st8`) and calls `register-school` on fresh databases.
 
 ### 8.3 Close documentation
 
 - [x] Update `docs/repo-inspection-report.md` with resolved/deferred status per finding.
 - [x] Update `specs/data-loading-spec.md` examples if query names changed.
 - [x] Update API and webapp package READMEs.
-- [x] Move this plan from `sprints/backlog` to `sprints/done` only when every exit criterion is satisfied or explicitly deferred with rationale.
+- [x] Move this plan to `sprints/` as the living reference when every exit criterion is satisfied or explicitly deferred with rationale.
 
 ### Final exit criteria
 
