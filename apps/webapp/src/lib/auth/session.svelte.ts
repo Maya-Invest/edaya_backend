@@ -10,6 +10,7 @@ class AuthSession {
 	schoolId = $state<string | null>(null);
 	sessionKind = $state<SessionKind | null>(null);
 	subjectId = $state<string | null>(null);
+	loginEmail = $state<string | null>(null);
 	userProfile = $state<StaffMember | null>(null);
 	guardianSettings = $state<GuardianNotificationSettings | null>(null);
 	grants = $state<EffectiveGrantsSnapshot | null>(null);
@@ -79,6 +80,7 @@ class AuthSession {
 			staffProfile?: StaffMember | null;
 			guardianSettings?: GuardianNotificationSettings | null;
 			subjectId?: string | null;
+			loginEmail?: string | null;
 		},
 	) {
 		if (!session) {
@@ -93,6 +95,7 @@ class AuthSession {
 		this.userProfile = options?.staffProfile ?? null;
 		this.guardianSettings = options?.guardianSettings ?? null;
 		this.subjectId = options?.subjectId ?? null;
+		this.loginEmail = options?.loginEmail ?? null;
 		this.ready = true;
 	}
 
@@ -101,6 +104,7 @@ class AuthSession {
 		this.schoolId = null;
 		this.sessionKind = null;
 		this.subjectId = null;
+		this.loginEmail = null;
 		this.userProfile = null;
 		this.guardianSettings = null;
 		this.grants = null;

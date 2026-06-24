@@ -41,7 +41,8 @@ describe('build recipient profiles', () => {
         id: 'st1',
         subjectId: 'auth-st1',
       },
-      email: 'ada@school.edu',
+      notificationEmail: undefined,
+      fallbackEmail: 'ada@school.edu',
       preferences: {
         allowsNotifications: true,
         channels: { email: true, in_app: true },

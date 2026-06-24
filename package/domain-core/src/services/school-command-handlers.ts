@@ -35,6 +35,7 @@ import type {
   MaterializeDeliveriesInput,
   PublishAnnouncementInput,
   RecordDeliveryInput,
+  UpdateNotificationContactInput,
 } from './service-workflows/communications'
 import type {
   AdjustStudentFeeInput,
@@ -184,6 +185,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     materializeDeliveries: payload => workflows.communications.materializeDeliveries(payload as MaterializeDeliveriesInput),
     applyDeliveryEvent: payload => workflows.communications.applyDeliveryEvent(payload as ApplyDeliveryEventInput),
     markDeliveryRead: payload => workflows.communications.markDeliveryRead(payload as MarkDeliveryReadInput),
+    updateNotificationContact: payload => workflows.communications.updateNotificationContact(payload as UpdateNotificationContactInput),
     // behavior
     recordIncident: payload => workflows.behavior.recordIncident(payload as RecordIncidentInput),
     addStudentInvolvement: payload => workflows.behavior.addStudentInvolvement(payload as AddStudentInvolvementInput),

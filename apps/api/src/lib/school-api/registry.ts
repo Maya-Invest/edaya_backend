@@ -266,6 +266,7 @@ export const coreCommands = [
   command("materialize-deliveries", "materializeDeliveries", commandSchemas.materializeDeliveriesCommandSchema, { serviceOnly: true }),
   command("apply-delivery-event", "applyDeliveryEvent", commandSchemas.applyDeliveryEventCommandSchema, { serviceOnly: true }),
   command("mark-delivery-read", "markDeliveryRead", commandSchemas.markDeliveryReadCommandSchema),
+  command("update-notification-contact", "updateNotificationContact", commandSchemas.updateNotificationContactCommandSchema),
 ] satisfies CoreCommandConfig[];
 
 export const coreQueries = [

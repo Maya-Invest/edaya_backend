@@ -5,6 +5,7 @@ import {
 } from 'bun:test'
 import { MessageDeliveryRecipientKind, ReportCardResultStatus } from '../../../src/domains'
 import {
+  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
   RecordingNotificationGateway,
   REPORT_CARD_PUBLISHED_EVENT_KEY,
 } from '../../../src/notifications'
@@ -129,6 +130,30 @@ describe('SchoolService assessment workflows', () => {
       schoolId: 'sch1',
       kind: 'event',
       eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
+    })
+    expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
+      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1' },
+      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1' },
+    ]))
+  })
+
+  test('recordAssessmentResult enqueues guardian and student notifications', async () => {
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createReportCardContext({ notificationGateway: gateway })
+
+    await service.assessmentsWorkflow.recordAssessmentResult({
+      id: 'ar-new',
+      studentId: 'stu1',
+      assessmentId: 'ass1',
+      score: 92,
+    })
+
+    expect(gateway.enqueued).toHaveLength(1)
+    expect(gateway.enqueued[0]).toMatchObject({
+      idempotencyKey: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:ar-new`,
+      schoolId: 'sch1',
+      kind: 'event',
+      eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
     })
     expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
       { kind: MessageDeliveryRecipientKind.Student, id: 'stu1' },

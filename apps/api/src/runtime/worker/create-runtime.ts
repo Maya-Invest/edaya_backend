@@ -16,6 +16,6 @@ export async function buildWorkerApiRuntime(env: Environment): Promise<ApiRuntim
       schoolHandlePromise ??= createDatabase(env);
       return schoolHandlePromise;
     },
-    initSchoolApplication: db => buildSchoolApplication(db, { env }),
+    initSchoolApplication: db => buildSchoolApplication(db, { env, authDb: authHandle.db }),
   });
 }

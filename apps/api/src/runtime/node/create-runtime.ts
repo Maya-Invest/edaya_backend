@@ -21,6 +21,7 @@ export async function buildNodeApiRuntime(env: Environment): Promise<ApiRuntime>
     initSchoolApplication: db => buildSchoolApplication(db, {
       databaseUrl: env.DATABASE_URL,
       env,
+      authDb: authHandle.db,
       runMigrations,
     }),
   });

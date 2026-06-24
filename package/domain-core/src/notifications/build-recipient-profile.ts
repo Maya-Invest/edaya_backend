@@ -1,6 +1,11 @@
 import type { Guardian, GuardianStudentLink, StaffMember, Student } from '../domains'
 import type { NotificationRecipientProfile } from '../ports/notification-gateway'
 import { GuardianContactMethodType, MessageDeliveryRecipientKind } from '../domains'
+import {
+  guardianFallbackEmail,
+  guardianFallbackPhone,
+  staffFallbackEmail,
+} from './resolve-notification-contact'
 
 function guardianAllowsChannel(
   guardian: Guardian,
@@ -16,6 +21,8 @@ export function buildStaffRecipientProfile(staff: StaffMember): NotificationReci
     return undefined
   }
 
+  const fallbackEmail = staffFallbackEmail(staff)
+
   return {
     schoolId: staff.schoolId,
     recipient: {
@@ -24,11 +31,13 @@ export function buildStaffRecipientProfile(staff: StaffMember): NotificationReci
       subjectId: staff.subjectId,
     },
     displayName: staff.fullName,
-    email: staff.email,
+    notificationEmail: staff.notificationEmail,
+    notificationPhone: staff.notificationPhone,
+    fallbackEmail,
     preferences: {
       allowsNotifications: true,
       channels: {
-        email: Boolean(staff.email),
+        email: Boolean(staff.notificationEmail ?? fallbackEmail),
         in_app: true,
       },
     },
@@ -44,6 +53,8 @@ export function buildGuardianRecipientProfile(
   }
 
   const allowsNotifications = guardian.contactMethods.some(method => method.allowsNotifications)
+  const fallbackEmail = guardianFallbackEmail(guardian)
+  const fallbackPhone = guardianFallbackPhone(guardian)
 
   return {
     schoolId: guardian.schoolId,
@@ -53,8 +64,10 @@ export function buildGuardianRecipientProfile(
       subjectId: guardian.subjectId,
     },
     displayName: guardian.fullName,
-    email: guardian.email,
-    phone: guardian.phone,
+    notificationEmail: guardian.notificationEmail,
+    notificationPhone: guardian.notificationPhone,
+    fallbackEmail,
+    fallbackPhone,
     preferences: {
       allowsNotifications,
       receivesAcademicReports: links.some(link => link.receivesAcademicReports),

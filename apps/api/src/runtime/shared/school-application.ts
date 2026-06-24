@@ -4,11 +4,13 @@ import { createAppLogger } from "@/logging/app-logger";
 import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
 import { createRepositoryAuthorizationPolicy, type NotificationGatewayPort } from "@edaya/core";
 import type { Environment } from "@/runtime/env/schema";
+import { createAuthContactResolver } from "@/runtime/shared/auth-contact-resolver";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
   env?: Environment;
   notificationGateway?: NotificationGatewayPort;
+  authDb?: unknown;
   runMigrations?: boolean;
 }
 
@@ -37,6 +39,9 @@ export async function buildSchoolApplication(
   return new ApiSchoolApplication({
     atomicExecution,
     notificationGateway,
+    authContactResolver: options.authDb
+      ? createAuthContactResolver(options.authDb as Parameters<typeof createAuthContactResolver>[0])
+      : undefined,
     repositories: repos,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories: repos,

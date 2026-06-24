@@ -138,6 +138,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   materializeDeliveries: messageDeliveryCommandListResponseSchema,
   applyDeliveryEvent: messageDeliveryResponseSchema,
   markDeliveryRead: messageDeliveryResponseSchema,
+  updateNotificationContact: z.union([
+    staffMemberResponseSchema,
+    guardianResponseSchema,
+  ]).openapi("UpdateNotificationContactResponse"),
 };
 
 export function resolveCommandResponseSchema(methodName: string): z.ZodTypeAny {

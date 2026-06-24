@@ -16,6 +16,10 @@ import {
 } from '../../domains'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import {
+  INCIDENT_RECORDED_EVENT_KEY,
+  runWorkflowNotifications,
+} from '../../notifications'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AddStudentInvolvementInput {
@@ -89,6 +93,10 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     }
     const involvement = new StudentIncidentInvolvement({ id, incidentId, studentId, role, notes, createdAt })
     await this.baseService.entities.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
+    await runWorkflowNotifications(this.baseService, INCIDENT_RECORDED_EVENT_KEY, {
+      incident,
+      involvement,
+    })
     return involvement
   }
 

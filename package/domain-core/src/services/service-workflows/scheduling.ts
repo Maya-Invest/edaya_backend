@@ -187,7 +187,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       studentId,
     })
     await this.requireStudentInSchool(studentId, classGroup.schoolId)
-    return this.saveAttendanceRecord({
+    const record = await this.saveAttendanceRecord({
       id,
       studentId,
       sessionId,
@@ -195,6 +195,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       createdBy: resolveAuditActorId(this.baseService.actor),
       createdAt,
     })
+    await runWorkflowNotifications(this.baseService, ATTENDANCE_RECORDED_EVENT_KEY, {
+      records: [record],
+      schoolId: classGroup.schoolId,
+    })
+    return record
   }
 
   async recordDailyAttendance({
@@ -213,7 +218,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     const createdBy = resolveAuditActorId(this.baseService.actor)
     return this.baseService.atomicExecution.execute(async () => {
       const session = await this.getOrCreateDailyAttendanceSession(classGroup, date, createdAt)
-      return this.saveAttendanceRecord({
+      const record = await this.saveAttendanceRecord({
         id,
         studentId,
         sessionId: session.id,
@@ -221,6 +226,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
         createdBy,
         createdAt,
       })
+      await runWorkflowNotifications(this.baseService, ATTENDANCE_RECORDED_EVENT_KEY, {
+        records: [record],
+        schoolId: classGroup.schoolId,
+      })
+      return record
     })
   }
 

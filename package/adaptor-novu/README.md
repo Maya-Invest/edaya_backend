@@ -25,6 +25,7 @@ const gateway = createNovuNotificationGateway({
 | `schoolId` | `context.tenant` (Novu v2; auto-created if missing) |
 | `recipients[]` | `to` subscriber ids: `{schoolId}:{kind}:{id}` |
 | `title`, `body`, `metadata`, … | `payload` |
+| `upsertRecipient` channel prefs | `subscribers.preferences.update` (global) + `bulkUpdate` (per workflow) with `context.tenant` |
 
 Create Novu workflows whose trigger identifiers match core `eventKey` values (e.g. `report_card.published`, `assessment.due_soon`).
 

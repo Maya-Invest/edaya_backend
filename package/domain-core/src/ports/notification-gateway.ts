@@ -17,8 +17,17 @@ export interface NotificationRecipientProfile {
   schoolId: string
   recipient: NotificationRecipient
   displayName?: string
+  /** Resolved delivery email — populated when upserting to the provider */
   email?: string
+  /** Resolved delivery phone — populated when upserting to the provider */
   phone?: string
+  /** Explicit notification override; defaults to auth email when unset */
+  notificationEmail?: string
+  /** Explicit notification override; defaults to auth phone when unset */
+  notificationPhone?: string
+  /** School-record contact used only when notification override and auth contact are absent */
+  fallbackEmail?: string
+  fallbackPhone?: string
   locale?: string
   preferences: {
     receivesAttendanceAlerts?: boolean

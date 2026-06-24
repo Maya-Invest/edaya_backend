@@ -17,6 +17,11 @@ export type { CreateNovuMessagesClientOptions, NovuMessagesClient } from "./novu
 export { createNovuSubscriberClient } from "./novu-subscriber-client";
 export type { CreateNovuSubscriberClientOptions, NovuSubscriberClient } from "./novu-subscriber-client";
 export { mapRecipientProfileToNovuSubscriber } from "./map-subscriber-profile";
+export {
+  mapRecipientProfileToNovuGlobalPreferences,
+  mapRecipientProfileToNovuWorkflowPreferencesBulk,
+  NOVU_NOTIFICATION_WORKFLOW_IDS,
+} from "./map-subscriber-preferences";
 export { createNovuSdkClient } from "./novu-sdk-client";
 export type { CreateNovuSdkClientOptions } from "./novu-sdk-client";
 export { buildNovuSubscriberId, buildNovuSubscriberIds } from "./subscriber-id";

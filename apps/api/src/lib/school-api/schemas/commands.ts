@@ -621,6 +621,11 @@ export const markDeliveryReadCommandSchema = z.object({
   readAt: field.optionalDate(),
 }).openapi("MarkDeliveryReadCommand");
 
+export const updateNotificationContactCommandSchema = z.object({
+  notificationEmail: field.optionalString().nullable(),
+  notificationPhone: field.optionalString().nullable(),
+}).openapi("UpdateNotificationContactCommand");
+
 export const listClassSubjectAssessmentResultsForPeriodCommandSchema = z.object({
   classSubjectId: field.id(),
   periodId: field.id(),

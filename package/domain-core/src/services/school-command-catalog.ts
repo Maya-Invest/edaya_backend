@@ -63,6 +63,7 @@ export type SchoolCommandKey
     | 'materializeDeliveries'
     | 'applyDeliveryEvent'
     | 'markDeliveryRead'
+    | 'updateNotificationContact'
     | 'recordIncident'
     | 'addStudentInvolvement'
     | 'applyDisciplinaryAction'
@@ -151,6 +152,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'materializeDeliveries',
   'applyDeliveryEvent',
   'markDeliveryRead',
+  'updateNotificationContact',
   'recordIncident',
   'addStudentInvolvement',
   'applyDisciplinaryAction',

@@ -629,6 +629,11 @@ export const clientBindings = {
       "publicName": "mark-delivery-read",
       "requestSchemaName": "MarkDeliveryReadCommand",
       "responseSchemaName": "MessageDelivery"
+    },
+    "updateNotificationContact": {
+      "publicName": "update-notification-contact",
+      "requestSchemaName": "UpdateNotificationContactCommand",
+      "responseSchemaName": "UpdateNotificationContactResponse"
     }
   },
   queries: {

@@ -179,7 +179,9 @@ export function createReportCardContext({
       })),
     },
     assessmentResults: {
+      findById: mock(async () => undefined),
       list: mock(async () => [{ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score: 80 }]),
+      save: mock(async (result: any) => result),
     },
     assessments: {
       findById: mock(async () => ({
@@ -222,6 +224,7 @@ export function createReportCardContext({
       findOne: mock(async () => undefined),
     },
     enrollments: {
+      findOne: mock(async () => ({ id: 'enr1', studentId: 'stu1', classGroupId: 'cg1', status: StudentClassEnrollmentStatus.Active })),
       list: mock(async () => [{ id: 'enr1', studentId: 'stu1', classGroupId: 'cg1' }]),
     },
     results: {
@@ -283,6 +286,7 @@ export function createReportCardContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
+    checkAssessmentAccess: mock(async () => {}),
     checkReportCardResultAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
@@ -883,11 +887,13 @@ export function createBehaviorContext({
   activeEnrollment = true,
   incidentStatus = IncidentStatus.Open,
   catalogActionSchoolId = 'sch1',
+  notificationGateway = noOpNotificationGateway,
 }: {
   existingInvolvement?: boolean
   activeEnrollment?: boolean
   incidentStatus?: IncidentStatus
   catalogActionSchoolId?: string
+  notificationGateway?: NotificationGatewayPort
 } = {}) {
   const incident = {
     id: 'inc1',
@@ -954,6 +960,21 @@ export function createBehaviorContext({
     students: {
       findById: mock(async id => ({ id, schoolId: 'sch1' })),
     },
+    guardianLinks: {
+      list: mock(async (filter: any = {}) => {
+        if (filter.studentId === 'stu1') {
+          return [{ studentId: 'stu1', guardianId: 'gua1' }]
+        }
+        return []
+      }),
+    },
+    guardians: {
+      findById: mock(async id => ({
+        id,
+        schoolId: 'sch1',
+        contactMethods: [],
+      })),
+    },
     studentDisciplinaryActions: {
       findById: mock(async id => disciplinaryActions.get(id)),
       save: mock(async action => disciplinaryActions.set(action.id, action)),
@@ -982,7 +1003,7 @@ export function createBehaviorContext({
     authorizationPolicy: mockPolicy,
     actor,
     atomicExecution: mockAtomic,
-    notificationGateway: noOpNotificationGateway,
+    notificationGateway,
   })
 
   return { disciplinaryActions, incidents, involvements, mockAtomic, mockPolicy, mockRepos, service }

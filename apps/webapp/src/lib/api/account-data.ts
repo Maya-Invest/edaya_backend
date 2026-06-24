@@ -14,8 +14,17 @@ export interface GuardianNotificationSettings {
 	subjectId: string | null;
 	hasAccess: boolean;
 	premiumNotificationsEnabled: boolean;
+	notificationEmail: string | null;
+	notificationPhone: string | null;
 	contactMethods: GuardianRaw['contactMethods'];
 	links: GuardianLinkRaw[];
+}
+
+export interface StaffNotificationSettings {
+	subjectId: string | null;
+	email: string;
+	notificationEmail: string | null;
+	notificationPhone: string | null;
 }
 
 function guardianInitials(firstName: string, lastName: string): string {
@@ -37,6 +46,8 @@ export async function fetchGuardianNotificationSettings(
 		subjectId: guardian.subjectId ?? null,
 		hasAccess: guardian.hasAccess ?? true,
 		premiumNotificationsEnabled: guardian.premiumNotificationsEnabled ?? false,
+		notificationEmail: guardian.notificationEmail ?? null,
+		notificationPhone: guardian.notificationPhone ?? null,
 		contactMethods: guardian.contactMethods ?? [],
 		links: links ?? [],
 	};
@@ -45,10 +56,12 @@ export async function fetchGuardianNotificationSettings(
 export async function fetchStaffSubjectId(
 	client: SchoolClient,
 	staffId: string,
-): Promise<{ subjectId: string | null; email: string }> {
+): Promise<StaffNotificationSettings> {
 	const staff: StaffRaw = await client.entities.staffMembers.get(staffId);
 	return {
 		subjectId: staff.subjectId ?? null,
 		email: staff.email ?? '',
+		notificationEmail: staff.notificationEmail ?? null,
+		notificationPhone: staff.notificationPhone ?? null,
 	};
 }

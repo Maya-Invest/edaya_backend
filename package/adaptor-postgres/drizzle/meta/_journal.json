@@ -120,6 +120,13 @@
       "when": 1781104996418,
       "tag": "0016_message_delivery_subject_id",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781104996419,
+      "tag": "0017_notification_contact",
+      "breakpoints": true
     }
   ]
 }

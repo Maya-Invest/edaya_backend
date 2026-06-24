@@ -58,6 +58,8 @@ export const staffMemberBaseSchema = z.object({
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notificationPhone: z.string().trim().min(1, 'notificationPhone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   accountKind: z.enum(STAFF_ACCOUNT_KINDS).default('human'),
   serviceId: z.string().trim().min(1, 'serviceId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -90,6 +92,8 @@ export class StaffMember {
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
   get email() { return this.data.email }
+  get notificationEmail() { return this.data.notificationEmail }
+  get notificationPhone() { return this.data.notificationPhone }
   get subjectId() { return this.data.subjectId }
   get accountKind(): StaffAccountKind { return this.data.accountKind }
   get serviceId() { return this.data.serviceId }

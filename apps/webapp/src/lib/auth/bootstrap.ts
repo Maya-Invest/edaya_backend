@@ -19,6 +19,7 @@ export async function bootstrapSession() {
 			return { session: null, staffProfile: null };
 		}
 
+		const loginEmail = auth.user.email ?? null;
 		const session = await browserFetch<SessionSnapshot>('/core/authorization/effective-grants');
 		const client = getBrowserSchoolClient();
 		let staffProfile = null;
@@ -43,6 +44,7 @@ export async function bootstrapSession() {
 			staffProfile,
 			guardianSettings,
 			subjectId,
+			loginEmail,
 		});
 		return { session, staffProfile, guardianSettings };
 	}

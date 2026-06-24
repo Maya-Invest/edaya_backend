@@ -27,6 +27,7 @@ import {
 } from '../../domains'
 import { normalizeDate, roundTo2 } from '../../domains/utils'
 import {
+  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
   REPORT_CARD_PUBLISHED_EVENT_KEY,
   runWorkflowNotifications,
 } from '../../notifications'
@@ -107,6 +108,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
     const result = new AssessmentResultEntity(input)
     await this.baseService.entities.assessmentResults.save(result)
+    const student = await this.requireStudent(result.studentId)
+    const assessment = await this.requireEntity(this.baseService.entities.assessments, result.assessmentId)
+    await runWorkflowNotifications(this.baseService, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, {
+      result,
+      assessment,
+      student,
+    })
     return result
   }
 

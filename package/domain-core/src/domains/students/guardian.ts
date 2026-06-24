@@ -19,6 +19,8 @@ export const guardianSchema = z.object({
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
   phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional(),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional(),
+  notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  notificationPhone: z.string().trim().min(1, 'notificationPhone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   contactMethods: z.array(z.union([z.instanceof(GuardianContactMethod), guardianContactMethodSchema])).default([]),
   hasAccess: z.boolean().default(true),
@@ -83,6 +85,8 @@ export class Guardian {
   get subjectId() { return this.data.subjectId }
   get hasAccess() { return this.data.hasAccess }
   get premiumNotificationsEnabled() { return this.data.premiumNotificationsEnabled }
+  get notificationEmail() { return this.data.notificationEmail }
+  get notificationPhone() { return this.data.notificationPhone }
   get createdAt() { return this.data.createdAt }
 
   get phone(): string | undefined {

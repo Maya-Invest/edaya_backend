@@ -190,6 +190,44 @@ describe('SchoolService scheduling workflows', () => {
     })).rejects.toThrow('Reviewed attendance must not be corrected without a reopen workflow')
   })
 
+  test('recordAttendance enqueues guardian notifications for absent or late statuses', async () => {
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createSchedulingContext({ notificationGateway: gateway })
+
+    await service.schedulingWorkflow.recordAttendance({
+      id: 'stu1-ses1',
+      studentId: 'stu1',
+      sessionId: 'ses1',
+      status: AttendanceStatus.Absent,
+    })
+
+    expect(gateway.enqueued).toHaveLength(1)
+    expect(gateway.enqueued[0]).toMatchObject({
+      idempotencyKey: `${ATTENDANCE_RECORDED_EVENT_KEY}:stu1:ses1:${AttendanceStatus.Absent}`,
+      schoolId: 'sch1',
+      kind: 'event',
+      eventKey: ATTENDANCE_RECORDED_EVENT_KEY,
+      recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1' }],
+    })
+  })
+
+  test('recordDailyAttendance enqueues guardian notifications for absent or late statuses', async () => {
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createSchedulingContext({ notificationGateway: gateway })
+
+    await service.schedulingWorkflow.recordDailyAttendance({
+      id: 'stu1-daily:cg_daily:2026-05-28',
+      classGroupId: 'cg_daily',
+      studentId: 'stu1',
+      date: new Date('2026-05-28T12:00:00Z'),
+      status: AttendanceStatus.Late,
+    })
+
+    expect(gateway.enqueued).toHaveLength(1)
+    expect(gateway.enqueued[0]?.eventKey).toBe(ATTENDANCE_RECORDED_EVENT_KEY)
+    expect(gateway.enqueued[0]?.recipients).toEqual([{ kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1' }])
+  })
+
   test('recordSessionAttendance enqueues guardian notifications for absent or late statuses', async () => {
     const gateway = new RecordingNotificationGateway()
     const { service } = createSchedulingContext({ notificationGateway: gateway })

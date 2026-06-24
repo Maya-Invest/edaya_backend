@@ -1,4 +1,12 @@
 import {
+  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
+  handleAssessmentResultRecorded,
+} from './handlers/assessment-result-recorded'
+import {
+  INCIDENT_RECORDED_EVENT_KEY,
+  handleIncidentRecorded,
+} from './handlers/incident-recorded'
+import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
   handleAnnouncementPublished,
 } from './handlers/announcement-published'
@@ -21,6 +29,12 @@ export function registerWorkflowNotificationHandlers(): void {
   }
   if (!workflowNotificationRunner.hasHandlers(ATTENDANCE_RECORDED_EVENT_KEY)) {
     workflowNotificationRunner.register(ATTENDANCE_RECORDED_EVENT_KEY, handleAttendanceRecorded)
+  }
+  if (!workflowNotificationRunner.hasHandlers(ASSESSMENT_RESULT_RECORDED_EVENT_KEY)) {
+    workflowNotificationRunner.register(ASSESSMENT_RESULT_RECORDED_EVENT_KEY, handleAssessmentResultRecorded)
+  }
+  if (!workflowNotificationRunner.hasHandlers(INCIDENT_RECORDED_EVENT_KEY)) {
+    workflowNotificationRunner.register(INCIDENT_RECORDED_EVENT_KEY, handleIncidentRecorded)
   }
 }
 

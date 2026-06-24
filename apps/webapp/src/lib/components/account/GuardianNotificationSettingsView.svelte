@@ -2,6 +2,7 @@
 	import type { NotificationSettingsPageData } from '$lib/queries/account.queries';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { saveGuardianNotificationPreferencesMutation } from '$lib/api/mutations/notifications.mutations';
 	import { t } from '$lib/i18n';
@@ -15,10 +16,13 @@
 	} = $props();
 
 	const settings = $derived(data.settings);
+	const loginEmail = $derived(data.loginEmail ?? '');
 
 	let premiumNotificationsEnabled = $state(false);
 	let emailNotificationsEnabled = $state(false);
 	let smsNotificationsEnabled = $state(false);
+	let notificationEmail = $state('');
+	let notificationPhone = $state('');
 	let linkRows = $state<Array<{
 		studentId: string;
 		receivesAcademicReports: boolean;
@@ -33,6 +37,8 @@
 		}
 		hydratedId = settings.id;
 		premiumNotificationsEnabled = settings.premiumNotificationsEnabled;
+		notificationEmail = settings.notificationEmail ?? '';
+		notificationPhone = settings.notificationPhone ?? '';
 		emailNotificationsEnabled = settings.contactMethods.some(
 			method => method.type === 'email' && method.allowsNotifications,
 		);
@@ -57,6 +63,8 @@
 			premiumNotificationsEnabled,
 			emailNotificationsEnabled,
 			smsNotificationsEnabled,
+			notificationEmail: notificationEmail.trim() || null,
+			notificationPhone: notificationPhone.trim() || null,
 			links: linkRows,
 		}, {
 			current: settings,
@@ -79,6 +87,41 @@
 			<p class="text-sm text-muted-foreground">{$t('account.notifications.noSubject')}</p>
 		{:else}
 			<div class="mx-auto max-w-2xl space-y-8">
+				<section class="space-y-4 rounded-xl border border-border bg-card p-5">
+					<h2 class="font-display text-lg font-semibold">{$t('account.notifications.contactDetails')}</h2>
+					<div class="space-y-3">
+						<div class="space-y-2">
+							<label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground" for="guardian-login-email">
+								{$t('account.notifications.loginEmail')}
+							</label>
+							<Input id="guardian-login-email" value={loginEmail || '—'} readonly />
+						</div>
+						<div class="space-y-2">
+							<label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground" for="guardian-notification-email">
+								{$t('account.notifications.deliveryEmail')}
+							</label>
+							<Input
+								id="guardian-notification-email"
+								type="email"
+								bind:value={notificationEmail}
+								placeholder={loginEmail || $t('account.notifications.deliveryEmailPlaceholder')}
+							/>
+						</div>
+						<div class="space-y-2">
+							<label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground" for="guardian-notification-phone">
+								{$t('account.notifications.deliveryPhone')}
+							</label>
+							<Input
+								id="guardian-notification-phone"
+								type="tel"
+								bind:value={notificationPhone}
+								placeholder={$t('account.notifications.deliveryPhonePlaceholder')}
+							/>
+						</div>
+					</div>
+					<p class="text-xs text-muted-foreground">{$t('account.notifications.contactHint')}</p>
+				</section>
+
 				<section class="space-y-4 rounded-xl border border-border bg-card p-5">
 					<h2 class="font-display text-lg font-semibold">{$t('account.notifications.channels')}</h2>
 					<div class="space-y-3">

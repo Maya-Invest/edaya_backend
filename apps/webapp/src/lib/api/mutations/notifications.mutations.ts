@@ -10,6 +10,8 @@ export interface GuardianNotificationPreferencesInput {
 	premiumNotificationsEnabled: boolean;
 	emailNotificationsEnabled: boolean;
 	smsNotificationsEnabled: boolean;
+	notificationEmail?: string | null;
+	notificationPhone?: string | null;
 	links: Array<{
 		studentId: string;
 		receivesAcademicReports: boolean;
@@ -52,6 +54,10 @@ export async function saveGuardianNotificationPreferencesMutation(
 	);
 
 	const result = await runMutation(async () => {
+		await client.commands.updateNotificationContact({
+			notificationEmail: input.notificationEmail ?? null,
+			notificationPhone: input.notificationPhone ?? null,
+		});
 		await client.commands.updateGuardianContactMethods({
 			guardianId: input.guardianId,
 			premiumNotificationsEnabled: input.premiumNotificationsEnabled,
@@ -83,6 +89,26 @@ export async function saveGuardianNotificationPreferencesMutation(
 		successMessage: options?.successMessage,
 	});
 
+	return result !== null;
+}
+
+export interface NotificationContactInput {
+	notificationEmail?: string | null;
+	notificationPhone?: string | null;
+}
+
+export async function saveNotificationContactMutation(
+	input: NotificationContactInput,
+	options?: { successMessage?: string },
+): Promise<boolean> {
+	const client = getBrowserSchoolClient();
+	const result = await runMutation(
+		() => client.commands.updateNotificationContact({
+			notificationEmail: input.notificationEmail ?? null,
+			notificationPhone: input.notificationPhone ?? null,
+		}),
+		{ successMessage: options?.successMessage },
+	);
 	return result !== null;
 }
 

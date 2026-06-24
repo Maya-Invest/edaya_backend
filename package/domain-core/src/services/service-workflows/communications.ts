@@ -2,7 +2,9 @@ import type {
   AnnouncementInput,
   AnnouncementTarget,
   AnnouncementTargetInput,
+  Guardian,
   MessageDeliveryStatus,
+  StaffMember,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess, Permission } from '../../authorization'
@@ -10,15 +12,20 @@ import {
   Announcement,
   AnnouncementStatus,
   AnnouncementTarget as AnnouncementTargetEntity,
+  Guardian as GuardianEntity,
   MessageDelivery,
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus as DeliveryStatus,
+  StaffMember as StaffMemberEntity,
   StudentClassEnrollmentStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../domains'
 import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
+  buildGuardianRecipientProfile,
+  buildStaffRecipientProfile,
   runWorkflowNotifications,
+  scheduleNotificationRecipientUpsert,
 } from '../../notifications'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
@@ -60,6 +67,16 @@ export interface ApplyDeliveryEventInput {
 export interface MarkDeliveryReadInput {
   deliveryId: string
   readAt?: Date
+}
+
+export interface UpdateNotificationContactInput {
+  notificationEmail?: string | null
+  notificationPhone?: string | null
+}
+
+function normalizeNotificationContact(value?: string | null): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : undefined
 }
 
 export type CreateAnnouncementInput = AnnouncementInput
@@ -312,6 +329,88 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     })
     await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
     return delivery
+  }
+
+  async updateNotificationContact(
+    input: UpdateNotificationContactInput,
+  ): Promise<StaffMember | Guardian> {
+    const actor = this.baseService.actor
+    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+
+    const notificationEmail = normalizeNotificationContact(input.notificationEmail)
+    const notificationPhone = normalizeNotificationContact(input.notificationPhone)
+
+    if (actor.kind === 'staff') {
+      const existing = await this.baseService.repositories.staffMembers.findById(actor.staffMemberId)
+      if (!existing) {
+        denyResourceAccess()
+      }
+      this.checkActorSchool(existing.schoolId)
+      if (!existing.subjectId) {
+        throw new BusinessRuleViolationError(
+          'NOTIFICATION_CONTACT_SUBJECT_REQUIRED',
+          'Link a login account before configuring notification contact details',
+        )
+      }
+      const staffMember = new StaffMemberEntity({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        firstName: existing.firstName,
+        lastName: existing.lastName,
+        email: existing.email,
+        notificationEmail,
+        notificationPhone,
+        subjectId: existing.subjectId,
+        accountKind: existing.accountKind,
+        serviceId: existing.serviceId,
+        createdBySubjectId: existing.createdBySubjectId,
+        serviceElevated: existing.serviceElevated,
+        isActive: existing.isActive,
+        createdAt: existing.createdAt,
+      })
+      await this.baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
+      scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
+      return staffMember
+    }
+
+    if (actor.kind === 'guardian') {
+      const existing = await this.baseService.repositories.guardians.findById(actor.guardianId)
+      if (!existing) {
+        denyResourceAccess()
+      }
+      this.checkActorSchool(existing.schoolId)
+      if (!existing.subjectId) {
+        throw new BusinessRuleViolationError(
+          'NOTIFICATION_CONTACT_SUBJECT_REQUIRED',
+          'Link a login account before configuring notification contact details',
+        )
+      }
+      const guardian = new GuardianEntity({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        firstName: existing.firstName,
+        lastName: existing.lastName,
+        contactMethods: [...existing.contactMethods],
+        notificationEmail,
+        notificationPhone,
+        subjectId: existing.subjectId,
+        hasAccess: existing.hasAccess,
+        premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
+        createdAt: existing.createdAt,
+      })
+      await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
+      const links = await this.baseService.repositories.guardianLinks.list({ guardianId: guardian.id })
+      scheduleNotificationRecipientUpsert(
+        this.baseService,
+        buildGuardianRecipientProfile(guardian, links),
+      )
+      return guardian
+    }
+
+    throw new BusinessRuleViolationError(
+      'NOTIFICATION_CONTACT_UNSUPPORTED_ACTOR',
+      'Only linked staff and guardian accounts can update notification contact details',
+    )
   }
 
   private async resolveSubjectId(

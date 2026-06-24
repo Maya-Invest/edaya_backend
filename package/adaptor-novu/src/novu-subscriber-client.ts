@@ -1,5 +1,9 @@
 import { Novu } from "@novu/api";
 import type { NotificationRecipientProfile } from "@edaya/core";
+import {
+  mapRecipientProfileToNovuGlobalPreferences,
+  mapRecipientProfileToNovuWorkflowPreferencesBulk,
+} from "./map-subscriber-preferences";
 import { mapRecipientProfileToNovuSubscriber } from "./map-subscriber-profile";
 
 export interface NovuSubscriberClient {
@@ -24,6 +28,14 @@ export function createNovuSubscriberClient(
     upsert: async (subscriberId, schoolId, profile) => {
       await novu.subscribers.create(
         mapRecipientProfileToNovuSubscriber(subscriberId, schoolId, profile),
+      );
+      await novu.subscribers.preferences.update(
+        mapRecipientProfileToNovuGlobalPreferences(schoolId, profile),
+        subscriberId,
+      );
+      await novu.subscribers.preferences.bulkUpdate(
+        mapRecipientProfileToNovuWorkflowPreferencesBulk(schoolId, profile),
+        subscriberId,
       );
     },
     remove: async (subscriberId) => {

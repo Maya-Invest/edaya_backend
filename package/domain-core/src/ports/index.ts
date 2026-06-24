@@ -1,4 +1,5 @@
 export * from './atomic-execution'
+export * from './auth-contact-resolver'
 export * from './base-repository'
 export * from './notification-gateway'
 export * from './school-repositories'
