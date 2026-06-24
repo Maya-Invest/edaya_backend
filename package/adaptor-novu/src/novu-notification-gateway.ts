@@ -1,9 +1,26 @@
-import type { NotificationEnqueueInput, NotificationGatewayPort } from "@edaya/core";
+import type {
+  NotificationDeliveryStatusLookup,
+  NotificationEnqueueInput,
+  NotificationGatewayPort,
+  NotificationRecipient,
+  NotificationRecipientProfile,
+} from "@edaya/core";
 import { chunkNovuTriggerRequests, defaultNovuWorkflowIdResolver, mapNotificationToNovuTriggerRequest } from "./trigger-request";
+import type { NovuMessagesClient } from "./novu-messages-client";
 import type { NovuNotificationGatewayOptions } from "./types";
 
+export interface NovuSubscriberClient {
+  upsert: (subscriberId: string, schoolId: string, profile: NotificationRecipientProfile) => Promise<void>;
+  remove: (subscriberId: string) => Promise<void>;
+}
+
+export interface ExtendedNovuNotificationGatewayOptions extends NovuNotificationGatewayOptions {
+  subscriberClient?: NovuSubscriberClient;
+  messagesClient?: NovuMessagesClient;
+}
+
 export function createNovuNotificationGateway(
-  options: NovuNotificationGatewayOptions,
+  options: ExtendedNovuNotificationGatewayOptions,
 ): NotificationGatewayPort {
   const resolveWorkflowId = options.resolveWorkflowId ?? defaultNovuWorkflowIdResolver;
 
@@ -31,8 +48,56 @@ export function createNovuNotificationGateway(
     }
   }
 
+  async function safeUpsertRecipient(profile: NotificationRecipientProfile): Promise<void> {
+    if (!options.subscriberClient || !profile.recipient.subjectId) {
+      return;
+    }
+    try {
+      await options.subscriberClient.upsert(
+        profile.recipient.subjectId,
+        profile.schoolId,
+        profile,
+      );
+    }
+    catch (error) {
+      options.onError?.(error, { operation: "upsertRecipient", profile });
+    }
+  }
+
+  async function safeRemoveRecipient(schoolId: string, recipient: NotificationRecipient): Promise<void> {
+    if (!options.subscriberClient || !recipient.subjectId) {
+      return;
+    }
+    try {
+      await options.subscriberClient.remove(recipient.subjectId);
+    }
+    catch (error) {
+      options.onError?.(error, { operation: "removeRecipient", schoolId, recipient });
+    }
+  }
+
+  async function safeLookupDeliveryStatuses(
+    deliveries: ReadonlyArray<{ deliveryId: string; subjectId: string }>,
+  ): Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>> {
+    if (!options.messagesClient || deliveries.length === 0) {
+      return new Map();
+    }
+    try {
+      return await options.messagesClient.lookupDeliveryStatuses(deliveries);
+    }
+    catch (error) {
+      options.onError?.(error, { operation: "lookupDeliveryStatuses", deliveries });
+      return new Map();
+    }
+  }
+
   return {
     enqueue: safeEnqueue,
     cancel: safeCancel,
+    upsertRecipient: safeUpsertRecipient,
+    removeRecipient: safeRemoveRecipient,
+    ...(options.messagesClient
+      ? { lookupDeliveryStatuses: safeLookupDeliveryStatuses }
+      : {}),
   };
 }

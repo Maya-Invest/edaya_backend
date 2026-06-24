@@ -1,6 +1,7 @@
 /* eslint-disable node/no-process-env */
 import { config } from "dotenv";
 import { expand } from "dotenv-expand";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseRuntimeEnv } from "@/runtime/env/schema";
@@ -19,9 +20,16 @@ function normalizeLocalDatabaseUrl(env: Environment): Environment {
 }
 
 export function loadDotenvFiles(): void {
-  expand(config({
-    path: path.resolve(resolveCronRoot(), ".env"),
-  }));
+  const cronRoot = resolveCronRoot();
+  const apiEnvPath = path.resolve(cronRoot, "../api/.env");
+  const cronEnvPath = path.resolve(cronRoot, ".env");
+
+  if (existsSync(apiEnvPath)) {
+    expand(config({ path: apiEnvPath }));
+  }
+  if (existsSync(cronEnvPath)) {
+    expand(config({ path: cronEnvPath, override: true }));
+  }
 }
 
 export function loadNodeProcessEnv(): Environment {

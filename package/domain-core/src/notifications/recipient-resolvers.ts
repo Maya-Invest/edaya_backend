@@ -9,6 +9,26 @@ import {
 } from '../domains'
 import { uniqueNotificationRecipients } from './recipient-utils'
 
+async function resolveStudentRecipients(
+  repositories: SchoolRepositories,
+  schoolId: string,
+  studentIds: readonly string[],
+): Promise<NotificationRecipient[]> {
+  const recipients: NotificationRecipient[] = []
+  for (const studentId of studentIds) {
+    const student = await repositories.students.findById(studentId)
+    if (!student || student.schoolId !== schoolId || !student.subjectId) {
+      continue
+    }
+    recipients.push({
+      kind: MessageDeliveryRecipientKind.Student,
+      id: student.id,
+      subjectId: student.subjectId,
+    })
+  }
+  return recipients
+}
+
 export async function resolveGuardiansForStudents(
   repositories: SchoolRepositories,
   schoolId: string,
@@ -26,12 +46,13 @@ export async function resolveGuardiansForStudents(
         continue
       }
       const guardian = await repositories.guardians.findById(link.guardianId)
-      if (!guardian || guardian.schoolId !== schoolId || !guardianFilter(guardian)) {
+      if (!guardian || guardian.schoolId !== schoolId || !guardianFilter(guardian) || !guardian.subjectId) {
         continue
       }
       recipients.push({
         kind: MessageDeliveryRecipientKind.Guardian,
         id: guardian.id,
+        subjectId: guardian.subjectId,
       })
     }
   }
@@ -53,10 +74,11 @@ export async function resolveClassGroupStudentAndGuardianRecipients(
     return []
   }
 
-  const studentRecipients = enrollments.map(enrollment => ({
-    kind: MessageDeliveryRecipientKind.Student,
-    id: enrollment.studentId,
-  }))
+  const studentRecipients = await resolveStudentRecipients(
+    repositories,
+    schoolId,
+    enrollments.map(enrollment => enrollment.studentId),
+  )
   const guardianRecipients = await resolveGuardiansForStudents(
     repositories,
     schoolId,
@@ -82,10 +104,7 @@ export async function resolveActivityEnrollmentRecipients(
     return []
   }
 
-  const studentRecipients = approvedStudentIds.map(studentId => ({
-    kind: MessageDeliveryRecipientKind.Student,
-    id: studentId,
-  }))
+  const studentRecipients = await resolveStudentRecipients(repositories, schoolId, approvedStudentIds)
   const guardianRecipients = await resolveGuardiansForStudents(
     repositories,
     schoolId,

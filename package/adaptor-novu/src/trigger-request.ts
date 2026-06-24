@@ -10,9 +10,9 @@ export function mapNotificationToNovuTriggerRequest(
   input: NotificationEnqueueInput,
   resolveWorkflowId: NovuWorkflowIdResolver = defaultNovuWorkflowIdResolver,
 ): NovuTriggerRequest {
-  const subscriberIds = buildNovuSubscriberIds(input.schoolId, input.recipients);
+  const subscriberIds = buildNovuSubscriberIds(input.recipients);
   if (subscriberIds.length === 0) {
-    throw new Error("NotificationEnqueueInput must include at least one recipient");
+    throw new Error("NotificationEnqueueInput must include at least one recipient with subjectId");
   }
 
   return {
@@ -27,7 +27,6 @@ export function mapNotificationToNovuTriggerRequest(
       eventKey: input.eventKey,
       schoolId: input.schoolId,
       announcementId: input.announcementId,
-      channels: input.channels,
       priority: input.priority,
       premium: input.premium,
       deliverAfter: input.deliverAfter?.toISOString(),

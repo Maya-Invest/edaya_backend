@@ -758,6 +758,23 @@
           "apiKey"
         ]
       },
+      "NovuWebhookResponse": {
+        "type": "object",
+        "properties": {
+          "processed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ignored": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "processed",
+          "ignored"
+        ]
+      },
       "RegisterSchoolCommand": {
         "type": "object",
         "properties": {
@@ -5755,6 +5772,10 @@
             "type": "string",
             "minLength": 1
           },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
           "recipientKind": {
             "type": "string",
             "enum": [
@@ -5766,16 +5787,6 @@
           "recipientId": {
             "type": "string",
             "minLength": 1
-          },
-          "channel": {
-            "type": "string",
-            "enum": [
-              "app",
-              "email",
-              "sms",
-              "whatsapp",
-              "other"
-            ]
           },
           "status": {
             "type": "string",
@@ -5810,9 +5821,7 @@
         "required": [
           "id",
           "announcementId",
-          "recipientKind",
-          "recipientId",
-          "channel"
+          "subjectId"
         ]
       },
       "RecordMessageDeliveryCommand": {
@@ -5826,6 +5835,10 @@
             "type": "string",
             "minLength": 1
           },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
           "recipientKind": {
             "type": "string",
             "enum": [
@@ -5837,16 +5850,6 @@
           "recipientId": {
             "type": "string",
             "minLength": 1
-          },
-          "channel": {
-            "type": "string",
-            "enum": [
-              "app",
-              "email",
-              "sms",
-              "whatsapp",
-              "other"
-            ]
           },
           "status": {
             "type": "string",
@@ -5881,9 +5884,7 @@
         "required": [
           "id",
           "announcementId",
-          "recipientKind",
-          "recipientId",
-          "channel"
+          "subjectId"
         ]
       },
       "MessageDeliveryCommandListResponse": {
@@ -5898,21 +5899,58 @@
           "announcementId": {
             "type": "string",
             "minLength": 1
-          },
-          "channel": {
-            "type": "string",
-            "enum": [
-              "app",
-              "email",
-              "sms",
-              "whatsapp",
-              "other"
-            ]
           }
         },
         "required": [
-          "announcementId",
-          "channel"
+          "announcementId"
+        ]
+      },
+      "ApplyDeliveryEventCommand": {
+        "type": "object",
+        "properties": {
+          "deliveryId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "failed",
+              "read",
+              "cancelled"
+            ]
+          },
+          "providerMessageId": {
+            "type": "string"
+          },
+          "failureReason": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "deliveryId",
+          "status"
+        ]
+      },
+      "MarkDeliveryReadCommand": {
+        "type": "object",
+        "properties": {
+          "deliveryId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "readAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "deliveryId"
         ]
       },
       "CountResponse": {
@@ -8971,6 +9009,68 @@
           },
           "500": {
             "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/novu": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Novu delivery lifecycle webhook",
+        "responses": {
+          "200": {
+            "description": "Processed delivery events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NovuWebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid webhook signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Webhook secret not configured",
             "content": {
               "application/json": {
                 "schema": {
@@ -18068,6 +18168,254 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MessageDeliveryCommandListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/apply-delivery-event": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "apply-delivery-event",
+        "requestBody": {
+          "description": "apply-delivery-event payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyDeliveryEventCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed apply-delivery-event",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDelivery"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/mark-delivery-read": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "mark-delivery-read",
+        "requestBody": {
+          "description": "mark-delivery-read payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkDeliveryReadCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed mark-delivery-read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDelivery"
                 }
               }
             }

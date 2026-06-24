@@ -24,7 +24,7 @@ TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 #   Required secret: BETTER_AUTH_SECRET
 #   Before first deploy: run `bun run db:migrate:dev` (Neon school DB) and `bun run db:migrate:auth:remote` (Better Auth D1)
 # Optional: DATABASE_URL (Node / wrangler fallback), GRANTS_CACHE_TTL_MS
-# Optional: NOVU_SECRET_KEY, NOVU_API_URL (Novu Cloud notification dispatch)
+# Optional: NOVU_SECRET_KEY, NOVU_API_URL, NOVU_WEBHOOK_SECRET (Novu Cloud)
 #
 # Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
 # CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://...

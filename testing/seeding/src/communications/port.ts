@@ -2,7 +2,6 @@ import type {
   AnnouncementPriority,
   AnnouncementStatus,
   AnnouncementTargetKind,
-  MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
 } from '@edaya/core'
@@ -35,15 +34,14 @@ export interface PublishAnnouncementSeedRecord {
 
 export interface MaterializeDeliveriesSeedRecord {
   announcementId: string
-  channel: MessageDeliveryChannel
 }
 
 export interface MessageDeliverySeedRecord {
   id: string
   announcementId: string
+  subjectId: string
   recipientKind: MessageDeliveryRecipientKind
   recipientId: string
-  channel: MessageDeliveryChannel
   status: MessageDeliveryStatus
   sentAt?: string
   readAt?: string

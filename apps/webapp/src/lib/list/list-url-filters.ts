@@ -28,6 +28,11 @@ const activityListFiltersCodec = defineUrlFilterCodec({
 	category: { type: 'string', default: 'all' },
 });
 
+const announcementListFiltersCodec = defineUrlFilterCodec({
+	q: { type: 'search', default: '' },
+	status: { type: 'string', default: 'all' },
+});
+
 const studentListFiltersCodec = defineUrlFilterCodec({
 	q: { type: 'search', default: '' },
 	class: { type: 'string', default: 'all' },
@@ -82,6 +87,7 @@ export type TeachingListFilters = ReturnType<typeof teachingListFiltersCodec.rea
 export type PlanningListFilters = ReturnType<typeof planningListFiltersCodec.read>;
 export type ClassStudentListFilters = ReturnType<typeof classStudentListFiltersCodec.read>;
 export type ActivityListFilters = ReturnType<typeof activityListFiltersCodec.read>;
+export type AnnouncementListFilters = ReturnType<typeof announcementListFiltersCodec.read>;
 export type StudentListFilters = ReturnType<typeof studentListFiltersCodec.read>;
 export type ClassReportCardListFilters = ReturnType<typeof classReportCardListFiltersCodec.read>;
 export type PaymentListFilters = ReturnType<typeof paymentListFiltersCodec.read>;
@@ -139,6 +145,14 @@ export function readActivityListFilters(url: URL): ActivityListFilters {
 
 export function writeActivityListFilters(url: URL, filters: ActivityListFilters): string {
 	return activityListFiltersCodec.write(url, filters);
+}
+
+export function readAnnouncementListFilters(url: URL): AnnouncementListFilters {
+	return announcementListFiltersCodec.read(url);
+}
+
+export function writeAnnouncementListFilters(url: URL, filters: AnnouncementListFilters): string {
+	return announcementListFiltersCodec.write(url, filters);
 }
 
 export function readStudentListFilters(url: URL): StudentListFilters {

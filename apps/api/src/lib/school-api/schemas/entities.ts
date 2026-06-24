@@ -349,9 +349,9 @@ export const announcementTargetQuerySchema = createQueryOptionsSchema({
 export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   announcementId: field.id(),
+  subjectId: field.id(),
   recipientKind: field.string(),
   recipientId: field.id(),
-  channel: field.string(),
   status: field.string(),
 });
 

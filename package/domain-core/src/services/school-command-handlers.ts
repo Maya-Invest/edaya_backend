@@ -28,8 +28,10 @@ import type {
 } from './service-workflows/behavior'
 import type {
   AddAnnouncementTargetInput,
+  ApplyDeliveryEventInput,
   CommunicationsServiceWorkflow,
   CreateAnnouncementInput,
+  MarkDeliveryReadInput,
   MaterializeDeliveriesInput,
   PublishAnnouncementInput,
   RecordDeliveryInput,
@@ -180,6 +182,8 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     publishAnnouncement: payload => workflows.communications.publishAnnouncement(payload as PublishAnnouncementInput),
     recordDelivery: payload => workflows.communications.recordDelivery(payload as RecordDeliveryInput),
     materializeDeliveries: payload => workflows.communications.materializeDeliveries(payload as MaterializeDeliveriesInput),
+    applyDeliveryEvent: payload => workflows.communications.applyDeliveryEvent(payload as ApplyDeliveryEventInput),
+    markDeliveryRead: payload => workflows.communications.markDeliveryRead(payload as MarkDeliveryReadInput),
     // behavior
     recordIncident: payload => workflows.behavior.recordIncident(payload as RecordIncidentInput),
     addStudentInvolvement: payload => workflows.behavior.addStudentInvolvement(payload as AddStudentInvolvementInput),

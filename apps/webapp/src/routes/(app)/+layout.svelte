@@ -14,7 +14,7 @@
 	import { isLikelyDetailPath, listRouteCacheKey } from '$lib/detail-route-patterns';
 	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';
-	import { LogOut, LoaderCircle } from '$lib/icons';
+	import { LogOut, LoaderCircle, Inbox, Settings2 } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -25,7 +25,7 @@
 	const drawer = new DrawerState();
 	setContext('drawer', drawer);
 
-	const me = $derived(authSession.user);
+	const me = $derived(authSession.accountActor);
 	const needsDrawer = $derived(drawer.item !== null || isLikelyDetailPath($page.url.pathname));
 
 	type DetailDrawerComponent = Component<{ item: DrawerItem | null; onClose: () => void }>;
@@ -141,6 +141,22 @@
 					<AcademicHeader />
 					<LanguageSelector />
 					<div class="flex items-center gap-1.5">
+						<a
+							href={appPath('/(app)/account/inbox/[[id]]')}
+							class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+							title={$t('account.inbox.title')}
+							aria-label={$t('account.inbox.title')}
+						>
+							<Inbox class="h-4 w-4" />
+						</a>
+						<a
+							href={appPath('/(app)/account/notifications')}
+							class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+							title={$t('account.notifications.title')}
+							aria-label={$t('account.notifications.title')}
+						>
+							<Settings2 class="h-4 w-4" />
+						</a>
 						<div
 							class="flex h-9 items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 text-xs font-medium text-foreground"
 							title={me.name}
@@ -153,7 +169,7 @@
 							<span class="flex flex-col items-start leading-tight">
 								<span class="text-[11px] font-semibold">{me.name}</span>
 								<span class="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-									{$t(`staff.role.${me.role}`)}
+									{$t(me.subtitleKey)}
 								</span>
 							</span>
 						</div>

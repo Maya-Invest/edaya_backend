@@ -1,5 +1,9 @@
 import type { SessionSnapshot } from '$lib/auth/types';
 import { browserFetch } from '$lib/api/browser-fetch';
+import {
+	fetchGuardianNotificationSettings,
+	fetchStaffSubjectId,
+} from '$lib/api/account-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { fetchStaffMemberById } from '$lib/api/staff-data';
 import { ApiError } from '@edaya/api-client';
@@ -16,16 +20,31 @@ export async function bootstrapSession() {
 		}
 
 		const session = await browserFetch<SessionSnapshot>('/core/authorization/effective-grants');
+		const client = getBrowserSchoolClient();
 		let staffProfile = null;
+		let guardianSettings = null;
+		let subjectId: string | null = null;
+
 		if (session?.kind === 'staff') {
 			staffProfile = await fetchStaffMemberById(
-				getBrowserSchoolClient(),
+				client,
 				session.actorId,
 				session.schoolId,
 			);
+			const staff = await fetchStaffSubjectId(client, session.actorId);
+			subjectId = staff.subjectId;
 		}
-		authSession.setFromServer(session, staffProfile);
-		return { session, staffProfile };
+		else if (session?.kind === 'guardian') {
+			guardianSettings = await fetchGuardianNotificationSettings(client, session.actorId);
+			subjectId = guardianSettings?.subjectId ?? null;
+		}
+
+		authSession.setFromServer(session, {
+			staffProfile,
+			guardianSettings,
+			subjectId,
+		});
+		return { session, staffProfile, guardianSettings };
 	}
 	catch (error) {
 		if (error instanceof ApiError && error.status === 401) {

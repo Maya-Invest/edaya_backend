@@ -118,6 +118,12 @@
 				{:then { default: LevelDetail }}
 					<LevelDetail label={item.data.label} subtitle={item.data.subtitle} items={item.data.items} />
 				{/await}
+			{:else if item.kind === 'announcement'}
+				{#await import('../school-life/AnnouncementDetail.svelte')}
+					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
+				{:then { default: AnnouncementDetail }}
+					<AnnouncementDetail announcement={item.data} />
+				{/await}
 			{:else if item.kind === 'activity'}
 				{#await import('../school-life/ActivityDetail.svelte')}
 					<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>

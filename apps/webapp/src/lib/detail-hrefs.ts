@@ -6,6 +6,7 @@ export const detailHref = {
 	schoolStudent: (id: string): ResolvedPathname => appPath('/(app)/school/students/[[id]]', { id }),
 	schoolGuardian: (id: string): ResolvedPathname => appPath('/(app)/school/guardians/[[id]]', { id }),
 	schoolActivity: (id: string): ResolvedPathname => appPath('/(app)/school/activities/[[id]]', { id }),
+	schoolAnnouncement: (id: string): ResolvedPathname => appPath('/(app)/school/announcements/[[id]]', { id }),
 	schoolIncident: (id: string): ResolvedPathname => appPath('/(app)/school/events/[[id]]', { id }),
 	schoolCalendarEvent: (id: string): ResolvedPathname => appPath('/(app)/school/calendar/[[id]]', { id }),
 	classStudent: (classId: string, id: string): ResolvedPathname =>
@@ -31,4 +32,7 @@ export const detailHref = {
 	financeFee: (id: string): ResolvedPathname => appPath('/(app)/finance/fees/[[id]]', { id }),
 	classReportCard: (classId: string, id: string): ResolvedPathname =>
 		appPath('/(app)/classes/[classId]/report-cards/[[id]]', { classId, id }),
+	accountInbox: (id?: string): ResolvedPathname =>
+		appPath('/(app)/account/inbox/[[id]]', id ? { id } : {}),
+	accountNotifications: (): ResolvedPathname => appPath('/(app)/account/notifications'),
 };

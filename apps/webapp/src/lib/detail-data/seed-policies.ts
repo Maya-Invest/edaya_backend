@@ -1,6 +1,7 @@
 import type { Crud } from '$lib/components/school/shared/drawer-constants';
 import type {
 	Activity,
+	Announcement,
 	AbsenceRecord,
 	AssessmentResultRow,
 	Deadline,
@@ -119,6 +120,13 @@ export function seedIncidentsCollection(existing: readonly Incident[], incidents
 
 export function seedActivitiesCollection(existing: readonly Activity[], activities: readonly Activity[]): Activity[] {
 	return mergeById(existing, activities);
+}
+
+export function seedAnnouncementsCollection(
+	existing: readonly Announcement[],
+	announcements: readonly Announcement[],
+): Announcement[] {
+	return mergeById(existing, announcements);
 }
 
 export function seedBillingCollection(existing: readonly StudentBilling[], billing: readonly StudentBilling[]): StudentBilling[] {

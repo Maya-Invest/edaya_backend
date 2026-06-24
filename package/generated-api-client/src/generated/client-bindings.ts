@@ -619,6 +619,16 @@ export const clientBindings = {
       "publicName": "materialize-deliveries",
       "requestSchemaName": "MaterializeDeliveriesCommand",
       "responseSchemaName": "MessageDeliveryCommandListResponse"
+    },
+    "applyDeliveryEvent": {
+      "publicName": "apply-delivery-event",
+      "requestSchemaName": "ApplyDeliveryEventCommand",
+      "responseSchemaName": "MessageDelivery"
+    },
+    "markDeliveryRead": {
+      "publicName": "mark-delivery-read",
+      "requestSchemaName": "MarkDeliveryReadCommand",
+      "responseSchemaName": "MessageDelivery"
     }
   },
   queries: {

@@ -1,6 +1,8 @@
 import type { NotificationGatewayPort } from "@edaya/core";
+import { createNovuMessagesClient } from "./novu-messages-client";
 import { createNovuNotificationGateway } from "./novu-notification-gateway";
 import { createNovuSdkClient } from "./novu-sdk-client";
+import { createNovuSubscriberClient } from "./novu-subscriber-client";
 import type { NovuNotificationGatewayOptions } from "./types";
 
 export interface CreateNovuNotificationGatewayFromSecretKeyOptions {
@@ -15,6 +17,14 @@ export function createNovuNotificationGatewayFromSecretKey(
 ): NotificationGatewayPort {
   return createNovuNotificationGateway({
     client: createNovuSdkClient({
+      secretKey: options.secretKey,
+      serverURL: options.serverURL,
+    }),
+    messagesClient: createNovuMessagesClient({
+      secretKey: options.secretKey,
+      serverURL: options.serverURL,
+    }),
+    subscriberClient: createNovuSubscriberClient({
       secretKey: options.secretKey,
       serverURL: options.serverURL,
     }),

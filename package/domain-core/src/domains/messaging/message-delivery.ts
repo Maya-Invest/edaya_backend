@@ -29,9 +29,9 @@ export enum MessageDeliveryStatus {
 export const messageDeliveryBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   announcementId: z.string().trim().min(1, 'announcementId must not be blank'),
-  recipientKind: z.nativeEnum(MessageDeliveryRecipientKind),
-  recipientId: z.string().trim().min(1, 'recipientId must not be blank'),
-  channel: z.nativeEnum(MessageDeliveryChannel),
+  subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
+  recipientKind: z.nativeEnum(MessageDeliveryRecipientKind).optional(),
+  recipientId: z.string().trim().min(1, 'recipientId must not be blank').optional(),
   status: z.nativeEnum(MessageDeliveryStatus).default(MessageDeliveryStatus.Pending),
   providerMessageId: z.string().trim().min(1, 'providerMessageId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   failureReason: z.string().trim().min(1, 'failureReason must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -77,7 +77,7 @@ export const messageDeliveryCreateSchema = messageDeliveryBaseSchema.omit({ crea
 export const messageDeliveryUpdateSchema = messageDeliveryBaseSchema.partial().required({ id: true }).superRefine(refineMessageDelivery)
 
 /**
- * Tracks delivery state for one announcement/message to one concrete recipient.
+ * Tracks delivery state for one announcement/message to one auth account (subjectId).
  */
 export class MessageDelivery {
   readonly data: MessageDeliveryData
@@ -88,9 +88,9 @@ export class MessageDelivery {
 
   get id() { return this.data.id }
   get announcementId() { return this.data.announcementId }
+  get subjectId() { return this.data.subjectId }
   get recipientKind() { return this.data.recipientKind }
   get recipientId() { return this.data.recipientId }
-  get channel() { return this.data.channel }
   get status() { return this.data.status }
   get providerMessageId() { return this.data.providerMessageId }
   get failureReason() { return this.data.failureReason }

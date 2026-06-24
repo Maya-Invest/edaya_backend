@@ -7,7 +7,6 @@ import {
   FeeStatus,
   GradeLevel,
   GradeScale,
-  MessageDeliveryChannel,
   PaymentMethod,
   PaymentStatus,
   SessionKind,
@@ -326,7 +325,6 @@ describeIntegration('atomic workflow safeguards', () => {
     failSaveOnAttempt('messageDeliveryRepository', 2)
     await expect(app.communicationsWorkflow.materializeDeliveries({
       announcementId: 'announcement',
-      channel: MessageDeliveryChannel.App,
     })).rejects.toThrow('Simulated messageDeliveryRepository save failure')
     expect(await repositories.messageDeliveryRepository.list({ announcementId: 'announcement' })).toHaveLength(0)
   })

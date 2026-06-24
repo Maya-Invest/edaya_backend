@@ -1,6 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import { runCronJobs } from "@edaya/core";
+import { runCronJobs, resolveCronJobKeys } from "@edaya/core";
 import { buildWorkerCronRuntime, parseRuntimeEnv } from "@/runtime";
 import { createAppLogger } from "@/logging/app-logger";
 
@@ -16,6 +16,7 @@ export default {
         const asOf = new Date(controller.scheduledTime);
         const summary = await runCronJobs(application, {
           asOf,
+          jobKeys: resolveCronJobKeys(controller.cron),
           requestIdPrefix: `worker-cron:${controller.cron}:${asOf.toISOString()}`,
         });
         logger.info({ cron: controller.cron, summary }, "scheduled cron jobs completed");

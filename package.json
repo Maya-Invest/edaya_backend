@@ -9,7 +9,7 @@
     "testing/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --filter=@edaya/api --filter=@edaya/webapp",
     "dev:worker": "bun --filter @edaya/api dev:worker",
     "dev:cron": "bun --filter @edaya/cron dev",
     "dev:cron:worker": "bun --filter @edaya/cron dev:worker",
@@ -32,6 +32,7 @@
     "lint:fix": "eslint scripts --fix && turbo run lint:fix",
     "fix": "bun run lint:fix",
     "doctor": "bun scripts/doctor.ts",
+    "novu:smoke": "bun scripts/novu-e2e-smoke.ts",
     "verify": "bun run doctor && bun run lint && bun run check && bun run build && bun run generated:check && bun run check:boundaries && bun run test:repo && turbo run test -- --dots",
     "fullcheck": "bun run verify",
     "deploy:api": "bun --filter @edaya/api deploy:worker",
@@ -50,6 +51,8 @@
     "db:migrate:auth": "bun --filter @edaya/betterauth-d1-migrations migrate:local",
     "db:migrate:auth:remote": "bun --filter @edaya/betterauth-d1-migrations migrate:remote",
     "db:migrate:auth:staging": "bun --filter @edaya/betterauth-d1-migrations migrate:staging",
+    "db:browser:school": "bun --env-file=apps/api/.env scripts/db-browser.ts school",
+    "db:browser:auth": "bun --env-file=apps/api/.env scripts/db-browser.ts auth",
     "auth:generate-schema": "bun --filter @edaya/betterauth-d1-migrations auth:generate-schema",
     "openapi:generate": "bun run --cwd apps/api export-openapi && bun run --cwd apps/webapp openapi:generate && bun run --cwd apps/api generate-api-client",
     "generated:update": "bun run openapi:generate",
@@ -59,6 +62,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
+    "@electric-sql/pglite": "^0.4.6",
     "@types/node": "^25.9.2",
     "eslint": "^9.39.0",
     "eslint-plugin-svelte": "^3.19.0",

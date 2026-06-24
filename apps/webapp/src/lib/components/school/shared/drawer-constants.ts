@@ -22,6 +22,7 @@ export const kindStyle: Record<NonNullable<DrawerItem>['kind'], string> = {
 	role: drawerBadge,
 	level: drawerBadge,
 	activity: drawerBadge,
+	announcement: drawerBadge,
 	reportCardDefinition: drawerBadge,
 	reportCardResult: drawerBadge,
 };
@@ -41,6 +42,7 @@ export const kindLabelKey: Record<NonNullable<DrawerItem>['kind'], string> = {
 	role: 'roles.title',
 	level: 'drawer.level',
 	activity: 'drawer.activity',
+	announcement: 'drawer.announcement',
 	reportCardDefinition: 'drawer.reportCardDefinition',
 	reportCardResult: 'drawer.reportCardResult',
 };

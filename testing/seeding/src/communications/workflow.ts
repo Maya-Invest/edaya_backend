@@ -3,7 +3,6 @@ import {
   AnnouncementPriority,
   AnnouncementStatus,
   AnnouncementTargetKind,
-  MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
 } from '@edaya/core'
@@ -37,14 +36,6 @@ const ANNOUNCEMENT_TARGET_KIND_BY_SEED = {
   staff_member: AnnouncementTargetKind.StaffMember,
   guardian: AnnouncementTargetKind.Guardian,
   student: AnnouncementTargetKind.Student,
-} as const
-
-const DELIVERY_CHANNEL_BY_SEED = {
-  app: MessageDeliveryChannel.App,
-  email: MessageDeliveryChannel.Email,
-  sms: MessageDeliveryChannel.Sms,
-  whatsapp: MessageDeliveryChannel.WhatsApp,
-  other: MessageDeliveryChannel.Other,
 } as const
 
 const RECIPIENT_KIND_BY_SEED = {
@@ -112,7 +103,6 @@ export async function seedDevCommunications(
   for (const plan of SEED_ANNOUNCEMENT_MATERIALIZE_PLANS) {
     messageDeliveryCount += await port.materializeDeliveries({
       announcementId: plan.announcementId,
-      channel: DELIVERY_CHANNEL_BY_SEED[plan.channel],
     })
   }
 
@@ -120,9 +110,9 @@ export async function seedDevCommunications(
     await port.recordDelivery({
       id: delivery.id,
       announcementId: delivery.announcementId,
+      subjectId: delivery.subjectId,
       recipientKind: RECIPIENT_KIND_BY_SEED[delivery.recipientKind],
       recipientId: delivery.recipientId,
-      channel: DELIVERY_CHANNEL_BY_SEED[delivery.channel],
       status: DELIVERY_STATUS_BY_SEED[delivery.status],
       sentAt: delivery.sentAt ? seedDateAndMinute(delivery.sentAt) : undefined,
       readAt: delivery.readAt ? seedDateAndMinute(delivery.readAt) : undefined,

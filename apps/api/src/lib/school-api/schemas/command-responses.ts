@@ -136,6 +136,8 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   publishAnnouncement: announcementResponseSchema,
   recordDelivery: messageDeliveryResponseSchema,
   materializeDeliveries: messageDeliveryCommandListResponseSchema,
+  applyDeliveryEvent: messageDeliveryResponseSchema,
+  markDeliveryRead: messageDeliveryResponseSchema,
 };
 
 export function resolveCommandResponseSchema(methodName: string): z.ZodTypeAny {

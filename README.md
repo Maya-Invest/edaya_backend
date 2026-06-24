@@ -206,9 +206,9 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | Command | Description |
 |---------|-------------|
 | `bun --filter @edaya/adaptor-postgres db:push` | Push schema to database (drizzle-kit) |
-| `bun --filter @edaya/adaptor-postgres db:studio` | Open Drizzle Studio |
 | `bun --filter @edaya/betterauth-d1-migrations db:push` | Push auth schema |
-| `bun --filter @edaya/betterauth-d1-migrations db:studio` | Drizzle Studio for auth schema |
+| `bun db:browser:school` | Browse local school tables (stop `bun dev` first) |
+| `bun db:browser:auth` | Browse local auth tables |
 
 ### OpenAPI & API client
 

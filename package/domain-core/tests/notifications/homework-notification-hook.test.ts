@@ -43,6 +43,13 @@ describe('homework notification postSave hook', () => {
       enrollments: {
         list: mock(async () => [{ studentId: 'student-1', classGroupId: 'cg1', status: 'active' }]),
       },
+      students: {
+        findById: mock(async () => ({
+          id: 'student-1',
+          schoolId: 'school-1',
+          subjectId: 'auth-student-1',
+        })),
+      },
       guardianLinks: {
         list: mock(async () => [{
           guardianId: 'guardian-1',
@@ -55,6 +62,7 @@ describe('homework notification postSave hook', () => {
         findById: mock(async () => ({
           id: 'guardian-1',
           schoolId: 'school-1',
+          subjectId: 'auth-guardian-1',
           contactMethods: [{ allowsNotifications: true }],
         })),
       },
@@ -90,8 +98,8 @@ describe('homework notification postSave hook', () => {
     expect(gateway.enqueued).toHaveLength(1)
     expect(gateway.enqueued[0]?.idempotencyKey).toBe(homeworkDueSoonIdempotencyKey('homework-1'))
     expect(gateway.enqueued[0]?.recipients).toEqual([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'student-1' },
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'guardian-1' },
+      { kind: MessageDeliveryRecipientKind.Student, id: 'student-1', subjectId: 'auth-student-1' },
+      { kind: MessageDeliveryRecipientKind.Guardian, id: 'guardian-1', subjectId: 'auth-guardian-1' },
     ])
   })
 

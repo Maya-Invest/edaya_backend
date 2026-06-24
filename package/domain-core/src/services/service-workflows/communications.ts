@@ -11,8 +11,8 @@ import {
   AnnouncementStatus,
   AnnouncementTarget as AnnouncementTargetEntity,
   MessageDelivery,
-  MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
+  MessageDeliveryStatus as DeliveryStatus,
   StudentClassEnrollmentStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../domains'
@@ -32,9 +32,9 @@ export interface PublishAnnouncementInput {
 export interface RecordDeliveryInput {
   id: string
   announcementId: string
-  recipientKind: MessageDeliveryRecipientKind
-  recipientId: string
-  channel: MessageDeliveryChannel
+  subjectId: string
+  recipientKind?: MessageDeliveryRecipientKind
+  recipientId?: string
   status?: MessageDeliveryStatus
   providerMessageId?: string
   failureReason?: string
@@ -46,12 +46,57 @@ export interface RecordDeliveryInput {
 
 export interface MaterializeDeliveriesInput {
   announcementId: string
-  channel: MessageDeliveryChannel
   createdAt?: Date
+}
+
+export interface ApplyDeliveryEventInput {
+  deliveryId: string
+  status: DeliveryStatus.Sent | DeliveryStatus.Failed | DeliveryStatus.Read | DeliveryStatus.Cancelled
+  providerMessageId?: string
+  failureReason?: string
+  occurredAt?: Date
+}
+
+export interface MarkDeliveryReadInput {
+  deliveryId: string
+  readAt?: Date
 }
 
 export type CreateAnnouncementInput = AnnouncementInput
 export type AddAnnouncementTargetInput = AnnouncementTargetInput
+
+const DELIVERY_STATUS_RANK: Record<MessageDeliveryStatus, number> = {
+  [DeliveryStatus.Pending]: 0,
+  [DeliveryStatus.Failed]: 1,
+  [DeliveryStatus.Cancelled]: 1,
+  [DeliveryStatus.Sent]: 2,
+  [DeliveryStatus.Read]: 3,
+}
+
+function buildDeliveryId(announcementId: string, subjectId: string): string {
+  return `delivery:${announcementId}:${subjectId}`
+}
+
+function canTransitionDeliveryStatus(
+  current: MessageDeliveryStatus,
+  next: MessageDeliveryStatus,
+): boolean {
+  if (current === next) {
+    return false
+  }
+  if (DELIVERY_STATUS_RANK[next] <= DELIVERY_STATUS_RANK[current]) {
+    return false
+  }
+  if (current === DeliveryStatus.Pending) {
+    return next === DeliveryStatus.Sent
+      || next === DeliveryStatus.Failed
+      || next === DeliveryStatus.Cancelled
+  }
+  if (current === DeliveryStatus.Sent) {
+    return next === DeliveryStatus.Read
+  }
+  return false
+}
 
 export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
@@ -95,7 +140,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     await this.baseService.entities.announcements.save(announcement, { moduleChecked: true })
     const deliveries = await this.materializeDeliveries({
       announcementId: announcement.id,
-      channel: MessageDeliveryChannel.App,
       createdAt: announcement.publishedAt,
     })
     await runWorkflowNotifications(this.baseService, ANNOUNCEMENT_PUBLISHED_EVENT_KEY, {
@@ -108,9 +152,9 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   async recordDelivery({
     id,
     announcementId,
+    subjectId,
     recipientKind,
     recipientId,
-    channel,
     status,
     providerMessageId,
     failureReason,
@@ -121,17 +165,19 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
   }: RecordDeliveryInput): Promise<MessageDelivery> {
     const announcement = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: announcement.schoolId, announcementId })
-    await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
-    if (!announcement.isPublished) {
-      throw new BusinessRuleViolationError('RECORD_DELIVERY_UNPUBLISHED', `Announcement ${announcementId} must be published before recording delivery`)
+    if (recipientKind && recipientId) {
+      await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
+      if (!announcement.isPublished) {
+        throw new BusinessRuleViolationError('RECORD_DELIVERY_UNPUBLISHED', `Announcement ${announcementId} must be published before recording delivery`)
+      }
+      await this.requireRecipientMatchesTarget(announcementId, recipientKind, recipientId)
     }
-    await this.requireRecipientMatchesTarget(announcementId, recipientKind, recipientId)
     const delivery = new MessageDelivery({
       id,
       announcementId,
+      subjectId,
       recipientKind,
       recipientId,
-      channel,
       status,
       providerMessageId,
       failureReason,
@@ -146,7 +192,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async materializeDeliveries({
     announcementId,
-    channel,
     createdAt,
   }: MaterializeDeliveriesInput): Promise<MessageDelivery[]> {
     const announcement = await this.requireAnnouncement(announcementId)
@@ -159,22 +204,25 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       const recipients = await this.resolveRecipients(current)
       const deliveries: MessageDelivery[] = []
       for (const recipient of recipients) {
+        const subjectId = await this.resolveSubjectId(recipient.recipientKind, recipient.recipientId)
+        if (!subjectId) {
+          continue
+        }
+        const deliveryId = buildDeliveryId(announcementId, subjectId)
         const existing = (await this.baseService.repositories.messageDeliveries.list({
           announcementId,
-          recipientKind: recipient.recipientKind,
-          recipientId: recipient.recipientId,
-          channel,
+          subjectId,
         }))[0]
         if (existing) {
           deliveries.push(existing)
           continue
         }
         const delivery = new MessageDelivery({
-          id: `generated:${announcementId}:${channel}:${recipient.recipientKind}:${recipient.recipientId}`,
+          id: deliveryId,
           announcementId,
+          subjectId,
           recipientKind: recipient.recipientKind,
           recipientId: recipient.recipientId,
-          channel,
           createdAt,
           updatedAt: createdAt,
         })
@@ -183,6 +231,107 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
       return deliveries
     })
+  }
+
+  async applyDeliveryEvent({
+    deliveryId,
+    status,
+    providerMessageId,
+    failureReason,
+    occurredAt,
+  }: ApplyDeliveryEventInput): Promise<MessageDelivery | undefined> {
+    const existing = await this.baseService.repositories.messageDeliveries.findById(deliveryId)
+    if (!existing) {
+      return undefined
+    }
+    const announcement = await this.requireAnnouncement(existing.announcementId)
+    this.checkActorSchool(announcement.schoolId)
+    if (this.baseService.actor.kind !== 'system') {
+      await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
+    }
+    if (!canTransitionDeliveryStatus(existing.status, status)) {
+      return existing
+    }
+    const at = occurredAt ?? new Date()
+    const delivery = new MessageDelivery({
+      id: existing.id,
+      announcementId: existing.announcementId,
+      subjectId: existing.subjectId,
+      recipientKind: existing.recipientKind,
+      recipientId: existing.recipientId,
+      status,
+      providerMessageId: providerMessageId ?? existing.providerMessageId,
+      failureReason: status === DeliveryStatus.Failed
+        ? (failureReason ?? existing.failureReason ?? 'Delivery failed')
+        : existing.failureReason,
+      sentAt: status === DeliveryStatus.Sent || status === DeliveryStatus.Read
+        ? (existing.sentAt ?? at)
+        : existing.sentAt,
+      readAt: status === DeliveryStatus.Read
+        ? (existing.readAt ?? at)
+        : existing.readAt,
+      createdAt: existing.createdAt,
+      updatedAt: at,
+    })
+    await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
+    return delivery
+  }
+
+  async markDeliveryRead({
+    deliveryId,
+    readAt,
+  }: MarkDeliveryReadInput): Promise<MessageDelivery> {
+    const existing = await this.baseService.repositories.messageDeliveries.findById(deliveryId)
+    if (!existing) {
+      denyResourceAccess()
+    }
+    const announcement = await this.requireAnnouncement(existing.announcementId)
+    this.checkActorSchool(announcement.schoolId)
+    const actor = this.baseService.actor
+    if (actor.kind === 'system' || existing.subjectId !== actor.subjectId) {
+      denyResourceAccess()
+    }
+    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(this.baseService.actor)
+    if (existing.status === DeliveryStatus.Read) {
+      return existing
+    }
+    const at = readAt ?? new Date()
+    const delivery = new MessageDelivery({
+      id: existing.id,
+      announcementId: existing.announcementId,
+      subjectId: existing.subjectId,
+      recipientKind: existing.recipientKind,
+      recipientId: existing.recipientId,
+      status: DeliveryStatus.Read,
+      providerMessageId: existing.providerMessageId,
+      failureReason: existing.failureReason,
+      sentAt: existing.sentAt ?? at,
+      readAt: at,
+      createdAt: existing.createdAt,
+      updatedAt: at,
+    })
+    await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
+    return delivery
+  }
+
+  private async resolveSubjectId(
+    recipientKind: MessageDeliveryRecipientKind,
+    recipientId: string,
+  ): Promise<string | undefined> {
+    switch (recipientKind) {
+      case MessageDeliveryRecipientKind.Staff: {
+        const staff = await this.baseService.repositories.staffMembers.findById(recipientId)
+        return staff?.subjectId
+      }
+      case MessageDeliveryRecipientKind.Guardian: {
+        const guardian = await this.baseService.repositories.guardians.findById(recipientId)
+        return guardian?.subjectId
+      }
+      case MessageDeliveryRecipientKind.Student: {
+        const student = await this.baseService.repositories.students.findById(recipientId)
+        return student?.subjectId
+      }
+    }
   }
 
   private async requireAnnouncement(announcementId: string): Promise<Announcement> {

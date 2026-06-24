@@ -72,4 +72,17 @@ describe('Announcement entity', () => {
       })
     }).toThrow('expiresAt must not be before publishedAt')
   })
+
+  test('allows expiresAt on the same calendar day as publishedAt', () => {
+    const ann = new Announcement({
+      id: 'ann6',
+      schoolId: 'sch1',
+      title: 'Same day',
+      content: 'Valid through today',
+      publishedAt: new Date('2026-09-02T15:30:00.000Z'),
+      expiresAt: new Date('2026-09-02'),
+    })
+
+    expect(ann.isPublished).toBe(true)
+  })
 })

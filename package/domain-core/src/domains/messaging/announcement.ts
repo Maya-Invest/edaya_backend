@@ -32,6 +32,10 @@ export const announcementBaseSchema = z.object({
   expiresAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
 })
 
+function startOfUtcDay(date: Date): number {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
 function refineAnnouncement(data: any, ctx: z.RefinementCtx) {
   const computedStatus = data.status ?? (data.publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
   if (computedStatus === AnnouncementStatus.Published && !data.publishedAt) {
@@ -46,7 +50,7 @@ function refineAnnouncement(data: any, ctx: z.RefinementCtx) {
       message: 'draft announcements must not define publishedAt',
     })
   }
-  if (data.expiresAt && data.publishedAt && data.expiresAt.getTime() < data.publishedAt.getTime()) {
+  if (data.expiresAt && data.publishedAt && startOfUtcDay(data.expiresAt) < startOfUtcDay(data.publishedAt)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'expiresAt must not be before publishedAt',

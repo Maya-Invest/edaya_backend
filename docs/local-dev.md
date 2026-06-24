@@ -67,6 +67,25 @@ The API runs on **Node** locally (`bun dev`) and is also packaged for **Cloudfla
 
 Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under repo-root `.data/`.
 
+## Browse local database tables
+
+Plain HTTP browser — no extra setup.
+
+```sh
+# School data (students, announcements, etc.) — stop `bun dev` first
+bun db:browser:school
+
+# Better Auth users/sessions — can run while the API is up
+bun db:browser:auth
+```
+
+Opens automatically at `http://127.0.0.1:8191` (auth) or `http://127.0.0.1:8192` (school).
+
+| Symptom | Fix |
+|---------|-----|
+| School browser fails to open PGlite | Stop `bun dev` first — the API holds the lock on `.data/school` |
+| Only auth tables visible | You ran `db:browser:auth` — use `db:browser:school` for school entities |
+
 ## Dev database seed
 
 Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `testing/seeding/`. School data persists under repo-root `.data/` when using `DATABASE_URL=pglite:.data/school`.
@@ -151,6 +170,7 @@ Before opening a pull request, run `bun run verify`.
 | `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun dev` |
 | Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; leave `PUBLIC_API_URL` empty in dev |
 | `SQLiteError: disk I/O error` on auth | API still running during a wipe | Stop API before `rm -rf .data`, then restart |
+| DB browser fails on school tables | API still running (`bun dev`) holds the `.data/school` lock | Stop `bun dev`, then run `bun db:browser:school` |
 
 Quick health checks:
 

@@ -4,6 +4,7 @@ import type { CronJobResult, SchoolCronJobContext } from './cron-job-context'
 import { createSystemActorMetadata } from '../authorization'
 import { CRON_JOB_KEYS } from './cron-job-catalog'
 import { processDueNotifications } from './jobs/process-due-notifications'
+import { reconcilePendingDeliveries } from './jobs/reconcile-pending-deliveries'
 
 export interface CronJobSchoolResult {
   schoolId: string
@@ -18,6 +19,7 @@ export interface CronJobRunSummary {
 
 const CRON_JOB_HANDLERS = {
   processDueNotifications,
+  reconcilePendingDeliveries,
 } as const satisfies Record<CronJobKey, (context: SchoolCronJobContext) => Promise<CronJobResult>>
 
 export async function runCronJobs(

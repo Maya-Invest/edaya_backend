@@ -13,6 +13,7 @@ import type {
 	Incident,
 	StaffRole,
 	Activity,
+	Announcement,
 } from '$lib/types/school';
 
 export type DrawerItem
@@ -30,6 +31,7 @@ export type DrawerItem
 		| { kind: 'role'; data: { role: StaffRole } }
 		| { kind: 'level'; data: { label: string; subtitle: string; items: Subject[] } }
 		| { kind: 'activity'; data: Activity }
+		| { kind: 'announcement'; data: Announcement }
 		| { kind: 'reportCardDefinition'; data: ReportCardDefinition }
 		| { kind: 'reportCardResult'; data: ReportCardResult }
 		| null;

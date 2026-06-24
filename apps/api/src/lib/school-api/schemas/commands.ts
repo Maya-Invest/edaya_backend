@@ -27,7 +27,6 @@ import {
   guardianSchema,
   guardianStudentLinkSchema,
   incidentSchema,
-  MessageDeliveryChannel,
   messageDeliverySchema,
   paymentSchema,
   periodDefinitionSchema,
@@ -607,8 +606,20 @@ export const recordDeliveryCommandSchema = z.object(unwrapShape(messageDeliveryS
 
 export const materializeDeliveriesCommandSchema = z.object({
   announcementId: field.id(),
-  channel: z.nativeEnum(MessageDeliveryChannel),
 }).openapi("MaterializeDeliveriesCommand");
+
+export const applyDeliveryEventCommandSchema = z.object({
+  deliveryId: field.id(),
+  status: z.enum(['sent', 'failed', 'read', 'cancelled']),
+  providerMessageId: field.optionalString(),
+  failureReason: field.optionalString(),
+  occurredAt: field.optionalDate(),
+}).openapi("ApplyDeliveryEventCommand");
+
+export const markDeliveryReadCommandSchema = z.object({
+  deliveryId: field.id(),
+  readAt: field.optionalDate(),
+}).openapi("MarkDeliveryReadCommand");
 
 export const listClassSubjectAssessmentResultsForPeriodCommandSchema = z.object({
   classSubjectId: field.id(),

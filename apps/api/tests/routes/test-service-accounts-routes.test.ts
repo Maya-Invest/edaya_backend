@@ -16,7 +16,7 @@ import {
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_ID,
 } from "@edaya/dev-fixtures";
-import { MessageDeliveryChannel, Permission, TEACHER_PERMISSIONS } from "@edaya/core";
+import { Permission, TEACHER_PERMISSIONS } from "@edaya/core";
 
 describe("service account routes", () => {
   it("authenticates service accounts with API keys against /core/entities/schools/list", async () => {
@@ -279,7 +279,6 @@ describe("service account routes", () => {
       },
       body: JSON.stringify({
         announcementId: "announcement-1",
-        channel: MessageDeliveryChannel.Email,
       }),
     }));
 

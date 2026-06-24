@@ -264,6 +264,8 @@ export const coreCommands = [
   command("publish-announcement", "publishAnnouncement", commandSchemas.publishAnnouncementCommandSchema),
   command("record-delivery", "recordDelivery", commandSchemas.recordDeliveryCommandSchema),
   command("materialize-deliveries", "materializeDeliveries", commandSchemas.materializeDeliveriesCommandSchema, { serviceOnly: true }),
+  command("apply-delivery-event", "applyDeliveryEvent", commandSchemas.applyDeliveryEventCommandSchema, { serviceOnly: true }),
+  command("mark-delivery-read", "markDeliveryRead", commandSchemas.markDeliveryReadCommandSchema),
 ] satisfies CoreCommandConfig[];
 
 export const coreQueries = [

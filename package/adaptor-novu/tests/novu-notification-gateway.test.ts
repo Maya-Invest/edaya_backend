@@ -7,7 +7,7 @@ import {
 } from "../src";
 
 describe("mapNotificationToNovuTriggerRequest", () => {
-  test("maps recipients to stable Novu subscriber ids and uses eventKey as workflowId", () => {
+  test("maps recipients to subjectId subscriber ids and uses eventKey as workflowId", () => {
     const request = mapNotificationToNovuTriggerRequest({
       idempotencyKey: "report_card.published:rc1",
       schoolId: "school-1",
@@ -16,15 +16,15 @@ describe("mapNotificationToNovuTriggerRequest", () => {
       title: "Report card",
       body: "Available now",
       recipients: [
-        { kind: MessageDeliveryRecipientKind.Guardian, id: "g1" },
-        { kind: MessageDeliveryRecipientKind.Student, id: "s1" },
+        { kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "auth-g1" },
+        { kind: MessageDeliveryRecipientKind.Student, id: "s1", subjectId: "auth-s1" },
       ],
       metadata: { resultId: "rc1" },
     });
 
     expect(request).toEqual({
       workflowId: "report_card.published",
-      to: ["school-1:guardian:g1", "school-1:student:s1"],
+      to: ["auth-g1", "auth-s1"],
       transactionId: "report_card.published:rc1",
       tenant: "school-1",
       payload: expect.objectContaining({
@@ -54,7 +54,7 @@ describe("createNovuNotificationGateway", () => {
       eventKey: "assessment.due_soon",
       title: "Due soon",
       body: "Tomorrow",
-      recipients: [{ kind: MessageDeliveryRecipientKind.Student, id: "s1" }],
+      recipients: [{ kind: MessageDeliveryRecipientKind.Student, id: "s1", subjectId: "auth-s1" }],
     };
 
     await gateway.enqueue(input);
@@ -63,7 +63,7 @@ describe("createNovuNotificationGateway", () => {
     expect(trigger).toHaveBeenCalledTimes(1);
     expect(triggerBulk).not.toHaveBeenCalled();
     expect(cancel).toHaveBeenCalledWith("assessment.due_soon:a1");
-    expect(buildNovuSubscriberId("school-1", input.recipients[0]!)).toBe("school-1:student:s1");
+    expect(buildNovuSubscriberId(input.recipients[0]!)).toBe("auth-s1");
   });
 
   test("swallows client errors and reports via onError", async () => {
@@ -86,7 +86,7 @@ describe("createNovuNotificationGateway", () => {
       eventKey: "test.event",
       title: "Title",
       body: "Body",
-      recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g1" }],
+      recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "auth-g1" }],
     })).resolves.toBeUndefined();
 
     expect(onError).toHaveBeenCalledTimes(1);

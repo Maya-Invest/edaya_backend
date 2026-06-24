@@ -10,15 +10,18 @@ Migration apply scripts for Neon / Hyperdrive live in `@edaya/neon-migrations`.
 # Generate SQL migration from schema changes
 bun run db:generate
 
-# Push schema or open Drizzle Studio (requires DATABASE_URL)
+# Push schema (requires DATABASE_URL)
 DATABASE_URL=postgres://... bun run db:push
-DATABASE_URL=postgres://... bun run db:studio
 ```
 
 From the monorepo root:
 
 ```sh
 bun db:generate
+
+# Browse local dev tables (loads apps/api/.env; stop the API first for PGlite)
+bun db:browser:school
+bun db:browser:auth
 ```
 
 Apply migrations with `@edaya/neon-migrations` (`bun db:migrate`, `bun db:migrate:dev`).

@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
-import { directPermissionEntityConfig, unique } from '../../shared'
+import { anyPermissionAction, directPermissionEntityConfig, unique } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 
 export const guardianStudentLinkSchema = z.object({
@@ -67,6 +67,10 @@ export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink>
       await input.policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     },
   )
+  config.read.checkModule = anyPermissionAction([
+    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
+    Permission.QUERY_GUARDIAN_SELF_READ,
+  ])
   return {
     ...config,
     gates: {

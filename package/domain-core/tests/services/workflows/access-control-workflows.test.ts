@@ -11,6 +11,7 @@ import {
   Guardian,
   noOpNotificationGateway,
   Permission,
+  RecordingNotificationGateway,
   StaffMember,
   Student,
   StudentStatus,
@@ -39,7 +40,10 @@ function actorWithPermissions(permissions: readonly Permission[]) {
   })
 }
 
-function createAccessControlContext(actor = actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN])) {
+function createAccessControlContext(
+  actor = actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
+  notificationGateway = noOpNotificationGateway,
+) {
   const staffMember = new StaffMember({
     id: 'st1',
     schoolId: 'sch1',
@@ -83,6 +87,9 @@ function createAccessControlContext(actor = actorWithPermissions([Permission.ACC
       findOne: mock(async () => undefined),
       save: mock(async () => {}),
     },
+    guardianLinks: {
+      list: mock(async () => []),
+    },
     students: {
       findById: mock(async (id: string) => id === 's1' ? student : undefined),
       findOne: mock(async () => undefined),
@@ -98,10 +105,10 @@ function createAccessControlContext(actor = actorWithPermissions([Permission.ACC
     atomicExecution: {
       execute: async operation => operation(),
     },
-    notificationGateway: noOpNotificationGateway,
+    notificationGateway,
   })
 
-  return { mockRepos, service, staffMember, guardian, student }
+  return { mockRepos, service, staffMember, guardian, student, notificationGateway }
 }
 
 describe('SchoolService access-control workflows', () => {
@@ -157,6 +164,27 @@ describe('SchoolService access-control workflows', () => {
     })).rejects.toMatchObject({
       code: 'SUBJECT_ID_ALREADY_LINKED',
     } satisfies Partial<BusinessRuleViolationError>)
+  })
+
+  test('linkActorSubject schedules provider subscriber sync for linked staff', async () => {
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createAccessControlContext(undefined, gateway)
+
+    await service.accessControlWorkflow.linkActorSubject({
+      subjectId: 'auth-user-1',
+      staffMemberId: 'st1',
+    })
+
+    expect(gateway.upserted).toHaveLength(1)
+    expect(gateway.upserted[0]).toMatchObject({
+      schoolId: 'sch1',
+      recipient: {
+        kind: 'staff',
+        id: 'st1',
+        subjectId: 'auth-user-1',
+      },
+      email: 'ada@school.edu',
+    })
   })
 
   test('linkActorSubject is idempotent when the same subject is already linked', async () => {

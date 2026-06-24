@@ -1,4 +1,4 @@
-export type CronJobKey = 'processDueNotifications'
+export type CronJobKey = 'processDueNotifications' | 'reconcilePendingDeliveries'
 
 function defineCronJobKeys<const Keys extends readonly CronJobKey[]>(
   keys: Keys & (
@@ -12,4 +12,5 @@ function defineCronJobKeys<const Keys extends readonly CronJobKey[]>(
 
 export const CRON_JOB_KEYS = defineCronJobKeys([
   'processDueNotifications',
+  'reconcilePendingDeliveries',
 ] as const)

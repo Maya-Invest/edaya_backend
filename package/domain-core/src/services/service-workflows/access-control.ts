@@ -3,6 +3,12 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { AccessControlWorkflowRepositories } from '../workflow-repository-catalog'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity } from '../../domains'
+import {
+  buildGuardianRecipientProfile,
+  buildStaffRecipientProfile,
+  buildStudentRecipientProfile,
+  scheduleNotificationRecipientUpsert,
+} from '../../notifications'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { pickWorkflowRepositories } from '../workflow-repository-catalog'
@@ -55,6 +61,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
+      scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
       return { kind: 'staff', entity: staffMember }
     }
 
@@ -75,6 +82,11 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
+      const links = await this.baseService.repositories.guardianLinks.list({ guardianId: guardian.id })
+      scheduleNotificationRecipientUpsert(
+        this.baseService,
+        buildGuardianRecipientProfile(guardian, links),
+      )
       return { kind: 'guardian', entity: guardian }
     }
 
@@ -82,6 +94,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
     this.assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
     const student = existing.copyWith({ subjectId: input.subjectId })
     await this.baseService.entities.students.save(student, { moduleChecked: true })
+    scheduleNotificationRecipientUpsert(this.baseService, buildStudentRecipientProfile(student))
     return { kind: 'student', entity: student }
   }
 

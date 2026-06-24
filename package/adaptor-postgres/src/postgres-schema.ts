@@ -315,9 +315,9 @@ export const announcementTargets = pgTable('announcement_targets', {
 export const messageDeliveries = pgTable('message_deliveries', {
   id: text('id').primaryKey(),
   announcementId: text('announcement_id').notNull(),
-  recipientKind: text('recipient_kind').notNull(),
-  recipientId: text('recipient_id').notNull(),
-  channel: text('channel').notNull(),
+  subjectId: text('subject_id').notNull(),
+  recipientKind: text('recipient_kind'),
+  recipientId: text('recipient_id'),
   status: text('status').notNull(),
   providerMessageId: text('provider_message_id'),
   failureReason: text('failure_reason'),

@@ -9,6 +9,7 @@ export interface PortalPermissionPolicy {
 
 /** Read-only portal permissions for guardians. */
 export const GUARDIAN_PORTAL_PERMISSIONS: ReadonlySet<Permission> = new Set([
+  Permission.QUERY_GUARDIAN_SELF_READ,
   Permission.ATTENDANCE_READ,
   Permission.PAYMENT_READ,
   Permission.QUERY_STUDENT_DETAIL_READ,

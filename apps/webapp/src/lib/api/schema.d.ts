@@ -660,6 +660,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/novu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Novu delivery lifecycle webhook */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Processed delivery events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NovuWebhookResponse"];
+                    };
+                };
+                /** @description Invalid webhook signature */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Webhook secret not configured */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/register-school": {
         parameters: {
             query?: never;
@@ -7553,6 +7611,194 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["MessageDeliveryCommandListResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/apply-delivery-event": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** apply-delivery-event */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description apply-delivery-event payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ApplyDeliveryEventCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed apply-delivery-event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MessageDelivery"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/mark-delivery-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** mark-delivery-read */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description mark-delivery-read payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MarkDeliveryReadCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed mark-delivery-read */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MessageDelivery"];
                     };
                 };
                 /** @description Invalid request payload */
@@ -48420,6 +48666,10 @@ export interface components {
         RotateServiceAccountKeyResponse: {
             apiKey: string;
         };
+        NovuWebhookResponse: {
+            processed: number;
+            ignored: number;
+        };
         RegisterSchoolCommand: {
             id: string;
             name: string;
@@ -49749,11 +49999,10 @@ export interface components {
         MessageDelivery: {
             id: string;
             announcementId: string;
+            subjectId: string;
             /** @enum {string} */
-            recipientKind: "staff" | "guardian" | "student";
-            recipientId: string;
-            /** @enum {string} */
-            channel: "app" | "email" | "sms" | "whatsapp" | "other";
+            recipientKind?: "staff" | "guardian" | "student";
+            recipientId?: string;
             /**
              * @default pending
              * @enum {string}
@@ -49769,11 +50018,10 @@ export interface components {
         RecordMessageDeliveryCommand: {
             id: string;
             announcementId: string;
+            subjectId: string;
             /** @enum {string} */
-            recipientKind: "staff" | "guardian" | "student";
-            recipientId: string;
-            /** @enum {string} */
-            channel: "app" | "email" | "sms" | "whatsapp" | "other";
+            recipientKind?: "staff" | "guardian" | "student";
+            recipientId?: string;
             /**
              * @default pending
              * @enum {string}
@@ -49789,8 +50037,18 @@ export interface components {
         MessageDeliveryCommandListResponse: components["schemas"]["MessageDelivery"][];
         MaterializeDeliveriesCommand: {
             announcementId: string;
+        };
+        ApplyDeliveryEventCommand: {
+            deliveryId: string;
             /** @enum {string} */
-            channel: "app" | "email" | "sms" | "whatsapp" | "other";
+            status: "sent" | "failed" | "read" | "cancelled";
+            providerMessageId?: string;
+            failureReason?: string;
+            occurredAt?: string | null;
+        };
+        MarkDeliveryReadCommand: {
+            deliveryId: string;
+            readAt?: string | null;
         };
         CountResponse: {
             count: number;

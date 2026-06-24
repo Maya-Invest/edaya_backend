@@ -24,6 +24,10 @@ import {
 } from '../../domains'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import {
+  buildGuardianRecipientProfile,
+  scheduleNotificationRecipientUpsert,
+} from '../../notifications'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface EnrollStudentInput {
@@ -429,6 +433,33 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
 
   async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
     const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
+    const actor = this.baseService.actor
+    const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
+
+    if (isSelfGuardian) {
+      permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+      const guardian = new Guardian({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        firstName: existing.firstName,
+        lastName: existing.lastName,
+        contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
+        subjectId: existing.subjectId,
+        hasAccess: existing.hasAccess,
+        premiumNotificationsEnabled: changes.premiumNotificationsEnabled ?? existing.premiumNotificationsEnabled,
+        createdAt: existing.createdAt,
+      })
+      await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
+      const links = await this.baseService.repositories.guardianLinks.list({ guardianId: guardian.id })
+      scheduleNotificationRecipientUpsert(
+        this.baseService,
+        buildGuardianRecipientProfile(guardian, links),
+      )
+      return guardian
+    }
+
+    await permissionAction(Permission.PARENT_UPDATE)(actor)
+    await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
     const guardian = new Guardian({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -441,6 +472,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
     })
     await this.baseService.entities.guardians.save(guardian)
+    const links = await this.baseService.repositories.guardianLinks.list({ guardianId: guardian.id })
+    scheduleNotificationRecipientUpsert(
+      this.baseService,
+      buildGuardianRecipientProfile(guardian, links),
+    )
     return guardian
   }
 
@@ -450,6 +486,42 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     ...changes
   }: UpdateGuardianStudentLinkInput): Promise<GuardianStudentLinkType> {
     const existing = await this.requireOne(this.baseService.entities.guardianLinks, { guardianId, studentId })
+    const actor = this.baseService.actor
+    const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
+
+    if (isSelfGuardian) {
+      permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+      await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
+      const link = new GuardianStudentLink({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        guardianId: existing.guardianId,
+        studentId: existing.studentId,
+        relationship: existing.relationship,
+        isPrimary: existing.isPrimary,
+        isBillingContact: existing.isBillingContact,
+        legalGuardian: existing.legalGuardian,
+        canPickup: existing.canPickup,
+        emergencyContactPriority: existing.emergencyContactPriority,
+        receivesAcademicReports: changes.receivesAcademicReports ?? existing.receivesAcademicReports,
+        receivesAttendanceAlerts: changes.receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
+        contactRestrictions: existing.contactRestrictions,
+        notes: existing.notes,
+        createdAt: existing.createdAt,
+      })
+      await this.baseService.entities.guardianLinks.save(link, { moduleChecked: true })
+      const guardian = await this.requireEntity(this.baseService.entities.guardians, guardianId)
+      const links = await this.baseService.repositories.guardianLinks.list({ guardianId })
+      scheduleNotificationRecipientUpsert(
+        this.baseService,
+        buildGuardianRecipientProfile(guardian, links),
+      )
+      return link
+    }
+
+    await permissionAction(Permission.PARENT_UPDATE)(actor)
+    await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
+    await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
     const link = new GuardianStudentLink({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -468,6 +540,12 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
     })
     await this.baseService.entities.guardianLinks.save(link)
+    const guardian = await this.requireEntity(this.baseService.entities.guardians, guardianId)
+    const links = await this.baseService.repositories.guardianLinks.list({ guardianId })
+    scheduleNotificationRecipientUpsert(
+      this.baseService,
+      buildGuardianRecipientProfile(guardian, links),
+    )
     return link
   }
 

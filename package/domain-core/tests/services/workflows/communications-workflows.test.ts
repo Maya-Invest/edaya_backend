@@ -4,19 +4,20 @@ import {
   mock,
   test,
 } from 'bun:test'
-import { AuthorizationError } from '../../../src/authorization'
+import { AuthorizationError, createSystemActorMetadata } from '../../../src/authorization'
 import {
   AnnouncementStatus,
   MessageDelivery,
-  MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/domains'
 import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
+  noOpNotificationGateway,
   RecordingNotificationGateway,
 } from '../../../src/notifications'
+import { SchoolService } from '../../../src/services'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
 import {
   createCommunicationsContext,
@@ -49,7 +50,22 @@ describe('SchoolService communications workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('publishAnnouncement enqueues ad-hoc notifications after materializing app deliveries', async () => {
+  test('publishAnnouncement allows same-day expiresAt when publishing a draft', async () => {
+    const { service } = createCommunicationsContext({
+      announcementStatus: AnnouncementStatus.Draft,
+      expiresAt: new Date('2026-05-02'),
+    })
+
+    const result = await service.communicationsWorkflow.publishAnnouncement({
+      announcementId: 'ann1',
+      publishedAt: new Date('2026-05-02T12:00:00Z'),
+    })
+
+    expect(result.status).toBe(AnnouncementStatus.Published)
+    expect(result.expiresAt?.toISOString().slice(0, 10)).toBe('2026-05-02')
+  })
+
+  test('publishAnnouncement enqueues one notification per materialized delivery', async () => {
     const gateway = new RecordingNotificationGateway()
     const { service } = createCommunicationsContext({
       announcementStatus: AnnouncementStatus.Draft,
@@ -61,19 +77,19 @@ describe('SchoolService communications workflows', () => {
       publishedAt: new Date('2026-05-02T00:00:00Z'),
     })
 
-    expect(gateway.enqueued).toHaveLength(1)
+    expect(gateway.enqueued.length).toBeGreaterThanOrEqual(2)
     expect(gateway.enqueued[0]).toMatchObject({
-      idempotencyKey: `${ANNOUNCEMENT_PUBLISHED_EVENT_KEY}:ann1`,
       schoolId: 'sch1',
       kind: 'ad_hoc',
       eventKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
       announcementId: 'ann1',
-      channels: [MessageDeliveryChannel.App],
     })
-    expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
-      { kind: MessageDeliveryRecipientKind.Staff, id: 'staff1' },
-      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1' },
-    ]))
+    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual(
+      expect.arrayContaining([
+        'delivery:ann1:subject:staff1',
+        'delivery:ann1:subject:stu1',
+      ]),
+    )
   })
 
   test('recordDelivery persists eligible recipients through managed service', async () => {
@@ -82,9 +98,9 @@ describe('SchoolService communications workflows', () => {
     const result = await service.communicationsWorkflow.recordDelivery({
       id: 'del1',
       announcementId: 'ann1',
+      subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
       recipientId: 'stu1',
-      channel: MessageDeliveryChannel.Email,
       status: MessageDeliveryStatus.Sent,
       sentAt: new Date('2026-05-02T00:00:00Z'),
     })
@@ -102,9 +118,9 @@ describe('SchoolService communications workflows', () => {
     await expect(service.communicationsWorkflow.recordDelivery({
       id: 'del1',
       announcementId: 'ann1',
+      subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
       recipientId: 'stu1',
-      channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
@@ -116,9 +132,9 @@ describe('SchoolService communications workflows', () => {
     await expect(unpublishedContext.service.communicationsWorkflow.recordDelivery({
       id: 'del-unpublished',
       announcementId: 'ann1',
+      subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
       recipientId: 'stu1',
-      channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
     const crossSchoolContext = createCommunicationsContext()
@@ -127,9 +143,9 @@ describe('SchoolService communications workflows', () => {
     await expect(crossSchoolContext.service.communicationsWorkflow.recordDelivery({
       id: 'del-cross-school',
       announcementId: 'ann1',
+      subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
       recipientId: 'stu1',
-      channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
@@ -141,9 +157,9 @@ describe('SchoolService communications workflows', () => {
     const result = await service.communicationsWorkflow.recordDelivery({
       id: 'del-guardian-class',
       announcementId: 'ann1',
+      subjectId: 'subject:gua1',
       recipientKind: MessageDeliveryRecipientKind.Guardian,
       recipientId: 'gua1',
-      channel: MessageDeliveryChannel.Sms,
     })
 
     expect(result.recipientKind).toBe(MessageDeliveryRecipientKind.Guardian)
@@ -154,30 +170,29 @@ describe('SchoolService communications workflows', () => {
     const existing = new MessageDelivery({
       id: 'existing-delivery',
       announcementId: 'ann1',
+      subjectId: 'subject:gua1',
       recipientKind: MessageDeliveryRecipientKind.Guardian,
       recipientId: 'gua1',
-      channel: MessageDeliveryChannel.Email,
     })
     const { mockAtomic, mockRepos, service } = createCommunicationsContext({ existingDelivery: existing })
 
     const result = await service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
-      channel: MessageDeliveryChannel.Email,
       createdAt: new Date('2026-05-02T00:00:00Z'),
     })
 
     expect(result.map(delivery => delivery.id)).toEqual([
       'existing-delivery',
-      'generated:ann1:email:staff:staff1',
-      'generated:ann1:email:student:stu1',
+      'delivery:ann1:subject:staff1',
+      'delivery:ann1:subject:stu1',
     ])
     expect(mockAtomic.execute).toHaveBeenCalled()
     expect(mockRepos.messageDeliveries.save).toHaveBeenCalledTimes(2)
     expect(mockRepos.messageDeliveries.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'generated:ann1:email:staff:staff1',
+      id: 'delivery:ann1:subject:staff1',
     }))
     expect(mockRepos.messageDeliveries.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'generated:ann1:email:student:stu1',
+      id: 'delivery:ann1:subject:stu1',
     }))
   })
 
@@ -188,7 +203,6 @@ describe('SchoolService communications workflows', () => {
 
     await expect(service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
-      channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
@@ -209,7 +223,6 @@ describe('SchoolService communications workflows', () => {
 
     const result = await service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
-      channel: MessageDeliveryChannel.App,
       createdAt: new Date('2026-05-03T00:00:00Z'),
     })
 
@@ -229,7 +242,6 @@ describe('SchoolService communications workflows', () => {
 
     await expect(crossSchoolTarget.service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
-      channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(AuthorizationError)
 
     const crossSchoolLinkedGuardian = createCommunicationsContext({
@@ -239,7 +251,60 @@ describe('SchoolService communications workflows', () => {
 
     await expect(crossSchoolLinkedGuardian.service.communicationsWorkflow.materializeDeliveries({
       announcementId: 'ann1',
-      channel: MessageDeliveryChannel.Email,
     })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('applyDeliveryEvent transitions pending deliveries to sent', async () => {
+    const { service } = createCommunicationsContext({
+      existingDelivery: new MessageDelivery({
+        id: 'delivery:ann1:subject:stu1',
+        announcementId: 'ann1',
+        subjectId: 'subject:stu1',
+        recipientKind: MessageDeliveryRecipientKind.Student,
+        recipientId: 'stu1',
+      }),
+    })
+
+    const result = await service.communicationsWorkflow.applyDeliveryEvent({
+      deliveryId: 'delivery:ann1:subject:stu1',
+      status: MessageDeliveryStatus.Sent,
+      providerMessageId: 'novu-msg-1',
+      occurredAt: new Date('2026-05-02T12:00:00Z'),
+    })
+
+    expect(result?.status).toBe(MessageDeliveryStatus.Sent)
+    expect(result?.providerMessageId).toBe('novu-msg-1')
+  })
+
+  test('applyDeliveryEvent allows system actor without communication create permission', async () => {
+    const existingDelivery = new MessageDelivery({
+      id: 'delivery:ann1:subject:stu1',
+      announcementId: 'ann1',
+      subjectId: 'subject:stu1',
+      recipientKind: MessageDeliveryRecipientKind.Student,
+      recipientId: 'stu1',
+    })
+    const { mockAtomic, mockPolicy, mockRepos, savedDeliveries } = createCommunicationsContext({ existingDelivery })
+    const systemService = new SchoolService({
+      repositories: mockRepos,
+      authorizationPolicy: mockPolicy,
+      actor: createSystemActorMetadata({
+        systemId: 'novu-webhook',
+        schoolId: 'sch1',
+        requestId: 'req-novu-1',
+        reason: 'test webhook',
+      }),
+      atomicExecution: mockAtomic,
+      notificationGateway: noOpNotificationGateway,
+    })
+
+    const result = await systemService.communicationsWorkflow.applyDeliveryEvent({
+      deliveryId: 'delivery:ann1:subject:stu1',
+      status: MessageDeliveryStatus.Sent,
+      occurredAt: new Date('2026-05-02T12:00:00Z'),
+    })
+
+    expect(result?.status).toBe(MessageDeliveryStatus.Sent)
+    expect(savedDeliveries.get('delivery:ann1:subject:stu1')?.status).toBe(MessageDeliveryStatus.Sent)
   })
 })

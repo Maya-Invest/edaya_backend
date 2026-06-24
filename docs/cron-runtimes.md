@@ -20,9 +20,11 @@ No auth database — cron only needs the school Postgres/PGlite connection.
 ## Node (local / CI)
 
 ```sh
-cp apps/cron/.env.example apps/cron/.env
+cp apps/cron/.env.example apps/cron/.env   # optional — falls back to apps/api/.env
 cd apps/cron && bun dev
 ```
+
+Or from the repo root: `bun run dev:cron` (uses the same env loading).
 
 Runs all registered cron jobs once and exits. School DB migrations run on startup (same as API Node runtime).
 

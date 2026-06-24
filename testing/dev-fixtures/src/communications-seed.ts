@@ -35,26 +35,27 @@ export interface SeedAnnouncementTarget {
   targetId?: string
 }
 
-export type SeedMessageDeliveryChannel = 'app' | 'email' | 'sms' | 'whatsapp' | 'other'
 export type SeedMessageDeliveryRecipientKind = 'staff' | 'guardian' | 'student'
 export type SeedMessageDeliveryStatus = 'pending' | 'sent' | 'failed' | 'read' | 'cancelled'
 
 export interface SeedMessageDelivery {
   id: string
   announcementId: string
+  subjectId: string
   recipientKind: SeedMessageDeliveryRecipientKind
   recipientId: string
-  channel: SeedMessageDeliveryChannel
   status: SeedMessageDeliveryStatus
   sentAt?: string
   readAt?: string
   failureReason?: string
 }
 
-export interface SeedAnnouncementMaterializePlan {
-  announcementId: string
-  channel: SeedMessageDeliveryChannel
-}
+/** Published announcements that need an extra materialize pass after publish (idempotent). */
+export const SEED_ANNOUNCEMENT_MATERIALIZE_PLANS: readonly { announcementId: string }[] = [
+  { announcementId: 'ann-rentree' },
+  { announcementId: 'ann-sports-day' },
+  { announcementId: 'ann-staff-training' },
+] as const
 
 /** School communications across the year — mix of published and draft. */
 export const SEED_ANNOUNCEMENTS: readonly SeedAnnouncement[] = [
@@ -124,21 +125,14 @@ export const SEED_ANNOUNCEMENT_TARGETS: readonly SeedAnnouncementTarget[] = [
   { id: 'at-draft-school', announcementId: 'ann-draft-fete', targetKind: 'school' },
 ] as const
 
-/** Deliveries materialized automatically after publish (count depends on audience size). */
-export const SEED_ANNOUNCEMENT_MATERIALIZE_PLANS: readonly SeedAnnouncementMaterializePlan[] = [
-  { announcementId: 'ann-rentree', channel: 'app' },
-  { announcementId: 'ann-sports-day', channel: 'email' },
-  { announcementId: 'ann-staff-training', channel: 'app' },
-] as const
-
 /** Explicit delivery records with varied statuses for parent-meeting announcement. */
 export const SEED_MESSAGE_DELIVERIES: readonly SeedMessageDelivery[] = [
   {
     id: 'md-parent-g1-read',
     announcementId: 'ann-parent-meeting',
+    subjectId: 'subject-g1',
     recipientKind: 'guardian',
     recipientId: 'g1',
-    channel: 'app',
     status: 'read',
     sentAt: '2026-01-28T18:05:00',
     readAt: '2026-01-28T19:12:00',
@@ -146,26 +140,26 @@ export const SEED_MESSAGE_DELIVERIES: readonly SeedMessageDelivery[] = [
   {
     id: 'md-parent-g2-sent',
     announcementId: 'ann-parent-meeting',
+    subjectId: 'subject-g2',
     recipientKind: 'guardian',
     recipientId: 'g2',
-    channel: 'app',
     status: 'sent',
     sentAt: '2026-01-28T18:05:00',
   },
   {
     id: 'md-parent-g3-pending',
     announcementId: 'ann-parent-meeting',
+    subjectId: 'subject-g3',
     recipientKind: 'guardian',
     recipientId: 'g3',
-    channel: 'email',
     status: 'pending',
   },
   {
     id: 'md-parent-st3-read',
     announcementId: 'ann-parent-meeting',
+    subjectId: 'subject-s3',
     recipientKind: 'student',
     recipientId: 's3',
-    channel: 'app',
     status: 'read',
     sentAt: '2026-01-28T18:10:00',
     readAt: '2026-01-29T07:45:00',

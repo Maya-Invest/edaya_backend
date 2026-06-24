@@ -18,6 +18,10 @@ import {
   onboardingRegisterSchoolHandler,
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
+import {
+  novuWebhookHandler,
+  novuWebhookRoute,
+} from "@/routes/novu-webhook.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -54,7 +58,8 @@ router
   .openapi(listServiceAccountsRoute, listServiceAccountsHandler)
   .openapi(updateServiceAccountRoute, updateServiceAccountHandler)
   .openapi(revokeServiceAccountRoute, revokeServiceAccountHandler)
-  .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler);
+  .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler)
+  .openapi(novuWebhookRoute, novuWebhookHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

@@ -68,6 +68,15 @@ const matchers: Matcher[] = [
 		},
 	},
 	{
+		test: p => p.match(/^\/school\/announcements\/([^/]+)$/) ?? null,
+		parse: (m) => {
+			const announcement = detailDataContext.announcements.find(x => x.id === m[1]);
+			return announcement
+				? { item: { kind: 'announcement', data: announcement }, listPath: appPath('/(app)/school/announcements/[[id]]') }
+				: null;
+		},
+	},
+	{
 		test: p => p.match(/^\/school\/activities\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const a = detailDataContext.activities.find(x => x.id === m[1]);

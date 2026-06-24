@@ -3,7 +3,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
-import { directPermissionEntityConfig, readByIds } from '../../shared'
+import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 import {
@@ -142,6 +142,10 @@ export const guardianConfig: EntityConfigFactory<Guardian> = (input) => {
     Permission.PARENT_UPDATE,
     readByIds((actor, ids) => input.policy.checkGuardianAccess(actor, ids)),
   )
+  config.read.checkModule = anyPermissionAction([
+    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
+    Permission.QUERY_GUARDIAN_SELF_READ,
+  ])
   return {
     ...config,
     gates: {

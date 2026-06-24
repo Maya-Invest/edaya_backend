@@ -4,6 +4,7 @@ import {
 	Users,
 	Shield,
 	CalendarDays,
+	Mail,
 	Sparkle,
 	AlertTriangle,
 	GraduationCap,
@@ -56,6 +57,7 @@ export const SCHOOL_ITEMS: ContextItem[] = [
 	{ key: 'guardians', labelKey: 'school.guardians', icon: Shield, href: appPath('/(app)/school/guardians/[[id]]') },
 	{ key: 'calendar', labelKey: 'school.calendar', icon: CalendarDays, href: appPath('/(app)/school/calendar/[[id]]') },
 	{ key: 'activities', labelKey: 'school.activities', icon: Sparkle, href: appPath('/(app)/school/activities/[[id]]') },
+	{ key: 'announcements', labelKey: 'school.announcements', icon: Mail, href: appPath('/(app)/school/announcements/[[id]]') },
 	{ key: 'events', labelKey: 'school.events', icon: AlertTriangle, href: appPath('/(app)/school/events/[[id]]') },
 ];
 

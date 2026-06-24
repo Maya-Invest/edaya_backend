@@ -22,7 +22,6 @@
     "migrate:remote": "bun ./scripts/migrate.ts remote",
     "migrate:staging": "bun ./scripts/migrate.ts remote staging",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
     "lint": "eslint src scripts",
     "lint:fix": "eslint src scripts --fix",
     "test": "bun test"

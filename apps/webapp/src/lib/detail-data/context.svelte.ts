@@ -2,6 +2,8 @@ import type { Crud } from '$lib/components/school/shared/drawer-constants';
 import type {
 	AbsenceRecord,
 	Activity,
+	Announcement,
+	AnnouncementTarget,
 	AssessmentResultRow,
 	Deadline,
 	Evaluation,
@@ -22,6 +24,7 @@ import type {
 import {
 	seedAbsencesCollection,
 	seedActivitiesCollection,
+	seedAnnouncementsCollection,
 	seedAssessmentResultsCollection,
 	seedBillingCollection,
 	seedDeadlinesCollection,
@@ -54,6 +57,7 @@ export class DetailDataContext {
 	evaluations = $state<Evaluation[]>([]);
 	assessmentResults = $state<AssessmentResultRow[]>([]);
 	activities = $state<Activity[]>([]);
+	announcements = $state<Announcement[]>([]);
 	deadlines = $state<Deadline[]>([]);
 	incidents = $state<Incident[]>([]);
 	schoolYearEvents = $state<SchoolYearEvent[]>([]);
@@ -140,6 +144,11 @@ export class DetailDataContext {
 	/** Merge by id. */
 	seedActivities(activities: Activity[]) {
 		this.activities = seedActivitiesCollection(this.activities, activities);
+	}
+
+	/** Merge by id. */
+	seedAnnouncements(announcements: Announcement[]) {
+		this.announcements = seedAnnouncementsCollection(this.announcements, announcements);
 	}
 
 	/** Merge by id. */
@@ -236,6 +245,42 @@ export class DetailDataContext {
 
 	patchActivity(id: string, patch: Partial<Activity>) {
 		this.activities = this.replaceById(this.activities, id, patch);
+	}
+
+	appendAnnouncement(announcement: Announcement) {
+		this.announcements = mergeById(this.announcements, [announcement]);
+	}
+
+	removeAnnouncement(id: string) {
+		this.announcements = this.announcements.filter(announcement => announcement.id !== id);
+	}
+
+	patchAnnouncement(id: string, patch: Partial<Announcement>) {
+		this.announcements = this.replaceById(this.announcements, id, patch);
+	}
+
+	appendAnnouncementTarget(announcementId: string, target: AnnouncementTarget) {
+		this.announcements = this.announcements.map((announcement) => {
+			if (announcement.id !== announcementId) {
+				return announcement;
+			}
+			return {
+				...announcement,
+				targets: mergeById(announcement.targets, [target]),
+			};
+		});
+	}
+
+	removeAnnouncementTarget(announcementId: string, targetId: string) {
+		this.announcements = this.announcements.map((announcement) => {
+			if (announcement.id !== announcementId) {
+				return announcement;
+			}
+			return {
+				...announcement,
+				targets: announcement.targets.filter(target => target.id !== targetId),
+			};
+		});
 	}
 
 	patchIncident(id: string, patch: Partial<Incident>) {

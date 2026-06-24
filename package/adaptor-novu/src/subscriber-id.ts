@@ -1,26 +1,27 @@
 import type { NotificationRecipient } from "@edaya/core";
 
-export function buildNovuSubscriberId(
-  schoolId: string,
-  recipient: NotificationRecipient,
-): string {
-  return `${schoolId}:${recipient.kind}:${recipient.id}`;
+export function buildNovuSubscriberId(recipient: NotificationRecipient): string {
+  if (!recipient.subjectId) {
+    throw new Error(`Notification recipient ${recipient.kind}:${recipient.id} is missing subjectId`);
+  }
+  return recipient.subjectId;
 }
 
 export function buildNovuSubscriberIds(
-  schoolId: string,
   recipients: readonly NotificationRecipient[],
 ): string[] {
   const seen = new Set<string>();
   const subscriberIds: string[] = [];
 
   for (const recipient of recipients) {
-    const subscriberId = buildNovuSubscriberId(schoolId, recipient);
-    if (seen.has(subscriberId)) {
+    if (!recipient.subjectId) {
       continue;
     }
-    seen.add(subscriberId);
-    subscriberIds.push(subscriberId);
+    if (seen.has(recipient.subjectId)) {
+      continue;
+    }
+    seen.add(recipient.subjectId);
+    subscriberIds.push(recipient.subjectId);
   }
 
   return subscriberIds;

@@ -1,14 +1,14 @@
 # Notifications Feature — Sprint Plan
 
-> **Status:** Infrastructure complete (Phases 1–4) — job scheduler and delivery UX deferred  
+> **Status:** Phases 1–5 complete — **Phase 6 in progress** (~6b/6c/6d/6e/6f done; 6a remains)  
 > **Created:** 2026-06-22  
-> **Last updated:** 2026-06-22  
-> **Scope:** Notification gateway port, trigger infrastructure (entity hooks + workflow hooks), and first vertical slices for three announcement kinds  
+> **Last updated:** 2026-06-24  
+> **Scope:** Notification gateway port, trigger infrastructure (entity hooks + workflow hooks), provider-centric delivery (Phase 6), and webapp UX  
 > **Related domain:** `package/domain-core/src/domains/messaging/` (`Announcement`, `AnnouncementTarget`, `MessageDelivery`)
 
 This plan introduced a **notification gateway** as a core port, wired **event-based triggers** through `ManagedEntityService` hooks and **workflow post-actions**, and reserved **job-based scheduling** and **provider delivery** for follow-on work.
 
-Phases **1–4** are implemented and tested in `@edaya/core`. The infrastructure sprint goal is met: notifications can be enqueued from workflows and entity saves without coupling core to external providers. **Nothing is actually delivered to users yet** outside log output in API dev/staging — that requires Phases 5–6.
+Phases **1–5** are implemented and tested in `@edaya/core`. Phase **6** is underway: Novu outbound dispatch, slim `MessageDelivery`, webhook ingress, and poll-based status reconcile are wired. **End-user inbox UI, subscriber sync to Novu, and remaining event hooks** are still open.
 
 ---
 
@@ -16,16 +16,16 @@ Phases **1–4** are implemented and tested in `@edaya/core`. The infrastructure
 
 | Kind | Trigger | Examples | Integration status |
 |------|---------|----------|-------------------|
-| **Ad-hoc** | Staff publishes communication to a defined audience | School-wide notice, class message | **Wired** — `publishAnnouncement` materializes App deliveries + gateway enqueue |
+| **Ad-hoc** | Staff publishes communication to a defined audience | School-wide notice, class message | **Live** — materialize per `subjectId` + Novu enqueue when `NOVU_SECRET_KEY` set |
 | **Event-based** | Domain state change after a command or save | Attendance, report card published | **Partial** — report card + batch attendance wired; incidents, marks, single-record attendance not wired |
-| **Job-based** | Time / schedule (cron or deferred queue) | Assessment due in 3 days | **Intent only** — entity hook enqueues with `deliverAfter`; no processor (Phase 5) |
+| **Job-based** | Time / schedule (cron or deferred queue) | Assessment due in 3 days | **Live** — cron scanners in `apps/cron` (`processDueNotifications` daily) |
 
 ### Relationship to existing messaging domain
 
-- `Announcement` + `AnnouncementTarget` + `MessageDelivery` remain the persistence model for **ad-hoc** communications.
-- **Event** and **job** notifications currently enqueue through `NotificationGatewayPort` only — they do **not** yet create system-authored `Announcement` rows (see gap G4 below).
-- Guardian preferences used in handlers: `receivesAttendanceAlerts`, `receivesAcademicReports`, `allowsNotifications` on contact methods.
-- `premiumNotificationsEnabled` on guardians and `premiumNotification` on announcements are passed through on ad-hoc enqueue but **not** used to filter recipients yet.
+- `Announcement` + `AnnouncementTarget` define **what** is sent and **who** is in scope.
+- `MessageDelivery` is the **per-recipient delivery record** in the school DB (status, read state, provider correlation). **`channel` removed from schema** — the notifier (Novu, Courier, internal) chooses email / push / SMS; school data stores outcome only.
+- **Event** and **job** notifications enqueue through `NotificationGatewayPort`; they may optionally materialize `MessageDelivery` rows when an in-app inbox row is required (see G4).
+- Guardian/staff **eligibility** flags remain in school domain (`receivesAttendanceAlerts`, `receivesAcademicReports`, `allowsNotifications`). **Channel preferences** are synced to the notifier via `NotificationGatewayPort.upsertRecipient` (Phase 6d).
 
 ---
 
@@ -62,8 +62,7 @@ Hard constraints observed in Phases 1–4:
 
 - No real email/SMS/WhatsApp in core or unit tests.
 - Gateway `enqueue` is non-blocking; no external I/O in `postSave` hooks.
-- No HTTP/GraphQL payload changes.
-- No new database migrations.
+- No HTTP/GraphQL payload changes **until Phase 6** (webhook route + inbox APIs excepted).
 - Ports-and-adapters layout preserved.
 - Authorization runs before notification triggers.
 
@@ -83,67 +82,92 @@ Hard constraints observed in Phases 1–4:
 
 ```text
 package/domain-core/src/
-  ports/notification-gateway.ts          # Port interface
+  ports/notification-gateway.ts          # Port interface (+ optional lookupDeliveryStatuses)
   notifications/
-    no-op-notification-gateway.ts
-    recording-notification-gateway.ts
-    recipient-utils.ts
-    notification-trigger-registry.ts       # Entity postSave registry
-    workflow-notification-runner.ts      # Workflow dispatch
-    register-notification-triggers.ts    # Entity triggers (auto-load)
-    register-workflow-notification-handlers.ts
-    triggers/assessment-due-soon.ts
-    handlers/
-      announcement-published.ts
-      report-card-published.ts
-      attendance-recorded.ts
+    ...
+  cron/jobs/reconcile-pending-deliveries.ts
+
+package/adaptor-novu/
+  novu-notification-gateway.ts           # enqueue, cancel, subscriber stubs, status lookup
+  delivery-webhook.ts                  # Svix verify + normalize inbound events
+  delivery-status.ts                   # Novu Messages API → status mapping
+  novu-messages-client.ts
+
+apps/api/src/
+  routes/novu-webhook.routes.ts        # POST /webhooks/novu
+  runtime/shared/resolve-notification-gateway.ts
 
 apps/api/src/runtime/shared/
   notification-gateway.ts                # Pino logging adapter
-  message-delivery-notification-gateway.ts  # Staging wrapper (log only)
+  message-delivery-notification-gateway.ts  # Log fallback when NOVU_SECRET_KEY unset
   school-application.ts                  # Gateway DI
+
+scripts/novu-e2e-smoke.ts              # Local publish + optional webhook simulation
 ```
 
 ### 4.2 Notification gateway port
 
+Single provider-facing port for **send** and **subscriber sync** (same adapter in practice — Novu, Courier, internal).
+
 ```typescript
+export interface NotificationRecipientProfile {
+  schoolId: string
+  recipient: NotificationRecipient
+  displayName?: string
+  email?: string
+  phone?: string
+  locale?: string
+  preferences: {
+    receivesAttendanceAlerts?: boolean
+    receivesAcademicReports?: boolean
+    allowsNotifications?: boolean
+    premiumNotificationsEnabled?: boolean
+    channels?: Partial<Record<'email' | 'sms' | 'push' | 'in_app', boolean>>
+  }
+}
+
 export interface NotificationGatewayPort {
   enqueue: (input: NotificationEnqueueInput) => Promise<void>
   cancel: (idempotencyKey: string) => Promise<void>
+  upsertRecipient: (profile: NotificationRecipientProfile) => Promise<void>
+  removeRecipient: (schoolId: string, recipient: NotificationRecipient) => Promise<void>
+  /** Optional — poll provider message status (reconcilePendingDeliveries cron) */
+  lookupDeliveryStatuses?: (
+    deliveries: ReadonlyArray<{ deliveryId: string; subjectId: string }>,
+  ) => Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>>
 }
 ```
 
-`NotificationEnqueueInput` supports `kind: 'ad_hoc' | 'event' | 'job'`, optional `announcementId`, `deliverAfter`, `channels`, `priority`, `premium`, and `metadata`.
+`NotificationEnqueueInput` supports `kind: 'ad_hoc' | 'event' | 'job'`, optional `announcementId`, `deliverAfter`, `priority`, `premium`, and `metadata`. **Phase 6 removes `channels` from routing** — see § Phase 6.
 
 ### 4.3 Adapters
 
 | Adapter | Location | Role |
 |---------|----------|------|
-| `noOpNotificationGateway` | `@edaya/core` | Default in tests; silent |
-| `RecordingNotificationGateway` | `@edaya/core` | Test assertions; dedupes by `idempotencyKey` |
-| `createLoggingNotificationGateway` | `apps/api`, `apps/cron` | Pino log of enqueue/cancel (fallback when Novu not configured) |
-| `createMessageDeliveryNotificationGateway` | `apps/api` | Wraps logging adapter for staging (**does not** update `MessageDelivery` status yet) |
-| `createNovuNotificationGateway` | `@edaya/adaptor-novu` | Novu Cloud trigger/cancel via `NotificationGatewayPort` |
+| `noOpNotificationGateway` | `@edaya/core` | Tests; enqueue/cancel/sync no-op |
+| `RecordingNotificationGateway` | `@edaya/core` | Test assertions; records enqueue, sync, status lookups |
+| `createLoggingNotificationGateway` | `apps/api`, `apps/cron` | Pino log (fallback when `NOVU_SECRET_KEY` unset) |
+| `createMessageDeliveryNotificationGateway` | `apps/api` | Wraps logging adapter when Novu not configured |
+| `createNovuNotificationGateway` | `@edaya/adaptor-novu` | Enqueue, cancel, status lookup; subscriber sync **stub** |
+| `NotificationDeliveryWebhookAdapter` | `@edaya/adaptor-novu` | Svix verify + normalize inbound delivery events |
 
 ### 4.4 Trigger flow
 
 ```text
                     ┌─────────────────────────────┐
                     │   NotificationGatewayPort   │
-                    │      enqueue() / cancel()   │
+                    │  enqueue / cancel           │
+                    │  upsertRecipient / remove   │
                     └──────────────▲──────────────┘
                                    │
               ┌────────────────────┼────────────────────┐
               │                    │                    │
     ┌─────────▼─────────┐ ┌───────▼────────┐ ┌────────▼────────┐
-    │ runWorkflow       │ │ postSave hook  │ │ Job processor   │
-    │ Notifications     │ │ (registry)     │ │ (Phase 5)       │
+    │ runWorkflow       │ │ postSave hook  │ │ guardian/staff  │
+    │ Notifications     │ │ (registry)     │ │ save → upsert    │
     └─────────▲─────────┘ └───────▲────────┘ └────────▲────────┘
               │                    │                    │
     publishAnnouncement      Assessment.save      cron / queue
-    publishReportCardResult  (dueAt change)
-    recordSessionAttendance
-    recordClassDailyAttendance
 ```
 
 **Entity hooks:** `withNotificationPostSaveHook` in `createCoreEntityServices` merges registry hooks into any entity with registered triggers (currently `assessments` only).
@@ -172,7 +196,7 @@ export interface NotificationGatewayPort {
 | 3 | Entity trigger registry + `postSave` infrastructure | **Complete** |
 | 4 | Workflow hooks + first vertical slices | **Complete** |
 | 5 | Job scheduler + date-based scanners | **Complete** |
-| 6 | Provider adapters + webapp inbox | **Deferred** |
+| 6 | Provider routing, subscriber sync, delivery status, webapp inbox | **In progress** — 6b/6c/6e largely done; 6a/6d/6f open (see § Phase 6) |
 
 ### Dependency order
 
@@ -229,7 +253,7 @@ Phase 0 was not executed as a separate spike. Implementation proceeded directly 
 
 ### Phase 4 caveat (4.5)
 
-The checklist item "transitions `MessageDelivery` Pending → Sent" is **not implemented**. The staging adapter only logs enqueue intent. `MessageDelivery` rows are created on ad-hoc publish (App channel) but status stays `Pending` until Phase 6 provider work.
+~~The checklist item "transitions `MessageDelivery` Pending → Sent" is **not implemented**.~~ **Superseded (2026-06-24):** `applyDeliveryEvent` + webhook route + `reconcilePendingDeliveries` cron now update status. Novu workflow configuration in dashboard is still required for outbound triggers.
 
 ---
 
@@ -250,8 +274,8 @@ Cron workflows live in `@edaya/core` (`package/domain-core/src/cron/`). `apps/cr
 
 - [x] Core cron catalog + runner (`runCronJobs`, `CRON_JOB_KEYS`)
 - [x] `processDueNotifications` job — scans assessments, homework, activities, calendar events
-- [x] Node entry (`bun dev` / `bun run dev:cron`) — one-shot run for local/CI
-- [x] Worker entry + `wrangler.toml` cron trigger (`0 6 * * *`)
+- [x] Node entry (`bun dev` / `bun run dev:cron`) — one-shot run for local/CI; optional `CRON_JOB_KEYS` filter
+- [x] Worker entry + `wrangler.toml` cron triggers (`0 6 * * *` due notifications; `*/5 * * * *` delivery reconcile)
 - [x] Deploy scripts: `bun run deploy:cron`, `bun run deploy:cron:staging` (ops: set secrets + Hyperdrive before first deploy)
 
 ### 5.3 Initial job types
@@ -260,16 +284,250 @@ Cron workflows live in `@edaya/core` (`package/domain-core/src/cron/`). `apps/cr
 - [x] `homework.due_soon` — 3-day lead, class students + guardians (`scan-homework-due-notifications.ts`)
 - [x] `activity.reminder` — 24h before `startDate`, enrolled students + guardians (`scan-activity-reminders.ts`)
 - [x] `calendar.event_reminder` — 24h before `startDate`, scoped class/grade recipients (`scan-calendar-event-reminders.ts`)
+- [x] `reconcilePendingDeliveries` — polls Novu Messages API for pending/sent rows (`reconcile-pending-deliveries.ts`)
 
 ---
 
-## Phase 6 — Providers and webapp (deferred)
+## Phase 6 — Provider routing, subscriber sync, and webapp (in progress)
 
-- [ ] Email/SMS/WhatsApp provider adapters behind gateway
-- [ ] Transition `MessageDelivery` Pending → Sent/Failed/Read
-- [ ] Webapp notification inbox (app channel); mark read via `MessageDelivery.readAt`
-- [ ] Staff UI for ad-hoc announcements (align with `specs/app-shell-spec.md`)
-- [ ] Multi-channel publish (ad-hoc currently materializes **App only** on publish)
+Phase 6 completes the **provider-centric** model: school domain decides **who** and **what**; the notifier decides **how** (channel routing).
+
+### Phase 6 progress (2026-06-24)
+
+| Slice | Status | Notes |
+|-------|--------|-------|
+| **6a** | Open | Single-record attendance, incident, assessment result hooks |
+| **6b** | **Done** | Slim `MessageDelivery`, migration `0016`, materialize by `subjectId` |
+| **6c** | **Mostly done** | Novu subscriber HTTP client; hooks on link/contact/staff save; Novu preferences API still future (6d) |
+| **6d** | **Done** | `/account/notifications` — guardian prefs + staff summary; self-service guardian save |
+| **6e** | **Done** | Webhook route, `applyDeliveryEvent`, `reconcilePendingDeliveries` cron |
+| **6f** | **Done** | `/account/inbox/[[id]]` — delivery list, detail drawer, `markDeliveryRead` on open |
+
+**E2E blockers (ops, not code):** Novu dashboard workflow trigger id `announcement.published` must exist; `NOVU_SECRET_KEY` (+ `NOVU_API_URL` for EU). Status sync: webhooks (`NOVU_WEBHOOK_SECRET`) **or** `CRON_JOB_KEYS=reconcilePendingDeliveries bun run dev:cron`.
+
+### 6.0 Target model (end state)
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│ School domain (EDAYA)                                                   │
+│  Announcement + targets → audience resolution                           │
+│  MessageDelivery: one row per recipient (no channel for routing)        │
+│    • status: pending | sent | failed | read | cancelled                 │
+│    • providerMessageId, failureReason (from webhook)                    │
+│    • readAt (in-app inbox, user action or provider in-app read)         │
+│  Recipient id: { kind: staff|guardian|student, id }                     │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │ enqueue / cancel / upsertRecipient / removeRecipient
+                                ▼
+                    ┌──────────────────────┐
+                    │ NotificationGatewayPort │
+                    │  (single port)         │
+                    └──────────┬───────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │ Adapter (Novu first) │  ← swappable: Courier, internal
+                    │  one factory per pkg │
+                    └──────────┬───────────┘
+                               │ webhooks (delivery lifecycle)
+                               ▼
+                    ┌──────────────────────┐
+                    │ API webhook ingress  │  → normalized event → core command
+                    │ applyDeliveryEvent   │  → update MessageDelivery status
+                    └──────────────────────┘
+```
+
+**Principles**
+
+1. **No channel in school routing data** — remove `channel` from `materializeDeliveries` input and from materialized rows; deprecate multi-channel seed fixtures. Optional: keep `channel` on webhook audit payload only, or add nullable `lastChannel` for support UI (not used to enqueue).
+2. **Recipient identifier to gateway** — domain resolves audience as staff/guardian/student entities; adapter maps to **auth account** (`subjectId` on `StaffMember` / `Guardian` / `Student`). Novu `subscriberId` = `subjectId` (tenant = `schoolId`). Students are treated like guardians from an auth perspective once invitation/linking lands.
+3. **Inbox per account** — `MessageDelivery` is keyed by `subjectId` (Better Auth user), not `{ recipientKind, recipientId }`. Profile/inbox UI queries by session `subjectId`. Domain may still store optional `recipientKind` / `recipientId` for staff audit (“sent to guardian X about student Y”).
+3. **One port per provider** — `NotificationGatewayPort` covers send and subscriber sync; each adapter package implements all methods so swapping Novu → Courier is a single DI change.
+4. **Delivery status returns via webhooks or poll** — provider pushes lifecycle events (preferred); `reconcilePendingDeliveries` cron polls Novu Messages API when webhooks unavailable (local dev, non-Enterprise tier).
+
+### 6.1 Domain and persistence changes (6b) ✅
+
+- [x] **Slim `MessageDelivery`** — one row per `(announcementId, subjectId)` for ad-hoc; remove `channel` from schema (migration `package/adaptor-postgres/drizzle/0016_message_delivery_subject_id.sql`).
+- [x] **`materializeDeliveries`** — drop `channel` parameter; resolve each audience member → `subjectId`; **skip** recipients without a linked account.
+- [x] Generate stable ids: `delivery:{announcementId}:{subjectId}`.
+- [x] **`publishAnnouncement`** — materialize recipient rows (status `pending`) then per-delivery `gateway.enqueue` (`idempotencyKey` = `delivery.id`).
+- [x] **Remove `channels` from `NotificationEnqueueInput`** as routing hint; handlers stop passing channel lists.
+- [x] **Seed cleanup** — multi-channel demo rows aligned with new model.
+- [ ] **Event/job notifications** — decide per event whether to materialize inbox rows (G4); at minimum ad-hoc announcements always materialize.
+
+**`MessageDelivery` fields (target)**
+
+| Field | Role |
+|-------|------|
+| `id` | Stable delivery id; **Novu `transactionId`** per trigger |
+| `announcementId` | Link to ad-hoc communication |
+| `subjectId` | **Auth account** (Better Auth user id) — inbox query key |
+| `recipientKind`, `recipientId` | Optional audit context (which school entity was targeted) |
+| `status` | School DB truth for inbox and staff dashboards |
+| `providerMessageId` | Set from webhook when provider assigns message id |
+| `failureReason` | Set from webhook on failure |
+| `sentAt`, `readAt` | Lifecycle timestamps |
+| ~~`channel`~~ | **Removed** — routing owned by notifier |
+
+### 6.2 Ports (6b — core interfaces) ✅
+
+Extend `package/domain-core/src/ports/notification-gateway.ts` (implementations stay in `package/adaptor-*`).
+
+#### `NotificationGatewayPort` (expanded)
+
+```typescript
+export interface NotificationRecipientProfile {
+  schoolId: string
+  recipient: NotificationRecipient
+  displayName?: string
+  email?: string
+  phone?: string
+  locale?: string
+  preferences: {
+    receivesAttendanceAlerts?: boolean
+    receivesAcademicReports?: boolean
+    allowsNotifications?: boolean
+    premiumNotificationsEnabled?: boolean
+    channels?: Partial<Record<'email' | 'sms' | 'push' | 'in_app', boolean>>
+  }
+}
+
+export interface NotificationGatewayPort {
+  enqueue: (input: NotificationEnqueueInput) => Promise<void>
+  cancel: (idempotencyKey: string) => Promise<void>
+  upsertRecipient: (profile: NotificationRecipientProfile) => Promise<void>
+  removeRecipient: (schoolId: string, recipient: NotificationRecipient) => Promise<void>
+  lookupDeliveryStatuses?: (
+    deliveries: ReadonlyArray<{ deliveryId: string; subjectId: string }>,
+  ) => Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>>
+}
+```
+
+- `NotificationEnqueueInput.recipients` remains `{ kind, id }[]`.
+- Pass `metadata.deliveryId` per recipient so webhooks can correlate.
+- Remove `channels` from enqueue contract when adapters no longer need it.
+- **`upsertRecipient` / `removeRecipient`** — invoked when staff/guardian contact or notification settings change, and on link/provision flows (e.g. after auth seed link). Async, non-blocking from entity saves.
+
+| Adapter | Package | Notes |
+|---------|---------|-------|
+| `noOpNotificationGateway` | `@edaya/core` | All methods no-op |
+| `RecordingNotificationGateway` | `@edaya/core` | Records enqueue + sync calls |
+| `createLoggingNotificationGateway` | `apps/api`, `apps/cron` | Logs all port methods |
+| `createNovuNotificationGateway` | `@edaya/adaptor-novu` | Trigger, cancel, status lookup; subscriber API **stub** |
+| `createCourierNotificationGateway` | future `package/adaptor-courier` | Same port surface |
+
+Single instance wired on `ServiceArgs.notificationGateway` (unchanged DI key).
+
+#### `NotificationDeliveryWebhookAdapter` (adapter-side, not core)
+
+Each provider adapter exposes **verify + normalize** for inbound HTTP:
+
+```typescript
+export interface NormalizedDeliveryEvent {
+  deliveryId: string           // MessageDelivery.id
+  status: 'sent' | 'failed' | 'read' | 'cancelled'
+  providerMessageId?: string
+  channel?: string             // audit only — which channel succeeded/failed
+  failureReason?: string
+  occurredAt: Date
+}
+
+export interface NotificationDeliveryWebhookAdapter {
+  verifyRequest: (request: Request) => Promise<boolean>
+  parseEvents: (request: Request) => Promise<NormalizedDeliveryEvent[]>
+}
+```
+
+Core stays provider-agnostic: API route calls adapter, then domain command.
+
+### 6.3 Delivery status sync — webhook + poll (6e) ✅
+
+**Problem:** Novu (or Courier) sends asynchronously; school DB must reflect sent/failed/read for inbox and staff visibility.
+
+**Correlation strategy**
+
+| Step | Detail |
+|------|--------|
+| 1. Materialize | Create `MessageDelivery` with `id = delivery:{announcementId}:{subjectId}`, `subjectId` set, `status = pending` |
+| 2. Enqueue | **One Novu trigger per account** via `triggerBulk` (≤100/request): `to = subjectId`, `transactionId = deliveryId`, `tenant = schoolId`, payload includes `deliveryId` + announcement metadata |
+| 3. Webhook | `message.sent` / `message.delivered` / `message.failed` / `message.read` → parse `transactionId` + `subscriberId` |
+| 4. Domain command | `communicationsWorkflow.applyDeliveryEvent(event)` — idempotent status transition |
+
+**`applyDeliveryEvent` rules (core)**
+
+- Lookup `MessageDelivery` by `event.deliveryId`; ignore unknown ids (log).
+- Valid transitions: `pending → sent | failed | cancelled`; `sent → read`; ignore duplicate/out-of-order with same or lower rank.
+- Set `providerMessageId`, `failureReason`, `sentAt`, `readAt` from event.
+- **Read path (in-app):** webapp inbox can also call `markDeliveryRead(deliveryId)` when user opens item — sets `readAt` locally; optional forward to provider if in-app channel supports read receipts.
+
+```text
+Novu workflow step completed
+        │
+        ▼
+POST /webhooks/novu  ──► adaptor-novu.parseEvents()
+        │
+        ▼
+applyDeliveryEvent({ deliveryId, status: 'sent', providerMessageId, channel: 'email' })
+        │
+        ▼
+MessageDelivery.status = sent, sentAt = now
+```
+
+**Workers / security**
+
+- Webhook route on API Worker (or dedicated `apps/notifications` later); verify HMAC/signature per adapter.
+- No auth session — shared secret or provider signing key in env (`NOVU_WEBHOOK_SECRET`).
+- Rate-limit and reject replay (timestamp + idempotency on `providerMessageId` + status).
+
+**Polling fallback (implemented 2026-06-24)**
+
+Cron job `reconcilePendingDeliveries` calls Novu Messages API via `lookupDeliveryStatuses` on the gateway — same `applyDeliveryEvent`. Runs every 5 minutes on Worker (`*/5 * * * *`); locally: `CRON_JOB_KEYS=reconcilePendingDeliveries bun run dev:cron`. Prefer webhooks in production when Novu tier supports outbound webhooks.
+
+### 6.4 Remaining event hooks (6a)
+
+- [ ] `recordAttendance` / `recordDailyAttendance` (single-record) workflow notification hooks (G2)
+- [ ] `incident.recorded`, `assessment.result_recorded` handlers (G3)
+- [ ] Enforce `premiumNotificationsEnabled` in recipient resolution where applicable (G6)
+
+### 6.5 Provider wiring (6c) — mostly done
+
+- [x] `createNovuSubscriberClient` — Novu subscriber create (upsert) + delete.
+- [x] `upsertRecipient` / `removeRecipient` wired through Novu adapter when `NOVU_SECRET_KEY` set.
+- [x] Production path: `resolveNotificationGateway` → Novu adapter; per-recipient `transactionId` = `deliveryId`.
+- [x] `lookupDeliveryStatuses` — Novu Messages API poll for reconcile cron.
+- [x] Workflow hooks schedule subscriber sync after `linkActorSubject`, `updateGuardianContactMethods`, `updateGuardianStudentLink`, `registerStaffMember`, `updateStaffMemberStatus` (remove when deactivated).
+- [ ] Novu **preferences** API sync (channel toggles per workflow) — defer to **6d** with webapp settings UI.
+- [ ] Novu workflows configured per `eventKey` in dashboard — **ops** task.
+
+### 6.6 Preferences UI + sync (6d)
+
+- [ ] Webapp **notification settings** screen (guardian/staff) — per-category toggles aligned with `NotificationRecipientProfile.preferences`.
+- [ ] Save → school entity update **and** `notificationGateway.upsertRecipient(profile)`.
+- [ ] School DB remains source for **authorization and eligibility**; provider copy is for **routing** (must stay in sync; document conflict rule: school save wins).
+
+### 6.7 Webapp inbox and staff communications (6f)
+
+- [ ] Guardian/staff **notification inbox** — list `MessageDelivery` for logged-in actor by session `subjectId`.
+- [ ] Mark read → `markDeliveryRead` command (core command exists; webapp not wired).
+- [x] Staff **announcements** UI (list, draft, targets, publish) — shipped; aligned with 6b materialize model.
+
+### 6.8 Phase 6 checklist (summary)
+
+| Slice | Deliverable | Status |
+|-------|-------------|--------|
+| **6a** | Remaining event hooks (attendance single, incident, assessment result) | Open |
+| **6b** | Slim `MessageDelivery`, port contracts, materialize without channel, migration | **Done** |
+| **6c** | Extend `NotificationGatewayPort` + Novu adapter (enqueue + subscriber sync) | **Mostly done** |
+| **6d** | Preferences UI + sync on save | Open |
+| **6e** | Webhook ingress + `applyDeliveryEvent` + reconcile job | **Done** |
+| **6f** | Guardian/staff inbox UI | Open |
+
+### 6.9 Success criteria (Phase 6 complete)
+
+- [x] Publish announcement → one `MessageDelivery` per recipient, no channel column used for routing.
+- [x] `gateway.enqueue` + `gateway.upsertRecipient` work through one port; Novu swappable via adapter package only.
+- [x] Provider webhook or poll reconcile updates `MessageDelivery` to `sent` / `failed` / `read`.
+- [ ] User can change notification preferences in webapp; changes reflected at provider.
+- [x] Core tests green; adapter tests for Novu trigger + webhook normalize + status mapping + reconcile cron (**subscriber sync tests pending**).
 
 ---
 
@@ -277,17 +535,18 @@ Cron workflows live in `@edaya/core` (`package/domain-core/src/cron/`). `apps/cr
 
 | Layer | Covered | Tests |
 |-------|---------|-------|
-| Port adapters | Yes | `notification-gateway-adapters.test.ts` (4) |
-| Entity trigger registry | Yes | `notification-trigger-registry.test.ts` (9) |
-| Entity hook integration | Yes | `assessment-notification-hook.test.ts` (2), `homework-notification-hook.test.ts` (2) |
-| Workflow: announcement | Yes | `communications-workflows.test.ts` |
+| Port adapters | Yes | `notification-gateway-adapters.test.ts` |
+| Entity trigger registry | Yes | `notification-trigger-registry.test.ts` |
+| Entity hook integration | Yes | `assessment-notification-hook.test.ts`, `homework-notification-hook.test.ts` |
+| Workflow: announcement | Yes | `communications-workflows.test.ts` (incl. `applyDeliveryEvent`) |
 | Workflow: report card | Yes | `assessment-workflows.test.ts` |
 | Workflow: attendance | Yes | `scheduling-workflows.test.ts` |
-| API runtime wiring | Implicit | `apps/api` tsc passes |
-| Job processor | Yes | `package/domain-core/tests/cron/` (due-window, cron-job-runner); `apps/cron` runtime |
-| Provider HTTP | No | Phase 6 |
+| API runtime wiring | Yes | `apps/api` tsc; `novu-webhook.routes.ts` |
+| Job processor | Yes | `tests/cron/` — due-window, runner, reconcile, resolve-cron-job-keys |
+| Novu adapter | Yes | `package/adaptor-novu/tests/` — trigger, webhook, delivery-status |
+| Provider HTTP (live) | Manual | `scripts/novu-e2e-smoke.ts`; requires Novu dashboard workflow |
 
-**Total notification-specific tests:** 19 in `package/domain-core/tests/notifications/` + 3 workflow assertion tests + 4 cron tests.
+**Smoke test:** `bun novu:smoke` (API running, seed data, `NOVU_SECRET_KEY`).
 
 ---
 
@@ -301,34 +560,37 @@ Cron workflows live in `@edaya/core` (`package/domain-core/src/cron/`). `apps/cr
 | Guardian spam | Partial | Opt-out flags on wired handlers; no digest/batching |
 | Cross-tenant leakage | Mitigated | Resolvers check `actor.schoolId` vs entity school |
 | Job intents never delivered | **Mitigated** | Cron scanners + entity hooks; idempotency keys |
-| Users see no notifications | **Open** | Phase 6 inbox + providers required |
+| Users see no notifications | **Partial** | Novu dispatch + status sync wired; inbox UI (6f) and dashboard workflows still required |
 
 ---
 
 ## 8. Suggested next PR sequence
 
-Infrastructure (Phases 1–4) can ship as one or more PRs. Recommended follow-on:
+1. ~~**PR 6b:** Domain — remove `channel` from `MessageDelivery` + materialize; migration.~~ **Done**
+2. ~~**PR 6e:** Webhook route + `applyDeliveryEvent` + Novu delivery webhook adapter; per-recipient `transactionId`; reconcile cron.~~ **Done**
+3. **PR 6f:** Guardian/staff inbox UI + `markDeliveryRead`.
+4. **PR 6d:** Webapp notification preferences screen + Novu preferences API sync.
+5. **PR 6a:** Remaining event hooks (single attendance, incident, assessment result).
 
-1. **PR A (Phase 5a):** Cron entry + process `deliverAfter` enqueue records (assessment due-soon end-to-end).
-2. **PR B (Phase 5b):** Homework/activity entity triggers + scanners.
-3. **PR C (Phase 6a):** Wire single-record attendance notifications; incident + assessment result handlers.
-4. **PR D (Phase 6b):** Provider adapter + `MessageDelivery` status transitions.
-5. **PR E (Phase 6c):** Webapp notification inbox.
+**Ops (parallel):** Create Novu workflows per `eventKey`; confirm webhook tier or rely on reconcile cron.
 
 ---
 
-## 9. Known gaps (post Phase 4)
+## 9. Known gaps (updated 2026-06-24)
 
-| ID | Gap | Impact | Suggested phase |
-|----|-----|--------|-----------------|
-| G1 | No persisted `deliverAfter` queue — cron re-scans domain | Cron may re-enqueue if idempotency expires at provider | 5 ✅ (query-based) |
-| G2 | `recordAttendance` / `recordDailyAttendance` (single-record) lack workflow notification hooks | Direct attendance API path silent | 6a |
-| G3 | `incident.recorded`, `assessment.result_recorded` not implemented | Matrix rows remain draft | 6a |
-| G4 | Event/job notifications do not create `Announcement` rows | No unified inbox/history for system events | 6 (design decision) |
-| G5 | `publishAnnouncement` materializes **App channel only** | Email/SMS not auto-materialized on publish | 6 |
-| G6 | `premiumNotificationsEnabled` not enforced in recipient resolution | Premium flag ignored for delivery | 6 |
-| G7 | `MessageDeliveryNotificationGateway` is log-only | No real delivery or status transition | 6 |
-| G8 | Phase 0 formal catalog never written | Onboarding/docs gap | Optional doc pass |
+| ID | Gap | Impact | Status |
+|----|-----|--------|--------|
+| G1 | No persisted `deliverAfter` queue — cron re-scans domain | Cron may re-enqueue if idempotency expires at provider | **Mitigated** (Phase 5) |
+| G2 | `recordAttendance` / `recordDailyAttendance` (single-record) lack workflow notification hooks | Direct attendance API path silent | Open — 6a |
+| G3 | `incident.recorded`, `assessment.result_recorded` not implemented | Matrix rows remain draft | Open — 6a |
+| G4 | Event/job notifications do not create `Announcement` rows | No unified inbox for system events unless `MessageDelivery` materialized per event | Open — 6f design |
+| G5 | `MessageDelivery.channel` used for routing | Wrong model | **Closed** — column removed (6b) |
+| G6 | `premiumNotificationsEnabled` not enforced in recipient resolution | Premium flag ignored | Open — 6a |
+| G7 | No real delivery or status transition | Stuck at pending | **Closed** — Novu + webhook + reconcile (6e) |
+| G8 | Phase 0 formal catalog never written | Onboarding/docs gap | Optional |
+| G9 | Subscriber sync at provider | Prefs not pushed to Novu preferences API | **Mostly closed** — subscriber upsert on link/save; channel prefs in `data` until 6d |
+| G10 | No inbound delivery status | Stuck at pending after send | **Closed** — webhook + poll (6e) |
+| G11 | Preferences UI not synced to provider | Channel routing cannot follow user choice | Open — 6d |
 
 ---
 
@@ -336,7 +598,7 @@ Infrastructure (Phases 1–4) can ship as one or more PRs. Recommended follow-on
 
 | eventKey | Kind | Entry point | Recipients | Opt-out | Status |
 |----------|------|-------------|------------|---------|--------|
-| `announcement.published` | ad_hoc | `communicationsWorkflow.publishAnnouncement` | Materialized App deliveries | `allowsNotifications` (partial) | **Live** |
+| `announcement.published` | ad_hoc | `communicationsWorkflow.publishAnnouncement` | Materialized deliveries (one per `subjectId`) | `allowsNotifications` (partial) | **Live** — Novu per-delivery trigger |
 | `report_card.published` | event | `assessmentsWorkflow.publishReportCardResult` | Student + guardians | `receivesAcademicReports` | **Live** |
 | `attendance.recorded` | event | `schedulingWorkflow.recordSessionAttendance`, `recordClassDailyAttendance` | Guardians | `receivesAttendanceAlerts`, `allowsNotifications` | **Live** (batch only) |
 | `assessment.due_soon` | job | Assessment `postSave` + cron scanner | Class students | — | **Live** |
@@ -350,7 +612,7 @@ Infrastructure (Phases 1–4) can ship as one or more PRs. Recommended follow-on
 
 | eventKey | Key pattern |
 |----------|-------------|
-| `announcement.published` | `announcement.published:{announcementId}` |
+| `announcement.published` | `delivery:{announcementId}:{subjectId}` (per delivery row; one Novu trigger each) |
 | `report_card.published` | `report_card.published:{resultId}` |
 | `attendance.recorded` | `attendance.recorded:{studentId}:{sessionId}:{status}` |
 | `assessment.due_soon` | `assessment.due_soon:{assessmentId}` |
@@ -364,16 +626,18 @@ Infrastructure (Phases 1–4) can ship as one or more PRs. Recommended follow-on
 
 | Area | Files |
 |------|-------|
-| Port | `package/domain-core/src/ports/notification-gateway.ts` |
+| Port (enqueue + subscriber sync + status lookup) | `package/domain-core/src/ports/notification-gateway.ts` |
+| Webhook normalize | `package/adaptor-novu/src/delivery-webhook.ts` |
+| Status poll mapping | `package/adaptor-novu/src/delivery-status.ts`, `novu-messages-client.ts` |
 | Adapters | `package/domain-core/src/notifications/no-op-notification-gateway.ts`, `recording-notification-gateway.ts` |
 | Entity triggers | `notification-trigger-registry.ts`, `register-notification-triggers.ts`, `triggers/*.ts` |
-| Cron jobs | `package/domain-core/src/cron/` — `runCronJobs`, `processDueNotifications`, scanners |
+| Cron jobs | `package/domain-core/src/cron/` — `processDueNotifications`, `reconcilePendingDeliveries`, `resolve-cron-job-keys.ts` |
 | Novu adapter | `package/adaptor-novu/` |
-| Workflow triggers | `workflow-notification-runner.ts`, `register-workflow-notification-handlers.ts`, `handlers/*.ts` |
-| Service wiring | `service-args.ts`, `base-school-service.ts`, `core-entity-catalog.ts` |
-| Workflows | `communications.ts`, `assessments.ts`, `scheduling.ts` |
-| API runtime | `apps/api/src/runtime/shared/school-application.ts`, `message-delivery-notification-gateway.ts` |
-| Tests | `package/domain-core/tests/notifications/*`, workflow test files |
+| Workflow triggers | `workflow-notification-runner.ts`, `handlers/announcement-published.ts`, … |
+| Workflows | `communications.ts` (`applyDeliveryEvent`, `markDeliveryRead`, materialize) |
+| API | `apps/api/src/routes/novu-webhook.routes.ts`, `resolve-notification-gateway.ts` |
+| Smoke test | `scripts/novu-e2e-smoke.ts` |
+| Tests | `package/domain-core/tests/notifications/*`, `tests/cron/reconcile-pending-deliveries.test.ts`, `package/adaptor-novu/tests/` |
 
 ---
 
@@ -382,7 +646,78 @@ Infrastructure (Phases 1–4) can ship as one or more PRs. Recommended follow-on
 | # | Question | Decision / status |
 |---|----------|-------------------|
 | 1 | System actor for automated announcements | **Deferred** — event notifications enqueue without creating `Announcement` rows (G4) |
-| 2 | App-channel visibility before webapp UI | **Deferred** — `MessageDelivery` App rows materialized on publish; no inbox UI (Phase 6) |
+| 2 | In-app visibility before inbox UI | **6f** — inbox reads `MessageDelivery` for logged-in actor |
 | 3 | Per-school assessment lead time | **Hardcoded** — `ASSESSMENT_DUE_SOON_LEAD_DAYS = 3` in `assessment-due-soon.ts` |
 | 4 | Queue vs cron on Workers | **Decided** — `apps/cron` Worker with daily cron trigger |
-| 5 | Single vs multi-channel on publish | **Decided** — App only on `publishAnnouncement`; other channels remain explicit `materializeDeliveries` calls |
+| 5 | Who owns channel routing? | **Decided (2026-06-23)** — **Provider** (Novu workflows + subscriber prefs). School DB stores delivery outcome only; `MessageDelivery.channel` removed in 6b |
+| 6 | How does delivery status return? | **Implemented (2026-06-24)** — Webhooks (`POST /webhooks/novu`) + `reconcilePendingDeliveries` cron poll; both call `applyDeliveryEvent` |
+| 7 | How to swap Novu for Courier/internal? | **Decided** — single `NotificationGatewayPort` per adapter package + per-provider webhook adapter; no core provider imports |
+| 8 | Separate port for subscriber sync? | **Decided (2026-06-23)** — **No** — merge `upsertRecipient` / `removeRecipient` into `NotificationGatewayPort`; one factory per provider |
+| 9 | Novu subscriber id | **Decided (2026-06-23)** — `subjectId` (auth account); `tenant` = `schoolId`. Replace `school:{kind}:{id}` in `@edaya/adaptor-novu` |
+| 10 | Inbox scope | **Decided (2026-06-23)** — per **account** (`subjectId`), query from session on profile/notifications page |
+| 11 | Students without linked account | **Deferred** — invitation/linking sprint; materialize skips until `subjectId` exists; provider used for invite comms |
+
+---
+
+## Appendix E — Novu feasibility (2026-06-23)
+
+**Verdict: proceed** with per-account triggers + `transactionId` = `MessageDelivery.id`. Adjust enqueue adapter (today one bulk trigger per event key).
+
+### Trigger API (outbound)
+
+| Capability | Novu support | Our use |
+|------------|--------------|---------|
+| `transactionId` on trigger | Yes — dedupes retries | Set to `MessageDelivery.id` |
+| One subscriber per trigger | Yes — `to: subjectId` | One account per delivery row |
+| Bulk trigger (≤100 events) | Yes — each event is full `TriggerEventRequestDto` with own `transactionId` | Announcement audiences chunked |
+| `tenant` | Yes | `schoolId` multi-tenant isolation |
+| Custom payload | Yes | `deliveryId`, `announcementId`, title, body, metadata |
+
+**Change from earlier code:** ~~`announcement-published` handler uses one `transactionId` for all recipients~~ **Done (2026-06-24)** — one Novu trigger per delivery; `transactionId` = `MessageDelivery.id`.
+
+### Webhook / status (inbound)
+
+| Event | Maps to `MessageDelivery` |
+|-------|---------------------------|
+| `message.sent` | Optional progress (provider accepted) |
+| `message.delivered` | `status = sent`, `sentAt` |
+| `message.failed` | `status = failed`, `failureReason` |
+| `message.read` / `message.seen` | `status = read`, `readAt` (in-app channel) |
+
+Novu message objects include **`transactionId`** and **`subscriber.subscriberId`** — sufficient to correlate webhook → `MessageDelivery.id` and verify account.
+
+**Plan tier:** outbound webhooks require Novu **Team/Enterprise**. Confirm subscription. **Fallback implemented:** `reconcilePendingDeliveries` polls [Messages API](https://docs.novu.co/api-reference/messages) by `transactionId` every 5 minutes.
+
+### Multi-channel caveat
+
+One trigger can produce **multiple messages** (email + in_app + push). Define rule in 6e:
+
+- **Recommended:** `sent` when **in_app** message delivers (inbox truth); email/SMS failures logged but do not fail the row if in-app succeeded.
+- Store optional `lastChannel` on webhook for support only.
+
+### Auth alignment (already in domain)
+
+`StaffMember`, `Guardian`, and `Student` already have optional `subjectId` (Better Auth user id). Invitation/linking sprint will populate student `subjectId` the same way as guardians — no separate Novu identity model for students.
+
+### Adapter changes (6c)
+
+- [x] `buildNovuSubscriberId` → `subjectId` pass-through.
+- [x] `handleAnnouncementPublished` → one Novu enqueue per delivery (`idempotencyKey` = `delivery.id`).
+- [x] `lookupDeliveryStatuses` → Novu Messages API for reconcile cron.
+- [ ] `upsertRecipient` → Novu subscriber CRUD keyed by `subjectId`, profile from guardian/staff/student + prefs.
+
+---
+
+## Appendix D — Responsibility split (reference)
+
+| Concern | School domain (EDAYA) | Notifier (Novu / Courier / internal) |
+|---------|----------------------|----------------------------------------|
+| Message content | `Announcement.title`, `content` | Template rendering |
+| Audience | `AnnouncementTarget` + resolvers | — |
+| Recipient identity | `subjectId` (auth account) | `subscriberId` (= `subjectId`) |
+| Eligibility (business rules) | Guardian flags, enrollment | — |
+| Channel choice (email/SMS/push) | — | Workflows + synced preferences |
+| Per-recipient delivery record | `MessageDelivery` status, readAt | Provider message ids |
+| Send intent | `NotificationGatewayPort.enqueue` | Execute workflow |
+| Profile/prefs push | `NotificationGatewayPort.upsertRecipient` | Subscriber store |
+| Delivery lifecycle inbound | `applyDeliveryEvent` (core) | Webhook or poll → adapter normalizes |

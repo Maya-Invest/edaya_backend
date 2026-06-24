@@ -1,21 +1,21 @@
 import { describe, expect, test } from 'bun:test'
-import { buildDeliverySummary, MessageDelivery, MessageDeliveryChannel, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '../../../../src/domains/messaging/message-delivery'
+import { buildDeliverySummary, MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '../../../../src/domains/messaging/message-delivery'
 
 describe('MessageDelivery entity', () => {
   const baseArgs = {
     id: 'md1',
     announcementId: 'ann1',
+    subjectId: 'subject-1',
     recipientKind: MessageDeliveryRecipientKind.Guardian,
     recipientId: 'rec1',
-    channel: MessageDeliveryChannel.Email,
   }
 
   test('instantiates successfully with valid inputs', () => {
     const delivery = new MessageDelivery(baseArgs)
     expect(delivery.id).toBe('md1')
     expect(delivery.announcementId).toBe('ann1')
+    expect(delivery.subjectId).toBe('subject-1')
     expect(delivery.recipientKind).toBe(MessageDeliveryRecipientKind.Guardian)
-    expect(delivery.channel).toBe(MessageDeliveryChannel.Email)
   })
 
   test('throws error if sent status lacks sentAt', () => {
@@ -62,9 +62,9 @@ describe('buildDeliverySummary', () => {
   const baseDelivery = {
     id: 'md1',
     announcementId: 'ann1',
+    subjectId: 'subject-1',
     recipientKind: MessageDeliveryRecipientKind.Guardian,
     recipientId: 'rec1',
-    channel: MessageDeliveryChannel.Email,
   }
 
   test('correctly summarizes an array of deliveries', () => {

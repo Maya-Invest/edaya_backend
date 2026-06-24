@@ -769,6 +769,7 @@ export function createSchedulingContext({
 
 export function createCommunicationsContext({
   announcementStatus = AnnouncementStatus.Published,
+  expiresAt,
   targets = [
     { id: 'target-students', announcementId: 'ann1', targetKind: TargetKind.AllStudents },
     { id: 'target-class', announcementId: 'ann1', targetKind: TargetKind.ClassGroup, targetId: 'cg1' },
@@ -778,6 +779,7 @@ export function createCommunicationsContext({
   notificationGateway = noOpNotificationGateway,
 }: {
   announcementStatus?: AnnouncementStatus
+  expiresAt?: Date
   targets?: Array<{ id: string, announcementId: string, targetKind: TargetKind, targetId?: string }>
   existingDelivery?: MessageDelivery
   notificationGateway?: NotificationGatewayPort
@@ -793,6 +795,7 @@ export function createCommunicationsContext({
     createdBy: 'user1',
     status: announcementStatus,
     publishedAt,
+    expiresAt,
   })
   const savedAnnouncements = new Map<string, Announcement>([['ann1', announcement]])
   const savedDeliveries = new Map<string, MessageDelivery>()
@@ -823,8 +826,8 @@ export function createCommunicationsContext({
       }),
     },
     guardians: {
-      findById: mock(async id => ({ id, schoolId: 'sch1' })),
-      list: mock(async () => [{ id: 'gua1', schoolId: 'sch1' }]),
+      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
+      list: mock(async () => [{ id: 'gua1', schoolId: 'sch1', subjectId: 'subject:gua1' }]),
     },
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
@@ -842,18 +845,18 @@ export function createCommunicationsContext({
       findById: mock(async id => savedDeliveries.get(id)),
       list: mock(async (filter: any = {}) => [...savedDeliveries.values()].filter(delivery =>
         (!filter.announcementId || delivery.announcementId === filter.announcementId)
+        && (!filter.subjectId || delivery.subjectId === filter.subjectId)
         && (!filter.recipientKind || delivery.recipientKind === filter.recipientKind)
-        && (!filter.recipientId || delivery.recipientId === filter.recipientId)
-        && (!filter.channel || delivery.channel === filter.channel))),
+        && (!filter.recipientId || delivery.recipientId === filter.recipientId))),
       save: mock(async delivery => savedDeliveries.set(delivery.id, delivery)),
     },
     staffMembers: {
-      findById: mock(async id => ({ id, schoolId: 'sch1' })),
-      list: mock(async () => [{ id: 'staff1', schoolId: 'sch1' }]),
+      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
+      list: mock(async () => [{ id: 'staff1', schoolId: 'sch1', subjectId: 'subject:staff1' }]),
     },
     students: {
-      findById: mock(async id => ({ id, schoolId: 'sch1' })),
-      list: mock(async () => [{ id: 'stu1', schoolId: 'sch1' }]),
+      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
+      list: mock(async () => [{ id: 'stu1', schoolId: 'sch1', subjectId: 'subject:stu1' }]),
     },
   } as unknown as SchoolRepositories
 

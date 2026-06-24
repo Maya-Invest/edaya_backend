@@ -1,6 +1,8 @@
 import type {
   NotificationEnqueueInput,
   NotificationGatewayPort,
+  NotificationRecipient,
+  NotificationRecipientProfile,
 } from "@edaya/core";
 import type { Logger } from "pino";
 
@@ -13,6 +15,12 @@ export function createLoggingNotificationGateway(logger: Logger): NotificationGa
     },
     cancel: async (idempotencyKey: string) => {
       notificationLogger.info({ idempotencyKey }, "notification cancelled");
+    },
+    upsertRecipient: async (profile: NotificationRecipientProfile) => {
+      notificationLogger.info({ profile }, "notification recipient upserted");
+    },
+    removeRecipient: async (schoolId: string, recipient: NotificationRecipient) => {
+      notificationLogger.info({ schoolId, recipient }, "notification recipient removed");
     },
   };
 }

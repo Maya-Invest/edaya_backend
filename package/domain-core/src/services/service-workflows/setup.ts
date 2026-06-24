@@ -26,6 +26,12 @@ import {
 } from '../../domains'
 import { permissionAction } from '../../shared'
 import { requireSchool } from '../../shared/require-school'
+import {
+  buildStaffRecipientProfile,
+  scheduleNotificationRecipientRemove,
+  scheduleNotificationRecipientUpsert,
+} from '../../notifications'
+import { MessageDeliveryRecipientKind } from '../../domains'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface CreateAcademicYearInput {
@@ -205,10 +211,12 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
-    return this.saveConstructed(
+    const staffMember = await this.saveConstructed(
       this.baseService.entities.staffMembers,
       new StaffMemberEntity(staffMemberInput),
     )
+    scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
+    return staffMember
   }
 
   private async validateOwnerTransfer(existing: School, ownerSubjectId: string | null | undefined): Promise<void> {
@@ -248,6 +256,16 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       isActive,
       createdAt: existing.createdAt,
     }))
+    if (!isActive && existing.subjectId) {
+      scheduleNotificationRecipientRemove(this.baseService, existing.schoolId, {
+        kind: MessageDeliveryRecipientKind.Staff,
+        id: existing.id,
+        subjectId: existing.subjectId,
+      })
+    }
+    else {
+      scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
+    }
     return staffMember
   }
 
