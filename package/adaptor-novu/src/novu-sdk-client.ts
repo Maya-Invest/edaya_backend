@@ -10,14 +10,14 @@ function toNovuTriggerBody(request: NovuTriggerRequest): {
   workflowId: string;
   to: string | string[];
   transactionId: string;
-  tenant: string;
+  context?: { tenant: string };
   payload: Record<string, unknown>;
 } {
   return {
     workflowId: request.workflowId,
     to: request.to,
     transactionId: request.transactionId,
-    tenant: request.tenant,
+    ...(request.context ? { context: request.context } : {}),
     payload: request.payload,
   };
 }

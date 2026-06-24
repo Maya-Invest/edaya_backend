@@ -5,7 +5,10 @@ export interface NovuTriggerRequest {
   to: string | string[];
   payload: Record<string, unknown>;
   transactionId: string;
-  tenant: string;
+  /** Novu v2 tenant scope — maps schoolId to `context.tenant` on trigger. */
+  context?: {
+    tenant: string;
+  };
 }
 
 export interface NovuTriggerClient {

@@ -22,7 +22,7 @@ const gateway = createNovuNotificationGateway({
 |------------|--------------|
 | `eventKey` | `workflowId` (override with `resolveWorkflowId`) |
 | `idempotencyKey` | `transactionId` (dedup + cancel) |
-| `schoolId` | `tenant` |
+| `schoolId` | `context.tenant` (Novu v2; auto-created if missing) |
 | `recipients[]` | `to` subscriber ids: `{schoolId}:{kind}:{id}` |
 | `title`, `body`, `metadata`, … | `payload` |
 

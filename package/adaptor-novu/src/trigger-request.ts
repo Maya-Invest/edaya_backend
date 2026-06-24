@@ -19,7 +19,9 @@ export function mapNotificationToNovuTriggerRequest(
     workflowId: resolveWorkflowId(input),
     to: subscriberIds.length === 1 ? subscriberIds[0]! : subscriberIds,
     transactionId: input.idempotencyKey,
-    tenant: input.schoolId,
+    context: {
+      tenant: input.schoolId,
+    },
     payload: {
       title: input.title,
       body: input.body,

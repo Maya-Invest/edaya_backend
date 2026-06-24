@@ -26,7 +26,9 @@ describe("mapNotificationToNovuTriggerRequest", () => {
       workflowId: "report_card.published",
       to: ["auth-g1", "auth-s1"],
       transactionId: "report_card.published:rc1",
-      tenant: "school-1",
+      context: {
+        tenant: "school-1",
+      },
       payload: expect.objectContaining({
         title: "Report card",
         body: "Available now",
