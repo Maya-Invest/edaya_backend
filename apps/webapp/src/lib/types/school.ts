@@ -23,6 +23,7 @@ export interface Student {
 	attendance: number;
 	average: number;
 	status: 'active' | 'warning' | 'honor';
+	subjectId?: string | null;
 }
 
 export type SubjectCategory = 'Scientifique' | 'Littéraire' | 'Langues' | 'Sciences humaines' | 'Sport' | 'Arts';
@@ -80,6 +81,7 @@ export interface Guardian {
 	phone: string;
 	studentIds: string[];
 	preferredContact: 'email' | 'phone' | 'sms';
+	subjectId?: string | null;
 }
 
 export type StaffRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur';
@@ -96,6 +98,7 @@ export interface StaffMember {
 	subjectsTaught?: string[];
 	subjectLabels?: string[];
 	isActive: boolean;
+	subjectId?: string | null;
 }
 
 export type ChronicCondition = 'Asthme' | 'Epilepsie' | 'Diabete';

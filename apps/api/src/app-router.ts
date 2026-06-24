@@ -22,6 +22,12 @@ import {
   novuWebhookHandler,
   novuWebhookRoute,
 } from "@/routes/novu-webhook.routes";
+import {
+  acceptInvitationHandler,
+  acceptInvitationRoute,
+  invitationPreviewHandler,
+  invitationPreviewRoute,
+} from "@/routes/invitation.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -59,7 +65,9 @@ router
   .openapi(updateServiceAccountRoute, updateServiceAccountHandler)
   .openapi(revokeServiceAccountRoute, revokeServiceAccountHandler)
   .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler)
-  .openapi(novuWebhookRoute, novuWebhookHandler);
+  .openapi(novuWebhookRoute, novuWebhookHandler)
+  .openapi(invitationPreviewRoute, invitationPreviewHandler)
+  .openapi(acceptInvitationRoute, acceptInvitationHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

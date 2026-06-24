@@ -1,0 +1,5 @@
+export const ACCOUNT_INVITATION_EVENT_KEY = 'account_invitation'
+
+export const ACCOUNT_INVITATION_TTL_DAYS = 7
+
+export const ACCOUNT_INVITATION_TTL_MS = ACCOUNT_INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000

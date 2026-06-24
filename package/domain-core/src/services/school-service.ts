@@ -7,6 +7,7 @@ import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './school-command-handlers'
 import { AcademicsServiceWorkflow } from './service-workflows/academics'
 import { AccessControlServiceWorkflow } from './service-workflows/access-control'
+import { AccountInvitationServiceWorkflow } from './service-workflows/account-invitation'
 import { AssessmentsServiceWorkflow } from './service-workflows/assessments'
 import { BehaviorServiceWorkflow } from './service-workflows/behavior'
 import { CommunicationsServiceWorkflow } from './service-workflows/communications'
@@ -26,6 +27,7 @@ export class SchoolService {
   readonly communicationsWorkflow: CommunicationsServiceWorkflow
   readonly behaviorWorkflow: BehaviorServiceWorkflow
   readonly accessControlWorkflow: AccessControlServiceWorkflow
+  readonly accountInvitationWorkflow: AccountInvitationServiceWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
@@ -39,9 +41,11 @@ export class SchoolService {
     this.communicationsWorkflow = new CommunicationsServiceWorkflow(this.baseService)
     this.behaviorWorkflow = new BehaviorServiceWorkflow(this.baseService)
     this.accessControlWorkflow = new AccessControlServiceWorkflow(this.baseService)
+    this.accountInvitationWorkflow = new AccountInvitationServiceWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
+      accountInvitation: this.accountInvitationWorkflow,
       academics: this.academicsWorkflow,
       assessments: this.assessmentsWorkflow,
       student: this.studentWorkflow,

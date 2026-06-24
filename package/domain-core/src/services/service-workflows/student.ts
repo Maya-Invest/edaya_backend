@@ -28,6 +28,11 @@ import {
   buildGuardianRecipientProfile,
   scheduleNotificationRecipientUpsert,
 } from '../../notifications'
+import {
+  resolveStudentInvitationEmail,
+  scheduleAccountInvitationIfEligible,
+} from '../../invitations'
+import { AccountInvitationKind } from '../../domains/access/account-invitation'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface EnrollStudentInput {
@@ -77,8 +82,13 @@ export interface GraduateStudentInput {
   notes?: string
 }
 
-export type RegisterStudentInput = StudentInput
-export type RegisterGuardianInput = GuardianInput
+export type RegisterStudentInput = StudentInput & {
+  sendAccountInvitation?: boolean
+  inviteEmail?: string
+}
+export type RegisterGuardianInput = GuardianInput & {
+  sendAccountInvitation?: boolean
+}
 
 export interface CloseEnrollmentInput {
   enrollmentId: string
@@ -130,14 +140,45 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStudent(input: RegisterStudentInput): Promise<Student> {
-    const student = new Student(input)
+    const { sendAccountInvitation, inviteEmail, ...entityInput } = input
+    const autoInviteEnabled = sendAccountInvitation !== false
+      && this.baseService.accountInvitationsEnabled !== false
+      && Boolean(this.baseService.inviteBaseUrl)
+    if (autoInviteEnabled && !resolveStudentInvitationEmail(inviteEmail)) {
+      throw new BusinessRuleViolationError(
+        'INVITATION_CONTACT_REQUIRED',
+        'inviteEmail is required when auto-invite is enabled for student registration',
+      )
+    }
+
+    const student = new Student(entityInput)
     await this.baseService.entities.students.save(student)
+    scheduleAccountInvitationIfEligible(
+      this.baseService,
+      {
+        kind: AccountInvitationKind.Student,
+        targetId: student.id,
+        sendAccountInvitation,
+        inviteEmail,
+      },
+      student,
+    )
     return student
   }
 
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
-    const guardian = new Guardian(input)
+    const { sendAccountInvitation, ...entityInput } = input
+    const guardian = new Guardian(entityInput)
     await this.baseService.entities.guardians.save(guardian)
+    scheduleAccountInvitationIfEligible(
+      this.baseService,
+      {
+        kind: AccountInvitationKind.Guardian,
+        targetId: guardian.id,
+        sendAccountInvitation,
+      },
+      guardian,
+    )
     return guardian
   }
 

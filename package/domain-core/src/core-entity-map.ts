@@ -2,6 +2,7 @@ import type {
   AcademicPeriod,
   AcademicYear,
   AccessRole,
+  AccountInvitation,
   ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
@@ -59,6 +60,7 @@ export interface CoreEntityMap {
   staffMembers: StaffMember
   staffAssignments: StaffAssignment
   accessRoles: AccessRole
+  accountInvitations: AccountInvitation
   staffRoleAssignments: StaffRoleAssignment
   attachments: Attachment
   resources: Resource
@@ -123,6 +125,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'staffMembers',
   'staffAssignments',
   'accessRoles',
+  'accountInvitations',
   'staffRoleAssignments',
   'attachments',
   'resources',

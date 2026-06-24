@@ -10,6 +10,7 @@
 	import DrawerEmptyState from '../shared/DrawerEmptyState.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import GuardianEditModal from './GuardianEditModal.svelte';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 
 	const { g }: { g: Guardian } = $props();
 
@@ -51,6 +52,14 @@
 			</div>
 		</DrawerField>
 	</div>
+
+	<AccountLinkingSection
+		kind="guardian"
+		targetId={g.id}
+		subjectId={g.subjectId}
+		contactEmail={g.email}
+		displayName={g.name}
+	/>
 
 	<DrawerActionBar>
 		<PermissionGate permission="PARENT_UPDATE" mode="disable" tooltip={$t('guardian.permissionUpdate')}>

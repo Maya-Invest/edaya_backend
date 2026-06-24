@@ -718,6 +718,210 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/invitations/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview an account invitation */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Invitation preview */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvitationPreviewResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invitation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/invitations/{token}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept an account invitation for the signed-in user */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Linked actor */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AcceptInvitationResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invitation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/register-school": {
         parameters: {
             query?: never;
@@ -1689,6 +1893,288 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["LinkActorSubjectResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/send-account-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** send-account-invitation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description send-account-invitation payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SendAccountInvitationCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed send-account-invitation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SendAccountInvitationResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/resend-account-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** resend-account-invitation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description resend-account-invitation payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResendAccountInvitationCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed resend-account-invitation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResendAccountInvitationResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/revoke-account-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** revoke-account-invitation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description revoke-account-invitation payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RevokeAccountInvitationCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed revoke-account-invitation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AccountInvitation"];
                     };
                 };
                 /** @description Invalid request payload */
@@ -7799,6 +8285,100 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["MessageDelivery"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/update-notification-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** update-notification-contact */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description update-notification-contact payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateNotificationContactCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed update-notification-contact */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateNotificationContactResponse"];
                     };
                 };
                 /** @description Invalid request payload */
@@ -14744,6 +15324,831 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/account-invitations/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_9"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Listed Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AccountInvitation"][];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_9"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Found Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AccountInvitation"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Account Invitations not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations query */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Filter_9"] & {
+                        $orderBy?: {
+                            field: string;
+                            /** @enum {string} */
+                            direction: "asc" | "desc";
+                        }[];
+                        $limit?: number;
+                        $offset?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Counted Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account Invitations */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Fetched Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AccountInvitation"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Account Invitations not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations entity */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AccountInvitation"];
+                };
+            };
+            responses: {
+                /** @description Saved Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AccountInvitation"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityDelete"];
+                };
+            };
+            responses: {
+                /** @description Deleted Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations batch save request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AccountInvitationsBatchSave"];
+                };
+            };
+            responses: {
+                /** @description Batch saved Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ids: string[];
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Use a domain command for this entity */
+                405: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/account-invitations/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Account Invitations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Account Invitations batch delete request */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CoreEntityBatchDelete"];
+                };
+            };
+            responses: {
+                /** @description Batch deleted Account Invitations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/staff-role-assignments/list": {
         parameters: {
             query?: never;
@@ -14764,7 +16169,7 @@ export interface paths {
             /** @description Staff Role Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_9"] & {
+                    "application/json": components["schemas"]["Filter_10"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -14866,7 +16271,7 @@ export interface paths {
             /** @description Staff Role Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_9"] & {
+                    "application/json": components["schemas"]["Filter_10"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -14979,7 +16384,7 @@ export interface paths {
             /** @description Staff Role Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_9"] & {
+                    "application/json": components["schemas"]["Filter_10"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -15589,7 +16994,7 @@ export interface paths {
             /** @description Attachments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_10"] & {
+                    "application/json": components["schemas"]["Filter_11"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -15691,7 +17096,7 @@ export interface paths {
             /** @description Attachments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_10"] & {
+                    "application/json": components["schemas"]["Filter_11"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -15804,7 +17209,7 @@ export interface paths {
             /** @description Attachments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_10"] & {
+                    "application/json": components["schemas"]["Filter_11"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -16414,7 +17819,7 @@ export interface paths {
             /** @description Resources query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_11"] & {
+                    "application/json": components["schemas"]["Filter_12"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -16516,7 +17921,7 @@ export interface paths {
             /** @description Resources query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_11"] & {
+                    "application/json": components["schemas"]["Filter_12"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -16629,7 +18034,7 @@ export interface paths {
             /** @description Resources query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_11"] & {
+                    "application/json": components["schemas"]["Filter_12"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -17239,7 +18644,7 @@ export interface paths {
             /** @description Resource Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_12"] & {
+                    "application/json": components["schemas"]["Filter_13"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -17341,7 +18746,7 @@ export interface paths {
             /** @description Resource Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_12"] & {
+                    "application/json": components["schemas"]["Filter_13"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -17454,7 +18859,7 @@ export interface paths {
             /** @description Resource Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_12"] & {
+                    "application/json": components["schemas"]["Filter_13"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -18064,7 +19469,7 @@ export interface paths {
             /** @description Fees query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_13"] & {
+                    "application/json": components["schemas"]["Filter_14"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -18166,7 +19571,7 @@ export interface paths {
             /** @description Fees query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_13"] & {
+                    "application/json": components["schemas"]["Filter_14"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -18279,7 +19684,7 @@ export interface paths {
             /** @description Fees query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_13"] & {
+                    "application/json": components["schemas"]["Filter_14"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -18889,7 +20294,7 @@ export interface paths {
             /** @description Student Fees query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_14"] & {
+                    "application/json": components["schemas"]["Filter_15"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -18991,7 +20396,7 @@ export interface paths {
             /** @description Student Fees query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_14"] & {
+                    "application/json": components["schemas"]["Filter_15"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -19104,7 +20509,7 @@ export interface paths {
             /** @description Student Fees query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_14"] & {
+                    "application/json": components["schemas"]["Filter_15"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -19714,7 +21119,7 @@ export interface paths {
             /** @description Payments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_15"] & {
+                    "application/json": components["schemas"]["Filter_16"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -19816,7 +21221,7 @@ export interface paths {
             /** @description Payments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_15"] & {
+                    "application/json": components["schemas"]["Filter_16"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -19929,7 +21334,7 @@ export interface paths {
             /** @description Payments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_15"] & {
+                    "application/json": components["schemas"]["Filter_16"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -20539,7 +21944,7 @@ export interface paths {
             /** @description Schedules query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_16"] & {
+                    "application/json": components["schemas"]["Filter_17"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -20641,7 +22046,7 @@ export interface paths {
             /** @description Schedules query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_16"] & {
+                    "application/json": components["schemas"]["Filter_17"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -20754,7 +22159,7 @@ export interface paths {
             /** @description Schedules query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_16"] & {
+                    "application/json": components["schemas"]["Filter_17"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -21364,7 +22769,7 @@ export interface paths {
             /** @description Sessions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_17"] & {
+                    "application/json": components["schemas"]["Filter_18"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -21466,7 +22871,7 @@ export interface paths {
             /** @description Sessions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_17"] & {
+                    "application/json": components["schemas"]["Filter_18"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -21579,7 +22984,7 @@ export interface paths {
             /** @description Sessions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_17"] & {
+                    "application/json": components["schemas"]["Filter_18"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -22189,7 +23594,7 @@ export interface paths {
             /** @description Calendar Events query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_18"] & {
+                    "application/json": components["schemas"]["Filter_19"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -22291,7 +23696,7 @@ export interface paths {
             /** @description Calendar Events query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_18"] & {
+                    "application/json": components["schemas"]["Filter_19"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -22404,7 +23809,7 @@ export interface paths {
             /** @description Calendar Events query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_18"] & {
+                    "application/json": components["schemas"]["Filter_19"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -23014,7 +24419,7 @@ export interface paths {
             /** @description Attendance Records query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_19"] & {
+                    "application/json": components["schemas"]["Filter_20"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -23116,7 +24521,7 @@ export interface paths {
             /** @description Attendance Records query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_19"] & {
+                    "application/json": components["schemas"]["Filter_20"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -23229,7 +24634,7 @@ export interface paths {
             /** @description Attendance Records query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_19"] & {
+                    "application/json": components["schemas"]["Filter_20"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -23839,7 +25244,7 @@ export interface paths {
             /** @description Announcements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_20"] & {
+                    "application/json": components["schemas"]["Filter_21"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -23941,7 +25346,7 @@ export interface paths {
             /** @description Announcements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_20"] & {
+                    "application/json": components["schemas"]["Filter_21"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -24054,7 +25459,7 @@ export interface paths {
             /** @description Announcements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_20"] & {
+                    "application/json": components["schemas"]["Filter_21"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -24664,7 +26069,7 @@ export interface paths {
             /** @description Announcement Targets query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_21"] & {
+                    "application/json": components["schemas"]["Filter_22"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -24766,7 +26171,7 @@ export interface paths {
             /** @description Announcement Targets query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_21"] & {
+                    "application/json": components["schemas"]["Filter_22"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -24879,7 +26284,7 @@ export interface paths {
             /** @description Announcement Targets query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_21"] & {
+                    "application/json": components["schemas"]["Filter_22"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -25489,7 +26894,7 @@ export interface paths {
             /** @description Message Deliveries query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_22"] & {
+                    "application/json": components["schemas"]["Filter_23"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -25591,7 +26996,7 @@ export interface paths {
             /** @description Message Deliveries query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_22"] & {
+                    "application/json": components["schemas"]["Filter_23"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -25704,7 +27109,7 @@ export interface paths {
             /** @description Message Deliveries query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_22"] & {
+                    "application/json": components["schemas"]["Filter_23"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -26314,7 +27719,7 @@ export interface paths {
             /** @description Subjects query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_23"] & {
+                    "application/json": components["schemas"]["Filter_24"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -26416,7 +27821,7 @@ export interface paths {
             /** @description Subjects query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_23"] & {
+                    "application/json": components["schemas"]["Filter_24"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -26529,7 +27934,7 @@ export interface paths {
             /** @description Subjects query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_23"] & {
+                    "application/json": components["schemas"]["Filter_24"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -27139,7 +28544,7 @@ export interface paths {
             /** @description Subject Matters query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_24"] & {
+                    "application/json": components["schemas"]["Filter_25"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -27241,7 +28646,7 @@ export interface paths {
             /** @description Subject Matters query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_24"] & {
+                    "application/json": components["schemas"]["Filter_25"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -27354,7 +28759,7 @@ export interface paths {
             /** @description Subject Matters query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_24"] & {
+                    "application/json": components["schemas"]["Filter_25"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -27964,7 +29369,7 @@ export interface paths {
             /** @description Class Groups query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_25"] & {
+                    "application/json": components["schemas"]["Filter_26"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -28066,7 +29471,7 @@ export interface paths {
             /** @description Class Groups query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_25"] & {
+                    "application/json": components["schemas"]["Filter_26"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -28179,7 +29584,7 @@ export interface paths {
             /** @description Class Groups query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_25"] & {
+                    "application/json": components["schemas"]["Filter_26"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -28789,7 +30194,7 @@ export interface paths {
             /** @description Class Subjects query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_26"] & {
+                    "application/json": components["schemas"]["Filter_27"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -28891,7 +30296,7 @@ export interface paths {
             /** @description Class Subjects query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_26"] & {
+                    "application/json": components["schemas"]["Filter_27"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -29004,7 +30409,7 @@ export interface paths {
             /** @description Class Subjects query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_26"] & {
+                    "application/json": components["schemas"]["Filter_27"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -29614,7 +31019,7 @@ export interface paths {
             /** @description Class Subject Matters query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_27"] & {
+                    "application/json": components["schemas"]["Filter_28"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -29716,7 +31121,7 @@ export interface paths {
             /** @description Class Subject Matters query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_27"] & {
+                    "application/json": components["schemas"]["Filter_28"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -29829,7 +31234,7 @@ export interface paths {
             /** @description Class Subject Matters query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_27"] & {
+                    "application/json": components["schemas"]["Filter_28"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -30439,7 +31844,7 @@ export interface paths {
             /** @description Class Subject Progress query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_28"] & {
+                    "application/json": components["schemas"]["Filter_29"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -30541,7 +31946,7 @@ export interface paths {
             /** @description Class Subject Progress query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_28"] & {
+                    "application/json": components["schemas"]["Filter_29"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -30654,7 +32059,7 @@ export interface paths {
             /** @description Class Subject Progress query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_28"] & {
+                    "application/json": components["schemas"]["Filter_29"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31264,7 +32669,7 @@ export interface paths {
             /** @description Class Logbook Entries query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_29"] & {
+                    "application/json": components["schemas"]["Filter_30"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31366,7 +32771,7 @@ export interface paths {
             /** @description Class Logbook Entries query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_29"] & {
+                    "application/json": components["schemas"]["Filter_30"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -31479,7 +32884,7 @@ export interface paths {
             /** @description Class Logbook Entries query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_29"] & {
+                    "application/json": components["schemas"]["Filter_30"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32089,7 +33494,7 @@ export interface paths {
             /** @description Homework Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_30"] & {
+                    "application/json": components["schemas"]["Filter_31"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32191,7 +33596,7 @@ export interface paths {
             /** @description Homework Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_30"] & {
+                    "application/json": components["schemas"]["Filter_31"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32304,7 +33709,7 @@ export interface paths {
             /** @description Homework Assignments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_30"] & {
+                    "application/json": components["schemas"]["Filter_31"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -32914,7 +34319,7 @@ export interface paths {
             /** @description Homework Submissions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_31"] & {
+                    "application/json": components["schemas"]["Filter_32"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33016,7 +34421,7 @@ export interface paths {
             /** @description Homework Submissions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_31"] & {
+                    "application/json": components["schemas"]["Filter_32"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33129,7 +34534,7 @@ export interface paths {
             /** @description Homework Submissions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_31"] & {
+                    "application/json": components["schemas"]["Filter_32"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33739,7 +35144,7 @@ export interface paths {
             /** @description Extracurricular Activities query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_33"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33841,7 +35246,7 @@ export interface paths {
             /** @description Extracurricular Activities query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_33"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -33954,7 +35359,7 @@ export interface paths {
             /** @description Extracurricular Activities query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_32"] & {
+                    "application/json": components["schemas"]["Filter_33"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34564,7 +35969,7 @@ export interface paths {
             /** @description Activity Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34666,7 +36071,7 @@ export interface paths {
             /** @description Activity Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -34779,7 +36184,7 @@ export interface paths {
             /** @description Activity Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_33"] & {
+                    "application/json": components["schemas"]["Filter_34"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35389,7 +36794,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35491,7 +36896,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -35604,7 +37009,7 @@ export interface paths {
             /** @description Assessments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_34"] & {
+                    "application/json": components["schemas"]["Filter_35"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36214,7 +37619,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36316,7 +37721,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -36429,7 +37834,7 @@ export interface paths {
             /** @description Assessment Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_35"] & {
+                    "application/json": components["schemas"]["Filter_36"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37039,7 +38444,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37141,7 +38546,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37254,7 +38659,7 @@ export interface paths {
             /** @description Grade Scales query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_36"] & {
+                    "application/json": components["schemas"]["Filter_37"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37864,7 +39269,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -37966,7 +39371,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38079,7 +39484,7 @@ export interface paths {
             /** @description Report Card Definitions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_37"] & {
+                    "application/json": components["schemas"]["Filter_38"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38689,7 +40094,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38791,7 +40196,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -38904,7 +40309,7 @@ export interface paths {
             /** @description Report Card Sections query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_38"] & {
+                    "application/json": components["schemas"]["Filter_39"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39514,7 +40919,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39616,7 +41021,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -39729,7 +41134,7 @@ export interface paths {
             /** @description Report Card Results query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_39"] & {
+                    "application/json": components["schemas"]["Filter_40"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40339,7 +41744,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40441,7 +41846,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -40554,7 +41959,7 @@ export interface paths {
             /** @description Students query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_40"] & {
+                    "application/json": components["schemas"]["Filter_41"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41164,7 +42569,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41266,7 +42671,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41379,7 +42784,7 @@ export interface paths {
             /** @description Student Enrollments query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_41"] & {
+                    "application/json": components["schemas"]["Filter_42"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -41989,7 +43394,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42091,7 +43496,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42204,7 +43609,7 @@ export interface paths {
             /** @description Guardians query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_42"] & {
+                    "application/json": components["schemas"]["Filter_43"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42814,7 +44219,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -42916,7 +44321,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43029,7 +44434,7 @@ export interface paths {
             /** @description Guardian Student Links query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_43"] & {
+                    "application/json": components["schemas"]["Filter_44"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43639,7 +45044,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43741,7 +45146,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -43854,7 +45259,7 @@ export interface paths {
             /** @description Student Notes query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_44"] & {
+                    "application/json": components["schemas"]["Filter_45"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44464,7 +45869,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_45"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44566,7 +45971,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_45"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -44679,7 +46084,7 @@ export interface paths {
             /** @description Student Health Profiles query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_45"] & {
+                    "application/json": components["schemas"]["Filter_46"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45289,7 +46694,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_46"] & {
+                    "application/json": components["schemas"]["Filter_47"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45391,7 +46796,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_46"] & {
+                    "application/json": components["schemas"]["Filter_47"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -45504,7 +46909,7 @@ export interface paths {
             /** @description Student Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_46"] & {
+                    "application/json": components["schemas"]["Filter_47"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -46114,7 +47519,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_47"] & {
+                    "application/json": components["schemas"]["Filter_48"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -46216,7 +47621,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_47"] & {
+                    "application/json": components["schemas"]["Filter_48"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -46329,7 +47734,7 @@ export interface paths {
             /** @description Disciplinary Actions query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_47"] & {
+                    "application/json": components["schemas"]["Filter_48"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -46939,7 +48344,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_48"] & {
+                    "application/json": components["schemas"]["Filter_49"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -47041,7 +48446,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_48"] & {
+                    "application/json": components["schemas"]["Filter_49"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -47154,7 +48559,7 @@ export interface paths {
             /** @description Student Incident Involvements query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_48"] & {
+                    "application/json": components["schemas"]["Filter_49"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -47764,7 +49169,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_49"] & {
+                    "application/json": components["schemas"]["Filter_50"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -47866,7 +49271,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_49"] & {
+                    "application/json": components["schemas"]["Filter_50"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -47979,7 +49384,7 @@ export interface paths {
             /** @description Incidents query */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Filter_49"] & {
+                    "application/json": components["schemas"]["Filter_50"] & {
                         $orderBy?: {
                             field: string;
                             /** @enum {string} */
@@ -48670,6 +50075,35 @@ export interface components {
             processed: number;
             ignored: number;
         };
+        InvitationPreviewResponse: {
+            /** @enum {string} */
+            status: "pending" | "accepted" | "revoked" | "expired";
+            /** @enum {string} */
+            kind: "staff" | "guardian" | "student";
+            expiresAt: string | null;
+            schoolName: string;
+            inviteeName: string;
+            contactChannel: string;
+        };
+        AcceptInvitationResponse: {
+            /** @enum {string} */
+            kind: "staff";
+            entity: {
+                [key: string]: unknown;
+            };
+        } | {
+            /** @enum {string} */
+            kind: "guardian";
+            entity: {
+                [key: string]: unknown;
+            };
+        } | {
+            /** @enum {string} */
+            kind: "student";
+            entity: {
+                [key: string]: unknown;
+            };
+        };
         RegisterSchoolCommand: {
             id: string;
             name: string;
@@ -48789,6 +50223,8 @@ export interface components {
             firstName: string;
             lastName: string;
             email?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
             subjectId?: string | null;
             /**
              * @default human
@@ -48809,6 +50245,8 @@ export interface components {
             firstName: string;
             lastName: string;
             email?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
             subjectId?: string | null;
             /**
              * @default human
@@ -48822,6 +50260,7 @@ export interface components {
             /** @default true */
             isActive: boolean;
             createdAt?: unknown;
+            sendAccountInvitation?: boolean;
         };
         UpdateStaffMemberStatusCommand: {
             staffId: string;
@@ -48834,6 +50273,8 @@ export interface components {
             lastName: string;
             phone?: string | null;
             email?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
             subjectId?: string | null;
             contactMethods: {
                 /** @enum {string} */
@@ -48889,6 +50330,49 @@ export interface components {
             staffMemberId?: string;
             guardianId?: string;
             studentId?: string;
+        };
+        AccountInvitation: {
+            id: string;
+            schoolId: string;
+            /** @enum {string} */
+            kind: "staff" | "guardian" | "student";
+            targetId: string;
+            /** @enum {string} */
+            contactChannel: "email" | "phone";
+            contactValue: string;
+            /**
+             * @default pending
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "revoked" | "expired";
+            expiresAt: unknown;
+            acceptedAt?: unknown;
+            acceptedSubjectId?: string | null;
+            createdByStaffId: string;
+            createdAt?: unknown;
+            lastSentAt?: unknown;
+        };
+        SendAccountInvitationResponse: {
+            invitation: components["schemas"]["AccountInvitation"];
+            token: string;
+        };
+        SendAccountInvitationCommand: {
+            /** @enum {string} */
+            kind: "staff" | "guardian" | "student";
+            targetId: string;
+            /** @enum {string} */
+            contactChannel?: "email" | "phone";
+            contactValue?: string;
+        };
+        ResendAccountInvitationResponse: {
+            invitation: components["schemas"]["AccountInvitation"];
+            token: string;
+        };
+        ResendAccountInvitationCommand: {
+            invitationId: string;
+        };
+        RevokeAccountInvitationCommand: {
+            invitationId: string;
         };
         StaffAssignment: {
             id: string;
@@ -48980,6 +50464,8 @@ export interface components {
             lastName: string;
             birthDate?: unknown;
             createdAt?: unknown;
+            sendAccountInvitation?: boolean;
+            inviteEmail?: string;
         };
         StudentClassEnrollment: {
             id: string;
@@ -49066,6 +50552,8 @@ export interface components {
             lastName: string;
             phone?: string | null;
             email?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
             subjectId?: string | null;
             contactMethods?: {
                 /** @enum {string} */
@@ -49082,6 +50570,7 @@ export interface components {
             /** @default false */
             premiumNotificationsEnabled: boolean;
             createdAt?: unknown;
+            sendAccountInvitation?: boolean;
         };
         PromoteStudentCommand: {
             enrollmentId: string;
@@ -49220,6 +50709,8 @@ export interface components {
             lastName?: string;
             phone?: string | null;
             email?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
             contactMethods?: {
                 /** @enum {string} */
                 type: "phone" | "email" | "whatsapp" | "sms" | "other";
@@ -50050,6 +51541,11 @@ export interface components {
             deliveryId: string;
             readAt?: string | null;
         };
+        UpdateNotificationContactResponse: components["schemas"]["StaffMember"] | components["schemas"]["Guardian"];
+        UpdateNotificationContactCommand: {
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
+        };
         CountResponse: {
             count: number;
         };
@@ -50221,6 +51717,10 @@ export interface components {
         AccessRolesBatchSave: {
             entities: components["schemas"]["AccessRole"][];
         };
+        Filter_9: Record<string, never>;
+        AccountInvitationsBatchSave: {
+            entities: components["schemas"]["AccountInvitation"][];
+        };
         StaffRoleAssignment: {
             id: string;
             staffId: string;
@@ -50245,11 +51745,11 @@ export interface components {
             createdAt?: unknown;
             updatedAt?: unknown;
         };
-        Filter_9: Record<string, never>;
+        Filter_10: Record<string, never>;
         StaffRoleAssignmentsBatchSave: {
             entities: components["schemas"]["StaffRoleAssignment"][];
         };
-        Filter_10: Record<string, never>;
+        Filter_11: Record<string, never>;
         AttachmentsBatchSave: {
             entities: components["schemas"]["Attachment"][];
         };
@@ -50263,51 +51763,51 @@ export interface components {
             capacity?: number | null;
             createdAt?: unknown;
         };
-        Filter_11: Record<string, never>;
+        Filter_12: Record<string, never>;
         ResourcesBatchSave: {
             entities: components["schemas"]["Resource"][];
         };
-        Filter_12: Record<string, never>;
+        Filter_13: Record<string, never>;
         ResourceAssignmentsBatchSave: {
             entities: components["schemas"]["ResourceAssignment"][];
         };
-        Filter_13: Record<string, never>;
+        Filter_14: Record<string, never>;
         FeesBatchSave: {
             entities: components["schemas"]["Fee"][];
         };
-        Filter_14: Record<string, never>;
+        Filter_15: Record<string, never>;
         StudentFeesBatchSave: {
             entities: components["schemas"]["StudentFee"][];
         };
-        Filter_15: Record<string, never>;
+        Filter_16: Record<string, never>;
         PaymentsBatchSave: {
             entities: components["schemas"]["Payment"][];
         };
-        Filter_16: Record<string, never>;
+        Filter_17: Record<string, never>;
         SchedulesBatchSave: {
             entities: components["schemas"]["Schedule"][];
         };
-        Filter_17: Record<string, never>;
+        Filter_18: Record<string, never>;
         SessionsBatchSave: {
             entities: components["schemas"]["Session"][];
         };
-        Filter_18: Record<string, never>;
+        Filter_19: Record<string, never>;
         CalendarEventsBatchSave: {
             entities: components["schemas"]["CalendarEvent"][];
         };
-        Filter_19: Record<string, never>;
+        Filter_20: Record<string, never>;
         AttendanceRecordsBatchSave: {
             entities: components["schemas"]["Attendance"][];
         };
-        Filter_20: Record<string, never>;
+        Filter_21: Record<string, never>;
         AnnouncementsBatchSave: {
             entities: components["schemas"]["Announcement"][];
         };
-        Filter_21: Record<string, never>;
+        Filter_22: Record<string, never>;
         AnnouncementTargetsBatchSave: {
             entities: components["schemas"]["AnnouncementTarget"][];
         };
-        Filter_22: Record<string, never>;
+        Filter_23: Record<string, never>;
         MessageDeliveriesBatchSave: {
             entities: components["schemas"]["MessageDelivery"][];
         };
@@ -50329,7 +51829,7 @@ export interface components {
             color: "mint" | "sky" | "warm";
             createdAt?: unknown;
         };
-        Filter_23: Record<string, never>;
+        Filter_24: Record<string, never>;
         SubjectsBatchSave: {
             entities: components["schemas"]["Subject"][];
         };
@@ -50342,23 +51842,23 @@ export interface components {
             estimatedHours?: number | null;
             createdAt?: unknown;
         };
-        Filter_24: Record<string, never>;
+        Filter_25: Record<string, never>;
         SubjectMattersBatchSave: {
             entities: components["schemas"]["SubjectMatter"][];
         };
-        Filter_25: Record<string, never>;
+        Filter_26: Record<string, never>;
         ClassGroupsBatchSave: {
             entities: components["schemas"]["ClassGroup"][];
         };
-        Filter_26: Record<string, never>;
+        Filter_27: Record<string, never>;
         ClassSubjectsBatchSave: {
             entities: components["schemas"]["ClassSubject"][];
         };
-        Filter_27: Record<string, never>;
+        Filter_28: Record<string, never>;
         ClassSubjectMattersBatchSave: {
             entities: components["schemas"]["ClassSubjectMatter"][];
         };
-        Filter_28: Record<string, never>;
+        Filter_29: Record<string, never>;
         ClassSubjectProgressBatchSave: {
             entities: components["schemas"]["ClassSubjectProgress"][];
         };
@@ -50376,7 +51876,7 @@ export interface components {
             progress: number;
             createdAt?: unknown;
         };
-        Filter_29: Record<string, never>;
+        Filter_30: Record<string, never>;
         ClassLogbookEntriesBatchSave: {
             entities: components["schemas"]["ClassLogbookEntry"][];
         };
@@ -50397,7 +51897,7 @@ export interface components {
             }[];
             createdAt?: unknown;
         };
-        Filter_30: Record<string, never>;
+        Filter_31: Record<string, never>;
         HomeworkAssignmentsBatchSave: {
             entities: components["schemas"]["HomeworkAssignment"][];
         };
@@ -50410,7 +51910,7 @@ export interface components {
             submittedAt?: unknown;
             createdAt?: unknown;
         };
-        Filter_31: Record<string, never>;
+        Filter_32: Record<string, never>;
         HomeworkSubmissionsBatchSave: {
             entities: components["schemas"]["HomeworkSubmission"][];
         };
@@ -50429,7 +51929,7 @@ export interface components {
             endDate: unknown;
             createdAt?: unknown;
         };
-        Filter_32: Record<string, never>;
+        Filter_33: Record<string, never>;
         ExtracurricularActivitiesBatchSave: {
             entities: components["schemas"]["ExtracurricularActivity"][];
         };
@@ -50441,59 +51941,59 @@ export interface components {
             status: "approved" | "pending" | "denied";
             createdAt?: unknown;
         };
-        Filter_33: Record<string, never>;
+        Filter_34: Record<string, never>;
         ActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ActivityEnrollment"][];
         };
-        Filter_34: Record<string, never>;
+        Filter_35: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_35: Record<string, never>;
+        Filter_36: Record<string, never>;
         AssessmentResultsBatchSave: {
             entities: components["schemas"]["AssessmentResult"][];
         };
-        Filter_36: Record<string, never>;
+        Filter_37: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_37: Record<string, never>;
+        Filter_38: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_38: Record<string, never>;
+        Filter_39: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
-        Filter_39: Record<string, never>;
+        Filter_40: Record<string, never>;
         ReportCardResultsBatchSave: {
             entities: components["schemas"]["ReportCardResult"][];
         };
-        Filter_40: Record<string, never>;
+        Filter_41: Record<string, never>;
         StudentsBatchSave: {
             entities: components["schemas"]["Student"][];
         };
-        Filter_41: Record<string, never>;
+        Filter_42: Record<string, never>;
         StudentEnrollmentsBatchSave: {
             entities: components["schemas"]["StudentClassEnrollment"][];
         };
-        Filter_42: Record<string, never>;
+        Filter_43: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_43: Record<string, never>;
+        Filter_44: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_44: Record<string, never>;
+        Filter_45: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_45: Record<string, never>;
+        Filter_46: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_46: Record<string, never>;
+        Filter_47: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
@@ -50511,15 +52011,15 @@ export interface components {
             description?: string | null;
             createdAt?: unknown;
         };
-        Filter_47: Record<string, never>;
+        Filter_48: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_48: Record<string, never>;
+        Filter_49: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_49: Record<string, never>;
+        Filter_50: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };

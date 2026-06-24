@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { registerStaffMemberMutation } from '$lib/api/mutations/staff.mutations';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
+	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { t } from '$lib/i18n';
@@ -18,11 +19,13 @@
 	let firstName = $state('');
 	let lastName = $state('');
 	let email = $state('');
+	let sendAccountInvitation = $state(true);
 
 	function resetForm() {
 		firstName = '';
 		lastName = '';
 		email = '';
+		sendAccountInvitation = true;
 	}
 
 	const canSubmit = $derived(firstName.trim().length > 0 && lastName.trim().length > 0);
@@ -37,6 +40,7 @@
 			firstName,
 			lastName,
 			email,
+			sendAccountInvitation,
 			successMessage: get(t)('staff.createSuccess', { name: fullName }),
 		});
 		busy = false;
@@ -77,5 +81,14 @@
 			{$t('common.email')}
 		</Label>
 		<Input type="email" bind:value={email} autocomplete="email" />
+	</div>
+	<div class="flex items-start gap-3 rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
+		<Checkbox bind:checked={sendAccountInvitation} id="staff-send-invite" />
+		<div class="space-y-1">
+			<Label for="staff-send-invite" class="text-sm font-medium">
+				{$t('invitation.createModal.sendInvite')}
+			</Label>
+			<p class="text-xs text-muted-foreground">{$t('invitation.createModal.sendInviteHint')}</p>
+		</div>
 	</div>
 </FormModal>

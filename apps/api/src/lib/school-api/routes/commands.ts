@@ -8,6 +8,28 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
 import { schoolApiPath } from "./paths";
+import { resolveInviteBaseUrl } from "@/runtime/shared/resolve-invite-config";
+import type { SchoolCommandKey } from "@edaya/core";
+
+const INVITATION_COMMANDS = new Set<SchoolCommandKey>([
+  "sendAccountInvitation",
+  "resendAccountInvitation",
+]);
+
+function enrichCommandPayload(
+  methodName: SchoolCommandKey,
+  payload: Record<string, unknown>,
+  inviteBaseUrl: string | undefined,
+): Record<string, unknown> {
+  if (!INVITATION_COMMANDS.has(methodName) || !inviteBaseUrl) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    inviteBaseUrl,
+  };
+}
 
 export function buildCommandRoutes(): SchoolApiRoutePair[] {
   const pairs: SchoolApiRoutePair[] = [];
@@ -41,10 +63,15 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
       }
 
       const service = c.get("schoolApp").forActor(actor);
-      const payload = validatedJson(c);
+      const payload = validatedJson(c) as Record<string, unknown>;
+      const inviteBaseUrl = resolveInviteBaseUrl(c.env);
 
       try {
-        const result = await dispatchCoreCommand(service, commandConfig.methodName, payload);
+        const result = await dispatchCoreCommand(
+          service,
+          commandConfig.methodName,
+          enrichCommandPayload(commandConfig.methodName, payload, inviteBaseUrl),
+        );
         if (result === undefined || result === null) {
           return c.json({ message: `${commandConfig.publicName} completed` }, HttpStatusCodes.OK);
         }

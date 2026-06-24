@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi";
 import {
   academicPeriodResponseSchema,
   academicYearResponseSchema,
+  accountInvitationResponseSchema,
   announcementResponseSchema,
   announcementTargetResponseSchema,
   assessmentResponseSchema,
@@ -73,6 +74,15 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
       entity: studentResponseSchema,
     }),
   ]).openapi("LinkActorSubjectResponse"),
+  sendAccountInvitation: z.object({
+    invitation: accountInvitationResponseSchema,
+    token: z.string(),
+  }).openapi("SendAccountInvitationResponse"),
+  resendAccountInvitation: z.object({
+    invitation: accountInvitationResponseSchema,
+    token: z.string(),
+  }).openapi("ResendAccountInvitationResponse"),
+  revokeAccountInvitation: accountInvitationResponseSchema,
   assignStaffToClass: staffAssignmentResponseSchema,
   assignStaffToClassSubject: staffAssignmentResponseSchema,
   assignStaffToSession: staffAssignmentResponseSchema,

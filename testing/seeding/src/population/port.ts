@@ -4,6 +4,7 @@ export interface StudentSeedRecord {
   firstName: string
   lastName: string
   birthDate?: string
+  sendAccountInvitation?: boolean
 }
 
 export interface EnrollmentSeedRecord {
@@ -19,6 +20,7 @@ export interface GuardianSeedRecord {
   lastName: string
   email?: string
   phone?: string
+  sendAccountInvitation?: boolean
 }
 
 export interface GuardianStudentLinkSeedRecord {

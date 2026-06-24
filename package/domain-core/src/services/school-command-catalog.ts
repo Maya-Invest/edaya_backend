@@ -18,6 +18,10 @@ export type SchoolCommandKey
     | 'registerAttachment'
     | 'removeAttachment'
     | 'linkActorSubject'
+    | 'sendAccountInvitation'
+    | 'resendAccountInvitation'
+    | 'revokeAccountInvitation'
+    | 'acceptAccountInvitation'
     | 'offerSubjectToClass'
     | 'assignMatterToClassSubject'
     | 'recordSessionProgress'
@@ -107,6 +111,10 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'registerAttachment',
   'removeAttachment',
   'linkActorSubject',
+  'sendAccountInvitation',
+  'resendAccountInvitation',
+  'revokeAccountInvitation',
+  'acceptAccountInvitation',
   'offerSubjectToClass',
   'assignMatterToClassSubject',
   'recordSessionProgress',

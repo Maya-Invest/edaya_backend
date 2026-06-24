@@ -37,6 +37,9 @@ import type {
   Schedule,
   School,
   ServiceApiKey,
+  AccountInvitation,
+  AccountInvitationKind,
+  AccountInvitationStatus,
   Session,
   StaffAssignment,
   StaffRoleAssignment,
@@ -236,6 +239,23 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       return staff.length
     },
   }
+  const accountInvitationStore = createStore<AccountInvitation>(transactionParticipants)
+  const accountInvitations = {
+    ...accountInvitationStore,
+    findByTokenHash: async (tokenHash: string) => {
+      const rows = await accountInvitationStore.list({ tokenHash })
+      return rows[0]
+    },
+    findPendingByTarget: async (schoolId: string, kind: AccountInvitationKind, targetId: string) => {
+      const rows = await accountInvitationStore.list({
+        schoolId,
+        kind,
+        targetId,
+        status: AccountInvitationStatus.Pending,
+      })
+      return rows[0]
+    },
+  }
   const accessRoles = createStore<AccessRole>(transactionParticipants)
   const staffRoleAssignments = createStore<StaffRoleAssignment>(transactionParticipants)
   const subjects = createStore<Subject>(transactionParticipants)
@@ -302,6 +322,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     staffMembers,
     staffAssignments,
     serviceApiKeys,
+    accountInvitations,
     accessRoles,
     staffRoleAssignments,
     attachments,

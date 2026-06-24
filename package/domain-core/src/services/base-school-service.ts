@@ -1,8 +1,9 @@
 import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
-import type { AtomicExecutionPort, NotificationGatewayPort, SchoolRepositories } from '../ports'
+import type { AtomicExecutionPort, InvitationDeliveryPort, NotificationGatewayPort, SchoolRepositories } from '../ports'
 import type { ServiceArgs } from '../shared/service-args'
 import type { CoreEntityServices } from './core-entity-catalog'
 import { createCoreEntityServices } from './core-entity-catalog'
+import { noOpInvitationDeliveryPort } from '../invitations/no-op-invitation-delivery'
 
 export class BaseSchoolService {
   readonly actor: ActorMetadata
@@ -10,7 +11,10 @@ export class BaseSchoolService {
   readonly authorizationPolicy: AuthorizationPolicy
   readonly atomicExecution: AtomicExecutionPort
   readonly notificationGateway: NotificationGatewayPort
+  readonly invitationDelivery: InvitationDeliveryPort
   readonly authContactResolver?: import('../ports/auth-contact-resolver').AuthContactResolverPort
+  readonly inviteBaseUrl?: string
+  readonly accountInvitationsEnabled: boolean
   readonly entities: CoreEntityServices
 
   constructor(args: ServiceArgs) {
@@ -19,7 +23,10 @@ export class BaseSchoolService {
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
     this.notificationGateway = args.notificationGateway
+    this.invitationDelivery = args.invitationDelivery ?? noOpInvitationDeliveryPort
     this.authContactResolver = args.authContactResolver
+    this.inviteBaseUrl = args.inviteBaseUrl
+    this.accountInvitationsEnabled = args.accountInvitationsEnabled ?? true
     this.entities = createCoreEntityServices(args)
   }
 }

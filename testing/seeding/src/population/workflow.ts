@@ -16,6 +16,7 @@ export async function seedDevPopulation(port: PopulationSeedPort): Promise<void>
       firstName,
       lastName,
       birthDate: seedDateTime(student.birthDate),
+      sendAccountInvitation: false,
     })
     await port.enrollStudent({
       id: `enr-${student.id}`,
@@ -33,6 +34,7 @@ export async function seedDevPopulation(port: PopulationSeedPort): Promise<void>
       lastName,
       email: guardian.email,
       phone: guardian.phone,
+      sendAccountInvitation: false,
     })
 
     for (const studentId of guardian.studentIds) {

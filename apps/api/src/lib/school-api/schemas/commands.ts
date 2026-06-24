@@ -3,6 +3,9 @@ import {
   academicPeriodSchema,
   academicYearSchema,
   accessRoleSchema,
+  AccountInvitationContactChannel,
+  AccountInvitationKind,
+  accountInvitationSchema,
   announcementSchema,
   announcementTargetSchema,
   assessmentResultSchema,
@@ -130,6 +133,9 @@ export const updateClassGroupConfigurationCommandSchema = z.object(unwrapShape(c
   .openapi("UpdateClassGroupConfigurationCommand");
 
 export const registerStaffMemberCommandSchema = z.object(unwrapShape(staffMemberSchema) as any)
+  .extend({
+    sendAccountInvitation: field.optionalBoolean(),
+  })
   .openapi("RegisterStaffMemberCommand");
 
 export const updateStaffMemberStatusCommandSchema = z.object({
@@ -151,6 +157,21 @@ export const linkActorSubjectCommandSchema = z.object({
     });
   }
 }).openapi("LinkActorSubjectCommand");
+
+export const sendAccountInvitationCommandSchema = z.object({
+  kind: field.enumValue(AccountInvitationKind),
+  targetId: field.id(),
+  contactChannel: field.enumValue(AccountInvitationContactChannel).optional(),
+  contactValue: field.optionalString(),
+}).openapi("SendAccountInvitationCommand");
+
+export const resendAccountInvitationCommandSchema = z.object({
+  invitationId: field.id(),
+}).openapi("ResendAccountInvitationCommand");
+
+export const revokeAccountInvitationCommandSchema = z.object({
+  invitationId: field.id(),
+}).openapi("RevokeAccountInvitationCommand");
 
 export const assignStaffToClassCommandSchema = z.object(unwrapShape(staffAssignmentSchema) as any)
   .omit({ classSubjectId: true, sessionId: true })
@@ -216,6 +237,10 @@ export const registerStudentCommandSchema = z.object(unwrapShape(studentSchema) 
     status: true,
     enrollmentDate: true,
   })
+  .extend({
+    sendAccountInvitation: field.optionalBoolean(),
+    inviteEmail: field.optionalString(),
+  })
   .openapi("RegisterStudentCommand");
 
 export const enrollStudentCommandSchema = z.object(unwrapShape(studentClassEnrollmentSchema) as any)
@@ -273,6 +298,7 @@ export const graduateStudentCommandSchema = z.object({
 export const registerGuardianCommandSchema = z.object(unwrapShape(guardianSchema) as any)
   .extend({
     contactMethods: z.array(guardianContactMethodSchema as any).optional(),
+    sendAccountInvitation: field.optionalBoolean(),
   })
   .openapi("RegisterGuardianCommand");
 

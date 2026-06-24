@@ -66,6 +66,7 @@ export async function registerGuardianMutation(input: {
 	lastName: string;
 	email?: string;
 	phone?: string;
+	sendAccountInvitation?: boolean;
 	successMessage?: string;
 }): Promise<string | null> {
 	const client = getBrowserSchoolClient();
@@ -84,6 +85,7 @@ export async function registerGuardianMutation(input: {
 		contactMethods: buildContactMethods(email, phone),
 		hasAccess: true,
 		premiumNotificationsEnabled: false,
+		sendAccountInvitation: input.sendAccountInvitation ?? true,
 		createdAt: new Date().toISOString(),
 	}), {
 		successMessage: input.successMessage,

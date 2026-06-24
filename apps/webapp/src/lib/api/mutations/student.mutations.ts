@@ -81,6 +81,8 @@ export async function createStudentMutation(input: {
 	lastName: string;
 	classGroupId: string;
 	birthDate?: string;
+	sendAccountInvitation?: boolean;
+	inviteEmail?: string;
 	successMessage?: string;
 }): Promise<string | null> {
 	const client = getBrowserSchoolClient();
@@ -100,6 +102,8 @@ export async function createStudentMutation(input: {
 			firstName: input.firstName.trim(),
 			lastName: input.lastName.trim(),
 			birthDate,
+			sendAccountInvitation: input.sendAccountInvitation ?? true,
+			...(input.inviteEmail?.trim() ? { inviteEmail: input.inviteEmail.trim() } : {}),
 			createdAt: now,
 		});
 		return client.commands.enrollStudent({

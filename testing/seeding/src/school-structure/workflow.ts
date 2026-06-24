@@ -91,6 +91,7 @@ export async function seedDevSchoolStructure(
       firstName: directorName.firstName,
       lastName: directorName.lastName,
       email: director.email,
+      sendAccountInvitation: false,
     })
   }
 
@@ -102,6 +103,7 @@ export async function seedDevSchoolStructure(
       firstName,
       lastName,
       email: member.email,
+      sendAccountInvitation: false,
     })
   }
 

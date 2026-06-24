@@ -380,6 +380,7 @@ export function mapStudents(
 			attendance: computeAttendancePercent(student.id, metrics.attendanceRaw),
 			average,
 			status: mapStudentStatus(student.status, average),
+			subjectId: student.subjectId ?? null,
 		};
 	});
 }
@@ -407,6 +408,7 @@ export function mapGuardians(
 			phone,
 			studentIds: guardianLinks.map(link => link.studentId),
 			preferredContact: mapPreferredContact(guardian),
+			subjectId: guardian.subjectId ?? null,
 		};
 	});
 }

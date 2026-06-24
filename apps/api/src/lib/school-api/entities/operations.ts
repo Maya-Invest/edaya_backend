@@ -1,4 +1,5 @@
 import type { ActorMetadata, CoreEntityKey } from "@edaya/core";
+import { toPublicAccountInvitationData, type AccountInvitationData } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
 import type { CoreEntityConfig } from "@/lib/school-api/registry";
@@ -49,6 +50,35 @@ function countFilter(filter: unknown): Record<string, unknown> {
   return next;
 }
 
+function unwrapDomainEntity(entity: unknown): unknown {
+  if (
+    entity
+    && typeof entity === "object"
+    && "data" in entity
+    && entity.data
+    && typeof entity.data === "object"
+  ) {
+    return entity.data;
+  }
+
+  return entity;
+}
+
+function serializeEntityResult(serviceName: CoreEntityKey, entity: unknown): unknown {
+  if (serviceName === "accountInvitations") {
+    const unwrapped = unwrapDomainEntity(entity);
+    if (unwrapped && typeof unwrapped === "object") {
+      return toPublicAccountInvitationData(unwrapped as AccountInvitationData);
+    }
+  }
+
+  return entity;
+}
+
+function serializeEntityResults(serviceName: CoreEntityKey, entities: unknown[]): unknown[] {
+  return entities.map(entity => serializeEntityResult(serviceName, entity));
+}
+
 export async function executeEntityList(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
@@ -60,7 +90,7 @@ export async function executeEntityList(
   if (!readService) {
     throw new EntityOperationError("NOT_READABLE", `Entity ${serviceName} is not readable`);
   }
-  return readService.list(filter ?? {});
+  return serializeEntityResults(serviceName, await readService.list(filter ?? {}));
 }
 
 export async function executeEntityOne(
@@ -79,7 +109,7 @@ export async function executeEntityOne(
   if (!result) {
     throw new EntityOperationError("NOT_FOUND", `${displayName} not found`);
   }
-  return result;
+  return serializeEntityResult(serviceName, result);
 }
 
 export async function executeEntityCount(
@@ -112,7 +142,7 @@ export async function executeEntityGet(
   if (!result) {
     throw new EntityOperationError("NOT_FOUND", `${displayName} not found`);
   }
-  return result;
+  return serializeEntityResult(serviceName, result);
 }
 
 export async function executeEntitySave(

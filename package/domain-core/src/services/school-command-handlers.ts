@@ -7,6 +7,13 @@ import type {
 } from './service-workflows/academics'
 import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from './service-workflows/access-control'
 import type {
+  AcceptAccountInvitationInput,
+  AccountInvitationServiceWorkflow,
+  RevokeAccountInvitationInput,
+  ResendAccountInvitationInput,
+  SendAccountInvitationInput,
+} from './service-workflows/account-invitation'
+import type {
   AssessmentsServiceWorkflow,
   CompleteAssessmentInput,
   CreateAssessmentInput,
@@ -99,6 +106,7 @@ import type {
 export interface SchoolWorkflowHandlers {
   readonly setup: SetupServiceWorkflow
   readonly accessControl: AccessControlServiceWorkflow
+  readonly accountInvitation: AccountInvitationServiceWorkflow
   readonly academics: AcademicsServiceWorkflow
   readonly assessments: AssessmentsServiceWorkflow
   readonly student: StudentServiceWorkflow
@@ -135,6 +143,10 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     removeAttachment: payload => workflows.setup.removeAttachment(payload as RemoveAttachmentInput),
     // accessControl
     linkActorSubject: payload => workflows.accessControl.linkActorSubject(payload as LinkActorSubjectInput),
+    sendAccountInvitation: payload => workflows.accountInvitation.sendAccountInvitation(payload as SendAccountInvitationInput),
+    resendAccountInvitation: payload => workflows.accountInvitation.resendAccountInvitation(payload as ResendAccountInvitationInput),
+    revokeAccountInvitation: payload => workflows.accountInvitation.revokeAccountInvitation(payload as RevokeAccountInvitationInput),
+    acceptAccountInvitation: payload => workflows.accountInvitation.acceptAccountInvitation(payload as AcceptAccountInvitationInput),
     // academics
     offerSubjectToClass: payload => workflows.academics.offerSubjectToClass(payload as OfferSubjectToClassInput),
     assignMatterToClassSubject: payload => workflows.academics.assignMatterToClassSubject(payload as AssignMatterToClassSubjectInput),

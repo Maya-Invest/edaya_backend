@@ -13,6 +13,7 @@
 	import StudentGuardianLinkModal from './StudentGuardianLinkModal.svelte';
 	import StudentNoteModal from './StudentNoteModal.svelte';
 	import StudentProfileEditModal from './StudentProfileEditModal.svelte';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 
 	const {
 		s,
@@ -104,6 +105,15 @@
 	<div class="rounded-xl bg-secondary/40 px-3 py-2 text-xs">
 		<span class="text-muted-foreground">Statut :</span> {$t(`studentStatus.${s.status}`)}
 	</div>
+
+	<AccountLinkingSection
+		kind="student"
+		targetId={s.id}
+		subjectId={s.subjectId}
+		contactEmail={s.email}
+		displayName={s.name}
+	/>
+
 	<DrawerActionBar>
 		<PermissionGate permission="STUDENT_UPDATE" mode="disable" tooltip="Droit STUDENT_UPDATE requis.">
 			{#snippet children({ disabled, title })}

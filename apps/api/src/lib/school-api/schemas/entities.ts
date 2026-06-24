@@ -3,6 +3,9 @@ import {
   academicPeriodSchema,
   academicYearSchema,
   accessRoleSchema,
+  accountInvitationSchema,
+  AccountInvitationKind,
+  AccountInvitationStatus,
   activityEnrollmentSchema,
   announcementSchema,
   announcementTargetSchema,
@@ -61,6 +64,7 @@ import {
 } from "@edaya/core";
 import type {
   AcademicPeriodInput,
+  AccountInvitationInput,
   AcademicYearInput,
   AccessRoleInput,
   ActivityEnrollmentInput,
@@ -128,6 +132,13 @@ export const academicPeriodResponseSchema = responseSchema<AcademicPeriodInput>(
 export const periodDefinitionResponseSchema = responseSchema<PeriodDefinitionInput>("PeriodDefinition", unwrapShape(periodDefinitionSchema));
 export const gradeLevelResponseSchema = responseSchema<GradeLevelInput>("GradeLevel", unwrapShape(gradeLevelSchema));
 export const staffMemberResponseSchema = responseSchema<StaffMemberInput>("StaffMember", unwrapShape(staffMemberSchema));
+
+const accountInvitationShape = unwrapShape(accountInvitationSchema);
+delete accountInvitationShape.tokenHash;
+export const accountInvitationResponseSchema = responseSchema<AccountInvitationInput>(
+  "AccountInvitation",
+  accountInvitationShape,
+);
 export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentInput>("StaffAssignment", unwrapShape(staffAssignmentSchema));
 export const scopeGrantResponseSchema = valueSchema<ScopeGrant>(unwrapShape(scopeGrantSchema));
 export const accessRoleResponseSchema = responseSchema<AccessRoleInput>("AccessRole", unwrapShape(accessRoleSchema));
@@ -251,6 +262,14 @@ export const accessRoleQuerySchema = createQueryOptionsSchema({
   schoolId: field.string(),
   name: field.string(),
   status: field.string(),
+});
+
+export const accountInvitationQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  kind: z.nativeEnum(AccountInvitationKind),
+  targetId: field.id(),
+  status: z.nativeEnum(AccountInvitationStatus),
 });
 
 export const staffRoleAssignmentQuerySchema = createQueryOptionsSchema({

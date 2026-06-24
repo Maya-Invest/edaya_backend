@@ -4,6 +4,7 @@ import type { School } from '../domains'
 import type { GetSchoolOverviewInput, SchoolOverview } from '../queries/school-overview'
 import type { BaseRepositoryInterface } from './base-repository'
 import type { ServiceApiKeyRepository } from './service-api-key-repository'
+import type { AccountInvitationRepository } from './account-invitation-repository'
 
 export type CoreEntityRepositories = {
   readonly [Key in keyof CoreEntityMap]: BaseRepositoryInterface<CoreEntityMap[Key]>
@@ -12,6 +13,7 @@ export type CoreEntityRepositories = {
 export interface SchoolRepositories extends CoreEntityRepositories {
   readonly authorization: AuthorizationRepository
   readonly serviceApiKeys: ServiceApiKeyRepository
+  readonly accountInvitations: AccountInvitationRepository
   readonly schools: BaseRepositoryInterface<School> & {
     getOverdueFeeCount: (schoolId: string) => Promise<number>
     getPublishedReportCardCount: (schoolId: string) => Promise<number>

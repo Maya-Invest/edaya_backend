@@ -37,5 +37,12 @@ export function serializeCommandResult(result: unknown): unknown {
     };
   }
 
+  if ("invitation" in result && "token" in result) {
+    return {
+      invitation: unwrapDomainEntity(result.invitation),
+      token: result.token,
+    };
+  }
+
   return unwrapDomainEntity(result);
 }

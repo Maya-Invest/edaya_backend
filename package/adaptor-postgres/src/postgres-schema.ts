@@ -91,6 +91,23 @@ export const serviceApiKeys = pgTable('service_api_keys', {
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('service_api_keys', table))
 
+export const accountInvitations = pgTable('account_invitations', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  kind: text('kind').notNull(),
+  targetId: text('target_id').notNull(),
+  contactChannel: text('contact_channel').notNull(),
+  contactValue: text('contact_value').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  status: text('status').notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  acceptedAt: timestamp('accepted_at', { mode: 'date' }),
+  acceptedSubjectId: text('accepted_subject_id'),
+  createdByStaffId: text('created_by_staff_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  lastSentAt: timestamp('last_sent_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('account_invitations', table))
+
 export const staffAssignments = pgTable('staff_assignments', {
   id: text('id').primaryKey(),
   staffId: text('staff_id').notNull(),

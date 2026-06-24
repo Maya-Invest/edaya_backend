@@ -7,6 +7,8 @@ export function resolveCronJobKeys(cronExpression: string): readonly CronJobKey[
       return ['processDueNotifications']
     case '*/5 * * * *':
       return ['reconcilePendingDeliveries']
+    case '0 2 * * *':
+      return ['expireAccountInvitations']
     default:
       return undefined
   }

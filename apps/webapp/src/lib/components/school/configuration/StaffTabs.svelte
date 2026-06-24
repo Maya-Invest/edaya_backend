@@ -11,6 +11,7 @@
 	import { get } from 'svelte/store';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import StaffPermissionsList from './StaffPermissionsList.svelte';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 
 	const { s }: { s: StaffMember } = $props();
 
@@ -134,6 +135,14 @@
 					{/snippet}
 				</PermissionGate>
 			</div>
+
+			<AccountLinkingSection
+				kind="staff"
+				targetId={s.id}
+				subjectId={s.subjectId}
+				contactEmail={s.email}
+				displayName={s.name}
+			/>
 		</div>
 	{:else}
 		<StaffPermissionsList {s} />

@@ -6,7 +6,7 @@
  *   - API running: cd apps/api && bun dev  (or bun dev from repo root)
  *   - Seed data: bun seed:smoke  (or bun seed:init)
  *   - apps/api/.env: NOVU_SECRET_KEY (+ NOVU_API_URL for EU)
- *   - Novu dashboard: workflow trigger id `announcement.published`
+ *   - Novu dashboard: workflow trigger id `announcement.published` (or run `bun novu:bootstrap:apply`)
  *   - Optional: NOVU_WEBHOOK_SECRET for local webhook simulation
  */
 import { resolve } from 'node:path'

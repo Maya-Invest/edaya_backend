@@ -43,6 +43,11 @@ export const clientBindings = {
       "schemaName": "AccessRole",
       "allowDirectSave": true
     },
+    "accountInvitations": {
+      "publicName": "account-invitations",
+      "schemaName": "AccountInvitation",
+      "allowDirectSave": false
+    },
     "staffRoleAssignments": {
       "publicName": "staff-role-assignments",
       "schemaName": "StaffRoleAssignment",
@@ -304,6 +309,21 @@ export const clientBindings = {
       "publicName": "link-actor-subject",
       "requestSchemaName": "LinkActorSubjectCommand",
       "responseSchemaName": "LinkActorSubjectResponse"
+    },
+    "sendAccountInvitation": {
+      "publicName": "send-account-invitation",
+      "requestSchemaName": "SendAccountInvitationCommand",
+      "responseSchemaName": "SendAccountInvitationResponse"
+    },
+    "resendAccountInvitation": {
+      "publicName": "resend-account-invitation",
+      "requestSchemaName": "ResendAccountInvitationCommand",
+      "responseSchemaName": "ResendAccountInvitationResponse"
+    },
+    "revokeAccountInvitation": {
+      "publicName": "revoke-account-invitation",
+      "requestSchemaName": "RevokeAccountInvitationCommand",
+      "responseSchemaName": "AccountInvitation"
     },
     "assignStaffToClass": {
       "publicName": "assign-staff-to-class",

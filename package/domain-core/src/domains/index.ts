@@ -1,4 +1,5 @@
 export * from './academics'
+export * from './access'
 export * from './assessments'
 export * from './finances'
 export * from './messaging'

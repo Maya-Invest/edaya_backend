@@ -12,9 +12,12 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix",
-    "test": "bun test tests"
+    "lint": "eslint src tests bootstrap",
+    "lint:fix": "eslint src tests bootstrap --fix",
+    "test": "bun test tests bootstrap/tests",
+    "bootstrap": "bun bootstrap/cli.ts plan",
+    "bootstrap:apply": "bun bootstrap/cli.ts apply",
+    "bootstrap:validate": "bun bootstrap/cli.ts validate"
   },
   "dependencies": {
     "@edaya/core": "workspace:*",

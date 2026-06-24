@@ -58,6 +58,7 @@ export interface SchoolStructureStaffRecord {
   firstName: string
   lastName: string
   email?: string
+  sendAccountInvitation?: boolean
 }
 
 export interface ClassGroupSeedRecord {

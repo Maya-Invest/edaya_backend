@@ -31,6 +31,10 @@ import {
   scheduleNotificationRecipientRemove,
   scheduleNotificationRecipientUpsert,
 } from '../../notifications'
+import {
+  scheduleAccountInvitationIfEligible,
+} from '../../invitations'
+import { AccountInvitationKind } from '../../domains/access/account-invitation'
 import { MessageDeliveryRecipientKind } from '../../domains'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -65,7 +69,9 @@ export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupIn
   classGroupId: string
 }
 
-export type RegisterStaffMemberInput = StaffMemberInput
+export type RegisterStaffMemberInput = StaffMemberInput & {
+  sendAccountInvitation?: boolean
+}
 
 export interface UpdateStaffMemberStatusInput {
   staffId: string
@@ -211,11 +217,21 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
+    const { sendAccountInvitation, ...entityInput } = staffMemberInput
     const staffMember = await this.saveConstructed(
       this.baseService.entities.staffMembers,
-      new StaffMemberEntity(staffMemberInput),
+      new StaffMemberEntity(entityInput),
     )
     scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
+    scheduleAccountInvitationIfEligible(
+      this.baseService,
+      {
+        kind: AccountInvitationKind.Staff,
+        targetId: staffMember.id,
+        sendAccountInvitation,
+      },
+      staffMember,
+    )
     return staffMember
   }
 

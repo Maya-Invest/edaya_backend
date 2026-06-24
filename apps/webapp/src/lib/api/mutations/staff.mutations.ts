@@ -21,6 +21,7 @@ export async function registerStaffMemberMutation(input: {
 	firstName: string;
 	lastName: string;
 	email?: string;
+	sendAccountInvitation?: boolean;
 	successMessage?: string;
 }): Promise<string | null> {
 	const client = getBrowserSchoolClient();
@@ -46,6 +47,7 @@ export async function registerStaffMemberMutation(input: {
 		accountKind: 'human',
 		isActive: true,
 		serviceElevated: false,
+		sendAccountInvitation: input.sendAccountInvitation ?? true,
 		createdAt: new Date().toISOString(),
 	}), {
 		successMessage: input.successMessage,

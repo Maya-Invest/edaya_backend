@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../ports/school-repositories'
 
 export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears'],
-  accessControl: ['staffMembers', 'guardians', 'students'],
+  accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks'],
   academics: [
     'sessions',
     'classGroups',
@@ -57,6 +57,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'enrollments',
   ],
   finance: ['fees', 'studentFees', 'students', 'payments'],
+  invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'schools'],
 } as const satisfies Record<string, readonly (keyof SchoolRepositories)[]>
 
 export type WorkflowRepositoryScope = keyof typeof WORKFLOW_REPOSITORY_KEYS
@@ -77,5 +78,7 @@ export function pickWorkflowRepositories<Workflow extends WorkflowRepositoryScop
 }
 
 export type AccessControlWorkflowRepositories = WorkflowRepositoryDeps<'accessControl'>
+
+export type InvitationWorkflowRepositories = WorkflowRepositoryDeps<'invitations'>
 
 export type SetupWorkflowRepositories = WorkflowRepositoryDeps<'setup'>

@@ -75,6 +75,18 @@ export function guardianLinksForGuardians(guardianIds: readonly string[]): Entit
 	return recordsForFieldIds('guardianId', guardianIds);
 }
 
+export function pendingAccountInvitationForTarget(
+	kind: 'staff' | 'guardian' | 'student',
+	targetId: string,
+): EntityQuery {
+	return {
+		kind,
+		targetId,
+		status: 'pending',
+		$limit: 1,
+	};
+}
+
 export function deliveriesForSubject(subjectId: string): EntityQuery {
 	return { subjectId };
 }

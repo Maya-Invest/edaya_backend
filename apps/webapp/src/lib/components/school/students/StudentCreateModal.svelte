@@ -2,6 +2,7 @@
 	import type { ClassNode } from '$lib/types/school';
 	import { createStudentMutation } from '$lib/api/mutations/student.mutations';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
+	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
@@ -25,6 +26,8 @@
 	let lastName = $state('');
 	let birthDate = $state('');
 	let classGroupId = $state('');
+	let sendAccountInvitation = $state(true);
+	let inviteEmail = $state('');
 	let wasOpen = $state(false);
 
 	const classOptions = $derived(
@@ -41,7 +44,10 @@
 	);
 
 	const canSubmit = $derived(
-		firstName.trim().length > 0 && lastName.trim().length > 0 && classGroupId.length > 0,
+		firstName.trim().length > 0
+		&& lastName.trim().length > 0
+		&& classGroupId.length > 0
+		&& (!sendAccountInvitation || inviteEmail.trim().length > 0),
 	);
 
 	function defaultClassId() {
@@ -55,6 +61,8 @@
 		lastName = '';
 		birthDate = '';
 		classGroupId = defaultClassId();
+		sendAccountInvitation = true;
+		inviteEmail = '';
 	}
 
 	function handleClassChange(value: string | undefined) {
@@ -80,6 +88,8 @@
 				lastName,
 				classGroupId,
 				birthDate,
+				sendAccountInvitation,
+				inviteEmail,
 				successMessage: get(t)('student.createSuccess', { name: fullName }),
 			});
 			if (studentId) {
@@ -148,4 +158,21 @@
 			</Select.Root>
 		{/if}
 	</div>
+	<div class="flex items-start gap-3 rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
+		<Checkbox bind:checked={sendAccountInvitation} id="student-send-invite" />
+		<div class="space-y-1">
+			<Label for="student-send-invite" class="text-sm font-medium">
+				{$t('invitation.createModal.sendInvite')}
+			</Label>
+			<p class="text-xs text-muted-foreground">{$t('invitation.createModal.studentInviteHint')}</p>
+		</div>
+	</div>
+	{#if sendAccountInvitation}
+		<div class="space-y-1.5">
+			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+				{$t('invitation.createModal.inviteEmail')}
+			</Label>
+			<Input type="email" bind:value={inviteEmail} autocomplete="email" />
+		</div>
+	{/if}
 </FormModal>

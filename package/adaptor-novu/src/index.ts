@@ -11,6 +11,11 @@ export {
 } from "./delivery-webhook";
 export { createNovuNotificationGatewayFromSecretKey } from "./create-from-secret-key";
 export type { CreateNovuNotificationGatewayFromSecretKeyOptions } from "./create-from-secret-key";
+export {
+  createNovuInvitationDeliveryPort,
+  createNovuInvitationDeliveryPortFromSecretKey,
+} from "./invitation-delivery";
+export type { CreateNovuInvitationDeliveryPortOptions } from "./invitation-delivery";
 export { createNovuNotificationGateway } from "./novu-notification-gateway";
 export { createNovuMessagesClient } from "./novu-messages-client";
 export type { CreateNovuMessagesClientOptions, NovuMessagesClient } from "./novu-messages-client";

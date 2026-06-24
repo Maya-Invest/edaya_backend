@@ -185,6 +185,7 @@ export function mapStaffMembers(
 			subjectsTaught: catalogSubjectIds,
 			subjectLabels: subjectLabelsForCatalogIds(catalogSubjectIds, subjectsRaw),
 			isActive: member.isActive ?? true,
+			subjectId: member.subjectId ?? null,
 		};
 	});
 }
