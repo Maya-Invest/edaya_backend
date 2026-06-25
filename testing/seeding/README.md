@@ -12,8 +12,20 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 | `bun seed:smoke` | Sign-in + `/core/authorization/effective-grants` |
 | `bun seed:validate` | Manifest entity counts + dashboard queries |
 | `bun seed:remote` | Full seed against `SEED_API_URL` |
+| `bun seed:clean` | Wipe local `.data/` (stop `bun dev` first) |
+| `bun seed:clean:staging` | Wipe Neon staging + Better Auth D1 (destructive) |
 
 From the repo root: `bun seed`, `bun seed:init`, etc.
+
+Optional wipe before seeding:
+
+```sh
+bun seed:clean --yes && bun seed:init          # local
+bun seed:clean:staging --yes && bun seed:remote   # staging
+# or
+bun seed:init --clean
+bun seed:remote --clean
+```
 
 ## Local dev flow
 

@@ -25,6 +25,8 @@
     "seed:smoke": "bun scripts/seed-http.ts smoke",
     "seed:validate": "bun scripts/seed-http.ts validate",
     "seed:init": "bun scripts/seed-http.ts all",
+    "seed:clean": "bun scripts/cleanup-seed-data.ts --local",
+    "seed:clean:staging": "bun scripts/cleanup-seed-data.ts --staging",
     "seed:remote": "bun scripts/seed-remote.ts",
     "seed:smoke:staging": "bun scripts/seed-smoke-staging.ts"
   },
@@ -33,7 +35,8 @@
     "@edaya/core": "workspace:*",
     "@edaya/dev-fixtures": "workspace:*",
     "dotenv": "^16.5.0",
-    "dotenv-expand": "^11.0.7"
+    "dotenv-expand": "^11.0.7",
+    "postgres": "^3.4.4"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

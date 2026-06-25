@@ -351,10 +351,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       client,
       serviceAccountApiKey: serviceAccountApiKeyFromProvision,
     })
-    const accessSeedPort = createHttpAccessSeedPort({
-      client,
-      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
-    })
     const schoolStructurePort = createHttpSchoolStructureSeedPort({
       client,
       serviceAccountApiKey: serviceAccountApiKeyFromProvision,
@@ -436,8 +432,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       communicationsPort,
       attachmentsPort,
     })
+    // Staff/class assignments require ACCESS_CONTROL_ASSIGN with class-group scope.
+    // Use the owner session (still on the client) rather than the service account API key.
     results.access = await runDevAccessAssignmentsSeedWithPort(
-      accessSeedPort,
+      createHttpAccessSeedPort({ client }),
       { auth, ownerSubjectId, authLinkPort },
     )
 
@@ -461,6 +459,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     }
   }
 
+  const httpSessionAccessPort = !options.application
+    ? createHttpAccessSeedPort({ client })
+    : undefined
+
   const domainResults = await runDevSeeds({
     scope,
     application: options.application,
@@ -471,6 +473,17 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     accessSeedPort: options.application
       ? createInProcessAccessSeedPort(options.application)
       : createHttpAccessSeedPort({ client, serviceAccountApiKey }),
+    accessAssignmentsSeedPort: httpSessionAccessPort && serviceAccountApiKey
+      ? httpSessionAccessPort
+      : undefined,
+    beforeAccessAssignments: httpSessionAccessPort && serviceAccountApiKey
+      ? async () => {
+        await signInViaHttp(client, {
+          email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+          password: DEV_AUTH_PASSWORD,
+        })
+      }
+      : undefined,
     schoolStructurePort: options.application
       ? createInProcessSchoolStructureSeedPort(options.application)
       : createHttpSchoolStructureSeedPort({ client, serviceAccountApiKey }),

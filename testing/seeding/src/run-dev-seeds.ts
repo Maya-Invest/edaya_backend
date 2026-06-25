@@ -60,6 +60,10 @@ export interface RunDevSeedsOptions {
   authLinkPort?: AuthLinkSeedPort
   /** Explicit access-bootstrap adapter; defaults to the in-process application adapter. */
   accessSeedPort?: AccessSeedPort
+  /** Optional separate port for staff/class assignments (e.g. owner session over HTTP). */
+  accessAssignmentsSeedPort?: AccessSeedPort
+  /** Runs before staff/class assignment writes when using a separate assignments port. */
+  beforeAccessAssignments?: () => Promise<void>
   /** Explicit school-foundation adapter; defaults to the in-process application adapter. */
   schoolStructurePort?: SchoolStructureSeedPort
   /** Explicit student/guardian adapter; defaults to the in-process application adapter. */
@@ -199,6 +203,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         auth,
         ownerSubjectId,
         authLinkPort,
+        assignmentsPort: options.accessAssignmentsSeedPort,
+        beforeAssignments: options.beforeAccessAssignments,
       },
     )
     return results
@@ -237,7 +243,12 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
   if (scope === 'access') {
     results.access = await runDevAccessSeedWithPort(
       accessSeedPort,
-      { auth, authLinkPort },
+      {
+        auth,
+        authLinkPort,
+        assignmentsPort: options.accessAssignmentsSeedPort,
+        beforeAssignments: options.beforeAccessAssignments,
+      },
     )
   }
 

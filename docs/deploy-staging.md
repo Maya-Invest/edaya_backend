@@ -86,6 +86,8 @@ bun run deploy:webapp:staging
 cp testing/seeding/.env.staging.example testing/seeding/.env.staging
 
 # 5. Bootstrap school + seeding service account (director session on first run)
+#    Optional fresh start after a failed/partial seed:
+#    bun seed:clean:staging --yes
 SEED_API_URL=https://api-staging.edaya.softilab.dev bun run seed:init
 
 # 6. Full remote seed (uses school profile API key from @edaya/dev-fixtures)

@@ -235,6 +235,10 @@ export interface RunDevAccessSeedOptions {
   auth?: AuthProvisioner
   ownerSubjectId?: string
   authLinkPort?: AuthLinkSeedPort
+  /** When set, staff/class assignments use this port instead of the roles port. */
+  assignmentsPort?: AccessSeedPort
+  /** Runs immediately before staff/class assignment writes (e.g. refresh owner session). */
+  beforeAssignments?: () => Promise<void>
 }
 
 /** Access roles only — used before service-account provisioning in HTTP bootstrap. */
@@ -253,6 +257,10 @@ export async function runDevAccessAssignmentsSeedWithPort(
   port: AccessSeedPort,
   options?: RunDevAccessSeedOptions,
 ): Promise<DevAccessSeedResult> {
+  if (options?.beforeAssignments) {
+    await options.beforeAssignments()
+  }
+
   if (!(await port.schoolExists(SEED_SCHOOL_ID))) {
     return { status: 'skipped', reason: 'school-not-seeded' }
   }
@@ -317,7 +325,7 @@ export async function runDevAccessSeedWithPort(
   options?: RunDevAccessSeedOptions,
 ): Promise<DevAccessSeedResult> {
   await runDevAccessRolesSeedWithPort(port)
-  return runDevAccessAssignmentsSeedWithPort(port, options)
+  return runDevAccessAssignmentsSeedWithPort(options?.assignmentsPort ?? port, options)
 }
 
 export async function runDevAccessSeed(
