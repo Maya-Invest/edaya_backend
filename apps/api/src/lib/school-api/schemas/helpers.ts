@@ -6,26 +6,67 @@ export type ObjectSchema = z.ZodObject<z.ZodRawShape>;
 
 /**
  * Accepts a raw shape from either plain zod or @hono/zod-openapi.
- * Uses Record<string, any> to bridge the structural incompatibility
+ * Uses Record<string, unknown> to bridge the structural incompatibility
  * between the two zod module augmentations.
  */
-type AnyZodRawShape = Record<string, any>;
+type AnyZodRawShape = Record<string, unknown>;
+
+interface SchemaWithInnerType {
+  innerType: () => unknown;
+}
+
+interface SchemaWithShape {
+  shape: unknown;
+}
+
+function hasInnerType(schema: unknown): schema is SchemaWithInnerType {
+  return typeof schema === "object"
+    && schema !== null
+    && "innerType" in schema
+    && typeof schema.innerType === "function";
+}
+
+function hasShape(schema: unknown): schema is SchemaWithShape {
+  return typeof schema === "object"
+    && schema !== null
+    && "shape" in schema;
+}
+
+function schemaDescription(schema: unknown): string {
+  if (typeof schema !== "object" || schema === null) {
+    return typeof schema;
+  }
+  const constructorName = (schema as { constructor?: { name?: string } }).constructor?.name;
+  return constructorName ?? "unknown schema";
+}
 
 /**
  * Extracts the inner ZodObject.shape from a schema that may be
  * wrapped in ZodEffects (via .refine() / .superRefine() / .transform()).
  * If the schema is already a ZodObject, returns .shape directly.
  */
-export function unwrapShape(schema: any): AnyZodRawShape {
+export function unwrapShape(schema: unknown): AnyZodRawShape {
   // Duck-type check for ZodEffects (works across zod module instances)
-  if (schema && typeof schema.innerType === "function") {
+  if (hasInnerType(schema)) {
     return unwrapShape(schema.innerType());
   }
   // Duck-type check for ZodObject
-  if (schema && typeof schema === "object" && "shape" in schema) {
-    return schema.shape;
+  if (hasShape(schema)) {
+    return schema.shape as AnyZodRawShape;
   }
-  throw new Error(`Cannot unwrap shape from ${schema?.constructor?.name}`);
+  throw new Error(`Cannot unwrap shape from ${schemaDescription(schema)}`);
+}
+
+export function objectShape(schema: unknown): z.ZodRawShape {
+  return unwrapShape(schema) as z.ZodRawShape;
+}
+
+export function objectFromSchema(schema: unknown): z.ZodObject<z.ZodRawShape> {
+  return z.object(objectShape(schema));
+}
+
+export function lazySchema<T>(schemaFactory: () => unknown): z.ZodType<T> {
+  return z.lazy(() => schemaFactory() as z.ZodTypeAny) as z.ZodType<T>;
 }
 
 export function responseSchema<T>(openApiName: string, shape: AnyZodRawShape): z.ZodType<T> {
@@ -106,7 +147,7 @@ const sortOptionSchema = z.object({
 
 let filterCounter = 0;
 
-export function createQueryOptionsSchema<T extends Record<string, any>>(
+export function createQueryOptionsSchema<T extends Record<string, unknown>>(
   allowedFields: Record<keyof T, z.ZodTypeAny>,
   entityName?: string,
 ) {

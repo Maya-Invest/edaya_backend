@@ -121,7 +121,7 @@ import type {
   SubjectInput,
   SubjectMatterInput,
 } from "@edaya/core";
-import { createQueryOptionsSchema, field, responseSchema, unwrapShape, valueSchema } from "./helpers";
+import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
 
 // ==========================================================
 // 1. All Domain Entities Response OpenAPI Schemas
@@ -200,7 +200,8 @@ export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(co
 export const gradeScaleResponseSchema = responseSchema<GradeScaleInput>("GradeScale", unwrapShape(gradeScaleSchema));
 export const definitionResponseSchema = responseSchema<ReportCardDefinitionInput>("ReportCardDefinition", unwrapShape(reportCardDefinitionSchema));
 export const sectionResponseSchema = responseSchema<ReportCardDefinitionSectionInput>("ReportCardDefinitionSection", unwrapShape(reportCardDefinitionSectionSchema));
-export const reportCardResultSectionSchema: any = (z.lazy(() => coreReportCardResultSectionSchema as any) as any).openapi("ReportCardResultSection", { type: "object" });
+export const reportCardResultSectionSchema = lazySchema(() => coreReportCardResultSectionSchema)
+  .openapi("ReportCardResultSection", { type: "object" });
 export const resultResponseSchema = responseSchema<ReportCardResultInput>("ReportCardResult", {
   ...unwrapShape(reportCardResultSchema),
   sectionResults: z.array(reportCardResultSectionSchema),
@@ -214,7 +215,7 @@ export const studentResponseSchema = responseSchema<StudentInput>("Student", unw
 export const enrollmentResponseSchema = responseSchema<StudentClassEnrollmentInput>("StudentClassEnrollment", unwrapShape(studentClassEnrollmentSchema));
 export const guardianResponseSchema = responseSchema<GuardianInput>("Guardian", {
   ...unwrapShape(guardianSchema),
-  contactMethods: z.array(z.object(unwrapShape(guardianContactMethodSchema) as any)),
+  contactMethods: z.array(objectFromSchema(guardianContactMethodSchema)),
 });
 export const guardianLinkResponseSchema = responseSchema<GuardianStudentLinkInput>("GuardianStudentLink", unwrapShape(guardianStudentLinkSchema));
 export const studentNoteResponseSchema = responseSchema<StudentNoteInput>("StudentNote", unwrapShape(studentNoteSchema));

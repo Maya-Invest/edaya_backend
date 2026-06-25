@@ -90,7 +90,7 @@ export class GradeScale {
   readonly ranges: readonly GradeScaleRange[]
 
   constructor(args: GradeScaleInput) {
-    this.data = parseDomain(gradeScaleSchema, args) as any
+    this.data = parseDomain(gradeScaleSchema, args)
     this.ranges = Object.freeze(args.ranges.map(r => Object.freeze({
       letter: r.letter,
       minScore: roundTo2(r.minScore),

@@ -39,6 +39,8 @@ export async function seedDevSchoolStructure(
   port: SchoolStructureSeedPort,
   options: SeedDevSchoolStructureOptions,
 ): Promise<void> {
+  const seedSubjectId = (id: string) => `subject-${id}`
+
   if (!options.demoSchoolExists) {
     await port.registerSchool({
       ...SEED_SCHOOL_PROFILE,
@@ -91,6 +93,7 @@ export async function seedDevSchoolStructure(
       firstName: directorName.firstName,
       lastName: directorName.lastName,
       email: director.email,
+      subjectId: seedSubjectId(director.id),
       sendAccountInvitation: false,
     })
   }
@@ -103,6 +106,7 @@ export async function seedDevSchoolStructure(
       firstName,
       lastName,
       email: member.email,
+      subjectId: seedSubjectId(member.id),
       sendAccountInvitation: false,
     })
   }

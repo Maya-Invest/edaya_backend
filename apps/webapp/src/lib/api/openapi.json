@@ -810,6 +810,13 @@
           },
           "contactChannel": {
             "type": "string"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "authAccountExists": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1897,6 +1904,86 @@
         },
         "required": [
           "invitationId"
+        ]
+      },
+      "AcceptAccountInvitationResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "staff"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/StaffMember"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "guardian"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Guardian"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "student"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Student"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          }
+        ]
+      },
+      "AcceptAccountInvitationCommand": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "token",
+          "subjectId",
+          "contactEmail"
         ]
       },
       "StaffAssignment": {
@@ -11641,6 +11728,130 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInvitation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/accept-account-invitation": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "accept-account-invitation",
+        "requestBody": {
+          "description": "accept-account-invitation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptAccountInvitationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed accept-account-invitation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptAccountInvitationResponse"
                 }
               }
             }

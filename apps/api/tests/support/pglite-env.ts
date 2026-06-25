@@ -9,6 +9,7 @@ export const pgliteTestEnvInput = {
   AUTH_DATABASE_PATH: ":memory:",
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
   BETTER_AUTH_URL: "http://localhost:9999",
+  ACCOUNT_INVITATIONS_ENABLED: false,
 } as const;
 
 export function createPgliteTestEnv(overrides: Record<string, unknown> = {}): Environment {

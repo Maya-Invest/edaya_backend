@@ -318,7 +318,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     && !options.application
     && !(await canUseSeedingServiceAccount(client, seedingApiKey))
   ) {
-    results.authProvision = await runDevAuthProvision(auth)
+    results.authProvision = await runDevAuthProvision(auth, { baseUrl: client.origin })
 
     try {
       await bootstrapHttpCoreSession(client)

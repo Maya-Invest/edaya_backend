@@ -1,5 +1,7 @@
 import type { PopulationSeedPort } from './port'
 import {
+  INTEGRATION_LIGHT_GUARDIANS,
+  INTEGRATION_LIGHT_STUDENTS,
   SEED_GUARDIANS,
   SEED_SCHOOL_ID,
   SEED_STUDENTS,
@@ -7,8 +9,14 @@ import {
 } from '@edaya/dev-fixtures'
 import { seedDateTime } from '../seed-date'
 
-export async function seedDevPopulation(port: PopulationSeedPort): Promise<void> {
-  for (const student of SEED_STUDENTS) {
+async function seedPopulationRecords(
+  port: PopulationSeedPort,
+  students: readonly (typeof SEED_STUDENTS)[number][],
+  guardians: readonly (typeof SEED_GUARDIANS)[number][],
+): Promise<void> {
+  const seedSubjectId = (id: string) => `subject-${id}`
+
+  for (const student of students) {
     const { firstName, lastName } = splitDisplayName(student.name)
     await port.registerStudent({
       id: student.id,
@@ -16,6 +24,7 @@ export async function seedDevPopulation(port: PopulationSeedPort): Promise<void>
       firstName,
       lastName,
       birthDate: seedDateTime(student.birthDate),
+      subjectId: seedSubjectId(student.id),
       sendAccountInvitation: false,
     })
     await port.enrollStudent({
@@ -25,7 +34,7 @@ export async function seedDevPopulation(port: PopulationSeedPort): Promise<void>
     })
   }
 
-  for (const guardian of SEED_GUARDIANS) {
+  for (const guardian of guardians) {
     const { firstName, lastName } = splitDisplayName(guardian.name)
     await port.registerGuardian({
       id: guardian.id,
@@ -34,6 +43,7 @@ export async function seedDevPopulation(port: PopulationSeedPort): Promise<void>
       lastName,
       email: guardian.email,
       phone: guardian.phone,
+      subjectId: seedSubjectId(guardian.id),
       sendAccountInvitation: false,
     })
 
@@ -48,4 +58,13 @@ export async function seedDevPopulation(port: PopulationSeedPort): Promise<void>
       })
     }
   }
+}
+
+/** Auth-linked students and guardians only — for fast integration test fixtures. */
+export async function seedIntegrationLightPopulation(port: PopulationSeedPort): Promise<void> {
+  await seedPopulationRecords(port, INTEGRATION_LIGHT_STUDENTS, INTEGRATION_LIGHT_GUARDIANS)
+}
+
+export async function seedDevPopulation(port: PopulationSeedPort): Promise<void> {
+  await seedPopulationRecords(port, SEED_STUDENTS, SEED_GUARDIANS)
 }

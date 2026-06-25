@@ -14,7 +14,7 @@ import {
   signInThroughApp,
   signUpAuthUser,
 } from '../support/api-route-harness'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
 const INVITEE_EMAIL = 'p.martin.invite-e2e@school.edu'
 const UNLINKED_STAFF_ID = 'st-invite-e2e'
@@ -22,7 +22,7 @@ const RESEND_STAFF_ID = 'st-invite-resend'
 
 async function registerUnlinkedStaff(
   application: ApiSchoolApplication,
-  input: { id: string; email: string; firstName: string; lastName: string },
+  input: { id: string, email: string, firstName: string, lastName: string },
 ) {
   const bootstrapActor = createBootstrapStaffActorMetadata({
     schoolId: SEED_SCHOOL_ID,
@@ -58,7 +58,7 @@ async function sendStaffInvitation(
 
   expect(response.status).toBe(200)
   return await response.json() as {
-    invitation: { id: string; status: string; targetId: string }
+    invitation: { id: string, status: string, targetId: string }
     token: string
   }
 }
@@ -75,11 +75,13 @@ async function previewInvitation(app: Hono<AppBindings>, token: string) {
       targetId: string
       inviteeName: string
       schoolName: string
+      contactEmail: string
+      authAccountExists: boolean
     },
   }
 }
 
-describeWithSeededSchool('account invitation public link flow', (getContext) => {
+describeWithLightSchool('account invitation public link flow', (getContext) => {
   it('sends an invitation, previews the link, and accepts it end-to-end', async () => {
     const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
@@ -130,7 +132,7 @@ describeWithSeededSchool('account invitation public link flow', (getContext) => 
 
     const acceptBody = await acceptResponse.json() as {
       kind: string
-      entity: { id: string; subjectId: string }
+      entity: { id: string, subjectId: string }
     }
     expect(acceptBody.kind).toBe('staff')
     expect(acceptBody.entity.id).toBe(UNLINKED_STAFF_ID)
@@ -169,7 +171,7 @@ describeWithSeededSchool('account invitation public link flow', (getContext) => 
     expect(resendResponse.status).toBe(200)
 
     const resent = await resendResponse.json() as {
-      invitation: { id: string; status: string }
+      invitation: { id: string, status: string }
       token: string
     }
     expect(resent.token).not.toBe(first.token)

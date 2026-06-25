@@ -53,6 +53,7 @@ export async function seedMinimalSchool(application: SeedApplication): Promise<v
     firstName: staffFirstName,
     lastName: staffLastName,
     email: staffFixture.email,
+    sendAccountInvitation: false,
   })
 
   const guardianFixture = findSeedGuardian(DEV_AUTH_GUARDIAN_ACCOUNTS[0].guardianId)

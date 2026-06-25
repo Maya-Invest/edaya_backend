@@ -2332,6 +2332,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/accept-account-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** accept-account-invitation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description accept-account-invitation payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AcceptAccountInvitationCommand"];
+                };
+            };
+            responses: {
+                /** @description Executed accept-account-invitation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AcceptAccountInvitationResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/assign-staff-to-class": {
         parameters: {
             query?: never;
@@ -51192,6 +51286,7 @@ export interface components {
             schoolName: string;
             inviteeName: string;
             contactChannel: string;
+            /** Format: email */
             contactEmail?: string;
             authAccountExists?: boolean;
         };
@@ -51489,6 +51584,25 @@ export interface components {
         };
         RevokeAccountInvitationCommand: {
             invitationId: string;
+        };
+        AcceptAccountInvitationResponse: {
+            /** @enum {string} */
+            kind: "staff";
+            entity: components["schemas"]["StaffMember"];
+        } | {
+            /** @enum {string} */
+            kind: "guardian";
+            entity: components["schemas"]["Guardian"];
+        } | {
+            /** @enum {string} */
+            kind: "student";
+            entity: components["schemas"]["Student"];
+        };
+        AcceptAccountInvitationCommand: {
+            token: string;
+            subjectId: string;
+            /** Format: email */
+            contactEmail: string;
         };
         StaffAssignment: {
             id: string;

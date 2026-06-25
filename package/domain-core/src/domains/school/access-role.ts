@@ -43,7 +43,7 @@ export class AccessRole {
   readonly data: AccessRoleData
 
   constructor(args: AccessRoleInput) {
-    this.data = parseDomain(accessRoleSchema, args) as any
+    this.data = parseDomain(accessRoleSchema, args)
   }
 
   get id() { return this.data.id }

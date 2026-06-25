@@ -209,6 +209,7 @@ export const coreCommands = [
   command("send-account-invitation", "sendAccountInvitation", commandSchemas.sendAccountInvitationCommandSchema),
   command("resend-account-invitation", "resendAccountInvitation", commandSchemas.resendAccountInvitationCommandSchema),
   command("revoke-account-invitation", "revokeAccountInvitation", commandSchemas.revokeAccountInvitationCommandSchema),
+  command("accept-account-invitation", "acceptAccountInvitation", commandSchemas.acceptAccountInvitationCommandSchema, { serviceOnly: true }),
   command("assign-staff-to-class", "assignStaffToClass", commandSchemas.assignStaffToClassCommandSchema),
   command("assign-staff-to-class-subject", "assignStaffToClassSubject", commandSchemas.assignStaffToClassSubjectCommandSchema),
   command("assign-staff-to-session", "assignStaffToSession", commandSchemas.assignStaffToSessionCommandSchema),

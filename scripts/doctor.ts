@@ -8,7 +8,6 @@ const repoRoot = resolve(import.meta.dirname, '..')
 const expectedEnvExamples = [
   'apps/api/.env.example',
   'apps/webapp/.env.example',
-  'testing/integration-tests/.env.test.example',
   'testing/seeding/.env.example',
   'testing/seeding/.env.staging.example',
 ]

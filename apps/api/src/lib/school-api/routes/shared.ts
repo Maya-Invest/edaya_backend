@@ -11,12 +11,20 @@ export interface SchoolApiRoutePair<R extends RouteConfig = any> {
   handler: AppRouteHandler<R>;
 }
 
+type ValidatedRequest = Context<AppBindings>["req"] & {
+  valid: (target: "json" | "param") => unknown;
+};
+
+function validatedRequest(c: Context<AppBindings>): ValidatedRequest {
+  return c.req as ValidatedRequest;
+}
+
 export function validatedJson(c: Context<AppBindings>): unknown {
-  return (c.req as any).valid("json");
+  return validatedRequest(c).valid("json");
 }
 
 export function validatedParam(c: Context<AppBindings>): unknown {
-  return (c.req as any).valid("param");
+  return validatedRequest(c).valid("param");
 }
 
 const commandMessageSchema = createMessageObjectSchema();

@@ -306,8 +306,8 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back generated communications deliveries when a later recipient save fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await saveGuardian(app, { id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba' })
-    await saveGuardian(app, { id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba' })
+    await saveGuardian(app, { id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba', subjectId: 'subject:guardian-a' })
+    await saveGuardian(app, { id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba', subjectId: 'subject:guardian-b' })
     const publishedAt = new Date('2026-01-15T10:00:00Z')
     await saveAnnouncement(app, {
       id: 'announcement',

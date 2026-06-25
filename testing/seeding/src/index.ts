@@ -46,6 +46,8 @@ export type {
   RunDevSeedsResults,
 } from './run-dev-seeds'
 export { logDevSeedResults, parseDevSeedScope, runDevSeeds } from './run-dev-seeds'
+export type { IntegrationLightSchoolSeedResult, RunIntegrationLightSchoolSeedOptions } from './run-integration-light-school-seed'
+export { runIntegrationLightSchoolSeed } from './run-integration-light-school-seed'
 export { createInProcessSchedulingSeedPort } from './scheduling/in-process'
 export type { SchedulingSeedPort } from './scheduling/port'
 export { createInProcessSchoolLifeSeedPort } from './school-life/in-process'

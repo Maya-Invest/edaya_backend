@@ -42,9 +42,6 @@ export {
 export {
   countSeedGuardians,
   countSeedStudents,
-  SEED_TARGET_STUDENT_COUNT,
-} from './dataset'
-export {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
@@ -75,6 +72,7 @@ export {
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
+  SEED_TARGET_STUDENT_COUNT,
   seedPeriodIdForDate,
   splitDisplayName,
 } from './dataset'
@@ -113,6 +111,12 @@ export {
   SEED_HOMEWORK_ASSIGNMENTS,
   SEED_HOMEWORK_SUBMISSIONS,
 } from './homework-seed'
+export {
+  INTEGRATION_LIGHT_AUTH_GUARDIAN_ACCOUNTS,
+  INTEGRATION_LIGHT_GUARDIAN_IDS,
+  INTEGRATION_LIGHT_GUARDIANS,
+  INTEGRATION_LIGHT_STUDENTS,
+} from './integration-light-fixture'
 export {
   countSeedPopulationGuardians,
   countSeedPopulationStudents,

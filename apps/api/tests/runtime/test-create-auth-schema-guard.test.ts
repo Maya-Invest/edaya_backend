@@ -7,7 +7,7 @@ describe("createAuth schema guard", () => {
   it("keeps authSchema imported and passed to drizzleAdapter", () => {
     const sourcePath = join(
       dirname(fileURLToPath(import.meta.url)),
-      "../../src/runtime/shared/create-auth.ts",
+      "../../src/runtime/shared/build-better-auth-config.ts",
     );
     const source = readFileSync(sourcePath, "utf8");
 

@@ -51,9 +51,9 @@ describe('notification template render', () => {
           templates: legacy,
           createdAt: new Date(),
           updatedAt: new Date(),
-        }),
+        } as SchoolNotificationTemplates),
       },
-    })
+    } as any)
 
     const rendered = await service.render({
       schoolId: 'school-1',
@@ -100,12 +100,12 @@ describe('seedSchoolNotificationTemplates', () => {
           templates: legacy,
           createdAt: new Date('2026-01-01T00:00:00Z'),
           updatedAt: new Date('2026-01-01T00:00:00Z'),
-        }),
+        } as SchoolNotificationTemplates),
         save: async (entity: SchoolNotificationTemplates) => {
           saved.push(entity)
         },
       },
-    }
+    } as any
 
     await seedSchoolNotificationTemplates(repositories, 'school-1')
 

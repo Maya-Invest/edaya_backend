@@ -8,10 +8,30 @@ import {
 const AUTH_REQUEST_PAUSE_MS = 250
 const STAGING_AUTH_REQUEST_PAUSE_MS = 750
 
-async function pauseBetweenAuthRequests(baseUrl?: string): Promise<void> {
-  const delayMs = baseUrl?.includes('api-staging.')
+export interface RunDevAuthProvisionOptions {
+  /** Remote API origin — enables throttling for HTTP/staging auth provision. */
+  baseUrl?: string
+  /** Override delay between ensureUser calls. Defaults to 0 in-process, 250ms remote, 750ms staging. */
+  pauseBetweenRequestsMs?: number
+}
+
+function resolveAuthRequestPauseMs(options: RunDevAuthProvisionOptions): number {
+  if (options.pauseBetweenRequestsMs !== undefined) {
+    return options.pauseBetweenRequestsMs
+  }
+  if (!options.baseUrl) {
+    return 0
+  }
+  return options.baseUrl.includes('api-staging.')
     ? STAGING_AUTH_REQUEST_PAUSE_MS
     : AUTH_REQUEST_PAUSE_MS
+}
+
+async function pauseBetweenAuthRequests(options: RunDevAuthProvisionOptions): Promise<void> {
+  const delayMs = resolveAuthRequestPauseMs(options)
+  if (delayMs === 0) {
+    return
+  }
   await new Promise(resolve => setTimeout(resolve, delayMs))
 }
 
@@ -20,10 +40,9 @@ export type DevAuthProvisionResult
 
 export async function runDevAuthProvision(
   auth: AuthProvisioner,
-  options: { baseUrl?: string } = {},
+  options: RunDevAuthProvisionOptions = {},
 ): Promise<DevAuthProvisionResult> {
   const accounts: DevAuthProvisionResult['accounts'] = []
-  const { baseUrl } = options
 
   for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
     const { subjectId } = await auth.ensureUser({
@@ -36,7 +55,7 @@ export async function runDevAuthProvision(
       subjectId,
       kind: 'staff',
     })
-    await pauseBetweenAuthRequests(baseUrl)
+    await pauseBetweenAuthRequests(options)
   }
 
   for (const account of DEV_AUTH_GUARDIAN_ACCOUNTS) {
@@ -50,7 +69,7 @@ export async function runDevAuthProvision(
       subjectId,
       kind: 'guardian',
     })
-    await pauseBetweenAuthRequests(baseUrl)
+    await pauseBetweenAuthRequests(options)
   }
 
   return {

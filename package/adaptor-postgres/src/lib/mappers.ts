@@ -33,9 +33,12 @@ export function createDefaultMappers<T extends { readonly id: string }>(
   return {
     toRow: (entity: T): any => {
       const row: any = {}
-      const dataSource = (entity && typeof entity === 'object' && 'data' in entity && entity.data && typeof entity.data === 'object') ? entity.data : entity
+      const dataSource: Record<string, unknown>
+        = (entity && typeof entity === 'object' && 'data' in entity && entity.data && typeof entity.data === 'object')
+          ? entity.data as Record<string, unknown>
+          : entity as Record<string, unknown>
       for (const key of Object.keys(dataSource)) {
-        const val = (dataSource as any)[key]
+        const val = dataSource[key]
         row[key] = val === undefined ? null : val
       }
       return row

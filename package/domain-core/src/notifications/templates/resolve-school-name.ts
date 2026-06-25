@@ -4,7 +4,7 @@ export async function resolveSchoolName(
   repositories: Partial<Pick<SchoolRepositories, 'schools'>>,
   schoolId: string,
 ): Promise<string> {
-  if (!repositories.schools) {
+  if (!repositories.schools?.findById) {
     return schoolId
   }
   const school = await repositories.schools.findById(schoolId)

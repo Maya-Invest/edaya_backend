@@ -83,8 +83,8 @@ export function buildSessionDetail(input: {
 	);
 	const logbookRaw = classSubjectId
 		? logSources.classLogbookEntriesRaw.find(entry =>
-			entry.classSubjectId === classSubjectId && formatDate(entry.date) === date,
-		)
+				entry.classSubjectId === classSubjectId && formatDate(entry.date) === date,
+			)
 		: undefined;
 
 	return {

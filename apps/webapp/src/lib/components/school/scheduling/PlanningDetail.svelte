@@ -124,65 +124,65 @@
 		{#if sessionLoading}
 			<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>
 		{:else}
-		<div class="space-y-4">
-			<div class="rounded-xl bg-secondary/40 px-4 py-3 text-sm">
-				<span class="text-muted-foreground">{$t('planning.session.attendanceSummary')} :</span>
-				{recordedCount} / {attendanceRows.length}
-			</div>
-			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-				{$t('students.student')}
-			</Label>
-			{#if attendanceRows.length === 0}
-				<DrawerEmptyState label={$t('planning.session.noStudents')}>
-					{#snippet icon()}
-						<ClipboardCheck class="h-5 w-5 text-muted-foreground" />
-					{/snippet}
-				</DrawerEmptyState>
-			{:else}
-				<ul class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-					{#each attendanceRows as row (row.studentId)}
-						<li class="border-b border-border px-4 py-3 last:border-b-0">
-							<div class="flex items-center justify-between gap-3">
-								<div class="flex items-center gap-3">
-									<div
-										class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-xs font-semibold text-primary-foreground"
-									>
-										{row.studentInitials}
-									</div>
-									<p class="text-sm font-medium">{row.studentName}</p>
-								</div>
-								<div class="flex items-center gap-2">
-									{#if row.status}
-										<span
-											class={cn(
-												'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
-												statusTone[row.status],
-											)}
+			<div class="space-y-4">
+				<div class="rounded-xl bg-secondary/40 px-4 py-3 text-sm">
+					<span class="text-muted-foreground">{$t('planning.session.attendanceSummary')} :</span>
+					{recordedCount} / {attendanceRows.length}
+				</div>
+				<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+					{$t('students.student')}
+				</Label>
+				{#if attendanceRows.length === 0}
+					<DrawerEmptyState label={$t('planning.session.noStudents')}>
+						{#snippet icon()}
+							<ClipboardCheck class="h-5 w-5 text-muted-foreground" />
+						{/snippet}
+					</DrawerEmptyState>
+				{:else}
+					<ul class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+						{#each attendanceRows as row (row.studentId)}
+							<li class="border-b border-border px-4 py-3 last:border-b-0">
+								<div class="flex items-center justify-between gap-3">
+									<div class="flex items-center gap-3">
+										<div
+											class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-xs font-semibold text-primary-foreground"
 										>
-											{$t(`attendance.${row.status}`)}
-										</span>
-									{:else}
-										<span class="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">
-											{$t('planning.session.notRecorded')}
-										</span>
-									{/if}
-									<PermissionGate
-										permission="ATTENDANCE_RECORD"
-										classId={s.classId}
-										mode="disable"
-										tooltip="Droit ATTENDANCE_RECORD requis."
-									>
-										{#snippet children({ disabled, title })}
-											<PlanningSessionAttendanceModal sessionId={s.id} {row} {disabled} {title} />
-										{/snippet}
-									</PermissionGate>
+											{row.studentInitials}
+										</div>
+										<p class="text-sm font-medium">{row.studentName}</p>
+									</div>
+									<div class="flex items-center gap-2">
+										{#if row.status}
+											<span
+												class={cn(
+													'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+													statusTone[row.status],
+												)}
+											>
+												{$t(`attendance.${row.status}`)}
+											</span>
+										{:else}
+											<span class="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">
+												{$t('planning.session.notRecorded')}
+											</span>
+										{/if}
+										<PermissionGate
+											permission="ATTENDANCE_RECORD"
+											classId={s.classId}
+											mode="disable"
+											tooltip="Droit ATTENDANCE_RECORD requis."
+										>
+											{#snippet children({ disabled, title })}
+												<PlanningSessionAttendanceModal sessionId={s.id} {row} {disabled} {title} />
+											{/snippet}
+										</PermissionGate>
+									</div>
 								</div>
-							</div>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</div>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
 		{/if}
 	{:else if sessionLoading}
 		<p class="text-sm text-muted-foreground">{$t('dataState.loading')}</p>

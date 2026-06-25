@@ -1,8 +1,8 @@
+import type { Student } from '$lib/types/school';
+import { buildSessionDetail, buildSessionSubjectMatters } from '$lib/api/session-detail-data';
 import { staffMember, subject } from '$lib/test/openapi-fixtures';
 import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures';
 import { describe, expect, it } from 'bun:test';
-import { buildSessionDetail, buildSessionSubjectMatters } from '$lib/api/session-detail-data';
-import type { Student } from '$lib/types/school';
 
 const students: Student[] = [{
 	id: 'stu-1',

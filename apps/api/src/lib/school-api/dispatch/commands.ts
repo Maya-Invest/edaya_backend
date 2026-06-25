@@ -38,14 +38,14 @@ export function serializeCommandResult(result: unknown): unknown {
   }
 
   if ("invitation" in result && "token" in result) {
-    const invitation = result.invitation
+    const invitation = result.invitation;
     const publicInvitation = invitation instanceof Object
       && invitation !== null
       && "data" in invitation
       && invitation.data
       && typeof invitation.data === "object"
       ? toPublicAccountInvitationData(invitation.data as AccountInvitationData)
-      : invitation
+      : invitation;
 
     return {
       invitation: publicInvitation,

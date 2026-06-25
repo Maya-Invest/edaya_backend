@@ -1,4 +1,4 @@
-import type { DevSchoolSeedResult } from '@edaya/seeding'
+import type { DevSchoolSeedResult, IntegrationLightSchoolSeedResult } from '@edaya/seeding'
 import type { Hono } from 'hono'
 import type { AuthenticatedRouteContext } from './api-route-harness'
 import type { AppBindings } from '@/http/types'
@@ -15,6 +15,7 @@ import {
   runDevAccessSeed,
   runDevAuthLinkWithPort,
   runDevSchoolSeed,
+  runIntegrationLightSchoolSeed,
 } from '@edaya/seeding'
 import { afterAll, beforeAll, describe } from 'bun:test'
 import { apiPgliteEnv } from './api-pglite-env'
@@ -26,13 +27,27 @@ import {
   resetCoreRouteTestHarness,
 } from './api-route-harness'
 
+export type IntegrationFixtureKind = 'light' | 'full'
+
+type FullSchoolSeedResult = DevSchoolSeedResult & { status: 'seeded' }
+type LightSchoolSeedResult = IntegrationLightSchoolSeedResult & { status: 'seeded' }
+
 export interface SeededSchoolDataContext {
   runtime: ApiRuntime
   application: ApiSchoolApplication
-  seedResult: DevSchoolSeedResult & { status: 'seeded' }
+  seedResult: FullSchoolSeedResult
 }
 
-export interface SeededRouteTestContext extends SeededSchoolDataContext {
+export interface LightSchoolDataContext {
+  runtime: ApiRuntime
+  application: ApiSchoolApplication
+  seedResult: LightSchoolSeedResult
+}
+
+export interface SeededRouteTestContext {
+  runtime: ApiRuntime
+  application: ApiSchoolApplication
+  seedResult: FullSchoolSeedResult | LightSchoolSeedResult
   app: Hono<AppBindings>
   authHeaders: (email?: string) => Promise<Record<string, string>>
 }
@@ -53,42 +68,59 @@ export function unwrapEntityList<T>(values: unknown): T[] {
 export interface SeededFixtureOptions {
   /** Fresh PGlite + seed per suite. Use when tests mutate school data. */
   isolate?: boolean
+  /** `light` for route/auth tests; `full` for dev seed verification suites. */
+  fixture?: IntegrationFixtureKind
 }
 
-let sharedSchoolDataContext: SeededSchoolDataContext | undefined
-let sharedSchoolDataPromise: Promise<SeededSchoolDataContext> | undefined
-let sharedRouteContext: SeededRouteTestContext | undefined
-let sharedRoutePromise: Promise<SeededRouteTestContext> | undefined
+const sharedContexts = new Map<IntegrationFixtureKind, {
+  schoolData?: SeededSchoolDataContext | LightSchoolDataContext
+  schoolDataPromise?: Promise<SeededSchoolDataContext | LightSchoolDataContext>
+  route?: SeededRouteTestContext
+  routePromise?: Promise<SeededRouteTestContext>
+}>()
 
-async function resolveSharedSchoolDataContext(): Promise<SeededSchoolDataContext> {
-  if (sharedSchoolDataContext) {
-    return sharedSchoolDataContext
+function getSharedBucket(fixture: IntegrationFixtureKind) {
+  let bucket = sharedContexts.get(fixture)
+  if (!bucket) {
+    bucket = {}
+    sharedContexts.set(fixture, bucket)
   }
-
-  sharedSchoolDataPromise ??= provisionSeededSchoolDataContext()
-  sharedSchoolDataContext = await sharedSchoolDataPromise
-  return sharedSchoolDataContext
+  return bucket
 }
 
-async function resolveSharedRouteContext(): Promise<SeededRouteTestContext> {
-  if (sharedRouteContext) {
-    return sharedRouteContext
+async function resolveSharedSchoolDataContext(
+  fixture: IntegrationFixtureKind,
+): Promise<SeededSchoolDataContext | LightSchoolDataContext> {
+  const bucket = getSharedBucket(fixture)
+  if (bucket.schoolData) {
+    return bucket.schoolData
   }
 
-  sharedRoutePromise ??= provisionSeededRouteTestContext()
-  sharedRouteContext = await sharedRoutePromise
-  return sharedRouteContext
+  bucket.schoolDataPromise ??= provisionSeededSchoolDataContext(fixture)
+  bucket.schoolData = await bucket.schoolDataPromise
+  return bucket.schoolData
+}
+
+async function resolveSharedRouteContext(
+  fixture: IntegrationFixtureKind,
+): Promise<SeededRouteTestContext> {
+  const bucket = getSharedBucket(fixture)
+  if (bucket.route) {
+    return bucket.route
+  }
+
+  bucket.routePromise ??= provisionSeededRouteTestContext(fixture)
+  bucket.route = await bucket.routePromise
+  return bucket.route
 }
 
 /** Tear down shared fixtures once per test run (registered from bootstrap preload). */
 export async function releaseSharedSeededFixtures(): Promise<void> {
-  const runtimes = [sharedRouteContext?.runtime, sharedSchoolDataContext?.runtime]
+  const runtimes = [...sharedContexts.values()]
+    .flatMap(bucket => [bucket.route?.runtime, bucket.schoolData?.runtime])
     .filter((runtime): runtime is ApiRuntime => runtime !== undefined)
 
-  sharedRouteContext = undefined
-  sharedRoutePromise = undefined
-  sharedSchoolDataContext = undefined
-  sharedSchoolDataPromise = undefined
+  sharedContexts.clear()
 
   for (const runtime of runtimes) {
     await runtime.close()
@@ -97,9 +129,22 @@ export async function releaseSharedSeededFixtures(): Promise<void> {
   await resetCoreRouteTestHarness()
 }
 
-export async function provisionSeededSchoolDataContext(): Promise<SeededSchoolDataContext> {
+async function seedSchoolFixture(
+  application: ApiSchoolApplication,
+  fixture: IntegrationFixtureKind,
+) {
+  if (fixture === 'light') {
+    return runIntegrationLightSchoolSeed(application)
+  }
+
+  return runDevSchoolSeed(application)
+}
+
+export async function provisionSeededSchoolDataContext(
+  fixture: IntegrationFixtureKind = 'full',
+): Promise<SeededSchoolDataContext | LightSchoolDataContext> {
   const { runtime, application } = await createCoreRouteTestApp({ autoCleanup: false })
-  const seedResult = await runDevSchoolSeed(application)
+  const seedResult = await seedSchoolFixture(application, fixture)
   if (seedResult.status !== 'seeded') {
     throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
   }
@@ -107,17 +152,22 @@ export async function provisionSeededSchoolDataContext(): Promise<SeededSchoolDa
   return { runtime, application, seedResult }
 }
 
-export async function provisionSeededRouteTestContext(): Promise<SeededRouteTestContext> {
+export async function provisionSeededRouteTestContext(
+  fixture: IntegrationFixtureKind = 'full',
+): Promise<SeededRouteTestContext> {
   const routeContext = await createCoreRouteTestApp({ autoCleanup: false })
   const { app, runtime, application } = routeContext
-  const seedResult = await runDevSchoolSeed(application)
+  const seedResult = await seedSchoolFixture(application, fixture)
   if (seedResult.status !== 'seeded') {
     throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
   }
 
   const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
   await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth)
-  await runDevAccessSeed(application)
+  await runDevAccessSeed(application, {
+    auth,
+    includeClassSubjectStaffAssignments: fixture === 'full',
+  })
 
   return {
     app,
@@ -139,19 +189,20 @@ export async function provisionSeededRouteTestContext(): Promise<SeededRouteTest
   }
 }
 
-export function describeWithSeededSchoolData(
+function describeWithFixture(
   name: string,
-  suite: (getContext: () => SeededSchoolDataContext) => void,
+  fixture: IntegrationFixtureKind,
+  suite: (getContext: () => SeededRouteTestContext) => void,
   options: SeededFixtureOptions = {},
 ): void {
   describe(name, () => {
-    let context: SeededSchoolDataContext
+    let context: SeededRouteTestContext
 
     beforeAll(async () => {
       context = options.isolate
-        ? await provisionSeededSchoolDataContext()
-        : await resolveSharedSchoolDataContext()
-    }, 60_000)
+        ? await provisionSeededRouteTestContext(fixture)
+        : await resolveSharedRouteContext(fixture)
+    }, fixture === 'light' ? 60_000 : 90_000)
 
     afterAll(async () => {
       if (!options.isolate) {
@@ -168,19 +219,20 @@ export function describeWithSeededSchoolData(
   })
 }
 
-export function describeWithSeededSchool(
+function describeWithSchoolDataFixture(
   name: string,
-  suite: (getContext: () => SeededRouteTestContext) => void,
+  fixture: IntegrationFixtureKind,
+  suite: (getContext: () => SeededSchoolDataContext | LightSchoolDataContext) => void,
   options: SeededFixtureOptions = {},
 ): void {
   describe(name, () => {
-    let context: SeededRouteTestContext
+    let context: SeededSchoolDataContext | LightSchoolDataContext
 
     beforeAll(async () => {
       context = options.isolate
-        ? await provisionSeededRouteTestContext()
-        : await resolveSharedRouteContext()
-    }, 90_000)
+        ? await provisionSeededSchoolDataContext(fixture)
+        : await resolveSharedSchoolDataContext(fixture)
+    }, fixture === 'light' ? 45_000 : 60_000)
 
     afterAll(async () => {
       if (!options.isolate) {
@@ -195,6 +247,40 @@ export function describeWithSeededSchool(
 
     suite(() => context)
   })
+}
+
+/** Full dev school fixture — use for seed verification suites. */
+export function describeWithSeededSchool(
+  name: string,
+  suite: (getContext: () => SeededRouteTestContext & { seedResult: FullSchoolSeedResult }) => void,
+  options: Omit<SeededFixtureOptions, 'fixture'> = {},
+): void {
+  describeWithFixture(name, 'full', suite as (getContext: () => SeededRouteTestContext) => void, options)
+}
+
+/** Light school fixture — structure, auth-linked people, and access roles only. */
+export function describeWithLightSchool(
+  name: string,
+  suite: (getContext: () => SeededRouteTestContext) => void,
+  options: Omit<SeededFixtureOptions, 'fixture'> = {},
+): void {
+  describeWithFixture(name, 'light', suite, options)
+}
+
+export function describeWithSeededSchoolData(
+  name: string,
+  suite: (getContext: () => SeededSchoolDataContext) => void,
+  options: Omit<SeededFixtureOptions, 'fixture'> = {},
+): void {
+  describeWithSchoolDataFixture(name, 'full', getContext => suite(() => getContext() as SeededSchoolDataContext), options)
+}
+
+export function describeWithLightSchoolData(
+  name: string,
+  suite: (getContext: () => LightSchoolDataContext) => void,
+  options: Omit<SeededFixtureOptions, 'fixture'> = {},
+): void {
+  describeWithSchoolDataFixture(name, 'light', getContext => suite(() => getContext() as LightSchoolDataContext), options)
 }
 
 export function describeWithSharedRouteApp(

@@ -36,7 +36,8 @@ export function createAuthContactResolver(db: AuthDatabase): AuthContactResolver
         .where(eq(user.id, subjectId))
         .limit(1);
 
-      const email = rows[0]?.email?.trim();
+      const rawEmail = rows[0]?.email;
+      const email = typeof rawEmail === "string" ? rawEmail.trim() : undefined;
       return email ? { email } : undefined;
     },
     hasAccountForEmail: (email: string) => authAccountExistsForEmail(db, email),

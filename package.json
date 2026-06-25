@@ -28,7 +28,6 @@
     "quality": "turbo run quality",
     "test:repo": "bun test ./scripts/check-import-boundaries.ts ./scripts/generated-artifacts.ts --dots",
     "test": "bun run test:repo && turbo run test",
-    "test:remote": "echo 'Remote Neon integration tests are disabled; use: bun --filter @edaya/integration-tests test' && exit 0",
     "test:coverage": "turbo run test -- --coverage",
     "lint": "eslint scripts && turbo run lint",
     "lint:fix": "eslint scripts --fix && turbo run lint:fix",

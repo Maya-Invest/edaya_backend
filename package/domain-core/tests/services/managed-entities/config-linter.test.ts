@@ -22,6 +22,8 @@ const indirectParentGateExceptions = new Set([
 ])
 
 const directDeleteGateExceptions = new Set([
+  'access/account-invitation.ts',
+  'messaging/school-notification-templates.ts',
   'school/grade-scale.ts',
   'school/school.ts',
 ])

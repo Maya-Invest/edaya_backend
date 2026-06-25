@@ -1,10 +1,11 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { AuthSessionProvider, SessionActorBindings } from './session-actor-harness'
+import type { BetterAuthEnv } from '@/runtime/shared/build-better-auth-config'
 import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
 } from '@edaya/adaptor-postgres'
-import { authSchema, runMigrations as runAuthMigrations } from '@edaya/betterauth-d1-migrations'
+import { runMigrations as runAuthMigrations } from '@edaya/betterauth-d1-migrations'
 import {
   createRepositoryAuthorizationPolicy,
   noOpNotificationGateway,
@@ -14,26 +15,23 @@ import {
 } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
-import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { Database } from 'bun:sqlite'
 import { sql } from 'drizzle-orm'
 import { drizzle as drizzleBunSqlite } from 'drizzle-orm/bun-sqlite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { Hono } from 'hono'
+import { buildBetterAuthConfig } from '@/runtime/shared/build-better-auth-config'
 import {
   createSessionActorMiddleware,
 } from './session-actor-harness'
 
-export interface AuthTestEnv {
-  BETTER_AUTH_SECRET: string
-  BETTER_AUTH_URL: string
-  LOG_LEVEL?: string
-}
+export type AuthTestEnv = BetterAuthEnv
 
 export const PG_LITE_AUTH_ENV: AuthTestEnv = {
   BETTER_AUTH_SECRET: 'super-secret-placeholder-key-for-local-testing',
   BETTER_AUTH_URL: 'http://localhost:9999',
   LOG_LEVEL: 'silent',
+  NODE_ENV: 'test',
 }
 
 export interface AuthService {
@@ -56,17 +54,9 @@ export interface AuthIntegrationContext {
 }
 
 function createAuth(db: unknown, env: AuthTestEnv): AuthService {
+  const config = buildBetterAuthConfig(db, env)
   return betterAuth({
-    database: drizzleAdapter(db as never, {
-      provider: 'sqlite',
-      schema: authSchema,
-    }),
-    secret: env.BETTER_AUTH_SECRET,
-    baseURL: env.BETTER_AUTH_URL,
-    basePath: '/auth',
-    emailAndPassword: {
-      enabled: true,
-    },
+    ...config,
     ...(env.LOG_LEVEL === 'silent' ? { logger: { disabled: true } } : {}),
   }) as AuthService
 }
@@ -221,6 +211,37 @@ export async function signInEmail(
   input: { email: string, password: string },
 ): Promise<Response> {
   return auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-in/email`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  }))
+}
+
+export async function sendSignInOtp(
+  auth: AuthService,
+  env: AuthTestEnv,
+  email: string,
+): Promise<Response> {
+  return auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/email-otp/send-verification-otp`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      type: 'sign-in',
+    }),
+  }))
+}
+
+export async function signInEmailOtp(
+  auth: AuthService,
+  env: AuthTestEnv,
+  input: { email: string, otp: string },
+): Promise<Response> {
+  return auth.handler(new Request(`${env.BETTER_AUTH_URL}/auth/sign-in/email-otp`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

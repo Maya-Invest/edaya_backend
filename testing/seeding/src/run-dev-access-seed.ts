@@ -239,6 +239,8 @@ export interface RunDevAccessSeedOptions {
   assignmentsPort?: AccessSeedPort
   /** Runs immediately before staff/class assignment writes (e.g. refresh owner session). */
   beforeAssignments?: () => Promise<void>
+  /** When false, skip class-subject teacher assignments (integration light fixture). */
+  includeClassSubjectStaffAssignments?: boolean
 }
 
 /** Access roles only — used before service-account provisioning in HTTP bootstrap. */
@@ -284,20 +286,24 @@ export async function runDevAccessAssignmentsSeedWithPort(
     await port.saveStaffAssignment(assignment)
   }
 
-  for (const offering of SEED_CLASS_SUBJECTS) {
-    await port.saveStaffAssignment({
-      id: `sa-${offering.teacherId}-${offering.id}`,
-      staffId: offering.teacherId,
-      responsibility: 'Teacher',
-      classSubjectId: offering.id,
-    })
+  let classSubjectStaffAssignments = 0
+  if (options?.includeClassSubjectStaffAssignments !== false) {
+    for (const offering of SEED_CLASS_SUBJECTS) {
+      await port.saveStaffAssignment({
+        id: `sa-${offering.teacherId}-${offering.id}`,
+        staffId: offering.teacherId,
+        responsibility: 'Teacher',
+        classSubjectId: offering.id,
+      })
+      classSubjectStaffAssignments += 1
+    }
   }
 
   return {
     status: 'seeded',
     roles: ACCESS_ROLE_RECORDS.length,
     assignments: STAFF_ROLE_ASSIGNMENT_RECORDS.length,
-    staffAssignments: BASE_STAFF_ASSIGNMENT_RECORDS.length + SEED_CLASS_SUBJECTS.length,
+    staffAssignments: BASE_STAFF_ASSIGNMENT_RECORDS.length + classSubjectStaffAssignments,
   }
 }
 

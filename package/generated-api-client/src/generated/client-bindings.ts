@@ -335,6 +335,11 @@ export const clientBindings = {
       "requestSchemaName": "RevokeAccountInvitationCommand",
       "responseSchemaName": "AccountInvitation"
     },
+    "acceptAccountInvitation": {
+      "publicName": "accept-account-invitation",
+      "requestSchemaName": "AcceptAccountInvitationCommand",
+      "responseSchemaName": "AcceptAccountInvitationResponse"
+    },
     "assignStaffToClass": {
       "publicName": "assign-staff-to-class",
       "requestSchemaName": "AssignStaffToClassCommand",

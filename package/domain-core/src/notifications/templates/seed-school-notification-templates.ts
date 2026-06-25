@@ -1,8 +1,8 @@
 import type { SchoolRepositories } from '../../ports'
 import { SchoolNotificationTemplates } from '../../domains/messaging/school-notification-templates'
 import { buildDefaultNotificationTemplateDocument } from './defaults/manifest'
-import { mergeSchoolNotificationTemplateDocument } from './merge-school-notification-templates'
 import { NOTIFICATION_TEMPLATE_KEYS } from './keys'
+import { mergeSchoolNotificationTemplateDocument } from './merge-school-notification-templates'
 
 function isMissingTemplateKeys(
   templates: SchoolNotificationTemplates['templates'],

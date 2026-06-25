@@ -259,6 +259,7 @@ export function createReportCardContext({
       findById: mock(async () => ({
         id: 'stu1',
         schoolId: 'sch1',
+        subjectId: 'subject-stu1',
         firstName: 'Ada',
         lastName: 'Lovelace',
         status: StudentStatus.Active,
@@ -269,7 +270,7 @@ export function createReportCardContext({
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
         if (filter.studentId === 'stu1') {
-          return [{ studentId: 'stu1', guardianId: 'gua1', receivesAcademicReports: true }]
+          return [{ schoolId: 'sch1', studentId: 'stu1', guardianId: 'gua1', receivesAcademicReports: true }]
         }
         return []
       }),
@@ -278,6 +279,7 @@ export function createReportCardContext({
       findById: mock(async id => ({
         id,
         schoolId: 'sch1',
+        subjectId: 'subject-gua1',
         firstName: 'Grace',
         lastName: 'Hopper',
         contactMethods: [],

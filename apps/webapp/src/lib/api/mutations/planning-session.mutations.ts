@@ -2,8 +2,8 @@ import type { SessionAttendanceStatus, SessionLogbook } from '$lib/types/session
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { authSession } from '$lib/auth/session.svelte';
-import { sessionDetailContext } from '$lib/session-detail/context.svelte';
 import { t } from '$lib/i18n';
+import { sessionDetailContext } from '$lib/session-detail/context.svelte';
 import { get } from 'svelte/store';
 
 function schoolId(): string {
@@ -19,8 +19,7 @@ export async function recordSessionStudentAttendanceMutation(input: {
 }): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const id = input.attendanceId ?? `${input.studentId}-${input.sessionId}`;
-	const previous = sessionDetailContext.get(input.sessionId)?.attendance
-		.find(row => row.studentId === input.studentId);
+	const previous = sessionDetailContext.get(input.sessionId)?.attendance.find(row => row.studentId === input.studentId);
 
 	const result = await runMutation(() => client.commands.recordAttendance({
 		id,

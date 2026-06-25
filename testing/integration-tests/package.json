@@ -9,7 +9,6 @@
     "test": "INTEGRATION_TEST_FAST=1 bun test --parallel=1",
     "test:invitation-link": "INTEGRATION_TEST_FAST=1 bun test src/routes/test-account-invitation-link.integration.test.ts --parallel=1",
     "test:full": "bun test --parallel=1",
-    "test:remote": "bun ./scripts/run-tests.ts",
     "smoke:staging": "bun ./scripts/smoke-staging.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
@@ -28,7 +27,6 @@
     "dotenv-expand": "^11.0.7",
     "drizzle-orm": "^0.39.0",
     "hono": "^4.7.9",
-    "postgres": "^3.4.4",
     "zod": "^3.24.4"
   }
 }

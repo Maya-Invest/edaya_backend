@@ -7,6 +7,7 @@ import {
 } from '@edaya/dev-fixtures'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
+import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/auth-otp-mailer'
 import {
   collectSetCookieHeaders,
   countAccountRowsForUser,
@@ -17,7 +18,9 @@ import {
   findUserByEmail,
   linkStaffMemberToAuthUser,
   mountEffectiveGrantsRoute,
+  sendSignInOtp,
   signInEmail,
+  signInEmailOtp,
   signUpEmail,
 } from './support/better-auth-harness'
 
@@ -25,6 +28,7 @@ describe('Better Auth session integration', () => {
   const contexts: Array<Awaited<ReturnType<typeof createAuthIntegrationContext>>> = []
 
   afterEach(async () => {
+    resetAuthOtpMailerForTests()
     while (contexts.length > 0) {
       const context = contexts.pop()
       if (context) {
@@ -76,6 +80,27 @@ describe('Better Auth session integration', () => {
       password: DEV_AUTH_PASSWORD,
     })
 
+    expect(signInResponse.status).toBe(200)
+    expect(collectSetCookieHeaders(signInResponse).length).toBeGreaterThan(0)
+  }, 30_000)
+
+  it('sign-in with email OTP sets a session cookie', async () => {
+    const { auth, env } = await openContext()
+    const email = 'otp-user@school.edu'
+
+    await signUpEmail(auth, env, {
+      email,
+      password: DEV_AUTH_PASSWORD,
+      name: 'OTP User',
+    })
+
+    const sendOtpResponse = await sendSignInOtp(auth, env, email)
+    expect(sendOtpResponse.status).toBe(200)
+
+    const otp = getLastAuthOtpForTests(email)
+    expect(otp).toMatch(/^\d{6}$/)
+
+    const signInResponse = await signInEmailOtp(auth, env, { email, otp: otp! })
     expect(signInResponse.status).toBe(200)
     expect(collectSetCookieHeaders(signInResponse).length).toBeGreaterThan(0)
   }, 30_000)

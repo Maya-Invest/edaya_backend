@@ -141,8 +141,11 @@ export function resolveAuditActorId(actor: ActorMetadata): string {
   return actor.kind === 'system' ? actor.systemId : actor.actorId
 }
 
-export function isInteractiveActor(actor: ActorMetadata): actor is InteractiveActorMetadata {
-  return actor.kind !== 'system'
+export function isInteractiveActor(actor: unknown): actor is InteractiveActorMetadata {
+  if (typeof actor !== 'object' || actor === null || !('kind' in actor)) {
+    return false
+  }
+  return actor.kind === 'staff' || actor.kind === 'guardian' || actor.kind === 'student'
 }
 
 function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<InteractiveActorContext, 'actorId' | 'kind'> {

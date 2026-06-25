@@ -1,3 +1,4 @@
+import type { Student } from '$lib/types/school';
 import { loadPeopleData } from '$lib/api/people-data';
 import { loadClassPlanning } from '$lib/api/planning-data';
 import { loadSessionDetail } from '$lib/api/session-detail-data';
@@ -6,7 +7,6 @@ import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 import { getClassSubjects } from '$lib/queries/subjects.queries';
 import { sessionDetailContext } from '$lib/session-detail/context.svelte';
-import type { Student } from '$lib/types/school';
 
 export function sessionDetailIdFromUrl(url: URL): string | undefined {
 	return url.pathname.match(/\/classes\/[^/]+\/timetable\/([^/]+)$/)?.[1];

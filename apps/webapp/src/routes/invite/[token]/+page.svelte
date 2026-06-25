@@ -2,10 +2,10 @@
 	import type { InvitationPreview } from '$lib/api/invitation-data';
 	import { page } from '$app/stores';
 	import { acceptInvitation, fetchInvitationPreview } from '$lib/api/invitation-data';
+	import { isExistingAccountAuthError } from '$lib/auth/auth-errors';
 	import { bootstrapSession, getAuthenticatedAuthUser } from '$lib/auth/bootstrap';
 	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authClient } from '$lib/auth/client';
-	import { isExistingAccountAuthError } from '$lib/auth/auth-errors';
 	import { authSession } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';

@@ -77,7 +77,7 @@ export class ReportCardResult {
   readonly sectionResults: readonly ReportCardResultSection[]
 
   constructor(args: ReportCardResultInput) {
-    this.data = parseDomain(reportCardResultSchema, args) as any
+    this.data = parseDomain(reportCardResultSchema, args)
     this.sectionResults = Object.freeze([...args.sectionResults])
   }
 

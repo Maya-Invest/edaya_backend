@@ -40,8 +40,8 @@ export function serializeActorAuthorization(actor: InteractiveActorMetadata): Se
 }
 
 export function requireInteractiveActor(actor: unknown): InteractiveActorMetadata | null {
-  if (!actor || typeof actor !== "object" || !isInteractiveActor(actor as any)) {
+  if (!isInteractiveActor(actor)) {
     return null;
   }
-  return actor as InteractiveActorMetadata;
+  return actor;
 }

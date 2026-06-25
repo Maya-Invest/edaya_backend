@@ -4,9 +4,9 @@ import {
 } from '@edaya/dev-fixtures'
 import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
-describeWithSeededSchool('better auth effective grants route', (getContext) => {
+describeWithLightSchool('better auth effective grants route', (getContext) => {
   it('returns effective grants after sign-in through the app router', async () => {
     const { app, application, authHeaders } = getContext()
     const cookies = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).cookie

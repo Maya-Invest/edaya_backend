@@ -98,7 +98,7 @@ export function buildWhereClause<T>(table: any, filter: Filter<T> | undefined): 
       continue
     }
 
-    conditions.push(...buildFieldConditions(column, (filter as any)[key]))
+    conditions.push(...buildFieldConditions(column, (filter as Record<string, unknown>)[key]))
   }
 
   if (conditions.length === 0) {

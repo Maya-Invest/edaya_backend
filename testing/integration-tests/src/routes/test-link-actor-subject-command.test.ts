@@ -11,11 +11,11 @@ import {
   grantAccessControlAssign,
   signUpAuthUser,
 } from '../support/api-route-harness'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
 const UNLINKED_STAFF_ID = 'st9'
 
-describeWithSeededSchool('link-actor-subject command route', (getContext) => {
+describeWithLightSchool('link-actor-subject command route', (getContext) => {
   it('links a staff member to a Better Auth subject through the command route', async () => {
     const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)

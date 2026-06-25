@@ -132,8 +132,8 @@ describe('SchoolService assessment workflows', () => {
       eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
     })
     expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1' },
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1' },
+      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1', subjectId: 'subject-stu1' },
+      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1', subjectId: 'subject-gua1' },
     ]))
   })
 
@@ -156,8 +156,8 @@ describe('SchoolService assessment workflows', () => {
       eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
     })
     expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1' },
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1' },
+      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1', subjectId: 'subject-stu1' },
+      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1', subjectId: 'subject-gua1' },
     ]))
   })
 

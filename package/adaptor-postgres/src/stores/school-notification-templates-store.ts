@@ -1,16 +1,30 @@
-import type { QueryOptions } from '@edaya/core'
-import type { SchoolNotificationTemplateDocument } from '@edaya/core'
+import type { QueryOptions, SchoolNotificationTemplateDocument } from '@edaya/core'
 import {
   buildDefaultNotificationTemplateDocument,
   mergeSchoolNotificationTemplateDocument,
   SchoolNotificationTemplates,
 } from '@edaya/core'
-import { eq, inArray } from 'drizzle-orm'
+import { asc, desc, eq, inArray } from 'drizzle-orm'
 import { buildWhereClause } from '../lib/filter'
 import * as schema from '../postgres-schema'
 import { PostgresStore } from '../postgres-store'
 
 type SchoolNotificationTemplatesRow = typeof schema.schoolNotificationTemplates.$inferSelect
+const orderableColumns = {
+  id: schema.schoolNotificationTemplates.id,
+  schoolId: schema.schoolNotificationTemplates.id,
+  createdAt: schema.schoolNotificationTemplates.createdAt,
+  updatedAt: schema.schoolNotificationTemplates.updatedAt,
+}
+type SchoolNotificationTemplatesColumnKey = keyof typeof orderableColumns
+
+function schoolNotificationTemplatesColumn(field: string) {
+  const column = orderableColumns[field as SchoolNotificationTemplatesColumnKey]
+  if (!column) {
+    throw new Error(`Unsupported school notification templates sort field: ${field}`)
+  }
+  return column
+}
 
 export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates> {
   constructor(db: unknown) {
@@ -52,7 +66,7 @@ export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<Scho
       .from(schema.schoolNotificationTemplates)
       .where(inArray(schema.schoolNotificationTemplates.id, [...ids]))
 
-    return Promise.all(rows.map(row => this.toDomainRow(row)))
+    return Promise.all(rows.map((row: SchoolNotificationTemplatesRow) => this.toDomainRow(row)))
   }
 
   override async list(options?: QueryOptions<SchoolNotificationTemplates>): Promise<SchoolNotificationTemplates[]> {
@@ -66,8 +80,8 @@ export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<Scho
 
       if (options.$orderBy && options.$orderBy.length > 0) {
         const orderByClauses = options.$orderBy.map(({ field, direction }) => {
-          const col = schema.schoolNotificationTemplates[field as keyof typeof schema.schoolNotificationTemplates]
-          return direction === 'asc' ? col.asc() : col.desc()
+          const col = schoolNotificationTemplatesColumn(field)
+          return direction === 'asc' ? asc(col) : desc(col)
         })
         query = query.orderBy(...orderByClauses)
       }
@@ -81,7 +95,7 @@ export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<Scho
     }
 
     const rows = await query
-    return Promise.all(rows.map(row => this.toDomainRow(row)))
+    return Promise.all(rows.map((row: SchoolNotificationTemplatesRow) => this.toDomainRow(row)))
   }
 
   private async toDomainRow(row: SchoolNotificationTemplatesRow): Promise<SchoolNotificationTemplates> {

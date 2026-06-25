@@ -35,10 +35,7 @@
 	const selectedMatter = $derived(subjectMatters.find(entry => entry.id === classSubjectMatterId));
 	const selectedMatterLabel = $derived(selectedMatter?.name ?? '');
 	const canSubmit = $derived(
-		classSubjectMatterId.length > 0
-			&& content.trim().length > 0
-			&& detail.classSubjectId.length > 0
-			&& subjectMatters.length > 0,
+		classSubjectMatterId.length > 0 && content.trim().length > 0	&& detail.classSubjectId.length > 0 && subjectMatters.length > 0,
 	);
 
 	function resolveInitialMatterId(): string {
@@ -57,9 +54,7 @@
 		objectivesText = detail.logbook?.objectives.join('\n') ?? '';
 		homework = detail.logbook?.homework ?? '';
 		progress = String(
-			detail.logbook?.progress
-			?? subjectMatters.find(entry => entry.id === classSubjectMatterId)?.completedPercentage
-			?? 0,
+			detail.logbook?.progress ?? subjectMatters.find(entry => entry.id === classSubjectMatterId)?.completedPercentage ?? 0,
 		);
 	}
 

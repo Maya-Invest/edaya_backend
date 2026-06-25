@@ -10,8 +10,8 @@
 	import { Mail } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
-	import DrawerField from '../shared/DrawerField.svelte';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import DrawerField from '../shared/DrawerField.svelte';
 	import StaffPermissionsList from './StaffPermissionsList.svelte';
 	import StaffProfileEditModal from './StaffProfileEditModal.svelte';
 

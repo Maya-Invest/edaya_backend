@@ -106,7 +106,7 @@ export function entitySaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceN
     const { actor, schoolApp } = resolveServices(c, entityConfig.serviceName);
     try {
       const entity = await executeEntitySave(actor, schoolApp!, entityConfig, validatedJson(c));
-      return c.json(entity as any, HttpStatusCodes.OK);
+      return c.json(entity, HttpStatusCodes.OK);
     }
     catch (err) {
       if (err instanceof EntityOperationError && err.code === "BAD_REQUEST") {

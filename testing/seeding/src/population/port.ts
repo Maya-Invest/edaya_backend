@@ -4,6 +4,7 @@ export interface StudentSeedRecord {
   firstName: string
   lastName: string
   birthDate?: string
+  subjectId?: string
   sendAccountInvitation?: boolean
 }
 
@@ -20,6 +21,7 @@ export interface GuardianSeedRecord {
   lastName: string
   email?: string
   phone?: string
+  subjectId?: string
   sendAccountInvitation?: boolean
 }
 

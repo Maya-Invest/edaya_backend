@@ -85,6 +85,20 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     token: z.string(),
   }).openapi("ResendAccountInvitationResponse"),
   revokeAccountInvitation: accountInvitationResponseSchema,
+  acceptAccountInvitation: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("staff"),
+      entity: staffMemberResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("guardian"),
+      entity: guardianResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("student"),
+      entity: studentResponseSchema,
+    }),
+  ]).openapi("AcceptAccountInvitationResponse"),
   assignStaffToClass: staffAssignmentResponseSchema,
   assignStaffToClassSubject: staffAssignmentResponseSchema,
   assignStaffToSession: staffAssignmentResponseSchema,
