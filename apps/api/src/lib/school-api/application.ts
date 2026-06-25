@@ -17,4 +17,8 @@ export class ApiSchoolApplication {
   forActor(actor: ActorMetadata): SchoolService {
     return this.application.forActor(actor);
   }
+
+  hasAuthAccountForEmail(email: string): Promise<boolean> {
+    return this.application.hasAuthAccountForEmail(email);
+  }
 }

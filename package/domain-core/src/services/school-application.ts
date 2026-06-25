@@ -19,4 +19,12 @@ export class SchoolApplication {
   forActor(actor: ActorMetadata): SchoolService {
     return new SchoolService({ ...this.args, actor })
   }
+
+  async hasAuthAccountForEmail(email: string): Promise<boolean> {
+    const resolver = this.args.authContactResolver
+    if (!resolver?.hasAccountForEmail) {
+      return false
+    }
+    return resolver.hasAccountForEmail(email)
+  }
 }

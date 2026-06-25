@@ -7,8 +7,10 @@ import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import {
   type AccountInvitation,
+  AccountInvitationContactChannel,
   AccountInvitationKind,
   AccountInvitationStatus,
+  type ActorMetadata,
   BusinessRuleViolationError,
   createSystemActorMetadata,
   type Guardian,
@@ -27,10 +29,13 @@ import { createMessageObjectSchema } from "stoker/openapi/schemas";
 const invitationPreviewResponseSchema = z.object({
   status: z.nativeEnum(AccountInvitationStatus),
   kind: z.nativeEnum(AccountInvitationKind),
+  targetId: z.string(),
   expiresAt: z.coerce.date(),
   schoolName: z.string(),
   inviteeName: z.string(),
   contactChannel: z.string(),
+  contactEmail: z.string().email().optional(),
+  authAccountExists: z.boolean().optional(),
 }).openapi("InvitationPreviewResponse");
 
 const acceptInvitationResponseSchema = z.discriminatedUnion("kind", [
@@ -105,6 +110,17 @@ async function resolveInviteeName(
   return student ? resolveInviteeDisplayName(student) : "Student";
 }
 
+function actorMatchesInvitationTarget(actor: ActorMetadata, invitation: AccountInvitation): boolean {
+  switch (invitation.kind) {
+    case AccountInvitationKind.Staff:
+      return actor.kind === "staff" && actor.staffMemberId === invitation.targetId;
+    case AccountInvitationKind.Guardian:
+      return actor.kind === "guardian" && actor.guardianId === invitation.targetId;
+    case AccountInvitationKind.Student:
+      return actor.kind === "student" && actor.studentId === invitation.targetId;
+  }
+}
+
 function createInvitationSystemService(
   schoolApp: ApiSchoolApplication,
   schoolId: string,
@@ -128,13 +144,25 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
   const school = await c.get("schoolApp").repositories.schools.findById(invitation.schoolId);
   const inviteeName = await resolveInviteeName(c.get("schoolApp").repositories, invitation);
 
+  let authAccountExists: boolean | undefined;
+  if (invitation.contactChannel === AccountInvitationContactChannel.Email && invitation.contactValue) {
+    authAccountExists = await c.get("schoolApp").hasAuthAccountForEmail(invitation.contactValue);
+  }
+
   return c.json({
     status: invitation.status,
     kind: invitation.kind,
+    targetId: invitation.targetId,
     expiresAt: invitation.expiresAt,
     schoolName: school?.name ?? "School",
     inviteeName,
     contactChannel: invitation.contactChannel,
+    ...(invitation.contactChannel === AccountInvitationContactChannel.Email
+      ? {
+          contactEmail: invitation.contactValue,
+          ...(authAccountExists !== undefined ? { authAccountExists } : {}),
+        }
+      : {}),
   }, HttpStatusCodes.OK);
 };
 
@@ -148,17 +176,18 @@ export const acceptInvitationHandler: AppRouteHandler<typeof acceptInvitationRou
     return unauthorizedResponse(c);
   }
 
-  if (c.get("actor")) {
-    return conflictResponse(c, new BusinessRuleViolationError(
-      "SUBJECT_ALREADY_LINKED",
-      "This account is already linked to a school actor",
-    ));
-  }
-
   const token = c.req.valid("param").token;
   const invitation = await findInvitationByToken(c.get("schoolApp").repositories, token);
   if (!invitation) {
     return c.json({ message: "Invitation not found" }, HttpStatusCodes.NOT_FOUND);
+  }
+
+  const actor = c.get("actor");
+  if (actor && !actorMatchesInvitationTarget(actor, invitation)) {
+    return conflictResponse(c, new BusinessRuleViolationError(
+      "SUBJECT_ALREADY_LINKED",
+      "This account is already linked to a school actor",
+    ));
   }
 
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();

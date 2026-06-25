@@ -3,17 +3,23 @@ import {
 	cachePendingInvitation,
 	clearPendingInvitation,
 } from '$lib/api/invitation-cache';
+import { buildInviteUrl } from '$lib/api/invitation-url';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 
 type InvitationKind = components['schemas']['SendAccountInvitationCommand']['kind'];
+
+export interface InvitationDeliveryResult {
+	invitationId: string;
+	inviteUrl: string;
+}
 
 export async function sendAccountInvitationMutation(input: {
 	kind: InvitationKind;
 	targetId: string;
 	contactValue?: string;
 	successMessage?: string;
-}): Promise<string | null> {
+}): Promise<InvitationDeliveryResult | null> {
 	const client = getBrowserSchoolClient();
 	const result = await runMutation(
 		() => client.commands.sendAccountInvitation({
@@ -25,12 +31,15 @@ export async function sendAccountInvitationMutation(input: {
 		{ successMessage: input.successMessage },
 	);
 
-	if (!result?.invitation?.id) {
+	if (!result?.invitation?.id || !result?.token) {
 		return null;
 	}
 
 	cachePendingInvitation(input.kind, input.targetId, result.invitation.id);
-	return result.invitation.id;
+	return {
+		invitationId: result.invitation.id,
+		inviteUrl: buildInviteUrl(result.token),
+	};
 }
 
 export async function resendAccountInvitationMutation(input: {
@@ -38,18 +47,22 @@ export async function resendAccountInvitationMutation(input: {
 	targetId: string;
 	invitationId: string;
 	successMessage?: string;
-}): Promise<boolean> {
+}): Promise<InvitationDeliveryResult | null> {
 	const client = getBrowserSchoolClient();
 	const result = await runMutation(
 		() => client.commands.resendAccountInvitation({ invitationId: input.invitationId }),
 		{ successMessage: input.successMessage },
 	);
 
-	if (result?.invitation?.id) {
-		cachePendingInvitation(input.kind, input.targetId, result.invitation.id);
-		return true;
+	if (!result?.invitation?.id || !result?.token) {
+		return null;
 	}
-	return result !== null;
+
+	cachePendingInvitation(input.kind, input.targetId, result.invitation.id);
+	return {
+		invitationId: result.invitation.id,
+		inviteUrl: buildInviteUrl(result.token),
+	};
 }
 
 export async function revokeAccountInvitationMutation(input: {

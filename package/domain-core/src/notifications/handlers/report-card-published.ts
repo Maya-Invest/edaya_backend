@@ -1,7 +1,6 @@
 import type { ReportCardResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
-import { MessageDeliveryRecipientKind } from '../../domains'
-import { uniqueNotificationRecipients } from '../recipient-utils'
+import { resolveStudentAndAcademicGuardianRecipients } from '../recipient-resolvers'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import { resolveSchoolName } from '../templates/resolve-school-name'
 
@@ -21,10 +20,11 @@ export async function handleReportCardPublished(
     return
   }
 
-  const recipients = uniqueNotificationRecipients([
-    { kind: MessageDeliveryRecipientKind.Student, id: student.id },
-    ...(await resolveGuardianRecipients(context, student.id, student.schoolId)),
-  ])
+  const recipients = await resolveStudentAndAcademicGuardianRecipients(
+    context.repositories,
+    student.schoolId,
+    student.id,
+  )
 
   if (recipients.length === 0) {
     return
@@ -53,29 +53,4 @@ export async function handleReportCardPublished(
       periodId: result.periodId,
     },
   })
-}
-
-async function resolveGuardianRecipients(
-  context: WorkflowNotificationContext,
-  studentId: string,
-  schoolId: string,
-) {
-  const links = await context.repositories.guardianLinks.list({ studentId })
-  const recipients: Array<{ kind: MessageDeliveryRecipientKind, id: string }> = []
-
-  for (const link of links) {
-    if (!link.receivesAcademicReports) {
-      continue
-    }
-    const guardian = await context.repositories.guardians.findById(link.guardianId)
-    if (!guardian || guardian.schoolId !== schoolId) {
-      continue
-    }
-    recipients.push({
-      kind: MessageDeliveryRecipientKind.Guardian,
-      id: guardian.id,
-    })
-  }
-
-  return recipients
 }

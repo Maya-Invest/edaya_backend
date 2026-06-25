@@ -795,6 +795,9 @@
               "student"
             ]
           },
+          "targetId": {
+            "type": "string"
+          },
           "expiresAt": {
             "type": "string",
             "nullable": true
@@ -812,6 +815,7 @@
         "required": [
           "status",
           "kind",
+          "targetId",
           "expiresAt",
           "schoolName",
           "inviteeName",

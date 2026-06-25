@@ -51187,10 +51187,13 @@ export interface components {
             status: "pending" | "accepted" | "revoked" | "expired";
             /** @enum {string} */
             kind: "staff" | "guardian" | "student";
+            targetId: string;
             expiresAt: string | null;
             schoolName: string;
             inviteeName: string;
             contactChannel: string;
+            contactEmail?: string;
+            authAccountExists?: boolean;
         };
         AcceptInvitationResponse: {
             /** @enum {string} */

@@ -9,6 +9,7 @@ export default defineConfig({
 		proxy: {
 			'/core': { target: apiOrigin, changeOrigin: true },
 			'/auth': { target: apiOrigin, changeOrigin: true },
+			'/public': { target: apiOrigin, changeOrigin: true },
 			'/doc': { target: apiOrigin, changeOrigin: true },
 			'/reference': { target: apiOrigin, changeOrigin: true },
 			'/graphql': { target: apiOrigin, changeOrigin: true },

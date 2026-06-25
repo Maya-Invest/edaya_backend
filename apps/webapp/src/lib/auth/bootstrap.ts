@@ -10,6 +10,15 @@ import { ApiError } from '@edaya/api-client';
 import { authClient } from './client';
 import { authSession } from './session.svelte';
 
+export async function getAuthenticatedAuthUser() {
+	const { data: auth } = await authClient.getSession();
+	if (!auth?.session || !auth.user?.id) {
+		return null;
+	}
+
+	return auth.user;
+}
+
 export async function bootstrapSession() {
 	authSession.markLoading();
 	try {
@@ -20,7 +29,19 @@ export async function bootstrapSession() {
 		}
 
 		const loginEmail = auth.user.email ?? null;
-		const session = await browserFetch<SessionSnapshot>('/core/authorization/effective-grants');
+		let session: SessionSnapshot;
+		try {
+			session = await browserFetch<SessionSnapshot>('/core/authorization/effective-grants');
+		}
+		catch (error) {
+			if (error instanceof ApiError && error.status === 401) {
+				// Better Auth session exists but the user is not linked to a school actor yet.
+				authSession.clear();
+				return { session: null, staffProfile: null };
+			}
+			throw error;
+		}
+
 		const client = getBrowserSchoolClient();
 		let staffProfile = null;
 		let guardianSettings = null;
@@ -50,12 +71,6 @@ export async function bootstrapSession() {
 	}
 	catch (error) {
 		if (error instanceof ApiError && error.status === 401) {
-			try {
-				await authClient.signOut();
-			}
-			catch {
-				// Ignore sign-out errors while clearing a stale session.
-			}
 			authSession.clear();
 			return { session: null, staffProfile: null };
 		}

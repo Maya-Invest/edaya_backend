@@ -116,6 +116,23 @@ export async function resolveActivityEnrollmentRecipients(
   return uniqueNotificationRecipients([...studentRecipients, ...guardianRecipients])
 }
 
+export async function resolveStudentAndAcademicGuardianRecipients(
+  repositories: SchoolRepositories,
+  schoolId: string,
+  studentId: string,
+): Promise<NotificationRecipient[]> {
+  const studentRecipients = await resolveStudentRecipients(repositories, schoolId, [studentId])
+  const guardianRecipients = await resolveGuardiansForStudents(
+    repositories,
+    schoolId,
+    [studentId],
+    link => link.receivesAcademicReports,
+    () => true,
+  )
+
+  return uniqueNotificationRecipients([...studentRecipients, ...guardianRecipients])
+}
+
 export async function resolveCalendarEventRecipients(
   repositories: SchoolRepositories,
   event: CalendarEvent,

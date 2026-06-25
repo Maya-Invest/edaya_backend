@@ -8,10 +8,12 @@
 		sendAccountInvitationMutation,
 	} from '$lib/api/mutations/invitation.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { t } from '$lib/i18n';
 	import { Mail, ShieldCheck, User } from '$lib/icons';
+	import { toast } from '$lib/toast.svelte';
 	import { get } from 'svelte/store';
 
 	type InvitationKind = components['schemas']['SendAccountInvitationCommand']['kind'];
@@ -33,6 +35,7 @@
 	let busy = $state(false);
 	let pendingOverride = $state<string | null | undefined>(undefined);
 	let serverPendingId = $state<string | null>(null);
+	let lastInviteUrl = $state<string | null>(null);
 
 	const pendingInvitationId = $derived(
 		pendingOverride !== undefined
@@ -90,16 +93,17 @@
 
 	async function handleSend() {
 		busy = true;
-		const invitationId = await sendAccountInvitationMutation({
+		const result = await sendAccountInvitationMutation({
 			kind,
 			targetId,
 			contactValue: contactEmail || undefined,
 			successMessage: get(t)('invitation.sendSuccess', { name: displayName }),
 		});
 		busy = false;
-		if (invitationId) {
-			pendingOverride = invitationId;
-			serverPendingId = invitationId;
+		if (result) {
+			pendingOverride = result.invitationId;
+			serverPendingId = result.invitationId;
+			lastInviteUrl = result.inviteUrl;
 		}
 	}
 
@@ -108,17 +112,17 @@
 			return;
 		}
 		busy = true;
-		const ok = await resendAccountInvitationMutation({
+		const result = await resendAccountInvitationMutation({
 			kind,
 			targetId,
 			invitationId: pendingInvitationId,
 			successMessage: get(t)('invitation.resendSuccess', { name: displayName }),
 		});
 		busy = false;
-		if (ok) {
-			const invitation = await fetchPendingAccountInvitation(kind, targetId);
-			pendingOverride = invitation?.id ?? readPendingInvitation(kind, targetId);
-			serverPendingId = invitation?.id ?? null;
+		if (result) {
+			pendingOverride = result.invitationId;
+			serverPendingId = result.invitationId;
+			lastInviteUrl = result.inviteUrl;
 		}
 	}
 
@@ -137,6 +141,20 @@
 		if (ok) {
 			pendingOverride = null;
 			serverPendingId = null;
+			lastInviteUrl = null;
+		}
+	}
+
+	async function copyInviteLink() {
+		if (!lastInviteUrl) {
+			return;
+		}
+		try {
+			await navigator.clipboard.writeText(lastInviteUrl);
+			toast.success(get(t)('invitation.copyInviteLinkSuccess'));
+		}
+		catch {
+			toast.error(get(t)('invitation.copyInviteLinkFailed'));
 		}
 	}
 </script>
@@ -202,5 +220,19 @@
 				</div>
 			{/snippet}
 		</PermissionGate>
+
+		{#if linkStatus === 'pending' && lastInviteUrl}
+			<div class="space-y-2 rounded-lg border border-border bg-secondary/30 px-3 py-2.5">
+				<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+					{$t('invitation.inviteLinkLabel')}
+				</Label>
+				<div class="flex flex-col gap-2 sm:flex-row">
+					<Input readonly value={lastInviteUrl} class="font-mono text-xs" />
+					<Button type="button" size="sm" variant="outline" onclick={copyInviteLink}>
+						{$t('invitation.copyInviteLink')}
+					</Button>
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>
