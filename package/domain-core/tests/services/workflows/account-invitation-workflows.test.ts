@@ -1,12 +1,11 @@
-import type { AccountInvitation } from '../../../src/domains/access/account-invitation'
 import type { EffectiveGrants } from '../../../src/authorization'
+import type { AccountInvitation } from '../../../src/domains/access/account-invitation'
 import { describe, expect, mock, test } from 'bun:test'
 import {
   AccountInvitationKind,
   AccountInvitationStatus,
   ActorAssuranceLevel,
   createStaffActorMetadata,
-  noOpNotificationGateway,
   Permission,
   RecordingInvitationDeliveryPort,
   RecordingNotificationGateway,
@@ -116,7 +115,7 @@ function createInvitationContext() {
       checkSessionAccess: mock(async () => {}),
     } as unknown as import('../../../src/authorization').AuthorizationPolicy,
     actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
-    atomicExecution: { execute: mock(async (operation: () => Promise<unknown>) => operation()) },
+    atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
     notificationGateway: new RecordingNotificationGateway(),
     invitationDelivery,
   })
@@ -171,7 +170,8 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(savedStaff[0]?.subjectId).toBe('auth-user-1')
     expect(savedInvitations[0]?.status).toBe(AccountInvitationStatus.Accepted)
     expect(savedInvitations[0]?.acceptedSubjectId).toBe('auth-user-1')
-    expect(invitationDelivery.revokedInvitationIds).toContain(savedInvitations[0]?.id)
+    expect(savedInvitations[0]?.id).toBeDefined()
+    expect(invitationDelivery.revokedInvitationIds).toContain(savedInvitations[0]!.id)
   })
 
   test('acceptAccountInvitation rejects mismatched email', async () => {
@@ -206,6 +206,32 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(revoked.status).toBe(AccountInvitationStatus.Revoked)
     expect(savedInvitations[0]?.status).toBe(AccountInvitationStatus.Revoked)
     expect(invitationDelivery.revokedInvitationIds).toContain(invitation.id)
+  })
+
+  test('resendAccountInvitation revokes the existing invitation and creates a new pending one', async () => {
+    const { service, invitationDelivery, savedInvitations } = createInvitationContext()
+
+    const { invitation, token: firstToken } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    const result = await service.accountInvitationWorkflow.resendAccountInvitation({
+      invitationId: invitation.id,
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    expect(result.token).not.toBe(firstToken)
+    expect(result.invitation.id).not.toBe(invitation.id)
+    expect(result.invitation.status).toBe(AccountInvitationStatus.Pending)
+    expect(savedInvitations).toHaveLength(2)
+    expect(savedInvitations.find(entry => entry.id === invitation.id)?.status)
+      .toBe(AccountInvitationStatus.Revoked)
+    expect(savedInvitations.find(entry => entry.id === result.invitation.id)?.status)
+      .toBe(AccountInvitationStatus.Pending)
+    expect(invitationDelivery.revokedInvitationIds).toContain(invitation.id)
+    expect(invitationDelivery.deliveries.at(-1)?.invitationId).toBe(result.invitation.id)
   })
 })
 

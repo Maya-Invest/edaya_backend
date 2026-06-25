@@ -9,6 +9,10 @@ export interface InvitationDeliveryInput {
   actorKind: AccountInvitationKind
   inviteUrl: string
   expiresAt: Date
+  /** Rendered invitation email subject */
+  emailSubject: string
+  /** Rendered invitation email HTML body */
+  emailBody: string
 }
 
 /** Delivers invite messages via transient Novu subscribers (pre-account). */

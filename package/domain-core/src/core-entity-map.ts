@@ -36,6 +36,7 @@ import type {
   ResourceAssignment,
   Schedule,
   School,
+  SchoolNotificationTemplates,
   Session,
   StaffAssignment,
   StaffMember,
@@ -75,6 +76,7 @@ export interface CoreEntityMap {
   announcements: Announcement
   announcementTargets: AnnouncementTarget
   messageDeliveries: MessageDelivery
+  schoolNotificationTemplates: SchoolNotificationTemplates
   subjects: Subject
   subjectMatters: SubjectMatter
   classGroups: ClassGroup
@@ -140,6 +142,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'announcements',
   'announcementTargets',
   'messageDeliveries',
+  'schoolNotificationTemplates',
   'subjects',
   'subjectMatters',
   'classGroups',

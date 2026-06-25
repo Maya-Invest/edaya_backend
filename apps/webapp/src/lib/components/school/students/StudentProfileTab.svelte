@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Guardian, HealthRecord, PedagogicalNote, StaffMember, Student } from '$lib/types/school';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { t } from '$lib/i18n';
@@ -13,7 +14,6 @@
 	import StudentGuardianLinkModal from './StudentGuardianLinkModal.svelte';
 	import StudentNoteModal from './StudentNoteModal.svelte';
 	import StudentProfileEditModal from './StudentProfileEditModal.svelte';
-	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 
 	const {
 		s,

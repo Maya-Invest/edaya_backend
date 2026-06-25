@@ -19,19 +19,20 @@
 		onClose: () => void;
 	} = $props();
 
-	let deliveries = $state<InboxDelivery[]>([]);
+	let readOverrides = $state<Record<string, InboxDelivery['status']>>({});
 
-	$effect(() => {
-		deliveries = incomingDeliveries;
-	});
+	const deliveries = $derived(
+		incomingDeliveries.map((delivery) => {
+			const status = readOverrides[delivery.id];
+			return status ? { ...delivery, status } : delivery;
+		}),
+	);
 
 	const selected = $derived(deliveries.find(delivery => delivery.id === selectedId) ?? null);
 	let markingRead = $state(false);
 
 	function markReadLocally(deliveryId: string) {
-		deliveries = deliveries.map(delivery => delivery.id === deliveryId
-			? { ...delivery, status: 'read' as const }
-			: delivery);
+		readOverrides = { ...readOverrides, [deliveryId]: 'read' };
 	}
 
 	function fmtDate(value?: string) {

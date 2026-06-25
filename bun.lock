@@ -76,16 +76,6 @@
         "wrangler": "^4.99.0",
       },
     },
-    "apps/novu-email-bridge": {
-      "name": "@edaya/novu-email-bridge",
-      "version": "0.0.1",
-      "devDependencies": {
-        "@cloudflare/workers-types": "^4.20260610.0",
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
-        "wrangler": "^4.99.0",
-      },
-    },
     "apps/webapp": {
       "name": "@edaya/webapp",
       "version": "0.0.1",
@@ -321,8 +311,6 @@
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:testing/integration-tests"],
 
     "@edaya/neon-migrations": ["@edaya/neon-migrations@workspace:package/integration-neon-migrations"],
-
-    "@edaya/novu-email-bridge": ["@edaya/novu-email-bridge@workspace:apps/novu-email-bridge"],
 
     "@edaya/seeding": ["@edaya/seeding@workspace:testing/seeding"],
 

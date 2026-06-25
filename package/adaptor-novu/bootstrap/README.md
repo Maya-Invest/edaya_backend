@@ -1,8 +1,8 @@
 # Novu bootstrap (infrastructure as code)
 
-Declarative Novu setup for Edaya: **workflows** and **email integrations** live in TypeScript and are applied idempotently via the Novu API.
+Declarative Novu setup for Edaya: **workflows** live in TypeScript and are applied idempotently via the Novu API.
 
-This replaces manual dashboard setup for the primitives we control from code. Outbound delivery webhooks (status sync to `POST /webhooks/novu`) still require a Novu dashboard or API step — see [Manual follow-up](#manual-follow-up).
+This replaces manual dashboard setup for the primitives we control from code. Outbound delivery webhooks (status sync to `POST /webhooks/novu`) and email delivery (SMTP or other Novu integration) still require a Novu dashboard or API step — see [Manual follow-up](#manual-follow-up).
 
 ## Layout
 
@@ -11,10 +11,8 @@ bootstrap/
   cli.ts                 # apply | plan | validate
   catalog/
     workflows.ts         # all eventKey-aligned workflows
-    integrations.ts      # email-webhook integration spec
   lib/
     apply-workflows.ts   # create / update via novu.workflows.*
-    apply-integrations.ts
     env.ts               # loads apps/api/.env
     fingerprint.ts       # drift detection
     load-templates.ts    # reads templates/ at apply time
@@ -47,12 +45,6 @@ Reads `apps/api/.env` when variables are not already exported.
 |----------|----------|---------|
 | `NOVU_SECRET_KEY` | yes | Novu API auth |
 | `NOVU_API_URL` | no | EU: `https://eu.api.novu.co` |
-| `NOVU_EMAIL_WEBHOOK_URL` | for email | `apps/novu-email-bridge` public URL |
-| `NOVU_EMAIL_WEBHOOK_SECRET` | for email | HMAC secret (same as bridge) |
-| `NOVU_EMAIL_FROM` | for email | Onboarded sender address |
-| `NOVU_EMAIL_SENDER_NAME` | no | Default `Edaya` |
-
-When email webhook env vars are omitted, workflows are still applied; the email integration step is skipped.
 
 ## Workflows
 
@@ -76,11 +68,11 @@ Email bodies live in `templates/emails/*.html`; subjects in `templates/subjects/
 
 Not yet managed by this bootstrap:
 
+- **Email delivery** — configure a Novu email integration (e.g. Custom SMTP) in the Novu dashboard.
 - **Outbound webhook** → `https://<api>/webhooks/novu` with `NOVU_WEBHOOK_SECRET` (Svix signing secret from Novu dashboard).
 - **Production sync** — apply bootstrap against each Novu environment (dev/staging/prod API keys).
 
 ## Related
 
 - Runtime adapter: `package/adaptor-novu/README.md`
-- Email bridge: `apps/novu-email-bridge/README.md`
 - Smoke test: `bun novu:smoke`

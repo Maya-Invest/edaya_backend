@@ -1,14 +1,14 @@
 import type { components } from '$lib/api/schema';
-import { pendingAccountInvitationForTarget } from '$lib/api/entity-list-filters';
 import { browserFetch } from '$lib/api/browser-fetch';
+import { pendingAccountInvitationForTarget } from '$lib/api/entity-list-filters';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 
 export type InvitationPreview = components['schemas']['InvitationPreviewResponse'];
 export type AccountInvitation = components['schemas']['AccountInvitation'];
-export type AcceptInvitationResult = {
+export interface AcceptInvitationResult {
 	kind: 'staff' | 'guardian' | 'student';
 	entity: Record<string, unknown>;
-};
+}
 
 export async function fetchPendingAccountInvitation(
 	kind: 'staff' | 'guardian' | 'student',

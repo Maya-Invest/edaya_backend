@@ -1455,6 +1455,31 @@
           "isActive"
         ]
       },
+      "UpdateStaffMemberProfileCommand": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "staffId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "staffId"
+        ]
+      },
       "Guardian": {
         "type": "object",
         "properties": {
@@ -6306,6 +6331,87 @@
           }
         }
       },
+      "SchoolNotificationTemplateDocument": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "SchoolNotificationTemplates": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templates": {
+            "$ref": "#/components/schemas/SchoolNotificationTemplateDocument"
+          },
+          "createdAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "schoolId",
+          "templates",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SchoolNotificationTemplateDocumentPatch": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "UpdateSchoolNotificationTemplatesCommand": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templates": {
+            "$ref": "#/components/schemas/SchoolNotificationTemplateDocumentPatch"
+          },
+          "expectedUpdatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "schoolId",
+          "templates"
+        ]
+      },
+      "ResetSchoolNotificationTemplatesCommand": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "enum": [
+              "announcement.published",
+              "report_card.published",
+              "attendance.recorded",
+              "assessment.result_recorded",
+              "incident.recorded",
+              "assessment.due_soon",
+              "homework.due_soon",
+              "activity.reminder",
+              "calendar.event_reminder",
+              "account_invitation"
+            ]
+          }
+        },
+        "required": [
+          "schoolId"
+        ]
+      },
       "CountResponse": {
         "type": "object",
         "properties": {
@@ -7644,6 +7750,23 @@
           "entities"
         ]
       },
+      "Filter_24": {
+        "type": "object"
+      },
+      "SchoolNotificationTemplatesBatchSave": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolNotificationTemplates"
+            }
+          }
+        },
+        "required": [
+          "entities"
+        ]
+      },
       "Subject": {
         "type": "object",
         "properties": {
@@ -7699,7 +7822,7 @@
           "name"
         ]
       },
-      "Filter_24": {
+      "Filter_25": {
         "type": "object"
       },
       "SubjectsBatchSave": {
@@ -7756,7 +7879,7 @@
           "sequenceOrder"
         ]
       },
-      "Filter_25": {
+      "Filter_26": {
         "type": "object"
       },
       "SubjectMattersBatchSave": {
@@ -7773,7 +7896,7 @@
           "entities"
         ]
       },
-      "Filter_26": {
+      "Filter_27": {
         "type": "object"
       },
       "ClassGroupsBatchSave": {
@@ -7790,7 +7913,7 @@
           "entities"
         ]
       },
-      "Filter_27": {
+      "Filter_28": {
         "type": "object"
       },
       "ClassSubjectsBatchSave": {
@@ -7807,7 +7930,7 @@
           "entities"
         ]
       },
-      "Filter_28": {
+      "Filter_29": {
         "type": "object"
       },
       "ClassSubjectMattersBatchSave": {
@@ -7824,7 +7947,7 @@
           "entities"
         ]
       },
-      "Filter_29": {
+      "Filter_30": {
         "type": "object"
       },
       "ClassSubjectProgressBatchSave": {
@@ -7906,7 +8029,7 @@
           "progress"
         ]
       },
-      "Filter_30": {
+      "Filter_31": {
         "type": "object"
       },
       "ClassLogbookEntriesBatchSave": {
@@ -7996,7 +8119,7 @@
           "attachments"
         ]
       },
-      "Filter_31": {
+      "Filter_32": {
         "type": "object"
       },
       "HomeworkAssignmentsBatchSave": {
@@ -8048,7 +8171,7 @@
           "status"
         ]
       },
-      "Filter_32": {
+      "Filter_33": {
         "type": "object"
       },
       "HomeworkSubmissionsBatchSave": {
@@ -8129,7 +8252,7 @@
           "endDate"
         ]
       },
-      "Filter_33": {
+      "Filter_34": {
         "type": "object"
       },
       "ExtracurricularActivitiesBatchSave": {
@@ -8178,7 +8301,7 @@
           "status"
         ]
       },
-      "Filter_34": {
+      "Filter_35": {
         "type": "object"
       },
       "ActivityEnrollmentsBatchSave": {
@@ -8195,7 +8318,7 @@
           "entities"
         ]
       },
-      "Filter_35": {
+      "Filter_36": {
         "type": "object"
       },
       "AssessmentsBatchSave": {
@@ -8212,7 +8335,7 @@
           "entities"
         ]
       },
-      "Filter_36": {
+      "Filter_37": {
         "type": "object"
       },
       "AssessmentResultsBatchSave": {
@@ -8229,7 +8352,7 @@
           "entities"
         ]
       },
-      "Filter_37": {
+      "Filter_38": {
         "type": "object"
       },
       "GradeScalesBatchSave": {
@@ -8246,7 +8369,7 @@
           "entities"
         ]
       },
-      "Filter_38": {
+      "Filter_39": {
         "type": "object"
       },
       "ReportCardDefinitionsBatchSave": {
@@ -8263,7 +8386,7 @@
           "entities"
         ]
       },
-      "Filter_39": {
+      "Filter_40": {
         "type": "object"
       },
       "ReportCardSectionsBatchSave": {
@@ -8280,7 +8403,7 @@
           "entities"
         ]
       },
-      "Filter_40": {
+      "Filter_41": {
         "type": "object"
       },
       "ReportCardResultsBatchSave": {
@@ -8297,7 +8420,7 @@
           "entities"
         ]
       },
-      "Filter_41": {
+      "Filter_42": {
         "type": "object"
       },
       "StudentsBatchSave": {
@@ -8314,7 +8437,7 @@
           "entities"
         ]
       },
-      "Filter_42": {
+      "Filter_43": {
         "type": "object"
       },
       "StudentEnrollmentsBatchSave": {
@@ -8331,7 +8454,7 @@
           "entities"
         ]
       },
-      "Filter_43": {
+      "Filter_44": {
         "type": "object"
       },
       "GuardiansBatchSave": {
@@ -8348,7 +8471,7 @@
           "entities"
         ]
       },
-      "Filter_44": {
+      "Filter_45": {
         "type": "object"
       },
       "GuardianStudentLinksBatchSave": {
@@ -8365,7 +8488,7 @@
           "entities"
         ]
       },
-      "Filter_45": {
+      "Filter_46": {
         "type": "object"
       },
       "StudentNotesBatchSave": {
@@ -8382,7 +8505,7 @@
           "entities"
         ]
       },
-      "Filter_46": {
+      "Filter_47": {
         "type": "object"
       },
       "StudentHealthProfilesBatchSave": {
@@ -8399,7 +8522,7 @@
           "entities"
         ]
       },
-      "Filter_47": {
+      "Filter_48": {
         "type": "object"
       },
       "StudentDisciplinaryActionsBatchSave": {
@@ -8464,7 +8587,7 @@
           "name"
         ]
       },
-      "Filter_48": {
+      "Filter_49": {
         "type": "object"
       },
       "DisciplinaryActionsBatchSave": {
@@ -8481,7 +8604,7 @@
           "entities"
         ]
       },
-      "Filter_49": {
+      "Filter_50": {
         "type": "object"
       },
       "StudentIncidentInvolvementsBatchSave": {
@@ -8498,7 +8621,7 @@
           "entities"
         ]
       },
-      "Filter_50": {
+      "Filter_51": {
         "type": "object"
       },
       "IncidentsBatchSave": {
@@ -10890,6 +11013,130 @@
         "responses": {
           "200": {
             "description": "Executed update-staff-member-status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMember"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/update-staff-member-profile": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "update-staff-member-profile",
+        "requestBody": {
+          "description": "update-staff-member-profile payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffMemberProfileCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed update-staff-member-profile",
             "content": {
               "application/json": {
                 "schema": {
@@ -19574,6 +19821,254 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UpdateNotificationContactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/update-school-notification-templates": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "update-school-notification-templates",
+        "requestBody": {
+          "description": "update-school-notification-templates payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolNotificationTemplatesCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed update-school-notification-templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/reset-school-notification-templates": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "reset-school-notification-templates",
+        "requestBody": {
+          "description": "reset-school-notification-templates payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetSchoolNotificationTemplatesCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed reset-school-notification-templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolNotificationTemplates"
                 }
               }
             }
@@ -48590,6 +49085,1247 @@
         }
       }
     },
+    "/core/entities/school-notification-templates/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_24"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_24"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "School Notification Templates not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_24"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get School Notification Templates",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "School Notification Templates not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Save School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolNotificationTemplates"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Delete School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deleted School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/batch-save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch save School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates batch save request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolNotificationTemplatesBatchSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch saved School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ids"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/school-notification-templates/batch-delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch delete School Notification Templates",
+        "requestBody": {
+          "description": "School Notification Templates batch delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityBatchDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch deleted School Notification Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/entities/subjects/list": {
       "post": {
         "tags": [
@@ -48603,7 +50339,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_24"
+                    "$ref": "#/components/schemas/Filter_25"
                   },
                   {
                     "type": "object",
@@ -48770,7 +50506,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_24"
+                    "$ref": "#/components/schemas/Filter_25"
                   },
                   {
                     "type": "object",
@@ -48955,7 +50691,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_24"
+                    "$ref": "#/components/schemas/Filter_25"
                   },
                   {
                     "type": "object",
@@ -49844,7 +51580,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_25"
+                    "$ref": "#/components/schemas/Filter_26"
                   },
                   {
                     "type": "object",
@@ -50011,7 +51747,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_25"
+                    "$ref": "#/components/schemas/Filter_26"
                   },
                   {
                     "type": "object",
@@ -50196,7 +51932,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_25"
+                    "$ref": "#/components/schemas/Filter_26"
                   },
                   {
                     "type": "object",
@@ -51085,7 +52821,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_26"
+                    "$ref": "#/components/schemas/Filter_27"
                   },
                   {
                     "type": "object",
@@ -51252,7 +52988,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_26"
+                    "$ref": "#/components/schemas/Filter_27"
                   },
                   {
                     "type": "object",
@@ -51437,7 +53173,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_26"
+                    "$ref": "#/components/schemas/Filter_27"
                   },
                   {
                     "type": "object",
@@ -52326,7 +54062,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_27"
+                    "$ref": "#/components/schemas/Filter_28"
                   },
                   {
                     "type": "object",
@@ -52493,7 +54229,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_27"
+                    "$ref": "#/components/schemas/Filter_28"
                   },
                   {
                     "type": "object",
@@ -52678,7 +54414,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_27"
+                    "$ref": "#/components/schemas/Filter_28"
                   },
                   {
                     "type": "object",
@@ -53567,7 +55303,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_28"
+                    "$ref": "#/components/schemas/Filter_29"
                   },
                   {
                     "type": "object",
@@ -53734,7 +55470,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_28"
+                    "$ref": "#/components/schemas/Filter_29"
                   },
                   {
                     "type": "object",
@@ -53919,7 +55655,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_28"
+                    "$ref": "#/components/schemas/Filter_29"
                   },
                   {
                     "type": "object",
@@ -54808,7 +56544,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_30"
                   },
                   {
                     "type": "object",
@@ -54975,7 +56711,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_30"
                   },
                   {
                     "type": "object",
@@ -55160,7 +56896,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_30"
                   },
                   {
                     "type": "object",
@@ -56049,7 +57785,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -56216,7 +57952,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -56401,7 +58137,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -57290,7 +59026,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -57457,7 +59193,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -57642,7 +59378,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -58531,7 +60267,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -58698,7 +60434,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -58883,7 +60619,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -59772,7 +61508,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -59939,7 +61675,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -60124,7 +61860,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -61013,7 +62749,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -61180,7 +62916,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -61365,7 +63101,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -62254,7 +63990,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -62421,7 +64157,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -62606,7 +64342,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -63495,7 +65231,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -63662,7 +65398,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -63847,7 +65583,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -64736,7 +66472,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -64903,7 +66639,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -65088,7 +66824,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -65977,7 +67713,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -66144,7 +67880,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -66329,7 +68065,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -67218,7 +68954,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -67385,7 +69121,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -67570,7 +69306,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -68459,7 +70195,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -68626,7 +70362,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -68811,7 +70547,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -69700,7 +71436,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -69867,7 +71603,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -70052,7 +71788,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -70941,7 +72677,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -71108,7 +72844,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -71293,7 +73029,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -72182,7 +73918,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -72349,7 +74085,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -72534,7 +74270,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -73423,7 +75159,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -73590,7 +75326,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -73775,7 +75511,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -74664,7 +76400,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -74831,7 +76567,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -75016,7 +76752,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -75905,7 +77641,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -76072,7 +77808,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -76257,7 +77993,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -77146,7 +78882,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -77313,7 +79049,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -77498,7 +79234,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -78387,7 +80123,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -78554,7 +80290,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -78739,7 +80475,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -79628,7 +81364,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -79795,7 +81531,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -79980,7 +81716,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -80869,7 +82605,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -81036,7 +82772,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -81221,7 +82957,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",

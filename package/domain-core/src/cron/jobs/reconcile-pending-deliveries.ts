@@ -1,6 +1,6 @@
+import type { NotificationDeliveryStatusLookup } from '../../ports/notification-gateway'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
 import { MessageDeliveryStatus } from '../../domains'
-import type { NotificationDeliveryStatusLookup } from '../../ports/notification-gateway'
 
 const RECONCILE_BATCH_SIZE = 50
 const RECONCILE_DELIVERY_LIMIT = 500
@@ -23,7 +23,7 @@ function toDeliveryStatus(
 async function listDeliveriesForReconcile(
   context: SchoolCronJobContext,
   status: MessageDeliveryStatus,
-): Promise<Array<{ id: string; subjectId: string; status: MessageDeliveryStatus }>> {
+): Promise<Array<{ id: string, subjectId: string, status: MessageDeliveryStatus }>> {
   const { service, actor } = context
   const announcements = await service.baseService.repositories.announcements.list({
     schoolId: actor.schoolId,

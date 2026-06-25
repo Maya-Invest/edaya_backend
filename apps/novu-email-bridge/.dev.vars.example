@@ -1,5 +1,0 @@
-# HMAC secret — same value as Novu → Integrations → Email Webhook → Secret Hmac Key
-NOVU_EMAIL_WEBHOOK_SECRET=change-me
-
-# Optional display name when Novu sends `from` as a bare email address
-DEFAULT_FROM_NAME=Edaya

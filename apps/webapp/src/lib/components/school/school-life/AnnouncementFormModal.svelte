@@ -42,12 +42,15 @@
 	const isDraft = $derived(!announcement || announcement.status === 'draft');
 	const priorityLabel = $derived($t(`announcements.priority.${priority}`));
 	const minExpiresAt = $derived(new Date().toISOString().slice(0, 10));
-	const canSubmit = $derived(
-		isDraft
-		&& announcementTitle.trim().length > 0
-		&& content.trim().length > 0
-		&& (expiresAt.length === 0 || expiresAt >= minExpiresAt),
-	);
+	const canSubmit = $derived.by(() => {
+		if (!isDraft) {
+			return false;
+		}
+		if (!announcementTitle.trim() || !content.trim()) {
+			return false;
+		}
+		return expiresAt.length === 0 || expiresAt >= minExpiresAt;
+	});
 
 	function resetForm() {
 		if (announcement) {

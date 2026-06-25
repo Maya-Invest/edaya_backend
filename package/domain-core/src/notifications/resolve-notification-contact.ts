@@ -1,7 +1,7 @@
 import type { Guardian, StaffMember } from '../domains'
-import { GuardianContactMethodType } from '../domains'
 import type { AuthContact } from '../ports/auth-contact-resolver'
 import type { NotificationRecipientProfile } from '../ports/notification-gateway'
+import { GuardianContactMethodType } from '../domains'
 
 function normalizeOptional(value?: string | null): string | undefined {
   const trimmed = value?.trim()

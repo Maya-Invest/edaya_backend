@@ -19,23 +19,24 @@ import {
   AcademicYear as AcademicYearEntity,
   Attachment,
   ClassGroup,
+  MessageDeliveryRecipientKind,
   ResourceAssignment,
   School as SchoolEntity,
   StaffAssignment as StaffAssignmentEntity,
   StaffMember as StaffMemberEntity,
 } from '../../domains'
-import { permissionAction } from '../../shared'
-import { requireSchool } from '../../shared/require-school'
+import { AccountInvitationKind } from '../../domains/access/account-invitation'
+import {
+  scheduleAccountInvitationIfEligible,
+} from '../../invitations'
 import {
   buildStaffRecipientProfile,
   scheduleNotificationRecipientRemove,
   scheduleNotificationRecipientUpsert,
 } from '../../notifications'
-import {
-  scheduleAccountInvitationIfEligible,
-} from '../../invitations'
-import { AccountInvitationKind } from '../../domains/access/account-invitation'
-import { MessageDeliveryRecipientKind } from '../../domains'
+import { seedSchoolNotificationTemplates } from '../../notifications/templates/seed-school-notification-templates'
+import { permissionAction } from '../../shared'
+import { requireSchool } from '../../shared/require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface CreateAcademicYearInput {
@@ -78,6 +79,13 @@ export interface UpdateStaffMemberStatusInput {
   isActive: boolean
 }
 
+export interface UpdateStaffMemberProfileInput {
+  staffId: string
+  firstName?: string
+  lastName?: string
+  email?: string | null
+}
+
 export type AssignStaffInput = StaffAssignmentInput
 export type AssignResourceInput = ResourceAssignmentInput
 
@@ -105,6 +113,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       await this.validateOwnerSubject(school.id, school.ownerSubjectId)
     }
     await this.baseService.entities.schools.save(school, { moduleChecked: true })
+    await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
     return school
   }
 
@@ -280,6 +289,30 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       })
     }
     else {
+      scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
+    }
+    return staffMember
+  }
+
+  async updateStaffMemberProfile({ staffId, ...changes }: UpdateStaffMemberProfileInput): Promise<StaffMember> {
+    const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
+    const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: changes.firstName ?? existing.firstName,
+      lastName: changes.lastName ?? existing.lastName,
+      email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
+      notificationEmail: existing.notificationEmail,
+      notificationPhone: existing.notificationPhone,
+      subjectId: existing.subjectId,
+      accountKind: existing.accountKind,
+      serviceId: existing.serviceId,
+      createdBySubjectId: existing.createdBySubjectId,
+      serviceElevated: existing.serviceElevated,
+      isActive: existing.isActive,
+      createdAt: existing.createdAt,
+    }))
+    if (existing.subjectId) {
       scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
     }
     return staffMember

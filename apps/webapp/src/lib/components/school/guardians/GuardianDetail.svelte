@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Guardian } from '$lib/types/school';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
@@ -10,7 +11,6 @@
 	import DrawerEmptyState from '../shared/DrawerEmptyState.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import GuardianEditModal from './GuardianEditModal.svelte';
-	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 
 	const { g }: { g: Guardian } = $props();
 

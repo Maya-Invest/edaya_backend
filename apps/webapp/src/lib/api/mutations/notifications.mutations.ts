@@ -1,5 +1,5 @@
-import type { components } from '$lib/api/schema';
 import type { GuardianNotificationSettings } from '$lib/api/account-data';
+import type { components } from '$lib/api/schema';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 

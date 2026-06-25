@@ -3,10 +3,12 @@ import type { CoreEntityKey } from '../core-entity-map'
 import type { SchoolRepositories } from '../ports'
 import type { NotificationEnqueueInput, NotificationGatewayPort } from '../ports/notification-gateway'
 import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../services/managed-entity-service'
+import type { NotificationTemplateService } from './templates/notification-template-service'
 
 export interface NotificationTriggerContext {
   notificationGateway: NotificationGatewayPort
   repositories: SchoolRepositories
+  templateService: NotificationTemplateService
   actor: ActorMetadata
 }
 
@@ -54,6 +56,7 @@ export const notificationTriggerRegistry = new NotificationTriggerRegistry()
 export function createNotificationPostSaveHook(
   entityKey: CoreEntityKey,
   notificationGateway: NotificationGatewayPort,
+  templateService: NotificationTemplateService,
 ): NonNullable<EntityBusinessHooks<unknown>['postSave']> {
   return async (entity, existing, repositories, actor) => {
     const triggers = notificationTriggerRegistry.getTriggers(entityKey)
@@ -64,6 +67,7 @@ export function createNotificationPostSaveHook(
     const context: NotificationTriggerContext = {
       notificationGateway,
       repositories,
+      templateService,
       actor,
     }
 
@@ -83,12 +87,13 @@ export function withNotificationPostSaveHook<T>(
   entityKey: CoreEntityKey,
   config: ManagedEntityServiceConfig<T>,
   notificationGateway: NotificationGatewayPort,
+  templateService: NotificationTemplateService,
 ): ManagedEntityServiceConfig<T> {
   if (!notificationTriggerRegistry.hasTriggers(entityKey)) {
     return config
   }
 
-  const notificationPostSave = createNotificationPostSaveHook(entityKey, notificationGateway)
+  const notificationPostSave = createNotificationPostSaveHook(entityKey, notificationGateway, templateService)
   const existingPostSave = config.hooks?.postSave
 
   return {

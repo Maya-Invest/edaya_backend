@@ -32,23 +32,28 @@ export function createNovuInvitationDeliveryPort(
   return {
     deliver: async (input: InvitationDeliveryInput) => {
       const subscriberId = buildTransientInvitationSubscriberId(input.invitationId);
-      await options.subscriberClient.upsert(subscriberId, input.schoolId, {
-        schoolId: input.schoolId,
-        recipient: {
-          kind: mapActorKindToRecipientKind(input.actorKind),
-          id: input.invitationId,
-        },
-        displayName: input.displayName,
-        email: input.contactChannel === "email" ? input.contactValue : undefined,
-        phone: input.contactChannel === "phone" ? input.contactValue : undefined,
-        preferences: {
-          allowsNotifications: true,
-          channels: {
-            email: input.contactChannel === "email",
-            sms: input.contactChannel === "phone",
+      await options.subscriberClient.upsert(
+        subscriberId,
+        input.schoolId,
+        {
+          schoolId: input.schoolId,
+          recipient: {
+            kind: mapActorKindToRecipientKind(input.actorKind),
+            id: input.invitationId,
+          },
+          displayName: input.displayName,
+          email: input.contactChannel === "email" ? input.contactValue : undefined,
+          phone: input.contactChannel === "phone" ? input.contactValue : undefined,
+          preferences: {
+            allowsNotifications: true,
+            channels: {
+              email: input.contactChannel === "email",
+              sms: input.contactChannel === "phone",
+            },
           },
         },
-      });
+        { skipWorkflowPreferences: true },
+      );
 
       await options.triggerClient.trigger({
         workflowId: ACCOUNT_INVITATION_EVENT_KEY,
@@ -58,8 +63,10 @@ export function createNovuInvitationDeliveryPort(
           tenant: input.schoolId,
         },
         payload: {
-          title: "Account invitation",
-          body: "You have been invited to connect your account.",
+          title: input.emailSubject,
+          body: input.emailBody,
+          emailSubject: input.emailSubject,
+          emailBody: input.emailBody,
           kind: "event",
           eventKey: ACCOUNT_INVITATION_EVENT_KEY,
           schoolId: input.schoolId,

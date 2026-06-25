@@ -3,12 +3,12 @@ import type {
   BootstrapWorkflowStep,
 } from "./types";
 
-type FingerprintStep = {
+interface FingerprintStep {
   stepId?: string;
   name: string;
   type: string;
   controlValues?: unknown;
-};
+}
 
 export function normalizeWorkflowFingerprint(workflow: BootstrapWorkflowDefinition): string {
   const payload = {
@@ -70,44 +70,5 @@ export function normalizeRemoteWorkflowFingerprint(workflow: {
       type: step.type,
       controlValues: step.controlValues ?? null,
     })),
-  });
-}
-
-export function normalizeIntegrationFingerprint(integration: {
-  identifier: string;
-  name: string;
-  providerId: string;
-  channel?: string;
-  active: boolean;
-  primary: boolean;
-  credentials?: Record<string, unknown>;
-}): string {
-  return stableStringify({
-    identifier: integration.identifier,
-    name: integration.name,
-    providerId: integration.providerId,
-    channel: integration.channel ?? null,
-    active: integration.active,
-    primary: integration.primary,
-    credentials: integration.credentials ?? null,
-  });
-}
-
-export function normalizeRemoteIntegrationFingerprint(integration: {
-  identifier: string;
-  name: string;
-  providerId: string;
-  channel?: string;
-  active: boolean;
-  primary: boolean;
-}): string {
-  return stableStringify({
-    identifier: integration.identifier,
-    name: integration.name,
-    providerId: integration.providerId,
-    channel: integration.channel ?? null,
-    active: integration.active,
-    primary: integration.primary,
-    credentials: null,
   });
 }

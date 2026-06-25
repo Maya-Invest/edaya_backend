@@ -7,6 +7,7 @@ import { clearAllTables } from './lib/schema-init'
 import { PostgresAccessRoleStore } from './stores/access-role-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
 import { createEntityStores } from './stores/entity-stores'
+import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffRoleAssignmentStore } from './stores/staff-role-assignment-store'
 
@@ -21,6 +22,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly staffAssignments: PostgresStore<StaffAssignment>
   public readonly serviceApiKeys: PostgresServiceApiKeyStore
   public readonly accountInvitations: PostgresAccountInvitationStore
+  public readonly schoolNotificationTemplates: PostgresSchoolNotificationTemplatesStore
   public readonly accessRoles: PostgresStore<AccessRole>
   public readonly staffRoleAssignments: PostgresStore<StaffRoleAssignment>
   public readonly attachments: PostgresStore<Attachment>
@@ -76,6 +78,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.staffAssignments = stores.staffAssignments
     this.serviceApiKeys = new PostgresServiceApiKeyStore(db)
     this.accountInvitations = new PostgresAccountInvitationStore(db)
+    this.schoolNotificationTemplates = new PostgresSchoolNotificationTemplatesStore(db)
     this.attachments = stores.attachments
     this.resources = stores.resources
     this.resourceAssignments = stores.resourceAssignments

@@ -49,6 +49,10 @@ export interface NotificationEnqueueInput {
   eventKey: string
   title: string
   body: string
+  /** Rendered email subject — defaults to `title` when omitted at the provider */
+  emailSubject?: string
+  /** Rendered email HTML body — defaults to `body` when omitted at the provider */
+  emailBody?: string
   recipients: NotificationRecipient[]
   priority?: AnnouncementPriority
   premium?: boolean

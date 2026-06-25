@@ -9,8 +9,8 @@ import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from './serv
 import type {
   AcceptAccountInvitationInput,
   AccountInvitationServiceWorkflow,
-  RevokeAccountInvitationInput,
   ResendAccountInvitationInput,
+  RevokeAccountInvitationInput,
   SendAccountInvitationInput,
 } from './service-workflows/account-invitation'
 import type {
@@ -54,6 +54,11 @@ import type {
   UpdatePaymentStatusInput,
 } from './service-workflows/finance'
 import type {
+  NotificationTemplatesServiceWorkflow,
+  ResetSchoolNotificationTemplatesInput,
+  UpdateSchoolNotificationTemplatesInput,
+} from './service-workflows/notification-templates'
+import type {
   CreateCalendarEventInput,
   CreateScheduleInput,
   CreateSessionInput,
@@ -81,6 +86,7 @@ import type {
   SetupServiceWorkflow,
   UpdateClassGroupConfigurationInput,
   UpdateSchoolConfigurationInput,
+  UpdateStaffMemberProfileInput,
   UpdateStaffMemberStatusInput,
 } from './service-workflows/setup'
 import type {
@@ -114,6 +120,7 @@ export interface SchoolWorkflowHandlers {
   readonly communications: CommunicationsServiceWorkflow
   readonly behavior: BehaviorServiceWorkflow
   readonly finance: FinanceServiceWorkflow
+  readonly notificationTemplates: NotificationTemplatesServiceWorkflow
 }
 
 export type SchoolCommandHandlerMap = {
@@ -133,6 +140,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     updateClassGroupConfiguration: payload => workflows.setup.updateClassGroupConfiguration(payload as UpdateClassGroupConfigurationInput),
     registerStaffMember: payload => workflows.setup.registerStaffMember(payload as RegisterStaffMemberInput),
     updateStaffMemberStatus: payload => workflows.setup.updateStaffMemberStatus(payload as UpdateStaffMemberStatusInput),
+    updateStaffMemberProfile: payload => workflows.setup.updateStaffMemberProfile(payload as UpdateStaffMemberProfileInput),
     assignStaffToClass: payload => workflows.setup.assignStaffToClass(payload as AssignStaffInput),
     assignStaffToClassSubject: payload => workflows.setup.assignStaffToClassSubject(payload as AssignStaffInput),
     assignStaffToSession: payload => workflows.setup.assignStaffToSession(payload as AssignStaffInput),
@@ -198,6 +206,10 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     applyDeliveryEvent: payload => workflows.communications.applyDeliveryEvent(payload as ApplyDeliveryEventInput),
     markDeliveryRead: payload => workflows.communications.markDeliveryRead(payload as MarkDeliveryReadInput),
     updateNotificationContact: payload => workflows.communications.updateNotificationContact(payload as UpdateNotificationContactInput),
+    updateSchoolNotificationTemplates: payload =>
+      workflows.notificationTemplates.updateSchoolNotificationTemplates(payload as UpdateSchoolNotificationTemplatesInput),
+    resetSchoolNotificationTemplates: payload =>
+      workflows.notificationTemplates.resetSchoolNotificationTemplates(payload as ResetSchoolNotificationTemplatesInput),
     // behavior
     recordIncident: payload => workflows.behavior.recordIncident(payload as RecordIncidentInput),
     addStudentInvolvement: payload => workflows.behavior.addStudentInvolvement(payload as AddStudentInvolvementInput),

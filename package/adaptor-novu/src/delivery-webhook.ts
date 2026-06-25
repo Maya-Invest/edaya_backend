@@ -37,6 +37,14 @@ function readRecord(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
+function readStringField(record: Record<string, unknown>, field: string): string | undefined {
+  return readString(record[field]);
+}
+
+function readRecordField(record: Record<string, unknown>, field: string): Record<string, unknown> | undefined {
+  return readRecord(record[field]);
+}
+
 function normalizeEventType(type: string | undefined): string | undefined {
   if (!type) {
     return undefined;
@@ -65,22 +73,22 @@ function extractMessageObject(data: unknown): Record<string, unknown> | undefine
   if (!record) {
     return undefined;
   }
-  return readRecord(record.object) ?? record;
+  return readRecord(readRecordField(record, "object")) ?? record;
 }
 
 function extractSubscriberId(message: Record<string, unknown>): string | undefined {
-  const subscriber = readRecord(message.subscriber);
-  return readString(message.subscriberId)
-    ?? readString(subscriber?.subscriberId)
-    ?? readString(subscriber?.id);
+  const subscriber = readRecordField(message, "subscriber");
+  return readStringField(message, "subscriberId")
+    ?? readStringField(subscriber ?? {}, "subscriberId")
+    ?? readStringField(subscriber ?? {}, "id");
 }
 
 function extractFailureReason(message: Record<string, unknown>): string | undefined {
-  const error = readRecord(message.error);
-  return readString(message.failureReason)
-    ?? readString(message.reason)
-    ?? readString(error?.message)
-    ?? readString(error?.error);
+  const error = readRecordField(message, "error");
+  return readStringField(message, "failureReason")
+    ?? readStringField(message, "reason")
+    ?? readStringField(error ?? {}, "message")
+    ?? readStringField(error ?? {}, "error");
 }
 
 function extractOccurredAt(
@@ -88,8 +96,8 @@ function extractOccurredAt(
   message: Record<string, unknown>,
 ): Date {
   const candidate = readString(envelope.timestamp)
-    ?? readString(message.updatedAt)
-    ?? readString(message.createdAt);
+    ?? readStringField(message, "updatedAt")
+    ?? readStringField(message, "createdAt");
   if (candidate) {
     const parsed = new Date(candidate);
     if (!Number.isNaN(parsed.getTime())) {
@@ -112,8 +120,8 @@ function parseEnvelope(rawBody: string): NormalizedDeliveryEvent[] {
     return [];
   }
 
-  const deliveryId = readString(message.transactionId)
-    ?? readString(message.transaction_id);
+  const deliveryId = readStringField(message, "transactionId")
+    ?? readStringField(message, "transaction_id");
   if (!deliveryId) {
     return [];
   }
@@ -121,10 +129,10 @@ function parseEnvelope(rawBody: string): NormalizedDeliveryEvent[] {
   return [{
     deliveryId,
     status,
-    providerMessageId: readString(message._id)
-      ?? readString(message.id)
-      ?? readString(message.messageId),
-    channel: readString(message.channel),
+    providerMessageId: readStringField(message, "_id")
+      ?? readStringField(message, "id")
+      ?? readStringField(message, "messageId"),
+    channel: readStringField(message, "channel"),
     failureReason: status === "failed" ? extractFailureReason(message) : undefined,
     occurredAt: extractOccurredAt(envelope, message),
     subjectId: extractSubscriberId(message),
@@ -150,7 +158,7 @@ export function createNovuDeliveryWebhookAdapter(
         return false;
       }
     },
-    parseEvents: async (rawBody) => parseEnvelope(rawBody),
+    parseEvents: async rawBody => parseEnvelope(rawBody),
   };
 }
 

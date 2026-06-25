@@ -264,16 +264,16 @@ export interface Resource {
 export type AnnouncementStatus = 'draft' | 'published' | 'archived';
 export type AnnouncementPriority = 'normal' | 'important' | 'urgent';
 
-export type AnnouncementTargetKind =
-	| 'school'
-	| 'all_staff'
-	| 'all_guardians'
-	| 'all_students'
-	| 'class_group'
-	| 'grade_level'
-	| 'staff_member'
-	| 'guardian'
-	| 'student';
+export type AnnouncementTargetKind
+	= | 'school'
+		| 'all_staff'
+		| 'all_guardians'
+		| 'all_students'
+		| 'class_group'
+		| 'grade_level'
+		| 'staff_member'
+		| 'guardian'
+		| 'student';
 
 export interface AnnouncementTarget {
 	id: string;

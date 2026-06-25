@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { randomUUID } from 'node:crypto'
 /**
  * Novu outbound + webhook smoke test against local API.
  *
@@ -10,15 +11,14 @@
  *   - Optional: NOVU_WEBHOOK_SECRET for local webhook simulation
  */
 import { resolve } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import { buildSignedNovuWebhookRequest } from '../package/adaptor-novu/src/delivery-webhook'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_ID,
 } from '../testing/dev-fixtures/src/index'
-import { HttpSeedClient } from '../testing/seeding/src/http/client'
 import { signInViaHttp } from '../testing/seeding/src/http/auth'
+import { HttpSeedClient } from '../testing/seeding/src/http/client'
 import { executeCoreCommand } from '../testing/seeding/src/http/core-command'
 import { waitForApi } from '../testing/seeding/src/http/wait-for-api'
 

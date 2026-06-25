@@ -85,3 +85,38 @@ export async function updateStaffMemberStatusMutation(input: {
 	});
 	return result !== null;
 }
+
+export async function updateStaffMemberProfileMutation(input: {
+	staffId: string;
+	firstName: string;
+	lastName: string;
+	email?: string;
+	successMessage?: string;
+}): Promise<boolean> {
+	const client = getBrowserSchoolClient();
+	const previous = staffSnapshot(input.staffId);
+	const email = input.email?.trim() ?? '';
+	const nextName = `${input.firstName.trim()} ${input.lastName.trim()}`;
+
+	const result = await runMutation(() => client.commands.updateStaffMemberProfile({
+		staffId: input.staffId,
+		firstName: input.firstName.trim(),
+		lastName: input.lastName.trim(),
+		email: email || null,
+	}), {
+		successMessage: input.successMessage,
+		apply: () => {
+			detailDataContext.patchStaff(input.staffId, {
+				name: nextName,
+				initials: staffInitials(input.firstName, input.lastName),
+				email,
+			});
+		},
+		rollback: () => {
+			if (previous) {
+				detailDataContext.patchStaff(input.staffId, previous);
+			}
+		},
+	});
+	return result !== null;
+}

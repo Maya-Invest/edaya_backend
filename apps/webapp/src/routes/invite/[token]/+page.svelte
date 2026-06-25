@@ -1,14 +1,15 @@
 <script lang="ts">
+	import type { InvitationPreview } from '$lib/api/invitation-data';
 	import { page } from '$app/stores';
-	import { acceptInvitation, fetchInvitationPreview, type InvitationPreview } from '$lib/api/invitation-data';
-	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
+	import { acceptInvitation, fetchInvitationPreview } from '$lib/api/invitation-data';
 	import { bootstrapSession } from '$lib/auth/bootstrap';
+	import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authClient } from '$lib/auth/client';
 	import { authSession } from '$lib/auth/session.svelte';
+	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
-	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import { t } from '$lib/i18n';
 	import { GraduationCap, LoaderCircle } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
@@ -27,13 +28,15 @@
 	let name = $state('');
 	let busy = $state(false);
 
-	const actorKindLabel = $derived(
-		preview?.kind === 'staff'
-			? $t('invitation.kind.staff')
-			: preview?.kind === 'guardian'
-				? $t('invitation.kind.guardian')
-				: $t('invitation.kind.student'),
-	);
+	const actorKindLabel = $derived.by(() => {
+		if (preview?.kind === 'staff') {
+			return $t('invitation.kind.staff');
+		}
+		if (preview?.kind === 'guardian') {
+			return $t('invitation.kind.guardian');
+		}
+		return $t('invitation.kind.student');
+	});
 
 	$effect(() => {
 		const currentToken = token;

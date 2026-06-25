@@ -2,6 +2,8 @@ import type { CalendarEvent } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { CalendarEventKind } from '../../domains'
 import { resolveCalendarEventRecipients } from '../recipient-resolvers'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const CALENDAR_EVENT_REMINDER_EVENT_KEY = 'calendar.event_reminder'
 export const CALENDAR_EVENT_REMINDER_LEAD_HOURS = 24
@@ -69,13 +71,23 @@ export const calendarEventReminderTrigger: NotificationTriggerRegistration<Calen
       return null
     }
 
+    const schoolName = await resolveSchoolName(context.repositories, entity.schoolId)
+    const content = await renderNotificationEnqueueContent(context.templateService, {
+      schoolId: entity.schoolId,
+      templateKey: CALENDAR_EVENT_REMINDER_EVENT_KEY,
+      variables: {
+        schoolName,
+        eventTitle: entity.title,
+        startDate: entity.startDate.toISOString().slice(0, 10),
+      },
+    })
+
     return {
       idempotencyKey,
       schoolId: entity.schoolId,
       kind: 'job',
       eventKey: CALENDAR_EVENT_REMINDER_EVENT_KEY,
-      title: `Upcoming event: ${entity.title}`,
-      body: `${entity.title} starts on ${entity.startDate.toISOString().slice(0, 10)}.`,
+      ...content,
       recipients,
       deliverAfter: calendarEventReminderDeliverAfter(entity.startDate),
       metadata: {

@@ -5,7 +5,6 @@ import {
   accessRoleSchema,
   AccountInvitationContactChannel,
   AccountInvitationKind,
-  accountInvitationSchema,
   announcementSchema,
   announcementTargetSchema,
   assessmentResultSchema,
@@ -31,6 +30,7 @@ import {
   guardianStudentLinkSchema,
   incidentSchema,
   messageDeliverySchema,
+  NOTIFICATION_TEMPLATE_KEYS,
   paymentSchema,
   periodDefinitionSchema,
   ProgressionDecision,
@@ -142,6 +142,26 @@ export const updateStaffMemberStatusCommandSchema = z.object({
   staffId: field.id(),
   isActive: field.boolean(),
 }).openapi("UpdateStaffMemberStatusCommand");
+
+export const updateStaffMemberProfileCommandSchema = z.object(unwrapShape(staffMemberSchema) as any)
+  .partial()
+  .omit({
+    id: true,
+    schoolId: true,
+    isActive: true,
+    createdAt: true,
+    subjectId: true,
+    accountKind: true,
+    serviceId: true,
+    createdBySubjectId: true,
+    serviceElevated: true,
+    notificationEmail: true,
+    notificationPhone: true,
+  })
+  .extend({
+    staffId: field.id(),
+  })
+  .openapi("UpdateStaffMemberProfileCommand");
 
 export const linkActorSubjectCommandSchema = z.object({
   subjectId: field.id(),
@@ -636,7 +656,7 @@ export const materializeDeliveriesCommandSchema = z.object({
 
 export const applyDeliveryEventCommandSchema = z.object({
   deliveryId: field.id(),
-  status: z.enum(['sent', 'failed', 'read', 'cancelled']),
+  status: z.enum(["sent", "failed", "read", "cancelled"]),
   providerMessageId: field.optionalString(),
   failureReason: field.optionalString(),
   occurredAt: field.optionalDate(),
@@ -651,6 +671,20 @@ export const updateNotificationContactCommandSchema = z.object({
   notificationEmail: field.optionalString().nullable(),
   notificationPhone: field.optionalString().nullable(),
 }).openapi("UpdateNotificationContactCommand");
+
+export const updateSchoolNotificationTemplatesCommandSchema = z.object({
+  schoolId: field.id(),
+  templates: z.record(z.string(), z.unknown()).openapi("SchoolNotificationTemplateDocumentPatch", {
+    type: "object",
+    additionalProperties: true,
+  }),
+  expectedUpdatedAt: field.optionalDate(),
+}).openapi("UpdateSchoolNotificationTemplatesCommand");
+
+export const resetSchoolNotificationTemplatesCommandSchema = z.object({
+  schoolId: field.id(),
+  templateKey: z.enum(NOTIFICATION_TEMPLATE_KEYS).optional(),
+}).openapi("ResetSchoolNotificationTemplatesCommand");
 
 export const listClassSubjectAssessmentResultsForPeriodCommandSchema = z.object({
   classSubjectId: field.id(),

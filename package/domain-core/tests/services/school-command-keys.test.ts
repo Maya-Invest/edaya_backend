@@ -53,6 +53,8 @@ describe('school command keys', () => {
     expect(keyDifference(Object.keys(createSchoolCommandHandlers({
       setup: service.setupWorkflow,
       accessControl: service.accessControlWorkflow,
+      accountInvitation: service.accountInvitationWorkflow,
+      notificationTemplates: service.notificationTemplatesWorkflow,
       academics: service.academicsWorkflow,
       assessments: service.assessmentsWorkflow,
       student: service.studentWorkflow,

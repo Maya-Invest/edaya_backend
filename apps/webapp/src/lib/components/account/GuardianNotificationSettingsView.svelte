@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { NotificationSettingsPageData } from '$lib/queries/account.queries';
+	import { saveGuardianNotificationPreferencesMutation } from '$lib/api/mutations/notifications.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
-	import { saveGuardianNotificationPreferencesMutation } from '$lib/api/mutations/notifications.mutations';
 	import { t } from '$lib/i18n';
 
 	const {

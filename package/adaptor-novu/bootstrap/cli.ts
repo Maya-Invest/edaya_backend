@@ -1,9 +1,8 @@
 #!/usr/bin/env bun
 import { buildBootstrapWorkflows } from "./catalog/workflows";
-import { applyBootstrapIntegrations, formatIntegrationApplyResult } from "./lib/apply-integrations";
 import { applyBootstrapWorkflows, formatWorkflowApplyResult } from "./lib/apply-workflows";
 import { createBootstrapNovuClient } from "./lib/client";
-import { loadBootstrapEnv, resolveBootstrapIntegrations } from "./lib/env";
+import { loadBootstrapEnv } from "./lib/env";
 import { loadBootstrapEmailTemplates } from "./lib/load-templates";
 
 type Command = "apply" | "plan" | "validate";
@@ -21,18 +20,12 @@ function printUsage() {
 
 Commands:
   plan      Show what would change (default)
-  apply     Create or update Novu workflows and integrations
+  apply     Create or update Novu workflows
   validate  Check the local catalog only (no API calls)
 
 Environment (from process.env or apps/api/.env):
   NOVU_SECRET_KEY              required
   NOVU_API_URL                 optional (e.g. https://eu.api.novu.co)
-
-Email webhook integration (optional but recommended):
-  NOVU_EMAIL_WEBHOOK_URL       e.g. https://novu-email-staging.example.com
-  NOVU_EMAIL_WEBHOOK_SECRET    HMAC secret (matches novu-email-bridge)
-  NOVU_EMAIL_FROM              e.g. announcements@example.com
-  NOVU_EMAIL_SENDER_NAME       default: Edaya
 `);
 }
 
@@ -74,7 +67,6 @@ async function main() {
     ...(env.serverURL ? { serverURL: env.serverURL } : {}),
   });
 
-  const integrations = resolveBootstrapIntegrations(env);
   const dryRun = command === "plan";
 
   console.log(dryRun ? "Novu bootstrap plan" : "Novu bootstrap apply");
@@ -84,9 +76,6 @@ async function main() {
 
   const workflowResult = await applyBootstrapWorkflows(novu, workflows, { dryRun });
   console.log(formatWorkflowApplyResult(workflowResult));
-
-  const integrationResult = await applyBootstrapIntegrations(novu, integrations, { dryRun });
-  console.log(formatIntegrationApplyResult(integrationResult));
 
   if (dryRun) {
     console.log("\nRun with `apply` to push changes.");

@@ -2,10 +2,10 @@ import { academicContext } from '$lib/academic/context.svelte';
 import { fetchActivities } from '$lib/api/activities-data';
 import { fetchAnnouncements } from '$lib/api/announcements-data';
 import { loadAbsences, loadCalendarEvents, loadIncidentRouteData } from '$lib/api/school-life-data';
-import { getSchoolGuardiansData, getSchoolStaffData, getSchoolStudentsData } from '$lib/queries/people.queries';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
+import { getSchoolGuardiansData, getSchoolStaffData, getSchoolStudentsData } from '$lib/queries/people.queries';
 
 export function querySchoolAnnouncementsPage() {
 	return (url: URL) => resolvePageLoad(url, {

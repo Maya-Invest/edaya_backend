@@ -108,6 +108,13 @@ export const accountInvitations = pgTable('account_invitations', {
   lastSentAt: timestamp('last_sent_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('account_invitations', table))
 
+export const schoolNotificationTemplates = pgTable('school_notification_templates', {
+  id: text('school_id').primaryKey(),
+  templates: jsonb('templates').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+})
+
 export const staffAssignments = pgTable('staff_assignments', {
   id: text('id').primaryKey(),
   staffId: text('staff_id').notNull(),

@@ -1,6 +1,8 @@
 import type { Assessment } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const ASSESSMENT_DUE_SOON_EVENT_KEY = 'assessment.due_soon'
 export const ASSESSMENT_DUE_SOON_LEAD_DAYS = 3
@@ -68,13 +70,23 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
       return null
     }
 
+    const schoolName = await resolveSchoolName(context.repositories, classGroup.schoolId)
+    const content = await renderNotificationEnqueueContent(context.templateService, {
+      schoolId: classGroup.schoolId,
+      templateKey: ASSESSMENT_DUE_SOON_EVENT_KEY,
+      variables: {
+        schoolName,
+        assessmentTitle: entity.title,
+        dueDate: entity.dueAt.toISOString().slice(0, 10),
+      },
+    })
+
     return {
       idempotencyKey,
       schoolId: classGroup.schoolId,
       kind: 'job',
       eventKey: ASSESSMENT_DUE_SOON_EVENT_KEY,
-      title: `Assessment due soon: ${entity.title}`,
-      body: `${entity.title} is due on ${entity.dueAt.toISOString().slice(0, 10)}.`,
+      ...content,
       recipients,
       deliverAfter: assessmentDueSoonDeliverAfter(entity.dueAt),
       metadata: {

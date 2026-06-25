@@ -29,9 +29,9 @@ describe("Novu bootstrap catalog", () => {
 
   test("loads email templates from html files", async () => {
     const templates = await loadBootstrapEmailTemplates();
-    expect(templates.standardNotification).toContain("{{payload.body}}");
-    expect(templates.accountInvitation).toContain("{{payload.metadata.inviteUrl}}");
-    expect(templates.accountInvitationSubject).toContain("{{context.tenant}}");
+    expect(templates.standardNotification).toContain("{{payload.emailBody}}");
+    expect(templates.accountInvitation).toContain("{{payload.emailBody}}");
+    expect(templates.accountInvitationSubject).toContain("{{payload.emailSubject}}");
   });
 
   test("fingerprints are stable for unchanged definitions", async () => {

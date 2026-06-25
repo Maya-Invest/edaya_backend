@@ -3,7 +3,7 @@
 > **Status:** Not started  
 > **Created:** 2026-06-24  
 > **Scope:** End-to-end invitation flow to link Better Auth user accounts to school **staff**, **guardians**, and **students**  
-> **Depends on:** Better Auth integration (done), `linkActorSubject` command (done), notification gateway + Novu email bridge (Phase 6, largely done)  
+> **Depends on:** Better Auth integration (done), `linkActorSubject` command (done), notification gateway + Novu (Phase 6, largely done)  
 > **Unblocks:** Notifications for unlinked students/guardians (notifications-plan Appendix C #11), guardian/student self-service login, inbox delivery for all actor kinds
 
 ---
@@ -35,7 +35,7 @@ Today a school admin can create staff, guardians, and students in the domain, bu
 | Subject uniqueness | `assertSubjectUnlinked`, `assertSubjectIdAvailable` | One auth account → at most one actor per school; one actor → one auth account |
 | Session → actor resolution | `apps/api/src/http/dependencies/session-actor.ts` | Exactly one of staff/guardian/student per `subjectId` |
 | Notification contact resolution | `resolve-notification-contact.ts`, `notificationEmail` / `notificationPhone` columns | Staff/guardian have contact fields; **students do not** |
-| Outbound email path | Novu workflow → `apps/novu-email-bridge` → Cloudflare Email Sending | Use for invitation delivery |
+| Outbound email path | Novu workflow → Novu email integration (e.g. Custom SMTP) | Configure in Novu dashboard; use for invitation delivery |
 | Auth | Better Auth email/password in `apps/api` | No public sign-up UI yet (demo login only) |
 | Novu enqueue (operational) | `buildNovuSubscriberIds` requires `subjectId` | Invite path is the **only** exception — transient subscriber |
 
@@ -49,7 +49,7 @@ Today a school admin can create staff, guardians, and students in the domain, bu
 |---|---------|------------|
 | O1 | `AccountInvitation` persisted with scoped target + delivery contact + lifecycle | Migration + entity store + tests |
 | O2 | Admin can **send** (and **resend** / **revoke**) invitations for staff, guardian, student | Core command + API route + permission |
-| O3 | Invitation delivered by email (SMS deferred) | Novu `account_invitation` workflow + bridge smoke test |
+| O3 | Invitation delivered by email (SMS deferred) | Novu `account_invitation` workflow + `bun novu:smoke` |
 | O4 | Public accept URL completes linking for all three kinds | Integration test: token → sign-up → linked `subjectId` → session resolves |
 | O5 | Webapp admin UX: send/resend from entity drawer; linked vs pending state visible | Staff, guardian, student detail drawers |
 | O6 | Webapp accept UX: `/invite/[token]` with sign-up/sign-in + success/error states | E2E manual test checklist |
@@ -203,7 +203,7 @@ Operational notifications require a linked auth account (`subjectId`). Invites a
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ package/adaptor-novu — transient subscriber + trigger                      │
 │  upsert invite:{id} → enqueue account_invitation                         │
-│  Novu → novu-email-bridge → Cloudflare Email Sending                     │
+│  Novu → configured email integration (e.g. Custom SMTP)                  │
 └───────────────────────────────┬─────────────────────────────────────────┘
                                 │
                                 ▼

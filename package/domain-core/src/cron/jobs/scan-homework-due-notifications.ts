@@ -1,6 +1,8 @@
 import type { HomeworkAssignment } from '../../domains'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
 import { resolveClassGroupStudentAndGuardianRecipients } from '../../notifications/recipient-resolvers'
+import { enqueueTemplatedNotification } from '../../notifications/templates/enqueue-templated-notification'
+import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
 import {
   HOMEWORK_DUE_SOON_EVENT_KEY,
   homeworkDueSoonDeliverAfter,
@@ -37,13 +39,21 @@ export async function scanHomeworkDueNotifications(
       continue
     }
 
-    await context.service.baseService.notificationGateway.enqueue({
+    const schoolName = await resolveSchoolName(
+      context.service.baseService.repositories,
+      assignment.schoolId,
+    )
+    await enqueueTemplatedNotification(context.service.baseService, {
       idempotencyKey: homeworkDueSoonIdempotencyKey(assignment.id),
       schoolId: assignment.schoolId,
       kind: 'job',
       eventKey: HOMEWORK_DUE_SOON_EVENT_KEY,
-      title: `Homework due soon: ${assignment.title}`,
-      body: `${assignment.title} is due on ${assignment.dueDate.toISOString().slice(0, 10)}.`,
+      templateKey: HOMEWORK_DUE_SOON_EVENT_KEY,
+      variables: {
+        schoolName,
+        homeworkTitle: assignment.title,
+        dueDate: assignment.dueDate.toISOString().slice(0, 10),
+      },
       recipients,
       deliverAfter: homeworkDueSoonDeliverAfter(assignment.dueDate),
       metadata: {

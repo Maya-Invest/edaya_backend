@@ -1,19 +1,19 @@
 import {
-  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-  handleAssessmentResultRecorded,
-} from './handlers/assessment-result-recorded'
-import {
-  INCIDENT_RECORDED_EVENT_KEY,
-  handleIncidentRecorded,
-} from './handlers/incident-recorded'
-import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
   handleAnnouncementPublished,
 } from './handlers/announcement-published'
 import {
+  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
+  handleAssessmentResultRecorded,
+} from './handlers/assessment-result-recorded'
+import {
   ATTENDANCE_RECORDED_EVENT_KEY,
   handleAttendanceRecorded,
 } from './handlers/attendance-recorded'
+import {
+  handleIncidentRecorded,
+  INCIDENT_RECORDED_EVENT_KEY,
+} from './handlers/incident-recorded'
 import {
   handleReportCardPublished,
   REPORT_CARD_PUBLISHED_EVENT_KEY,

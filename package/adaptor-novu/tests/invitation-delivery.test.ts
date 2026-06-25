@@ -1,3 +1,4 @@
+import { AccountInvitationKind } from "@edaya/core";
 import { createNovuInvitationDeliveryPort } from "@edaya/adaptor-novu";
 import { describe, expect, mock, test } from "bun:test";
 
@@ -25,9 +26,11 @@ describe("createNovuInvitationDeliveryPort", () => {
       contactChannel: "email",
       contactValue: "user@school.edu",
       displayName: "Paul Martin",
-      actorKind: "staff",
+      actorKind: AccountInvitationKind.Staff,
       inviteUrl: "https://app.edaya.test/invite/token",
       expiresAt: new Date("2026-07-01T00:00:00Z"),
+      emailSubject: "You're invited to Edaya",
+      emailBody: "<p>Join your school on Edaya.</p>",
     });
 
     expect(upsert).toHaveBeenCalledWith(
@@ -37,6 +40,7 @@ describe("createNovuInvitationDeliveryPort", () => {
         email: "user@school.edu",
         displayName: "Paul Martin",
       }),
+      { skipWorkflowPreferences: true },
     );
     expect(trigger).toHaveBeenCalledWith(expect.objectContaining({
       to: "invite:inv-1",

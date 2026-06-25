@@ -303,7 +303,7 @@ Phase 6 completes the **provider-centric** model: school domain decides **who** 
 | **6e** | **Done** | Webhook route, `applyDeliveryEvent`, `reconcilePendingDeliveries` cron |
 | **6f** | **Done** | `/account/inbox/[[id]]` — delivery list, detail drawer, `markDeliveryRead` on open |
 
-**E2E / ops:** Novu workflow trigger id must match `eventKey` (e.g. `announcement.published`). Tenant isolation uses **`context: { tenant: schoolId }`** on trigger (Novu v2). Email delivery: Novu Custom SMTP (`smtp.mx.cloudflare.net`) or **`apps/novu-email-bridge`** Email Webhook Worker. `NOVU_SECRET_KEY` cached at API startup — restart after key changes. Status sync: webhooks (`NOVU_WEBHOOK_SECRET`) **or** `CRON_JOB_KEYS=reconcilePendingDeliveries bun run dev:cron`.
+**E2E / ops:** Novu workflow trigger id must match `eventKey` (e.g. `announcement.published`). Tenant isolation uses **`context: { tenant: schoolId }`** on trigger (Novu v2). Email delivery: configure a Novu email integration in the dashboard (e.g. Custom SMTP such as `smtp.mx.cloudflare.net`). `NOVU_SECRET_KEY` cached at API startup — restart after key changes. Status sync: webhooks (`NOVU_WEBHOOK_SECRET`) **or** `CRON_JOB_KEYS=reconcilePendingDeliveries bun run dev:cron`.
 
 ### 6.0 Target model (end state)
 
@@ -573,7 +573,7 @@ Cron job `reconcilePendingDeliveries` calls Novu Messages API via `lookupDeliver
 4. ~~**PR 6d (tail):** Novu preferences API sync on guardian channel toggle save.~~ **Done**
 5. **PR 6a (tail):** Enforce `premiumNotificationsEnabled` in recipient resolution (G6).
 
-**Ops (parallel):** Create Novu workflows per `eventKey`; use `context.tenant` in workflow templates (`{{context.tenant.*}}`); configure Cloudflare email (SMTP or `apps/novu-email-bridge`).
+**Ops (parallel):** Create Novu workflows per `eventKey` (`bun novu:bootstrap:apply`); use `context.tenant` in workflow templates (`{{context.tenant.*}}`); configure email delivery via a Novu email integration (e.g. Custom SMTP).
 
 ---
 
@@ -637,7 +637,7 @@ Cron job `reconcilePendingDeliveries` calls Novu Messages API via `lookupDeliver
 | Cron jobs | `package/domain-core/src/cron/` — `processDueNotifications`, `reconcilePendingDeliveries`, `resolve-cron-job-keys.ts` |
 | Novu adapter | `package/adaptor-novu/` — trigger uses `context.tenant` = `schoolId` |
 | Notification contact | `package/domain-core/src/notifications/resolve-notification-contact.ts`, migration `0017_notification_contact.sql` |
-| CF email bridge | `apps/novu-email-bridge/` |
+| Novu bootstrap | `package/adaptor-novu/bootstrap/` — `bun novu:bootstrap:apply` |
 | Workflow triggers | `workflow-notification-runner.ts`, `handlers/announcement-published.ts`, … |
 | Workflows | `communications.ts` (`applyDeliveryEvent`, `markDeliveryRead`, materialize) |
 | API | `apps/api/src/routes/novu-webhook.routes.ts`, `resolve-notification-gateway.ts` |

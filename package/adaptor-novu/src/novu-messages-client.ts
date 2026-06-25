@@ -1,6 +1,7 @@
 import { Novu } from "@novu/api";
 import type { NotificationDeliveryStatusLookup } from "@edaya/core";
-import { groupNovuMessagesByDeliveryId, type NovuApiMessageSnapshot } from "./delivery-status";
+import { groupNovuMessagesByDeliveryId } from "./delivery-status";
+import type { NovuApiMessageSnapshot } from "./delivery-status";
 
 export interface NovuMessagesClient {
   lookupDeliveryStatuses: (

@@ -12,6 +12,7 @@ import { AssessmentsServiceWorkflow } from './service-workflows/assessments'
 import { BehaviorServiceWorkflow } from './service-workflows/behavior'
 import { CommunicationsServiceWorkflow } from './service-workflows/communications'
 import { FinanceServiceWorkflow } from './service-workflows/finance'
+import { NotificationTemplatesServiceWorkflow } from './service-workflows/notification-templates'
 import { SchedulingServiceWorkflow } from './service-workflows/scheduling'
 import { SetupServiceWorkflow } from './service-workflows/setup'
 import { StudentServiceWorkflow } from './service-workflows/student'
@@ -28,6 +29,7 @@ export class SchoolService {
   readonly behaviorWorkflow: BehaviorServiceWorkflow
   readonly accessControlWorkflow: AccessControlServiceWorkflow
   readonly accountInvitationWorkflow: AccountInvitationServiceWorkflow
+  readonly notificationTemplatesWorkflow: NotificationTemplatesServiceWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
@@ -42,10 +44,12 @@ export class SchoolService {
     this.behaviorWorkflow = new BehaviorServiceWorkflow(this.baseService)
     this.accessControlWorkflow = new AccessControlServiceWorkflow(this.baseService)
     this.accountInvitationWorkflow = new AccountInvitationServiceWorkflow(this.baseService)
+    this.notificationTemplatesWorkflow = new NotificationTemplatesServiceWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
       accountInvitation: this.accountInvitationWorkflow,
+      notificationTemplates: this.notificationTemplatesWorkflow,
       academics: this.academicsWorkflow,
       assessments: this.assessmentsWorkflow,
       student: this.studentWorkflow,

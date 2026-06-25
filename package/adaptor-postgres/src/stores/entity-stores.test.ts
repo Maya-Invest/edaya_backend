@@ -4,6 +4,8 @@ import { createEntityStores } from './entity-stores'
 
 const SPECIALIZED_ENTITY_STORE_KEYS = [
   'accessRoles',
+  'accountInvitations',
+  'schoolNotificationTemplates',
   'staffRoleAssignments',
 ] as const
 

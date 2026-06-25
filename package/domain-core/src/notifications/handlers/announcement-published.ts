@@ -1,5 +1,7 @@
 import type { Announcement, MessageDelivery } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const ANNOUNCEMENT_PUBLISHED_EVENT_KEY = 'announcement.published'
 
@@ -17,6 +19,17 @@ export async function handleAnnouncementPublished(
     return
   }
 
+  const schoolName = await resolveSchoolName(context.repositories, announcement.schoolId)
+  const content = await renderNotificationEnqueueContent(context.templateService, {
+    schoolId: announcement.schoolId,
+    templateKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
+    variables: {
+      schoolName,
+      announcementTitle: announcement.title,
+      announcementBody: announcement.content,
+    },
+  })
+
   for (const delivery of deliveries) {
     if (!delivery.recipientKind || !delivery.recipientId) {
       continue
@@ -27,8 +40,7 @@ export async function handleAnnouncementPublished(
       kind: 'ad_hoc',
       eventKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
       announcementId: announcement.id,
-      title: announcement.title,
-      body: announcement.content,
+      ...content,
       recipients: [{
         kind: delivery.recipientKind,
         id: delivery.recipientId,

@@ -40,6 +40,7 @@ import {
   resourceConfig,
   scheduleConfig,
   schoolConfig,
+  schoolNotificationTemplatesConfig,
   sessionConfig,
   staffAssignmentConfig,
   staffMemberConfig,
@@ -55,6 +56,7 @@ import {
   subjectMatterConfig,
 } from '../domains'
 import { withNotificationPostSaveHook } from '../notifications/notification-trigger-registry'
+import { NotificationTemplateService } from '../notifications/templates/notification-template-service'
 import { ManagedEntityService } from './managed-entity-service'
 
 export type CoreEntityConfigFactoryMap = {
@@ -89,6 +91,7 @@ export const CORE_ENTITY_CONFIG_FACTORIES: CoreEntityConfigFactoryMap = {
   announcements: announcementConfig,
   announcementTargets: announcementTargetConfig,
   messageDeliveries: messageDeliveryConfig,
+  schoolNotificationTemplates: schoolNotificationTemplatesConfig,
   subjects: subjectConfig,
   subjectMatters: subjectMatterConfig,
   classGroups: classGroupConfig,
@@ -138,10 +141,12 @@ function createManagedEntityService<Key extends CoreEntityKey>(
   args: ServiceArgs,
   input: EntityConfigFactoryInput,
 ): ManagedEntityService<CoreEntityMap[Key]> {
+  const templateService = args.templateService ?? new NotificationTemplateService(args.repositories)
   const config = withNotificationPostSaveHook(
     key,
     CORE_ENTITY_CONFIG_FACTORIES[key](input),
     args.notificationGateway,
+    templateService,
   )
 
   return new ManagedEntityService<CoreEntityMap[Key]>({

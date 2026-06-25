@@ -54,22 +54,19 @@
 		linkStatus === 'linked'
 			? $t('invitation.status.linked')
 			: linkStatus === 'pending'
-				? $t('invitation.status.pending')
-				: $t('invitation.status.notLinked'),
+			? $t('invitation.status.pending')
+			: $t('invitation.status.notLinked'),
 	);
 
 	const statusTone = $derived(
 		linkStatus === 'linked'
 			? 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20'
 			: linkStatus === 'pending'
-				? 'text-amber-800 bg-amber-500/10 border-amber-500/20'
-				: 'text-muted-foreground bg-secondary/50 border-border',
+			? 'text-amber-800 bg-amber-500/10 border-amber-500/20'
+			: 'text-muted-foreground bg-secondary/50 border-border',
 	);
 
 	$effect(() => {
-		kind;
-		targetId;
-		subjectId;
 		pendingOverride = undefined;
 
 		if (subjectId) {
@@ -77,8 +74,10 @@
 			return;
 		}
 
+		const currentKind = kind;
+		const currentTargetId = targetId;
 		let cancelled = false;
-		void fetchPendingAccountInvitation(kind, targetId).then((invitation) => {
+		void fetchPendingAccountInvitation(currentKind, currentTargetId).then((invitation) => {
 			if (!cancelled) {
 				serverPendingId = invitation?.id ?? null;
 			}

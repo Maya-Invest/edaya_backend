@@ -1,6 +1,8 @@
 import type { Assessment } from '../../domains'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
 import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
+import { enqueueTemplatedNotification } from '../../notifications/templates/enqueue-templated-notification'
+import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
 import {
   ASSESSMENT_DUE_SOON_EVENT_KEY,
   assessmentDueSoonDeliverAfter,
@@ -36,13 +38,21 @@ export async function scanAssessmentDueNotifications(
       continue
     }
 
-    await context.service.baseService.notificationGateway.enqueue({
+    const schoolName = await resolveSchoolName(
+      context.service.baseService.repositories,
+      classGroup.schoolId,
+    )
+    await enqueueTemplatedNotification(context.service.baseService, {
       idempotencyKey: assessmentDueSoonIdempotencyKey(assessment.id),
       schoolId: classGroup.schoolId,
       kind: 'job',
       eventKey: ASSESSMENT_DUE_SOON_EVENT_KEY,
-      title: `Assessment due soon: ${assessment.title}`,
-      body: `${assessment.title} is due on ${assessment.dueAt!.toISOString().slice(0, 10)}.`,
+      templateKey: ASSESSMENT_DUE_SOON_EVENT_KEY,
+      variables: {
+        schoolName,
+        assessmentTitle: assessment.title,
+        dueDate: assessment.dueAt!.toISOString().slice(0, 10),
+      },
       recipients: enrollments.map(enrollment => ({
         kind: MessageDeliveryRecipientKind.Student,
         id: enrollment.studentId,

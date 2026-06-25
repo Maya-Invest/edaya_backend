@@ -10,7 +10,7 @@ export default antfu(
       semi: true,
       quotes: "double",
     },
-    ignores: ["**/node_modules/*", "**/dist/*"],
+    ignores: ["**/node_modules/*", "**/dist/*", "bootstrap/**"],
   },
   {
     rules: {

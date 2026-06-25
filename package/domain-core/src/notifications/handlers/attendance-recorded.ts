@@ -2,6 +2,8 @@ import type { AttendanceRecord, Guardian } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { AttendanceStatus, MessageDeliveryRecipientKind } from '../../domains'
 import { uniqueNotificationRecipients } from '../recipient-utils'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const ATTENDANCE_RECORDED_EVENT_KEY = 'attendance.recorded'
 
@@ -23,6 +25,8 @@ export async function handleAttendanceRecorded(
     return
   }
 
+  const schoolName = await resolveSchoolName(context.repositories, payload.schoolId)
+
   for (const record of payload.records) {
     if (!NOTIFY_STATUSES.has(record.status)) {
       continue
@@ -37,13 +41,28 @@ export async function handleAttendanceRecorded(
       continue
     }
 
+    const [student, session] = await Promise.all([
+      context.repositories.students.findById(record.studentId),
+      context.repositories.sessions.findById(record.sessionId),
+    ])
+
+    const content = await renderNotificationEnqueueContent(context.templateService, {
+      schoolId: payload.schoolId,
+      templateKey: ATTENDANCE_RECORDED_EVENT_KEY,
+      variables: {
+        schoolName,
+        studentName: student ? `${student.firstName} ${student.lastName}` : record.studentId,
+        status: record.status,
+        sessionTitle: session?.title ?? record.sessionId,
+      },
+    })
+
     await context.notificationGateway.enqueue({
       idempotencyKey: `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.sessionId}:${record.status}`,
       schoolId: payload.schoolId,
       kind: 'event',
       eventKey: ATTENDANCE_RECORDED_EVENT_KEY,
-      title: `Attendance update: ${record.status}`,
-      body: `Attendance was recorded as ${record.status} for session ${record.sessionId}.`,
+      ...content,
       recipients: uniqueNotificationRecipients(recipients),
       metadata: {
         studentId: record.studentId,

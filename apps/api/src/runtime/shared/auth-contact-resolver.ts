@@ -2,7 +2,7 @@ import type { AuthContactResolverPort } from "@edaya/core";
 import { user } from "@edaya/betterauth-d1-migrations/schema";
 import { eq } from "drizzle-orm";
 
-type AuthDatabase = {
+interface AuthDatabase {
   select: (fields: { email: typeof user.email }) => {
     from: (table: typeof user) => {
       where: (condition: ReturnType<typeof eq>) => {
@@ -10,7 +10,7 @@ type AuthDatabase = {
       };
     };
   };
-};
+}
 
 export function createAuthContactResolver(db: AuthDatabase): AuthContactResolverPort {
   return {

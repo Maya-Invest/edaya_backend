@@ -1,12 +1,13 @@
+import type { GuardianNotificationSettings, StaffNotificationSettings } from '$lib/api/account-data';
+import type { InboxDelivery } from '$lib/api/notifications-inbox-data';
 import { academicContext } from '$lib/academic/context.svelte';
 import {
 	fetchGuardianNotificationSettings,
 	fetchStaffSubjectId,
-	type GuardianNotificationSettings,
-	type StaffNotificationSettings,
+
 } from '$lib/api/account-data';
 import { entitiesByIds } from '$lib/api/entity-list-filters';
-import { fetchInboxDeliveries, type InboxDelivery } from '$lib/api/notifications-inbox-data';
+import { fetchInboxDeliveries } from '$lib/api/notifications-inbox-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { authSession } from '$lib/auth/session.svelte';
 import { resolvePageLoad } from '$lib/queries/page-status';

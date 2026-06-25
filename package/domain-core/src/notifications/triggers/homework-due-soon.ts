@@ -1,6 +1,8 @@
 import type { HomeworkAssignment } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { resolveClassGroupStudentAndGuardianRecipients } from '../recipient-resolvers'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const HOMEWORK_DUE_SOON_EVENT_KEY = 'homework.due_soon'
 export const HOMEWORK_DUE_SOON_LEAD_DAYS = 3
@@ -49,13 +51,23 @@ export const homeworkDueSoonTrigger: NotificationTriggerRegistration<HomeworkAss
       return null
     }
 
+    const schoolName = await resolveSchoolName(context.repositories, entity.schoolId)
+    const content = await renderNotificationEnqueueContent(context.templateService, {
+      schoolId: entity.schoolId,
+      templateKey: HOMEWORK_DUE_SOON_EVENT_KEY,
+      variables: {
+        schoolName,
+        homeworkTitle: entity.title,
+        dueDate: entity.dueDate.toISOString().slice(0, 10),
+      },
+    })
+
     return {
       idempotencyKey,
       schoolId: entity.schoolId,
       kind: 'job',
       eventKey: HOMEWORK_DUE_SOON_EVENT_KEY,
-      title: `Homework due soon: ${entity.title}`,
-      body: `${entity.title} is due on ${entity.dueDate.toISOString().slice(0, 10)}.`,
+      ...content,
       recipients,
       deliverAfter: homeworkDueSoonDeliverAfter(entity.dueDate),
       metadata: {

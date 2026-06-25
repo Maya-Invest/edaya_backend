@@ -2,6 +2,8 @@ import type { Assessment, AssessmentResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { MessageDeliveryRecipientKind } from '../../domains'
 import { uniqueNotificationRecipients } from '../recipient-utils'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const ASSESSMENT_RESULT_RECORDED_EVENT_KEY = 'assessment.result_recorded'
 
@@ -29,19 +31,28 @@ export async function handleAssessmentResultRecorded(
     return
   }
 
+  const schoolName = await resolveSchoolName(context.repositories, student.schoolId)
+  const content = await renderNotificationEnqueueContent(context.templateService, {
+    schoolId: student.schoolId,
+    templateKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
+    variables: {
+      schoolName,
+      assessmentTitle: assessment.title,
+    },
+  })
+
   await context.notificationGateway.enqueue({
     idempotencyKey: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:${result.id}`,
     schoolId: student.schoolId,
     kind: 'event',
     eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-    title: 'Assessment result recorded',
-    body: `A result was recorded for ${assessment.title}.`,
+    ...content,
     recipients,
     metadata: {
       assessmentResultId: result.id,
       assessmentId: assessment.id,
       studentId: student.id,
-      score: result.score,
+      score: result.score === undefined ? '' : String(result.score),
     },
   })
 }

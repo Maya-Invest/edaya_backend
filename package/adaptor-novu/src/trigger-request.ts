@@ -25,6 +25,8 @@ export function mapNotificationToNovuTriggerRequest(
     payload: {
       title: input.title,
       body: input.body,
+      emailSubject: input.emailSubject ?? input.title,
+      emailBody: input.emailBody ?? input.body,
       kind: input.kind,
       eventKey: input.eventKey,
       schoolId: input.schoolId,

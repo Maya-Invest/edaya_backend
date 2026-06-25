@@ -22,17 +22,17 @@ import {
   StudentNote as StudentNoteEntity,
   StudentStatus,
 } from '../../domains'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import {
-  buildGuardianRecipientProfile,
-  scheduleNotificationRecipientUpsert,
-} from '../../notifications'
+import { AccountInvitationKind } from '../../domains/access/account-invitation'
 import {
   resolveStudentInvitationEmail,
   scheduleAccountInvitationIfEligible,
 } from '../../invitations'
-import { AccountInvitationKind } from '../../domains/access/account-invitation'
+import {
+  buildGuardianRecipientProfile,
+  scheduleNotificationRecipientUpsert,
+} from '../../notifications'
+import { permissionAction } from '../../shared'
+import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface EnrollStudentInput {

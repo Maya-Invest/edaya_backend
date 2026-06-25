@@ -14,12 +14,12 @@ import {
   StudentDisciplinaryActionStatus,
   StudentIncidentInvolvement,
 } from '../../domains'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import {
   INCIDENT_RECORDED_EVENT_KEY,
   runWorkflowNotifications,
 } from '../../notifications'
+import { permissionAction } from '../../shared'
+import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AddStudentInvolvementInput {

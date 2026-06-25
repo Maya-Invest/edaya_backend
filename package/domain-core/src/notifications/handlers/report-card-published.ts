@@ -2,6 +2,8 @@ import type { ReportCardResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { MessageDeliveryRecipientKind } from '../../domains'
 import { uniqueNotificationRecipients } from '../recipient-utils'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const REPORT_CARD_PUBLISHED_EVENT_KEY = 'report_card.published'
 
@@ -28,13 +30,22 @@ export async function handleReportCardPublished(
     return
   }
 
+  const schoolName = await resolveSchoolName(context.repositories, student.schoolId)
+  const content = await renderNotificationEnqueueContent(context.templateService, {
+    schoolId: student.schoolId,
+    templateKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
+    variables: {
+      schoolName,
+      studentName: `${student.firstName} ${student.lastName}`,
+    },
+  })
+
   await context.notificationGateway.enqueue({
     idempotencyKey: `${REPORT_CARD_PUBLISHED_EVENT_KEY}:${result.id}`,
     schoolId: student.schoolId,
     kind: 'event',
     eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
-    title: 'Report card published',
-    body: `The report card for ${student.firstName} ${student.lastName} is now available.`,
+    ...content,
     recipients,
     metadata: {
       reportCardResultId: result.id,

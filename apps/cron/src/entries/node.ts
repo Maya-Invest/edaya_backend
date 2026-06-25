@@ -10,7 +10,7 @@ async function main(): Promise<void> {
   try {
     const application = await runtime.getSchoolApplication();
     const asOf = new Date();
-    const jobKeys = process.env.CRON_JOB_KEYS?.split(',').map(key => key.trim()).filter(Boolean);
+    const jobKeys = env.CRON_JOB_KEYS?.split(",").map(key => key.trim()).filter(Boolean);
     const summary = await runCronJobs(application, {
       asOf,
       ...(jobKeys && jobKeys.length > 0 ? { jobKeys: jobKeys as import("@edaya/core").CronJobKey[] } : {}),

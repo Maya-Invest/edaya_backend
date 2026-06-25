@@ -1,8 +1,8 @@
-import { z } from 'zod'
-import { parseDomain, zodDate } from '../utils'
 import type { EntityConfigFactory } from '../../shared'
+import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
+import { parseDomain, zodDate } from '../utils'
 
 export enum AccountInvitationKind {
   Staff = 'staff',

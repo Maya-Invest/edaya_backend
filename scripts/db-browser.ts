@@ -68,9 +68,9 @@ function layout(title: string, body: string): string {
 
 interface DbBrowserBackend {
   label: string
-  listTables(): Promise<string[]>
-  getRows(table: string, offset: number, limit: number): Promise<{ total: number, rows: Record<string, unknown>[] }>
-  close(): Promise<void>
+  listTables: () => Promise<string[]>
+  getRows: (table: string, offset: number, limit: number) => Promise<{ total: number, rows: Record<string, unknown>[] }>
+  close: () => Promise<void>
 }
 
 async function createAuthBackend(dbPath: string): Promise<DbBrowserBackend> {

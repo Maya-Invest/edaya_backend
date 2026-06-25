@@ -3,6 +3,8 @@ import type { BootstrapEmailTemplates } from "./load-templates";
 /** Shared Novu template variables for Edaya notification payloads. */
 export const EDAYA_PAYLOAD_TITLE = "{{payload.title}}";
 export const EDAYA_PAYLOAD_BODY = "{{payload.body}}";
+export const EDAYA_PAYLOAD_EMAIL_SUBJECT = "{{payload.emailSubject}}";
+export const EDAYA_PAYLOAD_EMAIL_BODY = "{{payload.emailBody}}";
 
 export function edayaInAppStep(name = "In-app"): {
   stepId: string;
@@ -25,9 +27,8 @@ export function edayaInAppStep(name = "In-app"): {
 }
 
 export function edayaEmailStep(
-  templates: BootstrapEmailTemplates,
+  _templates: BootstrapEmailTemplates,
   name = "Email",
-  subject = EDAYA_PAYLOAD_TITLE,
 ): {
   stepId: string;
   name: string;
@@ -43,14 +44,14 @@ export function edayaEmailStep(
     name,
     type: "email",
     controlValues: {
-      subject,
-      body: templates.standardNotification,
+      subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
+      body: EDAYA_PAYLOAD_EMAIL_BODY,
       editorType: "html",
     },
   };
 }
 
-export function edayaInvitationEmailStep(templates: BootstrapEmailTemplates): {
+export function edayaInvitationEmailStep(_templates: BootstrapEmailTemplates): {
   stepId: string;
   name: string;
   type: "email";
@@ -65,8 +66,8 @@ export function edayaInvitationEmailStep(templates: BootstrapEmailTemplates): {
     name: "Invitation email",
     type: "email",
     controlValues: {
-      subject: templates.accountInvitationSubject,
-      body: templates.accountInvitation,
+      subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
+      body: EDAYA_PAYLOAD_EMAIL_BODY,
       editorType: "html",
     },
   };

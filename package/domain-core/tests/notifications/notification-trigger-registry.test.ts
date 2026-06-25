@@ -12,6 +12,15 @@ import {
   registerNotificationTriggers,
   withNotificationPostSaveHook,
 } from '../../src/notifications'
+import { NotificationTemplateService } from '../../src/notifications/templates/notification-template-service'
+
+function createTestTemplateService(): NotificationTemplateService {
+  return new NotificationTemplateService({
+    schoolNotificationTemplates: {
+      findById: async () => undefined,
+    },
+  } as any)
+}
 
 function assessment(overrides: Partial<Assessment['data']> & Pick<Assessment['data'], 'id'>): Assessment {
   return {
@@ -72,10 +81,14 @@ describe('assessmentDueSoonTrigger resolver', () => {
 
     const input = await assessmentDueSoonTrigger.resolver(entity, undefined, {
       notificationGateway: gateway,
+      templateService: createTestTemplateService(),
       actor,
       repositories: {
         classGroups: {
           findById: async () => ({ id: 'cg1', schoolId: 'school-1' }),
+        },
+        schools: {
+          findById: async () => ({ id: 'school-1', name: 'Test School' }),
         },
         enrollments: {
           list: async () => [
@@ -105,10 +118,14 @@ describe('assessmentDueSoonTrigger resolver', () => {
 
     const input = await assessmentDueSoonTrigger.resolver(entity, undefined, {
       notificationGateway: gateway,
+      templateService: createTestTemplateService(),
       actor,
       repositories: {
         classGroups: {
           findById: async () => ({ id: 'cg1', schoolId: 'other-school' }),
+        },
+        schools: {
+          findById: async () => undefined,
         },
         enrollments: {
           list: async () => [],
@@ -127,9 +144,11 @@ describe('assessmentDueSoonTrigger resolver', () => {
 
     const input = await assessmentDueSoonTrigger.resolver(completed, existing, {
       notificationGateway: gateway,
+      templateService: createTestTemplateService(),
       actor,
       repositories: {
         classGroups: { findById: async () => ({ id: 'cg1', schoolId: 'school-1' }) },
+        schools: { findById: async () => ({ id: 'school-1', name: 'Test School' }) },
         enrollments: { list: async () => [] },
       } as any,
     })
@@ -180,6 +199,7 @@ describe('withNotificationPostSaveHook', () => {
           },
         },
         gateway,
+        createTestTemplateService(),
       )
 
       await config.hooks?.postSave?.(

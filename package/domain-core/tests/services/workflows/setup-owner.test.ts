@@ -14,6 +14,7 @@ describe('Setup owner workflow', () => {
     })
 
     expect((await repositories.schoolRepository.findById('school'))?.ownerSubjectId).toBe('subject-owner')
+    expect(await repositories.schoolNotificationTemplates.findById('school')).toBeDefined()
   })
 
   test('does not auto-assign owner when registering staff after school creation', async () => {

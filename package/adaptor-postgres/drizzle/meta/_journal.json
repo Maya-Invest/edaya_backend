@@ -134,6 +134,13 @@
       "when": 1781104996420,
       "tag": "0018_account_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781104996421,
+      "tag": "0019_school_notification_templates",
+      "breakpoints": true
     }
   ]
 }

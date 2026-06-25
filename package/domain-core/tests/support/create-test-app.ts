@@ -3,6 +3,8 @@ import type {
   AcademicPeriod,
   AcademicYear,
   AccessRole,
+  AccountInvitation,
+  AccountInvitationKind,
   ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
@@ -36,10 +38,8 @@ import type {
   ResourceAssignment,
   Schedule,
   School,
+  SchoolNotificationTemplates,
   ServiceApiKey,
-  AccountInvitation,
-  AccountInvitationKind,
-  AccountInvitationStatus,
   Session,
   StaffAssignment,
   StaffRoleAssignment,
@@ -60,7 +60,7 @@ import {
   createStaffActorMetadata,
   DefaultAuthorizationRepository,
 } from '../../src/authorization'
-import { StaffMember } from '../../src/domains'
+import { AccountInvitationStatus, StaffMember } from '../../src/domains'
 import { noOpNotificationGateway } from '../../src/notifications'
 import { buildSchoolOverview } from '../../src/queries/school-overview'
 import { SchoolApplication } from '../../src/services'
@@ -240,6 +240,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     },
   }
   const accountInvitationStore = createStore<AccountInvitation>(transactionParticipants)
+  const schoolNotificationTemplates = createStore<SchoolNotificationTemplates>(transactionParticipants)
   const accountInvitations = {
     ...accountInvitationStore,
     findByTokenHash: async (tokenHash: string) => {
@@ -323,6 +324,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     staffAssignments,
     serviceApiKeys,
     accountInvitations,
+    schoolNotificationTemplates,
     accessRoles,
     staffRoleAssignments,
     attachments,
@@ -456,6 +458,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     disciplinaryActionRepository: schoolRepositories.disciplinaryActions,
     studentIncidentInvolvementRepository: schoolRepositories.studentIncidentInvolvements,
     incidentRepository: schoolRepositories.incidents,
+    schoolNotificationTemplates: schoolRepositories.schoolNotificationTemplates,
   }
 
   const defaultActor = actor ?? createStaffActorMetadata({

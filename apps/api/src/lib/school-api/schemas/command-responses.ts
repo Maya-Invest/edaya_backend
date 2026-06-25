@@ -26,6 +26,7 @@ import {
   resourceAssignmentResponseSchema,
   resultResponseSchema,
   scheduleResponseSchema,
+  schoolNotificationTemplatesResponseSchema,
   schoolResponseSchema,
   sectionResponseSchema,
   sessionResponseSchema,
@@ -60,6 +61,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   updateClassGroupConfiguration: classGroupResponseSchema,
   registerStaffMember: staffMemberResponseSchema,
   updateStaffMemberStatus: staffMemberResponseSchema,
+  updateStaffMemberProfile: staffMemberResponseSchema,
   linkActorSubject: z.discriminatedUnion("kind", [
     z.object({
       kind: z.literal("staff"),
@@ -152,6 +154,8 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     staffMemberResponseSchema,
     guardianResponseSchema,
   ]).openapi("UpdateNotificationContactResponse"),
+  updateSchoolNotificationTemplates: schoolNotificationTemplatesResponseSchema,
+  resetSchoolNotificationTemplates: schoolNotificationTemplatesResponseSchema,
 };
 
 export function resolveCommandResponseSchema(methodName: string): z.ZodTypeAny {

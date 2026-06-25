@@ -4,7 +4,7 @@ import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createAppLogger } from "@/logging/app-logger";
 import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/resolve-invite-config";
-import { createRepositoryAuthorizationPolicy, noOpInvitationDeliveryPort, type InvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
+import { createRepositoryAuthorizationPolicy, type InvitationDeliveryPort, noOpInvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
 import type { Environment } from "@/runtime/env/schema";
 import { createAuthContactResolver } from "@/runtime/shared/auth-contact-resolver";
 

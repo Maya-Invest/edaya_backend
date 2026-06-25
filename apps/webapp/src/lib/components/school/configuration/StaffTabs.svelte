@@ -2,6 +2,7 @@
 	import type { StaffMember } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
@@ -10,8 +11,9 @@
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import StaffPermissionsList from './StaffPermissionsList.svelte';
-	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
+	import StaffProfileEditModal from './StaffProfileEditModal.svelte';
 
 	const { s }: { s: StaffMember } = $props();
 
@@ -143,6 +145,14 @@
 				contactEmail={s.email}
 				displayName={s.name}
 			/>
+
+			<DrawerActionBar>
+				<PermissionGate permission="STAFF_UPDATE" mode="disable" tooltip={$t('staff.permissionUpdate')}>
+					{#snippet children({ disabled, title })}
+						<StaffProfileEditModal {s} {disabled} {title} />
+					{/snippet}
+				</PermissionGate>
+			</DrawerActionBar>
 		</div>
 	{:else}
 		<StaffPermissionsList {s} />

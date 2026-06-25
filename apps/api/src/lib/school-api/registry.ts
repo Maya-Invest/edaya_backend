@@ -9,8 +9,6 @@ import {
   AcademicYear,
   AccessRole,
   AccountInvitation,
-  AccountInvitationKind,
-  AccountInvitationStatus,
   ActivityEnrollment,
   Announcement,
   AnnouncementTarget,
@@ -47,6 +45,7 @@ import {
   Schedule,
   School,
   type SchoolCommandKey,
+  SchoolNotificationTemplates,
   Session,
   StaffAssignment,
   StaffMember,
@@ -144,6 +143,7 @@ const apiEntityDecorations = {
   announcements: decoration("announcements", "Announcements", entitySchemas.announcementQuerySchema, entitySchemas.announcementResponseSchema, Announcement),
   announcementTargets: decoration("announcement-targets", "Announcement Targets", entitySchemas.announcementTargetQuerySchema, entitySchemas.announcementTargetResponseSchema, AnnouncementTarget),
   messageDeliveries: decoration("message-deliveries", "Message Deliveries", entitySchemas.messageDeliveryQuerySchema, entitySchemas.messageDeliveryResponseSchema, MessageDelivery),
+  schoolNotificationTemplates: decoration("school-notification-templates", "School Notification Templates", entitySchemas.schoolNotificationTemplatesQuerySchema, entitySchemas.schoolNotificationTemplatesResponseSchema, SchoolNotificationTemplates, { allowDirectSave: false }),
   subjects: decoration("subjects", "Subjects", entitySchemas.subjectQuerySchema, entitySchemas.subjectResponseSchema, Subject),
   subjectMatters: decoration("subject-matters", "Subject Matters", entitySchemas.subjectMatterQuerySchema, entitySchemas.subjectMatterResponseSchema, SubjectMatter),
   classGroups: decoration("class-groups", "Class Groups", entitySchemas.classGroupQuerySchema, entitySchemas.classGroupResponseSchema, ClassGroup),
@@ -204,6 +204,7 @@ export const coreCommands = [
   command("update-class-group-configuration", "updateClassGroupConfiguration", commandSchemas.updateClassGroupConfigurationCommandSchema),
   command("register-staff-member", "registerStaffMember", commandSchemas.registerStaffMemberCommandSchema),
   command("update-staff-member-status", "updateStaffMemberStatus", commandSchemas.updateStaffMemberStatusCommandSchema),
+  command("update-staff-member-profile", "updateStaffMemberProfile", commandSchemas.updateStaffMemberProfileCommandSchema),
   command("link-actor-subject", "linkActorSubject", commandSchemas.linkActorSubjectCommandSchema),
   command("send-account-invitation", "sendAccountInvitation", commandSchemas.sendAccountInvitationCommandSchema),
   command("resend-account-invitation", "resendAccountInvitation", commandSchemas.resendAccountInvitationCommandSchema),
@@ -274,6 +275,8 @@ export const coreCommands = [
   command("apply-delivery-event", "applyDeliveryEvent", commandSchemas.applyDeliveryEventCommandSchema, { serviceOnly: true }),
   command("mark-delivery-read", "markDeliveryRead", commandSchemas.markDeliveryReadCommandSchema),
   command("update-notification-contact", "updateNotificationContact", commandSchemas.updateNotificationContactCommandSchema),
+  command("update-school-notification-templates", "updateSchoolNotificationTemplates", commandSchemas.updateSchoolNotificationTemplatesCommandSchema),
+  command("reset-school-notification-templates", "resetSchoolNotificationTemplates", commandSchemas.resetSchoolNotificationTemplatesCommandSchema),
 ] satisfies CoreCommandConfig[];
 
 export const coreQueries = [

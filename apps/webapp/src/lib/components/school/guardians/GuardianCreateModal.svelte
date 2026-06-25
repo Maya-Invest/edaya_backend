@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { registerGuardianMutation } from '$lib/api/mutations/people.mutations';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { t } from '$lib/i18n';

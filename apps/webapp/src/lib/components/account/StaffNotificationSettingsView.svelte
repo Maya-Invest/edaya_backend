@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { NotificationSettingsPageData } from '$lib/queries/account.queries';
+	import { saveNotificationContactMutation } from '$lib/api/mutations/notifications.mutations';
+	import { authSession } from '$lib/auth/session.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
-	import { saveNotificationContactMutation } from '$lib/api/mutations/notifications.mutations';
-	import { authSession } from '$lib/auth/session.svelte';
 	import { t } from '$lib/i18n';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 

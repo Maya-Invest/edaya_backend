@@ -1,9 +1,9 @@
 import type { SessionSnapshot } from '$lib/auth/types';
-import { browserFetch } from '$lib/api/browser-fetch';
 import {
 	fetchGuardianNotificationSettings,
 	fetchStaffSubjectId,
 } from '$lib/api/account-data';
+import { browserFetch } from '$lib/api/browser-fetch';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { fetchStaffMemberById } from '$lib/api/staff-data';
 import { ApiError } from '@edaya/api-client';

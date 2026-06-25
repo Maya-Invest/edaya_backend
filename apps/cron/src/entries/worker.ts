@@ -1,6 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import { runCronJobs, resolveCronJobKeys } from "@edaya/core";
+import { resolveCronJobKeys, runCronJobs } from "@edaya/core";
 import { buildWorkerCronRuntime, parseRuntimeEnv } from "@/runtime";
 import { createAppLogger } from "@/logging/app-logger";
 

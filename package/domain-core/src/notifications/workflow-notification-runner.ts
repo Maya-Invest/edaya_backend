@@ -1,4 +1,5 @@
 import type { ActorMetadata } from '../authorization'
+import type { NotificationTemplateService } from '../notifications/templates/notification-template-service'
 import type { SchoolRepositories } from '../ports'
 import type { NotificationGatewayPort } from '../ports/notification-gateway'
 import type { BaseSchoolService } from '../services/base-school-service'
@@ -6,6 +7,7 @@ import type { BaseSchoolService } from '../services/base-school-service'
 export interface WorkflowNotificationContext {
   notificationGateway: NotificationGatewayPort
   repositories: SchoolRepositories
+  templateService: NotificationTemplateService
   actor: ActorMetadata
 }
 
@@ -52,6 +54,7 @@ export async function runWorkflowNotifications(
   await workflowNotificationRunner.run(eventKey, {
     notificationGateway: baseService.notificationGateway,
     repositories: baseService.repositories,
+    templateService: baseService.templateService,
     actor: baseService.actor,
   }, payload)
 }

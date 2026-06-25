@@ -1,7 +1,7 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
-import { recordsForFieldIds } from '$lib/api/entity-list-filters';
 import type { Announcement, AnnouncementPriority, AnnouncementStatus, AnnouncementTarget } from '$lib/types/school';
+import { recordsForFieldIds } from '$lib/api/entity-list-filters';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 type AnnouncementRaw = components['schemas']['Announcement'];

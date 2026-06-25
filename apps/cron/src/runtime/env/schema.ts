@@ -9,6 +9,7 @@ export const CronEnvSchema = z.object({
   DATABASE_URL: z.string(),
   NOVU_SECRET_KEY: z.string().min(1).optional(),
   NOVU_API_URL: z.string().url().optional(),
+  CRON_JOB_KEYS: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof CronEnvSchema>;

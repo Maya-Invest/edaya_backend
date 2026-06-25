@@ -1,3 +1,5 @@
+export { createNovuNotificationGatewayFromSecretKey } from "./create-from-secret-key";
+export type { CreateNovuNotificationGatewayFromSecretKeyOptions } from "./create-from-secret-key";
 export {
   groupNovuMessagesByDeliveryId,
   mapNovuApiMessageToDeliveryStatus,
@@ -9,26 +11,24 @@ export {
   type NormalizedDeliveryEvent,
   type NotificationDeliveryWebhookAdapter,
 } from "./delivery-webhook";
-export { createNovuNotificationGatewayFromSecretKey } from "./create-from-secret-key";
-export type { CreateNovuNotificationGatewayFromSecretKeyOptions } from "./create-from-secret-key";
 export {
   createNovuInvitationDeliveryPort,
   createNovuInvitationDeliveryPortFromSecretKey,
 } from "./invitation-delivery";
 export type { CreateNovuInvitationDeliveryPortOptions } from "./invitation-delivery";
-export { createNovuNotificationGateway } from "./novu-notification-gateway";
-export { createNovuMessagesClient } from "./novu-messages-client";
-export type { CreateNovuMessagesClientOptions, NovuMessagesClient } from "./novu-messages-client";
-export { createNovuSubscriberClient } from "./novu-subscriber-client";
-export type { CreateNovuSubscriberClientOptions, NovuSubscriberClient } from "./novu-subscriber-client";
-export { mapRecipientProfileToNovuSubscriber } from "./map-subscriber-profile";
 export {
   mapRecipientProfileToNovuGlobalPreferences,
   mapRecipientProfileToNovuWorkflowPreferencesBulk,
   NOVU_NOTIFICATION_WORKFLOW_IDS,
 } from "./map-subscriber-preferences";
+export { mapRecipientProfileToNovuSubscriber } from "./map-subscriber-profile";
+export { createNovuMessagesClient } from "./novu-messages-client";
+export type { CreateNovuMessagesClientOptions, NovuMessagesClient } from "./novu-messages-client";
+export { createNovuNotificationGateway } from "./novu-notification-gateway";
 export { createNovuSdkClient } from "./novu-sdk-client";
 export type { CreateNovuSdkClientOptions } from "./novu-sdk-client";
+export { createNovuSubscriberClient } from "./novu-subscriber-client";
+export type { CreateNovuSubscriberClientOptions, NovuSubscriberClient } from "./novu-subscriber-client";
 export { buildNovuSubscriberId, buildNovuSubscriberIds } from "./subscriber-id";
 export {
   chunkNovuTriggerRequests,

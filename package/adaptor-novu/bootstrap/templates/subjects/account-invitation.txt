@@ -1,1 +1,1 @@
-You're invited to join {{context.tenant}} on Edaya
+{{payload.emailSubject}}

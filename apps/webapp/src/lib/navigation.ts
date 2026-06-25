@@ -85,6 +85,7 @@ export const CONFIG_ITEMS: ContextItem[] = [
 	{ key: 'roles', labelKey: 'roles.title', icon: ShieldCheck, href: appPath('/(app)/configuration/roles/[[role]]') },
 	{ key: 'gradeScales', labelKey: 'config.gradeScales', icon: Percent, href: appPath('/(app)/configuration/grade-scales') },
 	{ key: 'reportCards', labelKey: 'config.reportCards', icon: FileSpreadsheet, href: appPath('/(app)/configuration/report-cards/[[id]]') },
+	{ key: 'notificationTemplates', labelKey: 'config.notificationTemplates', icon: Mail, href: appPath('/(app)/configuration/notifications') },
 ];
 
 export function isDashboardPath(pathname: string): boolean {

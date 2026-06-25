@@ -4,6 +4,7 @@ import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 import { getAppShellData } from '$lib/queries/shell.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
+import { sessionDetailContext } from '$lib/session-detail/context.svelte';
 import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 
 let bootstrapPromise: Promise<void> | null = null;
@@ -21,6 +22,7 @@ export function resetAppShellBootstrap() {
 	detailDataContext.reset();
 	reportCardsContext.reset();
 	teachingLogContext.reset();
+	sessionDetailContext.reset();
 	pageQueryStatus.reset();
 }
 

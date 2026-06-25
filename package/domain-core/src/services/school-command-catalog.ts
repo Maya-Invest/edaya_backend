@@ -9,6 +9,7 @@ export type SchoolCommandKey
     | 'updateClassGroupConfiguration'
     | 'registerStaffMember'
     | 'updateStaffMemberStatus'
+    | 'updateStaffMemberProfile'
     | 'assignStaffToClass'
     | 'assignStaffToClassSubject'
     | 'assignStaffToSession'
@@ -68,6 +69,8 @@ export type SchoolCommandKey
     | 'applyDeliveryEvent'
     | 'markDeliveryRead'
     | 'updateNotificationContact'
+    | 'updateSchoolNotificationTemplates'
+    | 'resetSchoolNotificationTemplates'
     | 'recordIncident'
     | 'addStudentInvolvement'
     | 'applyDisciplinaryAction'
@@ -102,6 +105,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'updateClassGroupConfiguration',
   'registerStaffMember',
   'updateStaffMemberStatus',
+  'updateStaffMemberProfile',
   'assignStaffToClass',
   'assignStaffToClassSubject',
   'assignStaffToSession',
@@ -161,6 +165,8 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'applyDeliveryEvent',
   'markDeliveryRead',
   'updateNotificationContact',
+  'updateSchoolNotificationTemplates',
+  'resetSchoolNotificationTemplates',
   'recordIncident',
   'addStudentInvolvement',
   'applyDisciplinaryAction',

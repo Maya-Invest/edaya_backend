@@ -118,6 +118,11 @@ export const clientBindings = {
       "schemaName": "MessageDelivery",
       "allowDirectSave": true
     },
+    "schoolNotificationTemplates": {
+      "publicName": "school-notification-templates",
+      "schemaName": "SchoolNotificationTemplates",
+      "allowDirectSave": false
+    },
     "subjects": {
       "publicName": "subjects",
       "schemaName": "Subject",
@@ -303,6 +308,11 @@ export const clientBindings = {
     "updateStaffMemberStatus": {
       "publicName": "update-staff-member-status",
       "requestSchemaName": "UpdateStaffMemberStatusCommand",
+      "responseSchemaName": "StaffMember"
+    },
+    "updateStaffMemberProfile": {
+      "publicName": "update-staff-member-profile",
+      "requestSchemaName": "UpdateStaffMemberProfileCommand",
       "responseSchemaName": "StaffMember"
     },
     "linkActorSubject": {
@@ -654,6 +664,16 @@ export const clientBindings = {
       "publicName": "update-notification-contact",
       "requestSchemaName": "UpdateNotificationContactCommand",
       "responseSchemaName": "UpdateNotificationContactResponse"
+    },
+    "updateSchoolNotificationTemplates": {
+      "publicName": "update-school-notification-templates",
+      "requestSchemaName": "UpdateSchoolNotificationTemplatesCommand",
+      "responseSchemaName": "SchoolNotificationTemplates"
+    },
+    "resetSchoolNotificationTemplates": {
+      "publicName": "reset-school-notification-templates",
+      "requestSchemaName": "ResetSchoolNotificationTemplatesCommand",
+      "responseSchemaName": "SchoolNotificationTemplates"
     }
   },
   queries: {

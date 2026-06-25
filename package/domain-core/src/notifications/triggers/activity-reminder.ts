@@ -1,6 +1,8 @@
 import type { ExtracurricularActivity } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { resolveActivityEnrollmentRecipients } from '../recipient-resolvers'
+import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
+import { resolveSchoolName } from '../templates/resolve-school-name'
 
 export const ACTIVITY_REMINDER_EVENT_KEY = 'activity.reminder'
 export const ACTIVITY_REMINDER_LEAD_HOURS = 24
@@ -58,13 +60,23 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Extracurri
       return null
     }
 
+    const schoolName = await resolveSchoolName(context.repositories, entity.schoolId)
+    const content = await renderNotificationEnqueueContent(context.templateService, {
+      schoolId: entity.schoolId,
+      templateKey: ACTIVITY_REMINDER_EVENT_KEY,
+      variables: {
+        schoolName,
+        activityName: entity.name,
+        startDate: entity.startDate.toISOString().slice(0, 10),
+      },
+    })
+
     return {
       idempotencyKey,
       schoolId: entity.schoolId,
       kind: 'job',
       eventKey: ACTIVITY_REMINDER_EVENT_KEY,
-      title: `Activity starting soon: ${entity.name}`,
-      body: `${entity.name} starts on ${entity.startDate.toISOString().slice(0, 10)}.`,
+      ...content,
       recipients,
       deliverAfter: activityReminderDeliverAfter(entity.startDate),
       metadata: {

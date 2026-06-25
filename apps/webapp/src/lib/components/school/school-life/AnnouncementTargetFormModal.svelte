@@ -6,9 +6,9 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
-	import { announcementTargetNeedsEntity } from './announcement-target-label';
 	import { t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import { announcementTargetNeedsEntity } from './announcement-target-label';
 
 	const SCOPED_TARGET_KINDS: AnnouncementTargetKind[] = [
 		'class_group',

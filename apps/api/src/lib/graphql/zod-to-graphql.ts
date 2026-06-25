@@ -202,6 +202,9 @@ export class GraphQLTypeRegistry {
       case "ZodObject":
         resolved = this.getOrCreateOutputType(this.nestedTypeName(parentTypeName, fieldName), inner);
         break;
+      case "ZodRecord":
+        resolved = GraphQLJSON;
+        break;
       default:
         resolved = GraphQLString;
         break;
@@ -237,6 +240,9 @@ export class GraphQLTypeRegistry {
       }
       case "ZodObject":
         resolved = this.getOrCreateInputType(`${this.nestedTypeName(parentTypeName, fieldName)}Input`, inner);
+        break;
+      case "ZodRecord":
+        resolved = GraphQLJSON;
         break;
       default:
         resolved = GraphQLString;

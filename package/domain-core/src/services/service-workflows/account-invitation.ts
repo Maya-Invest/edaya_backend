@@ -1,6 +1,8 @@
 import type { Guardian, StaffMember, Student } from '../../domains'
+import type { LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor'
 import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../workflow-repository-catalog'
+import { randomUUID } from 'node:crypto'
 import { denyResourceAccess, Permission } from '../../authorization'
 import {
   AccountInvitation,
@@ -20,12 +22,14 @@ import {
   resolveInviteeDisplayName,
   resolveStudentInvitationEmail,
 } from '../../invitations/resolve-invitation-contact'
-import { linkSubjectToActor, type LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor'
+import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../notifications/templates/keys'
+import { renderInvitationEmailContent } from '../../notifications/templates/render-enqueue-content'
+import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
 import { pickWorkflowRepositories } from '../workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
-import { randomUUID } from 'node:crypto'
 
 export interface SendAccountInvitationInput {
   kind: AccountInvitationKind
@@ -80,6 +84,11 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       )
     }
     await this.revokeInvitationDelivery(existing)
+    if (existing.status !== AccountInvitationStatus.Revoked) {
+      await this.repositories.accountInvitations.save(existing.copyWith({
+        status: AccountInvitationStatus.Revoked,
+      }))
+    }
     return this.createAndDeliverInvitation({
       kind: existing.kind,
       targetId: existing.targetId,
@@ -159,6 +168,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     }
 
     const token = generateInvitationToken()
+    const tokenHash = hashInvitationToken(token)
     const now = new Date()
     const invitation = new AccountInvitation({
       id: randomUUID(),
@@ -167,7 +177,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       targetId: input.targetId,
       contactChannel: channel,
       contactValue,
-      tokenHash: hashInvitationToken(token),
+      tokenHash,
       status: AccountInvitationStatus.Pending,
       expiresAt: new Date(now.getTime() + ACCOUNT_INVITATION_TTL_MS),
       createdByStaffId: this.requireStaffActorId(),
@@ -175,7 +185,25 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       lastSentAt: now,
     })
 
-    await this.repositories.accountInvitations.save(invitation)
+    await this.repositories.accountInvitations.save(invitation, { tokenHash })
+
+    const schoolName = await resolveSchoolName(this.repositories, invitation.schoolId)
+    const inviteUrl = buildInvitationUrl(input.inviteBaseUrl, token)
+    const { emailSubject, emailBody } = await renderInvitationEmailContent(
+      this.baseService.templateService,
+      {
+        schoolId: invitation.schoolId,
+        templateKey: ACCOUNT_INVITATION_TEMPLATE_KEY,
+        variables: {
+          schoolName,
+          inviteeName: displayName,
+          inviteUrl,
+          expiresAt: invitation.expiresAt.toISOString(),
+          actorKind: invitation.kind,
+        },
+      },
+    )
+
     await this.baseService.invitationDelivery.deliver({
       invitationId: invitation.id,
       schoolId: invitation.schoolId,
@@ -183,8 +211,10 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       contactValue: invitation.contactValue,
       displayName,
       actorKind: invitation.kind,
-      inviteUrl: buildInvitationUrl(input.inviteBaseUrl, token),
+      inviteUrl,
       expiresAt: invitation.expiresAt,
+      emailSubject,
+      emailBody,
     })
 
     return { invitation, token }

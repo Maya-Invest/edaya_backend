@@ -2,12 +2,6 @@ import type { Guardian, StaffMember, Student } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AccessControlWorkflowRepositories } from '../workflow-repository-catalog'
 import { Permission } from '../../authorization'
-import {
-  buildGuardianRecipientProfile,
-  buildStaffRecipientProfile,
-  buildStudentRecipientProfile,
-  scheduleNotificationRecipientUpsert,
-} from '../../notifications'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'

@@ -2,6 +2,8 @@ import type { CalendarEvent } from '../../domains'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
 import { CalendarEventKind } from '../../domains'
 import { resolveCalendarEventRecipients } from '../../notifications/recipient-resolvers'
+import { enqueueTemplatedNotification } from '../../notifications/templates/enqueue-templated-notification'
+import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
 import {
   CALENDAR_EVENT_REMINDER_EVENT_KEY,
   calendarEventReminderDeliverAfter,
@@ -36,13 +38,21 @@ export async function scanCalendarEventReminders(
       continue
     }
 
-    await context.service.baseService.notificationGateway.enqueue({
+    const schoolName = await resolveSchoolName(
+      context.service.baseService.repositories,
+      event.schoolId,
+    )
+    await enqueueTemplatedNotification(context.service.baseService, {
       idempotencyKey: calendarEventReminderIdempotencyKey(event.id),
       schoolId: event.schoolId,
       kind: 'job',
       eventKey: CALENDAR_EVENT_REMINDER_EVENT_KEY,
-      title: `Upcoming event: ${event.title}`,
-      body: `${event.title} starts on ${event.startDate.toISOString().slice(0, 10)}.`,
+      templateKey: CALENDAR_EVENT_REMINDER_EVENT_KEY,
+      variables: {
+        schoolName,
+        eventTitle: event.title,
+        startDate: event.startDate.toISOString().slice(0, 10),
+      },
       recipients,
       deliverAfter: calendarEventReminderDeliverAfter(event.startDate),
       metadata: {

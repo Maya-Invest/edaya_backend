@@ -3,8 +3,8 @@ import {
   academicPeriodSchema,
   academicYearSchema,
   accessRoleSchema,
-  accountInvitationSchema,
   AccountInvitationKind,
+  accountInvitationSchema,
   AccountInvitationStatus,
   activityEnrollmentSchema,
   announcementSchema,
@@ -64,9 +64,9 @@ import {
 } from "@edaya/core";
 import type {
   AcademicPeriodInput,
-  AccountInvitationInput,
   AcademicYearInput,
   AccessRoleInput,
+  AccountInvitationInput,
   ActivityEnrollmentInput,
   AnnouncementInput,
   AnnouncementTargetInput,
@@ -104,6 +104,7 @@ import type {
   ResourceInput,
   ScheduleInput,
   SchoolInput,
+  SchoolNotificationTemplatesInput,
   ScopeGrant,
   SessionInput,
   StaffAssignmentInput,
@@ -158,6 +159,22 @@ export const attendanceResponseSchema = responseSchema<AttendanceRecordInput>("A
 export const announcementResponseSchema = responseSchema<AnnouncementInput>("Announcement", unwrapShape(announcementSchema));
 export const announcementTargetResponseSchema = responseSchema<AnnouncementTargetInput>("AnnouncementTarget", unwrapShape(announcementTargetSchema));
 export const messageDeliveryResponseSchema = responseSchema<MessageDeliveryInput>("MessageDelivery", unwrapShape(messageDeliverySchema));
+
+/** OpenAPI/GraphQL-safe: catalog keys contain dots (e.g. announcement.published). */
+const schoolNotificationTemplateDocumentApiSchema = z.record(z.string(), z.unknown()).openapi(
+  "SchoolNotificationTemplateDocument",
+  { type: "object", additionalProperties: true },
+);
+
+export const schoolNotificationTemplatesResponseSchema = responseSchema<SchoolNotificationTemplatesInput>(
+  "SchoolNotificationTemplates",
+  {
+    schoolId: field.id(),
+    templates: schoolNotificationTemplateDocumentApiSchema,
+    createdAt: field.date(),
+    updatedAt: field.date(),
+  },
+);
 export const subjectResponseSchema = responseSchema<SubjectInput>("Subject", unwrapShape(subjectSchema));
 export const subjectMatterResponseSchema = responseSchema<SubjectMatterInput>("SubjectMatter", unwrapShape(subjectMatterSchema));
 export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGroup", unwrapShape(classGroupSchema));
@@ -372,6 +389,10 @@ export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   recipientKind: field.string(),
   recipientId: field.id(),
   status: field.string(),
+});
+
+export const schoolNotificationTemplatesQuerySchema = createQueryOptionsSchema({
+  schoolId: field.id(),
 });
 
 export const subjectQuerySchema = createQueryOptionsSchema({

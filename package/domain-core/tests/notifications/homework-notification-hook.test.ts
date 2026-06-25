@@ -8,6 +8,7 @@ import {
   RecordingNotificationGateway,
   withNotificationPostSaveHook,
 } from '../../src/notifications'
+import { NotificationTemplateService } from '../../src/notifications/templates/notification-template-service'
 import { ManagedEntityService } from '../../src/services/managed-entity-service'
 import { createRepository } from '../services/managed-entities/managed-entity-test-context'
 import { effectiveGrantsForRoles } from '../support/effective-grants'
@@ -40,6 +41,9 @@ describe('homework notification postSave hook', () => {
 
   function createHomeworkService(gateway: RecordingNotificationGateway, repository = createRepository<HomeworkAssignment>()) {
     const repositories = {
+      schools: {
+        findById: mock(async () => ({ id: 'school-1', name: 'Test School' })),
+      },
       enrollments: {
         list: mock(async () => [{ studentId: 'student-1', classGroupId: 'cg1', status: 'active' }]),
       },
@@ -83,7 +87,9 @@ describe('homework notification postSave hook', () => {
           authorizeSave: mock(async () => {}),
           authorizeDelete: mock(async () => {}),
         },
-      }, gateway),
+      }, gateway, new NotificationTemplateService({
+        schoolNotificationTemplates: { findById: async () => undefined },
+      } as any)),
     })
 
     return { service, repository }

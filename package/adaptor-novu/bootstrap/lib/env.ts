@@ -1,16 +1,8 @@
 import { resolve } from "node:path";
-import { buildEmailWebhookIntegration } from "../catalog/integrations";
-import type { BootstrapIntegrationDefinition } from "./types";
 
 export interface BootstrapEnv {
   secretKey: string;
   serverURL?: string;
-  emailWebhook?: {
-    webhookUrl: string;
-    secretKey: string;
-    from: string;
-    senderName: string;
-  };
 }
 
 export interface LoadBootstrapEnvOptions {
@@ -22,7 +14,7 @@ export interface LoadBootstrapEnvOptions {
 
 function readEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
-  return value ? value : undefined;
+  return value || undefined;
 }
 
 export async function loadApiDotEnv(repoRoot: string): Promise<void> {
@@ -61,32 +53,8 @@ export async function loadBootstrapEnv(
     throw new Error("NOVU_SECRET_KEY is required (set in env or apps/api/.env)");
   }
 
-  const webhookUrl = readEnv("NOVU_EMAIL_WEBHOOK_URL");
-  const webhookSecret = readEnv("NOVU_EMAIL_WEBHOOK_SECRET");
-  const from = readEnv("NOVU_EMAIL_FROM");
-  const senderName = readEnv("NOVU_EMAIL_SENDER_NAME") ?? "Edaya";
-
-  let emailWebhook: BootstrapEnv["emailWebhook"];
-  if (webhookUrl && webhookSecret && from) {
-    emailWebhook = {
-      webhookUrl,
-      secretKey: webhookSecret,
-      from,
-      senderName,
-    };
-  }
-
   return {
     secretKey,
     ...(readEnv("NOVU_API_URL") ? { serverURL: readEnv("NOVU_API_URL") } : {}),
-    ...(emailWebhook ? { emailWebhook } : {}),
   };
-}
-
-export function resolveBootstrapIntegrations(env: BootstrapEnv): BootstrapIntegrationDefinition[] {
-  if (!env.emailWebhook) {
-    return [];
-  }
-
-  return [buildEmailWebhookIntegration(env.emailWebhook)];
 }

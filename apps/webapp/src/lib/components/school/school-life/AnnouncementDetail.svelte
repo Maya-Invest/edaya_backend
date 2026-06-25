@@ -9,8 +9,8 @@
 	import { t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
-	import { resolveAnnouncementTargetLabel } from './announcement-target-label';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import { resolveAnnouncementTargetLabel } from './announcement-target-label';
 	import AnnouncementFormModal from './AnnouncementFormModal.svelte';
 	import AnnouncementTargetFormModal from './AnnouncementTargetFormModal.svelte';
 
@@ -109,8 +109,8 @@
 					live.status === 'published'
 						? 'bg-accent/20 text-foreground'
 						: live.status === 'draft'
-							? 'bg-secondary text-muted-foreground'
-							: 'bg-muted text-muted-foreground',
+						? 'bg-secondary text-muted-foreground'
+						: 'bg-muted text-muted-foreground',
 				)}
 			>
 				{$t(`announcements.status.${live.status}`)}

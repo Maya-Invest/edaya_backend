@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { ClassNode } from '$lib/types/school';
 	import { createStudentMutation } from '$lib/api/mutations/student.mutations';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
@@ -43,12 +43,12 @@
 		classOptions.find(option => option.id === classGroupId)?.label ?? '',
 	);
 
-	const canSubmit = $derived(
-		firstName.trim().length > 0
-		&& lastName.trim().length > 0
-		&& classGroupId.length > 0
-		&& (!sendAccountInvitation || inviteEmail.trim().length > 0),
-	);
+	const canSubmit = $derived.by(() => {
+		if (!firstName.trim() || !lastName.trim() || !classGroupId) {
+			return false;
+		}
+		return !sendAccountInvitation || inviteEmail.trim().length > 0;
+	});
 
 	function defaultClassId() {
 		if (defaultClassGroupId && classOptions.some(option => option.id === defaultClassGroupId))
