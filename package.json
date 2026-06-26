@@ -28,6 +28,7 @@
     "quality": "turbo run quality",
     "test:repo": "bun test ./scripts/check-import-boundaries.ts ./scripts/generated-artifacts.ts --dots",
     "test": "bun run test:repo && turbo run test",
+    "test:integration-seeds": "bun --filter @edaya/integration-tests test:seeds",
     "test:coverage": "turbo run test -- --coverage",
     "lint": "eslint scripts && turbo run lint",
     "lint:fix": "eslint scripts --fix && turbo run lint:fix",

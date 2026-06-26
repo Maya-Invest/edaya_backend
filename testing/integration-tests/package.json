@@ -6,8 +6,9 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "INTEGRATION_TEST_FAST=1 bun test --parallel=1",
-    "test:invitation-link": "INTEGRATION_TEST_FAST=1 bun test src/routes/test-account-invitation-link.integration.test.ts --parallel=1",
+    "test": "bun test src/auth src/routes src/services src/runtime src/adaptor src/seed/contract.test.ts --parallel=1",
+    "test:seeds": "bun test src/seed/slow --parallel=1",
+    "test:invitation-link": "bun test src/routes/test-account-invitation-link.integration.test.ts --parallel=1",
     "test:full": "bun test --parallel=1",
     "smoke:staging": "bun ./scripts/smoke-staging.ts",
     "lint": "eslint src",

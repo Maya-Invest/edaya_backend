@@ -7,29 +7,18 @@ import {
   SEED_SCHOOL_ID,
 } from '@edaya/dev-fixtures'
 import {
-  HttpSeedClient,
   provisionSeedingServiceAccountInProcess,
   runHttpDevSeeds,
 } from '@edaya/seeding/http'
-import { afterAll, beforeAll, expect, it } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
+import { apiPgliteEnv } from '../../support/api-pglite-env'
 import {
-  apiPgliteEnv,
   createCoreRouteTestApp,
   resetCoreRouteTestHarness,
-} from '../support/api-route-harness'
-import { describeSlowIntegration } from '../support/seeded-route-test-context'
+} from '../../support/api-route-harness'
+import { createHttpClientForApp } from '../../support/http-seed-client'
 
-function createHttpClientForApp(app: Awaited<ReturnType<typeof createCoreRouteTestApp>>['app']): HttpSeedClient {
-  return new HttpSeedClient({
-    baseUrl: apiPgliteEnv.BETTER_AUTH_URL,
-    fetch: async (input, init) => {
-      const url = new URL(input.toString())
-      return await app.request(`${url.pathname}${url.search}`, init)
-    },
-  })
-}
-
-describeSlowIntegration('runHttpDevSeeds', () => {
+describe('runHttpDevSeeds', () => {
   let sharedApp: Awaited<ReturnType<typeof createCoreRouteTestApp>>
 
   beforeAll(async () => {

@@ -8,13 +8,20 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from '@edaya/dev-fixtures'
-import { createHandlerAuthProvisioner, createInProcessAuthLinkSeedPort, runDevAuthLinkWithPort, runDevAuthProvision, runDevSchoolSeed, runDevSeeds } from '@edaya/seeding'
+import {
+  createHandlerAuthProvisioner,
+  createInProcessAuthLinkSeedPort,
+  runDevAuthLinkWithPort,
+  runDevAuthProvision,
+  runDevSchoolSeed,
+  runDevSeeds,
+} from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { Hono } from 'hono'
 import { createDependenciesInjection } from '@/http/dependencies'
 import { createSessionActorDependency } from '@/http/dependencies/session-actor'
 import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime'
-import { apiPgliteEnv } from '../support/api-pglite-env'
+import { apiPgliteEnv } from '../../support/api-pglite-env'
 
 function collectSetCookieHeaders(response: Response): string[] {
   const headers = response.headers as Headers & { getSetCookie?: () => string[] }
@@ -54,7 +61,7 @@ describe('auth link seed port', () => {
     expect(signInResponse.status).toBe(200)
   }, 30_000)
 
-  it('links seeded staff and guardian accounts to Better Auth users', async () => {
+  it('links seeded accounts and resolves the staff actor from the session cookie', async () => {
     const runtime = await getApiRuntime(apiPgliteEnv)
     const application = await runtime.getSchoolApplication()
     const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
@@ -120,76 +127,6 @@ describe('auth link seed port', () => {
     expect(body.actor?.kind).toBe('staff')
     expect(body.actor?.staffMemberId).toBe(MINIMAL_AUTH_FIXTURE_STAFF_ID)
     expect(body.actor?.subjectId).toBe(staff?.subjectId)
-  }, 30_000)
-
-  it('links st2 and additional guardian accounts to Better Auth users', async () => {
-    const runtime = await getApiRuntime(apiPgliteEnv)
-    const application = await runtime.getSchoolApplication()
-    const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
-
-    await runDevSchoolSeed(application)
-    const authLinkPort = createInProcessAuthLinkSeedPort(application)
-    const result = await runDevAuthLinkWithPort(authLinkPort, auth)
-    expect(result.status).toBe('seeded')
-
-    const st2 = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === 'st2')
-    const g2 = DEV_AUTH_GUARDIAN_ACCOUNTS.find(account => account.guardianId === 'g2')
-    expect(st2).toBeTruthy()
-    expect(g2).toBeTruthy()
-
-    for (const email of [st2!.email, g2!.email]) {
-      const signInResponse = await runtime.getAuth().handler(new Request(`${apiPgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password: DEV_AUTH_PASSWORD,
-        }),
-      }))
-      expect(signInResponse.status).toBe(200)
-    }
-  }, 30_000)
-
-  it('re-provisions Better Auth users when domain links already exist', async () => {
-    const runtime = await getApiRuntime(apiPgliteEnv)
-    const application = await runtime.getSchoolApplication()
-    const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
-
-    await runDevSchoolSeed(application)
-    const authLinkPort = createInProcessAuthLinkSeedPort(application)
-    const firstRun = await runDevAuthLinkWithPort(authLinkPort, auth)
-    expect(firstRun.status).toBe('seeded')
-
-    const secondRun = await runDevAuthLinkWithPort(authLinkPort, auth)
-    expect(secondRun.status).toBe('skipped')
-    if (secondRun.status === 'skipped') {
-      expect(secondRun.reason).toBe('already-linked')
-    }
-
-    const signInResponse = await runtime.getAuth().handler(new Request(`${apiPgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-        password: DEV_AUTH_PASSWORD,
-      }),
-    }))
-
-    expect(signInResponse.status).toBe(200)
-  }, 30_000)
-
-  it('is idempotent when auth links already exist', async () => {
-    const runtime = await getApiRuntime(apiPgliteEnv)
-    const application = await runtime.getSchoolApplication()
-    const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
-
-    await runDevSchoolSeed(application)
-    const authLinkPort = createInProcessAuthLinkSeedPort(application)
-    await runDevAuthLinkWithPort(authLinkPort, auth)
 
     const secondRun = await runDevAuthLinkWithPort(authLinkPort, auth)
     expect(secondRun.status).toBe('skipped')

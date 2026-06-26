@@ -4,7 +4,6 @@ import type { AuthenticatedRouteContext } from './api-route-harness'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
 import type { ApiRuntime } from '@/runtime'
-import process from 'node:process'
 import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -304,8 +303,3 @@ export function describeWithSharedRouteApp(
     suite(() => context)
   })
 }
-
-/** Skip slow HTTP seed suites when INTEGRATION_TEST_FAST=1 (default in `bun test`). */
-export const describeSlowIntegration = process.env.INTEGRATION_TEST_FAST === '1'
-  ? describe.skip
-  : describe
