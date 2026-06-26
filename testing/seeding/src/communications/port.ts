@@ -37,6 +37,9 @@ export interface MaterializeDeliveriesSeedRecord {
 
 export interface MessageDeliverySeedRecord {
   id: string
+  schoolId: string
+  title: string
+  body: string
   announcementId: string
   subjectId: string
   recipientKind: MessageDeliveryRecipientKind

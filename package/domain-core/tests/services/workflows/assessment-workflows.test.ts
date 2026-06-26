@@ -3,7 +3,7 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { MessageDeliveryRecipientKind, ReportCardResultStatus } from '../../../src/domains'
+import { ReportCardResultStatus } from '../../../src/domains'
 import {
   ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
   RecordingNotificationGateway,

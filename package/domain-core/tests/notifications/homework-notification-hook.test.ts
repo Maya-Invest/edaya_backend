@@ -2,9 +2,8 @@ import type { HomeworkAssignment } from '../../src/domains'
 import type { SchoolRepositories } from '../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import { createStaffActorMetadata } from '../../src/authorization'
-import { HomeworkAssignmentType, MessageDeliveryRecipientKind } from '../../src/domains'
+import { HomeworkAssignmentType } from '../../src/domains'
 import {
-  homeworkDueSoonIdempotencyKey,
   RecordingNotificationGateway,
   withNotificationPostSaveHook,
 } from '../../src/notifications'

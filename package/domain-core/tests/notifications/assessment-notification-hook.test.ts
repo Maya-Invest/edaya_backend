@@ -4,7 +4,6 @@ import { describe, expect, mock, test } from 'bun:test'
 import { createStaffActorMetadata } from '../../src/authorization'
 import { AssessmentKind, MessageDeliveryRecipientKind } from '../../src/domains'
 import {
-  assessmentDueSoonIdempotencyKey,
   RecordingNotificationGateway,
   withNotificationPostSaveHook,
 } from '../../src/notifications'

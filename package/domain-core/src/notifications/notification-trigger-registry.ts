@@ -3,8 +3,8 @@ import type { CoreEntityKey } from '../core-entity-map'
 import type { SchoolRepositories } from '../ports'
 import type { NotificationEnqueueInput, NotificationGatewayPort } from '../ports/notification-gateway'
 import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../services/managed-entity-service'
-import { deliverNotificationFromEnqueueInput } from './deliver-notification'
 import type { NotificationTemplateService } from './templates/notification-template-service'
+import { deliverNotificationFromEnqueueInput } from './deliver-notification'
 
 export interface NotificationTriggerContext {
   notificationGateway: NotificationGatewayPort

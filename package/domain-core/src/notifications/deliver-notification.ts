@@ -1,5 +1,4 @@
 import type { AnnouncementPriority } from '../domains'
-import { MessageDelivery, MessageDeliveryRecipientKind } from '../domains'
 import type { SchoolRepositories } from '../ports'
 import type {
   NotificationEnqueueInput,
@@ -7,6 +6,7 @@ import type {
   NotificationKind,
   NotificationRecipient,
 } from '../ports/notification-gateway'
+import { MessageDelivery } from '../domains'
 import { resolveRecipientSubjectId, uniqueNotificationRecipients } from './recipient-utils'
 
 export function buildNotificationDeliveryId(sourceKey: string, subjectId: string): string {

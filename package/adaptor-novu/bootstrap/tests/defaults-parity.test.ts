@@ -24,12 +24,14 @@ describe("notification template catalog parity with domain-core", () => {
     for (const workflow of workflows) {
       for (const step of workflow.steps) {
         if (step.type === "email") {
-          expect(step.controlValues.subject).toBe(EDAYA_PAYLOAD_EMAIL_SUBJECT);
-          expect(step.controlValues.body).toBe(EDAYA_PAYLOAD_EMAIL_BODY);
+          expect(step.controlValues).toBeDefined();
+          expect(step.controlValues!.subject).toBe(EDAYA_PAYLOAD_EMAIL_SUBJECT);
+          expect(step.controlValues!.body).toBe(EDAYA_PAYLOAD_EMAIL_BODY);
         }
         if (step.type === "in_app") {
-          expect(step.controlValues.subject).toBe(EDAYA_PAYLOAD_TITLE);
-          expect(step.controlValues.body).toBe(EDAYA_PAYLOAD_BODY);
+          expect(step.controlValues).toBeDefined();
+          expect(step.controlValues!.subject).toBe(EDAYA_PAYLOAD_TITLE);
+          expect(step.controlValues!.body).toBe(EDAYA_PAYLOAD_BODY);
         }
       }
     }

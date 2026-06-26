@@ -106,8 +106,16 @@ export async function seedDevCommunications(
   }
 
   for (const delivery of SEED_MESSAGE_DELIVERIES) {
+    const announcement = SEED_ANNOUNCEMENTS.find(record => record.id === delivery.announcementId)
+    if (!announcement) {
+      throw new Error(`Missing announcement for delivery seed ${delivery.id}`)
+    }
+
     await port.recordDelivery({
       id: delivery.id,
+      schoolId: announcement.schoolId,
+      title: announcement.title,
+      body: announcement.content,
       announcementId: delivery.announcementId,
       subjectId: delivery.subjectId,
       recipientKind: RECIPIENT_KIND_BY_SEED[delivery.recipientKind],

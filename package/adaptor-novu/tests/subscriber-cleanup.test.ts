@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import type { NovuSubscriberSnapshot } from "../src/subscriber-cleanup";
 import {
   matchesSubscriberCleanupSelector,
   selectNovuSubscribersForCleanup,
   TRANSIENT_INVITATION_SUBSCRIBER_PREFIX,
-  type NovuSubscriberSnapshot,
 } from "../src/subscriber-cleanup";
 
 function snapshot(subscriberId: string, deleted = false): NovuSubscriberSnapshot {

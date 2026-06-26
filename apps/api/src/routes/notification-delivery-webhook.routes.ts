@@ -69,16 +69,9 @@ export const notificationDeliveryWebhookHandler: AppRouteHandler<typeof notifica
       continue;
     }
 
-    const announcement = await c.var.schoolApp.repositories.announcements.findById(delivery.announcementId);
-    if (!announcement) {
-      c.var.logger.warn({ deliveryId: event.deliveryId }, "notification delivery webhook missing announcement");
-      ignored += 1;
-      continue;
-    }
-
     const actor = createSystemActorMetadata({
       systemId: "notification-delivery-webhook",
-      schoolId: announcement.schoolId,
+      schoolId: delivery.schoolId,
       requestId: `notification-delivery-webhook:${randomUUID()}`,
       reason: "notification delivery lifecycle webhook",
     });

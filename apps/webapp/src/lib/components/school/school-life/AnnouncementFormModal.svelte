@@ -4,8 +4,8 @@
 		createAnnouncementMutation,
 		updateAnnouncementMutation,
 	} from '$lib/api/mutations/announcement.mutations';
-import Button from '$lib/components/ui/button/button.svelte';
-import FormModal from '$lib/components/ui/FormModal.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';

@@ -29,7 +29,7 @@ export interface DeleteNovuSubscribersResult {
   deleted: number;
   skipped: number;
   failed: number;
-  errors: Array<{ subscriberId: string, message: string }>;
+  errors: Array<{ subscriberId: string; message: string }>;
 }
 
 export function toNovuSubscriberSnapshot(
