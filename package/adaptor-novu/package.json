@@ -17,7 +17,9 @@
     "test": "bun test tests bootstrap/tests",
     "bootstrap": "bun bootstrap/cli.ts plan",
     "bootstrap:apply": "bun bootstrap/cli.ts apply",
-    "bootstrap:validate": "bun bootstrap/cli.ts validate"
+    "bootstrap:validate": "bun bootstrap/cli.ts validate",
+    "cleanup": "bun cleanup/cli.ts plan",
+    "cleanup:apply": "bun cleanup/cli.ts apply"
   },
   "dependencies": {
     "@edaya/core": "workspace:*",

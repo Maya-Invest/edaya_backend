@@ -32,3 +32,5 @@ Create Novu workflows whose trigger identifiers match core `eventKey` values (e.
 **Bootstrap as code:** use `bun novu:bootstrap:apply` to create/update workflows from `bootstrap/catalog/`. See [bootstrap/README.md](./bootstrap/README.md).
 
 The gateway never throws on Novu API failures — errors are passed to optional `onError` so business commands are not rolled back.
+
+**Subscriber cleanup:** use `bun novu:cleanup -- --transient-invites` to preview deletions, or `bun novu:cleanup:apply -- --transient-invites --yes` to apply. See [cleanup/README.md](./cleanup/README.md).

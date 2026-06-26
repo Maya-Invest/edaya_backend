@@ -38,6 +38,8 @@
     "novu:bootstrap": "bun package/adaptor-novu/bootstrap/cli.ts plan",
     "novu:bootstrap:apply": "bun package/adaptor-novu/bootstrap/cli.ts apply",
     "novu:bootstrap:validate": "bun package/adaptor-novu/bootstrap/cli.ts validate",
+    "novu:cleanup": "bun package/adaptor-novu/cleanup/cli.ts plan",
+    "novu:cleanup:apply": "bun package/adaptor-novu/cleanup/cli.ts apply",
     "verify": "bun run doctor && bun run lint && bun run check && bun run build && bun run generated:check && bun run check:boundaries && bun run test:repo && turbo run test -- --dots",
     "fullcheck": "bun run verify",
     "deploy:api": "bun --filter @edaya/api deploy:worker",

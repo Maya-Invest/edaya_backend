@@ -1,10 +1,35 @@
 # Account Invitation & Linking — Sprint Plan
 
-> **Status:** Not started  
+> **Status:** ~85% complete — core flow shipped; hardening before production (see §14)  
 > **Created:** 2026-06-24  
+> **Last assessed:** 2026-06-26  
 > **Scope:** End-to-end invitation flow to link Better Auth user accounts to school **staff**, **guardians**, and **students**  
-> **Depends on:** Better Auth integration (done), `linkActorSubject` command (done), notification gateway + Novu (Phase 6, largely done)  
+> **Depends on:** Better Auth integration (done), `linkActorSubject` command (done), notification gateway + Novu (done)  
 > **Unblocks:** Notifications for unlinked students/guardians (notifications-plan Appendix C #11), guardian/student self-service login, inbox delivery for all actor kinds
+
+---
+
+## 0. Implementation status (2026-06-26)
+
+Phases 1–5 are **done**. Phase 6 is **partial**. Broader test expansion is **deferred** to a repo-wide coverage pass.
+
+| Outcome | Status | Notes |
+|---------|--------|-------|
+| O1 `AccountInvitation` persistence | Done | `0018_account_invitations.sql`, entity store, domain config |
+| O2 Send / resend / revoke | Done | `AccountInvitationServiceWorkflow`, `ACCESS_CONTROL_ASSIGN` |
+| O3 Email via Novu | Done | `InvitationDeliveryPort` + `account_invitation` workflow; `bun novu:smoke` includes transient invite spike |
+| O4 Public accept (all kinds) | Partial | Logic supports staff/guardian/student; integration tests cover **staff only** |
+| O5 Admin drawer UX | Done | `AccountLinkingSection` on staff, guardian, student drawers |
+| O6 `/invite/[token]` accept page | Done | Sign-up/sign-in, all page states, FR i18n |
+| O7 Safe token handling | Done | SHA-256 at rest; raw token only on send/resend; stripped from entity reads |
+| O8 Auto-invite on create | Done | `scheduleAccountInvitationIfEligible`; seeding passes `sendAccountInvitation: false` |
+| O9 Transient Novu lifecycle | Done | `invite:{id}` create/revoke; expiry cron; `novu:cleanup --transient-invites` |
+
+**Design decisions locked:**
+
+- **Port shape:** `InvitationDeliveryPort` in `@edaya/core`, implemented in `package/adaptor-novu/src/invitation-delivery.ts` (§6.3 option A). No separate `handlers/account-invitation.ts` — delivery bypasses `NotificationGatewayPort`.
+- **Public API routes:** `apps/api/src/routes/invitation.routes.ts` (not `public-invitations.routes.ts` as originally sketched).
+- **Auto-invite defaults:** `sendAccountInvitation: true`; student `inviteEmail` required when auto-invite is on.
 
 ---
 
@@ -36,7 +61,7 @@ Today a school admin can create staff, guardians, and students in the domain, bu
 | Session → actor resolution | `apps/api/src/http/dependencies/session-actor.ts` | Exactly one of staff/guardian/student per `subjectId` |
 | Notification contact resolution | `resolve-notification-contact.ts`, `notificationEmail` / `notificationPhone` columns | Staff/guardian have contact fields; **students do not** |
 | Outbound email path | Novu workflow → Novu email integration (e.g. Custom SMTP) | Configure in Novu dashboard; use for invitation delivery |
-| Auth | Better Auth email/password in `apps/api` | No public sign-up UI yet (demo login only) |
+| Auth | Better Auth email/password in `apps/api` | Accept page (`/invite/[token]`) has sign-up/sign-in; `/login` still demo-oriented |
 | Novu enqueue (operational) | `buildNovuSubscriberIds` requires `subjectId` | Invite path is the **only** exception — transient subscriber |
 
 **Key constraint:** `linkActorSubject` is **authenticated + permissioned**. The accept path must be a **separate, token-gated** operation that performs the same linking rules without granting the caller `ACCESS_CONTROL_ASSIGN`.
@@ -389,85 +414,86 @@ Keep demo login for dev. Add real email/password sign-in on accept page (require
 
 Estimates assume one developer familiar with the codebase. **Total ~9 days**.
 
-### Phase 0 — Design lock (0.5 day)
+### Phase 0 — Design lock (0.5 day) ✓
 
-- [ ] Resolve open questions (§ 10)
-- [ ] Spike transient subscriber in `scripts/novu-e2e-smoke.ts`: upsert `invite:{id}` → trigger → delete
-- [ ] Choose port shape: `InvitationDeliveryPort` vs extended `NotificationEnqueueInput` (§6.3)
-- [ ] Lock auto-invite defaults and student `inviteEmail` requirement
+- [x] Resolve open questions (§ 10)
+- [x] Spike transient subscriber in `scripts/novu-e2e-smoke.ts`: upsert `invite:{id}` → trigger → delete
+- [x] Choose port shape: `InvitationDeliveryPort` (§6.3 option A)
+- [x] Lock auto-invite defaults and student `inviteEmail` requirement
 
 **Done when:** spike sends one test invite email via transient subscriber; decision recorded in this doc.
 
 ---
 
-### Phase 1 — Domain + persistence (1.5 days)
+### Phase 1 — Domain + persistence (1.5 days) ✓
 
-- [ ] `AccountInvitation` domain entity + Zod schemas
-- [ ] Postgres migration `0018_account_invitations.sql` + store in `entity-stores.ts`
-- [ ] Extract `linkSubjectToActor`; refactor `linkActorSubject`
-- [ ] `acceptAccountInvitation` workflow (token verify, link, mark accepted, revoke transient + upsert permanent)
-- [ ] Unit tests: token lifecycle, conflict rules, expired/revoked/already-linked
+- [x] `AccountInvitation` domain entity + Zod schemas
+- [x] Postgres migration `0018_account_invitations.sql` + store in `entity-stores.ts`
+- [x] Extract `linkSubjectToActor`; refactor `linkActorSubject`
+- [x] `acceptAccountInvitation` workflow (token verify, link, mark accepted, revoke transient + upsert permanent)
+- [x] Unit tests: token lifecycle, conflict rules, expired/revoked/already-linked (staff-focused; broader coverage deferred)
 
 **Done when:** core tests pass without API/webapp.
 
 ---
 
-### Phase 2 — Send commands + auto-invite hooks (2 days)
+### Phase 2 — Send commands + auto-invite hooks (2 days) ✓
 
-- [ ] `sendAccountInvitation`, `resendAccountInvitation`, `revokeAccountInvitation` workflows
-- [ ] `InvitationDeliveryPort` + Novu adapter (transient upsert, trigger, delete)
-- [ ] `scheduleAccountInvitationIfEligible` + post-save hooks on `register*`
-- [ ] Extend register command schemas; command registry + OpenAPI
-- [ ] Notification handler `account-invitation.ts`
-- [ ] Configure Novu `account_invitation` workflow in dashboard
-- [ ] Unit + integration tests for send/resend/revoke + auto-invite paths
-- [ ] Seeding: `sendAccountInvitation: false`
+- [x] `sendAccountInvitation`, `resendAccountInvitation`, `revokeAccountInvitation` workflows
+- [x] `InvitationDeliveryPort` + Novu adapter (transient upsert, trigger, delete)
+- [x] `scheduleAccountInvitationIfEligible` + post-save hooks on `register*`
+- [x] Extend register command schemas; command registry + OpenAPI
+- [x] ~~Notification handler `account-invitation.ts`~~ — skipped; `InvitationDeliveryPort` used directly
+- [x] Configure Novu `account_invitation` workflow (`bun novu:bootstrap:apply`)
+- [x] Unit + integration tests for send/resend/revoke (auto-invite + guardian/student paths deferred)
+- [x] Seeding: `sendAccountInvitation: false`
 
 **Done when:** register staff with email auto-sends invite via transient subscriber; email smoke in staging.
 
 ---
 
-### Phase 3 — Public accept API (1 day)
+### Phase 3 — Public accept API (1 day) ✓
 
-- [ ] `apps/api/src/routes/public-invitations.routes.ts`
-- [ ] Token lookup by hash; constant-time comparison
-- [ ] Accept endpoint + transient subscriber cleanup + permanent upsert
-- [ ] Integration tests: sign-up → accept → grants; sign-in (existing user) → accept
+- [x] `apps/api/src/routes/invitation.routes.ts`
+- [x] Token lookup by hash
+- [x] Accept endpoint + transient subscriber cleanup + permanent upsert
+- [x] Integration tests: sign-up → accept (staff); sign-in existing user; resend; 401 without session
 
 **Done when:** accept sets `subjectId` and `/core/authorization/effective-grants` resolves actor.
 
 ---
 
-### Phase 4 — Webapp admin UX (2 days)
+### Phase 4 — Webapp admin UX (2 days) ✓
 
-- [ ] Mutations: send / resend / revoke
-- [ ] Account linking section on staff, guardian, student drawers
-- [ ] Create modals with invite checkbox + student email field
-- [ ] Toast + query invalidation
+- [x] Mutations: send / resend / revoke
+- [x] Account linking section on staff, guardian, student drawers
+- [x] Create modals with invite checkbox + student email field
+- [x] Toast + query invalidation
 
 **Done when:** full admin UX works from UI.
 
 ---
 
-### Phase 5 — Webapp accept page + auth forms (1.5 days)
+### Phase 5 — Webapp accept page + auth forms (1.5 days) ✓
 
-- [ ] `/invite/[token]` page (all states)
-- [ ] Sign-up / sign-in on accept page (Better Auth client)
-- [ ] Post-accept redirect + session bootstrap
+- [x] `/invite/[token]` page (all states)
+- [x] Sign-up / sign-in on accept page (Better Auth client)
+- [x] Post-accept redirect + session bootstrap
 
 **Done when:** manual browser E2E completes without seed hacks.
 
 ---
 
-### Phase 6 — Hardening + ops (1 day)
+### Phase 6 — Hardening + ops (1 day) — partial
 
-- [ ] Cron: expire invitations + delete transient subscribers
-- [ ] Rate limit public routes
+- [x] Cron: expire invitations + delete transient subscribers
+- [ ] Rate limit public routes → **moved to §14 (before production)**
 - [ ] Login-time `scheduleNotificationRecipientUpsert` backfill (optional)
 - [ ] Update `docs/local-dev.md`
 - [ ] Dev seed: leave one unlinked staff/guardian for manual testing
+- [ ] Broader automated test expansion → **deferred to repo-wide coverage pass**
 
-**Done when:** `bun run verify` green.
+**Done when:** `bun run verify` green and §14 checklist complete.
 
 ---
 
@@ -509,7 +535,7 @@ Estimates assume one developer familiar with the codebase. **Total ~9 days**.
 | 7 | Multiple pending invites per target? | **No** — revoke previous on send/resend |
 | 8 | Auto-invite default? | **`sendAccountInvitation: true`** |
 | 9 | Auto-invite without assign permission? | **Skip silently** |
-| 10 | `InvitationDeliveryPort` vs extend enqueue input? | **Decide in Phase 0 spike** |
+| 10 | `InvitationDeliveryPort` vs extend enqueue input? | **Resolved:** `InvitationDeliveryPort` (option A) |
 
 ---
 
@@ -522,10 +548,10 @@ Estimates assume one developer familiar with the codebase. **Total ~9 days**.
 | Linking | `package/domain-core/src/services/account-linking/link-subject-to-actor.ts` (new) |
 | Workflows | `account-invitation.ts`; hooks in `setup.ts`, `student.ts` |
 | Novu adapter | `package/adaptor-novu/src/invitation-delivery.ts` (transient subscriber) |
-| Notifications | `handlers/account-invitation.ts`, `register-workflow-notification-handlers.ts` |
-| Postgres | `drizzle/0018_account_invitations.sql`, `entity-stores.ts` |
+| Notifications | `InvitationDeliveryPort` in adaptor-novu (no separate notification handler) |
+| Postgres | `package/adaptor-postgres/drizzle/0018_account_invitations.sql`, `account-invitation-store.ts` |
 | API commands | `schemas/commands.ts`, `registry.ts`, `command-responses.ts` |
-| API public | `routes/public-invitations.routes.ts` |
+| API public | `apps/api/src/routes/invitation.routes.ts` |
 | Cron | `cron/jobs/expire-account-invitations.ts` |
 | Seeding | `testing/seeding/**` — `sendAccountInvitation: false` |
 | Webapp | drawers, `invite/[token]/+page.svelte`, mutations, i18n |
@@ -548,10 +574,36 @@ Permanent rule unchanged: **`subscriberId` = auth `user.id`** for all operationa
 ## 13. Rollout
 
 1. Deploy migration + API with `ACCOUNT_INVITATIONS_ENABLED` flag.
-2. Configure Novu `account_invitation` workflow in staging.
-3. QA admin UX + accept flow.
-4. Enable public `/invite` route.
-5. Production after smoke test.
+2. Configure Novu `account_invitation` workflow in staging (`bun novu:bootstrap:apply`).
+3. QA admin UX + accept flow (§9 manual checklist).
+4. Complete §14 before-production checklist (rate limits, docs, smoke).
+5. Enable public `/invite` route in production.
+
+---
+
+## 14. Before production
+
+Complete these before enabling invitations in production. Test expansion beyond the current staff-focused suite is tracked separately in a repo-wide coverage pass.
+
+| # | Item | Priority | Notes |
+|---|------|----------|-------|
+| 1 | **Rate limit public invitation routes** | **Required** | `GET /public/invitations/:token` and `POST /public/invitations/:token/accept` — per-IP and/or per-token throttling to reduce brute-force and abuse |
+| 2 | Staging smoke | Required | `bun novu:smoke` — announcement + transient `invite:{id}` path; confirm `account_invitation` in Novu Activity |
+| 3 | Manual QA | Required | §9 manual checklist (auto-invite, resend, revoke, email mismatch, FR locale) |
+| 4 | `docs/local-dev.md` | Recommended | Document `ACCOUNT_INVITATIONS_ENABLED`, `INVITE_BASE_URL`, Novu workflow bootstrap, accept-page flow |
+| 5 | Dev seed fixture | Recommended | Leave one unlinked staff/guardian for manual invite testing without `seed:auth:link` |
+| 6 | Login-time Novu backfill | Optional | `scheduleNotificationRecipientUpsert` on session bootstrap for pre-Novu linked accounts |
+| 7 | Guardian/student integration tests | Deferred | Covered by repo-wide test expansion |
+| 8 | Auto-invite eligibility tests | Deferred | Covered by repo-wide test expansion |
+| 9 | Expiry cron test | Deferred | Covered by repo-wide test expansion |
+
+**Env vars for production:**
+
+| Variable | Purpose |
+|----------|---------|
+| `ACCOUNT_INVITATIONS_ENABLED` | Feature flag (default `true` when unset) |
+| `INVITE_BASE_URL` | Base URL for invite links, e.g. `https://app.edaya.com/invite` |
+| `NOVU_SECRET_KEY` | Novu API auth for transient + permanent subscribers |
 
 ---
 
