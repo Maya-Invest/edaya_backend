@@ -37,7 +37,7 @@ export const EnvSchema = z.object({
   NOVU_SECRET_KEY: z.string().min(1).optional(),
   /** Optional Novu API base URL (e.g. https://eu.api.novu.co) */
   NOVU_API_URL: z.string().url().optional(),
-  /** Novu webhook signing secret (Svix) — required for POST /webhooks/novu */
+  /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery */
   NOVU_WEBHOOK_SECRET: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),

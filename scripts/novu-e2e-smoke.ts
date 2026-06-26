@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto'
  *   - Optional: NOVU_WEBHOOK_SECRET for local webhook simulation
  */
 import { resolve } from 'node:path'
-import { buildSignedNovuWebhookRequest } from '../package/adaptor-novu/src/delivery-webhook'
+import { buildSignedNovuWebhookRequest } from '@edaya/adaptor-novu'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
@@ -119,7 +119,7 @@ async function simulateWebhook(delivery: MessageDeliveryRow): Promise<void> {
     },
   })
 
-  const request = buildSignedNovuWebhookRequest(secret, `${baseUrl}/webhooks/novu`, payload)
+  const request = buildSignedNovuWebhookRequest(secret, `${baseUrl}/webhooks/notification-delivery`, payload)
   const response = await fetch(request)
 
   const body = await response.json().catch(() => ({}))
@@ -127,7 +127,7 @@ async function simulateWebhook(delivery: MessageDeliveryRow): Promise<void> {
     fail(`webhook simulation failed: ${response.status} ${JSON.stringify(body)}`)
   }
 
-  log('Webhook simulated', `POST /webhooks/novu → ${JSON.stringify(body)}`)
+  log('Webhook simulated', `POST /webhooks/notification-delivery → ${JSON.stringify(body)}`)
 }
 
 async function main() {
@@ -230,7 +230,7 @@ async function main() {
   console.log(`2. Filter by transactionId prefix: delivery:${announcementId}`)
   console.log('3. Confirm workflow `announcement.published` exists (trigger id must match event key)')
   console.log('4. For real webhook delivery: point Novu webhook URL to your public API')
-  console.log('   e.g. https://<tunnel>/webhooks/novu  +  NOVU_WEBHOOK_SECRET in .env')
+  console.log('   e.g. https://<tunnel>/webhooks/notification-delivery  +  NOVU_WEBHOOK_SECRET in .env')
   console.log('   Or skip webhooks and run: CRON_JOB_KEYS=reconcilePendingDeliveries bun run dev:cron')
   console.log('\n✓ Smoke test finished — check API logs for "novu notification failed" if triggers did not appear.')
 }

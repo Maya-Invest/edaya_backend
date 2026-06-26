@@ -660,7 +660,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/webhooks/novu": {
+    "/webhooks/notification-delivery": {
         parameters: {
             query?: never;
             header?: never;
@@ -669,7 +669,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Novu delivery lifecycle webhook */
+        /** Notification delivery lifecycle webhook */
         post: {
             parameters: {
                 query?: never;
@@ -685,7 +685,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["NovuWebhookResponse"];
+                        "application/json": components["schemas"]["NotificationDeliveryWebhookResponse"];
                     };
                 };
                 /** @description Invalid webhook signature */
@@ -699,7 +699,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Webhook secret not configured */
+                /** @description Webhook adapter not configured */
                 503: {
                     headers: {
                         [name: string]: unknown;
@@ -51272,7 +51272,7 @@ export interface components {
         RotateServiceAccountKeyResponse: {
             apiKey: string;
         };
-        NovuWebhookResponse: {
+        NotificationDeliveryWebhookResponse: {
             processed: number;
             ignored: number;
         };

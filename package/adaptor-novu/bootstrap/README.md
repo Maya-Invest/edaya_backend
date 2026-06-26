@@ -2,7 +2,7 @@
 
 Declarative Novu setup for Edaya: **workflows** live in TypeScript and are applied idempotently via the Novu API.
 
-This replaces manual dashboard setup for the primitives we control from code. Outbound delivery webhooks (status sync to `POST /webhooks/novu`) and email delivery (SMTP or other Novu integration) still require a Novu dashboard or API step — see [Manual follow-up](#manual-follow-up).
+This replaces manual dashboard setup for the primitives we control from code. Outbound delivery webhooks (status sync to `POST /webhooks/notification-delivery`) and email delivery (SMTP or other Novu integration) still require a Novu dashboard or API step — see [Manual follow-up](#manual-follow-up).
 
 ## Layout
 
@@ -69,7 +69,7 @@ Email bodies live in `templates/emails/*.html`; subjects in `templates/subjects/
 Not yet managed by this bootstrap:
 
 - **Email delivery** — configure a Novu email integration (e.g. Custom SMTP) in the Novu dashboard.
-- **Outbound webhook** → `https://<api>/webhooks/novu` with `NOVU_WEBHOOK_SECRET` (Svix signing secret from Novu dashboard).
+- **Outbound webhook** → `https://<api>/webhooks/notification-delivery` with `NOVU_WEBHOOK_SECRET` (Svix signing secret from Novu dashboard).
 - **Production sync** — apply bootstrap against each Novu environment (dev/staging/prod API keys).
 
 ## Related

@@ -35,7 +35,7 @@ describe('resolveNotificationContact', () => {
     )).toBe('+33123456789')
   })
 
-  test('enrichRecipientProfile resolves delivery contact for Novu sync', () => {
+  test('enrichRecipientProfile resolves delivery contact for provider sync', () => {
     const enriched = enrichRecipientProfile({
       schoolId: 'school-1',
       recipient: { kind: MessageDeliveryRecipientKind.Guardian, id: 'g1', subjectId: 'auth-g1' },

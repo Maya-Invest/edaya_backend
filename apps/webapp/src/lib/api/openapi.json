@@ -758,7 +758,7 @@
           "apiKey"
         ]
       },
-      "NovuWebhookResponse": {
+      "NotificationDeliveryWebhookResponse": {
         "type": "object",
         "properties": {
           "processed": {
@@ -9615,19 +9615,19 @@
         }
       }
     },
-    "/webhooks/novu": {
+    "/webhooks/notification-delivery": {
       "post": {
         "tags": [
           "Webhooks"
         ],
-        "summary": "Novu delivery lifecycle webhook",
+        "summary": "Notification delivery lifecycle webhook",
         "responses": {
           "200": {
             "description": "Processed delivery events",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NovuWebhookResponse"
+                  "$ref": "#/components/schemas/NotificationDeliveryWebhookResponse"
                 }
               }
             }
@@ -9654,7 +9654,7 @@
             }
           },
           "503": {
-            "description": "Webhook secret not configured",
+            "description": "Webhook adapter not configured",
             "content": {
               "application/json": {
                 "schema": {

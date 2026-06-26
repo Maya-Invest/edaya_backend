@@ -1,20 +1,11 @@
+import type {
+  NormalizedDeliveryEvent,
+  NotificationDeliveryWebhookAdapter,
+} from "@edaya/core";
 import { Webhook } from "svix";
 import crypto from "node:crypto";
 
-export interface NormalizedDeliveryEvent {
-  deliveryId: string;
-  status: "sent" | "failed" | "read" | "cancelled";
-  providerMessageId?: string;
-  channel?: string;
-  failureReason?: string;
-  occurredAt: Date;
-  subjectId?: string;
-}
-
-export interface NotificationDeliveryWebhookAdapter {
-  verifyRequest: (request: Request, rawBody: string) => Promise<boolean>;
-  parseEvents: (rawBody: string) => Promise<NormalizedDeliveryEvent[]>;
-}
+export type { NormalizedDeliveryEvent, NotificationDeliveryWebhookAdapter } from "@edaya/core";
 
 export interface CreateNovuDeliveryWebhookAdapterOptions {
   webhookSecret: string;

@@ -1,10 +1,10 @@
 import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb, resolveMigrationDriver } from "@edaya/adaptor-postgres";
-import { createNovuInvitationDeliveryPortFromSecretKey } from "@edaya/adaptor-novu";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createAppLogger } from "@/logging/app-logger";
+import { resolveInvitationDelivery } from "@/runtime/shared/resolve-invitation-delivery";
 import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/resolve-invite-config";
-import { createRepositoryAuthorizationPolicy, type InvitationDeliveryPort, noOpInvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
+import { createRepositoryAuthorizationPolicy, type InvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
 import type { Environment } from "@/runtime/env/schema";
 import { createAuthContactResolver } from "@/runtime/shared/auth-contact-resolver";
 
@@ -39,12 +39,7 @@ export async function buildSchoolApplication(
   const notificationGateway = options.notificationGateway
     ?? resolveNotificationGateway(options.env, logger);
   const invitationDelivery = options.invitationDelivery
-    ?? (options.env?.NOVU_SECRET_KEY
-      ? createNovuInvitationDeliveryPortFromSecretKey({
-          secretKey: options.env.NOVU_SECRET_KEY,
-          serverURL: options.env.NOVU_API_URL,
-        })
-      : noOpInvitationDeliveryPort);
+    ?? resolveInvitationDelivery(options.env);
 
   return new ApiSchoolApplication({
     atomicExecution,

@@ -19,9 +19,9 @@ import {
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
 import {
-  novuWebhookHandler,
-  novuWebhookRoute,
-} from "@/routes/novu-webhook.routes";
+  notificationDeliveryWebhookHandler,
+  notificationDeliveryWebhookRoute,
+} from "@/routes/notification-delivery-webhook.routes";
 import {
   acceptInvitationHandler,
   acceptInvitationRoute,
@@ -65,7 +65,7 @@ router
   .openapi(updateServiceAccountRoute, updateServiceAccountHandler)
   .openapi(revokeServiceAccountRoute, revokeServiceAccountHandler)
   .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler)
-  .openapi(novuWebhookRoute, novuWebhookHandler)
+  .openapi(notificationDeliveryWebhookRoute, notificationDeliveryWebhookHandler)
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
   .openapi(acceptInvitationRoute, acceptInvitationHandler);
 

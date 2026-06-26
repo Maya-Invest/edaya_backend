@@ -10,7 +10,7 @@ function buildSignedRequest(body: string): Request {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const signature = wh.sign(messageId, new Date(Number(timestamp) * 1000), body);
 
-  return new Request("https://api.example.com/webhooks/novu", {
+  return new Request("https://api.example.com/webhooks/notification-delivery", {
     method: "POST",
     headers: {
       "content-type": "application/json",

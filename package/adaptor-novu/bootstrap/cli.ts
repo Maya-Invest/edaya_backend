@@ -82,7 +82,7 @@ async function main() {
   }
   else {
     console.log("\n✓ Bootstrap complete.");
-    console.log("Manual follow-up: configure Novu outbound webhooks → POST /webhooks/novu (see bootstrap/README.md).");
+    console.log("Manual follow-up: configure Novu outbound webhooks → POST /webhooks/notification-delivery (see bootstrap/README.md).");
   }
 }
 

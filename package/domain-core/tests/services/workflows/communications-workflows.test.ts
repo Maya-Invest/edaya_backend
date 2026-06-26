@@ -289,9 +289,9 @@ describe('SchoolService communications workflows', () => {
       repositories: mockRepos,
       authorizationPolicy: mockPolicy,
       actor: createSystemActorMetadata({
-        systemId: 'novu-webhook',
+        systemId: 'notification-delivery-webhook',
         schoolId: 'sch1',
-        requestId: 'req-novu-1',
+        requestId: 'req-delivery-webhook-1',
         reason: 'test webhook',
       }),
       atomicExecution: mockAtomic,

@@ -1,4 +1,4 @@
-/** Novu workflow trigger ids plus account invitation — keep in sync with adaptor-novu bootstrap. */
+/** Notification template keys — keep in sync with provider workflow/bootstrap catalogs. */
 export const NOTIFICATION_TEMPLATE_KEYS = [
   'announcement.published',
   'report_card.published',

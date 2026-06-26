@@ -8,8 +8,6 @@ export {
 export {
   buildSignedNovuWebhookRequest,
   createNovuDeliveryWebhookAdapter,
-  type NormalizedDeliveryEvent,
-  type NotificationDeliveryWebhookAdapter,
 } from "./delivery-webhook";
 export {
   createNovuInvitationDeliveryPort,
@@ -41,3 +39,7 @@ export type {
   NovuTriggerRequest,
   NovuWorkflowIdResolver,
 } from "./types";
+export type {
+  NormalizedDeliveryEvent,
+  NotificationDeliveryWebhookAdapter,
+} from "@edaya/core";

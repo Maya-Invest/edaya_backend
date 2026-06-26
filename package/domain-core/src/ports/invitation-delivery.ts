@@ -15,7 +15,7 @@ export interface InvitationDeliveryInput {
   emailBody: string
 }
 
-/** Delivers invite messages via transient Novu subscribers (pre-account). */
+/** Delivers invite messages to pre-account contacts via the notification provider. */
 export interface InvitationDeliveryPort {
   deliver: (input: InvitationDeliveryInput) => Promise<void>
   revoke: (invitationId: string) => Promise<void>
