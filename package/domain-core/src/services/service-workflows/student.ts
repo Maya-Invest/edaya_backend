@@ -487,7 +487,6 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
         subjectId: existing.subjectId,
         hasAccess: existing.hasAccess,
-        premiumNotificationsEnabled: changes.premiumNotificationsEnabled ?? existing.premiumNotificationsEnabled,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
@@ -509,7 +508,6 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
       subjectId: existing.subjectId,
       hasAccess: changes.hasAccess ?? existing.hasAccess,
-      premiumNotificationsEnabled: changes.premiumNotificationsEnabled ?? existing.premiumNotificationsEnabled,
       createdAt: existing.createdAt,
     })
     await this.baseService.entities.guardians.save(guardian)

@@ -33,7 +33,6 @@ export interface NotificationRecipientProfile {
     receivesAttendanceAlerts?: boolean
     receivesAcademicReports?: boolean
     allowsNotifications?: boolean
-    premiumNotificationsEnabled?: boolean
     channels?: Partial<Record<'email' | 'sms' | 'push' | 'in_app', boolean>>
   }
 }
@@ -55,7 +54,6 @@ export interface NotificationEnqueueInput {
   emailBody?: string
   recipients: NotificationRecipient[]
   priority?: AnnouncementPriority
-  premium?: boolean
   deliverAfter?: Date
   expiresAt?: Date
   metadata?: Record<string, string>

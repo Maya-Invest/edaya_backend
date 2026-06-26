@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
-import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
 import { parseDomain, zodDate } from '../utils'
 
 export enum MessageDeliveryChannel {
@@ -28,8 +28,12 @@ export enum MessageDeliveryStatus {
 
 export const messageDeliveryBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
-  announcementId: z.string().trim().min(1, 'announcementId must not be blank'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  announcementId: z.string().trim().min(1, 'announcementId must not be blank').optional(),
+  eventKey: z.string().trim().min(1, 'eventKey must not be blank').optional(),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
+  title: z.string().trim().min(1, 'title must not be blank'),
+  body: z.string().min(1, 'body must not be blank'),
   recipientKind: z.nativeEnum(MessageDeliveryRecipientKind).optional(),
   recipientId: z.string().trim().min(1, 'recipientId must not be blank').optional(),
   status: z.nativeEnum(MessageDeliveryStatus).default(MessageDeliveryStatus.Pending),
@@ -77,7 +81,8 @@ export const messageDeliveryCreateSchema = messageDeliveryBaseSchema.omit({ crea
 export const messageDeliveryUpdateSchema = messageDeliveryBaseSchema.partial().required({ id: true }).superRefine(refineMessageDelivery)
 
 /**
- * Tracks delivery state for one announcement/message to one auth account (subjectId).
+ * Tracks delivery state for one notification to one auth account (subjectId).
+ * Ad-hoc announcements link via `announcementId`; system events use `eventKey`.
  */
 export class MessageDelivery {
   readonly data: MessageDeliveryData
@@ -87,8 +92,12 @@ export class MessageDelivery {
   }
 
   get id() { return this.data.id }
+  get schoolId() { return this.data.schoolId }
   get announcementId() { return this.data.announcementId }
+  get eventKey() { return this.data.eventKey }
   get subjectId() { return this.data.subjectId }
+  get title() { return this.data.title }
+  get body() { return this.data.body }
   get recipientKind() { return this.data.recipientKind }
   get recipientId() { return this.data.recipientId }
   get status() { return this.data.status }
@@ -136,7 +145,7 @@ export function buildDeliverySummary(deliveries: MessageDelivery[]): Announcemen
 export const messageDeliveryConfig: EntityConfigFactory<MessageDelivery> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.messageDeliveries,
-    tenant: announcementLinkedTenant('announcementId'),
+    tenant: directSchoolTenant(),
     read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
     write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
     atomicExecution,

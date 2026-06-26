@@ -13,7 +13,6 @@ export interface GuardianNotificationSettings {
 	initials: string;
 	subjectId: string | null;
 	hasAccess: boolean;
-	premiumNotificationsEnabled: boolean;
 	notificationEmail: string | null;
 	notificationPhone: string | null;
 	contactMethods: GuardianRaw['contactMethods'];
@@ -45,7 +44,6 @@ export async function fetchGuardianNotificationSettings(
 		initials: guardianInitials(guardian.firstName, guardian.lastName),
 		subjectId: guardian.subjectId ?? null,
 		hasAccess: guardian.hasAccess ?? true,
-		premiumNotificationsEnabled: guardian.premiumNotificationsEnabled ?? false,
 		notificationEmail: guardian.notificationEmail ?? null,
 		notificationPhone: guardian.notificationPhone ?? null,
 		contactMethods: guardian.contactMethods ?? [],

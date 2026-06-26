@@ -154,7 +154,7 @@ describe('assessmentDueSoonTrigger resolver', () => {
     })
 
     expect(input).toBeNull()
-    expect(gateway.cancelled).toEqual([assessmentDueSoonIdempotencyKey('a1')])
+    expect(gateway.cancelled).toEqual([])
   })
 })
 
@@ -217,7 +217,7 @@ describe('withNotificationPostSaveHook', () => {
       )
 
       expect(existingPostSaveCalled).toBe(true)
-      expect(gateway.enqueued).toHaveLength(1)
+      expect(gateway.enqueued).toHaveLength(0)
     }
     finally {
       notificationTriggerRegistry.clear()

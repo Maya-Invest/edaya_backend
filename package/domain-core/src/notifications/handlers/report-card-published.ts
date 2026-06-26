@@ -1,5 +1,6 @@
 import type { ReportCardResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
+import { deliverNotification } from '../deliver-notification'
 import { resolveStudentAndAcademicGuardianRecipients } from '../recipient-resolvers'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import { resolveSchoolName } from '../templates/resolve-school-name'
@@ -40,11 +41,14 @@ export async function handleReportCardPublished(
     },
   })
 
-  await context.notificationGateway.enqueue({
-    idempotencyKey: `${REPORT_CARD_PUBLISHED_EVENT_KEY}:${result.id}`,
+  await deliverNotification({
+    notificationGateway: context.notificationGateway,
+    repositories: context.repositories,
+  }, {
     schoolId: student.schoolId,
     kind: 'event',
     eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
+    idempotencyKeyPrefix: `${REPORT_CARD_PUBLISHED_EVENT_KEY}:${result.id}`,
     ...content,
     recipients,
     metadata: {

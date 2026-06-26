@@ -72,7 +72,6 @@ export function buildGuardianRecipientProfile(
       allowsNotifications,
       receivesAcademicReports: links.some(link => link.receivesAcademicReports),
       receivesAttendanceAlerts: links.some(link => link.receivesAttendanceAlerts),
-      premiumNotificationsEnabled: guardian.premiumNotificationsEnabled,
       channels: {
         email: guardianAllowsChannel(guardian, [GuardianContactMethodType.Email]),
         sms: guardianAllowsChannel(guardian, [

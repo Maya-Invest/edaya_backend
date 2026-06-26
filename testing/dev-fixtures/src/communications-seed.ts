@@ -11,7 +11,6 @@ export interface SeedAnnouncement {
   createdBy: string
   status: SeedAnnouncementStatus
   priority?: SeedAnnouncementPriority
-  premiumNotification?: boolean
   createdAt: string
   publishedAt?: string
   expiresAt?: string
@@ -101,7 +100,6 @@ export const SEED_ANNOUNCEMENTS: readonly SeedAnnouncement[] = [
     createdBy: 'st5',
     status: 'published',
     priority: 'important',
-    premiumNotification: true,
     createdAt: '2026-01-06',
     publishedAt: '2026-01-06',
   },

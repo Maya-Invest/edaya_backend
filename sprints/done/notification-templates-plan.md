@@ -1,10 +1,11 @@
 # School Notification Templates — Sprint Plan
 
-> **Status:** Not started  
+> **Status:** Complete (2026-06-26)  
 > **Created:** 2026-06-24  
 > **Scope:** Per-school notification templates (email + in-app), including **account invitations**; platform defaults seeded as **one document per school** at **school creation**; render on Edaya side **before** Novu enqueue  
 > **Depends on:** Notifications Phases 1–6 (`NotificationGatewayPort`, workflow handlers, Novu bootstrap), account invitation flow  
-> **Related:** [notifications-plan.md](./notifications-plan.md), [account-invitation-plan.md](./account-invitation-plan.md), `package/adaptor-novu/bootstrap/`
+> **Related:** [notifications-plan.md](./notifications-plan.md), [account-invitation-plan.md](./account-invitation-plan.md), `package/adaptor-novu/bootstrap/`  
+> **Note:** No backfill — pre-release only; seed data can be wiped and re-seeded via `registerSchool`.
 
 ---
 
@@ -50,7 +51,7 @@ Today notification **content** is assembled in code (hardcoded strings in handle
 |-------|----------------|
 | **domain-core** | Entity (one row/school), Zod document schema, defaults, render, seed on school create |
 | **adaptor-novu bootstrap** | Platform Novu passthrough workflows only |
-| **webapp** | Admin UI to view/edit the school document (later phase) |
+| **webapp** | Admin UI to view/edit the school document (`configuration/notifications`) |
 | **Novu dashboard** | Not used for per-school copy |
 
 ### Why one row per school
@@ -74,7 +75,7 @@ New table `school_notification_templates` — **at most one row per school**.
 
 **Entity name:** `schoolNotificationTemplates` (singular resource per school).
 
-**Entity config:** read via entity API (`get` by schoolId / list one for actor’s school); writes via **commands** only; permission **`SCHOOL_CONFIGURATION_MANAGE`**.
+**Entity config:** read via entity API (`get` by schoolId / list one for actor’s school); writes via **commands** only; permission **`SCHOOL_LIFECYCLE_MANAGE`**.
 
 ### 3.2 Document shape (Zod-validated)
 
@@ -137,20 +138,15 @@ Export `NOTIFICATION_TEMPLATE_KEYS` and `schoolNotificationTemplateDocumentSchem
 ```
 defaults/
   manifest.ts              # builds full default document
+  load-default-files.ts    # reads account_invitation from disk
   emails/
-    announcement.published.html
     account-invitation.html
-    …
   subjects/
     account-invitation.txt
-    attendance.recorded.txt
-    …
-  in-app/
-    announcement.published.txt
-    …
 ```
 
-- Migrate content from `package/adaptor-novu/bootstrap/templates/` into domain-core (bootstrap **syncs** with a parity test — **domain-core owns** defaults).
+- `account_invitation` copy lives in HTML/text files (loaded by `load-default-files.ts`).
+- Operational templates (announcements, attendance, etc.) are defined inline in `manifest.ts` — Novu bootstrap uses passthrough steps only (`{{payload.*}}`).
 - `buildDefaultNotificationTemplateDocument(): SchoolNotificationTemplateDocument` — pure function, no DB.
 
 ### 3.5 Variable contracts
@@ -186,17 +182,9 @@ Also runs for:
 - `POST /core/onboarding/register-school` (via `registerSchool`)
 - Platform `registerSchool` command
 
-**Idempotent:** if a row already exists for `schoolId`, skip (do not overwrite customizations).
+**Idempotent:** if a row already exists for `schoolId`, skip (do not overwrite customizations). If the row exists but is missing new catalog keys, merge defaults for those keys only.
 
-### 4.2 Existing schools
-
-One-time backfill:
-
-```bash
-bun run scripts/backfill-notification-templates.ts
-```
-
-For each school without a row → insert default document.
+**Render fallback:** `NotificationTemplateService` falls back to platform defaults when no DB row exists (covers edge cases without a backfill script).
 
 ---
 
@@ -241,7 +229,7 @@ Add `templateService` to `WorkflowNotificationContext` / `BaseSchoolService`.
 
 | Command | Permission | Purpose |
 |---------|------------|---------|
-| `updateSchoolNotificationTemplates` | `SCHOOL_CONFIGURATION_MANAGE` | Patch one or more keys/channels in the document |
+| `updateSchoolNotificationTemplates` | `SCHOOL_LIFECYCLE_MANAGE` | Patch one or more keys/channels in the document |
 | `resetSchoolNotificationTemplates` | same | Reset entire document, or one `templateKey`, to platform defaults |
 
 Commands validate the **merged document** against `schoolNotificationTemplateDocumentSchema` before save.
@@ -254,9 +242,9 @@ Commands validate the **merged document** against `schoolNotificationTemplateDoc
 
 Query filter: `schoolId` (tenant-scoped). Response is the full document.
 
-### 6.3 Webapp (Phase 4)
+### 6.3 Webapp
 
-- **Settings → Notifications → Templates**
+- **Configuration → Notification templates** (`/(app)/configuration/notifications`)
 - Load single document; UI groups by category (Communications, Academic, Attendance, Invitations)
 - Edit modal per `templateKey` + channel; save sends patch command
 - Preview with sample variables; reset one key or all
@@ -279,42 +267,36 @@ Passthrough workflows only. After render, email body may be full HTML from the s
 | O4 | All send paths use render | No hardcoded enqueue strings |
 | O5 | Invitation uses school email slice | Custom invite body in delivery |
 | O6 | Admin can edit document | Commands + webapp |
-| O7 | Backfill existing schools | Script + docs |
 
 ---
 
 ## 9. Phased delivery
 
-**Total ~6–7 days.**
+### Phase 1 — Domain + defaults + seed ✅
 
-### Phase 1 — Domain + defaults + seed (1.5 days)
+- [x] Entity + Zod document schema + migration `0019_school_notification_templates.sql` (`schoolId` PK, `templates` JSONB)
+- [x] Default HTML/text → `buildDefaultNotificationTemplateDocument()`
+- [x] `NotificationTemplateService.render`
+- [x] `seedSchoolNotificationTemplates` + hook in `registerSchool`
+- [x] Unit tests: schema, render, seed idempotency
 
-- [ ] Entity + Zod document schema + migration `0019_school_notification_templates.sql` (`schoolId` PK, `templates` JSONB)
-- [ ] Default HTML/text → `buildDefaultNotificationTemplateDocument()`
-- [ ] `NotificationTemplateService.render`
-- [ ] `seedSchoolNotificationTemplates` + hook in `registerSchool`
-- [ ] Unit tests: schema, render, seed idempotency
+### Phase 2 — Wire send paths ✅
 
-**Done when:** new school has **one row** whose `templates` object contains all catalog keys.
+- [x] Handlers + cron triggers + invitation delivery
+- [x] Integration tests: patched document → custom enqueue body
 
-### Phase 2 — Wire send paths (2 days)
+### Phase 3 — API ✅
 
-- [ ] Handlers + cron triggers + invitation delivery
-- [ ] Integration tests: patched document → custom enqueue body
+- [x] Commands (patch + reset) + entity registry + OpenAPI
 
-### Phase 3 — API (1 day)
+### Phase 4 — Webapp ✅
 
-- [ ] Commands (patch + reset) + entity registry + OpenAPI
-- [ ] Backfill script
+- [x] Configuration editor (document load, per-key patch save, preview, reset)
 
-### Phase 4 — Webapp (1.5 days)
+### Phase 5 — Hardening ✅
 
-- [ ] Settings editor (document load, per-key patch save)
-
-### Phase 5 — Hardening (0.5 day)
-
-- [ ] Parity test: default document ↔ bootstrap HTML
-- [ ] `docs/local-dev.md`
+- [x] Parity tests: domain default files ↔ manifest; bootstrap workflow ids ↔ `NOTIFICATION_TEMPLATE_KEYS`; passthrough payload fields
+- [x] Invitation workflow test: custom school template → rendered delivery
 
 ---
 
@@ -327,7 +309,7 @@ Passthrough workflows only. After render, email body may be full HTML from the s
 | Seed | One row created; second registerSchool skipped |
 | Commands | Patch one key; reset one key; reset all |
 | Handlers | Custom body in enqueue payload |
-| Backfill | Schools without row get default document |
+| Invitations | Custom email subject/body in delivery |
 
 ---
 
@@ -338,9 +320,9 @@ Passthrough workflows only. After render, email body may be full HTML from the s
 | 1 | **One row per school** with JSONB `templates` document |
 | 2 | **Fixed catalog** — all keys required in every document |
 | 3 | **Fragment** HTML in `body`; no full `<html>` wrapper required |
-| 4 | **Permission** — `SCHOOL_CONFIGURATION_MANAGE` |
-| 5 | **Defaults** — domain-core owns files; bootstrap syncs |
-| 6 | **Existing schools** — backfill script only |
+| 4 | **Permission** — `SCHOOL_LIFECYCLE_MANAGE` |
+| 5 | **Defaults** — domain-core owns content; Novu bootstrap passthrough only (parity-tested) |
+| 6 | **Existing schools** — no backfill (pre-release); wipe/re-seed dev data; render falls back to defaults without a row |
 | 7 | **Locale** — deferred; single document until product needs `fr` |
 
 ---
@@ -349,14 +331,15 @@ Passthrough workflows only. After render, email body may be full HTML from the s
 
 | Area | Files |
 |------|-------|
-| Domain entity | `domains/messaging/school-notification-templates.ts` (new) |
+| Domain entity | `domains/messaging/school-notification-templates.ts` |
 | Schema | `notifications/templates/document-schema.ts`, `defaults/`, `variables.ts` |
 | Service | `notifications/notification-template-service.ts`, `seed-school-notification-templates.ts` |
 | Hook | `services/service-workflows/setup.ts` |
-| Handlers / triggers / invitations | as before |
+| Handlers / triggers / invitations | `notifications/handlers/`, `notifications/triggers/`, `services/service-workflows/account-invitation.ts` |
 | Postgres | `drizzle/0019_school_notification_templates.sql` |
-| API | commands, entity registry |
-| Script | `scripts/backfill-notification-templates.ts` |
+| API | commands, entity registry (`apps/api/src/lib/school-api/`) |
+| Webapp | `apps/webapp/src/routes/(app)/configuration/notifications/` |
+| Tests | `tests/notifications/notification-template-*.test.ts`, `adaptor-novu/bootstrap/tests/defaults-parity.test.ts` |
 
 ---
 

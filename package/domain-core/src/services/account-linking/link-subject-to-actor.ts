@@ -117,7 +117,6 @@ export async function linkSubjectToActor(
       subjectId: input.subjectId,
       contactMethods: [...existing.contactMethods],
       hasAccess: existing.hasAccess,
-      premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
       createdAt: existing.createdAt,
     })
     await baseService.entities.guardians.save(guardian, { moduleChecked: true })

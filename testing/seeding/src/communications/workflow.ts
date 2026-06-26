@@ -74,7 +74,6 @@ export async function seedDevCommunications(
       createdBy: announcement.createdBy,
       status: ANNOUNCEMENT_STATUS_BY_SEED[announcement.status],
       priority: ANNOUNCEMENT_PRIORITY_BY_SEED[announcement.priority ?? 'normal'],
-      premiumNotification: announcement.premiumNotification ?? false,
       createdAt: seedDateTime(announcement.createdAt),
       publishedAt: announcement.publishedAt ? seedDateTime(announcement.publishedAt) : undefined,
       expiresAt: announcement.expiresAt ? seedDateTime(announcement.expiresAt) : undefined,

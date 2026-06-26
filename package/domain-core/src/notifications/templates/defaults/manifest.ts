@@ -1,13 +1,6 @@
 import type { NotificationChannelTemplate, SchoolNotificationTemplateDocument } from '../document-schema'
 import { schoolNotificationTemplateDocumentSchema } from '../document-schema'
-
-const ACCOUNT_INVITATION_SUBJECT = 'You\'re invited to join {{schoolName}} on Edaya'
-const ACCOUNT_INVITATION_BODY = [
-  '<p>Hello {{inviteeName}},</p>',
-  '<p>You have been invited to connect your account to {{schoolName}} on Edaya.</p>',
-  '<p><a href="{{inviteUrl}}">Accept invitation</a></p>',
-  '<p>This link expires on {{expiresAt}}.</p>',
-].join('')
+import { loadAccountInvitationDefaultFiles } from './load-default-files'
 
 function dualChannelFromPlain(subject: string, body: string): {
   email: NotificationChannelTemplate
@@ -21,6 +14,7 @@ function dualChannelFromPlain(subject: string, body: string): {
 
 /** Platform default notification template document — copied once per school at registration. */
 export async function buildDefaultNotificationTemplateDocument(): Promise<SchoolNotificationTemplateDocument> {
+  const accountInvitation = await loadAccountInvitationDefaultFiles()
   const document: SchoolNotificationTemplateDocument = {
     'announcement.published': dualChannelFromPlain(
       '{{announcementTitle}}',
@@ -60,8 +54,8 @@ export async function buildDefaultNotificationTemplateDocument(): Promise<School
     ),
     'account_invitation': {
       email: {
-        subject: ACCOUNT_INVITATION_SUBJECT,
-        body: ACCOUNT_INVITATION_BODY,
+        subject: accountInvitation.subject,
+        body: accountInvitation.body,
       },
     },
   }

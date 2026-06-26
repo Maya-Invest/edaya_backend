@@ -18,11 +18,11 @@ const noopAccessExceptions = new Set([
 
 const indirectParentGateExceptions = new Set([
   'academics/subject-matter.ts',
-  'messaging/message-delivery.ts',
 ])
 
 const directDeleteGateExceptions = new Set([
   'access/account-invitation.ts',
+  'messaging/message-delivery.ts',
   'messaging/school-notification-templates.ts',
   'school/grade-scale.ts',
   'school/school.ts',

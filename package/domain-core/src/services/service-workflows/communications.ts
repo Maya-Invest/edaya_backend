@@ -23,6 +23,7 @@ import {
 import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
   buildGuardianRecipientProfile,
+  buildNotificationDeliveryId,
   buildStaffRecipientProfile,
   runWorkflowNotifications,
   scheduleNotificationRecipientUpsert,
@@ -38,8 +39,12 @@ export interface PublishAnnouncementInput {
 
 export interface RecordDeliveryInput {
   id: string
-  announcementId: string
+  schoolId: string
+  title: string
+  body: string
   subjectId: string
+  announcementId?: string
+  eventKey?: string
   recipientKind?: MessageDeliveryRecipientKind
   recipientId?: string
   status?: MessageDeliveryStatus
@@ -91,7 +96,7 @@ const DELIVERY_STATUS_RANK: Record<MessageDeliveryStatus, number> = {
 }
 
 function buildDeliveryId(announcementId: string, subjectId: string): string {
-  return `delivery:${announcementId}:${subjectId}`
+  return buildNotificationDeliveryId(announcementId, subjectId)
 }
 
 function canTransitionDeliveryStatus(
@@ -148,7 +153,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       content: existing.content,
       createdBy: existing.createdBy,
       priority: existing.priority,
-      premiumNotification: existing.premiumNotification,
       status: AnnouncementStatus.Published,
       createdAt: existing.createdAt,
       publishedAt: publishedAt ?? new Date(),
@@ -168,7 +172,11 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async recordDelivery({
     id,
+    schoolId,
+    title,
+    body,
     announcementId,
+    eventKey,
     subjectId,
     recipientKind,
     recipientId,
@@ -180,19 +188,29 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
     updatedAt,
   }: RecordDeliveryInput): Promise<MessageDelivery> {
-    const announcement = await this.requireAnnouncement(announcementId)
-    await this.authorize({ schoolId: announcement.schoolId, announcementId })
-    if (recipientKind && recipientId) {
-      await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
-      if (!announcement.isPublished) {
-        throw new BusinessRuleViolationError('RECORD_DELIVERY_UNPUBLISHED', `Announcement ${announcementId} must be published before recording delivery`)
+    this.checkActorSchool(schoolId)
+    if (announcementId) {
+      const announcement = await this.requireAnnouncement(announcementId)
+      await this.authorize({ schoolId: announcement.schoolId, announcementId })
+      if (recipientKind && recipientId) {
+        await this.requireRecipientInSchool(recipientKind, recipientId, announcement.schoolId)
+        if (!announcement.isPublished) {
+          throw new BusinessRuleViolationError('RECORD_DELIVERY_UNPUBLISHED', `Announcement ${announcementId} must be published before recording delivery`)
+        }
+        await this.requireRecipientMatchesTarget(announcementId, recipientKind, recipientId)
       }
-      await this.requireRecipientMatchesTarget(announcementId, recipientKind, recipientId)
+    }
+    else {
+      await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
     }
     const delivery = new MessageDelivery({
       id,
+      schoolId,
       announcementId,
+      eventKey,
       subjectId,
+      title,
+      body,
       recipientKind,
       recipientId,
       status,
@@ -236,10 +254,13 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         }
         const delivery = new MessageDelivery({
           id: deliveryId,
+          schoolId: current.schoolId,
           announcementId,
           subjectId,
           recipientKind: recipient.recipientKind,
           recipientId: recipient.recipientId,
+          title: current.title,
+          body: current.content,
           createdAt,
           updatedAt: createdAt,
         })
@@ -261,8 +282,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     if (!existing) {
       return undefined
     }
-    const announcement = await this.requireAnnouncement(existing.announcementId)
-    this.checkActorSchool(announcement.schoolId)
+    this.checkActorSchool(existing.schoolId)
     if (this.baseService.actor.kind !== 'system') {
       await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
     }
@@ -272,8 +292,12 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     const at = occurredAt ?? new Date()
     const delivery = new MessageDelivery({
       id: existing.id,
+      schoolId: existing.schoolId,
       announcementId: existing.announcementId,
+      eventKey: existing.eventKey,
       subjectId: existing.subjectId,
+      title: existing.title,
+      body: existing.body,
       recipientKind: existing.recipientKind,
       recipientId: existing.recipientId,
       status,
@@ -302,8 +326,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     if (!existing) {
       denyResourceAccess()
     }
-    const announcement = await this.requireAnnouncement(existing.announcementId)
-    this.checkActorSchool(announcement.schoolId)
+    this.checkActorSchool(existing.schoolId)
     const actor = this.baseService.actor
     if (actor.kind === 'system' || existing.subjectId !== actor.subjectId) {
       denyResourceAccess()
@@ -315,8 +338,12 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     const at = readAt ?? new Date()
     const delivery = new MessageDelivery({
       id: existing.id,
+      schoolId: existing.schoolId,
       announcementId: existing.announcementId,
+      eventKey: existing.eventKey,
       subjectId: existing.subjectId,
+      title: existing.title,
+      body: existing.body,
       recipientKind: existing.recipientKind,
       recipientId: existing.recipientId,
       status: DeliveryStatus.Read,
@@ -395,7 +422,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         notificationPhone,
         subjectId: existing.subjectId,
         hasAccess: existing.hasAccess,
-        premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })

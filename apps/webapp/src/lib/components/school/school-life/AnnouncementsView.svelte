@@ -206,11 +206,6 @@
 									>
 										{priorityLabel(announcement.priority)}
 									</span>
-									{#if announcement.premiumNotification}
-										<span class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-											{$t('announcements.premium')}
-										</span>
-									{/if}
 								</div>
 								<p class="mt-1 truncate font-display text-sm font-semibold">{announcement.title}</p>
 								<p class="line-clamp-1 text-xs text-muted-foreground">{announcement.content}</p>

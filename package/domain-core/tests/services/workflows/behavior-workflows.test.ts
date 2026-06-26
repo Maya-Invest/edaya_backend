@@ -46,7 +46,7 @@ describe('SchoolService behavior workflows', () => {
 
     expect(gateway.enqueued).toHaveLength(1)
     expect(gateway.enqueued[0]).toMatchObject({
-      idempotencyKey: `${INCIDENT_RECORDED_EVENT_KEY}:inc1:stu1`,
+      idempotencyKey: `delivery:${INCIDENT_RECORDED_EVENT_KEY}:inc1:stu1:subject:gua1`,
       schoolId: 'sch1',
       kind: 'event',
       eventKey: INCIDENT_RECORDED_EVENT_KEY,

@@ -2,6 +2,7 @@ import './register-notification-triggers'
 import './register-workflow-notification-handlers'
 
 export * from './build-recipient-profile'
+export * from './deliver-notification'
 export * from './handlers/announcement-published'
 export * from './handlers/assessment-result-recorded'
 export * from './handlers/attendance-recorded'

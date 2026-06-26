@@ -14,6 +14,7 @@ describe('runCronJobs', () => {
     const repositories = {
       schools: {
         list: mock(async () => [{ id: 'school-1' }]),
+        findById: mock(async () => ({ id: 'school-1', name: 'Test School' })),
       },
       assessments: {
         list: mock(async () => [{
@@ -48,7 +49,13 @@ describe('runCronJobs', () => {
       staffMembers: {},
       guardians: {},
       guardianLinks: {},
-      students: {},
+      students: {
+        findById: mock(async (id: string) => ({ id, schoolId: 'school-1', subjectId: `subject-${id}` })),
+      },
+      messageDeliveries: {
+        findById: mock(async () => undefined),
+        save: mock(async () => {}),
+      },
     } as any
 
     const application = new SchoolApplication({
@@ -78,6 +85,6 @@ describe('runCronJobs', () => {
       result: { processed: 1, skipped: 0 },
     })
     expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]?.idempotencyKey).toBe('assessment.due_soon:assessment-1')
+    expect(gateway.enqueued[0]?.idempotencyKey).toBe('delivery:assessment.due_soon:assessment-1:subject-student-1')
   })
 })

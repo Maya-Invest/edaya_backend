@@ -16,7 +16,6 @@ export async function createAnnouncementMutation(input: {
 	title: string;
 	content: string;
 	priority: AnnouncementPriority;
-	premiumNotification: boolean;
 	expiresAt?: string;
 	successMessage?: string;
 }): Promise<string | null> {
@@ -34,7 +33,6 @@ export async function createAnnouncementMutation(input: {
 		content: input.content.trim(),
 		status: 'draft',
 		priority: input.priority,
-		premiumNotification: input.premiumNotification,
 		createdAt: new Date().toISOString(),
 		expiresAt: announcementExpiresAtIso(input.expiresAt),
 		createdBy: authSession.userId ?? undefined,
@@ -47,7 +45,6 @@ export async function createAnnouncementMutation(input: {
 		title: input.title.trim(),
 		content: input.content.trim(),
 		priority: input.priority,
-		premiumNotification: input.premiumNotification,
 		createdBy: authSession.userId ?? undefined,
 		expiresAt: announcementExpiresAtIso(input.expiresAt),
 		createdAt: new Date().toISOString(),
@@ -69,7 +66,6 @@ export async function updateAnnouncementMutation(input: {
 	title: string;
 	content: string;
 	priority: AnnouncementPriority;
-	premiumNotification: boolean;
 	expiresAt?: string;
 	successMessage?: string;
 }): Promise<boolean> {
@@ -94,7 +90,6 @@ export async function updateAnnouncementMutation(input: {
 		title: input.title.trim(),
 		content: input.content.trim(),
 		priority: input.priority,
-		premiumNotification: input.premiumNotification,
 		expiresAt: announcementExpiresAtIso(input.expiresAt),
 	};
 

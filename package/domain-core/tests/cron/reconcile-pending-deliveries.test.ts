@@ -9,8 +9,11 @@ describe('reconcilePendingDeliveries', () => {
   test('applies provider status for pending deliveries', async () => {
     const delivery = new MessageDelivery({
       id: 'delivery:ann-1:sub-1',
+      schoolId: 'school-1',
       announcementId: 'ann-1',
       subjectId: 'sub-1',
+      title: 'Announcement',
+      body: 'Content',
       status: MessageDeliveryStatus.Pending,
     })
 
@@ -28,7 +31,7 @@ describe('reconcilePendingDeliveries', () => {
         findById: mock(async () => ({ id: 'ann-1', schoolId: 'school-1' })),
       },
       messageDeliveries: {
-        list: mock(async (options?: { status?: string }) => (
+        list: mock(async (options?: { status?: string, schoolId?: string }) => (
           options?.status === MessageDeliveryStatus.Pending ? [delivery] : []
         )),
         findById: mock(async (id: string) => (id === delivery.id ? delivery : undefined)),
@@ -89,12 +92,15 @@ describe('reconcilePendingDeliveries', () => {
         list: mock(async () => [{ id: 'ann-1', schoolId: 'school-1' }]),
       },
       messageDeliveries: {
-        list: mock(async (options?: { status?: string }) => (
+        list: mock(async (options?: { status?: string, schoolId?: string }) => (
           options?.status === MessageDeliveryStatus.Pending
             ? [new MessageDelivery({
                 id: 'delivery:ann-1:sub-1',
+                schoolId: 'school-1',
                 announcementId: 'ann-1',
                 subjectId: 'sub-1',
+                title: 'Announcement',
+                body: 'Content',
                 status: MessageDeliveryStatus.Pending,
               })]
             : []

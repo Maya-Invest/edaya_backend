@@ -86,6 +86,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [index('announcement_targets_announcement_id_idx').on(col(table, 'announcementId'))]
     case 'message_deliveries':
       return [
+        index('message_deliveries_school_id_idx').on(col(table, 'schoolId')),
         index('message_deliveries_announcement_id_idx').on(col(table, 'announcementId')),
         index('message_deliveries_subject_id_idx').on(col(table, 'subjectId')),
       ]

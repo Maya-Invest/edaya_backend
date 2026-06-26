@@ -195,7 +195,6 @@ async function main() {
         content: 'Published by scripts/novu-e2e-smoke.ts — safe to delete.',
         createdBy: director.staffId,
         priority: 'normal',
-        premiumNotification: false,
       },
     })
     if (!response.ok) {

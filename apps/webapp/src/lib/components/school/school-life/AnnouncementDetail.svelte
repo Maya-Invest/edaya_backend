@@ -118,11 +118,6 @@
 			<span class="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground/80">
 				{$t(`announcements.priority.${live.priority}`)}
 			</span>
-			{#if live.premiumNotification}
-				<span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-					{$t('announcements.premium')}
-				</span>
-			{/if}
 		</div>
 		<h3 class="mt-3 font-display text-xl font-semibold">{live.title}</h3>
 		<p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">

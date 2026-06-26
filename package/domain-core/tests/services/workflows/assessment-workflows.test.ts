@@ -124,17 +124,12 @@ describe('SchoolService assessment workflows', () => {
       publishedAt: new Date('2026-04-01T00:00:00Z'),
     })
 
-    expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]).toMatchObject({
-      idempotencyKey: `${REPORT_CARD_PUBLISHED_EVENT_KEY}:rc1`,
-      schoolId: 'sch1',
-      kind: 'event',
-      eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
-    })
-    expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1', subjectId: 'subject-stu1' },
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1', subjectId: 'subject-gua1' },
+    expect(gateway.enqueued).toHaveLength(2)
+    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual(expect.arrayContaining([
+      `delivery:${REPORT_CARD_PUBLISHED_EVENT_KEY}:rc1:subject-stu1`,
+      `delivery:${REPORT_CARD_PUBLISHED_EVENT_KEY}:rc1:subject-gua1`,
     ]))
+    expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === REPORT_CARD_PUBLISHED_EVENT_KEY)).toBe(true)
   })
 
   test('recordAssessmentResult enqueues guardian and student notifications', async () => {
@@ -148,17 +143,12 @@ describe('SchoolService assessment workflows', () => {
       score: 92,
     })
 
-    expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]).toMatchObject({
-      idempotencyKey: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:ar-new`,
-      schoolId: 'sch1',
-      kind: 'event',
-      eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-    })
-    expect(gateway.enqueued[0]?.recipients).toEqual(expect.arrayContaining([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'stu1', subjectId: 'subject-stu1' },
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1', subjectId: 'subject-gua1' },
+    expect(gateway.enqueued).toHaveLength(2)
+    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual(expect.arrayContaining([
+      `delivery:${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:ar-new:subject-stu1`,
+      `delivery:${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:ar-new:subject-gua1`,
     ]))
+    expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === ASSESSMENT_RESULT_RECORDED_EVENT_KEY)).toBe(true)
   })
 
   test('publishReportCardResult rejects already published report cards', async () => {

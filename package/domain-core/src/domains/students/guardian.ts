@@ -24,7 +24,6 @@ export const guardianSchema = z.object({
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   contactMethods: z.array(z.union([z.instanceof(GuardianContactMethod), guardianContactMethodSchema])).default([]),
   hasAccess: z.boolean().default(true),
-  premiumNotificationsEnabled: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -84,7 +83,6 @@ export class Guardian {
   get contactMethods() { return this.data.contactMethods }
   get subjectId() { return this.data.subjectId }
   get hasAccess() { return this.data.hasAccess }
-  get premiumNotificationsEnabled() { return this.data.premiumNotificationsEnabled }
   get notificationEmail() { return this.data.notificationEmail }
   get notificationPhone() { return this.data.notificationPhone }
   get createdAt() { return this.data.createdAt }

@@ -32,7 +32,6 @@ export function mapNotificationToNovuTriggerRequest(
       schoolId: input.schoolId,
       announcementId: input.announcementId,
       priority: input.priority,
-      premium: input.premium,
       deliverAfter: input.deliverAfter?.toISOString(),
       expiresAt: input.expiresAt?.toISOString(),
       metadata: input.metadata,

@@ -14,7 +14,6 @@ export interface AnnouncementSeedRecord {
   createdBy: string
   status: AnnouncementStatus
   priority: AnnouncementPriority
-  premiumNotification: boolean
   createdAt: string
   publishedAt?: string
   expiresAt?: string

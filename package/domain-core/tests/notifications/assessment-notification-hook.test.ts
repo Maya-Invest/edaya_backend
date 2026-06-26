@@ -50,6 +50,13 @@ describe('assessment notification postSave hook', () => {
       enrollments: {
         list: mock(async () => [{ studentId: 'student-1', classGroupId: 'cg1' }]),
       },
+      students: {
+        findById: mock(async (id: string) => ({ id, schoolId: 'school-1', subjectId: `subject-${id}` })),
+      },
+      messageDeliveries: {
+        findById: mock(async () => undefined),
+        save: mock(async () => {}),
+      },
     } as unknown as SchoolRepositories
 
     const service = new ManagedEntityService<Assessment>({
@@ -83,9 +90,9 @@ describe('assessment notification postSave hook', () => {
     await service.save(createAssessment({ dueAt }))
 
     expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]?.idempotencyKey).toBe(assessmentDueSoonIdempotencyKey('assessment-1'))
+    expect(gateway.enqueued[0]?.idempotencyKey).toBe('delivery:assessment.due_soon:assessment-1:subject-student-1')
     expect(gateway.enqueued[0]?.recipients).toEqual([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'student-1' },
+      { kind: MessageDeliveryRecipientKind.Student, id: 'student-1', subjectId: 'subject-student-1' },
     ])
   })
 

@@ -79,7 +79,6 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
         subjectId,
         contactMethods: [...guardian.contactMethods],
         hasAccess: guardian.hasAccess,
-        premiumNotificationsEnabled: guardian.premiumNotificationsEnabled,
         createdAt: guardian.createdAt,
       }))
     }),

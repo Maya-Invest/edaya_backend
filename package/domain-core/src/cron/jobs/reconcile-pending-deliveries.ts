@@ -25,17 +25,9 @@ async function listDeliveriesForReconcile(
   status: MessageDeliveryStatus,
 ): Promise<Array<{ id: string, subjectId: string, status: MessageDeliveryStatus }>> {
   const { service, actor } = context
-  const announcements = await service.baseService.repositories.announcements.list({
-    schoolId: actor.schoolId,
-  })
-  if (announcements.length === 0) {
-    return []
-  }
-
-  const announcementIds = announcements.map(announcement => announcement.id)
   const deliveries = await service.baseService.repositories.messageDeliveries.list({
+    schoolId: actor.schoolId,
     status,
-    announcementId: { $in: announcementIds },
     $limit: RECONCILE_DELIVERY_LIMIT,
   })
 

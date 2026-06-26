@@ -91,9 +91,9 @@
 							>
 								<div class="flex items-start justify-between gap-3">
 									<div class="min-w-0">
-										<p class="truncate text-sm">{delivery.announcementTitle}</p>
+										<p class="truncate text-sm">{delivery.title}</p>
 										<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
-											{delivery.announcementContent}
+											{delivery.body}
 										</p>
 									</div>
 									<span class="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -135,9 +135,9 @@
 						<p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 							{$t('account.inbox.message')}
 						</p>
-						<h3 class="mt-2 font-display text-xl font-semibold">{selected.announcementTitle}</h3>
+						<h3 class="mt-2 font-display text-xl font-semibold">{selected.title}</h3>
 						<p class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-							{selected.announcementContent}
+							{selected.body}
 						</p>
 					</div>
 				</div>

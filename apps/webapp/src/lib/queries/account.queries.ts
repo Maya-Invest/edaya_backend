@@ -1,6 +1,5 @@
 import type { GuardianNotificationSettings, StaffNotificationSettings } from '$lib/api/account-data';
 import type { InboxDelivery } from '$lib/api/notifications-inbox-data';
-import { academicContext } from '$lib/academic/context.svelte';
 import {
 	fetchGuardianNotificationSettings,
 	fetchStaffSubjectId,
@@ -81,7 +80,6 @@ export function queryInboxPage() {
 			const deliveries = await fetchInboxDeliveries(
 				getBrowserSchoolClient(),
 				subjectId,
-				authSession.schoolId ?? academicContext.schools[0]?.id ?? '',
 			);
 			return { deliveries, subjectId };
 		},

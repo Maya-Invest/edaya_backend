@@ -1,6 +1,7 @@
 import type { Guardian, Incident, StudentIncidentInvolvement } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { MessageDeliveryRecipientKind } from '../../domains'
+import { deliverNotification } from '../deliver-notification'
 import { uniqueNotificationRecipients } from '../recipient-utils'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import { resolveSchoolName } from '../templates/resolve-school-name'
@@ -41,11 +42,14 @@ export async function handleIncidentRecorded(
     },
   })
 
-  await context.notificationGateway.enqueue({
-    idempotencyKey: `${INCIDENT_RECORDED_EVENT_KEY}:${incident.id}:${involvement.studentId}`,
+  await deliverNotification({
+    notificationGateway: context.notificationGateway,
+    repositories: context.repositories,
+  }, {
     schoolId: incident.schoolId,
     kind: 'event',
     eventKey: INCIDENT_RECORDED_EVENT_KEY,
+    idempotencyKeyPrefix: `${INCIDENT_RECORDED_EVENT_KEY}:${incident.id}:${involvement.studentId}`,
     ...content,
     recipients: uniqueNotificationRecipients(recipients),
     metadata: {

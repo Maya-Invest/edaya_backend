@@ -316,7 +316,6 @@ export async function updateGuardian(app: SchoolService, input: {
     contactMethods: [...existing.contactMethods],
     subjectId: existing.subjectId,
     hasAccess: existing.hasAccess,
-    premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
     createdAt: existing.createdAt,
   })
   await app.baseService.entities.guardians.save(guardian)

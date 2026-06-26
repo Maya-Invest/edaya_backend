@@ -1578,10 +1578,6 @@
             "type": "boolean",
             "default": true
           },
-          "premiumNotificationsEnabled": {
-            "type": "boolean",
-            "default": false
-          },
           "createdAt": {}
         },
         "required": [
@@ -2720,10 +2716,6 @@
             "type": "boolean",
             "default": true
           },
-          "premiumNotificationsEnabled": {
-            "type": "boolean",
-            "default": false
-          },
           "createdAt": {},
           "sendAccountInvitation": {
             "type": "boolean"
@@ -3281,10 +3273,6 @@
           "hasAccess": {
             "type": "boolean",
             "default": true
-          },
-          "premiumNotificationsEnabled": {
-            "type": "boolean",
-            "default": false
           },
           "guardianId": {
             "type": "string",
@@ -6047,10 +6035,6 @@
             ],
             "default": "normal"
           },
-          "premiumNotification": {
-            "type": "boolean",
-            "default": false
-          },
           "createdAt": {},
           "publishedAt": {
             "nullable": true
@@ -6098,10 +6082,6 @@
               "urgent"
             ],
             "default": "normal"
-          },
-          "premiumNotification": {
-            "type": "boolean",
-            "default": false
           },
           "createdAt": {},
           "expiresAt": {
@@ -6214,11 +6194,27 @@
             "type": "string",
             "minLength": 1
           },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
           "announcementId": {
             "type": "string",
             "minLength": 1
           },
+          "eventKey": {
+            "type": "string",
+            "minLength": 1
+          },
           "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
             "type": "string",
             "minLength": 1
           },
@@ -6266,8 +6262,10 @@
         },
         "required": [
           "id",
-          "announcementId",
-          "subjectId"
+          "schoolId",
+          "subjectId",
+          "title",
+          "body"
         ]
       },
       "RecordMessageDeliveryCommand": {
@@ -6277,11 +6275,27 @@
             "type": "string",
             "minLength": 1
           },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
           "announcementId": {
             "type": "string",
             "minLength": 1
           },
+          "eventKey": {
+            "type": "string",
+            "minLength": 1
+          },
           "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
             "type": "string",
             "minLength": 1
           },
@@ -6329,8 +6343,10 @@
         },
         "required": [
           "id",
-          "announcementId",
-          "subjectId"
+          "schoolId",
+          "subjectId",
+          "title",
+          "body"
         ]
       },
       "MessageDeliveryCommandListResponse": {

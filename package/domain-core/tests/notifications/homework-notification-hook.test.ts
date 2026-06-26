@@ -70,6 +70,10 @@ describe('homework notification postSave hook', () => {
           contactMethods: [{ allowsNotifications: true }],
         })),
       },
+      messageDeliveries: {
+        findById: mock(async () => undefined),
+        save: mock(async () => {}),
+      },
     } as unknown as SchoolRepositories
 
     const service = new ManagedEntityService<HomeworkAssignment>({
@@ -101,11 +105,10 @@ describe('homework notification postSave hook', () => {
 
     await service.save(createHomework())
 
-    expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]?.idempotencyKey).toBe(homeworkDueSoonIdempotencyKey('homework-1'))
-    expect(gateway.enqueued[0]?.recipients).toEqual([
-      { kind: MessageDeliveryRecipientKind.Student, id: 'student-1', subjectId: 'auth-student-1' },
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'guardian-1', subjectId: 'auth-guardian-1' },
+    expect(gateway.enqueued).toHaveLength(2)
+    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual([
+      'delivery:homework.due_soon:homework-1:auth-student-1',
+      'delivery:homework.due_soon:homework-1:auth-guardian-1',
     ])
   })
 

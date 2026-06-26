@@ -1,5 +1,6 @@
 import type { Assessment, AssessmentResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
+import { deliverNotification } from '../deliver-notification'
 import { resolveStudentAndAcademicGuardianRecipients } from '../recipient-resolvers'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import { resolveSchoolName } from '../templates/resolve-school-name'
@@ -41,11 +42,14 @@ export async function handleAssessmentResultRecorded(
     },
   })
 
-  await context.notificationGateway.enqueue({
-    idempotencyKey: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:${result.id}`,
+  await deliverNotification({
+    notificationGateway: context.notificationGateway,
+    repositories: context.repositories,
+  }, {
     schoolId: student.schoolId,
     kind: 'event',
     eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
+    idempotencyKeyPrefix: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:${result.id}`,
     ...content,
     recipients,
     metadata: {

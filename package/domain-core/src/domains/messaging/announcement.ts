@@ -26,7 +26,6 @@ export const announcementBaseSchema = z.object({
   createdBy: z.string().trim().min(1, 'createdBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   status: z.nativeEnum(AnnouncementStatus).optional(),
   priority: z.nativeEnum(AnnouncementPriority).default(AnnouncementPriority.Normal),
-  premiumNotification: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
   publishedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   expiresAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
@@ -87,7 +86,6 @@ export class Announcement {
   }
 
   get priority() { return this.data.priority }
-  get premiumNotification() { return this.data.premiumNotification }
   get createdAt() { return this.data.createdAt }
   get publishedAt() { return this.data.publishedAt }
   get expiresAt() { return this.data.expiresAt }

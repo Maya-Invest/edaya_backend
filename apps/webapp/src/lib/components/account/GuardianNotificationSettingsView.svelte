@@ -18,7 +18,6 @@
 	const settings = $derived(data.settings);
 	const loginEmail = $derived(data.loginEmail ?? '');
 
-	let premiumNotificationsEnabled = $state(false);
 	let emailNotificationsEnabled = $state(false);
 	let smsNotificationsEnabled = $state(false);
 	let notificationEmail = $state('');
@@ -36,7 +35,6 @@
 			return;
 		}
 		hydratedId = settings.id;
-		premiumNotificationsEnabled = settings.premiumNotificationsEnabled;
 		notificationEmail = settings.notificationEmail ?? '';
 		notificationPhone = settings.notificationPhone ?? '';
 		emailNotificationsEnabled = settings.contactMethods.some(
@@ -60,7 +58,6 @@
 		saving = true;
 		const ok = await saveGuardianNotificationPreferencesMutation({
 			guardianId: settings.id,
-			premiumNotificationsEnabled,
 			emailNotificationsEnabled,
 			smsNotificationsEnabled,
 			notificationEmail: notificationEmail.trim() || null,
@@ -132,10 +129,6 @@
 						<label class="flex items-center gap-3 text-sm">
 							<Checkbox bind:checked={smsNotificationsEnabled} />
 							<span>{$t('account.notifications.sms')}</span>
-						</label>
-						<label class="flex items-center gap-3 text-sm">
-							<Checkbox bind:checked={premiumNotificationsEnabled} />
-							<span>{$t('account.notifications.premium')}</span>
 						</label>
 					</div>
 				</section>

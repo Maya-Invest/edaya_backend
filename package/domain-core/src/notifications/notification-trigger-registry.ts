@@ -3,6 +3,7 @@ import type { CoreEntityKey } from '../core-entity-map'
 import type { SchoolRepositories } from '../ports'
 import type { NotificationEnqueueInput, NotificationGatewayPort } from '../ports/notification-gateway'
 import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../services/managed-entity-service'
+import { deliverNotificationFromEnqueueInput } from './deliver-notification'
 import type { NotificationTemplateService } from './templates/notification-template-service'
 
 export interface NotificationTriggerContext {
@@ -77,7 +78,10 @@ export function createNotificationPostSaveHook(
       }
       const input = await trigger.resolver(entity, existing, context)
       if (input) {
-        await notificationGateway.enqueue(input)
+        await deliverNotificationFromEnqueueInput({
+          notificationGateway,
+          repositories,
+        }, input)
       }
     }
   }

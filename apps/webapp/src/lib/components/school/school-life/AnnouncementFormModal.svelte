@@ -4,9 +4,8 @@
 		createAnnouncementMutation,
 		updateAnnouncementMutation,
 	} from '$lib/api/mutations/announcement.mutations';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
+import Button from '$lib/components/ui/button/button.svelte';
+import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
@@ -35,7 +34,6 @@
 	let announcementTitle = $state('');
 	let content = $state('');
 	let priority = $state<AnnouncementPriority>('normal');
-	let premiumNotification = $state(false);
 	let expiresAt = $state('');
 
 	const isEdit = $derived(announcement !== undefined);
@@ -57,14 +55,12 @@
 			announcementTitle = announcement.title;
 			content = announcement.content;
 			priority = announcement.priority;
-			premiumNotification = announcement.premiumNotification;
 			expiresAt = announcement.expiresAt?.slice(0, 10) ?? '';
 		}
 		else {
 			announcementTitle = '';
 			content = '';
 			priority = 'normal';
-			premiumNotification = false;
 			expiresAt = '';
 		}
 	}
@@ -89,7 +85,6 @@
 				title: announcementTitle,
 				content,
 				priority,
-				premiumNotification,
 				expiresAt: expiresAtValue,
 				successMessage: get(t)('announcements.updateSuccess', { title: announcementTitle.trim() }),
 			});
@@ -103,7 +98,6 @@
 				title: announcementTitle,
 				content,
 				priority,
-				premiumNotification,
 				expiresAt: expiresAtValue,
 				successMessage: get(t)('announcements.createSuccess', { title: announcementTitle.trim() }),
 			});
@@ -172,12 +166,6 @@
 			</Label>
 			<Input type="date" bind:value={expiresAt} min={minExpiresAt} />
 		</div>
-	</div>
-	<div class="flex items-center gap-2">
-		<Checkbox id="premium-notification" bind:checked={premiumNotification} />
-		<Label for="premium-notification" class="text-sm text-foreground/80">
-			{$t('announcements.premiumNotification')}
-		</Label>
 	</div>
 	<div class="space-y-1.5">
 		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

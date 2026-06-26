@@ -11,7 +11,9 @@ import {
   RecordingNotificationGateway,
   StaffMember,
 } from '../../../src'
+import { SchoolNotificationTemplates } from '../../../src/domains/messaging/school-notification-templates'
 import { hashInvitationToken } from '../../../src/invitations/invitation-token'
+import { buildDefaultNotificationTemplateDocument } from '../../../src/notifications/templates/defaults/manifest'
 import { SchoolService } from '../../../src/services'
 
 function actorWithPermissions(permissions: readonly Permission[]) {
@@ -148,6 +150,92 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(invitationDelivery.deliveries[0]?.invitationId).toBe(savedInvitations[0]?.id)
     expect(invitationDelivery.deliveries[0]?.contactValue).toBe('p.martin@school.edu')
     expect(invitationDelivery.deliveries[0]?.inviteUrl).toContain(encodeURIComponent(result.token))
+  })
+
+  test('sendAccountInvitation delivers email rendered from school template document', async () => {
+    const invitationDelivery = new RecordingInvitationDeliveryPort()
+    const staffMember = new StaffMember({
+      id: 'st9',
+      schoolId: 'sch1',
+      firstName: 'Paul',
+      lastName: 'Martin',
+      email: 'p.martin@school.edu',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    })
+
+    const templates = await buildDefaultNotificationTemplateDocument()
+    templates.account_invitation = {
+      email: {
+        subject: 'Join {{schoolName}} — {{inviteeName}}',
+        body: '<p>Custom invite for {{inviteeName}} at {{schoolName}}</p>',
+      },
+    }
+
+    const savedInvitations: AccountInvitation[] = []
+    const mockRepos = {
+      schools: {
+        findById: mock(async (id: string) => id === 'sch1' ? { id: 'sch1', name: 'Edaya School' } : undefined),
+      },
+      staffMembers: {
+        findById: mock(async (id: string) => id === 'st9' ? staffMember : undefined),
+        findOne: mock(async () => undefined),
+        save: mock(async () => {}),
+      },
+      guardians: {
+        findById: mock(async () => undefined),
+        findOne: mock(async () => undefined),
+        save: mock(async () => {}),
+      },
+      students: {
+        findById: mock(async () => undefined),
+        findOne: mock(async () => undefined),
+        save: mock(async () => {}),
+      },
+      guardianLinks: {
+        list: mock(async () => []),
+      },
+      schoolNotificationTemplates: {
+        findById: mock(async () => new SchoolNotificationTemplates({
+          schoolId: 'sch1',
+          templates,
+          createdAt: new Date('2026-01-01T00:00:00Z'),
+          updatedAt: new Date('2026-01-01T00:00:00Z'),
+        })),
+      },
+      accountInvitations: {
+        findById: mock(async () => undefined),
+        findByTokenHash: mock(async () => undefined),
+        findPendingByTarget: mock(async () => undefined),
+        save: mock(async (entity: AccountInvitation) => {
+          savedInvitations.push(entity)
+        }),
+      },
+    } as unknown as import('../../../src/ports').SchoolRepositories
+
+    const service = new SchoolService({
+      repositories: mockRepos,
+      authorizationPolicy: {
+        checkClassGroupAccess: mock(async () => {}),
+        checkSessionAccess: mock(async () => {}),
+      } as unknown as import('../../../src/authorization').AuthorizationPolicy,
+      actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
+      atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
+      notificationGateway: new RecordingNotificationGateway(),
+      invitationDelivery,
+    })
+
+    await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    expect(invitationDelivery.deliveries).toHaveLength(1)
+    expect(invitationDelivery.deliveries[0]).toMatchObject({
+      emailSubject: 'Join Edaya School — Paul Martin',
+      emailBody: '<p>Custom invite for Paul Martin at Edaya School</p>',
+    })
   })
 
   test('acceptAccountInvitation links staff and revokes transient delivery', async () => {

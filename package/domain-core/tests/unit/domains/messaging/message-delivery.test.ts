@@ -4,8 +4,11 @@ import { buildDeliverySummary, MessageDelivery, MessageDeliveryRecipientKind, Me
 describe('MessageDelivery entity', () => {
   const baseArgs = {
     id: 'md1',
+    schoolId: 'school-1',
     announcementId: 'ann1',
     subjectId: 'subject-1',
+    title: 'Test title',
+    body: 'Test body',
     recipientKind: MessageDeliveryRecipientKind.Guardian,
     recipientId: 'rec1',
   }
@@ -61,8 +64,11 @@ describe('MessageDelivery entity', () => {
 describe('buildDeliverySummary', () => {
   const baseDelivery = {
     id: 'md1',
+    schoolId: 'school-1',
     announcementId: 'ann1',
     subjectId: 'subject-1',
+    title: 'Test title',
+    body: 'Test body',
     recipientKind: MessageDeliveryRecipientKind.Guardian,
     recipientId: 'rec1',
   }

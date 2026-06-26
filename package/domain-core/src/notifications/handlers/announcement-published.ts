@@ -47,7 +47,6 @@ export async function handleAnnouncementPublished(
         subjectId: delivery.subjectId,
       }],
       priority: announcement.priority,
-      premium: announcement.premiumNotification,
       metadata: {
         deliveryId: delivery.id,
       },

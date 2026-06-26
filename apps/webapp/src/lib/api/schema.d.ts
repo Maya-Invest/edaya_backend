@@ -51499,8 +51499,6 @@ export interface components {
             }[];
             /** @default true */
             hasAccess: boolean;
-            /** @default false */
-            premiumNotificationsEnabled: boolean;
             createdAt?: unknown;
         };
         Student: {
@@ -51797,8 +51795,6 @@ export interface components {
             }[];
             /** @default true */
             hasAccess: boolean;
-            /** @default false */
-            premiumNotificationsEnabled: boolean;
             createdAt?: unknown;
             sendAccountInvitation?: boolean;
         };
@@ -51953,8 +51949,6 @@ export interface components {
             }[];
             /** @default true */
             hasAccess: boolean;
-            /** @default false */
-            premiumNotificationsEnabled: boolean;
             guardianId: string;
         };
         UpdateGuardianStudentLinkCommand: {
@@ -52675,8 +52669,6 @@ export interface components {
              * @enum {string}
              */
             priority: "normal" | "important" | "urgent";
-            /** @default false */
-            premiumNotification: boolean;
             createdAt?: unknown;
             publishedAt?: unknown;
             expiresAt?: unknown;
@@ -52692,8 +52684,6 @@ export interface components {
              * @enum {string}
              */
             priority: "normal" | "important" | "urgent";
-            /** @default false */
-            premiumNotification: boolean;
             createdAt?: unknown;
             expiresAt?: unknown;
         };
@@ -52719,8 +52709,12 @@ export interface components {
         };
         MessageDelivery: {
             id: string;
-            announcementId: string;
+            schoolId: string;
+            announcementId?: string;
+            eventKey?: string;
             subjectId: string;
+            title: string;
+            body: string;
             /** @enum {string} */
             recipientKind?: "staff" | "guardian" | "student";
             recipientId?: string;
@@ -52738,8 +52732,12 @@ export interface components {
         };
         RecordMessageDeliveryCommand: {
             id: string;
-            announcementId: string;
+            schoolId: string;
+            announcementId?: string;
+            eventKey?: string;
             subjectId: string;
+            title: string;
+            body: string;
             /** @enum {string} */
             recipientKind?: "staff" | "guardian" | "student";
             recipientId?: string;

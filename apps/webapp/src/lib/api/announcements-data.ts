@@ -68,7 +68,6 @@ export function mapAnnouncements(sources: AnnouncementSources): Announcement[] {
 			content: announcement.content,
 			status: resolveStatus(announcement),
 			priority: announcement.priority as AnnouncementPriority,
-			premiumNotification: announcement.premiumNotification,
 			createdAt: formatDate(announcement.createdAt) ?? new Date().toISOString(),
 			publishedAt: formatDate(announcement.publishedAt),
 			expiresAt: formatDate(announcement.expiresAt),

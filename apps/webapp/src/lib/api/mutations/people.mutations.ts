@@ -84,7 +84,6 @@ export async function registerGuardianMutation(input: {
 		phone: phone || null,
 		contactMethods: buildContactMethods(email, phone),
 		hasAccess: true,
-		premiumNotificationsEnabled: false,
 		sendAccountInvitation: input.sendAccountInvitation ?? true,
 		createdAt: new Date().toISOString(),
 	}), {
@@ -123,7 +122,6 @@ export async function updateGuardianContactMutation(input: {
 			phone: phone || null,
 			contactMethods: buildContactMethods(email, phone),
 			hasAccess: existing.hasAccess,
-			premiumNotificationsEnabled: existing.premiumNotificationsEnabled,
 		});
 	}, {
 		successMessage: input.successMessage,

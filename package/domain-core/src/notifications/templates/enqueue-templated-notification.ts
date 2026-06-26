@@ -1,6 +1,7 @@
 import type { NotificationEnqueueInput } from '../../ports/notification-gateway'
 import type { BaseSchoolService } from '../../services/base-school-service'
 import type { NotificationTemplateKey } from './keys'
+import { deliverNotificationFromEnqueueInput } from '../deliver-notification'
 import { renderNotificationEnqueueContent } from './render-enqueue-content'
 
 export type EnqueueTemplatedNotificationInput
@@ -11,7 +12,7 @@ export type EnqueueTemplatedNotificationInput
     }
 
 export async function enqueueTemplatedNotification(
-  baseService: Pick<BaseSchoolService, 'notificationGateway' | 'templateService'>,
+  baseService: Pick<BaseSchoolService, 'notificationGateway' | 'templateService' | 'repositories'>,
   input: EnqueueTemplatedNotificationInput,
 ): Promise<void> {
   const { templateKey, variables, ...enqueueInput } = input
@@ -21,7 +22,10 @@ export async function enqueueTemplatedNotification(
     variables,
   })
 
-  await baseService.notificationGateway.enqueue({
+  await deliverNotificationFromEnqueueInput({
+    notificationGateway: baseService.notificationGateway,
+    repositories: baseService.repositories,
+  }, {
     ...enqueueInput,
     ...content,
   })

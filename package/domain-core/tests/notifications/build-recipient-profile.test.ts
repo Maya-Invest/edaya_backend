@@ -65,7 +65,6 @@ describe('build recipient profiles', () => {
           allowsNotifications: true,
         }),
       ],
-      premiumNotificationsEnabled: true,
     })
     const links = [
       new GuardianStudentLink({
@@ -91,7 +90,6 @@ describe('build recipient profiles', () => {
     expect(profile?.preferences).toMatchObject({
       receivesAcademicReports: true,
       receivesAttendanceAlerts: true,
-      premiumNotificationsEnabled: true,
       channels: { email: true, sms: false, in_app: true },
     })
   })

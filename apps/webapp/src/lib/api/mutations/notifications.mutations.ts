@@ -7,7 +7,6 @@ type GuardianContactMethod = components['schemas']['Guardian']['contactMethods']
 
 export interface GuardianNotificationPreferencesInput {
 	guardianId: string;
-	premiumNotificationsEnabled: boolean;
 	emailNotificationsEnabled: boolean;
 	smsNotificationsEnabled: boolean;
 	notificationEmail?: string | null;
@@ -60,7 +59,6 @@ export async function saveGuardianNotificationPreferencesMutation(
 		});
 		await client.commands.updateGuardianContactMethods({
 			guardianId: input.guardianId,
-			premiumNotificationsEnabled: input.premiumNotificationsEnabled,
 			contactMethods,
 			hasAccess: current?.hasAccess ?? true,
 		});

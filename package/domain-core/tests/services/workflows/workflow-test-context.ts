@@ -285,6 +285,10 @@ export function createReportCardContext({
         contactMethods: [],
       })),
     },
+    messageDeliveries: {
+      findById: mock(async () => undefined),
+      save: mock(async () => {}),
+    },
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
@@ -730,7 +734,10 @@ export function createSchedulingContext({
       save: mock(async session => savedSessions.set(session.id, session)),
     },
     students: {
-      findById: mock(async () => ({ id: 'stu1', schoolId: 'sch1' })),
+      findById: mock(async () => ({ id: 'stu1', schoolId: 'sch1', subjectId: 'subject:stu1' })),
+    },
+    schools: {
+      findById: mock(async () => ({ id: 'sch1', name: 'School' })),
     },
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
@@ -744,10 +751,15 @@ export function createSchedulingContext({
       findById: mock(async id => ({
         id,
         schoolId: 'sch1',
+        subjectId: `subject:${id}`,
         firstName: 'Grace',
         lastName: 'Hopper',
         contactMethods: [],
       })),
+    },
+    messageDeliveries: {
+      findById: mock(async () => undefined),
+      save: mock(async () => {}),
     },
   } as unknown as SchoolRepositories
 
@@ -960,7 +972,7 @@ export function createBehaviorContext({
       findById: mock(async id => ({ id, classGroupId: 'cg1' })),
     },
     students: {
-      findById: mock(async id => ({ id, schoolId: 'sch1' })),
+      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
     },
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
@@ -974,8 +986,13 @@ export function createBehaviorContext({
       findById: mock(async id => ({
         id,
         schoolId: 'sch1',
+        subjectId: `subject:${id}`,
         contactMethods: [],
       })),
+    },
+    messageDeliveries: {
+      findById: mock(async () => undefined),
+      save: mock(async () => {}),
     },
     studentDisciplinaryActions: {
       findById: mock(async id => disciplinaryActions.get(id)),

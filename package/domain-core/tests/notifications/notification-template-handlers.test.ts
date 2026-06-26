@@ -50,8 +50,13 @@ describe('templated notification handlers', () => {
           findById: async () => ({
             id: 'gua1',
             schoolId: 'sch1',
+            subjectId: 'subject-gua1',
             contactMethods: [],
           }),
+        },
+        messageDeliveries: {
+          findById: async () => undefined,
+          save: async () => {},
         },
       } as any,
     }, {

@@ -23,6 +23,12 @@ import {
   createCommunicationsContext,
 } from './workflow-test-context'
 
+const deliveryContent = {
+  schoolId: 'sch1',
+  title: 'Announcement',
+  body: 'Content',
+}
+
 describe('SchoolService communications workflows', () => {
   test('publishAnnouncement publishes only announcements with targets through managed service', async () => {
     const { mockRepos, service } = createCommunicationsContext({
@@ -97,6 +103,7 @@ describe('SchoolService communications workflows', () => {
 
     const result = await service.communicationsWorkflow.recordDelivery({
       id: 'del1',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -117,6 +124,7 @@ describe('SchoolService communications workflows', () => {
 
     await expect(service.communicationsWorkflow.recordDelivery({
       id: 'del1',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -131,6 +139,7 @@ describe('SchoolService communications workflows', () => {
 
     await expect(unpublishedContext.service.communicationsWorkflow.recordDelivery({
       id: 'del-unpublished',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -142,6 +151,7 @@ describe('SchoolService communications workflows', () => {
 
     await expect(crossSchoolContext.service.communicationsWorkflow.recordDelivery({
       id: 'del-cross-school',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,
@@ -156,6 +166,7 @@ describe('SchoolService communications workflows', () => {
 
     const result = await service.communicationsWorkflow.recordDelivery({
       id: 'del-guardian-class',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:gua1',
       recipientKind: MessageDeliveryRecipientKind.Guardian,
@@ -169,6 +180,7 @@ describe('SchoolService communications workflows', () => {
   test('materializeDeliveries expands targets, reuses existing deliveries, and saves missing deliveries', async () => {
     const existing = new MessageDelivery({
       id: 'existing-delivery',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:gua1',
       recipientKind: MessageDeliveryRecipientKind.Guardian,
@@ -258,6 +270,7 @@ describe('SchoolService communications workflows', () => {
     const { service } = createCommunicationsContext({
       existingDelivery: new MessageDelivery({
         id: 'delivery:ann1:subject:stu1',
+        ...deliveryContent,
         announcementId: 'ann1',
         subjectId: 'subject:stu1',
         recipientKind: MessageDeliveryRecipientKind.Student,
@@ -279,6 +292,7 @@ describe('SchoolService communications workflows', () => {
   test('applyDeliveryEvent allows system actor without communication create permission', async () => {
     const existingDelivery = new MessageDelivery({
       id: 'delivery:ann1:subject:stu1',
+      ...deliveryContent,
       announcementId: 'ann1',
       subjectId: 'subject:stu1',
       recipientKind: MessageDeliveryRecipientKind.Student,

@@ -1,6 +1,7 @@
 import type { Assessment } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
+import { cancelNotificationDeliveries } from '../deliver-notification'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import { resolveSchoolName } from '../templates/resolve-school-name'
 
@@ -41,14 +42,9 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
   predicate: assessmentDueSoonPredicate,
   resolver: async (entity, existing, context) => {
     const idempotencyKey = assessmentDueSoonIdempotencyKey(entity.id)
-
-    if (entity.metAt || !entity.dueAt) {
-      await context.notificationGateway.cancel(idempotencyKey)
-      return null
-    }
-
-    if (existing?.dueAt?.getTime() === entity.dueAt.getTime()) {
-      return null
+    const deps = {
+      notificationGateway: context.notificationGateway,
+      repositories: context.repositories,
     }
 
     const classGroup = await context.repositories.classGroups.findById(entity.classGroupId)
@@ -60,11 +56,19 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
       classGroupId: entity.classGroupId,
       status: StudentClassEnrollmentStatus.Active,
     })
-
     const recipients = enrollments.map(enrollment => ({
       kind: MessageDeliveryRecipientKind.Student,
       id: enrollment.studentId,
     }))
+
+    if (entity.metAt || !entity.dueAt) {
+      await cancelNotificationDeliveries(deps, idempotencyKey, recipients)
+      return null
+    }
+
+    if (existing?.dueAt?.getTime() === entity.dueAt.getTime()) {
+      return null
+    }
 
     if (recipients.length === 0) {
       return null

@@ -1,6 +1,7 @@
 import type { AttendanceRecord, Guardian } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { AttendanceStatus, MessageDeliveryRecipientKind } from '../../domains'
+import { deliverNotification } from '../deliver-notification'
 import { uniqueNotificationRecipients } from '../recipient-utils'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import { resolveSchoolName } from '../templates/resolve-school-name'
@@ -26,6 +27,10 @@ export async function handleAttendanceRecorded(
   }
 
   const schoolName = await resolveSchoolName(context.repositories, payload.schoolId)
+  const deps = {
+    notificationGateway: context.notificationGateway,
+    repositories: context.repositories,
+  }
 
   for (const record of payload.records) {
     if (!NOTIFY_STATUSES.has(record.status)) {
@@ -57,11 +62,12 @@ export async function handleAttendanceRecorded(
       },
     })
 
-    await context.notificationGateway.enqueue({
-      idempotencyKey: `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.sessionId}:${record.status}`,
+    const idempotencyKeyPrefix = `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.sessionId}:${record.status}`
+    await deliverNotification(deps, {
       schoolId: payload.schoolId,
       kind: 'event',
       eventKey: ATTENDANCE_RECORDED_EVENT_KEY,
+      idempotencyKeyPrefix,
       ...content,
       recipients: uniqueNotificationRecipients(recipients),
       metadata: {
