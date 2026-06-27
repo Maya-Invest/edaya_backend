@@ -6,6 +6,12 @@ import { directPermissionEntityConfig } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 
+export enum AttachmentStatus {
+  PendingUpload = 'pending_upload',
+  Ready = 'ready',
+  Failed = 'failed',
+}
+
 export enum AttachmentOwnerKind {
   StudentHealthProfile = 'student_health_profile',
   Incident = 'incident',
@@ -26,14 +32,25 @@ export const attachmentBaseSchema = z.object({
   ownerKind: z.nativeEnum(AttachmentOwnerKind),
   ownerId: z.string().trim().min(1, 'ownerId must not be blank'),
   fileName: z.string().trim().min(1, 'fileName must not be blank'),
-  fileUrl: z.string().trim().min(1, 'fileUrl must not be blank'),
+  storageKey: z.string().trim().min(1, 'storageKey must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  fileUrl: z.string().trim().min(1, 'fileUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  status: z.nativeEnum(AttachmentStatus).default(AttachmentStatus.Ready),
+  checksum: z.string().trim().min(1, 'checksum must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   mimeType: z.string().trim().min(1, 'mimeType must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   sizeBytes: z.number().int().positive('sizeBytes must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
   uploadedById: z.string().trim().min(1, 'uploadedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
-export const attachmentSchema = attachmentBaseSchema
+export const attachmentSchema = attachmentBaseSchema.superRefine((value, ctx) => {
+  if (!value.storageKey?.trim() && !value.fileUrl?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'storageKey or fileUrl is required',
+      path: ['storageKey'],
+    })
+  }
+})
 
 export type AttachmentData = z.infer<typeof attachmentSchema>
 export type AttachmentInput = z.input<typeof attachmentSchema>
@@ -58,7 +75,10 @@ export class Attachment {
   get ownerKind() { return this.data.ownerKind }
   get ownerId() { return this.data.ownerId }
   get fileName() { return this.data.fileName }
+  get storageKey() { return this.data.storageKey }
   get fileUrl() { return this.data.fileUrl }
+  get status() { return this.data.status }
+  get checksum() { return this.data.checksum }
   get mimeType() { return this.data.mimeType }
   get sizeBytes() { return this.data.sizeBytes }
   get uploadedById() { return this.data.uploadedById }

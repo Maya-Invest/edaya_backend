@@ -15,6 +15,7 @@ LOG_LEVEL = "info"
 RUNTIME = "worker"
 BETTER_AUTH_URL = "http://localhost:9999"
 TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
+R2_BUCKET_NAME = "edaya-files-dev"
 
 # Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
 # Staging (`wrangler deploy --env staging`):
@@ -40,6 +41,10 @@ database_name = "edaya"
 database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
 migrations_dir = "../../package/integration-betterauth-d1-migrations/drizzle"
 
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "edaya-files-dev"
+
 [env.production]
 name = "edaya-api"
 
@@ -51,10 +56,15 @@ BETTER_AUTH_URL = "https://api.edaya.softilab.dev"
 TRUSTED_ORIGINS = "https://app.edaya.softilab.dev"
 COOKIE_DOMAIN = "softilab.dev"
 ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
+R2_BUCKET_NAME = "edaya-files-production"
 
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "62c00eeda7d047fc9951daf7db430070"
+
+[[env.production.r2_buckets]]
+binding = "FILES"
+bucket_name = "edaya-files-production"
 
 [env.staging]
 name = "edaya-api-staging"
@@ -72,6 +82,7 @@ BETTER_AUTH_URL = "https://api-staging.edaya.softilab.dev"
 TRUSTED_ORIGINS = "https://app-staging.edaya.softilab.dev"
 COOKIE_DOMAIN = "softilab.dev"
 ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
+R2_BUCKET_NAME = "edaya-files-staging"
 
 [[env.production.d1_databases]]
 binding = "AUTH_DB"
@@ -89,6 +100,10 @@ binding = "AUTH_DB"
 database_name = "edaya-auth-staging"
 database_id = "2e55cf53-1b89-453f-ac17-3aab83fd8488"
 migrations_dir = "../../package/integration-betterauth-d1-migrations/drizzle"
+
+[[env.staging.r2_buckets]]
+binding = "FILES"
+bucket_name = "edaya-files-staging"
 
 [[env.staging.routes]]
 pattern = "api-staging.edaya.softilab.dev"

@@ -18,6 +18,7 @@ import {
   AcademicPeriod as AcademicPeriodEntity,
   AcademicYear as AcademicYearEntity,
   Attachment,
+  AttachmentStatus,
   ClassGroup,
   MessageDeliveryRecipientKind,
   ResourceAssignment,
@@ -36,6 +37,7 @@ import {
 } from '../../notifications'
 import { seedSchoolNotificationTemplates } from '../../notifications/templates/seed-school-notification-templates'
 import { permissionAction } from '../../shared'
+import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireSchool } from '../../shared/require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -343,11 +345,41 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    return this.saveConstructed(this.baseService.entities.attachments, new Attachment(input))
+    await permissionAction(Permission.ATTACHMENT_CONFIGURE)(this.baseService.actor)
+    const attachment = new Attachment({
+      ...input,
+      status: input.storageKey ? AttachmentStatus.Ready : input.status,
+    })
+    if (attachment.storageKey) {
+      const stored = await this.baseService.fileStorage.headObject(attachment.storageKey)
+      if (!stored) {
+        throw new BusinessRuleViolationError(
+          'ATTACHMENT_OBJECT_NOT_FOUND',
+          'Uploaded object was not found in storage',
+        )
+      }
+      if (attachment.sizeBytes !== undefined && stored.sizeBytes !== attachment.sizeBytes) {
+        throw new BusinessRuleViolationError(
+          'ATTACHMENT_SIZE_MISMATCH',
+          'Uploaded object size does not match declared sizeBytes',
+        )
+      }
+      if (attachment.mimeType && stored.contentType && stored.contentType !== attachment.mimeType) {
+        throw new BusinessRuleViolationError(
+          'ATTACHMENT_MIME_TYPE_MISMATCH',
+          'Uploaded object content type does not match declared mimeType',
+        )
+      }
+    }
+    return this.saveConstructed(this.baseService.entities.attachments, attachment)
   }
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
     const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
+    await permissionAction(Permission.ATTACHMENT_CONFIGURE)(this.baseService.actor)
+    if (existing.storageKey) {
+      await this.baseService.fileStorage.deleteObject(existing.storageKey)
+    }
     await this.baseService.entities.attachments.delete(existing.id)
   }
 

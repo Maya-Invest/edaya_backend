@@ -28,6 +28,12 @@ import {
   invitationPreviewHandler,
   invitationPreviewRoute,
 } from "@/routes/invitation.routes";
+import {
+  createFileUploadIntentHandler,
+  createFileUploadIntentRoute,
+  getFileDownloadUrlHandler,
+  getFileDownloadUrlRoute,
+} from "@/routes/file-storage.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -67,7 +73,9 @@ router
   .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler)
   .openapi(notificationDeliveryWebhookRoute, notificationDeliveryWebhookHandler)
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
-  .openapi(acceptInvitationRoute, acceptInvitationHandler);
+  .openapi(acceptInvitationRoute, acceptInvitationHandler)
+  .openapi(createFileUploadIntentRoute, createFileUploadIntentHandler)
+  .openapi(getFileDownloadUrlRoute, getFileDownloadUrlHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

@@ -10,6 +10,8 @@ export interface PortalPermissionPolicy {
 /** Read-only portal permissions for guardians. */
 export const GUARDIAN_PORTAL_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permission.QUERY_GUARDIAN_SELF_READ,
+  Permission.QUERY_WORKSPACE_READ,
+  Permission.QUERY_CLASS_DIRECTORY_READ,
   Permission.ATTENDANCE_READ,
   Permission.PAYMENT_READ,
   Permission.QUERY_STUDENT_DETAIL_READ,
@@ -25,6 +27,8 @@ export const GUARDIAN_PORTAL_PERMISSIONS: ReadonlySet<Permission> = new Set([
 
 /** Read-only portal permissions for students. Kept explicit so student policy can diverge safely. */
 export const STUDENT_PORTAL_PERMISSIONS: ReadonlySet<Permission> = new Set([
+  Permission.QUERY_WORKSPACE_READ,
+  Permission.QUERY_CLASS_DIRECTORY_READ,
   Permission.ATTENDANCE_READ,
   Permission.PAYMENT_READ,
   Permission.QUERY_STUDENT_DETAIL_READ,

@@ -7,6 +7,18 @@ import { t } from '$lib/i18n';
 import { toast } from '$lib/toast.svelte';
 import { get } from 'svelte/store';
 
+function evaluationStatsFromResults(assessmentId: string): Pick<Evaluation, 'graded' | 'averageMark'> {
+	const scored = detailDataContext.assessmentResults.filter(
+		result => result.assessmentId === assessmentId && typeof result.score === 'number',
+	);
+	return {
+		graded: scored.length,
+		averageMark: scored.length > 0
+			? scored.reduce((sum, result) => sum + (result.score ?? 0), 0) / scored.length
+			: 0,
+	};
+}
+
 export async function createAssessmentMutation(input: {
 	classGroupId: string;
 	classSubjectId: string;
@@ -84,4 +96,44 @@ export async function recordAssessmentResultMutation(input: {
 		rollback: input.rollback,
 	});
 	return result !== null;
+}
+
+export async function recordEvaluationAssessmentResultMutation(input: {
+	studentId: string;
+	assessmentId: string;
+	score: number;
+	successMessage?: string;
+}): Promise<boolean> {
+	const resultId = `ar-${input.assessmentId}-${input.studentId}`;
+	const previousResult = detailDataContext.assessmentResults.find(result => result.id === resultId);
+	const previousEvaluation = detailDataContext.evaluations.find(
+		evaluation => evaluation.id === input.assessmentId,
+	);
+	const previousStats = previousEvaluation
+		? { graded: previousEvaluation.graded, averageMark: previousEvaluation.averageMark }
+		: null;
+
+	return recordAssessmentResultMutation({
+		...input,
+		apply: () => {
+			detailDataContext.appendAssessmentResult({
+				id: resultId,
+				studentId: input.studentId,
+				assessmentId: input.assessmentId,
+				score: input.score,
+			});
+			detailDataContext.patchEvaluation(input.assessmentId, evaluationStatsFromResults(input.assessmentId));
+		},
+		rollback: () => {
+			if (previousResult) {
+				detailDataContext.appendAssessmentResult(previousResult);
+			}
+			else {
+				detailDataContext.removeAssessmentResult(resultId);
+			}
+			if (previousStats) {
+				detailDataContext.patchEvaluation(input.assessmentId, previousStats);
+			}
+		},
+	});
 }

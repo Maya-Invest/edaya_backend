@@ -26,6 +26,7 @@ import {
 	seedActivitiesCollection,
 	seedAnnouncementsCollection,
 	seedAssessmentResultsCollection,
+	seedAssessmentResultsForAssessments,
 	seedBillingCollection,
 	seedDeadlinesCollection,
 	seedEvaluationsCollection,
@@ -131,6 +132,15 @@ export class DetailDataContext {
 		this.evaluations = seedEvaluationsCollection(this.evaluations, evaluations, scope);
 	}
 
+	/** Replace results for the given assessments; merge the rest of the store. */
+	seedAssessmentResults(results: AssessmentResultRow[], scope: { assessmentIds: string[] }) {
+		this.assessmentResults = seedAssessmentResultsForAssessments(
+			this.assessmentResults,
+			results,
+			scope,
+		);
+	}
+
 	/** Replace the class slice. */
 	seedDeadlines(deadlines: Deadline[], scope: { classId: string }) {
 		this.deadlines = seedDeadlinesCollection(this.deadlines, deadlines, scope);
@@ -217,6 +227,10 @@ export class DetailDataContext {
 
 	appendEvaluation(evaluation: Evaluation) {
 		this.evaluations = mergeById(this.evaluations, [evaluation]);
+	}
+
+	patchEvaluation(id: string, patch: Partial<Evaluation>) {
+		this.evaluations = this.replaceById(this.evaluations, id, patch);
 	}
 
 	removeEvaluation(id: string) {

@@ -39,12 +39,29 @@ describe('Attachment entity owner relationship and URL integrity', () => {
     expect(attachment.createdAt.getTime()).toBe(createdDate.getTime())
   })
 
+  it('throws error when neither storageKey nor fileUrl is provided', () => {
+    expect(() => new Attachment({
+      ...baseArgs,
+      fileUrl: undefined,
+      storageKey: undefined,
+    })).toThrow()
+  })
+
+  it('accepts storageKey without fileUrl', () => {
+    const attachment = new Attachment({
+      ...baseArgs,
+      fileUrl: undefined,
+      storageKey: 'school-1/uploads/student/student-1/att-1/report.pdf',
+    })
+    expect(attachment.storageKey).toContain('report.pdf')
+  })
+
   it('throws error when non-blank fields are empty or invalid', () => {
     expect(() => new Attachment({ ...baseArgs, id: '' })).toThrow()
     expect(() => new Attachment({ ...baseArgs, schoolId: ' ' })).toThrow()
     expect(() => new Attachment({ ...baseArgs, ownerId: '\t' })).toThrow()
     expect(() => new Attachment({ ...baseArgs, fileName: ' \n' })).toThrow()
-    expect(() => new Attachment({ ...baseArgs, fileUrl: '  ' })).toThrow()
+    expect(() => new Attachment({ ...baseArgs, fileUrl: '  ', storageKey: undefined })).toThrow()
   })
 
   it('throws error when optional fields are empty or negative', () => {

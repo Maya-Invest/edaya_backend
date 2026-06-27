@@ -3,7 +3,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
-import { directPermissionEntityConfig, readByIds } from '../../shared'
+import { directPermissionEntityConfig, readByIds, anyPermissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 
@@ -97,6 +97,10 @@ export const studentConfig: EntityConfigFactory<Student> = (input) => {
     Permission.STUDENT_UPDATE,
     readByIds((actor, ids) => input.policy.checkStudentAccess(actor, ids)),
   )
+  config.read.checkModule = anyPermissionAction([
+    Permission.QUERY_STUDENT_DIRECTORY_READ,
+    Permission.QUERY_STUDENT_DETAIL_READ,
+  ])
   return {
     ...config,
     gates: {

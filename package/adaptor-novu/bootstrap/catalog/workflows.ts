@@ -12,7 +12,7 @@ import {
 } from "@edaya/core";
 import type { BootstrapEmailTemplates } from "../lib/load-templates";
 import type { BootstrapWorkflowDefinition } from "../lib/types";
-import { edayaEmailStep, edayaInAppStep, edayaInvitationEmailStep } from "../lib/templates";
+import { edayaEmailStep, edayaInAppStep, edayaInvitationEmailStep, edayaPushStep } from "../lib/templates";
 
 const EDAYA_TAG = "edaya";
 
@@ -27,7 +27,7 @@ function standardNotificationWorkflow(
     name,
     description,
     tags: [EDAYA_TAG, "notification"],
-    steps: [edayaInAppStep(), edayaEmailStep(templates)],
+    steps: [edayaInAppStep(), edayaEmailStep(templates), edayaPushStep()],
   };
 }
 

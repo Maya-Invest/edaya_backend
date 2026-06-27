@@ -1,5 +1,6 @@
 import { academicContext } from '$lib/academic/context.svelte';
-import { loadClassEvaluations } from '$lib/api/assessments-data';
+import { loadClassEvaluationsPageData } from '$lib/api/assessments-data';
+import { loadClassPeopleData } from '$lib/api/people-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
@@ -9,12 +10,19 @@ export function queryClassEvaluationsPage(classId: string) {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({ classId }),
 		load: async () => {
-			const [evaluations, subjects] = await Promise.all([
-				loadClassEvaluations(queryClient(), classId, academicContext.periodId),
+			const periodId = academicContext.periodId;
+			const client = queryClient();
+			const [{ evaluations, assessmentResults }, subjects, { students }] = await Promise.all([
+				loadClassEvaluationsPageData(client, classId, periodId),
 				getClassSubjects(classId),
+				loadClassPeopleData(client, classId, periodId),
 			]);
 			detailDataContext.seedEvaluations(evaluations, { classId });
+			detailDataContext.seedAssessmentResults(assessmentResults, {
+				assessmentIds: evaluations.map(evaluation => evaluation.id),
+			});
 			detailDataContext.seedSubjects(subjects, { classId });
+			detailDataContext.seedStudents(students, { classId });
 			return { classId };
 		},
 		hasItems: () => detailDataContext.evaluationsForClass(classId).length > 0,

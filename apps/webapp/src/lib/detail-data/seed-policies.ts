@@ -159,6 +159,16 @@ export function seedAssessmentResultsCollection(
 	return mergeById(existing, results);
 }
 
+export function seedAssessmentResultsForAssessments(
+	existing: readonly AssessmentResultRow[],
+	results: readonly AssessmentResultRow[],
+	scope: { assessmentIds: readonly string[] },
+): AssessmentResultRow[] {
+	const assessmentIds = new Set(scope.assessmentIds);
+	const kept = existing.filter(result => !assessmentIds.has(result.assessmentId));
+	return mergeById(kept, results);
+}
+
 export function seedRolePermissionsCollection(snapshot: {
 	roleCrudMatrix: Partial<Record<StaffRole, Record<string, Record<Crud, boolean>>>>;
 	roleEnabledPermissions: Partial<Record<StaffRole, Record<string, boolean>>>;

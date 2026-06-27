@@ -168,6 +168,8 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     staffMemberResponseSchema,
     guardianResponseSchema,
   ]).openapi("UpdateNotificationContactResponse"),
+  registerPushDevice: commandMessageResponseSchema,
+  unregisterPushDevice: commandMessageResponseSchema,
   updateSchoolNotificationTemplates: schoolNotificationTemplatesResponseSchema,
   resetSchoolNotificationTemplates: schoolNotificationTemplatesResponseSchema,
 };

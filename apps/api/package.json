@@ -23,6 +23,7 @@
   "dependencies": {
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
+    "@edaya/adaptor-r2": "workspace:*",
     "@edaya/betterauth-d1-migrations": "workspace:*",
     "@edaya/core": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",

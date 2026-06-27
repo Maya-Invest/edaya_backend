@@ -670,6 +670,16 @@ export const clientBindings = {
       "requestSchemaName": "UpdateNotificationContactCommand",
       "responseSchemaName": "UpdateNotificationContactResponse"
     },
+    "registerPushDevice": {
+      "publicName": "register-push-device",
+      "requestSchemaName": "RegisterPushDeviceCommand",
+      "responseSchemaName": "CommandMessageResponse"
+    },
+    "unregisterPushDevice": {
+      "publicName": "unregister-push-device",
+      "requestSchemaName": "UnregisterPushDeviceCommand",
+      "responseSchemaName": "CommandMessageResponse"
+    },
     "updateSchoolNotificationTemplates": {
       "publicName": "update-school-notification-templates",
       "requestSchemaName": "UpdateSchoolNotificationTemplatesCommand",

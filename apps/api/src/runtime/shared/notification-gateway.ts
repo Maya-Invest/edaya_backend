@@ -3,6 +3,8 @@ import type {
   NotificationGatewayPort,
   NotificationRecipient,
   NotificationRecipientProfile,
+  RegisterPushDeviceInput,
+  UnregisterPushDeviceInput,
 } from "@edaya/core";
 import type { Logger } from "pino";
 
@@ -21,6 +23,12 @@ export function createLoggingNotificationGateway(logger: Logger): NotificationGa
     },
     removeRecipient: async (schoolId: string, recipient: NotificationRecipient) => {
       notificationLogger.info({ schoolId, recipient }, "notification recipient removed");
+    },
+    registerPushDevice: async (input: RegisterPushDeviceInput) => {
+      notificationLogger.info({ input }, "push device registered");
+    },
+    unregisterPushDevice: async (input: UnregisterPushDeviceInput) => {
+      notificationLogger.info({ input }, "push device unregistered");
     },
   };
 }

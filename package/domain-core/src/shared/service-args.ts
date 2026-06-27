@@ -1,11 +1,12 @@
 import type { AuthorizedServiceArgs } from '../authorization'
 import type { NotificationTemplateService } from '../notifications/templates/notification-template-service'
-import type { AtomicExecutionPort, AuthContactResolverPort, InvitationDeliveryPort, NotificationGatewayPort, SchoolRepositories } from '../ports'
+import type { AtomicExecutionPort, AuthContactResolverPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort, SchoolRepositories } from '../ports'
 
 export interface ServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
   repositories: SchoolRepositories
   notificationGateway: NotificationGatewayPort
+  fileStorage?: FileStoragePort
   templateService?: NotificationTemplateService
   invitationDelivery?: InvitationDeliveryPort
   authContactResolver?: AuthContactResolverPort

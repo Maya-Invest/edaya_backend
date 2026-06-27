@@ -38,6 +38,14 @@ build/
 # Local dev databases (PGlite + auth SQLite)
 .data/
 
+# Flutter / Dart (mobile/)
+mobile/**/build/
+mobile/**/.dart_tool/
+mobile/**/.flutter-plugins
+mobile/**/.flutter-plugins-dependencies
+mobile/**/.packages
+mobile/**/*.iml
+
 # IDE / Editors
 .idea/
 *.suo

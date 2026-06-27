@@ -25,7 +25,7 @@ function defaultWorkflowPreferences(): PreferencesRequestDto {
         in_app: { enabled: true },
         email: { enabled: true },
         sms: { enabled: false },
-        push: { enabled: false },
+        push: { enabled: true },
         chat: { enabled: false },
       },
     },

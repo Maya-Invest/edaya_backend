@@ -33,4 +33,22 @@ describe("CORS configuration", () => {
     expect(resolveCorsOrigin("https://evil.example", env)).toBe("https://app.edaya.test");
     expect(resolveCorsOrigin(undefined, env)).toBe("https://app.edaya.test");
   });
+
+  it("allows any localhost origin in development for mobile and Flutter web dev servers", () => {
+    const env = parseEnv({
+      RUNTIME: "node",
+      NODE_ENV: "development",
+      PORT: 9999,
+      LOG_LEVEL: "silent",
+      DATABASE_URL: "pglite",
+      BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
+      BETTER_AUTH_URL: "http://localhost:9999",
+      TRUSTED_ORIGINS: "http://localhost:5173",
+    });
+
+    expect(resolveCorsOrigin("http://localhost:5173", env)).toBe("http://localhost:5173");
+    expect(resolveCorsOrigin("http://localhost:8080", env)).toBe("http://localhost:8080");
+    expect(resolveCorsOrigin("http://127.0.0.1:54321", env)).toBe("http://127.0.0.1:54321");
+    expect(resolveCorsOrigin("https://evil.example", env)).toBe("http://localhost:5173");
+  });
 });

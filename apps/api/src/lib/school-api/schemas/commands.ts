@@ -678,6 +678,15 @@ export const updateNotificationContactCommandSchema = z.object({
   notificationPhone: field.optionalString().nullable(),
 }).openapi("UpdateNotificationContactCommand");
 
+export const registerPushDeviceCommandSchema = z.object({
+  token: z.string().min(1),
+  provider: z.enum(["fcm", "apns"]).default("fcm"),
+}).openapi("RegisterPushDeviceCommand");
+
+export const unregisterPushDeviceCommandSchema = z.object({
+  provider: z.enum(["fcm", "apns"]).default("fcm"),
+}).openapi("UnregisterPushDeviceCommand");
+
 export const updateSchoolNotificationTemplatesCommandSchema = z.object({
   schoolId: field.id(),
   templates: z.record(z.string(), z.unknown()).openapi("SchoolNotificationTemplateDocumentPatch", {

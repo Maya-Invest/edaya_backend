@@ -1,4 +1,5 @@
 import { Novu } from "@novu/api";
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
 import type { NotificationRecipientProfile } from "@edaya/core";
 import {
   mapRecipientProfileToNovuGlobalPreferences,
@@ -19,6 +20,15 @@ export interface NovuSubscriberClient {
     options?: NovuSubscriberUpsertOptions,
   ) => Promise<void>;
   remove: (subscriberId: string) => Promise<void>;
+  registerPushDevice: (
+    subscriberId: string,
+    provider: "fcm" | "apns",
+    token: string,
+  ) => Promise<void>;
+  unregisterPushDevice: (
+    subscriberId: string,
+    provider: "fcm" | "apns",
+  ) => Promise<void>;
 }
 
 export interface CreateNovuSubscriberClientOptions {
@@ -73,6 +83,23 @@ export function createNovuSubscriberClient(
           throw error;
         }
       }
+    },
+    registerPushDevice: async (subscriberId, provider, token) => {
+      await novu.subscribers.credentials.update(
+        {
+          providerId: provider === "apns" ? ChatOrPushProviderEnum.Apns : ChatOrPushProviderEnum.Fcm,
+          credentials: {
+            deviceTokens: [token],
+          },
+        },
+        subscriberId,
+      );
+    },
+    unregisterPushDevice: async (subscriberId, provider) => {
+      await novu.subscribers.credentials.delete(
+        subscriberId,
+        provider === "apns" ? ChatOrPushProviderEnum.Apns : ChatOrPushProviderEnum.Fcm,
+      );
     },
   };
 }

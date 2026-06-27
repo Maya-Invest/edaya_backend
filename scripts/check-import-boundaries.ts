@@ -34,7 +34,7 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     pattern: /from ["']@\//,
     searchPath: 'package/domain-core/src',
   },
-  ...['package/domain-core', 'package/adaptor-postgres', 'package/generated-api-client', 'package/adaptor-novu'].map(
+  ...['package/domain-core', 'package/adaptor-postgres', 'package/generated-api-client', 'package/adaptor-novu', 'package/adaptor-r2'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports integrations',
       pattern: /from ["']@edaya\/(neon-migrations|betterauth-d1-migrations)/,

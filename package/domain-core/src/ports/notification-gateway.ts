@@ -71,6 +71,20 @@ export interface NotificationDeliveryStatusQuery {
   subjectId: string
 }
 
+export type PushDeviceProvider = 'fcm' | 'apns'
+
+export interface RegisterPushDeviceInput {
+  subjectId: string
+  schoolId: string
+  token: string
+  provider: PushDeviceProvider
+}
+
+export interface UnregisterPushDeviceInput {
+  subjectId: string
+  provider: PushDeviceProvider
+}
+
 /**
  * Outbound notification port. Implementations must be fast and non-blocking for
  * callers — enqueue records intent; delivery happens asynchronously.
@@ -84,6 +98,10 @@ export interface NotificationGatewayPort {
   lookupDeliveryStatuses?: (
     deliveries: ReadonlyArray<NotificationDeliveryStatusQuery>,
   ) => Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>>
+  /** Attach a mobile push token to the provider subscriber (Novu credentials API). */
+  registerPushDevice?: (input: RegisterPushDeviceInput) => Promise<void>
+  /** Remove push credentials for the provider subscriber. */
+  unregisterPushDevice?: (input: UnregisterPushDeviceInput) => Promise<void>
 }
 
 /** Channel preference mapping for subscriber sync — not used for routing in domain */
