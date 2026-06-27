@@ -67,9 +67,9 @@ export const SEED_SCHOOL_ID = 'sch-edaya-central'
 export const SEED_SCHOOL_PROFILE = {
   id: SEED_SCHOOL_ID,
   name: 'EDAYA — Campus Central',
-  timeZone: 'Europe/Paris',
-  city: 'Paris',
-  country: 'FR',
+  timeZone: 'America/Toronto',
+  city: 'Ottawa',
+  country: 'CA',
 } as const
 
 export const SEED_SCHOOL_NORD_ID = 'sch-edaya-nord'

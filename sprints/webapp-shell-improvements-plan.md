@@ -1,6 +1,6 @@
 # Webapp Shell Improvements — Sprint Plan
 
-> **Status:** Phase 2 implémentée — UX à valider  
+> **Status:** Phases 1–2 validées UX · prochaine : Phase 3  
 > **Created:** 2026-06-27  
 > **Last updated:** 2026-06-27  
 > **Branch suggérée:** `feature/webapp-shell-improvements`  
@@ -60,7 +60,7 @@ Redondant avec « Enseignements » (`tab.teaching`).
 **Effort estimé :** 4–6 h  
 **PR suggérée :** `feature/account-profile-modal`
 
-**État actuel :** zone profil cliquable → `AccountProfileModal` ; icônes inbox/notifications conservées en raccourci header.
+**État actuel :** zone profil cliquable → `AccountProfileModal` ; retour modale après sauvegarde notifications (`?return=profile`).
 
 ### 2.1 Zone cliquable dans le header
 
@@ -72,17 +72,18 @@ Redondant avec « Enseignements » (`tab.teaching`).
 - [x] Créer `apps/webapp/src/lib/components/account/AccountProfileModal.svelte`
 - [x] Section **Profil** : nom, rôle, département (read-only pour l’instant)
 - [x] **Email de connexion** : `authSession.loginEmail` — seul champ **grisé** (`text-muted-foreground`, `bg-secondary/30`, non éditable)
-- [x] Email métier staff (`userProfile.email`) : affiché normalement si distinct du login
+- [x] Email métier / notification : affiché normalement si distinct du login
 - [x] Raccourcis : boîte de réception, préférences notifications
 - [x] Action déconnexion (réutiliser la logique `logout` du layout)
 - [x] i18n : clés FR/EN pour les libellés modale
+- [x] Retour modale profil après sauvegarde email notification (sans refresh)
 
 ### 2.3 Intégration layout
 
 - [x] Brancher la modale dans `(app)/+layout.svelte`
 - [x] Icônes inbox/settings **retirées** du header (raccourcis dans la modale profil uniquement)
-- [ ] Vérifier rendu staff et guardian (`authSession.accountActor`)
-- [ ] Smoke test : ouverture modale, email login grisé, liens inbox/notifications
+- [x] Vérifier rendu staff et guardian (`authSession.accountActor`)
+- [x] Smoke test : ouverture modale, email login grisé, liens inbox/notifications
 
 **Données :** `authSession.accountActor`, `authSession.loginEmail`, `authSession.userProfile`, `authSession.guardianSettings`
 

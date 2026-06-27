@@ -116,6 +116,17 @@ class AcademicContext {
 		this.shellReady = true;
 	}
 
+	updateSchool(school: School) {
+		const index = this.schools.findIndex(entry => entry.id === school.id);
+		if (index === -1) {
+			this.schools = [...this.schools, school];
+			return;
+		}
+		const next = [...this.schools];
+		next[index] = school;
+		this.schools = next;
+	}
+
 	reset() {
 		this.years = [];
 		this.periods = [];

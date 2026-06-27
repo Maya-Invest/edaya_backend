@@ -1,8 +1,9 @@
 import type { GuardianNotificationSettings } from '$lib/api/account-data';
 import type { AccountActor, SessionKind } from '$lib/auth/account-actor';
 import type { EffectiveGrantsSnapshot, SessionSnapshot } from '$lib/auth/types';
-import type { School, StaffMember } from '$lib/types/school';
+import type { StaffMember } from '$lib/types/school';
 import { browser } from '$app/environment';
+import { academicContext } from '$lib/academic/context.svelte';
 import { authClient } from './client';
 
 class AuthSession {
@@ -55,17 +56,11 @@ class AuthSession {
 		return null;
 	});
 
-	school = $derived.by((): School | null => {
+	school = $derived.by(() => {
 		if (!this.schoolId) {
 			return null;
 		}
-		return {
-			id: this.schoolId,
-			name: 'EDAYA — Campus Central',
-			shortName: 'Campus Central',
-			city: 'Paris',
-			timeZone: 'Europe/Paris',
-		};
+		return academicContext.schools.find(entry => entry.id === this.schoolId) ?? null;
 	});
 
 	markLoading() {

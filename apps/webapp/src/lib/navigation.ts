@@ -78,6 +78,7 @@ export const FINANCE_ITEMS: ContextItem[] = [
 ];
 
 export const CONFIG_ITEMS: ContextItem[] = [
+	{ key: 'school', labelKey: 'config.school', icon: Building2, href: appPath('/(app)/configuration/school') },
 	{ key: 'academic', labelKey: 'config.academic', icon: CalendarRange, href: appPath('/(app)/configuration/academic') },
 	{ key: 'classGroups', labelKey: 'config.classGroups', icon: Layers, href: appPath('/(app)/configuration/classes') },
 	{ key: 'subjects', labelKey: 'config.subjects', icon: BookOpen, href: appPath('/(app)/configuration/subjects/[[id]]') },

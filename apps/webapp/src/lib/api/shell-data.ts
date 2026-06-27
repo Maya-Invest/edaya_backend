@@ -10,6 +10,7 @@ import type {
 } from '$lib/types/school';
 import { buildClassHierarchy } from '$lib/academic/hierarchy';
 import { activeEnrollmentCountForClass, schoolWideEntityList } from '$lib/api/entity-list-filters';
+import { mapSchoolFromApi } from '$lib/api/school-data';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -70,13 +71,7 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 	const schools: School[] = (schoolsRaw ?? [])
 		.filter((school): school is NonNullable<typeof schoolsRaw[number]> & { id: string; name: string } =>
 			Boolean(school?.id && school?.name))
-		.map(s => ({
-			id: s.id,
-			name: s.name,
-			shortName: s.name.split(' ')[0] ?? s.name,
-			city: s.city ?? '',
-			timeZone: s.timeZone ?? 'Europe/Paris',
-		}));
+		.map(s => mapSchoolFromApi(s));
 
 	const academicYears: AcademicYear[] = (yearsRaw ?? []).map(y => ({
 		id: y.id,
