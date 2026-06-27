@@ -7,6 +7,8 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { bootstrapAppShell, resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authSession } from '$lib/auth/session.svelte';
+	import { ACCOUNT_OPEN_PROFILE_PARAM } from '$lib/account/profile-navigation';
+	import AccountProfileModal from '$lib/components/account/AccountProfileModal.svelte';
 	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
 	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
@@ -14,7 +16,7 @@
 	import { isLikelyDetailPath, listRouteCacheKey } from '$lib/detail-route-patterns';
 	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';
-	import { LogOut, LoaderCircle, Inbox, Settings2 } from '$lib/icons';
+	import { LoaderCircle } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -35,6 +37,7 @@
 	let ToastHost = $state<ToastHostComponent | null>(null);
 
 	let drawerSyncVersion = 0;
+	let profileOpen = $state(false);
 
 	function isReportCardDetailPath(pathname: string): boolean {
 		return /^\/configuration\/report-cards\/[^/]+$/.test(pathname)
@@ -52,6 +55,17 @@
 			return;
 		}
 		void bootstrapAppShell();
+	});
+
+	$effect(() => {
+		if (!browser || $page.url.searchParams.get(ACCOUNT_OPEN_PROFILE_PARAM) !== '1') {
+			return;
+		}
+		profileOpen = true;
+		const next = new URL($page.url);
+		next.searchParams.delete(ACCOUNT_OPEN_PROFILE_PARAM);
+		const href = `${next.pathname}${next.search}` as ResolvedPathname;
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
 	});
 
 	$effect(() => {
@@ -141,25 +155,13 @@
 					<AcademicHeader />
 					<LanguageSelector />
 					<div class="flex items-center gap-1.5">
-						<a
-							href={appPath('/(app)/account/inbox/[[id]]')}
-							class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-							title={$t('account.inbox.title')}
-							aria-label={$t('account.inbox.title')}
-						>
-							<Inbox class="h-4 w-4" />
-						</a>
-						<a
-							href={appPath('/(app)/account/notifications')}
-							class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-							title={$t('account.notifications.title')}
-							aria-label={$t('account.notifications.title')}
-						>
-							<Settings2 class="h-4 w-4" />
-						</a>
-						<div
-							class="flex h-9 items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 text-xs font-medium text-foreground"
-							title={me.name}
+						<button
+							type="button"
+							onclick={() => (profileOpen = true)}
+							class="flex h-9 items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 text-xs font-medium text-foreground transition hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							aria-label={$t('account.profile.openProfile')}
+							aria-haspopup="dialog"
+							aria-expanded={profileOpen}
 						>
 							<span
 								class="flex h-7 w-7 items-center justify-center rounded-full bg-primary font-display text-[11px] font-semibold text-primary-foreground"
@@ -172,15 +174,6 @@
 									{$t(me.subtitleKey)}
 								</span>
 							</span>
-						</div>
-						<button
-							type="button"
-							onclick={logout}
-							class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-							title={$t('auth.signOut')}
-							aria-label={$t('auth.signOut')}
-						>
-							<LogOut class="h-4 w-4" />
 						</button>
 					</div>
 				</div>
@@ -192,6 +185,8 @@
 				{/if}
 			</div>
 		</div>
+
+		<AccountProfileModal bind:open={profileOpen} actor={me} onLogout={logout} />
 
 		{#if ToastHost}
 			<ToastHost />

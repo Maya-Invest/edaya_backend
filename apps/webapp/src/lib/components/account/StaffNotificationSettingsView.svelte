@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { NotificationSettingsPageData } from '$lib/queries/account.queries';
+	import { returnToProfileModalIfRequested } from '$lib/account/profile-navigation';
 	import { saveNotificationContactMutation } from '$lib/api/mutations/notifications.mutations';
 	import { authSession } from '$lib/auth/session.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -7,6 +8,7 @@
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { page } from '$app/stores';
 
 	const { data }: { data: NotificationSettingsPageData } = $props();
 
@@ -40,7 +42,13 @@
 		});
 		saving = false;
 		if (ok) {
-			await appGoto(appPath('/(app)/account/notifications'));
+			authSession.updateNotificationContact({
+				notificationEmail: notificationEmail.trim() || null,
+				notificationPhone: notificationPhone.trim() || null,
+			});
+			if (await returnToProfileModalIfRequested($page.url)) {
+				return;
+			}
 		}
 	}
 </script>

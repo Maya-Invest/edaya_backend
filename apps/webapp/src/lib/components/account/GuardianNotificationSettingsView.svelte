@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { NotificationSettingsPageData } from '$lib/queries/account.queries';
+	import { returnToProfileModalIfRequested } from '$lib/account/profile-navigation';
 	import { saveGuardianNotificationPreferencesMutation } from '$lib/api/mutations/notifications.mutations';
+	import { authSession } from '$lib/auth/session.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
+	import { page } from '$app/stores';
 
 	const {
 		data,
@@ -69,7 +72,12 @@
 		});
 		saving = false;
 		if (ok) {
+			authSession.updateNotificationContact({
+				notificationEmail: notificationEmail.trim() || null,
+				notificationPhone: notificationPhone.trim() || null,
+			});
 			onSaved?.();
+			await returnToProfileModalIfRequested($page.url);
 		}
 	}
 </script>

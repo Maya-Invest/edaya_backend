@@ -55,6 +55,15 @@ export async function bootstrapSession() {
 			);
 			const staff = await fetchStaffSubjectId(client, session.actorId);
 			subjectId = staff.subjectId;
+			authSession.setFromServer(session, {
+				staffProfile,
+				guardianSettings,
+				subjectId,
+				loginEmail,
+				notificationEmail: staff.notificationEmail,
+				notificationPhone: staff.notificationPhone,
+			});
+			return { session, staffProfile, guardianSettings };
 		}
 		else if (session?.kind === 'guardian') {
 			guardianSettings = await fetchGuardianNotificationSettings(client, session.actorId);

@@ -304,6 +304,10 @@ export const en: Dict = {
 	'header.settings': 'Settings',
 
 	// Account / notifications
+	'account.profile.openProfile': 'Open my account',
+	'account.profile.sectionProfile': 'Profile',
+	'account.profile.sectionShortcuts': 'Shortcuts',
+	'account.profile.workEmail': 'Work email',
 	'account.kind.guardian': 'Guardian',
 	'account.notifications.title': 'Notification settings',
 	'account.notifications.saved': 'Notification preferences saved.',

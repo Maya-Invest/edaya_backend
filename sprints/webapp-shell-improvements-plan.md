@@ -1,6 +1,6 @@
 # Webapp Shell Improvements — Sprint Plan
 
-> **Status:** Phase 1 complete (UX validée 2026-06-27)  
+> **Status:** Phase 2 implémentée — UX à valider  
 > **Created:** 2026-06-27  
 > **Last updated:** 2026-06-27  
 > **Branch suggérée:** `feature/webapp-shell-improvements`  
@@ -14,7 +14,7 @@
 Cocher quand la phase (ou sous-phase) est terminée et mergée.
 
 - [x] **Phase 1** — Navigation (Matières classe, Staff → École)
-- [ ] **Phase 2** — Compte connecté (modale profil)
+- [x] **Phase 2** — Compte connecté (modale profil)
 - [ ] **Phase 3** — Permissions menu
 - [ ] **Phase 4** — États vides + audit boutons
 - [ ] **Phase 5** — Templates notifications + invitations
@@ -60,27 +60,27 @@ Redondant avec « Enseignements » (`tab.teaching`).
 **Effort estimé :** 4–6 h  
 **PR suggérée :** `feature/account-profile-modal`
 
-**État actuel :** avatar + nom dans `(app)/+layout.svelte` (bloc statique) ; inbox et notifications = icônes séparées.
+**État actuel :** zone profil cliquable → `AccountProfileModal` ; icônes inbox/notifications conservées en raccourci header.
 
 ### 2.1 Zone cliquable dans le header
 
-- [ ] Remplacer le `<div>` profil par un `<button>` cliquable (hover, focus, `cursor-pointer`)
-- [ ] Ouvrir une modale au clic (pas de navigation full-page)
+- [x] Remplacer le `<div>` profil par un `<button>` cliquable (hover, focus, `cursor-pointer`)
+- [x] Ouvrir une modale au clic (pas de navigation full-page)
 
 ### 2.2 Modale `AccountProfileModal`
 
-- [ ] Créer `apps/webapp/src/lib/components/account/AccountProfileModal.svelte`
-- [ ] Section **Profil** : nom, rôle, département (read-only pour l’instant)
-- [ ] **Email de connexion** : `authSession.loginEmail` — seul champ **grisé** (`text-muted-foreground`, `bg-secondary/30`, non éditable)
-- [ ] Email métier staff (`userProfile.email`) : affiché normalement si distinct du login
-- [ ] Raccourcis : boîte de réception, préférences notifications
-- [ ] Action déconnexion (réutiliser la logique `logout` du layout)
-- [ ] i18n : clés FR/EN pour les libellés modale
+- [x] Créer `apps/webapp/src/lib/components/account/AccountProfileModal.svelte`
+- [x] Section **Profil** : nom, rôle, département (read-only pour l’instant)
+- [x] **Email de connexion** : `authSession.loginEmail` — seul champ **grisé** (`text-muted-foreground`, `bg-secondary/30`, non éditable)
+- [x] Email métier staff (`userProfile.email`) : affiché normalement si distinct du login
+- [x] Raccourcis : boîte de réception, préférences notifications
+- [x] Action déconnexion (réutiliser la logique `logout` du layout)
+- [x] i18n : clés FR/EN pour les libellés modale
 
 ### 2.3 Intégration layout
 
-- [ ] Brancher la modale dans `(app)/+layout.svelte`
-- [ ] Décider du sort des icônes inbox/settings (consolider dans la modale ou garder en raccourci header)
+- [x] Brancher la modale dans `(app)/+layout.svelte`
+- [x] Icônes inbox/settings **retirées** du header (raccourcis dans la modale profil uniquement)
 - [ ] Vérifier rendu staff et guardian (`authSession.accountActor`)
 - [ ] Smoke test : ouverture modale, email login grisé, liens inbox/notifications
 

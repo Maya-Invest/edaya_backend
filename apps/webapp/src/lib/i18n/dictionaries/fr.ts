@@ -294,6 +294,10 @@ export const fr: Dict = {
 	'header.settings': 'Paramètres',
 
 	// Account / notifications
+	'account.profile.openProfile': 'Ouvrir mon compte',
+	'account.profile.sectionProfile': 'Profil',
+	'account.profile.sectionShortcuts': 'Raccourcis',
+	'account.profile.workEmail': 'E-mail professionnel',
 	'account.kind.guardian': 'Responsable légal',
 	'account.notifications.title': 'Préférences de notification',
 	'account.notifications.saved': 'Préférences enregistrées.',
