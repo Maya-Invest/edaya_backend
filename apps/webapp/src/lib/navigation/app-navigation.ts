@@ -30,7 +30,6 @@ export function appPath(
 
 const CLASS_SEGMENTS: Record<string, RouteId> = {
 	'students': '/(app)/classes/[classId]/students/[[id]]',
-	'subjects': '/(app)/classes/[classId]/subjects/[[id]]',
 	'timetable': '/(app)/classes/[classId]/timetable/[[id]]',
 	'teaching': '/(app)/classes/[classId]/teaching/[[id]]',
 	'homework': '/(app)/classes/[classId]/homework/[[id]]',

@@ -55,6 +55,7 @@ export interface ContextItem {
 export const SCHOOL_ITEMS: ContextItem[] = [
 	{ key: 'students', labelKey: 'school.students', icon: Users, href: appPath('/(app)/school/students/[[id]]') },
 	{ key: 'guardians', labelKey: 'school.guardians', icon: Shield, href: appPath('/(app)/school/guardians/[[id]]') },
+	{ key: 'staff', labelKey: 'config.staff', icon: GraduationCap, href: appPath('/(app)/school/staff/[[id]]') },
 	{ key: 'calendar', labelKey: 'school.calendar', icon: CalendarDays, href: appPath('/(app)/school/calendar/[[id]]') },
 	{ key: 'activities', labelKey: 'school.activities', icon: Sparkle, href: appPath('/(app)/school/activities/[[id]]') },
 	{ key: 'announcements', labelKey: 'school.announcements', icon: Mail, href: appPath('/(app)/school/announcements/[[id]]') },
@@ -63,7 +64,6 @@ export const SCHOOL_ITEMS: ContextItem[] = [
 
 export const CLASS_ITEMS: ContextItem[] = [
 	{ key: 'students', labelKey: 'tab.students', icon: Users, href: 'students' },
-	{ key: 'subjects', labelKey: 'tab.subjects', icon: GraduationCap, href: 'subjects' },
 	{ key: 'timetable', labelKey: 'tab.timetable', icon: CalendarDays, href: 'timetable' },
 	{ key: 'teaching', labelKey: 'tab.teaching', icon: BookOpen, href: 'teaching' },
 	{ key: 'homework', labelKey: 'tab.homework', icon: CalendarClock, href: 'homework' },
@@ -81,7 +81,6 @@ export const CONFIG_ITEMS: ContextItem[] = [
 	{ key: 'academic', labelKey: 'config.academic', icon: CalendarRange, href: appPath('/(app)/configuration/academic') },
 	{ key: 'classGroups', labelKey: 'config.classGroups', icon: Layers, href: appPath('/(app)/configuration/classes') },
 	{ key: 'subjects', labelKey: 'config.subjects', icon: BookOpen, href: appPath('/(app)/configuration/subjects/[[id]]') },
-	{ key: 'staff', labelKey: 'config.staff', icon: GraduationCap, href: appPath('/(app)/configuration/staff/[[id]]') },
 	{ key: 'roles', labelKey: 'roles.title', icon: ShieldCheck, href: appPath('/(app)/configuration/roles/[[role]]') },
 	{ key: 'gradeScales', labelKey: 'config.gradeScales', icon: Percent, href: appPath('/(app)/configuration/grade-scales') },
 	{ key: 'reportCards', labelKey: 'config.reportCards', icon: FileSpreadsheet, href: appPath('/(app)/configuration/report-cards/[[id]]') },
