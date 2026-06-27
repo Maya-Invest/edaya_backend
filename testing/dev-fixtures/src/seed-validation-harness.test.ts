@@ -19,7 +19,7 @@ describe('seed validation harness', () => {
 
     expect(targets.length).toBeGreaterThan(40)
     expect(counts.students).toBe(countSeedStudents())
-    expect(targets.find(target => target.entity === 'students')?.minCount).toBe(30)
-    expect(targets.find(target => target.entity === 'guardians')?.minCount).toBeGreaterThanOrEqual(20)
+    expect(targets.find(target => target.entity === 'students')?.minCount).toBe(countSeedStudents())
+    expect(targets.find(target => target.entity === 'guardians')?.minCount).toBeGreaterThanOrEqual(900)
   })
 })

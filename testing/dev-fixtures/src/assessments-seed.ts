@@ -1,5 +1,5 @@
 import { SEED_EXTENDED_ASSESSMENT_RESULT_SCORES, SEED_EXTENDED_ASSESSMENTS } from './extended-dataset'
-import { SEED_CLASS_STUDENT_IDS } from './population-seed'
+import { SEED_NARRATIVE_CLASS_STUDENT_IDS } from './population-seed'
 
 export type SeedAssessmentKind = 'quiz' | 'other' | 'project' | 'homework'
 
@@ -14,14 +14,14 @@ export interface SeedAssessment {
   kind: SeedAssessmentKind
 }
 
-const STUDENTS_6A = SEED_CLASS_STUDENT_IDS['6a']
-const STUDENTS_6B = SEED_CLASS_STUDENT_IDS['6b']
-const STUDENTS_5A = SEED_CLASS_STUDENT_IDS['5a']
-const STUDENTS_4A = SEED_CLASS_STUDENT_IDS['4a']
-const STUDENTS_3A = SEED_CLASS_STUDENT_IDS['3a']
-const STUDENTS_2ND = SEED_CLASS_STUDENT_IDS['2nd']
-const STUDENTS_1ST_S = SEED_CLASS_STUDENT_IDS['1st-s']
-const STUDENTS_TERM_S = SEED_CLASS_STUDENT_IDS['term-s']
+const STUDENTS_6A = SEED_NARRATIVE_CLASS_STUDENT_IDS['6a']
+const STUDENTS_6B = SEED_NARRATIVE_CLASS_STUDENT_IDS['6b']
+const STUDENTS_5A = SEED_NARRATIVE_CLASS_STUDENT_IDS['5a']
+const STUDENTS_4A = SEED_NARRATIVE_CLASS_STUDENT_IDS['4a']
+const STUDENTS_3A = SEED_NARRATIVE_CLASS_STUDENT_IDS['3a']
+const STUDENTS_2ND = SEED_NARRATIVE_CLASS_STUDENT_IDS['2nd']
+const STUDENTS_1ST_S = SEED_NARRATIVE_CLASS_STUDENT_IDS['1st-s']
+const STUDENTS_TERM_S = SEED_NARRATIVE_CLASS_STUDENT_IDS['term-s']
 
 export function studentScores(
   studentIds: readonly string[],

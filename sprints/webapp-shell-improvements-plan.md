@@ -1,6 +1,6 @@
 # Webapp Shell Improvements — Sprint Plan
 
-> **Status:** Phases 1–2 validées UX · prochaine : Phase 3  
+> **Status:** Phases 1–2, 7 validées UX · Phase 6 implémentée (seed local en cours) · prochaine : Phase 3  
 > **Created:** 2026-06-27  
 > **Last updated:** 2026-06-27  
 > **Branch suggérée:** `feature/webapp-shell-improvements`  
@@ -19,7 +19,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [ ] **Phase 4** — États vides + audit boutons
 - [ ] **Phase 5** — Templates notifications + invitations
 - [ ] **Phase 6** — Seeding élèves étendu
-- [ ] **Phase 7** — Configuration école
+- [x] **Phase 7** — Configuration école
 - [ ] **Phase 8** — Pagination API (default 50) + webapp
 
 ---
@@ -185,15 +185,15 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 
 **Effort estimé :** 4–8 h
 
-**État actuel :** ~30 élèves (`testing/dev-fixtures/src/population-seed.ts` + `extended-dataset.ts`).
+**État actuel :** ~30 élèves narratifs + **970 élèves bulk générés** = **1000 total** (`population-generator.ts`).
 
-- [ ] Définir cible (ex. 80–150 élèves répartis sur les classes existantes)
-- [ ] Étendre `SEED_POPULATION_STUDENTS` ou générer programmatically dans `dev-fixtures`
-- [ ] Ajouter guardians associés par lot
-- [ ] Mettre à jour `testing/seeding/src/population/workflow.ts` si nécessaire
-- [ ] Mettre à jour `seed-validation-harness` si présent
-- [ ] Vérifier workflows dépendants (finance, notes, présences) restent cohérents
-- [ ] `bun run` seed dev local OK + badge count sidebar réaliste
+- [x] Définir cible (**1000 élèves** répartis sur classes narrative + bulk)
+- [x] Générer programmatically dans `dev-fixtures` (`population-generator.ts`)
+- [x] Ajouter guardians associés par lot (1 tuteur / élève bulk, g22–g991)
+- [x] `population/workflow.ts` inchangé (itère `SEED_STUDENTS` / `SEED_GUARDIANS`)
+- [x] Mettre à jour `seed-validation-harness` + tests
+- [x] Narratif s1–s30 conservé (finance, notes, présences, bulletins)
+- [ ] `bun run` seed dev local OK + badge count sidebar réaliste (1000)
 
 **Fichiers clés :** `testing/dev-fixtures/src/population-seed.ts`, `testing/seeding/src/population/`
 
@@ -204,18 +204,18 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 **Effort estimé :** 2–3 jours  
 **Dépend de :** Phase 3 (permissions menu) recommandée
 
-**État actuel :** pas d’écran dédié ; `authSession.school` partiellement mocké ; API `schools/list`, `schools/save` disponible.
+**État actuel :** route `configuration/school` livrée ; fiche read-only + modal edit ; `authSession.school` alimenté depuis l’API via `academicContext` (plus de mock). Champs API : nom, type, ville, pays, fuseau (`America/Toronto` / Ottawa) — pas de logo ni contacts côté API.
 
-- [ ] Route `configuration/school` ou entrée menu École (permission `SCHOOL_LIFECYCLE_MANAGE` / `SCHOOL_STRUCTURE_CONFIGURE`)
-- [ ] Vue liste ou fiche unique : nom, nom court, logo, contacts, fuseau horaire
-- [ ] Chargement : `client.entities.schools.one`
-- [ ] Sauvegarde : mutation `schools/save` + toast
-- [ ] Modal edit (spec app-shell) si champs multiples
-- [ ] Alimenter `authSession.school` et `SchoolSelector` depuis l’API (retirer mock `session.svelte.ts`)
-- [ ] i18n FR/EN
-- [ ] Smoke test : modification nom école visible dans header/sidebar
+- [x] Route `configuration/school` + entrée menu Configuration (`config.school`)
+- [x] Fiche unique : nom, nom court dérivé, type, ville, pays, fuseau horaire
+- [x] Chargement : `schools.get` (profil école courante)
+- [x] Sauvegarde : mutation `schools/save` + toast
+- [x] Modal edit (spec app-shell) — `PermissionGate` `SCHOOL_LIFECYCLE_MANAGE`
+- [x] Alimenter `authSession.school` et `SchoolSelector` depuis l’API (`academicContext.updateSchool`)
+- [x] i18n FR/EN
+- [x] Smoke test : modification nom école visible dans header/sidebar
 
-**Fichiers clés :** nouvelle route + composant `SchoolSettingsView.svelte`, `shell-data.ts`, `session.svelte.ts`
+**Fichiers clés :** `SchoolSettingsView.svelte`, `configuration/school/+page.svelte`, `school-data.ts`, `school.mutations.ts`, `school.queries.ts`, `shell-data.ts`, `session.svelte.ts`, `navigation.ts`
 
 ---
 
@@ -256,7 +256,7 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 | 3 | Phase 3 + 4 | Permissions + empty states + audit |
 | 4 | Phase 5 | Templates notifications |
 | 5 | Phase 6 + 8 | Seeding puis pagination |
-| 6 | Phase 7 | Config école |
+| 6 | Phase 7 | Config école ✅ |
 
 ---
 
