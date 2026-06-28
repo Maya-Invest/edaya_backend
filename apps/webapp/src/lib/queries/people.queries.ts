@@ -1,10 +1,15 @@
 import { academicContext } from '$lib/academic/context.svelte';
-import { loadClassPeopleData, loadGuardiansPeopleData, loadPeopleData } from '$lib/api/people-data';
-import { fetchStaffMembers } from '$lib/api/staff-data';
+import { schoolWideEntityList } from '$lib/api/entity-list-filters';
+import { loadClassPeopleData } from '$lib/api/people-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
 import { resolvePageLoad } from '$lib/queries/page-status';
 import { getStudent360Data, studentDetailIdFromUrl } from '$lib/queries/student-360.queries';
+
+const SCHOOL_ROSTER_SCOPE
+	= 'School students administration route loads paginated school roster.';
+const SCHOOL_GUARDIANS_SCOPE
+	= 'School guardians administration lists guardians with paginated fetch.';
 
 async function seedStudent360ForUrl(url: URL) {
 	const studentId = studentDetailIdFromUrl(url);
@@ -16,58 +21,44 @@ async function seedStudent360ForUrl(url: URL) {
 	detailDataContext.seedStudent360Data(studentId, healthRecord, pedagogicalNotes);
 }
 
-export async function getSchoolStudentsData() {
-	const { students } = await loadPeopleData(queryClient());
-	return students;
-}
-
-export async function getSchoolGuardiansData() {
-	const { guardians, students } = await loadGuardiansPeopleData(queryClient());
-	return { guardians, students };
-}
-
-export async function getSchoolStaffData() {
-	return fetchStaffMembers(queryClient(), {
-		schoolId: academicContext.schools[0]?.id ?? '',
-		academicYearId: academicContext.yearId,
-	});
-}
-
 export function querySchoolStudentsPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({}),
+		empty: () => ({ totalStudents: 0 }),
 		load: async () => {
-			const students = await getSchoolStudentsData();
-			detailDataContext.seedStudents(students);
+			const { count } = await queryClient().entities.students.count(
+				schoolWideEntityList(SCHOOL_ROSTER_SCOPE),
+			);
 			await seedStudent360ForUrl(url);
-			return {};
+			return { totalStudents: count };
 		},
-		hasItems: () => detailDataContext.students.length > 0,
+		hasItems: data => data.totalStudents > 0,
 	});
 }
 
 export function querySchoolGuardiansPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({}),
+		empty: () => ({ totalGuardians: 0 }),
 		load: async () => {
-			const { guardians, students } = await getSchoolGuardiansData();
-			detailDataContext.seedGuardians(guardians);
-			detailDataContext.seedStudents(students);
-			return {};
+			const { count } = await queryClient().entities.guardians.count(
+				schoolWideEntityList(SCHOOL_GUARDIANS_SCOPE),
+			);
+			return { totalGuardians: count };
 		},
-		hasItems: () => detailDataContext.guardians.length > 0,
+		hasItems: data => data.totalGuardians > 0,
 	});
 }
 
 export function querySchoolStaffPage() {
 	return (url: URL) => resolvePageLoad(url, {
-		empty: () => ({}),
+		empty: () => ({ totalStaff: 0 }),
 		load: async () => {
-			const staff = await getSchoolStaffData();
-			detailDataContext.seedStaff(staff);
-			return {};
+			const schoolId = academicContext.schools[0]?.id ?? '';
+			const { count } = schoolId
+				? await queryClient().entities.staffMembers.count({ schoolId })
+				: { count: 0 };
+			return { totalStaff: count };
 		},
-		hasItems: () => detailDataContext.staff.length > 0,
+		hasItems: data => data.totalStaff > 0,
 	});
 }
 

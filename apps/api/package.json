@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "bun --watch src/entries/node.ts",
+    "dev": "bun --watch src/entries/node.ts ../../package/adaptor-postgres/src/postgres-store.ts",
     "dev:worker": "wrangler dev --env-file .dev.vars",
     "start": "node dist/node.js",
     "deploy:worker": "wrangler deploy --env production",

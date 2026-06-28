@@ -146,6 +146,11 @@ export const fr: Dict = {
 	'list.active': 'Actif',
 	'list.loadingMore': 'Chargement…',
 	'list.endOfList': '{n} résultats',
+	'list.pagination': 'Pagination',
+	'list.pageRange': '{start}–{end} sur {total}',
+	'list.pageOf': 'Page {page} / {pageCount}',
+	'list.previousPage': 'Précédent',
+	'list.nextPage': 'Suivant',
 
 	'config.subjects': 'Catalogue des matières',
 	'config.school': 'Établissement',

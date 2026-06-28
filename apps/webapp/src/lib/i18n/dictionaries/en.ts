@@ -152,6 +152,11 @@ export const en: Dict = {
 	'list.active': 'Active',
 	'list.loadingMore': 'Loading more…',
 	'list.endOfList': '{n} results',
+	'list.pagination': 'Pagination',
+	'list.pageRange': '{start}–{end} of {total}',
+	'list.pageOf': 'Page {page} / {pageCount}',
+	'list.previousPage': 'Previous',
+	'list.nextPage': 'Next',
 
 	// Configuration sections
 	'config.subjects': 'Subjects catalog',

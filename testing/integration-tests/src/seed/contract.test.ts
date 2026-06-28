@@ -24,7 +24,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
     const failures: string[] = []
     for (const target of buildSeedValidationTargets()) {
-      const response = await app.request(createAppRequest(`/core/entities/${target.entity}/list`, {
+      const response = await app.request(createAppRequest(`/core/entities/${target.entity}/count`, {
         method: 'POST',
         headers,
         body: JSON.stringify({}),
@@ -33,9 +33,10 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
         failures.push(`${target.entity}: HTTP ${response.status}`)
         continue
       }
-      const rows = unwrapEntityList(await response.json())
-      if (rows.length < target.minCount) {
-        failures.push(`${target.entity}: expected >= ${target.minCount}, got ${rows.length}`)
+      const body = await response.json() as { count?: number }
+      const count = body.count ?? 0
+      if (count < target.minCount) {
+        failures.push(`${target.entity}: expected >= ${target.minCount}, got ${count}`)
       }
     }
 
@@ -64,17 +65,17 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       app.request(createAppRequest('/core/entities/students/list', {
         method: 'POST',
         headers,
-        body: JSON.stringify({}),
+        body: JSON.stringify({ $limit: SEED_TARGET_STUDENT_COUNT }),
       })),
       app.request(createAppRequest('/core/entities/guardians/list', {
         method: 'POST',
         headers,
-        body: JSON.stringify({}),
+        body: JSON.stringify({ $limit: countSeedGuardians() }),
       })),
       app.request(createAppRequest('/core/entities/enrollments/list', {
         method: 'POST',
         headers,
-        body: JSON.stringify({}),
+        body: JSON.stringify({ $limit: SEED_TARGET_STUDENT_COUNT }),
       })),
       app.request(createAppRequest('/core/entities/staff-assignments/list', {
         method: 'POST',

@@ -23,10 +23,20 @@
 	const {
 		hierarchy,
 		studentCount,
+		guardianCount,
+		staffCount,
 	}: {
 		hierarchy: HierarchyGroup[];
 		studentCount: number;
+		guardianCount: number;
+		staffCount: number;
 	} = $props();
+
+	const schoolBadges: Record<string, number> = {
+		students: studentCount,
+		guardians: guardianCount,
+		staff: staffCount,
+	};
 
 	const MODULE_ITEMS: Record<Exclude<ModuleKey, 'dashboard'>, ContextItem[]> = {
 		school: SCHOOL_ITEMS,
@@ -61,7 +71,7 @@
 			label: $t(it.labelKey),
 			icon: it.icon,
 			href: key === 'classes' ? classItemHref(classId, it.href) : it.href,
-			badge: key === 'school' && it.key === 'students' ? studentCount : it.badge,
+			badge: key === 'school' ? schoolBadges[it.key] : it.badge,
 		}));
 	}
 </script>

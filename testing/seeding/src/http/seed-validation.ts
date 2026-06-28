@@ -10,7 +10,7 @@ import {
 } from '@edaya/dev-fixtures'
 import { signInViaHttp } from './auth'
 import { isSeedEntityKey } from './catalog'
-import { postEntityList } from './core-entity'
+import { postEntityCount } from './core-entity'
 
 export interface SeedEntityValidationResult {
   entity: string
@@ -45,8 +45,7 @@ async function validateEntityTarget(
     if (!isSeedEntityKey(target.serviceName)) {
       throw new Error(`Generated API bindings do not contain entity key: ${target.serviceName}`)
     }
-    const rows = await postEntityList(options, target.serviceName)
-    const actual = rows.length
+    const actual = await postEntityCount(options, target.serviceName)
     const passed = actual >= target.minCount
     return {
       entity: target.entity,

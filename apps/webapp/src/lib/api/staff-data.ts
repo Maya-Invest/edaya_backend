@@ -2,7 +2,10 @@ import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { StaffMember, StaffRole, SubjectCategory } from '$lib/types/school';
 import {
+	DEFAULT_LIST_PAGE_SIZE,
 	entitiesByIds,
+	paginatedList,
+	STAFF_LIST_ORDER,
 	staffAssignmentsForStaff,
 	staffRoleAssignmentsForStaff,
 	uniqueIds,
@@ -271,4 +274,54 @@ export async function fetchStaffMemberById(
 		relations.subjectsRaw,
 	);
 	return members.find(member => member.id === staffId) ?? null;
+}
+
+export interface StaffPageRequest {
+	offset?: number;
+	limit?: number;
+}
+
+export interface PaginatedStaffData {
+	staff: StaffMember[];
+	totalStaff: number;
+}
+
+export async function fetchStaffMembersPage(
+	client: SchoolClient,
+	scope: { schoolId: string; academicYearId: string },
+	request: StaffPageRequest = {},
+): Promise<PaginatedStaffData> {
+	const limit = request.limit ?? DEFAULT_LIST_PAGE_SIZE;
+	const offset = request.offset ?? 0;
+	const staffFilter = paginatedList({ schoolId: scope.schoolId }, {
+		limit,
+		offset,
+		orderBy: STAFF_LIST_ORDER,
+	});
+
+	const [staffRaw, totalStaff, classGroupsRaw] = await Promise.all([
+		client.entities.staffMembers.list(staffFilter),
+		client.entities.staffMembers.count({ schoolId: scope.schoolId }).then(result => result.count),
+		client.entities.classGroups.list({
+			schoolId: scope.schoolId,
+			academicYearId: scope.academicYearId,
+		}),
+	]);
+	const staffIds = uniqueIds((staffRaw ?? []).map(member => member.id));
+	if (staffIds.length === 0) {
+		return { staff: [], totalStaff };
+	}
+	const relations = await fetchStaffRelations(client, staffIds);
+
+	return {
+		staff: mapStaffMembers(
+			staffRaw ?? [],
+			relations.roleAssignmentsRaw,
+			classGroupsRaw ?? [],
+			relations.assignmentsRaw,
+			relations.classSubjectsRaw,
+			relations.subjectsRaw,
+		),
+		totalStaff,
+	};
 }

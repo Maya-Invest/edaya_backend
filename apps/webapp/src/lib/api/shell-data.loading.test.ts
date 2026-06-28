@@ -51,11 +51,16 @@ describe('shell data loading', () => {
 			]),
 			{ count: 18 },
 			{ count: 21 },
+			{ count: 39 },
+			{ count: 12 },
+			{ count: 5 },
 		]);
 
 		const shell = await fetchAppShellData(client);
 
 		expect(shell.studentCount).toBe(39);
+		expect(shell.guardianCount).toBe(12);
+		expect(shell.staffCount).toBe(5);
 		expect(shell.classes.find(entry => entry.id === classA)?.studentCount).toBe(18);
 		expect(shell.classes.find(entry => entry.id === classB)?.studentCount).toBe(21);
 		expect(entityListRequests(requests, 'enrollments')).toHaveLength(0);
@@ -71,6 +76,9 @@ describe('shell data loading', () => {
 				body: { classGroupId: classB, status: 'active' },
 			},
 		]);
+		expect(entityCountRequests(requests, 'students')).toHaveLength(1);
+		expect(entityCountRequests(requests, 'guardians')).toHaveLength(1);
+		expect(entityCountRequests(requests, 'staffMembers')).toHaveLength(1);
 	});
 
 	it('fetchActiveEnrollmentCountsByClass returns zeroes for classes with no active enrollments', async () => {

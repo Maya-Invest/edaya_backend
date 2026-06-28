@@ -145,7 +145,12 @@
 		</div>
 	{:else}
 		<div class="flex h-screen w-full overflow-hidden bg-background text-foreground">
-			<AppSidebar hierarchy={academicContext.hierarchy} studentCount={academicContext.studentCount} />
+			<AppSidebar
+				hierarchy={academicContext.hierarchy}
+				studentCount={academicContext.studentCount}
+				guardianCount={academicContext.guardianCount}
+				staffCount={academicContext.staffCount}
+			/>
 
 			<div class="flex min-w-0 flex-1 flex-col">
 				<div

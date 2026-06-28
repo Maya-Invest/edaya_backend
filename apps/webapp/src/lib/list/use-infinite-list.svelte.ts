@@ -94,3 +94,64 @@ export function useCursorInfiniteList<T>(fetchPage: CursorFetcher<T>, pageSize =
 		pageSize,
 	};
 }
+
+export type OffsetPageFetcher<T> = (offset: number, limit: number) => Promise<{ items: T[]; total: number }>;
+
+/**
+ * Server-side offset pagination — loads pages via `$limit` / `$offset` and appends on scroll.
+ */
+export function useOffsetInfiniteList<T>(
+	fetchPage: OffsetPageFetcher<T>,
+	pageSize = DEFAULT_PAGE_SIZE,
+) {
+	let items = $state<T[]>([]);
+	let total = $state(0);
+	let offset = $state(0);
+	let loading = $state(false);
+	let initialized = $state(false);
+
+	async function loadAt(nextOffset: number, append: boolean) {
+		loading = true;
+		try {
+			const page = await fetchPage(nextOffset, pageSize);
+			items = append ? [...items, ...page.items] : page.items;
+			total = page.total;
+			offset = nextOffset + page.items.length;
+		}
+		finally {
+			loading = false;
+		}
+	}
+
+	$effect(() => {
+		if (initialized) {
+			return;
+		}
+		initialized = true;
+		void loadAt(0, false);
+	});
+
+	function loadMore() {
+		if (loading || items.length >= total) {
+			return;
+		}
+		void loadAt(offset, true);
+	}
+
+	return {
+		get visible() {
+			return items;
+		},
+		get hasMore() {
+			return items.length < total;
+		},
+		get total() {
+			return total;
+		},
+		get loading() {
+			return loading;
+		},
+		loadMore,
+		pageSize,
+	};
+}

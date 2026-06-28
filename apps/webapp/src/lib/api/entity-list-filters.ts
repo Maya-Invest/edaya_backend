@@ -1,5 +1,43 @@
 import type { EntityQuery } from '@edaya/api-client';
 
+export const DEFAULT_LIST_PAGE_SIZE = 50;
+
+export function pageToOffset(page: number, pageSize = DEFAULT_LIST_PAGE_SIZE): number {
+	const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
+	return (safePage - 1) * pageSize;
+}
+
+export function paginatedList(
+	query: EntityQuery = {},
+	options?: {
+		limit?: number;
+		offset?: number;
+		orderBy?: EntityQuery['$orderBy'];
+	},
+): EntityQuery {
+	return {
+		...query,
+		$limit: options?.limit ?? DEFAULT_LIST_PAGE_SIZE,
+		$offset: options?.offset ?? 0,
+		...(options?.orderBy ? { $orderBy: options.orderBy } : {}),
+	};
+}
+
+export const STUDENT_LIST_ORDER: EntityQuery['$orderBy'] = [
+	{ field: 'lastName', direction: 'asc' },
+	{ field: 'firstName', direction: 'asc' },
+];
+
+export const GUARDIAN_LIST_ORDER: EntityQuery['$orderBy'] = [
+	{ field: 'lastName', direction: 'asc' },
+	{ field: 'firstName', direction: 'asc' },
+];
+
+export const STAFF_LIST_ORDER: EntityQuery['$orderBy'] = [
+	{ field: 'lastName', direction: 'asc' },
+	{ field: 'firstName', direction: 'asc' },
+];
+
 /**
  * Documented unscoped entity list read.
  * Use only when a route intentionally loads a school-wide collection.

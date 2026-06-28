@@ -17,6 +17,9 @@ type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 const SHELL_ACADEMIC_STRUCTURE_SCOPE
 	= 'Shell bootstrap loads school-wide academic structure selectors (school, years, periods, grade levels, classes).';
 
+const SHELL_SIDEBAR_COUNTS_SCOPE
+	= 'Shell bootstrap loads school-wide people counts for sidebar navigation badges.';
+
 export interface AppShellData {
 	schools: School[];
 	academicYears: AcademicYear[];
@@ -26,6 +29,8 @@ export interface AppShellData {
 	classes: ClassNode[];
 	hierarchy: HierarchyGroup[];
 	studentCount: number;
+	guardianCount: number;
+	staffCount: number;
 }
 
 export async function fetchActiveEnrollmentCountsByClass(
@@ -128,6 +133,19 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 	const hierarchy = buildClassHierarchy(classesList, gradeLevels);
 	const activeStudentCount = Object.values(studentCountByClass).reduce((total, count) => total + count, 0);
 
+	const schoolId = schools[0]?.id ?? '';
+	const [
+		{ count: rosterStudentCount },
+		{ count: guardianCount },
+		{ count: staffCount },
+	] = await Promise.all([
+		client.entities.students.count(schoolWideEntityList(SHELL_SIDEBAR_COUNTS_SCOPE)),
+		client.entities.guardians.count(schoolWideEntityList(SHELL_SIDEBAR_COUNTS_SCOPE)),
+		schoolId
+			? client.entities.staffMembers.count({ schoolId })
+			: Promise.resolve({ count: 0 }),
+	]);
+
 	return {
 		schools,
 		academicYears,
@@ -136,6 +154,8 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 		periodDefinitions,
 		classes: classesList,
 		hierarchy,
-		studentCount: activeStudentCount,
+		studentCount: rosterStudentCount || activeStudentCount,
+		guardianCount,
+		staffCount,
 	};
 }

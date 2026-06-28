@@ -37,6 +37,12 @@ const studentListFiltersCodec = defineUrlFilterCodec({
 	q: { type: 'search', default: '' },
 	class: { type: 'string', default: 'all' },
 	status: { type: 'string', default: 'all' },
+	page: { type: 'page', default: '1' },
+});
+
+const guardianListFiltersCodec = defineUrlFilterCodec({
+	q: { type: 'search', default: '' },
+	page: { type: 'page', default: '1' },
 });
 
 const classReportCardListFiltersCodec = defineUrlFilterCodec({
@@ -89,6 +95,7 @@ export type ClassStudentListFilters = ReturnType<typeof classStudentListFiltersC
 export type ActivityListFilters = ReturnType<typeof activityListFiltersCodec.read>;
 export type AnnouncementListFilters = ReturnType<typeof announcementListFiltersCodec.read>;
 export type StudentListFilters = ReturnType<typeof studentListFiltersCodec.read>;
+export type GuardianListFilters = ReturnType<typeof guardianListFiltersCodec.read>;
 export type ClassReportCardListFilters = ReturnType<typeof classReportCardListFiltersCodec.read>;
 export type PaymentListFilters = ReturnType<typeof paymentListFiltersCodec.read>;
 export type ReportCardDefinitionListFilters = ReturnType<typeof reportCardDefinitionListFiltersCodec.read>;
@@ -161,6 +168,14 @@ export function readStudentListFilters(url: URL): StudentListFilters {
 
 export function writeStudentListFilters(url: URL, filters: StudentListFilters): string {
 	return studentListFiltersCodec.write(url, filters);
+}
+
+export function readGuardianListFilters(url: URL): GuardianListFilters {
+	return guardianListFiltersCodec.read(url);
+}
+
+export function writeGuardianListFilters(url: URL, filters: GuardianListFilters): string {
+	return guardianListFiltersCodec.write(url, filters);
 }
 
 export function readClassReportCardListFilters(url: URL): ClassReportCardListFilters {

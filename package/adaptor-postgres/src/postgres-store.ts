@@ -1,5 +1,5 @@
 import type { BaseRepositoryInterface, Filter, QueryOptions } from '@edaya/core'
-import { eq, inArray, sql } from 'drizzle-orm'
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 import { buildWhereClause } from './lib/filter'
 import { transactionContext } from './lib/transaction'
 
@@ -61,7 +61,7 @@ implements BaseRepositoryInterface<T> {
       if (options.$orderBy && options.$orderBy.length > 0) {
         const orderByClauses = options.$orderBy.map(({ field, direction }) => {
           const col = this.table[field as string]
-          return direction === 'asc' ? col.asc() : col.desc()
+          return direction === 'asc' ? asc(col) : desc(col)
         })
         query = query.orderBy(...orderByClauses)
       }

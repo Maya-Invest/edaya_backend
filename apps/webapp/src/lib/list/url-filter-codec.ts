@@ -14,7 +14,12 @@ export interface EnumFieldConfig<T extends string = string> {
 	values: readonly T[];
 }
 
-export type FilterFieldConfig = SearchFieldConfig | StringFieldConfig | EnumFieldConfig;
+export interface PageFieldConfig {
+	type: 'page';
+	default: '1';
+}
+
+export type FilterFieldConfig = SearchFieldConfig | StringFieldConfig | EnumFieldConfig | PageFieldConfig;
 
 export type FilterSchema = Record<string, FilterFieldConfig>;
 
@@ -34,6 +39,12 @@ function readField(url: URL, key: string, config: FilterFieldConfig): string {
 			return raw && (config.values as readonly string[]).includes(raw)
 				? raw
 				: config.default;
+		case 'page': {
+			const parsed = Number(raw);
+			if (!raw || !Number.isFinite(parsed) || parsed < 1)
+				return config.default;
+			return String(Math.trunc(parsed));
+		}
 	}
 }
 
@@ -53,7 +64,8 @@ function writeField(
 			return;
 		}
 		case 'string':
-		case 'enum': {
+		case 'enum':
+		case 'page': {
 			if (value !== config.default)
 				next.searchParams.set(key, value);
 			else

@@ -1,6 +1,11 @@
 <script lang="ts">
 	import type { StaffMember } from '$lib/types/school';
+	import { academicContext } from '$lib/academic/context.svelte';
+	import { DEFAULT_LIST_PAGE_SIZE } from '$lib/api/entity-list-filters';
+	import { fetchStaffMembersPage } from '$lib/api/staff-data';
+	import { getBrowserSchoolClient } from '$lib/api/school-client';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
@@ -8,6 +13,7 @@
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Mail, Plus, Search } from '$lib/icons';
+	import { useOffsetInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import StaffCreateModal from './StaffCreateModal.svelte';
@@ -20,12 +26,21 @@
 		selectedId?: string;
 	} = $props();
 
-	const staff = $derived(detailDataContext.staff);
+	const infinite = useOffsetInfiniteList(async (offset, limit) => {
+		const page = await fetchStaffMembersPage(getBrowserSchoolClient(), {
+			schoolId: academicContext.schools[0]?.id ?? '',
+			academicYearId: academicContext.yearId,
+		}, { offset, limit });
+		detailDataContext.seedStaff(page.staff);
+		return { items: page.staff, total: page.totalStaff };
+	}, DEFAULT_LIST_PAGE_SIZE);
 
 	let q = $state('');
 	let createOpen = $state(false);
 
-	const list = $derived(staff.filter(s => s.name.toLowerCase().includes(q.toLowerCase())));
+	const list = $derived(
+		infinite.visible.filter(s => s.name.toLowerCase().includes(q.toLowerCase())),
+	);
 
 	function handleCreated(staffId: string) {
 		appGoto(detailHref.configStaffMember(staffId));
@@ -35,7 +50,7 @@
 <div class="animate-fade-in">
 	<ListPageHeader
 		eyebrow={$t('config.staffDirectory')}
-		title={$t('people.staffCount', { n: list.length })}
+		title={$t('people.staffCount', { n: infinite.total })}
 	>
 		{#snippet search()}
 			<div class="relative">
@@ -81,8 +96,15 @@
 			<div class="col-span-3">{$t('people.role')}</div>
 			<div class="col-span-4">{$t('people.classes')}</div>
 		</div>
-		<ul>
-			{#each list as s (s.id)}
+		<InfiniteList
+			hasMore={infinite.hasMore}
+			loading={infinite.loading}
+			total={infinite.total}
+			visibleCount={infinite.visible.length}
+			onLoadMore={infinite.loadMore}
+		>
+			<ul>
+				{#each list as s (s.id)}
 				{@const active = selectedId === s.id}
 				<li>
 					<button
@@ -138,6 +160,7 @@
 					{$t('students.noMatch')}
 				</li>
 			{/if}
-		</ul>
+			</ul>
+		</InfiniteList>
 	</div>
 </div>

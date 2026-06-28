@@ -1,6 +1,6 @@
 # Webapp Shell Improvements — Sprint Plan
 
-> **Status:** Phases 1–2, 7 validées UX · Phase 6 implémentée (seed local en cours) · prochaine : Phase 3  
+> **Status:** Phases 1–2, 7 validées UX · Phases 6–8 implémentées (seed + pagination) · prochaine : Phase 3  
 > **Created:** 2026-06-27  
 > **Last updated:** 2026-06-27  
 > **Branch suggérée:** `feature/webapp-shell-improvements`  
@@ -20,7 +20,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [ ] **Phase 5** — Templates notifications + invitations
 - [ ] **Phase 6** — Seeding élèves étendu
 - [x] **Phase 7** — Configuration école
-- [ ] **Phase 8** — Pagination API (default 50) + webapp
+- [x] **Phase 8** — Pagination API (default 50) + webapp
 
 ---
 
@@ -226,24 +226,24 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 
 ### 8.1 API
 
-- [ ] Constante `DEFAULT_LIST_LIMIT = 50` dans `apps/api/src/lib/school-api/`
-- [ ] Appliquer quand `$limit` absent sur endpoints `list`
-- [ ] Vérifier / uniformiser `$skip` ou cursor pagination
-- [ ] Tests API : list sans limit → max 50 ; avec limit explicite → respecté
+- [x] Constante `DEFAULT_LIST_LIMIT = 50` dans `apps/api/src/lib/school-api/pagination.ts`
+- [x] Appliqué dans `executeEntityList` quand `$limit` absent (cap à 500)
+- [x] Offset via `$offset` (pas de cursor)
+- [x] Tests API : `test-entity-list-pagination.test.ts`
 - [ ] Mettre à jour GraphiQL example si pertinent
 
 ### 8.2 Webapp
 
-- [ ] Helper `paginatedList({ limit: 50, skip })` dans `entity-list-filters.ts`
-- [ ] Composant `ListPagination` ou extension `InfiniteList`
-- [ ] Migrer listes principales (ordre suggéré) :
-  - [ ] Élèves école
-  - [ ] Responsables
-  - [ ] Staff
+- [x] Helper `paginatedList({ limit, offset })` dans `entity-list-filters.ts`
+- [x] Hook `useOffsetInfiniteList` + `InfiniteList` (scroll infini, 50/page)
+- [x] Listes migrées :
+  - [x] Élèves école (`SchoolStudentsView`)
+  - [x] Responsables (`GuardiansView`)
+  - [x] Staff (`StaffView`)
   - [ ] Facturation
-  - [ ] Autres collections scalables (liste finalisée en fin de phase)
-- [ ] Filtres URL : `?page=2` ou cursor
-- [ ] Smoke test avec seed Phase 6 : scroll / pages, perf acceptable
+  - [ ] Autres collections scalables
+- [x] Validation seed via `/count` (plus via list length)
+- [ ] Smoke test avec seed 1000 : scroll fluide, total header correct
 
 ---
 

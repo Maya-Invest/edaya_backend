@@ -2,6 +2,7 @@ import type { AccountInvitationData, ActorMetadata, CoreEntityKey } from "@edaya
 import { toPublicAccountInvitationData } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
+import { normalizeListFilter } from "@/lib/school-api/pagination";
 import type { CoreEntityConfig } from "@/lib/school-api/registry";
 
 export class EntityOperationError extends Error {
@@ -90,7 +91,8 @@ export async function executeEntityList(
   if (!readService) {
     throw new EntityOperationError("NOT_READABLE", `Entity ${serviceName} is not readable`);
   }
-  return serializeEntityResults(serviceName, await readService.list(filter ?? {}));
+  const normalizedFilter = normalizeListFilter(filter ?? {});
+  return serializeEntityResults(serviceName, await readService.list(normalizedFilter));
 }
 
 export async function executeEntityOne(
