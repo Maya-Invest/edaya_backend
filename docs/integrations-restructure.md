@@ -49,7 +49,8 @@ testing/
 | `@edaya/neon-migrations` | `package/integration-neon-migrations` | School DB migration apply |
 | `@edaya/betterauth-d1-migrations` | `package/integration-betterauth-d1-migrations` | Auth schema + D1 deploy |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
-| `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter |
+| `@edaya/adaptor-file` | `package/adaptor-file` | File storage adapters (in-memory, local dev, no-op) |
+| `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
 | `@edaya/dev-fixtures` | `testing/dev-fixtures` | Fixture data |
 | `@edaya/seeding` | `testing/seeding` | HTTP seed CLI |
 | `@edaya/integration-tests` | `testing/integration-tests` | Integration test suite + staging smoke |

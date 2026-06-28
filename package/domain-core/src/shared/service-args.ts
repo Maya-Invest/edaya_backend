@@ -6,7 +6,7 @@ export interface ServiceArgs extends AuthorizedServiceArgs {
   atomicExecution: AtomicExecutionPort
   repositories: SchoolRepositories
   notificationGateway: NotificationGatewayPort
-  fileStorage?: FileStoragePort
+  fileStorage: FileStoragePort
   templateService?: NotificationTemplateService
   invitationDelivery?: InvitationDeliveryPort
   authContactResolver?: AuthContactResolverPort

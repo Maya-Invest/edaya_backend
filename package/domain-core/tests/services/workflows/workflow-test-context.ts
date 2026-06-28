@@ -36,6 +36,7 @@ import {
 import { noOpNotificationGateway } from '../../../src/notifications'
 import { SchoolService } from '../../../src/services'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
+import { testFileStorage } from '../../support/test-file-storage'
 
 export const actor = createElevatedTestStaffActor('sch1', 'user1')
 
@@ -98,6 +99,7 @@ export function createContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockAtomic, mockPolicy, mockRepos, service }
@@ -150,6 +152,7 @@ export function createSetupContext() {
     actor,
     atomicExecution: mockAtomic,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { academicYears, mockAtomic, mockPolicy, mockRepos, service }
@@ -307,6 +310,7 @@ export function createReportCardContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockAtomic, mockPolicy, mockRepos, savedReportCards, service }
@@ -407,6 +411,7 @@ export function createFinanceContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockAtomic, mockPolicy, mockRepos, service }
@@ -574,6 +579,7 @@ export function createStudentTransitionContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockAtomic, mockPolicy, mockRepos, savedEnrollments, service }
@@ -641,6 +647,7 @@ export function createGuardianLinkContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { existingCreatedAt, mockPolicy, mockRepos, savedLinks, service }
@@ -780,6 +787,7 @@ export function createSchedulingContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockAtomic, mockPolicy, mockRepos, savedAttendance, savedSessions, service }
@@ -891,6 +899,7 @@ export function createCommunicationsContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockAtomic, mockPolicy, mockRepos, savedAnnouncements, savedDeliveries, service }
@@ -1023,6 +1032,7 @@ export function createBehaviorContext({
     actor,
     atomicExecution: mockAtomic,
     notificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { disciplinaryActions, incidents, involvements, mockAtomic, mockPolicy, mockRepos, service }

@@ -13,6 +13,7 @@ import {
   SCHOOL_COMMAND_KEYS,
   SchoolService,
 } from '../../src'
+import { testFileStorage } from '../support/test-file-storage'
 
 function keyDifference(actual: readonly string[], expected: readonly string[]) {
   const actualKeys = new Set(actual)
@@ -44,6 +45,7 @@ describe('school command keys', () => {
       authorizationPolicy,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     expect(keyDifference(Object.keys(service.commands), SCHOOL_COMMAND_KEYS)).toEqual({
@@ -72,6 +74,7 @@ describe('school command keys', () => {
       authorizationPolicy,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })).toBeTruthy()
 
     for (const commandKey of SCHOOL_COMMAND_KEYS) {

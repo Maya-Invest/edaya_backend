@@ -19,8 +19,8 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # bun run db:migrate:dev        # Neon school DB + local D1 auth
 # bun run db:migrate:auth:remote # production D1 auth only
 
-# R2 file storage (presigned upload/download) — buckets: edaya-files-dev | -staging | -production
-# Create an R2 API token in Cloudflare dashboard (Object Read & Write on the target bucket).
+# R2 file storage — S3-compatible API only (no wrangler [[r2_buckets]] binding).
+# Buckets: edaya-files-dev | -staging | -production. Create an R2 API token (Object Read & Write).
 # R2_ACCOUNT_ID=
 # R2_ACCESS_KEY_ID=
 # R2_SECRET_ACCESS_KEY=

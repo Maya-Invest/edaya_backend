@@ -12,6 +12,8 @@ describe("createNovuInvitationDeliveryPort", () => {
       subscriberClient: {
         upsert,
         remove,
+        registerPushDevice: mock(async () => {}),
+        unregisterPushDevice: mock(async () => {}),
       },
       triggerClient: {
         trigger,

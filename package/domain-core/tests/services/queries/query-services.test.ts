@@ -4,6 +4,7 @@ import { describe, expect, mock, test } from 'bun:test'
 import { noOpNotificationGateway, SchoolService } from '../../../src'
 import { AuthorizationError } from '../../../src/authorization'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
+import { testFileStorage } from '../../support/test-file-storage'
 
 describe('SchoolService query operations', () => {
   const mockRepos = {
@@ -47,6 +48,7 @@ describe('SchoolService query operations', () => {
     actor,
     atomicExecution: mockAtomic,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
   })
 
   test('getOverdueFeeCount checks permission and delegates to repo', async () => {

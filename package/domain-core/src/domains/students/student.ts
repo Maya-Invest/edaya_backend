@@ -3,7 +3,7 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { Permission } from '../../authorization'
 import { AttachmentOwnerKind } from '../../domains'
-import { directPermissionEntityConfig, readByIds, anyPermissionAction } from '../../shared'
+import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 

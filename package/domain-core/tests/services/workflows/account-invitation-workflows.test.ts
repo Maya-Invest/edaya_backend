@@ -15,6 +15,7 @@ import { SchoolNotificationTemplates } from '../../../src/domains/messaging/scho
 import { hashInvitationToken } from '../../../src/invitations/invitation-token'
 import { buildDefaultNotificationTemplateDocument } from '../../../src/notifications/templates/defaults/manifest'
 import { SchoolService } from '../../../src/services'
+import { testFileStorage } from '../../support/test-file-storage'
 
 function actorWithPermissions(permissions: readonly Permission[]) {
   const effectiveGrants: EffectiveGrants = {
@@ -119,6 +120,7 @@ function createInvitationContext() {
     actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
     atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
     notificationGateway: new RecordingNotificationGateway(),
+    fileStorage: testFileStorage,
     invitationDelivery,
   })
 
@@ -222,6 +224,7 @@ describe('AccountInvitationServiceWorkflow', () => {
       actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
       atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
       notificationGateway: new RecordingNotificationGateway(),
+      fileStorage: testFileStorage,
       invitationDelivery,
     })
 

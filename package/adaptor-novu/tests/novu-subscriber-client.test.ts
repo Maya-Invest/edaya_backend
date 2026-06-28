@@ -13,7 +13,12 @@ describe("createNovuNotificationGateway subscriber sync", () => {
         triggerBulk: async () => {},
         cancel: async () => {},
       },
-      subscriberClient: { upsert, remove },
+      subscriberClient: {
+        upsert,
+        remove,
+        registerPushDevice: mock(async () => {}),
+        unregisterPushDevice: mock(async () => {}),
+      },
     });
 
     const profile = {

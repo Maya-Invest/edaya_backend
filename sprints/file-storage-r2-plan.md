@@ -2,7 +2,7 @@
 
 > **Status:** Phase 1 **foundation implemented** — port, adapter, migration, API routes; client UI + generated PDFs pending  
 > **Created:** 2026-06-27  
-> **Last updated:** 2026-06-27  
+> **Last updated:** 2026-06-27 (S3 API–only access; no Worker R2 bindings)  
 > **Scope:** R2-backed object storage for user uploads and server-generated documents (signed report cards, incident reports)  
 > **Related domain:** `package/domain-core/src/domains/school/attachment.ts` (`Attachment`, `AttachmentOwnerKind`)
 
@@ -15,14 +15,14 @@ Separate **R2 buckets per environment** (dev local uses in-memory adapter; stagi
 | # | Outcome | Phase | Status |
 |---|---------|-------|--------|
 | 1 | `FileStoragePort` in `@edaya/core` | 1 | Done |
-| 2 | In-memory adapter for tests / local dev without R2 | 1 | Done |
+| 2 | In-memory / local dev / no-op adapters in `@edaya/adaptor-file` | 1 | Done |
 | 3 | `@edaya/adaptor-r2` (S3-compatible R2 client) | 1 | Done |
 | 4 | Attachment schema: `storageKey`, `status`, `checksum`; nullable `fileUrl` | 1 | Done |
 | 5 | Gateway wired through `ServiceArgs` → `BaseSchoolService` | 1 | Done |
 | 6 | `POST /core/files/upload-intents` (presigned PUT) | 1 | Done |
 | 7 | `GET /core/files/{attachmentId}/download-url` (presigned GET) | 1 | Done |
 | 8 | `registerAttachment` verifies object exists; `removeAttachment` deletes object | 1 | Done |
-| 9 | R2 bindings in `wrangler.toml` (per env bucket) | 1 | Done |
+| 9 | R2 bucket names + S3 API secrets per env | 1 | Done |
 | 10 | Webapp upload UI (presigned flow) | 2 | Pending |
 | 11 | Mobile guardian upload UI | 2 | Pending |
 | 12 | Generated PDF: report card on publish | 3 | Pending |
@@ -40,20 +40,44 @@ package/domain-core/src/
   ports/file-storage.ts              # Port interface
   storage/
     build-storage-key.ts             # Key layout helper
-    in-memory-file-storage.ts        # Test / dev fallback
-    no-op-file-storage.ts
     sanitize-file-name.ts
     upload-policy.ts                 # MIME + size limits per owner kind
 
+package/adaptor-file/
+  src/in-memory-file-storage.ts    # Test / worker dev fallback
+  src/local-dev-file-storage.ts    # Node dev filesystem + signed URLs
+  src/no-op-file-storage.ts
+
 package/adaptor-r2/
   src/r2-file-storage.ts             # S3-compatible R2 implementation
-  src/create-r2-file-storage.ts
+  src/create-from-env.ts
 
 apps/api/src/
   runtime/shared/resolve-file-storage.ts
   routes/file-storage.routes.ts
-  wrangler.toml                      # [[r2_buckets]] per env
+  wrangler.toml                      # R2_BUCKET_NAME per env; S3 API secrets via wrangler
 ```
+
+### 2.1.2 Local dev storage (Node, no R2)
+
+When `RUNTIME=node`, `NODE_ENV=development`, and R2 env vars are **unset**, `resolveFileStorage()` uses `createLocalDevFileStorage()`:
+
+- Files on disk under `.data/file-storage/` (gitignored)
+- Presigned URLs point at `PUT/GET /core/dev/files/*` on the API (HMAC signed with `BETTER_AUTH_SECRET`)
+- Full upload/download flow works offline without Cloudflare
+
+`wrangler dev` without R2 still uses in-memory storage. Use R2 dev bucket or Node `bun dev` for realistic file flows.
+
+### 2.1.1 Access model (S3 API only)
+
+`@edaya/adaptor-r2` uses the **R2 S3-compatible endpoint** for all operations (put, head, delete, presigned upload/download). We do **not** use `[[r2_buckets]]` Worker bindings — one code path for Node and Worker, and bindings cannot mint presigned URLs anyway.
+
+| Config | Where | Purpose |
+|--------|-------|---------|
+| `R2_BUCKET_NAME` | `wrangler.toml` `[vars]` per env | Non-secret bucket name |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | `.dev.vars` / `wrangler secret put` | S3 API + presigning |
+
+Local Node (`bun dev`) without secrets → in-memory adapter. Worker / Node with secrets → real R2.
 
 ### 2.2 Object key layout
 
@@ -98,13 +122,13 @@ Server workflow generates PDF bytes → `fileStorage.putObject()` → `registerA
 
 ## 3. R2 infrastructure (per env)
 
-| Environment | Bucket name (suggested) | Binding |
-|-------------|----------------------|---------|
-| Local worker dev | `edaya-files-dev` | `FILES` |
-| Staging | `edaya-files-staging` | `FILES` |
-| Production | `edaya-files-production` | `FILES` |
+| Environment | Bucket |
+|-------------|--------|
+| Local worker dev | `edaya-files-dev` |
+| Staging | `edaya-files-staging` |
+| Production | `edaya-files-production` |
 
-**Secrets** (Worker dashboard + `.dev.vars`):
+**Secrets** (`.dev.vars` for `wrangler dev`, `wrangler secret put` for deployed workers):
 
 - `R2_ACCOUNT_ID`
 - `R2_ACCESS_KEY_ID`
@@ -132,7 +156,7 @@ bunx wrangler r2 bucket create edaya-files-production
 - Presigned PUT enforces `Content-Type` and declared `sizeBytes`
 - `registerAttachment` rejects external `fileUrl` when R2 is configured
 - `removeAttachment` deletes the R2 object when `storageKey` is set
-- Ports-and-adapters: `@edaya/core` never imports `@edaya/adaptor-r2`
+- Ports-and-adapters: `@edaya/core` never imports `@edaya/adaptor-file` or `@edaya/adaptor-r2`
 
 ---
 
@@ -157,7 +181,7 @@ Validation: at least one of `storageKey` or `fileUrl` must be non-blank.
 - [x] Port + adapters
 - [x] Schema migration (`0021_attachment_storage.sql`)
 - [x] API routes + workflow updates
-- [x] Wrangler R2 bindings + env schema
+- [x] Wrangler `R2_BUCKET_NAME` vars + env schema (S3 API secrets)
 - [x] Core tests green (531 pass)
 
 ### Phase 2 — Client upload
@@ -185,6 +209,7 @@ Validation: at least one of `storageKey` or `fileUrl` must be non-blank.
 |------|------|
 | Core | `buildStorageKey`, in-memory adapter, attachment validation |
 | Adaptor | Presign + put/head/delete against in-memory or mocked S3 |
+| `@edaya/adaptor-r2` integration | `bun run test:integration` in `package/adaptor-r2` with R2 env vars set |
 | API | Upload intent auth gate, download URL permission |
 | Integration | Register attachment after in-memory put |
 

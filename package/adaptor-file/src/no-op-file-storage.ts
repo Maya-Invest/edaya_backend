@@ -1,4 +1,4 @@
-import type { FileStoragePort } from '../ports/file-storage'
+import type { FileStoragePort } from "@edaya/core";
 
 export const noOpFileStorage: FileStoragePort = {
   putObject: async () => ({ sizeBytes: 0 }),
@@ -8,10 +8,10 @@ export const noOpFileStorage: FileStoragePort = {
     key: input.key,
     uploadUrl: `noop://upload/${encodeURIComponent(input.key)}`,
     expiresAt: new Date(Date.now() + 60_000),
-    headers: { 'Content-Type': input.contentType },
+    headers: { "Content-Type": input.contentType },
   }),
   createPresignedDownload: async (_key, options) => ({
-    downloadUrl: `noop://download/${encodeURIComponent(options?.fileName ?? 'file')}`,
+    downloadUrl: `noop://download/${encodeURIComponent(options?.fileName ?? "file")}`,
     expiresAt: new Date(Date.now() + 60_000),
   }),
-}
+};

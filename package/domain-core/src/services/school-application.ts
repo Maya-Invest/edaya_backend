@@ -1,7 +1,6 @@
 import type { ActorMetadata } from '../authorization'
 import type { FileStoragePort, SchoolRepositories } from '../ports'
 import type { ServiceArgs } from '../shared/service-args'
-import { noOpFileStorage } from '../storage/no-op-file-storage'
 import { SchoolService } from './school-service'
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>
@@ -18,7 +17,7 @@ export class SchoolApplication {
   }
 
   get fileStorage(): FileStoragePort {
-    return this.args.fileStorage ?? noOpFileStorage
+    return this.args.fileStorage
   }
 
   forActor(actor: ActorMetadata): SchoolService {

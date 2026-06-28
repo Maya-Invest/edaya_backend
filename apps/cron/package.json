@@ -19,6 +19,7 @@
     "build": "tsup"
   },
   "dependencies": {
+    "@edaya/adaptor-file": "workspace:*",
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/core": "workspace:*",

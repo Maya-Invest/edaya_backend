@@ -3,7 +3,6 @@ import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, Noti
 import type { ServiceArgs } from '../shared/service-args'
 import type { CoreEntityServices } from './core-entity-catalog'
 import { noOpInvitationDeliveryPort } from '../invitations/no-op-invitation-delivery'
-import { noOpFileStorage } from '../storage/no-op-file-storage'
 import { NotificationTemplateService } from '../notifications/templates/notification-template-service'
 import { createCoreEntityServices } from './core-entity-catalog'
 
@@ -27,7 +26,7 @@ export class BaseSchoolService {
     this.authorizationPolicy = args.authorizationPolicy
     this.atomicExecution = args.atomicExecution
     this.notificationGateway = args.notificationGateway
-    this.fileStorage = args.fileStorage ?? noOpFileStorage
+    this.fileStorage = args.fileStorage
     this.invitationDelivery = args.invitationDelivery ?? noOpInvitationDeliveryPort
     this.templateService = args.templateService ?? new NotificationTemplateService(args.repositories)
     this.authContactResolver = args.authContactResolver

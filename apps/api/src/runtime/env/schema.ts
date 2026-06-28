@@ -53,6 +53,8 @@ export const EnvSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   /** R2 bucket name — separate bucket per environment */
   R2_BUCKET_NAME: z.string().min(1).optional(),
+  /** Local dev filesystem storage root when R2 is unset (Node dev only). */
+  FILE_STORAGE_DEV_ROOT: z.string().min(1).optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema> & {

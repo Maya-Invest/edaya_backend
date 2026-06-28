@@ -452,7 +452,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     const actor = this.baseService.actor
     await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
 
-    if (!actor.subjectId) {
+    if (actor.kind === 'system') {
       throw new BusinessRuleViolationError(
         'PUSH_DEVICE_SUBJECT_REQUIRED',
         'Link a login account before registering a push device',
@@ -479,7 +479,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     const actor = this.baseService.actor
     await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
 
-    if (!actor.subjectId) {
+    if (actor.kind === 'system') {
       throw new BusinessRuleViolationError(
         'PUSH_DEVICE_SUBJECT_REQUIRED',
         'Link a login account before unregistering a push device',

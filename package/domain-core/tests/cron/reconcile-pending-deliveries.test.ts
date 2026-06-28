@@ -4,6 +4,7 @@ import { reconcilePendingDeliveries } from '../../src/cron/jobs/reconcile-pendin
 import { MessageDelivery, MessageDeliveryStatus } from '../../src/domains'
 import { noOpNotificationGateway, RecordingNotificationGateway } from '../../src/notifications'
 import { SchoolApplication } from '../../src/services'
+import { testFileStorage } from '../support/test-file-storage'
 
 describe('reconcilePendingDeliveries', () => {
   test('applies provider status for pending deliveries', async () => {
@@ -47,6 +48,7 @@ describe('reconcilePendingDeliveries', () => {
     const application = new SchoolApplication({
       atomicExecution: { execute: async operation => operation() },
       notificationGateway: gateway,
+      fileStorage: testFileStorage,
       repositories,
       authorizationPolicy: createRepositoryAuthorizationPolicy({
         repositories,
@@ -116,6 +118,7 @@ describe('reconcilePendingDeliveries', () => {
     const application = new SchoolApplication({
       atomicExecution: { execute: async operation => operation() },
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
       repositories,
       authorizationPolicy: createRepositoryAuthorizationPolicy({
         repositories,

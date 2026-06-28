@@ -66,6 +66,7 @@ import { buildSchoolOverview } from '../../src/queries/school-overview'
 import { SchoolApplication } from '../../src/services'
 import { effectiveGrantsForRoles } from './effective-grants'
 import { matchesFilter } from './filter-matcher'
+import { testFileStorage } from './test-file-storage'
 
 interface EntityWithId {
   readonly id: string
@@ -474,6 +475,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const application = new SchoolApplication({
     atomicExecution: createAtomicExecution(transactionParticipants),
     notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
     repositories: schoolRepositories,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories: schoolRepositories,

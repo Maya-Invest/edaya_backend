@@ -2,6 +2,7 @@ import type {
   EmailStepUpsertDto,
   InAppStepUpsertDto,
   PushStepUpsertDto,
+  UpdateWorkflowDto,
 } from "@novu/api/models/components";
 
 export type BootstrapWorkflowStep = InAppStepUpsertDto | EmailStepUpsertDto | PushStepUpsertDto;
@@ -14,7 +15,7 @@ export interface BootstrapWorkflowDefinition {
   steps: BootstrapWorkflowStep[];
 }
 
-export type BootstrapWorkflowSpec = Omit<CreateWorkflowDto, "workflowId"> & {
+export type BootstrapWorkflowSpec = Omit<UpdateWorkflowDto, "workflowId"> & {
   workflowId: string;
 };
 

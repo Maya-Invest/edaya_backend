@@ -3,10 +3,10 @@ import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import {
+  assertUploadPolicyAllowed,
   Attachment,
   AttachmentOwnerKind,
   AttachmentStatus,
-  assertUploadPolicyAllowed,
   buildStorageKey,
   BusinessRuleViolationError,
   isInteractiveActor,
@@ -37,7 +37,7 @@ const uploadIntentResponseSchema = z.object({
   uploadUrl: z.string().url(),
   expiresAt: z.coerce.date(),
   headers: z.record(z.string()).optional(),
-  status: z.literal('pending_upload'),
+  status: z.literal("pending_upload"),
 }).openapi("CreateFileUploadIntentResponse");
 
 const downloadUrlResponseSchema = z.object({
@@ -130,7 +130,7 @@ export const createFileUploadIntentHandler: AppRouteHandler<typeof createFileUpl
       uploadUrl: presigned.uploadUrl,
       expiresAt: presigned.expiresAt.toISOString(),
       headers: presigned.headers,
-      status: 'pending_upload' as const,
+      status: "pending_upload" as const,
     }, HttpStatusCodes.OK);
   }
   catch (error) {
