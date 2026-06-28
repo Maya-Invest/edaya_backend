@@ -1,8 +1,9 @@
 import type { GuardianNotificationSettings } from '$lib/api/account-data';
 import type { AccountActor, SessionKind } from '$lib/auth/account-actor';
 import type { EffectiveGrantsSnapshot, SessionSnapshot } from '$lib/auth/types';
-import type { School, StaffMember } from '$lib/types/school';
+import type { StaffMember } from '$lib/types/school';
 import { browser } from '$app/environment';
+import { academicContext } from '$lib/academic/context.svelte';
 import { authClient } from './client';
 
 class AuthSession {
@@ -11,6 +12,8 @@ class AuthSession {
 	sessionKind = $state<SessionKind | null>(null);
 	subjectId = $state<string | null>(null);
 	loginEmail = $state<string | null>(null);
+	notificationEmail = $state<string | null>(null);
+	notificationPhone = $state<string | null>(null);
 	userProfile = $state<StaffMember | null>(null);
 	guardianSettings = $state<GuardianNotificationSettings | null>(null);
 	grants = $state<EffectiveGrantsSnapshot | null>(null);
@@ -53,17 +56,11 @@ class AuthSession {
 		return null;
 	});
 
-	school = $derived.by((): School | null => {
+	school = $derived.by(() => {
 		if (!this.schoolId) {
 			return null;
 		}
-		return {
-			id: this.schoolId,
-			name: 'EDAYA — Campus Central',
-			shortName: 'Campus Central',
-			city: 'Paris',
-			timeZone: 'Europe/Paris',
-		};
+		return academicContext.schools.find(entry => entry.id === this.schoolId) ?? null;
 	});
 
 	markLoading() {
@@ -81,6 +78,8 @@ class AuthSession {
 			guardianSettings?: GuardianNotificationSettings | null;
 			subjectId?: string | null;
 			loginEmail?: string | null;
+			notificationEmail?: string | null;
+			notificationPhone?: string | null;
 		},
 	) {
 		if (!session) {
@@ -96,7 +95,32 @@ class AuthSession {
 		this.guardianSettings = options?.guardianSettings ?? null;
 		this.subjectId = options?.subjectId ?? null;
 		this.loginEmail = options?.loginEmail ?? null;
+		this.notificationEmail = options?.notificationEmail
+			?? options?.guardianSettings?.notificationEmail
+			?? null;
+		this.notificationPhone = options?.notificationPhone
+			?? options?.guardianSettings?.notificationPhone
+			?? null;
 		this.ready = true;
+	}
+
+	updateNotificationContact(contact: {
+		notificationEmail?: string | null;
+		notificationPhone?: string | null;
+	}) {
+		if (contact.notificationEmail !== undefined) {
+			this.notificationEmail = contact.notificationEmail;
+		}
+		if (contact.notificationPhone !== undefined) {
+			this.notificationPhone = contact.notificationPhone;
+		}
+		if (this.guardianSettings) {
+			this.guardianSettings = {
+				...this.guardianSettings,
+				notificationEmail: this.notificationEmail,
+				notificationPhone: this.notificationPhone,
+			};
+		}
 	}
 
 	clear() {
@@ -105,6 +129,8 @@ class AuthSession {
 		this.sessionKind = null;
 		this.subjectId = null;
 		this.loginEmail = null;
+		this.notificationEmail = null;
+		this.notificationPhone = null;
 		this.userProfile = null;
 		this.guardianSettings = null;
 		this.grants = null;

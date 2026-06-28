@@ -87,4 +87,22 @@ describe('mapClassSubjects', () => {
 
 		expect(subjects[0]).toMatchObject({ category: 'Scientifique', color: 'mint' });
 	});
+
+	it('shows a placeholder teacher when staff roster data is unavailable', () => {
+		const subjects = mapClassSubjects('6a', {
+			classSubjectsRaw: [
+				{ id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', completedPercentage: 0 },
+			],
+			subjectsRaw: [
+				subject({ id: 'subj-math', name: 'Mathematics', code: 'MATH', defaultCoefficient: 3 }),
+			],
+			subjectMattersRaw: [],
+			staffMembersRaw: [],
+			staffAssignmentsRaw: [
+				{ id: 'sa-st1-math', staffId: 'st1', responsibility: 'Teacher', classSubjectId: 'cs-6a-math' },
+			],
+		});
+
+		expect(subjects[0]?.teacher).toBe('Non assigné');
+	});
 });

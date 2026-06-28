@@ -1,5 +1,5 @@
 import { academicContext } from '$lib/academic/context.svelte';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 import { refreshReportCardCatalog } from '$lib/queries/report-cards.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
@@ -7,7 +7,7 @@ export function queryClassGroupsPage() {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({ classCount: 0 }),
 		load: async () => ({ classCount: academicContext.classes.length }),
-		hasItems: data => data.classCount > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -15,7 +15,7 @@ export function queryAcademicAdminPage() {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({ yearCount: 0 }),
 		load: async () => ({ yearCount: academicContext.years.length }),
-		hasItems: data => data.yearCount > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -28,7 +28,7 @@ export function queryGradeScalesPage() {
 			}
 			return {};
 		},
-		hasItems: () => reportCardsContext.scales.length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -41,6 +41,6 @@ export function queryReportCardDefinitionsPage() {
 			}
 			return {};
 		},
-		hasItems: () => reportCardsContext.definitions.length > 0,
+		hasItems: listPageHasItems,
 	});
 }

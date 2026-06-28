@@ -18,8 +18,14 @@ import {
   SEED_POPULATION_CLASS_SUBJECTS,
   SEED_POPULATION_GUARDIANS,
   SEED_POPULATION_STUDENTS,
-  SEED_TARGET_STUDENT_COUNT,
 } from './population-seed'
+import {
+  buildClassStudentIds,
+  SEED_BULK_CLASSES,
+  SEED_BULK_GUARDIANS,
+  SEED_BULK_STUDENTS,
+  SEED_TARGET_STUDENT_COUNT,
+} from './population-generator'
 
 export {
   countSeedAssessmentResults,
@@ -67,9 +73,9 @@ export const SEED_SCHOOL_ID = 'sch-edaya-central'
 export const SEED_SCHOOL_PROFILE = {
   id: SEED_SCHOOL_ID,
   name: 'EDAYA — Campus Central',
-  timeZone: 'Europe/Paris',
-  city: 'Paris',
-  country: 'FR',
+  timeZone: 'America/Toronto',
+  city: 'Ottawa',
+  country: 'CA',
 } as const
 
 export const SEED_SCHOOL_NORD_ID = 'sch-edaya-nord'
@@ -99,7 +105,8 @@ export const SEED_CLASSES = [
   { id: '6b', gradeLevelId: 'gl-6', name: '6th — B', capacity: 30, homeroomStaffId: 'st2' },
   { id: '5a', gradeLevelId: 'gl-5', name: '5th — A', capacity: 30, homeroomStaffId: 'st3' },
   ...SEED_EXTENDED_CLASSES,
-] as const
+  ...SEED_BULK_CLASSES,
+]
 
 /** All staff from `apps/webapp/src/lib/data/school.ts` — st5 first (director bootstrap). */
 export const SEED_STAFF = [
@@ -127,7 +134,8 @@ export const SEED_STUDENTS = [
   { id: 's8', classId: '6b', name: 'Zara Khan', birthDate: '2014-06-11' },
   ...SEED_EXTENDED_STUDENTS,
   ...SEED_POPULATION_STUDENTS,
-] as const
+  ...SEED_BULK_STUDENTS,
+]
 
 export const SEED_GUARDIANS = [
   {
@@ -180,7 +188,8 @@ export const SEED_GUARDIANS = [
   },
   ...SEED_EXTENDED_GUARDIANS,
   ...SEED_POPULATION_GUARDIANS,
-] as const
+  ...SEED_BULK_GUARDIANS,
+]
 
 export function countSeedStudents(): number {
   return SEED_STUDENTS.length
@@ -189,6 +198,9 @@ export function countSeedStudents(): number {
 export function countSeedGuardians(): number {
   return SEED_GUARDIANS.length
 }
+
+/** All students grouped by class — derived from merged fixture records. */
+export const SEED_CLASS_STUDENT_IDS = buildClassStudentIds(SEED_STUDENTS)
 
 export { SEED_TARGET_STUDENT_COUNT }
 

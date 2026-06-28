@@ -10,12 +10,15 @@
 		errorMessage,
 		emptyTitle,
 		emptyDescription,
+		preserveShell = false,
 		children,
 	}: {
 		status: PageLoadState;
 		errorMessage?: string;
 		emptyTitle?: string;
 		emptyDescription?: string;
+		/** Keep list shell (header + CTA) visible when the collection is empty. */
+		preserveShell?: boolean;
 		children: Snippet;
 	} = $props();
 
@@ -43,7 +46,7 @@
 			</Button>
 		</div>
 	</div>
-{:else if status === 'empty'}
+{:else if status === 'empty' && !preserveShell}
 	<div class="flex min-h-[40vh] items-center justify-center p-8 animate-fade-in">
 		<div class="max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-soft">
 			<Inbox class="mx-auto mb-3 h-8 w-8 text-muted-foreground" />

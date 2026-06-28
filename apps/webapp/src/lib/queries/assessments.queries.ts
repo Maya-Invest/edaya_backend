@@ -3,7 +3,7 @@ import { loadClassEvaluationsPageData } from '$lib/api/assessments-data';
 import { loadClassPeopleData } from '$lib/api/people-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 import { getClassSubjects } from '$lib/queries/subjects.queries';
 
 export function queryClassEvaluationsPage(classId: string) {
@@ -25,6 +25,6 @@ export function queryClassEvaluationsPage(classId: string) {
 			detailDataContext.seedStudents(students, { classId });
 			return { classId };
 		},
-		hasItems: () => detailDataContext.evaluationsForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }

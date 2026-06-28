@@ -103,6 +103,30 @@ export async function postEntityList(
   return unwrapEntityList(body)
 }
 
+export async function postEntityCount(
+  options: CoreHttpRequestOptions,
+  serviceName: SeedEntityKey,
+  query: Record<string, unknown> = {},
+): Promise<number> {
+  const { response, body } = await options.client.jsonRequest<{ count?: number }>(
+    `/core/entities/${seedEntityPublicName(serviceName)}/count`,
+    {
+      method: 'POST',
+      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
+      body: JSON.stringify(query),
+    },
+  )
+
+  if (!response.ok) {
+    const message = typeof body === 'object' && body && 'message' in body
+      ? String((body as { message?: string }).message)
+      : `HTTP ${response.status}`
+    throw new Error(`Entity count failed for ${serviceName}: ${response.status} ${message}`)
+  }
+
+  return typeof body?.count === 'number' ? body.count : 0
+}
+
 export async function postEntityFindById(
   options: CoreHttpRequestOptions,
   serviceName: SeedEntityKey,

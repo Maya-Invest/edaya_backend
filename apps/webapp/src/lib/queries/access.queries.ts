@@ -3,7 +3,7 @@ import { loadAccessRolesData } from '$lib/api/access-roles-data';
 import { fetchStaffMembers } from '$lib/api/staff-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 
 export function queryRolesPage() {
 	return (url: URL) => resolvePageLoad(url, {
@@ -23,6 +23,6 @@ export function queryRolesPage() {
 			});
 			return {};
 		},
-		hasItems: () => detailDataContext.staff.length > 0,
+		hasItems: listPageHasItems,
 	});
 }

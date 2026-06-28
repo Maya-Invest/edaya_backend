@@ -4,7 +4,7 @@ import {
 
 } from '$lib/api/notification-templates-data';
 import { authSession } from '$lib/auth/session.svelte';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 
 export interface NotificationTemplatesPageData {
 	schoolId: string | null;
@@ -25,7 +25,7 @@ export function queryNotificationTemplatesPage() {
 			const document = await fetchSchoolNotificationTemplates(schoolId);
 			return { schoolId, document };
 		},
-		hasItems: data => data.document !== null,
+		hasItems: listPageHasItems,
 		errorMessage: 'Unable to load notification templates.',
 	});
 }

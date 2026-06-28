@@ -202,12 +202,16 @@ export interface AcademicPeriod {
 	status: AcademicPublishStatus;
 }
 
+export type SchoolType = 'primary' | 'secondary' | 'k12' | 'vocational' | 'other';
+
 export interface School {
 	id: string;
 	name: string;
 	shortName: string;
 	city: string;
+	country?: string;
 	timeZone: string;
+	type?: SchoolType | null;
 }
 
 export interface SchoolYearEvent {

@@ -11,7 +11,7 @@ import {
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 export async function refreshReportCardCatalog(): Promise<void> {
@@ -53,6 +53,6 @@ export function queryClassReportCardsPage(classId: string) {
 			detailDataContext.seedStudents(students, { classId });
 			return { classId };
 		},
-		hasItems: () => detailDataContext.studentsForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }

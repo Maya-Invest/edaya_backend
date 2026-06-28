@@ -7,38 +7,43 @@
 	import { t } from '$lib/i18n';
 	import { Crown, GraduationCap, ChevronDown } from '$lib/icons';
 	import {
-		MODULES,
-		SCHOOL_ITEMS,
-		CLASS_ITEMS,
-		FINANCE_ITEMS,
-		CONFIG_ITEMS,
 		DASHBOARD_HREF,
+		MODULES,
+		NAV_MODULE_ITEMS,
 		getModuleFromPath,
 		isDashboardPath,
 		classItemHref,
-
 	} from '$lib/navigation';
+	import { filterNavItems, visibleNavModuleKeys } from '$lib/navigation/nav-permissions';
 	import { cn } from '$lib/utils';
 
 	const {
 		hierarchy,
 		studentCount,
+		guardianCount,
+		staffCount,
 	}: {
 		hierarchy: HierarchyGroup[];
 		studentCount: number;
+		guardianCount: number;
+		staffCount: number;
 	} = $props();
 
-	const MODULE_ITEMS: Record<Exclude<ModuleKey, 'dashboard'>, ContextItem[]> = {
-		school: SCHOOL_ITEMS,
-		classes: CLASS_ITEMS,
-		finance: FINANCE_ITEMS,
-		configuration: CONFIG_ITEMS,
+	const schoolBadges: Record<string, number> = {
+		students: studentCount,
+		guardians: guardianCount,
+		staff: staffCount,
 	};
 
 	const activeModule = $derived(getModuleFromPath($page.url.pathname));
 	const classId = $derived($page.params.classId ?? '6a');
+	const grants = $derived(authSession.grants);
 
 	const expanded = $state<Partial<Record<Exclude<ModuleKey, 'dashboard'>, boolean>>>({});
+
+	const visibleModules = $derived(
+		MODULES.filter(mod => visibleNavModuleKeys(grants, { schoolId: authSession.schoolId ?? '' }).includes(mod.key)),
+	);
 
 	function isExpanded(key: Exclude<ModuleKey, 'dashboard'>): boolean {
 		return key === activeModule || (expanded[key] ?? false);
@@ -55,13 +60,14 @@
 	}
 
 	function resolveItems(key: Exclude<ModuleKey, 'dashboard'>) {
-		const items = MODULE_ITEMS[key];
+		const ctx = { schoolId: authSession.schoolId ?? '' };
+		const items = filterNavItems(NAV_MODULE_ITEMS[key], grants, ctx);
 		return items.map(it => ({
 			key: it.key,
 			label: $t(it.labelKey),
 			icon: it.icon,
 			href: key === 'classes' ? classItemHref(classId, it.href) : it.href,
-			badge: key === 'school' && it.key === 'students' ? studentCount : it.badge,
+			badge: key === 'school' ? schoolBadges[it.key] : it.badge,
 		}));
 	}
 </script>
@@ -104,7 +110,7 @@
 					<span class="min-w-0 flex-1 truncate text-left">{$t('dashboard.nav')}</span>
 				</a>
 			</li>
-			{#each MODULES as mod (mod.key)}
+			{#each visibleModules as mod (mod.key)}
 				{@const open = isExpanded(mod.key)}
 				{@const moduleActive = activeModule === mod.key}
 				{@const ModIcon = mod.icon}

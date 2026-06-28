@@ -1,30 +1,34 @@
 import { academicContext } from '$lib/academic/context.svelte';
 import { fetchActivities } from '$lib/api/activities-data';
 import { fetchAnnouncements } from '$lib/api/announcements-data';
+import { loadPeopleData, loadGuardiansPeopleData } from '$lib/api/people-data';
 import { loadAbsences, loadCalendarEvents, loadIncidentRouteData } from '$lib/api/school-life-data';
+import { fetchStaffMembers } from '$lib/api/staff-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
-import { getSchoolGuardiansData, getSchoolStaffData, getSchoolStudentsData } from '$lib/queries/people.queries';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 
 export function querySchoolAnnouncementsPage() {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({}),
 		load: async () => {
 			const schoolId = academicContext.schools[0]?.id ?? '';
-			const [announcements, students, guardians, staff] = await Promise.all([
+			const [announcements, people, guardiansData, staff] = await Promise.all([
 				fetchAnnouncements(queryClient(), schoolId),
-				getSchoolStudentsData(),
-				getSchoolGuardiansData().then(data => data.guardians),
-				getSchoolStaffData(),
+				loadPeopleData(queryClient()),
+				loadGuardiansPeopleData(queryClient()),
+				fetchStaffMembers(queryClient(), {
+					schoolId,
+					academicYearId: academicContext.yearId,
+				}),
 			]);
 			detailDataContext.seedAnnouncements(announcements);
-			detailDataContext.seedStudents(students);
-			detailDataContext.seedGuardians(guardians);
+			detailDataContext.seedStudents(people.students);
+			detailDataContext.seedGuardians(guardiansData.guardians);
 			detailDataContext.seedStaff(staff);
 			return {};
 		},
-		hasItems: () => detailDataContext.announcements.length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -39,7 +43,7 @@ export function querySchoolActivitiesPage() {
 			detailDataContext.seedActivities(activities);
 			return {};
 		},
-		hasItems: () => detailDataContext.activities.length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -55,7 +59,7 @@ export function querySchoolCalendarPage() {
 			detailDataContext.seedAbsences(absences);
 			return {};
 		},
-		hasItems: () => detailDataContext.schoolYearEvents.length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -71,6 +75,6 @@ export function querySchoolEventsPage() {
 			detailDataContext.seedStudents(students);
 			return {};
 		},
-		hasItems: () => detailDataContext.incidents.length > 0,
+		hasItems: listPageHasItems,
 	});
 }

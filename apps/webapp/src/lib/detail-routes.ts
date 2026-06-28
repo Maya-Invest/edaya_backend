@@ -108,7 +108,7 @@ const matchers: Matcher[] = [
 		test: p => p.match(/^\/classes\/([^/]+)\/subjects\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const s = detailDataContext.subjects.find(x => x.id === m[2]);
-			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/classes/[classId]/subjects/[[id]]', { classId: m[1] }) } : null;
+			return s ? { item: { kind: 'subject', data: s }, listPath: appPath('/(app)/classes/[classId]/teaching/[[id]]', { classId: m[1] }) } : null;
 		},
 	},
 	{
@@ -155,15 +155,15 @@ const matchers: Matcher[] = [
 		},
 	},
 	{
-		test: p => p.match(/^\/configuration\/staff\/([^/]+)$/) ?? null,
+		test: p => p.match(/^\/school\/staff\/([^/]+)$/) ?? null,
 		parse: (m) => {
 			const id = m[1];
 			if (id.startsWith('st')) {
 				const s = detailDataContext.staff.find(x => x.id === id);
-				return s ? { item: { kind: 'staff', data: s }, listPath: appPath('/(app)/configuration/staff/[[id]]') } : null;
+				return s ? { item: { kind: 'staff', data: s }, listPath: appPath('/(app)/school/staff/[[id]]') } : null;
 			}
 			const g = detailDataContext.guardians.find(x => x.id === id);
-			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/(app)/configuration/staff/[[id]]') } : null;
+			return g ? { item: { kind: 'guardian', data: g }, listPath: appPath('/(app)/school/staff/[[id]]') } : null;
 		},
 	},
 	{

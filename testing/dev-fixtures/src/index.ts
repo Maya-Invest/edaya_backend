@@ -52,6 +52,7 @@ export {
   planningSessionDate,
   SEED_ACADEMIC_PERIODS,
   SEED_ACADEMIC_YEAR_ID,
+  SEED_CLASS_STUDENT_IDS,
   SEED_CLASS_SUBJECT_MATTERS,
   SEED_CLASS_SUBJECTS,
   SEED_CLASSES,
@@ -120,8 +121,20 @@ export {
 export {
   countSeedPopulationGuardians,
   countSeedPopulationStudents,
-  SEED_CLASS_STUDENT_IDS,
+  SEED_NARRATIVE_CLASS_STUDENT_IDS,
 } from './population-seed'
+export {
+  buildClassStudentIds,
+  buildBulkGuardianEmail,
+  countSeedBulkClasses,
+  countSeedBulkGuardians,
+  countSeedBulkStudents,
+  SEED_BULK_CLASSES,
+  SEED_BULK_GUARDIANS,
+  SEED_BULK_STUDENTS,
+  SEED_BULK_CLASS_CAPACITY,
+  SEED_NARRATIVE_STUDENT_ID_MAX,
+} from './population-generator'
 export {
   SEED_GRADE_SCALES,
   SEED_REPORT_CARD_DEFINITION_MS6,

@@ -21,6 +21,7 @@
 <PageQuery {query} loadingTitle={$t('school.calendar')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('school.calendar')}

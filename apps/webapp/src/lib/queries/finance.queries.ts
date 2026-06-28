@@ -2,7 +2,7 @@ import { academicContext } from '$lib/academic/context.svelte';
 import { loadFinanceData } from '$lib/api/finance-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 
 async function seedFinancePageData() {
 	const { fees, billing, students } = await loadFinanceData(queryClient(), {
@@ -21,7 +21,7 @@ export function queryFinancePage() {
 			await seedFinancePageData();
 			return {};
 		},
-		hasItems: () => detailDataContext.fees.length > 0 || detailDataContext.billing.length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -32,6 +32,6 @@ export function queryPaymentsPage() {
 			await seedFinancePageData();
 			return {};
 		},
-		hasItems: () => detailDataContext.billing.length > 0,
+		hasItems: listPageHasItems,
 	});
 }

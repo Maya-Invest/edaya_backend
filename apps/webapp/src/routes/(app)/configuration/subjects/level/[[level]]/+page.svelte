@@ -25,6 +25,7 @@
 <PageQuery {query} loadingTitle={$t('config.subjects')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('config.subjects')}

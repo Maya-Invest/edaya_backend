@@ -15,6 +15,7 @@
 <PageQuery {query} loadingTitle={$t('finance.billing')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('finance.billing')}

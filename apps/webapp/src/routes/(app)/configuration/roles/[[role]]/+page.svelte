@@ -16,6 +16,7 @@
 <PageQuery {query} loadingTitle={$t('roles.title')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('roles.title')}

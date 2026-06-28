@@ -1,12 +1,16 @@
 <script lang="ts">
 	import type { Activity } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { deleteActivityMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import {
 		ENROLL_STATUS_STYLE,
 		ENROLL_STATUS_LABEL,
@@ -15,6 +19,7 @@
 	} from '../shared/drawer-constants.ts';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import ActivityFormModal from './ActivityFormModal.svelte';
+	import { t } from '$lib/i18n';
 
 	const { a }: { a: Activity } = $props();
 
@@ -64,6 +69,19 @@
 <div class="space-y-5">
 	<DrawerActionBar>
 		<ActivityFormModal activity={a} />
+		<PermissionGate permission="DISCIPLINE_CREATE" mode="disable" tooltip={$t('activities.permissionCreate')}>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('activities.deleteConfirm', { name: a.name })}
+					onConfirm={() => deleteActivityMutation(a.id, {
+						successMessage: get(t)('activities.toastDeleted', { name: a.name }),
+					})}
+				/>
+			{/snippet}
+		</PermissionGate>
 	</DrawerActionBar>
 
 	<div>

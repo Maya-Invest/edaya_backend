@@ -18,6 +18,8 @@ class AcademicContext {
 	periodDefinitions = $state<PeriodDefinition[]>([]);
 	schools = $state<School[]>([]);
 	studentCount = $state(0);
+	guardianCount = $state(0);
+	staffCount = $state(0);
 	shellReady = $state(false);
 	yearId = $state('');
 	periodId = $state('');
@@ -112,8 +114,21 @@ class AcademicContext {
 		this.gradeLevels = clone(shell.gradeLevels);
 		this.periodDefinitions = clone(shell.periodDefinitions);
 		this.studentCount = shell.studentCount;
+		this.guardianCount = shell.guardianCount;
+		this.staffCount = shell.staffCount;
 		this.init(shell.academicYears, shell.academicPeriods, shell.classes);
 		this.shellReady = true;
+	}
+
+	updateSchool(school: School) {
+		const index = this.schools.findIndex(entry => entry.id === school.id);
+		if (index === -1) {
+			this.schools = [...this.schools, school];
+			return;
+		}
+		const next = [...this.schools];
+		next[index] = school;
+		this.schools = next;
 	}
 
 	reset() {
@@ -124,6 +139,8 @@ class AcademicContext {
 		this.periodDefinitions = [];
 		this.schools = [];
 		this.studentCount = 0;
+		this.guardianCount = 0;
+		this.staffCount = 0;
 		this.shellReady = false;
 	}
 }

@@ -200,11 +200,11 @@ export const SEED_POPULATION_AUTH_GUARDIANS = [
   { guardianId: 'g21', email: 'm.nguyen@mail.com', name: 'Minh Nguyen' },
 ] as const
 
-/** Expected student count after all fixture modules merge. */
-export const SEED_TARGET_STUDENT_COUNT = 30
+/** Expected student count after all fixture modules merge (see population-generator.ts). */
+export { SEED_TARGET_STUDENT_COUNT } from './population-generator'
 
-/** Student ids grouped by class — used by assessments and integration tests. */
-export const SEED_CLASS_STUDENT_IDS = {
+/** Narrative student ids grouped by class — used by assessments and integration spot checks. */
+export const SEED_NARRATIVE_CLASS_STUDENT_IDS = {
   '6a': ['s1', 's2', 's3', 's4', 's5', 's6'],
   '6b': ['s7', 's8', 's14', 's15', 's16'],
   '5a': ['s11', 's17', 's18'],

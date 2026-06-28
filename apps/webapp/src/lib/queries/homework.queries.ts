@@ -1,6 +1,6 @@
 import { fetchDeadlines } from '$lib/api/homework-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 import { getClassSubjects } from '$lib/queries/subjects.queries';
 
 export function queryClassHomeworkPage(classId: string) {
@@ -15,6 +15,6 @@ export function queryClassHomeworkPage(classId: string) {
 			detailDataContext.seedSubjects(subjects, { classId });
 			return { classId };
 		},
-		hasItems: () => detailDataContext.deadlinesForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }

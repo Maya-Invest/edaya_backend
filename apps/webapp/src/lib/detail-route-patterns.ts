@@ -1,11 +1,10 @@
 const DETAIL_PATH_PATTERNS = [
 	/^\/account\/inbox\/[^/]+$/,
-	/^\/school\/(students|guardians|activities|announcements|events|calendar)\/[^/]+$/,
+	/^\/school\/(students|guardians|staff|activities|announcements|events|calendar)\/[^/]+$/,
 	/^\/classes\/[^/]+\/(students|subjects|timetable|teaching|homework|evaluations|report-cards)\/[^/]+$/,
 	/^\/finance\/(billing|fees)\/[^/]+$/,
 	/^\/configuration\/subjects\/level\/[^/]+$/,
 	/^\/configuration\/subjects\/[^/]+$/,
-	/^\/configuration\/staff\/[^/]+$/,
 	/^\/configuration\/roles\/[^/]+$/,
 	/^\/configuration\/report-cards\/[^/]+$/,
 ] as const;

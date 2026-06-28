@@ -207,6 +207,11 @@
 				<div class="col-span-1 text-right">{$t('students.status')}</div>
 			</div>
 			<ul>
+				{#if billing.length === 0}
+					<li class="px-5 py-12 text-center text-sm text-muted-foreground">
+						{$t('dataState.emptyDescription')}
+					</li>
+				{:else}
 				{#each billing as b (b.id)}
 					{@const student = students.find(s => s.id === b.studentId)}
 					{@const fee = fees.find(f => f.id === b.feeId)}
@@ -280,10 +285,16 @@
 						</li>
 					{/if}
 				{/each}
+				{/if}
 			</ul>
 		</div>
 	{:else}
 		<div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+			{#if fees.length === 0}
+				<p class="col-span-full py-12 text-center text-sm text-muted-foreground">
+					{$t('dataState.emptyDescription')}
+				</p>
+			{:else}
 			{#each fees as f (f.id)}
 				{@const active = selectedId === f.id}
 				{@const usage = billing.filter(b => b.feeId === f.id).length}
@@ -318,6 +329,7 @@
 					</p>
 				</button>
 			{/each}
+			{/if}
 		</div>
 	{/if}
 </div>

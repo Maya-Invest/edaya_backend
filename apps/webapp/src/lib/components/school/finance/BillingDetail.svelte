@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { StudentBilling } from '$lib/types/school';
+	import { deleteStudentFeeMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import PaymentFormModal from './PaymentFormModal.svelte';
 
@@ -119,6 +122,43 @@
 							feeName={fee.name}
 							{disabled}
 							{title}
+						/>
+					{/snippet}
+				</PermissionGate>
+				<PermissionGate
+					permission="FINANCIAL_CONFIG_CONFIGURE"
+					mode="disable"
+					tooltip={$t('fee.permissionConfigure')}
+				>
+					{#snippet children({ disabled, title })}
+						<DeleteEntityButton
+							{disabled}
+							{title}
+							confirmTitle={$t('common.deleteConfirmTitle')}
+							confirmDescription={$t('finance.deleteBillingConfirm', { name: student.name })}
+							onConfirm={() => deleteStudentFeeMutation(b.id, {
+								successMessage: get(t)('finance.toastBillingDeleted'),
+							})}
+						/>
+					{/snippet}
+				</PermissionGate>
+			</DrawerActionBar>
+		{:else}
+			<DrawerActionBar>
+				<PermissionGate
+					permission="FINANCIAL_CONFIG_CONFIGURE"
+					mode="disable"
+					tooltip={$t('fee.permissionConfigure')}
+				>
+					{#snippet children({ disabled, title })}
+						<DeleteEntityButton
+							{disabled}
+							{title}
+							confirmTitle={$t('common.deleteConfirmTitle')}
+							confirmDescription={$t('finance.deleteBillingConfirm', { name: student.name })}
+							onConfirm={() => deleteStudentFeeMutation(b.id, {
+								successMessage: get(t)('finance.toastBillingDeleted'),
+							})}
 						/>
 					{/snippet}
 				</PermissionGate>

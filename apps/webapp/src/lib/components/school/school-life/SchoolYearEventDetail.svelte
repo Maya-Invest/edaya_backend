@@ -1,8 +1,11 @@
 <script lang="ts">
 	import type { SchoolYearEvent } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { deleteSchoolYearEventMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { locale, t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import SchoolYearEventFormModal from './SchoolYearEventFormModal.svelte';
@@ -80,6 +83,23 @@
 		>
 			{#snippet children({ disabled, title })}
 				<SchoolYearEventFormModal event={ev} {disabled} {title} />
+			{/snippet}
+		</PermissionGate>
+		<PermissionGate
+			permission="TIMETABLE_UPDATE"
+			mode="disable"
+			tooltip={$t('calendar.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('cal.deleteConfirm', { title: ev.title })}
+					onConfirm={() => deleteSchoolYearEventMutation(ev, {
+						successMessage: get(t)('cal.toastDeleted', { title: ev.title }),
+					})}
+				/>
 			{/snippet}
 		</PermissionGate>
 	</DrawerActionBar>

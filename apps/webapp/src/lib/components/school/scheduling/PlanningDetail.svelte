@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { PlanningEvent } from '$lib/types/school';
 	import type { SessionAttendanceStatus } from '$lib/types/session-detail';
+	import { deleteSessionMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import { loadSessionDetail } from '$lib/api/session-detail-data';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
@@ -10,6 +12,7 @@
 	import { queryClient } from '$lib/queries/client';
 	import { sessionDetailContext } from '$lib/session-detail/context.svelte';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerEmptyState from '../shared/DrawerEmptyState.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
@@ -119,6 +122,19 @@
 		</div>
 		<DrawerActionBar>
 			<PlanningFormModal event={s} />
+			<PermissionGate permission="TIMETABLE_UPDATE" mode="disable" tooltip={$t('calendar.permissionUpdate')}>
+				{#snippet children({ disabled, title })}
+					<DeleteEntityButton
+						{disabled}
+						{title}
+						confirmTitle={$t('common.deleteConfirmTitle')}
+						confirmDescription={$t('planning.deleteConfirm', { title: s.title })}
+						onConfirm={() => deleteSessionMutation(s.id, {
+							successMessage: get(t)('planning.toastDeleted', { title: s.title }),
+						})}
+					/>
+				{/snippet}
+			</PermissionGate>
 		</DrawerActionBar>
 	{:else if tab === 'attendance'}
 		{#if sessionLoading}

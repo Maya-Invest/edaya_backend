@@ -2,8 +2,10 @@
 	import type { StaffMember } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
+	import { deleteStaffMemberMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { t } from '$lib/i18n';
@@ -150,6 +152,19 @@
 				<PermissionGate permission="STAFF_UPDATE" mode="disable" tooltip={$t('staff.permissionUpdate')}>
 					{#snippet children({ disabled, title })}
 						<StaffProfileEditModal {s} {disabled} {title} />
+					{/snippet}
+				</PermissionGate>
+				<PermissionGate permission="STAFF_UPDATE" mode="disable" tooltip={$t('staff.permissionUpdate')}>
+					{#snippet children({ disabled, title })}
+						<DeleteEntityButton
+							{disabled}
+							{title}
+							confirmTitle={$t('common.deleteConfirmTitle')}
+							confirmDescription={$t('staff.deleteConfirm', { name: s.name })}
+							onConfirm={() => deleteStaffMemberMutation(s.id, {
+								successMessage: get(t)('staff.toastDeleted', { name: s.name }),
+							})}
+						/>
 					{/snippet}
 				</PermissionGate>
 			</DrawerActionBar>
