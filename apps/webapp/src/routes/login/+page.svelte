@@ -3,13 +3,13 @@
 	import type { AuthSplitPanel } from '$lib/components/auth/AuthSplitShell.svelte';
 	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
-	import { redirectPathIfLoggedIn } from '$lib/auth/complete-sign-in';
+	import { redirectPathIfAuthenticated } from '$lib/auth/resolve-post-auth';
 	import { DEFAULT_LOGIN_METHOD_ID } from '$lib/auth/login-methods';
 	import ApiConnectionBanner from '$lib/components/auth/ApiConnectionBanner.svelte';
 	import AuthSplitShell from '$lib/components/auth/AuthSplitShell.svelte';
 	import LoginPanelHost from '$lib/components/auth/login/LoginPanelHost.svelte';
 	import SignupPanel from '$lib/components/auth/signup/SignupPanel.svelte';
-	import { isDemoLoginEnabled } from '$lib/env/app-env';
+	import { isDemoLoginEnabled, isPublicSchoolRegistrationEnabled } from '$lib/env/app-env';
 	import { t } from '$lib/i18n';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 
@@ -19,9 +19,10 @@
 	let activePanel = $state<AuthSplitPanel>('signin');
 
 	const showDemoLink = $derived(isDemoLoginEnabled());
+	const showSignup = $derived(isPublicSchoolRegistrationEnabled());
 
 	$effect(() => {
-		const target = redirectPathIfLoggedIn();
+		const target = redirectPathIfAuthenticated();
 		if (target) {
 			appGoto(target, { replaceState: true });
 		}
@@ -53,16 +54,19 @@
 
 <AuthSplitShell
 	activePanel={activePanel}
+	showSignup={showSignup}
 	onPanelChange={(panel) => {
 		activePanel = panel;
 	}}
 >
 	{#snippet signup()}
-		<SignupPanel
-			bind:email
-			{apiConnected}
-			onSwitchToSignIn={handleSwitchToSignIn}
-		/>
+		{#if showSignup}
+			<SignupPanel
+				bind:email
+				{apiConnected}
+				onSwitchToSignIn={handleSwitchToSignIn}
+			/>
+		{/if}
 	{/snippet}
 
 	{#snippet signin()}

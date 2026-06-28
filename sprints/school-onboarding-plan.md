@@ -14,7 +14,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 
 - [ ] **Phase 0** — Livraison email auth (OTP / vérification) *(en pause — à reprendre)*
 - [x] **Phase 1** — Écran auth split (login à droite · signup à gauche)
-- [ ] **Phase 2** — Inscription + redirection compte non lié
+- [x] **Phase 2** — Inscription + redirection compte non lié
 - [ ] **Phase 3** — Shell assistant + barre de progression
 - [ ] **Phase 4** — Étape 1 : identité école + année / période
 - [ ] **Phase 5** — Étape 2 : modèle établissement + classes + curriculum
@@ -202,21 +202,21 @@ Route : `apps/webapp/src/routes/onboarding/+layout.svelte` + sous-routes ou quer
 
 #### 2.1 Guard de navigation post-auth
 
-- [ ] Nouveau helper `resolvePostAuthPath()` :
+- [x] Nouveau helper `resolvePostAuthPath()` :
   - session `/core/authorization/effective-grants` OK → dashboard (directeur) ou route métier
   - Better Auth OK mais 401 core → `/onboarding`
-- [ ] Mettre à jour `completeAuthSignIn`, `redirectPathIfLoggedIn`, signup success handler
+- [x] Mettre à jour `completeAuthSignIn`, `redirectPathIfLoggedIn`, signup success handler
 
 #### 2.2 Route guard onboarding
 
-- [ ] `(app)` layout : si user connecté sans acteur → redirect `/onboarding`
-- [ ] `/onboarding` : si user déjà lié → redirect dashboard
-- [ ] Route publique onboarding (hors `(app)` shell)
+- [x] `(app)` layout : si user connecté sans acteur → redirect `/onboarding`
+- [x] `/onboarding` : si user déjà lié → redirect dashboard
+- [x] Route publique onboarding (hors `(app)` shell)
 
 #### 2.3 Feature flag
 
-- [ ] Exposer côté webapp si registration publique activée (aligné `ALLOW_PUBLIC_SCHOOL_REGISTRATION`)
-- [ ] Masquer signup si désactivé (prod sans flag)
+- [x] Exposer côté webapp si registration publique activée (aligné `ALLOW_PUBLIC_SCHOOL_REGISTRATION`)
+- [x] Masquer signup si désactivé (prod sans flag)
 
 **Fichiers clés :** `complete-sign-in.ts`, `bootstrap.ts`, `routes/onboarding/+layout.ts`
 

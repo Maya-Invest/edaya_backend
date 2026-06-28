@@ -89,6 +89,12 @@ export const fr: Dict = {
 	'auth.noAccountYet': 'Pas encore de compte ?',
 	'auth.switchToSignIn': 'Se connecter',
 	'auth.switchToSignUp': 'Créer un compte',
+
+	'onboarding.title': 'Configuration de votre école',
+	'onboarding.placeholder': 'Bienvenue ! L’assistant de configuration arrive à l’étape suivante.',
+	'onboarding.signedInAs': 'Connecté en tant que {email}',
+	'onboarding.comingSoon': 'Les étapes guidées (école, classes, équipe) seront disponibles très bientôt.',
+
 	'auth.demoSignInFailed': 'Connexion échouée',
 	'auth.demoWelcome': 'Bienvenue, {name}',
 	'auth.demoSectionTitle': 'Comptes démo',

@@ -91,6 +91,12 @@ export const en: Dict = {
 	'auth.noAccountYet': 'No account yet?',
 	'auth.switchToSignIn': 'Sign in',
 	'auth.switchToSignUp': 'Create account',
+
+	'onboarding.title': 'Set up your school',
+	'onboarding.placeholder': 'Welcome! The setup wizard continues in the next step.',
+	'onboarding.signedInAs': 'Signed in as {email}',
+	'onboarding.comingSoon': 'Guided steps (school, classes, team) are coming very soon.',
+
 	'auth.demoSignInFailed': 'Sign-in failed',
 	'auth.demoWelcome': 'Welcome, {name}',
 	'auth.demoSectionTitle': 'Demo accounts',

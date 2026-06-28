@@ -48,7 +48,16 @@
 	}
 
 	$effect(() => {
-		if (authSession.ready && !authSession.isLoggedIn) {
+		if (!authSession.ready) {
+			return;
+		}
+
+		if (authSession.needsOnboarding) {
+			appGoto(appPath('/onboarding'), { replaceState: true });
+			return;
+		}
+
+		if (!authSession.isLoggedIn) {
 			appGoto(appPath('/login'), { replaceState: true });
 		}
 	});
