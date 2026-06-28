@@ -21,12 +21,12 @@ export interface BoundaryViolation {
 export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
   {
     label: 'runtime imports http',
-    pattern: /from ["']@\/http/,
+    pattern: /from ["']@\/http\/(?!bindings)/,
     searchPath: 'apps/api/src/runtime',
   },
   {
     label: 'core imports integrations',
-    pattern: /from ["']@edaya\/(neon-migrations|betterauth-d1-migrations)/,
+    pattern: /from ["']@edaya\/integration-migrations/,
     searchPath: 'package/domain-core/src',
   },
   {
@@ -37,7 +37,7 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
   ...['package/domain-core', 'package/adaptor-postgres', 'package/generated-api-client', 'package/adaptor-novu', 'package/adaptor-file', 'package/adaptor-r2'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports integrations',
-      pattern: /from ["']@edaya\/(neon-migrations|betterauth-d1-migrations)/,
+      pattern: /from ["']@edaya\/integration-migrations/,
       searchPath,
     }),
   ),
@@ -130,13 +130,14 @@ function registerTests(): void {
   describe('findBoundaryViolations', () => {
     test('reports no violations for clean imports', () => {
       const root = createRepoRoot()
-      writeSource(root, 'apps/api/src/runtime/node/create-runtime.ts', `import { foo } from '../shared/foo'\n`)
+      writeSource(root, 'apps/api/src/runtime/local/resolve-api-runtime.ts', `import type { AppBindings } from '@/http/bindings'\n`)
+      writeSource(root, 'apps/api/src/runtime/local/build-runtime.ts', `import { foo } from '../shared/foo'\n`)
       writeSource(root, 'package/domain-core/src/index.ts', `import { bar } from '@edaya/adaptor-postgres'\n`)
 
       expect(findBoundaryViolations([
         {
           label: 'runtime imports http',
-          pattern: /from ["']@\/http/,
+          pattern: /from ["']@\/http\/(?!bindings)/,
           searchPath: 'apps/api/src/runtime',
         },
         {
@@ -147,35 +148,52 @@ function registerTests(): void {
       ], root)).toEqual([])
     })
 
-    test('reports runtime imports of http layer', () => {
+    test('allows runtime imports of http bindings only', () => {
       const root = createRepoRoot()
-      writeSource(root, 'apps/api/src/runtime/node/create-runtime.ts', `import { app } from '@/http/app'\n`)
+      writeSource(root, 'apps/api/src/runtime/local/resolve-api-runtime.ts', `import type { AppBindings } from '@/http/bindings'\n`)
+      writeSource(root, 'apps/api/src/runtime/local/build-runtime.ts', `import { app } from '@/http/app'\n`)
 
       expect(findBoundaryViolations([
         {
           label: 'runtime imports http',
-          pattern: /from ["']@\/http/,
+          pattern: /from ["']@\/http\/(?!bindings)/,
           searchPath: 'apps/api/src/runtime',
         },
       ], root)).toEqual([{
         label: 'runtime imports http',
-        matches: ['apps/api/src/runtime/node/create-runtime.ts:1:import { app } from \'@/http/app\''],
+        matches: ['apps/api/src/runtime/local/build-runtime.ts:1:import { app } from \'@/http/app\''],
+      }])
+    })
+
+    test('reports runtime imports of http layer', () => {
+      const root = createRepoRoot()
+      writeSource(root, 'apps/api/src/runtime/local/build-runtime.ts', `import { app } from '@/http/app'\n`)
+
+      expect(findBoundaryViolations([
+        {
+          label: 'runtime imports http',
+          pattern: /from ["']@\/http\/(?!bindings)/,
+          searchPath: 'apps/api/src/runtime',
+        },
+      ], root)).toEqual([{
+        label: 'runtime imports http',
+        matches: ['apps/api/src/runtime/local/build-runtime.ts:1:import { app } from \'@/http/app\''],
       }])
     })
 
     test('reports core imports of integration packages', () => {
       const root = createRepoRoot()
-      writeSource(root, 'package/domain-core/src/index.ts', `import { migrate } from '@edaya/neon-migrations'\n`)
+      writeSource(root, 'package/domain-core/src/index.ts', `import { migrate } from '@edaya/integration-migrations'\n`)
 
       expect(findBoundaryViolations([
         {
           label: 'core imports integrations',
-          pattern: /from ["']@edaya\/(neon-migrations|betterauth-d1-migrations)/,
+          pattern: /from ["']@edaya\/integration-migrations/,
           searchPath: 'package/domain-core/src',
         },
       ], root)).toEqual([{
         label: 'core imports integrations',
-        matches: ['package/domain-core/src/index.ts:1:import { migrate } from \'@edaya/neon-migrations\''],
+        matches: ['package/domain-core/src/index.ts:1:import { migrate } from \'@edaya/integration-migrations\''],
       }])
     })
 
@@ -187,7 +205,7 @@ function registerTests(): void {
       expect(findBoundaryViolations([
         {
           label: 'runtime imports http',
-          pattern: /from ["']@\/http/,
+          pattern: /from ["']@\/http\/(?!bindings)/,
           searchPath: 'apps/api/src/runtime',
         },
       ], root)).toEqual([])

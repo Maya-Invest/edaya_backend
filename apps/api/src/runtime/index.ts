@@ -1,31 +1,33 @@
+export {
+  getApiRuntime,
+  resetApiRuntimesForTests,
+} from "@/runtime/local/registry";
+
+export { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
+
 /**
  * Public runtime API — prefer importing from `@/runtime`.
  *
- * Exception: middleware uses `@/runtime/resolve/api-runtime` so Wrangler can
- * alias the Worker implementation (`wrangler.toml` `[alias]`).
+ * Middleware imports `@/runtime/resolve-api-runtime` (tsconfig → local;
+ * Wrangler alias → worker).
  */
 export {
   type Environment,
   inferRuntimeKind,
+  loadDotenvFiles,
+  loadLocalProcessEnv,
   parseEnv,
   parseRuntimeEnv,
   prepareRuntimeBindings,
+  resolveAccountInvitationsEnabled,
   resolveDatabaseUrl,
-  usesHyperdriveBinding,
-} from "@/runtime/env";
-
-export { loadDotenvFiles, loadNodeProcessEnv } from "@/runtime/env/node-loader";
-
-export {
+  resolveInviteBaseUrl,
+  resolveRepoLocalDatabaseUrl,
+  resolveRepoLocalDataPath,
+  resolveRepoRoot,
   shouldAllowPublicSchoolRegistration,
-} from "@/runtime/feature-flags";
-
-export {
-  getApiRuntime,
-  resetApiRuntimesForTests,
-} from "@/runtime/registry";
-
-export { createAuth } from "@/runtime/shared/create-auth";
+  usesHyperdriveBinding,
+} from "@/runtime/shared/env";
 
 export type {
   ApiRuntime,

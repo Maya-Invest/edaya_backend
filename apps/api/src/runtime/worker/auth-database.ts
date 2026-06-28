@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import { readAuthDbBinding } from "@/runtime/env/schema";
-import type { Environment } from "@/runtime/env/schema";
+import { readAuthDbBinding } from "@/runtime/shared/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 import type { DatabaseHandle } from "@/runtime/types";
 
 export async function createAuthDatabase(env: Environment, bindings?: Record<string, unknown>): Promise<DatabaseHandle> {

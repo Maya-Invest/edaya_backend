@@ -1,55 +1,64 @@
 # API runtime
 
-Dual-runtime wiring for the Hono API: **Node** (local dev, tests, containers) and **Worker** (Cloudflare).
+Three runtime profiles: **in-memory** (tests), **local** (dev), **worker** (Cloudflare). Shared wiring lives under `shared/`.
 
 See [docs/api-runtimes.md](../../../../docs/api-runtimes.md) for env vars and commands.
 
 ## Public API
 
-Import from **`@/runtime`** everywhere outside this folder:
-
 ```typescript
 import type { ApiRuntime, Environment } from "@/runtime";
 import {
-  createAuth,
   getApiRuntime,
-  loadNodeProcessEnv,
-  parseEnv,
+  loadLocalProcessEnv,
   parseRuntimeEnv,
   resetApiRuntimesForTests,
-  shouldAllowPublicSchoolRegistration,
 } from "@/runtime";
 ```
 
-**Exception** — HTTP middleware must import the Wrangler-aliased resolver path:
-
-```typescript
-import { closeRequestApiRuntime, resolveApiRuntime } from "@/runtime/resolve/api-runtime";
-```
-
-Subfolders (`env/`, `registry/`, `shared/`, `node/`, `worker/`) are **internal**. Do not import them from routes, tests, or other `lib/` modules unless you are extending the runtime itself. Worker code should import `@/runtime/env` or `@/runtime/feature-flags` directly — not the `@/runtime` barrel — to avoid pulling Node-only modules into the Worker bundle.
+Middleware imports `@/runtime/resolve-api-runtime` (tsconfig defaults to `local/`; Wrangler aliases to `worker/`).
 
 ## Layout
 
 ```
 runtime/
-  index.ts              # Public exports (start here)
+  index.ts
   types.ts
-  feature-flags.ts
 
-  env/                  # internal — env parsing, bindings, dotenv
-  registry/             # internal — Node process cache
-  resolve/              # api-runtime.ts (+ .worker.ts via Wrangler alias)
-  shared/               # internal — Better Auth + ApiRuntime assembly
-  node/                 # internal — Node DB + buildNodeApiRuntime
-  worker/               # internal — Worker DB + buildWorkerApiRuntime
+  shared/
+    env/
+      schema.ts, bindings.ts, derived.ts, ...
+    adapters/
+      file-storage.ts
+      notification-gateway.ts
+      invitation-delivery.ts
+      notification-delivery-webhook.ts
+      auth-otp-mailer.ts
+      auth-contact-resolver.ts
+      better-auth.ts
+      pino-logger.ts
+    create-api-runtime.ts
+    school-application.ts
+    process-registry.ts
+    school-database.ts
+
+  in-memory/
+    build-runtime.ts, auth-database.ts
+
+  local/
+    profile.ts, build-runtime.ts, school-database.ts, auth-database.ts
+    registry.ts
+    resolve-api-runtime.ts
+
+  worker/
+    build-runtime.ts, school-database.ts, auth-database.ts
+    auth-service.ts
+    resolve-api-runtime.ts
 ```
 
-## Node vs Worker
+## Runtime access
 
-- School DB: Node uses `node/database.ts` with automatic PGlite migrations and explicit Postgres opt-in. Worker uses `worker/database.ts` with pre-applied Postgres migrations.
-- Auth DB: Node uses `node/auth-database.ts` with the same startup migration gate. Worker uses the D1 `AUTH_DB` binding through `worker/auth-database.ts`.
-- Runtime access: Node uses the process cache through `getApiRuntime(env)`. Worker uses `resolveApiRuntime(c)` per request.
-- Env loading: Node uses `loadNodeProcessEnv()` and `.env`. Worker uses Wrangler bindings and `parseRuntimeEnv`.
-
-Always obtain the Node runtime through `getApiRuntime`. Do not call `buildNodeApiRuntime` directly.
+| Profile               | Access                                       |
+| --------------------- | -------------------------------------------- |
+| `in-memory` / `local` | `getApiRuntime(env)` via `local/registry.ts` |
+| `worker`              | `resolveApiRuntime(c)` per request           |

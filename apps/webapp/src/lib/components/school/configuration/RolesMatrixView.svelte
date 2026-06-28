@@ -19,6 +19,7 @@
 	import { readRoleListFilters, writeRoleListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
 
 	const {
 		onSelect,
@@ -97,11 +98,12 @@
 				<div
 					class="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] text-muted-foreground shadow-soft"
 				>
-					<span
-						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
-					>
-						{me.initials}
-					</span>
+					<PersonAvatar
+						name={me.name}
+						initials={me.initials}
+						photoUrl={me.photoUrl}
+						size="sm"
+					/>
 					<span class="font-mono uppercase tracking-wider">{$t(`staff.role.${me.role}`)}</span>
 				</div>
 			{/if}

@@ -1,4 +1,4 @@
-import type { Environment } from "@/runtime/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 import pino from "pino";
 import type { Logger } from "pino";
 import pretty from "pino-pretty";

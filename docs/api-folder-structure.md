@@ -6,9 +6,9 @@ The `apps/api` package separates **route registration** (thin HTTP surface) from
 
 ```
 src/
-├── main.ts                    # Shim → entries/node (legacy import path)
+├── main.ts                    # Shim → entries/local (legacy import path)
 ├── entries/
-│   ├── node.ts                # Node/Bun server entry (dev + production Node)
+│   ├── local.ts               # Local dev server entry (PGlite / Postgres)
 │   └── worker.ts              # Cloudflare Worker export
 ├── app.ts                     # Hono app: createApp + OpenAPI + mount app-router
 ├── app-router.ts              # Composes route modules + Better Auth proxy
@@ -29,13 +29,13 @@ src/
 ├── context/                   # Shared request context types
 │   └── bindings.ts            # AppBindings (used by http/ and runtime/)
 │
-├── runtime/                   # Env, DB, auth, Hyperdrive, runtime registry
-│   ├── env/                   # Env parsing, bindings, dotenv
-│   ├── registry/              # Node process cache
-│   ├── resolve/               # api-runtime.ts (+ .worker.ts via Wrangler alias)
-│   ├── shared/                # Better Auth + ApiRuntime assembly
-│   ├── node/                  # Node DB + buildNodeApiRuntime
-│   └── worker/                # Worker DB + buildWorkerApiRuntime
+├── runtime/                   # Runtime profiles + shared wiring
+│   ├── shared/
+│   │   ├── env/               # schema, bindings, hyperdrive, local-loader
+│   │   └── adapters/          # file storage, notifications, invitations
+│   ├── in-memory/             # test profile
+│   ├── local/                 # dev profile + registry + resolve-api-runtime
+│   └── worker/                # Cloudflare profile + resolve-api-runtime (Wrangler alias)
 │
 ├── scripts/
 │   └── export-openapi.ts      # Writes OpenAPI JSON (embeds x-edaya-client-bindings)
@@ -75,7 +75,7 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 | Concern | Path |
 |---------|------|
 | Runtime (public) | `@/runtime` |
-| Runtime resolver (middleware only) | `@/runtime/resolve/api-runtime` (Wrangler alias → `.worker.ts`) |
+| Runtime resolver (middleware only) | `@/runtime/resolve-api-runtime` (Wrangler alias → `worker/resolve-api-runtime.ts`) |
 | HTTP app | `@/http/create-app` |
 | Dependency injection | `@/http/dependencies` |
 | Request context types | `@/context/bindings` |
@@ -90,9 +90,9 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 
 | Script | Command |
 |--------|---------|
-| `dev` | `bun --watch src/entries/node.ts` |
+| `dev` | `bun --watch src/entries/local.ts` |
 | `dev:worker` | `wrangler dev --env-file .dev.vars` |
-| `build` | `tsup` → `dist/node.js` from `src/entries/node.ts` |
+| `build` | `tsup` → `dist/node.js` from `src/entries/local.ts` |
 | `start` | `node dist/node.js` |
 | `deploy:worker` | `wrangler deploy --env production` |
 | `export-openapi` | `bun src/scripts/export-openapi.ts` |

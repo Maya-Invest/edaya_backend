@@ -9,7 +9,8 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/runtime/resolve-api-runtime": ["./src/runtime/local/resolve-api-runtime.ts"]
     },
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"],
     "types": [

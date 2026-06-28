@@ -1,13 +1,13 @@
 import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
-import { createAppLogger } from "@/logging/app-logger";
-import { resolveInvitationDelivery } from "@/runtime/shared/resolve-invitation-delivery";
-import { resolveFileStorage } from "@/runtime/shared/resolve-file-storage";
-import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
-import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/resolve-invite-config";
+import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
+import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
+import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
+import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-delivery";
+import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
+import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
+import type { Environment } from "@/runtime/shared/env/schema";
 import { createRepositoryAuthorizationPolicy, type FileStoragePort, type InvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
-import type { Environment } from "@/runtime/env/schema";
-import { createAuthContactResolver } from "@/runtime/shared/auth-contact-resolver";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;

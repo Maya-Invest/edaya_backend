@@ -40,6 +40,10 @@ import {
   devFileUploadHandler,
   devFileUploadPath,
 } from "@/routes/dev-file-storage.routes";
+import {
+  seedProfilePhotoHandler,
+  seedProfilePhotoPath,
+} from "@/routes/seed-profile-photos.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -85,7 +89,8 @@ router
 
 router
   .put(devFileUploadPath, devFileUploadHandler)
-  .get(devFileDownloadPath, devFileDownloadHandler);
+  .get(devFileDownloadPath, devFileDownloadHandler)
+  .get(seedProfilePhotoPath, seedProfilePhotoHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

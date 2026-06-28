@@ -175,6 +175,7 @@ export function mapStaffMembers(
 			id: member.id,
 			name: `${member.firstName} ${member.lastName}`,
 			initials: `${member.firstName[0] ?? ''}${member.lastName[0] ?? ''}`,
+			photoUrl: member.photoUrl ?? null,
 			role,
 			department: mapDepartment(
 				role,
@@ -303,6 +304,7 @@ export async function fetchSessionStaffProfile(
 			id: staff.id,
 			name: `${staff.firstName} ${staff.lastName}`,
 			initials: `${staff.firstName[0] ?? ''}${staff.lastName[0] ?? ''}`,
+			photoUrl: staff.photoUrl ?? null,
 			role,
 			department: mapDepartment(role, staff.id, [], [], []),
 			email: staff.email ?? '',

@@ -1,20 +1,23 @@
 import indexRouter from "@/app-router";
-import type { AppBindings } from "@/context/bindings";
-import { authDependency } from "@/http/dependencies/auth";
-import { envDependency } from "@/http/dependencies/env";
+import type { AppBindings } from "@/http/bindings";
 import { createDependenciesInjection } from "@/http/dependencies";
-import { createSchoolAppDependency } from "@/http/dependencies/school-app";
 import { isBetterAuthPath } from "@/http/dependencies/utils";
 import type { DependencyModule } from "@/http/dependency-injection";
 import {
   type AuthSessionProvider,
   createSessionActorDependency,
 } from "@/http/dependencies/session-actor";
-import type { Environment } from "@/runtime/env/schema";
-import { buildNodeApiRuntime } from "@/runtime/node/create-runtime";
+import type { Environment } from "@/runtime/shared/env/schema";
+import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { type ApiRuntime, resetApiRuntimesForTests } from "@/runtime";
-import { createHandlerAuthProvisioner, createInProcessAuthLinkSeedPort, runDevAccessSeed, runDevAuthLinkWithPort, runDevSchoolSeed } from "@edaya/seeding";
+import {
+  createHandlerAuthProvisioner,
+  createInProcessAuthLinkSeedPort,
+  runDevAccessSeed,
+  runDevAuthLinkWithPort,
+  runIntegrationLightSchoolSeed,
+} from "@edaya/seeding";
 import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -161,7 +164,6 @@ export function createCoreRouteTestDependencies(
   sessionActor = createSessionActorDependency(),
 ) {
   return createDependenciesInjection([
-    envDependency,
     createTestSchoolAppDependency(runtime),
     createTestAuthDependency(runtime),
     sessionActor,
@@ -172,7 +174,7 @@ export async function createCoreRouteTestApp(
   options: CoreRouteTestAppOptions = {},
 ): Promise<AuthenticatedRouteContext> {
   const env = createIsolatedPgliteTestEnv();
-  const runtime = await buildNodeApiRuntime(env);
+  const runtime = await buildInMemoryApiRuntime(env);
   if (options.autoCleanup !== false) {
     registerTestRuntimeCleanup(runtime);
   }
@@ -192,19 +194,15 @@ export async function createCoreRouteTestApp(
   return { app, runtime, application, env };
 }
 
-/** @deprecated Pass a test runtime to createCoreRouteTestDependencies(runtime). */
-export const dependenciesInjection = createDependenciesInjection([
-  envDependency,
-  createSchoolAppDependency(),
-  authDependency,
-  createSessionActorDependency(),
-]);
-
 export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, runtime: ApiRuntime) {
   const auth = createHandlerAuthProvisioner(runtime.getAuth(), pgliteEnv.BETTER_AUTH_URL);
-  await runDevSchoolSeed(application);
-  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth);
-  await runDevAccessSeed(application);
+  await runIntegrationLightSchoolSeed(application);
+  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth, {
+    linkGuardians: false,
+  });
+  await runDevAccessSeed(application, {
+    includeClassSubjectStaffAssignments: false,
+  });
 }
 
 export async function provisionServiceAccountForTests(

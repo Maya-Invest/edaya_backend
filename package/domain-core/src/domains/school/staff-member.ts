@@ -71,6 +71,7 @@ export const staffMemberBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
+  photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notificationPhone: z.string().trim().min(1, 'notificationPhone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -105,6 +106,7 @@ export class StaffMember {
   get schoolId() { return this.data.schoolId }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
+  get photoUrl() { return this.data.photoUrl }
   get email() { return this.data.email }
   get notificationEmail() { return this.data.notificationEmail }
   get notificationPhone() { return this.data.notificationPhone }

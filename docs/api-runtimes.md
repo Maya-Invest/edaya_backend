@@ -1,24 +1,25 @@
 # API runtimes
 
-The API supports two execution runtimes. Configuration is always validated through the same `EnvSchema`; only **how** env values are loaded differs.
+The API runs as one of three **profiles**: `in-memory`, `local`, or `worker`. Each profile declares which adapters to wire (school DB, auth DB, file storage, notifications). Configuration is validated through the same `EnvSchema`; only **how** env values are loaded differs.
 
 Scheduled cron jobs use a separate app: see [cron-runtimes.md](./cron-runtimes.md).
 
-| Runtime | Entry | Env source | Local command |
+| Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **Node** | `src/entries/node.ts` | `process.env` + optional `.env` (dotenv) | `cd apps/api && bun dev` |
-| **Worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.toml` `[vars]` + secrets) | `cd apps/api && bun run dev:worker` |
+| **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `cd apps/api && bun dev` |
+| **in-memory** | *(tests only)* | harness env | `bun test` in `apps/api` |
+| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.toml` `[vars]` + secrets) | `cd apps/api && bun run dev:worker` |
 
 ## Environment variables
 
-Same schema for both runtimes (`apps/api/src/runtime/env/schema.ts`):
+Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 
-| Variable | Node | Worker |
-|----------|------|--------|
-| `RUNTIME` | `node` (default) | `worker` |
-| `DATABASE_URL` | `pglite:.data/school` (persisted dev), `pglite` (in-memory), or `postgres://…` | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
-| `AUTH_DATABASE_PATH` | `.data/auth.sqlite` (default) | N/A — uses `AUTH_DB` D1 binding |
-| `RUN_MIGRATIONS_ON_STARTUP` | Optional; defaults on for PGlite, off for Postgres | N/A — migrations are pre-applied |
+| Variable | in-memory / local | worker |
+|----------|-------------------|--------|
+| `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
+| `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory), or `postgres://…` | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
+| `AUTH_DATABASE_PATH` | ignored on `in-memory`; `.data/auth.sqlite` on `local` | N/A — uses `AUTH_DB` D1 binding |
+| `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite, off for Postgres | N/A — migrations are pre-applied |
 | `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
@@ -26,21 +27,32 @@ Same schema for both runtimes (`apps/api/src/runtime/env/schema.ts`):
 | `GRANTS_CACHE_TTL_MS` | optional `.env` | optional secret / `[vars]` |
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
 
-`dotenv` is **only** used by the Node runtime in non-production environments (`runtime/env/node-loader.ts`).
+`dotenv` is **only** used by process profiles (`local` / `in-memory`) in non-production environments (`runtime/shared/env/local-loader.ts`).
 
-On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdrive binding when present (`runtime/env/hyperdrive.ts`). Any `pglite` / `file://` URL is rejected on Worker.
+On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdrive binding when present (`runtime/shared/env/hyperdrive.ts`). Any `pglite` / `file://` URL is rejected on Worker.
 
-## Node (local dev)
+## Profile adapters
+
+| Adapter | in-memory | local | worker |
+|---------|-----------|-------|--------|
+| School DB | PGlite (ephemeral) | PGlite (`.data/`) or Postgres | Postgres via Hyperdrive |
+| Auth DB | SQLite `:memory:` | SQLite file | D1 `AUTH_DB` |
+| Migrations on startup | yes | PGlite yes; Postgres explicit | no |
+| File storage (no R2) | no-op | local dev filesystem | no-op |
+| Notifications (no Novu) | no-op | message-delivery log | no-op |
+
+Novu and R2 upgrade adapters on any profile when their env vars are set.
+
+## Local dev
 
 ```sh
 cp apps/api/.env.example apps/api/.env
 cd apps/api && bun dev
 ```
 
-- **School DB** — PGlite (persisted or in-memory) or Postgres via `@edaya/adaptor-postgres`; startup migrations run automatically for PGlite and only by explicit `RUN_MIGRATIONS_ON_STARTUP=true` for Postgres.
-- **Auth DB** — local SQLite at `AUTH_DATABASE_PATH`; startup migrations follow the same `RUN_MIGRATIONS_ON_STARTUP` decision.
+Set `RUNTIME=local` (default). School data and auth SQLite live under repo-root `.data/` (gitignored).
 
-Production Node containers should inject env vars directly — no `.env` file, `NODE_ENV=production`.
+Production containers using the local entry should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 
 ## Worker (Cloudflare)
 
@@ -52,7 +64,7 @@ cd apps/api && bun run dev:worker
 - **`wrangler.toml`** — non-secret `[vars]` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive + D1 bindings
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
 - **School DB** — Postgres connection via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev)
-- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/integration-betterauth-d1-migrations/drizzle/`
+- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/integration-migrations/drizzle/auth/`
 
 Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB and D1.
 
@@ -65,25 +77,25 @@ Request
   └─ Hono app.fetch(request, bindings)
        └─ dependencies middleware (http/dependencies/)
             ├─ env → parseRuntimeEnv(prepareRuntimeBindings)
-            ├─ school runtime → getApiRuntime (Node) or resolveApiRuntime (Worker)
+            ├─ school runtime → getApiRuntime (process) or resolveApiRuntime (worker)
             ├─ auth → createAuth from runtime/shared/create-auth.ts
             └─ session actor → effective grants
        └─ route handler → SchoolApplication / Better Auth handler
 ```
 
-| Concern | Node | Worker |
-|---------|------|--------|
-| School DB | PGlite or Postgres (`node/database.ts`; startup migrations only for PGlite or explicit opt-in) | Postgres via Hyperdrive (`worker/database.ts`; migrations pre-applied) |
-| Auth DB | SQLite file (`node/auth-database.ts`) | D1 (`worker/auth-database.ts`) |
-| Runtime cache | Process registry — `getApiRuntime(env)` | Per-request — `resolveApiRuntime(c)` |
+| Concern | in-memory / local | worker |
+|---------|-------------------|--------|
+| School DB | `in-memory/school-database.ts`, `local/school-database.ts` | `worker/school-database.ts` |
+| Auth DB | `in-memory/auth-database.ts`, `local/auth-database.ts` | `worker/auth-database.ts` |
+| Runtime cache | `local/registry.ts` — `getApiRuntime(env)` | `worker/resolve-api-runtime.ts` per request |
 
-Auth schema and SQL migrations live in `package/integration-betterauth-d1-migrations`. School migration apply scripts live in `package/integration-neon-migrations`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
+Auth schema and SQL migrations live in `package/integration-migrations`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
 
 Folder map: `apps/api/src/runtime/README.md`.
 
-### Runtime registry (Node)
+### Runtime registry (process profiles)
 
-Always obtain the Node runtime through `getApiRuntime(env)`. The registry caches one instance per `RUNTIME` + `DATABASE_URL` pair so middleware, seeds, and handlers share the same database and auth service. Calling `buildNodeApiRuntime` directly creates an uncached handle that middleware will not see.
+Always obtain process runtimes through `getApiRuntime(env)`. The registry caches one instance per profile + database key so middleware, seeds, and handlers share the same database and auth service. Calling `buildProcessApiRuntime` directly creates an uncached handle that middleware will not see.
 
 On Worker, use `resolveApiRuntime(c)` — each request gets a runtime that is closed in the dependency middleware's `onRequestComplete` hook.
 

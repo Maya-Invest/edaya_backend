@@ -3,12 +3,11 @@ import {
   type DependencyModule,
 } from "@/http/dependency-injection";
 import type { MiddlewareHandler } from "hono";
-import { closeRequestApiRuntime } from "@/runtime/resolve/api-runtime";
+import { closeRequestApiRuntime } from "@/runtime/resolve-api-runtime";
 import type { AppBindings } from "@/http/types";
 import { authDependency } from "./auth";
 import { sessionActorDependency } from "./session-actor";
-import { envDependency } from "./env";
-import { createSchoolAppDependency } from "./school-app";
+import { schoolAppDependency } from "./school-app";
 
 export type { DependencyModule };
 
@@ -21,8 +20,7 @@ export function createDependenciesInjection(
 }
 
 export const dependenciesInjection = createDependenciesInjection([
-  envDependency,
-  createSchoolAppDependency(),
+  schoolAppDependency,
   authDependency,
   sessionActorDependency,
 ]);

@@ -10,6 +10,7 @@
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerEmptyState from '../shared/DrawerEmptyState.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
 	import { pedagogicalNoteToneByCategory } from './student-tab-selectors.ts';
 	import StudentGuardianLinkModal from './StudentGuardianLinkModal.svelte';
 	import StudentNoteModal from './StudentNoteModal.svelte';
@@ -234,11 +235,12 @@
 						<p class="mt-1.5 text-sm">{note.content}</p>
 						<p class="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
 							{#if author}
-								<span
-									class="flex h-5 w-5 items-center justify-center rounded-full bg-secondary font-display text-[9px] font-semibold text-foreground"
-								>
-									{author.initials}
-								</span>
+								<PersonAvatar
+									name={author.name}
+									initials={author.initials}
+									photoUrl={author.photoUrl}
+									size="xs"
+								/>
 							{/if}
 							<span>{author?.name ?? '—'}</span>
 							{#if author?.department}

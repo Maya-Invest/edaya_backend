@@ -55,15 +55,23 @@ See [webapp-migration-plan.md](../sprints/done/webapp-migration-plan.md) for the
 
 ## API runtimes
 
-The API runs on **Node** locally (`bun dev`) and is also packaged for **Cloudflare Workers** (`bun run dev:worker` in `apps/api`). Workers use `wrangler.toml` + `.dev.vars` instead of dotenv. See [api-runtimes.md](./api-runtimes.md).
+The API uses explicit **profiles** (`local`, `in-memory`, `worker`). Local dev runs the `local` profile (`RUNTIME=local` in `apps/api/.env`, default).
 
-## API database options
+| Profile | Command | School DB | Auth DB |
+|---------|---------|-----------|---------|
+| **local** | `cd apps/api && bun dev` | PGlite `.data/school` (default) or Postgres | SQLite `.data/auth.sqlite` |
+| **worker** | `cd apps/api && bun run dev:worker` | Postgres via Hyperdrive | D1 |
+
+Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` auth). Workers use `wrangler.toml` + `.dev.vars` instead of dotenv. See [api-runtimes.md](./api-runtimes.md).
+
+## API database options (local profile)
+
+Set `RUNTIME=local` (default). Override `DATABASE_URL` only when you need Postgres instead of PGlite:
 
 | `DATABASE_URL` | Use case |
 |----------------|----------|
 | `pglite:.data/school` | Default local dev — PGlite persisted under repo-root `.data/` (gitignored) |
-| `pglite` | Ephemeral in-memory Postgres (tests, CI) |
-| `postgres://…` | Real Postgres (Docker, Neon, staging) |
+| `postgres://…` | Real Postgres (Docker, Neon); set `RUN_MIGRATIONS_ON_STARTUP=true` on first boot |
 
 Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under repo-root `.data/`.
 

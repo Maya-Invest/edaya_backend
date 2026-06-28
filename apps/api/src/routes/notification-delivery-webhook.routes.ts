@@ -1,5 +1,5 @@
 import type { AppRouteHandler } from "@/http/types";
-import { resolveNotificationDeliveryWebhookAdapter } from "@/runtime/shared/resolve-notification-delivery-webhook";
+import { resolveNotificationDeliveryWebhookAdapter } from "@/runtime/shared/adapters/notification-delivery-webhook";
 import { createSystemActorMetadata, MessageDeliveryStatus } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";

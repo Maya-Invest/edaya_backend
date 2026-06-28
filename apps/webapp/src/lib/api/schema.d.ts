@@ -51852,6 +51852,7 @@ export interface components {
             serviceElevated: boolean;
             /** @default true */
             isActive: boolean;
+            photoUrl?: string | null;
             createdAt?: unknown;
         };
         RegisterStaffMemberCommand: {

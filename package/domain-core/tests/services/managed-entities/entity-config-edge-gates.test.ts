@@ -88,6 +88,7 @@ describe('entity config edge gates', () => {
 
     await validateAttachmentSave(attachment(AttachmentOwnerKind.Student, 'student-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.Guardian, 'guardian-1'), undefined, repos)
+    await validateAttachmentSave(attachment(AttachmentOwnerKind.Staff, 'staff-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.StudentHealthProfile, 'health-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.StudentClassEnrollment, 'enrollment-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.AttendanceRecord, 'attendance-1'), undefined, repos)

@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import { Buffer } from "node:buffer";
 import type { AppBindings } from "@/http/types";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import { resolveLocalDevFileStorageRoot } from "@/runtime/shared/resolve-local-dev-file-storage";
+import { resolveLocalDevFileStorageRoot } from "@/runtime/shared/adapters/file-storage";
 import {
   isDevStorageTokenExpired,
   readLocalDevObject,
@@ -12,7 +12,7 @@ import {
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 function isDevelopmentStorageEnabled(c: Context<AppBindings>): boolean {
-  return c.env.NODE_ENV === "development" && c.env.RUNTIME === "node";
+  return c.env.NODE_ENV === "development" && c.env.RUNTIME === "local";
 }
 
 function parseSignedRequest(c: Context<AppBindings>, operation: "upload" | "download") {

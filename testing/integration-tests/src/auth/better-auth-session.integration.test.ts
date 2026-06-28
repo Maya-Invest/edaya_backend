@@ -7,7 +7,7 @@ import {
 } from '@edaya/dev-fixtures'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/auth-otp-mailer'
+import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/adapters/auth-otp-mailer'
 import {
   collectSetCookieHeaders,
   countAccountRowsForUser,

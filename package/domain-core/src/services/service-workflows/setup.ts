@@ -86,6 +86,7 @@ export interface UpdateStaffMemberProfileInput {
   firstName?: string
   lastName?: string
   email?: string | null
+  photoUrl?: string | null
 }
 
 export type AssignStaffInput = StaffAssignmentInput
@@ -304,6 +305,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       firstName: changes.firstName ?? existing.firstName,
       lastName: changes.lastName ?? existing.lastName,
       email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
+      photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
       notificationEmail: existing.notificationEmail,
       notificationPhone: existing.notificationPhone,
       subjectId: existing.subjectId,

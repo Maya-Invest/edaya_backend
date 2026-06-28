@@ -4,11 +4,11 @@ import {
   createBetterAuthLogger,
   resetAppLoggersForTests,
   setAppLogDestinationForTests,
-} from "@/logging/app-logger";
-import type { Environment } from "@/runtime/env/schema";
+} from "@/runtime/shared/adapters/pino-logger";
+import type { Environment } from "@/runtime/shared/env/schema";
 
 const baseEnv = {
-  RUNTIME: "node",
+  RUNTIME: "local",
   NODE_ENV: "development",
   PORT: 9999,
   DATABASE_URL: "pglite",

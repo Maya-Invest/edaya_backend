@@ -14,6 +14,7 @@
 	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
 	import StaffPermissionsList from './StaffPermissionsList.svelte';
 	import StaffProfileEditModal from './StaffProfileEditModal.svelte';
 
@@ -56,11 +57,7 @@
 
 <div class="space-y-5">
 	<div class="flex items-center gap-4">
-		<div
-			class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-display text-lg font-semibold text-primary-foreground"
-		>
-			{s.initials}
-		</div>
+		<PersonAvatar name={s.name} initials={s.initials} photoUrl={s.photoUrl} size="lg" />
 		<div>
 			<h3 class="font-display text-2xl font-semibold leading-tight">{s.name}</h3>
 			<p class="text-sm text-muted-foreground">

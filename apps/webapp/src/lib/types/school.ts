@@ -90,6 +90,7 @@ export interface StaffMember {
 	id: string;
 	name: string;
 	initials: string;
+	photoUrl?: string | null;
 	role: StaffRole;
 	department: string;
 	email: string;

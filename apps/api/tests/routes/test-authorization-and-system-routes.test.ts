@@ -6,7 +6,7 @@ import indexRouter from "@/app-router";
 import { Hono } from "hono";
 
 const baseEnv = parseEnv({
-  RUNTIME: "node",
+  RUNTIME: "in-memory",
   NODE_ENV: "test",
   PORT: 9999,
   LOG_LEVEL: "silent",

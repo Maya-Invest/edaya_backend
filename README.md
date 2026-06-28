@@ -17,8 +17,7 @@ maya_school_core/
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
 │   ├── generated-api-client/             @edaya/api-client — typed API SDK
-│   ├── integration-neon-migrations/      @edaya/neon-migrations — apply school migrations
-│   └── integration-betterauth-d1-migrations/  @edaya/betterauth-d1-migrations — auth schema + D1
+│   └── integration-migrations/           @edaya/integration-migrations — school + auth migrations
 └── testing/
     ├── dev-fixtures/
     ├── seeding/
@@ -46,8 +45,7 @@ flowchart TB
   subgraph package["package/"]
     Core["@edaya/core"]
     PG["@edaya/adaptor-postgres"]
-    Auth["@edaya/betterauth-d1-migrations"]
-    NeonM["@edaya/neon-migrations"]
+    Migrations["@edaya/integration-migrations"]
   end
 
   Webapp --> Client
@@ -55,12 +53,12 @@ flowchart TB
   API --> WorkerHost
   API --> Core
   API --> PG
-  API --> Auth
+  API --> Migrations
   PG -.->|implements ports| Core
-  NeonM --> PG
-  NeonM -.->|migrate:all| Auth
+  Migrations --> PG
+  Migrations -.->|school:migrate:all| Migrations
   PG --> SchoolDB[(Postgres / PGlite)]
-  Auth --> AuthDB[(D1 / SQLite)]
+  Migrations --> AuthDB[(D1 / SQLite)]
 ```
 
 ### Request flow
@@ -72,12 +70,13 @@ flowchart TB
 
 ### API runtimes
 
-| Runtime | Entry | Env source | Local command |
+| Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **Node** | `apps/api/src/entries/node.ts` | `.env` (dotenv) | `cd apps/api && bun dev` |
-| **Worker** | `apps/api/src/entries/worker.ts` | `wrangler.toml` + `.dev.vars` | `cd apps/api && bun run dev:worker` |
+| **local** | `apps/api/src/entries/local.ts` | `.env` (dotenv) | `cd apps/api && bun dev` |
+| **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
+| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.toml` + `.dev.vars` | `cd apps/api && bun run dev:worker` |
 
-Node supports persisted PGlite (`DATABASE_URL=pglite:.data/school`) or in-memory (`pglite`) on Node. Workers require a real Postgres URL.
+`local` uses persisted PGlite by default (`DATABASE_URL=pglite:.data/school`). `in-memory` uses ephemeral PGlite for fast tests. Workers require a real Postgres URL via Hyperdrive.
 
 ### API layout
 
@@ -106,8 +105,7 @@ More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [do
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
-| `@edaya/neon-migrations` | `package/integration-neon-migrations` | Apply school migrations on Neon / Hyperdrive origin |
-| `@edaya/betterauth-d1-migrations` | `package/integration-betterauth-d1-migrations` | Better Auth schema, SQL migrations, D1 deploy scripts |
+| `@edaya/integration-migrations` | `package/integration-migrations` | School + auth migration apply (Neon / Hyperdrive + D1) |
 
 ### Testing
 
@@ -186,16 +184,16 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 ### Database
 
-Root scripts use the `db:*` prefix. Integration packages expose the underlying `migrate:*` scripts (e.g. `bun --filter @edaya/neon-migrations migrate:dev`).
+Root scripts use the `db:*` prefix. `@edaya/integration-migrations` exposes `school:*` and `auth:*` scripts (e.g. `bun --filter @edaya/integration-migrations school:migrate:dev`).
 
 | Command | Description |
 |---------|-------------|
 | `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-postgres`) |
-| `bun run db:migrate` | Apply school schema migrations (`@edaya/neon-migrations`) |
+| `bun run db:migrate` | Apply school schema migrations (`@edaya/integration-migrations`) |
 | `bun run db:migrate:all` | Apply school + local D1 auth migrations (dev bootstrap) |
 | `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate Hyperdrive origin + local D1 auth |
 | `bun run db:migrate:staging` | Apply school migrations to Neon staging branch (`STAGING_DATABASE_URL`) |
-| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/betterauth-d1-migrations`) |
+| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/integration-migrations`) |
 | `bun run db:migrate:auth` | Apply Better Auth migrations to local D1 |
 | `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 (production) |
 | `bun run db:migrate:auth:staging` | Apply Better Auth migrations to remote D1 (staging) |
@@ -206,7 +204,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | Command | Description |
 |---------|-------------|
 | `bun --filter @edaya/adaptor-postgres db:push` | Push schema to database (drizzle-kit) |
-| `bun --filter @edaya/betterauth-d1-migrations db:push` | Push auth schema |
+| `bun --filter @edaya/integration-migrations auth:db:push` | Push auth schema |
 | `bun db:browser:school` | Browse local school tables (stop `bun dev` first) |
 | `bun db:browser:auth` | Browse local auth tables |
 

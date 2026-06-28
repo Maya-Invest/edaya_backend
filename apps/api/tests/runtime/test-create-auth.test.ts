@@ -1,9 +1,9 @@
 import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
-import { runMigrations as runAuthMigrations } from "@edaya/betterauth-d1-migrations";
+import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { createAuth, type Environment } from "@/runtime";
+import { createBetterAuth, type Environment } from "@/runtime";
 
 const testEnv = {
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
@@ -21,15 +21,15 @@ function collectSetCookieHeaders(response: Response): string[] {
   return single ? [single] : [];
 }
 
-describe("createAuth", () => {
-  let auth: ReturnType<typeof createAuth>;
+describe("createBetterAuth", () => {
+  let auth: ReturnType<typeof createBetterAuth>;
   let sqlite: Database;
 
   beforeEach(async () => {
     sqlite = new Database(":memory:");
     const db = drizzle(sqlite);
     await runAuthMigrations(db, { driver: "sqlite" });
-    auth = createAuth(db, testEnv);
+    auth = createBetterAuth(db, testEnv);
   });
 
   afterEach(async () => {

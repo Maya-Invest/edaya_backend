@@ -23,6 +23,7 @@ export enum AttachmentOwnerKind {
   AssessmentResult = 'assessment_result',
   StudentClassEnrollment = 'student_enrollment',
   StudentDisciplinaryAction = 'applied_disciplinary_action',
+  Staff = 'staff',
   Other = 'other',
 }
 
@@ -121,6 +122,8 @@ async function resolveAttachmentOwnerContext(
       return resolveStudentOwner(ownerId, repositories)
     case AttachmentOwnerKind.Guardian:
       return requireOwned(repositories.guardians.findById(ownerId))
+    case AttachmentOwnerKind.Staff:
+      return requireOwned(repositories.staffMembers.findById(ownerId))
     case AttachmentOwnerKind.StudentHealthProfile: {
       const healthProfile = await repositories.studentHealthProfiles.findById(ownerId)
       if (!healthProfile) {

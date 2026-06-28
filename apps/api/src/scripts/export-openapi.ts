@@ -1,13 +1,9 @@
-/* eslint-disable node/no-process-env */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import app from "@/app";
 import { buildClientBindings, CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@/lib/school-api/client-bindings";
-import { loadNodeProcessEnv } from "@/runtime/env/node-loader";
+import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
 import { resetApiRuntimesForTests } from "@/runtime";
-
-// Load environment variables before importing app to ensure all dependencies initialize properly
-loadNodeProcessEnv();
 
 function resolveOutputPath(): string {
   const outputIndex = process.argv.indexOf("--output");
@@ -23,7 +19,8 @@ function resolveOutputPath(): string {
 }
 
 async function main() {
-  const res = await app.request("/doc", undefined, process.env);
+  const env = loadLocalProcessEnv();
+  const res = await app.request("/doc", undefined, env);
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Failed to fetch OpenAPI doc: ${res.status}\nBody: ${body}`);
@@ -39,10 +36,7 @@ async function main() {
 
   const outputPath = resolveOutputPath();
 
-  // Ensure the directory exists
   mkdirSync(dirname(outputPath), { recursive: true });
-
-  // Write the exported schema
   writeFileSync(outputPath, JSON.stringify(schema, null, 2));
 
   // eslint-disable-next-line no-console

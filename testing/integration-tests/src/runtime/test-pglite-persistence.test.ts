@@ -21,6 +21,7 @@ describe('persisted PGlite runtime', () => {
   it('keeps school data across runtime restarts', async () => {
     dataDir = mkdtempSync(join(tmpdir(), 'edaya-pglite-'))
     const env = createApiPgliteTestEnv({
+      RUNTIME: 'local',
       DATABASE_URL: `pglite:${dataDir}`,
     })
 

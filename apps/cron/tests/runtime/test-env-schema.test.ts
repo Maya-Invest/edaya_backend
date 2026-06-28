@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { parseRuntimeEnv } from "@/runtime/env/schema";
+import { parseRuntimeEnv } from "@/runtime/shared/env/schema";
 
 describe("cron runtime env", () => {
-  test("parses node bindings with defaults", () => {
+  test("parses local bindings with defaults", () => {
     const env = parseRuntimeEnv({
-      RUNTIME: "node",
+      RUNTIME: "local",
       DATABASE_URL: "pglite",
     });
 
-    expect(env.RUNTIME).toBe("node");
+    expect(env.RUNTIME).toBe("local");
     expect(env.LOG_LEVEL).toBe("info");
     expect(env.DATABASE_URL).toBe("pglite");
   });
@@ -25,6 +25,6 @@ describe("cron runtime env", () => {
   });
 
   test("rejects missing database URL", () => {
-    expect(() => parseRuntimeEnv({ RUNTIME: "node" })).toThrow("DATABASE_URL is required");
+    expect(() => parseRuntimeEnv({ RUNTIME: "local" })).toThrow("DATABASE_URL is required");
   });
 });

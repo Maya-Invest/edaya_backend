@@ -18,6 +18,7 @@
 	import { useOffsetInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
 	import StaffCreateModal from './StaffCreateModal.svelte';
 
 	const {
@@ -155,11 +156,12 @@
 							)}
 						>
 							<div class="col-span-5 flex items-center gap-3">
-								<div
-									class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold text-primary-foreground"
-								>
-									{s.initials}
-								</div>
+								<PersonAvatar
+									name={s.name}
+									initials={s.initials}
+									photoUrl={s.photoUrl}
+									size="list"
+								/>
 								<div class="min-w-0">
 									<p class="truncate text-sm font-medium">{s.name}</p>
 									<p class="flex items-center gap-1 truncate text-xs text-muted-foreground">

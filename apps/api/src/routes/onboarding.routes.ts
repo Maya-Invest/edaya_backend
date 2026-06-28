@@ -7,7 +7,7 @@ import {
 } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
 import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
-import { shouldAllowPublicSchoolRegistration } from "@/runtime/feature-flags";
+import { shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";

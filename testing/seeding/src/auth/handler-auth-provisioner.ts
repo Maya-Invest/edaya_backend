@@ -99,6 +99,11 @@ async function ensureAuthUser(
     if (userId) {
       return userId
     }
+
+    const recoveredUserId = await lookupAuthUserIdByEmail(auth, baseUrl, account.email, account.password)
+    if (recoveredUserId) {
+      return recoveredUserId
+    }
   }
 
   const signUpResponse = await auth.handler(new Request(`${baseUrl}/auth/sign-up/email`, {
@@ -114,6 +119,11 @@ async function ensureAuthUser(
   }))
 
   if (!signUpResponse.ok) {
+    const existingUserId = await lookupAuthUserIdByEmail(auth, baseUrl, account.email, account.password)
+    if (existingUserId) {
+      return existingUserId
+    }
+
     const message = await signUpResponse.text()
     throw new Error(`Failed to provision dev auth user ${account.email}: ${signUpResponse.status} ${message}`)
   }

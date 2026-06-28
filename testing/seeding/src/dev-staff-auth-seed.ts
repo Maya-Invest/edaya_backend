@@ -16,6 +16,11 @@ export interface DevStaffAuthSyncResult {
   ownerSubjectId?: string
 }
 
+export interface DevStaffAuthSyncOptions {
+  /** When false, only staff Better Auth accounts are provisioned (faster route tests). */
+  linkGuardians?: boolean
+}
+
 /** Dev-only: assign school owner without owner-transfer service gate (bootstrap / seeding). */
 export async function assignDevSchoolOwnerSubjectId(
   port: AuthLinkSeedPort,
@@ -57,7 +62,9 @@ async function ensureDevAuthStaffMembers(
 async function linkDevAuthStaffAndGuardians(
   port: AuthLinkSeedPort,
   auth: AuthProvisioner,
+  options: DevStaffAuthSyncOptions = {},
 ): Promise<Pick<DevStaffAuthSyncResult, 'linkedStaff' | 'linkedGuardians'>> {
+  const linkGuardians = options.linkGuardians ?? true
   let linkedStaff = 0
   let linkedGuardians = 0
 
@@ -88,6 +95,10 @@ async function linkDevAuthStaffAndGuardians(
       staffMemberId: account.staffId,
     })
     linkedStaff++
+  }
+
+  if (!linkGuardians) {
+    return { linkedStaff, linkedGuardians }
   }
 
   for (const account of DEV_AUTH_GUARDIAN_ACCOUNTS) {
@@ -167,6 +178,7 @@ export async function syncDevStaffAuthAndOwner(
   port: AuthLinkSeedPort,
   auth: AuthProvisioner,
   ownerSubjectId?: string,
+  options: DevStaffAuthSyncOptions = {},
 ): Promise<DevStaffAuthSyncResult | null> {
   const school = await port.findSchoolById(SEED_SCHOOL_ID)
   if (!school) {
@@ -174,7 +186,7 @@ export async function syncDevStaffAuthAndOwner(
   }
 
   await ensureDevAuthStaffMembers(port)
-  const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(port, auth)
+  const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(port, auth, options)
 
   const resolvedOwnerSubjectId = await resolveDevSchoolOwnerSubjectId(port, auth, ownerSubjectId)
   if (resolvedOwnerSubjectId) {

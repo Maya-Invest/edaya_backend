@@ -136,6 +136,16 @@ export {
   SEED_NARRATIVE_CLASS_STUDENT_IDS,
 } from './population-seed'
 export {
+  buildSeedProfileAttachmentId,
+  createRandomProfilePictureAllocator,
+  DEV_FIXTURES_PICTURES_DIR,
+  listProfilePictureFiles,
+  PROFILE_PICTURE_FILE_PATTERN,
+  resolveProfilePicturePath,
+  SEED_PROFILE_PHOTO_FILE_NAME,
+  SEED_PROFILE_PHOTO_MIME_TYPE,
+} from './profile-pictures'
+export {
   SEED_GRADE_SCALES,
   SEED_REPORT_CARD_DEFINITION_MS6,
   SEED_REPORT_CARD_DEFINITION_MS_DRAFT,

@@ -3,8 +3,8 @@ import {
   createAuthOtpMailer,
   getLastAuthOtpForTests,
   resetAuthOtpMailerForTests,
-} from "@/runtime/shared/auth-otp-mailer";
-import { createAppLogger, resetAppLoggersForTests } from "@/logging/app-logger";
+} from "@/runtime/shared/adapters/auth-otp-mailer";
+import { createAppLogger, resetAppLoggersForTests } from "@/runtime/shared/adapters/pino-logger";
 
 describe("createAuthOtpMailer", () => {
   it("stores OTP in test mode for integration tests", async () => {

@@ -10,6 +10,7 @@
 	import { authSession } from '$lib/auth/session.svelte';
 	import AccountProfileModal from '$lib/components/account/AccountProfileModal.svelte';
 	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
+	import PersonAvatar from '$lib/components/school/shared/PersonAvatar.svelte';
 	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import SchoolSelector from '$lib/components/layout/SchoolSelector.svelte';
@@ -180,11 +181,12 @@
 							aria-haspopup="dialog"
 							aria-expanded={profileOpen}
 						>
-							<span
-								class="flex h-7 w-7 items-center justify-center rounded-full bg-primary font-display text-[11px] font-semibold text-primary-foreground"
-							>
-								{me.initials}
-							</span>
+							<PersonAvatar
+								name={me.name}
+								initials={me.initials}
+								photoUrl={me.photoUrl}
+								size="md"
+							/>
 							<span class="flex flex-col items-start leading-tight">
 								<span class="text-[11px] font-semibold">{me.name}</span>
 								<span class="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">

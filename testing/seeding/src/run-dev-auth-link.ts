@@ -1,4 +1,5 @@
 import type { AuthLinkSeedPort } from './auth-link/port'
+import type { DevStaffAuthSyncOptions } from './dev-staff-auth-seed'
 import type { AuthProvisioner } from './types'
 import { syncDevStaffAuthAndOwner } from './dev-staff-auth-seed'
 
@@ -14,8 +15,9 @@ export type DevAuthLinkResult
 export async function runDevAuthLinkWithPort(
   port: AuthLinkSeedPort,
   auth: AuthProvisioner,
+  options?: DevStaffAuthSyncOptions,
 ): Promise<DevAuthLinkResult> {
-  const sync = await syncDevStaffAuthAndOwner(port, auth)
+  const sync = await syncDevStaffAuthAndOwner(port, auth, undefined, options)
   if (!sync) {
     return { status: 'skipped', reason: 'school-not-seeded', linkedStaff: 0, linkedGuardians: 0 }
   }

@@ -1,8 +1,8 @@
 import type { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 
-import type { AppBindings } from "@/context/bindings";
+import type { AppBindings } from "@/http/bindings";
 
-export type { AppBindings } from "@/context/bindings";
+export type { AppBindings } from "@/http/bindings";
 
 export type AppOpenAPI = OpenAPIHono<AppBindings>;
 

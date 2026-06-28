@@ -2,6 +2,7 @@ import type { AccessSeedPort } from './access/port'
 import type { ActivitiesSeedPort } from './activities/port'
 import type { AssessmentsSeedPort } from './assessments/port'
 import type { AttachmentsSeedPort } from './attachments/port'
+import type { ProfilePicturesSeedPort } from './profile-pictures/port'
 import type { AttendanceSeedPort } from './attendance/port'
 import type { AuthLinkSeedPort } from './auth-link/port'
 import type { CommunicationsSeedPort } from './communications/port'
@@ -27,6 +28,7 @@ import { createInProcessAccessSeedPort } from './access/in-process'
 import { createInProcessActivitiesSeedPort } from './activities/in-process'
 import { createInProcessAssessmentsSeedPort } from './assessments/in-process'
 import { createInProcessAttachmentsSeedPort } from './attachments/in-process'
+import { createInProcessProfilePicturesSeedPort } from './profile-pictures/in-process'
 import { createInProcessAttendanceSeedPort } from './attendance/in-process'
 import { createInProcessAuthLinkSeedPort } from './auth-link/in-process'
 import { createInProcessCommunicationsSeedPort } from './communications/in-process'
@@ -94,6 +96,9 @@ export interface RunDevSeedsOptions {
   communicationsPort?: CommunicationsSeedPort
   /** Explicit attachments adapter; defaults to the in-process application adapter. */
   attachmentsPort?: AttachmentsSeedPort
+  profilePicturesPort?: ProfilePicturesSeedPort
+  /** API origin used to build seeded profile photo URLs. */
+  apiBaseUrl?: string
 }
 
 export interface RunDevSeedsResults {
@@ -163,6 +168,11 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessCommunicationsSeedPort(requireApplication('communicationsPort'))
   const attachmentsPort = options.attachmentsPort
     ?? createInProcessAttachmentsSeedPort(requireApplication('attachmentsPort'))
+  const profilePicturesPort = options.profilePicturesPort
+    ?? createInProcessProfilePicturesSeedPort({
+      application: requireApplication('profilePicturesPort'),
+      apiBaseUrl: options.apiBaseUrl ?? 'http://localhost:9999',
+    })
   const results: RunDevSeedsResults = {
     school: null,
     authProvision: null,
@@ -196,6 +206,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       disciplinePort,
       communicationsPort,
       attachmentsPort,
+      profilePicturesPort,
+      apiBaseUrl: options.apiBaseUrl,
     })
     results.access = await runDevAccessSeedWithPort(
       accessSeedPort,
@@ -229,6 +241,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       disciplinePort,
       communicationsPort,
       attachmentsPort,
+      profilePicturesPort,
+      apiBaseUrl: options.apiBaseUrl,
     })
   }
 

@@ -1,7 +1,7 @@
 import type { SchoolApplication } from "@edaya/core";
-import type { Environment } from "@/runtime/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 
-export type RuntimeKind = "node" | "worker";
+export type RuntimeKind = "local" | "worker";
 
 export type RuntimeBindings = Record<string, unknown>;
 
@@ -13,8 +13,6 @@ export interface DatabaseHandle {
 
 export interface CronRuntime {
   readonly env: Environment;
-  readonly db: unknown;
-  readonly sqlClient: unknown | null;
   getSchoolApplication: () => Promise<SchoolApplication>;
   close: () => Promise<void>;
 }

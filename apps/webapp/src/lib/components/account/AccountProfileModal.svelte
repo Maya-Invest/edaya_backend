@@ -3,6 +3,7 @@
 	import { accountHrefWithReturn } from '$lib/account/profile-navigation';
 	import { authSession } from '$lib/auth/session.svelte';
 	import DrawerField from '$lib/components/school/shared/DrawerField.svelte';
+	import PersonAvatar from '$lib/components/school/shared/PersonAvatar.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { detailHref } from '$lib/detail-hrefs';
@@ -57,11 +58,12 @@
 	<Dialog.Content class="max-w-md gap-0 overflow-hidden rounded-2xl p-0 shadow-panel">
 		<div class="border-b border-border bg-secondary/30 px-6 py-5">
 			<div class="flex items-center gap-4">
-				<div
-					class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary font-display text-lg font-semibold text-primary-foreground"
-				>
-					{actor.initials}
-				</div>
+				<PersonAvatar
+					name={actor.name}
+					initials={actor.initials}
+					photoUrl={actor.photoUrl}
+					size="lg"
+				/>
 				<div class="min-w-0">
 					<Dialog.Title class="font-display text-xl font-semibold leading-tight">
 						{actor.name}

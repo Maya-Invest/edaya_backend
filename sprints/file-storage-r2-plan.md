@@ -60,7 +60,7 @@ apps/api/src/
 
 ### 2.1.2 Local dev storage (Node, no R2)
 
-When `RUNTIME=node`, `NODE_ENV=development`, and R2 env vars are **unset**, `resolveFileStorage()` uses `createLocalDevFileStorage()`:
+When `RUNTIME=local`, `NODE_ENV=development`, and R2 env vars are **unset**, `resolveFileStorage()` uses `createLocalDevFileStorage()`:
 
 - Files on disk under `.data/file-storage/` (gitignored)
 - Presigned URLs point at `PUT/GET /core/dev/files/*` on the API (HMAC signed with `BETTER_AUTH_SECRET`)

@@ -7,9 +7,8 @@ import {
   resolveDatabaseUrl,
   usesHyperdriveBinding,
 } from "@/runtime";
-import { createRuntimeRegistry } from "@/runtime/registry/process-registry";
-import { createWorkerRequestRuntimeResolver } from "@/runtime/resolve/request-runtime";
-import { shouldRunStartupMigrations } from "@/runtime/node/startup-migrations";
+import * as localProfile from "@/runtime/local/profile";
+import { createRuntimeRegistry } from "@/runtime/shared/process-registry";
 
 describe("resolveDatabaseUrl", () => {
   it("prefers Hyperdrive on the worker runtime", () => {
@@ -26,13 +25,13 @@ describe("resolveDatabaseUrl", () => {
     expect(url).toBe("postgres://direct");
   });
 
-  it("uses DATABASE_URL on the node runtime even when Hyperdrive is present", () => {
+  it("uses DATABASE_URL on process runtimes even when Hyperdrive is present", () => {
     const url = resolveDatabaseUrl({
-      DATABASE_URL: "postgres://node",
+      DATABASE_URL: "postgres://local",
       HYPERDRIVE: { connectionString: "postgres://hyperdrive" },
-    }, "node");
+    }, "local");
 
-    expect(url).toBe("postgres://node");
+    expect(url).toBe("postgres://local");
   });
 });
 
@@ -43,7 +42,7 @@ describe("usesHyperdriveBinding", () => {
     }, "worker")).toBe(true);
     expect(usesHyperdriveBinding({
       HYPERDRIVE: { connectionString: "postgres://hyperdrive" },
-    }, "node")).toBe(false);
+    }, "local")).toBe(false);
     expect(usesHyperdriveBinding({}, "worker")).toBe(false);
   });
 });
@@ -62,26 +61,24 @@ describe("prepareRuntimeBindings", () => {
   });
 });
 
-describe("shouldRunStartupMigrations", () => {
+describe("runtime profiles migrations", () => {
   it("defaults on for local PGlite databases", () => {
-    const env = parseEnv({ DATABASE_URL: "pglite:.data/school" });
-    expect(shouldRunStartupMigrations(env)).toBe(true);
+    expect(localProfile.runMigrationsOnStartup({ DATABASE_URL: "pglite:.data/school" })).toBe(true);
   });
 
-  it("defaults off for Postgres databases", () => {
-    const env = parseEnv({ DATABASE_URL: "postgres://admin:admin@localhost:5432/edaya" });
-    expect(shouldRunStartupMigrations(env)).toBe(false);
+  it("defaults off for local Postgres databases", () => {
+    expect(localProfile.runMigrationsOnStartup({ DATABASE_URL: "postgres://admin:admin@localhost:5432/edaya" })).toBe(false);
   });
 
   it("uses the explicit env flag over the database default", () => {
-    expect(shouldRunStartupMigrations(parseEnv({
+    expect(localProfile.runMigrationsOnStartup({
       DATABASE_URL: "pglite:.data/school",
-      RUN_MIGRATIONS_ON_STARTUP: "false",
-    }))).toBe(false);
-    expect(shouldRunStartupMigrations(parseEnv({
+      RUN_MIGRATIONS_ON_STARTUP: false,
+    })).toBe(false);
+    expect(localProfile.runMigrationsOnStartup({
       DATABASE_URL: "postgres://admin:admin@localhost:5432/edaya",
-      RUN_MIGRATIONS_ON_STARTUP: "true",
-    }))).toBe(true);
+      RUN_MIGRATIONS_ON_STARTUP: true,
+    })).toBe(true);
   });
 });
 
@@ -122,66 +119,11 @@ describe("createDependenciesInjection", () => {
   });
 });
 
-describe("createWorkerRequestRuntimeResolver", () => {
-  it("creates and closes a per-request runtime on worker", async () => {
-    const builds: string[] = [];
-    const closes: string[] = [];
-
-    interface WorkerEnv {
-      Bindings: { RUNTIME: "worker"; DATABASE_URL: string };
-      Variables: { apiRuntime?: { value: string; close: () => Promise<void> } };
-    }
-
-    const resolver = createWorkerRequestRuntimeResolver<
-      { RUNTIME: "worker"; DATABASE_URL: string },
-      { value: string; close: () => Promise<void> },
-      WorkerEnv
-    >({
-          get(c) {
-            return c.var.apiRuntime;
-          },
-          set(c, runtime) {
-            c.set("apiRuntime", runtime);
-          },
-        }, async (env) => {
-          builds.push(env.DATABASE_URL);
-          return {
-            value: env.DATABASE_URL,
-            close: async () => {
-              closes.push(env.DATABASE_URL);
-            },
-          };
-        }, runtime => runtime.close());
-
-    const app = new Hono<WorkerEnv>();
-    app.use(async (c, next) => {
-      await resolver.resolve(c);
-      try {
-        await next();
-      }
-      finally {
-        await resolver.close(c);
-      }
-    });
-    app.get("/", c => c.text(c.var.apiRuntime?.value ?? "missing"));
-
-    const response = await app.request("/", {}, {
-      RUNTIME: "worker",
-      DATABASE_URL: "postgres://worker",
-    });
-
-    expect(response.status).toBe(200);
-    expect(await response.text()).toBe("postgres://worker");
-    expect(builds).toEqual(["postgres://worker"]);
-    expect(closes).toEqual(["postgres://worker"]);
-  });
-});
-
 describe("createRuntimeRegistry", () => {
-  it("reuses cached runtimes on node and rejects worker env", async () => {
+  it("reuses cached runtimes on process profiles and rejects worker env", async () => {
     let buildCount = 0;
     const registry = createRuntimeRegistry<
-      { RUNTIME: "node" | "worker"; DATABASE_URL: string },
+      { RUNTIME: "local" | "worker"; DATABASE_URL: string },
       { close: () => Promise<void> }
     >({
           buildRuntime: async () => {
@@ -191,7 +133,7 @@ describe("createRuntimeRegistry", () => {
           closeRuntime: async () => {},
         });
 
-    const env = { RUNTIME: "node" as const, DATABASE_URL: "postgres://node" };
+    const env = { RUNTIME: "local" as const, DATABASE_URL: "postgres://local" };
     await registry.get(env);
     await registry.get(env);
     expect(buildCount).toBe(1);
@@ -199,5 +141,14 @@ describe("createRuntimeRegistry", () => {
     await expect(registry.get({ RUNTIME: "worker", DATABASE_URL: "postgres://worker" }))
       .rejects
       .toThrow(/worker runtime/i);
+  });
+});
+
+describe("EnvSchema runtime", () => {
+  it("rejects legacy RUNTIME=node", () => {
+    expect(() => parseEnv({
+      RUNTIME: "node",
+      DATABASE_URL: "pglite:.data/school",
+    })).toThrow(/RUNTIME/i);
   });
 });

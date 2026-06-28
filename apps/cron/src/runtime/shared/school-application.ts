@@ -1,16 +1,15 @@
 import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { createRepositoryAuthorizationPolicy, SchoolApplication } from "@edaya/core";
-import type { NotificationGatewayPort } from "@edaya/core";
 import { noOpFileStorage } from "@edaya/adaptor-file";
 import { createAppLogger } from "@/logging/app-logger";
-import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
-import type { Environment } from "@/runtime/env/schema";
+import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
+import type { Environment } from "@/runtime/shared/env/schema";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
   env?: Environment;
-  notificationGateway?: NotificationGatewayPort;
+  runMigrations?: boolean;
 }
 
 export async function buildSchoolApplication(
@@ -18,7 +17,11 @@ export async function buildSchoolApplication(
   options: BuildSchoolApplicationOptions = {},
 ): Promise<SchoolApplication> {
   const repos = new PostgresSchoolRepositories(db);
-  if (options.databaseUrl) {
+  if (options.runMigrations) {
+    if (!options.databaseUrl) {
+      throw new Error("databaseUrl is required when running school migrations on startup.");
+    }
+
     await repos.init({
       driver: resolveMigrationDriver(options.databaseUrl),
     });
@@ -27,8 +30,7 @@ export async function buildSchoolApplication(
   const logger = options.env && options.env.LOG_LEVEL !== "silent"
     ? createAppLogger(options.env)
     : undefined;
-  const notificationGateway = options.notificationGateway
-    ?? resolveNotificationGateway(options.env, logger);
+  const notificationGateway = resolveNotificationGateway(options.env, logger);
 
   return new SchoolApplication({
     atomicExecution: new PostgresAtomicExecution(db),

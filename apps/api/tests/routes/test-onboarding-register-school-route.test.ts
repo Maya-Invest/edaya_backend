@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/types";
-import type { Environment } from "@/runtime/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 import { Hono } from "hono";
 import {
   createAppRequest,

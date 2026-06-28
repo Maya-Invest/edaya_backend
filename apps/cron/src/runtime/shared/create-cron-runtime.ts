@@ -1,6 +1,6 @@
 import type { SchoolApplication } from "@edaya/core";
 import type { CronRuntime, DatabaseHandle } from "@/runtime/types";
-import type { Environment } from "@/runtime/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 
 export interface CreateCronRuntimeOptions {
   env: Environment;
@@ -19,12 +19,6 @@ export async function createCronRuntime(options: CreateCronRuntimeOptions): Prom
 
   return {
     env: options.env,
-    get db() {
-      return resolvedSchoolHandle?.db ?? null;
-    },
-    get sqlClient() {
-      return resolvedSchoolHandle?.sqlClient ?? null;
-    },
     async getSchoolApplication() {
       if (!schoolApp) {
         const handle = await getResolvedSchoolHandle();

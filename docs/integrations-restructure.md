@@ -15,8 +15,7 @@ package/
   adaptor-postgres/                 School Drizzle schema, SQL, repos, runMigrations()
   adaptor-novu/                     Novu notification gateway adapter
   generated-api-client/             Typed client generated from OpenAPI
-  integration-neon-migrations/      Apply school migrations (Neon / Hyperdrive)
-  integration-betterauth-d1-migrations/  Auth schema, SQL, D1 deploy, auth runMigrations()
+  integration-migrations/           School + auth migration apply (Neon / Hyperdrive + D1)
 
 testing/
   dev-fixtures/                     Shared seed IDs and fixture records
@@ -29,12 +28,11 @@ testing/
 | Layer | Owns | Does not own |
 |-------|------|--------------|
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
-| `package/integration-neon-migrations` | `drizzle-kit migrate`, Hyperdrive dev bootstrap, `migrate:all` orchestration | SQL source files |
-| `package/integration-betterauth-d1-migrations` | Auth schema, SQL, D1 Wrangler apply, auth `runMigrations()` | School data |
+| `package/integration-migrations` | School `drizzle-kit migrate`, Hyperdrive dev bootstrap, auth schema/SQL, D1 Wrangler apply, auth `runMigrations()` | School SQL source files (those live in adaptor-postgres) |
 | `testing/seeding` | HTTP seed scripts against running API (`seed:init`, `seed:all`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Platform migration scripts, seed data |
 
-**Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` never depend on `package/integration-*`. `apps/api` depends on both. `testing/seeding` calls the API over HTTP. Integration packages may reference adaptor paths for migration SQL only.
+**Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` never depend on `package/integration-*`. `apps/api` depends on integration packages. `testing/seeding` calls the API over HTTP. Integration packages may reference adaptor paths for migration SQL only.
 
 ## Package map
 
@@ -46,8 +44,7 @@ testing/
 | `@edaya/core` | `package/domain-core` | Domain + ports |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/api-client` | `package/generated-api-client` | Typed API SDK |
-| `@edaya/neon-migrations` | `package/integration-neon-migrations` | School DB migration apply |
-| `@edaya/betterauth-d1-migrations` | `package/integration-betterauth-d1-migrations` | Auth schema + D1 deploy |
+| `@edaya/integration-migrations` | `package/integration-migrations` | School + auth migration apply |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/adaptor-file` | `package/adaptor-file` | File storage adapters (in-memory, local dev, no-op) |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
@@ -60,9 +57,10 @@ testing/
 | Before | After |
 |--------|-------|
 | `@edaya/adaptor-cloudflare` | Inlined into `apps/api/src/runtime/` and `apps/api/src/http/` |
-| `@edaya/adaptor-betterauth` | `@edaya/betterauth-d1-migrations` in `package/integration-betterauth-d1-migrations` |
-| `@edaya/adaptor-neon` | `@edaya/adaptor-postgres` + `@edaya/neon-migrations` (split across `package/`) |
-| `packages/` + `integrations/` | Unified under `package/` (folder renames only; npm names unchanged) |
+| `@edaya/adaptor-betterauth` | Auth persistence in `@edaya/integration-migrations` |
+| `@edaya/adaptor-neon` | `@edaya/adaptor-postgres` + `@edaya/integration-migrations` (school apply) |
+| `@edaya/neon-migrations` + `@edaya/betterauth-d1-migrations` | `@edaya/integration-migrations` |
+| `packages/` + `integrations/` | Unified under `package/` |
 
 ## Root scripts
 
@@ -72,15 +70,15 @@ testing/
 | `bun dev:worker` | `@edaya/api` `dev:worker` |
 | `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
 | `bun db:generate` | `@edaya/adaptor-postgres` |
-| `bun db:migrate` | `@edaya/neon-migrations` (`migrate`) |
-| `bun db:migrate:all` | `@edaya/neon-migrations` (`migrate:all`) |
-| `bun db:migrate:dev` | `@edaya/neon-migrations` (`migrate:dev`) |
-| `bun db:generate:auth` | `@edaya/betterauth-d1-migrations` |
-| `bun auth:generate-schema` | `@edaya/betterauth-d1-migrations` |
-| `bun db:migrate:auth` | `@edaya/betterauth-d1-migrations` (`migrate:local`) |
-| `bun db:migrate:auth:remote` | `@edaya/betterauth-d1-migrations` (`migrate:remote`) |
-| `bun db:migrate:staging` | `@edaya/neon-migrations` (`migrate:staging`) |
-| `bun db:migrate:auth:staging` | `@edaya/betterauth-d1-migrations` (`migrate:staging`) |
+| `bun db:migrate` | `@edaya/integration-migrations` (`school:migrate`) |
+| `bun db:migrate:all` | `@edaya/integration-migrations` (`school:migrate:all`) |
+| `bun db:migrate:dev` | `@edaya/integration-migrations` (`school:migrate:dev`) |
+| `bun db:generate:auth` | `@edaya/integration-migrations` (`auth:db:generate`) |
+| `bun auth:generate-schema` | `@edaya/integration-migrations` |
+| `bun db:migrate:auth` | `@edaya/integration-migrations` (`auth:migrate:local`) |
+| `bun db:migrate:auth:remote` | `@edaya/integration-migrations` (`auth:migrate:remote`) |
+| `bun db:migrate:staging` | `@edaya/integration-migrations` (`school:migrate:staging`) |
+| `bun db:migrate:auth:staging` | `@edaya/integration-migrations` (`auth:migrate:staging`) |
 | `bun openapi:generate` | API export → webapp schema → API client regen |
 | `bun deploy:api` | `@edaya/api` `deploy:worker` |
 | `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
@@ -90,10 +88,10 @@ testing/
 
 ## Auth schema pipeline
 
-1. `auth:generate-schema` — Better Auth CLI → `package/integration-betterauth-d1-migrations/src/schema.ts`
-2. `db:generate:auth` — Drizzle Kit → `package/integration-betterauth-d1-migrations/drizzle/*.sql`
+1. `auth:generate-schema` — Better Auth CLI → `package/integration-migrations/src/auth/schema.ts`
+2. `db:generate:auth` — Drizzle Kit → `package/integration-migrations/drizzle/auth/*.sql`
 3. Node runtime — `runMigrations()` on API startup (SQLite file)
-4. Worker deploy — D1 migrations via `migrate:local` / `migrate:remote` (Wrangler)
+4. Worker deploy — D1 migrations via `auth:migrate:local` / `auth:migrate:remote` (Wrangler)
 
 ## School migration pipeline
 

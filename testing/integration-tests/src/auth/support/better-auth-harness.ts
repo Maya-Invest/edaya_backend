@@ -1,12 +1,11 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { AuthSessionProvider, SessionActorBindings } from './session-actor-harness'
-import type { BetterAuthEnv } from '@/runtime/shared/build-better-auth-config'
+import type { BetterAuthEnv } from '@/runtime/shared/adapters/better-auth'
 import { noOpFileStorage } from '@edaya/adaptor-file'
 import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
 } from '@edaya/adaptor-postgres'
-import { runMigrations as runAuthMigrations } from '@edaya/betterauth-d1-migrations'
 import {
   createRepositoryAuthorizationPolicy,
   noOpNotificationGateway,
@@ -14,6 +13,7 @@ import {
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
+import { runMigrations as runAuthMigrations } from '@edaya/integration-migrations'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { Database } from 'bun:sqlite'
@@ -21,7 +21,7 @@ import { sql } from 'drizzle-orm'
 import { drizzle as drizzleBunSqlite } from 'drizzle-orm/bun-sqlite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { Hono } from 'hono'
-import { buildBetterAuthConfig } from '@/runtime/shared/build-better-auth-config'
+import { buildBetterAuthConfig } from '@/runtime/shared/adapters/better-auth'
 import {
   createSessionActorMiddleware,
 } from './session-actor-harness'

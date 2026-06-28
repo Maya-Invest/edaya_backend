@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "bun src/entries/node.ts",
+    "dev": "bun src/entries/local.ts",
     "dev:worker": "wrangler dev --env-file .dev.vars",
-    "start": "node dist/node.js",
+    "start": "node dist/local.js",
     "deploy:worker": "wrangler deploy --env production",
     "deploy:worker:dry-run": "wrangler deploy --env production --dry-run",
     "deploy:worker:staging": "wrangler deploy --env staging",

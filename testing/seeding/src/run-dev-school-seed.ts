@@ -1,6 +1,7 @@
 import type { ActivitiesSeedPort } from './activities/port'
 import type { AssessmentsSeedPort } from './assessments/port'
 import type { AttachmentsSeedPort } from './attachments/port'
+import type { ProfilePicturesSeedPort } from './profile-pictures/port'
 import type { AttendanceSeedPort } from './attendance/port'
 import type { AuthLinkSeedPort } from './auth-link/port'
 import type { CommunicationsSeedPort } from './communications/port'
@@ -42,6 +43,8 @@ import { createInProcessAssessmentsSeedPort } from './assessments/in-process'
 import { seedDevAssessments } from './assessments/workflow'
 import { createInProcessAttachmentsSeedPort } from './attachments/in-process'
 import { seedDevAttachments } from './attachments/workflow'
+import { createInProcessProfilePicturesSeedPort } from './profile-pictures/in-process'
+import { seedDevProfilePictures } from './profile-pictures/workflow'
 import { createInProcessAttendanceSeedPort } from './attendance/in-process'
 import { seedDevAttendance } from './attendance/workflow'
 import { createInProcessAuthLinkSeedPort } from './auth-link/in-process'
@@ -113,6 +116,7 @@ export type DevSchoolSeedResult
       announcementTargets: number
       messageDeliveries: number
       attachments: number
+      profilePhotos: number
     }
 
 export interface RunDevSchoolSeedOptions {
@@ -134,6 +138,9 @@ export interface RunDevSchoolSeedOptions {
   disciplinePort?: DisciplineSeedPort
   communicationsPort?: CommunicationsSeedPort
   attachmentsPort?: AttachmentsSeedPort
+  profilePicturesPort?: ProfilePicturesSeedPort
+  /** API origin used to build seeded profile photo URLs. */
+  apiBaseUrl?: string
 }
 
 function requireSeedApplication(
@@ -180,6 +187,11 @@ export async function runDevSchoolSeed(
     ?? createInProcessCommunicationsSeedPort(requireSeedApplication(application, 'communicationsPort'))
   const attachmentsPort = options?.attachmentsPort
     ?? createInProcessAttachmentsSeedPort(requireSeedApplication(application, 'attachmentsPort'))
+  const profilePicturesPort = options?.profilePicturesPort
+    ?? createInProcessProfilePicturesSeedPort({
+      application: requireSeedApplication(application, 'profilePicturesPort'),
+      apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
+    })
   const structureInspection = await inspectDevSchoolStructure(schoolStructurePort)
 
   if (structureInspection.status === 'skipped') {
@@ -232,6 +244,9 @@ export async function runDevSchoolSeed(
 
   const communicationsCounts = await seedDevCommunications(communicationsPort)
   const attachmentCounts = await seedDevAttachments(attachmentsPort)
+  const profilePictureCounts = await seedDevProfilePictures(profilePicturesPort, {
+    apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
+  })
   if (options?.auth) {
     await syncDevStaffAuthAndOwner(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
@@ -283,6 +298,7 @@ export async function runDevSchoolSeed(
     announcements: communicationsCounts.announcements,
     announcementTargets: communicationsCounts.announcementTargets,
     messageDeliveries: communicationsCounts.messageDeliveries,
-    attachments: attachmentCounts.attachments,
-  }
+      attachments: attachmentCounts.attachments,
+      profilePhotos: profilePictureCounts.profilePhotos,
+    }
 }

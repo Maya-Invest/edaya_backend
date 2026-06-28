@@ -18,7 +18,7 @@
     "@edaya/adaptor-file": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/api": "workspace:*",
-    "@edaya/betterauth-d1-migrations": "workspace:*",
+    "@edaya/integration-migrations": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/dev-fixtures": "workspace:*",
     "@edaya/seeding": "workspace:*",

@@ -58,8 +58,9 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
       ?? 'http://localhost:9999'
 
     if (await probeLocalApiReachable(apiUrl)) {
-      console.warn(
-        `Local API appears to be running at ${apiUrl}. Stop \`bun dev\` before wiping .data to avoid PGlite corruption.`,
+      throw new Error(
+        `Local API is running at ${apiUrl}. Stop \`bun dev\` before wiping .data — `
+        + 'deleting databases while the API is up corrupts auth.sqlite and PGlite.',
       )
     }
 

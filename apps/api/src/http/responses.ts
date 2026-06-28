@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
-import type { AppBindings } from "@/context/bindings";
+import type { AppBindings } from "@/http/bindings";
 import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
 
 type ResponseDetails = Record<string, unknown>;

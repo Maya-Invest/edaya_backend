@@ -11,6 +11,8 @@ import { createHttpAssessmentsSeedPort } from '../assessments/http'
 import { createInProcessAssessmentsSeedPort } from '../assessments/in-process'
 import { createHttpAttachmentsSeedPort } from '../attachments/http'
 import { createInProcessAttachmentsSeedPort } from '../attachments/in-process'
+import { createHttpProfilePicturesSeedPort } from '../profile-pictures/http'
+import { createInProcessProfilePicturesSeedPort } from '../profile-pictures/in-process'
 import { createHttpAttendanceSeedPort } from '../attendance/http'
 import { createInProcessAttendanceSeedPort } from '../attendance/in-process'
 import { createHttpAuthLinkSeedPort } from '../auth-link/http'
@@ -411,6 +413,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       client,
       serviceAccountApiKey: serviceAccountApiKeyFromProvision,
     })
+    const profilePicturesPort = createHttpProfilePicturesSeedPort({
+      client,
+      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
+    })
 
     results.school = await runDevSchoolSeed(undefined, {
       auth,
@@ -431,6 +437,8 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       disciplinePort,
       communicationsPort,
       attachmentsPort,
+      profilePicturesPort,
+      apiBaseUrl: client.origin,
     })
     // Staff/class assignments require ACCESS_CONTROL_ASSIGN with class-group scope.
     // Use the owner session (still on the client) rather than the service account API key.
@@ -529,6 +537,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     attachmentsPort: options.application
       ? createInProcessAttachmentsSeedPort(options.application)
       : createHttpAttachmentsSeedPort({ client, serviceAccountApiKey }),
+    profilePicturesPort: options.application
+      ? createInProcessProfilePicturesSeedPort({ application: options.application, apiBaseUrl: client.origin })
+      : createHttpProfilePicturesSeedPort({ client, serviceAccountApiKey }),
+    apiBaseUrl: client.origin,
     ...(scope === 'all' && !serviceAccountApiKey && !options.application
       ? { skipAuthProvision: true }
       : {}),

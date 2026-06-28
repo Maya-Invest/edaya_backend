@@ -1,4 +1,4 @@
-import { resolveApiRuntime } from "@/runtime/resolve/api-runtime";
+import { resolveApiRuntime } from "@/runtime/resolve-api-runtime";
 import { resolveWorkerAuthService } from "@/runtime/worker/auth-service";
 import type { AppBindings } from "@/http/types";
 import type { DependencyModule } from "@/http/dependency-injection";

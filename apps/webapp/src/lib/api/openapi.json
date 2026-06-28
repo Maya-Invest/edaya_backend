@@ -2176,6 +2176,11 @@
             "type": "boolean",
             "default": true
           },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "createdAt": {}
         },
         "required": [

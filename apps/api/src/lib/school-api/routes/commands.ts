@@ -8,7 +8,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
 import { schoolApiPath } from "./paths";
-import { resolveInviteBaseUrl } from "@/runtime/shared/resolve-invite-config";
+import { resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
 import type { SchoolCommandKey } from "@edaya/core";
 
 const INVITATION_COMMANDS = new Set<SchoolCommandKey>([

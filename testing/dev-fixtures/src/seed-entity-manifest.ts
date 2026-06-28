@@ -61,6 +61,7 @@ export const SEED_ENTITY_MANIFEST: readonly SeedEntityManifestEntry[] = [
   { entity: 'disciplinary-actions', fixtureFile: 'discipline-seed.ts', loader: 'run-dev-school-seed', status: 'seeded' },
   { entity: 'student-disciplinary-actions', fixtureFile: 'discipline-seed.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Linked to incidents i1–i3' },
   { entity: 'attachments', fixtureFile: 'attachments-seed.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Incidents, health, finance, academics' },
+  { entity: 'profile-photos', fixtureFile: 'profile-pictures.ts + pictures/pic####.jpg', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Staff, students, guardians via file storage' },
 ]
 
 export function seedManifestEntitiesByStatus(status: SeedEntityManifestEntry['status']): SeedEntityManifestEntry[] {

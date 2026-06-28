@@ -1,7 +1,7 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { Environment } from "@/runtime/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 
-export type RuntimeKind = "node" | "worker";
+export type RuntimeKind = "in-memory" | "local" | "worker";
 
 export type RuntimeBindings = Record<string, unknown>;
 
@@ -20,9 +20,6 @@ export interface AuthService {
 
 export interface ApiRuntime {
   readonly env: Environment;
-  readonly db: unknown;
-  readonly authDb: unknown;
-  readonly sqlClient: unknown | null;
   getSchoolApplication: () => Promise<ApiSchoolApplication>;
   getAuth: () => AuthService;
   close: () => Promise<void>;

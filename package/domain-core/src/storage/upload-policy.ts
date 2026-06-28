@@ -21,6 +21,7 @@ function allowedMimeTypesForOwner(ownerKind: AttachmentOwnerKind): ReadonlySet<s
   switch (ownerKind) {
     case AttachmentOwnerKind.Student:
     case AttachmentOwnerKind.Guardian:
+    case AttachmentOwnerKind.Staff:
       return new Set([...IMAGE_MIME_TYPES, ...DOCUMENT_MIME_TYPES])
     case AttachmentOwnerKind.ReportCard:
     case AttachmentOwnerKind.Incident:

@@ -1,6 +1,6 @@
-import { createAuth } from "@/runtime/shared/create-auth";
+import { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
 import { createAuthDatabase } from "@/runtime/worker/auth-database";
-import type { Environment } from "@/runtime/env/schema";
+import type { Environment } from "@/runtime/shared/env/schema";
 import type { AuthService } from "@/runtime/types";
 
 let cachedAuthService: AuthService | null = null;
@@ -12,6 +12,6 @@ export async function resolveWorkerAuthService(env: Environment): Promise<AuthSe
   }
 
   const authHandle = await createAuthDatabase(env);
-  cachedAuthService = createAuth(authHandle.db, env);
+  cachedAuthService = createBetterAuth(authHandle.db, env);
   return cachedAuthService;
 }

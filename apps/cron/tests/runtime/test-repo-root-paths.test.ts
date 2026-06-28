@@ -4,7 +4,7 @@ import {
   resolveRepoLocalDatabaseUrl,
   resolveRepoLocalDataPath,
   resolveRepoRoot,
-} from "@/runtime/env/repo-root";
+} from "@/runtime/shared/env/repo-root";
 
 describe("repo-root local data paths", () => {
   test("resolveRepoRoot points at monorepo root", () => {

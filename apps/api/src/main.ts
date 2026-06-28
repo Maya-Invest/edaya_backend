@@ -1,1 +1,1 @@
-import "./entries/node";
+import "./entries/local";

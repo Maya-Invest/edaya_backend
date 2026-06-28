@@ -1,7 +1,7 @@
-import { type Environment, parseEnv } from "@/runtime/env";
+import { type Environment, parseEnv } from "@/runtime";
 
 export const pgliteTestEnvInput = {
-  RUNTIME: "node",
+  RUNTIME: "in-memory",
   NODE_ENV: "development",
   PORT: 9999,
   LOG_LEVEL: "silent",
@@ -16,5 +16,5 @@ export function createPgliteTestEnv(overrides: Record<string, unknown> = {}): En
   return parseEnv({ ...pgliteTestEnvInput, ...overrides });
 }
 
-/** Default Node + PGlite test environment for API integration and seed tests. */
+/** Default in-memory test environment for API integration and seed tests. */
 export const pgliteEnv = createPgliteTestEnv();

@@ -48,6 +48,7 @@ class AuthSession {
 				kind: 'staff',
 				name: this.userProfile?.name ?? 'Staff',
 				initials: this.userProfile?.initials ?? 'ST',
+				photoUrl: this.userProfile?.photoUrl ?? null,
 				subtitleKey: this.userProfile ? `staff.role.${this.userProfile.role}` : 'staff.role.professeur',
 				subjectId: this.subjectId,
 				email: this.userProfile?.email,

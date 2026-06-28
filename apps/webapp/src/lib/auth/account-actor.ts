@@ -5,6 +5,7 @@ export interface AccountActor {
 	kind: SessionKind;
 	name: string;
 	initials: string;
+	photoUrl?: string | null;
 	subtitleKey: string;
 	subjectId: string | null;
 	email?: string;

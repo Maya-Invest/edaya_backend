@@ -19,7 +19,7 @@ describe("CORS configuration", () => {
 
   it("reflects a trusted origin and rejects unknown origins", () => {
     const env = parseEnv({
-      RUNTIME: "node",
+      RUNTIME: "local",
       NODE_ENV: "production",
       PORT: 9999,
       LOG_LEVEL: "silent",
@@ -36,7 +36,7 @@ describe("CORS configuration", () => {
 
   it("allows any localhost origin in development for mobile and Flutter web dev servers", () => {
     const env = parseEnv({
-      RUNTIME: "node",
+      RUNTIME: "local",
       NODE_ENV: "development",
       PORT: 9999,
       LOG_LEVEL: "silent",

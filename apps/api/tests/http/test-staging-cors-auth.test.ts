@@ -3,12 +3,12 @@ import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import createApp from "@/http/create-app";
-import { createAuth, parseEnv } from "@/runtime";
-import { runMigrations as runAuthMigrations } from "@edaya/betterauth-d1-migrations";
+import { createBetterAuth, parseEnv } from "@/runtime";
+import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
 const stagingEnv = parseEnv({
-  RUNTIME: "node",
+  RUNTIME: "in-memory",
   NODE_ENV: "production",
   PORT: 9999,
   LOG_LEVEL: "silent",
@@ -62,7 +62,7 @@ describe("staging CORS and cross-subdomain auth cookies", () => {
 
   it("sets Better Auth session cookies on the configured parent domain", async () => {
     const db = drizzle(sqlite);
-    const auth = createAuth(db, stagingEnv);
+    const auth = createBetterAuth(db, stagingEnv);
 
     const signUpResponse = await auth.handler(new Request("https://api.edaya.test/auth/sign-up/email", {
       method: "POST",

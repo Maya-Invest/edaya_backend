@@ -6,6 +6,7 @@
     "noEmit": true,
     "paths": {
       "@/*": ["../../apps/api/src/*"],
+      "@/runtime/resolve-api-runtime": ["../../apps/api/src/runtime/local/resolve-api-runtime.ts"],
       "@api-tests/*": ["../../apps/api/tests/*"]
     }
   },

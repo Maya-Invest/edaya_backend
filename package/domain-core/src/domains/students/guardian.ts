@@ -17,6 +17,7 @@ export const guardianSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
+  photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional(),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional(),
   notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -80,6 +81,7 @@ export class Guardian {
   get schoolId() { return this.data.schoolId }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
+  get photoUrl() { return this.data.photoUrl }
   get contactMethods() { return this.data.contactMethods }
   get subjectId() { return this.data.subjectId }
   get hasAccess() { return this.data.hasAccess }
