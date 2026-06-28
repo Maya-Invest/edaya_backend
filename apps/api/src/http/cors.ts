@@ -11,10 +11,27 @@ export function trustedOriginsFromEnv(trustedOrigins: string | undefined): strin
   return parsed.length > 0 ? parsed : DEFAULT_ORIGINS;
 }
 
+function isLocalDevOrigin(origin: string): boolean {
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return (protocol === "http:" || protocol === "https:")
+      && (hostname === "localhost" || hostname === "127.0.0.1");
+  }
+  catch {
+    return false;
+  }
+}
+
 export function resolveCorsOrigin(origin: string | undefined, env: Environment): string {
   const allowedOrigins = trustedOriginsFromEnv(env.TRUSTED_ORIGINS);
   if (!origin) {
     return allowedOrigins[0] ?? DEFAULT_ORIGINS[0]!;
   }
-  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? DEFAULT_ORIGINS[0]!;
+  if (allowedOrigins.includes(origin)) {
+    return origin;
+  }
+  if (env.NODE_ENV === "development" && isLocalDevOrigin(origin)) {
+    return origin;
+  }
+  return allowedOrigins[0] ?? DEFAULT_ORIGINS[0]!;
 }

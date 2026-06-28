@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Evaluation, Student } from '$lib/types/school';
-	import { recordAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
+	import { recordEvaluationAssessmentResultMutation } from '$lib/api/mutations/evaluation.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -47,7 +47,7 @@
 			return;
 
 		busy = true;
-		const ok = await recordAssessmentResultMutation({
+		const ok = await recordEvaluationAssessmentResultMutation({
 			studentId: student.id,
 			assessmentId: evaluation.id,
 			score: numericScore,

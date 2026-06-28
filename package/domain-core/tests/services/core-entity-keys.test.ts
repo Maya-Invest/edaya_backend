@@ -7,6 +7,7 @@ import type {
 } from '../../src'
 import { describe, expect, test } from 'bun:test'
 import { BaseSchoolService, CORE_ENTITY_KEYS, noOpNotificationGateway } from '../../src'
+import { testFileStorage } from '../support/test-file-storage'
 
 function keyDifference(actual: readonly string[], expected: readonly string[]) {
   const actualKeys = new Set(actual)
@@ -38,6 +39,7 @@ describe('core entity keys', () => {
       authorizationPolicy,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     expect(keyDifference(Object.keys(service.entities), CORE_ENTITY_KEYS)).toEqual({

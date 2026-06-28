@@ -19,6 +19,7 @@ import {
 } from '../../../src/notifications'
 import { SchoolService } from '../../../src/services'
 import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
+import { testFileStorage } from '../../support/test-file-storage'
 import {
   createCommunicationsContext,
 } from './workflow-test-context'
@@ -310,6 +311,7 @@ describe('SchoolService communications workflows', () => {
       }),
       atomicExecution: mockAtomic,
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     const result = await systemService.communicationsWorkflow.applyDeliveryEvent({

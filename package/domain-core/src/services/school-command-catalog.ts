@@ -69,6 +69,8 @@ export type SchoolCommandKey
     | 'applyDeliveryEvent'
     | 'markDeliveryRead'
     | 'updateNotificationContact'
+    | 'registerPushDevice'
+    | 'unregisterPushDevice'
     | 'updateSchoolNotificationTemplates'
     | 'resetSchoolNotificationTemplates'
     | 'recordIncident'
@@ -165,6 +167,8 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'applyDeliveryEvent',
   'markDeliveryRead',
   'updateNotificationContact',
+  'registerPushDevice',
+  'unregisterPushDevice',
   'updateSchoolNotificationTemplates',
   'resetSchoolNotificationTemplates',
   'recordIncident',

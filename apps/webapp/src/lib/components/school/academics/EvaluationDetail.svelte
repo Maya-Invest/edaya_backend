@@ -16,8 +16,7 @@
 	const { s }: { s: Evaluation } = $props();
 
 	const classStudents = $derived(
-		detailDataContext.students
-			.filter(student => student.classId === s.classId)
+		detailDataContext.studentsForClass(s.classId)
 			.sort((left, right) => left.name.localeCompare(right.name, 'fr')),
 	);
 

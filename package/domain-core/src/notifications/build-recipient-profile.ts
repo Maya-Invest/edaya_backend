@@ -80,6 +80,7 @@ export function buildGuardianRecipientProfile(
           GuardianContactMethodType.Whatsapp,
         ]),
         in_app: allowsNotifications,
+        push: allowsNotifications,
       },
     },
   }

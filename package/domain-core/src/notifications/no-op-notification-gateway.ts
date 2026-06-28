@@ -5,4 +5,6 @@ export const noOpNotificationGateway: NotificationGatewayPort = {
   cancel: async () => {},
   upsertRecipient: async () => {},
   removeRecipient: async () => {},
+  registerPushDevice: async () => {},
+  unregisterPushDevice: async () => {},
 }

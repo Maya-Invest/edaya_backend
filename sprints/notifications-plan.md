@@ -68,7 +68,7 @@ Hard constraints observed in Phases 1–4:
 
 ### Non-goals (still deferred)
 
-- Push notification device tokens
+- ~~Push notification device tokens~~ → see [mobile-push-notifications-plan.md](./mobile-push-notifications-plan.md) (in progress)
 - Provider templates (SendGrid, Twilio, etc.)
 - Replacing `CommunicationsServiceWorkflow` audience resolution
 - Full event catalog document (`docs/notifications-triggers.md`) — Phase 0 was absorbed into implementation

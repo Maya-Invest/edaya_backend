@@ -2,6 +2,7 @@ import type {
   ActorMetadata,
   SchoolRepositories,
 } from '@edaya/core'
+import { noOpFileStorage } from '@edaya/adaptor-file'
 import {
   ActorAssuranceLevel,
   createRepositoryAuthorizationPolicy,
@@ -84,6 +85,7 @@ export function buildSchoolApplication(opts: {
     atomicExecution: opts.atomicExecution,
     repositories: opts.repositories,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: noOpFileStorage,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories: opts.repositories,
       staffAssignmentRepository: opts.repositories.staffAssignments,

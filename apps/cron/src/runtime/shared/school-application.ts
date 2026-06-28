@@ -2,6 +2,7 @@ import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDr
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { createRepositoryAuthorizationPolicy, SchoolApplication } from "@edaya/core";
 import type { NotificationGatewayPort } from "@edaya/core";
+import { noOpFileStorage } from "@edaya/adaptor-file";
 import { createAppLogger } from "@/logging/app-logger";
 import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
 import type { Environment } from "@/runtime/env/schema";
@@ -32,6 +33,7 @@ export async function buildSchoolApplication(
   return new SchoolApplication({
     atomicExecution: new PostgresAtomicExecution(db),
     notificationGateway,
+    fileStorage: noOpFileStorage,
     repositories: repos,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories: repos,

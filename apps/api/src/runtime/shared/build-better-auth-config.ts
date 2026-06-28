@@ -12,6 +12,19 @@ export type BetterAuthEnv = Pick<
   "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL" | "LOG_LEVEL" | "NODE_ENV"
 > & Pick<Partial<Environment>, "TRUSTED_ORIGINS" | "COOKIE_DOMAIN">;
 
+function resolveBetterAuthTrustedOrigins(env: BetterAuthEnv): string[] {
+  const configured = env.TRUSTED_ORIGINS?.split(",").map(origin => origin.trim()).filter(Boolean) ?? [];
+  if (env.NODE_ENV === "development") {
+    return [...new Set([
+      ...configured,
+      "http://localhost:*",
+      "http://127.0.0.1:*",
+      "http://10.0.2.2:*",
+    ])];
+  }
+  return configured;
+}
+
 export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Parameters<typeof betterAuth>[0] {
   const appLogger = createAppLogger(env as Environment);
   const sendAuthVerificationOtp = createAuthOtpMailer(env as Environment, appLogger);
@@ -24,7 +37,7 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/auth",
-    trustedOrigins: env.TRUSTED_ORIGINS ? env.TRUSTED_ORIGINS.split(",") : [],
+    trustedOrigins: resolveBetterAuthTrustedOrigins(env),
     advanced: {
       ...(env.COOKIE_DOMAIN
         ? {

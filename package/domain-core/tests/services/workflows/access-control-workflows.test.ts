@@ -17,6 +17,7 @@ import {
   StudentStatus,
 } from '../../../src'
 import { SchoolService } from '../../../src/services'
+import { testFileStorage } from '../../support/test-file-storage'
 
 function actorWithPermissions(permissions: readonly Permission[]) {
   const effectiveGrants: EffectiveGrants = {
@@ -106,6 +107,7 @@ function createAccessControlContext(
       execute: async operation => operation(),
     },
     notificationGateway,
+    fileStorage: testFileStorage,
   })
 
   return { mockRepos, service, staffMember, guardian, student, notificationGateway }

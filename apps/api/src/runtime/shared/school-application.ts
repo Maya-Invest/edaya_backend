@@ -2,9 +2,10 @@ import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTrans
 import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createAppLogger } from "@/logging/app-logger";
 import { resolveInvitationDelivery } from "@/runtime/shared/resolve-invitation-delivery";
+import { resolveFileStorage } from "@/runtime/shared/resolve-file-storage";
 import { resolveNotificationGateway } from "@/runtime/shared/resolve-notification-gateway";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/resolve-invite-config";
-import { createRepositoryAuthorizationPolicy, type InvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
+import { createRepositoryAuthorizationPolicy, type FileStoragePort, type InvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
 import type { Environment } from "@/runtime/env/schema";
 import { createAuthContactResolver } from "@/runtime/shared/auth-contact-resolver";
 
@@ -12,6 +13,7 @@ export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
   env?: Environment;
   notificationGateway?: NotificationGatewayPort;
+  fileStorage?: FileStoragePort;
   invitationDelivery?: InvitationDeliveryPort;
   authDb?: unknown;
   runMigrations?: boolean;
@@ -38,12 +40,15 @@ export async function buildSchoolApplication(
     : undefined;
   const notificationGateway = options.notificationGateway
     ?? resolveNotificationGateway(options.env, logger);
+  const fileStorage = options.fileStorage
+    ?? resolveFileStorage(options.env, logger);
   const invitationDelivery = options.invitationDelivery
     ?? resolveInvitationDelivery(options.env);
 
   return new ApiSchoolApplication({
     atomicExecution,
     notificationGateway,
+    fileStorage,
     invitationDelivery,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),

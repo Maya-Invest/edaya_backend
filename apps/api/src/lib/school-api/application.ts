@@ -1,4 +1,4 @@
-import type { ActorMetadata, SchoolRepositories, SchoolService } from "@edaya/core";
+import type { ActorMetadata, FileStoragePort, SchoolRepositories, SchoolService } from "@edaya/core";
 import { SchoolApplication as CoreSchoolApplication } from "@edaya/core";
 
 type CoreSchoolApplicationArgs = ConstructorParameters<typeof CoreSchoolApplication>[0];
@@ -12,6 +12,10 @@ export class ApiSchoolApplication {
 
   get repositories(): SchoolRepositories {
     return this.application.repositories;
+  }
+
+  get fileStorage(): FileStoragePort {
+    return this.application.fileStorage;
   }
 
   forActor(actor: ActorMetadata): SchoolService {

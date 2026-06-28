@@ -4,6 +4,8 @@ import type {
   NotificationGatewayPort,
   NotificationRecipient,
   NotificationRecipientProfile,
+  RegisterPushDeviceInput,
+  UnregisterPushDeviceInput,
 } from "@edaya/core";
 import { chunkNovuTriggerRequests, defaultNovuWorkflowIdResolver, mapNotificationToNovuTriggerRequest } from "./trigger-request";
 import type { NovuMessagesClient } from "./novu-messages-client";
@@ -12,6 +14,8 @@ import type { NovuNotificationGatewayOptions } from "./types";
 export interface NovuSubscriberClient {
   upsert: (subscriberId: string, schoolId: string, profile: NotificationRecipientProfile) => Promise<void>;
   remove: (subscriberId: string) => Promise<void>;
+  registerPushDevice: (subscriberId: string, provider: "fcm" | "apns", token: string) => Promise<void>;
+  unregisterPushDevice: (subscriberId: string, provider: "fcm" | "apns") => Promise<void>;
 }
 
 export interface ExtendedNovuNotificationGatewayOptions extends NovuNotificationGatewayOptions {
@@ -91,11 +95,46 @@ export function createNovuNotificationGateway(
     }
   }
 
+  async function safeRegisterPushDevice(input: RegisterPushDeviceInput): Promise<void> {
+    if (!options.subscriberClient) {
+      return;
+    }
+    try {
+      await options.subscriberClient.registerPushDevice(
+        input.subjectId,
+        input.provider,
+        input.token,
+      );
+    }
+    catch (error) {
+      options.onError?.(error, { operation: "registerPushDevice", input });
+      throw error;
+    }
+  }
+
+  async function safeUnregisterPushDevice(input: UnregisterPushDeviceInput): Promise<void> {
+    if (!options.subscriberClient) {
+      return;
+    }
+    try {
+      await options.subscriberClient.unregisterPushDevice(input.subjectId, input.provider);
+    }
+    catch (error) {
+      options.onError?.(error, { operation: "unregisterPushDevice", input });
+    }
+  }
+
   return {
     enqueue: safeEnqueue,
     cancel: safeCancel,
     upsertRecipient: safeUpsertRecipient,
     removeRecipient: safeRemoveRecipient,
+    ...(options.subscriberClient
+      ? {
+          registerPushDevice: safeRegisterPushDevice,
+          unregisterPushDevice: safeUnregisterPushDevice,
+        }
+      : {}),
     ...(options.messagesClient
       ? { lookupDeliveryStatuses: safeLookupDeliveryStatuses }
       : {}),

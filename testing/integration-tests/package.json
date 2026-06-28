@@ -15,6 +15,7 @@
     "lint:fix": "eslint src --fix"
   },
   "devDependencies": {
+    "@edaya/adaptor-file": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/api": "workspace:*",
     "@edaya/betterauth-d1-migrations": "workspace:*",

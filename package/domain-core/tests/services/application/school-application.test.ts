@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test'
 import { SchoolApplication, SchoolService } from '../../../src'
 import { createSystemActorMetadata } from '../../../src/authorization'
 import { noOpNotificationGateway } from '../../../src/notifications'
+import { testFileStorage } from '../../support/test-file-storage'
 
 describe('SchoolApplication', () => {
   const actor = createSystemActorMetadata({
@@ -25,6 +26,7 @@ describe('SchoolApplication', () => {
       repositories,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     const service = application.forActor(actor)
@@ -44,6 +46,7 @@ describe('SchoolApplication', () => {
       repositories,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     const serviceProperties = application.forActor(actor) as unknown as {

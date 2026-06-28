@@ -15,11 +15,13 @@ const temporaryDirectory = mkdtempSync(join(tmpdir(), 'edaya-generated-'))
 const generatedOpenApi = join(temporaryDirectory, 'openapi.json')
 const generatedSchema = join(temporaryDirectory, 'schema.d.ts')
 const generatedClientBindings = join(temporaryDirectory, 'client-bindings.ts')
+const generatedDartClientBindings = join(temporaryDirectory, 'client_bindings.dart')
+const generatedDartClientSurface = join(temporaryDirectory, 'school_client_surface.dart')
 
 async function runGeneration(): Promise<void> {
   await $`bun run --cwd ${join(repoRoot, 'apps/api')} export-openapi --output ${generatedOpenApi}`
   await $`${join(repoRoot, 'apps/webapp/node_modules/.bin/openapi-typescript')} ${generatedOpenApi} -o ${generatedSchema}`
-  await $`bun run --cwd ${join(repoRoot, 'apps/api')} generate-api-client --output ${generatedClientBindings}`
+  await $`bun run --cwd ${join(repoRoot, 'apps/api')} generate-api-client --output ${generatedClientBindings} --dart-output ${generatedDartClientBindings}`
 }
 
 const artifacts = [
@@ -34,6 +36,14 @@ const artifacts = [
   {
     generated: generatedClientBindings,
     tracked: resolve(repoRoot, 'package/generated-api-client/src/generated/client-bindings.ts'),
+  },
+  {
+    generated: generatedDartClientBindings,
+    tracked: resolve(repoRoot, 'mobile/packages/edaya_api_client/lib/src/generated/client_bindings.dart'),
+  },
+  {
+    generated: generatedDartClientSurface,
+    tracked: resolve(repoRoot, 'mobile/packages/edaya_api_client/lib/src/generated/school_client_surface.dart'),
   },
 ]
 

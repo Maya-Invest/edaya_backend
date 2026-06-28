@@ -276,6 +276,8 @@ export const coreCommands = [
   command("apply-delivery-event", "applyDeliveryEvent", commandSchemas.applyDeliveryEventCommandSchema, { serviceOnly: true }),
   command("mark-delivery-read", "markDeliveryRead", commandSchemas.markDeliveryReadCommandSchema),
   command("update-notification-contact", "updateNotificationContact", commandSchemas.updateNotificationContactCommandSchema),
+  command("register-push-device", "registerPushDevice", commandSchemas.registerPushDeviceCommandSchema),
+  command("unregister-push-device", "unregisterPushDevice", commandSchemas.unregisterPushDeviceCommandSchema),
   command("update-school-notification-templates", "updateSchoolNotificationTemplates", commandSchemas.updateSchoolNotificationTemplatesCommandSchema),
   command("reset-school-notification-templates", "resetSchoolNotificationTemplates", commandSchemas.resetSchoolNotificationTemplatesCommandSchema),
 ] satisfies CoreCommandConfig[];

@@ -12,6 +12,8 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
   readonly cancelled: string[] = []
   readonly upserted: NotificationRecipientProfile[] = []
   readonly removed: Array<{ schoolId: string, recipient: NotificationRecipient }> = []
+  readonly registeredPushDevices: Array<{ subjectId: string, schoolId: string, token: string, provider: 'fcm' | 'apns' }> = []
+  readonly unregisteredPushDevices: Array<{ subjectId: string, provider: 'fcm' | 'apns' }> = []
   readonly statusLookups: NotificationDeliveryStatusQuery[][] = []
   private readonly enqueuedKeys = new Set<string>()
   private readonly statusLookupResults = new Map<string, NotificationDeliveryStatusLookup>()
@@ -41,6 +43,22 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
     this.removed.push({ schoolId, recipient })
   }
 
+  async registerPushDevice(input: {
+    subjectId: string
+    schoolId: string
+    token: string
+    provider: 'fcm' | 'apns'
+  }): Promise<void> {
+    this.registeredPushDevices.push(input)
+  }
+
+  async unregisterPushDevice(input: {
+    subjectId: string
+    provider: 'fcm' | 'apns'
+  }): Promise<void> {
+    this.unregisteredPushDevices.push(input)
+  }
+
   async lookupDeliveryStatuses(
     deliveries: ReadonlyArray<NotificationDeliveryStatusQuery>,
   ): Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>> {
@@ -60,6 +78,8 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
     this.cancelled.length = 0
     this.upserted.length = 0
     this.removed.length = 0
+    this.registeredPushDevices.length = 0
+    this.unregisteredPushDevices.length = 0
     this.statusLookups.length = 0
     this.statusLookupResults.clear()
     this.enqueuedKeys.clear()

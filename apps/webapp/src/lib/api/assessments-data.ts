@@ -132,6 +132,18 @@ export async function loadClassEvaluations(
 	classGroupId: string,
 	periodId: string,
 ): Promise<Evaluation[]> {
+	const { evaluations } = await loadClassEvaluationsPageData(client, classGroupId, periodId);
+	return evaluations;
+}
+
+export async function loadClassEvaluationsPageData(
+	client: SchoolClient,
+	classGroupId: string,
+	periodId: string,
+): Promise<{ evaluations: Evaluation[]; assessmentResults: AssessmentResultRow[] }> {
 	const sources = await fetchClassAssessmentsSources(client, classGroupId, periodId);
-	return mapClassEvaluations(classGroupId, sources);
+	return {
+		evaluations: mapClassEvaluations(classGroupId, sources),
+		assessmentResults: mapAssessmentResults(sources.resultsRaw),
+	};
 }

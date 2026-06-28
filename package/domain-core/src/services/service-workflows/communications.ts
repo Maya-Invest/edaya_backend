@@ -79,6 +79,15 @@ export interface UpdateNotificationContactInput {
   notificationPhone?: string | null
 }
 
+export interface RegisterPushDeviceInput {
+  token: string
+  provider: 'fcm' | 'apns'
+}
+
+export interface UnregisterPushDeviceInput {
+  provider: 'fcm' | 'apns'
+}
+
 function normalizeNotificationContact(value?: string | null): string | undefined {
   const trimmed = value?.trim()
   return trimmed && trimmed.length > 0 ? trimmed : undefined
@@ -437,6 +446,55 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       'NOTIFICATION_CONTACT_UNSUPPORTED_ACTOR',
       'Only linked staff and guardian accounts can update notification contact details',
     )
+  }
+
+  async registerPushDevice(input: RegisterPushDeviceInput): Promise<void> {
+    const actor = this.baseService.actor
+    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+
+    if (actor.kind === 'system') {
+      throw new BusinessRuleViolationError(
+        'PUSH_DEVICE_SUBJECT_REQUIRED',
+        'Link a login account before registering a push device',
+      )
+    }
+
+    const gateway = this.baseService.notificationGateway
+    if (!gateway.registerPushDevice) {
+      throw new BusinessRuleViolationError(
+        'PUSH_DEVICE_GATEWAY_UNAVAILABLE',
+        'Push device registration is not available',
+      )
+    }
+
+    await gateway.registerPushDevice({
+      subjectId: actor.subjectId,
+      schoolId: actor.schoolId,
+      token: input.token.trim(),
+      provider: input.provider,
+    })
+  }
+
+  async unregisterPushDevice(input: UnregisterPushDeviceInput): Promise<void> {
+    const actor = this.baseService.actor
+    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+
+    if (actor.kind === 'system') {
+      throw new BusinessRuleViolationError(
+        'PUSH_DEVICE_SUBJECT_REQUIRED',
+        'Link a login account before unregistering a push device',
+      )
+    }
+
+    const gateway = this.baseService.notificationGateway
+    if (!gateway.unregisterPushDevice) {
+      return
+    }
+
+    await gateway.unregisterPushDevice({
+      subjectId: actor.subjectId,
+      provider: input.provider,
+    })
   }
 
   private async resolveSubjectId(

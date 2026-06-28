@@ -1,6 +1,7 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { AuthSessionProvider, SessionActorBindings } from './session-actor-harness'
 import type { BetterAuthEnv } from '@/runtime/shared/build-better-auth-config'
+import { noOpFileStorage } from '@edaya/adaptor-file'
 import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
@@ -85,6 +86,7 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
     atomicExecution: new PostgresAtomicExecution(db as PostgresTransactionalDb),
     repositories,
     notificationGateway: noOpNotificationGateway,
+    fileStorage: noOpFileStorage,
     authorizationPolicy: createRepositoryAuthorizationPolicy({
       repositories,
       staffAssignmentRepository: repositories.staffAssignments,

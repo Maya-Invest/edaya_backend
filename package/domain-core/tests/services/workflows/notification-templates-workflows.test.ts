@@ -8,6 +8,7 @@ import { seedSchoolNotificationTemplates } from '../../../src/notifications/temp
 import { SchoolService } from '../../../src/services'
 import { createStore } from '../../support/create-test-app'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
+import { testFileStorage } from '../../support/test-file-storage'
 
 describe('NotificationTemplatesServiceWorkflow', () => {
   test('updateSchoolNotificationTemplates patches one template key', async () => {
@@ -32,6 +33,7 @@ describe('NotificationTemplatesServiceWorkflow', () => {
       } as any),
       atomicExecution: { execute: operation => operation() },
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     const updated = await service.commands.updateSchoolNotificationTemplates({
@@ -71,6 +73,7 @@ describe('NotificationTemplatesServiceWorkflow', () => {
       } as any),
       atomicExecution: { execute: operation => operation() },
       notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
     })
 
     await service.commands.updateSchoolNotificationTemplates({

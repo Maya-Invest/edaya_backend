@@ -26,6 +26,26 @@ export function edayaInAppStep(name = "In-app"): {
   };
 }
 
+export function edayaPushStep(name = "Push"): {
+  stepId: string;
+  name: string;
+  type: "push";
+  controlValues: {
+    subject: string;
+    body: string;
+  };
+} {
+  return {
+    stepId: "edaya-push",
+    name,
+    type: "push",
+    controlValues: {
+      subject: EDAYA_PAYLOAD_TITLE,
+      body: EDAYA_PAYLOAD_BODY,
+    },
+  };
+}
+
 export function edayaEmailStep(
   _templates: BootstrapEmailTemplates,
   name = "Email",

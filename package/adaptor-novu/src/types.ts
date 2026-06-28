@@ -1,4 +1,4 @@
-import type { NotificationEnqueueInput } from "@edaya/core";
+import type { NotificationEnqueueInput, RegisterPushDeviceInput, UnregisterPushDeviceInput } from "@edaya/core";
 
 export interface NovuTriggerRequest {
   workflowId: string;
@@ -23,8 +23,8 @@ export interface NovuNotificationGatewayOptions {
   client: NovuTriggerClient;
   resolveWorkflowId?: NovuWorkflowIdResolver;
   onError?: (error: unknown, context: {
-    operation: "enqueue" | "cancel" | "upsertRecipient" | "removeRecipient" | "lookupDeliveryStatuses";
-    input?: NotificationEnqueueInput;
+    operation: "enqueue" | "cancel" | "upsertRecipient" | "removeRecipient" | "lookupDeliveryStatuses" | "registerPushDevice" | "unregisterPushDevice";
+    input?: NotificationEnqueueInput | RegisterPushDeviceInput | UnregisterPushDeviceInput;
     idempotencyKey?: string;
     profile?: import("@edaya/core").NotificationRecipientProfile;
     schoolId?: string;

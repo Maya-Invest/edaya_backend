@@ -42,6 +42,8 @@ import type {
   MaterializeDeliveriesInput,
   PublishAnnouncementInput,
   RecordDeliveryInput,
+  RegisterPushDeviceInput,
+  UnregisterPushDeviceInput,
   UpdateNotificationContactInput,
 } from './service-workflows/communications'
 import type {
@@ -206,6 +208,8 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     applyDeliveryEvent: payload => workflows.communications.applyDeliveryEvent(payload as ApplyDeliveryEventInput),
     markDeliveryRead: payload => workflows.communications.markDeliveryRead(payload as MarkDeliveryReadInput),
     updateNotificationContact: payload => workflows.communications.updateNotificationContact(payload as UpdateNotificationContactInput),
+    registerPushDevice: payload => workflows.communications.registerPushDevice(payload as RegisterPushDeviceInput),
+    unregisterPushDevice: payload => workflows.communications.unregisterPushDevice(payload as UnregisterPushDeviceInput),
     updateSchoolNotificationTemplates: payload =>
       workflows.notificationTemplates.updateSchoolNotificationTemplates(payload as UpdateSchoolNotificationTemplatesInput),
     resetSchoolNotificationTemplates: payload =>

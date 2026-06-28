@@ -4,6 +4,7 @@ import { runCronJobs } from '../../src/cron/cron-job-runner'
 import { AssessmentKind } from '../../src/domains'
 import { RecordingNotificationGateway } from '../../src/notifications'
 import { SchoolApplication } from '../../src/services'
+import { testFileStorage } from '../support/test-file-storage'
 
 describe('runCronJobs', () => {
   test('processDueNotifications scans assessments and enqueues due-soon jobs per school', async () => {
@@ -61,6 +62,7 @@ describe('runCronJobs', () => {
     const application = new SchoolApplication({
       atomicExecution: { execute: async operation => operation() },
       notificationGateway: gateway,
+      fileStorage: testFileStorage,
       repositories,
       authorizationPolicy: createRepositoryAuthorizationPolicy({
         repositories,
