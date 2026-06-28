@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Guardian } from '$lib/types/school';
 	import { deleteGuardianMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import { updateGuardianProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
 	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
@@ -8,25 +9,43 @@
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Mail, Phone, Users } from '$lib/icons';
+	import { canUploadProfilePhoto } from '$lib/permissions';
 	import { get } from 'svelte/store';
 	import { relationKey } from '../shared/drawer-constants.ts';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerEmptyState from '../shared/DrawerEmptyState.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
+	import ProfilePhotoPicker from '../shared/ProfilePhotoPicker.svelte';
 	import GuardianEditModal from './GuardianEditModal.svelte';
 
 	const { g }: { g: Guardian } = $props();
 
 	const linked = $derived(detailDataContext.students.filter(s => g.studentIds.includes(s.id)));
+	const canChangePhoto = $derived(canUploadProfilePhoto('PARENT_UPDATE'));
+
+	async function handlePhotoChange(file: File) {
+		return updateGuardianProfilePhotoMutation({
+			guardianId: g.id,
+			file,
+			successMessage: get(t)('profilePhoto.updateSuccess'),
+		});
+	}
 </script>
 
 <div class="space-y-5">
 	<div class="flex items-center gap-4">
-		<div
-			class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-display text-lg font-semibold text-primary-foreground"
-		>
-			{g.initials}
-		</div>
+		{#if canChangePhoto}
+			<ProfilePhotoPicker
+				name={g.name}
+				initials={g.initials}
+				photoUrl={g.photoUrl}
+				size="lg"
+				onChange={handlePhotoChange}
+			/>
+		{:else}
+			<PersonAvatar name={g.name} initials={g.initials} photoUrl={g.photoUrl} size="lg" />
+		{/if}
 		<div>
 			<h3 class="font-display text-2xl font-semibold leading-tight">{g.name}</h3>
 			<p class="text-sm text-muted-foreground">
@@ -99,11 +118,12 @@
 			<div class="space-y-2">
 				{#each linked as s (s.id)}
 					<div class="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2">
-						<div
-							class="flex h-7 w-7 items-center justify-center rounded-md bg-primary font-display text-[10px] font-semibold text-primary-foreground"
-						>
-							{s.initials}
-						</div>
+						<PersonAvatar
+							name={s.name}
+							initials={s.initials}
+							photoUrl={s.photoUrl}
+							size="md"
+						/>
 						<span class="text-sm">{s.name}</span>
 						<span class="ml-auto font-mono text-[10px] uppercase text-muted-foreground">{s.classId}</span>
 					</div>

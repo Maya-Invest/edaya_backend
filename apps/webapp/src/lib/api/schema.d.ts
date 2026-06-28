@@ -1118,6 +1118,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/files/{attachmentId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Redirect to a presigned download URL for attachment content */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    attachmentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Redirect to presigned object storage URL */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Attachment not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/register-school": {
         parameters: {
             query?: never;
@@ -51707,7 +51807,7 @@ export interface components {
         };
         CreateFileUploadIntentRequest: {
             /** @enum {string} */
-            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "other";
+            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "staff" | "other";
             ownerId: string;
             fileName: string;
             mimeType: string;
@@ -51837,6 +51937,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            photoUrl?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
             notificationPhone?: string | null;
@@ -51852,7 +51953,6 @@ export interface components {
             serviceElevated: boolean;
             /** @default true */
             isActive: boolean;
-            photoUrl?: string | null;
             createdAt?: unknown;
         };
         RegisterStaffMemberCommand: {
@@ -51860,6 +51960,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            photoUrl?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
             notificationPhone?: string | null;
@@ -51885,6 +51986,7 @@ export interface components {
         UpdateStaffMemberProfileCommand: {
             firstName?: string;
             lastName?: string;
+            photoUrl?: string | null;
             email?: string | null;
             staffId: string;
         };
@@ -51893,6 +51995,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
@@ -52072,7 +52175,7 @@ export interface components {
             id: string;
             schoolId: string;
             /** @enum {string} */
-            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "other";
+            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "staff" | "other";
             ownerId: string;
             fileName: string;
             storageKey?: string | null;
@@ -52092,7 +52195,7 @@ export interface components {
             id: string;
             schoolId: string;
             /** @enum {string} */
-            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "other";
+            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "staff" | "other";
             ownerId: string;
             fileName: string;
             storageKey?: string | null;
@@ -52203,6 +52306,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
@@ -52358,6 +52462,7 @@ export interface components {
         UpdateGuardianContactMethodsCommand: {
             firstName?: string;
             lastName?: string;
+            photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
             notificationEmail?: string | null;

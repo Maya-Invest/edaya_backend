@@ -123,6 +123,14 @@ curl -I "https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com"
 
 Profile photos and uploads use `/core/files/{attachmentId}/content`.
 
+The webapp uploads directly to R2 presigned URLs from the browser. Configure bucket CORS once per bucket (allows `http://localhost:5173` by default, plus any origins in `TRUSTED_ORIGINS`):
+
+```sh
+cd apps/api && bun run configure:r2-cors
+```
+
+Uses `wrangler r2 bucket cors set` when you are logged in (`wrangler login`); falls back to the S3 API with your R2 token. Re-run after adding staging/production app URLs to `TRUSTED_ORIGINS`.
+
 ## Browse local database tables
 
 Plain HTTP browser — no extra setup.

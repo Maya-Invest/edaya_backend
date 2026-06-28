@@ -1,4 +1,10 @@
 export {
+  buildBrowserUploadCorsOrigins,
+  buildR2BucketCorsRules,
+  buildWranglerR2CorsPolicy,
+  configureR2BucketCors,
+} from "./configure-r2-bucket-cors";
+export {
   createR2FileStorageFromEnv,
   isR2FileStorageConfigured,
   resolveR2EndpointFromEnv,

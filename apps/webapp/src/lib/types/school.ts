@@ -77,6 +77,7 @@ export interface Guardian {
 	id: string;
 	name: string;
 	initials: string;
+	photoUrl?: string | null;
 	relation: 'Mother' | 'Father' | 'Legal guardian';
 	email: string;
 	phone: string;

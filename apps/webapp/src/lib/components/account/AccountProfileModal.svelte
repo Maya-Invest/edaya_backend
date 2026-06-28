@@ -1,15 +1,19 @@
 <script lang="ts">
 	import type { AccountActor } from '$lib/auth/account-actor';
 	import { accountHrefWithReturn } from '$lib/account/profile-navigation';
+	import { updateStaffProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
 	import { authSession } from '$lib/auth/session.svelte';
 	import DrawerField from '$lib/components/school/shared/DrawerField.svelte';
 	import PersonAvatar from '$lib/components/school/shared/PersonAvatar.svelte';
+	import ProfilePhotoPicker from '$lib/components/school/shared/ProfilePhotoPicker.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { ChevronRight, Inbox, LogOut, Mail, Settings2 } from '$lib/icons';
+	import { canUploadProfilePhoto } from '$lib/permissions';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 
 	let {
 		open = $bindable(false),
@@ -42,6 +46,25 @@
 			&& loginEmail !== '—';
 	});
 
+	const canChangePhoto = $derived(
+		actor.kind === 'staff'
+			&& Boolean(staffProfile?.id)
+			&& canUploadProfilePhoto('STAFF_UPDATE'),
+	);
+
+	const staffPhotoUrl = $derived(staffProfile?.photoUrl ?? actor.photoUrl ?? null);
+
+	async function handlePhotoChange(file: File) {
+		if (!staffProfile?.id) {
+			return false;
+		}
+		return updateStaffProfilePhotoMutation({
+			staffId: staffProfile.id,
+			file,
+			successMessage: get(t)('profilePhoto.updateSuccess'),
+		});
+	}
+
 	const readOnlyFieldClass = 'min-h-10 rounded-md border border-input bg-card px-3 py-2 text-sm';
 	const loginEmailFieldClass = cn(
 		readOnlyFieldClass,
@@ -58,12 +81,22 @@
 	<Dialog.Content class="max-w-md gap-0 overflow-hidden rounded-2xl p-0 shadow-panel">
 		<div class="border-b border-border bg-secondary/30 px-6 py-5">
 			<div class="flex items-center gap-4">
-				<PersonAvatar
-					name={actor.name}
-					initials={actor.initials}
-					photoUrl={actor.photoUrl}
-					size="lg"
-				/>
+				{#if canChangePhoto}
+					<ProfilePhotoPicker
+						name={actor.name}
+						initials={actor.initials}
+						photoUrl={staffPhotoUrl}
+						size="lg"
+						onChange={handlePhotoChange}
+					/>
+				{:else}
+					<PersonAvatar
+						name={actor.name}
+						initials={actor.initials}
+						photoUrl={actor.photoUrl}
+						size="lg"
+					/>
+				{/if}
 				<div class="min-w-0">
 					<Dialog.Title class="font-display text-xl font-semibold leading-tight">
 						{actor.name}

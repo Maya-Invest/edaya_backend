@@ -18,7 +18,8 @@
     "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
     "build": "tsup",
     "export-openapi": "bun src/scripts/export-openapi.ts",
-    "test:r2": "bun src/scripts/test-r2-credentials.ts"
+    "test:r2": "bun src/scripts/test-r2-credentials.ts",
+    "configure:r2-cors": "bun src/scripts/configure-r2-cors.ts"
   },
   "dependencies": {
     "@edaya/adaptor-novu": "workspace:*",

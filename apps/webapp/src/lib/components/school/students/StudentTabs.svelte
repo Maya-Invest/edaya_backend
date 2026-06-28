@@ -4,7 +4,12 @@
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
+	import { canUploadProfilePhoto } from '$lib/permissions';
+	import { get } from 'svelte/store';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
+	import ProfilePhotoPicker from '../shared/ProfilePhotoPicker.svelte';
 	import StudentAvatar from '../shared/StudentAvatar.svelte';
+	import { updateStudentProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
 	import ChangeClassButton from './ChangeClassButton.svelte';
 	import {
 		buildStudentGradeSummary,
@@ -36,6 +41,15 @@
 	const absenceData = $derived(sortStudentAbsences(detailDataContext.absences, s.id));
 	const incidentsData = $derived(summarizeStudentIncidents(studentIncidents));
 	const financesData = $derived(summarizeStudentFinances(detailDataContext.billing, s.id));
+	const canChangePhoto = $derived(canUploadProfilePhoto('STUDENT_UPDATE'));
+
+	async function handlePhotoChange(file: File) {
+		return updateStudentProfilePhotoMutation({
+			studentId: s.id,
+			file,
+			successMessage: get(t)('profilePhoto.updateSuccess'),
+		});
+	}
 
 	const tabLabelKeys: Record<StudentTab, string | null> = {
 		profile: 'drawer.tab.profile',
@@ -55,7 +69,17 @@
 <div class="space-y-5">
 	<div class="flex items-start justify-between gap-4">
 		<div class="flex items-center gap-4">
-			<StudentAvatar {s} />
+			{#if canChangePhoto}
+				<ProfilePhotoPicker
+					name={s.name}
+					initials={s.initials}
+					photoUrl={s.photoUrl}
+					size="list"
+					onChange={handlePhotoChange}
+				/>
+			{:else}
+				<StudentAvatar {s} />
+			{/if}
 			<div>
 				<h3 class="font-display text-2xl font-semibold leading-tight">{s.name}</h3>
 				<p class="text-sm text-muted-foreground">

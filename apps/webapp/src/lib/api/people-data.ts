@@ -524,6 +524,7 @@ export function mapGuardians(
 			id: guardian.id,
 			name: `${guardian.firstName} ${guardian.lastName}`,
 			initials: initialsFor(guardian.firstName, guardian.lastName),
+			photoUrl: guardian.photoUrl ?? null,
 			relation: mapGuardianRelation(primaryLink),
 			email,
 			phone,

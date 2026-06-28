@@ -3,6 +3,7 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { deleteStaffMemberMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
+	import { updateStaffProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
 	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
@@ -10,11 +11,13 @@
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { t } from '$lib/i18n';
 	import { Mail } from '$lib/icons';
+	import { canUploadProfilePhoto } from '$lib/permissions';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import PersonAvatar from '../shared/PersonAvatar.svelte';
+	import ProfilePhotoPicker from '../shared/ProfilePhotoPicker.svelte';
 	import StaffPermissionsList from './StaffPermissionsList.svelte';
 	import StaffProfileEditModal from './StaffProfileEditModal.svelte';
 
@@ -25,6 +28,15 @@
 	let statusBusy = $state(false);
 
 	const active = $derived(optimisticActive ?? s.isActive);
+	const canChangePhoto = $derived(canUploadProfilePhoto('STAFF_UPDATE'));
+
+	async function handlePhotoChange(file: File) {
+		return updateStaffProfilePhotoMutation({
+			staffId: s.id,
+			file,
+			successMessage: get(t)('profilePhoto.updateSuccess'),
+		});
+	}
 
 	const classLabels = $derived(
 		s.classes.map(id => academicContext.classes.find(c => c.id === id)?.name ?? id),
@@ -57,7 +69,17 @@
 
 <div class="space-y-5">
 	<div class="flex items-center gap-4">
-		<PersonAvatar name={s.name} initials={s.initials} photoUrl={s.photoUrl} size="lg" />
+		{#if canChangePhoto}
+			<ProfilePhotoPicker
+				name={s.name}
+				initials={s.initials}
+				photoUrl={s.photoUrl}
+				size="lg"
+				onChange={handlePhotoChange}
+			/>
+		{:else}
+			<PersonAvatar name={s.name} initials={s.initials} photoUrl={s.photoUrl} size="lg" />
+		{/if}
 		<div>
 			<h3 class="font-display text-2xl font-semibold leading-tight">{s.name}</h3>
 			<p class="text-sm text-muted-foreground">

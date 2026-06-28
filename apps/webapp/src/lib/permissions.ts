@@ -33,6 +33,10 @@ export function hasAnyPermission(permissions: readonly PermissionCode[], ctx: Ct
 	return checkAnyPermission(authSession.grants, permissions, sessionContext(ctx));
 }
 
+export function canUploadProfilePhoto(updatePermission: PermissionCode): boolean {
+	return hasPermission('ATTACHMENT_CONFIGURE') && hasPermission(updatePermission);
+}
+
 export function getCurrentUser(): StaffMember | null {
 	return authSession.user;
 }

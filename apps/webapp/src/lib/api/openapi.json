@@ -1658,6 +1658,7 @@
               "assessment_result",
               "student_enrollment",
               "applied_disciplinary_action",
+              "staff",
               "other"
             ]
           },
@@ -2130,6 +2131,11 @@
             "type": "string",
             "minLength": 1
           },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "email": {
             "type": "string",
             "nullable": true,
@@ -2176,11 +2182,6 @@
             "type": "boolean",
             "default": true
           },
-          "photoUrl": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
           "createdAt": {}
         },
         "required": [
@@ -2207,6 +2208,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "email": {
@@ -2294,6 +2300,11 @@
             "type": "string",
             "minLength": 1
           },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "email": {
             "type": "string",
             "nullable": true,
@@ -2325,6 +2336,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "phone": {
@@ -3042,6 +3058,7 @@
               "assessment_result",
               "student_enrollment",
               "applied_disciplinary_action",
+              "staff",
               "other"
             ]
           },
@@ -3127,6 +3144,7 @@
               "assessment_result",
               "student_enrollment",
               "applied_disciplinary_action",
+              "staff",
               "other"
             ]
           },
@@ -3501,6 +3519,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "phone": {
@@ -4064,6 +4087,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "phone": {
@@ -11024,6 +11052,145 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Attachment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/files/{attachmentId}/content": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Redirect to a presigned download URL for attachment content",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "attachmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to presigned object storage URL"
           },
           "400": {
             "description": "Invalid request payload",
