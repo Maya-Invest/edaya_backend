@@ -2,7 +2,9 @@
 	import type { Announcement } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { publishAnnouncementMutation } from '$lib/api/mutations/announcement.mutations';
+	import { deleteAnnouncementMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
@@ -96,6 +98,23 @@
 					>
 						{$t('announcements.publish')}
 					</Button>
+				{/snippet}
+			</PermissionGate>
+			<PermissionGate
+				permission="COMMUNICATION_CREATE"
+				mode="disable"
+				tooltip={$t('announcements.permissionCreate')}
+			>
+				{#snippet children({ disabled, title })}
+					<DeleteEntityButton
+						{disabled}
+						{title}
+						confirmTitle={$t('common.deleteConfirmTitle')}
+						confirmDescription={$t('announcements.deleteConfirm', { title: live.title })}
+						onConfirm={() => deleteAnnouncementMutation(live.id, {
+							successMessage: get(t)('announcements.toastDeleted', { title: live.title }),
+						})}
+					/>
 				{/snippet}
 			</PermissionGate>
 		{/if}

@@ -1,6 +1,6 @@
 # Webapp Shell Improvements — Sprint Plan
 
-> **Status:** Phases 1–2, 4, 6–8 validées · prochaine : Phase 3  
+> **Status:** Phases 1–2, 4, 6–9 validées · prochaine : Phase 3  
 > **Created:** 2026-06-27  
 > **Last updated:** 2026-06-27  
 > **Branch suggérée:** `feature/webapp-shell-improvements`  
@@ -17,6 +17,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [x] **Phase 2** — Compte connecté (modale profil)
 - [ ] **Phase 3** — Permissions menu
 - [x] **Phase 4** — États vides + audit boutons
+- [x] **Phase 9** — CRUD complet (ajout / modification / suppression)
 - [ ] **Phase 5** — Templates notifications + invitations
 - [x] **Phase 6** — Seeding élèves étendu
 - [x] **Phase 7** — Configuration école
@@ -267,13 +268,66 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 
 ---
 
+## Phase 9 — CRUD complet (Ajouter / Modifier / Supprimer)
+
+**Effort estimé :** 2–3 jours  
+**Dépend de :** Phase 4 (audit boutons)
+
+**Objectif :** garantir que chaque entité liste/drawer expose les actions CRUD attendues par `app-shell-spec.md` (CTA create en liste, edit + delete en drawer, confirm modal pour suppression).
+
+### 9.1 Infrastructure
+
+- [x] `DeleteEntityButton.svelte` + `ConfirmModal` (style destructif)
+- [x] `delete-entity.mutations.ts` — mutations API `entities.*.delete` + rollback store
+- [x] `navigate-after-delete.ts` — fermeture drawer URL après suppression
+- [x] i18n `common.delete`, confirm/toast par module
+
+### 9.2 Boutons Ajouter (écarts Phase 4)
+
+- [x] `ReportCardDefinitionsView` — CTA « Nouveau modèle » + `ReportCardDefinitionFormModal`
+- [x] `createReportCardDefinitionMutation` dans `report-cards.mutations.ts`
+
+### 9.3 Boutons Supprimer (drawers + listes)
+
+| Entité | Drawer / vue | Mutation | Permission |
+|--------|--------------|----------|------------|
+| Tuteur | `GuardianDetail` | `deleteGuardianMutation` | `PARENT_UPDATE` |
+| Staff | `StaffTabs` | `deleteStaffMemberMutation` | `STAFF_UPDATE` |
+| Frais | `FeeDetail` | `deleteFeeMutation` | `FINANCIAL_CONFIG_CONFIGURE` |
+| Facture | `BillingDetail` | `deleteStudentFeeMutation` | `FINANCIAL_CONFIG_CONFIGURE` |
+| Devoir | `DeadlineDetail` | `deleteHomeworkMutation` | `GRADE_INPUT` |
+| Évaluation | `EvaluationDetail` | `deleteAssessmentMutation` | `GRADE_INPUT` |
+| Séance | `PlanningDetail` | `deleteSessionMutation` | `TIMETABLE_UPDATE` |
+| Activité | `ActivityDetail` | `deleteActivityMutation` | `DISCIPLINE_CREATE` |
+| Annonce (brouillon) | `AnnouncementDetail` | `deleteAnnouncementMutation` | `COMMUNICATION_CREATE` |
+| Incident | `IncidentDetail` | `deleteIncidentMutation` | `DISCIPLINE_UPDATE` |
+| Matière classe | `SubjectTabs` | `deleteClassSubjectMutation` | — |
+| Modèle bulletin (brouillon) | `ReportCardDefinitionDetail` | `deleteReportCardDefinitionMutation` | `REPORT_CARD_CONFIGURE` |
+| Barème | `GradeScalesView` (carte) | `deleteGradeScaleMutation` | `REPORT_CARD_CONFIGURE` |
+| Événement calendrier | `SchoolYearEventDetail` | `deleteSchoolYearEventMutation` | `TIMETABLE_UPDATE` |
+
+### 9.4 Hors scope / limitations connues
+
+- **Classes** : suppression API non exposée (`classGroups.deleteUnsupported` conservé).
+- **Catalogue matières config** : lecture seule ; création au niveau classe.
+- **Rôles** : liste fixe, pas de CRUD.
+- **Paiements** : enregistrement via facturation, pas de delete liste.
+- **Élèves** : pas de delete drawer (données liées / règles métier API).
+- **Templates notifications** : Phase 5.
+
+**Test :** ouvrir un drawer → Supprimer → confirm modal → toast → retour liste ; barèmes/modèles bulletin testables en config.
+
+**Fichiers clés :** `DeleteEntityButton.svelte`, `delete-entity.mutations.ts`, `navigate-after-delete.ts`, drawers `*Detail.svelte`, `ReportCardDefinitionFormModal.svelte`
+
+---
+
 ## Regroupement PRs
 
 | PR | Phases | Description |
 |----|--------|-------------|
 | 1 | Phase 1 | Navigation cleanup |
 | 2 | Phase 2 | Modale profil |
-| 3 | Phase 3 + 4 | Permissions + empty states + audit |
+| 3 | Phase 3 + 4 + 9 | Permissions + empty states + CRUD |
 | 4 | Phase 5 | Templates notifications |
 | 5 | Phase 6 + 8 | Seeding puis pagination ✅ |
 | 6 | Phase 7 | Config école ✅ |
@@ -297,6 +351,13 @@ _Espace pour noter les corrections découvertes pendant l’audit Phase 4._
 - **Vues** : empty in-collection ajouté sur `GradeScalesView`, `FinanceView` (onglets billing et fees).
 - **Queries** : `academic`, `assessments`, `homework`, `access`, `report-cards`, `notification-templates` migrées vers `listPageHasItems`.
 - **Audit boutons** : pattern modal create + modal edit drawer OK sur modules principaux ; écarts documentés ci-dessus (catalogue matières config, modèles bulletin, templates Phase 5).
+
+### Phase 9 — correctifs livrés
+
+- **`DeleteEntityButton`** + **`delete-entity.mutations.ts`** : suppression fonctionnelle via API avec confirm modal, toast, navigation retour liste.
+- **14 entités** couvertes (drawers + barèmes en liste).
+- **Create manquant** : CTA « Nouveau modèle » sur `ReportCardDefinitionsView`.
+- **`removeSubject`** ajouté au store détail pour rollback matière classe.
 
 ---
 

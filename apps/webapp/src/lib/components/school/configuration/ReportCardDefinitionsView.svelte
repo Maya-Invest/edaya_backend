@@ -2,10 +2,14 @@
 	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { page } from '$app/stores';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import ReportCardDefinitionFormModal from '$lib/components/school/configuration/ReportCardDefinitionFormModal.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
+	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
-	import { ChevronRight, Search } from '$lib/icons';
+	import { ChevronRight, Plus, Search } from '$lib/icons';
 	import { readReportCardDefinitionListFilters, writeReportCardDefinitionListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -76,6 +80,12 @@
 		status = next;
 		scheduleFilterSync();
 	}
+
+	let createOpen = $state(false);
+
+	function handleCreated(definitionId: string) {
+		appGoto(detailHref.configReportCard(definitionId));
+	}
 </script>
 
 <div class="animate-fade-in">
@@ -114,7 +124,25 @@
 				{/each}
 			</div>
 		{/snippet}
+		{#snippet primary()}
+			<PermissionGate permission="REPORT_CARD_CONFIGURE">
+				{#snippet children({ disabled, title })}
+					<Button
+						size="sm"
+						class="rounded-full"
+						{disabled}
+						{title}
+						onclick={() => (createOpen = true)}
+					>
+						<Plus class="mr-1 h-4 w-4" />
+						{$t('reportCards.newModel')}
+					</Button>
+				{/snippet}
+			</PermissionGate>
+		{/snippet}
 	</ListPageHeader>
+
+	<ReportCardDefinitionFormModal bind:open={createOpen} onCreated={handleCreated} />
 
 	<div class="space-y-2">
 		{#each filteredDefinitions as def (def.id)}

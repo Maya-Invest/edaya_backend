@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { Guardian } from '$lib/types/school';
 	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
+	import { deleteGuardianMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Mail, Phone, Users } from '$lib/icons';
+	import { get } from 'svelte/store';
 	import { relationKey } from '../shared/drawer-constants.ts';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerEmptyState from '../shared/DrawerEmptyState.svelte';
@@ -65,6 +68,19 @@
 		<PermissionGate permission="PARENT_UPDATE" mode="disable" tooltip={$t('guardian.permissionUpdate')}>
 			{#snippet children({ disabled, title })}
 				<GuardianEditModal {g} {disabled} {title} />
+			{/snippet}
+		</PermissionGate>
+		<PermissionGate permission="PARENT_UPDATE" mode="disable" tooltip={$t('guardian.permissionUpdate')}>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('guardian.deleteConfirm', { name: g.name })}
+					onConfirm={() => deleteGuardianMutation(g.id, {
+						successMessage: get(t)('guardian.toastDeleted', { name: g.name }),
+					})}
+				/>
 			{/snippet}
 		</PermissionGate>
 	</DrawerActionBar>

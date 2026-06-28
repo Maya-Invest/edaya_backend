@@ -1,12 +1,15 @@
 <script lang="ts">
 	import type { Deadline } from '$lib/types/school';
+	import { deleteHomeworkMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { Check, Clock, AlertCircle, FileText, Paperclip } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import DeadlineFormModal from './DeadlineFormModal.svelte';
@@ -112,6 +115,19 @@
 		<PermissionGate permission="GRADE_INPUT" mode="disable" tooltip={$t('hw.permissionCreate')}>
 			{#snippet children({ disabled, title })}
 				<DeadlineFormModal deadline={d} classId={d.classId} {disabled} title={title} />
+			{/snippet}
+		</PermissionGate>
+		<PermissionGate permission="GRADE_INPUT" mode="disable" tooltip={$t('hw.permissionCreate')}>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('hw.deleteConfirm', { title: d.title })}
+					onConfirm={() => deleteHomeworkMutation(d.id, {
+						successMessage: get(t)('hw.toastDeleted', { title: d.title }),
+					})}
+				/>
 			{/snippet}
 		</PermissionGate>
 	</DrawerActionBar>

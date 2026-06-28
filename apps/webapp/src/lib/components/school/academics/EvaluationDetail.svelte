@@ -1,12 +1,17 @@
 <script lang="ts">
 	import type { Evaluation } from '$lib/types/school';
+	import { deleteAssessmentMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { locale, t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import { SvelteMap } from 'svelte/reactivity';
 	import DrawerField from '../shared/DrawerField.svelte';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import EvaluationGradeEntryModal from './EvaluationGradeEntryModal.svelte';
+	import { get } from 'svelte/store';
 
 	const { s }: { s: Evaluation } = $props();
 
@@ -69,6 +74,22 @@
 			</div>
 		</DrawerField>
 	</div>
+
+	<DrawerActionBar>
+		<PermissionGate permission="GRADE_INPUT" mode="disable" tooltip={$t('eval.permissionCreate')}>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('eval.deleteConfirm', { title: s.title })}
+					onConfirm={() => deleteAssessmentMutation(s.id, {
+						successMessage: get(t)('eval.toastDeleted', { title: s.title }),
+					})}
+				/>
+			{/snippet}
+		</PermissionGate>
+	</DrawerActionBar>
 
 	<div class="space-y-2 border-t border-border pt-4">
 		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

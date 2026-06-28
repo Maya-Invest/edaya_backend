@@ -1,8 +1,11 @@
 <script lang="ts">
 	import type { Fee } from '$lib/types/school';
+	import { deleteFeeMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import DrawerField from '../shared/DrawerField.svelte';
 	import FeeFormModal from './FeeFormModal.svelte';
@@ -65,6 +68,23 @@
 		>
 			{#snippet children({ disabled, title })}
 				<FeeFormModal fee={f} {disabled} {title} />
+			{/snippet}
+		</PermissionGate>
+		<PermissionGate
+			permission="FINANCIAL_CONFIG_CONFIGURE"
+			mode="disable"
+			tooltip={$t('fee.permissionConfigure')}
+		>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('fee.deleteConfirm', { name: f.name })}
+					onConfirm={() => deleteFeeMutation(f.id, {
+						successMessage: get(t)('fee.toastDeleted', { name: f.name }),
+					})}
+				/>
 			{/snippet}
 		</PermissionGate>
 	</DrawerActionBar>

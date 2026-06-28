@@ -231,6 +231,10 @@ export class DetailDataContext {
 		this.deadlines = this.deadlines.filter(deadline => deadline.id !== id);
 	}
 
+	removeSubject(id: string) {
+		this.subjects = this.subjects.filter(subject => subject.id !== id);
+	}
+
 	patchDeadline(id: string, patch: Partial<Deadline>) {
 		this.deadlines = this.replaceById(this.deadlines, id, patch);
 	}

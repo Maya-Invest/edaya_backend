@@ -1,9 +1,12 @@
 <script lang="ts">
 	import type { Subject } from '$lib/types/school';
+	import { deleteClassSubjectMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import { t } from '$lib/i18n';
 	import { Check, FileText, Paperclip } from '$lib/icons';
 	import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 	import { cn } from '$lib/utils';
+	import { get } from 'svelte/store';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import SubjectFormModal from './SubjectFormModal.svelte';
 
@@ -64,6 +67,13 @@
 
 	<DrawerActionBar>
 		<SubjectFormModal subject={s} />
+		<DeleteEntityButton
+			confirmTitle={$t('common.deleteConfirmTitle')}
+			confirmDescription={$t('subjects.deleteConfirm', { name: s.name })}
+			onConfirm={() => deleteClassSubjectMutation(s.id, {
+				successMessage: get(t)('subjects.toastDeleted', { name: s.name }),
+			})}
+		/>
 	</DrawerActionBar>
 
 	<div class="flex items-center gap-1 rounded-full border border-border bg-secondary/40 p-1 text-xs">

@@ -104,6 +104,37 @@ export async function createGradeScaleMutation(input: {
 	return result !== null;
 }
 
+export async function createReportCardDefinitionMutation(input: {
+	name: string;
+	gradeLevelId: string;
+	gradeScaleId: string;
+	successMessage?: string;
+}): Promise<string | null> {
+	const client = getBrowserSchoolClient();
+	const yearId = academicContext.yearId;
+	if (!yearId) {
+		return null;
+	}
+
+	const id = `rcd-${Date.now().toString(36)}`;
+	const result = await runMutation(() => client.commands.createReportCardDefinition({
+		id,
+		schoolId: schoolId(),
+		academicYearId: yearId,
+		gradeLevelId: input.gradeLevelId,
+		gradeScaleId: input.gradeScaleId,
+		name: input.name.trim(),
+		kind: 'default',
+		status: 'draft',
+		isDefault: false,
+		description: input.name.trim(),
+	}), {
+		successMessage: input.successMessage,
+		onSuccess: () => refreshReportCardCatalog(),
+	});
+	return result ? id : null;
+}
+
 export async function publishReportCardDefinitionMutation(definitionId: string): Promise<boolean> {
 	const client = getBrowserSchoolClient();
 	const result = await runMutation(async () => {

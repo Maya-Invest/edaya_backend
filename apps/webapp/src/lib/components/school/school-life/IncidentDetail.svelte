@@ -2,7 +2,9 @@
 	import type { Incident } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { resolveIncidentMutation } from '$lib/api/mutations/incident.mutations';
+	import { deleteIncidentMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
@@ -132,6 +134,23 @@
 				>
 					{$t('events.resolveAction')}
 				</Button>
+			{/snippet}
+		</PermissionGate>
+		<PermissionGate
+			permission="DISCIPLINE_UPDATE"
+			mode="disable"
+			tooltip={$t('events.permissionUpdate')}
+		>
+			{#snippet children({ disabled, title })}
+				<DeleteEntityButton
+					{disabled}
+					{title}
+					confirmTitle={$t('common.deleteConfirmTitle')}
+					confirmDescription={$t('events.deleteConfirm', { title: i.summary })}
+					onConfirm={() => deleteIncidentMutation(i.id, {
+						successMessage: get(t)('events.toastDeleted'),
+					})}
+				/>
 			{/snippet}
 		</PermissionGate>
 	</DrawerActionBar>
