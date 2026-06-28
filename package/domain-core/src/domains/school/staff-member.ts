@@ -129,6 +129,10 @@ async function checkStaffMemberReadAccess(
   actor: ActorMetadata,
   entities: readonly StaffMember[],
 ): Promise<void> {
+  if (actor.kind === 'system') {
+    return
+  }
+
   for (const entity of entities) {
     if (isSelfStaffMember(actor, entity)) {
       continue
@@ -136,6 +140,7 @@ async function checkStaffMemberReadAccess(
     if (!actorHasAnyPermission(actor, [
       Permission.SCHOOL_STRUCTURE_CONFIGURE,
       Permission.STAFF_READ,
+      Permission.ACCESS_CONTROL_ASSIGN,
     ])) {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Staff member read denied')
     }

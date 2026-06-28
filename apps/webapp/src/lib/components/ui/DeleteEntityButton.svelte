@@ -4,7 +4,7 @@
 	import { t } from '$lib/i18n';
 	import { Trash2 } from '$lib/icons';
 
-	let {
+	const {
 		disabled = false,
 		title,
 		confirmTitle,

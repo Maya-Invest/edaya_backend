@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { ReportCardDefinition } from '$lib/types/report-cards';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { publishReportCardDefinitionMutation } from '$lib/api/mutations/report-cards.mutations';
 	import { deleteReportCardDefinitionMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import { publishReportCardDefinitionMutation } from '$lib/api/mutations/report-cards.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';

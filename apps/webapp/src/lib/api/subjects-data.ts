@@ -157,7 +157,7 @@ export async function fetchClassSubjectsSources(
 			: Promise.resolve([]),
 		classSubjectIds.length > 0
 			? safeOptionalEntityList(() =>
-				client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds)))
+					client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds)))
 			: Promise.resolve([]),
 	]);
 

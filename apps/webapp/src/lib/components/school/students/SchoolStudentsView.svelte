@@ -7,8 +7,8 @@
 	import { getBrowserSchoolClient } from '$lib/api/school-client';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FilterSelect from '$lib/components/ui/filter-select.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
 	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import ListMoreMenu from '$lib/components/ui/ListMoreMenu.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
@@ -108,7 +108,7 @@
 		if (!filtersReady)
 			return;
 		clearTimeout(searchTimer);
-		searchTimer = setTimeout(() => syncFiltersToUrl(), 250);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
 	}
 
 	function applyStatus(next: (typeof statusKeys)[number]) {
@@ -218,51 +218,51 @@
 			>
 				<ul class={cn(infinite.loading && 'opacity-60')}>
 					{#each filtered as s (s.id)}
-					{@const cls = classes.find(c => c.id === s.classId)}
-					{@const active = selectedId === s.id}
-					<li>
-						<button
-							type="button"
-							onclick={() => onSelect?.(s)}
-							class={cn(
-								'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-3.5 text-left transition-colors last:border-b-0',
-								active ? 'bg-primary/10' : 'hover:bg-secondary',
-							)}
-						>
-							<div class="col-span-4 flex items-center gap-3">
-								<div
-									class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-xs font-semibold text-primary-foreground"
-								>
-									{s.initials}
+						{@const cls = classes.find(c => c.id === s.classId)}
+						{@const active = selectedId === s.id}
+						<li>
+							<button
+								type="button"
+								onclick={() => onSelect?.(s)}
+								class={cn(
+									'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-3.5 text-left transition-colors last:border-b-0',
+									active ? 'bg-primary/10' : 'hover:bg-secondary',
+								)}
+							>
+								<div class="col-span-4 flex items-center gap-3">
+									<div
+										class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-xs font-semibold text-primary-foreground"
+									>
+										{s.initials}
+									</div>
+									<div class="min-w-0">
+										<p class="truncate text-sm font-medium">{s.name}</p>
+										<p class="truncate text-xs text-muted-foreground">{s.email}</p>
+									</div>
 								</div>
-								<div class="min-w-0">
-									<p class="truncate text-sm font-medium">{s.name}</p>
-									<p class="truncate text-xs text-muted-foreground">{s.email}</p>
+								<div class="col-span-2 text-sm text-foreground/80">{cls?.name}</div>
+								<div class="col-span-2 font-display text-base font-semibold tabular-nums">
+									{s.average.toFixed(1)}
 								</div>
-							</div>
-							<div class="col-span-2 text-sm text-foreground/80">{cls?.name}</div>
-							<div class="col-span-2 font-display text-base font-semibold tabular-nums">
-								{s.average.toFixed(1)}
-							</div>
-							<div class="col-span-2">
-								<div class="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-									<div class="h-full rounded-full bg-accent" style:width="{s.attendance}%"></div>
+								<div class="col-span-2">
+									<div class="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+										<div class="h-full rounded-full bg-accent" style:width="{s.attendance}%"></div>
+									</div>
+									<p class="mt-1 font-mono text-[10px] text-muted-foreground">{s.attendance}%</p>
 								</div>
-								<p class="mt-1 font-mono text-[10px] text-muted-foreground">{s.attendance}%</p>
-							</div>
-							<div class="col-span-2">
-								<span
-									class={cn(
-										'rounded-full px-2 py-0.5 text-[10px] font-medium',
-										statusStyle[s.status],
-									)}
-								>
-									{$t(`studentStatus.${s.status}`)}
-								</span>
-							</div>
-						</button>
-					</li>
-				{/each}
+								<div class="col-span-2">
+									<span
+										class={cn(
+											'rounded-full px-2 py-0.5 text-[10px] font-medium',
+											statusStyle[s.status],
+										)}
+									>
+										{$t(`studentStatus.${s.status}`)}
+									</span>
+								</div>
+							</button>
+						</li>
+					{/each}
 					{#if filtered.length === 0 && !infinite.loading}
 						<li class="px-5 py-12 text-center text-sm text-muted-foreground">
 							{$t('students.noMatch')}
@@ -282,40 +282,40 @@
 			>
 				<div class={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-3', infinite.loading && 'opacity-60')}>
 					{#each filtered as s (s.id)}
-					{@const cls = classes.find(c => c.id === s.classId)}
-					{@const active = selectedId === s.id}
-					<button
-						type="button"
-						onclick={() => onSelect?.(s)}
-						class={cn(
-							'rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-panel',
-							active && 'border-primary/40 bg-primary/5',
-						)}
-					>
-						<div class="flex items-center gap-3">
-							<div
-								class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold text-primary-foreground"
-							>
-								{s.initials}
+						{@const cls = classes.find(c => c.id === s.classId)}
+						{@const active = selectedId === s.id}
+						<button
+							type="button"
+							onclick={() => onSelect?.(s)}
+							class={cn(
+								'rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-panel',
+								active && 'border-primary/40 bg-primary/5',
+							)}
+						>
+							<div class="flex items-center gap-3">
+								<div
+									class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold text-primary-foreground"
+								>
+									{s.initials}
+								</div>
+								<div class="min-w-0">
+									<p class="truncate font-medium">{s.name}</p>
+									<p class="truncate text-xs text-muted-foreground">{cls?.name}</p>
+								</div>
 							</div>
-							<div class="min-w-0">
-								<p class="truncate font-medium">{s.name}</p>
-								<p class="truncate text-xs text-muted-foreground">{cls?.name}</p>
+							<div class="mt-4 flex items-center justify-between text-sm">
+								<span class="font-display font-semibold tabular-nums">{s.average.toFixed(1)}</span>
+								<span
+									class={cn(
+										'rounded-full px-2 py-0.5 text-[10px] font-medium',
+										statusStyle[s.status],
+									)}
+								>
+									{$t(`studentStatus.${s.status}`)}
+								</span>
 							</div>
-						</div>
-						<div class="mt-4 flex items-center justify-between text-sm">
-							<span class="font-display font-semibold tabular-nums">{s.average.toFixed(1)}</span>
-							<span
-								class={cn(
-									'rounded-full px-2 py-0.5 text-[10px] font-medium',
-									statusStyle[s.status],
-								)}
-							>
-								{$t(`studentStatus.${s.status}`)}
-							</span>
-						</div>
-					</button>
-				{/each}
+						</button>
+					{/each}
 				</div>
 				{#if filtered.length === 0 && !infinite.loading}
 					<p class="py-12 text-center text-sm text-muted-foreground">{$t('students.noMatch')}</p>
@@ -324,4 +324,3 @@
 		</div>
 	{/if}
 </div>
-

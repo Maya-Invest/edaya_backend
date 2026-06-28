@@ -8,10 +8,10 @@
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { t } from '$lib/i18n';
 	import { Plus, Search } from '$lib/icons';
-	import { get } from 'svelte/store';
 	import { readGradeScaleListFilters, writeGradeScaleListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
+	import { get } from 'svelte/store';
 	import GradeScaleFormModal from './GradeScaleFormModal.svelte';
 
 	const initialFilters = $derived(readGradeScaleListFilters($page.url));
@@ -93,42 +93,42 @@
 			</p>
 		{:else}
 			{#each filteredScales as scale (scale.id)}
-			<article class="rounded-2xl border border-border bg-card p-5 shadow-soft">
-				<div class="mb-2 flex items-start justify-between gap-2">
-					<h3 class="font-display font-semibold">{scale.name}</h3>
-					<div class="flex items-center gap-2">
-						{#if scale.isDefault}
-							<span class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] uppercase">
-								{$t('gradeScales.default')}
-							</span>
-						{/if}
-						{#if !scale.isDefault}
-							<PermissionGate permission="REPORT_CARD_CONFIGURE">
-								{#snippet children({ disabled, title })}
-									<DeleteEntityButton
-										size="sm"
-										variant="ghost"
-										{disabled}
-										{title}
-										confirmTitle={$t('common.deleteConfirmTitle')}
-										confirmDescription={$t('gradeScales.deleteConfirm', { name: scale.name })}
-										onConfirm={() => deleteGradeScaleMutation(scale.id, {
-											navigate: false,
-											successMessage: get(t)('gradeScales.toastDeleted', { name: scale.name }),
-										})}
-									/>
-								{/snippet}
-							</PermissionGate>
-						{/if}
+				<article class="rounded-2xl border border-border bg-card p-5 shadow-soft">
+					<div class="mb-2 flex items-start justify-between gap-2">
+						<h3 class="font-display font-semibold">{scale.name}</h3>
+						<div class="flex items-center gap-2">
+							{#if scale.isDefault}
+								<span class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] uppercase">
+									{$t('gradeScales.default')}
+								</span>
+							{/if}
+							{#if !scale.isDefault}
+								<PermissionGate permission="REPORT_CARD_CONFIGURE">
+									{#snippet children({ disabled, title })}
+										<DeleteEntityButton
+											size="sm"
+											variant="ghost"
+											{disabled}
+											{title}
+											confirmTitle={$t('common.deleteConfirmTitle')}
+											confirmDescription={$t('gradeScales.deleteConfirm', { name: scale.name })}
+											onConfirm={() => deleteGradeScaleMutation(scale.id, {
+												navigate: false,
+												successMessage: get(t)('gradeScales.toastDeleted', { name: scale.name }),
+											})}
+										/>
+									{/snippet}
+								</PermissionGate>
+							{/if}
+						</div>
 					</div>
-				</div>
-				<p class="font-mono text-sm text-muted-foreground">
-					{scale.minScore} → {scale.maxScore} · {$t('gradeScales.passing')} {scale.passingScore}
-				</p>
-				{#if scale.description}
-					<p class="mt-2 text-sm text-muted-foreground">{scale.description}</p>
-				{/if}
-			</article>
+					<p class="font-mono text-sm text-muted-foreground">
+						{scale.minScore} → {scale.maxScore} · {$t('gradeScales.passing')} {scale.passingScore}
+					</p>
+					{#if scale.description}
+						<p class="mt-2 text-sm text-muted-foreground">{scale.description}</p>
+					{/if}
+				</article>
 			{/each}
 		{/if}
 	</div>

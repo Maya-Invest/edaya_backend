@@ -2,8 +2,8 @@
 	import type { AccountActor } from '$lib/auth/account-actor';
 	import { accountHrefWithReturn } from '$lib/account/profile-navigation';
 	import { authSession } from '$lib/auth/session.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import DrawerField from '$lib/components/school/shared/DrawerField.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
@@ -34,11 +34,12 @@
 		return '';
 	});
 
-	const showWorkEmail = $derived(
-		workEmail.length > 0
-			&& workEmail.toLowerCase() !== loginEmail.toLowerCase()
-			&& loginEmail !== '—',
-	);
+	const showWorkEmail = $derived.by(() => {
+		const normalizedLogin = loginEmail.toLowerCase();
+		return workEmail.length > 0
+			&& workEmail.toLowerCase() !== normalizedLogin
+			&& loginEmail !== '—';
+	});
 
 	const readOnlyFieldClass = 'min-h-10 rounded-md border border-input bg-card px-3 py-2 text-sm';
 	const loginEmailFieldClass = cn(

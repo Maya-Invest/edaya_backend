@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { Incident } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
-	import { resolveIncidentMutation } from '$lib/api/mutations/incident.mutations';
 	import { deleteIncidentMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import { resolveIncidentMutation } from '$lib/api/mutations/incident.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';

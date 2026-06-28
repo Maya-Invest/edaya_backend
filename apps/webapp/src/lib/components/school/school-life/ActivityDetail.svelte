@@ -4,10 +4,11 @@
 	import { deleteActivityMutation } from '$lib/api/mutations/delete-entity.mutations';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
-	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
+	import { t } from '$lib/i18n';
 	import { Plus, ChevronRight, Search } from '$lib/icons';
 	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
@@ -19,7 +20,6 @@
 	} from '../shared/drawer-constants.ts';
 	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
 	import ActivityFormModal from './ActivityFormModal.svelte';
-	import { t } from '$lib/i18n';
 
 	const { a }: { a: Activity } = $props();
 

@@ -27,7 +27,7 @@ describe('population generator', () => {
   it('uses realistic guardian email domains for bulk fixtures', () => {
     const sample = SEED_BULK_GUARDIANS.slice(0, 20)
     expect(sample.every(entry => !entry.email.includes('@seed.edaya.test'))).toBe(true)
-    expect(sample.every(entry => /@[a-z0-9.-]+\.(com|ca)$/.test(entry.email))).toBe(true)
+    expect(sample.every(entry => /@[a-z0-9.-]+\.(?:com|ca)$/.test(entry.email))).toBe(true)
     expect(new Set(SEED_BULK_GUARDIANS.map(entry => entry.email)).size).toBe(SEED_BULK_GUARDIANS.length)
   })
 })

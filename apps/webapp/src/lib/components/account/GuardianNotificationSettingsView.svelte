@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { NotificationSettingsPageData } from '$lib/queries/account.queries';
+	import { page } from '$app/stores';
 	import { returnToProfileModalIfRequested } from '$lib/account/profile-navigation';
 	import { saveGuardianNotificationPreferencesMutation } from '$lib/api/mutations/notifications.mutations';
 	import { authSession } from '$lib/auth/session.svelte';
@@ -8,7 +9,6 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
 	import { t } from '$lib/i18n';
-	import { page } from '$app/stores';
 
 	const {
 		data,

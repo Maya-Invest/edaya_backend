@@ -3,8 +3,8 @@
 	import { page } from '$app/stores';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { DEFAULT_LIST_PAGE_SIZE } from '$lib/api/entity-list-filters';
-	import { fetchStaffMembersPage } from '$lib/api/staff-data';
 	import { getBrowserSchoolClient } from '$lib/api/school-client';
+	import { fetchStaffMembersPage } from '$lib/api/staff-data';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -77,7 +77,7 @@
 		if (!filtersReady)
 			return;
 		clearTimeout(searchTimer);
-		searchTimer = setTimeout(() => syncFiltersToUrl(), 250);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
 	}
 </script>
 

@@ -1,6 +1,7 @@
 import type { ResolvedPathname } from '$app/types';
 import type { PermissionCode } from '$lib/auth/types';
 import type { LucideIcon } from '$lib/icons';
+import type { NavItemDefinition } from '$lib/navigation/nav-catalog';
 import {
 	Users,
 	Shield,
@@ -25,14 +26,14 @@ import {
 	CalendarRange,
 	Layers,
 } from '$lib/icons';
+import { appPath } from '$lib/navigation/app-navigation';
 import {
 	CLASS_NAV_DEFS,
 	CONFIG_NAV_DEFS,
 	FINANCE_NAV_DEFS,
 	SCHOOL_NAV_DEFS,
-	type NavItemDefinition,
+
 } from '$lib/navigation/nav-catalog';
-import { appPath } from '$lib/navigation/app-navigation';
 
 export type { LucideIcon };
 

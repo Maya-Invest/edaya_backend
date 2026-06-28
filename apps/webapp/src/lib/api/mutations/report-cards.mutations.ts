@@ -3,6 +3,7 @@ import { runMutation } from '$lib/api/mutations/run-mutation';
 import { loadClassReportCardResultsData } from '$lib/api/report-cards-data';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
+import { refreshReportCardCatalog } from '$lib/queries/report-cards.queries';
 import { reportCardsContext } from '$lib/report-cards/context.svelte';
 
 function schoolId(): string {

@@ -61,50 +61,69 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     expect(seedResult.guardians).toBe(countSeedGuardians())
 
     const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
-    const [studentsResponse, guardiansResponse, enrollmentsResponse, staffAssignmentsResponse] = await Promise.all([
-      app.request(createAppRequest('/core/entities/students/list', {
+    const [studentsCountResponse, guardiansCountResponse, enrollmentsCountResponse, staffAssignmentsResponse, studentsResponse, guardiansResponse] = await Promise.all([
+      app.request(createAppRequest('/core/entities/students/count', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ $limit: SEED_TARGET_STUDENT_COUNT }),
+        body: JSON.stringify({}),
       })),
-      app.request(createAppRequest('/core/entities/guardians/list', {
+      app.request(createAppRequest('/core/entities/guardians/count', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ $limit: countSeedGuardians() }),
+        body: JSON.stringify({}),
       })),
-      app.request(createAppRequest('/core/entities/enrollments/list', {
+      app.request(createAppRequest('/core/entities/enrollments/count', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ $limit: SEED_TARGET_STUDENT_COUNT }),
+        body: JSON.stringify({}),
       })),
       app.request(createAppRequest('/core/entities/staff-assignments/list', {
         method: 'POST',
         headers,
         body: JSON.stringify({}),
       })),
+      app.request(createAppRequest('/core/entities/students/list', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ $limit: 500 }),
+      })),
+      app.request(createAppRequest('/core/entities/guardians/list', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ $limit: countSeedGuardians() }),
+      })),
     ])
 
+    expect(studentsCountResponse.status).toBe(200)
+    expect(guardiansCountResponse.status).toBe(200)
+    expect(enrollmentsCountResponse.status).toBe(200)
+    expect(staffAssignmentsResponse.status).toBe(200)
     expect(studentsResponse.status).toBe(200)
     expect(guardiansResponse.status).toBe(200)
-    expect(enrollmentsResponse.status).toBe(200)
-    expect(staffAssignmentsResponse.status).toBe(200)
 
+    const studentsCount = (await studentsCountResponse.json() as { count?: number }).count ?? 0
+    const guardiansCount = (await guardiansCountResponse.json() as { count?: number }).count ?? 0
+    const enrollmentsCount = (await enrollmentsCountResponse.json() as { count?: number }).count ?? 0
     const students = unwrapEntityList<{ id: string }>(await studentsResponse.json())
     const guardians = unwrapEntityList<{ id: string }>(await guardiansResponse.json())
-    const enrollments = unwrapEntityList<{ studentId: string, classGroupId: string }>(await enrollmentsResponse.json())
     const staffAssignments = unwrapEntityList<{ id: string, classGroupId?: string }>(
       await staffAssignmentsResponse.json(),
     )
 
-    expect(students.length).toBe(SEED_TARGET_STUDENT_COUNT)
-    expect(guardians.length).toBeGreaterThanOrEqual(countSeedGuardians())
-    expect(enrollments.length).toBe(SEED_TARGET_STUDENT_COUNT)
+    expect(studentsCount).toBe(SEED_TARGET_STUDENT_COUNT)
+    expect(guardiansCount).toBeGreaterThanOrEqual(countSeedGuardians())
+    expect(enrollmentsCount).toBe(SEED_TARGET_STUDENT_COUNT)
     expect(students.some(student => student.id === 's30')).toBe(true)
     expect(guardians.some(guardian => guardian.id === 'g9')).toBe(true)
 
     for (const [classGroupId, studentIds] of Object.entries(SEED_CLASS_STUDENT_IDS)) {
       for (const studentId of studentIds) {
-        expect(enrollments.some(enrollment => enrollment.studentId === studentId && enrollment.classGroupId === classGroupId)).toBe(true)
+        const enrollmentResponse = await app.request(createAppRequest('/core/entities/enrollments/one', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ studentId, classGroupId }),
+        }))
+        expect(enrollmentResponse.status).toBe(200)
       }
     }
 

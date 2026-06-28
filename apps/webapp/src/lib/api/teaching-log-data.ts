@@ -92,7 +92,7 @@ export async function fetchClassTeachingLogSources(
 	] = await Promise.all([
 		classSubjectIds.length > 0
 			? safeOptionalEntityList(() =>
-				client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds)))
+					client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds)))
 			: Promise.resolve([]),
 		subjectIds.length > 0
 			? client.entities.subjects.list(entitiesByIds(subjectIds))

@@ -1,17 +1,17 @@
+import type { SchoolYearEvent } from '$lib/types/school';
 import { runMutation } from '$lib/api/mutations/run-mutation';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { navigateToListAfterEntityDelete } from '$lib/navigation/navigate-after-delete';
 import { refreshReportCardCatalog } from '$lib/queries/report-cards.queries';
-import type { SchoolYearEvent } from '$lib/types/school';
 
-type DeleteOpts = {
+interface DeleteOpts {
 	successMessage?: string;
 	/** Navigate back to list route (default true). */
 	navigate?: boolean;
-};
+}
 
-async function deleteWithStore<T>(
+async function deleteWithStore(
 	deleteFn: () => Promise<unknown>,
 	apply: () => void,
 	rollback: () => void,
@@ -39,7 +39,10 @@ export async function deleteHomeworkMutation(
 	return deleteWithStore(
 		() => client.entities.homeworkAssignments.delete({ id: assignmentId }),
 		() => detailDataContext.removeDeadline(assignmentId),
-		() => { if (previous) detailDataContext.appendDeadline(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendDeadline(previous);
+		},
 		opts,
 	);
 }
@@ -53,7 +56,10 @@ export async function deleteAssessmentMutation(
 	return deleteWithStore(
 		() => client.entities.assessments.delete({ id: assessmentId }),
 		() => detailDataContext.removeEvaluation(assessmentId),
-		() => { if (previous) detailDataContext.appendEvaluation(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendEvaluation(previous);
+		},
 		opts,
 	);
 }
@@ -67,7 +73,10 @@ export async function deleteActivityMutation(
 	return deleteWithStore(
 		() => client.entities.activities.delete({ id: activityId }),
 		() => detailDataContext.removeActivity(activityId),
-		() => { if (previous) detailDataContext.appendActivity(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendActivity(previous);
+		},
 		opts,
 	);
 }
@@ -81,7 +90,10 @@ export async function deleteAnnouncementMutation(
 	return deleteWithStore(
 		() => client.entities.announcements.delete({ id: announcementId }),
 		() => detailDataContext.removeAnnouncement(announcementId),
-		() => { if (previous) detailDataContext.appendAnnouncement(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendAnnouncement(previous);
+		},
 		opts,
 	);
 }
@@ -92,7 +104,10 @@ export async function deleteFeeMutation(feeId: string, opts?: DeleteOpts): Promi
 	return deleteWithStore(
 		() => client.entities.fees.delete({ id: feeId }),
 		() => detailDataContext.removeFee(feeId),
-		() => { if (previous) detailDataContext.appendFee(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendFee(previous);
+		},
 		opts,
 	);
 }
@@ -106,7 +121,10 @@ export async function deleteStudentFeeMutation(
 	return deleteWithStore(
 		() => client.entities.studentFees.delete({ id: studentFeeId }),
 		() => detailDataContext.removeBilling(studentFeeId),
-		() => { if (previous) detailDataContext.appendBilling(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendBilling(previous);
+		},
 		opts,
 	);
 }
@@ -120,7 +138,10 @@ export async function deleteSessionMutation(
 	return deleteWithStore(
 		() => client.entities.sessions.delete({ id: sessionId }),
 		() => detailDataContext.removePlanningEvent(sessionId),
-		() => { if (previous) detailDataContext.appendPlanningEvent(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendPlanningEvent(previous);
+		},
 		opts,
 	);
 }
@@ -134,7 +155,10 @@ export async function deleteGuardianMutation(
 	return deleteWithStore(
 		() => client.entities.guardians.delete({ id: guardianId }),
 		() => detailDataContext.removeGuardian(guardianId),
-		() => { if (previous) detailDataContext.seedGuardians([previous]); },
+		() => {
+			if (previous)
+				detailDataContext.seedGuardians([previous]);
+		},
 		opts,
 	);
 }
@@ -148,7 +172,10 @@ export async function deleteStaffMemberMutation(
 	return deleteWithStore(
 		() => client.entities.staffMembers.delete({ id: staffId }),
 		() => detailDataContext.removeStaff(staffId),
-		() => { if (previous) detailDataContext.seedStaff([previous]); },
+		() => {
+			if (previous)
+				detailDataContext.seedStaff([previous]);
+		},
 		opts,
 	);
 }
@@ -162,7 +189,10 @@ export async function deleteIncidentMutation(
 	return deleteWithStore(
 		() => client.entities.incidents.delete({ id: incidentId }),
 		() => detailDataContext.removeIncident(incidentId),
-		() => { if (previous) detailDataContext.appendIncident(previous); },
+		() => {
+			if (previous)
+				detailDataContext.appendIncident(previous);
+		},
 		opts,
 	);
 }
@@ -176,7 +206,10 @@ export async function deleteClassSubjectMutation(
 	return deleteWithStore(
 		() => client.entities.classSubjects.delete({ id: classSubjectId }),
 		() => detailDataContext.removeSubject(classSubjectId),
-		() => { if (previous) detailDataContext.seedSubjects([previous], { classId: previous.classId }); },
+		() => {
+			if (previous)
+				detailDataContext.seedSubjects([previous], { classId: previous.classId });
+		},
 		opts,
 	);
 }

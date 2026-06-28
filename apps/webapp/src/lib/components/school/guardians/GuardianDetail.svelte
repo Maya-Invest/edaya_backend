@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Guardian } from '$lib/types/school';
-	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import { deleteGuardianMutation } from '$lib/api/mutations/delete-entity.mutations';
+	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';

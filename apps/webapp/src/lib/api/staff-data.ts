@@ -1,7 +1,6 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { StaffMember, StaffRole, SubjectCategory } from '$lib/types/school';
-import { ApiError } from '@edaya/api-client';
 import {
 	DEFAULT_LIST_PAGE_SIZE,
 	entitiesByIds,
@@ -11,6 +10,7 @@ import {
 	staffRoleAssignmentsForStaff,
 	uniqueIds,
 } from '$lib/api/entity-list-filters';
+import { ApiError } from '@edaya/api-client';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 

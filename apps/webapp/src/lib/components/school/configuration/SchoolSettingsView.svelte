@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { DEFAULT_SCHOOL_TIMEZONE, type SchoolRaw } from '$lib/api/school-data';
+	import type { SchoolRaw } from '$lib/api/school-data';
 	import type { SchoolSettingsPageData } from '$lib/queries/school.queries';
 	import type { School, SchoolType } from '$lib/types/school';
 	import { updateSchoolSettingsMutation } from '$lib/api/mutations/school.mutations';
+	import { DEFAULT_SCHOOL_TIMEZONE } from '$lib/api/school-data';
 	import DrawerField from '$lib/components/school/shared/DrawerField.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';

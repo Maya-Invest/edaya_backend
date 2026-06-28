@@ -1,7 +1,7 @@
 import type { SchoolRaw } from '$lib/api/school-data';
-import { fetchCurrentSchoolProfile } from '$lib/api/school-data';
-import { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { School } from '$lib/types/school';
+import { getBrowserSchoolClient } from '$lib/api/school-client';
+import { fetchCurrentSchoolProfile } from '$lib/api/school-profile-data';
 import { resolvePageLoad } from '$lib/queries/page-status';
 
 export interface SchoolSettingsPageData {

@@ -18,7 +18,6 @@
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import GuardianCreateModal from './GuardianCreateModal.svelte';
-
 	const {
 		onSelect,
 		selectedId,
@@ -26,62 +25,51 @@
 		onSelect?: (g: Guardian) => void;
 		selectedId?: string;
 	} = $props();
-
 	const students = $derived(detailDataContext.students);
-
 	const initialFilters = $derived(readGuardianListFilters($page.url));
-
 	let q = $state('');
 	let filtersReady = $state(false);
 	let createOpen = $state(false);
-
 	const infinite = useOffsetInfiniteList(
-		async (offset, limit) => {
+		async (offset, limit) => {
 			const result = await loadGuardiansPeopleDataPage(getBrowserSchoolClient(), { offset, limit });
 			detailDataContext.seedGuardians(result.guardians);
 			detailDataContext.seedStudents(result.students);
-			return { items: result.guardians, total: result.totalGuardians };
+			return { items: result.guardians, total: result.totalGuardians };
 		},
 		DEFAULT_LIST_PAGE_SIZE,
 		() => q,
 	);
-
 	const relationKey: Record<Guardian['relation'], string> = {
 		'Mother': 'guardian.relation.Mother',
 		'Father': 'guardian.relation.Father',
 		'Legal guardian': 'guardian.relation.LegalGuardian',
 	};
-
 	const list = $derived(
 		infinite.visible.filter(g => g.name.toLowerCase().includes(q.toLowerCase())),
 	);
-
-	function syncFiltersToUrl(overrides: Partial<{ q: string }> = {}) {
+	function syncFiltersToUrl(overrides: Partial<{ q: string }> = {}) {
 		const href = writeGuardianListFilters($page.url, {
 			q: overrides.q ?? q,
 		});
-		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
 	}
-
-	function handleCreated(guardianId: string) {
-		appGoto(detailHref.schoolGuardian(guardianId));
+	function handleCreated(guardianId: string) {
+		appGoto(detailHref.schoolGuardian(guardianId));
 	}
-
-	$effect(() => {
+	$effect(() => {
 		const next = initialFilters;
 		q = next.q;
-		filtersReady = true;
+		filtersReady = true;
 	});
-
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
-	function scheduleFilterSync() {
+	function scheduleFilterSync() {
 		if (!filtersReady)
 			return;
 		clearTimeout(searchTimer);
-		searchTimer = setTimeout(() => syncFiltersToUrl(), 250);
+		searchTimer = setTimeout(syncFiltersToUrl, 250);
 	}
 </script>
-
 <div class="animate-fade-in">
 	<ListPageHeader
 		eyebrow={$t('school.guardians')}
@@ -121,9 +109,7 @@
 			</PermissionGate>
 		{/snippet}
 	</ListPageHeader>
-
 	<GuardianCreateModal bind:open={createOpen} onCreated={handleCreated} />
-
 	<div
 		class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
 		aria-busy={infinite.loading}
@@ -215,4 +201,4 @@
 			</ul>
 		</InfiniteList>
 	</div>
-</div>
+</div>

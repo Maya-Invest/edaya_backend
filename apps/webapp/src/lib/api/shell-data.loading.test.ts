@@ -78,7 +78,7 @@ describe('shell data loading', () => {
 		]);
 		expect(entityCountRequests(requests, 'students')).toHaveLength(1);
 		expect(entityCountRequests(requests, 'guardians')).toHaveLength(1);
-		expect(entityCountRequests(requests, 'staffMembers')).toHaveLength(1);
+		expect(entityCountRequests(requests, 'staff-members')).toHaveLength(1);
 	});
 
 	it('fetchActiveEnrollmentCountsByClass returns zeroes for classes with no active enrollments', async () => {

@@ -49,7 +49,7 @@ export async function bootstrapSession() {
 		if (session?.kind === 'staff') {
 			const sessionStaff = await fetchSessionStaffProfile(client, session.actorId);
 			staffProfile = sessionStaff.profile;
-			subjectId = sessionStaff.profile.subjectId;
+			subjectId = sessionStaff.profile.subjectId ?? null;
 			authSession.setFromServer(session, {
 				staffProfile,
 				guardianSettings,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ModuleKey, ContextItem } from '$lib/navigation';
+	import type { ModuleKey } from '$lib/navigation';
 	import type { HierarchyGroup } from '$lib/types/school';
 	import { page } from '$app/stores';
 	import { authSession } from '$lib/auth/session.svelte';
@@ -29,11 +29,11 @@
 		staffCount: number;
 	} = $props();
 
-	const schoolBadges: Record<string, number> = {
+	const schoolBadges = $derived<Record<string, number>>({
 		students: studentCount,
 		guardians: guardianCount,
 		staff: staffCount,
-	};
+	});
 
 	const activeModule = $derived(getModuleFromPath($page.url.pathname));
 	const classId = $derived($page.params.classId ?? '6a');

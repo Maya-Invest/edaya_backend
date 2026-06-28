@@ -14,18 +14,18 @@ import {
   SEED_EXTENDED_SUBJECT_MATTERS,
 } from './extended-dataset'
 import {
-  SEED_POPULATION_AUTH_GUARDIANS,
-  SEED_POPULATION_CLASS_SUBJECTS,
-  SEED_POPULATION_GUARDIANS,
-  SEED_POPULATION_STUDENTS,
-} from './population-seed'
-import {
   buildClassStudentIds,
   SEED_BULK_CLASSES,
   SEED_BULK_GUARDIANS,
   SEED_BULK_STUDENTS,
   SEED_TARGET_STUDENT_COUNT,
 } from './population-generator'
+import {
+  SEED_POPULATION_AUTH_GUARDIANS,
+  SEED_POPULATION_CLASS_SUBJECTS,
+  SEED_POPULATION_GUARDIANS,
+  SEED_POPULATION_STUDENTS,
+} from './population-seed'
 
 export {
   countSeedAssessmentResults,

@@ -5,9 +5,9 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { ACCOUNT_OPEN_PROFILE_PARAM } from '$lib/account/profile-navigation';
 	import { bootstrapAppShell, resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 	import { authSession } from '$lib/auth/session.svelte';
-	import { ACCOUNT_OPEN_PROFILE_PARAM } from '$lib/account/profile-navigation';
 	import AccountProfileModal from '$lib/components/account/AccountProfileModal.svelte';
 	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
 	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
@@ -17,8 +17,8 @@
 	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';
 	import { LoaderCircle } from '$lib/icons';
-	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { DASHBOARD_HREF } from '$lib/navigation';
+	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 	import { canAccessPath } from '$lib/navigation/nav-permissions';
 	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';

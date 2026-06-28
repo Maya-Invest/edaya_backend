@@ -8,10 +8,10 @@
 	import { locale, t } from '$lib/i18n';
 	import { cn } from '$lib/utils';
 	import { SvelteMap } from 'svelte/reactivity';
-	import DrawerField from '../shared/DrawerField.svelte';
-	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
-	import EvaluationGradeEntryModal from './EvaluationGradeEntryModal.svelte';
 	import { get } from 'svelte/store';
+	import DrawerActionBar from '../shared/DrawerActionBar.svelte';
+	import DrawerField from '../shared/DrawerField.svelte';
+	import EvaluationGradeEntryModal from './EvaluationGradeEntryModal.svelte';
 
 	const { s }: { s: Evaluation } = $props();
 

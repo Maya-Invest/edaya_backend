@@ -1,8 +1,8 @@
 import type { EffectiveGrantsSnapshot, PermissionCode } from '$lib/auth/types';
+import type { NavItemDefinition, NavModuleKey } from '$lib/navigation/nav-catalog';
 import {
 	NAV_MODULE_DEFS,
-	type NavItemDefinition,
-	type NavModuleKey,
+
 } from '$lib/navigation/nav-catalog';
 import { checkAnyPermission } from '$lib/permission-check';
 

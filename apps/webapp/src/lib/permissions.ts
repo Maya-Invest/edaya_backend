@@ -1,8 +1,8 @@
 import type { PermissionCode } from '$lib/auth/types';
-import { authSession } from '$lib/auth/session.svelte';
 import type { PermissionContext } from '$lib/permission-check';
-import { checkAnyPermission, checkPermission } from '$lib/permission-check';
 import type { StaffMember, StaffRole } from '$lib/types/school';
+import { authSession } from '$lib/auth/session.svelte';
+import { checkAnyPermission, checkPermission } from '$lib/permission-check';
 
 interface Ctx { classId?: string; subject?: string }
 

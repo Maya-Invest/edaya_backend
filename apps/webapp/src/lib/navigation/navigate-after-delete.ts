@@ -1,6 +1,6 @@
-import { get } from 'svelte/store';
 import { page } from '$app/stores';
 import { appGoto } from '$lib/navigation/app-navigation';
+import { get } from 'svelte/store';
 
 /** Close URL-backed detail drawer after deleting the open entity. */
 export async function navigateToListAfterEntityDelete(): Promise<void> {

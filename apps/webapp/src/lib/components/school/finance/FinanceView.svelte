@@ -212,79 +212,79 @@
 						{$t('dataState.emptyDescription')}
 					</li>
 				{:else}
-				{#each billing as b (b.id)}
-					{@const student = students.find(s => s.id === b.studentId)}
-					{@const fee = fees.find(f => f.id === b.feeId)}
-					{#if student && fee}
-						{@const pct = (b.paid / b.total) * 100}
-						{@const active = selectedId === b.id}
-						<li>
-							<button
-								type="button"
-								onclick={() => onSelectBilling?.(b)}
-								class={cn(
-									'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0',
-									active ? 'bg-primary/10' : 'hover:bg-secondary',
-								)}
-							>
-								<div class="col-span-4 flex items-center gap-3">
-									<div
-										class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary font-display text-xs font-semibold text-primary-foreground"
-									>
-										{student.initials}
+					{#each billing as b (b.id)}
+						{@const student = students.find(s => s.id === b.studentId)}
+						{@const fee = fees.find(f => f.id === b.feeId)}
+						{#if student && fee}
+							{@const pct = (b.paid / b.total) * 100}
+							{@const active = selectedId === b.id}
+							<li>
+								<button
+									type="button"
+									onclick={() => onSelectBilling?.(b)}
+									class={cn(
+										'grid w-full grid-cols-12 items-center gap-4 border-b border-border px-5 py-4 text-left transition-colors last:border-b-0',
+										active ? 'bg-primary/10' : 'hover:bg-secondary',
+									)}
+								>
+									<div class="col-span-4 flex items-center gap-3">
+										<div
+											class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary font-display text-xs font-semibold text-primary-foreground"
+										>
+											{student.initials}
+										</div>
+										<div class="min-w-0">
+											<p class="truncate text-sm font-medium">{student.name}</p>
+											<p
+												class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+											>
+												{student.classId}
+											</p>
+										</div>
 									</div>
-									<div class="min-w-0">
-										<p class="truncate text-sm font-medium">{student.name}</p>
+									<div class="col-span-3">
+										<p class="truncate text-sm">{fee.name}</p>
 										<p
 											class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
 										>
-											{student.classId}
+											{$t(`feeCat.${fee.category}`)} · {$t(`feePeriod.${fee.period}`)}
 										</p>
 									</div>
-								</div>
-								<div class="col-span-3">
-									<p class="truncate text-sm">{fee.name}</p>
-									<p
-										class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-									>
-										{$t(`feeCat.${fee.category}`)} · {$t(`feePeriod.${fee.period}`)}
-									</p>
-								</div>
-								<div class="col-span-2">
-									<p class="font-mono text-xs">
-										{b.paid.toLocaleString()} / {b.total.toLocaleString()} FCFA
-									</p>
-									<div class="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
-										<div
-											class={cn(
-												'h-full rounded-full',
-												b.status === 'overdue' ? 'bg-destructive' : 'bg-accent',
-											)}
-											style:width="{pct}%"
-										></div>
+									<div class="col-span-2">
+										<p class="font-mono text-xs">
+											{b.paid.toLocaleString()} / {b.total.toLocaleString()} FCFA
+										</p>
+										<div class="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
+											<div
+												class={cn(
+													'h-full rounded-full',
+													b.status === 'overdue' ? 'bg-destructive' : 'bg-accent',
+												)}
+												style:width="{pct}%"
+											></div>
+										</div>
 									</div>
-								</div>
-								<div class="col-span-2 text-xs text-foreground/70">
-									{new Date(b.dueDate).toLocaleDateString($locale, {
-										day: 'numeric',
-										month: 'short',
-										year: 'numeric',
-									})}
-								</div>
-								<div class="col-span-1 flex justify-end">
-									<span
-										class={cn(
-											'rounded-full px-2 py-1 text-[10px] font-medium uppercase',
-											statusStyle[b.status],
-										)}
-									>
-										{$t(`billing.status.${b.status}`)}
-									</span>
-								</div>
-							</button>
-						</li>
-					{/if}
-				{/each}
+									<div class="col-span-2 text-xs text-foreground/70">
+										{new Date(b.dueDate).toLocaleDateString($locale, {
+											day: 'numeric',
+											month: 'short',
+											year: 'numeric',
+										})}
+									</div>
+									<div class="col-span-1 flex justify-end">
+										<span
+											class={cn(
+												'rounded-full px-2 py-1 text-[10px] font-medium uppercase',
+												statusStyle[b.status],
+											)}
+										>
+											{$t(`billing.status.${b.status}`)}
+										</span>
+									</div>
+								</button>
+							</li>
+						{/if}
+					{/each}
 				{/if}
 			</ul>
 		</div>
@@ -295,40 +295,40 @@
 					{$t('dataState.emptyDescription')}
 				</p>
 			{:else}
-			{#each fees as f (f.id)}
-				{@const active = selectedId === f.id}
-				{@const usage = billing.filter(b => b.feeId === f.id).length}
-				<button
-					type="button"
-					onclick={() => onSelectFee?.(f)}
-					class={cn(
-						'rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
-						active && 'border-primary/40 bg-primary/5',
-					)}
-				>
-					<div class="flex items-start justify-between">
-						<span
-							class="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-						>
-							{$t(`feeCat.${f.category}`)}
-						</span>
-						<span class="font-mono text-[10px] uppercase text-muted-foreground">
-							/ {$t(
-								`feePeriod.${f.period.toLowerCase() === 'year' ? 'year' : f.period.toLowerCase() === 'term' ? 'term' : 'month'}`,
-							)}
-						</span>
-					</div>
-					<h3 class="mt-3 font-display text-lg font-semibold">{f.name}</h3>
-					<p class="mt-2 font-display text-3xl font-semibold tabular-nums">
-						{f.amount.toLocaleString()} FCFA
-					</p>
-					<p class="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
-						{$t('finance.appliedTo')}
-						<span class="font-medium text-foreground">{usage}</span>
-						{usage !== 1 ? $t('finance.studentsLower') : $t('finance.studentLower')}
-					</p>
-				</button>
-			{/each}
+				{#each fees as f (f.id)}
+					{@const active = selectedId === f.id}
+					{@const usage = billing.filter(b => b.feeId === f.id).length}
+					<button
+						type="button"
+						onclick={() => onSelectFee?.(f)}
+						class={cn(
+							'rounded-2xl border border-border bg-card p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel',
+							active && 'border-primary/40 bg-primary/5',
+						)}
+					>
+						<div class="flex items-start justify-between">
+							<span
+								class="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+							>
+								{$t(`feeCat.${f.category}`)}
+							</span>
+							<span class="font-mono text-[10px] uppercase text-muted-foreground">
+								/ {$t(
+									`feePeriod.${f.period.toLowerCase() === 'year' ? 'year' : f.period.toLowerCase() === 'term' ? 'term' : 'month'}`,
+								)}
+							</span>
+						</div>
+						<h3 class="mt-3 font-display text-lg font-semibold">{f.name}</h3>
+						<p class="mt-2 font-display text-3xl font-semibold tabular-nums">
+							{f.amount.toLocaleString()} FCFA
+						</p>
+						<p class="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+							{$t('finance.appliedTo')}
+							<span class="font-medium text-foreground">{usage}</span>
+							{usage !== 1 ? $t('finance.studentsLower') : $t('finance.studentLower')}
+						</p>
+					</button>
+				{/each}
 			{/if}
 		</div>
 	{/if}
