@@ -15,7 +15,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 
 - [x] **Phase 1** — Navigation (Matières classe, Staff → École)
 - [x] **Phase 2** — Compte connecté (modale profil)
-- [ ] **Phase 3** — Permissions menu
+- [ ] **Phase 3** — Permissions menu (3.0 ✅ · 3.2 professeur ✅ · 3.1/3.3–3.5 restants)
 - [x] **Phase 4** — États vides + audit boutons
 - [x] **Phase 9** — CRUD complet (ajout / modification / suppression)
 - [ ] **Phase 5** — Templates notifications + invitations
@@ -92,20 +92,67 @@ Redondant avec « Enseignements » (`tab.teaching`).
 
 ## Phase 3 — Menu selon permissions
 
-**Effort estimé :** 4–8 h  
-**PR suggérée :** inclure dans `feature/nav-permissions` ou PR dédiée
+**Effort estimé :** 4–8 h (découpé par profil)  
+**PR suggérée :** `feature/nav-permissions`
 
-**État actuel :** `PermissionGate` sur les actions, pas sur la navigation.
+**Objectif :** chaque utilisateur connecté ne voit et n’accède qu’aux entrées autorisées par ses droits effectifs (`authSession.grants`).
 
-- [ ] Ajouter `permission?: PermissionCode` (ou tableau) sur `ContextItem` dans `navigation.ts`
-- [ ] Mapper les permissions par entrée (ex. `STUDENT_READ`, `STAFF_READ`, `ACCESS_CONTROL_READ`, `SCHOOL_LIFECYCLE_MANAGE`, …)
-- [ ] Filtrer les items dans `AppSidebar.svelte` via `hasPermission()` (`permissions.ts`)
-- [ ] Masquer un module entier si aucun sous-item visible
-- [ ] Dashboard toujours visible
-- [ ] Tests manuels : rôle professeur vs directeur — menus cohérents
-- [ ] (Optionnel) helper `canAccessNavItem(item)` dans `permissions.ts`
+### 3.0 — Infrastructure (partagée)
 
-**Fichiers clés :** `navigation.ts`, `AppSidebar.svelte`, `permissions.ts`
+- [x] `permissions?: PermissionCode[]` (any-of) sur `ContextItem` dans `navigation.ts`
+- [x] Mapper les permissions par entrée sidebar (aligné domaine API + seed dev)
+- [x] `nav-permissions.ts` — `canAccessNavItem`, `filterNavItems`, `visibleNavModules`, `canAccessPath`
+- [x] Filtrer items + modules dans `AppSidebar.svelte`
+- [x] Masquer un module entier si aucun sous-item visible
+- [x] Dashboard + compte toujours accessibles
+- [x] Garde route dans `(app)/+layout.svelte` (redirect dashboard si URL interdite)
+- [x] Tests unitaires `nav-permissions.test.ts`
+
+**Fichiers :** `navigation.ts`, `navigation/nav-permissions.ts`, `AppSidebar.svelte`, `(app)/+layout.svelte`
+
+### 3.1 — Directeur / owner (`isElevated`)
+
+- [x] Aucun code spécifique — `hasPermission` retourne `true` pour tout si `grants.isElevated`
+- [ ] Test manuel : `c.moreau@school.edu` — menu complet
+
+### 3.2 — Professeur (`role-teacher`) ✅ premier profil livré
+
+Compte dev : `m.dupont@school.edu` (st1)
+
+**Menu attendu :**
+
+| Zone | Visible |
+|------|---------|
+| Dashboard | ✅ |
+| École — élèves, responsables, calendrier, activités, incidents | ✅ |
+| École — staff, annonces | ❌ |
+| Classe — tous les onglets | ✅ |
+| Finance | ❌ (module entier) |
+| Configuration | ❌ (module entier) |
+
+- [x] Filtrage sidebar + garde route validés par tests unitaires (permissions seed `role-teacher`)
+- [ ] Test manuel connecté en professeur
+
+### 3.3 — Prof principal (`role-coordinator`)
+
+Compte dev : `m.leon@school.edu` (st3)
+
+- [ ] Valider menu : école élargie + staff + config partielle (sans finance complète si absent des droits)
+- [ ] Ajuster mappings si écart seed / UX
+
+### 3.4 — Éducateur (`role-educator`)
+
+Compte dev : `t.evrard@school.edu` (st7)
+
+- [ ] Menu discipline / présence / élèves — pas finance ni config admin
+
+### 3.5 — Tuteur (`sessionKind === 'guardian'`)
+
+Compte dev : `c.laurent@mail.com` (g1)
+
+- [ ] Shell guardian distinct (sidebar réduite ou layout dédié) — hors scope 3.0–3.2
+
+**État actuel :** `PermissionGate` sur les actions ; navigation filtrée depuis 3.0 + profil professeur (3.2).
 
 ---
 

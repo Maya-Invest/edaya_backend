@@ -1,6 +1,7 @@
 import type { components } from '$lib/api/schema';
 import type { getBrowserSchoolClient } from '$lib/api/school-client';
 import type { StaffMember, StaffRole, SubjectCategory } from '$lib/types/school';
+import { ApiError } from '@edaya/api-client';
 import {
 	DEFAULT_LIST_PAGE_SIZE,
 	entitiesByIds,
@@ -274,6 +275,47 @@ export async function fetchStaffMemberById(
 		relations.subjectsRaw,
 	);
 	return members.find(member => member.id === staffId) ?? null;
+}
+
+/** Loads the signed-in staff profile without admin-only relation endpoints. */
+export async function fetchSessionStaffProfile(
+	client: SchoolClient,
+	staffId: string,
+): Promise<{
+	profile: StaffMember;
+	notificationEmail: string | null;
+	notificationPhone: string | null;
+}> {
+	const staff = await client.entities.staffMembers.get(staffId);
+	let role: StaffRole = 'professeur';
+	try {
+		const relations = await fetchStaffRelations(client, [staffId]);
+		role = mapStaffRole(staff, relations.roleAssignmentsRaw);
+	}
+	catch (error) {
+		if (!(error instanceof ApiError && (error.status === 403 || error.status === 401))) {
+			throw error;
+		}
+	}
+
+	return {
+		profile: {
+			id: staff.id,
+			name: `${staff.firstName} ${staff.lastName}`,
+			initials: `${staff.firstName[0] ?? ''}${staff.lastName[0] ?? ''}`,
+			role,
+			department: mapDepartment(role, staff.id, [], [], []),
+			email: staff.email ?? '',
+			classes: [],
+			mainClassId: undefined,
+			subjectsTaught: [],
+			subjectLabels: [],
+			isActive: staff.isActive ?? true,
+			subjectId: staff.subjectId ?? null,
+		},
+		notificationEmail: staff.notificationEmail ?? null,
+		notificationPhone: staff.notificationPhone ?? null,
+	};
 }
 
 export interface StaffPageRequest {

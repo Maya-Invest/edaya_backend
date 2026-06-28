@@ -18,6 +18,8 @@
 	import { t } from '$lib/i18n';
 	import { LoaderCircle } from '$lib/icons';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { DASHBOARD_HREF } from '$lib/navigation';
+	import { canAccessPath } from '$lib/navigation/nav-permissions';
 	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { setContext } from 'svelte';
@@ -47,6 +49,16 @@
 	$effect(() => {
 		if (authSession.ready && !authSession.isLoggedIn) {
 			appGoto(appPath('/login'), { replaceState: true });
+		}
+	});
+
+	$effect(() => {
+		if (!browser || !authSession.ready || !authSession.isLoggedIn) {
+			return;
+		}
+		const pathname = $page.url.pathname;
+		if (!canAccessPath(pathname, authSession.grants, { schoolId: authSession.schoolId ?? '' })) {
+			appGoto(DASHBOARD_HREF, { replaceState: true });
 		}
 	});
 

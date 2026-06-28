@@ -31,6 +31,23 @@ async function runBootstrapAppShell() {
 		getYearId: () => academicContext.yearId,
 	});
 
-	const shell = await getAppShellData();
-	academicContext.initFromShell(shell);
+	try {
+		const shell = await getAppShellData();
+		academicContext.initFromShell(shell);
+	}
+	catch (error) {
+		console.error('[bootstrapAppShell] failed to load shell data', error);
+		academicContext.initFromShell({
+			schools: [],
+			academicYears: [],
+			academicPeriods: [],
+			gradeLevels: [],
+			periodDefinitions: [],
+			classes: [],
+			hierarchy: [],
+			studentCount: 0,
+			guardianCount: 0,
+			staffCount: 0,
+		});
+	}
 }

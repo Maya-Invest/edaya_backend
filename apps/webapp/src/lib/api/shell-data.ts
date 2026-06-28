@@ -8,6 +8,7 @@ import type {
 	PeriodDefinition,
 	School,
 } from '$lib/types/school';
+import { ApiError } from '@edaya/api-client';
 import { buildClassHierarchy } from '$lib/academic/hierarchy';
 import { activeEnrollmentCountForClass, schoolWideEntityList } from '$lib/api/entity-list-filters';
 import { mapSchoolFromApi } from '$lib/api/school-data';
@@ -42,13 +43,25 @@ export async function fetchActiveEnrollmentCountsByClass(
 	}
 
 	const entries = await Promise.all(classGroupIds.map(async (classGroupId) => {
-		const { count } = await client.entities.enrollments.count(
-			activeEnrollmentCountForClass(classGroupId),
+		const count = await safeEntityCount(() =>
+			client.entities.enrollments.count(activeEnrollmentCountForClass(classGroupId)),
 		);
 		return [classGroupId, count] as const;
 	}));
 
 	return Object.fromEntries(entries);
+}
+
+async function safeEntityCount(load: () => Promise<{ count: number }>): Promise<number> {
+	try {
+		return (await load()).count;
+	}
+	catch (error) {
+		if (error instanceof ApiError && (error.status === 403 || error.status === 401)) {
+			return 0;
+		}
+		throw error;
+	}
 }
 
 export async function fetchAppShellData(client: SchoolClient): Promise<AppShellData> {
@@ -134,16 +147,12 @@ export async function fetchAppShellData(client: SchoolClient): Promise<AppShellD
 	const activeStudentCount = Object.values(studentCountByClass).reduce((total, count) => total + count, 0);
 
 	const schoolId = schools[0]?.id ?? '';
-	const [
-		{ count: rosterStudentCount },
-		{ count: guardianCount },
-		{ count: staffCount },
-	] = await Promise.all([
-		client.entities.students.count(schoolWideEntityList(SHELL_SIDEBAR_COUNTS_SCOPE)),
-		client.entities.guardians.count(schoolWideEntityList(SHELL_SIDEBAR_COUNTS_SCOPE)),
+	const [rosterStudentCount, guardianCount, staffCount] = await Promise.all([
+		safeEntityCount(() => client.entities.students.count(schoolWideEntityList(SHELL_SIDEBAR_COUNTS_SCOPE))),
+		safeEntityCount(() => client.entities.guardians.count(schoolWideEntityList(SHELL_SIDEBAR_COUNTS_SCOPE))),
 		schoolId
-			? client.entities.staffMembers.count({ schoolId })
-			: Promise.resolve({ count: 0 }),
+			? safeEntityCount(() => client.entities.staffMembers.count({ schoolId }))
+			: Promise.resolve(0),
 	]);
 
 	return {

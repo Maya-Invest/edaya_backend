@@ -1,11 +1,10 @@
 import type { SessionSnapshot } from '$lib/auth/types';
 import {
 	fetchGuardianNotificationSettings,
-	fetchStaffSubjectId,
 } from '$lib/api/account-data';
 import { browserFetch } from '$lib/api/browser-fetch';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
-import { fetchStaffMemberById } from '$lib/api/staff-data';
+import { fetchSessionStaffProfile } from '$lib/api/staff-data';
 import { ApiError } from '@edaya/api-client';
 import { authClient } from './client';
 import { authSession } from './session.svelte';
@@ -48,20 +47,16 @@ export async function bootstrapSession() {
 		let subjectId: string | null = null;
 
 		if (session?.kind === 'staff') {
-			staffProfile = await fetchStaffMemberById(
-				client,
-				session.actorId,
-				session.schoolId,
-			);
-			const staff = await fetchStaffSubjectId(client, session.actorId);
-			subjectId = staff.subjectId;
+			const sessionStaff = await fetchSessionStaffProfile(client, session.actorId);
+			staffProfile = sessionStaff.profile;
+			subjectId = sessionStaff.profile.subjectId;
 			authSession.setFromServer(session, {
 				staffProfile,
 				guardianSettings,
 				subjectId,
 				loginEmail,
-				notificationEmail: staff.notificationEmail,
-				notificationPhone: staff.notificationPhone,
+				notificationEmail: sessionStaff.notificationEmail,
+				notificationPhone: sessionStaff.notificationPhone,
 			});
 			return { session, staffProfile, guardianSettings };
 		}

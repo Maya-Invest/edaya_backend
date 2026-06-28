@@ -3,8 +3,22 @@ import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../shared'
 import type { StaffAccountKind } from './staff-account-kind'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { directPermissionEntityConfig } from '../../shared'
+import {
+  actorHasAnyPermission,
+  AuthorizationError,
+  AuthorizationErrorCode,
+  Permission,
+} from '../../authorization'
+import {
+  anyPermissionAction,
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  permissionAction,
+  read,
+  write,
+} from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'
@@ -107,15 +121,50 @@ export class StaffMember {
   }
 }
 
+function isSelfStaffMember(actor: ActorMetadata, staffMember: StaffMember): boolean {
+  return actor.kind === 'staff' && actor.staffMemberId === staffMember.id
+}
+
+async function checkStaffMemberReadAccess(
+  actor: ActorMetadata,
+  entities: readonly StaffMember[],
+): Promise<void> {
+  for (const entity of entities) {
+    if (isSelfStaffMember(actor, entity)) {
+      continue
+    }
+    if (!actorHasAnyPermission(actor, [
+      Permission.SCHOOL_STRUCTURE_CONFIGURE,
+      Permission.STAFF_READ,
+    ])) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Staff member read denied')
+    }
+  }
+}
+
+const STAFF_MEMBER_ADMIN_READ_PERMISSIONS = [
+  Permission.SCHOOL_STRUCTURE_CONFIGURE,
+  Permission.STAFF_READ,
+] as const
+
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.staffMembers,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  )
+  const checkStaffReadModule = anyPermissionAction([
+    Permission.QUERY_WORKSPACE_READ,
+    ...STAFF_MEMBER_ADMIN_READ_PERMISSIONS,
+  ])
+
   return {
-    ...config,
+    ...config({
+      repository: input.repositories.staffMembers,
+      tenant: directSchoolTenant<StaffMember>(),
+      read: read(checkStaffReadModule, checkStaffMemberReadAccess),
+      write: write(
+        permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE),
+        authorizeExistingById(checkStaffMemberReadAccess),
+        authorizeDeleteByReadAccess(checkStaffMemberReadAccess),
+      ),
+      atomicExecution: input.atomicExecution,
+    }),
     gates: {
       preSave: validateStaffMemberSave,
       preDelete: validateStaffMemberDelete,
