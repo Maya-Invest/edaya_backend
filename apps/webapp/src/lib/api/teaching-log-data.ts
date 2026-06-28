@@ -8,6 +8,7 @@ import {
 	staffMembersByIds,
 	uniqueIds,
 } from '$lib/api/entity-list-filters';
+import { safeOptionalEntityList } from '$lib/api/safe-entity-access';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
 
@@ -90,7 +91,8 @@ export async function fetchClassTeachingLogSources(
 		subjectsRaw,
 	] = await Promise.all([
 		classSubjectIds.length > 0
-			? client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds))
+			? safeOptionalEntityList(() =>
+				client.entities.staffAssignments.list(assignmentsForClassSubjects(classSubjectIds)))
 			: Promise.resolve([]),
 		subjectIds.length > 0
 			? client.entities.subjects.list(entitiesByIds(subjectIds))
@@ -99,7 +101,7 @@ export async function fetchClassTeachingLogSources(
 
 	const staffIds = uniqueIds((staffAssignmentsRaw ?? []).map(assignment => assignment.staffId));
 	const staffMembersRaw = staffIds.length > 0
-		? await client.entities.staffMembers.list(staffMembersByIds(staffIds))
+		? await safeOptionalEntityList(() => client.entities.staffMembers.list(staffMembersByIds(staffIds)))
 		: [];
 
 	return {

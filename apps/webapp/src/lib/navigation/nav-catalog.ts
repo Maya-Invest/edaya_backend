@@ -131,7 +131,7 @@ export const CONFIG_NAV_DEFS: NavItemDefinition[] = [
 		key: 'academic',
 		labelKey: 'config.academic',
 		href: '/configuration/academic',
-		permissions: ['ACADEMIC_PROGRAM_READ', 'SCHOOL_STRUCTURE_READ'],
+		permissions: ['ACADEMIC_PROGRAM_READ', 'ACADEMIC_PROGRAM_UPDATE', 'SCHOOL_STRUCTURE_READ'],
 	},
 	{
 		key: 'classGroups',
@@ -143,7 +143,7 @@ export const CONFIG_NAV_DEFS: NavItemDefinition[] = [
 		key: 'subjects',
 		labelKey: 'config.subjects',
 		href: '/configuration/subjects',
-		permissions: ['ACADEMIC_PROGRAM_READ'],
+		permissions: ['ACADEMIC_PROGRAM_READ', 'ACADEMIC_PROGRAM_UPDATE'],
 	},
 	{
 		key: 'roles',
@@ -155,7 +155,7 @@ export const CONFIG_NAV_DEFS: NavItemDefinition[] = [
 		key: 'gradeScales',
 		labelKey: 'config.gradeScales',
 		href: '/configuration/grade-scales',
-		permissions: ['REPORT_CARD_CONFIGURE', 'EXAM_CONFIG_READ'],
+		permissions: ['REPORT_CARD_CONFIGURE', 'EXAM_CONFIG_READ', 'EXAM_CONFIG_CONFIGURE'],
 	},
 	{
 		key: 'reportCards',

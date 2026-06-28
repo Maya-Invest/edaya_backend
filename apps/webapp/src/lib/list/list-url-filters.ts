@@ -37,17 +37,14 @@ const studentListFiltersCodec = defineUrlFilterCodec({
 	q: { type: 'search', default: '' },
 	class: { type: 'string', default: 'all' },
 	status: { type: 'string', default: 'all' },
-	page: { type: 'page', default: '1' },
 });
 
 const guardianListFiltersCodec = defineUrlFilterCodec({
 	q: { type: 'search', default: '' },
-	page: { type: 'page', default: '1' },
 });
 
 const staffListFiltersCodec = defineUrlFilterCodec({
 	q: { type: 'search', default: '' },
-	page: { type: 'page', default: '1' },
 });
 
 const classReportCardListFiltersCodec = defineUrlFilterCodec({

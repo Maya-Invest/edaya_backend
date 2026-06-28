@@ -15,7 +15,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 
 - [x] **Phase 1** — Navigation (Matières classe, Staff → École)
 - [x] **Phase 2** — Compte connecté (modale profil)
-- [ ] **Phase 3** — Permissions menu (3.0 ✅ · 3.2 professeur ✅ · 3.1/3.3–3.5 restants)
+- [ ] **Phase 3** — Permissions menu staff (3.0–3.4 ✅ · tests manuels · ~~3.5 tuteur~~ → app mobile)
 - [x] **Phase 4** — États vides + audit boutons
 - [x] **Phase 9** — CRUD complet (ajout / modification / suppression)
 - [ ] **Phase 5** — Templates notifications + invitations
@@ -95,64 +95,49 @@ Redondant avec « Enseignements » (`tab.teaching`).
 **Effort estimé :** 4–8 h (découpé par profil)  
 **PR suggérée :** `feature/nav-permissions`
 
-**Objectif :** chaque utilisateur connecté ne voit et n’accède qu’aux entrées autorisées par ses droits effectifs (`authSession.grants`).
+**Objectif :** chaque membre du **personnel** connecté sur la webapp ne voit et n’accède qu’aux entrées autorisées par ses droits effectifs (`authSession.grants`). Le portail **tuteur** est hors scope ici (app mobile).
 
 ### 3.0 — Infrastructure (partagée)
 
-- [x] `permissions?: PermissionCode[]` (any-of) sur `ContextItem` dans `navigation.ts`
-- [x] Mapper les permissions par entrée sidebar (aligné domaine API + seed dev)
-- [x] `nav-permissions.ts` — `canAccessNavItem`, `filterNavItems`, `visibleNavModules`, `canAccessPath`
-- [x] Filtrer items + modules dans `AppSidebar.svelte`
-- [x] Masquer un module entier si aucun sous-item visible
-- [x] Dashboard + compte toujours accessibles
-- [x] Garde route dans `(app)/+layout.svelte` (redirect dashboard si URL interdite)
-- [x] Tests unitaires `nav-permissions.test.ts`
+- [x] `permissions?: PermissionCode[]` (any-of) sur `ContextItem` / `nav-catalog.ts`
+- [x] `nav-permissions.ts` — filtrage sidebar + garde route
+- [x] Tests unitaires `nav-permissions.test.ts` (12 tests, 4 profils)
+- [x] Bootstrap shell : `safeEntityCount` (403 → 0, évite spinner infini)
+- [x] Login staff : self-read profil + `fetchSessionStaffProfile`
 
-**Fichiers :** `navigation.ts`, `navigation/nav-permissions.ts`, `AppSidebar.svelte`, `(app)/+layout.svelte`
+**Fichiers :** `nav-catalog.ts`, `nav-permissions.ts`, `AppSidebar.svelte`, `shell-data.ts`, `staff-member.ts`
 
 ### 3.1 — Directeur / owner (`isElevated`)
 
-- [x] Aucun code spécifique — `hasPermission` retourne `true` pour tout si `grants.isElevated`
-- [ ] Test manuel : `c.moreau@school.edu` — menu complet
+- [x] Automatique via `grants.isElevated`
+- [ ] Test manuel : `c.moreau@school.edu`
 
-### 3.2 — Professeur (`role-teacher`) ✅ premier profil livré
+### 3.2 — Professeur (`role-teacher`) ✅
 
-Compte dev : `m.dupont@school.edu` (st1)
+Compte dev : `m.dupont@school.edu` — menu École (sans staff/annonces) + Classe · pas Finance/Config
 
-**Menu attendu :**
+- [x] Tests unitaires · [ ] test manuel
 
-| Zone | Visible |
-|------|---------|
-| Dashboard | ✅ |
-| École — élèves, responsables, calendrier, activités, incidents | ✅ |
-| École — staff, annonces | ❌ |
-| Classe — tous les onglets | ✅ |
-| Finance | ❌ (module entier) |
-| Configuration | ❌ (module entier) |
+### 3.3 — Prof principal (`role-coordinator`) ✅
 
-- [x] Filtrage sidebar + garde route validés par tests unitaires (permissions seed `role-teacher`)
-- [ ] Test manuel connecté en professeur
+Compte dev : `m.leon@school.edu` — École complet + Classe + **Configuration** (8 entrées) · pas Finance
 
-### 3.3 — Prof principal (`role-coordinator`)
+- [x] Mapping `ACADEMIC_PROGRAM_UPDATE` / `EXAM_CONFIG_CONFIGURE` · [x] tests · [ ] test manuel
 
-Compte dev : `m.leon@school.edu` (st3)
+### 3.4 — Éducateur (`role-educator`) ✅
 
-- [ ] Valider menu : école élargie + staff + config partielle (sans finance complète si absent des droits)
-- [ ] Ajuster mappings si écart seed / UX
+Compte dev : `t.evrard@school.edu` — École (élèves, responsables, incidents) + Classe · pas Finance/Config
 
-### 3.4 — Éducateur (`role-educator`)
+- [x] Tests unitaires · [ ] test manuel
 
-Compte dev : `t.evrard@school.edu` (st7)
+### 3.5 — Tuteur (`sessionKind === 'guardian'`) — **hors scope webapp**
 
-- [ ] Menu discipline / présence / élèves — pas finance ni config admin
+Compte dev : `c.laurent@mail.com` (g1) — réservé à l’**app mobile** (pas de shell guardian ni tests nav sur la webapp).
 
-### 3.5 — Tuteur (`sessionKind === 'guardian'`)
+- [x] ~~Shell guardian distinct~~ — non prévu webapp
+- [x] ~~Tests nav tuteur~~ — non prévu webapp
 
-Compte dev : `c.laurent@mail.com` (g1)
-
-- [ ] Shell guardian distinct (sidebar réduite ou layout dédié) — hors scope 3.0–3.2
-
-**État actuel :** `PermissionGate` sur les actions ; navigation filtrée depuis 3.0 + profil professeur (3.2).
+**État actuel :** navigation filtrée par profil staff (prof, prof principal, éducateur, directeur) ; shell bootstrap tolérant aux 403 ; reste : tests manuels 3.1–3.4.
 
 ---
 
@@ -299,9 +284,9 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 ### 8.2 Webapp
 
 - [x] Helper `paginatedList({ limit, offset, orderBy })` dans `entity-list-filters.ts`
-- [x] Hook `useOffsetPaginatedList` + composant `ListPagination` (50/page, URL `?page=`)
-- [x] i18n pagination (`list.pageRange`, `list.previousPage`, …)
-- [x] Listes migrées (pagination par pages, plus de scroll infini) :
+- [x] Hook `useOffsetInfiniteList` + composant `InfiniteList` (50/lot, scroll infini)
+- [x] i18n scroll infini (`list.loadingMore`, `list.endOfList`)
+- [x] Listes migrées (infinite loading côté API, lots de 50) :
   - [x] Élèves école (`SchoolStudentsView`)
   - [x] Responsables (`GuardiansView`)
   - [x] Personnel (`StaffView`)
@@ -309,9 +294,9 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
   - [ ] Autres collections scalables (annonces, activités, config matières…) — hors scope sprint
 - [x] Badges sidebar : totaux élèves / tuteurs / personnel (`shell-data` + `AppSidebar`)
 - [x] Validation seed via `/count` (plus via list length)
-- [x] Smoke test seed 1000 : pagination 20 pages, total header + badges sidebar cohérents
+- [x] Smoke test seed 1000 : scroll infini, total header + badges sidebar cohérents
 
-**Fichiers clés :** `use-paginated-list.svelte.ts`, `ListPagination.svelte`, `list-url-filters.ts` (`page`), `shell-data.ts`, `AppSidebar.svelte`, `postgres-store.ts`, `graphiql.ts`
+**Fichiers clés :** `use-infinite-list.svelte.ts`, `InfiniteList.svelte`, `list-url-filters.ts`, `shell-data.ts`, `AppSidebar.svelte`, `postgres-store.ts`, `graphiql.ts`
 
 ---
 
@@ -387,7 +372,7 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 
 - **API `$orderBy`** : `col.asc()` → `asc(col)` dans `@edaya/adaptor-postgres` (erreur 500 sur listes paginées).
 - **Dev reload** : `apps/api` watch inclut `postgres-store.ts` ; redémarrer `bun dev` après changement packages workspace.
-- **UX** : pagination par boutons (50/page) plutôt que scroll infini sur élèves, tuteurs, personnel.
+- **UX** : infinite loading (lots de 50 via API) sur élèves, tuteurs, personnel — plus de barre précédent/suivant.
 
 _Espace pour noter les corrections découvertes pendant l’audit Phase 4._
 
