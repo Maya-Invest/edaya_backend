@@ -20,6 +20,7 @@
 	import { useOffsetInfiniteList } from '$lib/list/use-infinite-list.svelte';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
+	import PersonAvatar from '../shared/PersonAvatar.svelte';
 	import StudentCreateModal from './StudentCreateModal.svelte';
 
 	const {
@@ -230,11 +231,13 @@
 								)}
 							>
 								<div class="col-span-4 flex items-center gap-3">
-									<div
-										class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-xs font-semibold text-primary-foreground"
-									>
-										{s.initials}
-									</div>
+									<PersonAvatar
+										name={s.name}
+										initials={s.initials}
+										photoUrl={s.photoUrl}
+										size="list"
+										class="h-9 w-9 text-xs"
+									/>
 									<div class="min-w-0">
 										<p class="truncate text-sm font-medium">{s.name}</p>
 										<p class="truncate text-xs text-muted-foreground">{s.email}</p>
@@ -293,11 +296,12 @@
 							)}
 						>
 							<div class="flex items-center gap-3">
-								<div
-									class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-display text-sm font-semibold text-primary-foreground"
-								>
-									{s.initials}
-								</div>
+								<PersonAvatar
+									name={s.name}
+									initials={s.initials}
+									photoUrl={s.photoUrl}
+									size="list"
+								/>
 								<div class="min-w-0">
 									<p class="truncate font-medium">{s.name}</p>
 									<p class="truncate text-xs text-muted-foreground">{cls?.name}</p>

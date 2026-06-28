@@ -494,6 +494,7 @@ export function mapStudents(
 			enrollmentId: activeEnrollment?.id,
 			name: `${student.firstName} ${student.lastName}`,
 			initials: initialsFor(student.firstName, student.lastName),
+			photoUrl: student.photoUrl ?? null,
 			email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@school.edu`,
 			birthdate: formatDateInput(student.birthDate),
 			guardian: guardianDisplayName(guardian),

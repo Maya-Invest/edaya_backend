@@ -17,6 +17,7 @@ export interface Student {
 	enrollmentId?: string;
 	name: string;
 	initials: string;
+	photoUrl?: string | null;
 	email: string;
 	birthdate: string;
 	guardian: string;
