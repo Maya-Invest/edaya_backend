@@ -37,3 +37,6 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # Dev bootstrap — enabled by default when NODE_ENV=development.
 # POST /core/onboarding/register-school (authenticated, unlinked users only)
 # ALLOW_PUBLIC_SCHOOL_REGISTRATION=true
+
+# Auth emails (OTP sign-in + signup verification) require NOVU_SECRET_KEY and Novu email integration.
+# Apply workflows once: bun novu:bootstrap:apply (includes auth.otp + auth.email_verification)

@@ -27,6 +27,13 @@ describe("Novu bootstrap catalog", () => {
     expect(workflowIds).toContain("account_invitation");
   });
 
+  test("includes auth email workflows", async () => {
+    const templates = await loadBootstrapEmailTemplates();
+    const workflowIds = buildBootstrapWorkflows(templates).map(workflow => workflow.workflowId);
+    expect(workflowIds).toContain("auth.otp");
+    expect(workflowIds).toContain("auth.email_verification");
+  });
+
   test("loads email templates from html files", async () => {
     const templates = await loadBootstrapEmailTemplates();
     expect(templates.standardNotification).toContain("{{payload.emailBody}}");

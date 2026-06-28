@@ -45,6 +45,10 @@ export const EnvSchema = z.object({
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
+  /** When true, require verified email before password sign-in. Defaults to true when NOVU_SECRET_KEY is set. */
+  REQUIRE_EMAIL_VERIFICATION: envBooleanSchema.optional(),
+  /** When false, skip logging auth OTP / verification URLs in development even when Novu sends. */
+  AUTH_EMAIL_LOG_OTP: envBooleanSchema.optional(),
   /** Cloudflare account id (dashboard). Optional when R2_ENDPOINT is set; may differ from the endpoint hostname. */
   R2_ACCOUNT_ID: z.string().min(1).optional(),
   /** Jurisdiction-specific R2 S3 API endpoint from the R2 dashboard — authoritative for all S3 API calls. */
