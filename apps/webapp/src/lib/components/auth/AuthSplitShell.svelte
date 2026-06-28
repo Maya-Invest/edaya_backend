@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
-	import { cn } from '$lib/utils';
-	import { GraduationCap } from '$lib/icons';
 	import { t } from '$lib/i18n';
+	import { GraduationCap } from '$lib/icons';
+	import { cn } from '$lib/utils';
 
 	export type AuthSplitPanel = 'signup' | 'signin';
 

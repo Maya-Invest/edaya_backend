@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { authClient } from '$lib/auth/client';
 	import { isExistingAccountAuthError } from '$lib/auth/auth-errors';
 	import { getAuthenticatedAuthUser } from '$lib/auth/bootstrap';
+	import { authClient } from '$lib/auth/client';
 	import { completeAuthSignIn } from '$lib/auth/complete-sign-in';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -30,11 +30,11 @@
 	const passwordLongEnough = $derived(password.length === 0 || password.length >= MIN_PASSWORD_LENGTH);
 	const canSubmit = $derived(
 		apiConnected
-		&& !busy
+			&& !busy
 		&& name.trim().length > 0
-		&& email.trim().length > 0
+			&& email.trim().length > 0
 		&& password.length >= MIN_PASSWORD_LENGTH
-		&& password === confirmPassword,
+			&& password === confirmPassword,
 	);
 
 	async function handleSignUp() {

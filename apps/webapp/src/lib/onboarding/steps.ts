@@ -1,0 +1,72 @@
+import type { OnboardingDraft, OnboardingStep } from '$lib/onboarding/types';
+
+export interface OnboardingStepDefinition {
+	id: OnboardingStep;
+	labelKey:
+		| 'onboarding.step.school'
+		| 'onboarding.step.structure'
+		| 'onboarding.step.staff'
+		| 'onboarding.step.complete';
+	descriptionKey:
+		| 'onboarding.stepDescription.school'
+		| 'onboarding.stepDescription.structure'
+		| 'onboarding.stepDescription.staff'
+		| 'onboarding.stepDescription.complete';
+	optional?: boolean;
+}
+
+export const ONBOARDING_STEPS: readonly OnboardingStepDefinition[] = [
+	{
+		id: 1,
+		labelKey: 'onboarding.step.school',
+		descriptionKey: 'onboarding.stepDescription.school',
+	},
+	{
+		id: 2,
+		labelKey: 'onboarding.step.structure',
+		descriptionKey: 'onboarding.stepDescription.structure',
+	},
+	{
+		id: 3,
+		labelKey: 'onboarding.step.staff',
+		descriptionKey: 'onboarding.stepDescription.staff',
+		optional: true,
+	},
+	{
+		id: 4,
+		labelKey: 'onboarding.step.complete',
+		descriptionKey: 'onboarding.stepDescription.complete',
+	},
+] as const;
+
+export function getOnboardingStepDefinition(step: OnboardingStep): OnboardingStepDefinition {
+	return ONBOARDING_STEPS[step - 1]!;
+}
+
+export function canAdvanceFromStep(step: OnboardingStep, draft: OnboardingDraft): boolean {
+	switch (step) {
+		case 1:
+			return draft.school.name.trim().length > 0;
+		case 2:
+		case 3:
+			return true;
+		case 4:
+			return false;
+		default:
+			return false;
+	}
+}
+
+export function nextOnboardingStep(step: OnboardingStep): OnboardingStep | null {
+	if (step >= 4) {
+		return null;
+	}
+	return (step + 1) as OnboardingStep;
+}
+
+export function previousOnboardingStep(step: OnboardingStep): OnboardingStep | null {
+	if (step <= 1) {
+		return null;
+	}
+	return (step - 1) as OnboardingStep;
+}

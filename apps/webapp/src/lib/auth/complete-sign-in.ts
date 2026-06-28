@@ -39,4 +39,4 @@ export function redirectPathIfLoggedIn(): string | null {
 	return redirectPathIfAuthenticated();
 }
 
-export { redirectPathIfAuthenticated, resolvePostAuthPath, ONBOARDING_PATH, resolveLinkedActorPath } from '$lib/auth/resolve-post-auth';
+export { ONBOARDING_PATH, redirectPathIfAuthenticated, resolveLinkedActorPath, resolvePostAuthPath } from '$lib/auth/resolve-post-auth';

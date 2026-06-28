@@ -48,7 +48,7 @@
 
 	const canChangePhoto = $derived(
 		actor.kind === 'staff'
-			&& Boolean(staffProfile?.id)
+		&& Boolean(staffProfile?.id)
 			&& canUploadProfilePhoto('STAFF_UPDATE'),
 	);
 

@@ -33,20 +33,21 @@
 	</div>
 {:else if authSession.needsOnboarding}
 	<div class="flex min-h-screen flex-col bg-background text-foreground">
-		<header class="flex items-center justify-end px-4 py-3 sm:px-6">
+		<header class="flex items-center justify-between px-4 py-3 sm:px-6">
+			<div class="flex items-center gap-2">
+				<div
+					class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-panel"
+				>
+					<GraduationCap class="h-4 w-4" />
+				</div>
+				<div class="hidden sm:block">
+					<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">EDAYA</p>
+				</div>
+			</div>
 			<LanguageSelector />
 		</header>
 
 		<main class="flex flex-1 flex-col">
-			<div class="mb-4 flex flex-col items-center pt-4 text-center">
-				<div
-					class="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-panel"
-				>
-					<GraduationCap class="h-5 w-5" />
-				</div>
-				<p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">EDAYA</p>
-			</div>
-
 			{@render children()}
 		</main>
 	</div>

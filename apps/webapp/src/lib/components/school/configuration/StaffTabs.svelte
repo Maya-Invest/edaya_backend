@@ -2,8 +2,8 @@
 	import type { StaffMember } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { deleteStaffMemberMutation } from '$lib/api/mutations/delete-entity.mutations';
-	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
 	import { updateStaffProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
+	import { updateStaffMemberStatusMutation } from '$lib/api/mutations/staff.mutations';
 	import AccountLinkingSection from '$lib/components/account/AccountLinkingSection.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';

@@ -1,32 +1,112 @@
 <script lang="ts">
+	import type { OnboardingStep } from '$lib/onboarding/types';
+	import { page } from '$app/stores';
 	import { authSession } from '$lib/auth/session.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { t } from '$lib/i18n';
+	import OnboardingShell from '$lib/components/onboarding/OnboardingShell.svelte';
+	import OnboardingStepContent from '$lib/components/onboarding/OnboardingStepContent.svelte';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { onboardingContext } from '$lib/onboarding/context.svelte';
+	import {
+		canVisitOnboardingStep,
+		clampOnboardingStep,
+		parseOnboardingStep,
+		writeOnboardingStepUrl,
+	} from '$lib/onboarding/navigation';
+	import {
+		canAdvanceFromStep,
+		getOnboardingStepDefinition,
+		nextOnboardingStep,
+		previousOnboardingStep,
+	} from '$lib/onboarding/steps';
 
-	async function logout() {
-		await authSession.logout();
-		appGoto(appPath('/login'), { replaceState: true });
+	let busy = $state(false);
+
+	const currentStep = $derived(parseOnboardingStep($page.url));
+	const maxReachedStep = $derived(onboardingContext.draft.maxReachedStep);
+	const stepDefinition = $derived(getOnboardingStepDefinition(currentStep));
+	const canAdvance = $derived(canAdvanceFromStep(currentStep, onboardingContext.draft));
+	const canGoBack = $derived(currentStep > 1);
+	const nextStep = $derived(nextOnboardingStep(currentStep));
+	const showContinue = $derived(nextStep !== null);
+	const showSkip = $derived(Boolean(stepDefinition.optional && nextStep !== null));
+
+	$effect(() => {
+		const authUserId = authSession.authUserId;
+		if (authUserId) {
+			onboardingContext.init(authUserId);
+		}
+	});
+
+	$effect(() => {
+		if (!onboardingContext.initialized) {
+			return;
+		}
+
+		const requested = parseOnboardingStep($page.url);
+		const allowed = clampOnboardingStep(requested, maxReachedStep);
+		if (requested !== allowed) {
+			appGoto(writeOnboardingStepUrl($page.url, allowed), { replaceState: true });
+		}
+	});
+
+	function navigateToStep(step: OnboardingStep) {
+		if (!canVisitOnboardingStep(step, maxReachedStep)) {
+			return;
+		}
+		appGoto(writeOnboardingStepUrl($page.url, step));
+	}
+
+	function goBack() {
+		const previous = previousOnboardingStep(currentStep);
+		if (previous) {
+			navigateToStep(previous);
+		}
+	}
+
+	function goNext() {
+		if (!canAdvance || !nextStep) {
+			return;
+		}
+		onboardingContext.markStepReached(nextStep);
+		appGoto(writeOnboardingStepUrl($page.url, nextStep));
+	}
+
+	function skipStep() {
+		if (!stepDefinition.optional || !nextStep) {
+			return;
+		}
+		onboardingContext.markStepReached(nextStep);
+		appGoto(writeOnboardingStepUrl($page.url, nextStep));
+	}
+
+	async function signOut() {
+		busy = true;
+		try {
+			await authSession.logout();
+			onboardingContext.reset();
+			appGoto(appPath('/login'), { replaceState: true });
+		}
+		finally {
+			busy = false;
+		}
 	}
 </script>
 
-<div class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-10 pt-2 sm:px-6">
-	<section class="rounded-2xl border border-border bg-card p-6 shadow-soft">
-		<h1 class="font-display text-2xl font-semibold">{$t('onboarding.title')}</h1>
-		<p class="mt-2 text-sm text-muted-foreground">{$t('onboarding.placeholder')}</p>
-
-		{#if authSession.loginEmail}
-			<p class="mt-4 rounded-xl bg-secondary/50 px-3 py-2 text-sm text-muted-foreground">
-				{$t('onboarding.signedInAs', { email: authSession.loginEmail })}
-			</p>
-		{/if}
-
-		<p class="mt-6 text-xs text-muted-foreground">{$t('onboarding.comingSoon')}</p>
-	</section>
-
-	<div class="mt-6 flex justify-center">
-		<Button variant="ghost" type="button" onclick={() => void logout()}>
-			{$t('auth.signOut')}
-		</Button>
-	</div>
-</div>
+{#if onboardingContext.initialized}
+	<OnboardingShell
+		{currentStep}
+		{maxReachedStep}
+		{canAdvance}
+		{canGoBack}
+		{showSkip}
+		{showContinue}
+		{busy}
+		onBack={goBack}
+		onContinue={goNext}
+		onSkip={skipStep}
+		onStepSelect={navigateToStep}
+		onSignOut={() => void signOut()}
+	>
+		<OnboardingStepContent step={currentStep} />
+	</OnboardingShell>
+{/if}

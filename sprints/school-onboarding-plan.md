@@ -15,7 +15,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [ ] **Phase 0** — Livraison email auth (OTP / vérification) *(en pause — à reprendre)*
 - [x] **Phase 1** — Écran auth split (login à droite · signup à gauche)
 - [x] **Phase 2** — Inscription + redirection compte non lié
-- [ ] **Phase 3** — Shell assistant + barre de progression
+- [x] **Phase 3** — Shell assistant + barre de progression
 - [ ] **Phase 4** — Étape 1 : identité école + année / période
 - [ ] **Phase 5** — Étape 2 : modèle établissement + classes + curriculum
 - [ ] **Phase 6** — Étape 3 : invitations staff
@@ -227,9 +227,9 @@ Route : `apps/webapp/src/routes/onboarding/+layout.svelte` + sous-routes ou quer
 **Effort estimé :** 4–6 h  
 **PR suggérée :** `feature/onboarding-shell`
 
-- [ ] `OnboardingShell.svelte` + `OnboardingStepper.svelte`
-- [ ] Store ou URL `step` (1–4) avec validation avant avance
-- [ ] Persistance brouillon local (`sessionStorage`) — reprise si refresh
+- [x] `OnboardingShell.svelte` + `OnboardingStepper.svelte`
+- [x] Store ou URL `step` (1–4) avec validation avant avance
+- [x] Persistance brouillon local (`sessionStorage`) — reprise si refresh
 - [ ] *(Optionnel v1.1)* API `GET/PATCH /core/onboarding/draft` pour reprise cross-device
 
 **Done when :** navigation 1→4 avec stepper visuel ; données brouillon survivent au refresh.

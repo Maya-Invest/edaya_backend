@@ -1,8 +1,8 @@
 <script lang="ts">
-	import PersonAvatar from './PersonAvatar.svelte';
 	import { t } from '$lib/i18n';
 	import { Camera, LoaderCircle } from '$lib/icons';
 	import { cn } from '$lib/utils';
+	import PersonAvatar from './PersonAvatar.svelte';
 
 	let {
 		name,
