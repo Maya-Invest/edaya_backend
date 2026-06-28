@@ -2,6 +2,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import app from "@/app";
+import { buildClientBindings, CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@/lib/school-api/client-bindings";
 import { loadNodeProcessEnv } from "@/runtime/env/node-loader";
 import { resetApiRuntimesForTests } from "@/runtime";
 
@@ -27,7 +28,14 @@ async function main() {
     const body = await res.text();
     throw new Error(`Failed to fetch OpenAPI doc: ${res.status}\nBody: ${body}`);
   }
-  const schema = await res.json();
+  const schema = await res.json() as {
+    info?: Record<string, unknown>;
+  };
+
+  schema.info = {
+    ...schema.info,
+    [CLIENT_BINDINGS_OPENAPI_EXTENSION]: buildClientBindings(),
+  };
 
   const outputPath = resolveOutputPath();
 

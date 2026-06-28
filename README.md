@@ -220,7 +220,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run openapi:check` | Compatibility alias for `generated:check` |
 | `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/integrations) |
 | `cd apps/api && bun run export-openapi` | Export OpenAPI JSON only |
-| `cd apps/api && bun run generate-api-client` | Regenerate `@edaya/api-client` bindings only |
+| `bun scripts/generate-client-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
 | `cd apps/webapp && bun run openapi:generate` | Regenerate `schema.d.ts` from local OpenAPI JSON |
 
 ### Quality & CI

@@ -38,8 +38,7 @@ src/
 │   └── worker/                # Worker DB + buildWorkerApiRuntime
 │
 ├── scripts/
-│   ├── export-openapi.ts      # Writes OpenAPI JSON for client generation
-│   └── generate-api-client.ts
+│   └── export-openapi.ts      # Writes OpenAPI JSON (embeds x-edaya-client-bindings)
 │
 └── lib/
     ├── authorization/         # Grants cache + serialization
@@ -97,6 +96,7 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 | `start` | `node dist/node.js` |
 | `deploy:worker` | `wrangler deploy --env production` |
 | `export-openapi` | `bun src/scripts/export-openapi.ts` |
-| `generate-api-client` | `bun src/scripts/generate-api-client.ts` |
+
+TypeScript client bindings are generated at the repo root from the exported OpenAPI document: `bun scripts/generate-client-bindings.ts`.
 
 Root shortcut: `bun run deploy:api` → `@edaya/api deploy:worker`.

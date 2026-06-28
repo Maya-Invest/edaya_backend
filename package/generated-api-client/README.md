@@ -321,17 +321,19 @@ This runs three steps in order:
 
 | Step | Script | Output |
 |------|--------|--------|
-| 1. Export OpenAPI spec | `apps/api export-openapi` | `apps/webapp/src/lib/api/openapi.json` |
+| 1. Export OpenAPI spec | `apps/api export-openapi` | `apps/webapp/src/lib/api/openapi.json` (includes `info.x-edaya-client-bindings`) |
 | 2. Generate TypeScript types | `apps/webapp openapi:generate` | `apps/webapp/src/lib/api/schema.d.ts` |
-| 3. Generate client bindings | `apps/api generate-api-client` | `package/generated-api-client/src/generated/client-bindings.ts` |
+| 3. Generate client bindings | `scripts/generate-client-bindings.ts` | `package/generated-api-client/src/generated/client-bindings.ts` |
+
+The exported OpenAPI document embeds client bindings under `info.x-edaya-client-bindings`. The Flutter `edaya_mobile` repo consumes that extension to generate its Dart client — no shared checkout required.
 
 You can also run step 3 alone during API development:
 
 ```bash
-bun run --cwd apps/api generate-api-client
+bun scripts/generate-client-bindings.ts
 ```
 
-The codegen script (`apps/api/src/scripts/generate-api-client.ts`) reads the API registry and extracts OpenAPI schema names from Zod metadata. **Do not edit the generated bindings file by hand.**
+The codegen script (`scripts/generate-client-bindings.ts`) reads `info.x-edaya-client-bindings` from the committed OpenAPI document. **Do not edit the generated bindings file by hand.**
 
 ---
 

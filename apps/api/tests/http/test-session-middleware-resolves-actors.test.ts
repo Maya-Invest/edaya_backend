@@ -8,7 +8,7 @@ import {
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { DefaultAuthorizationRepository } from "@edaya/core";
+import { buildPortalScopeGrants, DefaultAuthorizationRepository, STUDENT_PORTAL_PERMISSIONS } from "@edaya/core";
 
 describe("session Middleware ActorMetadata Construction", () => {
   const getSession = mock();
@@ -473,19 +473,9 @@ describe("session Middleware ActorMetadata Construction", () => {
       effectiveGrants: {
         isElevated: false,
         permissions: {},
-        scopeGrants: [
-          { permission: "ATTENDANCE_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "PAYMENT_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_STUDENT_DETAIL_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_REPORT_CARD_DETAIL_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_ENROLLMENT_HISTORY_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "GRADE_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "CLASS_LOGBOOK_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_TIMETABLE_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_CALENDAR_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_COMMUNICATIONS_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-          { permission: "QUERY_CLASS_CURRICULUM_READ", scopeType: "student", scopeEntityIds: ["student-1"] },
-        ],
+        scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, {
+          studentIds: ["student-1"],
+        }),
       },
     });
   });
