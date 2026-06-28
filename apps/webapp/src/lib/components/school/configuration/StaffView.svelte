@@ -1,19 +1,21 @@
 <script lang="ts">
 	import type { StaffMember } from '$lib/types/school';
+	import { page } from '$app/stores';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { DEFAULT_LIST_PAGE_SIZE } from '$lib/api/entity-list-filters';
 	import { fetchStaffMembersPage } from '$lib/api/staff-data';
 	import { getBrowserSchoolClient } from '$lib/api/school-client';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import InfiniteList from '$lib/components/ui/InfiniteList.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import ListPageHeader from '$lib/components/ui/ListPageHeader.svelte';
+	import ListPagination from '$lib/components/ui/ListPagination.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
 	import { t } from '$lib/i18n';
 	import { Mail, Plus, Search } from '$lib/icons';
-	import { useOffsetInfiniteList } from '$lib/list/use-infinite-list.svelte';
+	import { readStaffListFilters, writeStaffListFilters } from '$lib/list/list-url-filters';
+	import { useOffsetPaginatedList } from '$lib/list/use-paginated-list.svelte';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { cn } from '$lib/utils';
 	import StaffCreateModal from './StaffCreateModal.svelte';
@@ -26,31 +28,72 @@
 		selectedId?: string;
 	} = $props();
 
-	const infinite = useOffsetInfiniteList(async (offset, limit) => {
-		const page = await fetchStaffMembersPage(getBrowserSchoolClient(), {
-			schoolId: academicContext.schools[0]?.id ?? '',
-			academicYearId: academicContext.yearId,
-		}, { offset, limit });
-		detailDataContext.seedStaff(page.staff);
-		return { items: page.staff, total: page.totalStaff };
-	}, DEFAULT_LIST_PAGE_SIZE);
+	const initialFilters = $derived(readStaffListFilters($page.url));
 
 	let q = $state('');
+	let listPage = $state(1);
+	let filtersReady = $state(false);
 	let createOpen = $state(false);
 
-	const list = $derived(
-		infinite.visible.filter(s => s.name.toLowerCase().includes(q.toLowerCase())),
+	const paginated = useOffsetPaginatedList(
+		async (offset, limit) => {
+			const result = await fetchStaffMembersPage(
+				getBrowserSchoolClient(),
+				{
+					schoolId: academicContext.schools[0]?.id ?? '',
+					academicYearId: academicContext.yearId,
+				},
+				{ offset, limit },
+			);
+			detailDataContext.seedStaff(result.staff);
+			return { items: result.staff, total: result.totalStaff };
+		},
+		() => listPage,
+		DEFAULT_LIST_PAGE_SIZE,
 	);
+
+	const list = $derived(
+		paginated.items.filter(s => s.name.toLowerCase().includes(q.toLowerCase())),
+	);
+
+	function syncFiltersToUrl(overrides: Partial<{ q: string; page: string }> = {}) {
+		const href = writeStaffListFilters($page.url, {
+			q: overrides.q ?? q,
+			page: overrides.page ?? String(listPage),
+		});
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	function goToPage(nextPage: number) {
+		listPage = nextPage;
+		syncFiltersToUrl({ page: String(nextPage) });
+	}
 
 	function handleCreated(staffId: string) {
 		appGoto(detailHref.configStaffMember(staffId));
+	}
+
+	$effect(() => {
+		const next = initialFilters;
+		q = next.q;
+		listPage = Number(next.page) || 1;
+		filtersReady = true;
+	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleFilterSync() {
+		if (!filtersReady)
+			return;
+		listPage = 1;
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => syncFiltersToUrl({ page: '1' }), 250);
 	}
 </script>
 
 <div class="animate-fade-in">
 	<ListPageHeader
 		eyebrow={$t('config.staffDirectory')}
-		title={$t('people.staffCount', { n: infinite.total })}
+		title={$t('people.staffCount', { n: paginated.total })}
 	>
 		{#snippet search()}
 			<div class="relative">
@@ -59,6 +102,7 @@
 				/>
 				<Input
 					bind:value={q}
+					oninput={scheduleFilterSync}
 					placeholder={$t('common.search')}
 					class="h-9 w-56 rounded-full pl-9 text-sm"
 				/>
@@ -88,7 +132,10 @@
 
 	<StaffCreateModal bind:open={createOpen} onCreated={handleCreated} />
 
-	<div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+	<div
+		class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
+		aria-busy={paginated.loading}
+	>
 		<div
 			class="grid grid-cols-12 gap-4 border-b border-border bg-secondary/40 px-5 py-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
 		>
@@ -96,15 +143,8 @@
 			<div class="col-span-3">{$t('people.role')}</div>
 			<div class="col-span-4">{$t('people.classes')}</div>
 		</div>
-		<InfiniteList
-			hasMore={infinite.hasMore}
-			loading={infinite.loading}
-			total={infinite.total}
-			visibleCount={infinite.visible.length}
-			onLoadMore={infinite.loadMore}
-		>
-			<ul>
-				{#each list as s (s.id)}
+		<ul class={cn(paginated.loading && 'opacity-60')}>
+			{#each list as s (s.id)}
 				{@const active = selectedId === s.id}
 				<li>
 					<button
@@ -155,12 +195,21 @@
 					</button>
 				</li>
 			{/each}
-			{#if list.length === 0}
+			{#if list.length === 0 && !paginated.loading}
 				<li class="px-5 py-12 text-center text-sm text-muted-foreground">
 					{$t('students.noMatch')}
 				</li>
 			{/if}
-			</ul>
-		</InfiniteList>
+		</ul>
+		{#if paginated.total > 0}
+			<ListPagination
+				page={listPage}
+				pageCount={paginated.pageCount}
+				total={paginated.total}
+				pageSize={paginated.pageSize}
+				loading={paginated.loading}
+				onPageChange={goToPage}
+			/>
+		{/if}
 	</div>
 </div>

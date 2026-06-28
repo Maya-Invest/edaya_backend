@@ -11,6 +11,7 @@
 <PageQuery {query} loadingTitle={$t('config.notificationTemplates')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('notificationTemplates.emptyTitle')}

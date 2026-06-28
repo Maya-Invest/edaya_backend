@@ -22,6 +22,7 @@
 <PageQuery {query} loadingTitle={$t('tab.teaching')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('tab.teaching')}

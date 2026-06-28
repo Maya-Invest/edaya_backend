@@ -3,7 +3,7 @@ import { schoolWideEntityList } from '$lib/api/entity-list-filters';
 import { loadClassPeopleData } from '$lib/api/people-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { resolvePageLoad, listPageHasItems } from '$lib/queries/page-status';
 import { getStudent360Data, studentDetailIdFromUrl } from '$lib/queries/student-360.queries';
 
 const SCHOOL_ROSTER_SCOPE
@@ -31,7 +31,7 @@ export function querySchoolStudentsPage() {
 			await seedStudent360ForUrl(url);
 			return { totalStudents: count };
 		},
-		hasItems: data => data.totalStudents > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -44,7 +44,7 @@ export function querySchoolGuardiansPage() {
 			);
 			return { totalGuardians: count };
 		},
-		hasItems: data => data.totalGuardians > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -58,7 +58,7 @@ export function querySchoolStaffPage() {
 				: { count: 0 };
 			return { totalStaff: count };
 		},
-		hasItems: data => data.totalStaff > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -80,6 +80,6 @@ export function queryClassStudentsPage(classId: string) {
 			await seedStudent360ForUrl(url);
 			return { classId, currentClass };
 		},
-		hasItems: () => detailDataContext.studentsForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }

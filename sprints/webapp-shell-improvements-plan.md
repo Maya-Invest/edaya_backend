@@ -1,6 +1,6 @@
 # Webapp Shell Improvements — Sprint Plan
 
-> **Status:** Phases 1–2, 7 validées UX · Phases 6–8 implémentées (seed + pagination) · prochaine : Phase 3  
+> **Status:** Phases 1–2, 4, 6–8 validées · prochaine : Phase 3  
 > **Created:** 2026-06-27  
 > **Last updated:** 2026-06-27  
 > **Branch suggérée:** `feature/webapp-shell-improvements`  
@@ -16,9 +16,9 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [x] **Phase 1** — Navigation (Matières classe, Staff → École)
 - [x] **Phase 2** — Compte connecté (modale profil)
 - [ ] **Phase 3** — Permissions menu
-- [ ] **Phase 4** — États vides + audit boutons
+- [x] **Phase 4** — États vides + audit boutons
 - [ ] **Phase 5** — Templates notifications + invitations
-- [ ] **Phase 6** — Seeding élèves étendu
+- [x] **Phase 6** — Seeding élèves étendu
 - [x] **Phase 7** — Configuration école
 - [x] **Phase 8** — Pagination API (default 50) + webapp
 
@@ -117,33 +117,47 @@ Redondant avec « Enseignements » (`tab.teaching`).
 
 **Problème :** `DataState` remplace tout le contenu quand `status === 'empty'`, masquant `ListPageHeader` et le bouton Ajouter — contraire à `app-shell-spec.md` § UX risks.
 
-- [ ] Déplacer `ListPageHeader` **hors** de `DataState` sur les pages liste concernées
-- [ ] Réserver `DataState` à la zone collection uniquement
-- [ ] En empty : message + CTA « Ajouter » visible (`PermissionGate`)
-- [ ] (Alternative) Ajouter snippet `emptyActions` à `DataState.svelte` si refactor central préféré
-- [ ] Pages auditées et corrigées :
-  - [ ] `configuration/subjects/[[id]]`
-  - [ ] `finance/billing/[[id]]`
-  - [ ] `classes/[classId]/evaluations/[[id]]`
-  - [ ] `configuration/grade-scales`
-  - [ ] `dashboard`
-  - [ ] Autres routes `PageQuery` + `DataState` (liste exhaustive documentée en fin de phase)
+**Solution livrée :** prop `preserveShell` sur `DataState.svelte` + helper `listPageHasItems()` dans `page-status.ts` pour que les routes liste passent en `ready` après load même sans items ; états vides in-collection dans les vues.
+
+- [x] `DataState.svelte` — prop `preserveShell` (empty rend quand même `children()`)
+- [x] `page-status.ts` — `listPageHasItems()` pour queries liste
+- [x] Queries migrées : `people`, `subjects`, `school-life`, `finance`, `academic`, `assessments`, `homework`, `access`, `report-cards`, `notification-templates`
+- [x] `preserveShell` sur **24 routes liste** (voir liste ci-dessous)
+- [x] États vides in-collection : `GradeScalesView`, `FinanceView` (billing + fees) ; autres vues déjà OK
+- [x] Exclu volontairement : `dashboard`, `configuration/school`, `account/inbox`, `account/notifications`
+
+**Routes `preserveShell` :**
+
+| Zone | Routes |
+|------|--------|
+| École | `school/students`, `guardians`, `staff`, `calendar`, `activities`, `announcements`, `events` |
+| Classe | `classes/[classId]/students`, `evaluations`, `homework`, `teaching`, `timetable`, `report-cards` |
+| Config | `configuration/subjects`, `subjects/level`, `classes`, `academic`, `grade-scales`, `roles`, `report-cards`, `notifications` |
+| Finance | `finance/fees`, `billing`, `payment` |
+
+**Test :** `?demo=empty` sur une route liste → header + CTA visibles, message vide in-collection.
 
 ### 4.2 Audit boutons Ajouter / Modifier
 
 Spec : CTA liste → modal create ; drawer → Edit → modal.
 
-| Module | CTA create | Edit drawer | Corrigé |
-|--------|------------|-------------|---------|
-| Élèves (école + classe) | | | [ ] |
-| Responsables | | | [ ] |
-| Staff | | | [ ] |
-| Annonces, activités, événements | | | [ ] |
-| Finance (frais, facturation) | | | [ ] |
-| Config (matières, classes, rôles, bulletins) | | | [ ] |
-| Classe (devoirs, évaluations, emploi du temps) | | | [ ] |
+| Module | CTA create | Edit drawer | Conforme |
+|--------|------------|-------------|----------|
+| Élèves (école + classe) | Modal (`StudentCreateModal`) | Modal (`StudentProfileEditModal`) | ✅ |
+| Responsables | Modal (`GuardianCreateModal`) | Modal (`GuardianEditModal`) | ✅ |
+| Staff | Modal (`StaffCreateModal`) | Modal (`StaffProfileEditModal`) | ✅ |
+| Annonces, activités, événements | Modal (`*FormModal`) | Modal dans drawer | ✅ |
+| Finance (frais, facturation) | Modal (`FeeFormModal`, `AssignFeeFormModal`) | Drawer facturation | ✅ |
+| Config (matières, classes, rôles, bulletins) | Modal sauf catalogue matières (lecture) et rôles (fixes) | Drawer / inline selon écran | ⚠️ voir écarts |
+| Classe (devoirs, évaluations, emploi du temps) | Modal (`EvaluationCreateModal`, `PlanningFormModal`, …) | Modal dans drawer | ✅ |
 
-- [ ] Corrections ciblées listées dans une section « Fixes » en bas de ce fichier (au fil de l’audit)
+**Écarts documentés (pas de fix Phase 4 — comportement métier ou Phase 5+) :**
+
+- `ConfigSubjectsView` : catalogue config en lecture ; création matière au niveau **classe** (`SubjectsView`).
+- `RolesMatrixView` : rôles fixes, pas de CTA create.
+- `ReportCardDefinitionsView` : pas encore de CTA « Nouveau modèle » (hors scope empty state).
+- `PaymentsView` : pas de create liste ; enregistrement via facturation.
+- `NotificationTemplatesView` : édition par carte, refactor liste Phase 5.
 
 ---
 
@@ -193,7 +207,7 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 - [x] `population/workflow.ts` inchangé (itère `SEED_STUDENTS` / `SEED_GUARDIANS`)
 - [x] Mettre à jour `seed-validation-harness` + tests
 - [x] Narratif s1–s30 conservé (finance, notes, présences, bulletins)
-- [ ] `bun run` seed dev local OK + badge count sidebar réaliste (1000)
+- [x] `bun run` seed dev local OK + badges sidebar (élèves, tuteurs, personnel)
 
 **Fichiers clés :** `testing/dev-fixtures/src/population-seed.ts`, `testing/seeding/src/population/`
 
@@ -222,28 +236,34 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 ## Phase 8 — Pagination API (default 50) + webapp
 
 **Effort estimé :** 3–5 jours  
-**Dépend de :** Phase 6 recommandée (volume de test)
+**Dépend de :** Phase 6 recommandée (volume de test)  
+**État :** livré pour les listes people (école). Facturation et autres collections volumineuses : reportées (voir §8.2).
 
 ### 8.1 API
 
 - [x] Constante `DEFAULT_LIST_LIMIT = 50` dans `apps/api/src/lib/school-api/pagination.ts`
 - [x] Appliqué dans `executeEntityList` quand `$limit` absent (cap à 500)
 - [x] Offset via `$offset` (pas de cursor)
+- [x] Fix tri Postgres : `asc(col)` / `desc(col)` dans `postgres-store.ts` (Drizzle 0.39)
 - [x] Tests API : `test-entity-list-pagination.test.ts`
-- [ ] Mettre à jour GraphiQL example si pertinent
+- [x] Exemple GraphiQL : `limit: 50`, `offset: 0`, `orderBy` lastName/firstName
 
 ### 8.2 Webapp
 
-- [x] Helper `paginatedList({ limit, offset })` dans `entity-list-filters.ts`
-- [x] Hook `useOffsetInfiniteList` + `InfiniteList` (scroll infini, 50/page)
-- [x] Listes migrées :
+- [x] Helper `paginatedList({ limit, offset, orderBy })` dans `entity-list-filters.ts`
+- [x] Hook `useOffsetPaginatedList` + composant `ListPagination` (50/page, URL `?page=`)
+- [x] i18n pagination (`list.pageRange`, `list.previousPage`, …)
+- [x] Listes migrées (pagination par pages, plus de scroll infini) :
   - [x] Élèves école (`SchoolStudentsView`)
   - [x] Responsables (`GuardiansView`)
-  - [x] Staff (`StaffView`)
-  - [ ] Facturation
-  - [ ] Autres collections scalables
+  - [x] Personnel (`StaffView`)
+  - [ ] Facturation — volume seed modéré ; KPI agrégés + modale assignation nécessitent encore chargement groupé
+  - [ ] Autres collections scalables (annonces, activités, config matières…) — hors scope sprint
+- [x] Badges sidebar : totaux élèves / tuteurs / personnel (`shell-data` + `AppSidebar`)
 - [x] Validation seed via `/count` (plus via list length)
-- [ ] Smoke test avec seed 1000 : scroll fluide, total header correct
+- [x] Smoke test seed 1000 : pagination 20 pages, total header + badges sidebar cohérents
+
+**Fichiers clés :** `use-paginated-list.svelte.ts`, `ListPagination.svelte`, `list-url-filters.ts` (`page`), `shell-data.ts`, `AppSidebar.svelte`, `postgres-store.ts`, `graphiql.ts`
 
 ---
 
@@ -255,14 +275,28 @@ Gérer le contenu des workflows d’invitation via la clé `account_invitation` 
 | 2 | Phase 2 | Modale profil |
 | 3 | Phase 3 + 4 | Permissions + empty states + audit |
 | 4 | Phase 5 | Templates notifications |
-| 5 | Phase 6 + 8 | Seeding puis pagination |
+| 5 | Phase 6 + 8 | Seeding puis pagination ✅ |
 | 6 | Phase 7 | Config école ✅ |
 
 ---
 
 ## Notes & fixes (à compléter au fil de l’eau)
 
+### Phase 8 — correctifs livrés
+
+- **API `$orderBy`** : `col.asc()` → `asc(col)` dans `@edaya/adaptor-postgres` (erreur 500 sur listes paginées).
+- **Dev reload** : `apps/api` watch inclut `postgres-store.ts` ; redémarrer `bun dev` après changement packages workspace.
+- **UX** : pagination par boutons (50/page) plutôt que scroll infini sur élèves, tuteurs, personnel.
+
 _Espace pour noter les corrections découvertes pendant l’audit Phase 4._
+
+### Phase 4 — correctifs livrés
+
+- **`DataState.preserveShell`** + **`listPageHasItems`** : listes vides conservent header + CTA (spec app-shell § UX risks).
+- **24 routes** `+page.svelte` avec `preserveShell` ; dashboard / config école / compte exclus.
+- **Vues** : empty in-collection ajouté sur `GradeScalesView`, `FinanceView` (onglets billing et fees).
+- **Queries** : `academic`, `assessments`, `homework`, `access`, `report-cards`, `notification-templates` migrées vers `listPageHasItems`.
+- **Audit boutons** : pattern modal create + modal edit drawer OK sur modules principaux ; écarts documentés ci-dessus (catalogue matières config, modèles bulletin, templates Phase 5).
 
 ---
 

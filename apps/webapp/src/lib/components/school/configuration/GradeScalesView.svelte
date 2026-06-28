@@ -73,7 +73,12 @@
 	</ListPageHeader>
 
 	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-		{#each filteredScales as scale (scale.id)}
+		{#if filteredScales.length === 0}
+			<p class="col-span-full py-12 text-center text-sm text-muted-foreground">
+				{$t('dataState.emptyDescription')}
+			</p>
+		{:else}
+			{#each filteredScales as scale (scale.id)}
 			<article class="rounded-2xl border border-border bg-card p-5 shadow-soft">
 				<div class="mb-2 flex items-start justify-between gap-2">
 					<h3 class="font-display font-semibold">{scale.name}</h3>
@@ -90,7 +95,8 @@
 					<p class="mt-2 text-sm text-muted-foreground">{scale.description}</p>
 				{/if}
 			</article>
-		{/each}
+			{/each}
+		{/if}
 	</div>
 </div>
 

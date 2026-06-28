@@ -1,6 +1,11 @@
 import type { PageLoadMeta } from '$lib/page/load-state';
 import { finalizeStatus, maybeSimulateLoading, resolveDemoState } from '$lib/page/load-state';
 
+/** List routes with in-view empty state + header CTA — never use full-page DataState empty. */
+export function listPageHasItems(): boolean {
+	return true;
+}
+
 export async function resolvePageLoad<T>(
 	url: URL,
 	options: {

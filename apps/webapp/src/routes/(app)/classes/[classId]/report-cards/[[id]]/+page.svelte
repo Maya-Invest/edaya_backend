@@ -22,6 +22,7 @@
 <PageQuery {query} loadingTitle={$t('reportCards.classTitle')}>
 	{#snippet children(data)}
 		<DataState
+			preserveShell
 			status={data.status}
 			errorMessage={data.errorMessage}
 			emptyTitle={$t('reportCards.classTitle')}

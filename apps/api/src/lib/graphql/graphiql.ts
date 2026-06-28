@@ -262,7 +262,7 @@ export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
           shouldPersistHeaders: true,
           initialHeaders: ${initialHeadersJson},
           defaultEditorToolsVisibility: true,
-          defaultQuery: '# Sign in above, or set Authorization in Headers.\\n\\nquery ListStudents {\\n  students(filter: { limit: 10 }) {\\n    id\\n    firstName\\n    lastName\\n  }\\n}\\n',
+          defaultQuery: '# Sign in above, or set Authorization in Headers.\\n\\n# Paginated list (default API limit = 50 when offset/limit omitted on REST).\\nquery ListStudentsPage1 {\\n  students(filter: {\\n    limit: 50\\n    offset: 0\\n    orderBy: [{ field: "lastName", direction: asc }, { field: "firstName", direction: asc }]\\n  }) {\\n    id\\n    firstName\\n    lastName\\n  }\\n}\\n',
         });
       }
 

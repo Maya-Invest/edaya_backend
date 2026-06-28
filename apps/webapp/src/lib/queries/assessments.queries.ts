@@ -2,7 +2,7 @@ import { academicContext } from '$lib/academic/context.svelte';
 import { loadClassEvaluations } from '$lib/api/assessments-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { listPageHasItems, resolvePageLoad } from '$lib/queries/page-status';
 import { getClassSubjects } from '$lib/queries/subjects.queries';
 
 export function queryClassEvaluationsPage(classId: string) {
@@ -17,6 +17,6 @@ export function queryClassEvaluationsPage(classId: string) {
 			detailDataContext.seedSubjects(subjects, { classId });
 			return { classId };
 		},
-		hasItems: () => detailDataContext.evaluationsForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }

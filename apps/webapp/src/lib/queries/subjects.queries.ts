@@ -2,7 +2,7 @@ import { fetchSchoolSubjectsSources, loadClassSubjects, mapAllClassSubjects } fr
 import { fetchTeachingLogEntries } from '$lib/api/teaching-log-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
-import { resolvePageLoad } from '$lib/queries/page-status';
+import { resolvePageLoad, listPageHasItems } from '$lib/queries/page-status';
 import { teachingLogContext } from '$lib/teaching-log/context.svelte';
 
 export async function getClassSubjects(classId: string) {
@@ -33,7 +33,7 @@ export function queryClassSubjectsPage(classId: string) {
 			detailDataContext.seedSubjects(subjects, { classId });
 			return { classId };
 		},
-		hasItems: () => detailDataContext.subjectsForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -49,7 +49,7 @@ export function queryClassTeachingPage(classId: string) {
 			teachingLogContext.hydrateFromServer(entries);
 			return { classId };
 		},
-		hasItems: () => detailDataContext.subjectsForClass(classId).length > 0,
+		hasItems: listPageHasItems,
 	});
 }
 
@@ -60,6 +60,6 @@ export function queryConfigSubjectsPage() {
 			await getAllSubjects();
 			return {};
 		},
-		hasItems: () => detailDataContext.subjects.length > 0,
+		hasItems: listPageHasItems,
 	});
 }
