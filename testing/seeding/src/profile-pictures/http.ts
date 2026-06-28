@@ -1,7 +1,7 @@
 import type { HttpSeedClient } from '../http/client'
 import type { CoreHttpRequestOptions } from '../http/core-entity'
 import type { ProfilePicturesSeedPort } from './port'
-import { AttachmentStatus, buildSeedProfilePhotoUrl } from '@edaya/core'
+import { AttachmentStatus, buildAttachmentContentUrl } from '@edaya/core'
 import { postCoreCommand } from '../http/core-entity'
 import { withSeedPortError } from '../seed-port-error'
 
@@ -56,13 +56,16 @@ export function createHttpProfilePicturesSeedPort(
         throw new Error(`upload-intents failed with status ${response.status}`)
       }
 
-      const uploadResponse = await options.client.request(body.uploadUrl, {
+      const uploadResponse = await fetch(body.uploadUrl, {
         method: 'PUT',
-        headers: body.headers ?? { 'content-type': input.mimeType },
+        headers: body.headers ?? { 'Content-Type': input.mimeType },
         body: input.body,
       })
       if (!uploadResponse.ok) {
-        throw new Error(`profile photo upload failed with status ${uploadResponse.status}`)
+        const detail = (await uploadResponse.text()).trim().slice(0, 300)
+        throw new Error(
+          `profile photo upload failed with status ${uploadResponse.status}${detail ? `: ${detail}` : ''}`,
+        )
       }
 
       await postCoreCommand(requestOptions, 'registerAttachment', {
@@ -80,7 +83,7 @@ export function createHttpProfilePicturesSeedPort(
 
       return {
         attachmentId: body.attachmentId,
-        photoUrl: buildSeedProfilePhotoUrl(options.client.origin, body.attachmentId),
+        photoUrl: buildAttachmentContentUrl(options.client.origin, body.attachmentId),
       }
     }),
     setStudentPhotoUrl: (studentId, photoUrl) => withSeedPortError('profilePictures.setStudentPhotoUrl', async () => {

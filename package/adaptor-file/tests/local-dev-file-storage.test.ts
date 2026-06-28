@@ -62,9 +62,18 @@ describe("createLocalDevFileStorage", () => {
       contentType: "application/pdf",
     });
 
-    const download = await storage.createPresignedDownload(key, { fileName: "report.pdf" });
+    const download = await storage.createPresignedDownload(key, {
+      fileName: "report.pdf",
+      disposition: "attachment",
+    });
     expect(download.downloadUrl).toContain("/core/dev/files/download");
     expect(download.downloadUrl).toContain("fileName=report.pdf");
+
+    const inlineDownload = await storage.createPresignedDownload(key, {
+      fileName: "photo.jpg",
+      disposition: "inline",
+    });
+    expect(inlineDownload.downloadUrl).toContain("disposition=inline");
 
     await storage.deleteObject(key);
     expect(await readLocalDevObject(rootDir, key)).toBeNull();

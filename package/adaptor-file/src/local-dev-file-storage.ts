@@ -67,6 +67,7 @@ function buildSignedUrl(
   expiresAt: Date,
   contentType?: string,
   fileName?: string,
+  disposition?: "inline" | "attachment",
 ): string {
   const expiresAtMs = expiresAt.getTime();
   const token = createDevStorageToken(config.signingSecret, {
@@ -87,6 +88,9 @@ function buildSignedUrl(
   }
   if (fileName) {
     url.searchParams.set("fileName", fileName);
+  }
+  if (disposition) {
+    url.searchParams.set("disposition", disposition);
   }
   return url.toString();
 }
@@ -118,7 +122,15 @@ export function createLocalDevFileStorage(config: LocalDevFileStorageConfig): Fi
       const expiresIn = options?.expiresInSeconds ?? 900;
       const expiresAt = new Date(Date.now() + expiresIn * 1000);
       return {
-        downloadUrl: buildSignedUrl(config, "download", key, expiresAt, undefined, options?.fileName),
+        downloadUrl: buildSignedUrl(
+          config,
+          "download",
+          key,
+          expiresAt,
+          undefined,
+          options?.fileName,
+          options?.disposition,
+        ),
         expiresAt,
       };
     },

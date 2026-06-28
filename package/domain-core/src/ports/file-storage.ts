@@ -38,6 +38,7 @@ export interface CreatePresignedUploadInput {
 export interface CreatePresignedDownloadOptions {
   expiresInSeconds?: number
   fileName?: string
+  disposition?: 'inline' | 'attachment'
 }
 
 /**

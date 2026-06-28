@@ -3,7 +3,7 @@ import type { ProfilePicturesSeedPort, UploadProfilePhotoInput } from './port'
 import {
   Attachment,
   AttachmentStatus,
-  buildSeedProfilePhotoUrl,
+  buildAttachmentContentUrl,
 } from '@edaya/core'
 import { createInProcessSeedService } from '../in-process-seed-service'
 import { withSeedPortError } from '../seed-port-error'
@@ -23,7 +23,7 @@ export function createInProcessProfilePicturesSeedPort(
       const uploaded = await uploadProfilePhotoInProcess(service, input)
       return {
         attachmentId: uploaded.id,
-        photoUrl: buildSeedProfilePhotoUrl(options.apiBaseUrl, uploaded.id),
+        photoUrl: buildAttachmentContentUrl(options.apiBaseUrl, uploaded.id),
       }
     }),
     setStudentPhotoUrl: (studentId, photoUrl) => withSeedPortError('profilePictures.setStudentPhotoUrl', async () => {

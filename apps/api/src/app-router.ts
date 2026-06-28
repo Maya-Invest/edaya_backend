@@ -31,19 +31,11 @@ import {
 import {
   createFileUploadIntentHandler,
   createFileUploadIntentRoute,
+  getFileContentHandler,
+  getFileContentRoute,
   getFileDownloadUrlHandler,
   getFileDownloadUrlRoute,
 } from "@/routes/file-storage.routes";
-import {
-  devFileDownloadHandler,
-  devFileDownloadPath,
-  devFileUploadHandler,
-  devFileUploadPath,
-} from "@/routes/dev-file-storage.routes";
-import {
-  seedProfilePhotoHandler,
-  seedProfilePhotoPath,
-} from "@/routes/seed-profile-photos.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -85,12 +77,8 @@ router
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
   .openapi(acceptInvitationRoute, acceptInvitationHandler)
   .openapi(createFileUploadIntentRoute, createFileUploadIntentHandler)
-  .openapi(getFileDownloadUrlRoute, getFileDownloadUrlHandler);
-
-router
-  .put(devFileUploadPath, devFileUploadHandler)
-  .get(devFileDownloadPath, devFileDownloadHandler)
-  .get(seedProfilePhotoPath, seedProfilePhotoHandler);
+  .openapi(getFileDownloadUrlRoute, getFileDownloadUrlHandler)
+  .openapi(getFileContentRoute, getFileContentHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

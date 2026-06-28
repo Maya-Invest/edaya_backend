@@ -168,16 +168,28 @@ export class HttpSeedClient {
     this.lastRequestAt = Date.now()
   }
 
+  private isApiRequest(url: string): boolean {
+    try {
+      return new URL(url).origin === new URL(this.baseUrl).origin
+    }
+    catch {
+      return false
+    }
+  }
+
   async request(path: string, init: RequestInit = {}): Promise<Response> {
     const url = path.startsWith('http') ? path : `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`
     const headers = new Headers(init.headers)
     const cookieHeader = this.cookieHeader()
     const hasBearerAuth = headers.get('authorization')?.toLowerCase().startsWith('bearer ') ?? false
-    if (cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
-      headers.set('cookie', cookieHeader)
-    }
-    if (this.appOrigin && !headers.has('origin')) {
-      headers.set('origin', this.appOrigin)
+    // Presigned object-storage URLs (R2/S3) must not receive API session headers.
+    if (this.isApiRequest(url)) {
+      if (cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
+        headers.set('cookie', cookieHeader)
+      }
+      if (this.appOrigin && !headers.has('origin')) {
+        headers.set('origin', this.appOrigin)
+      }
     }
 
     const maxRetries = this.isStaging()

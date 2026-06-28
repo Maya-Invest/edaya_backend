@@ -20,8 +20,10 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # bun run db:migrate:auth:remote # production D1 auth only
 
 # R2 file storage — S3-compatible API only (no wrangler [[r2_buckets]] binding).
+# Loaded by `bun dev` (Node) and `wrangler dev --env-file .dev.vars` (Worker).
 # Buckets: edaya-files-dev | -staging | -production. Create an R2 API token (Object Read & Write).
-# R2_ACCOUNT_ID=
+# R2_ENDPOINT=https://<jurisdiction-host>.r2.cloudflarestorage.com
+# R2_ACCOUNT_ID=   # optional; dashboard account id — may differ from the endpoint hostname
 # R2_ACCESS_KEY_ID=
 # R2_SECRET_ACCESS_KEY=
 # R2_BUCKET_NAME is set per env in wrangler.toml [vars]; override here only if needed:

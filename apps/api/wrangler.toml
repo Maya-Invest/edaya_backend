@@ -28,7 +28,7 @@ R2_BUCKET_NAME = "edaya-files-dev"
 # Optional: NOVU_SECRET_KEY, NOVU_API_URL, NOVU_WEBHOOK_SECRET (Novu Cloud)
 # R2 file storage uses the S3-compatible API (@edaya/adaptor-r2), not [[r2_buckets]] bindings.
 # Per env: R2_BUCKET_NAME in [vars] below; secrets in .dev.vars / Worker dashboard:
-#   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+#   R2_ACCOUNT_ID, R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
 #
 # Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
 # CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://...

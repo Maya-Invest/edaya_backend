@@ -16,16 +16,31 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export interface R2FileStorageConfig {
-  accountId: string;
+  /** Cloudflare account id — used only to derive the endpoint when `endpoint` is unset. */
+  accountId?: string;
   accessKeyId: string;
   secretAccessKey: string;
   bucketName: string;
+  /** Jurisdiction-specific S3 API endpoint from the R2 dashboard. Takes precedence over `accountId`. */
+  endpoint?: string;
   /** Optional public base URL for custom domains — presigned URLs use the R2 endpoint by default. */
   publicBaseUrl?: string;
 }
 
 const DEFAULT_UPLOAD_TTL_SECONDS = 900;
 const DEFAULT_DOWNLOAD_TTL_SECONDS = 900;
+
+export function resolveR2Endpoint(config: { accountId?: string; endpoint?: string }): string {
+  if (config.endpoint) {
+    return config.endpoint.replace(/\/$/, "");
+  }
+
+  if (config.accountId) {
+    return `https://${config.accountId}.r2.cloudflarestorage.com`;
+  }
+
+  throw new Error("R2 file storage requires R2_ENDPOINT or R2_ACCOUNT_ID");
+}
 
 async function readBody(body: PutObjectInput["body"]): Promise<Uint8Array | ReadableStream> {
   if (body instanceof Uint8Array || body instanceof ReadableStream) {
@@ -35,14 +50,18 @@ async function readBody(body: PutObjectInput["body"]): Promise<Uint8Array | Read
 }
 
 export function createR2FileStorage(config: R2FileStorageConfig): FileStoragePort {
-  const endpoint = `https://${config.accountId}.r2.cloudflarestorage.com`;
+  const endpoint = resolveR2Endpoint(config);
   const client = new S3Client({
     region: "auto",
     endpoint,
+    forcePathStyle: true,
     credentials: {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
+    // Presigned browser/seed PUTs only send Content-Type; disable default CRC32 query params.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
 
   return {
@@ -95,7 +114,6 @@ export function createR2FileStorage(config: R2FileStorageConfig): FileStoragePor
         Bucket: config.bucketName,
         Key: input.key,
         ContentType: input.contentType,
-        ContentLength: input.sizeBytes,
       });
       const uploadUrl = await getSignedUrl(client, command, { expiresIn });
       return {
@@ -107,11 +125,12 @@ export function createR2FileStorage(config: R2FileStorageConfig): FileStoragePor
     },
     async createPresignedDownload(key: string, options?: CreatePresignedDownloadOptions) {
       const expiresIn = options?.expiresInSeconds ?? DEFAULT_DOWNLOAD_TTL_SECONDS;
+      const disposition = options?.disposition ?? "attachment";
       const getCommand = new GetObjectCommand({
         Bucket: config.bucketName,
         Key: key,
         ResponseContentDisposition: options?.fileName
-          ? `attachment; filename="${options.fileName.replace(/"/g, "")}"`
+          ? `${disposition}; filename="${options.fileName.replace(/"/g, "")}"`
           : undefined,
       });
       const downloadUrl = await getSignedUrl(client, getCommand, { expiresIn });

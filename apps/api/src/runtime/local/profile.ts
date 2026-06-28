@@ -10,9 +10,3 @@ export function runMigrationsOnStartup(
 
   return isPgliteDatabase(env.DATABASE_URL);
 }
-
-export function shouldUseLocalDevFileStorage(
-  env: Pick<Environment, "NODE_ENV" | "LOG_LEVEL">,
-): boolean {
-  return env.NODE_ENV === "development" && env.LOG_LEVEL !== "silent";
-}

@@ -45,16 +45,16 @@ export const EnvSchema = z.object({
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
-  /** Cloudflare R2 account ID for file storage presigning */
+  /** Cloudflare account id (dashboard). Optional when R2_ENDPOINT is set; may differ from the endpoint hostname. */
   R2_ACCOUNT_ID: z.string().min(1).optional(),
+  /** Jurisdiction-specific R2 S3 API endpoint from the R2 dashboard — authoritative for all S3 API calls. */
+  R2_ENDPOINT: z.string().url().optional(),
   /** R2 API token access key id */
   R2_ACCESS_KEY_ID: z.string().min(1).optional(),
   /** R2 API token secret access key */
   R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   /** R2 bucket name — separate bucket per environment */
   R2_BUCKET_NAME: z.string().min(1).optional(),
-  /** Local dev filesystem storage root when R2 is unset (Node dev only). */
-  FILE_STORAGE_DEV_ROOT: z.string().min(1).optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema> & {

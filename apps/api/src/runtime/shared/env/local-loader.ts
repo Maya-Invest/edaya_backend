@@ -11,7 +11,7 @@ import {
 } from "@/runtime/shared/env/repo-root";
 
 function resolveApiRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../..");
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 }
 
 function normalizeLocalDataPaths(env: Environment): Environment {
@@ -22,10 +22,17 @@ function normalizeLocalDataPaths(env: Environment): Environment {
   };
 }
 
-export function loadDotenvFiles(): void {
+function loadEnvFile(fileName: string, options?: { override?: boolean }): void {
   expand(config({
-    path: path.resolve(resolveApiRoot(), ".env"),
+    path: path.resolve(resolveApiRoot(), fileName),
+    override: options?.override ?? false,
   }));
+}
+
+export function loadDotenvFiles(): void {
+  loadEnvFile(".env");
+  // Shared with `wrangler dev --env-file .dev.vars` — R2 credentials and other secrets.
+  loadEnvFile(".dev.vars");
 }
 
 function shouldLoadDotenvFiles(): boolean {

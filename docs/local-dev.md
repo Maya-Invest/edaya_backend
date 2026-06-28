@@ -75,6 +75,54 @@ Set `RUNTIME=local` (default). Override `DATABASE_URL` only when you need Postgr
 
 Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under repo-root `.data/`.
 
+## File storage (R2)
+
+Local `bun dev` uses the same `@edaya/adaptor-r2` presigned-URL flow as staging and production when R2 credentials are present. No Worker R2 bindings and no `wrangler dev` required.
+
+1. Create the dev bucket once: `wrangler r2 bucket create edaya-files-dev`
+2. Create an R2 API token (Object Read & Write) in the Cloudflare dashboard
+3. Add to `apps/api/.dev.vars` (shared with `wrangler dev`):
+
+```env
+R2_BUCKET_NAME=edaya-files-dev
+R2_ENDPOINT=https://<jurisdiction-host>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+# Optional — your Cloudflare account id from the dashboard; may differ from the endpoint hostname
+R2_ACCOUNT_ID=...
+```
+
+`R2_ENDPOINT` is the jurisdiction-specific S3 API URL from the R2 dashboard and is used for all presigned uploads/downloads. It does **not** need to share the same id as `R2_ACCOUNT_ID`. When `R2_ENDPOINT` is unset, the API falls back to `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`.
+
+`bun dev` loads `.env` then `.dev.vars` automatically. On startup you should see `Using R2 file storage` in API logs.
+
+Without R2 credentials, local dev uses in-memory file storage (uploads do not persist across restarts).
+
+### R2 TLS troubleshooting
+
+Quick credential test (loads `apps/api/.dev.vars`, prints a `curl` PUT, runs it, then cleans up):
+
+```sh
+cd apps/api && bun run test:r2
+# print curl only, without running it:
+cd apps/api && bun run test:r2 -- --curl-only
+```
+
+Verify your account endpoint:
+
+```sh
+curl -I "$R2_ENDPOINT"
+# or, when R2_ENDPOINT is unset:
+curl -I "https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com"
+```
+
+| Result | Meaning |
+|--------|---------|
+| HTTP response (any status) | TLS is provisioned — R2 presigned uploads should work |
+| `SSL alert handshake failure` or connection refused | Account-scoped TLS not provisioned yet — wait or contact Cloudflare support |
+
+Profile photos and uploads use `/core/files/{attachmentId}/content`.
+
 ## Browse local database tables
 
 Plain HTTP browser — no extra setup.
