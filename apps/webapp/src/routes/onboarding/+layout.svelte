@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { redirectPathIfAuthenticated } from '$lib/auth/resolve-post-auth';
+	import { shouldEnforceLoginGate } from '$lib/auth/enforce-login-gate';
 	import { authSession } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import { GraduationCap, LoaderCircle } from '$lib/icons';
@@ -21,6 +22,11 @@
 
 	$effect(() => {
 		if (!authSession.ready) {
+			return;
+		}
+
+		if (shouldEnforceLoginGate()) {
+			appGoto(appPath('/login'), { replaceState: true });
 			return;
 		}
 
@@ -72,5 +78,9 @@
 		<main class="flex flex-1 flex-col">
 			{@render children()}
 		</main>
+	</div>
+{:else}
+	<div class="flex min-h-screen items-center justify-center bg-background text-foreground">
+		<LoaderCircle class="h-8 w-8 animate-spin text-primary" />
 	</div>
 {/if}

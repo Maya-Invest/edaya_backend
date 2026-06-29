@@ -7,6 +7,8 @@ import {
 } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
 import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
+import { applyStructureTemplate } from "@/lib/onboarding/apply-structure-template";
+import { isGradeLevelTemplateKey } from "@/lib/onboarding/structure-templates";
 import { shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
@@ -33,6 +35,24 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   ownerLastName: z.string().trim().min(1).optional(),
   ownerEmail: z.string().trim().email().optional(),
 }).openapi("OnboardingRegisterSchoolRequest");
+
+const onboardingStructureModelSchema = z.enum(["college", "lycee"]);
+
+const onboardingApplyStructureTemplateRequestSchema = z.object({
+  models: z.array(onboardingStructureModelSchema).min(1),
+  levels: z.array(z.object({
+    gradeLevelId: z.string().trim().min(1).refine(isGradeLevelTemplateKey, "Invalid grade level template key"),
+    classCount: z.number().int().min(1),
+    capacity: z.number().int().min(1),
+  })).min(1),
+}).openapi("OnboardingApplyStructureTemplateRequest");
+
+const onboardingApplyStructureTemplateResponseSchema = z.object({
+  gradeLevelCount: z.number().int(),
+  classGroupCount: z.number().int(),
+  subjectCount: z.number().int(),
+  classSubjectCount: z.number().int(),
+}).openapi("OnboardingApplyStructureTemplateResponse");
 
 export const onboardingRegisterSchoolRoute = createRoute({
   method: "post",
@@ -94,6 +114,37 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       serializeCommandResult(result.school) as z.infer<typeof schoolResponseSchema>,
       HttpStatusCodes.OK,
     );
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
+
+export const onboardingApplyStructureTemplateRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("onboarding", "apply-structure-template"),
+  tags: ["Core Onboarding"],
+  summary: "Apply collège / lycée structure template for the current school",
+  request: {
+    body: jsonContent(onboardingApplyStructureTemplateRequestSchema, "Structure template payload"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(onboardingApplyStructureTemplateResponseSchema, "Applied structure summary"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onboardingApplyStructureTemplateRoute> = async (c) => {
+  const actor = c.get("actor");
+  if (!actor) {
+    return unauthorizedResponse(c);
+  }
+
+  const body = c.req.valid("json");
+
+  try {
+    const result = await applyStructureTemplate(c.get("schoolApp"), actor, body);
+    return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {
     return routeErrorResponse(c, err);

@@ -41,8 +41,15 @@ describe('canAdvanceFromStep', () => {
 
 	it('allows optional middle steps and blocks step 4 continue', () => {
 		const draft = createEmptyDraft();
-		expect(canAdvanceFromStep(2, draft)).toBe(true);
 		expect(canAdvanceFromStep(3, draft)).toBe(true);
 		expect(canAdvanceFromStep(4, draft)).toBe(false);
+	});
+
+	it('requires structure configuration on step 2', () => {
+		const draft = createEmptyDraft();
+		expect(canAdvanceFromStep(2, draft)).toBe(false);
+		draft.structure.models = ['college'];
+		draft.structure.levels = [{ gradeLevelId: 'gl-6', classCount: 1, capacity: 30 }];
+		expect(canAdvanceFromStep(2, draft)).toBe(true);
 	});
 });

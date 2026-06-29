@@ -26,6 +26,7 @@ export function createEmptyDraft(): OnboardingDraft {
 		maxReachedStep: 1,
 		wizardCompleted: false,
 		schoolStepSubmitted: false,
+		structureStepSubmitted: false,
 		registeredSchoolId: null,
 		school: {
 			name: '',
@@ -136,6 +137,7 @@ function normalizeDraft(raw: unknown): OnboardingDraft | null {
 		maxReachedStep,
 		wizardCompleted: candidate.wizardCompleted === true,
 		schoolStepSubmitted: candidate.schoolStepSubmitted === true,
+		structureStepSubmitted: candidate.structureStepSubmitted === true,
 		registeredSchoolId: typeof candidate.registeredSchoolId === 'string'
 			? candidate.registeredSchoolId
 			: empty.registeredSchoolId,

@@ -4,7 +4,6 @@
 	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 	import { DEFAULT_LOGIN_METHOD_ID } from '$lib/auth/login-methods';
-	import { redirectPathIfAuthenticated } from '$lib/auth/resolve-post-auth';
 	import ApiConnectionBanner from '$lib/components/auth/ApiConnectionBanner.svelte';
 	import AuthSplitShell from '$lib/components/auth/AuthSplitShell.svelte';
 	import LoginPanelHost from '$lib/components/auth/login/LoginPanelHost.svelte';
@@ -20,13 +19,6 @@
 
 	const showDemoLink = $derived(isDemoLoginEnabled());
 	const showSignup = $derived(isPublicSchoolRegistrationEnabled());
-
-	$effect(() => {
-		const target = redirectPathIfAuthenticated();
-		if (target) {
-			appGoto(target, { replaceState: true });
-		}
-	});
 
 	$effect(() => {
 		if (!browser) {

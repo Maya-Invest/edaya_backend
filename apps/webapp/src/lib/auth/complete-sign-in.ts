@@ -1,9 +1,11 @@
 import { bootstrapSession } from '$lib/auth/bootstrap';
+import { markAuthGatePassed } from '$lib/auth/auth-gate';
 import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 import {
 	redirectPathIfAuthenticated,
 	resolvePostAuthPath,
 } from '$lib/auth/resolve-post-auth';
+import { authSession } from '$lib/auth/session.svelte';
 import { t } from '$lib/i18n';
 import { appGoto } from '$lib/navigation/app-navigation';
 import { toast } from '$lib/toast.svelte';
@@ -17,6 +19,7 @@ export async function completeAuthSignIn(successMessage?: string): Promise<boole
 		if (successMessage) {
 			toast.success(successMessage);
 		}
+		markAuthGatePassed();
 		appGoto(resolvePostAuthPath({ session: null, pendingOnboarding: true }));
 		return true;
 	}
@@ -30,7 +33,12 @@ export async function completeAuthSignIn(successMessage?: string): Promise<boole
 		toast.success(successMessage);
 	}
 
-	appGoto(resolvePostAuthPath({ session, pendingOnboarding: false }));
+	markAuthGatePassed();
+	appGoto(resolvePostAuthPath({
+		session,
+		pendingOnboarding: false,
+		authUserId: authSession.authUserId,
+	}));
 	return true;
 }
 

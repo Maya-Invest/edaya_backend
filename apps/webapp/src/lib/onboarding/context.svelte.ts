@@ -1,12 +1,13 @@
 import type { OnboardingDraft, OnboardingStep } from '$lib/onboarding/types';
 import { browser } from '$app/environment';
 import { authSession } from '$lib/auth/session.svelte';
-import {
+	import {
 	clearDraft,
 	createEmptyDraft,
 	loadDraft,
 	saveDraft,
 } from '$lib/onboarding/draft-storage';
+import { persistSyncedOnboardingDraft } from '$lib/onboarding/resume-onboarding';
 
 class OnboardingContext {
 	draft = $state<OnboardingDraft>(createEmptyDraft());
@@ -23,12 +24,7 @@ class OnboardingContext {
 		}
 
 		this.authUserId = authUserId;
-		this.draft = loadDraft(authUserId) ?? createEmptyDraft();
-		if (authSession.schoolId && !this.draft.schoolStepSubmitted) {
-			this.draft.schoolStepSubmitted = true;
-			this.draft.registeredSchoolId = authSession.schoolId;
-			saveDraft(authUserId, this.draft);
-		}
+		this.draft = persistSyncedOnboardingDraft(authUserId, { schoolId: authSession.schoolId });
 		this.initialized = true;
 	}
 
@@ -55,6 +51,11 @@ class OnboardingContext {
 	markSchoolStepSubmitted(schoolId: string) {
 		this.draft.schoolStepSubmitted = true;
 		this.draft.registeredSchoolId = schoolId;
+		this.persist();
+	}
+
+	markStructureStepSubmitted() {
+		this.draft.structureStepSubmitted = true;
 		this.persist();
 	}
 

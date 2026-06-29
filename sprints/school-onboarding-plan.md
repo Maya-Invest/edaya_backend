@@ -17,7 +17,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [x] **Phase 2** — Inscription + redirection compte non lié
 - [x] **Phase 3** — Shell assistant + barre de progression
 - [x] **Phase 4** — Étape 1 : identité école + année / période
-- [ ] **Phase 5** — Étape 2 : modèle établissement + classes + curriculum
+- [x] **Phase 5** — Étape 2 : modèle établissement + classes + curriculum
 - [ ] **Phase 6** — Étape 3 : invitations staff
 - [ ] **Phase 7** — Étape 4 : sortie assistant + checklist
 - [ ] **Phase 8** — Cutover dev (seeding optionnel vs assistant)
@@ -279,31 +279,31 @@ Route : `apps/webapp/src/routes/onboarding/+layout.svelte` + sous-routes ou quer
 
 Extraire de `@edaya/dev-fixtures` vers `package/onboarding-templates/` (ou dossier dédié) :
 
-- [ ] Modèles **Collège** (6e–3e) et **Lycée** (2nde, 1ère, Terminale)
-- [ ] Par niveau : matières par défaut + chapitres (`Subject` / `SubjectMatter`)
-- [ ] Mapping niveau → `GradeLevel` records
+- [x] Modèles **Collège** (6e–3e) et **Lycée** (2nde, 1ère, Terminale) — templates API (`structure-templates.ts`)
+- [x] Par niveau : matières par défaut + chapitres (`Subject` / `SubjectMatter`) — 6 matières de base
+- [x] Mapping niveau → `GradeLevel` records
 
 #### 5.2 UI sélection modèle
 
-- [ ] Cases à cocher Collège / Lycée (multi-sélection)
-- [ ] Pour chaque niveau coché :
+- [x] Cases à cocher Collège / Lycée (multi-sélection)
+- [x] Pour chaque niveau coché :
   - nombre de classes (stepper 1–n)
   - capacité max par classe (défaut 30)
   - preview noms générés (`6e A`, `6e B`, …)
-- [ ] Récapitulatif avant validation
+- [x] Récapitulatif avant validation
 
 #### 5.3 API batch structure
 
 Option A (recommandée v1) : **endpoint dédié** orchestré côté API
 
-- [ ] `POST /core/onboarding/apply-structure-template`
-- [ ] Body : `{ models: ['college','lycee'], levels: [{ gradeLevelId, classCount, capacity }] }`
-- [ ] Serveur : crée `GradeLevel`, `ClassGroup`, `Subject`, `SubjectMatter`, `ClassSubject`, liens chapitres — en une transaction
+- [x] `POST /core/onboarding/apply-structure-template`
+- [x] Body : `{ models: ['college','lycee'], levels: [{ gradeLevelId, classCount, capacity }] }`
+- [x] Serveur : crée `GradeLevel`, `ClassGroup`, `Subject`, `SubjectMatter`, `ClassSubject`, liens chapitres — en une transaction
 
 Option B : enchaîner les commandes existantes depuis le client (plus de requêtes, plus fragile).
 
-- [ ] Implémenter Option A
-- [ ] Tests : 2 classes 6e + 1 Terminale → entités attendues en DB
+- [x] Implémenter Option A
+- [x] Tests : 2 classes 6e + 1 5e → entités attendues en DB
 
 #### 5.4 Fichiers clés
 

@@ -44,6 +44,7 @@ export interface OnboardingDraft {
 	maxReachedStep: OnboardingStep;
 	wizardCompleted: boolean;
 	schoolStepSubmitted: boolean;
+	structureStepSubmitted: boolean;
 	registeredSchoolId: string | null;
 	school: OnboardingSchoolDraft;
 	structure: OnboardingStructureDraft;

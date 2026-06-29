@@ -19,6 +19,7 @@
 		previousOnboardingStep,
 	} from '$lib/onboarding/steps';
 	import { submitSchoolOnboardingStep } from '$lib/onboarding/submit-school-step';
+	import { submitStructureOnboardingStep } from '$lib/onboarding/submit-structure-step';
 
 	let busy = $state(false);
 
@@ -81,6 +82,27 @@
 				}
 				if (!onboardingContext.draft.schoolStepSubmitted) {
 					onboardingContext.markSchoolStepSubmitted(result.schoolId);
+				}
+				onboardingContext.markStepReached(nextStep);
+				appGoto(writeOnboardingStepUrl($page.url, nextStep));
+			}
+			finally {
+				busy = false;
+			}
+			return;
+		}
+
+		if (currentStep === 2) {
+			busy = true;
+			try {
+				const success = await submitStructureOnboardingStep(onboardingContext.draft.structure, {
+					alreadySubmitted: onboardingContext.draft.structureStepSubmitted,
+				});
+				if (!success) {
+					return;
+				}
+				if (!onboardingContext.draft.structureStepSubmitted) {
+					onboardingContext.markStructureStepSubmitted();
 				}
 				onboardingContext.markStepReached(nextStep);
 				appGoto(writeOnboardingStepUrl($page.url, nextStep));

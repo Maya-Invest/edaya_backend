@@ -1,5 +1,6 @@
 import type { SessionSnapshot } from '$lib/auth/types';
 import { authSession } from '$lib/auth/session.svelte';
+import { onboardingResumePath } from '$lib/onboarding/resume-onboarding';
 import { appPath } from '$lib/navigation/app-navigation';
 
 export const ONBOARDING_PATH = appPath('/onboarding');
@@ -18,6 +19,7 @@ export function resolveLinkedActorPath(session?: SessionSnapshot | null): string
 export function resolvePostAuthPath(options: {
 	session: SessionSnapshot | null;
 	pendingOnboarding: boolean;
+	authUserId?: string | null;
 }): string {
 	if (options.pendingOnboarding) {
 		return ONBOARDING_PATH;
@@ -25,6 +27,14 @@ export function resolvePostAuthPath(options: {
 
 	if (!options.session) {
 		return appPath('/login');
+	}
+
+	const resumePath = onboardingResumePath(
+		options.authUserId ?? authSession.authUserId,
+		options.session.schoolId,
+	);
+	if (resumePath) {
+		return resumePath;
 	}
 
 	return resolveLinkedActorPath(options.session);
@@ -35,12 +45,16 @@ export function redirectPathIfAuthenticated(): string | null {
 		return null;
 	}
 
-	if (authSession.isLoggedIn) {
-		return resolveLinkedActorPath();
-	}
-
 	if (authSession.needsOnboarding) {
 		return ONBOARDING_PATH;
+	}
+
+	if (authSession.isLoggedIn) {
+		const resumePath = onboardingResumePath(authSession.authUserId, authSession.schoolId);
+		if (resumePath) {
+			return resumePath;
+		}
+		return resolveLinkedActorPath();
 	}
 
 	return null;
