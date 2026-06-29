@@ -1,4 +1,5 @@
 import type { OnboardingDraft, OnboardingStep } from '$lib/onboarding/types';
+import { isSchoolStepValid } from '$lib/onboarding/school-step-validation';
 
 export interface OnboardingStepDefinition {
 	id: OnboardingStep;
@@ -46,7 +47,7 @@ export function getOnboardingStepDefinition(step: OnboardingStep): OnboardingSte
 export function canAdvanceFromStep(step: OnboardingStep, draft: OnboardingDraft): boolean {
 	switch (step) {
 		case 1:
-			return draft.school.name.trim().length > 0;
+			return isSchoolStepValid(draft.school);
 		case 2:
 		case 3:
 			return true;

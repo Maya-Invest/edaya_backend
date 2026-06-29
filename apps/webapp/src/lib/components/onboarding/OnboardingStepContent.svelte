@@ -1,22 +1,17 @@
 <script lang="ts">
 	import type { OnboardingStep } from '$lib/onboarding/types';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/label/label.svelte';
-	import { t } from '$lib/i18n';
-	import { onboardingContext } from '$lib/onboarding/context.svelte';
+	import OnboardingStepSchoolForm from '$lib/components/onboarding/OnboardingStepSchoolForm.svelte';
 	import { getOnboardingStepDefinition } from '$lib/onboarding/steps';
+	import { t } from '$lib/i18n';
 
 	interface Props {
 		step: OnboardingStep;
+		busy?: boolean;
 	}
 
-	const { step }: Props = $props();
+	const { step, busy = false }: Props = $props();
 
 	const definition = $derived(getOnboardingStepDefinition(step));
-
-	function persistDraft() {
-		onboardingContext.persist();
-	}
 </script>
 
 <div class="space-y-4">
@@ -33,16 +28,7 @@
 	</header>
 
 	{#if step === 1}
-		<div class="space-y-2 rounded-xl bg-secondary/40 p-4">
-			<Label for="onboarding-school-name">{$t('onboarding.schoolNameLabel')}</Label>
-			<Input
-				id="onboarding-school-name"
-				bind:value={onboardingContext.draft.school.name}
-				placeholder={$t('onboarding.schoolNamePlaceholder')}
-				oninput={persistDraft}
-			/>
-			<p class="text-xs text-muted-foreground">{$t('onboarding.schoolNameHint')}</p>
-		</div>
+		<OnboardingStepSchoolForm disabled={busy} />
 	{:else if step === 2}
 		<div class="rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-6 text-sm text-muted-foreground">
 			{$t('onboarding.placeholder.structure')}

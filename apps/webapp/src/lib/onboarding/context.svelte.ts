@@ -1,5 +1,6 @@
 import type { OnboardingDraft, OnboardingStep } from '$lib/onboarding/types';
 import { browser } from '$app/environment';
+import { authSession } from '$lib/auth/session.svelte';
 import {
 	clearDraft,
 	createEmptyDraft,
@@ -23,6 +24,11 @@ class OnboardingContext {
 
 		this.authUserId = authUserId;
 		this.draft = loadDraft(authUserId) ?? createEmptyDraft();
+		if (authSession.schoolId && !this.draft.schoolStepSubmitted) {
+			this.draft.schoolStepSubmitted = true;
+			this.draft.registeredSchoolId = authSession.schoolId;
+			saveDraft(authUserId, this.draft);
+		}
 		this.initialized = true;
 	}
 
@@ -43,6 +49,17 @@ class OnboardingContext {
 		if (step > this.draft.maxReachedStep) {
 			this.draft.maxReachedStep = step;
 		}
+		this.persist();
+	}
+
+	markSchoolStepSubmitted(schoolId: string) {
+		this.draft.schoolStepSubmitted = true;
+		this.draft.registeredSchoolId = schoolId;
+		this.persist();
+	}
+
+	markWizardCompleted() {
+		this.draft.wizardCompleted = true;
 		this.persist();
 	}
 

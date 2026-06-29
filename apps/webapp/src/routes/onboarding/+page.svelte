@@ -18,6 +18,7 @@
 		nextOnboardingStep,
 		previousOnboardingStep,
 	} from '$lib/onboarding/steps';
+	import { submitSchoolOnboardingStep } from '$lib/onboarding/submit-school-step';
 
 	let busy = $state(false);
 
@@ -63,10 +64,33 @@
 		}
 	}
 
-	function goNext() {
-		if (!canAdvance || !nextStep) {
+	async function goNext() {
+		if (!canAdvance || !nextStep || busy) {
 			return;
 		}
+
+		if (currentStep === 1) {
+			busy = true;
+			try {
+				const result = await submitSchoolOnboardingStep(onboardingContext.draft.school, {
+					alreadySubmitted: onboardingContext.draft.schoolStepSubmitted,
+					registeredSchoolId: onboardingContext.draft.registeredSchoolId,
+				});
+				if (!result) {
+					return;
+				}
+				if (!onboardingContext.draft.schoolStepSubmitted) {
+					onboardingContext.markSchoolStepSubmitted(result.schoolId);
+				}
+				onboardingContext.markStepReached(nextStep);
+				appGoto(writeOnboardingStepUrl($page.url, nextStep));
+			}
+			finally {
+				busy = false;
+			}
+			return;
+		}
+
 		onboardingContext.markStepReached(nextStep);
 		appGoto(writeOnboardingStepUrl($page.url, nextStep));
 	}
@@ -102,11 +126,11 @@
 		{showContinue}
 		{busy}
 		onBack={goBack}
-		onContinue={goNext}
+		onContinue={() => void goNext()}
 		onSkip={skipStep}
 		onStepSelect={navigateToStep}
 		onSignOut={() => void signOut()}
 	>
-		<OnboardingStepContent step={currentStep} />
+		<OnboardingStepContent step={currentStep} {busy} />
 	</OnboardingShell>
 {/if}

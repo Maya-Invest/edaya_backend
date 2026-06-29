@@ -1,6 +1,6 @@
 # School Onboarding — Sprint Plan
 
-> **Status:** Not started  
+> **Status:** En cours (Phases 0–4 implémentées ; Phase 5+ à implémenter)  
 > **Created:** 2026-06-28  
 > **Scope:** Inscription publique, écran auth split login/signup, assistant de configuration école (remplace le seeding manuel pour les nouveaux comptes)  
 > **Depends on:** Better Auth (done), `POST /core/onboarding/register-school` (done), invitations staff (Phase 5 webapp — en cours), `@edaya/dev-fixtures` (templates collège/lycée)  
@@ -12,11 +12,11 @@
 
 Cocher quand la phase (ou sous-phase) est terminée et mergée.
 
-- [ ] **Phase 0** — Livraison email auth (OTP / vérification) *(en pause — à reprendre)*
+- [x] **Phase 0** — Livraison email auth (OTP / vérification) — *validée 2026-06-28 (Novu US + email réel)*
 - [x] **Phase 1** — Écran auth split (login à droite · signup à gauche)
 - [x] **Phase 2** — Inscription + redirection compte non lié
 - [x] **Phase 3** — Shell assistant + barre de progression
-- [ ] **Phase 4** — Étape 1 : identité école + année / période
+- [x] **Phase 4** — Étape 1 : identité école + année / période
 - [ ] **Phase 5** — Étape 2 : modèle établissement + classes + curriculum
 - [ ] **Phase 6** — Étape 3 : invitations staff
 - [ ] **Phase 7** — Étape 4 : sortie assistant + checklist
@@ -32,7 +32,7 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 |------|--------------|
 | **Login** | `/login` — connexion uniquement ; comptes démo via fixtures |
 | **Seeding dev** | `bun seed:init` crée users Better Auth + école via fixtures + charge ~toutes les entités demo |
-| **Nouveau compte réel** | Possible via Better Auth, mais pas d’UI signup ; OTP loggé en console en dev, pas d’email réel |
+| **Nouveau compte réel** | Signup split UI + email Novu (vérification) ; OTP login ; redirect `/onboarding` si non lié |
 | **École vide** | `register-school` API existe ; session `/core/*` renvoie 401 tant que le compte n’est pas lié à un acteur |
 
 ### Objectif produit
@@ -146,23 +146,25 @@ Route : `apps/webapp/src/routes/onboarding/+layout.svelte` + sous-routes ou quer
 
 #### 0.1 Brancher le mailer auth sur Novu (ou SMTP)
 
-- [ ] Créer `AuthEmailDeliveryPort` dans `@edaya/adaptor-novu` (`auth-email-delivery.ts`)
-- [ ] Implémenter envoi via Novu workflows `auth.otp` + `auth.email_verification`
-- [ ] Fallback dev sans Novu : conserver le log console
-- [ ] Documenter dans `docs/local-dev.md` : variables requises pour recevoir un OTP réel
+- [x] Créer `AuthEmailDeliveryPort` dans `@edaya/adaptor-novu` (`auth-email-delivery.ts`)
+- [x] Implémenter envoi via Novu workflows `auth.otp` + `auth.email_verification`
+- [x] Fallback dev sans Novu : conserver le log console
+- [x] Documenter dans `docs/local-dev.md` : variables requises pour recevoir un OTP réel
 
 #### 0.2 Vérification email signup (si password)
 
-- [ ] Activer `emailVerification` Better Auth quand Novu est configuré
-- [ ] Email de vérification via le même canal Novu
+- [x] Activer `emailVerification` Better Auth quand Novu est configuré
+- [x] Email de vérification via le même canal Novu
 - [x] UI : état « Vérifiez votre boîte mail » après signup (Phase 1 — `SignupPanel`)
 
 #### 0.3 Test manuel (critère de done)
 
-- [ ] S’inscrire avec une adresse email personnelle → recevoir le mail (OTP ou lien de vérification)
-- [ ] Se connecter avec ce compte → session Better Auth OK, `/core/*` encore 401 (non lié)
+- [x] S’inscrire avec une adresse email personnelle → recevoir le mail (OTP ou lien de vérification)
+- [x] Se connecter avec ce compte → session Better Auth OK, `/core/*` encore 401 (non lié)
 
-**Fichiers clés :** `apps/api/src/runtime/shared/adapters/auth-otp-mailer.ts`, `better-auth.ts`, Novu bootstrap scripts
+**Config locale validée :** `NOVU_SECRET_KEY` + `NOVU_API_URL=https://api.novu.co` dans `apps/api/.dev.vars` ; `bun novu:bootstrap:apply` (workflows `auth.otp`, `auth.email_verification`).
+
+**Fichiers clés :** `apps/api/src/runtime/shared/adapters/auth-otp-mailer.ts`, `better-auth.ts`, `package/adaptor-novu/src/auth-email-delivery.ts`, Novu bootstrap scripts
 
 ---
 
@@ -257,9 +259,9 @@ Route : `apps/webapp/src/routes/onboarding/+layout.svelte` + sous-routes ou quer
 2. `createAcademicYear` — commande core
 3. `createAcademicPeriod` + `publishAcademicPeriod`
 
-- [ ] UI formulaire + validation
-- [ ] Mutations séquentielles avec toast erreur
-- [ ] Après succès : `bootstrapSession()` → session staff directeur active
+- [x] UI formulaire + validation
+- [x] Mutations séquentielles avec toast erreur
+- [x] Après succès : `bootstrapSession()` → session staff directeur active
 - [ ] Tests intégration : register-school + year + period
 
 **Note :** étendre le payload `register-school` si besoin (owner name déjà supporté).

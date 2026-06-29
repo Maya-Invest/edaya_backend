@@ -1,7 +1,14 @@
-export const ONBOARDING_DRAFT_VERSION = 1 as const;
+export const ONBOARDING_DRAFT_VERSION = 2 as const;
 export const ONBOARDING_STEP_COUNT = 4;
 
 export type OnboardingStep = 1 | 2 | 3 | 4;
+
+export interface OnboardingPeriodDraft {
+	id: string;
+	label: string;
+	start: string;
+	end: string;
+}
 
 export interface OnboardingSchoolDraft {
 	name: string;
@@ -11,10 +18,8 @@ export interface OnboardingSchoolDraft {
 	academicYearLabel: string;
 	academicYearStart: string;
 	academicYearEnd: string;
-	periodLabel: string;
 	periodType: 'trimester' | 'semester';
-	periodStart: string;
-	periodEnd: string;
+	periods: OnboardingPeriodDraft[];
 }
 
 export interface OnboardingStructureLevelDraft {
@@ -37,6 +42,9 @@ export interface OnboardingDraft {
 	version: typeof ONBOARDING_DRAFT_VERSION;
 	updatedAt: string;
 	maxReachedStep: OnboardingStep;
+	wizardCompleted: boolean;
+	schoolStepSubmitted: boolean;
+	registeredSchoolId: string | null;
 	school: OnboardingSchoolDraft;
 	structure: OnboardingStructureDraft;
 	staffInvites: OnboardingStaffInviteDraft[];

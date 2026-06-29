@@ -30,10 +30,12 @@ describe('onboarding navigation', () => {
 });
 
 describe('canAdvanceFromStep', () => {
-	it('requires a school name on step 1', () => {
+	it('requires a complete school form on step 1', () => {
 		const draft = createEmptyDraft();
 		expect(canAdvanceFromStep(1, draft)).toBe(false);
 		draft.school.name = 'Lycée EDAYA';
+		expect(canAdvanceFromStep(1, draft)).toBe(false);
+		draft.school.city = 'Paris';
 		expect(canAdvanceFromStep(1, draft)).toBe(true);
 	});
 
