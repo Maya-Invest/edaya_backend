@@ -1,3 +1,4 @@
+import { scheduleNotificationRecipientBackfillForActor } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -48,6 +49,9 @@ export const getEffectiveGrantsHandler: AppRouteHandler<typeof getEffectiveGrant
   }
 
   try {
+    const service = c.get("schoolApp").forActor(interactiveActor);
+    scheduleNotificationRecipientBackfillForActor(service.baseService, interactiveActor);
+
     return c.json(serializeActorAuthorization(interactiveActor), HttpStatusCodes.OK);
   }
   catch (err) {

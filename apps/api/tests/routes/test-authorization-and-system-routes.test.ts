@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { parseEnv } from "@/runtime";
-import { ActorAssuranceLevel, Permission } from "@edaya/core";
+import { ActorAssuranceLevel, Permission, RecordingNotificationGateway } from "@edaya/core";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { Hono } from "hono";
@@ -38,11 +38,19 @@ describe("authorization routes", () => {
   };
 
   it("returns serialized effective grants for the current actor", async () => {
+    const gateway = new RecordingNotificationGateway();
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {
       c.env = baseEnv;
       c.set("actor", mockActor);
-      c.set("schoolApp", { forActor: () => ({}) } as any);
+      c.set("schoolApp", {
+        forActor: () => ({
+          baseService: {
+            repositories: {},
+            notificationGateway: gateway,
+          },
+        }),
+      } as any);
       await next();
     });
     app.route("/", indexRouter);
@@ -64,6 +72,9 @@ describe("authorization routes", () => {
     expect(body.actorId).toBe("staff-1");
     expect(body.effectiveGrants.permissions).toContain("STUDENT_READ");
     expect(body.effectiveGrants.scopeGrants).toHaveLength(1);
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(gateway.upserted).toHaveLength(0);
   });
 
   it("returns 401 when no actor is present", async () => {

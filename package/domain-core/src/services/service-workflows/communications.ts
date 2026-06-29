@@ -7,7 +7,7 @@ import type {
   StaffMember,
 } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, Permission } from '../../authorization'
+import { denyResourceAccess, isInteractiveActor, Permission } from '../../authorization'
 import {
   Announcement,
   AnnouncementStatus,
@@ -25,6 +25,7 @@ import {
   buildGuardianRecipientProfile,
   buildNotificationDeliveryId,
   buildStaffRecipientProfile,
+  ensureNotificationRecipientForActor,
   runWorkflowNotifications,
   scheduleNotificationRecipientUpsert,
 } from '../../notifications'
@@ -466,6 +467,15 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         'Push device registration is not available',
       )
     }
+
+    if (!isInteractiveActor(actor)) {
+      throw new BusinessRuleViolationError(
+        'PUSH_DEVICE_SUBJECT_REQUIRED',
+        'Link a login account before registering a push device',
+      )
+    }
+
+    await ensureNotificationRecipientForActor(this.baseService, actor)
 
     await gateway.registerPushDevice({
       subjectId: actor.subjectId,
