@@ -10,10 +10,10 @@
 	import { authSession } from '$lib/auth/session.svelte';
 	import AccountProfileModal from '$lib/components/account/AccountProfileModal.svelte';
 	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
-	import PersonAvatar from '$lib/components/school/shared/PersonAvatar.svelte';
 	import AppSidebar from '$lib/components/layout/AppSidebar.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import SchoolSelector from '$lib/components/layout/SchoolSelector.svelte';
+	import PersonAvatar from '$lib/components/school/shared/PersonAvatar.svelte';
 	import { isLikelyDetailPath, listRouteCacheKey } from '$lib/detail-route-patterns';
 	import { DrawerState } from '$lib/drawer.svelte';
 	import { t } from '$lib/i18n';

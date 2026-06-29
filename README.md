@@ -1,6 +1,6 @@
 # Edaya Core
 
-Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`testing/`** harnesses.
+Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
 
 Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build).
 
@@ -18,10 +18,11 @@ maya_school_core/
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
 │   ├── generated-api-client/             @edaya/api-client — typed API SDK
 │   └── integration-migrations/           @edaya/integration-migrations — school + auth migrations
-└── testing/
-    ├── dev-fixtures/
-    ├── seeding/
-    └── integration-tests/
+└── tooling/
+    ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
+    ├── fixtures/                         @edaya/dev-fixtures
+    ├── seeding/                          @edaya/seeding
+    └── integration-tests/                @edaya/integration-tests (+ smoke/)
 ```
 
 **Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` stay vendor-agnostic; `package/integration-*` folders own platform-specific migration/deploy orchestration; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
@@ -107,13 +108,14 @@ More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [do
 | `@edaya/api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
 | `@edaya/integration-migrations` | `package/integration-migrations` | School + auth migration apply (Neon / Hyperdrive + D1) |
 
-### Testing
+### Tooling
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/dev-fixtures` | `testing/dev-fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
-| `@edaya/seeding` | `testing/seeding` | HTTP seed orchestration (`seed:all`, `seed:init`, …) |
-| `@edaya/integration-tests` | `testing/integration-tests` | Cross-package integration tests (auth, Postgres, core services) |
+| `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
+| `@edaya/dev-fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
+| `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (`seed:all`, `seed:init`, …) |
+| `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
 
 ## Prerequisites
 
@@ -217,9 +219,9 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run openapi:generate` | Compatibility alias for updating all tracked OpenAPI artifacts |
 | `bun run openapi:check` | Compatibility alias for `generated:check` |
 | `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/integrations) |
-| `cd apps/api && bun run export-openapi` | Export OpenAPI JSON only |
-| `bun scripts/generate-client-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
-| `cd apps/webapp && bun run openapi:generate` | Regenerate `schema.d.ts` from local OpenAPI JSON |
+| `bun run export-openapi` | Export OpenAPI JSON only |
+| `bun tooling/repo/openapi/generate-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
+| `cd apps/webapp && bun run openapi:generate` | Regenerate `schema.d.ts` from local OpenAPI JSON (webapp-only; repo pipeline uses `tooling/repo/openapi/generate-schema.ts`) |
 
 ### Quality & CI
 
@@ -265,7 +267,7 @@ Tests are split by layer. Run everything with `bun run test` (repository tooling
 | Domain | `package/domain-core/tests/` | Entities, authorization, service workflows |
 | API unit | `apps/api/tests/` | HTTP helpers, runtime, route builders, thin route tests |
 | API harness | `apps/api/tests/support/core-route-harness.ts` | Shared PGlite app + auth helpers (also used by integration-tests) |
-| Cross-package | `testing/integration-tests/src/` | Seeds, auth flows, PGlite persistence, full route scenarios |
+| Cross-package | `tooling/integration-tests/src/` | Seeds, auth flows, PGlite persistence, full route scenarios |
 | Webapp mappers | `apps/webapp/src/lib/api/*.test.ts` | OpenAPI → UI type mapping logic |
 
 **Conventions**

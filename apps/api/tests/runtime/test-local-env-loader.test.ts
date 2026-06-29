@@ -1,3 +1,4 @@
+/* eslint-disable node/no-process-env */
 import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
@@ -6,10 +7,20 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import { expand } from "dotenv-expand";
-import { isR2FileStorageConfigured } from "@edaya/adaptor-r2";
+import { isR2FileStorageConfigured, type R2Environment } from "@edaya/adaptor-r2";
 import { loadLocalProcessEnv } from "@/runtime";
 
 const originalEnv = { ...process.env };
+
+function r2EnvFromProcessEnv(): Partial<R2Environment> {
+  return {
+    R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+    R2_ENDPOINT: process.env.R2_ENDPOINT,
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+    R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+  };
+}
 
 function loadLocalDevEnvFiles(apiRoot: string): void {
   expand(config({ path: path.join(apiRoot, ".env") }));
@@ -56,7 +67,7 @@ describe("local dev env files", () => {
       };
       loadLocalDevEnvFiles(apiRoot);
 
-      expect(isR2FileStorageConfigured(process.env)).toBe(true);
+      expect(isR2FileStorageConfigured(r2EnvFromProcessEnv())).toBe(true);
       expect(process.env.R2_BUCKET_NAME).toBe("edaya-files-dev");
     }
     finally {

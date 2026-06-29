@@ -1,15 +1,14 @@
 <script lang="ts">
 	import type { Student } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
+	import { updateStudentProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
-	import { cn } from '$lib/utils';
 	import { canUploadProfilePhoto } from '$lib/permissions';
+	import { cn } from '$lib/utils';
 	import { get } from 'svelte/store';
-	import PersonAvatar from '../shared/PersonAvatar.svelte';
 	import ProfilePhotoPicker from '../shared/ProfilePhotoPicker.svelte';
 	import StudentAvatar from '../shared/StudentAvatar.svelte';
-	import { updateStudentProfilePhotoMutation } from '$lib/api/mutations/profile-photo.mutations';
 	import ChangeClassButton from './ChangeClassButton.svelte';
 	import {
 		buildStudentGradeSummary,

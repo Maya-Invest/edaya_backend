@@ -5,16 +5,16 @@ export {
   configureR2BucketCors,
 } from "./configure-r2-bucket-cors";
 export {
+  type ConfiguredR2Environment,
   createR2FileStorageFromEnv,
+  type CreateR2FileStorageFromEnvOptions,
   isR2FileStorageConfigured,
   resolveR2EndpointFromEnv,
-  type ConfiguredR2Environment,
-  type CreateR2FileStorageFromEnvOptions,
 } from "./create-from-env";
+export { probeR2EndpointReachable } from "./probe-r2-endpoint";
 export {
   createR2FileStorage,
-  resolveR2Endpoint,
   type R2FileStorageConfig,
+  resolveR2Endpoint,
 } from "./r2-file-storage";
 export type { R2Environment } from "./types";
-export { probeR2EndpointReachable } from "./probe-r2-endpoint";

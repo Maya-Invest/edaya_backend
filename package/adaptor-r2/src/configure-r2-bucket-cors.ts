@@ -31,7 +31,19 @@ export function buildR2BucketCorsRules(allowedOrigins: readonly string[]): R2Buc
   ];
 }
 
-export function buildWranglerR2CorsPolicy(allowedOrigins: readonly string[]) {
+export interface WranglerR2CorsPolicy {
+  rules: Array<{
+    allowed: {
+      origins: string[];
+      methods: string[];
+      headers: string[];
+    };
+    exposeHeaders: string[];
+    maxAgeSeconds: number;
+  }>;
+}
+
+export function buildWranglerR2CorsPolicy(allowedOrigins: readonly string[]): WranglerR2CorsPolicy {
   return {
     rules: [
       {

@@ -5,8 +5,10 @@ export default antfu({
     'no-new': 'off',
   },
 }, {
-  files: ['scripts/**'],
+  files: ['tooling/repo/**', 'tooling/integration-tests/smoke/**'],
   rules: {
+    'antfu/no-top-level-await': 'off',
     'node/prefer-global/process': 'off',
+    'no-console': 'off',
   },
 })

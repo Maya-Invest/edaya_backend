@@ -1,7 +1,7 @@
 import {
   createInMemoryFileStorage,
   noOpFileStorage,
-} from "@edaya/adaptor-file";
+} from "@edaya/core";
 import { createR2FileStorageFromEnv, isR2FileStorageConfigured, resolveR2EndpointFromEnv } from "@edaya/adaptor-r2";
 import type { FileStoragePort, LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
@@ -10,7 +10,7 @@ export function resolveFileStorage(
   env: Environment | undefined,
   logger?: LoggerPort,
 ): FileStoragePort {
-  if (!env || env.LOG_LEVEL === "silent") {
+  if (!env) {
     return noOpFileStorage;
   }
 
@@ -26,9 +26,15 @@ export function resolveFileStorage(
     return createR2FileStorageFromEnv({ env });
   }
 
-  if (env.RUNTIME === "local") {
-    logger?.info("R2 not configured — using in-memory file storage");
+  if (env.RUNTIME === "in-memory" || env.RUNTIME === "local") {
+    if (env.LOG_LEVEL !== "silent") {
+      logger?.info("R2 not configured — using in-memory file storage");
+    }
     return createInMemoryFileStorage();
+  }
+
+  if (env.LOG_LEVEL === "silent") {
+    return noOpFileStorage;
   }
 
   logger?.warn("R2 not configured in non-development runtime — file storage disabled");

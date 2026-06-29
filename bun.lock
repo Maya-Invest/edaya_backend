@@ -7,7 +7,6 @@
       "devDependencies": {
         "@antfu/eslint-config": "^9.0.0",
         "@edaya/adaptor-novu": "workspace:*",
-        "@electric-sql/pglite": "^0.4.6",
         "@types/node": "^25.9.2",
         "eslint": "^9.39.0",
         "eslint-plugin-format": "^0.1.2",
@@ -22,10 +21,10 @@
       "name": "@edaya/api",
       "version": "0.0.1",
       "dependencies": {
-        "@edaya/adaptor-file": "workspace:*",
         "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
+        "@edaya/api-client": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/integration-migrations": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
@@ -60,7 +59,6 @@
       "name": "@edaya/cron",
       "version": "0.0.1",
       "dependencies": {
-        "@edaya/adaptor-file": "workspace:*",
         "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/core": "workspace:*",
@@ -115,16 +113,6 @@
         "typescript": "^6.0.2",
         "vite": "^8.0.7",
         "wrangler": "^4.99.0",
-      },
-    },
-    "package/adaptor-file": {
-      "name": "@edaya/adaptor-file",
-      "version": "0.0.1",
-      "dependencies": {
-        "@edaya/core": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
       },
     },
     "package/adaptor-novu": {
@@ -198,7 +186,7 @@
         "wrangler": "^4.99.0",
       },
     },
-    "testing/dev-fixtures": {
+    "tooling/fixtures": {
       "name": "@edaya/dev-fixtures",
       "version": "0.0.1",
       "dependencies": {
@@ -210,11 +198,11 @@
         "typescript": "^6.0.2",
       },
     },
-    "testing/integration-tests": {
+    "tooling/integration-tests": {
       "name": "@edaya/integration-tests",
       "version": "0.0.1",
       "devDependencies": {
-        "@edaya/adaptor-file": "workspace:*",
+        "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/api": "workspace:*",
         "@edaya/core": "workspace:*",
@@ -231,7 +219,21 @@
         "zod": "^3.24.4",
       },
     },
-    "testing/seeding": {
+    "tooling/repo": {
+      "name": "@edaya/repo",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/adaptor-r2": "workspace:*",
+        "@edaya/api-client": "workspace:*",
+        "@electric-sql/pglite": "^0.4.6",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "openapi-typescript": "^7.13.0",
+        "typescript": "^6.0.2",
+      },
+    },
+    "tooling/seeding": {
       "name": "@edaya/seeding",
       "version": "0.0.1",
       "dependencies": {
@@ -376,8 +378,6 @@
 
     "@e18e/eslint-plugin": ["@e18e/eslint-plugin@0.4.1", "", { "dependencies": { "empathic": "^2.0.0", "module-replacements": "^3.0.0-beta.7", "semver": "^7.7.4" }, "peerDependencies": { "eslint": "^9.0.0 || ^10.0.0", "oxlint": "^1.61.0" }, "optionalPeers": ["eslint", "oxlint"] }, "sha512-Re00N8ad1HsNrzpuIX7Bhdr8RSaFWp6VgwJUEJF+47+D1CMcXoS7VNRkIG23e46pddhgxWU0cWk4wYiQIuMHqQ=="],
 
-    "@edaya/adaptor-file": ["@edaya/adaptor-file@workspace:package/adaptor-file"],
-
     "@edaya/adaptor-novu": ["@edaya/adaptor-novu@workspace:package/adaptor-novu"],
 
     "@edaya/adaptor-postgres": ["@edaya/adaptor-postgres@workspace:package/adaptor-postgres"],
@@ -392,13 +392,15 @@
 
     "@edaya/cron": ["@edaya/cron@workspace:apps/cron"],
 
-    "@edaya/dev-fixtures": ["@edaya/dev-fixtures@workspace:testing/dev-fixtures"],
+    "@edaya/dev-fixtures": ["@edaya/dev-fixtures@workspace:tooling/fixtures"],
 
     "@edaya/integration-migrations": ["@edaya/integration-migrations@workspace:package/integration-migrations"],
 
-    "@edaya/integration-tests": ["@edaya/integration-tests@workspace:testing/integration-tests"],
+    "@edaya/integration-tests": ["@edaya/integration-tests@workspace:tooling/integration-tests"],
 
-    "@edaya/seeding": ["@edaya/seeding@workspace:testing/seeding"],
+    "@edaya/repo": ["@edaya/repo@workspace:tooling/repo"],
+
+    "@edaya/seeding": ["@edaya/seeding@workspace:tooling/seeding"],
 
     "@edaya/webapp": ["@edaya/webapp@workspace:apps/webapp"],
 

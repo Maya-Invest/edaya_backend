@@ -2,13 +2,13 @@ import type { R2Environment } from "./types";
 import { createR2FileStorage, resolveR2Endpoint } from "./r2-file-storage";
 import type { R2FileStorageConfig } from "./r2-file-storage";
 
-export type ConfiguredR2Environment = {
+export interface ConfiguredR2Environment {
   R2_ACCESS_KEY_ID: string;
   R2_SECRET_ACCESS_KEY: string;
   R2_BUCKET_NAME: string;
   R2_ACCOUNT_ID?: string;
   R2_ENDPOINT?: string;
-};
+}
 
 export interface CreateR2FileStorageFromEnvOptions {
   env: ConfiguredR2Environment;

@@ -9,7 +9,7 @@ describe("probeR2EndpointReachable", () => {
   });
 
   it("returns true when fetch completes with any HTTP response", async () => {
-    globalThis.fetch = mock(async () => new Response(null, { status: 403 })) as typeof fetch;
+    globalThis.fetch = mock(async () => new Response(null, { status: 403 })) as unknown as typeof fetch;
 
     await expect(probeR2EndpointReachable("https://test-account-id.r2.cloudflarestorage.com")).resolves.toBe(true);
   });
@@ -17,7 +17,7 @@ describe("probeR2EndpointReachable", () => {
   it("returns false when fetch throws", async () => {
     globalThis.fetch = mock(async () => {
       throw new Error("ConnectionRefused");
-    }) as typeof fetch;
+    }) as unknown as typeof fetch;
 
     await expect(probeR2EndpointReachable("https://test-account-id.r2.cloudflarestorage.com")).resolves.toBe(false);
   });

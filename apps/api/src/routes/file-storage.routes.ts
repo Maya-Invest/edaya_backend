@@ -3,11 +3,11 @@ import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import {
+  allowsPublicInlineAttachmentContent,
   assertUploadPolicyAllowed,
   Attachment,
   AttachmentOwnerKind,
   AttachmentStatus,
-  allowsPublicInlineAttachmentContent,
   buildStorageKey,
   BusinessRuleViolationError,
   isInteractiveActor,
@@ -92,7 +92,6 @@ export const getFileContentRoute = createRoute({
       description: "Redirect to presigned object storage URL",
     },
     [HttpStatusCodes.NOT_FOUND]: jsonContent(commandMessageSchema, "Attachment not found"),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Unauthorized"),
     ...coreRouteErrorResponses,
   },
 });

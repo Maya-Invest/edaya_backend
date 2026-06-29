@@ -302,7 +302,7 @@ authorization/
 | Actor factories | `tests/unit/auth/actor-metadata.test.ts` |
 | Test grant fixtures | `tests/support/effective-grants.ts` |
 
-Integration tests under `testing/integration-tests/src/auth/` exercise persistence-backed resolution and concurrency.
+Integration tests under `tooling/integration-tests/src/auth/` exercise persistence-backed resolution and concurrency.
 
 ---
 

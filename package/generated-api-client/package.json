@@ -7,6 +7,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./openapi-bindings": {
+      "types": "./src/openapi-bindings.ts",
+      "import": "./src/openapi-bindings.ts"
     }
   },
   "scripts": {

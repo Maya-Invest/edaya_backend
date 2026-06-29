@@ -1,6 +1,6 @@
 import type { ProfilePhotoOwnerKind } from '$lib/api/profile-photo-upload';
-import { uploadProfilePhoto, withPhotoCacheBust } from '$lib/api/profile-photo-upload';
 import { runMutation } from '$lib/api/mutations/run-mutation';
+import { uploadProfilePhoto, withPhotoCacheBust } from '$lib/api/profile-photo-upload';
 import { getBrowserSchoolClient } from '$lib/api/school-client';
 import { authSession } from '$lib/auth/session.svelte';
 import { detailDataContext } from '$lib/detail-data/context.svelte';

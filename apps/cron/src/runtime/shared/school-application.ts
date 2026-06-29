@@ -1,7 +1,6 @@
 import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
-import { createRepositoryAuthorizationPolicy, SchoolApplication } from "@edaya/core";
-import { noOpFileStorage } from "@edaya/adaptor-file";
+import { createRepositoryAuthorizationPolicy, noOpFileStorage, SchoolApplication } from "@edaya/core";
 import { createAppLogger } from "@/logging/app-logger";
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
 import type { Environment } from "@/runtime/shared/env/schema";

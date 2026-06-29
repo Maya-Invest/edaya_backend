@@ -1,7 +1,7 @@
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
-import type { ClientBindingsDocument } from "../../../../../scripts/client-bindings-openapi";
-import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "../../../../../scripts/client-bindings-openapi";
+import type { ClientBindingsDocument } from "@edaya/api-client/openapi-bindings";
+import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@edaya/api-client/openapi-bindings";
 
 export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 

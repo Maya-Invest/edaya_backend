@@ -47,9 +47,7 @@
 	});
 
 	const canChangePhoto = $derived(
-		actor.kind === 'staff'
-			&& Boolean(staffProfile?.id)
-			&& canUploadProfilePhoto('STAFF_UPDATE'),
+		actor.kind === 'staff' && Boolean(staffProfile?.id) && canUploadProfilePhoto('STAFF_UPDATE'),
 	);
 
 	const staffPhotoUrl = $derived(staffProfile?.photoUrl ?? actor.photoUrl ?? null);

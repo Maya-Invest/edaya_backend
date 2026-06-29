@@ -12,7 +12,7 @@ import { repairDrizzleMigrationJournal } from './repair-drizzle-journal'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = path.resolve(packageRoot, '../..')
-const stagingEnvPath = path.resolve(repoRoot, 'testing/seeding/.env.staging')
+const stagingEnvPath = path.resolve(repoRoot, 'tooling/seeding/.env.staging')
 
 if (existsSync(stagingEnvPath)) {
   expand(config({ path: stagingEnvPath }))

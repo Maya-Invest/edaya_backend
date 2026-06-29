@@ -7,9 +7,9 @@ alwaysApply: false
 # App Shell UI Spec
 
 **Read the full specs before building or refactoring webapp screens:**
-- Interaction: [`specs/app-shell-spec.md`](../../specs/app-shell-spec.md)
-- Visual design: [`specs/design-language-spec.md`](../../specs/design-language-spec.md)
-- Data loading: [`specs/data-loading-spec.md`](../../specs/data-loading-spec.md)
+- Interaction: [`specs/app-shell-spec.md`](../../docs/specs/app-shell-spec.md)
+- Visual design: [`specs/design-language-spec.md`](../../docs/specs/design-language-spec.md)
+- Data loading: [`specs/data-loading-spec.md`](../../docs/specs/data-loading-spec.md)
 
 ## Core invariants
 
