@@ -23,7 +23,7 @@
   "dependencies": {
     "@edaya/adaptor-r2": "workspace:*",
     "@edaya/api-client": "workspace:*",
-    "@edaya/client-codegen": "file:../../../edaya-client-codegen",
+    "@edaya/client-codegen": "github:Maya-Invest/edaya-client-codegen#dev",
     "@electric-sql/pglite": "^0.4.6"
   },
   "devDependencies": {

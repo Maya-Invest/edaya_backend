@@ -1,46 +1,46 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
-	extractClientBindingsFromOpenApi,
-	X_EDAYA_KIND,
+  extractClientBindingsFromOpenApi,
+  X_EDAYA_KIND,
 } from '@edaya/api-client/openapi-bindings'
 import { describe, expect, it } from 'bun:test'
 
 const openApiPath = resolve(
-	import.meta.dirname,
-	'../../../tooling/repo/fixtures/openapi.json',
+  import.meta.dirname,
+  '../../../tooling/repo/fixtures/openapi.json',
 )
 
 describe('extractClientBindingsFromOpenApi', () => {
-	it('reads client bindings from annotated core operations', () => {
-		const openApi = JSON.parse(readFileSync(openApiPath, 'utf8')) as {
-			paths?: Record<string, Record<string, Record<string, unknown>>>
-		}
+  it('reads client bindings from annotated core operations', () => {
+    const openApi = JSON.parse(readFileSync(openApiPath, 'utf8')) as {
+      paths?: Record<string, Record<string, Record<string, unknown>>>
+    }
 
-		const bindings = extractClientBindingsFromOpenApi(openApi)
+    const bindings = extractClientBindingsFromOpenApi(openApi)
 
-		expect(bindings.entities.schools).toEqual({
-			publicName: 'schools',
-			schemaName: 'School',
-			allowDirectSave: true,
-		})
-		expect(bindings.commands.registerSchool.publicName).toBe('register-school')
-		expect(bindings.queries.getOverdueFeeCount.publicName).toBe(
-			'get-overdue-fee-count',
-		)
-		expect(bindings.authorization.effectiveGrants).toEqual({
-			method: 'GET',
-			path: 'authorization/effective-grants',
-			responseSchemaName: 'EffectiveGrantsResponse',
-		})
+    expect(bindings.entities.schools).toEqual({
+      publicName: 'schools',
+      schemaName: 'School',
+      allowDirectSave: true,
+    })
+    expect(bindings.commands.registerSchool.publicName).toBe('register-school')
+    expect(bindings.queries.getOverdueFeeCount.publicName).toBe(
+      'get-overdue-fee-count',
+    )
+    expect(bindings.authorization.effectiveGrants).toEqual({
+      method: 'GET',
+      path: 'authorization/effective-grants',
+      responseSchemaName: 'EffectiveGrantsResponse',
+    })
 
-		const listOperation = openApi.paths?.['/core/entities/students/list']?.post
-		expect(listOperation?.[X_EDAYA_KIND]).toBe('entity')
-	})
+    const listOperation = openApi.paths?.['/core/entities/students/list']?.post
+    expect(listOperation?.[X_EDAYA_KIND]).toBe('entity')
+  })
 
-	it('fails when the OpenAPI spec has no annotated entity operations', () => {
-		expect(() => extractClientBindingsFromOpenApi({ paths: {} })).toThrow(
-			'OpenAPI spec has no x-edaya-kind entity operations',
-		)
-	})
+  it('fails when the OpenAPI spec has no annotated entity operations', () => {
+    expect(() => extractClientBindingsFromOpenApi({ paths: {} })).toThrow(
+      'OpenAPI spec has no x-edaya-kind entity operations',
+    )
+  })
 })
