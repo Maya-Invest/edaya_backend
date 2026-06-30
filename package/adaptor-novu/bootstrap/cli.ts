@@ -2,7 +2,7 @@
 import { buildBootstrapWorkflows } from "./catalog/workflows";
 import { applyBootstrapWorkflows, formatWorkflowApplyResult } from "./lib/apply-workflows";
 import { createBootstrapNovuClient } from "./lib/client";
-import { loadBootstrapEnv } from "./lib/env";
+import { loadBootstrapEnv, validateNovuSecretKeyHint } from "./lib/env";
 import { loadBootstrapEmailTemplates } from "./lib/load-templates";
 
 type Command = "apply" | "plan" | "validate";
@@ -60,6 +60,10 @@ async function main() {
   }
 
   const env = await loadBootstrapEnv();
+  const keyHint = validateNovuSecretKeyHint(env.secretKey);
+  if (keyHint) {
+    console.warn(`⚠ ${keyHint}`);
+  }
   await validateCatalog(workflows);
 
   const novu = createBootstrapNovuClient({
@@ -87,6 +91,16 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.includes("API Key not found")) {
+    console.error(message);
+    console.error("");
+    console.error("Novu rejected NOVU_SECRET_KEY. Check:");
+    console.error("  1. Novu dashboard → Settings → API Keys → Secret Key (not Application Identifier)");
+    console.error("  2. Same region as NOVU_API_URL (EU workspace → https://eu.api.novu.co)");
+    console.error("  3. Key stored in apps/api/.dev.vars — not mixed with R2 or other tokens");
+    process.exit(1);
+  }
+  console.error(message);
   process.exit(1);
 });

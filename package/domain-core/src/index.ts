@@ -1,3 +1,4 @@
+export * from './auth'
 export * from './authorization'
 export * from './core-entity-map'
 export * from './cron'

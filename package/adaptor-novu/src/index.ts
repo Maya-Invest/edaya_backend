@@ -1,3 +1,15 @@
+export {
+  createNovuAuthEmailDeliveryPort,
+  createNovuAuthEmailDeliveryPortFromSecretKey,
+} from "./auth-email-delivery";
+export type {
+  AuthEmailDeliveryPort,
+  AuthOtpEmailInput,
+  AuthOtpEmailType,
+  AuthVerificationEmailInput,
+  CreateNovuAuthEmailDeliveryPortOptions,
+} from "./auth-email-delivery";
+export { buildAuthEmailSubscriberId } from "./auth-email-delivery";
 export { createNovuNotificationGatewayFromSecretKey } from "./create-from-secret-key";
 export type { CreateNovuNotificationGatewayFromSecretKeyOptions } from "./create-from-secret-key";
 export {

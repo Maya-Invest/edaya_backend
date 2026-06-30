@@ -202,6 +202,27 @@ See `tooling/fixtures/src/seed-entity-manifest.ts` for entity coverage status.
 
 In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/dev-fixtures/demo-login`. Sign-in uses Better Auth with password `DevPassword1!`.
 
+## Auth emails (OTP + signup verification)
+
+Better Auth can send **real emails** when Novu is configured:
+
+1. Set `NOVU_SECRET_KEY` (and optional `NOVU_API_URL`) in `apps/api/.env` or `.dev.vars`
+2. Configure an email integration in the Novu dashboard (e.g. Custom SMTP)
+3. Apply Novu workflows (includes `auth.otp` and `auth.email_verification`):
+
+```sh
+bun novu:bootstrap:apply
+```
+
+| Mode | `NOVU_SECRET_KEY` | OTP sign-in | Signup verification |
+|------|-------------------|-------------|---------------------|
+| Dev fallback | unset | OTP logged in API console | not required |
+| Real email | set | Novu email | required before password sign-in |
+
+When Novu is set, `REQUIRE_EMAIL_VERIFICATION` defaults to **true** (override with `REQUIRE_EMAIL_VERIFICATION=false`). OTP and verification links are still logged in the API console in development unless `AUTH_EMAIL_LOG_OTP=false`.
+
+**Quick test:** use login **OTP email** on `/login` with your real address, or sign up (Phase 1 UI) once available — you should receive the message in your inbox.
+
 ## Testing
 
 Use package-scoped commands for fast local feedback:

@@ -18,13 +18,27 @@ export async function getAuthenticatedAuthUser() {
 	return auth.user;
 }
 
-export async function bootstrapSession() {
+export interface BootstrapSessionResult {
+	session: SessionSnapshot | null;
+	staffProfile: Awaited<ReturnType<typeof fetchSessionStaffProfile>>['profile'] | null;
+	guardianSettings: Awaited<ReturnType<typeof fetchGuardianNotificationSettings>> | null;
+	pendingOnboarding: boolean;
+}
+
+export async function bootstrapSession(): Promise<BootstrapSessionResult> {
+	const emptyResult: BootstrapSessionResult = {
+		session: null,
+		staffProfile: null,
+		guardianSettings: null,
+		pendingOnboarding: false,
+	};
+
 	authSession.markLoading();
 	try {
 		const { data: auth } = await authClient.getSession();
-		if (!auth?.session) {
+		if (!auth?.session || !auth.user?.id) {
 			authSession.clear();
-			return { session: null, staffProfile: null };
+			return emptyResult;
 		}
 
 		const loginEmail = auth.user.email ?? null;
@@ -34,9 +48,14 @@ export async function bootstrapSession() {
 		}
 		catch (error) {
 			if (error instanceof ApiError && error.status === 401) {
-				// Better Auth session exists but the user is not linked to a school actor yet.
-				authSession.clear();
-				return { session: null, staffProfile: null };
+				authSession.setPendingOnboarding({
+					authUserId: auth.user.id,
+					loginEmail,
+				});
+				return {
+					...emptyResult,
+					pendingOnboarding: true,
+				};
 			}
 			throw error;
 		}
@@ -55,10 +74,11 @@ export async function bootstrapSession() {
 				guardianSettings,
 				subjectId,
 				loginEmail,
+				authUserId: auth.user.id,
 				notificationEmail: sessionStaff.notificationEmail,
 				notificationPhone: sessionStaff.notificationPhone,
 			});
-			return { session, staffProfile, guardianSettings };
+			return { session, staffProfile, guardianSettings, pendingOnboarding: false };
 		}
 		else if (session?.kind === 'guardian') {
 			guardianSettings = await fetchGuardianNotificationSettings(client, session.actorId);
@@ -70,13 +90,14 @@ export async function bootstrapSession() {
 			guardianSettings,
 			subjectId,
 			loginEmail,
+			authUserId: auth.user.id,
 		});
-		return { session, staffProfile, guardianSettings };
+		return { session, staffProfile, guardianSettings, pendingOnboarding: false };
 	}
 	catch (error) {
 		if (error instanceof ApiError && error.status === 401) {
 			authSession.clear();
-			return { session: null, staffProfile: null };
+			return emptyResult;
 		}
 		throw error;
 	}

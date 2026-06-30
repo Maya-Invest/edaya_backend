@@ -7,6 +7,7 @@
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { ACCOUNT_OPEN_PROFILE_PARAM } from '$lib/account/profile-navigation';
 	import { bootstrapAppShell, resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
+	import { shouldEnforceLoginGate } from '$lib/auth/enforce-login-gate';
 	import { authSession } from '$lib/auth/session.svelte';
 	import AccountProfileModal from '$lib/components/account/AccountProfileModal.svelte';
 	import AcademicHeader from '$lib/components/layout/AcademicHeader.svelte';
@@ -20,6 +21,8 @@
 	import { LoaderCircle } from '$lib/icons';
 	import { DASHBOARD_HREF } from '$lib/navigation';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { onboardingContext } from '$lib/onboarding/context.svelte';
+	import { onboardingResumePath } from '$lib/onboarding/resume-onboarding';
 	import { canAccessPath } from '$lib/navigation/nav-permissions';
 	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
@@ -48,7 +51,32 @@
 	}
 
 	$effect(() => {
-		if (authSession.ready && !authSession.isLoggedIn) {
+		if (!authSession.ready) {
+			return;
+		}
+
+		if (shouldEnforceLoginGate()) {
+			appGoto(appPath('/login'), { replaceState: true });
+			return;
+		}
+
+		if (authSession.needsOnboarding) {
+			appGoto(appPath('/onboarding'), { replaceState: true });
+			return;
+		}
+
+		const authUserId = authSession.authUserId;
+		if (authUserId) {
+			onboardingContext.init(authUserId);
+		}
+
+		const resumePath = onboardingResumePath(authSession.authUserId, authSession.schoolId);
+		if (resumePath) {
+			appGoto(resumePath, { replaceState: true });
+			return;
+		}
+
+		if (!authSession.isLoggedIn) {
 			appGoto(appPath('/login'), { replaceState: true });
 		}
 	});

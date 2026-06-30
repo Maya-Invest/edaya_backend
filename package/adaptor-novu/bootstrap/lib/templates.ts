@@ -92,3 +92,25 @@ export function edayaInvitationEmailStep(_templates: BootstrapEmailTemplates): {
     },
   };
 }
+
+export function edayaAuthEmailStep(_templates: BootstrapEmailTemplates): {
+  stepId: string;
+  name: string;
+  type: "email";
+  controlValues: {
+    subject: string;
+    body: string;
+    editorType: "html";
+  };
+} {
+  return {
+    stepId: "edaya-auth-email",
+    name: "Auth email",
+    type: "email",
+    controlValues: {
+      subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
+      body: EDAYA_PAYLOAD_EMAIL_BODY,
+      editorType: "html",
+    },
+  };
+}

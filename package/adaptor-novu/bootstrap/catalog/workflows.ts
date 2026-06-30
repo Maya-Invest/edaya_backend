@@ -5,6 +5,8 @@ import {
   ASSESSMENT_DUE_SOON_EVENT_KEY,
   ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
   ATTENDANCE_RECORDED_EVENT_KEY,
+  AUTH_EMAIL_VERIFICATION_EVENT_KEY,
+  AUTH_OTP_EVENT_KEY,
   CALENDAR_EVENT_REMINDER_EVENT_KEY,
   HOMEWORK_DUE_SOON_EVENT_KEY,
   INCIDENT_RECORDED_EVENT_KEY,
@@ -12,7 +14,7 @@ import {
 } from "@edaya/core";
 import type { BootstrapEmailTemplates } from "../lib/load-templates";
 import type { BootstrapWorkflowDefinition } from "../lib/types";
-import { edayaEmailStep, edayaInAppStep, edayaInvitationEmailStep, edayaPushStep } from "../lib/templates";
+import { edayaAuthEmailStep, edayaEmailStep, edayaInAppStep, edayaInvitationEmailStep, edayaPushStep } from "../lib/templates";
 
 const EDAYA_TAG = "edaya";
 
@@ -96,6 +98,20 @@ export function buildBootstrapWorkflows(
       description: "Pre-account invite email for staff, guardians, and students.",
       tags: [EDAYA_TAG, "invitation"],
       steps: [edayaInvitationEmailStep(templates)],
+    },
+    {
+      workflowId: AUTH_OTP_EVENT_KEY,
+      name: "Auth OTP",
+      description: "One-time codes for Better Auth sign-in and account verification.",
+      tags: [EDAYA_TAG, "auth"],
+      steps: [edayaAuthEmailStep(templates)],
+    },
+    {
+      workflowId: AUTH_EMAIL_VERIFICATION_EVENT_KEY,
+      name: "Auth email verification",
+      description: "Email verification link for new EDAYA accounts.",
+      tags: [EDAYA_TAG, "auth"],
+      steps: [edayaAuthEmailStep(templates)],
     },
   ];
 }

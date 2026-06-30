@@ -3,7 +3,7 @@
 	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
 	import { authClient } from '$lib/auth/client';
-	import { completeAuthSignIn, redirectPathIfLoggedIn } from '$lib/auth/complete-sign-in';
+	import { completeAuthSignIn } from '$lib/auth/complete-sign-in';
 	import ApiConnectionBanner from '$lib/components/auth/ApiConnectionBanner.svelte';
 	import AuthScreenShell from '$lib/components/auth/AuthScreenShell.svelte';
 	import { t } from '$lib/i18n';
@@ -30,13 +30,6 @@
 		}
 		return { message: 'User not found' };
 	}
-
-	$effect(() => {
-		const target = redirectPathIfLoggedIn();
-		if (target) {
-			appGoto(target, { replaceState: true });
-		}
-	});
 
 	$effect(() => {
 		if (!browser) {

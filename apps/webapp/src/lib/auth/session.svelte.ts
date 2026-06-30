@@ -4,10 +4,13 @@ import type { EffectiveGrantsSnapshot, SessionSnapshot } from '$lib/auth/types';
 import type { StaffMember } from '$lib/types/school';
 import { browser } from '$app/environment';
 import { academicContext } from '$lib/academic/context.svelte';
+import { clearAuthGate } from '$lib/auth/auth-gate';
 import { authClient } from './client';
 
 class AuthSession {
 	userId = $state<string | null>(null);
+	authUserId = $state<string | null>(null);
+	needsOnboarding = $state(false);
 	schoolId = $state<string | null>(null);
 	sessionKind = $state<SessionKind | null>(null);
 	subjectId = $state<string | null>(null);
@@ -21,6 +24,10 @@ class AuthSession {
 
 	get isLoggedIn(): boolean {
 		return Boolean(this.grants && this.userId);
+	}
+
+	get hasAuthAccount(): boolean {
+		return Boolean(this.authUserId);
 	}
 
 	user = $derived.by((): StaffMember | null => {
@@ -72,12 +79,29 @@ class AuthSession {
 		this.ready = true;
 	}
 
+	setPendingOnboarding(options: { authUserId: string; loginEmail: string | null }) {
+		this.authUserId = options.authUserId;
+		this.needsOnboarding = true;
+		this.loginEmail = options.loginEmail;
+		this.userId = null;
+		this.schoolId = null;
+		this.sessionKind = null;
+		this.subjectId = null;
+		this.notificationEmail = null;
+		this.notificationPhone = null;
+		this.userProfile = null;
+		this.guardianSettings = null;
+		this.grants = null;
+		this.ready = true;
+	}
+
 	setFromServer(
 		session: SessionSnapshot | null,
 		options?: {
 			staffProfile?: StaffMember | null;
 			guardianSettings?: GuardianNotificationSettings | null;
 			subjectId?: string | null;
+			authUserId?: string | null;
 			loginEmail?: string | null;
 			notificationEmail?: string | null;
 			notificationPhone?: string | null;
@@ -88,6 +112,8 @@ class AuthSession {
 			return;
 		}
 
+		this.needsOnboarding = false;
+		this.authUserId = options?.authUserId ?? options?.subjectId ?? this.authUserId;
 		this.userId = session.actorId;
 		this.schoolId = session.schoolId;
 		this.sessionKind = session.kind;
@@ -126,6 +152,8 @@ class AuthSession {
 
 	clear() {
 		this.userId = null;
+		this.authUserId = null;
+		this.needsOnboarding = false;
 		this.schoolId = null;
 		this.sessionKind = null;
 		this.subjectId = null;
@@ -139,6 +167,7 @@ class AuthSession {
 
 	async logout() {
 		this.clear();
+		clearAuthGate();
 		if (browser) {
 			try {
 				await authClient.signOut();

@@ -1,31 +1,24 @@
 <script lang="ts">
 	import type { LoginMethodId } from '$lib/auth/login-methods';
+	import type { AuthSplitPanel } from '$lib/components/auth/AuthSplitShell.svelte';
 	import { browser } from '$app/environment';
 	import { checkBrowserApiHealth } from '$lib/api/check-api-health';
-	import { redirectPathIfLoggedIn } from '$lib/auth/complete-sign-in';
-	import {
-		DEFAULT_LOGIN_METHOD_ID,
-
-	} from '$lib/auth/login-methods';
+	import { DEFAULT_LOGIN_METHOD_ID } from '$lib/auth/login-methods';
 	import ApiConnectionBanner from '$lib/components/auth/ApiConnectionBanner.svelte';
-	import AuthScreenShell from '$lib/components/auth/AuthScreenShell.svelte';
+	import AuthSplitShell from '$lib/components/auth/AuthSplitShell.svelte';
 	import LoginPanelHost from '$lib/components/auth/login/LoginPanelHost.svelte';
-	import { isDemoLoginEnabled } from '$lib/env/app-env';
+	import SignupPanel from '$lib/components/auth/signup/SignupPanel.svelte';
+	import { isDemoLoginEnabled, isPublicSchoolRegistrationEnabled } from '$lib/env/app-env';
 	import { t } from '$lib/i18n';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
 
 	let apiConnected = $state(false);
 	let email = $state('');
 	let activeMethod = $state<LoginMethodId>(DEFAULT_LOGIN_METHOD_ID);
+	let activePanel = $state<AuthSplitPanel>('signin');
 
 	const showDemoLink = $derived(isDemoLoginEnabled());
-
-	$effect(() => {
-		const target = redirectPathIfLoggedIn();
-		if (target) {
-			appGoto(target, { replaceState: true });
-		}
-	});
+	const showSignup = $derived(isPublicSchoolRegistrationEnabled());
 
 	$effect(() => {
 		if (!browser) {
@@ -41,17 +34,43 @@
 	function handleMethodChange(method: LoginMethodId) {
 		activeMethod = method;
 	}
+
+	function handleSwitchToSignIn(prefillEmail: string) {
+		if (prefillEmail) {
+			email = prefillEmail;
+		}
+		activePanel = 'signin';
+		activeMethod = 'password';
+	}
 </script>
 
-<AuthScreenShell title={$t('auth.welcome')} subtitle={$t('auth.subtitle')}>
-	<ApiConnectionBanner connected={apiConnected} />
+<AuthSplitShell
+	activePanel={activePanel}
+	showSignup={showSignup}
+	onPanelChange={(panel) => {
+		activePanel = panel;
+	}}
+>
+	{#snippet signup()}
+		{#if showSignup}
+			<SignupPanel
+				bind:email
+				{apiConnected}
+				onSwitchToSignIn={handleSwitchToSignIn}
+			/>
+		{/if}
+	{/snippet}
 
-	<LoginPanelHost
-		bind:email
-		{activeMethod}
-		{apiConnected}
-		onMethodChange={handleMethodChange}
-	/>
+	{#snippet signin()}
+		<ApiConnectionBanner connected={apiConnected} />
+
+		<LoginPanelHost
+			bind:email
+			{activeMethod}
+			{apiConnected}
+			onMethodChange={handleMethodChange}
+		/>
+	{/snippet}
 
 	{#snippet footer()}
 		{#if showDemoLink}
@@ -66,4 +85,4 @@
 			</p>
 		{/if}
 	{/snippet}
-</AuthScreenShell>
+</AuthSplitShell>

@@ -40,6 +40,7 @@ export {
 	LogOut,
 	Mail,
 	MapPin,
+	Minus,
 	MoreHorizontal,
 	Palmtree,
 	Paperclip,
