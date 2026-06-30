@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { redirectPathIfAuthenticated } from '$lib/auth/resolve-post-auth';
 	import { shouldEnforceLoginGate } from '$lib/auth/enforce-login-gate';
+	import { redirectPathIfAuthenticated } from '$lib/auth/resolve-post-auth';
 	import { authSession } from '$lib/auth/session.svelte';
 	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 	import { GraduationCap, LoaderCircle } from '$lib/icons';

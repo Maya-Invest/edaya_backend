@@ -1,13 +1,13 @@
 export type StructureModel = 'college' | 'lycee';
 
-export type GradeLevelTemplateKey =
-	| 'gl-6'
-	| 'gl-5'
-	| 'gl-4'
-	| 'gl-3'
-	| 'gl-2'
-	| 'gl-1'
-	| 'gl-t';
+export type GradeLevelTemplateKey
+	= | 'gl-6'
+		| 'gl-5'
+		| 'gl-4'
+		| 'gl-3'
+		| 'gl-2'
+		| 'gl-1'
+		| 'gl-t';
 
 export interface GradeLevelTemplate {
 	key: GradeLevelTemplateKey;

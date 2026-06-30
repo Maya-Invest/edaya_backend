@@ -1,4 +1,3 @@
-import type { AuthEmailDeliveryPort } from "@edaya/adaptor-novu";
 import type { LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
 import {

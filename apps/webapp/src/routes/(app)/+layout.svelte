@@ -21,9 +21,9 @@
 	import { LoaderCircle } from '$lib/icons';
 	import { DASHBOARD_HREF } from '$lib/navigation';
 	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { canAccessPath } from '$lib/navigation/nav-permissions';
 	import { onboardingContext } from '$lib/onboarding/context.svelte';
 	import { onboardingResumePath } from '$lib/onboarding/resume-onboarding';
-	import { canAccessPath } from '$lib/navigation/nav-permissions';
 	import { pageQueryStatus } from '$lib/queries/page-query-status.svelte';
 	import { reportCardsContext } from '$lib/report-cards/context.svelte';
 	import { setContext } from 'svelte';

@@ -13,8 +13,9 @@ describe("notification template catalog parity with domain-core", () => {
   test("bootstrap workflow ids match NOTIFICATION_TEMPLATE_KEYS", async () => {
     const templates = await loadBootstrapEmailTemplates();
     const workflowIds = buildBootstrapWorkflows(templates).map(workflow => workflow.workflowId);
+    const schoolWorkflowIds = workflowIds.filter(workflowId => !workflowId.startsWith("auth."));
 
-    expect(workflowIds.sort()).toEqual([...NOTIFICATION_TEMPLATE_KEYS].sort());
+    expect(schoolWorkflowIds.sort()).toEqual([...NOTIFICATION_TEMPLATE_KEYS].sort());
   });
 
   test("novu steps passthrough rendered payload fields from core", async () => {

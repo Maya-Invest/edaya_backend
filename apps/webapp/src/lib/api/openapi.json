@@ -1044,6 +1044,118 @@
           "timeZone"
         ]
       },
+      "OnboardingApplyStructureTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "gradeLevelCount": {
+            "type": "integer"
+          },
+          "classGroupCount": {
+            "type": "integer"
+          },
+          "subjectCount": {
+            "type": "integer"
+          },
+          "classSubjectCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gradeLevelCount",
+          "classGroupCount",
+          "subjectCount",
+          "classSubjectCount"
+        ]
+      },
+      "OnboardingApplyStructureTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "college",
+                "lycee"
+              ]
+            },
+            "minItems": 1
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "gradeLevelId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classCount": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "capacity": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "gradeLevelId",
+                "classCount",
+                "capacity"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "models",
+          "levels"
+        ]
+      },
+      "OnboardingInviteStaffMembersResponse": {
+        "type": "object",
+        "properties": {
+          "invitedCount": {
+            "type": "integer"
+          },
+          "accessRolesEnsured": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "invitedCount",
+          "accessRolesEnsured"
+        ]
+      },
+      "OnboardingInviteStaffMembersRequest": {
+        "type": "object",
+        "properties": {
+          "invites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            }
+          }
+        },
+        "required": [
+          "invites"
+        ]
+      },
       "ServiceAccountResponse": {
         "type": "object",
         "properties": {
@@ -9901,6 +10013,254 @@
           },
           "503": {
             "description": "Public school registration is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/apply-structure-template": {
+      "post": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Apply collège / lycée structure template for the current school",
+        "requestBody": {
+          "description": "Structure template payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingApplyStructureTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Applied structure summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingApplyStructureTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/invite-staff-members": {
+      "post": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Invite staff members during school onboarding",
+        "requestBody": {
+          "description": "Staff invitation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingInviteStaffMembersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingInviteStaffMembersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
             "content": {
               "application/json": {
                 "schema": {

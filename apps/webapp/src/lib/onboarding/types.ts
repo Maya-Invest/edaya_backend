@@ -33,11 +33,11 @@ export interface OnboardingStructureDraft {
 	levels: OnboardingStructureLevelDraft[];
 }
 
-export type OnboardingStaffInviteRole =
-	| 'deputy_director'
-	| 'cpe'
-	| 'teacher'
-	| 'secretary';
+export type OnboardingStaffInviteRole
+	= | 'deputy_director'
+		| 'cpe'
+		| 'teacher'
+		| 'secretary';
 
 export interface OnboardingStaffInviteDraft {
 	id: string;

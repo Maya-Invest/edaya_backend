@@ -14,8 +14,8 @@ import {
   BASE_SUBJECT_TEMPLATES,
   classDisplayName,
   GRADE_LEVEL_TEMPLATES,
-  isGradeLevelTemplateKey,
   type GradeLevelTemplateKey,
+  isGradeLevelTemplateKey,
   type StructureModel,
   type SubjectTemplate,
 } from "./structure-templates";
@@ -39,11 +39,11 @@ export interface ApplyStructureTemplateResult {
 }
 
 const SUBJECT_CATEGORY_BY_KEY: Record<SubjectTemplate["category"], SubjectCategory> = {
-  Scientifique: SubjectCategory.Scientific,
-  Littéraire: SubjectCategory.Literary,
-  Langues: SubjectCategory.Languages,
+  "Scientifique": SubjectCategory.Scientific,
+  "Littéraire": SubjectCategory.Literary,
+  "Langues": SubjectCategory.Languages,
   "Sciences humaines": SubjectCategory.Humanities,
-  Sport: SubjectCategory.Sport,
+  "Sport": SubjectCategory.Sport,
 };
 
 const SUBJECT_COLOR_BY_KEY: Record<SubjectTemplate["color"], SubjectColor> = {

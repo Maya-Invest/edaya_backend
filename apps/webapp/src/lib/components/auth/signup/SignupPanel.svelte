@@ -29,12 +29,7 @@
 	const passwordsMatch = $derived(confirmPassword.length === 0 || password === confirmPassword);
 	const passwordLongEnough = $derived(password.length === 0 || password.length >= MIN_PASSWORD_LENGTH);
 	const canSubmit = $derived(
-		apiConnected
-			&& !busy
-		&& name.trim().length > 0
-			&& email.trim().length > 0
-		&& password.length >= MIN_PASSWORD_LENGTH
-			&& password === confirmPassword,
+		apiConnected && !busy && name.trim().length > 0 && email.trim().length > 0 && password.length >= MIN_PASSWORD_LENGTH && password === confirmPassword,
 	);
 
 	async function handleSignUp() {

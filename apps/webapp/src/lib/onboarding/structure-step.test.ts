@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { toggleStructureModel } from './structure-step-helpers';
 import { createEmptyDraft } from './draft-storage';
+import { toggleStructureModel } from './structure-step-helpers';
 import { isStructureStepValid } from './structure-step-validation';
 
 describe('structure onboarding', () => {

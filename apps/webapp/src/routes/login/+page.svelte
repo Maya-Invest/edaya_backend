@@ -10,7 +10,7 @@
 	import SignupPanel from '$lib/components/auth/signup/SignupPanel.svelte';
 	import { isDemoLoginEnabled, isPublicSchoolRegistrationEnabled } from '$lib/env/app-env';
 	import { t } from '$lib/i18n';
-	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { appPath } from '$lib/navigation/app-navigation';
 
 	let apiConnected = $state(false);
 	let email = $state('');

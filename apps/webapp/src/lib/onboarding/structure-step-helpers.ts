@@ -1,3 +1,4 @@
+import type { GradeLevelTemplateKey, StructureModel } from '$lib/onboarding/structure-templates';
 import type {
 	OnboardingStructureDraft,
 	OnboardingStructureLevelDraft,
@@ -7,8 +8,7 @@ import {
 	isGradeLevelTemplateKey,
 	sortedStructureLevels,
 	templateKeysForModel,
-	type GradeLevelTemplateKey,
-	type StructureModel,
+
 } from '$lib/onboarding/structure-templates';
 
 const DEFAULT_CLASS_COUNT = 1;

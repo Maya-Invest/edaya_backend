@@ -3,8 +3,8 @@
 	import OnboardingStepSchoolForm from '$lib/components/onboarding/OnboardingStepSchoolForm.svelte';
 	import OnboardingStepStaffForm from '$lib/components/onboarding/OnboardingStepStaffForm.svelte';
 	import OnboardingStepStructureForm from '$lib/components/onboarding/OnboardingStepStructureForm.svelte';
-	import { getOnboardingStepDefinition } from '$lib/onboarding/steps';
 	import { t } from '$lib/i18n';
+	import { getOnboardingStepDefinition } from '$lib/onboarding/steps';
 
 	interface Props {
 		step: OnboardingStep;

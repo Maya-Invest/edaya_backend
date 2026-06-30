@@ -1,6 +1,6 @@
 import {
-  createNovuAuthEmailDeliveryPortFromSecretKey,
   type AuthEmailDeliveryPort,
+  createNovuAuthEmailDeliveryPortFromSecretKey,
 } from "@edaya/adaptor-novu";
 import type { Environment } from "@/runtime/shared/env/schema";
 

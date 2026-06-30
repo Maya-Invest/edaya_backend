@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { GradeLevelTemplateKey, StructureModel } from '$lib/onboarding/structure-templates';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -16,8 +17,7 @@
 		isGradeLevelTemplateKey,
 		previewClassNames,
 		sortedStructureLevels,
-		type GradeLevelTemplateKey,
-		type StructureModel,
+
 	} from '$lib/onboarding/structure-templates';
 
 	interface Props {
@@ -92,7 +92,7 @@
 					<Checkbox
 						checked={isModelSelected(model.value)}
 						{disabled}
-						onCheckedChange={(checked) => setModelEnabled(model.value, checked === true)}
+						onCheckedChange={checked => setModelEnabled(model.value, checked === true)}
 					/>
 					<span>
 						<span class="block text-sm font-medium text-foreground">{$t(model.labelKey)}</span>
@@ -111,11 +111,12 @@
 			<div class="space-y-3">
 				{#each sortedLevels as level (level.gradeLevelId)}
 					{#if isGradeLevelTemplateKey(level.gradeLevelId)}
+						{@const gradeLevelId = level.gradeLevelId}
 						<article class="rounded-xl border border-border bg-secondary/20 p-4">
 							<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-								<h3 class="text-sm font-medium">{gradeLevelLabel(level.gradeLevelId)}</h3>
+								<h3 class="text-sm font-medium">{gradeLevelLabel(gradeLevelId)}</h3>
 								<p class="text-xs text-muted-foreground">
-									{$t('onboarding.structure.previewLabel')}: {previewClassNames(level.gradeLevelId, level.classCount).join(', ')}
+									{$t('onboarding.structure.previewLabel')}: {previewClassNames(gradeLevelId, level.classCount).join(', ')}
 								</p>
 							</div>
 							<div class="grid gap-3 sm:grid-cols-2">
@@ -128,7 +129,7 @@
 											size="icon"
 											class="h-9 w-9"
 											{disabled}
-											onclick={() => adjustClassCount(level.gradeLevelId, -1)}
+											onclick={() => adjustClassCount(gradeLevelId, -1)}
 										>
 											<Minus class="h-4 w-4" />
 										</Button>
@@ -139,23 +140,23 @@
 											size="icon"
 											class="h-9 w-9"
 											{disabled}
-											onclick={() => adjustClassCount(level.gradeLevelId, 1)}
+											onclick={() => adjustClassCount(gradeLevelId, 1)}
 										>
 											<Plus class="h-4 w-4" />
 										</Button>
 									</div>
 								</div>
 								<div class="space-y-1.5">
-									<Label for={`structure-capacity-${level.gradeLevelId}`}>
+									<Label for={`structure-capacity-${gradeLevelId}`}>
 										{$t('onboarding.structure.capacityLabel')}
 									</Label>
 									<Input
-										id={`structure-capacity-${level.gradeLevelId}`}
+										id={`structure-capacity-${gradeLevelId}`}
 										type="number"
 										min="1"
 										value={String(level.capacity)}
 										{disabled}
-										oninput={(event) => updateCapacity(level.gradeLevelId, event.currentTarget.value)}
+										oninput={event => updateCapacity(gradeLevelId, event.currentTarget.value)}
 									/>
 								</div>
 							</div>

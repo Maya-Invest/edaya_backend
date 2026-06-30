@@ -1,8 +1,31 @@
-import { describe, expect, it } from 'vitest';
 import { createEmptyDraft, saveDraft } from '$lib/onboarding/draft-storage';
-import { resolvePostAuthPath } from './resolve-post-auth';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { resolvePostAuthPath } from './resolve-post-auth-paths';
+
+function mockSessionStorage() {
+	const store = new Map<string, string>();
+	Object.defineProperty(globalThis, 'sessionStorage', {
+		configurable: true,
+		value: {
+			getItem: (key: string) => store.get(key) ?? null,
+			setItem: (key: string, value: string) => {
+				store.set(key, value);
+			},
+			removeItem: (key: string) => {
+				store.delete(key);
+			},
+		},
+	});
+}
 
 describe('resolvePostAuthPath', () => {
+	beforeEach(() => {
+		mockSessionStorage();
+	});
+
+	afterEach(() => {
+		Reflect.deleteProperty(globalThis, 'sessionStorage');
+	});
 	it('routes unlinked accounts to onboarding', () => {
 		expect(resolvePostAuthPath({ session: null, pendingOnboarding: true })).toBe('/onboarding');
 	});

@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { clearAuthGate, hasAuthGatePassed, markAuthGatePassed } from '$lib/auth/auth-gate';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 
 function mockSessionStorage() {
 	const store = new Map<string, string>();

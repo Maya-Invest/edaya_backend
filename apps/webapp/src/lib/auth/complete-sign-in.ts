@@ -1,5 +1,5 @@
-import { bootstrapSession } from '$lib/auth/bootstrap';
 import { markAuthGatePassed } from '$lib/auth/auth-gate';
+import { bootstrapSession } from '$lib/auth/bootstrap';
 import { resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
 import {
 	redirectPathIfAuthenticated,

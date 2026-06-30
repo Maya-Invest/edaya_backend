@@ -46,14 +46,18 @@ export function getOnboardingStepDefinition(step: OnboardingStep): OnboardingSte
 	return ONBOARDING_STEPS[step - 1]!;
 }
 
-export function canAdvanceFromStep(step: OnboardingStep, draft: OnboardingDraft): boolean {
+export function canAdvanceFromStep(
+	step: OnboardingStep,
+	draft: OnboardingDraft,
+	loginEmail?: string | null,
+): boolean {
 	switch (step) {
 		case 1:
 			return isSchoolStepValid(draft.school);
 		case 2:
 			return isStructureStepValid(draft.structure);
 		case 3:
-			return isStaffStepValid(draft.staffInvites);
+			return isStaffStepValid(draft.staffInvites, loginEmail);
 		case 4:
 			return false;
 		default:

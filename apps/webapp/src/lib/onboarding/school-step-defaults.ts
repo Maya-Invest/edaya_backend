@@ -57,7 +57,7 @@ export const COMMON_TIMEZONES = [
 export function optionsWithCurrent<T extends string>(
 	options: readonly T[],
 	current: string,
-): T[] {
+): string[] {
 	const trimmed = current.trim();
 	if (!trimmed || options.includes(trimmed as T)) {
 		return [...options];

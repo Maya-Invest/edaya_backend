@@ -1,6 +1,6 @@
+import type { OnboardingDraft } from '$lib/onboarding/types';
 import { createEmptyDraft, loadDraft, saveDraft } from '$lib/onboarding/draft-storage';
 import { onboardingStepUrl } from '$lib/onboarding/navigation';
-import type { OnboardingDraft } from '$lib/onboarding/types';
 
 export function resolveOnboardingDraft(
 	authUserId: string,

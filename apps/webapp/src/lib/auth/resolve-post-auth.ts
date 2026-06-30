@@ -1,19 +1,19 @@
 import type { SessionSnapshot } from '$lib/auth/types';
+import {
+	ONBOARDING_PATH,
+	resolveLinkedActorPath as resolveLinkedActorPathCore,
+	resolvePostAuthPath as resolvePostAuthPathCore,
+} from '$lib/auth/resolve-post-auth-paths';
 import { authSession } from '$lib/auth/session.svelte';
 import { onboardingResumePath } from '$lib/onboarding/resume-onboarding';
-import { appPath } from '$lib/navigation/app-navigation';
 
-export const ONBOARDING_PATH = appPath('/onboarding');
+export { ONBOARDING_PATH };
 
 export function resolveLinkedActorPath(session?: SessionSnapshot | null): string {
-	const role = authSession.user?.role;
-	const kind = session?.kind ?? authSession.sessionKind;
-
-	if (kind === 'staff' && role === 'directeur') {
-		return appPath('/(app)/dashboard');
-	}
-
-	return appPath('/(app)/school/students/[[id]]');
+	return resolveLinkedActorPathCore(session, {
+		role: authSession.user?.role,
+		sessionKind: authSession.sessionKind,
+	});
 }
 
 export function resolvePostAuthPath(options: {
@@ -21,23 +21,12 @@ export function resolvePostAuthPath(options: {
 	pendingOnboarding: boolean;
 	authUserId?: string | null;
 }): string {
-	if (options.pendingOnboarding) {
-		return ONBOARDING_PATH;
-	}
-
-	if (!options.session) {
-		return appPath('/login');
-	}
-
-	const resumePath = onboardingResumePath(
-		options.authUserId ?? authSession.authUserId,
-		options.session.schoolId,
-	);
-	if (resumePath) {
-		return resumePath;
-	}
-
-	return resolveLinkedActorPath(options.session);
+	return resolvePostAuthPathCore({
+		...options,
+		authUserId: options.authUserId ?? authSession.authUserId,
+		role: authSession.user?.role,
+		sessionKind: authSession.sessionKind,
+	});
 }
 
 export function redirectPathIfAuthenticated(): string | null {

@@ -215,6 +215,194 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/onboarding/apply-structure-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply collège / lycée structure template for the current school */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Structure template payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingApplyStructureTemplateRequest"];
+                };
+            };
+            responses: {
+                /** @description Applied structure summary */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingApplyStructureTemplateResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/onboarding/invite-staff-members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite staff members during school onboarding */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Staff invitation payload */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingInviteStaffMembersRequest"];
+                };
+            };
+            responses: {
+                /** @description Invitation summary */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingInviteStaffMembersResponse"];
+                    };
+                };
+                /** @description Invalid request payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Missing or invalid authorization session */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Access denied due to authorization policies */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Business rule violation */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                    };
+                };
+                /** @description Internal server error occurred */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/service-accounts": {
         parameters: {
             query?: never;
@@ -51712,6 +51900,31 @@ export interface components {
             ownerLastName?: string;
             /** Format: email */
             ownerEmail?: string;
+        };
+        OnboardingApplyStructureTemplateResponse: {
+            gradeLevelCount: number;
+            classGroupCount: number;
+            subjectCount: number;
+            classSubjectCount: number;
+        };
+        OnboardingApplyStructureTemplateRequest: {
+            models: ("college" | "lycee")[];
+            levels: {
+                gradeLevelId: string;
+                classCount: number;
+                capacity: number;
+            }[];
+        };
+        OnboardingInviteStaffMembersResponse: {
+            invitedCount: number;
+            accessRolesEnsured: number;
+        };
+        OnboardingInviteStaffMembersRequest: {
+            invites: {
+                /** Format: email */
+                email: string;
+                role: string;
+            }[];
         };
         ServiceAccountResponse: {
             id: string;

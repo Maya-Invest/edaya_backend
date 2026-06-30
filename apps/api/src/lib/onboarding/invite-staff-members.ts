@@ -8,10 +8,11 @@ import {
   BusinessRuleViolationError,
   createBootstrapStaffActorMetadata,
   Permission,
+  permissionAction,
   StaffMember,
   StaffRoleAssignment,
-  permissionAction,
-} from "@edaya/core";import { randomUUID } from "node:crypto";
+} from "@edaya/core";
+import { randomUUID } from "node:crypto";
 import { ensureDefaultAccessRoles } from "./default-access-roles";
 import {
   ACCESS_ROLE_ID_BY_INVITE_ROLE,
@@ -47,7 +48,7 @@ function parseInvites(input: InviteStaffMembersInput): InviteStaffMemberInput[] 
       continue;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(email)) {
       throw new BusinessRuleViolationError(
         "STAFF_INVITE_INVALID_EMAIL",
         `Invalid email address: ${invite.email}`,

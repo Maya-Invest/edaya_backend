@@ -1,11 +1,11 @@
-import { bootstrapAppShell, resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
-import { browserFetch } from '$lib/api/browser-fetch';
 import type { OnboardingStaffInviteDraft } from '$lib/onboarding/types';
+import { browserFetch } from '$lib/api/browser-fetch';
+import { bootstrapAppShell, resetAppShellBootstrap } from '$lib/auth/bootstrap-app';
+import { t } from '$lib/i18n';
 import { staffInvitesForSubmit } from '$lib/onboarding/staff-step-helpers';
+import { toast } from '$lib/toast.svelte';
 import { ApiError } from '@edaya/api-client';
 import { get } from 'svelte/store';
-import { t } from '$lib/i18n';
-import { toast } from '$lib/toast.svelte';
 
 interface InviteStaffResponse {
 	invitedCount: number;

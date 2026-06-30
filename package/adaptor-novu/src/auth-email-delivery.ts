@@ -9,11 +9,11 @@ import { createNovuSdkClient } from "./novu-sdk-client";
 import { createNovuSubscriberClient } from "./novu-subscriber-client";
 import type { NovuTriggerClient } from "./types";
 
-export type AuthOtpEmailType =
-  | "sign-in"
-  | "email-verification"
-  | "forget-password"
-  | "change-email";
+export type AuthOtpEmailType
+  = | "sign-in"
+    | "email-verification"
+    | "forget-password"
+    | "change-email";
 
 export interface AuthOtpEmailInput {
   email: string;

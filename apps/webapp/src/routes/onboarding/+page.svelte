@@ -27,7 +27,11 @@
 	const currentStep = $derived(parseOnboardingStep($page.url));
 	const maxReachedStep = $derived(onboardingContext.draft.maxReachedStep);
 	const stepDefinition = $derived(getOnboardingStepDefinition(currentStep));
-	const canAdvance = $derived(canAdvanceFromStep(currentStep, onboardingContext.draft));
+	const canAdvance = $derived(canAdvanceFromStep(
+		currentStep,
+		onboardingContext.draft,
+		authSession.loginEmail,
+	));
 	const canGoBack = $derived(currentStep > 1);
 	const nextStep = $derived(nextOnboardingStep(currentStep));
 	const showContinue = $derived(nextStep !== null);

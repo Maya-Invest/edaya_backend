@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { isStaffStepValid, staffInviteCount } from '$lib/onboarding/staff-step-validation';
+import { describe, expect, it } from 'bun:test';
 
 describe('staff step validation', () => {
 	it('allows empty invite list', () => {

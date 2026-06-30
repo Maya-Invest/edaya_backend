@@ -1,7 +1,6 @@
 import type { OnboardingStaffInviteDraft } from '$lib/onboarding/types';
-import { authSession } from '$lib/auth/session.svelte';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
 export function isValidStaffInviteEmail(email: string): boolean {
 	return EMAIL_PATTERN.test(email.trim());
@@ -11,20 +10,23 @@ export function activeStaffInvites(invites: OnboardingStaffInviteDraft[]): Onboa
 	return invites.filter(invite => invite.email.trim().length > 0 || invite.role !== '');
 }
 
-export function isStaffStepValid(invites: OnboardingStaffInviteDraft[]): boolean {
+export function isStaffStepValid(
+	invites: OnboardingStaffInviteDraft[],
+	loginEmail?: string | null,
+): boolean {
 	const active = activeStaffInvites(invites);
 	if (active.length === 0) {
 		return true;
 	}
 
-	const loginEmail = authSession.loginEmail?.trim().toLowerCase() ?? '';
+	const normalizedLogin = loginEmail?.trim().toLowerCase() ?? '';
 	const seenEmails = new Set<string>();
 	for (const invite of active) {
 		if (!isValidStaffInviteEmail(invite.email) || !invite.role) {
 			return false;
 		}
 		const normalized = invite.email.trim().toLowerCase();
-		if (loginEmail && normalized === loginEmail) {
+		if (normalizedLogin && normalized === normalizedLogin) {
 			return false;
 		}
 		if (seenEmails.has(normalized)) {

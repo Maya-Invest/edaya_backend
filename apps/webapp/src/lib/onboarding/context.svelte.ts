@@ -4,7 +4,6 @@ import { authSession } from '$lib/auth/session.svelte';
 	import {
 	clearDraft,
 	createEmptyDraft,
-	loadDraft,
 	saveDraft,
 } from '$lib/onboarding/draft-storage';
 import { persistSyncedOnboardingDraft } from '$lib/onboarding/resume-onboarding';

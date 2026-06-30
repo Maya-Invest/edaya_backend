@@ -7,13 +7,13 @@
 	import { t } from '$lib/i18n';
 	import { Plus, Trash2 } from '$lib/icons';
 	import { onboardingContext } from '$lib/onboarding/context.svelte';
+	import { ONBOARDING_STAFF_INVITE_PROFILES } from '$lib/onboarding/staff-invite-profiles';
 	import {
 		addStaffInvite,
 		removeStaffInvite,
 		updateStaffInvite,
 	} from '$lib/onboarding/staff-step-helpers';
 	import { staffInviteCount } from '$lib/onboarding/staff-step-validation';
-	import { ONBOARDING_STAFF_INVITE_PROFILES } from '$lib/onboarding/staff-invite-profiles';
 
 	interface Props {
 		disabled?: boolean;
@@ -84,7 +84,7 @@
 									placeholder={$t('onboarding.staff.emailPlaceholder')}
 									value={invite.email}
 									{disabled}
-									oninput={(event) => updateEmail(invite.id, event.currentTarget.value)}
+									oninput={event => updateEmail(invite.id, event.currentTarget.value)}
 								/>
 							</div>
 							<div class="space-y-1.5">

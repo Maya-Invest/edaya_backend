@@ -1,7 +1,8 @@
-import { defaultAcademicYearPreset } from '$lib/onboarding/school-step-defaults';
-import { createInitialPeriods } from '$lib/onboarding/school-periods';
 import type { OnboardingDraft, OnboardingPeriodDraft, OnboardingSchoolDraft, OnboardingStaffInviteRole, OnboardingStep } from '$lib/onboarding/types';
+import { createInitialPeriods } from '$lib/onboarding/school-periods';
+import { defaultAcademicYearPreset } from '$lib/onboarding/school-step-defaults';
 import { ONBOARDING_DRAFT_VERSION } from '$lib/onboarding/types';
+
 const STORAGE_PREFIX = 'edaya:onboarding:draft';
 
 function isOnboardingStaffInviteRole(value: unknown): value is OnboardingStaffInviteRole {
@@ -46,7 +47,8 @@ export function createEmptyDraft(): OnboardingDraft {
 			academicYearEnd: yearPreset.end,
 			periodType: 'trimester',
 			periods: createInitialPeriods('trimester', yearPreset.start, yearPreset.end),
-		},		structure: {
+		},
+		structure: {
 			models: [],
 			levels: [],
 		},
@@ -130,7 +132,8 @@ function normalizeDraft(raw: unknown): OnboardingDraft | null {
 	}
 
 	const candidate = raw as Partial<OnboardingDraft>;
-	if (candidate.version !== 1 && candidate.version !== ONBOARDING_DRAFT_VERSION) {
+	const version = (raw as { version?: unknown }).version;
+	if (version !== 1 && version !== ONBOARDING_DRAFT_VERSION) {
 		return null;
 	}
 
@@ -150,7 +153,8 @@ function normalizeDraft(raw: unknown): OnboardingDraft | null {
 		registeredSchoolId: typeof candidate.registeredSchoolId === 'string'
 			? candidate.registeredSchoolId
 			: empty.registeredSchoolId,
-		school: normalizeSchoolDraft(candidate.school ?? {}, empty.school),		structure: {
+		school: normalizeSchoolDraft(candidate.school ?? {}, empty.school),
+		structure: {
 			models: Array.isArray(candidate.structure?.models)
 				? candidate.structure.models.filter((entry): entry is 'college' | 'lycee' => entry === 'college' || entry === 'lycee')
 				: empty.structure.models,

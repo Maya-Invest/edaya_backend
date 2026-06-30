@@ -7,7 +7,7 @@
 	import ApiConnectionBanner from '$lib/components/auth/ApiConnectionBanner.svelte';
 	import AuthScreenShell from '$lib/components/auth/AuthScreenShell.svelte';
 	import { t } from '$lib/i18n';
-	import { appGoto, appPath } from '$lib/navigation/app-navigation';
+	import { appPath } from '$lib/navigation/app-navigation';
 	import { toast } from '$lib/toast.svelte';
 
 	let demoAccounts = $state<DemoAccount[]>([]);

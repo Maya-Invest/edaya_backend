@@ -20,7 +20,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         name: "Staff Invite School",
@@ -36,7 +36,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         id: "2025",
@@ -52,7 +52,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         invites: [
@@ -92,7 +92,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         name: "Owner Invite School",
@@ -106,7 +106,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         invites: [{ email, role: "teacher" }],

@@ -20,7 +20,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         name: "Structure Test School",
@@ -36,7 +36,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         id: "2025",
@@ -52,7 +52,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookies.join("; "),
+        "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
         models: ["college"],
