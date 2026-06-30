@@ -2,8 +2,13 @@ import type { ReportCardResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { deliverNotification } from '../deliver-notification'
 import { resolveStudentAndAcademicGuardianRecipients } from '../recipient-resolvers'
+import { formatPersonName } from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import {
+  resolveClassGroupName,
+  resolvePeriodName,
+} from '../templates/resolve-notification-labels'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const REPORT_CARD_PUBLISHED_EVENT_KEY = 'report_card.published'
 
@@ -31,13 +36,20 @@ export async function handleReportCardPublished(
     return
   }
 
-  const schoolName = await resolveSchoolName(context.repositories, student.schoolId)
+  const { schoolName } = await resolveSchoolContext(context.repositories, student.schoolId)
+  const [periodName, classGroupName] = await Promise.all([
+    resolvePeriodName(context.repositories, result.periodId),
+    resolveClassGroupName(context.repositories, result.classGroupId),
+  ])
+
   const content = await renderNotificationEnqueueContent(context.templateService, {
     schoolId: student.schoolId,
     templateKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
     variables: {
       schoolName,
-      studentName: `${student.firstName} ${student.lastName}`,
+      studentName: formatPersonName(student.firstName, student.lastName),
+      periodName,
+      classGroupName,
     },
   })
 

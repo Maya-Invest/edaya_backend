@@ -2,8 +2,13 @@ import type { CalendarEvent } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { CalendarEventKind } from '../../domains'
 import { resolveCalendarEventRecipients } from '../recipient-resolvers'
+import {
+  formatNotificationDate,
+  formatNotificationDateRange,
+} from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import { resolveCalendarEventScopeLabel } from '../templates/resolve-notification-labels'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const CALENDAR_EVENT_REMINDER_EVENT_KEY = 'calendar.event_reminder'
 export const CALENDAR_EVENT_REMINDER_LEAD_HOURS = 24
@@ -71,14 +76,19 @@ export const calendarEventReminderTrigger: NotificationTriggerRegistration<Calen
       return null
     }
 
-    const schoolName = await resolveSchoolName(context.repositories, entity.schoolId)
+    const { schoolName, timeZone } = await resolveSchoolContext(context.repositories, entity.schoolId)
+    const scopeLabel = await resolveCalendarEventScopeLabel(context.repositories, entity)
+    const dateRange = formatNotificationDateRange(entity.startDate, entity.endDate, timeZone)
     const content = await renderNotificationEnqueueContent(context.templateService, {
       schoolId: entity.schoolId,
       templateKey: CALENDAR_EVENT_REMINDER_EVENT_KEY,
       variables: {
         schoolName,
         eventTitle: entity.title,
-        startDate: entity.startDate.toISOString().slice(0, 10),
+        startDate: formatNotificationDate(entity.startDate, timeZone),
+        endDate: formatNotificationDate(entity.endDate, timeZone),
+        dateRange,
+        scopeLabel,
       },
     })
 

@@ -18,6 +18,7 @@ export {
 	Check,
 	CheckCircle2,
 	ChevronDown,
+	ChevronLeft,
 	ChevronRight,
 	ClipboardCheck,
 	Clock,

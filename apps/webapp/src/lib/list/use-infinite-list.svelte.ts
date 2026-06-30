@@ -97,6 +97,34 @@ export function useCursorInfiniteList<T>(fetchPage: CursorFetcher<T>, pageSize =
 
 export type OffsetPageFetcher<T> = (offset: number, limit: number) => Promise<{ items: T[]; total: number }>;
 
+function hasStringId(value: unknown): value is { id: string } {
+	return typeof value === 'object' && value !== null && typeof (value as { id?: unknown }).id === 'string';
+}
+
+function appendUniqueById<T>(existing: readonly T[], incoming: readonly T[]): T[] {
+	if (existing.length === 0) {
+		return [...incoming];
+	}
+	if (!hasStringId(existing[0]) || !incoming.every(hasStringId)) {
+		return [...existing, ...incoming];
+	}
+
+	const identifiedExisting = existing as ReadonlyArray<T & { id: string }>;
+	const identifiedIncoming = incoming as ReadonlyArray<T & { id: string }>;
+	const seen: Record<string, true> = Object.create(null);
+	for (const item of identifiedExisting) {
+		seen[item.id] = true;
+	}
+	const merged = [...existing];
+	for (const item of identifiedIncoming) {
+		if (!seen[item.id]) {
+			seen[item.id] = true;
+			merged.push(item);
+		}
+	}
+	return merged;
+}
+
 /**
  * Server-side infinite scroll — loads pages via `$limit` / `$offset` and appends on scroll.
  * Pass `getResetKey` to reload from the first page when filters change.
@@ -111,8 +139,10 @@ export function useOffsetInfiniteList<T>(
 	let offset = $state(0);
 	let loading = $state(false);
 	let loadingMore = $state(false);
+	let generation = 0;
+	let loadingMoreOffset: number | null = null;
 
-	async function loadAt(nextOffset: number, append: boolean) {
+	async function loadAt(nextOffset: number, append: boolean, requestGeneration: number) {
 		if (append) {
 			loadingMore = true;
 		}
@@ -122,29 +152,40 @@ export function useOffsetInfiniteList<T>(
 
 		try {
 			const page = await fetchPage(nextOffset, pageSize);
-			items = append ? [...items, ...page.items] : page.items;
+			if (requestGeneration !== generation) {
+				return;
+			}
+
+			items = append ? appendUniqueById(items, page.items) : page.items;
 			total = page.total;
 			offset = nextOffset + page.items.length;
 		}
 		finally {
-			loading = false;
-			loadingMore = false;
+			if (requestGeneration === generation) {
+				loading = false;
+				if (append && loadingMoreOffset === nextOffset) {
+					loadingMoreOffset = null;
+				}
+				loadingMore = loadingMoreOffset !== null;
+			}
 		}
 	}
 
 	$effect(() => {
 		void getResetKey();
+		const requestGeneration = ++generation;
 		let cancelled = false;
 
 		loading = true;
 		loadingMore = false;
+		loadingMoreOffset = null;
 		items = [];
 		offset = 0;
 		total = 0;
 
 		void fetchPage(0, pageSize)
 			.then((page) => {
-				if (cancelled) {
+				if (cancelled || requestGeneration !== generation) {
 					return;
 				}
 				items = page.items;
@@ -152,7 +193,7 @@ export function useOffsetInfiniteList<T>(
 				offset = page.items.length;
 			})
 			.finally(() => {
-				if (!cancelled) {
+				if (!cancelled && requestGeneration === generation) {
 					loading = false;
 				}
 			});
@@ -163,10 +204,14 @@ export function useOffsetInfiniteList<T>(
 	});
 
 	function loadMore() {
-		if (loading || loadingMore || items.length >= total) {
+		if (loading || loadingMoreOffset !== null || items.length >= total) {
 			return;
 		}
-		void loadAt(offset, true);
+
+		const nextOffset = offset;
+		loadingMoreOffset = nextOffset;
+		loadingMore = true;
+		void loadAt(nextOffset, true, generation);
 	}
 
 	return {

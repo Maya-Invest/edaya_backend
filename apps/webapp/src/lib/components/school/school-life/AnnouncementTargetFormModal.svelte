@@ -2,6 +2,9 @@
 	import type { AnnouncementTargetKind } from '$lib/types/school';
 	import { academicContext } from '$lib/academic/context.svelte';
 	import { addAnnouncementTargetMutation } from '$lib/api/mutations/announcement.mutations';
+	import GuardianPicker from '$lib/components/school/shared/pickers/GuardianPicker.svelte';
+	import StaffPicker from '$lib/components/school/shared/pickers/StaffPicker.svelte';
+	import StudentPicker from '$lib/components/school/shared/pickers/StudentPicker.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import * as Select from '$lib/components/ui/select';
@@ -47,16 +50,14 @@
 				return academicContext.classes.map(entry => ({ id: entry.id, label: entry.name }));
 			case 'grade_level':
 				return sortedLevels.map(entry => ({ id: entry.id, label: entry.name }));
-			case 'staff_member':
-				return detailDataContext.staff.map(entry => ({ id: entry.id, label: entry.name }));
-			case 'guardian':
-				return detailDataContext.guardians.map(entry => ({ id: entry.id, label: entry.name }));
-			case 'student':
-				return detailDataContext.students.map(entry => ({ id: entry.id, label: entry.name }));
 			default:
 				return [];
 		}
 	});
+
+	const usesPersonPicker = $derived(
+		targetKind === 'staff_member' || targetKind === 'guardian' || targetKind === 'student',
+	);
 
 	const selectedEntityLabel = $derived(
 		entityOptions.find(entry => entry.id === targetId)?.label ?? '',
@@ -78,6 +79,17 @@
 	$effect(() => {
 		if (!needsEntity) {
 			targetId = '';
+			return;
+		}
+		if (usesPersonPicker) {
+			const pool = targetKind === 'student'
+				? detailDataContext.students
+				: targetKind === 'guardian'
+				? detailDataContext.guardians
+				: detailDataContext.staff;
+			if (!pool.some(entry => entry.id === targetId)) {
+				targetId = '';
+			}
 			return;
 		}
 		if (!entityOptions.some(entry => entry.id === targetId)) {
@@ -145,20 +157,28 @@
 			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 				{$t('announcements.targetEntityLabel')}
 			</Label>
-			<Select.Root type="single" value={targetId} onValueChange={v => v && (targetId = v)}>
-				<Select.Trigger>
-					<Select.Value placeholder={$t('announcements.targetEntityLabel')}>
-						{selectedEntityLabel}
-					</Select.Value>
-				</Select.Trigger>
-				<Select.Content class="z-[100]">
-					{#each entityOptions as entry (entry.id)}
-						<Select.Item value={entry.id} label={entry.label}>
-							{entry.label}
-						</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+			{#if targetKind === 'student'}
+				<StudentPicker bind:value={targetId} students={detailDataContext.students} />
+			{:else if targetKind === 'guardian'}
+				<GuardianPicker bind:value={targetId} guardians={detailDataContext.guardians} />
+			{:else if targetKind === 'staff_member'}
+				<StaffPicker bind:value={targetId} staff={detailDataContext.staff} />
+			{:else}
+				<Select.Root type="single" value={targetId} onValueChange={v => v && (targetId = v)}>
+					<Select.Trigger>
+						<Select.Value placeholder={$t('announcements.targetEntityLabel')}>
+							{selectedEntityLabel}
+						</Select.Value>
+					</Select.Trigger>
+					<Select.Content class="z-[100]">
+						{#each entityOptions as entry (entry.id)}
+							<Select.Item value={entry.id} label={entry.label}>
+								{entry.label}
+							</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			{/if}
 		</div>
 	{/if}
 </FormModal>

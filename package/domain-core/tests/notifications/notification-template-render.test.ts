@@ -31,11 +31,15 @@ describe('notification template render', () => {
       schoolId: 'school-1',
       templateKey: 'report_card.published',
       channel: 'in_app',
-      variables: { studentName: 'Ada Lovelace' },
+      variables: {
+        studentName: 'Ada Lovelace',
+        periodName: 'Term 2',
+        classGroupName: '6ème A',
+      },
     })
 
-    expect(rendered.subject).toBe('Report card published')
-    expect(rendered.body).toBe('The report card for Ada Lovelace is now available.')
+    expect(rendered.subject).toBe('Report card — Ada Lovelace')
+    expect(rendered.body).toBe('Term 2 results for 6ème A are available.')
   })
 
   test('renders account_invitation from platform defaults when school row is missing that key', async () => {

@@ -72,6 +72,26 @@ describe('SchoolService communications workflows', () => {
     expect(result.expiresAt?.toISOString().slice(0, 10)).toBe('2026-05-02')
   })
 
+  test('publishAnnouncement can defer notification dispatch', async () => {
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createCommunicationsContext({
+      announcementStatus: AnnouncementStatus.Draft,
+      notificationGateway: gateway,
+    })
+
+    const result = await service.communicationsWorkflow.publishAnnouncement({
+      announcementId: 'ann1',
+      publishedAt: new Date('2026-05-02T00:00:00Z'),
+    }, { deferNotifications: true })
+
+    expect(result.status).toBe(AnnouncementStatus.Published)
+    expect(gateway.enqueued).toHaveLength(0)
+
+    await service.communicationsWorkflow.dispatchPublishedAnnouncementNotifications('ann1')
+
+    expect(gateway.enqueued.length).toBeGreaterThanOrEqual(2)
+  })
+
   test('publishAnnouncement enqueues one notification per materialized delivery', async () => {
     const gateway = new RecordingNotificationGateway()
     const { service } = createCommunicationsContext({

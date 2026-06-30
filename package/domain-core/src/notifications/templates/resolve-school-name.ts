@@ -1,12 +1,10 @@
 import type { SchoolRepositories } from '../../ports'
+import { resolveSchoolContext } from './resolve-school-context'
 
 export async function resolveSchoolName(
   repositories: Partial<Pick<SchoolRepositories, 'schools'>>,
   schoolId: string,
 ): Promise<string> {
-  if (!repositories.schools?.findById) {
-    return schoolId
-  }
-  const school = await repositories.schools.findById(schoolId)
-  return school?.name ?? schoolId
+  const { schoolName } = await resolveSchoolContext(repositories, schoolId)
+  return schoolName
 }

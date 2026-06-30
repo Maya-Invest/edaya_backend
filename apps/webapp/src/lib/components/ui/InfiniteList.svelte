@@ -22,7 +22,7 @@
 
 	$effect(() => {
 		const node = sentinel;
-		if (!node || !hasMore || !onLoadMore)
+		if (!node || !hasMore || !onLoadMore || loading)
 			return;
 
 		const observer = new IntersectionObserver(

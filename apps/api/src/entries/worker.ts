@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import app from "@/app";
-import { parseRuntimeEnv } from "@/runtime";
+import { parseRuntimeEnv } from "@/runtime/shared/env";
 
 export default {
   async fetch(request: Request, bindings: Record<string, unknown>, executionCtx: ExecutionContext) {

@@ -76,8 +76,8 @@ const cases: FilterCase[] = [
 		name: 'planning',
 		read: readPlanningListFilters,
 		write: writeWith(writePlanningListFilters),
-		defaults: { q: '' },
-		nonDefault: { q: 'room' },
+		defaults: { q: '', week: '' },
+		nonDefault: { q: 'room', week: '2026-05-18' },
 	},
 	{
 		name: 'class students',

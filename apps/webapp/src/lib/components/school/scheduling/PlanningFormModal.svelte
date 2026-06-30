@@ -15,6 +15,7 @@
 	let {
 		classId,
 		event,
+		weekStart = new Date(),
 		open = $bindable(false),
 		onCreated,
 		disabled = false,
@@ -22,6 +23,7 @@
 	}: {
 		classId?: string;
 		event?: PlanningEvent;
+		weekStart?: Date;
 		open?: boolean;
 		onCreated?: (sessionId: string) => void;
 		disabled?: boolean;
@@ -100,6 +102,7 @@
 				classGroupId: resolvedClassId,
 				title: sessionTitle,
 				classSubjectId: classSubjectId || undefined,
+				weekStart,
 				day,
 				start,
 				end,

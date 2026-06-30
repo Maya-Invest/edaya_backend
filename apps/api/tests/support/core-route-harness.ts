@@ -10,7 +10,8 @@ import {
 import type { Environment } from "@/runtime/shared/env/schema";
 import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { type ApiRuntime, resetApiRuntimesForTests } from "@/runtime";
+import type { ApiRuntime } from "@/runtime/types";
+import { resetApiRuntimesForTests } from "@/runtime/local/registry";
 import {
   createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,

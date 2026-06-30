@@ -8,11 +8,10 @@ See [docs/api-runtimes.md](../../../../docs/api-runtimes.md) for env vars and co
 
 ```typescript
 import type { ApiRuntime, Environment } from "@/runtime";
+import { getApiRuntime, resetApiRuntimesForTests } from "@/runtime/local/registry";
 import {
-  getApiRuntime,
   loadLocalProcessEnv,
   parseRuntimeEnv,
-  resetApiRuntimesForTests,
 } from "@/runtime";
 ```
 

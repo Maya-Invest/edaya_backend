@@ -1,6 +1,7 @@
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
-import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
+import { executeSchoolCommand } from "@/lib/school-api/execute-command";
+import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
 import { assertCommandActorKind } from "@edaya/core";
 import { createRoute } from "@hono/zod-openapi";
@@ -67,7 +68,8 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
       const inviteBaseUrl = resolveInviteBaseUrl(c.env);
 
       try {
-        const result = await dispatchCoreCommand(
+        const result = await executeSchoolCommand(
+          c,
           service,
           commandConfig.methodName,
           enrichCommandPayload(commandConfig.methodName, payload, inviteBaseUrl),

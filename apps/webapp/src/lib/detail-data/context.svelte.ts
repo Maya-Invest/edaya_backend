@@ -20,6 +20,7 @@ import type {
 	Student,
 	StudentBilling,
 	Subject,
+	TimetableSchedule,
 } from '$lib/types/school';
 import {
 	seedAbsencesCollection,
@@ -34,6 +35,7 @@ import {
 	seedGuardiansCollection,
 	seedIncidentsCollection,
 	seedPlanningCollection,
+	seedSchedulesCollection,
 	seedResourcesCollection,
 	seedRolePermissionsCollection,
 	seedSchoolYearEventsCollection,
@@ -55,6 +57,7 @@ export class DetailDataContext {
 	staff = $state<StaffMember[]>([]);
 	subjects = $state<Subject[]>([]);
 	planning = $state<PlanningEvent[]>([]);
+	schedules = $state<TimetableSchedule[]>([]);
 	evaluations = $state<Evaluation[]>([]);
 	assessmentResults = $state<AssessmentResultRow[]>([]);
 	activities = $state<Activity[]>([]);
@@ -125,6 +128,11 @@ export class DetailDataContext {
 	/** Replace the class slice. */
 	seedPlanning(events: PlanningEvent[], scope: { classId: string }) {
 		this.planning = seedPlanningCollection(this.planning, events, scope);
+	}
+
+	/** Replace the class slice. */
+	seedSchedules(schedules: TimetableSchedule[], scope: { classId: string }) {
+		this.schedules = seedSchedulesCollection(this.schedules, schedules, scope);
 	}
 
 	/** Replace the class slice. */
@@ -201,6 +209,10 @@ export class DetailDataContext {
 		return this.planning.filter(event => event.classId === classId);
 	}
 
+	schedulesForClass(classId: string): TimetableSchedule[] {
+		return this.schedules.filter(schedule => schedule.classId === classId);
+	}
+
 	evaluationsForClass(classId: string): Evaluation[] {
 		return this.evaluations.filter(evaluation => evaluation.classId === classId);
 	}
@@ -223,6 +235,18 @@ export class DetailDataContext {
 
 	removePlanningEvent(id: string) {
 		this.planning = this.planning.filter(event => event.id !== id);
+	}
+
+	patchSchedule(id: string, patch: Partial<TimetableSchedule>) {
+		this.schedules = this.replaceById(this.schedules, id, patch);
+	}
+
+	appendSchedule(schedule: TimetableSchedule) {
+		this.schedules = mergeById(this.schedules, [schedule]);
+	}
+
+	removeSchedule(id: string) {
+		this.schedules = this.schedules.filter(schedule => schedule.id !== id);
 	}
 
 	appendEvaluation(evaluation: Evaluation) {

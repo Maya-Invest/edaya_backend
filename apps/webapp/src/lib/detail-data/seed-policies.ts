@@ -19,6 +19,7 @@ import type {
 	Student,
 	StudentBilling,
 	Subject,
+	TimetableSchedule,
 } from '$lib/types/school';
 
 export function mergeById<T extends { id: string }>(existing: readonly T[], incoming: readonly T[]): T[] {
@@ -96,6 +97,14 @@ export function seedPlanningCollection(
 	scope: { classId: string },
 ): PlanningEvent[] {
 	return replaceSlice(existing, events, event => event.classId === scope.classId);
+}
+
+export function seedSchedulesCollection(
+	existing: readonly TimetableSchedule[],
+	schedules: readonly TimetableSchedule[],
+	scope: { classId: string },
+): TimetableSchedule[] {
+	return replaceSlice(existing, schedules, schedule => schedule.classId === scope.classId);
 }
 
 export function seedEvaluationsCollection(

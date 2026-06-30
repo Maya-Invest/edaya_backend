@@ -3,8 +3,16 @@ import type { WorkflowNotificationContext } from '../workflow-notification-runne
 import { AttendanceStatus, MessageDeliveryRecipientKind } from '../../domains'
 import { deliverNotification } from '../deliver-notification'
 import { uniqueNotificationRecipients } from '../recipient-utils'
+import {
+  formatNotificationDate,
+  formatNotificationTime,
+  formatNotificationTimeRange,
+  formatPersonName,
+  labelAttendanceStatus,
+} from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import { resolveClassGroupName } from '../templates/resolve-notification-labels'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const ATTENDANCE_RECORDED_EVENT_KEY = 'attendance.recorded'
 
@@ -26,7 +34,7 @@ export async function handleAttendanceRecorded(
     return
   }
 
-  const schoolName = await resolveSchoolName(context.repositories, payload.schoolId)
+  const { schoolName, timeZone } = await resolveSchoolContext(context.repositories, payload.schoolId)
   const deps = {
     notificationGateway: context.notificationGateway,
     repositories: context.repositories,
@@ -51,14 +59,32 @@ export async function handleAttendanceRecorded(
       context.repositories.sessions.findById(record.sessionId),
     ])
 
+    const classGroupName = await resolveClassGroupName(
+      context.repositories,
+      session?.classGroupId,
+    )
+
     const content = await renderNotificationEnqueueContent(context.templateService, {
       schoolId: payload.schoolId,
       templateKey: ATTENDANCE_RECORDED_EVENT_KEY,
       variables: {
         schoolName,
-        studentName: student ? `${student.firstName} ${student.lastName}` : record.studentId,
+        studentName: student
+          ? formatPersonName(student.firstName, student.lastName)
+          : record.studentId,
         status: record.status,
+        statusLabel: labelAttendanceStatus(record.status),
         sessionTitle: session?.title ?? record.sessionId,
+        sessionDate: session
+          ? formatNotificationDate(session.startsAt, timeZone)
+          : formatNotificationDate(record.date, timeZone),
+        sessionTime: session
+          ? formatNotificationTime(session.startsAt, timeZone)
+          : '',
+        sessionTimeRange: session
+          ? formatNotificationTimeRange(session.startsAt, session.endsAt, timeZone)
+          : '',
+        classGroupName,
       },
     })
 

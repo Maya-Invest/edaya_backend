@@ -41,7 +41,14 @@ describe('templated notification handlers', () => {
       actor: { schoolId: 'sch1' } as any,
       repositories: {
         schools: {
-          findById: async () => ({ id: 'sch1', name: 'Edaya School' }),
+          findById: async () => ({ id: 'sch1', name: 'Edaya School', timeZone: 'UTC' }),
+        },
+        students: {
+          findById: async () => ({
+            id: 'stu1',
+            firstName: 'Noah',
+            lastName: 'Martin',
+          }),
         },
         guardianLinks: {
           list: async () => [{ guardianId: 'gua1', studentId: 'stu1' }],

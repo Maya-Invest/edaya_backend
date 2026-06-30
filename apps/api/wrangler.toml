@@ -3,6 +3,11 @@ main = "src/entries/worker.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = [ "nodejs_compat" ]
 
+[[rules]]
+type = "Text"
+globs = [ "**/*.txt", "**/*.html" ]
+fallthrough = true
+
 [alias]
 "@/runtime/resolve-api-runtime" = "./src/runtime/worker/resolve-api-runtime.ts"
 

@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { Hono } from 'hono'
 import { createDependenciesInjection } from '@/http/dependencies'
 import { createSessionActorDependency } from '@/http/dependencies/session-actor'
-import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime'
+import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime/local/registry'
 import { apiPgliteEnv } from '../../support/api-pglite-env'
 
 function collectSetCookieHeaders(response: Response): string[] {

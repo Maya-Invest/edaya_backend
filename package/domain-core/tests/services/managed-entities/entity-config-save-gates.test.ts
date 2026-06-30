@@ -383,7 +383,7 @@ describe('Entity config save gates', () => {
       enrollmentIndex: staleEnrollment.enrollmentIndex,
       status: StudentClassEnrollmentStatus.Closed,
       enrolledAt: staleEnrollment.enrolledAt,
-      endedAt: new Date('2026-06-30T00:00:00Z'),
+      endedAt: new Date(staleEnrollment.enrolledAt.getTime() + 86_400_000),
       endReason: EnrollmentEndReason.Withdrawn,
       closedBy: 'system',
       createdAt: staleEnrollment.createdAt,

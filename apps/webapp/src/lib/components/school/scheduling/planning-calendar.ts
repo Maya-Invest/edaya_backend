@@ -19,13 +19,25 @@ export type ScheduleDayOfWeek
 		| 'saturday'
 		| 'sunday';
 
-const DAY_LABEL_TO_SCHEDULE: Record<PlanningEvent['day'], ScheduleDayOfWeek> = {
+export const SCHEDULE_DAY_TO_PLANNING: Record<ScheduleDayOfWeek, PlanningEvent['day']> = {
+	monday: 'Mon',
+	tuesday: 'Tue',
+	wednesday: 'Wed',
+	thursday: 'Thu',
+	friday: 'Fri',
+	saturday: 'Mon',
+	sunday: 'Mon',
+};
+
+export const PLANNING_DAY_TO_SCHEDULE: Record<PlanningEvent['day'], ScheduleDayOfWeek> = {
 	Mon: 'monday',
 	Tue: 'tuesday',
 	Wed: 'wednesday',
 	Thu: 'thursday',
 	Fri: 'friday',
 };
+
+const DAY_LABEL_TO_SCHEDULE: Record<PlanningEvent['day'], ScheduleDayOfWeek> = PLANNING_DAY_TO_SCHEDULE;
 
 export interface PlanningSlotFromDates {
 	day: PlanningEvent['day'];
@@ -42,6 +54,79 @@ export function mondayOfWeek(date: Date): Date {
 	const diff = (d.getDay() + 6) % 7;
 	d.setDate(d.getDate() - diff);
 	return d;
+}
+
+export function shiftWeek(weekStart: Date, weeks: number): Date {
+	const next = new Date(weekStart);
+	next.setDate(next.getDate() + weeks * 7);
+	return next;
+}
+
+export function formatWeekAnchor(date: Date): string {
+	const monday = mondayOfWeek(date);
+	const year = monday.getFullYear();
+	const month = `${monday.getMonth() + 1}`.padStart(2, '0');
+	const day = `${monday.getDate()}`.padStart(2, '0');
+	return `${year}-${month}-${day}`;
+}
+
+export function formatWeekAnchorUtc(date: Date): string {
+	const monday = mondayOfWeekUtc(date);
+	const year = monday.getUTCFullYear();
+	const month = `${monday.getUTCMonth() + 1}`.padStart(2, '0');
+	const day = `${monday.getUTCDate()}`.padStart(2, '0');
+	return `${year}-${month}-${day}`;
+}
+
+export function planningEventWeekAnchor(startsAt: string | Date): string {
+	return formatWeekAnchorUtc(mondayOfWeekUtc(new Date(startsAt)));
+}
+
+export function filterPlanningEventsForWeek(
+	events: PlanningEvent[],
+	weekStart: Date,
+): PlanningEvent[] {
+	const anchor = formatWeekAnchorUtc(mondayOfWeekUtc(weekStart));
+	return events.filter(event => planningEventWeekAnchor(event.startsAt) === anchor);
+}
+
+export function parseWeekAnchor(value: string | undefined, fallback = new Date()): Date {
+	const trimmed = value?.trim() ?? '';
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+		return mondayOfWeek(fallback);
+	}
+	const parsed = new Date(`${trimmed}T12:00:00`);
+	if (Number.isNaN(parsed.getTime())) {
+		return mondayOfWeek(fallback);
+	}
+	return mondayOfWeek(parsed);
+}
+
+export function isCurrentWeek(weekStart: Date, reference = new Date()): boolean {
+	return formatWeekAnchor(weekStart) === formatWeekAnchor(reference);
+}
+
+export function formatPlanningWeekRange(weekStart: Date, locale: string): { start: string; end: string } {
+	const friday = new Date(weekStart);
+	friday.setDate(friday.getDate() + 4);
+	const sameMonth = weekStart.getMonth() === friday.getMonth();
+	const sameYear = weekStart.getFullYear() === friday.getFullYear();
+
+	if (sameMonth) {
+		return {
+			start: weekStart.toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
+			end: friday.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
+		};
+	}
+
+	return {
+		start: weekStart.toLocaleDateString(locale, {
+			day: 'numeric',
+			month: 'short',
+			year: sameYear ? undefined : 'numeric',
+		}),
+		end: friday.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
+	};
 }
 
 /** Monday 00:00 UTC for the week containing `date` (matches seed session instants). */
@@ -138,17 +223,10 @@ export function subjectToneClass(subject: string): string {
 
 export function mapPlanningToCalendarEvents(
 	events: PlanningEvent[],
-	weekStart: Date,
 ): TimetableCalendarEvent[] {
 	return events.map((event) => {
-		const start = new Date(weekStart);
-		start.setDate(start.getDate() + TIMETABLE_DAY_OFFSET[event.day]);
-		const startParts = parseTimeOfDay(event.start);
-		start.setHours(startParts.hours, startParts.minutes, 0, 0);
-
-		const end = new Date(start);
-		const endParts = parseTimeOfDay(event.end);
-		end.setHours(endParts.hours, endParts.minutes, 0, 0);
+		const start = new Date(event.startsAt);
+		const end = new Date(event.endsAt);
 
 		return {
 			id: event.id,
@@ -161,6 +239,14 @@ export function mapPlanningToCalendarEvents(
 			css: subjectToneClass(event.subject),
 		};
 	});
+}
+
+export function weekGenerationRange(weekStart: Date): { startDate: Date; endDate: Date } {
+	const startDate = mondayOfWeekUtc(weekStart);
+	const endDate = new Date(startDate);
+	endDate.setUTCDate(endDate.getUTCDate() + 4);
+	endDate.setUTCHours(23, 59, 59, 999);
+	return { startDate, endDate };
 }
 
 export function timetableHours(events: PlanningEvent[]): { startHour: number; endHour: number } {

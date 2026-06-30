@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Fee, Student, StudentBilling } from '$lib/types/school';
 	import { assignFeeToStudentMutation } from '$lib/api/mutations/billing.mutations';
+	import StudentPicker from '$lib/components/school/shared/pickers/StudentPicker.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
@@ -42,9 +43,6 @@
 	const availableFees = $derived(feesForStudent(studentId));
 	const selectedStudent = $derived(sortedStudents.find(entry => entry.id === studentId));
 	const selectedFee = $derived(fees.find(entry => entry.id === feeId));
-	const selectedStudentLabel = $derived(
-		selectedStudent ? `${selectedStudent.name} — ${selectedStudent.classId}` : '',
-	);
 	const selectedFeeLabel = $derived(selectedFee?.name ?? '');
 
 	const defaultAmount = $derived(selectedFee?.amount ?? 0);
@@ -67,11 +65,9 @@
 		dueDate = '';
 	}
 
-	function handleStudentChange(value: string | undefined) {
-		if (!value)
-			return;
-		studentId = value;
-		feeId = firstAvailableFeeFor(value);
+	function handleStudentChange(next: string) {
+		studentId = next;
+		feeId = firstAvailableFeeFor(next);
 	}
 
 	function handleFeeChange(value: string | undefined) {
@@ -125,21 +121,11 @@
 		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 			{$t('events.student')}
 		</Label>
-		<Select.Root type="single" value={studentId} onValueChange={handleStudentChange}>
-			<Select.Trigger>
-				<Select.Value placeholder={$t('invoice.selectStudent')}>
-					{selectedStudentLabel}
-				</Select.Value>
-			</Select.Trigger>
-			<Select.Content class="z-[100]">
-				{#each sortedStudents as student (student.id)}
-					<Select.Item value={student.id} label={student.name}>
-						{student.name}
-						<span class="text-muted-foreground"> — {student.classId}</span>
-					</Select.Item>
-				{/each}
-			</Select.Content>
-		</Select.Root>
+		<StudentPicker
+			bind:value={studentId}
+			students={sortedStudents}
+			onValueChange={handleStudentChange}
+		/>
 	</div>
 	<div class="space-y-1.5">
 		<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

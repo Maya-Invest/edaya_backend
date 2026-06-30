@@ -6,7 +6,6 @@
 	import DeleteEntityButton from '$lib/components/ui/DeleteEntityButton.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
-	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { t } from '$lib/i18n';
 	import { Check, ClipboardCheck, FileText, MapPin } from '$lib/icons';
 	import { queryClient } from '$lib/queries/client';
@@ -46,16 +45,14 @@
 
 	$effect(() => {
 		const sessionId = s.id;
-		const classId = s.classId;
 		if (sessionDetailContext.get(sessionId)) {
 			return;
 		}
 
 		sessionLoading = true;
-		const students = detailDataContext.studentsForClass(classId);
 		let cancelled = false;
 
-		void loadSessionDetail(queryClient(), sessionId, students).then((detail) => {
+		void loadSessionDetail(queryClient(), sessionId).then((detail) => {
 			if (cancelled) {
 				return;
 			}

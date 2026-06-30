@@ -1,6 +1,7 @@
-import type { Student } from '$lib/types/school';
-import { loadPeopleData } from '$lib/api/people-data';
+import { academicContext } from '$lib/academic/context.svelte';
+import { loadClassPeopleData } from '$lib/api/people-data';
 import { loadClassPlanning } from '$lib/api/planning-data';
+import { loadClassSchedules } from '$lib/api/schedule-data';
 import { loadSessionDetail } from '$lib/api/session-detail-data';
 import { detailDataContext } from '$lib/detail-data/context.svelte';
 import { queryClient } from '$lib/queries/client';
@@ -12,13 +13,13 @@ export function sessionDetailIdFromUrl(url: URL): string | undefined {
 	return url.pathname.match(/\/classes\/[^/]+\/timetable\/([^/]+)$/)?.[1];
 }
 
-async function seedSessionDrawerForUrl(url: URL, classId: string, students: Student[]) {
+async function seedSessionDrawerForUrl(url: URL) {
 	const sessionId = sessionDetailIdFromUrl(url);
 	if (!sessionId) {
 		return;
 	}
 
-	const detail = await loadSessionDetail(queryClient(), sessionId, students);
+	const detail = await loadSessionDetail(queryClient(), sessionId);
 	if (detail) {
 		sessionDetailContext.hydrate(sessionId, detail);
 	}
@@ -28,16 +29,18 @@ export function queryClassTimetablePage(classId: string) {
 	return (url: URL) => resolvePageLoad(url, {
 		empty: () => ({ classId }),
 		load: async () => {
-			const [planning, { students }, subjects] = await Promise.all([
+			const periodId = academicContext.periodId;
+			const [planning, schedules, { students }, subjects] = await Promise.all([
 				loadClassPlanning(queryClient(), classId),
-				loadPeopleData(queryClient()),
+				loadClassSchedules(queryClient(), classId),
+				loadClassPeopleData(queryClient(), classId, periodId),
 				getClassSubjects(classId),
 			]);
-			const classStudents = students.filter(student => student.classId === classId);
 			detailDataContext.seedPlanning(planning, { classId });
-			detailDataContext.seedStudents(classStudents, { classId });
+			detailDataContext.seedSchedules(schedules, { classId });
+			detailDataContext.seedStudents(students, { classId });
 			detailDataContext.seedSubjects(subjects, { classId });
-			await seedSessionDrawerForUrl(url, classId, classStudents);
+			await seedSessionDrawerForUrl(url);
 			return { classId };
 		},
 		hasItems: () => true,

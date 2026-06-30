@@ -8,14 +8,24 @@
 	import PermissionGate from '$lib/components/ui/PermissionGate.svelte';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
 	import { detailHref } from '$lib/detail-hrefs';
-	import { t } from '$lib/i18n';
-	import { Plus, Search } from '$lib/icons';
+	import { locale, t } from '$lib/i18n';
+	import { ChevronLeft, ChevronRight, Plus, Search } from '$lib/icons';
 	import { readPlanningListFilters, writePlanningListFilters } from '$lib/list/list-url-filters';
 	import { appGoto } from '$lib/navigation/app-navigation';
 	import { canEditTimetable } from '$lib/permissions';
 	import AttendanceFlow from './AttendanceFlow.svelte';
 	import ClassTimetableCalendar from './ClassTimetableCalendar.svelte';
+	import {
+		filterPlanningEventsForWeek,
+		formatPlanningWeekRange,
+		formatWeekAnchor,
+		isCurrentWeek,
+		mondayOfWeek,
+		parseWeekAnchor,
+		shiftWeek,
+	} from './planning-calendar';
 	import PlanningFormModal from './PlanningFormModal.svelte';
+	import ScheduleFormModal from './ScheduleFormModal.svelte';
 
 	const {
 		classId,
@@ -32,11 +42,16 @@
 	const students = $derived(detailDataContext.studentsForClass(classId));
 
 	const initialFilters = $derived(readPlanningListFilters($page.url));
+	const weekStart = $derived(parseWeekAnchor(initialFilters.week));
+	const weekRange = $derived(formatPlanningWeekRange(weekStart, $locale));
+	const viewingCurrentWeek = $derived(isCurrentWeek(weekStart));
 
 	let q = $state('');
+	let weekPickerValue = $state('');
 	let filtersReady = $state(false);
 	let attendanceSession = $state<PlanningEvent | null>(null);
 	let createOpen = $state(false);
+	let scheduleCreateOpen = $state(false);
 
 	const editable = $derived(canEditTimetable({ classId }));
 
@@ -51,6 +66,7 @@
 				|| ev.room.toLowerCase().includes(needle);
 		}),
 	);
+	const weekEvents = $derived(filterPlanningEventsForWeek(filteredEvents, weekStart));
 
 	const attendanceClass = $derived(
 		attendanceSession ? classes.find(c => c.id === attendanceSession!.classId) : null,
@@ -69,14 +85,57 @@
 	}
 
 	function syncFiltersToUrl() {
-		const href = writePlanningListFilters($page.url, { q });
+		const href = writePlanningListFilters($page.url, {
+			q,
+			week: viewingCurrentWeek ? '' : formatWeekAnchor(weekStart),
+		});
 		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
+	}
+
+	function navigateWeek(nextWeekStart: Date) {
+		const href = writePlanningListFilters($page.url, {
+			q,
+			week: isCurrentWeek(nextWeekStart) ? '' : formatWeekAnchor(nextWeekStart),
+		});
+		appGoto(href, { keepFocus: true, noScroll: true });
+	}
+
+	function goToPreviousWeek() {
+		navigateWeek(shiftWeek(weekStart, -1));
+	}
+
+	function goToNextWeek() {
+		navigateWeek(shiftWeek(weekStart, 1));
+	}
+
+	function goToThisWeek() {
+		navigateWeek(mondayOfWeek(new Date()));
+	}
+
+	function handleWeekPickerChange(event: Event) {
+		const value = (event.currentTarget as HTMLInputElement).value;
+		if (!value) {
+			return;
+		}
+		navigateWeek(parseWeekAnchor(value));
 	}
 
 	$effect(() => {
 		const next = initialFilters;
 		q = next.q;
+		weekPickerValue = formatWeekAnchor(parseWeekAnchor(next.week));
 		filtersReady = true;
+	});
+
+	$effect(() => {
+		if (!filtersReady || !selectedId) {
+			return;
+		}
+		if (weekEvents.some(event => event.id === selectedId)) {
+			return;
+		}
+		const href = `${detailHref.classPlanning(classId)}${$page.url.search}`;
+		appGoto(href, { replaceState: true, keepFocus: true, noScroll: true });
 	});
 
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -113,16 +172,29 @@
 				tooltip={$t('calendar.permissionUpdate')}
 			>
 				{#snippet children({ disabled, title })}
-					<Button
-						size="sm"
-						class="rounded-full"
-						{disabled}
-						{title}
-						onclick={() => (createOpen = true)}
-					>
-						<Plus class="mr-1 h-4 w-4" />
-						{$t('planning.newSession')}
-					</Button>
+					<div class="flex flex-wrap items-center gap-2">
+						<Button
+							size="sm"
+							class="rounded-full"
+							{disabled}
+							{title}
+							onclick={() => (scheduleCreateOpen = true)}
+						>
+							<Plus class="mr-1 h-4 w-4" />
+							{$t('planning.newSchedule')}
+						</Button>
+						<Button
+							size="sm"
+							variant="outline"
+							class="rounded-full"
+							{disabled}
+							{title}
+							onclick={() => (createOpen = true)}
+						>
+							<Plus class="mr-1 h-4 w-4" />
+							{$t('planning.newSession')}
+						</Button>
+					</div>
 				{/snippet}
 			</PermissionGate>
 		{/snippet}
@@ -132,11 +204,60 @@
 		<p class="mb-4 text-xs text-muted-foreground">{$t('planning.dragHint')}</p>
 	{/if}
 
-	<PlanningFormModal {classId} bind:open={createOpen} onCreated={handleCreated} />
+	<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+		<div class="flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+			<Button
+				variant="ghost"
+				size="icon"
+				class="h-8 w-8 rounded-full"
+				onclick={goToPreviousWeek}
+				aria-label={$t('planning.prevWeek')}
+			>
+				<ChevronLeft class="h-4 w-4" />
+			</Button>
+			<div class="flex min-w-0 items-center gap-2 px-2">
+				<p class="hidden text-sm font-medium sm:block">
+					{$t('planning.weekRange', weekRange)}
+				</p>
+				<label class="sr-only" for="planning-week-picker">{$t('planning.goToWeek')}</label>
+				<Input
+					id="planning-week-picker"
+					type="date"
+					value={weekPickerValue}
+					onchange={handleWeekPickerChange}
+					class="h-8 w-[10.5rem] rounded-full px-3 text-xs"
+					aria-label={$t('planning.goToWeek')}
+				/>
+			</div>
+			<Button
+				variant="ghost"
+				size="icon"
+				class="h-8 w-8 rounded-full"
+				onclick={goToNextWeek}
+				aria-label={$t('planning.nextWeek')}
+			>
+				<ChevronRight class="h-4 w-4" />
+			</Button>
+		</div>
+		{#if !viewingCurrentWeek}
+			<Button
+				variant="outline"
+				size="sm"
+				class="rounded-full"
+				onclick={goToThisWeek}
+			>
+				{$t('planning.thisWeek')}
+			</Button>
+		{/if}
+	</div>
+
+	<ScheduleFormModal {classId} {weekStart} bind:open={scheduleCreateOpen} />
+	<PlanningFormModal {classId} weekStart={weekStart} bind:open={createOpen} onCreated={handleCreated} />
 
 	<ClassTimetableCalendar
-		events={filteredEvents}
+		events={weekEvents}
 		{selectedId}
+		{weekStart}
 		{editable}
 		{onSelect}
 		onAttendance={ev => (attendanceSession = ev)}

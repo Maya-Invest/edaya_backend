@@ -3,8 +3,13 @@ import type { WorkflowNotificationContext } from '../workflow-notification-runne
 import { MessageDeliveryRecipientKind } from '../../domains'
 import { deliverNotification } from '../deliver-notification'
 import { uniqueNotificationRecipients } from '../recipient-utils'
+import {
+  formatNotificationDate,
+  formatPersonName,
+  labelIncidentKind,
+} from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const INCIDENT_RECORDED_EVENT_KEY = 'incident.recorded'
 
@@ -31,14 +36,21 @@ export async function handleIncidentRecorded(
     return
   }
 
-  const schoolName = await resolveSchoolName(context.repositories, incident.schoolId)
+  const { schoolName, timeZone } = await resolveSchoolContext(context.repositories, incident.schoolId)
+  const student = await context.repositories.students.findById(involvement.studentId)
+
   const content = await renderNotificationEnqueueContent(context.templateService, {
     schoolId: incident.schoolId,
     templateKey: INCIDENT_RECORDED_EVENT_KEY,
     variables: {
       schoolName,
+      studentName: student
+        ? formatPersonName(student.firstName, student.lastName)
+        : involvement.studentId,
       incidentTitle: incident.title,
       incidentDescription: incident.description,
+      incidentDate: formatNotificationDate(incident.date, timeZone),
+      incidentKindLabel: labelIncidentKind(incident.kind),
     },
   })
 

@@ -1,6 +1,6 @@
 import type { InteractiveActorMetadata } from '../authorization'
-import type { NotificationRecipient, NotificationRecipientProfile } from '../ports/notification-gateway'
 import type { SchoolRepositories } from '../ports'
+import type { NotificationRecipient, NotificationRecipientProfile } from '../ports/notification-gateway'
 import type { BaseSchoolService } from '../services/base-school-service'
 import {
   buildGuardianRecipientProfile,

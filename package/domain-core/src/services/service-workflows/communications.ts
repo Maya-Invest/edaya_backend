@@ -38,6 +38,10 @@ export interface PublishAnnouncementInput {
   publishedAt?: Date
 }
 
+export interface PublishAnnouncementOptions {
+  deferNotifications?: boolean
+}
+
 export interface RecordDeliveryInput {
   id: string
   schoolId: string
@@ -147,10 +151,13 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     return target
   }
 
-  async publishAnnouncement({
-    announcementId,
-    publishedAt,
-  }: PublishAnnouncementInput): Promise<Announcement> {
+  async publishAnnouncement(
+    {
+      announcementId,
+      publishedAt,
+    }: PublishAnnouncementInput,
+    options?: PublishAnnouncementOptions,
+  ): Promise<Announcement> {
     const existing = await this.requireAnnouncement(announcementId)
     await this.authorize({ schoolId: existing.schoolId, announcementId })
     if ((await this.baseService.repositories.announcementTargets.list({ announcementId })).length === 0) {
@@ -169,15 +176,32 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       expiresAt: existing.expiresAt,
     })
     await this.baseService.entities.announcements.save(announcement, { moduleChecked: true })
+    if (!options?.deferNotifications) {
+      await this.dispatchPublishedAnnouncementNotifications(announcement)
+    }
+    return announcement
+  }
+
+  async dispatchPublishedAnnouncementNotifications(
+    announcementOrId: Announcement | string,
+  ): Promise<void> {
+    const announcement = typeof announcementOrId === 'string'
+      ? await this.requireAnnouncement(announcementOrId)
+      : announcementOrId
+    if (!announcement.isPublished) {
+      throw new BusinessRuleViolationError(
+        'DISPATCH_UNPUBLISHED_ANNOUNCEMENT',
+        `Announcement ${announcement.id} must be published before dispatching notifications`,
+      )
+    }
     const deliveries = await this.materializeDeliveries({
       announcementId: announcement.id,
-      createdAt: announcement.publishedAt,
+      createdAt: announcement.publishedAt ?? new Date(),
     })
     await runWorkflowNotifications(this.baseService, ANNOUNCEMENT_PUBLISHED_EVENT_KEY, {
       announcement,
       deliveries,
     })
-    return announcement
   }
 
   async recordDelivery({

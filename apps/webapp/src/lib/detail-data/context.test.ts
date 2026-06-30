@@ -32,6 +32,8 @@ function planningEvent(id: string, classId: string): PlanningEvent {
 		day: 'Mon',
 		start: '08:00',
 		end: '09:00',
+		startsAt: '2026-01-05T08:00:00.000Z',
+		endsAt: '2026-01-05T09:00:00.000Z',
 		room: 'A1',
 		teacher: 'Teacher',
 	};

@@ -201,7 +201,7 @@ function describeWithFixture(
       context = options.isolate
         ? await provisionSeededRouteTestContext(fixture)
         : await resolveSharedRouteContext(fixture)
-    }, fixture === 'light' ? 60_000 : 90_000)
+    }, fixture === 'light' ? 60_000 : 180_000)
 
     afterAll(async () => {
       if (!options.isolate) {
@@ -231,7 +231,7 @@ function describeWithSchoolDataFixture(
       context = options.isolate
         ? await provisionSeededSchoolDataContext(fixture)
         : await resolveSharedSchoolDataContext(fixture)
-    }, fixture === 'light' ? 45_000 : 60_000)
+    }, fixture === 'light' ? 45_000 : 120_000)
 
     afterAll(async () => {
       if (!options.isolate) {

@@ -10,6 +10,7 @@
 	import { setContext } from 'svelte';
 	import {
 		calendarSlotFromDates,
+		filterPlanningEventsForWeek,
 		formatPlanningSlotLabel,
 		mapPlanningToCalendarEvents,
 		mondayOfWeek,
@@ -25,20 +26,23 @@
 	const {
 		events,
 		selectedId,
+		weekStart = mondayOfWeek(new Date()),
 		editable = false,
 		onSelect,
 		onAttendance,
 	}: {
 		events: PlanningEvent[];
 		selectedId?: string;
+		weekStart?: Date;
 		editable?: boolean;
 		onSelect?: (event: PlanningEvent) => void;
 		onAttendance?: (event: PlanningEvent) => void;
 	} = $props();
 
-	const anchorDate = mondayOfWeek(new Date());
-	const hours = $derived(timetableHours(events));
-	const calendarEvents = $derived(mapPlanningToCalendarEvents(events, anchorDate));
+	const anchorDate = $derived(mondayOfWeek(weekStart));
+	const weekEvents = $derived(filterPlanningEventsForWeek(events, anchorDate));
+	const hours = $derived(timetableHours(weekEvents));
+	const calendarEvents = $derived(mapPlanningToCalendarEvents(weekEvents));
 	const weekView = $derived({
 		id: 'week',
 		sections: {
@@ -84,7 +88,7 @@
 
 	setContext<PlanningTimetableContext>(PLANNING_TIMETABLE_CONTEXT, {
 		onAttendance: (eventId) => {
-			const planningEvent = events.find(event => event.id === eventId);
+			const planningEvent = weekEvents.find(event => event.id === eventId);
 			if (planningEvent)
 				onAttendance?.(planningEvent);
 		},
@@ -107,7 +111,7 @@
 		const id = payload.id;
 		if (id == null)
 			return;
-		const planningEvent = events.find(event => event.id === String(id));
+		const planningEvent = weekEvents.find(event => event.id === String(id));
 		if (planningEvent)
 			onSelect?.(planningEvent);
 	}
@@ -124,11 +128,11 @@
 		if (id == null || !update || typeof update !== 'object')
 			return false;
 
-		const planningEvent = events.find(event => event.id === String(id));
+		const planningEvent = weekEvents.find(event => event.id === String(id));
 		if (!planningEvent)
 			return false;
 
-		const [baseline] = mapPlanningToCalendarEvents([planningEvent], anchorDate);
+		const [baseline] = mapPlanningToCalendarEvents([planningEvent]);
 		const start = 'start' in update && update.start instanceof Date ? update.start : baseline.start;
 		const end = 'end' in update && update.end instanceof Date ? update.end : baseline.end;
 		if (!start || !end || end <= start)
@@ -198,7 +202,7 @@
 
 {#if browser}
 	<div class="edaya-timetable-calendar h-[min(780px,calc(100vh-13rem))] min-h-[520px] overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-		{#key $lang}
+		{#key `${$lang}-${anchorDate.getTime()}`}
 			<SvarCalendarLocale lang={$lang}>
 				<Willow fonts={false}>
 					<Calendar

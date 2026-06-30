@@ -25,7 +25,6 @@
 
 	let addTargetOpen = $state(false);
 	let publishOpen = $state(false);
-	let publishBusy = $state(false);
 
 	function fmtDate(value?: string) {
 		if (!value) {
@@ -48,16 +47,12 @@
 		});
 	}
 
-	async function confirmPublish() {
-		publishBusy = true;
-		const ok = await publishAnnouncementMutation({
+	function confirmPublish() {
+		publishOpen = false;
+		void publishAnnouncementMutation({
 			announcementId: live.id,
 			successMessage: get(t)('announcements.publishSuccess', { title: live.title }),
 		});
-		publishBusy = false;
-		if (ok) {
-			publishOpen = false;
-		}
 	}
 </script>
 
@@ -200,7 +195,6 @@
 	title={$t('announcements.publishTitle')}
 	description={$t('announcements.publishDescription', { title: live.title })}
 	submitLabel={$t('announcements.publish')}
-	busy={publishBusy}
 	submitDisabled={live.targets.length === 0}
 	onSubmit={confirmPublish}
 />

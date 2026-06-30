@@ -2,8 +2,16 @@ import type { Assessment, AssessmentResult, Student } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
 import { deliverNotification } from '../deliver-notification'
 import { resolveStudentAndAcademicGuardianRecipients } from '../recipient-resolvers'
+import {
+  formatPersonName,
+  formatScoreDisplay,
+} from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import {
+  resolvePeriodName,
+  resolveSubjectNameFromClassSubject,
+} from '../templates/resolve-notification-labels'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const ASSESSMENT_RESULT_RECORDED_EVENT_KEY = 'assessment.result_recorded'
 
@@ -32,13 +40,24 @@ export async function handleAssessmentResultRecorded(
     return
   }
 
-  const schoolName = await resolveSchoolName(context.repositories, student.schoolId)
+  const { schoolName } = await resolveSchoolContext(context.repositories, student.schoolId)
+  const [subjectName, periodName] = await Promise.all([
+    resolveSubjectNameFromClassSubject(context.repositories, assessment.classSubjectId),
+    resolvePeriodName(context.repositories, assessment.periodId),
+  ])
+
   const content = await renderNotificationEnqueueContent(context.templateService, {
     schoolId: student.schoolId,
     templateKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
     variables: {
       schoolName,
+      studentName: formatPersonName(student.firstName, student.lastName),
       assessmentTitle: assessment.title,
+      subjectName,
+      periodName,
+      score: result.score === undefined ? '' : String(result.score),
+      maxScore: String(assessment.maxScore),
+      scoreDisplay: formatScoreDisplay(result.score, assessment.maxScore),
     },
   })
 

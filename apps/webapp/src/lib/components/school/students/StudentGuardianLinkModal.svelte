@@ -1,12 +1,11 @@
 <script lang="ts">
 	import type { Student } from '$lib/types/school';
 	import { linkGuardianToStudentMutation } from '$lib/api/mutations/student.mutations';
+	import GuardianPicker from '$lib/components/school/shared/pickers/GuardianPicker.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import PickerModal from '$lib/components/ui/PickerModal.svelte';
-	import * as Select from '$lib/components/ui/select';
 	import { detailDataContext } from '$lib/detail-data/context.svelte';
-	import { t } from '$lib/i18n';
 
 	const {
 		s,
@@ -24,11 +23,6 @@
 
 	const available = $derived(detailDataContext.guardians.filter(g => !g.studentIds.includes(s.id)));
 	const selectedGuardian = $derived(available.find(g => g.id === guardianId));
-	const selectedGuardianLabel = $derived(
-		selectedGuardian
-			? `${selectedGuardian.name}${selectedGuardian.email ? ` · ${selectedGuardian.email}` : selectedGuardian.phone ? ` · ${selectedGuardian.phone}` : ''}`
-			: '',
-	);
 
 	let wasOpen = $state(false);
 
@@ -87,21 +81,7 @@
 	{:else}
 		<div class="space-y-1.5">
 			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Tuteur</Label>
-			<Select.Root type="single" value={guardianId} onValueChange={v => v && (guardianId = v)}>
-				<Select.Trigger>
-					<Select.Value placeholder={$t('guardian.selectGuardian')}>
-						{selectedGuardianLabel}
-					</Select.Value>
-				</Select.Trigger>
-				<Select.Content class="z-[100]">
-					{#each available as guardian (guardian.id)}
-						<Select.Item value={guardian.id} label={guardian.name}>
-							{guardian.name}
-							<span class="ml-1 text-muted-foreground">· {guardian.email || guardian.phone}</span>
-						</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+			<GuardianPicker bind:value={guardianId} guardians={available} />
 		</div>
 	{/if}
 </PickerModal>

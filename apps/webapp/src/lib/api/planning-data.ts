@@ -156,6 +156,8 @@ export function mapPlanningEvents(
 				day: dayLabel(session.startsAt),
 				start: formatTime(session.startsAt),
 				end: formatTime(session.endsAt),
+				startsAt: String(session.startsAt),
+				endsAt: String(session.endsAt),
 				room: resource?.name ?? '—',
 				teacher: teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Non assigné',
 			} satisfies PlanningEvent;

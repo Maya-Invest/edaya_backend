@@ -1,8 +1,12 @@
 import type { ExtracurricularActivity } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { resolveActivityEnrollmentRecipients } from '../recipient-resolvers'
+import {
+  formatNotificationDate,
+  formatNotificationDateRange,
+} from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const ACTIVITY_REMINDER_EVENT_KEY = 'activity.reminder'
 export const ACTIVITY_REMINDER_LEAD_HOURS = 24
@@ -60,14 +64,19 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Extracurri
       return null
     }
 
-    const schoolName = await resolveSchoolName(context.repositories, entity.schoolId)
+    const { schoolName, timeZone } = await resolveSchoolContext(context.repositories, entity.schoolId)
     const content = await renderNotificationEnqueueContent(context.templateService, {
       schoolId: entity.schoolId,
       templateKey: ACTIVITY_REMINDER_EVENT_KEY,
       variables: {
         schoolName,
         activityName: entity.name,
-        startDate: entity.startDate.toISOString().slice(0, 10),
+        startDate: formatNotificationDate(entity.startDate, timeZone),
+        endDate: formatNotificationDate(entity.endDate, timeZone),
+        dateRange: formatNotificationDateRange(entity.startDate, entity.endDate, timeZone),
+        activitySchedule: entity.schedule,
+        coachName: entity.coach,
+        activityCategory: entity.category,
       },
     })
 

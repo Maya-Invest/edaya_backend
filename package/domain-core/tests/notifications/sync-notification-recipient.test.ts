@@ -1,3 +1,4 @@
+import type { GuardianStudentLink, Student } from '../../src'
 import { describe, expect, test } from 'bun:test'
 import {
   ActorAssuranceLevel,
@@ -56,9 +57,9 @@ function createGuardianBaseService(gateway: RecordingNotificationGateway) {
 
   const repositories = {
     guardians,
-    guardianLinks: createStore(),
+    guardianLinks: createStore<GuardianStudentLink>(),
     staffMembers: createStore<StaffMember>(),
-    students: createStore(),
+    students: createStore<Student>(),
   }
 
   const actor = createGuardianActor()
@@ -75,7 +76,7 @@ function createGuardianBaseService(gateway: RecordingNotificationGateway) {
     actor,
     repositories: repositories as never,
     authorizationPolicy,
-    atomicExecution: { execute: async operation => operation() } as never,
+    atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
     notificationGateway: gateway,
     fileStorage: testFileStorage,
   })

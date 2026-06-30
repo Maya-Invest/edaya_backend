@@ -49,8 +49,33 @@ export interface PlanningEvent {
 	day: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri';
 	start: string;
 	end: string;
+	startsAt: string;
+	endsAt: string;
 	room: string;
 	teacher: string;
+}
+
+export type TimetableScheduleDay
+	= | 'monday'
+		| 'tuesday'
+		| 'wednesday'
+		| 'thursday'
+		| 'friday'
+		| 'saturday'
+		| 'sunday';
+
+export interface TimetableSchedule {
+	id: string;
+	classId: string;
+	classSubjectId?: string;
+	title: string;
+	isRecurring: boolean;
+	dayOfWeek?: TimetableScheduleDay;
+	day: PlanningEvent['day'];
+	startTime: string;
+	endTime: string;
+	subject: string;
+	specificDate?: string;
 }
 
 export interface AssessmentResultRow {

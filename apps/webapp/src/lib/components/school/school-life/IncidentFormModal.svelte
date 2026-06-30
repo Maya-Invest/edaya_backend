@@ -5,6 +5,7 @@
 		recordIncidentMutation,
 		updateIncidentMutation,
 	} from '$lib/api/mutations/incident.mutations';
+	import StudentPicker from '$lib/components/school/shared/pickers/StudentPicker.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -53,7 +54,6 @@
 	const schoolId = $derived(academicContext.schools[0]?.id ?? '');
 
 	const selectedStudent = $derived(students.find(entry => entry.id === studentId));
-	const selectedStudentLabel = $derived(selectedStudent?.name ?? '');
 	const kindLabel = $derived($t(`events.kind.${kind}`));
 	const studentClass = $derived(
 		selectedStudent
@@ -161,18 +161,7 @@
 			<Label class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
 				{$t('events.student')}
 			</Label>
-			<Select.Root type="single" value={studentId} onValueChange={v => v && (studentId = v)}>
-				<Select.Trigger>
-					<Select.Value placeholder={$t('events.selectStudent')}>
-						{selectedStudentLabel}
-					</Select.Value>
-				</Select.Trigger>
-				<Select.Content class="z-[100]">
-					{#each students as student (student.id)}
-						<Select.Item value={student.id} label={student.name}>{student.name}</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+			<StudentPicker bind:value={studentId} {students} {classes} />
 			{#if studentClass}
 				<p class="text-xs text-muted-foreground">{studentClass.name}</p>
 			{/if}

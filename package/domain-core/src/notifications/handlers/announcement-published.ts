@@ -1,7 +1,11 @@
 import type { Announcement, MessageDelivery } from '../../domains'
 import type { WorkflowNotificationContext } from '../workflow-notification-runner'
+import {
+  labelAnnouncementPriority,
+  truncateNotificationText,
+} from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const ANNOUNCEMENT_PUBLISHED_EVENT_KEY = 'announcement.published'
 
@@ -19,7 +23,8 @@ export async function handleAnnouncementPublished(
     return
   }
 
-  const schoolName = await resolveSchoolName(context.repositories, announcement.schoolId)
+  const { schoolName } = await resolveSchoolContext(context.repositories, announcement.schoolId)
+  const priorityLabel = labelAnnouncementPriority(announcement.priority)
   const content = await renderNotificationEnqueueContent(context.templateService, {
     schoolId: announcement.schoolId,
     templateKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
@@ -27,6 +32,8 @@ export async function handleAnnouncementPublished(
       schoolName,
       announcementTitle: announcement.title,
       announcementBody: announcement.content,
+      announcementBodyShort: truncateNotificationText(announcement.content),
+      priorityLabel,
     },
   })
 

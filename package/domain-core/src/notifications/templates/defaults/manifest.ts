@@ -16,41 +16,47 @@ function dualChannelFromPlain(subject: string, body: string): {
 export async function buildDefaultNotificationTemplateDocument(): Promise<SchoolNotificationTemplateDocument> {
   const accountInvitation = await loadAccountInvitationDefaultFiles()
   const document: SchoolNotificationTemplateDocument = {
-    'announcement.published': dualChannelFromPlain(
-      '{{announcementTitle}}',
-      '{{announcementBody}}',
-    ),
+    'announcement.published': {
+      email: {
+        subject: '{{schoolName}}: {{announcementTitle}}',
+        body: '<p>{{announcementBody}}</p>',
+      },
+      in_app: {
+        subject: '{{schoolName}}: {{announcementTitle}}',
+        body: '{{announcementBodyShort}}',
+      },
+    },
     'report_card.published': dualChannelFromPlain(
-      'Report card published',
-      'The report card for {{studentName}} is now available.',
+      'Report card — {{studentName}}',
+      '{{periodName}} results for {{classGroupName}} are available.',
     ),
     'attendance.recorded': dualChannelFromPlain(
-      'Attendance update: {{status}}',
-      'Attendance was recorded as {{status}} for session {{sessionTitle}}.',
+      '{{studentName}} — {{statusLabel}}',
+      '{{sessionTitle}} on {{sessionDate}} at {{sessionTime}} ({{classGroupName}})',
     ),
     'assessment.result_recorded': dualChannelFromPlain(
-      'Assessment result recorded',
-      'A result was recorded for {{assessmentTitle}}.',
+      '{{studentName}} — {{assessmentTitle}}',
+      'Score {{scoreDisplay}} · {{subjectName}}',
     ),
     'incident.recorded': dualChannelFromPlain(
-      'Incident: {{incidentTitle}}',
-      '{{incidentDescription}}',
+      '{{studentName}} — {{incidentTitle}}',
+      '{{incidentKindLabel}} on {{incidentDate}}. {{incidentDescription}}',
     ),
     'assessment.due_soon': dualChannelFromPlain(
-      'Assessment due soon: {{assessmentTitle}}',
-      '{{assessmentTitle}} is due on {{dueDate}}.',
+      '{{assessmentTitle}} due {{dueDateLabel}}',
+      '{{subjectName}} · {{classGroupName}} — due {{dueDateLabel}}',
     ),
     'homework.due_soon': dualChannelFromPlain(
-      'Homework due soon: {{homeworkTitle}}',
-      '{{homeworkTitle}} is due on {{dueDate}}.',
+      'Homework due {{dueDateLabel}} — {{classGroupName}}',
+      '{{homeworkTitle}} · {{subjectName}} — due {{dueDateLabel}}',
     ),
     'activity.reminder': dualChannelFromPlain(
-      'Activity starting soon: {{activityName}}',
-      '{{activityName}} starts on {{startDate}}.',
+      'Reminder: {{activityName}}',
+      '{{startDate}} · {{activitySchedule}} ({{coachName}})',
     ),
     'calendar.event_reminder': dualChannelFromPlain(
-      'Upcoming event: {{eventTitle}}',
-      '{{eventTitle}} starts on {{startDate}}.',
+      'Reminder: {{eventTitle}}',
+      '{{dateRange}} · {{scopeLabel}}',
     ),
     'account_invitation': {
       email: {

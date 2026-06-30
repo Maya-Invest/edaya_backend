@@ -13,8 +13,8 @@ export const detailHref = {
 		appPath('/(app)/classes/[classId]/students/[[id]]', { classId, id }),
 	classSubject: (classId: string, id: string): ResolvedPathname =>
 		appPath('/(app)/classes/[classId]/teaching/[[id]]', { classId, id }),
-	classPlanning: (classId: string, id: string): ResolvedPathname =>
-		appPath('/(app)/classes/[classId]/timetable/[[id]]', { classId, id }),
+	classPlanning: (classId: string, id?: string): ResolvedPathname =>
+		appPath('/(app)/classes/[classId]/timetable/[[id]]', id ? { classId, id } : { classId }),
 	classEvaluation: (classId: string, id: string): ResolvedPathname =>
 		appPath('/(app)/classes/[classId]/evaluations/[[id]]', { classId, id }),
 	classTeachingSubject: (classId: string, id: string): ResolvedPathname =>

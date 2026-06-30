@@ -2,8 +2,13 @@ import type { Assessment } from '../../domains'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
 import { cancelNotificationDeliveries } from '../deliver-notification'
+import { formatNotificationDueLabel } from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
-import { resolveSchoolName } from '../templates/resolve-school-name'
+import {
+  resolveClassGroupName,
+  resolveSubjectNameFromClassSubject,
+} from '../templates/resolve-notification-labels'
+import { resolveSchoolContext } from '../templates/resolve-school-context'
 
 export const ASSESSMENT_DUE_SOON_EVENT_KEY = 'assessment.due_soon'
 export const ASSESSMENT_DUE_SOON_LEAD_DAYS = 3
@@ -74,14 +79,22 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
       return null
     }
 
-    const schoolName = await resolveSchoolName(context.repositories, classGroup.schoolId)
+    const { schoolName, timeZone } = await resolveSchoolContext(context.repositories, classGroup.schoolId)
+    const [classGroupName, subjectName] = await Promise.all([
+      resolveClassGroupName(context.repositories, entity.classGroupId),
+      resolveSubjectNameFromClassSubject(context.repositories, entity.classSubjectId),
+    ])
+    const dueDateLabel = formatNotificationDueLabel(entity.dueAt, timeZone)
     const content = await renderNotificationEnqueueContent(context.templateService, {
       schoolId: classGroup.schoolId,
       templateKey: ASSESSMENT_DUE_SOON_EVENT_KEY,
       variables: {
         schoolName,
         assessmentTitle: entity.title,
-        dueDate: entity.dueAt.toISOString().slice(0, 10),
+        dueDate: dueDateLabel,
+        dueDateLabel,
+        classGroupName,
+        subjectName,
       },
     })
 

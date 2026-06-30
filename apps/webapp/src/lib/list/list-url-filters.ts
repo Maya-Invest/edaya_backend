@@ -16,6 +16,7 @@ const teachingListFiltersCodec = defineUrlFilterCodec({
 
 const planningListFiltersCodec = defineUrlFilterCodec({
 	q: { type: 'search', default: '' },
+	week: { type: 'string', default: '' },
 });
 
 const classStudentListFiltersCodec = defineUrlFilterCodec({

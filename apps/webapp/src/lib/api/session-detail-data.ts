@@ -10,6 +10,7 @@ import type {
 	SessionSubjectMatterStatus,
 } from '$lib/types/session-detail';
 import { entitiesByIds, recordsForFieldIds } from '$lib/api/entity-list-filters';
+import { fetchClassPeopleSources, mapStudents } from '$lib/api/people-data';
 import { fetchClassTeachingLogSources } from '$lib/api/teaching-log-data';
 
 type SchoolClient = ReturnType<typeof getBrowserSchoolClient>;
@@ -110,7 +111,6 @@ export function buildSessionDetail(input: {
 export async function loadSessionDetail(
 	client: SchoolClient,
 	sessionId: string,
-	students: Student[],
 ): Promise<SessionDetail | null> {
 	let session: SessionRaw;
 	try {
@@ -120,7 +120,7 @@ export async function loadSessionDetail(
 		return null;
 	}
 
-	const classStudents = students.filter(student => student.classId === session.classGroupId);
+	const classStudents = mapStudents(await fetchClassPeopleSources(client, session.classGroupId));
 	const classSubjectId = session.classSubjectId ?? '';
 	const [attendanceRaw, logSources, classSubjectMattersRaw] = await Promise.all([
 		client.entities.attendance.list(recordsForFieldIds('sessionId', [sessionId])),

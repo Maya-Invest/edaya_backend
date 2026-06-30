@@ -1,5 +1,6 @@
 import { assertCommandActorKind } from "@edaya/core";
-import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
+import { executeSchoolCommand } from "@/lib/school-api/execute-command";
+import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import type { CoreCommandConfig } from "@/lib/school-api/registry";
 import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 
@@ -9,7 +10,7 @@ export function createCommandMutationResolver(commandConfig: CoreCommandConfig) 
     assertCommandActorKind(actor, { serviceOnly: commandConfig.serviceOnly });
 
     const service = context.get("schoolApp").forActor(actor);
-    const result = await dispatchCoreCommand(service, commandConfig.methodName, args.input);
+    const result = await executeSchoolCommand(context, service, commandConfig.methodName, args.input);
 
     if (result === undefined || result === null) {
       return { message: `${commandConfig.publicName} completed` };

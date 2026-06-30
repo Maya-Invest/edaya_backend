@@ -7,7 +7,7 @@ import {
 } from '@edaya/api-client/openapi-bindings'
 import app from '../../../apps/api/src/app.ts'
 import { buildClientBindings } from '../../../apps/api/src/lib/school-api/client-bindings.ts'
-import { resetApiRuntimesForTests } from '../../../apps/api/src/runtime/index.ts'
+import { resetApiRuntimesForTests } from '../../../apps/api/src/runtime/local/registry.ts'
 import { loadLocalProcessEnv } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
 import { resolveArgvPath, trackedOpenApiPath } from './paths.ts'
 
