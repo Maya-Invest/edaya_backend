@@ -1,6 +1,8 @@
 # Edaya Core
 
-Monorepo for the Edaya platform: a **Hono API** (`apps/api`), a **SvelteKit webapp** (`apps/webapp`), shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
+Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`), **cron** jobs, shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
+
+Web frontends live in the separate **[edaya_web](../edaya_web)** repo (`@edaya/webapp`, `@edaya/saas-admin`).
 
 Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build).
 
@@ -10,8 +12,7 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 maya_school_core/
 ├── apps/
 │   ├── api/                              @edaya/api — Hono API (Node + Cloudflare Worker)
-│   ├── cron/                             @edaya/cron — scheduled jobs (Node + Worker)
-│   └── webapp/                           @edaya/webapp — SvelteKit UI (Cloudflare Pages)
+│   └── cron/                             @edaya/cron — scheduled jobs (Node + Worker)
 ├── package/
 │   ├── domain-core/                      @edaya/core — domain, services, ports
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
@@ -29,12 +30,12 @@ maya_school_core/
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; platform migrations live in `package/integration-*`; the API wires runtime and HTTP; the webapp consumes the API through `@edaya/api-client`.
+The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; platform migrations live in `package/integration-*`; the API wires runtime and HTTP. Web clients consume the API through `@edaya/api-client` in **edaya_web**.
 
 ```mermaid
 flowchart TB
-  subgraph clients["Clients"]
-    Webapp["@edaya/webapp<br/>SvelteKit · Cloudflare Pages"]
+  subgraph clients["Clients (edaya_web)"]
+    Webapp["@edaya/webapp<br/>SvelteKit · Cloudflare"]
   end
 
   subgraph api_layer["API"]
@@ -64,7 +65,7 @@ flowchart TB
 
 ### Request flow
 
-1. **Webapp** — The static browser SPA calls the API through `@edaya/api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
+1. **Web clients** — Static browser SPAs in **edaya_web** call the API through `@edaya/api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
 3. **Runtime** — Opens the school Postgres DB and auth store (D1 or local SQLite), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
 4. **Core** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
@@ -96,7 +97,7 @@ More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [do
 | Package | Path | Role |
 |---------|------|------|
 | `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, dev seed, Worker host wiring |
-| `@edaya/webapp` | `apps/webapp` | SvelteKit UI (Cloudflare Pages adapter) |
+| `@edaya/cron` | `apps/cron` | Scheduled jobs (Node + Cloudflare Workers) |
 
 ### Package workspace
 
@@ -127,26 +128,27 @@ More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [do
 bun install
 
 cp apps/api/.env.example apps/api/.env
-cp apps/webapp/.env.example apps/webapp/.env
 ```
+
+Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env.example apps/webapp/.env` there).
 
 ## Local development
 
 ```sh
-bun dev
+bun dev   # API only
 ```
 
 | Service | URL |
 |---------|-----|
-| Webapp | http://localhost:5173 |
 | API | http://localhost:9999 |
 | OpenAPI reference | http://localhost:9999/reference |
 
-Or run apps separately:
+Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
+
+Or run the API alone:
 
 ```sh
 cd apps/api && bun dev          # Node API
-cd apps/webapp && bun dev       # SvelteKit
 ```
 
 **Worker runtime** (API on Cloudflare):
@@ -156,7 +158,7 @@ cp apps/api/.dev.vars.example apps/api/.dev.vars
 cd apps/api && bun run dev:worker
 ```
 
-See [docs/local-dev.md](./docs/local-dev.md) for database options, dev seed, troubleshooting, and how the webapp connects to the API.
+See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database options, dev seed, and troubleshooting.
 
 ## Commands
 
@@ -166,21 +168,16 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 | Command | Description |
 |---------|-------------|
-| `bun dev` | Start API + webapp in watch mode |
+| `bun dev` | Start API in watch mode |
 | `bun seed` | Run all dev seeds via HTTP (`@edaya/seeding seed:all`) |
 | `bun run seed:init` | Alias for `bun seed` — full HTTP demo seed (fresh clone / after `rm -rf .data`) |
 | `bun run seed:auth` | Provision Better Auth user accounts only |
 | `bun run seed:smoke` | Minimal smoke seed for quick verification |
 | `bun run seed:remote` | Seed a remote API instance |
 | `bun run deploy:api:staging` | Deploy API to Cloudflare Workers (staging) |
-| `bun run deploy:webapp:staging` | Build + deploy webapp to staging |
 | `bun run seed:smoke:staging` | Sign-in + effective-grants smoke against staging URL |
 | `cd apps/api && bun dev` | API only (Node, port 9999) |
 | `bun run dev:worker` | API only (Cloudflare Worker) |
-| `cd apps/webapp && bun dev` | Webapp only (port 5173) |
-| `cd apps/webapp && bun run preview` | Preview production build |
-| `cd apps/webapp && bun run preview:worker` | Preview webapp on Cloudflare Workers locally |
-| `bun run deploy:webapp` | Build and deploy webapp to Cloudflare Workers |
 | `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
 | `bun run deploy:api` | Deploy API to Cloudflare Workers (production) |
 
@@ -214,14 +211,15 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 
 | Command | Description |
 |---------|-------------|
-| `bun run generated:update` | Export OpenAPI and update tracked webapp types + API client bindings |
+| `bun run generated:update` | Export OpenAPI and update tracked API client bindings |
 | `bun run generated:check` | Generate in a temporary directory and fail if tracked artifacts drift |
 | `bun run openapi:generate` | Compatibility alias for updating all tracked OpenAPI artifacts |
 | `bun run openapi:check` | Compatibility alias for `generated:check` |
 | `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/integrations) |
 | `bun run export-openapi` | Export OpenAPI JSON only |
 | `bun tooling/repo/openapi/generate-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
-| `cd apps/webapp && bun run openapi:generate` | Regenerate `schema.d.ts` from local OpenAPI JSON (webapp-only; repo pipeline uses `tooling/repo/openapi/generate-schema.ts`) |
+
+TypeScript schema types for web apps are generated in **edaya_web** (`bun run openapi:generate`).
 
 ### Quality & CI
 
@@ -236,7 +234,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run test` | Repository-tooling, unit, and integration tests |
 | `bun run test:remote` | Integration tests against a real Postgres database |
 | `bun run test:coverage` | Tests with coverage (where supported) |
-| `bun run build` | Build deployable apps (webapp + API Node bundle) |
+| `bun run build` | Build deployable API bundle |
 | `bun run verify` | Complete non-mutating CI verification path |
 | `bun run fullcheck` | Compatibility alias for `verify` |
 
@@ -252,11 +250,9 @@ bun --filter @edaya/core test
 bun --filter @edaya/api lint
 bun --filter @edaya/api check
 bun --filter @edaya/api test
-
-bun --filter @edaya/webapp lint
-bun --filter @edaya/webapp check
-bun --filter @edaya/webapp test
 ```
+
+Webapp tests run from **edaya_web** (`bun --filter @edaya/webapp test`).
 
 ## Testing
 
@@ -268,14 +264,12 @@ Tests are split by layer. Run everything with `bun run test` (repository tooling
 | API unit | `apps/api/tests/` | HTTP helpers, runtime, route builders, thin route tests |
 | API harness | `apps/api/tests/support/core-route-harness.ts` | Shared PGlite app + auth helpers (also used by integration-tests) |
 | Cross-package | `tooling/integration-tests/src/` | Seeds, auth flows, PGlite persistence, full route scenarios |
-| Webapp mappers | `apps/webapp/src/lib/api/*.test.ts` | OpenAPI → UI type mapping logic |
 
 **Conventions**
 
 - Put pure domain tests in `@edaya/core`.
 - Put API transport/runtime tests in `apps/api/tests/`, mirroring `src/` layout (`http/`, `runtime/`, `routes/`, `lib/`).
 - Put scenarios that span seeding, auth, and Postgres in `@edaya/integration-tests`.
-- Colocate webapp mapper tests next to `*-data.ts` files; they run via `bun --filter @edaya/webapp test`.
 - Integration-tests import the canonical route harness from `@api-tests/support/core-route-harness` (resolved to `apps/api/tests/support/`).
 
 ## Environment
@@ -291,9 +285,4 @@ Tests are split by layer. Run everything with `bun run test` (repository tooling
 
 Seeding uses per-school `seedingApiKey` values from `@edaya/dev-fixtures` — no API env key required.
 
-**Webapp** (`apps/webapp/.env`):
-
-| Variable | Purpose |
-|----------|---------|
-| `API_URL` | Vite development proxy target; defaults to `http://localhost:9999` |
-| `PUBLIC_API_URL` | Browser-facing API origin; leave empty locally to use the same-origin proxy |
+Webapp env vars live in **edaya_web** (`apps/webapp/.env`).

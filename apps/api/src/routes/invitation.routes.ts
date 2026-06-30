@@ -4,6 +4,7 @@ import { normalizeAuthSession, resolveAuthenticatedSession } from "@/http/depend
 import { conflictResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
+import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import {
   type AccountInvitation,
@@ -58,6 +59,14 @@ export const invitationPreviewRoute = createRoute({
   path: "/public/invitations/{token}",
   tags: ["Public Invitations"],
   summary: "Preview an account invitation",
+  ...clientRouteOperation({
+    namespace: "public",
+    clientKey: "previewInvitation",
+    path: "public/invitations/{token}",
+    pathParams: ["token"],
+    basePath: "root",
+    responseSchemaName: "InvitationPreviewResponse",
+  }),
   request: {
     params: z.object({
       token: z.string().min(1),
@@ -75,6 +84,14 @@ export const acceptInvitationRoute = createRoute({
   path: "/public/invitations/{token}/accept",
   tags: ["Public Invitations"],
   summary: "Accept an account invitation for the signed-in user",
+  ...clientRouteOperation({
+    namespace: "public",
+    clientKey: "acceptInvitation",
+    path: "public/invitations/{token}/accept",
+    pathParams: ["token"],
+    basePath: "root",
+    responseSchemaName: "AcceptInvitationResponse",
+  }),
   request: {
     params: z.object({
       token: z.string().min(1),

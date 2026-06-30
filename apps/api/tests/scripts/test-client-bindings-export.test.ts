@@ -1,24 +1,22 @@
 import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import {
-  buildClientBindings,
-  CLIENT_BINDINGS_OPENAPI_EXTENSION,
-} from "@/lib/school-api/client-bindings";
+import { buildClientBindings } from "@/lib/school-api/client-bindings";
+import { extractClientBindingsFromOpenApi } from "@edaya/api-client/openapi-bindings";
 
 const openApiPath = resolve(
   import.meta.dirname,
-  "../../../../apps/webapp/src/lib/api/openapi.json",
+  "../../../../tooling/repo/fixtures/openapi.json",
 );
 
 describe("exported OpenAPI client bindings", () => {
-  it("embeds the registry bindings under info.x-edaya-client-bindings", () => {
+  it("encodes registry bindings on core operation extensions", () => {
     const openApi = JSON.parse(readFileSync(openApiPath, "utf8")) as {
+      paths?: Record<string, Record<string, Record<string, unknown>>>;
       info?: Record<string, unknown>;
     };
 
-    expect(openApi.info?.[CLIENT_BINDINGS_OPENAPI_EXTENSION]).toEqual(
-      buildClientBindings(),
-    );
+    expect(openApi.info?.["x-edaya-client-bindings"]).toBeUndefined();
+    expect(extractClientBindingsFromOpenApi(openApi)).toEqual(buildClientBindings());
   });
 });

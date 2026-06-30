@@ -13,6 +13,7 @@ import { isGradeLevelTemplateKey } from "@/lib/onboarding/structure-templates";
 import { isOnboardingStaffInviteRoleKey } from "@/lib/onboarding/staff-invite-roles";
 import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
+import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolResponseSchema } from "@/lib/school-api/schemas/entities";
@@ -73,6 +74,13 @@ export const onboardingRegisterSchoolRoute = createRoute({
   path: schoolApiPath("onboarding", "register-school"),
   tags: ["Core Onboarding"],
   summary: "Register a school and make the current user its owner (dev bootstrap)",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "registerSchool",
+    path: "onboarding/register-school",
+    requestSchemaName: "OnboardingRegisterSchoolRequest",
+    responseSchemaName: "School",
+  }),
   request: {
     body: jsonContent(onboardingRegisterSchoolRequestSchema, "School registration payload"),
   },
@@ -139,6 +147,13 @@ export const onboardingApplyStructureTemplateRoute = createRoute({
   path: schoolApiPath("onboarding", "apply-structure-template"),
   tags: ["Core Onboarding"],
   summary: "Apply collège / lycée structure template for the current school",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "applyStructureTemplate",
+    path: "onboarding/apply-structure-template",
+    requestSchemaName: "OnboardingApplyStructureTemplateRequest",
+    responseSchemaName: "OnboardingApplyStructureTemplateResponse",
+  }),
   request: {
     body: jsonContent(onboardingApplyStructureTemplateRequestSchema, "Structure template payload"),
   },
@@ -170,6 +185,13 @@ export const onboardingInviteStaffMembersRoute = createRoute({
   path: schoolApiPath("onboarding", "invite-staff-members"),
   tags: ["Core Onboarding"],
   summary: "Invite staff members during school onboarding",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "inviteStaffMembers",
+    path: "onboarding/invite-staff-members",
+    requestSchemaName: "OnboardingInviteStaffMembersRequest",
+    responseSchemaName: "OnboardingInviteStaffMembersResponse",
+  }),
   request: {
     body: jsonContent(onboardingStaffInviteRequestSchema, "Staff invitation payload"),
   },

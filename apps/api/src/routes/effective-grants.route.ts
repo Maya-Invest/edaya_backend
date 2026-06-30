@@ -7,6 +7,7 @@ import type { AppRouteHandler } from "@/http/types";
 import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
 import { requireInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
 import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/entities";
+import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 
 const commandMessageSchema = createMessageObjectSchema();
@@ -29,6 +30,12 @@ export const getEffectiveGrantsRoute = createRoute({
   path: schoolApiPath("authorization", "effective-grants"),
   tags: ["Core Authorization"],
   summary: "Get current actor effective grants",
+  ...clientRouteOperation({
+    namespace: "authorization",
+    clientKey: "effectiveGrants",
+    path: "authorization/effective-grants",
+    responseSchemaName: "EffectiveGrantsResponse",
+  }),
   responses: {
     [HttpStatusCodes.OK]: jsonContent(effectiveGrantsResponseSchema, "Current actor authorization snapshot"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Missing or invalid authorization session"),

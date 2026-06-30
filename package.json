@@ -9,7 +9,7 @@
     "tooling/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --filter=@edaya/api --filter=@edaya/webapp",
+    "dev": "turbo run dev --filter=@edaya/api",
     "dev:worker": "bun --filter @edaya/api dev:worker",
     "dev:cron": "bun --filter @edaya/cron dev",
     "dev:cron:worker": "bun --filter @edaya/cron dev:worker",
@@ -46,8 +46,6 @@
     "deploy:api:staging": "bun --filter @edaya/api deploy:worker:staging",
     "deploy:cron": "bun --filter @edaya/cron deploy:worker",
     "deploy:cron:staging": "bun --filter @edaya/cron deploy:worker:staging",
-    "deploy:webapp": "bun --filter @edaya/webapp deploy",
-    "deploy:webapp:staging": "bun --filter @edaya/webapp deploy:staging",
     "smoke:staging": "bun --filter @edaya/integration-tests smoke:staging",
     "db:generate": "bun --filter @edaya/adaptor-postgres db:generate",
     "db:migrate": "bun --filter @edaya/integration-migrations school:migrate",
@@ -76,13 +74,8 @@
     "@types/node": "^25.9.2",
     "eslint": "^9.39.0",
     "eslint-plugin-format": "^0.1.2",
-    "eslint-plugin-svelte": "^3.19.0",
-    "svelte-eslint-parser": "^1.8.0",
     "tsup": "^8.5.1",
     "turbo": "^2.9.17",
     "typescript": "^6.0.2"
-  },
-  "overrides": {
-    "svelte": "5.56.3"
   }
 }

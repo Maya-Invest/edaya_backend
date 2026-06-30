@@ -7,7 +7,6 @@ import { $ } from 'bun'
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const expectedEnvExamples = [
   'apps/api/.env.example',
-  'apps/webapp/.env.example',
   'tooling/seeding/.env.example',
   'tooling/seeding/.env.staging.example',
 ]

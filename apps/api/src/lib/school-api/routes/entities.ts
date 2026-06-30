@@ -1,4 +1,5 @@
 import { coreEntities } from "@/lib/school-api/registry";
+import { entityRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { arraySchema } from "@/lib/school-api/schemas/helpers";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -33,6 +34,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "list"),
       tags: ["Core Entities"],
       summary: `List ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "list"),
       request: {
         body: jsonContent(entityConfig.querySchema, `${entityConfig.displayName} query`),
       },
@@ -48,6 +50,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "one"),
       tags: ["Core Entities"],
       summary: `Find one ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "one"),
       request: {
         body: jsonContent(entityConfig.querySchema, `${entityConfig.displayName} query`),
       },
@@ -64,6 +67,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "count"),
       tags: ["Core Entities"],
       summary: `Count ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "count"),
       request: {
         body: jsonContent(entityConfig.querySchema, `${entityConfig.displayName} query`),
       },
@@ -79,6 +83,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "{id}"),
       tags: ["Core Entities"],
       summary: `Get ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "get"),
       request: {
         params: idParamSchema,
       },
@@ -95,6 +100,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "save"),
       tags: ["Core Entities"],
       summary: `Save ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "save"),
       request: {
         body: jsonContent(entityConfig.saveSchema, `${entityConfig.displayName} entity`),
       },
@@ -111,6 +117,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "delete"),
       tags: ["Core Entities"],
       summary: `Delete ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "delete"),
       request: {
         body: jsonContent(deleteEntitySchema, `${entityConfig.displayName} delete request`),
       },
@@ -126,6 +133,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "batch-save"),
       tags: ["Core Entities"],
       summary: `Batch save ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "batchSave"),
       request: {
         body: jsonContent(
           z.object({ entities: z.array(entityConfig.saveSchema) }).openapi(`${entityConfig.displayName.replaceAll(" ", "")}BatchSave`),
@@ -145,6 +153,7 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("entities", entityConfig.publicName, "batch-delete"),
       tags: ["Core Entities"],
       summary: `Batch delete ${entityConfig.displayName}`,
+      ...entityRouteOperation(entityConfig, "batchDelete"),
       request: {
         body: jsonContent(batchDeleteSchema, `${entityConfig.displayName} batch delete request`),
       },

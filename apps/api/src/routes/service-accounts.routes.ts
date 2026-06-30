@@ -9,6 +9,7 @@ import {
   updateServiceAccountRequestSchema,
 } from "@/lib/service-accounts/schemas";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
+import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import {
   createServiceAccount,
@@ -26,6 +27,13 @@ export const createServiceAccountRoute = createRoute({
   path: schoolApiPath("service-accounts"),
   tags: ["Core Service Accounts"],
   summary: "Create a school service account and return its API key once",
+  ...clientRouteOperation({
+    namespace: "serviceAccounts",
+    clientKey: "create",
+    path: "service-accounts",
+    requestSchemaName: "CreateServiceAccountRequest",
+    responseSchemaName: "CreateServiceAccountResponse",
+  }),
   request: {
     body: jsonContent(createServiceAccountRequestSchema, "Service account provisioning payload"),
   },
@@ -40,6 +48,13 @@ export const listServiceAccountsRoute = createRoute({
   path: schoolApiPath("service-accounts"),
   tags: ["Core Service Accounts"],
   summary: "List service accounts for the current school",
+  ...clientRouteOperation({
+    namespace: "serviceAccounts",
+    clientKey: "list",
+    path: "service-accounts",
+    responseSchemaName: "ServiceAccountResponse",
+    responseIsArray: true,
+  }),
   responses: {
     [HttpStatusCodes.OK]: jsonContent(z.array(serviceAccountResponseSchema), "Service accounts"),
     ...coreRouteErrorResponses,
@@ -51,6 +66,14 @@ export const updateServiceAccountRoute = createRoute({
   path: schoolApiPath("service-accounts", "{id}"),
   tags: ["Core Service Accounts"],
   summary: "Update a service account display name, roles, or scope grants",
+  ...clientRouteOperation({
+    namespace: "serviceAccounts",
+    clientKey: "update",
+    path: "service-accounts/{id}",
+    pathParams: ["id"],
+    requestSchemaName: "UpdateServiceAccountRequest",
+    responseSchemaName: "ServiceAccountResponse",
+  }),
   request: {
     params: z.object({ id: z.string().trim().min(1) }),
     body: jsonContent(updateServiceAccountRequestSchema, "Service account update payload"),
@@ -66,6 +89,13 @@ export const revokeServiceAccountRoute = createRoute({
   path: schoolApiPath("service-accounts", "{id}", "revoke"),
   tags: ["Core Service Accounts"],
   summary: "Revoke a service account and invalidate its API keys",
+  ...clientRouteOperation({
+    namespace: "serviceAccounts",
+    clientKey: "revoke",
+    path: "service-accounts/{id}/revoke",
+    pathParams: ["id"],
+    responseSchemaName: "ServiceAccountResponse",
+  }),
   request: {
     params: z.object({ id: z.string().trim().min(1) }),
   },
@@ -80,6 +110,13 @@ export const rotateServiceAccountKeyRoute = createRoute({
   path: schoolApiPath("service-accounts", "{id}", "rotate-key"),
   tags: ["Core Service Accounts"],
   summary: "Rotate the API key for a service account",
+  ...clientRouteOperation({
+    namespace: "serviceAccounts",
+    clientKey: "rotateKey",
+    path: "service-accounts/{id}/rotate-key",
+    pathParams: ["id"],
+    responseSchemaName: "RotateServiceAccountKeyResponse",
+  }),
   request: {
     params: z.object({ id: z.string().trim().min(1) }),
   },

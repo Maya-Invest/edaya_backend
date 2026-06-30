@@ -1,10 +1,8 @@
 #!/usr/bin/env bun
 import { exportOpenApi } from './export.ts'
-import { generateClientBindings } from './generate-bindings.ts'
-import { generateSchema } from './generate-schema.ts'
+import { generateClientArtifactsFromOpenApi } from './generate-bindings.ts'
 
 await exportOpenApi()
-await generateSchema()
-generateClientBindings()
+await generateClientArtifactsFromOpenApi()
 
 console.log('Generated API artifacts updated.')

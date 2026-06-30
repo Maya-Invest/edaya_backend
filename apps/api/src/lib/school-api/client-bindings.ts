@@ -5,6 +5,115 @@ import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@edaya/api-client/openapi-bin
 
 export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 
+const manualClientRoutes: Pick<
+  ClientBindingsDocument,
+  "authorization" | "onboarding" | "files" | "serviceAccounts" | "public" | "webhooks"
+> = {
+  authorization: {
+    effectiveGrants: {
+      method: "GET",
+      path: "authorization/effective-grants",
+      responseSchemaName: "EffectiveGrantsResponse",
+    },
+  },
+  onboarding: {
+    registerSchool: {
+      method: "POST",
+      path: "onboarding/register-school",
+      requestSchemaName: "OnboardingRegisterSchoolRequest",
+      responseSchemaName: "School",
+    },
+    applyStructureTemplate: {
+      method: "POST",
+      path: "onboarding/apply-structure-template",
+      requestSchemaName: "OnboardingApplyStructureTemplateRequest",
+      responseSchemaName: "OnboardingApplyStructureTemplateResponse",
+    },
+    inviteStaffMembers: {
+      method: "POST",
+      path: "onboarding/invite-staff-members",
+      requestSchemaName: "OnboardingInviteStaffMembersRequest",
+      responseSchemaName: "OnboardingInviteStaffMembersResponse",
+    },
+  },
+  files: {
+    createUploadIntent: {
+      method: "POST",
+      path: "files/upload-intents",
+      requestSchemaName: "CreateFileUploadIntentRequest",
+      responseSchemaName: "CreateFileUploadIntentResponse",
+    },
+    getDownloadUrl: {
+      method: "GET",
+      path: "files/{attachmentId}/download-url",
+      pathParams: ["attachmentId"],
+      responseSchemaName: "FileDownloadUrlResponse",
+    },
+    getContent: {
+      method: "GET",
+      path: "files/{attachmentId}/content",
+      pathParams: ["attachmentId"],
+    },
+  },
+  serviceAccounts: {
+    create: {
+      method: "POST",
+      path: "service-accounts",
+      requestSchemaName: "CreateServiceAccountRequest",
+      responseSchemaName: "CreateServiceAccountResponse",
+    },
+    list: {
+      method: "GET",
+      path: "service-accounts",
+      responseSchemaName: "ServiceAccountResponse",
+      responseIsArray: true,
+    },
+    update: {
+      method: "PATCH",
+      path: "service-accounts/{id}",
+      pathParams: ["id"],
+      requestSchemaName: "UpdateServiceAccountRequest",
+      responseSchemaName: "ServiceAccountResponse",
+    },
+    revoke: {
+      method: "POST",
+      path: "service-accounts/{id}/revoke",
+      pathParams: ["id"],
+      responseSchemaName: "ServiceAccountResponse",
+    },
+    rotateKey: {
+      method: "POST",
+      path: "service-accounts/{id}/rotate-key",
+      pathParams: ["id"],
+      responseSchemaName: "RotateServiceAccountKeyResponse",
+    },
+  },
+  public: {
+    previewInvitation: {
+      method: "GET",
+      path: "public/invitations/{token}",
+      pathParams: ["token"],
+      basePath: "root",
+      responseSchemaName: "InvitationPreviewResponse",
+    },
+    acceptInvitation: {
+      method: "POST",
+      path: "public/invitations/{token}/accept",
+      pathParams: ["token"],
+      basePath: "root",
+      responseSchemaName: "AcceptInvitationResponse",
+    },
+  },
+  webhooks: {
+    notificationDelivery: {
+      method: "POST",
+      path: "webhooks/notification-delivery",
+      basePath: "root",
+      responseSchemaName: "NotificationDeliveryWebhookResponse",
+    },
+  },
+};
+
 export function buildClientBindings(): ClientBindingsDocument {
   return {
     entities: Object.fromEntries(
@@ -43,5 +152,6 @@ export function buildClientBindings(): ClientBindingsDocument {
         ];
       }),
     ),
+    ...manualClientRoutes,
   };
 }

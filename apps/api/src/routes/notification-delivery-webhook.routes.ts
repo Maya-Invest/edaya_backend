@@ -1,4 +1,5 @@
 import type { AppRouteHandler } from "@/http/types";
+import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { resolveNotificationDeliveryWebhookAdapter } from "@/runtime/shared/adapters/notification-delivery-webhook";
 import { createSystemActorMetadata, MessageDeliveryStatus } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
@@ -24,6 +25,13 @@ export const notificationDeliveryWebhookRoute = createRoute({
   path: "/webhooks/notification-delivery",
   tags: ["Webhooks"],
   summary: "Notification delivery lifecycle webhook",
+  ...clientRouteOperation({
+    namespace: "webhooks",
+    clientKey: "notificationDelivery",
+    path: "webhooks/notification-delivery",
+    basePath: "root",
+    responseSchemaName: "NotificationDeliveryWebhookResponse",
+  }),
   request: {},
   responses: {
     [HttpStatusCodes.OK]: jsonContent(webhookResponseSchema, "Processed delivery events"),

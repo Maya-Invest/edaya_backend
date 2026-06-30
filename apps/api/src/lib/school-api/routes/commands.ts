@@ -3,6 +3,7 @@ import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { executeSchoolCommand } from "@/lib/school-api/execute-command";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
+import { commandRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { assertCommandActorKind } from "@edaya/core";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -41,6 +42,7 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("commands", commandConfig.publicName),
       tags: ["Core Commands"],
       summary: commandConfig.publicName,
+      ...commandRouteOperation(commandConfig),
       request: {
         body: jsonContent(commandConfig.requestSchema, `${commandConfig.publicName} payload`),
       },

@@ -3,11 +3,14 @@ import process from 'node:process'
 
 export const repoRoot = resolve(import.meta.dirname, '../../..')
 
-export const trackedOpenApiPath = resolve(repoRoot, 'apps/webapp/src/lib/api/openapi.json')
-export const trackedSchemaPath = resolve(repoRoot, 'apps/webapp/src/lib/api/schema.d.ts')
+export const trackedOpenApiPath = resolve(repoRoot, 'tooling/repo/fixtures/openapi.json')
 export const trackedClientBindingsPath = resolve(
   repoRoot,
   'package/generated-api-client/src/generated/client-bindings.ts',
+)
+export const trackedCreateClientPath = resolve(
+  repoRoot,
+  'package/generated-api-client/src/generated/create-client.ts',
 )
 
 export function resolveArgvPath(flag: string, defaultPath: string): string {

@@ -1,11 +1,14 @@
 # Local development
 
-Run the API and webapp together on your machine. The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@edaya/api-client`. In dev, Vite proxies `/core`, `/auth`, `/doc`, and `/reference` to the API so cookies and CORS work without extra setup.
+Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/saas-admin`) live in the sibling **[edaya_web](../../edaya_web/README.MD)** repo.
+
+The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@edaya/api-client`. In dev, Vite proxies `/core`, `/auth`, `/doc`, and `/reference` to the API so cookies and CORS work without extra setup.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (repo `packageManager`: `bun@1.3.14`)
-- From the repo root: `bun install`
+- From the **edaya** repo root: `bun install`
+- **edaya_web** checked out as a sibling directory for the webapp UI
 
 ## First-time setup
 
@@ -13,26 +16,19 @@ Run the API and webapp together on your machine. The webapp is a **static SPA** 
 # API — persisted PGlite + auth SQLite under repo-root .data/
 cp apps/api/.env.example apps/api/.env
 
-# Webapp — Vite proxy target + optional production API URL
+# Webapp — in edaya_web
+cd ../edaya_web
 cp apps/webapp/.env.example apps/webapp/.env
 ```
 
-## Start both apps
-
-From the repo root:
+## Start API + webapp
 
 ```sh
-bun dev
-```
+# Terminal 1 — API on http://localhost:9999 (from edaya/)
+cd edaya && bun --filter @edaya/api dev
 
-Or in separate terminals:
-
-```sh
-# Terminal 1 — API on http://localhost:9999
-cd apps/api && bun dev
-
-# Terminal 2 — Webapp on http://localhost:5173
-cd apps/webapp && bun dev
+# Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
+cd edaya_web && bun --filter @edaya/webapp dev
 ```
 
 ## URLs

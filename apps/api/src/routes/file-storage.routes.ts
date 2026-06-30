@@ -1,6 +1,7 @@
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
+import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import {
   allowsPublicInlineAttachmentContent,
@@ -51,6 +52,13 @@ export const createFileUploadIntentRoute = createRoute({
   path: schoolApiPath("files", "upload-intents"),
   tags: ["Files"],
   summary: "Create a presigned upload URL for a new attachment",
+  ...clientRouteOperation({
+    namespace: "files",
+    clientKey: "createUploadIntent",
+    path: "files/upload-intents",
+    requestSchemaName: "CreateFileUploadIntentRequest",
+    responseSchemaName: "CreateFileUploadIntentResponse",
+  }),
   request: {
     body: jsonContent(uploadIntentRequestSchema, "Upload intent payload"),
   },
@@ -65,6 +73,13 @@ export const getFileDownloadUrlRoute = createRoute({
   path: schoolApiPath("files", "{attachmentId}", "download-url"),
   tags: ["Files"],
   summary: "Create a presigned download URL for an attachment",
+  ...clientRouteOperation({
+    namespace: "files",
+    clientKey: "getDownloadUrl",
+    path: "files/{attachmentId}/download-url",
+    pathParams: ["attachmentId"],
+    responseSchemaName: "FileDownloadUrlResponse",
+  }),
   request: {
     params: z.object({
       attachmentId: z.string().min(1),
@@ -82,6 +97,12 @@ export const getFileContentRoute = createRoute({
   path: schoolApiPath("files", "{attachmentId}", "content"),
   tags: ["Files"],
   summary: "Redirect to a presigned download URL for attachment content",
+  ...clientRouteOperation({
+    namespace: "files",
+    clientKey: "getContent",
+    path: "files/{attachmentId}/content",
+    pathParams: ["attachmentId"],
+  }),
   request: {
     params: z.object({
       attachmentId: z.string().min(1),

@@ -2,6 +2,7 @@ import type { GetSchoolOverviewInput } from "@edaya/core";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";
+import { queryRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -17,6 +18,7 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
       path: schoolApiPath("queries", queryConfig.publicName),
       tags: ["Core Queries"],
       summary: queryConfig.publicName,
+      ...queryRouteOperation(queryConfig),
       request: {
         body: jsonContent(queryConfig.requestSchema, `${queryConfig.publicName} payload`),
       },
