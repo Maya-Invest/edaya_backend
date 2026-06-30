@@ -8,8 +8,10 @@ import {
 import type { AppRouteHandler } from "@/http/types";
 import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
 import { applyStructureTemplate } from "@/lib/onboarding/apply-structure-template";
+import { inviteStaffMembers } from "@/lib/onboarding/invite-staff-members";
 import { isGradeLevelTemplateKey } from "@/lib/onboarding/structure-templates";
-import { shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
+import { isOnboardingStaffInviteRoleKey } from "@/lib/onboarding/staff-invite-roles";
+import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
@@ -53,6 +55,18 @@ const onboardingApplyStructureTemplateResponseSchema = z.object({
   subjectCount: z.number().int(),
   classSubjectCount: z.number().int(),
 }).openapi("OnboardingApplyStructureTemplateResponse");
+
+const onboardingStaffInviteRequestSchema = z.object({
+  invites: z.array(z.object({
+    email: z.string().trim().email(),
+    role: z.string().trim().min(1).refine(isOnboardingStaffInviteRoleKey, "Invalid staff invite role"),
+  })),
+}).openapi("OnboardingInviteStaffMembersRequest");
+
+const onboardingStaffInviteResponseSchema = z.object({
+  invitedCount: z.number().int(),
+  accessRolesEnsured: z.number().int(),
+}).openapi("OnboardingInviteStaffMembersResponse");
 
 export const onboardingRegisterSchoolRoute = createRoute({
   method: "post",
@@ -144,6 +158,39 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
 
   try {
     const result = await applyStructureTemplate(c.get("schoolApp"), actor, body);
+    return c.json(result, HttpStatusCodes.OK);
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
+
+export const onboardingInviteStaffMembersRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("onboarding", "invite-staff-members"),
+  tags: ["Core Onboarding"],
+  summary: "Invite staff members during school onboarding",
+  request: {
+    body: jsonContent(onboardingStaffInviteRequestSchema, "Staff invitation payload"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(onboardingStaffInviteResponseSchema, "Invitation summary"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const onboardingInviteStaffMembersHandler: AppRouteHandler<typeof onboardingInviteStaffMembersRoute> = async (c) => {
+  const actor = c.get("actor");
+  if (!actor) {
+    return unauthorizedResponse(c);
+  }
+
+  const body = c.req.valid("json");
+
+  try {
+    const result = await inviteStaffMembers(c.get("schoolApp"), actor, body, {
+      inviteBaseUrl: resolveInviteBaseUrl(c.env),
+    });
     return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {

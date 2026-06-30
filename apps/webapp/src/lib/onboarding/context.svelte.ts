@@ -59,6 +59,11 @@ class OnboardingContext {
 		this.persist();
 	}
 
+	markStaffStepSubmitted() {
+		this.draft.staffStepSubmitted = true;
+		this.persist();
+	}
+
 	markWizardCompleted() {
 		this.draft.wizardCompleted = true;
 		this.persist();

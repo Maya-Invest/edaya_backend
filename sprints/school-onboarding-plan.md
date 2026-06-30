@@ -1,6 +1,6 @@
 # School Onboarding — Sprint Plan
 
-> **Status:** En cours (Phases 0–4 implémentées ; Phase 5+ à implémenter)  
+> **Status:** En cours (Phases 0–6 implémentées ; **prochaine : Phase 7**)  
 > **Created:** 2026-06-28  
 > **Scope:** Inscription publique, écran auth split login/signup, assistant de configuration école (remplace le seeding manuel pour les nouveaux comptes)  
 > **Depends on:** Better Auth (done), `POST /core/onboarding/register-school` (done), invitations staff (Phase 5 webapp — en cours), `@edaya/dev-fixtures` (templates collège/lycée)  
@@ -18,9 +18,10 @@ Cocher quand la phase (ou sous-phase) est terminée et mergée.
 - [x] **Phase 3** — Shell assistant + barre de progression
 - [x] **Phase 4** — Étape 1 : identité école + année / période
 - [x] **Phase 5** — Étape 2 : modèle établissement + classes + curriculum
-- [ ] **Phase 6** — Étape 3 : invitations staff
+- [x] **Phase 6** — Étape 3 : invitations staff
 - [ ] **Phase 7** — Étape 4 : sortie assistant + checklist
 - [ ] **Phase 8** — Cutover dev (seeding optionnel vs assistant)
+- [ ] **Phase 9** — Templates curriculum par niveau (matières + chapitres par promo)
 
 ---
 
@@ -280,7 +281,7 @@ Route : `apps/webapp/src/routes/onboarding/+layout.svelte` + sous-routes ou quer
 Extraire de `@edaya/dev-fixtures` vers `package/onboarding-templates/` (ou dossier dédié) :
 
 - [x] Modèles **Collège** (6e–3e) et **Lycée** (2nde, 1ère, Terminale) — templates API (`structure-templates.ts`)
-- [x] Par niveau : matières par défaut + chapitres (`Subject` / `SubjectMatter`) — 6 matières de base
+- [x] Matières de base + chapitres placeholder (`Subject` / `SubjectMatter`) — 6 matières identiques pour toutes les promos *(enrichissement par niveau → Phase 9)*
 - [x] Mapping niveau → `GradeLevel` records
 
 #### 5.2 UI sélection modèle
@@ -326,10 +327,10 @@ Option B : enchaîner les commandes existantes depuis le client (plus de requêt
 | Email | requis |
 | Profil / rôle | select prédéfini (Directeur adj., CPE, Professeur, Secrétaire, …) → map permissions |
 
-- [ ] Lignes add/remove (pattern liste modale app-shell)
-- [ ] `registerStaffMember` + `sendAccountInvitation: true` par ligne
-- [ ] Bouton « Passer cette étape » (0 invitation OK)
-- [ ] Réutiliser templates Novu `account_invitation`
+- [x] Lignes add/remove (pattern liste modale app-shell)
+- [x] `registerStaffMember` + `sendAccountInvitation: true` par ligne
+- [x] Bouton « Passer cette étape » (0 invitation OK)
+- [x] Réutiliser templates Novu `account_invitation`
 
 **Done when :** invitations envoyées par email réel ; staff visible dans menu École après onboarding complet.
 
@@ -378,6 +379,64 @@ bun dev
 
 ---
 
+### Phase 9 — Templates curriculum par niveau
+
+**Effort estimé :** 8–12 h  
+**PR suggérée :** `feature/onboarding-grade-curriculum-templates`  
+**Depends on :** Phase 5 (batch structure)  
+**Bloque :** rien — peut partir en parallèle de la Phase 8
+
+**Problème :** la Phase 5 crée les mêmes 6 matières pour toutes les promos (6e = Terminale), avec un seul chapitre « Programme de base ». Le logbook et la configuration matières manquent de réalisme après le wizard.
+
+**Objectif :** différencier matières et chapitres par `GradeLevelTemplateKey` (6e, 5e, … Terminale), sans changer l’UI du wizard (étape 2 inchangée).
+
+#### 9.1 Modèle templates
+
+- [ ] `GradeLevelTemplateKey → SubjectTemplate[]` (références par `code` : `MATH`, `FR`, …)
+- [ ] `SubjectTemplate → SubjectMatter[]` (chapitres ordonnés, ≥ 2 par matière)
+- [ ] Catalogue école **dédupliqué par code** — une entité `Subject` par code, réutilisée entre promos
+- [ ] Chapitres (`SubjectMatter`) : communs ou spécifiques par niveau (ex. « Nombres et calcul » en 6e, « Dérivation » en Terminale)
+- [ ] Source unique partagée avec `@edaya/dev-fixtures` (éviter divergence seed / onboarding)
+
+#### 9.2 Contenu v1 (générique EDAYA, pas référentiel officiel FR)
+
+| Niveau | Matières |
+|--------|----------|
+| 6e – 3e (collège) | 6 de base : Maths, Français, Histoire-Géo, Sciences, Anglais, EPS |
+| 2nde | base collège + LV2 (optionnel v1) |
+| 1ère / Terminale | base lycée + Philosophie + Physique-Chimie *(aligné `extended-dataset`)* |
+
+Hors scope v1 : filières S / ES / L, options pro (AO), référentiel Éducation nationale.
+
+#### 9.3 API
+
+- [ ] Étendre `apps/api/src/lib/onboarding/structure-templates.ts` — templates par niveau
+- [ ] Adapter `apply-structure-template.ts` :
+  - créer le catalogue `Subject` une fois (par code)
+  - pour chaque classe : n’offrir que les matières du template de sa promo
+  - créer les `SubjectMatter` et `ClassSubjectMatter` correspondants
+- [ ] Tests intégration :
+  - `6e A` ≠ `Terminale A` (nombre et types de matières)
+  - chapitres multiples par matière, statut `NotStarted`
+  - pas de régression si une seule promo configurée
+
+#### 9.4 Webapp
+
+- [ ] Aucun changement formulaire étape 2 (comportement transparent)
+- [ ] *(Optionnel)* preview récap : « X matières · Y chapitres par niveau » avant validation
+- [ ] Checklist Phase 7 : lien Configuration matières reste pour affinage manuel
+
+#### 9.5 Fichiers clés
+
+- `apps/api/src/lib/onboarding/structure-templates.ts`
+- `apps/api/src/lib/onboarding/apply-structure-template.ts`
+- `testing/dev-fixtures/src/dataset.ts`, `extended-dataset.ts` (source à unifier)
+- `apps/api/tests/routes/test-onboarding-apply-structure-route.test.ts`
+
+**Done when :** après wizard, le logbook d’une 6e et d’une Terminale affichent des matières **différentes** ; chaque matière a ≥ 2 chapitres exploitables pour la progression.
+
+---
+
 ## 6. Décisions produit à trancher
 
 | # | Question | Recommandation v1 |
@@ -385,7 +444,7 @@ bun dev
 | D1 | Signup : mot de passe ou OTP uniquement ? | **Mot de passe** pour owner (pattern invite) ; OTP reste pour login rapide |
 | D2 | Vérification email obligatoire avant wizard ? | **Oui** — évite comptes jetables |
 | D3 | Étape 3 staff obligatoire ? | **Non** — skippable |
-| D4 | Templates pédagogiques | Générique EDAYA (fixtures) ; référentiel officiel FR en v2 |
+| D4 | Templates pédagogiques | Générique EDAYA par niveau (Phase 9) ; référentiel officiel FR en v2 |
 | D5 | « AO » / filières pro | Hors v1 |
 | D6 | Endpoint batch structure vs commandes client | **Endpoint batch** |
 
@@ -408,8 +467,11 @@ Phase 0 (email) ──► Phase 1 (split UI) ──► Phase 2 (redirect)
                                               ▼
                                     Phase 7 (completion)
                                               │
-                                              ▼
-                                    Phase 8 (cutover docs)
+                              ┌───────────────┴───────────────┐
+                              ▼                               ▼
+                    Phase 8 (cutover docs)          Phase 9 (curriculum / niveau)
+                              │                               │
+                              └──────── (parallèle possible) ───┘
 ```
 
 | Phase | Effort | PRs | Bloqué par |
@@ -423,7 +485,8 @@ Phase 0 (email) ──► Phase 1 (split UI) ──► Phase 2 (redirect)
 | 6 | 6–8 h | 1 | 5, Novu invite |
 | 7 | 4–6 h | 1 | 6 |
 | 8 | 2–4 h | 1 | 7 |
-| **Total** | **~47–71 h** | **9–10 PRs** | |
+| 9 | 8–12 h | 1 | 5 |
+| **Total** | **~55–83 h** | **10–11 PRs** | |
 
 ---
 
@@ -431,8 +494,8 @@ Phase 0 (email) ──► Phase 1 (split UI) ──► Phase 2 (redirect)
 
 | Niveau | Couverture |
 |--------|------------|
-| **Unit** | Templates structure, génération noms classes, validation formulaires |
-| **Integration** | `register-school` → year → period ; batch structure ; invitation send |
+| **Unit** | Templates structure, templates curriculum par niveau, génération noms classes, validation formulaires |
+| **Integration** | `register-school` → year → period ; batch structure ; curriculum par promo ; invitation send |
 | **E2E manuel** | Signup email réel → wizard complet → dashboard |
 | **Régression** | `bun seed:init` + demo login inchangés ; tests seed existants verts |
 
@@ -450,16 +513,13 @@ Phase 0 (email) ──► Phase 1 (split UI) ──► Phase 2 (redirect)
 
 ## 10. Prochaine PR recommandée
 
-**Phase 0 + Phase 1 en parallèle partiel** — sans email réel, tu ne peux pas valider le parcours complet.
+**Phase 7** — écran « C'est prêt » + checklist + `wizardCompleted`.
 
-Ordre strict pour ton objectif « email réel + couper le seeding » :
+Ordre restant :
 
-1. **Phase 0** — configurer l’envoi OTP / vérification (bloquant)
-2. **Phase 1** — split login/signup
-3. **Phase 2** — redirect `/onboarding`
-4. **Phases 3–4** — shell + école (MVP : une école vide utilisable)
-5. **Phase 5** — structure (remplace le cœur du seeding manuel)
-6. **Phases 6–8** — staff, finition, docs
+1. **Phase 7** — écran « C'est prêt » + checklist + `wizardCompleted`
+2. **Phase 8** — docs cutover dev (seeding optionnel)
+3. **Phase 9** — templates curriculum par niveau (logbook crédible ; parallèle possible avec Phase 8)
 
 ---
 
@@ -469,7 +529,7 @@ Ordre strict pour ton objectif « email réel + couper le seeding » :
 |---------------------|-----------------|
 | `bootstrapHttpCoreSession` → `register-school` | Étape 1 |
 | `school-structure` : grade levels, classes, year, period | Étape 1 + 2 |
-| `curriculum` : subjects, matters, class subjects | Étape 2 |
+| `curriculum` : subjects, matters, class subjects | Étape 2 (Phase 5) ; par promo (Phase 9) |
 | `auth-link` : lier users fixtures | Signup réel (plus besoin) |
 | `population` : élèves, guardians | Hors scope — config manuelle |
 | `assessments`, `attendance`, … | Demo only — `bun seed` |

@@ -17,6 +17,8 @@ import {
 import {
   onboardingApplyStructureTemplateHandler,
   onboardingApplyStructureTemplateRoute,
+  onboardingInviteStaffMembersHandler,
+  onboardingInviteStaffMembersRoute,
   onboardingRegisterSchoolHandler,
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
@@ -71,6 +73,7 @@ router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
+  .openapi(onboardingInviteStaffMembersRoute, onboardingInviteStaffMembersHandler)
   .openapi(createServiceAccountRoute, createServiceAccountHandler)
   .openapi(listServiceAccountsRoute, listServiceAccountsHandler)
   .openapi(updateServiceAccountRoute, updateServiceAccountHandler)

@@ -1,5 +1,6 @@
 import type { OnboardingDraft, OnboardingStep } from '$lib/onboarding/types';
 import { isSchoolStepValid } from '$lib/onboarding/school-step-validation';
+import { isStaffStepValid } from '$lib/onboarding/staff-step-validation';
 import { isStructureStepValid } from '$lib/onboarding/structure-step-validation';
 
 export interface OnboardingStepDefinition {
@@ -52,7 +53,7 @@ export function canAdvanceFromStep(step: OnboardingStep, draft: OnboardingDraft)
 		case 2:
 			return isStructureStepValid(draft.structure);
 		case 3:
-			return true;
+			return isStaffStepValid(draft.staffInvites);
 		case 4:
 			return false;
 		default:

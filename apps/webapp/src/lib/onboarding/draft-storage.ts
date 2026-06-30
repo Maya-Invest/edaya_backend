@@ -1,8 +1,15 @@
 import { defaultAcademicYearPreset } from '$lib/onboarding/school-step-defaults';
 import { createInitialPeriods } from '$lib/onboarding/school-periods';
-import type { OnboardingDraft, OnboardingPeriodDraft, OnboardingSchoolDraft, OnboardingStep } from '$lib/onboarding/types';
+import type { OnboardingDraft, OnboardingPeriodDraft, OnboardingSchoolDraft, OnboardingStaffInviteRole, OnboardingStep } from '$lib/onboarding/types';
 import { ONBOARDING_DRAFT_VERSION } from '$lib/onboarding/types';
 const STORAGE_PREFIX = 'edaya:onboarding:draft';
+
+function isOnboardingStaffInviteRole(value: unknown): value is OnboardingStaffInviteRole {
+	return value === 'deputy_director'
+		|| value === 'cpe'
+		|| value === 'teacher'
+		|| value === 'secretary';
+}
 
 export function draftStorageKey(authUserId: string): string {
 	return `${STORAGE_PREFIX}:${authUserId}`;
@@ -27,6 +34,7 @@ export function createEmptyDraft(): OnboardingDraft {
 		wizardCompleted: false,
 		schoolStepSubmitted: false,
 		structureStepSubmitted: false,
+		staffStepSubmitted: false,
 		registeredSchoolId: null,
 		school: {
 			name: '',
@@ -138,6 +146,7 @@ function normalizeDraft(raw: unknown): OnboardingDraft | null {
 		wizardCompleted: candidate.wizardCompleted === true,
 		schoolStepSubmitted: candidate.schoolStepSubmitted === true,
 		structureStepSubmitted: candidate.structureStepSubmitted === true,
+		staffStepSubmitted: candidate.staffStepSubmitted === true,
 		registeredSchoolId: typeof candidate.registeredSchoolId === 'string'
 			? candidate.registeredSchoolId
 			: empty.registeredSchoolId,
@@ -155,8 +164,9 @@ function normalizeDraft(raw: unknown): OnboardingDraft | null {
 		},
 		staffInvites: Array.isArray(candidate.staffInvites)
 			? candidate.staffInvites.map(invite => ({
+					id: typeof invite.id === 'string' ? invite.id : crypto.randomUUID(),
 					email: typeof invite.email === 'string' ? invite.email : '',
-					role: typeof invite.role === 'string' ? invite.role : '',
+					role: isOnboardingStaffInviteRole(invite.role) ? invite.role : '',
 				}))
 			: empty.staffInvites,
 	};

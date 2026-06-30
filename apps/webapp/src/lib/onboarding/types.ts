@@ -1,4 +1,4 @@
-export const ONBOARDING_DRAFT_VERSION = 2 as const;
+export const ONBOARDING_DRAFT_VERSION = 3 as const;
 export const ONBOARDING_STEP_COUNT = 4;
 
 export type OnboardingStep = 1 | 2 | 3 | 4;
@@ -33,9 +33,16 @@ export interface OnboardingStructureDraft {
 	levels: OnboardingStructureLevelDraft[];
 }
 
+export type OnboardingStaffInviteRole =
+	| 'deputy_director'
+	| 'cpe'
+	| 'teacher'
+	| 'secretary';
+
 export interface OnboardingStaffInviteDraft {
+	id: string;
 	email: string;
-	role: string;
+	role: OnboardingStaffInviteRole | '';
 }
 
 export interface OnboardingDraft {
@@ -45,6 +52,7 @@ export interface OnboardingDraft {
 	wizardCompleted: boolean;
 	schoolStepSubmitted: boolean;
 	structureStepSubmitted: boolean;
+	staffStepSubmitted: boolean;
 	registeredSchoolId: string | null;
 	school: OnboardingSchoolDraft;
 	structure: OnboardingStructureDraft;
