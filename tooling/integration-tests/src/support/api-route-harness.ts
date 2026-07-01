@@ -7,6 +7,7 @@ export {
   createCoreRouteTestApp,
   createPgliteTestEnv,
   grantAccessControlAssign,
+  isR2ConfiguredForTests,
   pgliteEnv,
   resetApiRuntimesForTests,
   resetCoreRouteTestHarness,

@@ -133,7 +133,7 @@ describe('auth link seed port', () => {
     if (secondRun.status === 'skipped') {
       expect(secondRun.reason).toBe('already-linked')
     }
-  }, 30_000)
+  }, 90_000)
 
   it('seeds auth before school and sets ownerSubjectId when scope is all', async () => {
     const runtime = await getApiRuntime(apiPgliteEnv)

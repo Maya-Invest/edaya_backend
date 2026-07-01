@@ -14,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { apiPgliteEnv } from '../../support/api-pglite-env'
 import {
   createCoreRouteTestApp,
+  isR2ConfiguredForTests,
   resetCoreRouteTestHarness,
 } from '../../support/api-route-harness'
 import { createHttpClientForApp } from '../../support/http-seed-client'
@@ -87,7 +88,7 @@ describe('runHttpDevSeeds', () => {
     expect(smoke.smoke?.status).toBe('passed')
   }, 60_000)
 
-  it('seeds the full demo school through HTTP session bootstrap without in-process application access', async () => {
+  it.skipIf(!isR2ConfiguredForTests())('seeds the full demo school through HTTP session bootstrap without in-process application access', async () => {
     const { app } = await createCoreRouteTestApp()
     const client = createHttpClientForApp(app)
 

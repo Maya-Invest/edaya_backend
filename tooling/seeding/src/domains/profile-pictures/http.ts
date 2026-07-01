@@ -56,7 +56,7 @@ export function createHttpProfilePicturesSeedPort(
         throw new Error(`upload-intents failed with status ${response.status}`)
       }
 
-      const uploadResponse = await fetch(body.uploadUrl, {
+      const uploadResponse = await options.client.request(body.uploadUrl, {
         method: 'PUT',
         headers: body.headers ?? { 'Content-Type': input.mimeType },
         body: input.body,
