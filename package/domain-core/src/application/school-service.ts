@@ -1,10 +1,12 @@
 import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
+import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
 import { AuthorizationError, AuthorizationErrorCode, Permission } from '../capabilities/authorization'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { permissionAction } from './entities/entity-config'
+import { buildClassGroupTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
 import { AccountInvitationServiceWorkflow } from './workflows/account-invitation'
@@ -76,6 +78,20 @@ export class SchoolService {
     this.checkActorSchool(input.schoolId)
     permissionAction(Permission.QUERY_OVERVIEW_READ)(this.baseService.actor)
     return this.baseService.repositories.schools.getSchoolOverview(input)
+  }
+
+  async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {
+    const classGroup = await this.baseService.repositories.classGroups.findById(input.classGroupId)
+    if (!classGroup) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+    this.checkActorSchool(classGroup.schoolId)
+    permissionAction(Permission.QUERY_TIMETABLE_READ)(this.baseService.actor)
+    await this.baseService.authorizationPolicy.checkClassGroupAccess(
+      this.baseService.actor,
+      [input.classGroupId],
+    )
+    return buildClassGroupTimetable(this.baseService.repositories, input)
   }
 
   private checkActorSchool(schoolId: string): void {

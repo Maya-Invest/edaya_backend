@@ -1,0 +1,644 @@
+{
+  "Primaire": {
+    "description": "Primary Education in Ivory Coast (6 years)",
+    "report_card_structure": {
+      "grading_scale": 10,
+      "periods": [
+        {
+          "code": "T1",
+          "name": "Trimestre 1",
+          "weight": 1
+        },
+        {
+          "code": "T2",
+          "name": "Trimestre 2",
+          "weight": 1
+        },
+        {
+          "code": "T3",
+          "name": "Trimestre 3",
+          "weight": 1
+        }
+      ],
+      "passing_grade": 5.0
+    },
+    "levels": [
+      {
+        "code": "CP1",
+        "name": "Cours Préparatoire 1ère année",
+        "exam_year": false
+      },
+      {
+        "code": "CP2",
+        "name": "Cours Préparatoire 2ème année",
+        "exam_year": false
+      },
+      {
+        "code": "CE1",
+        "name": "Cours Élémentaire 1ère année",
+        "exam_year": false
+      },
+      {
+        "code": "CE2",
+        "name": "Cours Élémentaire 2ème année",
+        "exam_year": false
+      },
+      {
+        "code": "CM1",
+        "name": "Cours Moyen 1ère année",
+        "exam_year": false
+      },
+      {
+        "code": "CM2",
+        "name": "Cours Moyen 2ème année",
+        "exam_year": true,
+        "exam_name": "CEPE"
+      }
+    ],
+    "subjects": [
+      {
+        "code": "FR",
+        "name": "Français",
+        "domain": "Langues"
+      },
+      {
+        "code": "MATH",
+        "name": "Mathématiques",
+        "domain": "Sciences"
+      },
+      {
+        "code": "EDHC",
+        "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+        "domain": "Univers Social"
+      },
+      {
+        "code": "AEC",
+        "name": "Activités d'Expression et de Création",
+        "domain": "Arts"
+      },
+      {
+        "code": "EPS",
+        "name": "Éducation Physique et Sportive",
+        "domain": "Développement Physique"
+      },
+      {
+        "code": "EVS",
+        "name": "Éveil au Milieu / Sciences",
+        "domain": "Sciences"
+      }
+    ],
+    "curriculum": [
+      {
+        "level_codes": [
+          "CP1",
+          "CP2"
+        ],
+        "subject_code": "FR",
+        "coefficient": 1,
+        "matters": [
+          "Apprentissage des voyelles et consonnes simples",
+          "Assemblage syllabique",
+          "Lecture de mots simples",
+          "Copie et transcription cursive",
+          "Dictée de syllabes et de mots",
+          "Expression orale : se présenter, décrire son environnement",
+          "Poésie et récitation",
+          "Initiation à la phrase simple (majuscule, point)"
+        ]
+      },
+      {
+        "level_codes": [
+          "CP1",
+          "CP2"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 1,
+        "matters": [
+          "Connaissance des nombres de 0 à 100",
+          "L'addition sans retenue",
+          "L'addition avec retenue (CP2)",
+          "La soustraction simple",
+          "Notions spatiales (sur, sous, devant, derrière, gauche, droite)",
+          "Les figures géométriques planes (carré, rectangle, triangle, cercle)",
+          "Mesure de temps (jours de la semaine, mois)",
+          "Monnaie (pièces et billets de base)"
+        ]
+      },
+      {
+        "level_codes": [
+          "CE1",
+          "CE2"
+        ],
+        "subject_code": "FR",
+        "coefficient": 1,
+        "matters": [
+          "Lecture courante et expressive",
+          "Grammaire : le nom, le déterminant, le verbe, l'adjectif qualificatif",
+          "La phrase : types (déclarative, interrogative, exclamative)",
+          "Le genre et le nombre",
+          "Conjugaison : les verbes du 1er groupe au présent, futur, passé composé",
+          "Orthographe : m devant m, b, p ; accents",
+          "Production d'écrits courts"
+        ]
+      },
+      {
+        "level_codes": [
+          "CE1",
+          "CE2"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 1,
+        "matters": [
+          "Nombres entiers jusqu'à 10 000",
+          "Technique opératoire de la multiplication",
+          "La division (initiation)",
+          "Alignement, droites perpendiculaires et parallèles",
+          "Les polygones",
+          "Symétrie",
+          "Unités de longueur (m, cm, km), de masse (g, kg), de capacité (L)"
+        ]
+      },
+      {
+        "level_codes": [
+          "CM1",
+          "CM2"
+        ],
+        "subject_code": "FR",
+        "coefficient": 1,
+        "matters": [
+          "Lecture méthodique et compréhension de textes divers (narratifs, descriptifs, informatifs)",
+          "Grammaire : fonctions (sujet, COD, COI, compléments circonstanciels), l'attribut du sujet, les pronoms",
+          "Conjugaison : 1er, 2ème et 3ème groupes (imparfait, passé simple, plus-que-parfait, conditionnel présent, impératif)",
+          "Orthographe grammaticale : accords du participe passé avec être et avoir, pluriel des noms composés",
+          "Orthographe lexicale : homonymes, mots invariables",
+          "Expression écrite : rédaction de lettres, récits, descriptions, dialogues"
+        ]
+      },
+      {
+        "level_codes": [
+          "CM1",
+          "CM2"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 1,
+        "matters": [
+          "Nombres entiers jusqu'au milliard",
+          "Nombres décimaux (lecture, écriture, comparaison)",
+          "Les 4 opérations sur les nombres entiers et décimaux",
+          "Fractions : écritures fractionnaires, sommes, réductions",
+          "Proportionnalité : règles de trois, pourcentages, échelles, vitesses",
+          "Géométrie : construction de triangles et quadrilatères avec instruments, le cercle, les solides",
+          "Mesures : périmètres, aires (carré, rectangle, triangle, disque), volumes (cube, pavé droit)",
+          "Organisation et gestion de données : tableaux et graphiques"
+        ]
+      },
+      {
+        "level_codes": [
+          "CM1",
+          "CM2"
+        ],
+        "subject_code": "EVS",
+        "coefficient": 1,
+        "matters": [
+          "Le corps humain : digestion, respiration, circulation, squelette",
+          "Hygiène et santé : maladies endémiques, paludisme, MST/SIDA, vaccination",
+          "L'eau : états, cycle de l'eau, potabilisation",
+          "L'environnement : la forêt, la savane, les animaux de Côte d'Ivoire, protection de la nature",
+          "Technologie : leviers, poulies, circuits électriques simples"
+        ]
+      }
+    ]
+  },
+  "College": {
+    "description": "Lower Secondary Education (4 years)",
+    "report_card_structure": {
+      "grading_scale": 20,
+      "periods": [
+        {
+          "code": "T1",
+          "name": "Trimestre 1",
+          "weight": 1
+        },
+        {
+          "code": "T2",
+          "name": "Trimestre 2",
+          "weight": 1
+        },
+        {
+          "code": "T3",
+          "name": "Trimestre 3",
+          "weight": 1
+        }
+      ],
+      "passing_grade": 10.0
+    },
+    "levels": [
+      {
+        "code": "6EME",
+        "name": "Sixième",
+        "exam_year": false
+      },
+      {
+        "code": "5EME",
+        "name": "Cinquième",
+        "exam_year": false
+      },
+      {
+        "code": "4EME",
+        "name": "Quatrième",
+        "exam_year": false
+      },
+      {
+        "code": "3EME",
+        "name": "Troisième",
+        "exam_year": true,
+        "exam_name": "BEPC"
+      }
+    ],
+    "subjects": [
+      {
+        "code": "FR",
+        "name": "Français",
+        "domain": "Langues"
+      },
+      {
+        "code": "MATH",
+        "name": "Mathématiques",
+        "domain": "Sciences"
+      },
+      {
+        "code": "PC",
+        "name": "Physique-Chimie",
+        "domain": "Sciences"
+      },
+      {
+        "code": "SVT",
+        "name": "Sciences de la Vie et de la Terre",
+        "domain": "Sciences"
+      },
+      {
+        "code": "ANG",
+        "name": "Anglais",
+        "domain": "Langues"
+      },
+      {
+        "code": "LV2",
+        "name": "Allemand / Espagnol",
+        "domain": "Langues"
+      },
+      {
+        "code": "HG",
+        "name": "Histoire-Géographie",
+        "domain": "Univers Social"
+      },
+      {
+        "code": "EDHC",
+        "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+        "domain": "Univers Social"
+      },
+      {
+        "code": "EPS",
+        "name": "Éducation Physique et Sportive",
+        "domain": "Développement Physique"
+      }
+    ],
+    "curriculum": [
+      {
+        "level_codes": [
+          "6EME",
+          "5EME"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 2,
+        "matters": [
+          "Arithmétique : PGCD, PPCM, division euclidienne, nombres premiers",
+          "Nombres relatifs : addition, soustraction, repérage sur un axe",
+          "Fractions : opérations simples, fractions équivalentes",
+          "Géométrie plane : points, segments, droites sécantes, parallèles, perpendiculaires",
+          "Angles : mesure, angles adjacents, complémentaires, supplémentaires",
+          "Symétrie axiale et centrale : propriétés de conservation",
+          "Les triangles : propriétés, inégalité triangulaire, droites remarquables",
+          "Parallélogrammes particuliers",
+          "Initiation aux probabilités et statistiques (tableaux d'effectifs)"
+        ]
+      },
+      {
+        "level_codes": [
+          "4EME",
+          "3EME"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 3,
+        "matters": [
+          "Nombres rationnels et irrationnels : racines carrées",
+          "Calcul littéral : développement, factorisation, identités remarquables",
+          "Équations et inéquations du 1er degré à une inconnue",
+          "Systèmes d'équations à deux inconnues dans R2",
+          "Applications affines et linéaires : expressions, représentations graphiques, coefficient directeur",
+          "Vecteurs et translations : relations de Chasles, colinéarité, repères du plan",
+          "Théorème de Thalès et sa réciproque",
+          "Théorème de Pythagore et sa réciproque",
+          "Trigonométrie dans le triangle rectangle (cos, sin, tan)",
+          "Angles inscrits et polygones réguliers",
+          "Géométrie dans l'espace : cônes, cylindres, pyramides, sphères (sections et volumes)",
+          "Statistiques : moyennes, médianes, fréquences, diagrammes"
+        ]
+      },
+      {
+        "level_codes": [
+          "4EME",
+          "3EME"
+        ],
+        "subject_code": "PC",
+        "coefficient": 2,
+        "matters": [
+          "Notion de force, le poids, la masse, relation P = mg",
+          "La poussée d'Archimède dans les liquides",
+          "Masse volumique et densité",
+          "Structure de la matière : atomes, molécules",
+          "Les ions et les solutions aqueuses",
+          "Acides et bases : pH, réactions acido-basiques",
+          "Oxydoréduction (actions des acides sur les métaux)",
+          "Le courant alternatif : tension efficace, période, fréquence",
+          "Résistance électrique et Loi d'Ohm",
+          "Énergie et puissance électrique"
+        ]
+      },
+      {
+        "level_codes": [
+          "4EME",
+          "3EME"
+        ],
+        "subject_code": "SVT",
+        "coefficient": 2,
+        "matters": [
+          "La digestion et l'absorption intestinale",
+          "Le sang et la circulation sanguine",
+          "La respiration chez l'homme",
+          "L'excrétion urinaire",
+          "Le système nerveux : centres nerveux, organes des sens, l'œil",
+          "La reproduction humaine : puberté, appareils génitaux, cycle menstruel, fécondation",
+          "Les maladies nutritionnelles (carences)",
+          "Immunologie de base : microbes, infection, phagocytose, anticorps, VIH/SIDA",
+          "Les roches sédimentaires et la formation des sols"
+        ]
+      },
+      {
+        "level_codes": [
+          "4EME",
+          "3EME"
+        ],
+        "subject_code": "FR",
+        "coefficient": 3,
+        "matters": [
+          "Lecture expliquée de textes littéraires (auteurs africains et français)",
+          "Grammaire de la phrase complexe : la juxtaposition, la coordination, la subordination",
+          "Les propositions subordonnées relatives, conjonctives, circonstancielles (cause, but, conséquence, condition)",
+          "Le discours rapporté : style direct et indirect, concordance des temps",
+          "La voix active et la voix passive",
+          "Expression écrite : le texte narratif avec dialogue intégré, le résumé d'un texte argumentatif",
+          "Figures de style : métaphore, comparaison, hyperbole, anaphore, personnification"
+        ]
+      }
+    ]
+  },
+  "Lycee": {
+    "description": "Upper Secondary Education (3 years)",
+    "report_card_structure": {
+      "grading_scale": 20,
+      "periods": [
+        {
+          "code": "S1",
+          "name": "Semestre 1",
+          "weight": 1
+        },
+        {
+          "code": "S2",
+          "name": "Semestre 2",
+          "weight": 1
+        }
+      ],
+      "passing_grade": 10.0
+    },
+    "levels": [
+      {
+        "code": "2NDA",
+        "name": "Seconde A",
+        "exam_year": false
+      },
+      {
+        "code": "2NDC",
+        "name": "Seconde C",
+        "exam_year": false
+      },
+      {
+        "code": "1ERA",
+        "name": "Première A",
+        "exam_year": false
+      },
+      {
+        "code": "1ERC",
+        "name": "Première C",
+        "exam_year": false
+      },
+      {
+        "code": "1ERD",
+        "name": "Première D",
+        "exam_year": false
+      },
+      {
+        "code": "TLEA",
+        "name": "Terminale A",
+        "exam_year": true,
+        "exam_name": "BAC A"
+      },
+      {
+        "code": "TLEC",
+        "name": "Terminale C",
+        "exam_year": true,
+        "exam_name": "BAC C"
+      },
+      {
+        "code": "TLED",
+        "name": "Terminale D",
+        "exam_year": true,
+        "exam_name": "BAC D"
+      }
+    ],
+    "subjects": [
+      {
+        "code": "FR",
+        "name": "Français",
+        "domain": "Langues"
+      },
+      {
+        "code": "PHILO",
+        "name": "Philosophie",
+        "domain": "Univers Social"
+      },
+      {
+        "code": "MATH",
+        "name": "Mathématiques",
+        "domain": "Sciences"
+      },
+      {
+        "code": "PC",
+        "name": "Physique-Chimie",
+        "domain": "Sciences"
+      },
+      {
+        "code": "SVT",
+        "name": "Sciences de la Vie et de la Terre",
+        "domain": "Sciences"
+      },
+      {
+        "code": "ANG",
+        "name": "Anglais",
+        "domain": "Langues"
+      },
+      {
+        "code": "LV2",
+        "name": "Allemand / Espagnol",
+        "domain": "Langues"
+      },
+      {
+        "code": "HG",
+        "name": "Histoire-Géographie",
+        "domain": "Univers Social"
+      }
+    ],
+    "curriculum": [
+      {
+        "level_codes": [
+          "TLEA",
+          "1ERA"
+        ],
+        "subject_code": "PHILO",
+        "coefficient": 5,
+        "matters": [
+          "Introduction générale à la philosophie : mythe, religion, science et philosophie",
+          "La conscience, l'inconscient et le désir",
+          "Le travail, l'art, la technique",
+          "Autrui, la société, l'État, le Droit et la Justice",
+          "La liberté et le devoir moral",
+          "Vérité, Raison et Croyance",
+          "Méthodologie de la dissertation philosophique",
+          "Méthodologie du commentaire de texte philosophique"
+        ]
+      },
+      {
+        "level_codes": [
+          "TLEC",
+          "TLED"
+        ],
+        "subject_code": "PHILO",
+        "coefficient": 2,
+        "matters": [
+          "La conscience et l'inconscient",
+          "Science, épistémologie et vérité",
+          "La société et l'État",
+          "Liberté, devoir et morale",
+          "Méthodologies (Dissertation et Commentaire)"
+        ]
+      },
+      {
+        "level_codes": [
+          "TLEC"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 5,
+        "matters": [
+          "Arithmétique dans Z : congruences, théorèmes de Bézout et de Gauss, systèmes de numération",
+          "Nombres complexes : forme algébrique, trigonométrique, exponentielle, racines n-ièmes",
+          "Transformations du plan : isométries, similitudes directes et indirectes",
+          "Les coniques : parabole, ellipse, hyperbole (équations et constructions)",
+          "Fonctions numériques : limites, continuité, dérivation, théorèmes des valeurs intermédiaires",
+          "Fonctions logarithmes (ln) et exponentielles (exp), puissances",
+          "Suites numériques : convergence, raisonnement par récurrence, suites adjacentes",
+          "Calcul intégral : primitives, intégration par parties, calcul d'aires et de volumes",
+          "Équations différentielles : y' = ay + b, y'' + ω²y = 0",
+          "Géométrie dans l'espace : produit scalaire, produit vectoriel, produit mixte",
+          "Probabilités : combinatoire, variables aléatoires, lois binomiales, loi normale",
+          "Statistiques à deux variables : ajustement affine, méthode des moindres carrés"
+        ]
+      },
+      {
+        "level_codes": [
+          "TLED"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 4,
+        "matters": [
+          "Nombres complexes : algèbre et géométrie",
+          "Fonctions numériques : limites, continuité, dérivabilité",
+          "Fonctions logarithmes et exponentielles",
+          "Suites numériques (arithmétiques, géométriques)",
+          "Calcul intégral et calcul d'aires",
+          "Équations différentielles linéaires d'ordre 1 et 2",
+          "Probabilités : conditionnement, indépendance, variables aléatoires",
+          "Statistiques : nuages de points, droites de régression"
+        ]
+      },
+      {
+        "level_codes": [
+          "TLEA"
+        ],
+        "subject_code": "MATH",
+        "coefficient": 2,
+        "matters": [
+          "Suites arithmétiques et géométriques",
+          "Étude de fonctions polynômes, rationnelles, logarithme népérien et exponentielle base e",
+          "Dénombrement et probabilités simples",
+          "Statistiques descriptives à une et deux variables"
+        ]
+      },
+      {
+        "level_codes": [
+          "TLEC",
+          "TLED"
+        ],
+        "subject_code": "PC",
+        "coefficient": 4,
+        "matters": [
+          "Physique : Cinématique du point matériel (vecteur position, vitesse, accélération)",
+          "Physique : Dynamique du point matériel (Lois de Newton, centre d'inertie)",
+          "Physique : Travail, énergie cinétique, énergie potentielle, énergie mécanique",
+          "Physique : Les oscillateurs mécaniques (pendule simple, pendule élastique)",
+          "Physique : Champ électrostatique et mouvement d'une particule chargée",
+          "Physique : Champ magnétique et force de Lorentz",
+          "Physique : La force de Laplace, le galvanomètre, le haut-parleur",
+          "Physique : Auto-induction et circuits RL",
+          "Physique : Circuits RLC en régime sinusoïdal forcé, résonance",
+          "Physique : Radioactivité, décroissance radioactive, énergie nucléaire (défaut de masse, fission, fusion)",
+          "Chimie : Cinétique chimique, vitesse de réaction, facteurs cinétiques",
+          "Chimie : Autoprotolyse de l'eau, pH des solutions aqueuses",
+          "Chimie : Acides forts/faibles, bases fortes/faibles, réactions acido-basiques, dosage pH-métrique",
+          "Chimie : Alcools (classes, oxydation ménagée)",
+          "Chimie : Composés carbonylés (aldéhydes et cétones)",
+          "Chimie : Acides carboxyliques et dérivés (chlorures d'acyle, anhydrides)",
+          "Chimie : Réaction d'estérification et d'hydrolyse",
+          "Chimie : Les amines, acides aminés et liaisons peptidiques"
+        ]
+      },
+      {
+        "level_codes": [
+          "TLED"
+        ],
+        "subject_code": "SVT",
+        "coefficient": 4,
+        "matters": [
+          "Le tissu nerveux et les propriétés du nerf (excitabilité, conductibilité, potentiel d'action)",
+          "Le réflexe myotatique et le fonctionnement des synapses",
+          "L'activité cérébrale et la motricité volontaire",
+          "Le milieu intérieur et la régulation de la pression artérielle",
+          "La régulation de la glycémie",
+          "La reproduction humaine : gamétogenèse, régulation hormonale chez l'homme et la femme",
+          "Génétique classique : lois de Mendel, monohybridisme, dihybridisme, liaison sexuelle",
+          "Génétique moléculaire : ADN, transcription, traduction, code génétique",
+          "Le système immunitaire : antigènes, anticorps, lymphocytes T et B, coopération cellulaire, VIH",
+          "L'évolution des espèces et les preuves de l'évolution"
+        ]
+      }
+    ]
+  }
+}

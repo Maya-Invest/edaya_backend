@@ -96,8 +96,8 @@ function authorizeStudentDisciplinaryAction(policy: AuthorizationPolicy): Entity
     }
     if (incident.classGroupId)
       await policy.checkClassGroupAccess(actor, [incident.classGroupId])
-    if (incident.sessionId)
-      await policy.checkSessionAccess(actor, [incident.sessionId])
+    if (incident.lessonSessionId)
+      await policy.checkLessonSessionAccess(actor, [incident.lessonSessionId])
     await policy.checkStudentAccess(actor, [entity.studentId])
   }
 }

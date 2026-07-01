@@ -1,4 +1,4 @@
-import type { GetSchoolOverviewInput } from "@edaya/core";
+import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/core";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";
@@ -51,6 +51,16 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(overview, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "getClassGroupTimetable") {
+          const input: GetClassGroupTimetableInput = {
+            classGroupId: payload.classGroupId as string,
+            startDate: new Date(`${payload.startDate as string}T00:00:00.000Z`),
+            endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
+          };
+          const timetable = await service.getClassGroupTimetable(input);
+          return c.json(serializeClassGroupTimetable(timetable), HttpStatusCodes.OK);
+        }
+
         const count = await service[queryConfig.methodName](payload.schoolId as string);
         return c.json({ count }, HttpStatusCodes.OK);
       }
@@ -63,4 +73,15 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
   });
 
   return pairs;
+}
+
+function serializeClassGroupTimetable(timetable: ClassGroupTimetable) {
+  return {
+    ...timetable,
+    events: timetable.events.map(event => ({
+      ...event,
+      startsAt: event.startsAt.toISOString(),
+      endsAt: event.endsAt.toISOString(),
+    })),
+  };
 }

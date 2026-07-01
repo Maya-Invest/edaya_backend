@@ -12,7 +12,7 @@ import {
   SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
   SEED_SCHOOL_ID,
   SEED_TARGET_STUDENT_COUNT,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { isSeedEntityKey, seedEntityPublicName } from '@edaya/seeding/http'
 import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'

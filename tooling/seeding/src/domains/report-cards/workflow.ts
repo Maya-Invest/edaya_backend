@@ -11,7 +11,7 @@ import {
   SEED_REPORT_CARD_DEFINITIONS,
   SEED_REPORT_CARD_RESULTS,
   SEED_SCHOOL_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const SECTION_ROLE_BY_KIND = {

@@ -52,6 +52,6 @@ src/
 - **Ports** (`domains/*/port.ts`) — shared workflow contracts between HTTP and in-process adapters.
 - **Bootstrap** (`http/bootstrap-http-core-session.ts`) — signs in as the school owner, calls `register-school` when needed, then provisions the seeding service account.
 
-Seeding API keys come from `@edaya/dev-fixtures` school profiles (`seedingApiKey`). No `.env` secret required for local dev.
+Seeding API keys come from `@edaya/fixtures` school profiles (`seedingApiKey`). No `.env` secret required for local dev.
 
 See [src/README.md](src/README.md) for layer rules and [seed-contract.md](seed-contract.md) for the operation inventory.

@@ -7,7 +7,7 @@ import type { ApiRuntime } from '@/runtime'
 import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import {
   createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,

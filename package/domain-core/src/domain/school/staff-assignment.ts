@@ -3,7 +3,7 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../application/entities/entity-config'
+import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId, write } from '../../application/entities/entity-config'
 
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -14,16 +14,27 @@ export const staffAssignmentBaseSchema = z.object({
   responsibility: z.string().trim().min(1, 'responsibility must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  lessonSessionId: z.string().trim().min(1, 'lessonSessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  activitySessionId: z.string().trim().min(1, 'activitySessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  assessmentId: z.string().trim().min(1, 'assessmentId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
-function refineStaffAssignment(data: any, ctx: z.RefinementCtx) {
-  const targets = [data.classGroupId, data.classSubjectId, data.sessionId].filter(Boolean)
+function refineStaffAssignment(
+  data: {
+    classGroupId?: string
+    classSubjectId?: string
+    lessonSessionId?: string
+    activitySessionId?: string
+    assessmentId?: string
+  },
+  ctx: z.RefinementCtx,
+) {
+  const targets = [data.classGroupId, data.classSubjectId, data.lessonSessionId, data.activitySessionId, data.assessmentId].filter(Boolean)
   if (targets.length !== 1) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId',
+      message: 'A StaffAssignment must target exactly one of: classGroupId, classSubjectId, lessonSessionId, activitySessionId, or assessmentId',
     })
   }
 }
@@ -36,7 +47,7 @@ export const staffAssignmentCreateSchema = staffAssignmentBaseSchema.omit({ crea
 export const staffAssignmentUpdateSchema = staffAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineStaffAssignment)
 
 /**
- * Assigns a staff member (with a free-form responsibility label) to a ClassGroup, ClassSubject, or Session.
+ * Assigns a staff member (with a free-form responsibility label) to a class, subject, or occurrence.
  */
 export class StaffAssignment {
   readonly data: StaffAssignmentData
@@ -50,7 +61,9 @@ export class StaffAssignment {
   get responsibility() { return this.data.responsibility }
   get classGroupId() { return this.data.classGroupId }
   get classSubjectId() { return this.data.classSubjectId }
-  get sessionId() { return this.data.sessionId }
+  get lessonSessionId() { return this.data.lessonSessionId }
+  get activitySessionId() { return this.data.activitySessionId }
+  get assessmentId() { return this.data.assessmentId }
   get createdAt() { return this.data.createdAt }
 }
 
@@ -72,8 +85,17 @@ function staffAssignmentTenant(): EntityTenantResolver<StaffAssignment> {
       return (await repositories.classGroups.findById(entity.classGroupId))?.schoolId
     if (entity.classSubjectId)
       return resolveClassSubjectSchoolId(repositories, entity.classSubjectId)
-    if (entity.sessionId)
-      return resolveSessionSchoolId(repositories, entity.sessionId)
+    if (entity.lessonSessionId)
+      return resolveLessonSessionSchoolId(repositories, entity.lessonSessionId)
+    if (entity.activitySessionId)
+      return resolveActivitySessionSchoolId(repositories, entity.activitySessionId)
+    if (entity.assessmentId) {
+      const assessment = await repositories.assessments.findById(entity.assessmentId)
+      if (!assessment) {
+        return undefined
+      }
+      return (await repositories.classGroups.findById(assessment.classGroupId))?.schoolId
+    }
     return undefined
   })
 }
@@ -87,8 +109,12 @@ function authorizeStaffAssignment(policy: AuthorizationPolicy): EntityWriteAutho
       if (classSubject)
         await policy.checkClassGroupAccess(actor, [classSubject.classGroupId])
     }
-    if (entity.sessionId)
-      await policy.checkSessionAccess(actor, [entity.sessionId])
+    if (entity.lessonSessionId)
+      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
+    if (entity.activitySessionId)
+      await policy.checkActivitySessionAccess(actor, [entity.activitySessionId])
+    if (entity.assessmentId)
+      await policy.checkAssessmentAccess(actor, [entity.assessmentId])
   }
 }
 
@@ -124,11 +150,18 @@ async function resolveStaffAssignmentTargetSchoolId(
       return undefined
     return (await repositories.classGroups.findById(classSubject.classGroupId))?.schoolId
   }
-  if (assignment.sessionId) {
-    const session = await repositories.sessions.findById(assignment.sessionId)
-    if (!session)
+  if (assignment.lessonSessionId) {
+    return resolveLessonSessionSchoolId(repositories, assignment.lessonSessionId)
+  }
+  if (assignment.activitySessionId) {
+    return resolveActivitySessionSchoolId(repositories, assignment.activitySessionId)
+  }
+  if (assignment.assessmentId) {
+    const assessment = await repositories.assessments.findById(assignment.assessmentId)
+    if (!assessment) {
       return undefined
-    return (await repositories.classGroups.findById(session.classGroupId))?.schoolId
+    }
+    return (await repositories.classGroups.findById(assessment.classGroupId))?.schoolId
   }
   return undefined
 }

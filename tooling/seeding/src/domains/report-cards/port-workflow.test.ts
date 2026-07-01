@@ -9,7 +9,7 @@ import {
   SEED_GRADE_SCALES,
   SEED_REPORT_CARD_DEFINITIONS,
   SEED_REPORT_CARD_RESULTS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevReportCards } from './workflow'
 

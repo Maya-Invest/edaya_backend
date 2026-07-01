@@ -1,7 +1,7 @@
 import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'

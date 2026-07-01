@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildClientBindings } from "@/lib/school-api/client-bindings";
-import { extractClientBindingsFromOpenApi } from "@edaya/api-client/openapi-bindings";
+import { extractClientBindingsFromOpenApi } from "@edaya/client-codegen";
 
 const openApiPath = resolve(
   import.meta.dirname,

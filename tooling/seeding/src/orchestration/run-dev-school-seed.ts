@@ -7,7 +7,6 @@ import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
-import type { LearningContentSeedPort } from '../domains/learning-content/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
 import type { ReportCardsSeedPort } from '../domains/report-cards/port'
@@ -36,7 +35,7 @@ import {
   SEED_STAFF,
   SEED_STUDENTS,
   SEED_SUBJECT_CATALOG,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
 import { seedDevActivities } from '../domains/activities/workflow'
@@ -55,8 +54,6 @@ import { createInProcessDisciplineSeedPort } from '../domains/discipline/in-proc
 import { seedDevDiscipline } from '../domains/discipline/workflow'
 import { createInProcessFinanceSeedPort } from '../domains/finance/in-process'
 import { seedDevFinance } from '../domains/finance/workflow'
-import { createInProcessLearningContentSeedPort } from '../domains/learning-content/in-process'
-import { seedDevLearningContent } from '../domains/learning-content/workflow'
 import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
 import { seedDevPopulation } from '../domains/population/workflow'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/in-process'
@@ -93,14 +90,11 @@ export type DevSchoolSeedResult
       classSubjectMatters: number
       resources: number
       schedules: number
-      sessions: number
+      lessonSessions: number
       assessments: number
       assessmentResults: number
-      homeworkAssignments: number
-      homeworkSubmissions: number
       activities: number
       activityEnrollments: number
-      classLogbookEntries: number
       calendarEvents: number
       incidents: number
       attendanceRecords: number
@@ -131,7 +125,6 @@ export interface RunDevSchoolSeedOptions {
   assessmentsPort?: AssessmentsSeedPort
   reportCardsPort?: ReportCardsSeedPort
   financePort?: FinanceSeedPort
-  learningContentPort?: LearningContentSeedPort
   activitiesPort?: ActivitiesSeedPort
   schoolLifePort?: SchoolLifeSeedPort
   studentSupportPort?: StudentSupportSeedPort
@@ -173,8 +166,6 @@ export async function runDevSchoolSeed(
     ?? createInProcessReportCardsSeedPort(requireSeedApplication(application, 'reportCardsPort'))
   const financePort = options?.financePort
     ?? createInProcessFinanceSeedPort(requireSeedApplication(application, 'financePort'))
-  const learningContentPort = options?.learningContentPort
-    ?? createInProcessLearningContentSeedPort(requireSeedApplication(application, 'learningContentPort'))
   const activitiesPort = options?.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireSeedApplication(application, 'activitiesPort'))
   const schoolLifePort = options?.schoolLifePort
@@ -230,7 +221,6 @@ export async function runDevSchoolSeed(
   await seedDevCurriculum(curriculumPort)
   await seedDevScheduling(schedulingPort)
   await seedDevAssessments(assessmentsPort)
-  const learningContentCounts = await seedDevLearningContent(learningContentPort)
   const activitiesCounts = await seedDevActivities(activitiesPort)
   const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort)
 
@@ -276,14 +266,11 @@ export async function runDevSchoolSeed(
     classSubjectMatters: SEED_CLASS_SUBJECT_MATTERS.length,
     resources: SEED_RESOURCES.length,
     schedules: countSeedPlanningSlots(),
-    sessions: countSeedPlanningSlots(),
+    lessonSessions: countSeedPlanningSlots(),
     assessments: countSeedAssessments(),
     assessmentResults: countSeedAssessmentResults(),
-    homeworkAssignments: learningContentCounts.homeworkAssignments,
-    homeworkSubmissions: learningContentCounts.homeworkSubmissions,
     activities: activitiesCounts.activities,
     activityEnrollments: activitiesCounts.activityEnrollments,
-    classLogbookEntries: learningContentCounts.classLogbookEntries,
     calendarEvents: schoolLifeCounts.calendarEvents,
     incidents: schoolLifeCounts.incidents,
     attendanceRecords: attendanceRecordCount,

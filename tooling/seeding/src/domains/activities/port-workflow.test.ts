@@ -1,16 +1,16 @@
 import type {
   ActivitiesSeedPort,
   ActivityEnrollmentSeedRecord,
-  ExtracurricularActivitySeedRecord,
+  ActivitySeedRecord,
 } from './port'
-import { ActivityEnrollmentStatus, ExtracurricularActivityCategory } from '@edaya/core'
-import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '@edaya/dev-fixtures'
+import { ActivityCategory, ActivityEnrollmentStatus } from '@edaya/core'
+import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevActivities } from './workflow'
 
 describe('activities seed port workflow', () => {
   test('seeds activities and enrollments with explicit domain enums', async () => {
-    const activities: ExtracurricularActivitySeedRecord[] = []
+    const activities: ActivitySeedRecord[] = []
     const enrollments: ActivityEnrollmentSeedRecord[] = []
     const port: ActivitiesSeedPort = {
       saveActivity: async (record) => {
@@ -27,7 +27,7 @@ describe('activities seed port workflow', () => {
       activities: SEED_EXTRACURRICULAR_ACTIVITIES.length,
       activityEnrollments: SEED_ACTIVITY_ENROLLMENTS.length,
     })
-    expect(activities.map(record => record.category)).toContain(ExtracurricularActivityCategory.Science)
+    expect(activities.map(record => record.category)).toContain(ActivityCategory.Science)
     expect(activities[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
     expect(enrollments.map(record => record.status)).toContain(ActivityEnrollmentStatus.Pending)
   })

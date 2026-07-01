@@ -1,7 +1,6 @@
 import type {
   DayOfWeek,
   ResourceKind,
-  SessionKind,
 } from '@edaya/core'
 
 export interface ResourceSeedRecord {
@@ -15,6 +14,7 @@ export interface ResourceSeedRecord {
 
 export interface ScheduleSeedRecord {
   id: string
+  schoolId: string
   classGroupId: string
   classSubjectId?: string
   title: string
@@ -24,34 +24,23 @@ export interface ScheduleSeedRecord {
   endTime: string
 }
 
-export interface SessionSeedRecord {
-  id: string
-  classGroupId: string
-  classSubjectId?: string
-  scheduleId?: string
-  title: string
-  kind: SessionKind
-  startsAt: string
-  endsAt: string
-}
-
-export interface SessionStaffAssignmentSeedRecord {
+export interface LessonSessionStaffAssignmentSeedRecord {
   id: string
   staffId: string
   responsibility: string
-  sessionId: string
+  lessonSessionId: string
 }
 
-export interface SessionResourceAssignmentSeedRecord {
+export interface LessonSessionResourceAssignmentSeedRecord {
   id: string
   resourceId: string
-  sessionId: string
+  lessonSessionId: string
 }
 
-export interface SessionProgressSeedRecord {
+export interface LessonSessionProgressSeedRecord {
   id: string
   classSubjectMatterId: string
-  sessionId: string
+  lessonSessionId: string
   completedPercentage: number
   notes?: string
   recordedAt: string
@@ -60,8 +49,8 @@ export interface SessionProgressSeedRecord {
 export interface SchedulingSeedPort {
   saveResource: (record: ResourceSeedRecord) => Promise<void>
   createSchedule: (record: ScheduleSeedRecord) => Promise<void>
-  createSession: (record: SessionSeedRecord) => Promise<void>
-  assignStaffToSession: (record: SessionStaffAssignmentSeedRecord) => Promise<void>
-  assignResourceToSession: (record: SessionResourceAssignmentSeedRecord) => Promise<void>
-  recordSessionProgress: (record: SessionProgressSeedRecord) => Promise<void>
+  materializeSchedule: (input: { scheduleId: string }) => Promise<void>
+  assignStaffToLessonSession: (record: LessonSessionStaffAssignmentSeedRecord) => Promise<void>
+  assignResourceToLessonSession: (record: LessonSessionResourceAssignmentSeedRecord) => Promise<void>
+  recordLessonSessionProgress: (record: LessonSessionProgressSeedRecord) => Promise<void>
 }

@@ -45,7 +45,6 @@ import {
   // Zod schemas from core
   schoolSchema,
   SchoolType,
-  sessionSchema,
   staffAssignmentSchema,
   staffMemberSchema,
   staffRoleAssignmentSchema,
@@ -202,25 +201,25 @@ export const acceptAccountInvitationCommandSchema = z.object({
 }).openapi("AcceptAccountInvitationCommand");
 
 export const assignStaffToClassCommandSchema = objectFromSchema(staffAssignmentSchema)
-  .omit({ classSubjectId: true, sessionId: true })
+  .omit({ classSubjectId: true, lessonSessionId: true, activitySessionId: true, assessmentId: true })
   .extend({
     classGroupId: field.id(),
   })
   .openapi("AssignStaffToClassCommand");
 
 export const assignStaffToClassSubjectCommandSchema = objectFromSchema(staffAssignmentSchema)
-  .omit({ classGroupId: true, sessionId: true })
+  .omit({ classGroupId: true, lessonSessionId: true, activitySessionId: true, assessmentId: true })
   .extend({
     classSubjectId: field.id(),
   })
   .openapi("AssignStaffToClassSubjectCommand");
 
-export const assignStaffToSessionCommandSchema = objectFromSchema(staffAssignmentSchema)
-  .omit({ classGroupId: true, classSubjectId: true })
+export const assignStaffToLessonSessionCommandSchema = objectFromSchema(staffAssignmentSchema)
+  .omit({ classGroupId: true, classSubjectId: true, activitySessionId: true, assessmentId: true })
   .extend({
-    sessionId: field.id(),
+    lessonSessionId: field.id(),
   })
-  .openapi("AssignStaffToSessionCommand");
+  .openapi("AssignStaffToLessonSessionCommand");
 
 export const accessRoleConfigCommandSchema = objectFromSchema(accessRoleSchema)
   .openapi("AccessRoleConfigCommand");
@@ -229,18 +228,18 @@ export const staffRoleAssignmentConfigCommandSchema = objectFromSchema(staffRole
   .openapi("StaffRoleAssignmentConfigCommand");
 
 export const assignResourceToClassCommandSchema = objectFromSchema(resourceAssignmentSchema)
-  .omit({ sessionId: true })
+  .omit({ lessonSessionId: true, activitySessionId: true, assessmentId: true })
   .extend({
     classGroupId: field.id(),
   })
   .openapi("AssignResourceToClassCommand");
 
-export const assignResourceToSessionCommandSchema = objectFromSchema(resourceAssignmentSchema)
-  .omit({ classGroupId: true })
+export const assignResourceToLessonSessionCommandSchema = objectFromSchema(resourceAssignmentSchema)
+  .omit({ classGroupId: true, activitySessionId: true, assessmentId: true })
   .extend({
-    sessionId: field.id(),
+    lessonSessionId: field.id(),
   })
-  .openapi("AssignResourceToSessionCommand");
+  .openapi("AssignResourceToLessonSessionCommand");
 
 export const removeResourceAssignmentCommandSchema = z.object({
   assignmentId: field.id(),
@@ -395,7 +394,17 @@ export const removeSubjectFromGradeLevelCommandSchema = z.object({
 export const updateGradeLevelSubjectCommandSchema = z.object({
   gradeLevelSubjectId: field.id(),
   coefficient: z.number().positive().optional(),
+  isOptional: z.boolean().optional(),
 }).openapi("UpdateGradeLevelSubjectCommand");
+
+export const addCustomClassSubjectCommandSchema = objectFromSchema(classSubjectSchema)
+  .omit({ gradeLevelSubjectId: true, completedPercentage: true })
+  .openapi("AddCustomClassSubjectCommand");
+
+export const setClassSubjectOfferedCommandSchema = z.object({
+  classSubjectId: field.id(),
+  isOffered: z.boolean(),
+}).openapi("SetClassSubjectOfferedCommand");
 
 export const assignMatterToClassSubjectCommandSchema = objectFromSchema(classSubjectMatterSchema)
   .omit({ status: true, completedPercentage: true, updatedByStaffId: true, startedAt: true, completedAt: true })
@@ -407,25 +416,39 @@ export const assignMatterToGradeLevelSubjectCommandSchema = objectFromSchema(gra
   })
   .openapi("AssignMatterToGradeLevelSubjectCommand");
 
-export const recordSessionProgressCommandSchema = objectFromSchema(classSubjectProgressSchema)
+export const recordLessonSessionProgressCommandSchema = objectFromSchema(classSubjectProgressSchema)
   .omit({ recordedByStaffId: true })
-  .openapi("RecordSessionProgressCommand");
+  .openapi("RecordLessonSessionProgressCommand");
 
 export const createScheduleCommandSchema = objectFromSchema(scheduleSchema)
   .openapi("CreateScheduleCommand");
 
+export const saveScheduleCommandSchema = z.object({
+  schedule: objectFromSchema(scheduleSchema),
+  materialize: z.boolean().optional(),
+}).openapi("SaveScheduleCommand");
+
+export const materializeScheduleCommandSchema = z.object({
+  scheduleId: field.id(),
+}).openapi("MaterializeScheduleCommand");
+
 export const createCalendarEventCommandSchema = objectFromSchema(calendarEventSchema)
   .openapi("CreateCalendarEventCommand");
 
-export const generateSessionsCommandSchema = z.object({
-  classGroupId: field.id(),
-  startDate: field.date(),
-  endDate: field.date(),
-}).openapi("GenerateSessionsCommand");
+export const cancelLessonSessionCommandSchema = z.object({
+  lessonSessionId: field.id(),
+}).openapi("CancelLessonSessionCommand");
 
-export const createSessionCommandSchema = objectFromSchema(sessionSchema)
-  .omit({ schoolId: true })
-  .openapi("CreateSessionCommand");
+export const cancelActivitySessionCommandSchema = z.object({
+  activitySessionId: field.id(),
+}).openapi("CancelActivitySessionCommand");
+
+export const rescheduleOccurrenceCommandSchema = z.object({
+  lessonSessionId: field.id().optional(),
+  activitySessionId: field.id().optional(),
+  startsAt: field.date(),
+  endsAt: field.date(),
+}).openapi("RescheduleOccurrenceCommand");
 
 export const recordAttendanceCommandSchema = objectFromSchema(attendanceRecordSchema)
   .omit({
@@ -444,7 +467,10 @@ export const recordAttendanceCommandSchema = objectFromSchema(attendanceRecordSc
 
 export const recordDailyAttendanceCommandSchema = objectFromSchema(attendanceRecordSchema)
   .omit({
-    sessionId: true,
+    attendanceId: true,
+    lessonSessionId: true,
+    activitySessionId: true,
+    assessmentId: true,
     justificationStatus: true,
     reason: true,
     notes: true,
@@ -462,7 +488,8 @@ export const recordDailyAttendanceCommandSchema = objectFromSchema(attendanceRec
 
 export const reviewAttendanceJustificationCommandSchema = z.object({
   studentId: field.id(),
-  sessionId: field.id(),
+  attendanceId: field.id().optional(),
+  lessonSessionId: field.id().optional(),
   decision: z.union([
     z.literal(AttendanceJustificationStatus.Excused),
     z.literal(AttendanceJustificationStatus.Rejected),
@@ -472,11 +499,11 @@ export const reviewAttendanceJustificationCommandSchema = z.object({
   reviewedAt: field.optionalDate(),
 }).openapi("ReviewAttendanceJustificationCommand");
 
-export const recordSessionAttendanceCommandSchema = z.object({
-  sessionId: field.id(),
+export const recordLessonSessionAttendanceCommandSchema = z.object({
+  lessonSessionId: field.id(),
   attendanceByStudent: attendanceByStudentSchema,
   createdAt: field.optionalDate(),
-}).openapi("RecordSessionAttendanceCommand");
+}).openapi("RecordLessonSessionAttendanceCommand");
 
 export const recordClassDailyAttendanceCommandSchema = z.object({
   classGroupId: field.id(),
@@ -498,12 +525,12 @@ export const createReportCardDefinitionCommandSchema = objectFromSchema(reportCa
   .openapi("CreateReportCardDefinitionCommand");
 
 export const createAssessmentCommandSchema = objectFromSchema(assessmentSchema)
-  .omit({ metAt: true, date: true })
+  .omit({ completedAt: true })
   .openapi("CreateAssessmentCommand");
 
 export const completeAssessmentCommandSchema = z.object({
   assessmentId: field.id(),
-  metAt: field.optionalDate(),
+  completedAt: field.optionalDate(),
 }).openapi("CompleteAssessmentCommand");
 
 export const recordAssessmentResultCommandSchema = objectFromSchema(assessmentResultSchema)

@@ -21,7 +21,6 @@ import {
   Permission,
   Resource,
   ResourceKind,
-  SessionKind,
   StaffMember,
   StaffRoleAssignment,
   StudentNoteVisibility,
@@ -49,10 +48,10 @@ import {
   saveFee,
   saveGuardian,
   saveIncident,
+  saveLessonSession,
   saveReportCardDefinition,
   saveResourceAssignment,
   saveSchool,
-  saveSession,
   saveStaffAssignment,
   saveStaffMember,
   saveStudent,
@@ -193,11 +192,20 @@ describeIntegration('tenant boundary safeguards', () => {
       gradeLevelId: 'level-b',
       name: 'Grade 6 B',
     })
-    await expect(saveSession(app, {
+    await schoolBApp.baseService.entities.subjects.save(
+      new Subject({ id: 'subject-b', schoolId: 'school-b', name: 'Outside subject' }),
+    )
+    const classSubjectB = await saveClassSubject(schoolBApp, {
+      id: 'class-subject-b',
+      classGroupId: 'class-b',
+      subjectId: 'subject-b',
+      gradeLevelSubjectId: 'gls-subject-b',
+    })
+    await expect(saveLessonSession(app, {
       id: 'invalid-school-session',
       classGroupId: 'class-b',
-      title: 'Cross-school session',
-      kind: SessionKind.Course,
+      classSubjectId: classSubject.id,
+      displayLabel: 'Cross-school session',
       startsAt: new Date('2026-09-01T08:00:00Z'),
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -274,19 +282,19 @@ describeIntegration('tenant boundary safeguards', () => {
       body: 'Foreign note.',
       visibility: StudentNoteVisibility.Staff,
     })
-    const sessionB = await saveSession(schoolBApp, {
+    const sessionB = await saveLessonSession(schoolBApp, {
       id: 'session-b',
       schoolId: 'school-b',
       classGroupId: 'class-b',
-      title: 'Outside attendance',
-      kind: SessionKind.Course,
+      classSubjectId: classSubjectB.id,
+      displayLabel: 'Outside attendance',
       startsAt: new Date('2026-09-01T08:00:00Z'),
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })
     await schoolBApp.schedulingWorkflow.recordAttendance({
       id: 'attendance-b',
       studentId: 'student-b',
-      sessionId: sessionB.id,
+      lessonSessionId: sessionB.id,
       status: AttendanceStatus.Absent,
     })
     const actionB = new DisciplinaryAction({
@@ -300,7 +308,7 @@ describeIntegration('tenant boundary safeguards', () => {
       id: 'incident-b',
       schoolId: 'school-b',
       classGroupId: 'class-b',
-      sessionId: sessionB.id,
+      lessonSessionId: sessionB.id,
       title: 'Outside incident',
       description: 'Foreign school incident.',
       date: new Date('2026-09-01T08:30:00Z'),
@@ -349,7 +357,7 @@ describeIntegration('tenant boundary safeguards', () => {
     await saveResourceAssignment(schoolBApp, {
       id: 'resource-session-b',
       resourceId: 'resource-b',
-      sessionId: sessionB.id,
+      lessonSessionId: sessionB.id,
     })
     await saveAttachment(schoolBApp, {
       id: 'attachment-b',
@@ -376,6 +384,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'School B Report Card',
       isDefault: true,
     })
+    await publishAcademicPeriod(schoolBApp, 'term-b')
     await schoolBApp.assessmentsWorkflow.publishReportCardResult({
       id: 'report-card-b',
       studentId: 'student-b',
@@ -417,23 +426,24 @@ describeIntegration('tenant boundary safeguards', () => {
       targetId: 'staff-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject({ id: 'subject-b', schoolId: 'school-b', name: 'Outside subject' }),
+      new Subject({ id: 'subject-b-assessment', schoolId: 'school-b', name: 'Assessment subject' }),
     )
-    const classSubjectB = await saveClassSubject(schoolBApp, {
-      id: 'class-subject-b',
+    const classSubjectBForAssessment = await saveClassSubject(schoolBApp, {
+      id: 'class-subject-b-assessment',
       classGroupId: 'class-b',
-      subjectId: 'subject-b',
-      gradeLevelSubjectId: 'gls-subject-b',
+      subjectId: 'subject-b-assessment',
+      gradeLevelSubjectId: 'gls-subject-b-assessment',
     })
     await saveAssessment(schoolBApp, {
       id: 'assessment-b',
       classGroupId: 'class-b',
-      classSubjectId: classSubjectB.id,
+      classSubjectId: classSubjectBForAssessment.id,
       periodId: 'term-b',
       title: 'Outside assessment',
       kind: AssessmentKind.Quiz,
       maxScore: 20,
-      dueAt: new Date('2026-09-15T00:00:00Z'),
+      startsAt: new Date('2026-09-15T09:00:00Z'),
+      endsAt: new Date('2026-09-15T10:00:00Z'),
     })
     await expect(saveClassSubject(app, {
       id: 'invalid-course',
@@ -441,10 +451,10 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'subject-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
-    for (const sessionId of ['missing-session', sessionB.id]) {
+    for (const lessonSessionId of ['missing-session', sessionB.id]) {
       await expect(reviewAttendanceJustification(app, {
         studentId: 'student-b',
-        sessionId,
+        lessonSessionId,
         decision: AttendanceJustificationStatus.Excused,
         reason: 'Cross-school review probe',
       })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -452,7 +462,7 @@ describeIntegration('tenant boundary safeguards', () => {
     await expect(saveResourceAssignment(app, {
       id: 'foreign-resource-assignment',
       resourceId: 'resource-b',
-      sessionId: sessionB.id,
+      lessonSessionId: sessionB.id,
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(app.baseService.entities.resources.list({ schoolId: 'school-b' }))
       .rejects

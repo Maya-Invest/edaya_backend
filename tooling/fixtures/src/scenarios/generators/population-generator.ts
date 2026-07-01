@@ -3,7 +3,7 @@
  * Narrative fixtures s1–s30 stay hand-crafted in dataset / extended / population-seed.
  */
 
-import type { SeedPopulationGuardian, SeedPopulationStudent } from './population-seed'
+import type { SeedPopulationGuardian, SeedPopulationStudent } from '../demo-central/population'
 
 export const SEED_TARGET_STUDENT_COUNT = 1000
 export const SEED_NARRATIVE_STUDENT_ID_MAX = 30

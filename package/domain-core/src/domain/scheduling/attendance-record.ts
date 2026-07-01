@@ -1,11 +1,15 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
+import type { AttendanceAnchor } from './attendance-anchor'
 import { z } from 'zod'
-import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../application/entities/entity-config'
+import { config, dateTime, indirectTenant, permissionAction, read, unique, write } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
+import { attendanceAnchorFields, attendanceAnchorKey, refineAttendanceAnchor } from './attendance-anchor'
+import { resolveAttendanceRecordSchoolId } from './attendance-record-school'
 
 export enum AttendanceStatus {
   Present = 'present',
@@ -23,7 +27,7 @@ export enum AttendanceJustificationStatus {
 export const attendanceRecordBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
-  sessionId: z.string().trim().min(1, 'sessionId must not be blank'),
+  ...attendanceAnchorFields,
   date: zodDate().transform(normalizeDate),
   status: z.nativeEnum(AttendanceStatus),
   justificationStatus: z.nativeEnum(AttendanceJustificationStatus).default(AttendanceJustificationStatus.None),
@@ -38,7 +42,18 @@ export const attendanceRecordBaseSchema = z.object({
   updatedAt: zodDate().default(() => new Date()),
 })
 
-function refineAttendanceRecord(data: any, ctx: z.RefinementCtx) {
+function refineAttendanceRecord(
+  data: AttendanceAnchor & {
+    status?: AttendanceStatus
+    justificationStatus?: AttendanceJustificationStatus
+    justifiedByStaffId?: string
+    justifiedAt?: Date
+    correctedAt?: Date
+    correctedByStaffId?: string
+  },
+  ctx: z.RefinementCtx,
+) {
+  refineAttendanceAnchor(data, ctx)
   if (data.justifiedByStaffId && !data.justifiedAt) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -82,7 +97,7 @@ export const attendanceRecordUpdateSchema = attendanceRecordBaseSchema.partial()
 
 /**
  * Records the presence, absence, or tardiness of a student on a specific date,
- * typically associated with a particular subject or daily check-in.
+ * anchored to a class-wide attendance occurrence or a lesson/activity/assessment occurrence.
  */
 export class AttendanceRecord {
   readonly data: AttendanceRecordData
@@ -93,7 +108,10 @@ export class AttendanceRecord {
 
   get id() { return this.data.id }
   get studentId() { return this.data.studentId }
-  get sessionId() { return this.data.sessionId }
+  get attendanceId() { return this.data.attendanceId }
+  get lessonSessionId() { return this.data.lessonSessionId }
+  get activitySessionId() { return this.data.activitySessionId }
+  get assessmentId() { return this.data.assessmentId }
   get date() { return this.data.date }
   get status() { return this.data.status }
   get justificationStatus() { return this.data.justificationStatus }
@@ -107,11 +125,18 @@ export class AttendanceRecord {
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
 
+  get anchorKey(): string {
+    return attendanceAnchorKey(this.data)
+  }
+
   copyWith(changes: Partial<AttendanceRecordInput>): AttendanceRecord {
     return new AttendanceRecord({
       id: this.id,
       studentId: this.studentId,
-      sessionId: this.sessionId,
+      attendanceId: this.attendanceId,
+      lessonSessionId: this.lessonSessionId,
+      activitySessionId: this.activitySessionId,
+      assessmentId: this.assessmentId,
       date: this.date,
       status: this.status,
       justificationStatus: this.justificationStatus,
@@ -129,7 +154,7 @@ export class AttendanceRecord {
   }
 }
 
-export interface SessionAttendanceSummary {
+export interface OccurrenceAttendanceSummary {
   present: number
   absent: number
   excusedAbsent: number
@@ -137,8 +162,8 @@ export interface SessionAttendanceSummary {
   total: number
 }
 
-export function buildSessionAttendanceSummary(records: AttendanceRecord[], expectedTotal: number): SessionAttendanceSummary {
-  const summary: SessionAttendanceSummary = {
+export function buildOccurrenceAttendanceSummary(records: AttendanceRecord[], expectedTotal: number): OccurrenceAttendanceSummary {
+  const summary: OccurrenceAttendanceSummary = {
     present: 0,
     absent: 0,
     excusedAbsent: 0,
@@ -167,7 +192,7 @@ export function buildSessionAttendanceSummary(records: AttendanceRecord[], expec
 export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.attendance,
-    tenant: attendanceTenant(),
+    tenant: attendanceRecordTenant(),
     read: read(permissionAction(Permission.ATTENDANCE_READ), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
@@ -178,19 +203,19 @@ export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ 
     atomicExecution,
   })
 
-function attendanceTenant(): EntityTenantResolver<AttendanceRecord> {
-  return indirectTenant(async (entity, repositories) => resolveSessionSchoolId(repositories, entity.sessionId))
+function attendanceRecordTenant(): EntityTenantResolver<AttendanceRecord> {
+  return indirectTenant(async (entity, repositories) => resolveAttendanceRecordSchoolId(repositories, entity))
 }
 
 function authorizeAttendance(policy: AuthorizationPolicy): EntityWriteAuthorization<AttendanceRecord>['authorizeSave'] {
   return async (actor, entity) => {
-    await policy.checkAttendanceAccess(actor, [entity.studentId], [entity.sessionId])
+    await policy.checkAttendanceRecordAccess(actor, [entity])
   }
 }
 
 function authorizeAttendanceDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<AttendanceRecord>['authorizeDelete'] {
   return async (actor, entity) => {
-    await policy.checkAttendanceAccess(actor, [entity.studentId], [entity.sessionId])
+    await policy.checkAttendanceRecordAccess(actor, [entity])
   }
 }
 
@@ -232,4 +257,24 @@ function attendanceJustificationChanged(entity: AttendanceRecord, existing: Atte
     || entity.notes !== existing.notes
     || dateTime(entity.justifiedAt) !== dateTime(existing.justifiedAt)
     || entity.justifiedByStaffId !== existing.justifiedByStaffId
+}
+
+export async function findAttendanceRecordByAnchor(
+  repositories: SchoolRepositories,
+  studentId: string,
+  anchor: AttendanceAnchor,
+): Promise<AttendanceRecord | undefined> {
+  if (anchor.attendanceId) {
+    return repositories.attendance.findOne({ studentId, attendanceId: anchor.attendanceId })
+  }
+  if (anchor.lessonSessionId) {
+    return repositories.attendance.findOne({ studentId, lessonSessionId: anchor.lessonSessionId })
+  }
+  if (anchor.activitySessionId) {
+    return repositories.attendance.findOne({ studentId, activitySessionId: anchor.activitySessionId })
+  }
+  if (anchor.assessmentId) {
+    return repositories.attendance.findOne({ studentId, assessmentId: anchor.assessmentId })
+  }
+  return undefined
 }

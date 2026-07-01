@@ -24,15 +24,12 @@ describe('runCronJobs', () => {
           classSubjectId: 'cs1',
           periodId: 'period1',
           title: 'Midterm',
-          kind: AssessmentKind.Quiz,
+          kind: AssessmentKind.Homework,
           maxScore: 20,
           coefficient: 1,
           dueAt,
           createdAt: new Date('2026-06-01T00:00:00.000Z'),
         }]),
-      },
-      homeworkAssignments: {
-        list: mock(async () => []),
       },
       activities: {
         list: mock(async () => []),

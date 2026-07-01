@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/fixtures'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
 

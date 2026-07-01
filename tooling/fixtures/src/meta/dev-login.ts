@@ -3,7 +3,7 @@ import {
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_OWNER_STAFF_ID,
-} from './dataset'
+} from '../scenarios/demo-central/core'
 
 export { DEV_AUTH_PASSWORD }
 

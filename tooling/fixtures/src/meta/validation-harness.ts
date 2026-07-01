@@ -1,14 +1,4 @@
-import type { SeedEntityManifestEntry } from './seed-entity-manifest'
-import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from './activities-seed'
-import { countSeedAssessmentResults, countSeedAssessments } from './assessments-seed'
-import { countSeedAttachments } from './attachments-seed'
-import { countSeedAttendanceRecords } from './attendance-seed'
-import { countSeedCalendarEvents } from './calendar-seed'
-import {
-  countSeedAnnouncements,
-  countSeedAnnouncementTargets,
-  countSeedMessageDeliveriesMinimum,
-} from './communications-seed'
+import type { SeedEntityManifestEntry } from './entity-manifest'
 import {
   countSeedGuardians,
   countSeedStudents,
@@ -31,15 +21,23 @@ import {
   SEED_STUDENT_HEALTH_PROFILES,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
-} from './dataset'
+} from '../scenarios/demo-central/core'
+import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '../scenarios/demo-central/domains/activities'
+import { countSeedAttachments } from '../scenarios/demo-central/domains/attachments'
+import { countSeedAttendanceRecords } from '../scenarios/demo-central/domains/attendance'
+import { countSeedCalendarEvents } from '../scenarios/demo-central/domains/calendar'
+import {
+  countSeedAnnouncements,
+  countSeedAnnouncementTargets,
+  countSeedMessageDeliveriesMinimum,
+} from '../scenarios/demo-central/domains/communications'
+import { countSeedDisciplinaryActions, countSeedStudentDisciplinaryActions } from '../scenarios/demo-central/domains/discipline'
+import { SEED_FEES, SEED_PAYMENTS, SEED_STUDENT_FEES } from '../scenarios/demo-central/domains/finance'
+import { SEED_GRADE_SCALES, SEED_REPORT_CARD_DEFINITIONS, SEED_REPORT_CARD_RESULTS } from '../scenarios/demo-central/domains/report-cards'
+import { countSeedPlanningSlots } from '../scenarios/demo-central/domains/scheduling'
+import { countSeedAssessmentResults, countSeedAssessments } from '../scenarios/demo-central/domains/seed-assessment-counts'
 import { SEED_REFERENCE_DATE } from './dates'
-import { countSeedDisciplinaryActions, countSeedStudentDisciplinaryActions } from './discipline-seed'
-import { SEED_FEES, SEED_PAYMENTS, SEED_STUDENT_FEES } from './finance-seed'
-import { countSeedHomeworkAssignments, SEED_HOMEWORK_SUBMISSIONS } from './homework-seed'
-import { SEED_GRADE_SCALES, SEED_REPORT_CARD_DEFINITIONS, SEED_REPORT_CARD_RESULTS } from './report-cards-seed'
-import { countSeedPlanningSlots } from './scheduling-seed'
-import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './seed-entity-manifest'
-import { SEED_TEACHING_LOG_ENTRIES } from './teaching-log-seed'
+import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'
 
 /** Maps manifest entity slugs to generated API entity keys used by HTTP validation. */
 export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
@@ -60,17 +58,14 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'class-subject-matters': 'classSubjectMatters',
   'resources': 'resources',
   'schedules': 'schedules',
-  'sessions': 'sessions',
+  'lesson-sessions': 'lessonSessions',
   'staff-assignments': 'staffAssignments',
   'resource-assignments': 'resourceAssignments',
   'class-subject-progress': 'classSubjectProgress',
   'assessments': 'assessments',
   'assessment-results': 'assessmentResults',
-  'homework-assignments': 'homeworkAssignments',
-  'homework-submissions': 'homeworkSubmissions',
   'activities': 'activities',
   'activity-enrollments': 'activityEnrollments',
-  'class-logbook-entries': 'classLogbookEntries',
   'calendar-events': 'calendarEvents',
   'incidents': 'incidents',
   'student-incident-involvements': 'studentIncidentInvolvements',
@@ -143,17 +138,14 @@ export function resolveSeedExpectedCounts(): Record<string, number> {
     'class-subject-matters': SEED_CLASS_SUBJECT_MATTERS.length,
     'resources': SEED_RESOURCES.length,
     'schedules': countSeedPlanningSlots(),
-    'sessions': countSeedPlanningSlots(),
+    'lesson-sessions': countSeedPlanningSlots(),
     'staff-assignments': 5 + SEED_CLASS_SUBJECTS.length,
     'resource-assignments': 0,
     'class-subject-progress': 1,
     'assessments': countSeedAssessments(),
     'assessment-results': countSeedAssessmentResults(),
-    'homework-assignments': countSeedHomeworkAssignments(),
-    'homework-submissions': SEED_HOMEWORK_SUBMISSIONS.length,
     'activities': SEED_EXTRACURRICULAR_ACTIVITIES.length,
     'activity-enrollments': SEED_ACTIVITY_ENROLLMENTS.length,
-    'class-logbook-entries': SEED_TEACHING_LOG_ENTRIES.length,
     'calendar-events': countSeedCalendarEvents(),
     'incidents': SEED_INCIDENTS.length,
     'student-incident-involvements': SEED_INCIDENTS.length,

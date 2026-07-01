@@ -82,4 +82,47 @@ describe('SchoolService query operations', () => {
     expect(mockRepos.schools.getSchoolOverview).toHaveBeenCalledWith(input)
     expect(result.kpis.studentCount).toBe(100)
   })
+
+  test('getClassGroupTimetable checks access and builds timetable', async () => {
+    const mockClassGroups = {
+      findById: mock(async () => ({ id: 'cg1', schoolId: 'school1' })),
+    }
+    const mockLessonSessions = {
+      list: mock(async () => []),
+    }
+    const mockActivitySessions = {
+      list: mock(async () => []),
+    }
+    const mockAssessments = {
+      list: mock(async () => []),
+    }
+    const mockPolicyWithClassGroup = {
+      checkClassGroupAccess: mock(async () => {}),
+    } as unknown as AuthorizationPolicy
+
+    const timetableService = new SchoolService({
+      repositories: {
+        ...mockRepos,
+        classGroups: mockClassGroups,
+        lessonSessions: mockLessonSessions,
+        activitySessions: mockActivitySessions,
+        assessments: mockAssessments,
+      } as unknown as SchoolRepositories,
+      authorizationPolicy: mockPolicyWithClassGroup,
+      actor,
+      atomicExecution: mockAtomic,
+      notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
+    })
+
+    const input = {
+      classGroupId: 'cg1',
+      startDate: new Date('2026-05-01T00:00:00.000Z'),
+      endDate: new Date('2026-05-31T00:00:00.000Z'),
+    }
+    const result = await timetableService.getClassGroupTimetable(input)
+    expect(mockPolicyWithClassGroup.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
+    expect(result.classGroupId).toBe('cg1')
+    expect(result.events).toEqual([])
+  })
 })

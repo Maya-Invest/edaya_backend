@@ -5,7 +5,7 @@ import type {
   PopulationSeedPort,
   StudentSeedRecord,
 } from './port'
-import { SEED_GUARDIANS, SEED_STUDENTS } from '@edaya/dev-fixtures'
+import { SEED_GUARDIANS, SEED_STUDENTS } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevPopulation } from './workflow'
 

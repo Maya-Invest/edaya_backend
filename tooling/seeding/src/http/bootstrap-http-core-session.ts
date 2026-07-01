@@ -8,7 +8,7 @@ import {
   SEED_SCHOOL_PROFILE,
   SEED_STAFF,
   splitDisplayName,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { HttpAuthProvisioner } from './auth'
 import { isTransientHttpStatus } from './client'
 

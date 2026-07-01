@@ -11,7 +11,7 @@ import {
   SEED_GRADE_LEVEL_SUBJECTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevCurriculum } from './workflow'
 

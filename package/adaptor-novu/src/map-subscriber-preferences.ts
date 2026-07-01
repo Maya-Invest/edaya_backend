@@ -13,7 +13,6 @@ export const NOVU_NOTIFICATION_WORKFLOW_IDS = [
   "assessment.result_recorded",
   "incident.recorded",
   "assessment.due_soon",
-  "homework.due_soon",
   "activity.reminder",
   "calendar.event_reminder",
 ] as const;

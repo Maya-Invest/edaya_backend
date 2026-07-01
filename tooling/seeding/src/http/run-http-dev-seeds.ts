@@ -2,7 +2,7 @@ import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from 
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { HttpSeedClient } from './client'
 import type { HttpSeedValidationResult } from './seed-validation'
-import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { DEV_AUTH_PASSWORD, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/fixtures'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createHttpAccessSeedPort } from '../domains/access/http'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
@@ -24,8 +24,6 @@ import { createHttpDisciplineSeedPort } from '../domains/discipline/http'
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/in-process'
 import { createHttpFinanceSeedPort } from '../domains/finance/http'
 import { createInProcessFinanceSeedPort } from '../domains/finance/in-process'
-import { createHttpLearningContentSeedPort } from '../domains/learning-content/http'
-import { createInProcessLearningContentSeedPort } from '../domains/learning-content/in-process'
 import { createHttpPopulationSeedPort } from '../domains/population/http'
 import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
 import { createHttpProfilePicturesSeedPort } from '../domains/profile-pictures/http'
@@ -244,7 +242,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     const valid = await isServiceAccountApiKeyValid(client, serviceAccountApiKey)
     if (!valid) {
       console.warn(
-        'Seeding API key from the school profile in @edaya/dev-fixtures was rejected by the API (401). '
+        'Seeding API key from the school profile in @edaya/fixtures was rejected by the API (401). '
         + 'Using session bootstrap to register the school and provision the seeding service account.',
       )
       serviceAccountApiKey = undefined
@@ -385,10 +383,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       client,
       serviceAccountApiKey: serviceAccountApiKeyFromProvision,
     })
-    const learningContentPort = createHttpLearningContentSeedPort({
-      client,
-      serviceAccountApiKey: serviceAccountApiKeyFromProvision,
-    })
     const activitiesPort = createHttpActivitiesSeedPort({
       client,
       serviceAccountApiKey: serviceAccountApiKeyFromProvision,
@@ -430,7 +424,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       assessmentsPort,
       reportCardsPort,
       financePort,
-      learningContentPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -516,9 +509,6 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     financePort: options.application
       ? createInProcessFinanceSeedPort(options.application)
       : createHttpFinanceSeedPort({ client, serviceAccountApiKey }),
-    learningContentPort: options.application
-      ? createInProcessLearningContentSeedPort(options.application)
-      : createHttpLearningContentSeedPort({ client, serviceAccountApiKey }),
     activitiesPort: options.application
       ? createInProcessActivitiesSeedPort(options.application)
       : createHttpActivitiesSeedPort({ client, serviceAccountApiKey }),

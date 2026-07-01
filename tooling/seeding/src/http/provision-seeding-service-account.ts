@@ -12,7 +12,7 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
   resolveSeedingApiKeyForSchool,
   SEED_SCHOOL_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { signInViaHttp } from './auth'
 
 export const SEEDING_SERVICE_ID = 'seeding'
@@ -161,6 +161,6 @@ export function logProvisionedServiceAccountKey(result: ProvisionSeedingServiceA
 
   if (result.status === 'skipped' && result.apiKey) {
     // eslint-disable-next-line no-console
-    console.log(`Seeding service account already exists for ${schoolLabel}; using API key from school profile in dev-fixtures.`)
+    console.log(`Seeding service account already exists for ${schoolLabel}; using API key from school profile in fixtures.`)
   }
 }

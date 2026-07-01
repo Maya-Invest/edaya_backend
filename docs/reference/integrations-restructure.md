@@ -49,7 +49,7 @@ edaya_backend/
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
 | `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
-| `@edaya/dev-fixtures` | `tooling/fixtures` | Fixture data |
+| `@edaya/fixtures` | `tooling/fixtures` | Fixture data |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed CLI |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration test suite + staging smoke |
 

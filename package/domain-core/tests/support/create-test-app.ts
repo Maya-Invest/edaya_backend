@@ -5,21 +5,22 @@ import type {
   AccessRole,
   AccountInvitation,
   AccountInvitationKind,
+  Activity,
   ActivityEnrollment,
+  ActivitySession,
   Announcement,
   AnnouncementTarget,
   Assessment,
   AssessmentResult,
   Attachment,
+  Attendance,
   AttendanceRecord,
   CalendarEvent,
   ClassGroup,
-  ClassLogbookEntry,
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
-  ExtracurricularActivity,
   Fee,
   GradeLevel,
   GradeLevelSubject,
@@ -27,9 +28,8 @@ import type {
   GradeScale,
   Guardian,
   GuardianStudentLink,
-  HomeworkAssignment,
-  HomeworkSubmission,
   Incident,
+  LessonSession,
   MessageDelivery,
   Payment,
   PeriodDefinition,
@@ -42,7 +42,6 @@ import type {
   School,
   SchoolNotificationTemplates,
   ServiceApiKey,
-  Session,
   StaffAssignment,
   StaffRoleAssignment,
   Student,
@@ -193,7 +192,8 @@ export type FailableRepository
   = | 'classSubjectMatterRepository'
     | 'messageDeliveryRepository'
     | 'reportCardResultRepository'
-    | 'sessionRepository'
+    | 'lessonSessionRepository'
+    | 'activitySessionRepository'
     | 'studentClassEnrollmentRepository'
     | 'studentFeeRepository'
 
@@ -269,12 +269,11 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const classSubjects = createStore<ClassSubject>(transactionParticipants)
   const classSubjectMatters = createStore<ClassSubjectMatter>(transactionParticipants)
   const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
-  const classLogbookEntries = createStore<ClassLogbookEntry>(transactionParticipants)
-  const homeworkAssignments = createStore<HomeworkAssignment>(transactionParticipants)
-  const homeworkSubmissions = createStore<HomeworkSubmission>(transactionParticipants)
-  const activities = createStore<ExtracurricularActivity>(transactionParticipants)
+  const activities = createStore<Activity>(transactionParticipants)
   const activityEnrollments = createStore<ActivityEnrollment>(transactionParticipants)
-  const sessions = createStore<Session>(transactionParticipants)
+  const lessonSessions = createStore<LessonSession>(transactionParticipants)
+  const activitySessions = createStore<ActivitySession>(transactionParticipants)
+  const attendances = createStore<Attendance>(transactionParticipants)
   const assessments = createStore<Assessment>(transactionParticipants)
   const attendance = createStore<AttendanceRecord>(transactionParticipants)
   const assessmentResults = createStore<AssessmentResult>(transactionParticipants)
@@ -346,9 +345,16 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
 
     // scheduling
     schedules,
-    sessions: {
-      ...sessions,
-      save: entity => saveWithFailure('sessionRepository', sessions, entity),
+    lessonSessions: {
+      ...lessonSessions,
+      save: entity => saveWithFailure('lessonSessionRepository', lessonSessions, entity),
+    },
+    activitySessions: {
+      ...activitySessions,
+      save: entity => saveWithFailure('activitySessionRepository', activitySessions, entity),
+    },
+    attendances: {
+      ...attendances,
     },
     attendance: {
       ...attendance,
@@ -367,9 +373,6 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
     },
     classSubjectProgress,
-    classLogbookEntries,
-    homeworkAssignments,
-    homeworkSubmissions,
     activities,
     activityEnrollments,
 
@@ -440,7 +443,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     classSubjectRepository: schoolRepositories.classSubjects,
     classSubjectMatterRepository: schoolRepositories.classSubjectMatters,
     classSubjectProgressRepository: schoolRepositories.classSubjectProgress,
-    sessionRepository: schoolRepositories.sessions,
+    lessonSessionRepository: schoolRepositories.lessonSessions,
+    attendanceOccurrenceRepository: schoolRepositories.attendances,
     assessmentRepository: schoolRepositories.assessments,
     attendanceRepository: schoolRepositories.attendance,
     assessmentResultRepository: schoolRepositories.assessmentResults,

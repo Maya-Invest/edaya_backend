@@ -1,5 +1,5 @@
-import { SEED_EXTENDED_ASSESSMENT_RESULT_SCORES, SEED_EXTENDED_ASSESSMENTS } from './extended-dataset'
-import { SEED_NARRATIVE_CLASS_STUDENT_IDS } from './population-seed'
+import { SEED_EXTENDED_ASSESSMENT_RESULT_SCORES, SEED_EXTENDED_ASSESSMENTS } from '../extended'
+import { SEED_NARRATIVE_CLASS_STUDENT_IDS } from '../population'
 
 export type SeedAssessmentKind = 'quiz' | 'other' | 'project' | 'homework'
 

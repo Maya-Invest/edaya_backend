@@ -1,6 +1,6 @@
 import type { StudentSupportSeedPort } from './port'
 import { StudentNoteCategory } from '@edaya/core'
-import { SEED_PEDAGOGICAL_NOTES, SEED_STUDENT_HEALTH_PROFILES } from '@edaya/dev-fixtures'
+import { SEED_PEDAGOGICAL_NOTES, SEED_STUDENT_HEALTH_PROFILES } from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const NOTE_CATEGORY_BY_SEED = {

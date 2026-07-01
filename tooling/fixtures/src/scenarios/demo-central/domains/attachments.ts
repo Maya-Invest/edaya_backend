@@ -1,4 +1,4 @@
-import { SEED_SCHOOL_ID } from './dataset'
+import { SEED_SCHOOL_ID } from '../core'
 
 export type SeedAttachmentOwnerKind
   = | 'student_health_profile'

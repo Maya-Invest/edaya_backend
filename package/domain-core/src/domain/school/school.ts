@@ -30,6 +30,7 @@ export const schoolSchema = z.object({
   type: z.nativeEnum(SchoolType).nullable().optional().transform(v => v === null ? undefined : v),
   country: z.string().trim().min(1, 'country must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   city: z.string().trim().min(1, 'city must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  enforceScheduleConflicts: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -57,6 +58,7 @@ export class School {
   get type() { return this.data.type }
   get country() { return this.data.country }
   get city() { return this.data.city }
+  get enforceScheduleConflicts() { return this.data.enforceScheduleConflicts }
   get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {

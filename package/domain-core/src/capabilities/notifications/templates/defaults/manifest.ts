@@ -46,10 +46,6 @@ export async function buildDefaultNotificationTemplateDocument(): Promise<School
       '{{assessmentTitle}} due {{dueDateLabel}}',
       '{{subjectName}} · {{classGroupName}} — due {{dueDateLabel}}',
     ),
-    'homework.due_soon': dualChannelFromPlain(
-      'Homework due {{dueDateLabel}} — {{classGroupName}}',
-      '{{homeworkTitle}} · {{subjectName}} — due {{dueDateLabel}}',
-    ),
     'activity.reminder': dualChannelFromPlain(
       'Reminder: {{activityName}}',
       '{{startDate}} · {{activitySchedule}} ({{coachName}})',

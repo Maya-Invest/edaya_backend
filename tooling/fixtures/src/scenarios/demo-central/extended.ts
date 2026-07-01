@@ -1,4 +1,4 @@
-/** Additional mock data from `school.ts` / `report-cards.ts` not yet in base `dataset.ts`. */
+/** Additional mock data from `school.ts` / `report-cards.ts` not yet in base `core.ts`. */
 
 export const SEED_EXTENDED_CLASSES = [
   { id: '4a', gradeLevelId: 'gl-4', name: '4th — A', capacity: 30 },

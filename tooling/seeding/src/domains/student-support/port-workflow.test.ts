@@ -4,7 +4,7 @@ import type {
   StudentSupportSeedPort,
 } from './port'
 import { StudentNoteCategory } from '@edaya/core'
-import { SEED_PEDAGOGICAL_NOTES, SEED_STUDENT_HEALTH_PROFILES } from '@edaya/dev-fixtures'
+import { SEED_PEDAGOGICAL_NOTES, SEED_STUDENT_HEALTH_PROFILES } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevStudentSupport } from './workflow'
 

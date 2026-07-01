@@ -10,13 +10,13 @@ import {
 } from './workflow-test-context'
 
 describe('SchoolService academics workflows', () => {
-  test('recordSessionProgress records progress and updates aggregates through managed services', async () => {
+  test('recordLessonSessionProgress records progress and updates aggregates through managed services', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createContext()
 
-    const result = await service.academicsWorkflow.recordSessionProgress({
+    const result = await service.academicsWorkflow.recordLessonSessionProgress({
       id: 'csp1',
       classSubjectMatterId: 'csm1',
-      sessionId: 'sess1',
+      lessonSessionId: 'sess1',
       completedPercentage: 100,
       notes: 'Completed',
       recordedAt: new Date('2026-02-01T10:00:00Z'),
@@ -26,7 +26,7 @@ describe('SchoolService academics workflows', () => {
     expect(result.completedPercentage).toBe(100)
     expect(result.recordedByStaffId).toBe('user1')
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkSessionAccess).toHaveBeenCalledWith(actor, ['sess1'])
+    expect(mockPolicy.checkLessonSessionAccess).toHaveBeenCalledWith(actor, ['sess1'])
     expect(mockRepos.classSubjectProgress.save).toHaveBeenCalledWith(result)
     expect(mockRepos.classSubjectMatters.save).toHaveBeenCalledWith(expect.objectContaining({
       id: 'csm1',
@@ -38,24 +38,24 @@ describe('SchoolService academics workflows', () => {
     }))
   })
 
-  test('recordSessionProgress rejects duplicate progress records', async () => {
+  test('recordLessonSessionProgress rejects duplicate progress records', async () => {
     const { service } = createContext({ existingProgress: { id: 'existing-progress' } })
 
-    await expect(service.academicsWorkflow.recordSessionProgress({
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({
       id: 'csp1',
       classSubjectMatterId: 'csm1',
-      sessionId: 'sess1',
+      lessonSessionId: 'sess1',
       completedPercentage: 100,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('recordSessionProgress rejects progress decreases', async () => {
+  test('recordLessonSessionProgress rejects progress decreases', async () => {
     const { service } = createContext({ matterCompletedPercentage: 80 })
 
-    await expect(service.academicsWorkflow.recordSessionProgress({
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({
       id: 'csp1',
       classSubjectMatterId: 'csm1',
-      sessionId: 'sess1',
+      lessonSessionId: 'sess1',
       completedPercentage: 60,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })

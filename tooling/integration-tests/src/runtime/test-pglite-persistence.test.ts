@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { getApiRuntime, resetApiRuntimesForTests } from '@/runtime/local/registry'

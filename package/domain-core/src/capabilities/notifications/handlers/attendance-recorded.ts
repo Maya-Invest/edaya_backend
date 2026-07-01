@@ -54,14 +54,11 @@ export async function handleAttendanceRecorded(
       continue
     }
 
-    const [student, session] = await Promise.all([
-      context.repositories.students.findById(record.studentId),
-      context.repositories.sessions.findById(record.sessionId),
-    ])
-
+    const student = await context.repositories.students.findById(record.studentId)
+    const occurrence = await resolveAttendanceOccurrence(context, record)
     const classGroupName = await resolveClassGroupName(
       context.repositories,
-      session?.classGroupId,
+      occurrence?.classGroupId,
     )
 
     const content = await renderNotificationEnqueueContent(context.templateService, {
@@ -74,21 +71,21 @@ export async function handleAttendanceRecorded(
           : record.studentId,
         status: record.status,
         statusLabel: labelAttendanceStatus(record.status),
-        sessionTitle: session?.title ?? record.sessionId,
-        sessionDate: session
-          ? formatNotificationDate(session.startsAt, timeZone)
+        sessionTitle: occurrence?.title ?? record.anchorKey,
+        sessionDate: occurrence
+          ? formatNotificationDate(occurrence.startsAt, timeZone)
           : formatNotificationDate(record.date, timeZone),
-        sessionTime: session
-          ? formatNotificationTime(session.startsAt, timeZone)
+        sessionTime: occurrence
+          ? formatNotificationTime(occurrence.startsAt, timeZone)
           : '',
-        sessionTimeRange: session
-          ? formatNotificationTimeRange(session.startsAt, session.endsAt, timeZone)
+        sessionTimeRange: occurrence
+          ? formatNotificationTimeRange(occurrence.startsAt, occurrence.endsAt, timeZone)
           : '',
         classGroupName,
       },
     })
 
-    const idempotencyKeyPrefix = `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.sessionId}:${record.status}`
+    const idempotencyKeyPrefix = `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.anchorKey}:${record.status}`
     await deliverNotification(deps, {
       schoolId: payload.schoolId,
       kind: 'event',
@@ -98,11 +95,42 @@ export async function handleAttendanceRecorded(
       recipients: uniqueNotificationRecipients(recipients),
       metadata: {
         studentId: record.studentId,
-        sessionId: record.sessionId,
+        anchorKey: record.anchorKey,
         status: record.status,
       },
     })
   }
+}
+
+async function resolveAttendanceOccurrence(
+  context: WorkflowNotificationContext,
+  record: AttendanceRecord,
+): Promise<{ classGroupId?: string, title: string, startsAt: Date, endsAt: Date } | undefined> {
+  if (record.attendanceId) {
+    const attendance = await context.repositories.attendances.findById(record.attendanceId)
+    if (!attendance) {
+      return undefined
+    }
+    return {
+      classGroupId: attendance.classGroupId,
+      title: attendance.displayLabel,
+      startsAt: attendance.startsAt,
+      endsAt: attendance.endsAt,
+    }
+  }
+  if (record.lessonSessionId) {
+    const lessonSession = await context.repositories.lessonSessions.findById(record.lessonSessionId)
+    if (!lessonSession) {
+      return undefined
+    }
+    return {
+      classGroupId: lessonSession.classGroupId,
+      title: lessonSession.displayLabel,
+      startsAt: lessonSession.startsAt,
+      endsAt: lessonSession.endsAt,
+    }
+  }
+  return undefined
 }
 
 async function resolveAttendanceGuardianRecipients(

@@ -1,12 +1,30 @@
 # Schedule & Lesson Model — Sprint Plan
 
-> **Status:** Phase 0 signed off — ready for Phase 1  
+> **Status:** Backend cutover complete through Phase 5 (except optional legacy-field cleanup); UI deferred to `edaya_web`  
 > **Created:** 2026-06-29  
-> **Last updated:** 2026-06-29 (Phase 0 decisions: `Attendance`, staff assignments, optional conflict enforcement, greenfield cutover)  
+> **Last updated:** 2026-07-01 (occurrence mutations, command rename cleanup, `Activity` rename `0033`, `bun run verify` green)  
 > **Scope:** Drop generic `Session`; materialize `LessonSession` / `ActivitySession` from `Schedule`; self-timed `Assessment`; class-wide `Attendance` for daily mode; logbook via `ClassSubjectProgress`; homework consolidation  
-> **Related domain:** `package/domain-core/src/domains/scheduling/`, `domains/academics/`, `domains/assessments/`, `domains/school-life/`
+> **Related domain:** `package/domain-core/src/domain/scheduling/`, `domain/academics/`, `domain/assessments/`, `domain/school/`
 
 This plan replaces the generic **`Session`** entity with **typed occurrence rows** (`LessonSession`, `ActivitySession`), keeps **`Schedule`** as configuration for lessons and activities only, and gives **`Assessment`** its own time model. The timetable is a **union query** over occurrence tables — no virtual expansion at read time.
+
+### Implementation snapshot (2026-07-01)
+
+| Area | State |
+|------|--------|
+| Generic `Session` | **Removed** — `sessions` table dropped (`0028`); domain entity deleted |
+| `LessonSession` | **Shipped** — materialized from lesson schedules (`materializeSchedule`) |
+| `Attendance` (daily) | **Shipped** — `getOrCreateAttendance`; `AttendanceRecord.attendanceId` |
+| Per-lesson attendance | **Shipped** — `AttendanceRecord.lessonSessionId`; auto-complete pending lesson |
+| Occurrence FKs | **Shipped** — progress, staff/resource assignments, assessments, incidents |
+| `ActivitySession` | **Shipped** — materialized from activity schedules (`materializeSchedule`); entity + migration `0030` |
+| `Activity` (program) | **Shipped** — `ExtracurricularActivity` renamed (`0033`); API entity `activities` |
+| Occurrence mutations | **Shipped** — `cancelLessonSession`, `cancelActivitySession`, `rescheduleOccurrence` |
+| Assessment self-timing | **Shipped** — `startsAt`/`endsAt` on in-class rows (`0031`); homework uses `dueAt` only |
+| Homework consolidation | **Shipped** — `homework_assignments` / `homework_submissions` dropped (`0032`); `Assessment.kind = homework` |
+| Timetable union query | **Shipped** — `getClassGroupTimetable` (`LessonSession` + `ActivitySession` + in-class `Assessment`) |
+| Deprecated session commands | **Removed** — use `assignStaffToLessonSession`, `recordLessonSessionAttendance`, `materializeSchedule`, etc. |
+| `ClassLogbookEntry` table | **Dropped** — entity/API/seeds removed; migration `0029_drop_class_logbook_entries.sql` |
 
 ---
 
@@ -17,11 +35,11 @@ This plan replaces the generic **`Session`** entity with **typed occurrence rows
 | Issue | Today | Impact |
 |-------|-------|--------|
 | Triple homework model | `HomeworkAssignment`, `Assessment.kind = homework`, free-text `ClassLogbookEntry.homework` | Duplicate CRUD, notifications, and UI paths |
-| Ambiguous “course” / “session” | `SessionKind.Course` vs `ClassLogbookEntry` | Naming collision; two concepts for one lesson |
-| Generic `Session` | One table for lessons, exams, events | Extra joins; weak typing |
+| Ambiguous “course” / “session” | `SessionKind.Course` vs `ClassLogbookEntry` | **`SessionKind` removed**; lesson = `LessonSession` |
+| Generic `Session` | One table for lessons, exams, events | **Removed** — use typed occurrence tables |
 | Loose logbook join | Logbook matched by `classSubjectId + date` | No FK integrity |
 | Subject on time slots | `Session.classSubjectId`, `Schedule.classSubjectId` | Timetable edits entangle calendar and curriculum |
-| Isolated activities | `ExtracurricularActivity.schedule` is free text | No shared scheduling model |
+| Isolated activities | ~~`ExtracurricularActivity.schedule` is free text~~ | **`Activity` + `ActivitySession`** via `Schedule` |
 
 ### Design principles (agreed)
 
@@ -327,7 +345,7 @@ Per–class-subject-matter progress for a **lesson occurrence**.
 |--------|--------|
 | Remove | `sessionId`, `scheduleId` |
 | Add | `startsAt`, `endsAt` for in-class; optional `lessonSessionId` |
-| Keep | `kind`, `title`, `maxScore`, `coefficient`, `periodId`, `metAt`, `description`, `attachments` |
+| Keep | `kind`, `title`, `maxScore`, `coefficient`, `periodId`, `completedAt`, `description`, `attachments` |
 | Homework | Fold `HomeworkAssignment` / `HomeworkSubmission` into `Assessment` / `AssessmentResult` |
 
 **Optional link to lesson:** `Assessment.lessonSessionId` when the in-class evaluation is delivered in that `LessonSession` slot.
@@ -555,19 +573,20 @@ In-class and homework assessments saved **outside** `saveSchedule`. Optional `As
 
 ### 7.1 Schema
 
-| Step | Action |
-|------|--------|
-| M1 | Add `school_id`, `schedule_kind`, nullable `class_group_id` on `schedules` |
-| M2 | Create `lesson_sessions` (replace `sessions` + `class_logbook_entries`) |
-| M3 | Create `activity_sessions` with full occurrence fields |
-| M4 | Create `attendances` (class-wide daily occurrence) |
-| M5 | `class_subject_progress.session_id` → `lesson_session_id` |
-| M6 | `attendance_records`: polymorphic `attendance_id` / `lesson_session_id` / `activity_session_id` / `assessment_id` |
-| M7 | `assessments`: `starts_at` / `ends_at` / `lesson_session_id`; drop `session_id` |
-| M8 | `staff_assignments`: `session_id` → `lesson_session_id`; add `activity_session_id`, `assessment_id` |
-| M9 | `resource_assignments`: same occurrence FKs as staff assignments |
-| M10 | Homework entities → `assessments` / `assessment_results` |
-| M11 | Drop `sessions`, `class_logbook_entries`, homework tables |
+| Step | Action | Status |
+|------|--------|--------|
+| M1 | Add `school_id`, `schedule_kind`, nullable `class_group_id` on `schedules` | ✅ `0027_lesson_sessions.sql` |
+| M2 | Create `lesson_sessions` (replace `sessions` + `class_logbook_entries`) | ✅ `0027` (`class_logbook_entries` drop deferred) |
+| M3 | Create `activity_sessions` with full occurrence fields | ✅ `0030_activity_sessions.sql` |
+| M4 | Create `attendances` (class-wide daily occurrence) | ✅ `0028_remove_sessions.sql` |
+| M5 | `class_subject_progress.session_id` → `lesson_session_id` | ✅ `0028` |
+| M6 | `attendance_records`: polymorphic `attendance_id` / `lesson_session_id` / `activity_session_id` / `assessment_id` | ✅ `0028` |
+| M7 | `assessments`: `lesson_session_id`; drop `session_id`; add `starts_at` / `ends_at` | ✅ `0028` + `0031_assessment_self_timing.sql` |
+| M8 | `staff_assignments`: `session_id` → `lesson_session_id`; add `activity_session_id`, `assessment_id` | ✅ `0028` |
+| M9 | `resource_assignments`: same occurrence FKs as staff assignments | ✅ `0028` |
+| M10 | Homework entities → `assessments` / `assessment_results` | ✅ `0032_drop_homework_tables.sql` |
+| M11 | Drop `sessions` | ✅ `0028` |
+| M12 | `extracurricular_activities` → `activities` | ✅ `0033_rename_extracurricular_activities.sql` |
 
 ### 7.2 Seed / dev data (summary)
 
@@ -576,14 +595,16 @@ ClassGroup (attendanceMode = daily)
   → Attendance per class per day (predefined startsAt/endsAt)
   → AttendanceRecord.attendanceId
 
-Schedule (lesson) → LessonSession shells
-Schedule (activity) → ActivitySession shells
+Schedule (lesson) → materializeSchedule → LessonSession shells
+Schedule (activity) → materializeSchedule → ActivitySession shells
 Assessment (in-class) → startsAt/endsAt; optional lessonSessionId
-Assessment (homework) → dueAt only
+Assessment (homework) → dueAt only (kind = homework)
 
 StaffAssignment / ResourceAssignment
   → lessonSessionId | activitySessionId | assessmentId | classGroupId
 ```
+
+**Seeding (current):** `tooling/seeding` creates schedules then calls `materializeSchedule` (no `createSession` / `generateSessions`). Attendance seeds use `ensureLessonSession` (one-off schedule + materialize, resolves `{scheduleId}:{date}`) or daily `getOrCreateAttendance`. Absence fixture dates must fall on school days (materialization skips non-school calendar days).
 
 **Logbook:** `ClassLogbookEntry.content` → `LessonSession.sessionNote` where useful; structured fields (`chapter`, `objectives`) are not preserved.
 
@@ -594,13 +615,39 @@ StaffAssignment / ResourceAssignment
 ### Progress
 
 - [x] **Phase 0** — Sign off this spec + §11 checklist
-- [ ] **Phase 1** — `Schedule.scheduleKind`; `LessonSession`; `materializeSchedule`; optional conflict gate; remove `Session` entity
-- [ ] **Phase 2** — `ClassSubjectProgress.lessonSessionId`; logbook UI on lesson occurrence
-- [ ] **Phase 3** — Timetable union read model; Lessons menu; optional overlap warnings in UI
-- [ ] **Phase 4** — `Activity` + `ActivitySession` materialization; Activities menu
-- [ ] **Phase 5** — Assessment self-timing; homework consolidation
-- [ ] **Phase 6** — `Attendance` entity; polymorphic `AttendanceRecord`; `StaffAssignment` / `ResourceAssignment` occurrence FKs; notifications
-- [ ] **Phase 7** — Webapp + mobile cutover; drop legacy tables, APIs, and seeds referencing `Session`
+- [x] **Phase 1** — `Schedule.scheduleKind`; `LessonSession`; `materializeSchedule` / `saveSchedule`; `School.enforceScheduleConflicts`; **remove generic `Session`**
+  - Domain: `LessonSession`, `OccurrenceStatus`, `Attendance` (class-wide), polymorphic `AttendanceRecord` anchors
+  - Workflows: `getOrCreateAttendance`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`
+  - FK cutover: `ClassSubjectProgress`, `StaffAssignment`, `ResourceAssignment`, `Assessment`, `Incident`
+  - Auth: `checkLessonSessionAccess`, `checkAttendanceRecordAccess` (replaces `checkSessionAccess`)
+  - API: `lesson-sessions` + `attendances` entities; removed `sessions` entity and `create-session` command
+  - Migrations: `0027_lesson_sessions.sql`, `0028_remove_sessions.sql`
+  - Tests: `@edaya/core` green; seeds updated (`materializeSchedule`, `lessonSessionId`)
+  - Occurrence mutations: `cancelLessonSession`, `cancelActivitySession`, `rescheduleOccurrence` (§5.5)
+  - Command cleanup: deprecated `*Session` aliases removed; clients use `assignStaffToLessonSession`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `assignResourceToLessonSession`
+- [x] **Phase 2** — ~~Logbook UX~~ **deferred (UI)** — backend: dropped `ClassLogbookEntry` entity/table (`0029`); seeds no longer call `saveClassLogbookEntry`
+- [x] **Phase 3** — ~~Lessons menu rename; overlap warnings in UI~~ **deferred (UI)** — backend: `getClassGroupTimetable` union query (`LessonSession` + in-class `Assessment`; + `ActivitySession` when Phase 4 lands)
+- [x] **Phase 4** — `ActivitySession` entity + activity `materializeSchedule` branch; auth (`checkActivitySessionAccess`); timetable union includes activities; `ExtracurricularActivity` → `Activity` (`0033`, API `activities`) — ~~Activities menu~~ **deferred (UI)**
+- [x] **Phase 5** — Assessment self-timing (`startsAt`/`endsAt`, `0031`); homework consolidation (`0032`); `completedAt` replaces `metAt`; legacy `date` dropped (`0034`)
+- [x] **Phase 6** — Attendance + assignment occurrence model *(landed with Session removal)*
+- [ ] **Phase 7** — ~~Webapp + mobile cutover~~ **deferred (UI / `edaya_web`)**
+
+### Deferred (UI — out of scope until frontend sprint)
+
+| Item | Repo | Notes |
+|------|------|-------|
+| Lessons menu rename (Teaching Log → Lessons) | `edaya_web` | Naming only |
+| Logbook screens on `LessonSession` + `ClassSubjectProgress` | `edaya_web` | Consume existing APIs |
+| Timetable grid / week view | `edaya_web` | Consume `get-class-group-timetable` query |
+| Schedule overlap warnings | `edaya_web` | Optional; backend already enforces when `enforceScheduleConflicts` |
+| Activities menu | `edaya_web` | Consume `activities` entity + `activity-sessions` |
+| Session / legacy occurrence references | `edaya_web` | `lessonSessionId`; remove `sessions` / homework entity client usage; adopt renamed commands |
+
+### Remaining backend work (priority order)
+
+| # | Work | Notes |
+|---|------|-------|
+| 1 | **Web client cutover** | `edaya_web` — regenerate OpenAPI client; adopt `activities`, renamed commands, occurrence mutations |
 
 ---
 
@@ -662,14 +709,29 @@ StaffAssignment / ResourceAssignment
 
 ## 12. References
 
-- `SchedulingServiceWorkflow`: `package/domain-core/src/services/service-workflows/scheduling.ts`
-- `Session` (to remove): `package/domain-core/src/domains/scheduling/session.ts`
-- `Schedule`: `package/domain-core/src/domains/scheduling/schedule.ts`
-- `ClassLogbookEntry`: `package/domain-core/src/domains/academics/class-logbook-entry.ts`
-- `ClassSubjectProgress`: `package/domain-core/src/domains/academics/class-subject-progress.ts`
-- `Assessment`: `package/domain-core/src/domains/assessments/assessment.ts`
-- `ExtracurricularActivity` → `Activity`: `package/domain-core/src/domains/school-life/extracurricular-activity.ts`
-- Attendance handler: `package/domain-core/src/notifications/handlers/attendance-recorded.ts`
-- `StaffAssignment`: `package/domain-core/src/domains/school/staff-assignment.ts`
-- `ResourceAssignment`: `package/domain-core/src/domains/school/resource-assignment.ts`
-- Session detail (to replace): `apps/webapp/src/lib/api/session-detail-data.ts`
+### Backend (implemented)
+
+| Topic | Path |
+|-------|------|
+| Scheduling workflows | `package/domain-core/src/application/workflows/scheduling.ts` |
+| `LessonSession` | `package/domain-core/src/domain/scheduling/lesson-session.ts` |
+| `Attendance` (class-wide) | `package/domain-core/src/domain/scheduling/attendance.ts` |
+| `AttendanceRecord` anchors | `package/domain-core/src/domain/scheduling/attendance-record.ts` |
+| `Schedule` | `package/domain-core/src/domain/scheduling/schedule.ts` |
+| `ClassSubjectProgress` | `package/domain-core/src/domain/academics/class-subject-progress.ts` |
+| `Assessment` | `package/domain-core/src/domain/assessments/assessment.ts` |
+| `StaffAssignment` | `package/domain-core/src/domain/school/staff-assignment.ts` |
+| `ResourceAssignment` | `package/domain-core/src/domain/school/resource-assignment.ts` |
+| Attendance notifications | `package/domain-core/src/capabilities/notifications/handlers/attendance-recorded.ts` |
+| Migrations | `package/adaptor-postgres/drizzle/0027`–`0033` (lesson sessions, session removal, logbook drop, activity sessions, assessment timing, homework drop, activity rename) |
+| Activity sessions | `package/domain-core/src/domain/scheduling/activity-session.ts` — `activity-sessions` entity; materialized via `materializeSchedule` when `scheduleKind = activity` |
+| Activity (program) | `package/domain-core/src/domain/school-life/activity.ts` — `activities` entity |
+| Occurrence mutations | `cancelLessonSession`, `cancelActivitySession`, `rescheduleOccurrence` in `scheduling.ts` + API commands |
+| Timetable query | `package/domain-core/src/application/queries/timetable.ts` — `POST /core/queries/get-class-group-timetable` |
+| Dev seeds | `tooling/seeding/src/domains/scheduling/`, `tooling/seeding/src/domains/attendance/` |
+
+### Deferred (frontend)
+
+| Topic | Path / note |
+|-------|-------------|
+| Web session detail | `edaya_web` — **deferred (UI)**; regenerate OpenAPI client for `activities`, renamed commands, occurrence mutations |

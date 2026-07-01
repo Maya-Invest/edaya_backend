@@ -32,13 +32,13 @@ describe('Incident entity gravity and status validation', () => {
     const incident = new Incident({
       ...baseArgs,
       classGroupId: 'class-1',
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
       createdAt: createdDate,
       updatedAt: updatedDate,
     })
 
     expect(incident.classGroupId).toBe('class-1')
-    expect(incident.sessionId).toBe('session-1')
+    expect(incident.lessonSessionId).toBe('session-1')
     expect(incident.createdAt.getTime()).toBe(createdDate.getTime())
     expect(incident.updatedAt.getTime()).toBe(updatedDate.getTime())
   })

@@ -5,6 +5,7 @@ import type {
   AssessmentResultInput,
   GradeScale,
   GradeScaleInput,
+  ReportCardAggregation,
   ReportCardDefinitionInput,
   ReportCardDefinitionSection,
   ReportCardDefinitionSectionInput,
@@ -18,23 +19,20 @@ import {
   REPORT_CARD_PUBLISHED_EVENT_KEY,
   runWorkflowNotifications,
 } from '../../capabilities/notifications'
-import {
-  Assessment as AssessmentEntity,
-  AssessmentResult as AssessmentResultEntity,
-  AttendanceJustificationStatus,
-  AttendanceStatus,
-  GradeScale as GradeScaleEntity,
-  ReportCardDefinition,
-  ReportCardDefinitionSection as ReportCardDefinitionSectionEntity,
-  ReportCardDefinitionSectionKind,
-  ReportCardResult,
-  ReportCardResultSection,
-  ReportCardResultStatus,
-} from '../../domain'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, GradeScale as GradeScaleEntity, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { normalizeDate, roundTo2 } from '../../domain/shared/utils'
 import { AttendanceSummary } from '../../domain/value-objects/attendance-summary'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import {
+  buildGroupResultFromChildren,
+  buildSubjectAverageFromAssessments,
+  buildSubjectAverageFromPriorReportCards,
+  evaluateAggregationPublishReadiness,
+  listAssessmentResultsForStudentAndPeriods,
+  listPublishedPeriodIds,
+  loadPriorReportCardResults,
+} from './report-card-aggregation'
 
 export interface PublishReportCardResultInput {
   id: string
@@ -42,6 +40,7 @@ export interface PublishReportCardResultInput {
   periodId: string
   reportCardDefinitionId?: string
   publishedAt?: Date
+  aggregation?: ReportCardAggregation
 }
 
 export interface GenerateReportCardResultInput {
@@ -50,6 +49,7 @@ export interface GenerateReportCardResultInput {
   periodId: string
   reportCardDefinitionId?: string
   generatedAt?: Date
+  aggregation?: ReportCardAggregation
 }
 
 export type CreateGradeScaleInput = GradeScaleInput
@@ -59,7 +59,7 @@ export type CreateAssessmentInput = AssessmentInput
 
 export interface CompleteAssessmentInput {
   assessmentId: string
-  metAt?: Date
+  completedAt?: Date
 }
 
 export type RecordAssessmentResultInput = AssessmentResultInput
@@ -98,9 +98,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     return assessment
   }
 
-  async completeAssessment({ assessmentId, metAt }: CompleteAssessmentInput): Promise<Assessment> {
+  async completeAssessment({ assessmentId, completedAt }: CompleteAssessmentInput): Promise<Assessment> {
     const existing = await this.requireEntity(this.baseService.entities.assessments, assessmentId)
-    const assessment = new AssessmentEntity({ ...existing.data, metAt: metAt ?? new Date() })
+    const assessment = new AssessmentEntity({ ...existing.data, completedAt: completedAt ?? new Date() })
     await this.baseService.entities.assessments.save(assessment)
     return assessment
   }
@@ -158,6 +158,11 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       await this.requireReportCardNotPublished(input.studentId, input.periodId)
       const generated = await this.buildReportCardResult(input)
+      await this.requireReportCardPublishReady({
+        studentId: input.studentId,
+        periodId: input.periodId,
+        aggregation: generated.aggregation,
+      })
       const published = generated.copyWith({
         status: ReportCardResultStatus.Published,
         publishedAt: input.publishedAt ?? new Date(),
@@ -201,6 +206,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     periodId,
     reportCardDefinitionId,
     generatedAt,
+    aggregation,
   }: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const period = await this.requirePeriod(periodId)
     const enrollment = await this.requireEnrollmentForPeriod({
@@ -214,19 +220,21 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           gradeLevelId: classGroup.gradeLevelId,
           academicYearId: period.academicYearId,
         })
-    const { sectionResults, overallAverage } = await this.buildReportCardResults({
+    const existing = await this.baseService.repositories.results.findOne({ studentId, periodId })
+    const resolvedAggregation = aggregation ?? existing?.aggregation
+    const { sectionResults, overallAverage, assessmentResultCount, attendanceSummary, canPublish } = await this.buildReportCardResults({
       studentId,
       periodId,
       classGroupId: classGroup.id,
       reportCardDefinitionId: definition.id,
+      aggregation: resolvedAggregation,
     })
     const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
-    const attendanceSummary = await this.buildAttendanceSummary({
+    const resolvedAttendanceSummary = attendanceSummary ?? await this.buildAttendanceSummary({
       studentId,
       startDate: period.startDate,
       endDate: period.endDate,
     })
-    const existing = await this.baseService.repositories.results.findOne({ studentId, periodId })
     return new ReportCardResult({
       id: existing?.id ?? id,
       reportCardDefinitionId: definition.id,
@@ -234,12 +242,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       classGroupId: classGroup.id,
       periodId,
       sectionResults,
-      attendanceSummary,
-      assessmentResultCount: periodAssessmentResults.length,
+      attendanceSummary: resolvedAttendanceSummary,
+      assessmentResultCount: assessmentResultCount ?? periodAssessmentResults.length,
       overallAverage: overallAverage === undefined ? undefined : Math.round(overallAverage),
-      status: existing?.status ?? ReportCardResultStatus.Draft,
+      status: canPublish ? (existing?.status ?? ReportCardResultStatus.Draft) : ReportCardResultStatus.Draft,
       generatedAt: existing?.generatedAt ?? generatedAt,
       publishedAt: existing?.publishedAt,
+      aggregation: resolvedAggregation,
     })
   }
 
@@ -248,11 +257,181 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     periodId,
     classGroupId,
     reportCardDefinitionId,
+    aggregation,
   }: {
     studentId: string
     periodId: string
     classGroupId: string
     reportCardDefinitionId: string
+    aggregation?: ReportCardAggregation
+  }): Promise<{
+    sectionResults: ReportCardResultSection[]
+    overallAverage?: number
+    assessmentResultCount?: number
+    attendanceSummary?: AttendanceSummary
+    canPublish: boolean
+  }> {
+    const period = await this.requirePeriod(periodId)
+    const allSections = (await this.baseService.repositories.sections.list({ reportCardDefinitionId }))
+      .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+    const classSubjects = (await this.baseService.repositories.classSubjects.list({ classGroupId }))
+      .filter(classSubject => classSubject.isOffered !== false)
+    const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
+
+    if (!aggregation) {
+      const singlePeriod = await this.buildSinglePeriodReportCardResults({
+        studentId,
+        periodId,
+        classSubjectBySubject,
+        allSections,
+      })
+      return {
+        ...singlePeriod,
+        canPublish: period.isPublished,
+      }
+    }
+
+    const readiness = await evaluateAggregationPublishReadiness(this.baseService, studentId, aggregation)
+    const publishedSourcePeriodIds = await listPublishedPeriodIds(this.baseService, aggregation.sourcePeriodIds)
+    const assessmentsWithResults = await listAssessmentResultsForStudentAndPeriods(
+      this.baseService,
+      studentId,
+      aggregation.sourcePeriodIds,
+      { onlyPublishedPeriods: aggregation.source === ReportCardAggregationSource.Assessments },
+    )
+    const { publishedByPeriodId: priorResultsByPeriodId } = aggregation.source === ReportCardAggregationSource.ReportCards
+      ? await loadPriorReportCardResults(this.baseService, {
+          studentId,
+          sourcePeriodIds: aggregation.sourcePeriodIds,
+        })
+      : { publishedByPeriodId: new Map() }
+
+    const computeNode = async (
+      section: ReportCardDefinitionSection,
+      visited = new Set<string>(),
+    ): Promise<ReportCardResultSection | null> => {
+      if (visited.has(section.id)) {
+        throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
+      }
+      const nextVisited = new Set(visited).add(section.id)
+      const childSections = allSections.filter(item => item.parentSectionId === section.id)
+      if (section.kind === ReportCardDefinitionSectionKind.Subject) {
+        const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
+        if (!classSubject) {
+          return null
+        }
+        const average = aggregation.source === ReportCardAggregationSource.ReportCards
+          ? buildSubjectAverageFromPriorReportCards(section.id, aggregation, priorResultsByPeriodId)
+          : buildSubjectAverageFromAssessments(classSubject.id, assessmentsWithResults)
+        if (average === undefined) {
+          return null
+        }
+        return new ReportCardResultSection({
+          sectionId: section.id,
+          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          name: section.name,
+          average,
+          weight: section.weight,
+          parentSectionId: section.parentSectionId,
+          classSubjectId: classSubject.id,
+          subResults: [],
+        })
+      }
+
+      const childResults: ReportCardResultSection[] = []
+      for (const child of childSections) {
+        const childResult = await computeNode(child, nextVisited)
+        if (childResult) {
+          childResults.push(childResult)
+        }
+      }
+      return buildGroupResultFromChildren(section, childResults)
+    }
+
+    const sectionResults: ReportCardResultSection[] = []
+    let rootSumWeights = 0
+    let rootSumWeightedPoints = 0
+    for (const root of allSections.filter(section => !section.parentSectionId)) {
+      const result = await computeNode(root)
+      if (result) {
+        sectionResults.push(result)
+        rootSumWeights += root.weight
+        rootSumWeightedPoints += result.average * root.weight
+      }
+    }
+
+    const sourcePeriods = await Promise.all(
+      [...publishedSourcePeriodIds].map(sourcePeriodId => this.requirePeriod(sourcePeriodId)),
+    )
+    let presentCount = 0
+    let absenceCount = 0
+    let excusedAbsenceCount = 0
+    let lateCount = 0
+    for (const sourcePeriod of sourcePeriods) {
+      const summary = await this.buildAttendanceSummary({
+        studentId,
+        startDate: sourcePeriod.startDate,
+        endDate: sourcePeriod.endDate,
+      })
+      presentCount += summary.presentCount
+      absenceCount += summary.absenceCount
+      excusedAbsenceCount += summary.excusedAbsenceCount
+      lateCount += summary.lateCount
+    }
+
+    const overallAverage = rootSumWeights > 0 ? roundTo2(rootSumWeightedPoints / rootSumWeights) : undefined
+    return {
+      sectionResults,
+      overallAverage,
+      assessmentResultCount: assessmentsWithResults.length,
+      attendanceSummary: new AttendanceSummary({
+        presentCount,
+        absenceCount,
+        excusedAbsenceCount,
+        lateCount,
+      }),
+      canPublish: readiness.canPublish,
+    }
+  }
+
+  private async requireReportCardPublishReady({
+    studentId,
+    periodId,
+    aggregation,
+  }: {
+    studentId: string
+    periodId: string
+    aggregation?: ReportCardAggregation
+  }): Promise<void> {
+    const period = await this.requirePeriod(periodId)
+    if (aggregation) {
+      const readiness = await evaluateAggregationPublishReadiness(this.baseService, studentId, aggregation)
+      if (!readiness.canPublish) {
+        throw new BusinessRuleViolationError(
+          'AGGREGATED_REPORT_CARD_SOURCES_NOT_READY',
+          `Aggregated report card for student ${studentId} and period ${periodId} cannot be published until all source periods are published and source report cards are published`,
+        )
+      }
+      return
+    }
+    if (!period.isPublished) {
+      throw new BusinessRuleViolationError(
+        'ACADEMIC_PERIOD_NOT_PUBLISHED',
+        `Report card for student ${studentId} and period ${periodId} cannot be published until the academic period is published`,
+      )
+    }
+  }
+
+  private async buildSinglePeriodReportCardResults({
+    studentId,
+    periodId,
+    classSubjectBySubject,
+    allSections,
+  }: {
+    studentId: string
+    periodId: string
+    classSubjectBySubject: Map<string, { id: string, subjectId: string }>
+    allSections: ReportCardDefinitionSection[]
   }): Promise<{ sectionResults: ReportCardResultSection[], overallAverage?: number }> {
     await this.requirePeriod(periodId)
     const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
@@ -263,10 +442,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         { result, assessment },
       ])
     }
-    const classSubjects = await this.baseService.repositories.classSubjects.list({ classGroupId })
-    const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
-    const allSections = (await this.baseService.repositories.sections.list({ reportCardDefinitionId }))
-      .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
 
     const computeNode = async (
       section: ReportCardDefinitionSection,
@@ -281,20 +456,18 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
         if (!classSubject)
           return null
-        const leafResults = (assessmentResultsByClassSubject.get(classSubject.id) ?? [])
-          .filter(({ result }) => result.score !== undefined)
-        if (leafResults.length === 0)
+        const average = buildSubjectAverageFromAssessments(
+          classSubject.id,
+          assessmentResultsByClassSubject.get(classSubject.id) ?? [],
+        )
+        if (average === undefined) {
           return null
-        const totalWeight = leafResults.reduce((sum, { assessment }) => sum + assessment.coefficient, 0)
-        const weightedPoints = leafResults.reduce((sum, { result, assessment }) => {
-          const normalizedScore = ((result.score ?? 0) / assessment.maxScore) * 20
-          return sum + normalizedScore * assessment.coefficient
-        }, 0)
+        }
         return new ReportCardResultSection({
           sectionId: section.id,
           sectionKind: ReportCardDefinitionSectionKind.Subject,
           name: section.name,
-          average: totalWeight === 0 ? 0 : weightedPoints / totalWeight,
+          average,
           weight: section.weight,
           parentSectionId: section.parentSectionId,
           classSubjectId: classSubject.id,
@@ -303,27 +476,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       }
 
       const childResults: ReportCardResultSection[] = []
-      let sumWeights = 0
-      let sumWeightedPoints = 0
       for (const child of childSections) {
         const childResult = await computeNode(child, nextVisited)
         if (childResult) {
           childResults.push(childResult)
-          sumWeights += child.weight
-          sumWeightedPoints += childResult.average * child.weight
         }
       }
-      if (childResults.length === 0)
-        return null
-      return new ReportCardResultSection({
-        sectionId: section.id,
-        sectionKind: ReportCardDefinitionSectionKind.Group,
-        name: section.name,
-        average: sumWeights === 0 ? 0 : sumWeightedPoints / sumWeights,
-        weight: section.weight,
-        parentSectionId: section.parentSectionId,
-        subResults: childResults,
-      })
+      return buildGroupResultFromChildren(section, childResults)
     }
 
     const sectionResults: ReportCardResultSection[] = []

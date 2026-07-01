@@ -31,7 +31,7 @@ export const incidentBaseSchema = z.object({
   kind: z.nativeEnum(IncidentKind),
   reporterId: z.string().trim().min(1, 'reporterId must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  lessonSessionId: z.string().trim().min(1, 'lessonSessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   status: z.nativeEnum(IncidentStatus).default(IncidentStatus.Open),
   resolutionNotes: z.string().trim().min(1, 'resolutionNotes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   resolvedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
@@ -94,7 +94,7 @@ export class Incident {
   get kind() { return this.data.kind }
   get reporterId() { return this.data.reporterId }
   get classGroupId() { return this.data.classGroupId }
-  get sessionId() { return this.data.sessionId }
+  get lessonSessionId() { return this.data.lessonSessionId }
   get status() { return this.data.status }
   get resolutionNotes() { return this.data.resolutionNotes }
   get resolvedAt() { return this.data.resolvedAt }
@@ -120,8 +120,8 @@ function authorizeIncident(policy: AuthorizationPolicy): EntityWriteAuthorizatio
   return async (actor, entity) => {
     if (entity.classGroupId)
       await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.sessionId)
-      await policy.checkSessionAccess(actor, [entity.sessionId])
+    if (entity.lessonSessionId)
+      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
   }
 }
 
@@ -129,8 +129,8 @@ function authorizeIncidentDelete(policy: AuthorizationPolicy): EntityWriteAuthor
   return async (actor, entity) => {
     if (entity.classGroupId)
       await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.sessionId)
-      await policy.checkSessionAccess(actor, [entity.sessionId])
+    if (entity.lessonSessionId)
+      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
   }
 }
 
@@ -158,11 +158,11 @@ async function validateIncidentSave(
 }
 
 async function validateIncidentScope(entity: Incident, repositories: SchoolRepositories): Promise<void> {
-  if (entity.sessionId) {
-    const session = await repositories.sessions.findById(entity.sessionId)
-    const classGroup = session ? await repositories.classGroups.findById(session.classGroupId) : undefined
+  if (entity.lessonSessionId) {
+    const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
+    const classGroup = lessonSession ? await repositories.classGroups.findById(lessonSession.classGroupId) : undefined
     if (
-      !session
+      !lessonSession
       || !classGroup
       || classGroup.schoolId !== entity.schoolId
       || (entity.classGroupId && classGroup.id !== entity.classGroupId)

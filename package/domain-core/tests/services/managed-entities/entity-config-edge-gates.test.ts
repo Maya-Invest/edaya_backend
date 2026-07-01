@@ -11,6 +11,7 @@ import {
   CalendarEventScopeKind,
   ClassGroup,
   DayOfWeek,
+  LessonSession,
   Resource,
   ResourceAssignment,
   ResourceKind,
@@ -24,8 +25,8 @@ import {
   validateAttachmentSave,
   validateCalendarEventSave,
   validateClassGroupSave,
+  validateLessonSessionSave,
   validateScheduleSave,
-  validateSessionSave,
   validateStaffAssignmentSave,
   validateStudentSave,
 } from '../../../src/domain'
@@ -38,7 +39,7 @@ function repositories(overrides: Partial<SchoolRepositories> = {}): SchoolReposi
   return {
     academicYears: { findById: mock(async () => ({ id: 'year-1', schoolId: 'school', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })) },
     assessmentResults: { findById: mock(async () => ({ id: 'result-1', studentId: 'student-1' })) },
-    attendance: { findById: mock(async () => ({ id: 'attendance-1', studentId: 'student-1', sessionId: 'session-1' })) },
+    attendance: { findById: mock(async () => ({ id: 'attendance-1', studentId: 'student-1', lessonSessionId: 'session-1' })) },
     classGroups: { findById: mock(async () => ({ id: 'class-1', schoolId: 'school', academicYearId: 'year-1' })) },
     classSubjects: { findById: mock(async () => ({ id: 'subject-1', classGroupId: 'class-1' })) },
     enrollments: {
@@ -53,7 +54,7 @@ function repositories(overrides: Partial<SchoolRepositories> = {}): SchoolReposi
     incidents: { findById: mock(async () => ({ id: 'incident-1', schoolId: 'school' })) },
     payments: { findById: mock(async () => ({ id: 'payment-1', studentFeeId: 'student-fee-1' })) },
     results: { findById: mock(async () => ({ id: 'report-card-1', studentId: 'student-1' })) },
-    sessions: { findById: mock(async () => ({ id: 'session-1', classGroupId: 'class-1' })) },
+    lessonSessions: { findById: mock(async () => ({ id: 'session-1', classGroupId: 'class-1', classSubjectId: 'subject-1', schoolId: 'school' })) },
     staffMembers: { findById: mock(async () => ({ id: 'staff-1', schoolId: 'school' })) },
     studentDisciplinaryActions: { findById: mock(async () => ({ id: 'action-1', studentId: 'student-1' })) },
     studentFees: { findById: mock(async () => ({ id: 'student-fee-1', studentId: 'student-1' })) },
@@ -113,7 +114,7 @@ describe('entity config edge gates', () => {
       .toBeInstanceOf(AuthorizationError)
   })
 
-  test('validates schedule and session class-subject ownership', async () => {
+  test('validates schedule and lesson session class-subject ownership', async () => {
     const repos = repositories()
 
     await validateScheduleSave(new Schedule({
@@ -127,14 +128,16 @@ describe('entity config edge gates', () => {
       endTime: '10:00',
       isRecurring: true,
     } as any), undefined, repos)
-    await validateSessionSave({
+    await validateLessonSessionSave(new LessonSession({
       id: 'session-new',
+      schoolId: 'school',
       classGroupId: 'class-1',
+      scheduleId: 'schedule-1',
       classSubjectId: 'subject-1',
-      title: 'Math',
+      displayLabel: 'Math',
       startsAt: new Date('2026-03-01T09:00:00Z'),
       endsAt: new Date('2026-03-01T10:00:00Z'),
-    } as any, undefined, repos)
+    }), undefined, repos)
 
     await expect(validateScheduleSave(new Schedule({
       id: 'schedule-2',
@@ -207,10 +210,10 @@ describe('entity config edge gates', () => {
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('validates staff assignment targets through class group, class subject, and session paths', async () => {
+  test('validates staff assignment targets through class group, class subject, and lesson session paths', async () => {
     await validateStaffAssignmentSave({ id: 'a1', staffId: 'staff-1', classGroupId: 'class-1' } as any, undefined, repositories())
     await validateStaffAssignmentSave({ id: 'a2', staffId: 'staff-1', classSubjectId: 'subject-1' } as any, undefined, repositories())
-    await validateStaffAssignmentSave({ id: 'a3', staffId: 'staff-1', sessionId: 'session-1' } as any, undefined, repositories())
+    await validateStaffAssignmentSave({ id: 'a3', staffId: 'staff-1', lessonSessionId: 'session-1' } as any, undefined, repositories())
 
     await expect(validateStaffAssignmentSave({ id: 'a4', staffId: 'missing', classGroupId: 'class-1' } as any, undefined, repositories({
       staffMembers: { findById: mock(async () => undefined) } as any,

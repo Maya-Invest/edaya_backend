@@ -7,7 +7,7 @@ import {
   countSeedStudents,
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { signInViaHttp } from './auth'
 import { isSeedEntityKey } from './catalog'
 import { postEntityCount } from './core-entity'

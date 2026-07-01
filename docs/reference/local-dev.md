@@ -174,7 +174,7 @@ bun seed:init
 3. Seed access roles, provision the seeding service account with the school profile API key
 4. Load demo school data through `/core/*` routes
 
-**Credentials:** seeding uses the `seedingApiKey` from the school profile in `@edaya/dev-fixtures` — no `.env` API key required. For GraphiQL Bearer auto-injection, set `GRAPHQL_DEV_API_KEY` to the same profile key.
+**Credentials:** seeding uses the `seedingApiKey` from the school profile in `@edaya/fixtures` — no `.env` API key required. For GraphiQL Bearer auto-injection, set `GRAPHQL_DEV_API_KEY` to the same profile key.
 
 | Command | Purpose |
 |---------|---------|
@@ -190,13 +190,13 @@ bun seed:init
 
 Fixture data lives in `tooling/fixtures/`. Loaders and orchestration live in `tooling/seeding/`.
 
-**Reference date:** rolling dashboard data anchors to `SEED_REFERENCE_DATE` in `tooling/fixtures/src/dates.ts` (default `2026-06-16`). Override at seed time in `apps/api/.env` or `tooling/seeding/.env`.
+**Reference date:** rolling dashboard data anchors to `SEED_REFERENCE_DATE` in `tooling/fixtures/src/meta/dates.ts` (default `2026-06-16`). Override at seed time in `apps/api/.env` or `tooling/seeding/.env`.
 
-See `tooling/fixtures/src/seed-entity-manifest.ts` for entity coverage status.
+See `tooling/fixtures/src/meta/entity-manifest.ts` for entity coverage status.
 
 ### Demo login
 
-In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/dev-fixtures/demo-login`. Sign-in uses Better Auth with password `DevPassword1!`.
+In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/fixtures/demo-login`. Sign-in uses Better Auth with password `DevPassword1!`.
 
 ## Auth emails (OTP + signup verification)
 

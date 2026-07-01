@@ -11,12 +11,14 @@ export async function resolveClassSubjectSchoolId(repositories: SchoolRepositori
   return classGroup?.schoolId
 }
 
-export async function resolveSessionSchoolId(repositories: SchoolRepositories, sessionId: string): Promise<string | undefined> {
-  const session = await repositories.sessions.findById(sessionId)
-  if (!session)
-    return undefined
-  const classGroup = await repositories.classGroups.findById(session.classGroupId)
-  return classGroup?.schoolId
+export async function resolveActivitySessionSchoolId(repositories: SchoolRepositories, activitySessionId: string): Promise<string | undefined> {
+  const activitySession = await repositories.activitySessions.findById(activitySessionId)
+  return activitySession?.schoolId
+}
+
+export async function resolveLessonSessionSchoolId(repositories: SchoolRepositories, lessonSessionId: string): Promise<string | undefined> {
+  const lessonSession = await repositories.lessonSessions.findById(lessonSessionId)
+  return lessonSession?.schoolId
 }
 
 export function directSchoolTenant<T extends EntityWithSchoolId>(): EntityTenantResolver<T> {

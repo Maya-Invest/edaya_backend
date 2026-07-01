@@ -8,7 +8,7 @@ CLI seeding (`bun seed`, `bun seed:init`) always targets a **running API**:
 
 1. Provision Better Auth users via `/auth/*`
 2. Bootstrap an owner session (`register-school` on a fresh database)
-3. Seed access roles, provision the seeding service account (profile API key from `@edaya/dev-fixtures`)
+3. Seed access roles, provision the seeding service account (profile API key from `@edaya/fixtures`)
 4. Load demo data through `/core/*` entity routes and commands
 
 There is **no** direct PGlite/SQLite write path from the seed CLI. If HTTP bootstrap fails, the CLI exits with instructions to wipe `.data` and reseed — do not write to the database while the API is running.
@@ -33,7 +33,7 @@ Application-level repositories:
 
 Direct base-service writes:
 
-`activities.save`, `activityEnrollments.save`, `attachments.save`, `attendance.save`, `classLogbookEntries.save`, `disciplinaryActions.save`, `gradeLevels.save`, `homeworkAssignments.save`, `homeworkSubmissions.save`, `periodDefinitions.save`, `resources.save`, `subjectMatters.save`, and `subjects.save`.
+`activities.save`, `activityEnrollments.save`, `attachments.save`, `attendance.save`, `disciplinaryActions.save`, `gradeLevels.save`, `periodDefinitions.save`, `resources.save`, `subjectMatters.save`, and `subjects.save`.
 
 These writes are bootstrap operations, not normal public workflows. Keep them named and isolated in future ports rather than exposing a generic repository bag.
 
@@ -41,7 +41,7 @@ These writes are bootstrap operations, not normal public workflows. Keep them na
 
 The seed flows call these `SchoolService` workflows:
 
-`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignFeeToStudent`, `assignMatterToClassSubject`, `assignResourceToSession`, `assignStaffToSession`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createClassGroup`, `createFee`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createSession`, `createStudentNote`, `enrollStudent`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordPayment`, `recordSessionProgress`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `updateStudentDisciplinaryActionStatus`, and `upsertStudentHealthProfile`.
+`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignFeeToStudent`, `assignMatterToClassSubject`, `assignResourceToLessonSession`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `completeAssessment`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createClassGroup`, `createFee`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `rescheduleOccurrence`, `updateStudentDisciplinaryActionStatus`, and `upsertStudentHealthProfile`.
 
 ## Migrated vertical ports
 
@@ -96,15 +96,15 @@ Curriculum uses a four-operation `CurriculumSeedPort` for subjects, subject matt
 
 ### Scheduling
 
-Scheduling uses a six-operation `SchedulingSeedPort` for resources, schedules, sessions, staff/resource assignments, and session progress. Timestamps cross the boundary as ISO strings. The in-process adapter reconstructs `Date` and `Resource`; the HTTP adapter sends command/entity records directly.
+Scheduling uses a six-operation `SchedulingSeedPort` for resources, schedules, schedule materialization, lesson-session staff/resource assignments, and lesson-session progress. Timestamps cross the boundary as ISO strings. Lesson session IDs follow `{scheduleId}:{calendarDate}` after `materializeSchedule`. The in-process adapter reconstructs `Date` and `Resource`; the HTTP adapter sends command records directly.
 
 ### Attendance
 
-Attendance uses a three-operation `AttendanceSeedPort` for sessions, attendance records, and pending-justification updates. The named pending update keeps record lookup and mutation inside each adapter. The in-process implementation uses `AttendanceRecord.copyWith`; the HTTP implementation updates the plain entity response without representing it as a domain instance.
+Attendance uses a three-operation `AttendanceSeedPort` for one-off lesson-session setup (schedule + materialize), attendance records, and pending-justification updates. Fixture `scheduleId` values are full schedule ids (e.g. `sch-sess-abs-a1`). The named pending update keeps record lookup and mutation inside each adapter. The in-process implementation uses `AttendanceRecord.copyWith`; the HTTP implementation updates the plain entity response without representing it as a domain instance.
 
 ### Assessments
 
-Assessments use a two-operation `AssessmentsSeedPort` for assessment creation and student result recording. Assessment dates cross the boundary as ISO strings. Partial fixture score maps are narrowed before records reach the port, so result scores remain required and finite.
+Assessments use a two-operation `AssessmentsSeedPort` for assessment creation and student result recording. In-class assessments seed `startsAt`/`endsAt`; homework seeds `dueAt` only (`Assessment.kind = homework`). Homework assignments and submissions from fixtures map to `createAssessment` + `recordAssessmentResult`. Partial fixture score maps are narrowed before records reach the port, so result scores remain required and finite.
 
 ### Report cards
 
@@ -114,13 +114,9 @@ Report cards use a five-operation `ReportCardsSeedPort` for grade scales, defini
 
 Finance uses a three-operation `FinanceSeedPort` for fee creation, student fee assignment, and payment recording. The workflow resolves one reference date for status-sensitive operations and maps fixture categories to domain enums. Installment, due, payment, and reference dates cross as ISO strings and are reconstructed only by the in-process adapter.
 
-### Learning content
+### Activities
 
-Learning content uses a three-operation `LearningContentSeedPort` for homework assignments, homework submissions, and class-logbook entries. Dates cross as ISO strings, and fixture types/statuses map explicitly to core enums. The in-process adapter owns all three domain constructors.
-
-### Extracurricular activities
-
-Activities use a separate two-operation `ActivitiesSeedPort` for activities and enrollments. Activity categories and enrollment statuses are mapped explicitly; dates cross as ISO strings and are reconstructed only in-process.
+Activities use a two-operation `ActivitiesSeedPort` for activity programs and enrollments. Activity categories and enrollment statuses are mapped explicitly; dates cross as ISO strings and are reconstructed only in-process.
 
 ### School life
 
@@ -151,7 +147,7 @@ Attachments use a one-operation `AttachmentsSeedPort`. The workflow maps fixture
 5. Scheduling and attendance: migrated.
 6. Assessments and report cards: migrated.
 7. Finance: migrated.
-8. Learning content and extracurricular activities: migrated.
+8. Activities: migrated.
 9. Calendar events, incidents, and student involvements: migrated.
 10. Student health profiles and pedagogical notes: migrated.
 11. Communications, discipline, and attachments: migrated.

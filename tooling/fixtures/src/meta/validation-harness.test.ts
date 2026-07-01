@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'bun:test'
-import { countSeedStudents } from './dataset'
-import { seedManifestEntitiesByStatus } from './seed-entity-manifest'
+import { countSeedStudents } from '../scenarios/demo-central/core'
+import { seedManifestEntitiesByStatus } from './entity-manifest'
 import {
   assertSeedManifestComplete,
   buildSeedValidationTargets,
   resolveSeedExpectedCounts,
-} from './seed-validation-harness'
+} from './validation-harness'
 
 describe('seed validation harness', () => {
   it('has no missing entities in the manifest', () => {

@@ -13,7 +13,7 @@ import {
   SEED_SCHOOL_ID,
   SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_STAFF,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
 import { seedIntegrationLightPopulation } from '../domains/population/workflow'
 import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'

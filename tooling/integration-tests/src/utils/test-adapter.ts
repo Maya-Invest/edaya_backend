@@ -16,7 +16,7 @@ export type FailableRepository
   = | 'classSubjectMatterRepository'
     | 'messageDeliveryRepository'
     | 'reportCardResultRepository'
-    | 'sessionRepository'
+    | 'lessonSessionRepository'
     | 'studentClassEnrollmentRepository'
     | 'studentFeeRepository'
 
@@ -54,7 +54,7 @@ export function wrapSaveWithFailure<T extends { readonly id: string }>(
 
 export function applyAllSaveFailureWraps(repos: any, getSaveFailure: () => any, clearSaveFailure: () => void) {
   wrapSaveWithFailure('studentFeeRepository', repos.studentFees, getSaveFailure, clearSaveFailure)
-  wrapSaveWithFailure('sessionRepository', repos.sessions, getSaveFailure, clearSaveFailure)
+  wrapSaveWithFailure('lessonSessionRepository', repos.lessonSessions, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('classSubjectMatterRepository', repos.classSubjectMatters, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('reportCardResultRepository', repos.results, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('studentClassEnrollmentRepository', repos.enrollments, getSaveFailure, clearSaveFailure)
@@ -127,7 +127,7 @@ export function buildTestRepositoriesMap(repos: any) {
     classSubjectRepository: repos.classSubjects,
     classSubjectMatterRepository: repos.classSubjectMatters,
     classSubjectProgressRepository: repos.classSubjectProgress,
-    sessionRepository: repos.sessions,
+    lessonSessionRepository: repos.lessonSessions,
     assessmentRepository: repos.assessments,
     attendanceRepository: repos.attendance,
     assessmentResultRepository: repos.assessmentResults,

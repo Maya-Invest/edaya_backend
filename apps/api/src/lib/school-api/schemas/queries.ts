@@ -87,6 +87,34 @@ export const schoolOverviewKpisSchema = z.object({
   incompleteGradingClassCount: z.number().int().nonnegative(),
 }).openapi("SchoolOverviewKpis");
 
+export const timetableEventSchema = z.object({
+  kind: z.enum(["lesson", "activity", "assessment"]),
+  id: z.string().min(1),
+  classGroupId: z.string().min(1),
+  classSubjectId: z.string().min(1).optional(),
+  activityId: z.string().min(1).optional(),
+  title: z.string().min(1),
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+  lessonSessionId: z.string().min(1).optional(),
+  activitySessionId: z.string().min(1).optional(),
+  assessmentId: z.string().min(1).optional(),
+  status: z.enum(["pending", "completed", "cancelled"]).optional(),
+}).openapi("TimetableEvent");
+
+export const getClassGroupTimetableQuerySchema = z.object({
+  classGroupId: z.string().min(1),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+}).openapi("GetClassGroupTimetableQuery");
+
+export const classGroupTimetableResponseSchema = z.object({
+  classGroupId: z.string().min(1),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+  events: z.array(timetableEventSchema),
+}).openapi("ClassGroupTimetableResponse");
+
 export const schoolOverviewResponseSchema = z.object({
   schoolId: z.string().min(1),
   academicYearId: z.string().min(1),

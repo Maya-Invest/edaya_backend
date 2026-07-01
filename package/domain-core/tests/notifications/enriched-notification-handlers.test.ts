@@ -41,11 +41,11 @@ describe('enriched notification handlers', () => {
             lastName: 'Martin',
           }),
         },
-        sessions: {
+        lessonSessions: {
           findById: async () => ({
             id: 'sess1',
             classGroupId: 'cg1',
-            title: 'Mathematics',
+            displayLabel: 'Mathematics',
             startsAt: new Date('2026-06-30T07:30:00.000Z'),
             endsAt: new Date('2026-06-30T08:30:00.000Z'),
           }),
@@ -77,7 +77,7 @@ describe('enriched notification handlers', () => {
       records: [{
         id: 'att1',
         studentId: 'stu1',
-        sessionId: 'sess1',
+        lessonSessionId: 'sess1',
         date: new Date('2026-06-30T07:30:00.000Z'),
         status: AttendanceStatus.Absent,
       }] as AttendanceRecord[],

@@ -1,5 +1,5 @@
-import { SEED_DEADLINES } from './activities-deadlines-seed'
-import { SEED_SCHOOL_ID } from './dataset'
+import { SEED_SCHOOL_ID } from '../core'
+import { SEED_DEADLINES } from './activities-deadlines'
 
 const SUBJECT_TO_CLASS_SUBJECT: Record<string, Record<string, string>> = {
   '6a': {

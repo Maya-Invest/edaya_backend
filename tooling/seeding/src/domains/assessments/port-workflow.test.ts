@@ -3,12 +3,13 @@ import type {
   AssessmentSeedRecord,
   AssessmentsSeedPort,
 } from './port'
-import { countSeedAssessmentResults, countSeedAssessments } from '@edaya/dev-fixtures'
+import { AssessmentKind, DeadlineComplianceStatus } from '@edaya/core'
+import { countSeedAssessmentResults, countSeedAssessments } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevAssessments } from './workflow'
 
 describe('assessments seed port workflow', () => {
-  test('seeds assessments and their defined student scores', async () => {
+  test('seeds in-class assessments, homework, and their results', async () => {
     const assessments: AssessmentSeedRecord[] = []
     const results: AssessmentResultSeedRecord[] = []
     const port: AssessmentsSeedPort = {
@@ -24,8 +25,17 @@ describe('assessments seed port workflow', () => {
 
     expect(assessments).toHaveLength(countSeedAssessments())
     expect(results).toHaveLength(countSeedAssessmentResults())
-    expect(assessments[0]?.date).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
-    expect(assessments.every(record => record.date === record.dueAt)).toBe(true)
-    expect(results.every(record => Number.isFinite(record.score))).toBe(true)
+
+    const inClass = assessments.find(record => record.id === 'e1')
+    expect(inClass?.startsAt).toBeDefined()
+    expect(inClass?.endsAt).toBeDefined()
+    expect(inClass?.dueAt).toBeUndefined()
+
+    const homework = assessments.find(record => record.kind === AssessmentKind.Homework)
+    expect(homework?.dueAt).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
+    expect(homework?.startsAt).toBeUndefined()
+
+    expect(results.some(record => record.status === DeadlineComplianceStatus.Late)).toBe(true)
+    expect(results.filter(record => record.score !== undefined).every(record => Number.isFinite(record.score!))).toBe(true)
   })
 })

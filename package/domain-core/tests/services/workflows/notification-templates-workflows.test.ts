@@ -102,14 +102,14 @@ describe('mergeSchoolNotificationTemplateDocument', () => {
   test('validates merged document shape', async () => {
     const defaults = await buildDefaultNotificationTemplateDocument()
     const merged = mergeSchoolNotificationTemplateDocument(defaults, {
-      'homework.due_soon': {
+      'assessment.due_soon': {
         email: {
-          subject: 'Due soon: {{homeworkTitle}}',
+          subject: 'Due soon: {{assessmentTitle}}',
         },
       },
     })
 
-    expect(merged['homework.due_soon'].email?.subject).toBe('Due soon: {{homeworkTitle}}')
-    expect(merged['homework.due_soon'].email?.body).toBe(defaults['homework.due_soon'].email?.body)
+    expect(merged['assessment.due_soon'].email?.subject).toBe('Due soon: {{assessmentTitle}}')
+    expect(merged['assessment.due_soon'].email?.body).toBe(defaults['assessment.due_soon'].email?.body)
   })
 })

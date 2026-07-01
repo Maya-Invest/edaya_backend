@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { directPermissionEntityConfig } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { resolveAttendanceRecordSchoolId } from '../scheduling/attendance-record-school'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AttachmentStatus {
@@ -148,16 +149,15 @@ async function resolveAttachmentOwnerContext(
       if (!record) {
         denyResourceAccess()
       }
-      const session = await repositories.sessions.findById(record.sessionId)
-      if (!session) {
+      const schoolId = await resolveAttendanceRecordSchoolId(repositories, record)
+      if (!schoolId) {
         denyResourceAccess()
       }
-      const classGroup = await repositories.classGroups.findById(session.classGroupId)
       const student = await repositories.students.findById(record.studentId)
-      if (!classGroup || !student || student.schoolId !== classGroup.schoolId) {
+      if (!student || student.schoolId !== schoolId) {
         denyResourceAccess()
       }
-      return { schoolId: classGroup.schoolId }
+      return { schoolId }
     }
     case AttachmentOwnerKind.Incident:
       return requireOwned(repositories.incidents.findById(ownerId))

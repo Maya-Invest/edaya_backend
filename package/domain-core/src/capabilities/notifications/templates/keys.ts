@@ -6,7 +6,6 @@ export const NOTIFICATION_TEMPLATE_KEYS = [
   'assessment.result_recorded',
   'incident.recorded',
   'assessment.due_soon',
-  'homework.due_soon',
   'activity.reminder',
   'calendar.event_reminder',
   'account_invitation',

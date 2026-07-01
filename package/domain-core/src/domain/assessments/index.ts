@@ -1,5 +1,6 @@
 export * from './assessment'
 export * from './assessment-result'
+export * from './report-card-aggregation-config'
 export * from './report-card-definition'
 export * from './report-card-definition-section'
 export * from './report-card-result'

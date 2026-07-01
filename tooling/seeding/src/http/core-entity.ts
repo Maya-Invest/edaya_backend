@@ -1,21 +1,12 @@
+import { ApiError } from '../generated/api-client'
 import type { SeedCommandKey, SeedEntityKey } from './catalog'
 import type { HttpSeedClient } from './client'
-import { unwrapEntity, unwrapEntityList } from '@edaya/api-client'
-import { seedCommandPublicName, seedEntityPublicName } from './catalog'
-import { executeCoreCommand } from './core-command'
+import { createSeedSchoolClient } from './school-client'
 
 export interface CoreHttpRequestOptions {
   client: HttpSeedClient
   serviceAccountApiKey?: string
   requestId?: string
-}
-
-function coreHeaders(serviceAccountApiKey: string | undefined, requestId?: string): Record<string, string> {
-  return {
-    'content-type': 'application/json',
-    ...(serviceAccountApiKey ? { authorization: `Bearer ${serviceAccountApiKey}` } : {}),
-    ...(requestId ? { 'x-request-id': requestId } : {}),
-  }
 }
 
 function serializeValue(value: unknown): unknown {
@@ -50,6 +41,27 @@ function entityPayload(entity: unknown): Record<string, unknown> {
   return serializePlainObject(entity as Record<string, unknown>)
 }
 
+function schoolClient(options: CoreHttpRequestOptions) {
+  return createSeedSchoolClient(options.client, {
+    serviceAccountApiKey: options.serviceAccountApiKey,
+    requestId: options.requestId,
+  })
+}
+
+function formatCoreError(scope: string, error: unknown): Error {
+  if (error instanceof ApiError) {
+    const body = error.body
+    const message = typeof body === 'object' && body && 'message' in body
+      ? String((body as { message?: string }).message)
+      : typeof body === 'object' && body
+        ? JSON.stringify(body)
+        : `HTTP ${error.status}`
+    return new Error(`${scope}: ${error.status} ${message}`)
+  }
+
+  return error instanceof Error ? error : new Error(String(error))
+}
+
 export async function postCoreCommand(
   options: CoreHttpRequestOptions,
   methodName: SeedCommandKey,
@@ -59,24 +71,12 @@ export async function postCoreCommand(
     ? serializePlainObject(payload as Record<string, unknown>)
     : payload
 
-  const { response, body } = await executeCoreCommand<Record<string, unknown>>({
-    client: options.client,
-    serviceAccountApiKey: options.serviceAccountApiKey,
-    commandName: seedCommandPublicName(methodName),
-    requestId: options.requestId,
-    payload: serializedPayload as Record<string, unknown>,
-  })
-
-  if (!response.ok) {
-    const message = typeof body === 'object' && body && 'message' in body
-      ? String((body as { message?: string }).message)
-      : typeof body === 'object' && body
-        ? JSON.stringify(body)
-        : `HTTP ${response.status}`
-    throw new Error(`Core command failed for ${methodName}: ${response.status} ${message}`)
+  try {
+    return await schoolClient(options).commands[methodName](serializedPayload)
   }
-
-  return body
+  catch (error) {
+    throw formatCoreError(`Core command failed for ${methodName}`, error)
+  }
 }
 
 export async function postEntityList(
@@ -84,23 +84,12 @@ export async function postEntityList(
   serviceName: SeedEntityKey,
   query: Record<string, unknown> = {},
 ): Promise<unknown[]> {
-  const { response, body } = await options.client.jsonRequest<unknown[]>(
-    `/core/entities/${seedEntityPublicName(serviceName)}/list`,
-    {
-      method: 'POST',
-      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
-      body: JSON.stringify(query),
-    },
-  )
-
-  if (!response.ok) {
-    const message = typeof body === 'object' && body && 'message' in body
-      ? String((body as { message?: string }).message)
-      : `HTTP ${response.status}`
-    throw new Error(`Entity list failed for ${serviceName}: ${response.status} ${message}`)
+  try {
+    return await schoolClient(options).entities[serviceName].list(query)
   }
-
-  return unwrapEntityList(body)
+  catch (error) {
+    throw formatCoreError(`Entity list failed for ${serviceName}`, error)
+  }
 }
 
 export async function postEntityCount(
@@ -108,23 +97,13 @@ export async function postEntityCount(
   serviceName: SeedEntityKey,
   query: Record<string, unknown> = {},
 ): Promise<number> {
-  const { response, body } = await options.client.jsonRequest<{ count?: number }>(
-    `/core/entities/${seedEntityPublicName(serviceName)}/count`,
-    {
-      method: 'POST',
-      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
-      body: JSON.stringify(query),
-    },
-  )
-
-  if (!response.ok) {
-    const message = typeof body === 'object' && body && 'message' in body
-      ? String((body as { message?: string }).message)
-      : `HTTP ${response.status}`
-    throw new Error(`Entity count failed for ${serviceName}: ${response.status} ${message}`)
+  try {
+    const result = await schoolClient(options).entities[serviceName].count(query)
+    return typeof result?.count === 'number' ? result.count : 0
   }
-
-  return typeof body?.count === 'number' ? body.count : 0
+  catch (error) {
+    throw formatCoreError(`Entity count failed for ${serviceName}`, error)
+  }
 }
 
 export async function postEntityFindById(
@@ -132,23 +111,15 @@ export async function postEntityFindById(
   serviceName: SeedEntityKey,
   id: string,
 ): Promise<unknown | undefined> {
-  const { response, body } = await options.client.jsonRequest(
-    `/core/entities/${seedEntityPublicName(serviceName)}/${encodeURIComponent(id)}`,
-    {
-      method: 'GET',
-      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
-    },
-  )
-
-  if (response.status === 404) {
-    return undefined
+  try {
+    return await schoolClient(options).entities[serviceName].get(id)
   }
-
-  if (!response.ok) {
-    throw new Error(`Entity get failed for ${serviceName}/${id}: ${response.status}`)
+  catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return undefined
+    }
+    throw formatCoreError(`Entity get failed for ${serviceName}/${id}`, error)
   }
-
-  return body === undefined ? undefined : unwrapEntity(body)
 }
 
 export async function postEntityFindOne(
@@ -156,24 +127,15 @@ export async function postEntityFindOne(
   serviceName: SeedEntityKey,
   query: Record<string, unknown>,
 ): Promise<unknown | undefined> {
-  const { response, body } = await options.client.jsonRequest(
-    `/core/entities/${seedEntityPublicName(serviceName)}/one`,
-    {
-      method: 'POST',
-      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
-      body: JSON.stringify(query),
-    },
-  )
-
-  if (response.status === 404) {
-    return undefined
+  try {
+    return await schoolClient(options).entities[serviceName].one(query)
   }
-
-  if (!response.ok) {
-    throw new Error(`Entity one failed for ${serviceName}: ${response.status}`)
+  catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return undefined
+    }
+    throw formatCoreError(`Entity one failed for ${serviceName}`, error)
   }
-
-  return body === undefined ? undefined : unwrapEntity(body)
 }
 
 export async function postEntitySave(
@@ -181,21 +143,14 @@ export async function postEntitySave(
   serviceName: SeedEntityKey,
   entity: unknown,
 ): Promise<void> {
-  const { response, body } = await options.client.jsonRequest(
-    `/core/entities/${seedEntityPublicName(serviceName)}/save`,
-    {
-      method: 'POST',
-      headers: coreHeaders(options.serviceAccountApiKey, options.requestId),
-      body: JSON.stringify(entityPayload(entity)),
-    },
-  )
-
-  if (!response.ok) {
-    const message = typeof body === 'object' && body && 'message' in body
-      ? String((body as { message?: string }).message)
-      : typeof body === 'object' && body
-        ? JSON.stringify(body)
-        : `HTTP ${response.status}`
-    throw new Error(`Entity save failed for ${serviceName}: ${response.status} ${message}`)
+  try {
+    const resource = schoolClient(options).entities[serviceName]
+    if (!('save' in resource) || typeof resource.save !== 'function') {
+      throw new Error(`Entity ${serviceName} does not support direct save`)
+    }
+    await resource.save(entityPayload(entity) as never)
+  }
+  catch (error) {
+    throw formatCoreError(`Entity save failed for ${serviceName}`, error)
   }
 }

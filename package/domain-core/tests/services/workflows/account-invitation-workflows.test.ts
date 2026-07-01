@@ -115,7 +115,7 @@ function createInvitationContext() {
     repositories: mockRepos,
     authorizationPolicy: {
       checkClassGroupAccess: mock(async () => {}),
-      checkSessionAccess: mock(async () => {}),
+      checkLessonSessionAccess: mock(async () => {}),
     } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
     actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
     atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
@@ -219,7 +219,7 @@ describe('AccountInvitationServiceWorkflow', () => {
       repositories: mockRepos,
       authorizationPolicy: {
         checkClassGroupAccess: mock(async () => {}),
-        checkSessionAccess: mock(async () => {}),
+        checkLessonSessionAccess: mock(async () => {}),
       } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
       actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
       atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },

@@ -15,7 +15,7 @@ import {
   SEED_PERIOD_DEFINITIONS,
   SEED_SCHOOL_ID,
   SEED_STAFF,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from './workflow'
 

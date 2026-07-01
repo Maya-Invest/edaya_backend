@@ -4,7 +4,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears'],
   accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks'],
   academics: [
-    'sessions',
+    'lessonSessions',
     'classGroups',
     'classSubjectProgress',
     'classSubjectMatters',
@@ -33,7 +33,8 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'schedules',
     'calendarEvents',
     'attendance',
-    'sessions',
+    'attendances',
+    'lessonSessions',
     'students',
     'enrollments',
   ],

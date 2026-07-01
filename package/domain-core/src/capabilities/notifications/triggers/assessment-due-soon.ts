@@ -1,6 +1,6 @@
 import type { Assessment } from '../../../domain'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
-import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
+import { AssessmentKind, MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
 import { cancelNotificationDeliveries } from '../delivery/deliver-notification'
 import { formatNotificationDueLabel } from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
@@ -27,7 +27,14 @@ export function assessmentDueSoonPredicate(
   entity: Assessment,
   existing: Assessment | undefined,
 ): boolean {
-  if (entity.metAt && !existing?.metAt) {
+  const wasHomeworkDue = existing?.kind === AssessmentKind.Homework && Boolean(existing.dueAt)
+  const isHomeworkDue = entity.kind === AssessmentKind.Homework && Boolean(entity.dueAt)
+
+  if (!wasHomeworkDue && !isHomeworkDue) {
+    return false
+  }
+
+  if (entity.completedAt && !existing?.completedAt) {
     return true
   }
   if (!entity.dueAt && existing?.dueAt) {
@@ -46,6 +53,9 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
   entityKey: 'assessments',
   predicate: assessmentDueSoonPredicate,
   resolver: async (entity, existing, context) => {
+    if (entity.kind !== AssessmentKind.Homework) {
+      return null
+    }
     const idempotencyKey = assessmentDueSoonIdempotencyKey(entity.id)
     const deps = {
       notificationGateway: context.notificationGateway,
@@ -66,7 +76,7 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
       id: enrollment.studentId,
     }))
 
-    if (entity.metAt || !entity.dueAt) {
+    if (entity.completedAt || !entity.dueAt) {
       await cancelNotificationDeliveries(deps, idempotencyKey, recipients)
       return null
     }

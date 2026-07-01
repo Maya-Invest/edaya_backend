@@ -148,6 +148,19 @@ describe('SchoolService assessment workflows', () => {
     expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === ASSESSMENT_RESULT_RECORDED_EVENT_KEY)).toBe(true)
   })
 
+  test('publishReportCardResult rejects unpublished academic periods', async () => {
+    const { service } = createReportCardContext({
+      academicPeriodPublished: false,
+    })
+
+    await expect(service.assessmentsWorkflow.publishReportCardResult({
+      id: 'rc1',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
   test('publishReportCardResult rejects already published report cards', async () => {
     const { service } = createReportCardContext({
       existingReportCard: {

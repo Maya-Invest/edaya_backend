@@ -28,7 +28,7 @@ GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authori
 
 1. **Sign in on the GraphiQL page** — use the email/password form at http://localhost:9999/graphiql (`POST /graphiql/login`, dev-only wrapper around Better Auth).
 2. **Session cookie** — sign in via the webapp (http://localhost:5173), then open GraphiQL.
-3. **Service account** — set `GRAPHQL_DEV_API_KEY` in `apps/api/.env` to the school profile `seedingApiKey` from `@edaya/dev-fixtures` for auto-injected Bearer auth locally, or add it manually in GraphiQL's **Headers** panel.
+3. **Service account** — set `GRAPHQL_DEV_API_KEY` in `apps/api/.env` to the school profile `seedingApiKey` from `@edaya/fixtures` for auto-injected Bearer auth locally, or add it manually in GraphiQL's **Headers** panel.
 
 Default dev credentials (after `bun run seed:auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 

@@ -4,12 +4,12 @@ import {
   AnnouncementTargetKind,
   AttendanceStatus,
   AuthorizationErrorCode,
+  DayOfWeek,
   FeeStatus,
   GradeLevel,
   GradeScale,
   PaymentMethod,
   PaymentStatus,
-  SessionKind,
   Subject,
   SubjectMatter,
 } from '@edaya/core'
@@ -21,16 +21,17 @@ import {
   createAcademicPeriod,
   createClassGroup,
   listMatterProgress,
+  publishAcademicPeriod,
   saveAnnouncement,
   saveAnnouncementTarget,
   saveClassSubject,
   saveClassSubjectMatter,
   saveFee,
   saveGuardian,
+  saveLessonSession,
   saveReportCardDefinition,
   saveSchedule,
   saveSchool,
-  saveSession,
   saveStudent,
 } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
@@ -73,21 +74,20 @@ describeIntegration('atomic workflow safeguards', () => {
       classSubjectId: classSubject.id,
       subjectMatterId: 'fractions',
     })
-    await saveSession(app, {
+    await saveLessonSession(app, {
       id: 'lesson',
       schoolId: 'school',
       classGroupId: 'class',
       classSubjectId: classSubject.id,
-      title: 'Fractions',
-      kind: SessionKind.Course,
+      displayLabel: 'Fractions',
       startsAt: new Date('2026-09-01T08:00:00Z'),
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })
     failSaveOnAttempt('classSubjectMatterRepository')
-    await expect(app.academicsWorkflow.recordSessionProgress({
+    await expect(app.academicsWorkflow.recordLessonSessionProgress({
       id: 'progress',
       classSubjectMatterId: classMatter.id,
-      sessionId: 'lesson',
+      lessonSessionId: 'lesson',
       completedPercentage: 50,
     })).rejects.toThrow('Simulated classSubjectMatterRepository save failure')
     expect(await listMatterProgress(app, classMatter.id)).toHaveLength(0)
@@ -213,6 +213,7 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 Standard',
       isDefault: true,
     })
+    await publishAcademicPeriod(app, 'term')
     failSaveOnAttempt('reportCardResultRepository')
     await expect(app.assessmentsWorkflow.publishReportCardResult({
       id: 'report-card',
@@ -244,23 +245,31 @@ describeIntegration('atomic workflow safeguards', () => {
     })
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
-    await saveSession(app, {
+    await app.baseService.entities.subjects.save(
+      new Subject({ id: 'general', schoolId: 'school', name: 'General' }),
+    )
+    const classSubject = await saveClassSubject(app, {
+      id: 'class-general',
+      classGroupId: 'class',
+      subjectId: 'general',
+    })
+    await saveLessonSession(app, {
       id: 'lesson',
       schoolId: 'school',
       classGroupId: 'class',
-      title: 'Class attendance',
-      kind: SessionKind.Course,
+      classSubjectId: classSubject.id,
+      displayLabel: 'Class attendance',
       startsAt: new Date('2026-09-01T08:00:00Z'),
       endsAt: new Date('2026-09-01T09:00:00Z'),
     })
-    await expect(app.schedulingWorkflow.recordSessionAttendance({
-      sessionId: 'lesson',
+    await expect(app.schedulingWorkflow.recordLessonSessionAttendance({
+      lessonSessionId: 'lesson',
       attendanceByStudent: { student: AttendanceStatus.Present, missing: AttendanceStatus.Absent },
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    expect(await repositories.attendanceRepository.list({ sessionId: 'lesson' })).toHaveLength(0)
+    expect(await repositories.attendanceRepository.list({ lessonSessionId: 'lesson' })).toHaveLength(0)
   })
 
-  it('rolls back generated sessions when materializing a later schedule fails', async () => {
+  it('rolls back materialized lesson sessions when a later occurrence save fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
     await app.setupWorkflow.createAcademicYear({
@@ -280,28 +289,30 @@ describeIntegration('atomic workflow safeguards', () => {
       gradeLevelId: 'level',
       name: 'Grade 6 A',
     })
-    const sessionDate = new Date('2026-09-01T00:00:00Z')
-    for (const [id, title, startTime, endTime] of [
-      ['morning', 'Morning', '08:00', '09:00'],
-      ['afternoon', 'Afternoon', '13:00', '14:00'],
-    ] as const) {
-      await saveSchedule(app, {
-        id,
-        classGroupId: 'class',
-        title,
-        isRecurring: false,
-        startTime,
-        endTime,
-        specificDate: sessionDate,
-      })
-    }
-    failSaveOnAttempt('sessionRepository', 2)
-    await expect(app.schedulingWorkflow.generateSessions({
+    await app.baseService.entities.subjects.save(
+      new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
+    )
+    const classSubject = await saveClassSubject(app, {
+      id: 'class-math',
       classGroupId: 'class',
-      startDate: sessionDate,
-      endDate: sessionDate,
-    })).rejects.toThrow('Simulated sessionRepository save failure')
-    expect(await repositories.sessionRepository.list({ classGroupId: 'class' })).toHaveLength(0)
+      subjectId: 'math',
+      gradeLevelSubjectId: 'gls-math',
+    })
+    await saveSchedule(app, {
+      id: 'weekly-math',
+      classGroupId: 'class',
+      title: 'Math',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Monday,
+      startTime: '08:00',
+      endTime: '09:00',
+      classSubjectId: classSubject.id,
+    })
+    failSaveOnAttempt('lessonSessionRepository', 2)
+    await expect(app.schedulingWorkflow.materializeSchedule({ scheduleId: 'weekly-math' }))
+      .rejects
+      .toThrow('Simulated lessonSessionRepository save failure')
+    expect(await repositories.lessonSessionRepository.list({ classGroupId: 'class' })).toHaveLength(0)
   })
 
   it('rolls back generated communications deliveries when a later recipient save fails', async () => {

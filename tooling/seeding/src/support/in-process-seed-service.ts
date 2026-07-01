@@ -1,7 +1,7 @@
 import type { SchoolService } from '@edaya/core'
 import type { SeedApplication } from '../support/types'
 import { createBootstrapStaffActorMetadata } from '@edaya/core'
-import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures'
 
 export function createInProcessSeedService(
   application: SeedApplication,

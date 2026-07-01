@@ -8,14 +8,17 @@ import {
 import type { AppRouteHandler } from "@/http/types";
 import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
 import { applyStructureTemplate } from "@/lib/onboarding/apply-structure-template";
-import type { StructureTemplateDefinition } from "@/lib/onboarding/templates/types";
+import type { StructureTemplateDefinition } from "@edaya/fixtures/onboarding";
 import { inviteStaffMembers } from "@/lib/onboarding/invite-staff-members";
 import {
   completeOnboardingWizard,
   recordOnboardingAccountProgress,
   resolveOnboardingAccountStatus,
 } from "@/lib/onboarding/onboarding-account-state";
-import { isStructureTemplateId } from "@/lib/onboarding/templates/registry";
+import {
+  isStructureTemplateId,
+  listStructureTemplatesForCountry,
+} from "@edaya/fixtures/onboarding";
 import { isOnboardingStaffInviteRoleKey } from "@/lib/onboarding/staff-invite-roles";
 import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
@@ -45,18 +48,42 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   ownerEmail: z.string().trim().email().optional(),
 }).openapi("OnboardingRegisterSchoolRequest");
 
-const structureTemplateSnapshotSchema = z.object({
+const structureTemplateReportCardDomainCategorySchema = z.object({
+  domain: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  order: z.number().int(),
+  coefficient: z.number().optional(),
+  weight: z.number().optional(),
+});
+
+const structureTemplateReportCardStructureSchema = z.object({
+  gradingScale: z.number(),
+  passingGrade: z.number(),
+  periods: z.array(z.object({
+    code: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+    weight: z.number(),
+  })).min(1),
+  domainCategories: z.array(structureTemplateReportCardDomainCategorySchema).min(1),
+  includeSummary: z.boolean().optional(),
+  includeComments: z.boolean().optional(),
+});
+
+const structureTemplateDefinitionSchema = z.object({
   id: z.string().trim().min(1),
-  countryCode: z.enum(["FR", "CI"]),
+  countryCode: z.enum(["CI", "FR"]),
   label: z.string().trim().min(1),
   description: z.string().trim().min(1),
   cycle: z.string().trim().min(1),
+  reportCardStructure: structureTemplateReportCardStructureSchema.optional(),
   gradeLevels: z.array(z.object({
     id: z.string().trim().min(1),
     code: z.string().trim().min(1),
     name: z.string().trim().min(1),
     shortLabel: z.string().trim().min(1),
     order: z.number().int(),
+    examYear: z.boolean().optional(),
+    examName: z.string().trim().min(1).optional(),
   }).passthrough()).min(1),
   subjects: z.array(z.object({
     code: z.string().trim().min(1),
@@ -71,7 +98,18 @@ const structureTemplateSnapshotSchema = z.object({
     coefficient: z.number(),
     matters: z.array(z.string().trim().min(1)).min(1),
   }).passthrough()),
-}).passthrough();
+}).passthrough().openapi("StructureTemplateDefinition");
+
+const onboardingListStructureTemplatesQuerySchema = z.object({
+  country: z.string().trim().min(1).optional(),
+}).openapi("OnboardingListStructureTemplatesQuery");
+
+const onboardingListStructureTemplatesResponseSchema = z.object({
+  countryCode: z.enum(["CI", "FR"]),
+  templates: z.array(structureTemplateDefinitionSchema),
+}).openapi("OnboardingListStructureTemplatesResponse");
+
+const structureTemplateSnapshotSchema = structureTemplateDefinitionSchema;
 
 const onboardingApplyStructureTemplateRequestSchema = z.object({
   templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
@@ -187,6 +225,35 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   catch (err) {
     return routeErrorResponse(c, err);
   }
+};
+
+export const onboardingListStructureTemplatesRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("onboarding", "structure-templates"),
+  tags: ["Core Onboarding"],
+  summary: "List built-in school structure templates for a country",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "listStructureTemplates",
+    path: "onboarding/structure-templates",
+    responseSchemaName: "OnboardingListStructureTemplatesResponse",
+  }),
+  request: {
+    query: onboardingListStructureTemplatesQuerySchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(onboardingListStructureTemplatesResponseSchema, "Structure templates for the requested country"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const onboardingListStructureTemplatesHandler: AppRouteHandler<typeof onboardingListStructureTemplatesRoute> = async (c) => {
+  const query = c.req.valid("query");
+  const result = listStructureTemplatesForCountry(query.country);
+  return c.json({
+    countryCode: result.countryCode,
+    templates: [...result.templates],
+  }, HttpStatusCodes.OK);
 };
 
 export const onboardingApplyStructureTemplateRoute = createRoute({

@@ -201,7 +201,7 @@ export const SEED_POPULATION_AUTH_GUARDIANS = [
 ] as const
 
 /** Expected student count after all fixture modules merge (see population-generator.ts). */
-export { SEED_TARGET_STUDENT_COUNT } from './population-generator'
+export { SEED_TARGET_STUDENT_COUNT } from '../generators/population-generator'
 
 /** Narrative student ids grouped by class — used by assessments and integration spot checks. */
 export const SEED_NARRATIVE_CLASS_STUDENT_IDS = {

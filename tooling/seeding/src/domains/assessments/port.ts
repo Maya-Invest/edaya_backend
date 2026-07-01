@@ -1,4 +1,9 @@
-import type { AssessmentKind } from '@edaya/core'
+import type { AssessmentKind, DeadlineComplianceStatus } from '@edaya/core'
+
+export interface AssessmentAttachmentSeedRecord {
+  name: string
+  size: string
+}
 
 export interface AssessmentSeedRecord {
   id: string
@@ -9,15 +14,20 @@ export interface AssessmentSeedRecord {
   kind: AssessmentKind
   maxScore: number
   coefficient: number
-  date: string
-  dueAt: string
+  description?: string
+  attachments?: AssessmentAttachmentSeedRecord[]
+  startsAt?: string
+  endsAt?: string
+  dueAt?: string
+  completedAt?: string
 }
 
 export interface AssessmentResultSeedRecord {
   id: string
   assessmentId: string
   studentId: string
-  score: number
+  score?: number
+  status?: DeadlineComplianceStatus
 }
 
 export interface AssessmentsSeedPort {

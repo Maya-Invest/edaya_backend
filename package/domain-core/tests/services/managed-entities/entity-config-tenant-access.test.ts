@@ -14,11 +14,10 @@ import {
   ClassSubjectMatter,
   ClassSubjectMatterStatus,
   ClassSubjectProgress,
+  LessonSession,
   Resource,
   ResourceAssignment,
   ResourceKind,
-  Session,
-  SessionKind,
   Student,
   StudentClassEnrollment,
   StudentNote,
@@ -46,7 +45,7 @@ describe('Entity config tenant and access gates', () => {
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('class subject progress direct save requires session access', async () => {
+  test('class subject progress direct save requires lesson session access', async () => {
     const teacherActor = createStaffActorMetadata({
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-1',
@@ -87,12 +86,13 @@ describe('Entity config tenant and access gates', () => {
       status: ClassSubjectMatterStatus.NotStarted,
       completedPercentage: 0,
     }))
-    await repositories.sessionRepository.save(new Session({
+    await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-unassigned-1',
+      schoolId: 'school',
       classGroupId: 'class-unassigned-1',
+      scheduleId: 'schedule-1',
       classSubjectId: 'class-subject-unassigned-1',
-      title: 'Math',
-      kind: SessionKind.Course,
+      displayLabel: 'Math',
       startsAt: new Date('2026-05-01T08:00:00Z'),
       endsAt: new Date('2026-05-01T09:00:00Z'),
     }))
@@ -100,7 +100,7 @@ describe('Entity config tenant and access gates', () => {
     await expect(app.baseService.entities.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-unassigned-1',
       classSubjectMatterId: 'class-subject-matter-unassigned-1',
-      sessionId: 'session-unassigned-1',
+      lessonSessionId: 'session-unassigned-1',
       completedPercentage: 10,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })

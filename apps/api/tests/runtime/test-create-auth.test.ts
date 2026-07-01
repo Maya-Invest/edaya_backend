@@ -1,4 +1,4 @@
-import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
+import { DEV_AUTH_PASSWORD } from "@edaya/fixtures";
 import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";

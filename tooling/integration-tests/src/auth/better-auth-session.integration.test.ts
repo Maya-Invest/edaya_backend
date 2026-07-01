@@ -4,7 +4,7 @@ import {
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/adapters/auth-otp-mailer'

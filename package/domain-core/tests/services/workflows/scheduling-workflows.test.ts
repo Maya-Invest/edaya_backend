@@ -14,6 +14,8 @@ import {
   CalendarEventScopeKind,
   DayOfWeek,
   MessageDeliveryRecipientKind,
+  OccurrenceStatus,
+  ScheduleKind,
 } from '../../../src/domain'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
@@ -22,12 +24,64 @@ import {
 } from './workflow-test-context'
 
 describe('SchoolService scheduling workflows', () => {
-  test('generateSessions expands schedules and saves sessions through managed service', async () => {
-    const { mockAtomic, mockPolicy, mockRepos, service } = createSchedulingContext({
+  test('materializeSchedule upserts lesson sessions for a single schedule', async () => {
+    const { savedLessonSessions, service } = createSchedulingContext({
       schedules: [
         {
           id: 'sched-thu',
+          schoolId: 'sch1',
           classGroupId: 'cg_daily',
+          scheduleKind: ScheduleKind.Lesson,
+          title: 'Math',
+          isRecurring: true,
+          dayOfWeek: DayOfWeek.Thursday,
+          startTime: '08:00',
+          endTime: '09:00',
+          classSubjectId: 'cs1',
+        },
+      ],
+    })
+
+    const result = await service.schedulingWorkflow.materializeSchedule({ scheduleId: 'sched-thu' })
+
+    expect(result.length).toBeGreaterThan(0)
+    expect(savedLessonSessions.has('sched-thu:2026-05-28')).toBe(true)
+    expect(result.find(session => session.id === 'sched-thu:2026-05-28')?.displayLabel).toBe('Math')
+  })
+
+  test('materializeSchedule upserts activity sessions for an activity schedule', async () => {
+    const { savedActivitySessions, service } = createSchedulingContext({
+      schedules: [
+        {
+          id: 'sched-chess',
+          schoolId: 'sch1',
+          classGroupId: 'cg_daily',
+          scheduleKind: ScheduleKind.Activity,
+          title: 'Chess',
+          isRecurring: true,
+          dayOfWeek: DayOfWeek.Thursday,
+          startTime: '15:00',
+          endTime: '16:00',
+          activityId: 'act1',
+        },
+      ],
+    })
+
+    const result = await service.schedulingWorkflow.materializeSchedule({ scheduleId: 'sched-chess' })
+
+    expect(result.length).toBeGreaterThan(0)
+    expect(savedActivitySessions.has('sched-chess:2026-05-28')).toBe(true)
+    expect(result.find(session => session.id === 'sched-chess:2026-05-28')?.displayLabel).toBe('Chess Club')
+  })
+
+  test('materializeSchedule skips non-school days that apply to the class', async () => {
+    const { savedLessonSessions, service } = createSchedulingContext({
+      schedules: [
+        {
+          id: 'sched-thu',
+          schoolId: 'sch1',
+          classGroupId: 'cg_daily',
+          scheduleKind: ScheduleKind.Lesson,
           title: 'Math',
           isRecurring: true,
           dayOfWeek: DayOfWeek.Thursday,
@@ -36,55 +90,16 @@ describe('SchoolService scheduling workflows', () => {
           classSubjectId: 'cs1',
         },
         {
-          id: 'sched-specific',
-          classGroupId: 'cg_daily',
-          title: 'Science lab',
-          isRecurring: false,
-          specificDate: new Date('2026-05-29T00:00:00Z'),
-          startTime: '10:00',
-          endTime: '11:30',
-        },
-      ],
-    })
-
-    const result = await service.schedulingWorkflow.generateSessions({
-      classGroupId: 'cg_daily',
-      startDate: new Date('2026-05-28T00:00:00Z'),
-      endDate: new Date('2026-05-29T00:00:00Z'),
-    })
-
-    expect(result).toHaveLength(2)
-    expect(result.map(session => session.title)).toEqual(['Math', 'Science lab'])
-    expect(result[0]?.scheduleId).toBe('sched-thu')
-    expect(result[0]?.startsAt.getHours()).toBe(8)
-    expect(result[1]?.scheduleId).toBe('sched-specific')
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg_daily'])
-    expect(mockRepos.sessions.save).toHaveBeenCalledTimes(2)
-    expect(mockRepos.sessions.save).toHaveBeenCalledWith(result[0])
-    expect(mockRepos.sessions.save).toHaveBeenCalledWith(result[1])
-  })
-
-  test('generateSessions skips non-school days that apply to the class', async () => {
-    const { mockRepos, service } = createSchedulingContext({
-      schedules: [
-        {
-          id: 'sched-thu',
-          classGroupId: 'cg_daily',
-          title: 'Math',
-          isRecurring: true,
-          dayOfWeek: DayOfWeek.Thursday,
-          startTime: '08:00',
-          endTime: '09:00',
-        },
-        {
           id: 'sched-fri',
+          schoolId: 'sch1',
           classGroupId: 'cg_daily',
+          scheduleKind: ScheduleKind.Lesson,
           title: 'History',
           isRecurring: true,
           dayOfWeek: DayOfWeek.Friday,
           startTime: '09:00',
           endTime: '10:00',
+          classSubjectId: 'cs3',
         },
       ],
       calendarEvents: [
@@ -103,19 +118,15 @@ describe('SchoolService scheduling workflows', () => {
       ],
     })
 
-    const result = await service.schedulingWorkflow.generateSessions({
-      classGroupId: 'cg_daily',
-      startDate: new Date('2026-05-28T00:00:00Z'),
-      endDate: new Date('2026-05-29T00:00:00Z'),
-    })
+    await service.schedulingWorkflow.materializeSchedule({ scheduleId: 'sched-thu' })
+    await service.schedulingWorkflow.materializeSchedule({ scheduleId: 'sched-fri' })
 
-    expect(result).toHaveLength(1)
-    expect(result[0]?.title).toBe('Math')
-    expect(mockRepos.sessions.save).toHaveBeenCalledTimes(1)
+    expect(savedLessonSessions.has('sched-thu:2026-05-28')).toBe(true)
+    expect(savedLessonSessions.has('sched-fri:2026-05-29')).toBe(false)
   })
 
-  test('recordDailyAttendance creates a daily session and attendance through managed services', async () => {
-    const { mockAtomic, mockPolicy, mockRepos, savedSessions, service } = createSchedulingContext()
+  test('recordDailyAttendance creates a daily attendance occurrence and record through managed services', async () => {
+    const { mockAtomic, mockPolicy, mockRepos, savedDailyAttendances, service } = createSchedulingContext()
 
     const result = await service.schedulingWorkflow.recordDailyAttendance({
       id: 'att1',
@@ -126,20 +137,19 @@ describe('SchoolService scheduling workflows', () => {
     })
 
     expect(result.id).toBe('att1')
-    expect(result.sessionId).toBe('daily:cg_daily:2026-05-28')
-    expect(savedSessions.has('daily:cg_daily:2026-05-28')).toBe(true)
+    expect(result.attendanceId).toBe('cg_daily:2026-05-28')
+    expect(savedDailyAttendances.has('cg_daily:2026-05-28')).toBe(true)
     expect(mockAtomic.execute).toHaveBeenCalled()
     expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg_daily'])
     expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockPolicy.checkAttendanceAccess).toHaveBeenCalledWith(actor, ['stu1'], ['daily:cg_daily:2026-05-28'])
-    expect(mockRepos.sessions.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'daily:cg_daily:2026-05-28',
+    expect(mockRepos.attendances.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'cg_daily:2026-05-28',
     }))
     expect(mockRepos.attendance.save).toHaveBeenCalledWith(result)
   })
 
-  test('recordDailyAttendance reuses an existing daily session', async () => {
-    const { mockRepos, service } = createSchedulingContext({ existingDailySession: true })
+  test('recordDailyAttendance reuses an existing daily attendance occurrence', async () => {
+    const { mockRepos, service } = createSchedulingContext({ existingDailyAttendance: true })
 
     const result = await service.schedulingWorkflow.recordDailyAttendance({
       id: 'att1',
@@ -149,8 +159,8 @@ describe('SchoolService scheduling workflows', () => {
       status: AttendanceStatus.Present,
     })
 
-    expect(result.sessionId).toBe('daily:cg_daily:2026-05-28')
-    expect(mockRepos.sessions.save).not.toHaveBeenCalled()
+    expect(result.attendanceId).toBe('cg_daily:2026-05-28')
+    expect(mockRepos.attendances.save).not.toHaveBeenCalled()
     expect(mockRepos.attendance.save).toHaveBeenCalledWith(result)
   })
 
@@ -171,7 +181,7 @@ describe('SchoolService scheduling workflows', () => {
       existingAttendance: new AttendanceRecord({
         id: 'stu1-ses1',
         studentId: 'stu1',
-        sessionId: 'ses1',
+        lessonSessionId: 'ses1',
         date: new Date('2026-05-28T08:00:00Z'),
         status: AttendanceStatus.Absent,
         justificationStatus: AttendanceJustificationStatus.Excused,
@@ -183,7 +193,7 @@ describe('SchoolService scheduling workflows', () => {
     await expect(service.schedulingWorkflow.recordAttendance({
       id: 'stu1-ses1',
       studentId: 'stu1',
-      sessionId: 'ses1',
+      lessonSessionId: 'ses1',
       status: AttendanceStatus.Present,
     })).rejects.toThrow('Reviewed attendance must not be corrected without a reopen workflow')
   })
@@ -195,7 +205,7 @@ describe('SchoolService scheduling workflows', () => {
     await service.schedulingWorkflow.recordAttendance({
       id: 'stu1-ses1',
       studentId: 'stu1',
-      sessionId: 'ses1',
+      lessonSessionId: 'ses1',
       status: AttendanceStatus.Absent,
     })
 
@@ -214,7 +224,7 @@ describe('SchoolService scheduling workflows', () => {
     const { service } = createSchedulingContext({ notificationGateway: gateway })
 
     await service.schedulingWorkflow.recordDailyAttendance({
-      id: 'stu1-daily:cg_daily:2026-05-28',
+      id: 'stu1-cg_daily:2026-05-28',
       classGroupId: 'cg_daily',
       studentId: 'stu1',
       date: new Date('2026-05-28T12:00:00Z'),
@@ -226,12 +236,12 @@ describe('SchoolService scheduling workflows', () => {
     expect(gateway.enqueued[0]?.recipients).toEqual([{ kind: MessageDeliveryRecipientKind.Guardian, id: 'gua1', subjectId: 'subject:gua1' }])
   })
 
-  test('recordSessionAttendance enqueues guardian notifications for absent or late statuses', async () => {
+  test('recordLessonSessionAttendance enqueues guardian notifications for absent or late statuses', async () => {
     const gateway = new RecordingNotificationGateway()
     const { service } = createSchedulingContext({ notificationGateway: gateway })
 
-    await service.schedulingWorkflow.recordSessionAttendance({
-      sessionId: 'ses1',
+    await service.schedulingWorkflow.recordLessonSessionAttendance({
+      lessonSessionId: 'ses1',
       attendanceByStudent: { stu1: AttendanceStatus.Absent },
     })
 
@@ -245,11 +255,11 @@ describe('SchoolService scheduling workflows', () => {
     })
   })
 
-  test('recordSessionAttendance records each student through managed attendance', async () => {
+  test('recordLessonSessionAttendance records each student through managed attendance', async () => {
     const { mockRepos, service } = createSchedulingContext()
 
-    const result = await service.schedulingWorkflow.recordSessionAttendance({
-      sessionId: 'ses1',
+    const result = await service.schedulingWorkflow.recordLessonSessionAttendance({
+      lessonSessionId: 'ses1',
       attendanceByStudent: { stu1: AttendanceStatus.Late },
     })
 
@@ -259,7 +269,44 @@ describe('SchoolService scheduling workflows', () => {
     expect(mockRepos.attendance.save).toHaveBeenCalledWith(result[0])
   })
 
-  test('recordClassDailyAttendance records class attendance through a daily session', async () => {
+  test('cancelLessonSession marks a pending lesson session as cancelled', async () => {
+    const { mockPolicy, mockRepos, service } = createSchedulingContext()
+
+    const result = await service.schedulingWorkflow.cancelLessonSession({ lessonSessionId: 'ses1' })
+
+    expect(result.status).toBe(OccurrenceStatus.Cancelled)
+    expect(result.isException).toBe(true)
+    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg_daily'])
+    expect(mockRepos.lessonSessions.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'ses1',
+      status: OccurrenceStatus.Cancelled,
+      isException: true,
+    }))
+  })
+
+  test('rescheduleOccurrence updates lesson session times and marks exception', async () => {
+    const { mockRepos, service } = createSchedulingContext()
+    const startsAt = new Date('2026-05-29T10:00:00Z')
+    const endsAt = new Date('2026-05-29T11:00:00Z')
+
+    const result = await service.schedulingWorkflow.rescheduleOccurrence({
+      lessonSessionId: 'ses1',
+      startsAt,
+      endsAt,
+    })
+
+    expect(result.startsAt).toEqual(startsAt)
+    expect(result.endsAt).toEqual(endsAt)
+    expect(result.isException).toBe(true)
+    expect(mockRepos.lessonSessions.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'ses1',
+      startsAt,
+      endsAt,
+      isException: true,
+    }))
+  })
+
+  test('recordClassDailyAttendance records class attendance through a daily occurrence', async () => {
     const { mockRepos, service } = createSchedulingContext()
 
     const result = await service.schedulingWorkflow.recordClassDailyAttendance({
@@ -269,10 +316,10 @@ describe('SchoolService scheduling workflows', () => {
     })
 
     expect(result).toHaveLength(1)
-    expect(result[0]?.id).toBe('stu1-daily:cg_daily:2026-05-28')
+    expect(result[0]?.id).toBe('stu1-cg_daily:2026-05-28')
     expect(result[0]?.status).toBe(AttendanceStatus.Absent)
-    expect(mockRepos.sessions.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'daily:cg_daily:2026-05-28',
+    expect(mockRepos.attendances.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'cg_daily:2026-05-28',
     }))
     expect(mockRepos.attendance.save).toHaveBeenCalledWith(result[0])
   })

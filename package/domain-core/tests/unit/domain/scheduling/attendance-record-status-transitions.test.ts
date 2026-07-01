@@ -3,14 +3,14 @@ import {
   AttendanceJustificationStatus,
   AttendanceRecord,
   AttendanceStatus,
-  buildSessionAttendanceSummary,
+  buildOccurrenceAttendanceSummary,
 } from '../../../../src/domain/scheduling/attendance-record'
 
 describe('Attendance record status transitions and validation', () => {
   const baseArgs = {
     id: 'record-1',
     studentId: 'student-1',
-    sessionId: 'session-1',
+    lessonSessionId: 'session-1',
     date: new Date('2026-09-01T08:00:00Z'),
     status: AttendanceStatus.Absent,
     justificationStatus: AttendanceJustificationStatus.None,
@@ -90,14 +90,14 @@ describe('Attendance record status transitions and validation', () => {
   })
 })
 
-describe('buildSessionAttendanceSummary', () => {
+describe('buildOccurrenceAttendanceSummary', () => {
   it('correctly aggregates attendance records', () => {
-    const r1 = new AttendanceRecord({ id: '1', studentId: 's1', sessionId: 'ses1', date: new Date(), status: AttendanceStatus.Present })
-    const r2 = new AttendanceRecord({ id: '2', studentId: 's2', sessionId: 'ses1', date: new Date(), status: AttendanceStatus.Absent, justificationStatus: AttendanceJustificationStatus.None })
-    const r3 = new AttendanceRecord({ id: '3', studentId: 's3', sessionId: 'ses1', date: new Date(), status: AttendanceStatus.Absent, justificationStatus: AttendanceJustificationStatus.Excused, justifiedAt: new Date(), justifiedByStaffId: 'st1' })
-    const r4 = new AttendanceRecord({ id: '4', studentId: 's4', sessionId: 'ses1', date: new Date(), status: AttendanceStatus.Late })
+    const r1 = new AttendanceRecord({ id: '1', studentId: 's1', lessonSessionId: 'ses1', date: new Date(), status: AttendanceStatus.Present })
+    const r2 = new AttendanceRecord({ id: '2', studentId: 's2', lessonSessionId: 'ses1', date: new Date(), status: AttendanceStatus.Absent, justificationStatus: AttendanceJustificationStatus.None })
+    const r3 = new AttendanceRecord({ id: '3', studentId: 's3', lessonSessionId: 'ses1', date: new Date(), status: AttendanceStatus.Absent, justificationStatus: AttendanceJustificationStatus.Excused, justifiedAt: new Date(), justifiedByStaffId: 'st1' })
+    const r4 = new AttendanceRecord({ id: '4', studentId: 's4', lessonSessionId: 'ses1', date: new Date(), status: AttendanceStatus.Late })
 
-    const summary = buildSessionAttendanceSummary([r1, r2, r3, r4], 5)
+    const summary = buildOccurrenceAttendanceSummary([r1, r2, r3, r4], 5)
 
     expect(summary.total).toBe(5)
     expect(summary.present).toBe(1)

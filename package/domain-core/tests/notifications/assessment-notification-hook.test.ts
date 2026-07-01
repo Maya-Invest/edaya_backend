@@ -21,7 +21,7 @@ function createAssessment(overrides: Partial<Assessment['data']> = {}): Assessme
     maxScore: overrides.maxScore ?? 20,
     coefficient: overrides.coefficient ?? 1,
     dueAt: overrides.dueAt,
-    metAt: overrides.metAt,
+    completedAt: overrides.completedAt,
     createdAt: overrides.createdAt ?? new Date('2026-06-01T00:00:00Z'),
   } as Assessment
 }
@@ -84,7 +84,7 @@ describe('assessment notification postSave hook', () => {
     const dueAt = new Date('2026-06-20T00:00:00Z')
     const { service } = createAssessmentService(gateway)
 
-    await service.save(createAssessment({ dueAt }))
+    await service.save(createAssessment({ dueAt, kind: AssessmentKind.Homework }))
 
     expect(gateway.enqueued).toHaveLength(1)
     expect(gateway.enqueued[0]?.idempotencyKey).toBe('delivery:assessment.due_soon:assessment-1:subject-student-1')
@@ -96,7 +96,7 @@ describe('assessment notification postSave hook', () => {
   test('does not enqueue on no-op save with unchanged dueAt', async () => {
     const gateway = new RecordingNotificationGateway()
     const dueAt = new Date('2026-06-20T00:00:00Z')
-    const existing = createAssessment({ dueAt })
+    const existing = createAssessment({ dueAt, kind: AssessmentKind.Homework })
     const repository = createRepository<Assessment>()
     await repository.save(existing)
     const { service } = createAssessmentService(gateway, repository)

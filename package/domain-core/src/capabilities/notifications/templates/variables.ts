@@ -50,14 +50,6 @@ export const NOTIFICATION_TEMPLATE_VARIABLES = {
     'classGroupName',
     'subjectName',
   ],
-  'homework.due_soon': [
-    'schoolName',
-    'homeworkTitle',
-    'dueDate',
-    'dueDateLabel',
-    'classGroupName',
-    'subjectName',
-  ],
   'activity.reminder': [
     'schoolName',
     'activityName',

@@ -2,9 +2,11 @@ import type { EntityConfigFactory } from '../../application/entities/entity-conf
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
+import { assertNoClassGroupScheduleConflict } from '../../application/workflows/schedule-conflicts'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
-import { parseDomain, zodDate } from '../shared/utils'
+import { refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
+import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
 
 export enum AssessmentKind {
   Quiz = 'quiz',
@@ -12,6 +14,13 @@ export enum AssessmentKind {
   Project = 'project',
   Other = 'other',
 }
+
+export const assessmentAttachmentSchema = z.object({
+  name: z.string().trim().min(1, 'attachment name must not be blank'),
+  size: z.string().trim().min(1, 'attachment size must not be blank'),
+})
+
+export type AssessmentAttachment = z.infer<typeof assessmentAttachmentSchema>
 
 export const assessmentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -22,18 +31,77 @@ export const assessmentBaseSchema = z.object({
   kind: z.nativeEnum(AssessmentKind),
   maxScore: z.number().finite().positive('maxScore must be a finite, strictly positive number'),
   coefficient: z.number().finite().positive('coefficient must be a finite, strictly positive number').default(1),
-  sessionId: z.string().trim().min(1, 'sessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  attachments: z.array(assessmentAttachmentSchema).default([]),
+  lessonSessionId: z.string().trim().min(1, 'lessonSessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  startsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  endsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   dueAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
-  metAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
-  date: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  completedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
-function refineAssessment(data: any, ctx: z.RefinementCtx) {
-  if (!data.sessionId && !data.dueAt && !data.date) {
+export function buildInClassAssessmentWindow(date: Date): { startsAt: Date, endsAt: Date } {
+  const startsAt = normalizeDate(date)
+  startsAt.setUTCHours(9, 0, 0, 0)
+  const endsAt = new Date(startsAt)
+  endsAt.setUTCHours(10, 0, 0, 0)
+  return { startsAt, endsAt }
+}
+
+function refineAssessment(
+  data: {
+    kind?: AssessmentKind
+    startsAt?: Date
+    endsAt?: Date
+    dueAt?: Date
+    lessonSessionId?: string
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (data.startsAt && data.endsAt) {
+    refineEndsAtAfterStartsAt({ startsAt: data.startsAt, endsAt: data.endsAt }, ctx)
+  }
+
+  if (data.kind === AssessmentKind.Homework) {
+    if (!data.dueAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'homework assessments require dueAt',
+        path: ['dueAt'],
+      })
+    }
+    if (data.startsAt || data.endsAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'homework assessments cannot define startsAt or endsAt',
+      })
+    }
+    return
+  }
+
+  if (data.dueAt) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'assessment must be linked to a session, have a due date, or have a date',
+      message: 'dueAt is only valid for homework assessments',
+      path: ['dueAt'],
+    })
+  }
+
+  const hasTimedRange = Boolean(data.startsAt && data.endsAt)
+  const hasLessonSession = Boolean(data.lessonSessionId)
+
+  if (!hasTimedRange && !hasLessonSession) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'in-class assessments require startsAt and endsAt or lessonSessionId',
+    })
+  }
+
+  if ((data.startsAt && !data.endsAt) || (!data.startsAt && data.endsAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'startsAt and endsAt must be provided together',
     })
   }
 }
@@ -65,11 +133,22 @@ export class Assessment {
   get kind() { return this.data.kind }
   get maxScore() { return this.data.maxScore }
   get coefficient() { return this.data.coefficient }
-  get sessionId() { return this.data.sessionId }
+  get description() { return this.data.description }
+  get attachments() { return this.data.attachments }
+  get lessonSessionId() { return this.data.lessonSessionId }
+  get startsAt() { return this.data.startsAt }
+  get endsAt() { return this.data.endsAt }
   get dueAt() { return this.data.dueAt }
-  get metAt() { return this.data.metAt }
-  get date() { return this.data.date }
+  get completedAt() { return this.data.completedAt }
   get createdAt() { return this.data.createdAt }
+
+  get isHomework(): boolean {
+    return this.kind === AssessmentKind.Homework
+  }
+
+  get isInClassTimetableCandidate(): boolean {
+    return !this.isHomework && !this.dueAt
+  }
 }
 
 export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories, policy, atomicExecution }) =>
@@ -89,11 +168,11 @@ async function validateAssessmentSave(
   existing: Assessment | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
-  const [classGroup, classSubject, period, session] = await Promise.all([
+  const [classGroup, classSubject, period, lessonSession] = await Promise.all([
     repositories.classGroups.findById(assessment.classGroupId),
     repositories.classSubjects.findById(assessment.classSubjectId),
     repositories.academicPeriods.findById(assessment.periodId),
-    assessment.sessionId ? repositories.sessions.findById(assessment.sessionId) : Promise.resolve(undefined),
+    assessment.lessonSessionId ? repositories.lessonSessions.findById(assessment.lessonSessionId) : Promise.resolve(undefined),
   ])
   if (
     !classGroup
@@ -102,16 +181,39 @@ async function validateAssessmentSave(
     || !period
     || period.schoolId !== classGroup.schoolId
     || period.academicYearId !== classGroup.academicYearId
-    || (assessment.sessionId && (
-      !session
-      || session.classGroupId !== classGroup.id
-      || (session.classSubjectId && session.classSubjectId !== assessment.classSubjectId)
+    || (assessment.lessonSessionId && (
+      !lessonSession
+      || lessonSession.classGroupId !== classGroup.id
+      || lessonSession.classSubjectId !== assessment.classSubjectId
     ))
   ) {
     denyResourceAccess()
   }
 
-  if (existing && !existing.metAt && assessment.metAt) {
+  if (classSubject.isOffered === false) {
+    throw new BusinessRuleViolationError(
+      'CLASS_SUBJECT_NOT_OFFERED',
+      `Class subject ${classSubject.id} is not offered and cannot be assessed`,
+    )
+  }
+
+  if (
+    assessment.startsAt
+    && assessment.endsAt
+    && assessment.kind !== AssessmentKind.Homework
+  ) {
+    const school = await repositories.schools.findById(classGroup.schoolId)
+    if (school?.enforceScheduleConflicts) {
+      await assertNoClassGroupScheduleConflict(repositories, {
+        classGroupId: assessment.classGroupId,
+        startsAt: assessment.startsAt,
+        endsAt: assessment.endsAt,
+        excludeAssessmentId: existing?.id,
+      })
+    }
+  }
+
+  if (existing && !existing.completedAt && assessment.completedAt) {
     const results = await repositories.assessmentResults.list({ assessmentId: assessment.id })
     if (results.length > 0) {
       throw new BusinessRuleViolationError(

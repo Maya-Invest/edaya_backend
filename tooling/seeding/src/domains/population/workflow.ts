@@ -6,7 +6,7 @@ import {
   SEED_SCHOOL_ID,
   SEED_STUDENTS,
   splitDisplayName,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 async function seedPopulationRecords(

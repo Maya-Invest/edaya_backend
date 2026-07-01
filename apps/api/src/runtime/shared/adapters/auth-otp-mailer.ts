@@ -135,12 +135,3 @@ export function createAuthEmailSenders(
     delivery,
   };
 }
-
-/** @deprecated Use createAuthEmailSenders().sendAuthVerificationOtp */
-export function createAuthOtpMailer(
-  env: Environment,
-  logger: LoggerPort,
-  options: CreateAuthEmailSendersOptions = {},
-) {
-  return createAuthEmailSenders(env, logger, options).sendAuthVerificationOtp;
-}

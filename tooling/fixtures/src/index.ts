@@ -1,44 +1,40 @@
 export {
-  SEED_ACTIVITIES,
-  SEED_DEADLINES,
-} from './activities-deadlines-seed'
+  parseSeedDate,
+  parseSeedDateTime,
+  resolveSeedReferenceDate,
+  SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
+  SEED_FINANCE_REFERENCE_DATE,
+  SEED_REFERENCE_DATE,
+  seedDateOffset,
+  seedUpcomingDate,
+} from './meta/dates'
 export {
-  SEED_ACTIVITY_ENROLLMENTS,
-  SEED_EXTRACURRICULAR_ACTIVITIES,
-} from './activities-seed'
+  buildDevDemoLoginAccounts,
+  DEV_DEMO_LOGIN_ACCOUNTS,
+  type DevDemoLoginAccount,
+  type DevDemoLoginRole,
+  initialsForName,
+  resolveDevDemoStaffRole,
+} from './meta/dev-login'
 export {
-  countSeedAssessmentResults,
-  countSeedAssessments,
-  SEED_ASSESSMENT_RESULT_SCORES,
-  SEED_ASSESSMENTS,
-} from './assessments-seed'
+  SEED_ENTITY_MANIFEST,
+  type SeedEntityManifestEntry,
+  seedManifestEntitiesByStatus,
+} from './meta/entity-manifest'
 export {
-  countSeedAttachments,
-  SEED_ATTACHMENTS,
-} from './attachments-seed'
+  resolveSeedingApiKeyForSchool,
+  SEED_SCHOOL_PROFILES,
+  type SeedSchoolProfile,
+} from './meta/school-profiles'
 export {
-  countSeedAttendanceRecords,
-  SEED_ABSENCE_RECORDS,
-  SEED_PENDING_JUSTIFICATION_RECORD_IDS,
-  SEED_TODAY_ATTENDANCE,
-  type SeedTodayAttendanceRecord,
-} from './attendance-seed'
-export {
-  countSeedCalendarEvents,
-  SEED_ALL_CALENDAR_EVENTS,
-  SEED_CALENDAR_EVENTS,
-  SEED_DASHBOARD_UPCOMING_CALENDAR_EVENTS,
-} from './calendar-seed'
-export {
-  countSeedAnnouncements,
-  countSeedAnnouncementTargets,
-  countSeedExplicitMessageDeliveries,
-  countSeedMessageDeliveriesMinimum,
-  SEED_ANNOUNCEMENT_MATERIALIZE_PLANS,
-  SEED_ANNOUNCEMENT_TARGETS,
-  SEED_ANNOUNCEMENTS,
-  SEED_MESSAGE_DELIVERIES,
-} from './communications-seed'
+  assertSeedManifestComplete,
+  buildSeedQueryValidationTargets,
+  buildSeedValidationTargets,
+  resolveSeedExpectedCounts,
+  SEED_ENTITY_TO_SERVICE_NAME,
+  type SeedQueryValidationTarget,
+  type SeedValidationTarget,
+} from './meta/validation-harness'
 export {
   countSeedGuardians,
   countSeedStudents,
@@ -80,48 +76,93 @@ export {
   SEED_TARGET_STUDENT_COUNT,
   seedPeriodIdForDate,
   splitDisplayName,
-} from './dataset'
+} from './scenarios/demo-central/core'
 export {
-  parseSeedDate,
-  parseSeedDateTime,
-  resolveSeedReferenceDate,
-  SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
-  SEED_FINANCE_REFERENCE_DATE,
-  SEED_REFERENCE_DATE,
-  seedDateOffset,
-  seedUpcomingDate,
-} from './dates'
+  SEED_ACTIVITY_ENROLLMENTS,
+  SEED_EXTRACURRICULAR_ACTIVITIES,
+} from './scenarios/demo-central/domains/activities'
 export {
-  buildDevDemoLoginAccounts,
-  DEV_DEMO_LOGIN_ACCOUNTS,
-  type DevDemoLoginAccount,
-  type DevDemoLoginRole,
-  initialsForName,
-  resolveDevDemoStaffRole,
-} from './dev-demo-login'
+  SEED_ACTIVITIES,
+  SEED_DEADLINES,
+} from './scenarios/demo-central/domains/activities-deadlines'
+export {
+  SEED_ASSESSMENT_RESULT_SCORES,
+  SEED_ASSESSMENTS,
+} from './scenarios/demo-central/domains/assessments'
+export {
+  countSeedAttachments,
+  SEED_ATTACHMENTS,
+} from './scenarios/demo-central/domains/attachments'
+export {
+  countSeedAttendanceRecords,
+  SEED_ABSENCE_RECORDS,
+  SEED_PENDING_JUSTIFICATION_RECORD_IDS,
+  SEED_TODAY_ATTENDANCE,
+  type SeedTodayAttendanceRecord,
+} from './scenarios/demo-central/domains/attendance'
+export {
+  countSeedCalendarEvents,
+  SEED_ALL_CALENDAR_EVENTS,
+  SEED_CALENDAR_EVENTS,
+  SEED_DASHBOARD_UPCOMING_CALENDAR_EVENTS,
+} from './scenarios/demo-central/domains/calendar'
+export {
+  countSeedAnnouncements,
+  countSeedAnnouncementTargets,
+  countSeedExplicitMessageDeliveries,
+  countSeedMessageDeliveriesMinimum,
+  SEED_ANNOUNCEMENT_MATERIALIZE_PLANS,
+  SEED_ANNOUNCEMENT_TARGETS,
+  SEED_ANNOUNCEMENTS,
+  SEED_MESSAGE_DELIVERIES,
+} from './scenarios/demo-central/domains/communications'
 export {
   countSeedDisciplinaryActions,
   countSeedStudentDisciplinaryActions,
   SEED_DISCIPLINARY_ACTIONS,
   SEED_STUDENT_DISCIPLINARY_ACTIONS,
-} from './discipline-seed'
+} from './scenarios/demo-central/domains/discipline'
 export {
   SEED_CURRENCY,
   SEED_FEES,
   SEED_PAYMENTS,
   SEED_STUDENT_FEES,
   SEED_UPCOMING_STUDENT_FEES,
-} from './finance-seed'
+} from './scenarios/demo-central/domains/finance'
 export {
   SEED_HOMEWORK_ASSIGNMENTS,
   SEED_HOMEWORK_SUBMISSIONS,
-} from './homework-seed'
+} from './scenarios/demo-central/domains/homework'
+export {
+  SEED_GRADE_SCALES,
+  SEED_REPORT_CARD_DEFINITION_MS6,
+  SEED_REPORT_CARD_DEFINITION_MS_DRAFT,
+  SEED_REPORT_CARD_DEFINITION_TERM,
+  SEED_REPORT_CARD_DEFINITIONS,
+  SEED_REPORT_CARD_RESULTS,
+  SEED_REPORT_CARD_RESULTS_6A,
+  SEED_REPORT_CARD_RESULTS_TERM,
+} from './scenarios/demo-central/domains/report-cards'
+export {
+  countSeedPlanningSlots,
+  SEED_PLANNING_REFERENCE_WEEK_START,
+  SEED_PLANNING_SLOTS,
+} from './scenarios/demo-central/domains/scheduling'
+export {
+  countSeedAssessmentResults,
+  countSeedAssessments,
+} from './scenarios/demo-central/domains/seed-assessment-counts'
 export {
   INTEGRATION_LIGHT_AUTH_GUARDIAN_ACCOUNTS,
   INTEGRATION_LIGHT_GUARDIAN_IDS,
   INTEGRATION_LIGHT_GUARDIANS,
   INTEGRATION_LIGHT_STUDENTS,
-} from './integration-light-fixture'
+} from './scenarios/demo-central/integration-light'
+export {
+  countSeedPopulationGuardians,
+  countSeedPopulationStudents,
+  SEED_NARRATIVE_CLASS_STUDENT_IDS,
+} from './scenarios/demo-central/population'
 export {
   buildBulkGuardianEmail,
   buildClassStudentIds,
@@ -133,12 +174,7 @@ export {
   SEED_BULK_GUARDIANS,
   SEED_BULK_STUDENTS,
   SEED_NARRATIVE_STUDENT_ID_MAX,
-} from './population-generator'
-export {
-  countSeedPopulationGuardians,
-  countSeedPopulationStudents,
-  SEED_NARRATIVE_CLASS_STUDENT_IDS,
-} from './population-seed'
+} from './scenarios/generators/population-generator'
 export {
   buildSeedProfileAttachmentId,
   createRandomProfilePictureAllocator,
@@ -148,42 +184,4 @@ export {
   resolveProfilePicturePath,
   SEED_PROFILE_PHOTO_FILE_NAME,
   SEED_PROFILE_PHOTO_MIME_TYPE,
-} from './profile-pictures'
-export {
-  SEED_GRADE_SCALES,
-  SEED_REPORT_CARD_DEFINITION_MS6,
-  SEED_REPORT_CARD_DEFINITION_MS_DRAFT,
-  SEED_REPORT_CARD_DEFINITION_TERM,
-  SEED_REPORT_CARD_DEFINITIONS,
-  SEED_REPORT_CARD_RESULTS,
-  SEED_REPORT_CARD_RESULTS_6A,
-  SEED_REPORT_CARD_RESULTS_TERM,
-} from './report-cards-seed'
-export {
-  countSeedPlanningSlots,
-  SEED_PLANNING_REFERENCE_WEEK_START,
-  SEED_PLANNING_SLOTS,
-} from './scheduling-seed'
-export {
-  resolveSeedingApiKeyForSchool,
-  SEED_SCHOOL_PROFILES,
-  type SeedSchoolProfile,
-} from './school-profiles-seed'
-export {
-  SEED_ENTITY_MANIFEST,
-  type SeedEntityManifestEntry,
-  seedManifestEntitiesByStatus,
-} from './seed-entity-manifest'
-export {
-  assertSeedManifestComplete,
-  buildSeedQueryValidationTargets,
-  buildSeedValidationTargets,
-  resolveSeedExpectedCounts,
-  SEED_ENTITY_TO_SERVICE_NAME,
-  type SeedQueryValidationTarget,
-  type SeedValidationTarget,
-} from './seed-validation-harness'
-export {
-  SEED_TEACHING_LOG_ENTRIES,
-  type TeachingLogSeedEntry,
-} from './teaching-log-seed'
+} from './shared/profile-pictures'

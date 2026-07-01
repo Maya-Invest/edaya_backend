@@ -9,7 +9,7 @@ import {
   SEED_FEES,
   SEED_PAYMENTS,
   SEED_STUDENT_FEES,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevFinance } from './workflow'
 

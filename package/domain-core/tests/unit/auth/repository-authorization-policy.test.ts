@@ -9,13 +9,23 @@ import {
   checkReportCardResultAccess,
 } from '../../../src/capabilities/authorization/policy/resolvers/academic'
 import {
-  checkAttendanceAccess as checkSchedulingAttendanceAccess,
-  checkSessionAccess as checkSchedulingSessionAccess,
+  checkAttendanceRecordAccess as checkSchedulingAttendanceRecordAccess,
+  checkLessonSessionAccess as checkSchedulingLessonSessionAccess,
 } from '../../../src/capabilities/authorization/policy/resolvers/scheduling'
-import { AccessRole, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domain'
+import { AccessRole, AttendanceRecord, AttendanceStatus, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domain'
 import { TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
+
+function lessonAttendanceRecord(studentId: string, lessonSessionId: string): AttendanceRecord {
+  return new AttendanceRecord({
+    id: `record-${studentId}-${lessonSessionId}`,
+    studentId,
+    lessonSessionId,
+    date: now,
+    status: AttendanceStatus.Present,
+  })
+}
 
 async function staffActor(
   roles: TestRole[],
@@ -194,7 +204,7 @@ function createRepos(
         .filter(id => id === 'result-1')
         .map(id => ({ id, studentId: 'student-1' }))),
     },
-    sessions: {
+    lessonSessions: {
       findById: mock(async id => id === 'session-1' ? { id, classGroupId: 'class-1' } : undefined),
       findByIds: mock(async (ids: string[]) => ids
         .filter(id => id === 'session-1')
@@ -253,7 +263,7 @@ describe('createRepositoryAuthorizationPolicy', () => {
     const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     await policy.checkClassGroupAccess(studentActor(), [])
-    await policy.checkSessionAccess(studentActor(), [])
+    await policy.checkLessonSessionAccess(studentActor(), [])
 
     expect(repos.staffMembers.findById).not.toHaveBeenCalled()
   })
@@ -304,17 +314,20 @@ describe('createRepositoryAuthorizationPolicy', () => {
     await expectForbidden(policy.checkAssessmentAccess(await staffActor(['teacher'], repos), ['assessment-1', 'missing-assessment']))
   })
 
-  test('resolves scheduling and attendance access through sessions and roster access', async () => {
+  test('resolves scheduling and attendance access through lesson sessions and roster access', async () => {
     const repos = createRepos()
     const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
-    await policy.checkSessionAccess(studentActor(), ['session-1'])
-    await policy.checkSessionAccess(guardianActor(), ['session-1'])
-    await policy.checkSessionAccess(await staffActor(['teacher'], repos), ['session-1'])
-    await policy.checkAttendanceAccess(await staffActor(['teacher'], repos), ['student-1'], ['session-1'])
+    await policy.checkLessonSessionAccess(studentActor(), ['session-1'])
+    await policy.checkLessonSessionAccess(guardianActor(), ['session-1'])
+    await policy.checkLessonSessionAccess(await staffActor(['teacher'], repos), ['session-1'])
+    await policy.checkAttendanceRecordAccess(
+      await staffActor(['teacher'], repos),
+      [lessonAttendanceRecord('student-1', 'session-1')],
+    )
 
-    await expectForbidden(policy.checkSessionAccess(studentActor(), ['missing-session']))
-    await expectForbidden(policy.checkSessionAccess(await staffActor(['teacher'], repos), ['missing-session']))
+    await expectForbidden(policy.checkLessonSessionAccess(studentActor(), ['missing-session']))
+    await expectForbidden(policy.checkLessonSessionAccess(await staffActor(['teacher'], repos), ['missing-session']))
   })
 
   test('resolves finance access for staff, students, and guardians', async () => {
@@ -393,24 +406,32 @@ describe('createRepositoryAuthorizationPolicy', () => {
 
   test('covers scheduling resolver empty, elevated, and denied relationship paths', async () => {
     const reposPrincipal = createRepos({}, ['principal'])
-    await checkSchedulingSessionAccess(await staffActor(['principal'], reposPrincipal), ['missing-session'], reposPrincipal)
-    await checkSchedulingAttendanceAccess(await staffActor(['principal'], reposPrincipal), [], ['session-1'], reposPrincipal)
+    await checkSchedulingLessonSessionAccess(await staffActor(['principal'], reposPrincipal), ['missing-session'], reposPrincipal)
+    await checkSchedulingAttendanceRecordAccess(
+      await staffActor(['principal'], reposPrincipal),
+      [lessonAttendanceRecord('student-1', 'session-1')],
+      reposPrincipal,
+    )
 
     const reposPrincipal2 = createRepos({}, ['principal'])
-    await checkSchedulingSessionAccess(await staffActor(['principal'], reposPrincipal2), ['missing-session'], reposPrincipal2)
+    await checkSchedulingLessonSessionAccess(await staffActor(['principal'], reposPrincipal2), ['missing-session'], reposPrincipal2)
 
-    await expectForbidden(checkSchedulingSessionAccess(guardianActor('guardian-1', 'student-1', 'class-different'), ['session-1'], createRepos()))
+    await expectForbidden(checkSchedulingLessonSessionAccess(guardianActor('guardian-1', 'student-1', 'class-different'), ['session-1'], createRepos()))
 
     const reposAcct2 = createRepos({}, ['accountant'])
-    await expectForbidden(checkSchedulingSessionAccess(await staffActor(['accountant'], reposAcct2), ['session-1'], reposAcct2))
+    await expectForbidden(checkSchedulingLessonSessionAccess(await staffActor(['accountant'], reposAcct2), ['session-1'], reposAcct2))
 
     const reposNoAssign3 = createRepos({
       staffAssignments: {
         list: mock(async () => []),
       } as any,
     })
-    await expectForbidden(checkSchedulingSessionAccess(await staffActor(['teacher'], reposNoAssign3), ['session-1'], reposNoAssign3))
-    await expectForbidden(checkSchedulingAttendanceAccess(studentActor('student-2'), ['student-1'], ['session-1'], createRepos()))
+    await expectForbidden(checkSchedulingLessonSessionAccess(await staffActor(['teacher'], reposNoAssign3), ['session-1'], reposNoAssign3))
+    await expectForbidden(checkSchedulingAttendanceRecordAccess(
+      studentActor('student-2'),
+      [lessonAttendanceRecord('student-1', 'session-1')],
+      createRepos(),
+    ))
 
     const reposNoAssign4 = createRepos({
       staffAssignments: {
@@ -420,7 +441,11 @@ describe('createRepositoryAuthorizationPolicy', () => {
             : [{ id: 'assignment-other', staffId: 'other-staff', classGroupId: 'class-1' }]),
       } as any,
     })
-    await expectForbidden(checkSchedulingAttendanceAccess(await staffActor(['teacher'], reposNoAssign4), ['student-1'], ['session-1'], reposNoAssign4))
+    await expectForbidden(checkSchedulingAttendanceRecordAccess(
+      await staffActor(['teacher'], reposNoAssign4),
+      [lessonAttendanceRecord('student-1', 'session-1')],
+      reposNoAssign4,
+    ))
   })
 
   test('resolves actor grants for students and guardians via auth repository', async () => {

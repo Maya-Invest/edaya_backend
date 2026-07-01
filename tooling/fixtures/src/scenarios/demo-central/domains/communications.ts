@@ -1,4 +1,4 @@
-import { SEED_GUARDIANS, SEED_SCHOOL_ID, SEED_STAFF, SEED_STUDENTS } from './dataset'
+import { SEED_GUARDIANS, SEED_SCHOOL_ID, SEED_STAFF, SEED_STUDENTS } from '../core'
 
 export type SeedAnnouncementStatus = 'draft' | 'published' | 'archived'
 export type SeedAnnouncementPriority = 'normal' | 'important' | 'urgent'

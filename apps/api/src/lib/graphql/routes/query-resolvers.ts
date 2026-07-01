@@ -1,4 +1,4 @@
-import type { GetSchoolOverviewInput } from "@edaya/core";
+import type { GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/core";
 import type { CoreQueryConfig } from "@/lib/school-api/registry";
 import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 
@@ -25,6 +25,23 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
           : undefined,
       };
       return service.getSchoolOverview(input);
+    }
+
+    if (queryConfig.methodName === "getClassGroupTimetable") {
+      const input: GetClassGroupTimetableInput = {
+        classGroupId: payload.classGroupId as string,
+        startDate: new Date(`${payload.startDate as string}T00:00:00.000Z`),
+        endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
+      };
+      const timetable = await service.getClassGroupTimetable(input);
+      return {
+        ...timetable,
+        events: timetable.events.map(event => ({
+          ...event,
+          startsAt: event.startsAt.toISOString(),
+          endsAt: event.endsAt.toISOString(),
+        })),
+      };
     }
 
     const count = await service[queryConfig.methodName](payload.schoolId as string);

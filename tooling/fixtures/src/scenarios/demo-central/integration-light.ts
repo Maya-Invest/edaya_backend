@@ -1,4 +1,4 @@
-import { DEV_AUTH_GUARDIAN_ACCOUNTS, SEED_GUARDIANS, SEED_STUDENTS } from './dataset'
+import { DEV_AUTH_GUARDIAN_ACCOUNTS, SEED_GUARDIANS, SEED_STUDENTS } from './core'
 
 /** Guardian ids linked in the integration light fixture (core auth accounts only). */
 export const INTEGRATION_LIGHT_GUARDIAN_IDS = [

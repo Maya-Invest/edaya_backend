@@ -22,7 +22,7 @@
         "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
-        "@edaya/api-client": "workspace:*",
+        "@edaya/client-codegen": "file:../../../edaya-client-codegen",
         "@edaya/core": "workspace:*",
         "@edaya/integration-migrations": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
@@ -45,7 +45,7 @@
       },
       "devDependencies": {
         "@cloudflare/workers-types": "^4.20260610.0",
-        "@edaya/dev-fixtures": "workspace:*",
+        "@edaya/fixtures": "workspace:*",
         "@edaya/seeding": "workspace:*",
         "@types/bun": "^1.3.14",
         "@types/node": "^25.9.2",
@@ -124,17 +124,6 @@
         "@types/bun": "^1.3.14",
       },
     },
-    "package/generated-api-client": {
-      "name": "@edaya/api-client",
-      "version": "0.0.1",
-      "dependencies": {
-        "@edaya/client-codegen": "github:Maya-Invest/edaya-client-codegen#dev",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
-      },
-    },
     "package/integration-migrations": {
       "name": "@edaya/integration-migrations",
       "version": "0.0.1",
@@ -152,7 +141,7 @@
       },
     },
     "tooling/fixtures": {
-      "name": "@edaya/dev-fixtures",
+      "name": "@edaya/fixtures",
       "version": "0.0.1",
       "dependencies": {
         "@edaya/core": "workspace:*",
@@ -170,8 +159,9 @@
         "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/api": "workspace:*",
+        "@edaya/client-codegen": "file:../../../edaya-client-codegen",
         "@edaya/core": "workspace:*",
-        "@edaya/dev-fixtures": "workspace:*",
+        "@edaya/fixtures": "workspace:*",
         "@edaya/integration-migrations": "workspace:*",
         "@edaya/seeding": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
@@ -189,8 +179,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@edaya/adaptor-r2": "workspace:*",
-        "@edaya/api-client": "workspace:*",
-        "@edaya/client-codegen": "github:Maya-Invest/edaya-client-codegen#dev",
+        "@edaya/client-codegen": "file:../../../edaya-client-codegen",
         "@electric-sql/pglite": "^0.4.6",
       },
       "devDependencies": {
@@ -202,14 +191,14 @@
       "name": "@edaya/seeding",
       "version": "0.0.1",
       "dependencies": {
-        "@edaya/api-client": "workspace:*",
         "@edaya/core": "workspace:*",
-        "@edaya/dev-fixtures": "workspace:*",
+        "@edaya/fixtures": "workspace:*",
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
         "postgres": "^3.4.4",
       },
       "devDependencies": {
+        "@edaya/client-codegen": "file:../../../edaya-client-codegen",
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.2",
       },
@@ -346,15 +335,11 @@
 
     "@edaya/api": ["@edaya/api@workspace:apps/api"],
 
-    "@edaya/api-client": ["@edaya/api-client@workspace:package/generated-api-client"],
-
-    "@edaya/client-codegen": ["@edaya/client-codegen@github:Maya-Invest/edaya-client-codegen#e8d35e7", { "dependencies": { "openapi-typescript": "^7.13.0" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }, "Maya-Invest-edaya-client-codegen-e8d35e7", "sha512-oO82hVFA23R1B3QJhJcKxPXrsngB8QukedElv8jiDkcc0OG1/y/ol5M+GQF1jrTca7dHnn1Mh+PgriNuklWyig=="],
-
     "@edaya/core": ["@edaya/core@workspace:package/domain-core"],
 
     "@edaya/cron": ["@edaya/cron@workspace:apps/cron"],
 
-    "@edaya/dev-fixtures": ["@edaya/dev-fixtures@workspace:tooling/fixtures"],
+    "@edaya/fixtures": ["@edaya/fixtures@workspace:tooling/fixtures"],
 
     "@edaya/integration-migrations": ["@edaya/integration-migrations@workspace:package/integration-migrations"],
 
@@ -1667,6 +1652,14 @@
     "@better-auth/core/zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "@cspotcode/source-map-support/@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
+
+    "@edaya/api/@edaya/client-codegen": ["@edaya/client-codegen@file:../edaya-client-codegen", { "dependencies": { "openapi-typescript": "^7.13.0" }, "devDependencies": { "@types/bun": "^1.3.14", "typescript": "^6.0.2" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }],
+
+    "@edaya/integration-tests/@edaya/client-codegen": ["@edaya/client-codegen@file:../edaya-client-codegen", { "dependencies": { "openapi-typescript": "^7.13.0" }, "devDependencies": { "@types/bun": "^1.3.14", "typescript": "^6.0.2" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }],
+
+    "@edaya/repo/@edaya/client-codegen": ["@edaya/client-codegen@file:../edaya-client-codegen", { "dependencies": { "openapi-typescript": "^7.13.0" }, "devDependencies": { "@types/bun": "^1.3.14", "typescript": "^6.0.2" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }],
+
+    "@edaya/seeding/@edaya/client-codegen": ["@edaya/client-codegen@file:../edaya-client-codegen", { "dependencies": { "openapi-typescript": "^7.13.0" }, "devDependencies": { "@types/bun": "^1.3.14", "typescript": "^6.0.2" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }],
 
     "@es-joy/jsdoccomment/comment-parser": ["comment-parser@1.4.5", "", {}, "sha512-aRDkn3uyIlCFfk5NUA+VdwMmMsh8JGhc4hapfV4yxymHGQ3BVskMQfoXGpCo5IoBuQ9tS5iiVKhCpTcB4pW4qw=="],
 

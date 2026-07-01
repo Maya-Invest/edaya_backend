@@ -10,6 +10,7 @@ export const schools = pgTable('schools', {
   type: text('type'),
   country: text('country'),
   city: text('city'),
+  enforceScheduleConflicts: boolean('enforce_schedule_conflicts').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -124,7 +125,9 @@ export const staffAssignments = pgTable('staff_assignments', {
   role: text('role').notNull(),
   classGroupId: text('class_group_id'),
   classSubjectId: text('class_subject_id'),
-  sessionId: text('session_id'),
+  lessonSessionId: text('lesson_session_id'),
+  activitySessionId: text('activity_session_id'),
+  assessmentId: text('assessment_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('staff_assignments', table))
 
@@ -198,7 +201,9 @@ export const resources = pgTable('resources', {
 export const resourceAssignments = pgTable('resource_assignments', {
   id: text('id').primaryKey(),
   resourceId: text('resource_id').notNull(),
-  sessionId: text('session_id'),
+  lessonSessionId: text('lesson_session_id'),
+  activitySessionId: text('activity_session_id'),
+  assessmentId: text('assessment_id'),
   classGroupId: text('class_group_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('resource_assignments', table))
@@ -262,8 +267,11 @@ export const payments = pgTable('payments', {
 // 14. Schedule Table
 export const schedules = pgTable('schedules', {
   id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
   classGroupId: text('class_group_id').notNull(),
+  scheduleKind: text('schedule_kind').notNull(),
   classSubjectId: text('class_subject_id'),
+  activityId: text('activity_id'),
   title: text('title').notNull(),
   isRecurring: boolean('is_recurring').notNull(),
   dayOfWeek: text('day_of_week'),
@@ -273,17 +281,47 @@ export const schedules = pgTable('schedules', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('schedules', table))
 
-export const sessions = pgTable('sessions', {
+export const lessonSessions = pgTable('lesson_sessions', {
   id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
   classGroupId: text('class_group_id').notNull(),
-  title: text('title').notNull(),
-  kind: text('kind').notNull(),
+  scheduleId: text('schedule_id').notNull(),
+  classSubjectId: text('class_subject_id').notNull(),
+  status: text('status').notNull(),
+  isException: boolean('is_exception').notNull(),
   startsAt: timestamp('starts_at', { mode: 'date' }).notNull(),
   endsAt: timestamp('ends_at', { mode: 'date' }).notNull(),
-  classSubjectId: text('class_subject_id'),
-  scheduleId: text('schedule_id'),
+  calendarDate: timestamp('calendar_date', { mode: 'date' }).notNull(),
+  displayLabel: text('display_label').notNull(),
+  sessionNote: text('session_note'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('sessions', table))
+}, table => definePerformanceIndexes('lesson_sessions', table))
+
+export const activitySessions = pgTable('activity_sessions', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  scheduleId: text('schedule_id').notNull(),
+  activityId: text('activity_id').notNull(),
+  status: text('status').notNull(),
+  isException: boolean('is_exception').notNull(),
+  startsAt: timestamp('starts_at', { mode: 'date' }).notNull(),
+  endsAt: timestamp('ends_at', { mode: 'date' }).notNull(),
+  calendarDate: timestamp('calendar_date', { mode: 'date' }).notNull(),
+  displayLabel: text('display_label').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('activity_sessions', table))
+
+export const attendances = pgTable('attendances', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  startsAt: timestamp('starts_at', { mode: 'date' }).notNull(),
+  endsAt: timestamp('ends_at', { mode: 'date' }).notNull(),
+  displayLabel: text('display_label').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('attendances', table))
 
 // 16. Calendar Event Table
 export const calendarEvents = pgTable('calendar_events', {
@@ -305,7 +343,10 @@ export const calendarEvents = pgTable('calendar_events', {
 export const attendanceRecords = pgTable('attendance_records', {
   id: text('id').primaryKey(),
   studentId: text('student_id').notNull(),
-  sessionId: text('session_id').notNull(),
+  attendanceId: text('attendance_id'),
+  lessonSessionId: text('lesson_session_id'),
+  activitySessionId: text('activity_session_id'),
+  assessmentId: text('assessment_id'),
   date: timestamp('date', { mode: 'date' }).notNull(),
   status: text('status').notNull(),
   justificationStatus: text('justification_status').notNull(),
@@ -401,6 +442,7 @@ export const gradeLevelSubjects = pgTable('grade_level_subjects', {
   academicYearId: text('academic_year_id').notNull(),
   subjectId: text('subject_id').notNull(),
   coefficient: integer('coefficient'),
+  isOptional: boolean('is_optional').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('grade_level_subjects', table))
 
@@ -418,53 +460,13 @@ export const classSubjects = pgTable('class_subjects', {
   subjectId: text('subject_id').notNull(),
   gradeLevelSubjectId: text('grade_level_subject_id'),
   coefficient: integer('coefficient'),
+  isOffered: boolean('is_offered').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),
 }, table => definePerformanceIndexes('class_subjects', table))
 
-// 25. Homework Assignment Table
-export const homeworkAssignments = pgTable('homework_assignments', {
-  id: text('id').primaryKey(),
-  schoolId: text('school_id').notNull(),
-  classGroupId: text('class_group_id').notNull(),
-  classSubjectId: text('class_subject_id').notNull(),
-  title: text('title').notNull(),
-  description: text('description').notNull(),
-  dueDate: timestamp('due_date', { mode: 'date' }).notNull(),
-  assignedDate: timestamp('assigned_date', { mode: 'date' }).notNull(),
-  type: text('type').notNull(),
-  attachments: jsonb('attachments').notNull().default([]),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('homework_assignments', table))
-
-// 26. Class Logbook Entry Table
-export const classLogbookEntries = pgTable('class_logbook_entries', {
-  id: text('id').primaryKey(),
-  schoolId: text('school_id').notNull(),
-  classGroupId: text('class_group_id').notNull(),
-  classSubjectId: text('class_subject_id').notNull(),
-  date: timestamp('date', { mode: 'date' }).notNull(),
-  chapter: text('chapter').notNull(),
-  content: text('content').notNull(),
-  objectives: jsonb('objectives').notNull().default([]),
-  homework: text('homework'),
-  attachments: jsonb('attachments').notNull().default([]),
-  progress: integer('progress').notNull(),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('class_logbook_entries', table))
-
-// 27. Homework Submission Table
-export const homeworkSubmissions = pgTable('homework_submissions', {
-  id: text('id').primaryKey(),
-  homeworkAssignmentId: text('homework_assignment_id').notNull(),
-  studentId: text('student_id').notNull(),
-  status: text('status').notNull(),
-  submittedAt: timestamp('submitted_at', { mode: 'date' }),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('homework_submissions', table))
-
-// 28. Extracurricular Activity Table
-export const extracurricularActivities = pgTable('extracurricular_activities', {
+// 28. Activity Table (school program / club)
+export const activities = pgTable('activities', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
@@ -477,7 +479,7 @@ export const extracurricularActivities = pgTable('extracurricular_activities', {
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('extracurricular_activities', table))
+}, table => definePerformanceIndexes('activities', table))
 
 // 29. Activity Enrollment Table
 export const activityEnrollments = pgTable('activity_enrollments', {
@@ -506,7 +508,7 @@ export const classSubjectMatters = pgTable('class_subject_matters', {
 export const classSubjectProgress = pgTable('class_subject_progress', {
   id: text('id').primaryKey(),
   classSubjectMatterId: text('class_subject_matter_id').notNull(),
-  sessionId: text('session_id').notNull(),
+  lessonSessionId: text('lesson_session_id').notNull(),
   completedPercentage: integer('completed_percentage').notNull(),
   recordedByStaffId: text('recorded_by_staff_id'),
   notes: text('notes'),
@@ -523,10 +525,13 @@ export const assessments = pgTable('assessments', {
   kind: text('kind').notNull(),
   maxScore: integer('max_score').notNull(),
   coefficient: integer('coefficient').notNull(),
-  sessionId: text('session_id'),
+  description: text('description'),
+  attachments: jsonb('attachments').notNull().default([]),
+  lessonSessionId: text('lesson_session_id'),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
   dueAt: timestamp('due_at', { mode: 'date' }),
-  metAt: timestamp('met_at', { mode: 'date' }),
-  date: timestamp('date', { mode: 'date' }),
+  completedAt: timestamp('completed_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('assessments', table))
 
@@ -603,6 +608,7 @@ export const reportCardResults = pgTable('report_card_results', {
   status: text('status').notNull(),
   generatedAt: timestamp('generated_at', { mode: 'date' }).notNull(),
   publishedAt: timestamp('published_at', { mode: 'date' }),
+  aggregation: jsonb('aggregation'),
 }, table => definePerformanceIndexes('report_card_results', table))
 
 // 33. Student Table
@@ -743,7 +749,7 @@ export const incidents = pgTable('incidents', {
   kind: text('kind').notNull(),
   reporterId: text('reporter_id').notNull(),
   classGroupId: text('class_group_id'),
-  sessionId: text('session_id'),
+  lessonSessionId: text('lesson_session_id'),
   status: text('status').notNull(),
   resolutionNotes: text('resolution_notes'),
   resolvedAt: timestamp('resolved_at', { mode: 'date' }),

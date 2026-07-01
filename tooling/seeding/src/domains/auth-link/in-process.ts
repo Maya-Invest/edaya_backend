@@ -1,7 +1,7 @@
 import type { SeedApplication } from '../../support/types'
 import type { AuthLinkSeedPort } from './port'
 import { createBootstrapStaffActorMetadata, Guardian, School, StaffMember } from '@edaya/core'
-import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures'
 import { SeedPortError, withSeedPortError } from '../../support/seed-port-error'
 
 export function createInProcessAuthLinkSeedPort(application: SeedApplication): AuthLinkSeedPort {

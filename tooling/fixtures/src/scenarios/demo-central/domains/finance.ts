@@ -1,6 +1,6 @@
-import { seedUpcomingDate } from './dates'
-import { SEED_EXTENDED_PAYMENTS, SEED_EXTENDED_STUDENT_FEES } from './extended-dataset'
-import { SEED_POPULATION_PAYMENTS, SEED_POPULATION_STUDENT_FEES } from './population-seed'
+import { seedUpcomingDate } from '../../../meta/dates'
+import { SEED_EXTENDED_PAYMENTS, SEED_EXTENDED_STUDENT_FEES } from '../extended'
+import { SEED_POPULATION_PAYMENTS, SEED_POPULATION_STUDENT_FEES } from '../population'
 
 /** Currency for seeded fee and payment amounts (Paris campus). */
 export const SEED_CURRENCY = 'EUR'

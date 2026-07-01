@@ -83,7 +83,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     await this.authorize(Permission.DISCIPLINE_CREATE, {
       schoolId: incident.schoolId,
       classGroupId: incident.classGroupId,
-      sessionId: incident.sessionId,
+      lessonSessionId: incident.lessonSessionId,
       studentId,
     })
     await this.requireStudentInIncidentScope(studentId, incident)
@@ -114,7 +114,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     await this.authorize(Permission.DISCIPLINE_VALIDATE, {
       schoolId: incident.schoolId,
       classGroupId: incident.classGroupId,
-      sessionId: incident.sessionId,
+      lessonSessionId: incident.lessonSessionId,
       studentId,
     })
     await this.requireStudentInIncidentScope(studentId, incident)
@@ -179,7 +179,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       kind: existing.kind,
       reporterId: existing.reporterId,
       classGroupId: existing.classGroupId,
-      sessionId: existing.sessionId,
+      lessonSessionId: existing.lessonSessionId,
       status: IncidentStatus.Resolved,
       resolutionNotes: resolutionNotes ?? 'Resolved',
       resolvedAt: new Date(),
@@ -221,7 +221,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     resource: {
       schoolId: string
       classGroupId?: string
-      sessionId?: string
+      lessonSessionId?: string
       studentId?: string
     },
   ): Promise<void> {
@@ -234,8 +234,8 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     if (resource.classGroupId) {
       await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [resource.classGroupId])
     }
-    else if (resource.sessionId) {
-      await this.baseService.authorizationPolicy.checkSessionAccess(this.baseService.actor, [resource.sessionId])
+    else if (resource.lessonSessionId) {
+      await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [resource.lessonSessionId])
     }
     if (resource.studentId) {
       await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [resource.studentId])

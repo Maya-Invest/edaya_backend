@@ -11,7 +11,7 @@ import {
   SEED_ANNOUNCEMENT_TARGETS,
   SEED_ANNOUNCEMENTS,
   SEED_MESSAGE_DELIVERIES,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const ANNOUNCEMENT_STATUS_BY_SEED = {

@@ -73,7 +73,7 @@ describe('templated notification handlers', () => {
         kind: IncidentKind.MinorInfraction,
         reporterId: 'user1',
         classGroupId: 'cg1',
-        sessionId: 'sess1',
+        lessonSessionId: 'sess1',
         status: IncidentStatus.Open,
         createdAt: new Date('2026-05-01T10:00:00Z'),
         updatedAt: new Date('2026-05-01T10:00:00Z'),

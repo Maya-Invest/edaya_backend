@@ -1,5 +1,5 @@
 import type { HttpFetch } from '@edaya/seeding/http'
-import { SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures'
 import { HttpSeedClient } from '@edaya/seeding/http'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { loadSmokeStagingEnv } from './load-smoke-env'

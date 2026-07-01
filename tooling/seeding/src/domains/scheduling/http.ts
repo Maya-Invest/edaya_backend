@@ -25,17 +25,17 @@ export function createHttpSchedulingSeedPort(
     createSchedule: record => withSeedPortError('scheduling.createSchedule', async () => {
       await postCoreCommand(requestOptions, 'createSchedule', record)
     }),
-    createSession: record => withSeedPortError('scheduling.createSession', async () => {
-      await postCoreCommand(requestOptions, 'createSession', record)
+    materializeSchedule: input => withSeedPortError('scheduling.materializeSchedule', async () => {
+      await postCoreCommand(requestOptions, 'materializeSchedule', input)
     }),
-    assignStaffToSession: record => withSeedPortError('scheduling.assignStaffToSession', async () => {
-      await postCoreCommand(requestOptions, 'assignStaffToSession', record)
+    assignStaffToLessonSession: record => withSeedPortError('scheduling.assignStaffToLessonSession', async () => {
+      await postCoreCommand(requestOptions, 'assignStaffToLessonSession', record)
     }),
-    assignResourceToSession: record => withSeedPortError('scheduling.assignResourceToSession', async () => {
-      await postCoreCommand(requestOptions, 'assignResourceToSession', record)
+    assignResourceToLessonSession: record => withSeedPortError('scheduling.assignResourceToLessonSession', async () => {
+      await postCoreCommand(requestOptions, 'assignResourceToLessonSession', record)
     }),
-    recordSessionProgress: record => withSeedPortError('scheduling.recordSessionProgress', async () => {
-      await postCoreCommand(requestOptions, 'recordSessionProgress', record)
+    recordLessonSessionProgress: record => withSeedPortError('scheduling.recordLessonSessionProgress', async () => {
+      await postCoreCommand(requestOptions, 'recordLessonSessionProgress', record)
     }),
   }
 }

@@ -1,4 +1,4 @@
-import { seedUpcomingDate } from './dates'
+import { seedUpcomingDate } from '../../../meta/dates'
 
 export type SeedCalendarEventScope = 'all' | readonly string[]
 

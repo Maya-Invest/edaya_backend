@@ -1,19 +1,18 @@
-import type { Assessment, CalendarEvent, ExtracurricularActivity, HomeworkAssignment } from '../../src/domain'
+import type { Activity, Assessment, CalendarEvent } from '../../src/domain'
 import { describe, expect, test } from 'bun:test'
 import { RecordingNotificationGateway } from '../../src/adapters'
 import {
   activityReminderTrigger,
   assessmentDueSoonTrigger,
   calendarEventReminderTrigger,
-  homeworkDueSoonTrigger,
 } from '../../src/capabilities/notifications'
 import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
 import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
 import {
+  ActivityCategory,
   AssessmentKind,
   CalendarEventKind,
   CalendarEventScopeKind,
-  ExtracurricularActivityCategory,
   StudentClassEnrollmentStatus,
 } from '../../src/domain'
 import { SchoolNotificationTemplates } from '../../src/domain/messaging/school-notification-templates'
@@ -102,41 +101,16 @@ const schoolRepositories = {
 }
 
 describe('enriched notification triggers', () => {
-  test('homeworkDueSoonTrigger renders subject, class, and formatted due date', async () => {
+  test('assessmentDueSoonTrigger renders subject, class, and formatted due date for homework', async () => {
     const gateway = new RecordingNotificationGateway()
     const templateService = await createDefaultTemplateService()
     const entity = {
       id: 'hw1',
-      schoolId: 'sch1',
-      classGroupId: 'cg1',
-      classSubjectId: 'cs1',
-      title: 'Chapter 5 exercises',
-      dueDate: new Date('2026-06-20T00:00:00.000Z'),
-    } as HomeworkAssignment
-
-    const input = await homeworkDueSoonTrigger.resolver(entity, undefined, {
-      notificationGateway: gateway,
-      templateService,
-      actor: { schoolId: 'sch1' } as any,
-      repositories: schoolRepositories as any,
-    })
-
-    expect(input).not.toBeNull()
-    expect(input?.title).toBe('Homework due sam. 20 juin 2026 — 6ème A')
-    expect(input?.body).toContain('Chapter 5 exercises')
-    expect(input?.body).toContain('Mathematics')
-  })
-
-  test('assessmentDueSoonTrigger renders subject, class, and formatted due date', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const templateService = await createDefaultTemplateService()
-    const entity = {
-      id: 'a1',
       classGroupId: 'cg1',
       classSubjectId: 'cs1',
       periodId: 'p1',
-      title: 'Midterm',
-      kind: AssessmentKind.Quiz,
+      title: 'Chapter 5 exercises',
+      kind: AssessmentKind.Homework,
       maxScore: 20,
       coefficient: 1,
       dueAt: new Date('2026-06-20T00:00:00.000Z'),
@@ -151,7 +125,7 @@ describe('enriched notification triggers', () => {
     })
 
     expect(input).not.toBeNull()
-    expect(input?.title).toBe('Midterm due sam. 20 juin 2026')
+    expect(input?.title).toBe('Chapter 5 exercises due sam. 20 juin 2026')
     expect(input?.body).toContain('Mathematics')
     expect(input?.body).toContain('6ème A')
   })
@@ -163,7 +137,7 @@ describe('enriched notification triggers', () => {
       id: 'act1',
       schoolId: 'sch1',
       name: 'Basketball club',
-      category: ExtracurricularActivityCategory.Sport,
+      category: ActivityCategory.Sport,
       coach: 'Coach Dupont',
       schedule: 'Tuesdays 4–6pm',
       participants: 10,
@@ -171,7 +145,7 @@ describe('enriched notification triggers', () => {
       description: 'Weekly practice',
       startDate: new Date('2027-01-15T00:00:00.000Z'),
       endDate: new Date('2027-06-30T00:00:00.000Z'),
-    } as ExtracurricularActivity
+    } as Activity
 
     const input = await activityReminderTrigger.resolver(entity, undefined, {
       notificationGateway: gateway,

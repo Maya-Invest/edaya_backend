@@ -20,8 +20,6 @@ export { createInProcessDisciplineSeedPort } from './domains/discipline/in-proce
 export type { DisciplineSeedPort } from './domains/discipline/port'
 export { createInProcessFinanceSeedPort } from './domains/finance/in-process'
 export type { FinanceSeedPort } from './domains/finance/port'
-export { createInProcessLearningContentSeedPort } from './domains/learning-content/in-process'
-export type { LearningContentSeedPort } from './domains/learning-content/port'
 export { createInProcessPopulationSeedPort } from './domains/population/in-process'
 export type { PopulationSeedPort } from './domains/population/port'
 export { createInProcessProfilePicturesSeedPort } from './domains/profile-pictures/in-process'

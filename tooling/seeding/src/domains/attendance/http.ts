@@ -20,8 +20,20 @@ export function createHttpAttendanceSeedPort(
   }
 
   return {
-    createSession: record => withSeedPortError('attendance.createSession', async () => {
-      await postCoreCommand(requestOptions, 'createSession', record)
+    ensureLessonSession: input => withSeedPortError('attendance.ensureLessonSession', async () => {
+      await postCoreCommand(requestOptions, 'createSchedule', {
+        id: input.scheduleId,
+        schoolId: input.schoolId,
+        classGroupId: input.classGroupId,
+        classSubjectId: input.classSubjectId,
+        title: input.title,
+        isRecurring: false,
+        specificDate: `${input.date}T12:00:00.000Z`,
+        startTime: input.startTime,
+        endTime: input.endTime,
+      })
+      await postCoreCommand(requestOptions, 'materializeSchedule', { scheduleId: input.scheduleId })
+      return { lessonSessionId: `${input.scheduleId}:${input.date}` }
     }),
     recordAttendance: record => withSeedPortError('attendance.recordAttendance', async () => {
       await postCoreCommand(requestOptions, 'recordAttendance', record)

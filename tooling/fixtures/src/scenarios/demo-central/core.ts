@@ -3,7 +3,14 @@
  * Canonical source — align `apps/webapp/src/lib/data/school.ts` with this package over time.
  */
 
-import { parseSeedDate } from './dates'
+import { parseSeedDate } from '../../meta/dates'
+import {
+  buildClassStudentIds,
+  SEED_BULK_CLASSES,
+  SEED_BULK_GUARDIANS,
+  SEED_BULK_STUDENTS,
+  SEED_TARGET_STUDENT_COUNT,
+} from '../generators/population-generator'
 import {
   SEED_EXTENDED_AUTH_GUARDIANS,
   SEED_EXTENDED_CLASS_SUBJECTS,
@@ -12,39 +19,14 @@ import {
   SEED_EXTENDED_STUDENTS,
   SEED_EXTENDED_SUBJECT_CATALOG,
   SEED_EXTENDED_SUBJECT_MATTERS,
-} from './extended-dataset'
-import {
-  buildClassStudentIds,
-  SEED_BULK_CLASSES,
-  SEED_BULK_GUARDIANS,
-  SEED_BULK_STUDENTS,
-  SEED_TARGET_STUDENT_COUNT,
-} from './population-generator'
+} from './extended'
 import {
   SEED_POPULATION_AUTH_GUARDIANS,
   SEED_POPULATION_CLASS_SUBJECTS,
   SEED_POPULATION_GUARDIANS,
   SEED_POPULATION_STUDENTS,
-} from './population-seed'
+} from './population'
 
-export {
-  countSeedAssessmentResults,
-  countSeedAssessments,
-  SEED_ASSESSMENT_RESULT_SCORES,
-  SEED_ASSESSMENTS,
-} from './assessments-seed'
-export {
-  countSeedAttendanceRecords,
-  SEED_ABSENCE_RECORDS,
-  SEED_PENDING_JUSTIFICATION_RECORD_IDS,
-  SEED_TODAY_ATTENDANCE,
-} from './attendance-seed'
-export {
-  countSeedCalendarEvents,
-  SEED_ALL_CALENDAR_EVENTS,
-  SEED_CALENDAR_EVENTS,
-  SEED_DASHBOARD_UPCOMING_CALENDAR_EVENTS,
-} from './calendar-seed'
 export {
   parseSeedDate,
   parseSeedDateTime,
@@ -54,19 +36,37 @@ export {
   SEED_REFERENCE_DATE,
   seedDateOffset,
   seedUpcomingDate,
-} from './dates'
+} from '../../meta/dates'
+export {
+  countSeedAssessmentResults,
+  countSeedAssessments,
+  SEED_ASSESSMENT_RESULT_SCORES,
+  SEED_ASSESSMENTS,
+} from './domains/assessments'
+export {
+  countSeedAttendanceRecords,
+  SEED_ABSENCE_RECORDS,
+  SEED_PENDING_JUSTIFICATION_RECORD_IDS,
+  SEED_TODAY_ATTENDANCE,
+} from './domains/attendance'
+export {
+  countSeedCalendarEvents,
+  SEED_ALL_CALENDAR_EVENTS,
+  SEED_CALENDAR_EVENTS,
+  SEED_DASHBOARD_UPCOMING_CALENDAR_EVENTS,
+} from './domains/calendar'
 export {
   SEED_CURRENCY,
   SEED_FEES,
   SEED_PAYMENTS,
   SEED_STUDENT_FEES,
   SEED_UPCOMING_STUDENT_FEES,
-} from './finance-seed'
+} from './domains/finance'
 export {
   countSeedPlanningSlots,
   SEED_PLANNING_REFERENCE_WEEK_START,
   SEED_PLANNING_SLOTS,
-} from './scheduling-seed'
+} from './domains/scheduling'
 
 export const SEED_SCHOOL_ID = 'sch-edaya-central'
 
@@ -407,7 +407,6 @@ export const SEED_RESOURCES = [
 export const SEED_SESSION_PROGRESS = {
   id: 'csp-p1',
   classSubjectMatterId: 'csm-cs-6a-math',
-  sessionId: 'sess-p1',
   completedPercentage: 25,
   notes: 'Introduced algebra basics.',
 } as const

@@ -1,10 +1,10 @@
-import type { ActivityEnrollmentStatus, ExtracurricularActivityCategory } from '@edaya/core'
+import type { ActivityCategory, ActivityEnrollmentStatus } from '@edaya/core'
 
-export interface ExtracurricularActivitySeedRecord {
+export interface ActivitySeedRecord {
   id: string
   schoolId: string
   name: string
-  category: ExtracurricularActivityCategory
+  category: ActivityCategory
   coach: string
   schedule: string
   participants: number
@@ -22,6 +22,6 @@ export interface ActivityEnrollmentSeedRecord {
 }
 
 export interface ActivitiesSeedPort {
-  saveActivity: (record: ExtracurricularActivitySeedRecord) => Promise<void>
+  saveActivity: (record: ActivitySeedRecord) => Promise<void>
   saveEnrollment: (record: ActivityEnrollmentSeedRecord) => Promise<void>
 }

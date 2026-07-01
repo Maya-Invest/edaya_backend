@@ -8,7 +8,7 @@ import {
   SEED_PAYMENTS,
   SEED_SCHOOL_ID,
   SEED_STUDENT_FEES,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const FEE_CATEGORY_BY_SEED = {

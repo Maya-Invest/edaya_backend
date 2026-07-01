@@ -1,6 +1,6 @@
-import { clientBindings } from '@edaya/api-client'
+import { clientBindings } from '../generated/api-client'
 import { CORE_ENTITY_KEYS } from '@edaya/core'
-import { buildSeedValidationTargets } from '@edaya/dev-fixtures'
+import { buildSeedValidationTargets } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { isSeedEntityKey, seedCommandPublicName, seedEntityPublicName } from './catalog'
 
@@ -15,7 +15,7 @@ function keyDifference(actual: readonly string[], expected: readonly string[]) {
 
 describe('HTTP seed catalog', () => {
   test('uses generated entity and command public names', () => {
-    expect(seedEntityPublicName('homeworkAssignments')).toBe('homework-assignments')
+    expect(seedEntityPublicName('assessments')).toBe('assessments')
     expect(seedCommandPublicName('recordAssessmentResult')).toBe('record-assessment-result')
   })
 

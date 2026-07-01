@@ -1,7 +1,7 @@
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
-import type { ClientBindingsDocument } from "@edaya/api-client/openapi-bindings";
-import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@edaya/api-client/openapi-bindings";
+import type { ClientBindingsDocument } from "@edaya/client-codegen";
+import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@edaya/client-codegen";
 
 export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 
@@ -22,6 +22,11 @@ const manualClientRoutes: Pick<
       path: "onboarding/register-school",
       requestSchemaName: "OnboardingRegisterSchoolRequest",
       responseSchemaName: "School",
+    },
+    listStructureTemplates: {
+      method: "GET",
+      path: "onboarding/structure-templates",
+      responseSchemaName: "OnboardingListStructureTemplatesResponse",
     },
     applyStructureTemplate: {
       method: "POST",

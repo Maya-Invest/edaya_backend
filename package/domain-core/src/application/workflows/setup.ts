@@ -335,7 +335,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     return this.saveStaffAssignment(input)
   }
 
-  async assignStaffToSession(input: AssignStaffInput): Promise<StaffAssignment> {
+  async assignStaffToLessonSession(input: AssignStaffInput): Promise<StaffAssignment> {
     return this.saveStaffAssignment(input)
   }
 
@@ -343,7 +343,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
   }
 
-  async assignResourceToSession(input: AssignResourceInput): Promise<ResourceAssignment> {
+  async assignResourceToLessonSession(input: AssignResourceInput): Promise<ResourceAssignment> {
     return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
   }
 

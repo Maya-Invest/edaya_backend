@@ -1,5 +1,5 @@
 import indexRouter from "@/app-router";
-import { DEV_AUTH_PASSWORD } from "@edaya/dev-fixtures";
+import { DEV_AUTH_PASSWORD } from "@edaya/fixtures";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import createApp from "@/http/create-app";

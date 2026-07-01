@@ -8,7 +8,6 @@ import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
-import type { LearningContentSeedPort } from '../domains/learning-content/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
 import type { ReportCardsSeedPort } from '../domains/report-cards/port'
@@ -23,7 +22,7 @@ import type { DevAuthProvisionResult } from './run-dev-auth-provision'
 import type { DevSchoolSeedResult } from './run-dev-school-seed'
 import {
   DEV_AUTH_PASSWORD,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
@@ -35,7 +34,6 @@ import { createInProcessCommunicationsSeedPort } from '../domains/communications
 import { createInProcessCurriculumSeedPort } from '../domains/curriculum/in-process'
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/in-process'
 import { createInProcessFinanceSeedPort } from '../domains/finance/in-process'
-import { createInProcessLearningContentSeedPort } from '../domains/learning-content/in-process'
 import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/in-process'
 import { createInProcessReportCardsSeedPort } from '../domains/report-cards/in-process'
@@ -82,8 +80,6 @@ export interface RunDevSeedsOptions {
   reportCardsPort?: ReportCardsSeedPort
   /** Explicit finance adapter; defaults to the in-process application adapter. */
   financePort?: FinanceSeedPort
-  /** Explicit learning-content adapter; defaults to the in-process application adapter. */
-  learningContentPort?: LearningContentSeedPort
   /** Explicit extracurricular-activities adapter; defaults to the in-process application adapter. */
   activitiesPort?: ActivitiesSeedPort
   /** Explicit calendar/incident adapter; defaults to the in-process application adapter. */
@@ -154,8 +150,6 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessReportCardsSeedPort(requireApplication('reportCardsPort'))
   const financePort = options.financePort
     ?? createInProcessFinanceSeedPort(requireApplication('financePort'))
-  const learningContentPort = options.learningContentPort
-    ?? createInProcessLearningContentSeedPort(requireApplication('learningContentPort'))
   const activitiesPort = options.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireApplication('activitiesPort'))
   const schoolLifePort = options.schoolLifePort
@@ -199,7 +193,6 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       assessmentsPort,
       reportCardsPort,
       financePort,
-      learningContentPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -234,7 +227,6 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       assessmentsPort,
       reportCardsPort,
       financePort,
-      learningContentPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,

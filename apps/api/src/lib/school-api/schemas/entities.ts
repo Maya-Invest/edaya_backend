@@ -7,26 +7,26 @@ import {
   accountInvitationSchema,
   AccountInvitationStatus,
   activityEnrollmentSchema,
+  activitySchema,
+  activitySessionSchema,
   announcementSchema,
   announcementTargetSchema,
   assessmentResultSchema,
   assessmentSchema,
   attachmentSchema,
   attendanceRecordSchema,
+  attendanceSchema,
   calendarEventSchema,
   classGroupSchema,
-  classLogbookEntrySchema,
   classSubjectMatterSchema,
   classSubjectProgressSchema,
   classSubjectSchema,
   attendanceSummarySchema as coreAttendanceSummarySchema,
   feeInstallmentTemplateSchema as coreFeeInstallmentTemplateSchema,
   gradeScaleRangeSchema as coreGradeScaleRangeSchema,
-  homeworkAttachmentSchema as coreHomeworkAttachmentSchema,
   reportCardResultSectionSchema as coreReportCardResultSectionSchema,
   studentFeeInstallmentSchema as coreStudentFeeInstallmentSchema,
   disciplinaryActionSchema,
-  extracurricularActivitySchema,
   feeSchema,
   gradeLevelSchema,
   gradeLevelSubjectMatterSchema,
@@ -35,9 +35,8 @@ import {
   guardianContactMethodSchema,
   guardianSchema,
   guardianStudentLinkSchema,
-  homeworkAssignmentSchema,
-  homeworkSubmissionSchema,
   incidentSchema,
+  lessonSessionSchema,
   messageDeliverySchema,
   paymentSchema,
   periodDefinitionSchema,
@@ -47,10 +46,8 @@ import {
   resourceAssignmentSchema,
   resourceSchema,
   scheduleSchema,
-  // Zod schemas imported from core
   schoolSchema,
   scopeGrantSchema,
-  sessionSchema,
   staffAssignmentSchema,
   staffMemberSchema,
   staffRoleAssignmentSchema,
@@ -70,21 +67,22 @@ import type {
   AccessRoleInput,
   AccountInvitationInput,
   ActivityEnrollmentInput,
+  ActivityInput,
+  ActivitySessionInput,
   AnnouncementInput,
   AnnouncementTargetInput,
   AssessmentInput,
   AssessmentResultInput,
   AttachmentInput,
+  AttendanceInput,
   AttendanceRecordInput,
   AttendanceSummary,
   CalendarEventInput,
   ClassGroupInput,
-  ClassLogbookEntryInput,
   ClassSubjectInput,
   ClassSubjectMatterInput,
   ClassSubjectProgressInput,
   DisciplinaryActionInput,
-  ExtracurricularActivityInput,
   FeeInput,
   FeeInstallmentTemplate,
   GradeLevelInput,
@@ -94,10 +92,8 @@ import type {
   GradeScaleRange,
   GuardianInput,
   GuardianStudentLinkInput,
-  HomeworkAssignmentInput,
-  HomeworkAttachment,
-  HomeworkSubmissionInput,
   IncidentInput,
+  LessonSessionInput,
   MessageDeliveryInput,
   PaymentInput,
   PeriodDefinitionInput,
@@ -110,7 +106,6 @@ import type {
   SchoolInput,
   SchoolNotificationTemplatesInput,
   ScopeGrant,
-  SessionInput,
   StaffAssignmentInput,
   StaffMemberInput,
   StaffRoleAssignmentInput,
@@ -157,7 +152,9 @@ export const studentFeeInstallmentSchema = valueSchema<StudentFeeInstallment>(un
 export const studentFeeResponseSchema = responseSchema<StudentFeeInput>("StudentFee", unwrapShape(studentFeeSchema));
 export const paymentResponseSchema = responseSchema<PaymentInput>("Payment", unwrapShape(paymentSchema));
 export const scheduleResponseSchema = responseSchema<ScheduleInput>("Schedule", unwrapShape(scheduleSchema));
-export const sessionResponseSchema = responseSchema<SessionInput>("Session", unwrapShape(sessionSchema));
+export const lessonSessionResponseSchema = responseSchema<LessonSessionInput>("LessonSession", unwrapShape(lessonSessionSchema));
+export const activitySessionResponseSchema = responseSchema<ActivitySessionInput>("ActivitySession", unwrapShape(activitySessionSchema));
+export const attendanceOccurrenceResponseSchema = responseSchema<AttendanceInput>("AttendanceOccurrence", unwrapShape(attendanceSchema));
 export const calendarEventResponseSchema = responseSchema<CalendarEventInput>("CalendarEvent", unwrapShape(calendarEventSchema));
 export const attendanceResponseSchema = responseSchema<AttendanceRecordInput>("Attendance", unwrapShape(attendanceRecordSchema));
 export const announcementResponseSchema = responseSchema<AnnouncementInput>("Announcement", unwrapShape(announcementSchema));
@@ -187,18 +184,7 @@ export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGr
 export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
 export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
 export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressInput>("ClassSubjectProgress", unwrapShape(classSubjectProgressSchema));
-export const classLogbookEntryResponseSchema = responseSchema<ClassLogbookEntryInput>("ClassLogbookEntry", {
-  ...unwrapShape(classLogbookEntrySchema),
-  objectives: z.array(z.string()),
-  attachments: z.array(z.string()),
-});
-export const homeworkAttachmentResponseSchema = valueSchema<HomeworkAttachment>(unwrapShape(coreHomeworkAttachmentSchema));
-export const homeworkAssignmentResponseSchema = responseSchema<HomeworkAssignmentInput>("HomeworkAssignment", {
-  ...unwrapShape(homeworkAssignmentSchema),
-  attachments: z.array(homeworkAttachmentResponseSchema),
-});
-export const homeworkSubmissionResponseSchema = responseSchema<HomeworkSubmissionInput>("HomeworkSubmission", unwrapShape(homeworkSubmissionSchema));
-export const extracurricularActivityResponseSchema = responseSchema<ExtracurricularActivityInput>("ExtracurricularActivity", unwrapShape(extracurricularActivitySchema));
+export const activityResponseSchema = responseSchema<ActivityInput>("Activity", unwrapShape(activitySchema));
 export const activityEnrollmentResponseSchema = responseSchema<ActivityEnrollmentInput>("ActivityEnrollment", unwrapShape(activityEnrollmentSchema));
 export const assessmentResponseSchema = responseSchema<AssessmentInput>("Assessment", unwrapShape(assessmentSchema));
 export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>("AssessmentResult", unwrapShape(assessmentResultSchema));
@@ -277,7 +263,9 @@ export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   staffId: field.id(),
   classGroupId: field.id(),
   classSubjectId: field.id(),
-  sessionId: field.id(),
+  lessonSessionId: field.id(),
+  activitySessionId: field.id(),
+  assessmentId: field.id(),
   responsibility: field.string(),
 });
 
@@ -321,7 +309,9 @@ export const resourceQuerySchema = createQueryOptionsSchema({
 export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   resourceId: field.id(),
-  sessionId: field.id(),
+  lessonSessionId: field.id(),
+  activitySessionId: field.id(),
+  assessmentId: field.id(),
   classGroupId: field.id(),
 });
 
@@ -347,18 +337,38 @@ export const paymentQuerySchema = createQueryOptionsSchema({
 
 export const scheduleQuerySchema = createQueryOptionsSchema({
   id: field.id(),
+  schoolId: field.id(),
   classGroupId: field.id(),
   classSubjectId: field.id(),
+  scheduleKind: field.string(),
   title: field.string(),
 });
 
-export const sessionQuerySchema = createQueryOptionsSchema({
+export const lessonSessionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
-  scheduleId: field.id(),
+  schoolId: field.id(),
   classGroupId: field.id(),
+  scheduleId: field.id(),
   classSubjectId: field.id(),
-  title: field.string(),
-  kind: field.string(),
+  status: field.string(),
+  displayLabel: field.string(),
+});
+
+export const activitySessionQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  classGroupId: field.id(),
+  scheduleId: field.id(),
+  activityId: field.id(),
+  status: field.string(),
+  displayLabel: field.string(),
+});
+
+export const attendancesQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  classGroupId: field.id(),
+  displayLabel: field.string(),
 });
 
 export const calendarEventQuerySchema = createQueryOptionsSchema({
@@ -371,7 +381,10 @@ export const calendarEventQuerySchema = createQueryOptionsSchema({
 export const attendanceQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   studentId: field.id(),
-  sessionId: field.id(),
+  attendanceId: field.id(),
+  lessonSessionId: field.id(),
+  activitySessionId: field.id(),
+  assessmentId: field.id(),
   status: field.string(),
 });
 
@@ -454,34 +467,10 @@ export const classSubjectMatterQuerySchema = createQueryOptionsSchema({
 export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   classSubjectMatterId: field.id(),
-  sessionId: field.id(),
+  lessonSessionId: field.id(),
 });
 
-export const classLogbookEntryQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  schoolId: field.id(),
-  classGroupId: field.id(),
-  classSubjectId: field.id(),
-  chapter: field.string(),
-});
-
-export const homeworkAssignmentQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  schoolId: field.id(),
-  classGroupId: field.id(),
-  classSubjectId: field.id(),
-  title: field.string(),
-  type: field.string(),
-});
-
-export const homeworkSubmissionQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  homeworkAssignmentId: field.id(),
-  studentId: field.id(),
-  status: field.string(),
-});
-
-export const extracurricularActivityQuerySchema = createQueryOptionsSchema({
+export const activityQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),

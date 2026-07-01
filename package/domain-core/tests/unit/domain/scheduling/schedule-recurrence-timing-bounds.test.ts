@@ -4,7 +4,9 @@ import { DayOfWeek, Schedule } from '../../../../src/domain/scheduling/schedule'
 describe('Schedule entity recurrence and timing bounds', () => {
   const baseArgs = {
     id: 'schedule-1',
+    schoolId: 'school-1',
     classGroupId: 'class-1',
+    classSubjectId: 'subject-1',
     title: 'Math Class',
     startTime: '08:00',
     endTime: '09:00',

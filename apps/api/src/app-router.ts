@@ -23,6 +23,8 @@ import {
   onboardingCompleteWizardRoute,
   onboardingInviteStaffMembersHandler,
   onboardingInviteStaffMembersRoute,
+  onboardingListStructureTemplatesHandler,
+  onboardingListStructureTemplatesRoute,
   onboardingRegisterSchoolHandler,
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
@@ -76,6 +78,7 @@ const router = createRouter()
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
+  .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
   .openapi(onboardingCompleteWizardRoute, onboardingCompleteWizardHandler)

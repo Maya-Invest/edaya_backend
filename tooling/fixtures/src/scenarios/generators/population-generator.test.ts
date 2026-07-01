@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { countSeedGuardians, countSeedStudents, SEED_CLASS_STUDENT_IDS, SEED_STUDENTS } from './dataset'
+import { countSeedGuardians, countSeedStudents, SEED_CLASS_STUDENT_IDS, SEED_STUDENTS } from '../demo-central/core'
 import {
   countSeedBulkClasses,
   countSeedBulkGuardians,

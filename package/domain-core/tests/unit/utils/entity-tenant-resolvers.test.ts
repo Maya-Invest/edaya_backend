@@ -7,8 +7,8 @@ import {
   indirectTenant,
   resolveClassSubjectSchoolId,
   resolveIdFromFilter,
+  resolveLessonSessionSchoolId,
   resolveSchoolIdFromFilter,
-  resolveSessionSchoolId,
   resolveStringFilterValue,
 } from '../../../src/application/entities/entity-config/tenant'
 
@@ -23,8 +23,8 @@ describe('entity tenant resolvers', () => {
     classSubjects: {
       findById: mock(async id => id === 'subject-1' ? { id, classGroupId: 'class-1' } : undefined),
     },
-    sessions: {
-      findById: mock(async id => id === 'session-1' ? { id, classGroupId: 'class-1' } : undefined),
+    lessonSessions: {
+      findById: mock(async id => id === 'session-1' ? { id, schoolId: 'school-1', classGroupId: 'class-1' } : undefined),
     },
   } as unknown as SchoolRepositories
 
@@ -34,9 +34,9 @@ describe('entity tenant resolvers', () => {
     expect(await classGroupLinkedTenant<{ classGroupId: string }>('classGroupId').resolve({ classGroupId: 'class-1' }, repositories)).toBe('school-1')
     expect(await announcementLinkedTenant<{ announcementId: string }>('announcementId').resolve({ announcementId: 'announcement-1' }, repositories)).toBe('school-1')
     expect(await resolveClassSubjectSchoolId(repositories, 'subject-1')).toBe('school-1')
-    expect(await resolveSessionSchoolId(repositories, 'session-1')).toBe('school-1')
+    expect(await resolveLessonSessionSchoolId(repositories, 'session-1')).toBe('school-1')
     expect(await resolveClassSubjectSchoolId(repositories, 'missing-subject')).toBeUndefined()
-    expect(await resolveSessionSchoolId(repositories, 'missing-session')).toBeUndefined()
+    expect(await resolveLessonSessionSchoolId(repositories, 'missing-session')).toBeUndefined()
   })
 
   test('extracts string filters from direct, equality, and inclusion filter shapes', () => {

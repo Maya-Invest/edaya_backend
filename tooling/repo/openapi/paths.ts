@@ -4,14 +4,19 @@ import process from 'node:process'
 export const repoRoot = resolve(import.meta.dirname, '../../..')
 
 export const trackedOpenApiPath = resolve(repoRoot, 'tooling/repo/fixtures/openapi.json')
-export const trackedClientBindingsPath = resolve(
+export const trackedSeedingClientDirPath = resolve(
   repoRoot,
-  'package/generated-api-client/src/generated/client-bindings.ts',
+  'tooling/seeding/src/generated/api-client',
 )
-export const trackedCreateClientPath = resolve(
+export const trackedIntegrationTestsClientDirPath = resolve(
   repoRoot,
-  'package/generated-api-client/src/generated/create-client.ts',
+  'tooling/integration-tests/src/generated/api-client',
 )
+
+export const trackedConsumerClientDirPaths = [
+  trackedSeedingClientDirPath,
+  trackedIntegrationTestsClientDirPath,
+] as const
 
 export function resolveArgvPath(flag: string, defaultPath: string): string {
   const flagIndex = process.argv.indexOf(flag)

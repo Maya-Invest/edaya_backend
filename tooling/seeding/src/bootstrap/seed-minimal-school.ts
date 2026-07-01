@@ -11,7 +11,7 @@ import {
   SEED_SCHOOL_PROFILE,
   SEED_STAFF,
   splitDisplayName,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 
 function findSeedStaff(staffId: string) {
   const staff = SEED_STAFF.find(entry => entry.id === staffId)

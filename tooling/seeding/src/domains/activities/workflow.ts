@@ -1,14 +1,14 @@
 import type { ActivitiesSeedPort } from './port'
-import { ActivityEnrollmentStatus, ExtracurricularActivityCategory } from '@edaya/core'
-import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '@edaya/dev-fixtures'
+import { ActivityCategory, ActivityEnrollmentStatus } from '@edaya/core'
+import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const ACTIVITY_CATEGORY_BY_SEED = {
-  Sport: ExtracurricularActivityCategory.Sport,
-  Arts: ExtracurricularActivityCategory.Arts,
-  Science: ExtracurricularActivityCategory.Science,
-  Language: ExtracurricularActivityCategory.Language,
-  Wellbeing: ExtracurricularActivityCategory.Wellbeing,
+  Sport: ActivityCategory.Sport,
+  Arts: ActivityCategory.Arts,
+  Science: ActivityCategory.Science,
+  Language: ActivityCategory.Language,
+  Wellbeing: ActivityCategory.Wellbeing,
 } as const
 
 const ENROLLMENT_STATUS_BY_SEED = {

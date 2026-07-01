@@ -23,7 +23,7 @@ export interface StaffAssignmentSeedRecord {
   responsibility: string
   classGroupId?: string
   classSubjectId?: string
-  sessionId?: string
+  lessonSessionId?: string
 }
 
 export interface AccessSeedPort {

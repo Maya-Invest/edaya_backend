@@ -1,13 +1,14 @@
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { AuthorizationPolicy, RepositoryAuthorizationPolicyArgs } from './types'
 import {
+  checkActivitySessionAccess,
   checkAssessmentAccess,
-  checkAttendanceAccess,
+  checkAttendanceRecordAccess,
   checkClassGroupAccess,
   checkFeeAccess,
   checkGuardianAccess,
+  checkLessonSessionAccess,
   checkReportCardResultAccess,
-  checkSessionAccess,
   checkStudentAccess,
   checkStudentFeeAccess,
   checkStudentHealthAccess,
@@ -39,8 +40,9 @@ export function createRepositoryAuthorizationPolicy(
     checkReportCardResultAccess: (actor, reportCardResultIds) => checkReportCardResultAccess(actor, reportCardResultIds, repositories),
     checkFeeAccess: (actor, feeIds) => checkFeeAccess(actor, feeIds, repositories),
     checkStudentFeeAccess: (actor, studentFeeIds) => checkStudentFeeAccess(actor, studentFeeIds, repositories),
-    checkSessionAccess: (actor, sessionIds) => checkSessionAccess(actor, sessionIds, repositories),
-    checkAttendanceAccess: (actor, studentIds, sessionIds) => checkAttendanceAccess(actor, studentIds, sessionIds, repositories),
+    checkLessonSessionAccess: (actor, lessonSessionIds) => checkLessonSessionAccess(actor, lessonSessionIds, repositories),
+    checkActivitySessionAccess: (actor, activitySessionIds) => checkActivitySessionAccess(actor, activitySessionIds, repositories),
+    checkAttendanceRecordAccess: (actor, records) => checkAttendanceRecordAccess(actor, records, repositories),
     getRepositories: () => repositories,
   }
 }

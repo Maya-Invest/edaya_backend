@@ -37,12 +37,22 @@ function scopeGrantsFromStaffAssignment(assignment: StaffAssignment): ScopeGrant
     }
   }
 
-  if (assignment.sessionId) {
+  if (assignment.lessonSessionId) {
     for (const permission of ASSIGNMENT_SCOPED_PERMISSIONS) {
       grants.push({
         permission,
         scopeType: 'session',
-        scopeEntityIds: [assignment.sessionId],
+        scopeEntityIds: [assignment.lessonSessionId],
+      })
+    }
+  }
+
+  if (assignment.activitySessionId) {
+    for (const permission of ASSIGNMENT_SCOPED_PERMISSIONS) {
+      grants.push({
+        permission,
+        scopeType: 'session',
+        scopeEntityIds: [assignment.activitySessionId],
       })
     }
   }

@@ -32,41 +32,43 @@ function assessment(overrides: Partial<Assessment['data']> & Pick<Assessment['da
     kind: overrides.kind ?? AssessmentKind.Quiz,
     maxScore: overrides.maxScore ?? 20,
     coefficient: overrides.coefficient ?? 1,
-    sessionId: overrides.sessionId,
+    lessonSessionId: overrides.lessonSessionId,
+    startsAt: overrides.startsAt,
+    endsAt: overrides.endsAt,
     dueAt: overrides.dueAt,
-    metAt: overrides.metAt,
-    date: overrides.date,
+    completedAt: overrides.completedAt,
     createdAt: overrides.createdAt ?? new Date('2026-06-01T00:00:00Z'),
   } as Assessment
 }
 
 describe('assessmentDueSoonPredicate', () => {
   const dueAt = new Date('2026-06-20T00:00:00Z')
+  const homework = { kind: AssessmentKind.Homework } as const
 
   test('fires when a new assessment is created with dueAt', () => {
-    expect(assessmentDueSoonPredicate(assessment({ id: 'a1', dueAt }), undefined)).toBe(true)
+    expect(assessmentDueSoonPredicate(assessment({ id: 'a1', dueAt, ...homework }), undefined)).toBe(true)
   })
 
   test('does not fire on no-op save with unchanged dueAt', () => {
-    const entity = assessment({ id: 'a1', dueAt })
+    const entity = assessment({ id: 'a1', dueAt, ...homework })
     expect(assessmentDueSoonPredicate(entity, entity)).toBe(false)
   })
 
   test('fires when dueAt changes', () => {
-    const existing = assessment({ id: 'a1', dueAt })
-    const updated = assessment({ id: 'a1', dueAt: new Date('2026-06-25T00:00:00Z') })
+    const existing = assessment({ id: 'a1', dueAt, ...homework })
+    const updated = assessment({ id: 'a1', dueAt: new Date('2026-06-25T00:00:00Z'), ...homework })
     expect(assessmentDueSoonPredicate(updated, existing)).toBe(true)
   })
 
   test('fires when dueAt is removed', () => {
-    const existing = assessment({ id: 'a1', dueAt })
-    const updated = assessment({ id: 'a1' })
+    const existing = assessment({ id: 'a1', dueAt, ...homework })
+    const updated = assessment({ id: 'a1', kind: AssessmentKind.Quiz, startsAt: new Date('2026-06-20T09:00:00.000Z'), endsAt: new Date('2026-06-20T10:00:00.000Z') })
     expect(assessmentDueSoonPredicate(updated, existing)).toBe(true)
   })
 
   test('fires when assessment is marked complete', () => {
-    const existing = assessment({ id: 'a1', dueAt })
-    const updated = assessment({ id: 'a1', dueAt, metAt: new Date('2026-06-18T00:00:00Z') })
+    const existing = assessment({ id: 'a1', dueAt, ...homework })
+    const updated = assessment({ id: 'a1', dueAt, completedAt: new Date('2026-06-18T00:00:00Z'), ...homework })
     expect(assessmentDueSoonPredicate(updated, existing)).toBe(true)
   })
 })
@@ -77,7 +79,7 @@ describe('assessmentDueSoonTrigger resolver', () => {
 
   test('enqueues a job notification for active class students', async () => {
     const gateway = new RecordingNotificationGateway()
-    const entity = assessment({ id: 'a1', dueAt, title: 'Midterm' })
+    const entity = assessment({ id: 'a1', dueAt, title: 'Midterm', kind: AssessmentKind.Homework })
 
     const input = await assessmentDueSoonTrigger.resolver(entity, undefined, {
       notificationGateway: gateway,
@@ -114,7 +116,7 @@ describe('assessmentDueSoonTrigger resolver', () => {
 
   test('skips enqueue when class group school does not match actor tenant', async () => {
     const gateway = new RecordingNotificationGateway()
-    const entity = assessment({ id: 'a1', dueAt })
+    const entity = assessment({ id: 'a1', dueAt, kind: AssessmentKind.Homework })
 
     const input = await assessmentDueSoonTrigger.resolver(entity, undefined, {
       notificationGateway: gateway,
@@ -139,8 +141,8 @@ describe('assessmentDueSoonTrigger resolver', () => {
 
   test('cancels scheduled notification when assessment is completed', async () => {
     const gateway = new RecordingNotificationGateway()
-    const existing = assessment({ id: 'a1', dueAt })
-    const completed = assessment({ id: 'a1', dueAt, metAt: new Date('2026-06-18T00:00:00Z') })
+    const existing = assessment({ id: 'a1', dueAt, kind: AssessmentKind.Homework })
+    const completed = assessment({ id: 'a1', dueAt, completedAt: new Date('2026-06-18T00:00:00Z'), kind: AssessmentKind.Homework })
 
     const input = await assessmentDueSoonTrigger.resolver(completed, existing, {
       notificationGateway: gateway,
@@ -203,7 +205,7 @@ describe('withNotificationPostSaveHook', () => {
       )
 
       await config.hooks?.postSave?.(
-        assessment({ id: 'a1', dueAt: new Date('2026-06-20T00:00:00Z') }),
+        assessment({ id: 'a1', dueAt: new Date('2026-06-20T00:00:00Z'), kind: AssessmentKind.Homework }),
         undefined,
         {
           classGroups: {

@@ -70,15 +70,34 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'payments':
       return [index('payments_student_fee_id_idx').on(col(table, 'studentFeeId'))]
     case 'schedules':
-      return [index('schedules_class_group_id_idx').on(col(table, 'classGroupId'))]
-    case 'sessions':
-      return [index('sessions_class_group_id_idx').on(col(table, 'classGroupId'))]
+      return [
+        index('schedules_class_group_id_idx').on(col(table, 'classGroupId')),
+        index('schedules_school_id_idx').on(col(table, 'schoolId')),
+      ]
+    case 'lesson_sessions':
+      return [
+        index('lesson_sessions_class_group_id_idx').on(col(table, 'classGroupId')),
+        index('lesson_sessions_school_id_idx').on(col(table, 'schoolId')),
+        index('lesson_sessions_schedule_calendar_date_idx').on(col(table, 'scheduleId'), col(table, 'calendarDate')),
+      ]
+    case 'activity_sessions':
+      return [
+        index('activity_sessions_class_group_id_idx').on(col(table, 'classGroupId')),
+        index('activity_sessions_school_id_idx').on(col(table, 'schoolId')),
+        index('activity_sessions_schedule_calendar_date_idx').on(col(table, 'scheduleId'), col(table, 'calendarDate')),
+      ]
+    case 'attendances':
+      return [
+        index('attendances_class_group_id_idx').on(col(table, 'classGroupId')),
+        index('attendances_school_id_idx').on(col(table, 'schoolId')),
+      ]
     case 'calendar_events':
       return [index('calendar_events_school_year_idx').on(col(table, 'schoolId'), col(table, 'academicYearId'))]
     case 'attendance_records':
       return [
         index('attendance_records_student_id_idx').on(col(table, 'studentId')),
-        index('attendance_records_session_id_idx').on(col(table, 'sessionId')),
+        index('attendance_records_attendance_id_idx').on(col(table, 'attendanceId')),
+        index('attendance_records_lesson_session_id_idx').on(col(table, 'lessonSessionId')),
       ]
     case 'announcements':
       return [index('announcements_school_id_idx').on(col(table, 'schoolId'))]
@@ -105,17 +124,8 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('class_subjects_class_group_id_idx').on(col(table, 'classGroupId')),
         index('class_subjects_subject_id_idx').on(col(table, 'subjectId')),
       ]
-    case 'homework_assignments':
-      return [index('homework_assignments_class_group_id_idx').on(col(table, 'classGroupId'))]
-    case 'class_logbook_entries':
-      return [index('class_logbook_entries_class_group_id_idx').on(col(table, 'classGroupId'))]
-    case 'homework_submissions':
-      return [
-        index('homework_submissions_assignment_id_idx').on(col(table, 'homeworkAssignmentId')),
-        index('homework_submissions_student_id_idx').on(col(table, 'studentId')),
-      ]
-    case 'extracurricular_activities':
-      return [index('extracurricular_activities_school_id_idx').on(col(table, 'schoolId'))]
+    case 'activities':
+      return [index('activities_school_id_idx').on(col(table, 'schoolId'))]
     case 'activity_enrollments':
       return [
         index('activity_enrollments_activity_id_idx').on(col(table, 'activityId')),

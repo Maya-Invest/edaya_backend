@@ -10,7 +10,7 @@ import {
   SEED_ALL_CALENDAR_EVENTS,
   SEED_INCIDENTS,
   SEED_SCHOOL_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const CALENDAR_KIND_BY_SEED = {

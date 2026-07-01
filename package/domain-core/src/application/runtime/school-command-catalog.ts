@@ -12,9 +12,9 @@ export type SchoolCommandKey
     | 'updateStaffMemberProfile'
     | 'assignStaffToClass'
     | 'assignStaffToClassSubject'
-    | 'assignStaffToSession'
+    | 'assignStaffToLessonSession'
     | 'assignResourceToClass'
-    | 'assignResourceToSession'
+    | 'assignResourceToLessonSession'
     | 'removeResourceAssignment'
     | 'registerAttachment'
     | 'removeAttachment'
@@ -29,7 +29,9 @@ export type SchoolCommandKey
     | 'removeSubjectFromGradeLevel'
     | 'updateGradeLevelSubject'
     | 'assignMatterToGradeLevelSubject'
-    | 'recordSessionProgress'
+    | 'addCustomClassSubject'
+    | 'setClassSubjectOffered'
+    | 'recordLessonSessionProgress'
     | 'createGradeScale'
     | 'createReportCardDefinition'
     | 'createReportCardDefinitionSection'
@@ -57,12 +59,15 @@ export type SchoolCommandKey
     | 'updateGuardianContactMethods'
     | 'updateGuardianStudentLink'
     | 'createSchedule'
+    | 'saveSchedule'
+    | 'materializeSchedule'
     | 'createCalendarEvent'
-    | 'createSession'
-    | 'generateSessions'
+    | 'cancelLessonSession'
+    | 'cancelActivitySession'
+    | 'rescheduleOccurrence'
     | 'recordAttendance'
     | 'recordDailyAttendance'
-    | 'recordSessionAttendance'
+    | 'recordLessonSessionAttendance'
     | 'recordClassDailyAttendance'
     | 'reviewAttendanceJustification'
     | 'createAnnouncement'
@@ -114,9 +119,9 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'updateStaffMemberProfile',
   'assignStaffToClass',
   'assignStaffToClassSubject',
-  'assignStaffToSession',
+  'assignStaffToLessonSession',
   'assignResourceToClass',
-  'assignResourceToSession',
+  'assignResourceToLessonSession',
   'removeResourceAssignment',
   'registerAttachment',
   'removeAttachment',
@@ -131,7 +136,9 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'removeSubjectFromGradeLevel',
   'updateGradeLevelSubject',
   'assignMatterToGradeLevelSubject',
-  'recordSessionProgress',
+  'addCustomClassSubject',
+  'setClassSubjectOffered',
+  'recordLessonSessionProgress',
   'createGradeScale',
   'createReportCardDefinition',
   'createReportCardDefinitionSection',
@@ -159,12 +166,15 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'updateGuardianContactMethods',
   'updateGuardianStudentLink',
   'createSchedule',
+  'saveSchedule',
+  'materializeSchedule',
   'createCalendarEvent',
-  'createSession',
-  'generateSessions',
+  'cancelLessonSession',
+  'cancelActivitySession',
+  'rescheduleOccurrence',
   'recordAttendance',
   'recordDailyAttendance',
-  'recordSessionAttendance',
+  'recordLessonSessionAttendance',
   'recordClassDailyAttendance',
   'reviewAttendanceJustification',
   'createAnnouncement',

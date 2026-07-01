@@ -2,6 +2,8 @@ import { describe, expect, it } from 'bun:test'
 import { ResourceAssignment } from '../../../../src/domain/school/resource-assignment'
 import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
+const targetError = 'A ResourceAssignment must target exactly one of: lessonSessionId, activitySessionId, assessmentId, or classGroupId'
+
 describe('ResourceAssignment target bounds and validation', () => {
   const baseArgs = {
     id: 'assignment-1',
@@ -17,17 +19,17 @@ describe('ResourceAssignment target bounds and validation', () => {
     expect(assignment.id).toBe('assignment-1')
     expect(assignment.resourceId).toBe('resource-1')
     expect(assignment.classGroupId).toBe('class-1')
-    expect(assignment.sessionId).toBeUndefined()
+    expect(assignment.lessonSessionId).toBeUndefined()
     expect(assignment.createdAt).toBeInstanceOf(Date)
   })
 
-  it('instantiates successfully with sessionId only', () => {
+  it('instantiates successfully with lessonSessionId only', () => {
     const assignment = new ResourceAssignment({
       ...baseArgs,
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
     })
 
-    expect(assignment.sessionId).toBe('session-1')
+    expect(assignment.lessonSessionId).toBe('session-1')
     expect(assignment.classGroupId).toBeUndefined()
   })
 
@@ -36,15 +38,15 @@ describe('ResourceAssignment target bounds and validation', () => {
       new ResourceAssignment({
         ...baseArgs,
         classGroupId: 'class-1',
-        sessionId: 'session-1',
+        lessonSessionId: 'session-1',
       })
-    }).toThrow('A ResourceAssignment must target exactly one of: sessionId or classGroupId')
+    }).toThrow(targetError)
   })
 
   it('throws DomainValidationError when no targets are provided', () => {
     expect(() => {
       new ResourceAssignment(baseArgs)
-    }).toThrow('A ResourceAssignment must target exactly one of: sessionId or classGroupId')
+    }).toThrow(targetError)
   })
 
   it('throws DomainValidationError when id or resourceId is blank', () => {

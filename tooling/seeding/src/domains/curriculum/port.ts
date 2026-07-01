@@ -1,5 +1,4 @@
 import type {
-  ClassSubjectMatterStatus,
   SubjectCategory,
   SubjectColor,
 } from '@edaya/core'
@@ -37,23 +36,6 @@ export interface GradeLevelSubjectMatterSeedRecord {
   gradeLevelSubjectId: string
   subjectMatterId: string
   classSubjectMatterIdsByClassGroupId?: Record<string, string>
-}
-
-/** @deprecated Internal seed compatibility only. */
-export interface ClassSubjectSeedRecord {
-  id: string
-  classGroupId: string
-  subjectId: string
-  coefficient?: number
-}
-
-/** @deprecated Internal seed compatibility only. */
-export interface ClassSubjectMatterSeedRecord {
-  id: string
-  classSubjectId: string
-  subjectMatterId: string
-  status: ClassSubjectMatterStatus
-  completedPercentage: number
 }
 
 export interface CurriculumSeedPort {

@@ -1,6 +1,6 @@
 # `@edaya/seeding` source layout
 
-HTTP-first seed orchestration. Fixture data lives in `@edaya/dev-fixtures`; this package owns ports, workflows, and CLI/runtime wiring.
+HTTP-first seed orchestration. Fixture data lives in `@edaya/fixtures`; this package owns ports, workflows, and CLI/runtime wiring.
 
 ## Layers
 
@@ -42,6 +42,6 @@ Each folder under `domains/<name>/`:
 
 - **CLI / staging** — always HTTP (`domains/*/http.ts` + `http/`). Never construct a proxy `SeedApplication` in scripts.
 - **Integration tests** — prefer `@edaya/seeding/http`; use `@edaya/seeding` in-process ports only when the harness provides `SeedApplication`.
-- **Imports** — use `@edaya/core` and `@edaya/dev-fixtures` barrels; do not deep-import domain-core paths.
+- **Imports** — use `@edaya/core` and `@edaya/fixtures` barrels; do not deep-import domain-core paths.
 
 See [seed-contract.md](../seed-contract.md) for the operation inventory and [README.md](../README.md) for CLI commands.

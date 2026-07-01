@@ -5,7 +5,7 @@ import {
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_ID,
   SEED_SCHOOL_OWNER_STAFF_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
 

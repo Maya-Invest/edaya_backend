@@ -12,8 +12,11 @@ export function createInProcessAssessmentsSeedPort(
     createAssessment: record => withSeedPortError('assessments.createAssessment', async () => {
       await service.assessmentsWorkflow.createAssessment({
         ...record,
-        date: new Date(record.date),
-        dueAt: new Date(record.dueAt),
+        ...(record.dueAt ? { dueAt: new Date(record.dueAt) } : {}),
+        ...(record.completedAt ? { completedAt: new Date(record.completedAt) } : {}),
+        ...(record.startsAt ? { startsAt: new Date(record.startsAt) } : {}),
+        ...(record.endsAt ? { endsAt: new Date(record.endsAt) } : {}),
+        attachments: record.attachments?.map(attachment => ({ ...attachment })),
       })
     }),
     recordAssessmentResult: record => withSeedPortError('assessments.recordAssessmentResult', async () => {

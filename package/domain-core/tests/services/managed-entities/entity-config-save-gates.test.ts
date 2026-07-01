@@ -32,6 +32,8 @@ import {
   Incident,
   IncidentKind,
   IncidentStatus,
+  LessonSession,
+  OccurrenceStatus,
   Payment,
   PaymentMethod,
   PaymentStatus,
@@ -44,8 +46,6 @@ import {
   ResourceAssignment,
   ResourceKind,
   School,
-  Session,
-  SessionKind,
   StaffMember,
   Student,
   StudentClassEnrollment,
@@ -67,7 +67,7 @@ describe('Entity config save gates', () => {
     await expect(app.baseService.entities.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-orphan',
       classSubjectMatterId: 'missing-matter',
-      sessionId: 'missing-session',
+      lessonSessionId: 'missing-lesson-session',
       completedPercentage: 10,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
@@ -222,7 +222,7 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('assessment preSave rejects inconsistent class subject, period, and session references', async () => {
+  test('assessment preSave rejects inconsistent class subject, period, and lesson session references', async () => {
     const { app, repositories } = createTestApp(actor)
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-1',
@@ -245,14 +245,15 @@ describe('Entity config save gates', () => {
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
     }))
-    await repositories.sessionRepository.save(new Session({
+    await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-1',
+      schoolId: 'school',
       classGroupId: 'class-1',
-      title: 'Other subject',
-      kind: SessionKind.Evaluation,
+      scheduleId: 'schedule-1',
+      classSubjectId: 'other-class-subject',
+      displayLabel: 'Other subject',
       startsAt: new Date('2026-02-01T08:00:00Z'),
       endsAt: new Date('2026-02-01T09:00:00Z'),
-      classSubjectId: 'other-class-subject',
     }))
 
     await expect(app.baseService.entities.assessments.save(new Assessment({
@@ -263,7 +264,8 @@ describe('Entity config save gates', () => {
       title: 'Quiz',
       kind: AssessmentKind.Quiz,
       maxScore: 20,
-      dueAt: new Date('2026-02-01T00:00:00Z'),
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
     }))).rejects.toBeInstanceOf(AuthorizationError)
 
     await repositories.academicPeriodRepository.save(new AcademicPeriod({
@@ -277,15 +279,107 @@ describe('Entity config save gates', () => {
     }))
 
     await expect(app.baseService.entities.assessments.save(new Assessment({
-      id: 'assessment-bad-session',
+      id: 'assessment-bad-lesson-session',
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
       periodId: 'period-valid',
       title: 'Quiz',
       kind: AssessmentKind.Quiz,
       maxScore: 20,
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
     }))).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('assessment preSave rejects class subjects that are not offered', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.classGroupRepository.save(new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Grade 1',
+    }))
+    await repositories.classSubjectRepository.save(new ClassSubject({
+      id: 'class-subject-1',
+      classGroupId: 'class-1',
+      subjectId: 'subject-1',
+      isOffered: false,
+    }))
+    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+      id: 'period-1',
+      schoolId: 'school',
+      academicYearId: 'year-1',
+      name: 'Term 1',
+      type: AcademicPeriodType.Trimester,
+      startDate: new Date('2026-01-01T00:00:00Z'),
+      endDate: new Date('2026-03-31T00:00:00Z'),
+    }))
+
+    await expect(app.baseService.entities.assessments.save(new Assessment({
+      id: 'assessment-not-offered',
+      classGroupId: 'class-1',
+      classSubjectId: 'class-subject-1',
+      periodId: 'period-1',
+      title: 'Quiz',
+      kind: AssessmentKind.Quiz,
+      maxScore: 20,
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
+    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('assessment preSave rejects self-timed overlap when schedule conflict enforcement is enabled', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.schoolRepository.save(new School({
+      id: 'school',
+      name: 'School',
+      timeZone: 'UTC',
+      enforceScheduleConflicts: true,
+    }))
+    await repositories.classGroupRepository.save(new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Grade 1',
+    }))
+    await repositories.classSubjectRepository.save(new ClassSubject({
+      id: 'class-subject-1',
+      classGroupId: 'class-1',
+      subjectId: 'subject-1',
+    }))
+    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+      id: 'period-1',
+      schoolId: 'school',
+      academicYearId: 'year-1',
+      name: 'Term 1',
+      type: AcademicPeriodType.Trimester,
+      startDate: new Date('2026-01-01T00:00:00Z'),
+      endDate: new Date('2026-03-31T00:00:00Z'),
+    }))
+    await repositories.lessonSessionRepository.save(new LessonSession({
+      id: 'ls-1',
+      schoolId: 'school',
+      classGroupId: 'class-1',
+      scheduleId: 'sch-1',
+      classSubjectId: 'class-subject-1',
+      status: OccurrenceStatus.Pending,
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
+      displayLabel: 'Math',
+    }))
+
+    await expect(app.baseService.entities.assessments.save(new Assessment({
+      id: 'assessment-conflict',
+      classGroupId: 'class-1',
+      classSubjectId: 'class-subject-1',
+      periodId: 'period-1',
+      title: 'Quiz',
+      kind: AssessmentKind.Quiz,
+      maxScore: 20,
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
+    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('assessment preSave rejects completion after results are recorded', async () => {
@@ -316,8 +410,8 @@ describe('Entity config save gates', () => {
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
       periodId: 'period-1',
-      title: 'Quiz',
-      kind: AssessmentKind.Quiz,
+      title: 'Homework 1',
+      kind: AssessmentKind.Homework,
       maxScore: 20,
       dueAt: new Date('2026-02-01T00:00:00Z'),
     })
@@ -339,7 +433,7 @@ describe('Entity config save gates', () => {
       maxScore: assessment.maxScore,
       coefficient: assessment.coefficient,
       dueAt: assessment.dueAt,
-      metAt: new Date('2026-02-02T00:00:00Z'),
+      completedAt: new Date('2026-02-02T00:00:00Z'),
       createdAt: assessment.createdAt,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
@@ -405,18 +499,20 @@ describe('Entity config save gates', () => {
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
     }))
-    await repositories.sessionRepository.save(new Session({
+    await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-1',
+      schoolId: 'school',
       classGroupId: 'class-1',
-      title: 'Math',
-      kind: SessionKind.Course,
+      scheduleId: 'schedule-1',
+      classSubjectId: 'class-subject-1',
+      displayLabel: 'Math',
       startsAt: new Date('2026-05-01T08:00:00Z'),
       endsAt: new Date('2026-05-01T09:00:00Z'),
     }))
     const attendance = new AttendanceRecord({
       id: 'attendance-1',
       studentId: 'student-1',
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
       date: new Date('2026-05-01T08:00:00Z'),
       status: AttendanceStatus.Late,
     })
@@ -590,7 +686,7 @@ describe('Entity config save gates', () => {
       .toThrow('Transfer school ownership before deleting the owner')
   })
 
-  test('resource assignment preSave rejects overlapping session assignments', async () => {
+  test('resource assignment preSave rejects overlapping lesson session assignments', async () => {
     const { app, repositories } = createTestApp(actor)
     await repositories.resourceRepository.save(new Resource({
       id: 'resource-1',
@@ -605,32 +701,36 @@ describe('Entity config save gates', () => {
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
     }))
-    await repositories.sessionRepository.save(new Session({
+    await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-1',
+      schoolId: 'school',
       classGroupId: 'class-1',
-      title: 'Math',
-      kind: SessionKind.Course,
+      scheduleId: 'schedule-1',
+      classSubjectId: 'class-subject-1',
+      displayLabel: 'Math',
       startsAt: new Date('2026-05-01T08:00:00Z'),
       endsAt: new Date('2026-05-01T09:00:00Z'),
     }))
-    await repositories.sessionRepository.save(new Session({
+    await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-2',
+      schoolId: 'school',
       classGroupId: 'class-1',
-      title: 'Science',
-      kind: SessionKind.Course,
+      scheduleId: 'schedule-2',
+      classSubjectId: 'class-subject-1',
+      displayLabel: 'Science',
       startsAt: new Date('2026-05-01T08:30:00Z'),
       endsAt: new Date('2026-05-01T09:30:00Z'),
     }))
     await repositories.resourceAssignmentRepository.save(new ResourceAssignment({
       id: 'assignment-existing',
       resourceId: 'resource-1',
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
     }))
 
     await expect(app.baseService.entities.resourceAssignments.save(new ResourceAssignment({
       id: 'assignment-new',
       resourceId: 'resource-1',
-      sessionId: 'session-2',
+      lessonSessionId: 'session-2',
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
@@ -678,7 +778,8 @@ describe('Entity config save gates', () => {
       title: 'Quiz',
       kind: AssessmentKind.Quiz,
       maxScore: 20,
-      dueAt: new Date('2026-02-01T00:00:00Z'),
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
     }))
     await repositories.reportCardResultRepository.save(new ReportCardResult({
       id: 'report-card-1',

@@ -17,7 +17,7 @@ import {
   SEED_ACADEMIC_YEAR_ID,
   SEED_CLASS_SUBJECTS,
   SEED_SCHOOL_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'

@@ -7,7 +7,7 @@ import {
   assessmentDueSoonDeliverAfter,
   assessmentDueSoonIdempotencyKey,
 } from '../../../capabilities/notifications/triggers/assessment-due-soon'
-import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
+import { AssessmentKind, MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
 import { isInJobNotificationWindow } from '../due-window'
 
 export async function scanAssessmentDueNotifications(
@@ -70,7 +70,7 @@ export async function scanAssessmentDueNotifications(
 }
 
 function shouldNotifyAssessmentDueSoon(assessment: Assessment, asOf: Date): boolean {
-  if (!assessment.dueAt || assessment.metAt) {
+  if (assessment.kind !== AssessmentKind.Homework || !assessment.dueAt || assessment.completedAt) {
     return false
   }
   return isInJobNotificationWindow(

@@ -306,7 +306,7 @@ function buildUpcoming(args: {
   }
 
   for (const assessment of args.periodAssessments) {
-    const assessmentDate = assessment.dueAt ?? assessment.date ?? assessment.metAt
+    const assessmentDate = assessment.dueAt ?? assessment.startsAt ?? assessment.completedAt
     if (!assessmentDate) {
       continue
     }

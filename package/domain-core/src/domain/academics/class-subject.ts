@@ -16,6 +16,7 @@ export const classSubjectSchema = z.object({
     val => val === null ? undefined : val,
     z.number().min(0, 'completedPercentage must be a finite, non-negative number').max(100, 'completedPercentage must be between 0 and 100').default(0),
   ),
+  isOffered: z.boolean().default(true),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -43,6 +44,7 @@ export class ClassSubject {
   get coefficient() { return this.data.coefficient ?? undefined }
   get createdAt() { return this.data.createdAt }
   get completedPercentage() { return this.data.completedPercentage }
+  get isOffered() { return this.data.isOffered }
 }
 
 export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, policy, atomicExecution }) =>
@@ -62,7 +64,21 @@ function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: 
     && existing.subjectId === classSubject.subjectId
     && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
+    && existing.isOffered === classSubject.isOffered
     && classSubject.completedPercentage !== existing.completedPercentage
+}
+
+function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
+  return existing.classGroupId === classSubject.classGroupId
+    && existing.subjectId === classSubject.subjectId
+    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
+    && existing.coefficient === classSubject.coefficient
+    && existing.completedPercentage === classSubject.completedPercentage
+    && classSubject.isOffered !== existing.isOffered
+}
+
+function isCustomClassSubject(classSubject: ClassSubject): boolean {
+  return !classSubject.gradeLevelSubjectId
 }
 
 async function validateClassSubjectSave(
@@ -83,10 +99,36 @@ async function validateClassSubjectSave(
   if (existing && isProgressOnlyClassSubjectUpdate(existing, classSubject)) {
     return
   }
+  if (existing && isOfferedOnlyClassSubjectUpdate(existing, classSubject)) {
+    return
+  }
   if (!classSubject.gradeLevelSubjectId) {
+    if (existing && !isCustomClassSubject(existing)) {
+      throw new BusinessRuleViolationError(
+        'CLASS_SUBJECT_INHERITED_FROM_GRADE_LEVEL',
+        'Inherited class subjects cannot be converted to custom subjects',
+      )
+    }
+    const duplicate = await repositories.classSubjects.findOne({
+      classGroupId: classSubject.classGroupId,
+      subjectId: classSubject.subjectId,
+    })
+    if (duplicate && duplicate.id !== classSubject.id) {
+      throw new BusinessRuleViolationError(
+        'CLASS_SUBJECT_ALREADY_EXISTS',
+        `Subject ${classSubject.subjectId} is already offered in class group ${classSubject.classGroupId}`,
+      )
+    }
+    return
+  }
+  if (!existing) {
     throw new BusinessRuleViolationError(
       'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-      'Class subjects are inherited from grade level allocation and cannot be created or modified directly',
+      'Class subjects are inherited from grade level allocation and cannot be created directly',
     )
   }
+  throw new BusinessRuleViolationError(
+    'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
+    'Inherited class subjects can only be updated through grade level sync or setClassSubjectOffered',
+  )
 }

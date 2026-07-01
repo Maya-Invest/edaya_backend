@@ -10,12 +10,25 @@ export function createInProcessAttendanceSeedPort(
   const service = createInProcessSeedService(application, 'dev-attendance-seed')
 
   return {
-    createSession: record => withSeedPortError('attendance.createSession', async () => {
-      await service.schedulingWorkflow.createSession({
-        ...record,
-        startsAt: new Date(record.startsAt),
-        endsAt: new Date(record.endsAt),
+    ensureLessonSession: input => withSeedPortError('attendance.ensureLessonSession', async () => {
+      await service.schedulingWorkflow.createSchedule({
+        id: input.scheduleId,
+        schoolId: input.schoolId,
+        classGroupId: input.classGroupId,
+        classSubjectId: input.classSubjectId,
+        title: input.title,
+        isRecurring: false,
+        specificDate: new Date(`${input.date}T12:00:00.000Z`),
+        startTime: input.startTime,
+        endTime: input.endTime,
       })
+      await service.schedulingWorkflow.materializeSchedule({ scheduleId: input.scheduleId })
+      const lessonSessionId = `${input.scheduleId}:${input.date}`
+      const lessonSession = await application.repositories.lessonSessions.findById(lessonSessionId)
+      if (!lessonSession) {
+        throw new Error(`Failed to materialize lesson session for schedule ${input.scheduleId} on ${input.date}`)
+      }
+      return { lessonSessionId: lessonSession.id }
     }),
     recordAttendance: record => withSeedPortError('attendance.recordAttendance', async () => {
       await service.schedulingWorkflow.recordAttendance(record)

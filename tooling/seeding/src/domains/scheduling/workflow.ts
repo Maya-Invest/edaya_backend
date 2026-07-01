@@ -1,12 +1,12 @@
 import type { SchedulingSeedPort } from './port'
-import { DayOfWeek, ResourceKind, SessionKind } from '@edaya/core'
+import { DayOfWeek, ResourceKind } from '@edaya/core'
 import {
   planningSessionDate,
   SEED_PLANNING_SLOTS,
   SEED_RESOURCES,
   SEED_SCHOOL_ID,
   SEED_SESSION_PROGRESS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateAndTime } from '../../support/seed-date'
 
 const DAY_OF_WEEK_BY_SEED = {
@@ -23,6 +23,10 @@ const RESOURCE_KIND_BY_SEED = {
   vehicle: ResourceKind.Vehicle,
 } as const
 
+function lessonSessionIdForSlot(scheduleId: string, day: keyof typeof DAY_OF_WEEK_BY_SEED): string {
+  return `${scheduleId}:${planningSessionDate(day)}`
+}
+
 export async function seedDevScheduling(port: SchedulingSeedPort): Promise<void> {
   for (const resource of SEED_RESOURCES) {
     await port.saveResource({
@@ -38,6 +42,7 @@ export async function seedDevScheduling(port: SchedulingSeedPort): Promise<void>
   for (const slot of SEED_PLANNING_SLOTS) {
     await port.createSchedule({
       id: slot.scheduleId,
+      schoolId: SEED_SCHOOL_ID,
       classGroupId: slot.classGroupId,
       classSubjectId: slot.classSubjectId,
       title: slot.title,
@@ -49,38 +54,30 @@ export async function seedDevScheduling(port: SchedulingSeedPort): Promise<void>
   }
 
   for (const slot of SEED_PLANNING_SLOTS) {
-    const sessionDate = planningSessionDate(slot.day)
-    await port.createSession({
-      id: slot.sessionId,
-      classGroupId: slot.classGroupId,
-      classSubjectId: slot.classSubjectId,
-      scheduleId: slot.scheduleId,
-      title: slot.title,
-      kind: SessionKind.Course,
-      startsAt: seedDateAndTime(sessionDate, slot.startTime),
-      endsAt: seedDateAndTime(sessionDate, slot.endTime),
-    })
+    await port.materializeSchedule({ scheduleId: slot.scheduleId })
+    const lessonSessionId = lessonSessionIdForSlot(slot.scheduleId, slot.day)
 
-    await port.assignStaffToSession({
-      id: `sa-${slot.sessionId}-${slot.teacherId}`,
+    await port.assignStaffToLessonSession({
+      id: `sa-${lessonSessionId}-${slot.teacherId}`,
       staffId: slot.teacherId,
       responsibility: 'Teacher',
-      sessionId: slot.sessionId,
+      lessonSessionId,
     })
 
     if ('resourceId' in slot && slot.resourceId) {
-      await port.assignResourceToSession({
-        id: `ra-${slot.sessionId}-${slot.resourceId}`,
+      await port.assignResourceToLessonSession({
+        id: `ra-${lessonSessionId}-${slot.resourceId}`,
         resourceId: slot.resourceId,
-        sessionId: slot.sessionId,
+        lessonSessionId,
       })
     }
   }
 
-  await port.recordSessionProgress({
+  const progressLessonSessionId = lessonSessionIdForSlot('sch-p1', 'Mon')
+  await port.recordLessonSessionProgress({
     id: SEED_SESSION_PROGRESS.id,
     classSubjectMatterId: SEED_SESSION_PROGRESS.classSubjectMatterId,
-    sessionId: SEED_SESSION_PROGRESS.sessionId,
+    lessonSessionId: progressLessonSessionId,
     completedPercentage: SEED_SESSION_PROGRESS.completedPercentage,
     notes: SEED_SESSION_PROGRESS.notes,
     recordedAt: seedDateAndTime(planningSessionDate('Mon'), '09:00'),

@@ -10,7 +10,6 @@ import {
   createStaffActorMetadata,
   GradeLevel,
   Permission,
-  SessionKind,
   StaffMember,
   StaffRoleAssignment,
   Subject,
@@ -25,8 +24,8 @@ import {
   saveClassSubject,
   saveFee,
   saveGuardian,
+  saveLessonSession,
   saveSchool,
-  saveSession,
   saveStaffAssignment,
   saveStaffMember,
   saveStudent,
@@ -152,13 +151,12 @@ async function setupBaselineFixture() {
   })
 
   // Create session
-  const session = await saveSession(app, {
+  const session = await saveLessonSession(app, {
     id: 'active-session',
     schoolId: 'school',
     classGroupId: 'class-7a',
     classSubjectId: classSubject.id,
-    title: 'Poetry',
-    kind: SessionKind.Course,
+    displayLabel: 'Poetry',
     startsAt: new Date('2026-09-01T08:00:00Z'),
     endsAt: new Date('2026-09-01T09:00:00Z'),
   })
@@ -167,7 +165,7 @@ async function setupBaselineFixture() {
   await saveStaffAssignment(app, {
     id: 'staff-session-1',
     staffId: 'teacher-staff',
-    sessionId: session.id,
+    lessonSessionId: session.id,
     responsibility: 'teacher',
   })
 
@@ -276,7 +274,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     const attendance = await teacherApp.schedulingWorkflow.recordAttendance({
       id: 'attendance-1',
       studentId: 'active-student',
-      sessionId: 'active-session',
+      lessonSessionId: 'active-session',
       status: AttendanceStatus.Present,
     })
     expect(attendance.id).toBe('attendance-1')

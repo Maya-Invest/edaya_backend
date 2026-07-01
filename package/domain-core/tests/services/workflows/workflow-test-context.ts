@@ -27,7 +27,6 @@ import {
   PaymentMethod,
   PaymentStatus,
   ReportCardDefinitionSectionKind,
-  SessionKind,
   StudentClassEnrollment,
   StudentClassEnrollmentStatus,
   StudentDisciplinaryActionStatus,
@@ -35,6 +34,8 @@ import {
   StudentStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/domain'
+import { LessonSession } from '../../../src/domain/scheduling/lesson-session'
+import { OccurrenceStatus } from '../../../src/domain/scheduling/occurrence-status'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
@@ -74,8 +75,8 @@ export function createContext({
     classGroups: {
       findById: mock(async () => ({ id: 'cg1', schoolId: 'sch1' })),
     },
-    sessions: {
-      findById: mock(async () => ({ id: 'sess1', classSubjectId: 'cs1', classGroupId: 'cg1' })),
+    lessonSessions: {
+      findById: mock(async () => ({ id: 'sess1', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1' })),
     },
     classSubjectProgress: {
       findById: mock(async () => undefined),
@@ -86,7 +87,8 @@ export function createContext({
 
   const mockPolicy = {
     checkClassGroupAccess: mock(async () => {}),
-    checkSessionAccess: mock(async () => {}),
+    checkLessonSessionAccess: mock(async () => {}),
+    checkActivitySessionAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const mockAtomic: AtomicExecutionPort = {
@@ -161,9 +163,11 @@ export function createSetupContext() {
 export function createReportCardContext({
   existingReportCard,
   notificationGateway = noOpNotificationGateway,
+  academicPeriodPublished = true,
 }: {
   existingReportCard?: any
   notificationGateway?: NotificationGatewayPort
+  academicPeriodPublished?: boolean
 } = {}) {
   const periodStart = new Date('2026-01-01T00:00:00Z')
   const periodEnd = new Date('2026-03-31T00:00:00Z')
@@ -177,6 +181,7 @@ export function createReportCardContext({
         id: 'per1',
         schoolId: 'sch1',
         academicYearId: 'ay1',
+        isPublished: academicPeriodPublished,
         startDate: periodStart,
         endDate: periodEnd,
       })),
@@ -656,7 +661,7 @@ export function createGuardianLinkContext({
 export function createSchedulingContext({
   classGroupAttendanceMode = AttendanceMode.Daily,
   existingAttendance,
-  existingDailySession = false,
+  existingDailyAttendance = false,
   activeEnrollment = true,
   schedules = [],
   calendarEvents = [],
@@ -664,23 +669,38 @@ export function createSchedulingContext({
 }: {
   classGroupAttendanceMode?: AttendanceMode
   existingAttendance?: AttendanceRecord
-  existingDailySession?: boolean
+  existingDailyAttendance?: boolean
   activeEnrollment?: boolean
   schedules?: any[]
   calendarEvents?: any[]
   notificationGateway?: NotificationGatewayPort
 } = {}) {
-  const savedSessions = new Map<string, any>()
-  const savedAttendance = new Map<string, AttendanceRecord>()
-  if (existingAttendance) {
-    savedAttendance.set(existingAttendance.id, existingAttendance)
-  }
-  if (existingDailySession) {
-    savedSessions.set('daily:cg_daily:2026-05-28', {
-      id: 'daily:cg_daily:2026-05-28',
+  const savedLessonSessions = new Map<string, LessonSession>([
+    ['ses1', new LessonSession({
+      id: 'ses1',
+      schoolId: 'sch1',
       classGroupId: 'cg_daily',
-      kind: SessionKind.Other,
-      title: 'Daily attendance',
+      scheduleId: 'sched-1',
+      classSubjectId: 'cs1',
+      displayLabel: 'Math',
+      status: OccurrenceStatus.Pending,
+      isException: false,
+      startsAt: new Date('2026-05-28T08:00:00Z'),
+      endsAt: new Date('2026-05-28T09:00:00Z'),
+    })],
+  ])
+  const savedActivitySessions = new Map<string, any>()
+  const savedDailyAttendances = new Map<string, any>()
+  const savedAttendanceRecords = new Map<string, AttendanceRecord>()
+  if (existingAttendance) {
+    savedAttendanceRecords.set(existingAttendance.id, existingAttendance)
+  }
+  if (existingDailyAttendance) {
+    savedDailyAttendances.set('cg_daily:2026-05-28', {
+      id: 'cg_daily:2026-05-28',
+      schoolId: 'sch1',
+      classGroupId: 'cg_daily',
+      displayLabel: 'Daily attendance',
       startsAt: new Date('2026-05-28T00:00:00Z'),
       endsAt: new Date('2026-05-29T00:00:00Z'),
     })
@@ -703,10 +723,17 @@ export function createSchedulingContext({
   ])
   const mockRepos = {
     attendance: {
-      findById: mock(async id => savedAttendance.get(id)),
-      findOne: mock(async filter => [...savedAttendance.values()].find(record =>
-        record.studentId === filter?.studentId && record.sessionId === filter?.sessionId)),
-      save: mock(async record => savedAttendance.set(record.id, record)),
+      findById: mock(async id => savedAttendanceRecords.get(id)),
+      findOne: mock(async filter => [...savedAttendanceRecords.values()].find(record =>
+        record.studentId === filter?.studentId
+        && (record.lessonSessionId === filter?.lessonSessionId || record.attendanceId === filter?.attendanceId))),
+      save: mock(async record => savedAttendanceRecords.set(record.id, record)),
+    },
+    attendances: {
+      findById: mock(async (id: string) => savedDailyAttendances.get(id)),
+      save: mock(async (attendance) => {
+        savedDailyAttendances.set(attendance.id, attendance)
+      }),
     },
     classGroups: {
       findById: mock(async id => classGroups.get(id)),
@@ -721,30 +748,58 @@ export function createSchedulingContext({
     },
     schedules: {
       list: mock(async () => schedules),
+      findById: mock(async (id: string) => schedules.find(schedule => schedule.id === id)),
     },
-    sessions: {
-      findById: mock(async (id) => {
-        if (savedSessions.has(id))
-          return savedSessions.get(id)
-        if (id === 'ses1') {
-          return {
-            id,
-            classGroupId: 'cg_daily',
-            kind: SessionKind.Course,
-            title: 'Math',
-            startsAt: new Date('2026-05-28T08:00:00Z'),
-            endsAt: new Date('2026-05-28T09:00:00Z'),
-          }
-        }
-        return undefined
+    lessonSessions: {
+      findById: mock(async (id: string) => savedLessonSessions.get(id)),
+      list: mock(async (filter: { classGroupId?: string } = {}) =>
+        [...savedLessonSessions.values()].filter(session => !filter.classGroupId || session.classGroupId === filter.classGroupId)),
+      save: mock(async (session) => {
+        savedLessonSessions.set(session.id, session)
       }),
-      save: mock(async session => savedSessions.set(session.id, session)),
+    },
+    activitySessions: {
+      findById: mock(async (id: string) => savedActivitySessions.get(id)),
+      list: mock(async (filter: { classGroupId?: string } = {}) =>
+        [...savedActivitySessions.values()].filter(session => !filter.classGroupId || session.classGroupId === filter.classGroupId)),
+      save: mock(async (session) => {
+        savedActivitySessions.set(session.id, session)
+      }),
+    },
+    activities: {
+      findById: mock(async (id: string) => ({
+        id,
+        schoolId: 'sch1',
+        name: id === 'act1' ? 'Chess Club' : 'Activity',
+      })),
+    },
+    academicYears: {
+      findById: mock(async () => ({
+        id: 'ay1',
+        schoolId: 'sch1',
+        startDate: new Date('2026-01-01T00:00:00Z'),
+        endDate: new Date('2026-12-31T00:00:00Z'),
+      })),
+    },
+    classSubjects: {
+      findById: mock(async (id: string) => ({
+        id,
+        classGroupId: 'cg_daily',
+        subjectId: `subj-${id}`,
+      })),
+    },
+    subjects: {
+      findById: mock(async (id: string) => ({
+        id,
+        schoolId: 'sch1',
+        name: id === 'subj-cs1' ? 'Math' : id === 'subj-cs2' ? 'Science lab' : id === 'subj-cs3' ? 'History' : 'Subject',
+      })),
     },
     students: {
       findById: mock(async () => ({ id: 'stu1', schoolId: 'sch1', subjectId: 'subject:stu1' })),
     },
     schools: {
-      findById: mock(async () => ({ id: 'sch1', name: 'School' })),
+      findById: mock(async () => ({ id: 'sch1', name: 'School', enforceScheduleConflicts: false })),
     },
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
@@ -771,9 +826,10 @@ export function createSchedulingContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
-    checkAttendanceAccess: mock(async () => {}),
+    checkAttendanceRecordAccess: mock(async () => {}),
     checkClassGroupAccess: mock(async () => {}),
-    checkSessionAccess: mock(async () => {}),
+    checkLessonSessionAccess: mock(async () => {}),
+    checkActivitySessionAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
@@ -790,7 +846,7 @@ export function createSchedulingContext({
     fileStorage: testFileStorage,
   })
 
-  return { mockAtomic, mockPolicy, mockRepos, savedAttendance, savedSessions, service }
+  return { mockAtomic, mockPolicy, mockRepos, savedAttendanceRecords, savedDailyAttendances, savedLessonSessions, savedActivitySessions, service }
 }
 
 export function createCommunicationsContext({
@@ -927,7 +983,7 @@ export function createBehaviorContext({
     kind: IncidentKind.MinorInfraction,
     reporterId: 'user1',
     classGroupId: 'cg1',
-    sessionId: 'sess1',
+    lessonSessionId: 'sess1',
     status: incidentStatus,
     resolvedAt: incidentStatus === IncidentStatus.Resolved ? new Date('2026-05-01T11:00:00Z') : undefined,
     resolvedByStaffId: incidentStatus === IncidentStatus.Resolved ? 'user1' : undefined,
@@ -977,7 +1033,7 @@ export function createBehaviorContext({
     schools: {
       findById: mock(async id => ({ id, name: 'School' })),
     },
-    sessions: {
+    lessonSessions: {
       findById: mock(async id => ({ id, classGroupId: 'cg1' })),
     },
     students: {
@@ -1018,7 +1074,8 @@ export function createBehaviorContext({
 
   const mockPolicy = {
     checkClassGroupAccess: mock(async () => {}),
-    checkSessionAccess: mock(async () => {}),
+    checkLessonSessionAccess: mock(async () => {}),
+    checkActivitySessionAccess: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 

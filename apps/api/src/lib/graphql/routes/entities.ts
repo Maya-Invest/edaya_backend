@@ -145,8 +145,3 @@ export function buildGraphQLSchema(): GraphQLSchema {
     }),
   });
 }
-
-/** @deprecated Use `buildGraphQLSchema()` */
-export function buildGraphQLEntitySchema(): GraphQLSchema {
-  return buildGraphQLSchema();
-}

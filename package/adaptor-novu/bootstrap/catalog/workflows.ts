@@ -8,7 +8,6 @@ import {
   AUTH_EMAIL_VERIFICATION_EVENT_KEY,
   AUTH_OTP_EVENT_KEY,
   CALENDAR_EVENT_REMINDER_EVENT_KEY,
-  HOMEWORK_DUE_SOON_EVENT_KEY,
   INCIDENT_RECORDED_EVENT_KEY,
   REPORT_CARD_PUBLISHED_EVENT_KEY,
 } from "@edaya/core";
@@ -73,12 +72,6 @@ export function buildBootstrapWorkflows(
       ASSESSMENT_DUE_SOON_EVENT_KEY,
       "Assessment due soon",
       "Reminder before an assessment due date.",
-    ),
-    standardNotificationWorkflow(
-      templates,
-      HOMEWORK_DUE_SOON_EVENT_KEY,
-      "Homework due soon",
-      "Reminder before homework is due.",
     ),
     standardNotificationWorkflow(
       templates,

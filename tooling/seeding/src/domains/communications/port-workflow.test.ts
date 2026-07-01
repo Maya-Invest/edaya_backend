@@ -11,7 +11,7 @@ import {
   SEED_ANNOUNCEMENT_TARGETS,
   SEED_ANNOUNCEMENTS,
   SEED_MESSAGE_DELIVERIES,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevCommunications } from './workflow'
 

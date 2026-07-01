@@ -16,21 +16,17 @@ export function createInProcessSchedulingSeedPort(
     createSchedule: record => withSeedPortError('scheduling.createSchedule', async () => {
       await service.schedulingWorkflow.createSchedule(record)
     }),
-    createSession: record => withSeedPortError('scheduling.createSession', async () => {
-      await service.schedulingWorkflow.createSession({
-        ...record,
-        startsAt: new Date(record.startsAt),
-        endsAt: new Date(record.endsAt),
-      })
+    materializeSchedule: input => withSeedPortError('scheduling.materializeSchedule', async () => {
+      await service.schedulingWorkflow.materializeSchedule(input)
     }),
-    assignStaffToSession: record => withSeedPortError('scheduling.assignStaffToSession', async () => {
-      await service.setupWorkflow.assignStaffToSession(record)
+    assignStaffToLessonSession: record => withSeedPortError('scheduling.assignStaffToLessonSession', async () => {
+      await service.setupWorkflow.assignStaffToLessonSession(record)
     }),
-    assignResourceToSession: record => withSeedPortError('scheduling.assignResourceToSession', async () => {
-      await service.setupWorkflow.assignResourceToSession(record)
+    assignResourceToLessonSession: record => withSeedPortError('scheduling.assignResourceToLessonSession', async () => {
+      await service.setupWorkflow.assignResourceToLessonSession(record)
     }),
-    recordSessionProgress: record => withSeedPortError('scheduling.recordSessionProgress', async () => {
-      await service.academicsWorkflow.recordSessionProgress({
+    recordLessonSessionProgress: record => withSeedPortError('scheduling.recordLessonSessionProgress', async () => {
+      await service.academicsWorkflow.recordLessonSessionProgress({
         ...record,
         recordedAt: new Date(record.recordedAt),
       })

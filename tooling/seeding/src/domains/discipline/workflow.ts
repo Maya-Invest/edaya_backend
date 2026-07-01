@@ -4,7 +4,7 @@ import {
   SEED_DISCIPLINARY_ACTIONS,
   SEED_SCHOOL_ID,
   SEED_STUDENT_DISCIPLINARY_ACTIONS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 const DISCIPLINARY_KIND_BY_SEED = {

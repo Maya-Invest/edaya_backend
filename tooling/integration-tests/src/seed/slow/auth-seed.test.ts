@@ -7,7 +7,7 @@ import {
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import {
   createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,

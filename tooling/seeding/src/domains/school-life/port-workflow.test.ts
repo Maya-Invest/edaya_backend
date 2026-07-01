@@ -5,7 +5,7 @@ import type {
   StudentIncidentInvolvementSeedRecord,
 } from './port'
 import { CalendarEventScopeKind, IncidentInvolvementRole, IncidentKind } from '@edaya/core'
-import { countSeedCalendarEvents, SEED_INCIDENTS } from '@edaya/dev-fixtures'
+import { countSeedCalendarEvents, SEED_INCIDENTS } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevSchoolLife } from './workflow'
 

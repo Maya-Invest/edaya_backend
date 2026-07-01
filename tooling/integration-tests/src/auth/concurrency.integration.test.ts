@@ -9,7 +9,6 @@ import {
   PaymentMethod,
   Permission,
   resolveEffectiveGrants,
-  SessionKind,
   StaffRoleAssignment,
   Subject,
 } from '@edaya/core'
@@ -21,8 +20,8 @@ import {
   saveClassSubject,
   saveFee,
   saveGuardian,
+  saveLessonSession,
   saveSchool,
-  saveSession,
   saveStaffAssignment,
   saveStaffMember,
   saveStudent,
@@ -134,13 +133,12 @@ async function createConcurrencyFixture() {
     gradeLevelSubjectId: 'gls-math',
   })
 
-  const session = await saveSession(app, {
+  const session = await saveLessonSession(app, {
     id: 'lesson',
     schoolId: 'school',
     classGroupId: 'class',
     classSubjectId: classSubject.id,
-    title: 'Fractions',
-    kind: SessionKind.Course,
+    displayLabel: 'Fractions',
     startsAt: new Date('2026-09-01T08:00:00Z'),
     endsAt: new Date('2026-09-01T09:00:00Z'),
   })
@@ -161,7 +159,7 @@ async function createConcurrencyFixture() {
   await saveStaffAssignment(app, {
     id: 'teacher-session',
     staffId: 'teacher',
-    sessionId: session.id,
+    lessonSessionId: session.id,
     responsibility: 'teacher',
   })
 
@@ -263,7 +261,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       label('teacher attendance', teacherApp.schedulingWorkflow.recordAttendance({
         id: 'concurrent-attendance',
         studentId: 'student',
-        sessionId: session.id,
+        lessonSessionId: session.id,
         status: AttendanceStatus.Present,
       })),
       label('accountant payment', accountantApp.financeWorkflow.recordPayment({
@@ -285,7 +283,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
     expect(feeSummaryResult.totalExpected.amount).toBe(90000)
 
     // Verify repository persisted states
-    const attendanceRepoRecords = await repositories.attendanceRepository.list({ sessionId: session.id })
+    const attendanceRepoRecords = await repositories.attendanceRepository.list({ lessonSessionId: session.id })
     const paymentRepoRecords = await repositories.paymentRepository.list({ studentFeeId: studentFee.id })
 
     expect(attendanceRepoRecords).toHaveLength(1)

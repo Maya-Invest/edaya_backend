@@ -118,15 +118,3 @@ export function clientRouteOperation(config: {
     ...(config.responseIsArray ? { [X_EDAYA_RESPONSE_IS_ARRAY]: true } : {}),
   };
 }
-
-/** @deprecated Use clientRouteOperation({ namespace: "authorization", ... }) */
-export function authorizationRouteOperation(config: {
-  clientKey: string;
-  path: string;
-  responseSchemaName: string;
-}): Record<string, unknown> {
-  return clientRouteOperation({
-    namespace: "authorization",
-    ...config,
-  });
-}

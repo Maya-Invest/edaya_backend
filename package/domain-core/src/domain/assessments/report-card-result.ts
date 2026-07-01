@@ -9,6 +9,7 @@ import { denyResourceAccess, Permission } from '../../capabilities/authorization
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { AttendanceSummary, attendanceSummarySchema } from '../../domain/value-objects/attendance-summary'
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
+import { reportCardAggregationSchema } from './report-card-aggregation-config'
 import { reportCardResultSectionSchema } from './report-card-result-section'
 
 export enum ReportCardResultStatus {
@@ -33,6 +34,7 @@ export const reportCardResultBaseSchema = z.object({
   status: z.nativeEnum(ReportCardResultStatus).default(ReportCardResultStatus.Draft),
   generatedAt: zodDate().default(() => new Date()),
   publishedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  aggregation: reportCardAggregationSchema.nullable().optional().transform(v => v === null ? undefined : v),
 })
 
 function refineReportCardResult(data: any, ctx: z.RefinementCtx) {
@@ -97,8 +99,17 @@ export class ReportCardResult {
   get status() { return this.data.status }
   get generatedAt() { return this.data.generatedAt }
   get publishedAt() { return this.data.publishedAt }
+  get aggregation() { return this.data.aggregation }
 
-  copyWith({ status, publishedAt }: { status?: ReportCardResultStatus, publishedAt?: Date }): ReportCardResult {
+  copyWith({
+    status,
+    publishedAt,
+    aggregation,
+  }: {
+    status?: ReportCardResultStatus
+    publishedAt?: Date
+    aggregation?: ReportCardResultData['aggregation']
+  }): ReportCardResult {
     return new ReportCardResult({
       id: this.id,
       reportCardDefinitionId: this.reportCardDefinitionId,
@@ -117,6 +128,7 @@ export class ReportCardResult {
       status: status ?? this.status,
       generatedAt: this.generatedAt,
       publishedAt: publishedAt ?? this.publishedAt,
+      aggregation: aggregation ?? this.aggregation,
     })
   }
 }

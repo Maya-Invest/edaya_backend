@@ -11,7 +11,7 @@ import type {
   StructureTemplateCurriculumEntry,
   StructureTemplateDefinition,
   StructureTemplateReportCardStructure,
-} from "./templates/types";
+} from "@edaya/fixtures/onboarding";
 
 export interface AppliedStructureLevelSubjects {
   template: StructureTemplateDefinition;

@@ -5,7 +5,7 @@ import type {
   StudentDisciplinaryStatusSeedRecord,
 } from './port'
 import { DisciplinaryActionKind, StudentDisciplinaryActionStatus } from '@edaya/core'
-import { SEED_DISCIPLINARY_ACTIONS, SEED_STUDENT_DISCIPLINARY_ACTIONS } from '@edaya/dev-fixtures'
+import { SEED_DISCIPLINARY_ACTIONS, SEED_STUDENT_DISCIPLINARY_ACTIONS } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevDiscipline } from './workflow'
 

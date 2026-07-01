@@ -12,7 +12,7 @@ import {
   SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_STAFF,
   SEED_STUDENTS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 
 const PROFILE_PHOTO_UPLOAD_CONCURRENCY = 8
 

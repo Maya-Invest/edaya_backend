@@ -2,7 +2,7 @@ import {
   buildDevDemoLoginAccounts,
   DEV_DEMO_LOGIN_ACCOUNTS,
   resolveDevDemoStaffRole,
-} from "@edaya/dev-fixtures/demo-login";
+} from "@edaya/fixtures/demo-login";
 import { describe, expect, it } from "bun:test";
 
 describe("dev demo login accounts", () => {

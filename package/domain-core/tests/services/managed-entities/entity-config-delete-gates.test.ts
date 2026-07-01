@@ -147,7 +147,8 @@ describe('Entity config delete gates', () => {
       title: 'Quiz',
       kind: AssessmentKind.Quiz,
       maxScore: 20,
-      dueAt: new Date('2026-02-01T00:00:00Z'),
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
     }))
     await repositories.assessmentResultRepository.save(new AssessmentResult({
       id: 'assessment-result-1',
@@ -180,7 +181,8 @@ describe('Entity config delete gates', () => {
       title: 'Quiz',
       kind: AssessmentKind.Quiz,
       maxScore: 20,
-      dueAt: new Date('2026-02-01T00:00:00Z'),
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
     }))
 
     await expect(app.baseService.entities.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)

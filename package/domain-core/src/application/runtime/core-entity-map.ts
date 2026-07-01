@@ -3,21 +3,22 @@ import type {
   AcademicYear,
   AccessRole,
   AccountInvitation,
+  Activity,
   ActivityEnrollment,
+  ActivitySession,
   Announcement,
   AnnouncementTarget,
   Assessment,
   AssessmentResult,
   Attachment,
+  Attendance,
   AttendanceRecord,
   CalendarEvent,
   ClassGroup,
-  ClassLogbookEntry,
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
-  ExtracurricularActivity,
   Fee,
   GradeLevel,
   GradeLevelSubject,
@@ -25,9 +26,8 @@ import type {
   GradeScale,
   Guardian,
   GuardianStudentLink,
-  HomeworkAssignment,
-  HomeworkSubmission,
   Incident,
+  LessonSession,
   MessageDelivery,
   Payment,
   PeriodDefinition,
@@ -39,7 +39,6 @@ import type {
   Schedule,
   School,
   SchoolNotificationTemplates,
-  Session,
   StaffAssignment,
   StaffMember,
   StaffRoleAssignment,
@@ -72,7 +71,9 @@ export interface CoreEntityMap {
   studentFees: StudentFee
   payments: Payment
   schedules: Schedule
-  sessions: Session
+  lessonSessions: LessonSession
+  activitySessions: ActivitySession
+  attendances: Attendance
   calendarEvents: CalendarEvent
   attendance: AttendanceRecord
   announcements: Announcement
@@ -87,10 +88,7 @@ export interface CoreEntityMap {
   classSubjects: ClassSubject
   classSubjectMatters: ClassSubjectMatter
   classSubjectProgress: ClassSubjectProgress
-  classLogbookEntries: ClassLogbookEntry
-  homeworkAssignments: HomeworkAssignment
-  homeworkSubmissions: HomeworkSubmission
-  activities: ExtracurricularActivity
+  activities: Activity
   activityEnrollments: ActivityEnrollment
   assessments: Assessment
   assessmentResults: AssessmentResult
@@ -140,7 +138,9 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'studentFees',
   'payments',
   'schedules',
-  'sessions',
+  'lessonSessions',
+  'activitySessions',
+  'attendances',
   'calendarEvents',
   'attendance',
   'announcements',
@@ -155,9 +155,6 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'classSubjects',
   'classSubjectMatters',
   'classSubjectProgress',
-  'classLogbookEntries',
-  'homeworkAssignments',
-  'homeworkSubmissions',
   'activities',
   'activityEnrollments',
   'assessments',

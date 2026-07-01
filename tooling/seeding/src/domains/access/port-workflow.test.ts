@@ -4,7 +4,7 @@ import type {
   StaffAssignmentSeedRecord,
   StaffRoleAssignmentSeedRecord,
 } from './port'
-import { SEED_CLASS_SUBJECTS, SEED_SCHOOL_ID } from '@edaya/dev-fixtures'
+import { SEED_CLASS_SUBJECTS, SEED_SCHOOL_ID } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import {
   runDevAccessAssignmentsSeedWithPort,

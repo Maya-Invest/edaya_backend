@@ -1,4 +1,4 @@
-import type { ExtracurricularActivity } from '../../../domain'
+import type { Activity } from '../../../domain'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
 import { enqueueTemplatedNotification } from '../../../capabilities/notifications/templates/enqueue-templated-notification'
 import { resolveSchoolName } from '../../../capabilities/notifications/templates/resolve-school-name'
@@ -65,7 +65,7 @@ export async function scanActivityReminders(
   return { processed, skipped }
 }
 
-function shouldNotifyActivityReminder(activity: ExtracurricularActivity, asOf: Date): boolean {
+function shouldNotifyActivityReminder(activity: Activity, asOf: Date): boolean {
   if (activity.endDate.getTime() < asOf.getTime()) {
     return false
   }

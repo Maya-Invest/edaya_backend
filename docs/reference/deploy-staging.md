@@ -90,7 +90,7 @@ cp tooling/seeding/.env.staging.example tooling/seeding/.env.staging
 #    bun seed:clean:staging --yes
 SEED_API_URL=https://api-staging.edaya.softilab.dev bun run seed:init
 
-# 6. Full remote seed (uses school profile API key from @edaya/dev-fixtures)
+# 6. Full remote seed (uses school profile API key from @edaya/fixtures)
 SEED_API_URL=https://api-staging.edaya.softilab.dev bun run seed:remote
 
 # 7. Verify

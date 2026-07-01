@@ -22,10 +22,10 @@ import {
   syncGradeLevelSubjectToAllClassGroups,
 } from './grade-level-subject-sync'
 
-export interface RecordSessionProgressInput {
+export interface RecordLessonSessionProgressInput {
   id: string
   classSubjectMatterId: string
-  sessionId: string
+  lessonSessionId: string
   completedPercentage: number
   notes?: string
   recordedAt?: Date
@@ -47,6 +47,20 @@ export interface RemoveSubjectFromGradeLevelInput {
 export interface UpdateGradeLevelSubjectInput {
   gradeLevelSubjectId: string
   coefficient?: number
+  isOptional?: boolean
+}
+
+export interface AddCustomClassSubjectInput {
+  id: string
+  classGroupId: string
+  subjectId: string
+  coefficient?: number
+  isOffered?: boolean
+}
+
+export interface SetClassSubjectOfferedInput {
+  classSubjectId: string
+  isOffered: boolean
 }
 
 export type AssignMatterToGradeLevelSubjectInput = GradeLevelSubjectMatterInput & {
@@ -91,7 +105,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
+  async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient, isOptional }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
     await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireGradeLevelSubject(gradeLevelSubjectId)
@@ -100,25 +114,69 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         gradeLevelId: existing.gradeLevelId,
         academicYearId: existing.academicYearId,
         subjectId: existing.subjectId,
-        coefficient,
+        coefficient: coefficient ?? existing.coefficient,
+        isOptional: isOptional ?? existing.isOptional,
         createdAt: existing.createdAt,
       })
 
       const classSubjects = await this.baseService.repositories.classSubjects.list({ gradeLevelSubjectId })
+      const isOptionalChanged = updated.isOptional !== existing.isOptional
       for (const classSubject of classSubjects) {
         await this.baseService.repositories.classSubjects.save(new ClassSubject({
           id: classSubject.id,
           classGroupId: classSubject.classGroupId,
           subjectId: classSubject.subjectId,
           gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
-          coefficient,
+          coefficient: coefficient ?? classSubject.coefficient,
           completedPercentage: classSubject.completedPercentage,
+          isOffered: isOptionalChanged ? !updated.isOptional : classSubject.isOffered,
           createdAt: classSubject.createdAt,
         }))
       }
 
       return updated
     })
+  }
+
+  async addCustomClassSubject({
+    id,
+    classGroupId,
+    subjectId,
+    coefficient,
+    isOffered = true,
+  }: AddCustomClassSubjectInput): Promise<ClassSubject> {
+    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    const classGroup = await this.baseService.repositories.classGroups.findById(classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
+      denyResourceAccess()
+    }
+    const classSubject = new ClassSubject({
+      id,
+      classGroupId,
+      subjectId,
+      coefficient,
+      isOffered,
+      completedPercentage: 0,
+    })
+    await this.baseService.entities.classSubjects.save(classSubject, { moduleChecked: true })
+    return classSubject
+  }
+
+  async setClassSubjectOffered({ classSubjectId, isOffered }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
+    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    const existing = await this.requireClassSubject(classSubjectId)
+    const updated = new ClassSubject({
+      id: existing.id,
+      classGroupId: existing.classGroupId,
+      subjectId: existing.subjectId,
+      gradeLevelSubjectId: existing.gradeLevelSubjectId,
+      coefficient: existing.coefficient,
+      completedPercentage: existing.completedPercentage,
+      isOffered,
+      createdAt: existing.createdAt,
+    })
+    await this.baseService.entities.classSubjects.save(updated, { moduleChecked: true })
+    return updated
   }
 
   async assignMatterToGradeLevelSubject(input: AssignMatterToGradeLevelSubjectInput): Promise<GradeLevelSubjectMatter> {
@@ -168,35 +226,34 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     return matter
   }
 
-  async recordSessionProgress({
+  async recordLessonSessionProgress({
     id,
     classSubjectMatterId,
-    sessionId,
+    lessonSessionId,
     completedPercentage,
     notes,
     recordedAt,
-  }: RecordSessionProgressInput): Promise<ClassSubjectProgress> {
+  }: RecordLessonSessionProgressInput): Promise<ClassSubjectProgress> {
     return this.baseService.atomicExecution.execute(async () => {
       const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
       const classSubject = await this.requireClassSubject(matter.classSubjectId)
-      const session = await this.baseService.repositories.sessions.findById(sessionId)
-      if (!session) {
+      const lessonSession = await this.baseService.repositories.lessonSessions.findById(lessonSessionId)
+      if (!lessonSession) {
         denyResourceAccess()
       }
-      const classGroup = await this.baseService.repositories.classGroups.findById(session.classGroupId)
-      if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
+      if (lessonSession.schoolId !== this.baseService.actor.schoolId) {
         denyResourceAccess()
       }
-      if (session.classSubjectId !== classSubject.id) {
+      if (lessonSession.classSubjectId !== classSubject.id) {
         denyResourceAccess()
       }
 
       await permissionAction(Permission.CLASS_LOGBOOK_CREATE)(this.baseService.actor)
-      await this.baseService.authorizationPolicy.checkSessionAccess(this.baseService.actor, [sessionId])
+      await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [lessonSessionId])
 
-      const existing = await this.baseService.repositories.classSubjectProgress.findOne({ classSubjectMatterId, sessionId })
+      const existing = await this.baseService.repositories.classSubjectProgress.findOne({ classSubjectMatterId, lessonSessionId })
       if (existing) {
-        throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and session ${sessionId}`)
+        throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and lesson session ${lessonSessionId}`)
       }
       if (completedPercentage < matter.completedPercentage) {
         throw new BusinessRuleViolationError('PROGRESS_PERCENTAGE_DECREASED', 'completedPercentage must not decrease cumulative class subject matter progress')
@@ -205,7 +262,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       const snapshot = new ClassSubjectProgress({
         id,
         classSubjectMatterId,
-        sessionId,
+        lessonSessionId,
         completedPercentage,
         recordedByStaffId: resolveAuditActorId(this.baseService.actor),
         notes,
@@ -289,6 +346,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
       coefficient: classSubject.coefficient,
       completedPercentage,
+      isOffered: classSubject.isOffered,
       createdAt: classSubject.createdAt,
     }), { moduleChecked: true })
   }

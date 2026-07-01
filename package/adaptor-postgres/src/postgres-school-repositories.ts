@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, AccessRole, ActivityEnrollment, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, AttendanceRecord, CalendarEvent, ClassGroup, ClassLogbookEntry, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, ExtracurricularActivity, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, HomeworkAssignment, HomeworkSubmission, Incident, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, Session, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, AccessRole, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
 import { buildSchoolOverview, DefaultAuthorizationRepository } from '@edaya/core'
@@ -32,7 +32,9 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly studentFees: PostgresStore<StudentFee>
   public readonly payments: PostgresStore<Payment>
   public readonly schedules: PostgresStore<Schedule>
-  public readonly sessions: PostgresStore<Session>
+  public readonly attendances: PostgresStore<Attendance>
+  public readonly lessonSessions: PostgresStore<LessonSession>
+  public readonly activitySessions: PostgresStore<ActivitySession>
   public readonly calendarEvents: PostgresStore<CalendarEvent>
   public readonly attendance: PostgresStore<AttendanceRecord>
   public readonly announcements: PostgresStore<Announcement>
@@ -46,10 +48,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly classSubjects: PostgresStore<ClassSubject>
   public readonly classSubjectMatters: PostgresStore<ClassSubjectMatter>
   public readonly classSubjectProgress: PostgresStore<ClassSubjectProgress>
-  public readonly classLogbookEntries: PostgresStore<ClassLogbookEntry>
-  public readonly homeworkAssignments: PostgresStore<HomeworkAssignment>
-  public readonly homeworkSubmissions: PostgresStore<HomeworkSubmission>
-  public readonly activities: PostgresStore<ExtracurricularActivity>
+  public readonly activities: PostgresStore<Activity>
   public readonly activityEnrollments: PostgresStore<ActivityEnrollment>
   public readonly assessments: PostgresStore<Assessment>
   public readonly assessmentResults: PostgresStore<AssessmentResult>
@@ -88,7 +87,9 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.studentFees = stores.studentFees
     this.payments = stores.payments
     this.schedules = stores.schedules
-    this.sessions = stores.sessions
+    this.attendances = stores.attendances
+    this.lessonSessions = stores.lessonSessions
+    this.activitySessions = stores.activitySessions
     this.calendarEvents = stores.calendarEvents
     this.attendance = stores.attendance
     this.announcements = stores.announcements
@@ -102,9 +103,6 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.classSubjects = stores.classSubjects
     this.classSubjectMatters = stores.classSubjectMatters
     this.classSubjectProgress = stores.classSubjectProgress
-    this.classLogbookEntries = stores.classLogbookEntries
-    this.homeworkAssignments = stores.homeworkAssignments
-    this.homeworkSubmissions = stores.homeworkSubmissions
     this.activities = stores.activities
     this.activityEnrollments = stores.activityEnrollments
     this.assessments = stores.assessments

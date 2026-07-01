@@ -13,17 +13,18 @@ import {
   classDisplayName,
   parseGradeLevelTemplateId,
   resolveStructureTemplates,
-} from "./templates/registry";
+} from "@edaya/fixtures/onboarding";
 import type {
   StructureTemplateCurriculumEntry,
   StructureTemplateDefinition,
   StructureTemplateId,
-} from "./templates/types";
+} from "@edaya/fixtures/onboarding";
 import {
   type AppliedStructureLevelSubjects,
   applyReportCardsFromTemplate,
   collectLevelSubjects,
 } from "./apply-report-cards-from-template";
+import { ensureAcademicPeriodsFromTemplates } from "./ensure-academic-periods-from-template";
 
 export interface ApplyStructureLevelInput {
   gradeLevelId: string;
@@ -197,6 +198,15 @@ export async function applyStructureTemplate(
   const appliedLevels: AppliedStructureLevelSubjects[] = [];
 
   await service.baseService.atomicExecution.execute(async () => {
+    const uniqueTemplates = [...new Map(levels.map(level => [level.template.id, level.template])).values()];
+    await ensureAcademicPeriodsFromTemplates(application, actor, {
+      schoolId,
+      academicYearId: academicYear.id,
+      academicYearStart: academicYear.startDate,
+      academicYearEnd: academicYear.endDate,
+      templates: uniqueTemplates,
+    });
+
     const subjectIds = new Map<string, string>();
     const matterIdsByKey = new Map<string, string>();
 
@@ -283,6 +293,7 @@ export async function applyStructureTemplate(
           academicYearId: academicYear.id,
           subjectId,
           coefficient: entry.coefficient,
+          isOptional: entry.isOptional,
         });
 
         for (const [matterIndex, matterName] of entry.matters.entries()) {

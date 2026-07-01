@@ -1,3 +1,4 @@
+import type { AttendanceRecord } from '../../../domain/scheduling/attendance-record'
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../model/actor'
 
@@ -16,8 +17,9 @@ export interface AuthorizationPolicy {
   checkReportCardResultAccess: (actor: ActorMetadata, reportCardResultIds: readonly string[]) => Promise<void>
   checkFeeAccess: (actor: ActorMetadata, feeIds: readonly string[]) => Promise<void>
   checkStudentFeeAccess: (actor: ActorMetadata, studentFeeIds: readonly string[]) => Promise<void>
-  checkSessionAccess: (actor: ActorMetadata, sessionIds: readonly string[]) => Promise<void>
-  checkAttendanceAccess: (actor: ActorMetadata, studentIds: readonly string[], sessionIds: readonly string[]) => Promise<void>
+  checkLessonSessionAccess: (actor: ActorMetadata, lessonSessionIds: readonly string[]) => Promise<void>
+  checkActivitySessionAccess: (actor: ActorMetadata, activitySessionIds: readonly string[]) => Promise<void>
+  checkAttendanceRecordAccess: (actor: ActorMetadata, records: readonly AttendanceRecord[]) => Promise<void>
   getRepositories?: () => SchoolRepositories
 }
 

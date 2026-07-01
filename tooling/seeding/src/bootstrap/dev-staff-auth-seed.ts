@@ -8,7 +8,7 @@ import {
   SEED_SCHOOL_OWNER_STAFF_ID,
   SEED_STAFF,
   splitDisplayName,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 
 export interface DevStaffAuthSyncResult {
   linkedStaff: number

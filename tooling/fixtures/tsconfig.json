@@ -3,12 +3,14 @@
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true,
+    "resolveJsonModule": true,
     "types": [
       "bun"
     ]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "data/**/*.json"
   ],
   "exclude": [
     "node_modules",

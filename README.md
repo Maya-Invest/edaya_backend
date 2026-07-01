@@ -22,7 +22,7 @@ edaya_backend/
 │   └── integration-migrations/           @edaya/integration-migrations — school + auth migrations
 └── tooling/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
-    ├── fixtures/                         @edaya/dev-fixtures
+    ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
     └── integration-tests/                @edaya/integration-tests (+ smoke/)
 ```
@@ -115,7 +115,7 @@ More detail: [docs/reference/api-folder-structure.md](./docs/reference/api-folde
 | Package | Path | Role |
 |---------|------|------|
 | `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
-| `@edaya/dev-fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
+| `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (`seed:all`, `seed:init`, …) |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
 
@@ -284,6 +284,6 @@ Tests are split by layer. Run everything with `bun run test` (repository tooling
 | `BETTER_AUTH_URL` | Public API URL for auth callbacks |
 | `TRUSTED_ORIGINS` | CORS / auth origins (e.g. webapp URL) |
 
-Seeding uses per-school `seedingApiKey` values from `@edaya/dev-fixtures` — no API env key required.
+Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.
 
 Webapp env vars live in **edaya_web** (`apps/webapp/.env`).

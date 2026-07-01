@@ -15,7 +15,7 @@ import {
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_ID,
-} from "@edaya/dev-fixtures";
+} from "@edaya/fixtures";
 import { Permission, TEACHER_PERMISSIONS } from "@edaya/core";
 
 describe("service account routes", () => {

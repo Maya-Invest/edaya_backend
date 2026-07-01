@@ -21,13 +21,14 @@ import {
   GuardianStudentLink,
   Incident,
   IncidentStatus,
+  LessonSession,
+  OccurrenceStatus,
   Permission,
   ReportCardDefinition,
   resolveAuditActorId,
   ResourceAssignment,
   Schedule,
   School,
-  Session,
   StaffAssignment,
   StaffMember,
   Student,
@@ -355,10 +356,66 @@ export async function updateGuardianStudentLink(app: SchoolService, input: {
   return link
 }
 
-export async function saveClassSubject(app: SchoolService, input: ArgsOf<typeof ClassSubject>): Promise<ClassSubject> {
-  const classSubject = new ClassSubject(input)
-  await app.baseService.entities.classSubjects.save(classSubject)
-  return classSubject
+export async function saveClassSubject(
+  app: SchoolService,
+  input: ArgsOf<typeof ClassSubject>,
+): Promise<ClassSubject> {
+  if (!input.gradeLevelSubjectId) {
+    const classSubject = new ClassSubject(input)
+    await app.baseService.entities.classSubjects.save(classSubject)
+    return classSubject
+  }
+
+  const classGroup = await app.baseService.repositories.classGroups.findById(input.classGroupId)
+  if (!classGroup) {
+    throw new Error(`saveClassSubject: unknown class group ${input.classGroupId}`)
+  }
+
+  let classSubject = input.id
+    ? await app.baseService.repositories.classSubjects.findById(input.id)
+    : undefined
+  classSubject ??= await app.baseService.repositories.classSubjects.findOne({
+    classGroupId: input.classGroupId,
+    subjectId: input.subjectId,
+  }) ?? undefined
+
+  if (!classSubject) {
+    const gradeLevelSubject = await app.baseService.repositories.gradeLevelSubjects.findById(input.gradeLevelSubjectId)
+    if (!gradeLevelSubject) {
+      await app.academicsWorkflow.offerSubjectToGradeLevel({
+        id: input.gradeLevelSubjectId,
+        gradeLevelId: classGroup.gradeLevelId,
+        academicYearId: classGroup.academicYearId,
+        subjectId: input.subjectId,
+        classSubjectIdsByClassGroupId: input.id
+          ? { [input.classGroupId]: input.id }
+          : undefined,
+      })
+    }
+    classSubject = input.id
+      ? await app.baseService.repositories.classSubjects.findById(input.id)
+      : await app.baseService.repositories.classSubjects.findOne({
+          classGroupId: input.classGroupId,
+          subjectId: input.subjectId,
+        })
+    if (!classSubject) {
+      throw new Error(`saveClassSubject: failed to materialize class subject for ${input.subjectId}`)
+    }
+    return classSubject
+  }
+
+  const updated = new ClassSubject({
+    id: classSubject.id,
+    classGroupId: classSubject.classGroupId,
+    subjectId: classSubject.subjectId,
+    gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
+    coefficient: input.coefficient ?? classSubject.coefficient,
+    completedPercentage: input.completedPercentage ?? classSubject.completedPercentage,
+    isOffered: input.isOffered ?? classSubject.isOffered,
+    createdAt: classSubject.createdAt,
+  })
+  await app.baseService.entities.classSubjects.save(updated)
+  return updated
 }
 
 export async function saveClassSubjectMatter(
@@ -378,15 +435,52 @@ export async function listMatterProgress(app: SchoolService, classSubjectMatterI
   return app.baseService.entities.classSubjectProgress.list({ classSubjectMatterId })
 }
 
-export async function saveSession(app: SchoolService, input: ArgsOf<typeof Session> & { schoolId?: string }): Promise<Session> {
-  const { schoolId: _schoolId, ...sessionInput } = input
-  const session = new Session(sessionInput)
-  await app.baseService.entities.sessions.save(session)
-  return session
+export interface SaveLessonSessionInput {
+  id: string
+  schoolId?: string
+  classGroupId: string
+  classSubjectId?: string
+  scheduleId?: string
+  displayLabel?: string
+  startsAt: Date
+  endsAt: Date
+  status?: OccurrenceStatus
+  isException?: boolean
 }
 
-export async function saveSchedule(app: SchoolService, input: ArgsOf<typeof Schedule>): Promise<Schedule> {
-  const schedule = new Schedule(input)
+export async function saveLessonSession(
+  app: SchoolService,
+  input: SaveLessonSessionInput,
+): Promise<LessonSession> {
+  if (!input.classSubjectId) {
+    throw new Error('saveLessonSession requires classSubjectId')
+  }
+  const lessonSession = new LessonSession({
+    id: input.id,
+    schoolId: input.schoolId ?? 'school',
+    classGroupId: input.classGroupId,
+    classSubjectId: input.classSubjectId,
+    scheduleId: input.scheduleId ?? `schedule-${input.id}`,
+    displayLabel: input.displayLabel ?? 'Lesson',
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    status: input.status ?? OccurrenceStatus.Pending,
+    isException: input.isException ?? false,
+  })
+  await app.baseService.entities.lessonSessions.save(lessonSession)
+  return lessonSession
+}
+
+export async function saveSchedule(
+  app: SchoolService,
+  input: Omit<ArgsOf<typeof Schedule>, 'schoolId'> & { schoolId?: string },
+): Promise<Schedule> {
+  const schoolId = input.schoolId
+    ?? (await app.baseService.repositories.classGroups.findById(input.classGroupId))?.schoolId
+  if (!schoolId) {
+    throw new Error(`saveSchedule could not resolve schoolId for class group ${input.classGroupId}`)
+  }
+  const schedule = new Schedule({ ...input, schoolId })
   await app.baseService.entities.schedules.save(schedule)
   return schedule
 }
@@ -496,7 +590,7 @@ export async function resolveIncident(app: SchoolService, incidentId: string): P
     kind: existing.kind,
     reporterId: existing.reporterId,
     classGroupId: existing.classGroupId,
-    sessionId: existing.sessionId,
+    lessonSessionId: existing.lessonSessionId,
     status: IncidentStatus.Resolved,
     resolutionNotes: 'Resolved',
     resolvedAt: new Date(),
@@ -510,13 +604,13 @@ export async function resolveIncident(app: SchoolService, incidentId: string): P
 
 export async function reviewAttendanceJustification(app: SchoolService, input: {
   studentId: string
-  sessionId: string
+  lessonSessionId: string
   decision: AttendanceJustificationStatus
   reason?: string
 }) {
   const existing = await app.baseService.entities.attendance.findOne({
     studentId: input.studentId,
-    sessionId: input.sessionId,
+    lessonSessionId: input.lessonSessionId,
   })
   if (!existing) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)

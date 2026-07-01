@@ -3,7 +3,7 @@ import {
   DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   SEED_SCHOOL_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { HttpSeedClient, signInViaHttp } from '@edaya/seeding/http'
 import { loadSmokeStagingEnv } from './load-smoke-env'
 

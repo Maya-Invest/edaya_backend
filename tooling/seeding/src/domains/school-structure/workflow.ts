@@ -10,7 +10,7 @@ import {
   SEED_SCHOOL_PROFILE,
   SEED_STAFF,
   splitDisplayName,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 export type DevSchoolStructureInspection

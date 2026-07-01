@@ -85,7 +85,7 @@ describe('buildSchoolOverview', () => {
     const attendance = new AttendanceRecord({
       id: 'attendance-1',
       studentId: 'student-1',
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
       date: new Date('2026-06-14T00:00:00.000Z'),
       status: AttendanceStatus.Absent,
       justificationStatus: AttendanceJustificationStatus.Pending,

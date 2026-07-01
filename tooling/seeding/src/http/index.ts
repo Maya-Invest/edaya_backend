@@ -8,7 +8,6 @@ export { createHttpCommunicationsSeedPort } from '../domains/communications/http
 export { createHttpCurriculumSeedPort } from '../domains/curriculum/http'
 export { createHttpDisciplineSeedPort } from '../domains/discipline/http'
 export { createHttpFinanceSeedPort } from '../domains/finance/http'
-export { createHttpLearningContentSeedPort } from '../domains/learning-content/http'
 export { createHttpPopulationSeedPort } from '../domains/population/http'
 export { createHttpProfilePicturesSeedPort } from '../domains/profile-pictures/http'
 export { createHttpReportCardsSeedPort } from '../domains/report-cards/http'
@@ -56,4 +55,6 @@ export {
   type SeedEntityValidationResult,
   type SeedQueryValidationResult,
 } from './seed-validation'
+export { createSeedSchoolClient, type SeedSchoolClient } from './school-client'
+export { createSeedTransport, type SeedTransportOptions } from './seed-transport'
 export { waitForApi, type WaitForApiOptions } from './wait-for-api'

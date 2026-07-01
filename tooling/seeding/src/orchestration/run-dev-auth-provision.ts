@@ -3,7 +3,7 @@ import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 
 const AUTH_REQUEST_PAUSE_MS = 250
 const STAGING_AUTH_REQUEST_PAUSE_MS = 750

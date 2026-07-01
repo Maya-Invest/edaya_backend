@@ -24,7 +24,7 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
   SEED_SCHOOL_ID,
-} from "@edaya/dev-fixtures";
+} from "@edaya/fixtures";
 import {
   AccessRole,
   ActorAssuranceLevel,

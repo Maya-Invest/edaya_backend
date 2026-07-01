@@ -1,12 +1,12 @@
-import type { SeedTodayAttendanceRecord } from '@edaya/dev-fixtures'
+import type { SeedTodayAttendanceRecord } from '@edaya/fixtures'
 import type { AttendanceSeedPort } from './port'
-import { AttendanceStatus, SessionKind } from '@edaya/core'
+import { AttendanceStatus } from '@edaya/core'
 import {
   SEED_ABSENCE_RECORDS,
   SEED_PENDING_JUSTIFICATION_RECORD_IDS,
+  SEED_SCHOOL_ID,
   SEED_TODAY_ATTENDANCE,
-} from '@edaya/dev-fixtures'
-import { seedDateAndTime } from '../../support/seed-date'
+} from '@edaya/fixtures'
 
 const ATTENDANCE_STATUS_BY_SEED = {
   present: AttendanceStatus.Present,
@@ -17,7 +17,7 @@ const ATTENDANCE_STATUS_BY_SEED = {
 async function seedAttendanceSession(
   port: AttendanceSeedPort,
   session: {
-    sessionId: string
+    scheduleId: string
     classGroupId: string
     classSubjectId: string
     date: string
@@ -26,21 +26,22 @@ async function seedAttendanceSession(
     records: readonly SeedTodayAttendanceRecord[]
   },
 ): Promise<number> {
-  await port.createSession({
-    id: session.sessionId,
+  const { lessonSessionId } = await port.ensureLessonSession({
+    scheduleId: session.scheduleId,
+    schoolId: SEED_SCHOOL_ID,
     classGroupId: session.classGroupId,
     classSubjectId: session.classSubjectId,
     title: 'Attendance session',
-    kind: SessionKind.Course,
-    startsAt: seedDateAndTime(session.date, session.startTime),
-    endsAt: seedDateAndTime(session.date, session.endTime),
+    date: session.date,
+    startTime: session.startTime,
+    endTime: session.endTime,
   })
 
   for (const record of session.records) {
     await port.recordAttendance({
       id: record.id,
       studentId: record.studentId,
-      sessionId: session.sessionId,
+      lessonSessionId,
       status: ATTENDANCE_STATUS_BY_SEED[record.status],
     })
   }
@@ -52,25 +53,35 @@ export async function seedDevAttendance(port: AttendanceSeedPort): Promise<numbe
   let recordCount = 0
 
   for (const absence of SEED_ABSENCE_RECORDS) {
-    await port.createSession({
-      id: absence.sessionId,
+    const scheduleId = absence.scheduleId
+    const { lessonSessionId } = await port.ensureLessonSession({
+      scheduleId,
+      schoolId: SEED_SCHOOL_ID,
       classGroupId: absence.classGroupId,
       classSubjectId: absence.classSubjectId,
       title: 'Absence session',
-      kind: SessionKind.Course,
-      startsAt: seedDateAndTime(absence.date, absence.startTime),
-      endsAt: seedDateAndTime(absence.date, absence.endTime),
+      date: absence.date,
+      startTime: absence.startTime,
+      endTime: absence.endTime,
     })
     await port.recordAttendance({
       id: absence.id,
       studentId: absence.studentId,
-      sessionId: absence.sessionId,
+      lessonSessionId,
       status: AttendanceStatus.Absent,
     })
     recordCount += 1
   }
 
-  recordCount += await seedAttendanceSession(port, SEED_TODAY_ATTENDANCE)
+  recordCount += await seedAttendanceSession(port, {
+    scheduleId: SEED_TODAY_ATTENDANCE.scheduleId,
+    classGroupId: SEED_TODAY_ATTENDANCE.classGroupId,
+    classSubjectId: SEED_TODAY_ATTENDANCE.classSubjectId,
+    date: SEED_TODAY_ATTENDANCE.date,
+    startTime: SEED_TODAY_ATTENDANCE.startTime,
+    endTime: SEED_TODAY_ATTENDANCE.endTime,
+    records: SEED_TODAY_ATTENDANCE.records,
+  })
 
   for (const recordId of new Set<string>(SEED_PENDING_JUSTIFICATION_RECORD_IDS)) {
     await port.markJustificationPending(recordId, 'Awaiting parent justification')

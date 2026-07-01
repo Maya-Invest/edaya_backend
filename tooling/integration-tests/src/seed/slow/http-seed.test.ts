@@ -5,7 +5,7 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   resolveSeedingApiKeyForSchool,
   SEED_SCHOOL_ID,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 import {
   provisionSeedingServiceAccountInProcess,
   runHttpDevSeeds,

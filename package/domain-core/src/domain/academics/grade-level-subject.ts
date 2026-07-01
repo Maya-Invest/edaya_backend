@@ -12,6 +12,7 @@ export const gradeLevelSubjectSchema = z.object({
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
   coefficient: z.number().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
+  isOptional: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -37,6 +38,7 @@ export class GradeLevelSubject {
   get academicYearId() { return this.data.academicYearId }
   get subjectId() { return this.data.subjectId }
   get coefficient() { return this.data.coefficient ?? undefined }
+  get isOptional() { return this.data.isOptional }
   get createdAt() { return this.data.createdAt }
 }
 
@@ -98,12 +100,12 @@ async function validateGradeLevelSubjectDelete(
 ): Promise<void> {
   const classSubjects = await repositories.classSubjects.list({ gradeLevelSubjectId: gradeLevelSubject.id })
   for (const classSubject of classSubjects) {
-    const [assessments, sessions, staffAssignments] = await Promise.all([
+    const [assessments, lessonSessions, staffAssignments] = await Promise.all([
       repositories.assessments.list({ classSubjectId: classSubject.id }),
-      repositories.sessions.list({ classSubjectId: classSubject.id }),
+      repositories.lessonSessions.list({ classSubjectId: classSubject.id }),
       repositories.staffAssignments.list({ classSubjectId: classSubject.id }),
     ])
-    if (assessments.length > 0 || sessions.length > 0 || staffAssignments.length > 0) {
+    if (assessments.length > 0 || lessonSessions.length > 0 || staffAssignments.length > 0) {
       throw new BusinessRuleViolationError(
         'GRADE_LEVEL_SUBJECT_HAS_DEPENDENCIES',
         `Cannot remove grade level subject ${gradeLevelSubject.id}: dependent class records still exist`,

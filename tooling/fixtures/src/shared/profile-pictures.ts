@@ -7,7 +7,7 @@ export const SEED_PROFILE_PHOTO_MIME_TYPE = 'image/jpeg'
 export const PROFILE_PICTURE_FILE_PATTERN = /^pic\d{4}\.jpg$/i
 
 const packageRoot = path.dirname(fileURLToPath(import.meta.url))
-export const DEV_FIXTURES_PICTURES_DIR = path.resolve(packageRoot, '../pictures')
+export const DEV_FIXTURES_PICTURES_DIR = path.resolve(packageRoot, '../../assets/profile-pictures')
 
 let cachedPictureFiles: readonly string[] | undefined
 

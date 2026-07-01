@@ -20,6 +20,7 @@ const noopAccessExceptions = new Set([
 
 const indirectParentGateExceptions = new Set([
   'academics/subject-matter.ts',
+  'scheduling/attendance.ts',
 ])
 
 const directDeleteGateExceptions = new Set([

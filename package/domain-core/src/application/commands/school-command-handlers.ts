@@ -1,12 +1,14 @@
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
+  AddCustomClassSubjectInput,
   AssignMatterToClassSubjectInput,
   AssignMatterToGradeLevelSubjectInput,
   OfferSubjectToClassInput,
   OfferSubjectToGradeLevelInput,
-  RecordSessionProgressInput,
+  RecordLessonSessionProgressInput,
   RemoveSubjectFromGradeLevelInput,
+  SetClassSubjectOfferedInput,
   UpdateGradeLevelSubjectInput,
 } from '../workflows/academics'
 import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from '../workflows/access-control'
@@ -65,15 +67,18 @@ import type {
   UpdateSchoolNotificationTemplatesInput,
 } from '../workflows/notification-templates'
 import type {
+  CancelActivitySessionInput,
+  CancelLessonSessionInput,
   CreateCalendarEventInput,
   CreateScheduleInput,
-  CreateSessionInput,
-  GenerateSessionsInput,
+  MaterializeScheduleInput,
   RecordAttendanceInput,
   RecordClassDailyAttendanceInput,
   RecordDailyAttendanceInput,
-  RecordSessionAttendanceInput,
+  RecordLessonSessionAttendanceInput,
+  RescheduleOccurrenceInput,
   ReviewAttendanceJustificationInput,
+  SaveScheduleInput,
   SchedulingServiceWorkflow,
 } from '../workflows/scheduling'
 import type {
@@ -149,9 +154,9 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     updateStaffMemberProfile: payload => workflows.setup.updateStaffMemberProfile(payload as UpdateStaffMemberProfileInput),
     assignStaffToClass: payload => workflows.setup.assignStaffToClass(payload as AssignStaffInput),
     assignStaffToClassSubject: payload => workflows.setup.assignStaffToClassSubject(payload as AssignStaffInput),
-    assignStaffToSession: payload => workflows.setup.assignStaffToSession(payload as AssignStaffInput),
+    assignStaffToLessonSession: payload => workflows.setup.assignStaffToLessonSession(payload as AssignStaffInput),
     assignResourceToClass: payload => workflows.setup.assignResourceToClass(payload as AssignResourceInput),
-    assignResourceToSession: payload => workflows.setup.assignResourceToSession(payload as AssignResourceInput),
+    assignResourceToLessonSession: payload => workflows.setup.assignResourceToLessonSession(payload as AssignResourceInput),
     removeResourceAssignment: payload => workflows.setup.removeResourceAssignment(payload as RemoveResourceAssignmentInput),
     registerAttachment: payload => workflows.setup.registerAttachment(payload as RegisterAttachmentInput),
     removeAttachment: payload => workflows.setup.removeAttachment(payload as RemoveAttachmentInput),
@@ -168,7 +173,9 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     removeSubjectFromGradeLevel: payload => workflows.academics.removeSubjectFromGradeLevel(payload as RemoveSubjectFromGradeLevelInput),
     updateGradeLevelSubject: payload => workflows.academics.updateGradeLevelSubject(payload as UpdateGradeLevelSubjectInput),
     assignMatterToGradeLevelSubject: payload => workflows.academics.assignMatterToGradeLevelSubject(payload as AssignMatterToGradeLevelSubjectInput),
-    recordSessionProgress: payload => workflows.academics.recordSessionProgress(payload as RecordSessionProgressInput),
+    addCustomClassSubject: payload => workflows.academics.addCustomClassSubject(payload as AddCustomClassSubjectInput),
+    setClassSubjectOffered: payload => workflows.academics.setClassSubjectOffered(payload as SetClassSubjectOfferedInput),
+    recordLessonSessionProgress: payload => workflows.academics.recordLessonSessionProgress(payload as RecordLessonSessionProgressInput),
     // assessments
     createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),
     createReportCardDefinition: payload => workflows.assessments.createReportCardDefinition(payload as CreateReportCardDefinitionInput),
@@ -199,12 +206,15 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     updateGuardianStudentLink: payload => workflows.student.updateGuardianStudentLink(payload as UpdateGuardianStudentLinkInput),
     // scheduling
     createSchedule: payload => workflows.scheduling.createSchedule(payload as CreateScheduleInput),
+    saveSchedule: payload => workflows.scheduling.saveSchedule(payload as SaveScheduleInput),
+    materializeSchedule: payload => workflows.scheduling.materializeSchedule(payload as MaterializeScheduleInput),
     createCalendarEvent: payload => workflows.scheduling.createCalendarEvent(payload as CreateCalendarEventInput),
-    createSession: payload => workflows.scheduling.createSession(payload as CreateSessionInput),
-    generateSessions: payload => workflows.scheduling.generateSessions(payload as GenerateSessionsInput),
+    cancelLessonSession: payload => workflows.scheduling.cancelLessonSession(payload as CancelLessonSessionInput),
+    cancelActivitySession: payload => workflows.scheduling.cancelActivitySession(payload as CancelActivitySessionInput),
+    rescheduleOccurrence: payload => workflows.scheduling.rescheduleOccurrence(payload as RescheduleOccurrenceInput),
     recordAttendance: payload => workflows.scheduling.recordAttendance(payload as RecordAttendanceInput),
     recordDailyAttendance: payload => workflows.scheduling.recordDailyAttendance(payload as RecordDailyAttendanceInput),
-    recordSessionAttendance: payload => workflows.scheduling.recordSessionAttendance(payload as RecordSessionAttendanceInput),
+    recordLessonSessionAttendance: payload => workflows.scheduling.recordLessonSessionAttendance(payload as RecordLessonSessionAttendanceInput),
     recordClassDailyAttendance: payload => workflows.scheduling.recordClassDailyAttendance(payload as RecordClassDailyAttendanceInput),
     reviewAttendanceJustification: payload => workflows.scheduling.reviewAttendanceJustification(payload as ReviewAttendanceJustificationInput),
     // communications

@@ -1,6 +1,6 @@
 import type { AttachmentSeedRecord, AttachmentsSeedPort } from './port'
 import { AttachmentOwnerKind } from '@edaya/core'
-import { SEED_ATTACHMENTS } from '@edaya/dev-fixtures'
+import { SEED_ATTACHMENTS } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevAttachments } from './workflow'
 

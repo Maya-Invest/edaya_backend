@@ -174,4 +174,37 @@ describe("generated core query endpoints", () => {
       referenceDate: new Date("2026-06-14T00:00:00.000Z"),
     });
   });
+
+  it("executes get-class-group-timetable query route", async () => {
+    const mockGetClassGroupTimetable = mock().mockResolvedValue({
+      classGroupId: "cg-1",
+      startDate: "2026-05-01",
+      endDate: "2026-05-31",
+      events: [],
+    });
+    const app = setupTestApp({
+      baseService: {},
+      getClassGroupTimetable: mockGetClassGroupTimetable,
+    });
+
+    const res = await app.request("/core/queries/get-class-group-timetable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        classGroupId: "cg-1",
+        startDate: "2026-05-01",
+        endDate: "2026-05-31",
+      }),
+    });
+
+    const body = await res.json() as { classGroupId: string; events: unknown[] };
+    expect(res.status).toBe(200);
+    expect(body.classGroupId).toBe("cg-1");
+    expect(body.events).toEqual([]);
+    expect(mockGetClassGroupTimetable).toHaveBeenCalledWith({
+      classGroupId: "cg-1",
+      startDate: new Date("2026-05-01T00:00:00.000Z"),
+      endDate: new Date("2026-05-31T00:00:00.000Z"),
+    });
+  });
 });

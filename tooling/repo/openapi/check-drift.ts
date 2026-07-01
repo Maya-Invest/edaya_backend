@@ -11,30 +11,53 @@ import { checkClientArtifacts } from '@edaya/client-codegen'
 import { exportOpenApi } from './export.ts'
 import {
   repoRoot,
-  trackedClientBindingsPath,
-  trackedCreateClientPath,
+  trackedConsumerClientDirPaths,
   trackedOpenApiPath,
 } from './paths.ts'
 
 const temporaryDirectory = mkdtempSync(join(tmpdir(), 'edaya-generated-'))
 const generatedOpenApi = join(temporaryDirectory, 'openapi.json')
 
-try {
-  await exportOpenApi(generatedOpenApi)
+async function checkClientDirDrift(
+  input: string,
+  clientDir: string,
+  label: string,
+): Promise<string[]> {
   const changed = await checkClientArtifacts({
-    input: generatedOpenApi,
-    openApiOut: trackedOpenApiPath,
-    bindingsOut: trackedClientBindingsPath,
-    clientOut: trackedCreateClientPath,
+    input,
+    clientDir,
     repoRoot,
   })
 
   if (changed.length > 0) {
-    console.error('Generated API artifacts are out of date. Run `bun run generated:update` and commit the changes.')
+    console.error(`${label} client artifacts are out of date. Run \`bun run generate:client\` and commit the changes.`)
     console.error('Changed files:')
     for (const path of changed) {
       console.error(`  - ${path}`)
     }
+  }
+
+  return changed
+}
+
+try {
+  await exportOpenApi(generatedOpenApi)
+  const changed = [
+    ...(await checkClientArtifacts({
+      input: generatedOpenApi,
+      openApiOut: trackedOpenApiPath,
+      repoRoot,
+    })),
+    ...(await Promise.all(
+      trackedConsumerClientDirPaths.map(clientDir => checkClientDirDrift(
+        generatedOpenApi,
+        clientDir,
+        clientDir.includes('/seeding/') ? 'Seeding' : 'Integration tests',
+      )),
+    )).flat(),
+  ]
+
+  if (changed.length > 0) {
     process.exitCode = 1
   }
   else {

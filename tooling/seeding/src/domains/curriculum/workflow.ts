@@ -11,7 +11,7 @@ import {
   SEED_SCHOOL_ID,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
-} from '@edaya/dev-fixtures'
+} from '@edaya/fixtures'
 
 const SUBJECT_CATEGORY_BY_SEED: Readonly<Record<string, SubjectCategory>> = {
   'Arts': SubjectCategory.Arts,

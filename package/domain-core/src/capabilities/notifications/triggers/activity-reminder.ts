@@ -1,4 +1,4 @@
-import type { ExtracurricularActivity } from '../../../domain'
+import type { Activity } from '../../../domain'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { resolveActivityEnrollmentRecipients } from '../delivery/recipient-resolvers'
 import {
@@ -22,8 +22,8 @@ export function activityReminderDeliverAfter(startDate: Date): Date {
 }
 
 export function activityReminderPredicate(
-  entity: ExtracurricularActivity,
-  existing: ExtracurricularActivity | undefined,
+  entity: Activity,
+  existing: Activity | undefined,
 ): boolean {
   if (!existing) {
     return true
@@ -32,7 +32,7 @@ export function activityReminderPredicate(
     || entity.endDate.getTime() !== existing.endDate.getTime()
 }
 
-export const activityReminderTrigger: NotificationTriggerRegistration<ExtracurricularActivity> = {
+export const activityReminderTrigger: NotificationTriggerRegistration<Activity> = {
   entityKey: 'activities',
   predicate: activityReminderPredicate,
   resolver: async (entity, existing, context) => {

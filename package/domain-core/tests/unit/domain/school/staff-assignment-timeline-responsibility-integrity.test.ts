@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { StaffAssignment } from '../../../../src/domain/school/staff-assignment'
 
+const targetError = 'A StaffAssignment must target exactly one of: classGroupId, classSubjectId, lessonSessionId, activitySessionId, or assessmentId'
+
 describe('StaffAssignment entity timeline and responsibility integrity', () => {
   const baseArgs = {
     id: 'assignment-1',
@@ -19,7 +21,7 @@ describe('StaffAssignment entity timeline and responsibility integrity', () => {
     expect(assignment.responsibility).toBe('teacher')
     expect(assignment.classGroupId).toBe('class-1')
     expect(assignment.classSubjectId).toBeUndefined()
-    expect(assignment.sessionId).toBeUndefined()
+    expect(assignment.lessonSessionId).toBeUndefined()
     expect(assignment.createdAt).toBeInstanceOf(Date)
   })
 
@@ -31,16 +33,16 @@ describe('StaffAssignment entity timeline and responsibility integrity', () => {
 
     expect(assignment.classSubjectId).toBe('subject-1')
     expect(assignment.classGroupId).toBeUndefined()
-    expect(assignment.sessionId).toBeUndefined()
+    expect(assignment.lessonSessionId).toBeUndefined()
   })
 
-  it('instantiates successfully when targeting exactly sessionId', () => {
+  it('instantiates successfully when targeting exactly lessonSessionId', () => {
     const assignment = new StaffAssignment({
       ...baseArgs,
-      sessionId: 'session-1',
+      lessonSessionId: 'session-1',
     })
 
-    expect(assignment.sessionId).toBe('session-1')
+    expect(assignment.lessonSessionId).toBe('session-1')
     expect(assignment.classGroupId).toBeUndefined()
     expect(assignment.classSubjectId).toBeUndefined()
   })
@@ -50,24 +52,24 @@ describe('StaffAssignment entity timeline and responsibility integrity', () => {
       ...baseArgs,
       classGroupId: 'class-1',
       classSubjectId: 'subject-1',
-    })).toThrow('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId')
+    })).toThrow(targetError)
 
     expect(() => new StaffAssignment({
       ...baseArgs,
       classGroupId: 'class-1',
-      sessionId: 'session-1',
-    })).toThrow('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId')
+      lessonSessionId: 'session-1',
+    })).toThrow(targetError)
 
     expect(() => new StaffAssignment({
       ...baseArgs,
       classGroupId: 'class-1',
       classSubjectId: 'subject-1',
-      sessionId: 'session-1',
-    })).toThrow('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId')
+      lessonSessionId: 'session-1',
+    })).toThrow(targetError)
   })
 
   it('throws error when no targets are provided', () => {
-    expect(() => new StaffAssignment(baseArgs)).toThrow('A StaffAssignment must target exactly one of: classGroupId, classSubjectId, or sessionId')
+    expect(() => new StaffAssignment(baseArgs)).toThrow(targetError)
   })
 
   it('throws error when non-blank fields are empty or invalid', () => {

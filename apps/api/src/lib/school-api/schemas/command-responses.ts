@@ -3,6 +3,7 @@ import {
   academicPeriodResponseSchema,
   academicYearResponseSchema,
   accountInvitationResponseSchema,
+  activitySessionResponseSchema,
   announcementResponseSchema,
   announcementTargetResponseSchema,
   assessmentResponseSchema,
@@ -23,6 +24,7 @@ import {
   guardianLinkResponseSchema,
   guardianResponseSchema,
   incidentResponseSchema,
+  lessonSessionResponseSchema,
   messageDeliveryResponseSchema,
   paymentResponseSchema,
   resourceAssignmentResponseSchema,
@@ -31,7 +33,6 @@ import {
   schoolNotificationTemplatesResponseSchema,
   schoolResponseSchema,
   sectionResponseSchema,
-  sessionResponseSchema,
   staffAssignmentResponseSchema,
   staffMemberResponseSchema,
   studentDisciplinaryActionResponseSchema,
@@ -46,7 +47,14 @@ export const commandMessageResponseSchema = z.object({
   message: z.string(),
 }).openapi("CommandMessageResponse");
 
-export const sessionCommandListResponseSchema = z.array(sessionResponseSchema).openapi("SessionCommandListResponse");
+export const lessonSessionCommandListResponseSchema = z.array(lessonSessionResponseSchema).openapi("LessonSessionCommandListResponse");
+export const materializedOccurrenceCommandResponseSchema = z.union([
+  lessonSessionResponseSchema,
+  activitySessionResponseSchema,
+]).openapi("MaterializedOccurrenceCommandResponse");
+export const materializedOccurrenceCommandListResponseSchema = z.array(
+  materializedOccurrenceCommandResponseSchema,
+).openapi("MaterializedOccurrenceCommandListResponse");
 export const attendanceCommandListResponseSchema = z.array(attendanceResponseSchema).openapi("AttendanceCommandListResponse");
 export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
 export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi("AssessmentResultCommandListResponse");
@@ -103,9 +111,9 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   ]).openapi("AcceptAccountInvitationResponse"),
   assignStaffToClass: staffAssignmentResponseSchema,
   assignStaffToClassSubject: staffAssignmentResponseSchema,
-  assignStaffToSession: staffAssignmentResponseSchema,
+  assignStaffToLessonSession: staffAssignmentResponseSchema,
   assignResourceToClass: resourceAssignmentResponseSchema,
-  assignResourceToSession: resourceAssignmentResponseSchema,
+  assignResourceToLessonSession: resourceAssignmentResponseSchema,
   removeResourceAssignment: commandMessageResponseSchema,
   registerAttachment: attachmentResponseSchema,
   removeAttachment: commandMessageResponseSchema,
@@ -131,7 +139,9 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   removeSubjectFromGradeLevel: commandMessageResponseSchema,
   updateGradeLevelSubject: gradeLevelSubjectResponseSchema,
   assignMatterToGradeLevelSubject: gradeLevelSubjectMatterResponseSchema,
-  recordSessionProgress: classSubjectProgressResponseSchema,
+  addCustomClassSubject: classSubjectResponseSchema,
+  setClassSubjectOffered: classSubjectResponseSchema,
+  recordLessonSessionProgress: classSubjectProgressResponseSchema,
   createGradeScale: gradeScaleResponseSchema,
   createReportCardDefinition: definitionResponseSchema,
   createReportCardDefinitionSection: sectionResponseSchema,
@@ -155,12 +165,15 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   adjustStudentFee: studentFeeResponseSchema,
   cancelStudentFee: studentFeeResponseSchema,
   createSchedule: scheduleResponseSchema,
+  saveSchedule: scheduleResponseSchema,
+  materializeSchedule: materializedOccurrenceCommandListResponseSchema,
   createCalendarEvent: calendarEventResponseSchema,
-  createSession: sessionResponseSchema,
-  generateSessions: sessionCommandListResponseSchema,
+  cancelLessonSession: lessonSessionResponseSchema,
+  cancelActivitySession: activitySessionResponseSchema,
+  rescheduleOccurrence: materializedOccurrenceCommandResponseSchema,
   recordAttendance: attendanceResponseSchema,
   recordDailyAttendance: attendanceResponseSchema,
-  recordSessionAttendance: attendanceCommandListResponseSchema,
+  recordLessonSessionAttendance: attendanceCommandListResponseSchema,
   recordClassDailyAttendance: attendanceCommandListResponseSchema,
   reviewAttendanceJustification: attendanceResponseSchema,
   createAnnouncement: announcementResponseSchema,
