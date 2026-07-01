@@ -25,7 +25,7 @@ if (authPath === ':memory:') {
 }
 
 export default defineConfig({
-  schema: './src/auth/schema.ts',
+  schema: './src/schema.ts',
   out: './drizzle/auth',
   dialect: 'sqlite',
   strict: true,

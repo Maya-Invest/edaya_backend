@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { NOVU_NOTIFICATION_WORKFLOW_IDS } from "../../src/map-subscriber-preferences";
+import { NOVU_NOTIFICATION_WORKFLOW_IDS } from "@edaya/adaptor-novu";
 import { buildBootstrapWorkflows } from "../catalog/workflows";
 import { loadBootstrapEmailTemplates } from "../lib/load-templates";
 import { normalizeWorkflowFingerprint } from "../lib/fingerprint";

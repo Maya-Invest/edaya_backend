@@ -62,7 +62,7 @@ Email bodies live in `templates/emails/*.html`; subjects in `templates/subjects/
 
 1. Export the `eventKey` constant from `@edaya/core` (if new).
 2. Add an entry to `catalog/workflows.ts`.
-3. Add the id to `NOVU_NOTIFICATION_WORKFLOW_IDS` in `src/map-subscriber-preferences.ts` when subscribers should sync prefs.
+3. Add the id to `NOVU_NOTIFICATION_WORKFLOW_IDS` in `package/adaptor-novu/src/map-subscriber-preferences.ts` when subscribers should sync prefs.
 4. Run `bun novu:bootstrap:validate` then `bun novu:bootstrap:apply`.
 
 ## Manual follow-up

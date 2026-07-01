@@ -1,5 +1,5 @@
 import type { AuthContactResolverPort } from "@edaya/core";
-import { user } from "@edaya/integration-migrations/auth/schema";
+import { user } from "@edaya/adaptor-auth/schema";
 import { eq } from "drizzle-orm";
 
 interface AuthDatabase {

@@ -1,5 +1,5 @@
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures";
-import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
+import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";

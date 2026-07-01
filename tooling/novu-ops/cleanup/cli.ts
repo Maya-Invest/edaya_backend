@@ -74,7 +74,7 @@ function parseArgs(argv: string[]): ParsedCli {
 }
 
 function printUsage() {
-  console.log(`Usage: bun package/adaptor-novu/cleanup/cli.ts <plan|apply> [options]
+  console.log(`Usage: bun tooling/novu-ops/cleanup/cli.ts <plan|apply> [options]
 
 Commands:
   plan      List subscribers that would be deleted (default)
@@ -97,7 +97,7 @@ Environment (from process.env or apps/api/.env):
 Examples:
   bun novu:cleanup -- --transient-invites
   bun novu:cleanup:apply -- --prefix smoke- --yes
-  bun package/adaptor-novu/cleanup/cli.ts plan --ids auth-g1,invite:inv-123
+  bun tooling/novu-ops/cleanup/cli.ts plan --ids auth-g1,invite:inv-123
 `);
 }
 

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import createApp from "@/http/create-app";
 import { createBetterAuth, parseEnv } from "@/runtime";
-import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
+import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
 const stagingEnv = parseEnv({

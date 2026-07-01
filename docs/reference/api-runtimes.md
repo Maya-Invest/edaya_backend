@@ -64,7 +64,7 @@ cd apps/api && bun run dev:worker
 - **`wrangler.toml`** — non-secret `[vars]` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive + D1 bindings
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
 - **School DB** — Postgres connection via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev)
-- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/integration-migrations/drizzle/auth/`
+- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/adaptor-auth/drizzle/auth/`
 
 Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB and D1.
 
@@ -89,7 +89,7 @@ Request
 | Auth DB | `in-memory/auth-database.ts`, `local/auth-database.ts` | `worker/auth-database.ts` |
 | Runtime cache | `local/registry.ts` — `getApiRuntime(env)` | `worker/resolve-api-runtime.ts` per request |
 
-Auth schema and SQL migrations live in `package/integration-migrations`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
+Auth schema and SQL migrations live in `package/adaptor-auth`. Migration CLI lives in `tooling/db-migrate`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
 
 Folder map: `apps/api/src/runtime/README.md`.
 

@@ -18,20 +18,22 @@ edaya_backend/
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
-│   ├── generated-api-client/             @edaya/api-client — typed API SDK
-│   └── integration-migrations/           @edaya/integration-migrations — school + auth migrations
+│   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
+│   └── generated-api-client/             @edaya/api-client — typed API SDK
 └── tooling/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
     ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
+    ├── db-migrate/                       @edaya/db-migrate — school + auth migration CLI
+    ├── novu-ops/                         @edaya/novu-ops — Novu bootstrap + subscriber cleanup
     └── integration-tests/                @edaya/integration-tests (+ smoke/)
 ```
 
-**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` stay vendor-agnostic; `package/integration-*` folders own platform-specific migration/deploy orchestration; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` stay vendor-agnostic; `package/adaptor-auth` owns Better Auth persistence; `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; platform migrations live in `package/integration-*`; the API wires runtime and HTTP. Web clients consume the API through `@edaya/api-client` in **edaya_web**.
+The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; Better Auth persistence lives in `@edaya/adaptor-auth`; migration CLI lives in `@edaya/db-migrate`; the API wires runtime and HTTP. Web clients consume the API through `@edaya/api-client` in **edaya_web**.
 
 ```mermaid
 flowchart TB
@@ -48,7 +50,8 @@ flowchart TB
   subgraph package["package/"]
     Core["@edaya/core"]
     PG["@edaya/adaptor-postgres"]
-    Migrations["@edaya/integration-migrations"]
+    Auth["@edaya/adaptor-auth"]
+    DbMigrate["@edaya/db-migrate"]
   end
 
   Webapp --> Client
@@ -56,12 +59,13 @@ flowchart TB
   API --> WorkerHost
   API --> Core
   API --> PG
-  API --> Migrations
+  API --> Auth
   PG -.->|implements ports| Core
-  Migrations --> PG
-  Migrations -.->|school:migrate:all| Migrations
+  DbMigrate --> PG
+  DbMigrate --> Auth
+  DbMigrate -.->|school:migrate:all| DbMigrate
   PG --> SchoolDB[(Postgres / PGlite)]
-  Migrations --> AuthDB[(D1 / SQLite)]
+  Auth --> AuthDB[(D1 / SQLite)]
 ```
 
 ### Request flow
@@ -107,8 +111,8 @@ More detail: [docs/reference/api-folder-structure.md](./docs/reference/api-folde
 | `@edaya/core` | `package/domain-core` | Domain model, business services, authorization, repository ports |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
+| `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth Drizzle schema, SQL migrations, runtime `runMigrations()` |
 | `@edaya/api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
-| `@edaya/integration-migrations` | `package/integration-migrations` | School + auth migration apply (Neon / Hyperdrive + D1) |
 
 ### Tooling
 
@@ -117,6 +121,8 @@ More detail: [docs/reference/api-folder-structure.md](./docs/reference/api-folde
 | `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (`seed:all`, `seed:init`, …) |
+| `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive + D1) |
+| `@edaya/novu-ops` | `tooling/novu-ops` | Novu workflow bootstrap + subscriber cleanup CLI |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
 
 ## Prerequisites
@@ -184,16 +190,16 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 ### Database
 
-Root scripts use the `db:*` prefix. `@edaya/integration-migrations` exposes `school:*` and `auth:*` scripts (e.g. `bun --filter @edaya/integration-migrations school:migrate:dev`).
+Root scripts use the `db:*` prefix. `@edaya/db-migrate` exposes `school:*` and `auth:*` scripts (e.g. `bun --filter @edaya/db-migrate school:migrate:dev`).
 
 | Command | Description |
 |---------|-------------|
 | `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-postgres`) |
-| `bun run db:migrate` | Apply school schema migrations (`@edaya/integration-migrations`) |
+| `bun run db:migrate` | Apply school schema migrations (`@edaya/db-migrate`) |
 | `bun run db:migrate:all` | Apply school + local D1 auth migrations (dev bootstrap) |
 | `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate Hyperdrive origin + local D1 auth |
 | `bun run db:migrate:staging` | Apply school migrations to Neon staging branch (`STAGING_DATABASE_URL`) |
-| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/integration-migrations`) |
+| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/adaptor-auth`) |
 | `bun run db:migrate:auth` | Apply Better Auth migrations to local D1 |
 | `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 (production) |
 | `bun run db:migrate:auth:staging` | Apply Better Auth migrations to remote D1 (staging) |
@@ -204,7 +210,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | Command | Description |
 |---------|-------------|
 | `bun --filter @edaya/adaptor-postgres db:push` | Push schema to database (drizzle-kit) |
-| `bun --filter @edaya/integration-migrations auth:db:push` | Push auth schema |
+| `bun --filter @edaya/adaptor-auth auth:db:push` | Push auth schema |
 | `bun db:browser:school` | Browse local school tables (stop `bun dev` first) |
 | `bun db:browser:auth` | Browse local auth tables |
 
@@ -216,7 +222,7 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 | `bun run generated:check` | Generate in a temporary directory and fail if tracked artifacts drift |
 | `bun run openapi:generate` | Compatibility alias for updating all tracked OpenAPI artifacts |
 | `bun run openapi:check` | Compatibility alias for `generated:check` |
-| `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/integrations) |
+| `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/adaptor-auth) |
 | `bun run export-openapi` | Export OpenAPI JSON only |
 | `bun tooling/repo/openapi/generate-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
 

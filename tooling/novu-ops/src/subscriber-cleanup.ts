@@ -1,6 +1,6 @@
 import type { Novu } from "@novu/api";
 import type { SubscriberResponseDto } from "@novu/api/models/components";
-import { isNovuSubscriberNotFoundError } from "./novu-subscriber-client";
+import { isNovuSubscriberNotFoundError } from "@edaya/adaptor-novu";
 
 export const TRANSIENT_INVITATION_SUBSCRIBER_PREFIX = "invite:";
 

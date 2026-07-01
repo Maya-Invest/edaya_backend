@@ -1,4 +1,4 @@
-import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
+import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import type { DatabaseHandle } from "@/runtime/types";
 
 export async function createAuthDatabase(options: { runMigrations?: boolean } = {}): Promise<DatabaseHandle> {

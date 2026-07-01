@@ -13,7 +13,7 @@ import {
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
-import { runMigrations as runAuthMigrations } from '@edaya/integration-migrations'
+import { runMigrations as runAuthMigrations } from '@edaya/adaptor-auth'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { Database } from 'bun:sqlite'

@@ -2,7 +2,7 @@
 
 Portable Postgres persistence for EDAYA: Drizzle schema, SQL migrations, and repository implementations.
 
-Migration apply scripts for Neon / Hyperdrive and Better Auth D1 live in `@edaya/integration-migrations`.
+Migration apply scripts for Neon / Hyperdrive and Better Auth D1 live in `@edaya/db-migrate`.
 
 ## Scripts
 
@@ -24,7 +24,7 @@ bun db:browser:school
 bun db:browser:auth
 ```
 
-Apply migrations with `@edaya/integration-migrations` (`bun db:migrate`, `bun db:migrate:dev`).
+Apply migrations with `@edaya/db-migrate` (`bun db:migrate`, `bun db:migrate:dev`).
 
 ## Runtime usage
 
@@ -54,4 +54,4 @@ await repos.init({ driver: resolveMigrationDriver(databaseUrl) })
 
 ## Naming note
 
-`@edaya/integration-migrations` also has a `session` table for auth sessions. The school `sessions` table in this package is for **class scheduling** — unrelated to Better Auth.
+`@edaya/adaptor-auth` has a `session` table for auth sessions. The school `sessions` table in this package is for **class scheduling** — unrelated to Better Auth.

@@ -20,7 +20,7 @@
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/api": "workspace:*",
-    "@edaya/integration-migrations": "workspace:*",
+    "@edaya/adaptor-auth": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/fixtures": "workspace:*",
     "@edaya/seeding": "workspace:*",

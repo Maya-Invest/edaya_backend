@@ -1,0 +1,26 @@
+{
+  "name": "@edaya/novu-ops",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
+    "bootstrap": "bun bootstrap/cli.ts plan",
+    "bootstrap:apply": "bun bootstrap/cli.ts apply",
+    "bootstrap:validate": "bun bootstrap/cli.ts validate",
+    "cleanup": "bun cleanup/cli.ts plan",
+    "cleanup:apply": "bun cleanup/cli.ts apply",
+    "lint": "eslint src bootstrap cleanup tests",
+    "lint:fix": "eslint src bootstrap cleanup tests --fix",
+    "test": "bun test bootstrap/tests tests"
+  },
+  "dependencies": {
+    "@edaya/adaptor-novu": "workspace:*",
+    "@edaya/core": "workspace:*",
+    "@novu/api": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14"
+  }
+}

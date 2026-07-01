@@ -21,8 +21,18 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     searchPath: 'apps/api/src/runtime',
   },
   {
-    label: 'core imports integrations',
-    pattern: /from ["']@edaya\/integration-migrations/,
+    label: 'api imports db-migrate tooling',
+    pattern: /from ["']@edaya\/db-migrate/,
+    searchPath: 'apps/api/src',
+  },
+  {
+    label: 'api imports novu-ops tooling',
+    pattern: /from ["']@edaya\/novu-ops/,
+    searchPath: 'apps/api/src',
+  },
+  {
+    label: 'core imports adaptor-auth',
+    pattern: /from ["']@edaya\/adaptor-auth/,
     searchPath: 'package/domain-core/src',
   },
   {
@@ -32,8 +42,8 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
   },
   ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-r2'].map(
     (searchPath): BoundaryCheck => ({
-      label: 'package imports integrations',
-      pattern: /from ["']@edaya\/integration-migrations/,
+      label: 'package imports adaptor-auth',
+      pattern: /from ["']@edaya\/adaptor-auth/,
       searchPath,
     }),
   ),

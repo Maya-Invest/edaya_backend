@@ -39,6 +39,7 @@ export { createNovuSdkClient } from "./novu-sdk-client";
 export type { CreateNovuSdkClientOptions } from "./novu-sdk-client";
 export { createNovuSubscriberClient } from "./novu-subscriber-client";
 export type { CreateNovuSubscriberClientOptions, NovuSubscriberClient } from "./novu-subscriber-client";
+export { isNovuSubscriberNotFoundError } from "./novu-subscriber-client";
 export { buildNovuSubscriberId, buildNovuSubscriberIds } from "./subscriber-id";
 export {
   chunkNovuTriggerRequests,

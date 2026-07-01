@@ -23,7 +23,7 @@
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/adaptor-r2": "workspace:*",
     "@edaya/client-codegen": "file:../../../edaya-client-codegen",
-    "@edaya/integration-migrations": "workspace:*",
+    "@edaya/adaptor-auth": "workspace:*",
     "@edaya/core": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",
     "@hono/graphql-server": "^0.7.0",

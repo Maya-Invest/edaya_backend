@@ -61,19 +61,19 @@ describe('findBoundaryViolations', () => {
     }])
   })
 
-  test('reports core imports of integration packages', () => {
+  test('reports core imports of adaptor-auth', () => {
     const root = createRepoRoot()
-    writeSource(root, 'package/domain-core/src/index.ts', `import { migrate } from '@edaya/integration-migrations'\n`)
+    writeSource(root, 'package/domain-core/src/index.ts', `import { migrate } from '@edaya/adaptor-auth'\n`)
 
     expect(findBoundaryViolations([
       {
-        label: 'core imports integrations',
-        pattern: /from ["']@edaya\/integration-migrations/,
+        label: 'core imports adaptor-auth',
+        pattern: /from ["']@edaya\/adaptor-auth/,
         searchPath: 'package/domain-core/src',
       },
     ], root)).toEqual([{
-      label: 'core imports integrations',
-      matches: ['package/domain-core/src/index.ts:1:import { migrate } from \'@edaya/integration-migrations\''],
+      label: 'core imports adaptor-auth',
+      matches: ['package/domain-core/src/index.ts:1:import { migrate } from \'@edaya/adaptor-auth\''],
     }])
   })
 

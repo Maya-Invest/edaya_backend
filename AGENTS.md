@@ -6,7 +6,7 @@ Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI wor
 
 ## Architecture
 
-- **Ports and adapters** — business rules in `@edaya/core`; Postgres in `@edaya/adaptor-postgres`; platform migrations in `@edaya/integration-migrations`; HTTP/runtime wiring in `apps/api`.
+- **Ports and adapters** — business rules in `@edaya/core`; Postgres in `@edaya/adaptor-postgres`; auth persistence in `@edaya/adaptor-auth`; Novu gateway in `@edaya/adaptor-novu`; migration CLI in `@edaya/db-migrate`; Novu ops CLI in `@edaya/novu-ops`; HTTP/runtime wiring in `apps/api`.
 - **Boundary rule** — `package/domain-core`, `package/adaptor-postgres`, and adaptor packages never depend on `apps/` or `tooling/`.
 
 ## Key docs

@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { runMigrations as runAuthMigrations } from "@edaya/integration-migrations";
+import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { DatabaseHandle } from "@/runtime/types";
 

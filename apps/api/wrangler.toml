@@ -47,7 +47,7 @@ id = "62c00eeda7d047fc9951daf7db430070"
 binding = "AUTH_DB"
 database_name = "edaya"
 database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
-migrations_dir = "../../package/integration-migrations/drizzle/auth"
+migrations_dir = "../../package/adaptor-auth/drizzle/auth"
 
 [env.production]
 name = "edaya-api"
@@ -88,7 +88,7 @@ R2_BUCKET_NAME = "edaya-files-staging"
 binding = "AUTH_DB"
 database_name = "edaya"
 database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
-migrations_dir = "../../package/integration-migrations/drizzle/auth"
+migrations_dir = "../../package/adaptor-auth/drizzle/auth"
 
 [[env.production.routes]]
 pattern = "api.edaya.softilab.dev"
@@ -99,7 +99,7 @@ custom_domain = true
 binding = "AUTH_DB"
 database_name = "edaya-auth-staging"
 database_id = "2e55cf53-1b89-453f-ac17-3aab83fd8488"
-migrations_dir = "../../package/integration-migrations/drizzle/auth"
+migrations_dir = "../../package/adaptor-auth/drizzle/auth"
 
 [[env.staging.routes]]
 pattern = "api-staging.edaya.softilab.dev"

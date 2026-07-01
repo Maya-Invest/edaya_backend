@@ -10,7 +10,7 @@ function getPackageRoot(): string {
     throw new Error('Cannot resolve Better Auth migrations folder in this runtime')
   }
 
-  return join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
+  return join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 }
 
 /** Resolve the SQL migrations folder from the installed package root. */

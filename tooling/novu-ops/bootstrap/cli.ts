@@ -16,7 +16,7 @@ function parseCommand(argv: string[]): Command {
 }
 
 function printUsage() {
-  console.log(`Usage: bun package/adaptor-novu/bootstrap/cli.ts <apply|plan|validate>
+  console.log(`Usage: bun tooling/novu-ops/bootstrap/cli.ts <apply|plan|validate>
 
 Commands:
   plan      Show what would change (default)
