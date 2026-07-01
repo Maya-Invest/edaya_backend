@@ -29,6 +29,8 @@ import {
   extracurricularActivitySchema,
   feeSchema,
   gradeLevelSchema,
+  gradeLevelSubjectMatterSchema,
+  gradeLevelSubjectSchema,
   gradeScaleSchema,
   guardianContactMethodSchema,
   guardianSchema,
@@ -86,6 +88,8 @@ import type {
   FeeInput,
   FeeInstallmentTemplate,
   GradeLevelInput,
+  GradeLevelSubjectInput,
+  GradeLevelSubjectMatterInput,
   GradeScaleInput,
   GradeScaleRange,
   GuardianInput,
@@ -177,6 +181,8 @@ export const schoolNotificationTemplatesResponseSchema = responseSchema<SchoolNo
 );
 export const subjectResponseSchema = responseSchema<SubjectInput>("Subject", unwrapShape(subjectSchema));
 export const subjectMatterResponseSchema = responseSchema<SubjectMatterInput>("SubjectMatter", unwrapShape(subjectMatterSchema));
+export const gradeLevelSubjectResponseSchema = responseSchema<GradeLevelSubjectInput>("GradeLevelSubject", unwrapShape(gradeLevelSubjectSchema));
+export const gradeLevelSubjectMatterResponseSchema = responseSchema<GradeLevelSubjectMatterInput>("GradeLevelSubjectMatter", unwrapShape(gradeLevelSubjectMatterSchema));
 export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGroup", unwrapShape(classGroupSchema));
 export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
 export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
@@ -422,6 +428,20 @@ export const classSubjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   classGroupId: field.id(),
   subjectId: field.id(),
+  gradeLevelSubjectId: field.id(),
+});
+
+export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  gradeLevelId: field.id(),
+  academicYearId: field.id(),
+  subjectId: field.id(),
+});
+
+export const gradeLevelSubjectMatterQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  gradeLevelSubjectId: field.id(),
+  subjectMatterId: field.id(),
 });
 
 export const classSubjectMatterQuerySchema = createQueryOptionsSchema({

@@ -40,6 +40,7 @@ import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { requireSchool } from '../../shared/require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
 
 export interface CreateAcademicYearInput {
   id: string
@@ -218,7 +219,11 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createClassGroup(input: CreateClassGroupInput): Promise<ClassGroup> {
-    return this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
+    const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
+    await this.baseService.atomicExecution.execute(async () => {
+      await syncGradeLevelSubjectsToClassGroup(this.baseService, classGroup)
+    })
+    return classGroup
   }
 
   async updateClassGroupConfiguration({ classGroupId, ...changes }: UpdateClassGroupConfigurationInput): Promise<ClassGroup> {

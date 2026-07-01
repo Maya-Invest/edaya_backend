@@ -20,6 +20,8 @@ import type {
   ExtracurricularActivity,
   Fee,
   GradeLevel,
+  GradeLevelSubject,
+  GradeLevelSubjectMatter,
   GradeScale,
   Guardian,
   GuardianStudentLink,
@@ -79,6 +81,8 @@ export interface CoreEntityMap {
   schoolNotificationTemplates: SchoolNotificationTemplates
   subjects: Subject
   subjectMatters: SubjectMatter
+  gradeLevelSubjects: GradeLevelSubject
+  gradeLevelSubjectMatters: GradeLevelSubjectMatter
   classGroups: ClassGroup
   classSubjects: ClassSubject
   classSubjectMatters: ClassSubjectMatter
@@ -145,6 +149,8 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'schoolNotificationTemplates',
   'subjects',
   'subjectMatters',
+  'gradeLevelSubjects',
+  'gradeLevelSubjectMatters',
   'classGroups',
   'classSubjects',
   'classSubjectMatters',

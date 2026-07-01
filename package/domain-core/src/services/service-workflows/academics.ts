@@ -1,5 +1,6 @@
-import type { ClassSubjectInput, ClassSubjectMatterInput } from '../../domains'
+import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput } from '../../domains'
 import type { BaseSchoolService } from '../base-school-service'
+import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
 import {
   ClassSubject,
@@ -11,6 +12,15 @@ import { roundTo2 } from '../../domains/utils'
 import { permissionAction } from '../../shared'
 import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import {
+  removeMirroredClassSubjects,
+  saveGradeLevelSubjectEntity,
+  saveGradeLevelSubjectMatterEntity,
+
+  syncGradeLevelSubjectMatterToClassSubject,
+  syncGradeLevelSubjectsToClassGroup,
+  syncGradeLevelSubjectToAllClassGroups,
+} from './grade-level-subject-sync'
 
 export interface RecordSessionProgressInput {
   id: string
@@ -25,24 +35,136 @@ export type OfferSubjectToClassInput = ClassSubjectInput
 
 export type AssignMatterToClassSubjectInput = ClassSubjectMatterInput
 
+export interface OfferSubjectToGradeLevelInput extends GradeLevelSubjectInput {
+  classSubjectIdsByClassGroupId?: Record<string, string>
+  classSubjectMatterIdsByClassGroupId?: Record<string, string>
+}
+
+export interface RemoveSubjectFromGradeLevelInput {
+  gradeLevelSubjectId: string
+}
+
+export interface UpdateGradeLevelSubjectInput {
+  gradeLevelSubjectId: string
+  coefficient?: number
+}
+
+export type AssignMatterToGradeLevelSubjectInput = GradeLevelSubjectMatterInput & {
+  classSubjectMatterIdsByClassGroupId?: Record<string, string>
+}
+
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
   }
 
+  async offerSubjectToGradeLevel(input: OfferSubjectToGradeLevelInput): Promise<GradeLevelSubject> {
+    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    const { classSubjectIdsByClassGroupId, classSubjectMatterIdsByClassGroupId, ...gradeLevelSubjectInput } = input
+
+    return this.baseService.atomicExecution.execute(async () => {
+      const gradeLevelSubject = await saveGradeLevelSubjectEntity(this.baseService, gradeLevelSubjectInput)
+      const optionsByClassGroupId = Object.fromEntries(
+        Object.entries(classSubjectIdsByClassGroupId ?? {}).map(([classGroupId, classSubjectId]) => [
+          classGroupId,
+          {
+            classSubjectId,
+            classSubjectMatterIdsByClassGroupId,
+          } satisfies SyncClassSubjectOptions,
+        ]),
+      )
+      await syncGradeLevelSubjectToAllClassGroups(this.baseService, gradeLevelSubject, optionsByClassGroupId)
+      return gradeLevelSubject
+    })
+  }
+
+  async removeSubjectFromGradeLevel({ gradeLevelSubjectId }: RemoveSubjectFromGradeLevelInput): Promise<void> {
+    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await this.baseService.atomicExecution.execute(async () => {
+      const gradeLevelSubject = await this.requireGradeLevelSubject(gradeLevelSubjectId)
+      await removeMirroredClassSubjects(this.baseService, gradeLevelSubject.id)
+      const matters = await this.baseService.repositories.gradeLevelSubjectMatters.list({ gradeLevelSubjectId })
+      for (const matter of matters) {
+        await this.baseService.repositories.gradeLevelSubjectMatters.delete(matter.id)
+      }
+      await this.baseService.repositories.gradeLevelSubjects.delete(gradeLevelSubject.id)
+    })
+  }
+
+  async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
+    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireGradeLevelSubject(gradeLevelSubjectId)
+      const updated = await saveGradeLevelSubjectEntity(this.baseService, {
+        id: existing.id,
+        gradeLevelId: existing.gradeLevelId,
+        academicYearId: existing.academicYearId,
+        subjectId: existing.subjectId,
+        coefficient,
+        createdAt: existing.createdAt,
+      })
+
+      const classSubjects = await this.baseService.repositories.classSubjects.list({ gradeLevelSubjectId })
+      for (const classSubject of classSubjects) {
+        await this.baseService.repositories.classSubjects.save(new ClassSubject({
+          id: classSubject.id,
+          classGroupId: classSubject.classGroupId,
+          subjectId: classSubject.subjectId,
+          gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
+          coefficient,
+          completedPercentage: classSubject.completedPercentage,
+          createdAt: classSubject.createdAt,
+        }))
+      }
+
+      return updated
+    })
+  }
+
+  async assignMatterToGradeLevelSubject(input: AssignMatterToGradeLevelSubjectInput): Promise<GradeLevelSubjectMatter> {
+    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    const { classSubjectMatterIdsByClassGroupId, ...matterInput } = input
+
+    return this.baseService.atomicExecution.execute(async () => {
+      const gradeLevelSubjectMatter = await saveGradeLevelSubjectMatterEntity(this.baseService, matterInput)
+      const classSubjects = await this.baseService.repositories.classSubjects.list({
+        gradeLevelSubjectId: gradeLevelSubjectMatter.gradeLevelSubjectId,
+      })
+      for (const classSubject of classSubjects) {
+        await syncGradeLevelSubjectMatterToClassSubject(
+          this.baseService,
+          classSubject,
+          gradeLevelSubjectMatter,
+          { classSubjectMatterIdsByClassGroupId },
+        )
+      }
+      return gradeLevelSubjectMatter
+    })
+  }
+
+  async syncGradeLevelSubjectsToClassGroup(classGroupId: string, optionsByGradeLevelSubjectId: Record<string, SyncClassSubjectOptions> = {}) {
+    const classGroup = await this.baseService.repositories.classGroups.findById(classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
+      denyResourceAccess()
+    }
+    return syncGradeLevelSubjectsToClassGroup(this.baseService, classGroup, optionsByGradeLevelSubjectId)
+  }
+
+  /** @internal */
   async offerSubjectToClass(input: OfferSubjectToClassInput): Promise<ClassSubject> {
     const classSubject = new ClassSubject(input)
-    await this.baseService.entities.classSubjects.save(classSubject)
+    await this.baseService.repositories.classSubjects.save(classSubject)
     return classSubject
   }
 
+  /** @internal */
   async assignMatterToClassSubject(input: AssignMatterToClassSubjectInput): Promise<ClassSubjectMatter> {
     const matter = new ClassSubjectMatter({
       ...input,
       status: input.status ?? ClassSubjectMatterStatus.NotStarted,
       completedPercentage: input.completedPercentage ?? 0,
     })
-    await this.baseService.entities.classSubjectMatters.save(matter)
+    await this.baseService.repositories.classSubjectMatters.save(matter)
     return matter
   }
 
@@ -109,6 +231,18 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
+  private async requireGradeLevelSubject(gradeLevelSubjectId: string): Promise<GradeLevelSubject> {
+    const gradeLevelSubject = await this.baseService.repositories.gradeLevelSubjects.findById(gradeLevelSubjectId)
+    if (!gradeLevelSubject) {
+      denyResourceAccess()
+    }
+    const gradeLevel = await this.baseService.repositories.gradeLevels.findById(gradeLevelSubject.gradeLevelId)
+    if (!gradeLevel || gradeLevel.schoolId !== this.baseService.actor.schoolId) {
+      denyResourceAccess()
+    }
+    return gradeLevelSubject
+  }
+
   private async requireClassSubjectMatter(classSubjectMatterId: string): Promise<ClassSubjectMatter> {
     const matter = await this.baseService.repositories.classSubjectMatters.findById(classSubjectMatterId)
     if (!matter) {
@@ -152,6 +286,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       id: classSubject.id,
       classGroupId: classSubject.classGroupId,
       subjectId: classSubject.subjectId,
+      gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
       coefficient: classSubject.coefficient,
       completedPercentage,
       createdAt: classSubject.createdAt,

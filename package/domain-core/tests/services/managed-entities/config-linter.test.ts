@@ -6,6 +6,8 @@ const configRoot = join(import.meta.dir, '../../../src/domains')
 
 const noopAccessExceptions = new Set([
   'academics/class-subject-matter.ts',
+  'academics/grade-level-subject-matter.ts',
+  'academics/grade-level-subject.ts',
   'academics/subject-matter.ts',
   'assessments/report-card-definition-section.ts',
   'assessments/report-card-definition.ts',

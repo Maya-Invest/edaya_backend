@@ -2,8 +2,12 @@ import type { SchoolCommandKey } from './school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
   AssignMatterToClassSubjectInput,
+  AssignMatterToGradeLevelSubjectInput,
   OfferSubjectToClassInput,
+  OfferSubjectToGradeLevelInput,
   RecordSessionProgressInput,
+  RemoveSubjectFromGradeLevelInput,
+  UpdateGradeLevelSubjectInput,
 } from './service-workflows/academics'
 import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from './service-workflows/access-control'
 import type {
@@ -160,6 +164,10 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     // academics
     offerSubjectToClass: payload => workflows.academics.offerSubjectToClass(payload as OfferSubjectToClassInput),
     assignMatterToClassSubject: payload => workflows.academics.assignMatterToClassSubject(payload as AssignMatterToClassSubjectInput),
+    offerSubjectToGradeLevel: payload => workflows.academics.offerSubjectToGradeLevel(payload as OfferSubjectToGradeLevelInput),
+    removeSubjectFromGradeLevel: payload => workflows.academics.removeSubjectFromGradeLevel(payload as RemoveSubjectFromGradeLevelInput),
+    updateGradeLevelSubject: payload => workflows.academics.updateGradeLevelSubject(payload as UpdateGradeLevelSubjectInput),
+    assignMatterToGradeLevelSubject: payload => workflows.academics.assignMatterToGradeLevelSubject(payload as AssignMatterToGradeLevelSubjectInput),
     recordSessionProgress: payload => workflows.academics.recordSessionProgress(payload as RecordSessionProgressInput),
     // assessments
     createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),

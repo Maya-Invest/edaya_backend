@@ -8,8 +8,14 @@ import {
 import type { AppRouteHandler } from "@/http/types";
 import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
 import { applyStructureTemplate } from "@/lib/onboarding/apply-structure-template";
+import type { StructureTemplateDefinition } from "@/lib/onboarding/templates/types";
 import { inviteStaffMembers } from "@/lib/onboarding/invite-staff-members";
-import { isGradeLevelTemplateKey } from "@/lib/onboarding/structure-templates";
+import {
+  completeOnboardingWizard,
+  recordOnboardingAccountProgress,
+  resolveOnboardingAccountStatus,
+} from "@/lib/onboarding/onboarding-account-state";
+import { isStructureTemplateId } from "@/lib/onboarding/templates/registry";
 import { isOnboardingStaffInviteRoleKey } from "@/lib/onboarding/staff-invite-roles";
 import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
@@ -39,12 +45,39 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   ownerEmail: z.string().trim().email().optional(),
 }).openapi("OnboardingRegisterSchoolRequest");
 
-const onboardingStructureModelSchema = z.enum(["college", "lycee"]);
+const structureTemplateSnapshotSchema = z.object({
+  id: z.string().trim().min(1),
+  countryCode: z.enum(["FR", "CI"]),
+  label: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  cycle: z.string().trim().min(1),
+  gradeLevels: z.array(z.object({
+    id: z.string().trim().min(1),
+    code: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+    shortLabel: z.string().trim().min(1),
+    order: z.number().int(),
+  }).passthrough()).min(1),
+  subjects: z.array(z.object({
+    code: z.string().trim().min(1),
+    shortName: z.string().trim().min(1),
+    domain: z.string().trim().min(1),
+    defaultCoefficient: z.number(),
+  }).passthrough()).min(1),
+  curriculum: z.array(z.object({
+    levelCodes: z.array(z.string().trim().min(1)),
+    subjectCode: z.string().trim().min(1),
+    longName: z.string().trim().min(1).optional(),
+    coefficient: z.number(),
+    matters: z.array(z.string().trim().min(1)).min(1),
+  }).passthrough()),
+}).passthrough();
 
 const onboardingApplyStructureTemplateRequestSchema = z.object({
-  models: z.array(onboardingStructureModelSchema).min(1),
+  templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
+  templateSnapshots: z.array(structureTemplateSnapshotSchema).optional(),
   levels: z.array(z.object({
-    gradeLevelId: z.string().trim().min(1).refine(isGradeLevelTemplateKey, "Invalid grade level template key"),
+    gradeLevelId: z.string().trim().min(1),
     classCount: z.number().int().min(1),
     capacity: z.number().int().min(1),
   })).min(1),
@@ -55,6 +88,9 @@ const onboardingApplyStructureTemplateResponseSchema = z.object({
   classGroupCount: z.number().int(),
   subjectCount: z.number().int(),
   classSubjectCount: z.number().int(),
+  gradeScaleCount: z.number().int(),
+  reportCardDefinitionCount: z.number().int(),
+  reportCardSectionCount: z.number().int(),
 }).openapi("OnboardingApplyStructureTemplateResponse");
 
 const onboardingStaffInviteRequestSchema = z.object({
@@ -68,6 +104,17 @@ const onboardingStaffInviteResponseSchema = z.object({
   invitedCount: z.number().int(),
   accessRolesEnsured: z.number().int(),
 }).openapi("OnboardingInviteStaffMembersResponse");
+
+const onboardingAccountStatusSchema = z.object({
+  wizardCompleted: z.boolean(),
+  maxReachedStep: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  schoolStepSubmitted: z.boolean(),
+  structureStepSubmitted: z.boolean(),
+}).openapi("OnboardingAccountStatusResponse");
+
+const onboardingCompleteWizardRequestSchema = z.object({
+  maxReachedStep: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+}).openapi("OnboardingCompleteWizardRequest");
 
 export const onboardingRegisterSchoolRoute = createRoute({
   method: "post",
@@ -172,7 +219,16 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
   const body = c.req.valid("json");
 
   try {
-    const result = await applyStructureTemplate(c.get("schoolApp"), actor, body);
+    const result = await applyStructureTemplate(c.get("schoolApp"), actor, {
+      templates: body.templates,
+      ...(body.templateSnapshots
+        ? { templateSnapshots: body.templateSnapshots as StructureTemplateDefinition[] }
+        : {}),
+      levels: body.levels,
+    });
+    await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
+      maxReachedStep: 3,
+    });
     return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {
@@ -213,7 +269,78 @@ export const onboardingInviteStaffMembersHandler: AppRouteHandler<typeof onboard
     const result = await inviteStaffMembers(c.get("schoolApp"), actor, body, {
       inviteBaseUrl: resolveInviteBaseUrl(c.env),
     });
+    await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
+      maxReachedStep: 3,
+    });
     return c.json(result, HttpStatusCodes.OK);
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
+
+export const onboardingAccountStatusRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("onboarding", "account-status"),
+  tags: ["Core Onboarding"],
+  summary: "Get onboarding progress for the current staff account",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "accountStatus",
+    path: "onboarding/account-status",
+    responseSchemaName: "OnboardingAccountStatusResponse",
+  }),
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(onboardingAccountStatusSchema, "Onboarding account status"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const onboardingAccountStatusHandler: AppRouteHandler<typeof onboardingAccountStatusRoute> = async (c) => {
+  const actor = c.get("actor");
+  if (!actor) {
+    return unauthorizedResponse(c);
+  }
+
+  try {
+    const status = await resolveOnboardingAccountStatus(c.get("schoolApp").repositories, actor);
+    return c.json(status, HttpStatusCodes.OK);
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
+
+export const onboardingCompleteWizardRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("onboarding", "complete-wizard"),
+  tags: ["Core Onboarding"],
+  summary: "Mark the onboarding wizard complete for the current staff account",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "completeWizard",
+    path: "onboarding/complete-wizard",
+    requestSchemaName: "OnboardingCompleteWizardRequest",
+    responseSchemaName: "OnboardingAccountStatusResponse",
+  }),
+  request: {
+    body: jsonContent(onboardingCompleteWizardRequestSchema, "Optional onboarding completion payload"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(onboardingAccountStatusSchema, "Updated onboarding account status"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const onboardingCompleteWizardHandler: AppRouteHandler<typeof onboardingCompleteWizardRoute> = async (c) => {
+  const actor = c.get("actor");
+  if (!actor) {
+    return unauthorizedResponse(c);
+  }
+
+  try {
+    const status = await completeOnboardingWizard(c.get("schoolApp").repositories, actor);
+    return c.json(status, HttpStatusCodes.OK);
   }
   catch (err) {
     return routeErrorResponse(c, err);

@@ -362,16 +362,159 @@
       "OnboardingApplyStructureTemplateRequest": {
         "type": "object",
         "properties": {
-          "models": {
+          "templates": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "college",
-                "lycee"
-              ]
+              "minLength": 1
             },
             "minItems": 1
+          },
+          "templateSnapshots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "countryCode": {
+                  "type": "string",
+                  "enum": [
+                    "FR",
+                    "CI"
+                  ]
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cycle": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "gradeLevels": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "shortLabel": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "order": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "code",
+                      "name",
+                      "shortLabel",
+                      "order"
+                    ]
+                  },
+                  "minItems": 1
+                },
+                "subjects": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "shortName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "domain": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "defaultCoefficient": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "shortName",
+                      "domain",
+                      "defaultCoefficient"
+                    ]
+                  },
+                  "minItems": 1
+                },
+                "curriculum": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "levelCodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "subjectCode": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "longName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "coefficient": {
+                        "type": "number"
+                      },
+                      "matters": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "required": [
+                      "levelCodes",
+                      "subjectCode",
+                      "coefficient",
+                      "matters"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "countryCode",
+                "label",
+                "description",
+                "cycle",
+                "gradeLevels",
+                "subjects",
+                "curriculum"
+              ]
+            }
           },
           "levels": {
             "type": "array",
@@ -401,7 +544,7 @@
           }
         },
         "required": [
-          "models",
+          "templates",
           "levels"
         ]
       },
@@ -3643,6 +3786,11 @@
             "type": "string",
             "minLength": 1
           },
+          "gradeLevelSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "coefficient": {
             "type": "number",
             "nullable": true,
@@ -3677,6 +3825,11 @@
           },
           "subjectId": {
             "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelSubjectId": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "coefficient": {
@@ -3772,6 +3925,170 @@
         "required": [
           "id",
           "classSubjectId",
+          "subjectMatterId"
+        ]
+      },
+      "GradeLevelSubject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "gradeLevelId",
+          "academicYearId",
+          "subjectId"
+        ]
+      },
+      "OfferSubjectToGradeLevelCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {},
+          "classSubjectIdsByClassGroupId": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "classSubjectMatterIdsByClassGroupId": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "id",
+          "gradeLevelId",
+          "academicYearId",
+          "subjectId"
+        ]
+      },
+      "RemoveSubjectFromGradeLevelCommand": {
+        "type": "object",
+        "properties": {
+          "gradeLevelSubjectId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "gradeLevelSubjectId"
+        ]
+      },
+      "UpdateGradeLevelSubjectCommand": {
+        "type": "object",
+        "properties": {
+          "gradeLevelSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          }
+        },
+        "required": [
+          "gradeLevelSubjectId"
+        ]
+      },
+      "GradeLevelSubjectMatter": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectMatterId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "gradeLevelSubjectId",
+          "subjectMatterId"
+        ]
+      },
+      "AssignMatterToGradeLevelSubjectCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectMatterId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "createdAt": {},
+          "classSubjectMatterIdsByClassGroupId": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "id",
+          "gradeLevelSubjectId",
           "subjectMatterId"
         ]
       },
@@ -8209,6 +8526,11 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "code": {
             "type": "string",
             "nullable": true,
@@ -8323,6 +8645,40 @@
           "entities"
         ]
       },
+      "Filter_29": {
+        "type": "object"
+      },
+      "GradeLevelSubjectsBatchSave": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeLevelSubject"
+            }
+          }
+        },
+        "required": [
+          "entities"
+        ]
+      },
+      "Filter_30": {
+        "type": "object"
+      },
+      "GradeLevelSubjectMattersBatchSave": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeLevelSubjectMatter"
+            }
+          }
+        },
+        "required": [
+          "entities"
+        ]
+      },
       "Filter_27": {
         "type": "object"
       },
@@ -8357,7 +8713,7 @@
           "entities"
         ]
       },
-      "Filter_29": {
+      "Filter_31": {
         "type": "object"
       },
       "ClassSubjectMattersBatchSave": {
@@ -8374,7 +8730,7 @@
           "entities"
         ]
       },
-      "Filter_30": {
+      "Filter_32": {
         "type": "object"
       },
       "ClassSubjectProgressBatchSave": {
@@ -8456,7 +8812,7 @@
           "progress"
         ]
       },
-      "Filter_31": {
+      "Filter_33": {
         "type": "object"
       },
       "ClassLogbookEntriesBatchSave": {
@@ -8546,7 +8902,7 @@
           "attachments"
         ]
       },
-      "Filter_32": {
+      "Filter_34": {
         "type": "object"
       },
       "HomeworkAssignmentsBatchSave": {
@@ -8598,7 +8954,7 @@
           "status"
         ]
       },
-      "Filter_33": {
+      "Filter_35": {
         "type": "object"
       },
       "HomeworkSubmissionsBatchSave": {
@@ -8679,7 +9035,7 @@
           "endDate"
         ]
       },
-      "Filter_34": {
+      "Filter_36": {
         "type": "object"
       },
       "ExtracurricularActivitiesBatchSave": {
@@ -8728,7 +9084,7 @@
           "status"
         ]
       },
-      "Filter_35": {
+      "Filter_37": {
         "type": "object"
       },
       "ActivityEnrollmentsBatchSave": {
@@ -8745,7 +9101,7 @@
           "entities"
         ]
       },
-      "Filter_36": {
+      "Filter_38": {
         "type": "object"
       },
       "AssessmentsBatchSave": {
@@ -8762,7 +9118,7 @@
           "entities"
         ]
       },
-      "Filter_37": {
+      "Filter_39": {
         "type": "object"
       },
       "AssessmentResultsBatchSave": {
@@ -8779,7 +9135,7 @@
           "entities"
         ]
       },
-      "Filter_38": {
+      "Filter_40": {
         "type": "object"
       },
       "GradeScalesBatchSave": {
@@ -8796,7 +9152,7 @@
           "entities"
         ]
       },
-      "Filter_39": {
+      "Filter_41": {
         "type": "object"
       },
       "ReportCardDefinitionsBatchSave": {
@@ -8813,7 +9169,7 @@
           "entities"
         ]
       },
-      "Filter_40": {
+      "Filter_42": {
         "type": "object"
       },
       "ReportCardSectionsBatchSave": {
@@ -8830,7 +9186,7 @@
           "entities"
         ]
       },
-      "Filter_41": {
+      "Filter_43": {
         "type": "object"
       },
       "ReportCardResultsBatchSave": {
@@ -8847,7 +9203,7 @@
           "entities"
         ]
       },
-      "Filter_42": {
+      "Filter_44": {
         "type": "object"
       },
       "StudentsBatchSave": {
@@ -8864,7 +9220,7 @@
           "entities"
         ]
       },
-      "Filter_43": {
+      "Filter_45": {
         "type": "object"
       },
       "StudentEnrollmentsBatchSave": {
@@ -8881,7 +9237,7 @@
           "entities"
         ]
       },
-      "Filter_44": {
+      "Filter_46": {
         "type": "object"
       },
       "GuardiansBatchSave": {
@@ -8898,7 +9254,7 @@
           "entities"
         ]
       },
-      "Filter_45": {
+      "Filter_47": {
         "type": "object"
       },
       "GuardianStudentLinksBatchSave": {
@@ -8915,7 +9271,7 @@
           "entities"
         ]
       },
-      "Filter_46": {
+      "Filter_48": {
         "type": "object"
       },
       "StudentNotesBatchSave": {
@@ -8932,7 +9288,7 @@
           "entities"
         ]
       },
-      "Filter_47": {
+      "Filter_49": {
         "type": "object"
       },
       "StudentHealthProfilesBatchSave": {
@@ -8949,7 +9305,7 @@
           "entities"
         ]
       },
-      "Filter_48": {
+      "Filter_50": {
         "type": "object"
       },
       "StudentDisciplinaryActionsBatchSave": {
@@ -9014,7 +9370,7 @@
           "name"
         ]
       },
-      "Filter_49": {
+      "Filter_51": {
         "type": "object"
       },
       "DisciplinaryActionsBatchSave": {
@@ -9031,7 +9387,7 @@
           "entities"
         ]
       },
-      "Filter_50": {
+      "Filter_52": {
         "type": "object"
       },
       "StudentIncidentInvolvementsBatchSave": {
@@ -9048,7 +9404,7 @@
           "entities"
         ]
       },
-      "Filter_51": {
+      "Filter_53": {
         "type": "object"
       },
       "IncidentsBatchSave": {
@@ -16426,6 +16782,526 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassSubjectMatter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/offer-subject-to-grade-level": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "offer-subject-to-grade-level",
+        "operationId": "commands.offerSubjectToGradeLevel",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "offerSubjectToGradeLevel",
+        "x-edaya-command-public-name": "offer-subject-to-grade-level",
+        "x-edaya-request-schema": "OfferSubjectToGradeLevelCommand",
+        "x-edaya-response-schema": "GradeLevelSubject",
+        "requestBody": {
+          "description": "offer-subject-to-grade-level payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferSubjectToGradeLevelCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed offer-subject-to-grade-level",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/remove-subject-from-grade-level": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "remove-subject-from-grade-level",
+        "operationId": "commands.removeSubjectFromGradeLevel",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "removeSubjectFromGradeLevel",
+        "x-edaya-command-public-name": "remove-subject-from-grade-level",
+        "x-edaya-request-schema": "RemoveSubjectFromGradeLevelCommand",
+        "x-edaya-response-schema": "CommandMessageResponse",
+        "requestBody": {
+          "description": "remove-subject-from-grade-level payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveSubjectFromGradeLevelCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed remove-subject-from-grade-level",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandMessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/update-grade-level-subject": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "update-grade-level-subject",
+        "operationId": "commands.updateGradeLevelSubject",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "updateGradeLevelSubject",
+        "x-edaya-command-public-name": "update-grade-level-subject",
+        "x-edaya-request-schema": "UpdateGradeLevelSubjectCommand",
+        "x-edaya-response-schema": "GradeLevelSubject",
+        "requestBody": {
+          "description": "update-grade-level-subject payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGradeLevelSubjectCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed update-grade-level-subject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/assign-matter-to-grade-level-subject": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "assign-matter-to-grade-level-subject",
+        "operationId": "commands.assignMatterToGradeLevelSubject",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "assignMatterToGradeLevelSubject",
+        "x-edaya-command-public-name": "assign-matter-to-grade-level-subject",
+        "x-edaya-request-schema": "AssignMatterToGradeLevelSubjectCommand",
+        "x-edaya-response-schema": "GradeLevelSubjectMatter",
+        "requestBody": {
+          "description": "assign-matter-to-grade-level-subject payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignMatterToGradeLevelSubjectCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed assign-matter-to-grade-level-subject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubjectMatter"
                 }
               }
             }
@@ -55241,6 +56117,2514 @@
         }
       }
     },
+    "/core/entities/grade-level-subjects/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.list",
+        "x-edaya-kind": "entity",
+        "x-edaya-entity-key": "gradeLevelSubjects",
+        "x-edaya-entity-public-name": "grade-level-subjects",
+        "x-edaya-response-schema": "GradeLevelSubject",
+        "x-edaya-allow-direct-save": false,
+        "requestBody": {
+          "description": "Grade Level Subjects query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_29"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GradeLevelSubject"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.one",
+        "requestBody": {
+          "description": "Grade Level Subjects query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_29"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grade Level Subjects not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.count",
+        "requestBody": {
+          "description": "Grade Level Subjects query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_29"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.get",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grade Level Subjects not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Save Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.save",
+        "requestBody": {
+          "description": "Grade Level Subjects entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeLevelSubject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Delete Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.delete",
+        "requestBody": {
+          "description": "Grade Level Subjects delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deleted Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/batch-save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch save Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.batchSave",
+        "requestBody": {
+          "description": "Grade Level Subjects batch save request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeLevelSubjectsBatchSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch saved Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ids"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subjects/batch-delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch delete Grade Level Subjects",
+        "operationId": "entities.gradeLevelSubjects.batchDelete",
+        "requestBody": {
+          "description": "Grade Level Subjects batch delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityBatchDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch deleted Grade Level Subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.list",
+        "x-edaya-kind": "entity",
+        "x-edaya-entity-key": "gradeLevelSubjectMatters",
+        "x-edaya-entity-public-name": "grade-level-subject-matters",
+        "x-edaya-response-schema": "GradeLevelSubjectMatter",
+        "x-edaya-allow-direct-save": false,
+        "requestBody": {
+          "description": "Grade Level Subject Matters query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_30"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GradeLevelSubjectMatter"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.one",
+        "requestBody": {
+          "description": "Grade Level Subject Matters query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_30"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubjectMatter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grade Level Subject Matters not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.count",
+        "requestBody": {
+          "description": "Grade Level Subject Matters query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_30"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.get",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubjectMatter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grade Level Subject Matters not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Save Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.save",
+        "requestBody": {
+          "description": "Grade Level Subject Matters entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeLevelSubjectMatter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevelSubjectMatter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Delete Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.delete",
+        "requestBody": {
+          "description": "Grade Level Subject Matters delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deleted Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/batch-save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch save Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.batchSave",
+        "requestBody": {
+          "description": "Grade Level Subject Matters batch save request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeLevelSubjectMattersBatchSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch saved Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ids"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/grade-level-subject-matters/batch-delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch delete Grade Level Subject Matters",
+        "operationId": "entities.gradeLevelSubjectMatters.batchDelete",
+        "requestBody": {
+          "description": "Grade Level Subject Matters batch delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityBatchDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch deleted Grade Level Subject Matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/entities/class-groups/list": {
       "post": {
         "tags": [
@@ -56506,7 +59890,7 @@
         "x-edaya-entity-key": "classSubjects",
         "x-edaya-entity-public-name": "class-subjects",
         "x-edaya-response-schema": "ClassSubject",
-        "x-edaya-allow-direct-save": true,
+        "x-edaya-allow-direct-save": false,
         "requestBody": {
           "description": "Class Subjects query",
           "content": {
@@ -57768,7 +61152,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -57936,7 +61320,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -58122,7 +61506,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -59022,7 +62406,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -59190,7 +62574,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -59376,7 +62760,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -60276,7 +63660,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -60444,7 +63828,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -60630,7 +64014,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -61530,7 +64914,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -61698,7 +65082,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -61884,7 +65268,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -62784,7 +66168,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -62952,7 +66336,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -63138,7 +66522,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -64038,7 +67422,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -64206,7 +67590,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -64392,7 +67776,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -65292,7 +68676,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -65460,7 +68844,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -65646,7 +69030,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -66546,7 +69930,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -66714,7 +70098,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -66900,7 +70284,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -67800,7 +71184,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -67968,7 +71352,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -68154,7 +71538,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -69054,7 +72438,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -69222,7 +72606,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -69408,7 +72792,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -70308,7 +73692,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -70476,7 +73860,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -70662,7 +74046,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -71562,7 +74946,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -71730,7 +75114,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -71916,7 +75300,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -72816,7 +76200,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -72984,7 +76368,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -73170,7 +76554,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -74070,7 +77454,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -74238,7 +77622,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -74424,7 +77808,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -75324,7 +78708,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -75492,7 +78876,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -75678,7 +79062,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -76578,7 +79962,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -76746,7 +80130,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -76932,7 +80316,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -77832,7 +81216,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -78000,7 +81384,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -78186,7 +81570,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -79086,7 +82470,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -79254,7 +82638,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -79440,7 +82824,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -80340,7 +83724,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -80508,7 +83892,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -80694,7 +84078,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -81594,7 +84978,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -81762,7 +85146,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -81948,7 +85332,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -82848,7 +86232,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -83016,7 +86400,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -83202,7 +86586,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -84102,7 +87486,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -84270,7 +87654,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -84456,7 +87840,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -85356,7 +88740,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -85524,7 +88908,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -85710,7 +89094,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",

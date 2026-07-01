@@ -131,6 +131,7 @@ async function createConcurrencyFixture() {
     id: 'class-math',
     classGroupId: 'class',
     subjectId: 'math',
+    gradeLevelSubjectId: 'gls-math',
   })
 
   const session = await saveSession(app, {

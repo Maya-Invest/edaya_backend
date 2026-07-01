@@ -18,6 +18,8 @@ import type {
   ExtracurricularActivity,
   Fee,
   GradeLevel,
+  GradeLevelSubject,
+  GradeLevelSubjectMatter,
   GradeScale,
   Guardian,
   GuardianStudentLink,
@@ -81,6 +83,8 @@ import {
   Fee as FeeCtor,
   FeeStatus,
   GradeLevel as GradeLevelCtor,
+  GradeLevelSubject as GradeLevelSubjectCtor,
+  GradeLevelSubjectMatter as GradeLevelSubjectMatterCtor,
   GradeScale as GradeScaleCtor,
   Guardian as GuardianCtor,
   GuardianStudentLink as GuardianStudentLinkCtor,
@@ -207,6 +211,8 @@ export interface EntityStores {
   messageDeliveries: PostgresStore<MessageDelivery>
   subjects: PostgresStore<Subject>
   subjectMatters: PostgresStore<SubjectMatter>
+  gradeLevelSubjects: PostgresStore<GradeLevelSubject>
+  gradeLevelSubjectMatters: PostgresStore<GradeLevelSubjectMatter>
   classGroups: PostgresStore<ClassGroup>
   classSubjects: PostgresStore<ClassSubject>
   classSubjectMatters: PostgresStore<ClassSubjectMatter>
@@ -308,6 +314,8 @@ export function createEntityStores(db: any): EntityStores {
         createdBySubjectId: entity.createdBySubjectId ?? null,
         serviceElevated: entity.serviceElevated,
         isActive: entity.isActive,
+        onboardingWizardCompletedAt: entity.onboardingWizardCompletedAt ?? null,
+        onboardingMaxReachedStep: entity.onboardingMaxReachedStep ?? null,
         createdAt: entity.createdAt,
       }),
       row => new StaffMemberCtor({
@@ -325,6 +333,8 @@ export function createEntityStores(db: any): EntityStores {
         createdBySubjectId: row.createdBySubjectId,
         serviceElevated: row.serviceElevated ?? false,
         isActive: row.isActive,
+        onboardingWizardCompletedAt: row.onboardingWizardCompletedAt,
+        onboardingMaxReachedStep: row.onboardingMaxReachedStep,
         createdAt: row.createdAt,
       }),
     ),
@@ -625,6 +635,29 @@ export function createEntityStores(db: any): EntityStores {
       }),
     ),
 
+    gradeLevelSubjects: customStore(
+      db,
+      schema.gradeLevelSubjects,
+      (entity: GradeLevelSubject) => ({
+        id: entity.id,
+        gradeLevelId: entity.gradeLevelId,
+        academicYearId: entity.academicYearId,
+        subjectId: entity.subjectId,
+        coefficient: entity.coefficient ?? null,
+        createdAt: entity.createdAt,
+      }),
+      row => new GradeLevelSubjectCtor({
+        id: row.id,
+        gradeLevelId: row.gradeLevelId,
+        academicYearId: row.academicYearId,
+        subjectId: row.subjectId,
+        coefficient: row.coefficient,
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    gradeLevelSubjectMatters: defaultStore(db, schema.gradeLevelSubjectMatters, GradeLevelSubjectMatterCtor),
+
     classGroups: defaultStore(db, schema.classGroups, ClassGroupCtor),
 
     classSubjects: customStore(
@@ -634,6 +667,7 @@ export function createEntityStores(db: any): EntityStores {
         id: entity.id,
         classGroupId: entity.classGroupId,
         subjectId: entity.subjectId,
+        gradeLevelSubjectId: entity.gradeLevelSubjectId ?? null,
         coefficient: entity.coefficient ?? null,
         completedPercentage: entity.completedPercentage,
         createdAt: entity.createdAt,
@@ -642,6 +676,7 @@ export function createEntityStores(db: any): EntityStores {
         id: row.id,
         classGroupId: row.classGroupId,
         subjectId: row.subjectId,
+        gradeLevelSubjectId: row.gradeLevelSubjectId,
         coefficient: row.coefficient,
         completedPercentage: row.completedPercentage,
         createdAt: row.createdAt,

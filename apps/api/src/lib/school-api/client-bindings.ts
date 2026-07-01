@@ -29,6 +29,17 @@ const manualClientRoutes: Pick<
       requestSchemaName: "OnboardingApplyStructureTemplateRequest",
       responseSchemaName: "OnboardingApplyStructureTemplateResponse",
     },
+    accountStatus: {
+      method: "GET",
+      path: "onboarding/account-status",
+      responseSchemaName: "OnboardingAccountStatusResponse",
+    },
+    completeWizard: {
+      method: "POST",
+      path: "onboarding/complete-wizard",
+      requestSchemaName: "OnboardingCompleteWizardRequest",
+      responseSchemaName: "OnboardingAccountStatusResponse",
+    },
     inviteStaffMembers: {
       method: "POST",
       path: "onboarding/invite-staff-members",

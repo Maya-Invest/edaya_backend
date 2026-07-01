@@ -133,6 +133,16 @@ export const clientBindings = {
         "schemaName": "SubjectMatter",
         "allowDirectSave": true
       },
+      "gradeLevelSubjects": {
+        "publicName": "grade-level-subjects",
+        "schemaName": "GradeLevelSubject",
+        "allowDirectSave": false
+      },
+      "gradeLevelSubjectMatters": {
+        "publicName": "grade-level-subject-matters",
+        "schemaName": "GradeLevelSubjectMatter",
+        "allowDirectSave": false
+      },
       "classGroups": {
         "publicName": "class-groups",
         "schemaName": "ClassGroup",
@@ -141,7 +151,7 @@ export const clientBindings = {
       "classSubjects": {
         "publicName": "class-subjects",
         "schemaName": "ClassSubject",
-        "allowDirectSave": true
+        "allowDirectSave": false
       },
       "classSubjectMatters": {
         "publicName": "class-subject-matters",
@@ -469,6 +479,26 @@ export const clientBindings = {
         "publicName": "assign-matter-to-class-subject",
         "requestSchemaName": "AssignMatterToClassSubjectCommand",
         "responseSchemaName": "ClassSubjectMatter"
+      },
+      "offerSubjectToGradeLevel": {
+        "publicName": "offer-subject-to-grade-level",
+        "requestSchemaName": "OfferSubjectToGradeLevelCommand",
+        "responseSchemaName": "GradeLevelSubject"
+      },
+      "removeSubjectFromGradeLevel": {
+        "publicName": "remove-subject-from-grade-level",
+        "requestSchemaName": "RemoveSubjectFromGradeLevelCommand",
+        "responseSchemaName": "CommandMessageResponse"
+      },
+      "updateGradeLevelSubject": {
+        "publicName": "update-grade-level-subject",
+        "requestSchemaName": "UpdateGradeLevelSubjectCommand",
+        "responseSchemaName": "GradeLevelSubject"
+      },
+      "assignMatterToGradeLevelSubject": {
+        "publicName": "assign-matter-to-grade-level-subject",
+        "requestSchemaName": "AssignMatterToGradeLevelSubjectCommand",
+        "responseSchemaName": "GradeLevelSubjectMatter"
       },
       "recordSessionProgress": {
         "publicName": "record-session-progress",

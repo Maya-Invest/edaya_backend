@@ -22,6 +22,8 @@ import type {
   ExtracurricularActivity,
   Fee,
   GradeLevel,
+  GradeLevelSubject,
+  GradeLevelSubjectMatter,
   GradeScale,
   Guardian,
   GuardianStudentLink,
@@ -262,6 +264,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const staffRoleAssignments = createStore<StaffRoleAssignment>(transactionParticipants)
   const subjects = createStore<Subject>(transactionParticipants)
   const subjectMatters = createStore<SubjectMatter>(transactionParticipants)
+  const gradeLevelSubjects = createStore<GradeLevelSubject>(transactionParticipants)
+  const gradeLevelSubjectMatters = createStore<GradeLevelSubjectMatter>(transactionParticipants)
   const classSubjects = createStore<ClassSubject>(transactionParticipants)
   const classSubjectMatters = createStore<ClassSubjectMatter>(transactionParticipants)
   const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
@@ -354,6 +358,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     // academics
     subjects,
     subjectMatters,
+    gradeLevelSubjects,
+    gradeLevelSubjectMatters,
     classGroups,
     classSubjects,
     classSubjectMatters: {

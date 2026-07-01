@@ -23,6 +23,23 @@ export interface SubjectMatterSeedRecord {
   estimatedHours?: number
 }
 
+export interface GradeLevelSubjectSeedRecord {
+  id: string
+  gradeLevelId: string
+  academicYearId: string
+  subjectId: string
+  coefficient?: number
+  classSubjectIdsByClassGroupId?: Record<string, string>
+}
+
+export interface GradeLevelSubjectMatterSeedRecord {
+  id: string
+  gradeLevelSubjectId: string
+  subjectMatterId: string
+  classSubjectMatterIdsByClassGroupId?: Record<string, string>
+}
+
+/** @deprecated Internal seed compatibility only. */
 export interface ClassSubjectSeedRecord {
   id: string
   classGroupId: string
@@ -30,6 +47,7 @@ export interface ClassSubjectSeedRecord {
   coefficient?: number
 }
 
+/** @deprecated Internal seed compatibility only. */
 export interface ClassSubjectMatterSeedRecord {
   id: string
   classSubjectId: string
@@ -41,6 +59,6 @@ export interface ClassSubjectMatterSeedRecord {
 export interface CurriculumSeedPort {
   saveSubject: (record: SubjectSeedRecord) => Promise<void>
   saveSubjectMatter: (record: SubjectMatterSeedRecord) => Promise<void>
-  offerSubjectToClass: (record: ClassSubjectSeedRecord) => Promise<void>
-  assignMatterToClassSubject: (record: ClassSubjectMatterSeedRecord) => Promise<void>
+  offerSubjectToGradeLevel: (record: GradeLevelSubjectSeedRecord) => Promise<void>
+  assignMatterToGradeLevelSubject: (record: GradeLevelSubjectMatterSeedRecord) => Promise<void>
 }

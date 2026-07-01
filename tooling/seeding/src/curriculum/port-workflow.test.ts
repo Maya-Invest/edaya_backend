@@ -1,14 +1,14 @@
 import type {
-  ClassSubjectMatterSeedRecord,
-  ClassSubjectSeedRecord,
   CurriculumSeedPort,
+  GradeLevelSubjectMatterSeedRecord,
+  GradeLevelSubjectSeedRecord,
   SubjectMatterSeedRecord,
   SubjectSeedRecord,
 } from './port'
-import { ClassSubjectMatterStatus, SubjectCategory, SubjectColor } from '@edaya/core'
+import { SubjectCategory, SubjectColor } from '@edaya/core'
 import {
-  SEED_CLASS_SUBJECT_MATTERS,
-  SEED_CLASS_SUBJECTS,
+  SEED_GRADE_LEVEL_SUBJECT_MATTERS,
+  SEED_GRADE_LEVEL_SUBJECTS,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
 } from '@edaya/dev-fixtures'
@@ -16,11 +16,11 @@ import { describe, expect, test } from 'bun:test'
 import { seedDevCurriculum } from './workflow'
 
 describe('curriculum seed port workflow', () => {
-  test('seeds validated subject and class curriculum records', async () => {
+  test('seeds validated subject and grade-level curriculum records', async () => {
     const subjects: SubjectSeedRecord[] = []
     const matters: SubjectMatterSeedRecord[] = []
-    const offerings: ClassSubjectSeedRecord[] = []
-    const assignments: ClassSubjectMatterSeedRecord[] = []
+    const offerings: GradeLevelSubjectSeedRecord[] = []
+    const assignments: GradeLevelSubjectMatterSeedRecord[] = []
     const port: CurriculumSeedPort = {
       saveSubject: async (record) => {
         subjects.push(record)
@@ -28,10 +28,10 @@ describe('curriculum seed port workflow', () => {
       saveSubjectMatter: async (record) => {
         matters.push(record)
       },
-      offerSubjectToClass: async (record) => {
+      offerSubjectToGradeLevel: async (record) => {
         offerings.push(record)
       },
-      assignMatterToClassSubject: async (record) => {
+      assignMatterToGradeLevelSubject: async (record) => {
         assignments.push(record)
       },
     }
@@ -46,11 +46,7 @@ describe('curriculum seed port workflow', () => {
     expect(Object.values(SubjectCategory)).toContain(firstSubject.category)
     expect(Object.values(SubjectColor)).toContain(firstSubject.color)
     expect(matters).toHaveLength(SEED_SUBJECT_MATTERS.length)
-    expect(offerings).toHaveLength(SEED_CLASS_SUBJECTS.length)
-    expect(assignments).toHaveLength(SEED_CLASS_SUBJECT_MATTERS.length)
-    expect(assignments.every(record =>
-      record.status === ClassSubjectMatterStatus.NotStarted
-      && record.completedPercentage === 0,
-    )).toBe(true)
+    expect(offerings).toHaveLength(SEED_GRADE_LEVEL_SUBJECTS.length)
+    expect(assignments).toHaveLength(SEED_GRADE_LEVEL_SUBJECT_MATTERS.length)
   })
 })

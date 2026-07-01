@@ -81,6 +81,8 @@ export const staffMemberBaseSchema = z.object({
   createdBySubjectId: z.string().trim().min(1, 'createdBySubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   serviceElevated: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  onboardingWizardCompletedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  onboardingMaxReachedStep: z.number().int().min(1).max(4).nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -116,6 +118,8 @@ export class StaffMember {
   get createdBySubjectId() { return this.data.createdBySubjectId }
   get serviceElevated() { return this.data.serviceElevated }
   get isActive() { return this.data.isActive }
+  get onboardingWizardCompletedAt() { return this.data.onboardingWizardCompletedAt }
+  get onboardingMaxReachedStep() { return this.data.onboardingMaxReachedStep }
   get createdAt() { return this.data.createdAt }
 
   get fullName(): string {

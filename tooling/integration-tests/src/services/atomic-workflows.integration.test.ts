@@ -63,6 +63,7 @@ describeIntegration('atomic workflow safeguards', () => {
       id: 'class-math',
       classGroupId: 'class',
       subjectId: 'math',
+      gradeLevelSubjectId: 'gls-math',
     })
     await app.baseService.entities.subjectMatters.save(
       new SubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }),

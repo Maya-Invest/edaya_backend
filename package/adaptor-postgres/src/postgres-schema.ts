@@ -76,6 +76,8 @@ export const staffMembers = pgTable('staff_members', {
   createdBySubjectId: text('created_by_subject_id'),
   serviceElevated: boolean('service_elevated').notNull().default(false),
   isActive: boolean('is_active').notNull(),
+  onboardingWizardCompletedAt: timestamp('onboarding_wizard_completed_at', { mode: 'date' }),
+  onboardingMaxReachedStep: integer('onboarding_max_reached_step'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('staff_members', table))
 
@@ -393,11 +395,28 @@ export const classGroups = pgTable('class_groups', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('class_groups', table))
 
+export const gradeLevelSubjects = pgTable('grade_level_subjects', {
+  id: text('id').primaryKey(),
+  gradeLevelId: text('grade_level_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  subjectId: text('subject_id').notNull(),
+  coefficient: integer('coefficient'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('grade_level_subjects', table))
+
+export const gradeLevelSubjectMatters = pgTable('grade_level_subject_matters', {
+  id: text('id').primaryKey(),
+  gradeLevelSubjectId: text('grade_level_subject_id').notNull(),
+  subjectMatterId: text('subject_matter_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('grade_level_subject_matters', table))
+
 // 24. Class Subject Table
 export const classSubjects = pgTable('class_subjects', {
   id: text('id').primaryKey(),
   classGroupId: text('class_group_id').notNull(),
   subjectId: text('subject_id').notNull(),
+  gradeLevelSubjectId: text('grade_level_subject_id'),
   coefficient: integer('coefficient'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),

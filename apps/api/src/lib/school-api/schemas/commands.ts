@@ -24,6 +24,8 @@ import {
   EnrollmentEndReason,
   feeSchema,
   gradeLevelSchema,
+  gradeLevelSubjectMatterSchema,
+  gradeLevelSubjectSchema,
   gradeScaleSchema,
   guardianContactMethodSchema,
   guardianSchema,
@@ -379,9 +381,31 @@ export const offerSubjectToClassCommandSchema = objectFromSchema(classSubjectSch
   .omit({ completedPercentage: true })
   .openapi("OfferSubjectToClassCommand");
 
+export const offerSubjectToGradeLevelCommandSchema = objectFromSchema(gradeLevelSubjectSchema)
+  .extend({
+    classSubjectIdsByClassGroupId: z.record(field.id(), field.id()).optional(),
+    classSubjectMatterIdsByClassGroupId: z.record(field.id(), field.id()).optional(),
+  })
+  .openapi("OfferSubjectToGradeLevelCommand");
+
+export const removeSubjectFromGradeLevelCommandSchema = z.object({
+  gradeLevelSubjectId: field.id(),
+}).openapi("RemoveSubjectFromGradeLevelCommand");
+
+export const updateGradeLevelSubjectCommandSchema = z.object({
+  gradeLevelSubjectId: field.id(),
+  coefficient: z.number().positive().optional(),
+}).openapi("UpdateGradeLevelSubjectCommand");
+
 export const assignMatterToClassSubjectCommandSchema = objectFromSchema(classSubjectMatterSchema)
   .omit({ status: true, completedPercentage: true, updatedByStaffId: true, startedAt: true, completedAt: true })
   .openapi("AssignMatterToClassSubjectCommand");
+
+export const assignMatterToGradeLevelSubjectCommandSchema = objectFromSchema(gradeLevelSubjectMatterSchema)
+  .extend({
+    classSubjectMatterIdsByClassGroupId: z.record(field.id(), field.id()).optional(),
+  })
+  .openapi("AssignMatterToGradeLevelSubjectCommand");
 
 export const recordSessionProgressCommandSchema = objectFromSchema(classSubjectProgressSchema)
   .omit({ recordedByStaffId: true })

@@ -184,6 +184,7 @@ describeIntegration('tenant boundary safeguards', () => {
       id: 'class-subject-a',
       classGroupId: 'class-a',
       subjectId: 'subject-a',
+      gradeLevelSubjectId: 'gls-subject-a',
     })
     await createClassGroup(schoolBApp, {
       id: 'class-b',
@@ -422,6 +423,7 @@ describeIntegration('tenant boundary safeguards', () => {
       id: 'class-subject-b',
       classGroupId: 'class-b',
       subjectId: 'subject-b',
+      gradeLevelSubjectId: 'gls-subject-b',
     })
     await saveAssessment(schoolBApp, {
       id: 'assessment-b',

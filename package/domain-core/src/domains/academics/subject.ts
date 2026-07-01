@@ -23,6 +23,7 @@ export const subjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: z.string().trim().min(1, 'shortName must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   defaultCoefficient: z.number().positive('defaultCoefficient must be a finite, positive number').nullable().optional().transform(v => v === null ? undefined : v),
   category: z.nativeEnum(SubjectCategory).default(SubjectCategory.Scientific),
@@ -50,6 +51,8 @@ export class Subject {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName }
+  get displayShortName() { return this.data.shortName ?? this.data.name }
   get code() { return this.data.code }
   get defaultCoefficient() { return this.data.defaultCoefficient }
   get category() { return this.data.category }
@@ -61,6 +64,7 @@ export class Subject {
       id: this.id,
       schoolId: this.schoolId,
       name: overrides.name ?? this.name,
+      shortName: overrides.shortName !== undefined ? overrides.shortName : this.shortName,
       code: overrides.code !== undefined ? overrides.code : this.code,
       defaultCoefficient: overrides.defaultCoefficient !== undefined ? overrides.defaultCoefficient : this.defaultCoefficient,
       category: overrides.category ?? this.category,

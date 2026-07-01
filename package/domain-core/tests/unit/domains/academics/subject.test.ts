@@ -6,20 +6,24 @@ describe('Subject entity', () => {
     const subject = new Subject({
       id: 'sub1',
       schoolId: 'school1',
-      name: 'Math',
+      name: 'Math — Grade 6',
+      shortName: 'Math',
       code: 'MATH101',
       defaultCoefficient: 2,
     })
 
     const updated = subject.copyWith({
-      name: 'Advanced Math',
+      name: 'Advanced Math — Grade 10',
+      shortName: 'Advanced Math',
       code: 'MATH201',
       defaultCoefficient: 3,
     })
 
     expect(updated.id).toBe('sub1')
     expect(updated.schoolId).toBe('school1')
-    expect(updated.name).toBe('Advanced Math')
+    expect(updated.name).toBe('Advanced Math — Grade 10')
+    expect(updated.shortName).toBe('Advanced Math')
+    expect(updated.displayShortName).toBe('Advanced Math')
     expect(updated.code).toBe('MATH201')
     expect(updated.defaultCoefficient).toBe(3)
     expect(updated.createdAt).toEqual(subject.createdAt)

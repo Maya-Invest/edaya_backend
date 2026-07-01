@@ -1,12 +1,13 @@
 import type { CurriculumSeedPort } from './port'
 import {
-  ClassSubjectMatterStatus,
   SubjectCategory,
   SubjectColor,
 } from '@edaya/core'
 import {
-  SEED_CLASS_SUBJECT_MATTERS,
-  SEED_CLASS_SUBJECTS,
+  SEED_CLASS_SUBJECT_IDS_BY_GRADE_LEVEL_SUBJECT,
+  SEED_CLASS_SUBJECT_MATTER_IDS_BY_GRADE_LEVEL_MATTER,
+  SEED_GRADE_LEVEL_SUBJECT_MATTERS,
+  SEED_GRADE_LEVEL_SUBJECTS,
   SEED_SCHOOL_ID,
   SEED_SUBJECT_CATALOG,
   SEED_SUBJECT_MATTERS,
@@ -60,15 +61,17 @@ export async function seedDevCurriculum(port: CurriculumSeedPort): Promise<void>
     await port.saveSubjectMatter({ ...matter })
   }
 
-  for (const offering of SEED_CLASS_SUBJECTS) {
-    await port.offerSubjectToClass({ ...offering })
+  for (const offering of SEED_GRADE_LEVEL_SUBJECTS) {
+    await port.offerSubjectToGradeLevel({
+      ...offering,
+      classSubjectIdsByClassGroupId: SEED_CLASS_SUBJECT_IDS_BY_GRADE_LEVEL_SUBJECT[offering.id],
+    })
   }
 
-  for (const link of SEED_CLASS_SUBJECT_MATTERS) {
-    await port.assignMatterToClassSubject({
+  for (const link of SEED_GRADE_LEVEL_SUBJECT_MATTERS) {
+    await port.assignMatterToGradeLevelSubject({
       ...link,
-      status: ClassSubjectMatterStatus.NotStarted,
-      completedPercentage: 0,
+      classSubjectMatterIdsByClassGroupId: SEED_CLASS_SUBJECT_MATTER_IDS_BY_GRADE_LEVEL_MATTER[link.id],
     })
   }
 }

@@ -134,6 +134,7 @@ async function setupBaselineFixture() {
     id: 'class-subject-english',
     classGroupId: 'class-7a',
     subjectId: 'english-lit',
+    gradeLevelSubjectId: 'gls-english-lit',
   })
 
   await saveStaffAssignment(app, {

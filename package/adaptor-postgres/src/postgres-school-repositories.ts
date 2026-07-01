@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, AccessRole, ActivityEnrollment, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, AttendanceRecord, CalendarEvent, ClassGroup, ClassLogbookEntry, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, ExtracurricularActivity, Fee, GradeLevel, GradeScale, Guardian, GuardianStudentLink, HomeworkAssignment, HomeworkSubmission, Incident, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, Session, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, AccessRole, ActivityEnrollment, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, AttendanceRecord, CalendarEvent, ClassGroup, ClassLogbookEntry, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, ExtracurricularActivity, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, HomeworkAssignment, HomeworkSubmission, Incident, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, Session, StaffAssignment, StaffMember, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
 import { buildSchoolOverview, DefaultAuthorizationRepository } from '@edaya/core'
@@ -40,6 +40,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly messageDeliveries: PostgresStore<MessageDelivery>
   public readonly subjects: PostgresStore<Subject>
   public readonly subjectMatters: PostgresStore<SubjectMatter>
+  public readonly gradeLevelSubjects: PostgresStore<GradeLevelSubject>
+  public readonly gradeLevelSubjectMatters: PostgresStore<GradeLevelSubjectMatter>
   public readonly classGroups: PostgresStore<ClassGroup>
   public readonly classSubjects: PostgresStore<ClassSubject>
   public readonly classSubjectMatters: PostgresStore<ClassSubjectMatter>
@@ -94,6 +96,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.messageDeliveries = stores.messageDeliveries
     this.subjects = stores.subjects
     this.subjectMatters = stores.subjectMatters
+    this.gradeLevelSubjects = stores.gradeLevelSubjects
+    this.gradeLevelSubjectMatters = stores.gradeLevelSubjectMatters
     this.classGroups = stores.classGroups
     this.classSubjects = stores.classSubjects
     this.classSubjectMatters = stores.classSubjectMatters

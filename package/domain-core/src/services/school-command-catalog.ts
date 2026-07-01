@@ -25,6 +25,10 @@ export type SchoolCommandKey
     | 'acceptAccountInvitation'
     | 'offerSubjectToClass'
     | 'assignMatterToClassSubject'
+    | 'offerSubjectToGradeLevel'
+    | 'removeSubjectFromGradeLevel'
+    | 'updateGradeLevelSubject'
+    | 'assignMatterToGradeLevelSubject'
     | 'recordSessionProgress'
     | 'createGradeScale'
     | 'createReportCardDefinition'
@@ -123,6 +127,10 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'acceptAccountInvitation',
   'offerSubjectToClass',
   'assignMatterToClassSubject',
+  'offerSubjectToGradeLevel',
+  'removeSubjectFromGradeLevel',
+  'updateGradeLevelSubject',
+  'assignMatterToGradeLevelSubject',
   'recordSessionProgress',
   'createGradeScale',
   'createReportCardDefinition',

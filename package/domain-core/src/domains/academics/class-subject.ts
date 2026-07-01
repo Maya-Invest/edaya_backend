@@ -3,12 +3,14 @@ import type { EntityConfigFactory } from '../../shared'
 import { z } from 'zod'
 import { denyResourceAccess, Permission } from '../../authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
+import { BusinessRuleViolationError } from '../../shared/business-rule-error'
 import { parseDomain, zodDate } from '../utils'
 
 export const classSubjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
+  gradeLevelSubjectId: z.string().trim().min(1, 'gradeLevelSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   coefficient: z.number().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
   completedPercentage: z.preprocess(
     val => val === null ? undefined : val,
@@ -37,6 +39,7 @@ export class ClassSubject {
   get id() { return this.data.id }
   get classGroupId() { return this.data.classGroupId }
   get subjectId() { return this.data.subjectId }
+  get gradeLevelSubjectId() { return this.data.gradeLevelSubjectId ?? undefined }
   get coefficient() { return this.data.coefficient ?? undefined }
   get createdAt() { return this.data.createdAt }
   get completedPercentage() { return this.data.completedPercentage }
@@ -54,9 +57,17 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
     atomicExecution,
   })
 
+function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
+  return existing.classGroupId === classSubject.classGroupId
+    && existing.subjectId === classSubject.subjectId
+    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
+    && existing.coefficient === classSubject.coefficient
+    && classSubject.completedPercentage !== existing.completedPercentage
+}
+
 async function validateClassSubjectSave(
   classSubject: ClassSubject,
-  _existing: ClassSubject | undefined,
+  existing: ClassSubject | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
   if (!repositories.classGroups || !repositories.subjects) {
@@ -68,5 +79,14 @@ async function validateClassSubjectSave(
   ])
   if (!classGroup || !subject || subject.schoolId !== classGroup.schoolId) {
     denyResourceAccess()
+  }
+  if (existing && isProgressOnlyClassSubjectUpdate(existing, classSubject)) {
+    return
+  }
+  if (!classSubject.gradeLevelSubjectId) {
+    throw new BusinessRuleViolationError(
+      'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
+      'Class subjects are inherited from grade level allocation and cannot be created or modified directly',
+    )
   }
 }

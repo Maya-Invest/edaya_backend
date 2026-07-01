@@ -15,8 +15,12 @@ import {
   updateServiceAccountRoute,
 } from "@/routes/service-accounts.routes";
 import {
+  onboardingAccountStatusHandler,
+  onboardingAccountStatusRoute,
   onboardingApplyStructureTemplateHandler,
   onboardingApplyStructureTemplateRoute,
+  onboardingCompleteWizardHandler,
+  onboardingCompleteWizardRoute,
   onboardingInviteStaffMembersHandler,
   onboardingInviteStaffMembersRoute,
   onboardingRegisterSchoolHandler,
@@ -72,7 +76,9 @@ const router = createRouter()
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
+  .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
+  .openapi(onboardingCompleteWizardRoute, onboardingCompleteWizardHandler)
   .openapi(onboardingInviteStaffMembersRoute, onboardingInviteStaffMembersHandler)
   .openapi(createServiceAccountRoute, createServiceAccountHandler)
   .openapi(listServiceAccountsRoute, listServiceAccountsHandler)

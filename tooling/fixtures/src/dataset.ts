@@ -299,6 +299,92 @@ const SEED_SUBJECT_MATTER_BY_SUBJECT_ID: Record<string, string> = {
   'subj-phys': 'sm-phys',
 }
 
+const SEED_CLASS_GRADE_LEVEL_BY_ID = Object.fromEntries(
+  SEED_CLASSES.map(classGroup => [classGroup.id, classGroup.gradeLevelId]),
+) as Record<string, string>
+
+function gradeLevelSubjectSeedId(gradeLevelId: string, subjectId: string): string {
+  return `gls-${gradeLevelId}-${subjectId.replace('subj-', '')}`
+}
+
+function buildSeedGradeLevelCurriculum() {
+  const gradeLevelSubjects: Array<{
+    id: string
+    gradeLevelId: string
+    academicYearId: string
+    subjectId: string
+    coefficient?: number
+  }> = []
+  const classSubjectIdsByGradeLevelSubjectId: Record<string, Record<string, string>> = {}
+  const seenGradeLevelSubjects = new Set<string>()
+
+  for (const offering of SEED_CLASS_SUBJECTS) {
+    const gradeLevelId = SEED_CLASS_GRADE_LEVEL_BY_ID[offering.classGroupId]
+    if (!gradeLevelId) {
+      continue
+    }
+    const gradeLevelSubjectId = gradeLevelSubjectSeedId(gradeLevelId, offering.subjectId)
+    const key = gradeLevelSubjectId
+    if (!seenGradeLevelSubjects.has(key)) {
+      seenGradeLevelSubjects.add(key)
+      gradeLevelSubjects.push({
+        id: gradeLevelSubjectId,
+        gradeLevelId,
+        academicYearId: SEED_ACADEMIC_YEAR_ID,
+        subjectId: offering.subjectId,
+        coefficient: offering.coefficient,
+      })
+      classSubjectIdsByGradeLevelSubjectId[gradeLevelSubjectId] = {}
+    }
+    classSubjectIdsByGradeLevelSubjectId[gradeLevelSubjectId]![offering.classGroupId] = offering.id
+  }
+
+  const gradeLevelSubjectMatters = gradeLevelSubjects.flatMap((gradeLevelSubject) => {
+    const subjectMatterId = SEED_SUBJECT_MATTER_BY_SUBJECT_ID[gradeLevelSubject.subjectId]
+    if (!subjectMatterId) {
+      return []
+    }
+    const gradeLevelSubjectMatterId = `glsm-${gradeLevelSubject.id}`
+    return [{
+      id: gradeLevelSubjectMatterId,
+      gradeLevelSubjectId: gradeLevelSubject.id,
+      subjectMatterId,
+      classSubjectMatterIdsByClassGroupId: Object.fromEntries(
+        Object.entries(classSubjectIdsByGradeLevelSubjectId[gradeLevelSubject.id] ?? {}).map(([classGroupId, classSubjectId]) => [
+          classGroupId,
+          `csm-${classSubjectId}`,
+        ]),
+      ),
+    }]
+  })
+
+  return {
+    gradeLevelSubjects,
+    classSubjectIdsByGradeLevelSubjectId,
+    gradeLevelSubjectMatters,
+  }
+}
+
+const seedGradeLevelCurriculum = buildSeedGradeLevelCurriculum()
+
+/** Canonical grade-level subject allocation used by dev seeding. */
+export const SEED_GRADE_LEVEL_SUBJECTS = seedGradeLevelCurriculum.gradeLevelSubjects
+
+export const SEED_CLASS_SUBJECT_IDS_BY_GRADE_LEVEL_SUBJECT = seedGradeLevelCurriculum.classSubjectIdsByGradeLevelSubjectId
+
+/** Programme chapters linked at grade level and mirrored to each class. */
+export const SEED_GRADE_LEVEL_SUBJECT_MATTERS = seedGradeLevelCurriculum.gradeLevelSubjectMatters.map(({
+  classSubjectMatterIdsByClassGroupId: _ignored,
+  ...matter
+}) => matter)
+
+export const SEED_CLASS_SUBJECT_MATTER_IDS_BY_GRADE_LEVEL_MATTER = Object.fromEntries(
+  seedGradeLevelCurriculum.gradeLevelSubjectMatters.map(matter => [
+    matter.id,
+    matter.classSubjectMatterIdsByClassGroupId,
+  ]),
+)
+
 /** Links programme matters to class offerings for teaching progress tracking. */
 export const SEED_CLASS_SUBJECT_MATTERS = SEED_CLASS_SUBJECTS.map(offering => ({
   id: `csm-${offering.id}`,
