@@ -1,4 +1,4 @@
-import { AttachmentOwnerKind, AttachmentStatus } from '../domains/school/attachment'
+import { AttachmentOwnerKind, AttachmentStatus } from '../../domain/school/attachment'
 
 const PUBLIC_INLINE_OWNER_KINDS = new Set<AttachmentOwnerKind>([
   AttachmentOwnerKind.Staff,

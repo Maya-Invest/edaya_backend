@@ -1,16 +1,16 @@
-import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput } from '../../domains'
+import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
+import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
 import {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectMatterStatus,
   ClassSubjectProgress,
-} from '../../domains'
-import { roundTo2 } from '../../domains/utils'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../../domain'
+import { roundTo2 } from '../../domain/shared/utils'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import {
   removeMirroredClassSubjects,

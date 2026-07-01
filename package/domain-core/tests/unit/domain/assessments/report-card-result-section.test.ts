@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { ReportCardDefinitionSectionKind } from '../../../../src/domains/assessments/report-card-definition-section'
-import { ReportCardResultSection } from '../../../../src/domains/assessments/report-card-result-section'
+import { ReportCardDefinitionSectionKind } from '../../../../src/domain/assessments/report-card-definition-section'
+import { ReportCardResultSection } from '../../../../src/domain/assessments/report-card-result-section'
 
 describe('ReportCardResultSection entity', () => {
   test('instantiates successfully as a group section', () => {

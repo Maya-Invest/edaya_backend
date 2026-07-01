@@ -3,7 +3,7 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,
   createContext,

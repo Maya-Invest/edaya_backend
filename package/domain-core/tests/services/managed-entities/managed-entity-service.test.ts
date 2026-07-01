@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '../../../src/authorization'
+import type { ActorMetadata } from '../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import type { TestEntity } from './managed-entity-test-context'
 import {
@@ -11,7 +11,7 @@ import { ManagedEntityService } from '../../../src'
 import {
   AuthorizationError,
   AuthorizationErrorCode,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import {
   actor,
   createRepository,

@@ -1,12 +1,12 @@
-import type { Session } from '../../domains'
+import type { Session } from '../../domain'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { zodTimeOfDay } from '../../value_object/time-of-day'
-import { refineTimeRangeStrictAfter } from '../../value_object/time-range'
-import { parseDomain, zodDate } from '../utils'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
+import { refineTimeRangeStrictAfter } from '../../domain/value-objects/time-range'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum DayOfWeek {
   Monday = 'monday',

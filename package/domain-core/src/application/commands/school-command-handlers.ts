@@ -1,4 +1,4 @@
-import type { SchoolCommandKey } from './school-command-catalog'
+import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
   AssignMatterToClassSubjectInput,
@@ -8,15 +8,15 @@ import type {
   RecordSessionProgressInput,
   RemoveSubjectFromGradeLevelInput,
   UpdateGradeLevelSubjectInput,
-} from './service-workflows/academics'
-import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from './service-workflows/access-control'
+} from '../workflows/academics'
+import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from '../workflows/access-control'
 import type {
   AcceptAccountInvitationInput,
   AccountInvitationServiceWorkflow,
   ResendAccountInvitationInput,
   RevokeAccountInvitationInput,
   SendAccountInvitationInput,
-} from './service-workflows/account-invitation'
+} from '../workflows/account-invitation'
 import type {
   AssessmentsServiceWorkflow,
   CompleteAssessmentInput,
@@ -28,7 +28,7 @@ import type {
   ListClassSubjectAssessmentResultsForPeriodInput,
   PublishReportCardResultInput,
   RecordAssessmentResultInput,
-} from './service-workflows/assessments'
+} from '../workflows/assessments'
 import type {
   AddStudentInvolvementInput,
   ApplyDisciplinaryActionInput,
@@ -36,7 +36,7 @@ import type {
   RecordIncidentInput,
   ResolveIncidentInput,
   UpdateStudentDisciplinaryActionStatusInput,
-} from './service-workflows/behavior'
+} from '../workflows/behavior'
 import type {
   AddAnnouncementTargetInput,
   ApplyDeliveryEventInput,
@@ -49,7 +49,7 @@ import type {
   RegisterPushDeviceInput,
   UnregisterPushDeviceInput,
   UpdateNotificationContactInput,
-} from './service-workflows/communications'
+} from '../workflows/communications'
 import type {
   AdjustStudentFeeInput,
   AssignFeeToStudentInput,
@@ -58,12 +58,12 @@ import type {
   FinanceServiceWorkflow,
   RecordPaymentInput,
   UpdatePaymentStatusInput,
-} from './service-workflows/finance'
+} from '../workflows/finance'
 import type {
   NotificationTemplatesServiceWorkflow,
   ResetSchoolNotificationTemplatesInput,
   UpdateSchoolNotificationTemplatesInput,
-} from './service-workflows/notification-templates'
+} from '../workflows/notification-templates'
 import type {
   CreateCalendarEventInput,
   CreateScheduleInput,
@@ -75,7 +75,7 @@ import type {
   RecordSessionAttendanceInput,
   ReviewAttendanceJustificationInput,
   SchedulingServiceWorkflow,
-} from './service-workflows/scheduling'
+} from '../workflows/scheduling'
 import type {
   ActivateAcademicYearInput,
   AssignResourceInput,
@@ -94,7 +94,7 @@ import type {
   UpdateSchoolConfigurationInput,
   UpdateStaffMemberProfileInput,
   UpdateStaffMemberStatusInput,
-} from './service-workflows/setup'
+} from '../workflows/setup'
 import type {
   CloseEnrollmentInput,
   CreateStudentNoteInput,
@@ -113,7 +113,7 @@ import type {
   UpdateStudentProfileInput,
   UpdateStudentStatusInput,
   UpsertStudentHealthProfileInput,
-} from './service-workflows/student'
+} from '../workflows/student'
 
 export interface SchoolWorkflowHandlers {
   readonly setup: SetupServiceWorkflow

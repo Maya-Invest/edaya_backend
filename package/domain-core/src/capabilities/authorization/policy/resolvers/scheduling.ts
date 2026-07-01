@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
 import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'

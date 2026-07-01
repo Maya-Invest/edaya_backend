@@ -6,11 +6,11 @@ import {
   GuardianStudentLink,
   MessageDeliveryRecipientKind,
   StaffMember,
-} from '../../src/domains'
+} from '../../src/domain'
 import {
   buildGuardianRecipientProfile,
   buildStaffRecipientProfile,
-} from '../../src/notifications/build-recipient-profile'
+} from '../../src/capabilities/notifications/delivery/build-recipient-profile'
 
 describe('build recipient profiles', () => {
   test('buildStaffRecipientProfile returns undefined without subjectId', () => {

@@ -1,4 +1,4 @@
-import type { PutObjectInput } from '../ports/file-storage'
+import type { PutObjectInput } from '../../ports/gateways/file-storage'
 
 export async function readStorageBody(body: PutObjectInput['body']): Promise<Uint8Array> {
   if (body instanceof Uint8Array) {

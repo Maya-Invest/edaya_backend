@@ -7,7 +7,7 @@ import {
   createServiceStaffActorMetadata,
   createStaffActorMetadata,
   Permission,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')

@@ -1,6 +1,6 @@
 import type { SchoolRepositories } from '../../src'
 import { describe, expect, test } from 'bun:test'
-import { pickWorkflowRepositories, WORKFLOW_REPOSITORY_KEYS } from '../../src/services/workflow-repository-catalog'
+import { pickWorkflowRepositories, WORKFLOW_REPOSITORY_KEYS } from '../../src/application/runtime/workflow-repository-catalog'
 
 describe('workflow repository catalog', () => {
   test('documents repository keys for workflows with narrow direct repository usage', () => {

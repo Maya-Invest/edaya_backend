@@ -1,4 +1,4 @@
-import type { AccountInvitationKind } from '../domains/access/account-invitation'
+import type { AccountInvitationKind } from '../../domain/access/account-invitation'
 
 export interface InvitationDeliveryInput {
   invitationId: string

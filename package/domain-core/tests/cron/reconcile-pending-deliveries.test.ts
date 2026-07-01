@@ -1,9 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test'
-import { createRepositoryAuthorizationPolicy } from '../../src/authorization'
-import { reconcilePendingDeliveries } from '../../src/cron/jobs/reconcile-pending-deliveries'
-import { MessageDelivery, MessageDeliveryStatus } from '../../src/domains'
-import { noOpNotificationGateway, RecordingNotificationGateway } from '../../src/notifications'
-import { SchoolApplication } from '../../src/services'
+import { createRepositoryAuthorizationPolicy } from '../../src/capabilities/authorization'
+import { reconcilePendingDeliveries } from '../../src/capabilities/scheduling-jobs/jobs/reconcile-pending-deliveries'
+import { MessageDelivery, MessageDeliveryStatus } from '../../src/domain'
+import { noOpNotificationGateway, RecordingNotificationGateway } from '../../src/adapters'
+import { SchoolApplication } from '../../src/application'
 import { testFileStorage } from '../support/test-file-storage'
 
 describe('reconcilePendingDeliveries', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { GuardianContactMethod, GuardianContactMethodType } from '../../../../src/domains/students/guardian-contact-method'
+import { GuardianContactMethod, GuardianContactMethodType } from '../../../../src/domain/students/guardian-contact-method'
 
 describe('GuardianContactMethod entity', () => {
   test('instantiates successfully with valid inputs', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { StaffAssignment } from '../../../../src/domains/school/staff-assignment'
+import { StaffAssignment } from '../../../../src/domain/school/staff-assignment'
 
 describe('StaffAssignment entity timeline and responsibility integrity', () => {
   const baseArgs = {

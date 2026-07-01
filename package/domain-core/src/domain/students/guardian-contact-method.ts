@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseDomain } from '../utils'
+import { parseDomain } from '../shared/utils'
 
 export enum GuardianContactMethodType {
   Phone = 'phone',

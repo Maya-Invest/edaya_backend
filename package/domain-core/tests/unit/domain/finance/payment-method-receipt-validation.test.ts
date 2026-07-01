@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { Payment, PaymentMethod, PaymentStatus } from '../../../../src/domains/finances/payment'
+import { Payment, PaymentMethod, PaymentStatus } from '../../../../src/domain/finances/payment'
 
 describe('Payment entity method and receipt validation', () => {
   const defaultArgs = {

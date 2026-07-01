@@ -7,9 +7,9 @@ import {
   SubjectCategory,
   SubjectColor,
   SubjectMatter,
-} from '../../../src/domains'
-import { noOpNotificationGateway } from '../../../src/notifications'
-import { SchoolService } from '../../../src/services'
+} from '../../../src/domain'
+import { noOpNotificationGateway } from '../../../src/adapters'
+import { SchoolService } from '../../../src/application'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
@@ -34,10 +34,10 @@ describe('grade level subject inheritance', () => {
     const classGroups = new Map<string, ClassGroup>()
     const subjects = new Map<string, Subject>()
     const subjectMatters = new Map<string, SubjectMatter>()
-    const gradeLevelSubjects = new Map<string, import('../../../src/domains').GradeLevelSubject>()
-    const gradeLevelSubjectMatters = new Map<string, import('../../../src/domains').GradeLevelSubjectMatter>()
-    const classSubjects = new Map<string, import('../../../src/domains').ClassSubject>()
-    const classSubjectMatters = new Map<string, import('../../../src/domains').ClassSubjectMatter>()
+    const gradeLevelSubjects = new Map<string, import('../../../src/domain').GradeLevelSubject>()
+    const gradeLevelSubjectMatters = new Map<string, import('../../../src/domain').GradeLevelSubjectMatter>()
+    const classSubjects = new Map<string, import('../../../src/domain').ClassSubject>()
+    const classSubjectMatters = new Map<string, import('../../../src/domain').ClassSubjectMatter>()
 
     const repositories = {
       gradeLevels: {
@@ -72,7 +72,7 @@ describe('grade level subject inheritance', () => {
           [...gradeLevelSubjects.values()].filter(entry =>
             (!filter.gradeLevelId || entry.gradeLevelId === filter.gradeLevelId)
             && (!filter.academicYearId || entry.academicYearId === filter.academicYearId)),
-        save: async (entity: import('../../../src/domains').GradeLevelSubject) => {
+        save: async (entity: import('../../../src/domain').GradeLevelSubject) => {
           gradeLevelSubjects.set(entity.id, entity)
         },
       },
@@ -81,7 +81,7 @@ describe('grade level subject inheritance', () => {
         list: async (filter: { gradeLevelSubjectId?: string } = {}) =>
           [...gradeLevelSubjectMatters.values()].filter(entry =>
             !filter.gradeLevelSubjectId || entry.gradeLevelSubjectId === filter.gradeLevelSubjectId),
-        save: async (entity: import('../../../src/domains').GradeLevelSubjectMatter) => {
+        save: async (entity: import('../../../src/domain').GradeLevelSubjectMatter) => {
           gradeLevelSubjectMatters.set(entity.id, entity)
         },
         delete: async (id: string) => { gradeLevelSubjectMatters.delete(id) },
@@ -97,7 +97,7 @@ describe('grade level subject inheritance', () => {
           [...classSubjects.values()].filter(entry =>
             (!filter.gradeLevelSubjectId || entry.gradeLevelSubjectId === filter.gradeLevelSubjectId)
             && (!filter.classGroupId || entry.classGroupId === filter.classGroupId)),
-        save: async (entity: import('../../../src/domains').ClassSubject) => {
+        save: async (entity: import('../../../src/domain').ClassSubject) => {
           classSubjects.set(entity.id, entity)
         },
         delete: async (id: string) => { classSubjects.delete(id) },
@@ -110,7 +110,7 @@ describe('grade level subject inheritance', () => {
         list: async (filter: { classSubjectId?: string } = {}) =>
           [...classSubjectMatters.values()].filter(entry =>
             !filter.classSubjectId || entry.classSubjectId === filter.classSubjectId),
-        save: async (entity: import('../../../src/domains').ClassSubjectMatter) => {
+        save: async (entity: import('../../../src/domain').ClassSubjectMatter) => {
           classSubjectMatters.set(entity.id, entity)
         },
         delete: async (id: string) => { classSubjectMatters.delete(id) },
@@ -199,8 +199,8 @@ describe('grade level subject inheritance', () => {
     const gradeLevels = new Map<string, GradeLevel>()
     const classGroups = new Map<string, ClassGroup>()
     const subjects = new Map<string, Subject>()
-    const gradeLevelSubjects = new Map<string, import('../../../src/domains').GradeLevelSubject>()
-    const classSubjects = new Map<string, import('../../../src/domains').ClassSubject>()
+    const gradeLevelSubjects = new Map<string, import('../../../src/domain').GradeLevelSubject>()
+    const classSubjects = new Map<string, import('../../../src/domain').ClassSubject>()
 
     const repositories = {
       gradeLevels: {
@@ -235,7 +235,7 @@ describe('grade level subject inheritance', () => {
           [...gradeLevelSubjects.values()].filter(entry =>
             (!filter.gradeLevelId || entry.gradeLevelId === filter.gradeLevelId)
             && (!filter.academicYearId || entry.academicYearId === filter.academicYearId)),
-        save: async (entity: import('../../../src/domains').GradeLevelSubject) => {
+        save: async (entity: import('../../../src/domain').GradeLevelSubject) => {
           gradeLevelSubjects.set(entity.id, entity)
         },
       },
@@ -255,7 +255,7 @@ describe('grade level subject inheritance', () => {
         list: async (filter: { classGroupId?: string } = {}) =>
           [...classSubjects.values()].filter(entry =>
             !filter.classGroupId || entry.classGroupId === filter.classGroupId),
-        save: async (entity: import('../../../src/domains').ClassSubject) => {
+        save: async (entity: import('../../../src/domain').ClassSubject) => {
           classSubjects.set(entity.id, entity)
         },
         delete: async (id: string) => { classSubjects.delete(id) },

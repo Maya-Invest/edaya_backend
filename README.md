@@ -9,7 +9,7 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 ## Monorepo layout
 
 ```text
-maya_school_core/
+edaya_backend/
 ├── apps/
 │   ├── api/                              @edaya/api — Hono API (Node + Cloudflare Worker)
 │   └── cron/                             @edaya/cron — scheduled jobs (Node + Worker)
@@ -17,6 +17,7 @@ maya_school_core/
 │   ├── domain-core/                      @edaya/core — domain, services, ports
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
+│   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── generated-api-client/             @edaya/api-client — typed API SDK
 │   └── integration-migrations/           @edaya/integration-migrations — school + auth migrations
 └── tooling/
@@ -88,7 +89,7 @@ flowchart TB
 - `apps/api/src/http/` — Hono app, dependency injection middleware
 - `package/domain-core/src/` — domains, entities, authorization, services, ports
 
-More detail: [docs/api-folder-structure.md](./docs/api-folder-structure.md), [docs/api-runtimes.md](./docs/api-runtimes.md).
+More detail: [docs/reference/api-folder-structure.md](./docs/reference/api-folder-structure.md), [docs/reference/api-runtimes.md](./docs/reference/api-runtimes.md), [docs/reference/cross-repo-workflow.md](./docs/reference/cross-repo-workflow.md).
 
 ## Workspace packages
 

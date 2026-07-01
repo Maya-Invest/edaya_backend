@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { DomainValidationError } from '../../../src/domains/utils'
-import { StudentFeeSummary } from '../../../src/value_object/student-fee-summary'
+import { DomainValidationError } from '../../../src/domain/shared/utils'
+import { StudentFeeSummary } from '../../../src/domain/value-objects/student-fee-summary'
 
 describe('studentFeeSummary value object', () => {
   test('computes balanceDue from totals', () => {

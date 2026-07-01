@@ -3,9 +3,6 @@
     "neon-postgres": {
       "enabled": true
     },
-    "svelte": {
-      "enabled": true
-    },
     "cloudflare": {
       "enabled": true
     }

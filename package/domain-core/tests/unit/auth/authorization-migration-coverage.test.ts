@@ -26,7 +26,7 @@ async function readSourceUnder(paths: readonly string[]): Promise<Array<{ path: 
 }
 
 function authorizationConfigSource(source: { path: string, text: string }): string {
-  if (!source.path.startsWith('src/domains/'))
+  if (!source.path.startsWith('src/domain/'))
     return source.text
 
   const configStart = source.text.search(/^export const \w+Config\b/m)
@@ -36,9 +36,9 @@ function authorizationConfigSource(source: { path: string, text: string }): stri
 describe('authorization migration coverage', () => {
   test('entity configs and workflows do not reintroduce legacy action strings', async () => {
     const sources = await readSourceUnder([
-      'src/domains',
-      'src/services/service-workflows',
-      'src/shared/entity',
+      'src/domain',
+      'src/application/workflows',
+      'src/application/entities/entity-config',
     ])
     const legacyActionPattern = /['"`][a-z]+(?:_[a-z]+)*\.[a-z_]+['"`]/
     const offenders = sources
@@ -49,7 +49,7 @@ describe('authorization migration coverage', () => {
   })
 
   test('entity config authorization uses Permission enum values, not raw strings', async () => {
-    const sources = await readSourceUnder(['src/domains'])
+    const sources = await readSourceUnder(['src/domain'])
     const rawPermissionPattern = /\b(?:permissionAction|anyPermissionAction)\s*\([^,\n]*,\s*(?:\[[^\]\n]*['"`][A-Z][A-Z0-9_]+['"`]|['"`][A-Z][A-Z0-9_]+['"`])/
     const offenders = sources
       .filter(source => authorizationConfigSource(source).split('\n').some(line => rawPermissionPattern.test(line)))

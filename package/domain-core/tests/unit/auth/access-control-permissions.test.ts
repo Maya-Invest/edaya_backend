@@ -1,4 +1,4 @@
-import type { ActorMetadata, EffectiveGrants } from '../../../src/authorization'
+import type { ActorMetadata, EffectiveGrants } from '../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, test } from 'bun:test'
 import {
@@ -7,9 +7,9 @@ import {
   createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
   Permission,
-} from '../../../src/authorization'
-import { accessRoleConfig, staffRoleAssignmentConfig } from '../../../src/domains'
-import { noOpNotificationGateway } from '../../../src/notifications'
+} from '../../../src/capabilities/authorization'
+import { accessRoleConfig, staffRoleAssignmentConfig } from '../../../src/domain'
+import { noOpNotificationGateway } from '../../../src/adapters'
 
 function actorWithPermissions(permissions: readonly Permission[]): ActorMetadata {
   const grants: EffectiveGrants = {

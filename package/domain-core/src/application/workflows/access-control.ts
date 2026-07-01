@@ -1,11 +1,11 @@
-import type { Guardian, StaffMember, Student } from '../../domains'
+import type { Guardian, StaffMember, Student } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import type { AccessControlWorkflowRepositories } from '../workflow-repository-catalog'
-import { Permission } from '../../authorization'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { Permission } from '../../capabilities/authorization'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
-import { pickWorkflowRepositories } from '../workflow-repository-catalog'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface LinkActorSubjectInput {

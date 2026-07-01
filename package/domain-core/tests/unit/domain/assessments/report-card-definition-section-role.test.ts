@@ -3,7 +3,7 @@ import {
   ReportCardDefinitionSection,
   ReportCardDefinitionSectionKind,
   ReportCardDefinitionSectionRole,
-} from '../../../../src/domains/assessments/report-card-definition-section'
+} from '../../../../src/domain/assessments/report-card-definition-section'
 
 describe('ReportCardDefinitionSection role and coefficient', () => {
   test('persists role and coefficient on group sections', () => {

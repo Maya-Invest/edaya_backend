@@ -1,11 +1,11 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../shared'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireSchool } from '../../shared/require-school'
-import { parseDomain, roundTo2, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { requireSchool } from '../../application/require-school'
+import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
 export const gradeScaleRangeSchema = z.object({
   letter: z.string().trim().min(1, 'letter must not be blank'),

@@ -1,14 +1,12 @@
-import type { Assessment } from '../../src/domains'
+import type { Assessment } from '../../src/domain'
 import type { SchoolRepositories } from '../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
-import { createStaffActorMetadata } from '../../src/authorization'
-import { AssessmentKind, MessageDeliveryRecipientKind } from '../../src/domains'
-import {
-  RecordingNotificationGateway,
-  withNotificationPostSaveHook,
-} from '../../src/notifications'
-import { NotificationTemplateService } from '../../src/notifications/templates/notification-template-service'
-import { ManagedEntityService } from '../../src/services/managed-entity-service'
+import { createStaffActorMetadata } from '../../src/capabilities/authorization'
+import { AssessmentKind, MessageDeliveryRecipientKind } from '../../src/domain'
+import { withNotificationPostSaveHook } from '../../src/capabilities/notifications'
+import { RecordingNotificationGateway } from '../../src/adapters'
+import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
+import { ManagedEntityService } from '../../src/application/entities/managed-entity-service'
 import { createRepository } from '../services/managed-entities/managed-entity-test-context'
 import { effectiveGrantsForRoles } from '../support/effective-grants'
 

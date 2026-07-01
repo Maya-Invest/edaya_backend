@@ -5,7 +5,7 @@ import {
   generateApiKey,
   hashApiKey,
   parseBearerApiKey,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 
 describe('api key crypto', () => {
   test('generateApiKey returns prefixed key and stable hash', () => {

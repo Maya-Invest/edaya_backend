@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { AttachmentOwnerKind, AttachmentStatus } from '../../../src/domains/school/attachment'
-import { allowsPublicInlineAttachmentContent } from '../../../src/storage/attachment-inline-access'
-import { buildAttachmentContentUrl } from '../../../src/storage/build-attachment-content-url'
+import { AttachmentOwnerKind, AttachmentStatus } from '../../../src/domain/school/attachment'
+import { allowsPublicInlineAttachmentContent } from '../../../src/capabilities/files/attachment-inline-access'
+import { buildAttachmentContentUrl } from '../../../src/capabilities/files/build-attachment-content-url'
 
 describe('buildAttachmentContentUrl', () => {
   it('builds a stable content URL for an attachment', () => {

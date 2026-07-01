@@ -8,8 +8,8 @@ import {
   ProgressionDecision,
   StudentClassEnrollmentStatus,
   StudentStatus,
-} from '../../../src/domains'
-import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
+} from '../../../src/domain'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,
   createGuardianLinkContext,

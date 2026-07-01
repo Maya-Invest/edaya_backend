@@ -1,5 +1,5 @@
-import { AttachmentOwnerKind } from '../domains/school/attachment'
-import { BusinessRuleViolationError } from '../shared/business-rule-error'
+import { AttachmentOwnerKind } from '../../domain/school/attachment'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 
 const DEFAULT_MAX_BYTES = 10 * 1024 * 1024
 const PDF_MAX_BYTES = 25 * 1024 * 1024

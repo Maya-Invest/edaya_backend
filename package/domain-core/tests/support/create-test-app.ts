@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '../../src/authorization'
+import type { ActorMetadata } from '../../src/capabilities/authorization'
 import type {
   AcademicPeriod,
   AcademicYear,
@@ -54,18 +54,18 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../../src/domains'
+} from '../../src/domain'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import {
   ActorAssuranceLevel,
   createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
   DefaultAuthorizationRepository,
-} from '../../src/authorization'
-import { AccountInvitationStatus, StaffMember } from '../../src/domains'
-import { noOpNotificationGateway } from '../../src/notifications'
-import { buildSchoolOverview } from '../../src/queries/school-overview'
-import { SchoolApplication } from '../../src/services'
+} from '../../src/capabilities/authorization'
+import { AccountInvitationStatus, StaffMember } from '../../src/domain'
+import { noOpNotificationGateway } from '../../src/adapters'
+import { buildSchoolOverview } from '../../src/application/queries/school-overview'
+import { SchoolApplication } from '../../src/application'
 import { effectiveGrantsForRoles } from './effective-grants'
 import { matchesFilter } from './filter-matcher'
 import { testFileStorage } from './test-file-storage'

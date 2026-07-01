@@ -1,11 +1,11 @@
 import type { SchoolRepositories } from '../../ports'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { AttachmentOwnerKind } from '../../domains'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { AttachmentOwnerKind } from '../../domain'
+import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { parseDomain, zodDate } from '../shared/utils'
 import {
   GuardianContactMethod,
   guardianContactMethodSchema,

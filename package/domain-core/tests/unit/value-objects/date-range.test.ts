@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { DomainValidationError } from '../../../src/domains/utils'
-import { DateRange } from '../../../src/value_object/date-range'
+import { DomainValidationError } from '../../../src/domain/shared/utils'
+import { DateRange } from '../../../src/domain/value-objects/date-range'
 
 describe('dateRange value object', () => {
   const startDate = new Date('2026-09-01T00:00:00.000Z')

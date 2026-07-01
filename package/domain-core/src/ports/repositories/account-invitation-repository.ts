@@ -1,4 +1,4 @@
-import type { AccountInvitation, AccountInvitationKind } from '../domains/access/account-invitation'
+import type { AccountInvitation, AccountInvitationKind } from '../../domain/access/account-invitation'
 import type { BaseRepositoryInterface } from './base-repository'
 
 export interface SaveAccountInvitationOptions {

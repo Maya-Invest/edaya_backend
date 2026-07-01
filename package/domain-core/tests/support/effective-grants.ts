@@ -1,4 +1,4 @@
-import type { EffectiveGrants } from '../../src/authorization'
+import type { EffectiveGrants } from '../../src/capabilities/authorization'
 import {
   ACCOUNTANT_PERMISSIONS,
   ASSIGNMENT_SCOPED_PERMISSIONS,
@@ -7,8 +7,8 @@ import {
   Permission,
   STUDENT_PORTAL_PERMISSIONS,
   TEACHER_PERMISSIONS,
-} from '../../src/authorization'
-import { buildPortalScopeGrants } from '../../src/authorization/grants/portal-scope-grants'
+} from '../../src/capabilities/authorization'
+import { buildPortalScopeGrants } from '../../src/capabilities/authorization/grants/portal-scope-grants'
 
 export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'
 

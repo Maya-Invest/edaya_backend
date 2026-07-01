@@ -7,7 +7,7 @@ import {
   ActorAssuranceLevel,
   AuthorizationError,
   createStaffActorMetadata,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import {
   AcademicPeriod,
   AcademicPeriodType,
@@ -53,9 +53,9 @@ import {
   StudentDisciplinaryAction,
   StudentDisciplinaryActionStatus,
   StudentFee,
-} from '../../../src/domains'
-import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
-import { AttendanceSummary } from '../../../src/value_object/attendance-summary'
+} from '../../../src/domain'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
+import { AttendanceSummary } from '../../../src/domain/value-objects/attendance-summary'
 import { createTestApp } from '../../support/create-test-app'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'

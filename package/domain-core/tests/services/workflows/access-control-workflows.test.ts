@@ -1,7 +1,7 @@
 import type {
   BusinessRuleViolationError,
 } from '../../../src'
-import type { AuthorizationPolicy, EffectiveGrants } from '../../../src/authorization'
+import type { AuthorizationPolicy, EffectiveGrants } from '../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
@@ -16,7 +16,7 @@ import {
   Student,
   StudentStatus,
 } from '../../../src'
-import { SchoolService } from '../../../src/services'
+import { SchoolService } from '../../../src/application'
 import { testFileStorage } from '../../support/test-file-storage'
 
 function actorWithPermissions(permissions: readonly Permission[]) {

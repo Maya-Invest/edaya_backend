@@ -1,8 +1,8 @@
-import type { AttendanceRecord, Guardian } from '../../domains'
-import type { WorkflowNotificationContext } from '../workflow-notification-runner'
-import { AttendanceStatus, MessageDeliveryRecipientKind } from '../../domains'
-import { deliverNotification } from '../deliver-notification'
-import { uniqueNotificationRecipients } from '../recipient-utils'
+import type { AttendanceRecord, Guardian } from '../../../domain'
+import type { WorkflowNotificationContext } from '../delivery/workflow-notification-runner'
+import { AttendanceStatus, MessageDeliveryRecipientKind } from '../../../domain'
+import { deliverNotification } from '../delivery/deliver-notification'
+import { uniqueNotificationRecipients } from '../delivery/recipient-utils'
 import {
   formatNotificationDate,
   formatNotificationTime,

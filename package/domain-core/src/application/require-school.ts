@@ -1,6 +1,6 @@
-import type { School } from '../domains'
-import type { SchoolRepositories } from '../ports/school-repositories'
-import { BusinessRuleViolationError } from './business-rule-error'
+import type { School } from '../domain'
+import type { SchoolRepositories } from '../ports/repositories/school-repositories'
+import { BusinessRuleViolationError } from '../domain/shared/business-rule-error'
 
 /**
  * Fetches a school by ID and throws a descriptive error if it doesn't exist.

@@ -1,4 +1,4 @@
-import type { ClassGroup, GradeLevelSubject, GradeLevelSubjectMatter } from '../../domains'
+import type { ClassGroup, GradeLevelSubject, GradeLevelSubjectMatter } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
 import { randomUUID } from 'node:crypto'
 import {
@@ -7,7 +7,7 @@ import {
   ClassSubjectMatterStatus,
   GradeLevelSubject as GradeLevelSubjectEntity,
   GradeLevelSubjectMatter as GradeLevelSubjectMatterEntity,
-} from '../../domains'
+} from '../../domain'
 
 export interface SyncClassSubjectOptions {
   classSubjectId?: string

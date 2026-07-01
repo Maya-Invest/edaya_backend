@@ -1,13 +1,13 @@
-import type { Assessment } from '../../domains'
+import type { Assessment } from '../../../domain'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
-import { enqueueTemplatedNotification } from '../../notifications/templates/enqueue-templated-notification'
-import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
+import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
+import { enqueueTemplatedNotification } from '../../../capabilities/notifications/templates/enqueue-templated-notification'
+import { resolveSchoolName } from '../../../capabilities/notifications/templates/resolve-school-name'
 import {
   ASSESSMENT_DUE_SOON_EVENT_KEY,
   assessmentDueSoonDeliverAfter,
   assessmentDueSoonIdempotencyKey,
-} from '../../notifications/triggers/assessment-due-soon'
+} from '../../../capabilities/notifications/triggers/assessment-due-soon'
 import { isInJobNotificationWindow } from '../due-window'
 
 export async function scanAssessmentDueNotifications(

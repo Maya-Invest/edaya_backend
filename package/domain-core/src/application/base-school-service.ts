@@ -1,10 +1,10 @@
-import type { ActorMetadata, AuthorizationPolicy } from '../authorization'
+import type { ActorMetadata, AuthorizationPolicy } from '../capabilities/authorization'
 import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort, SchoolRepositories } from '../ports'
-import type { ServiceArgs } from '../shared/service-args'
-import type { CoreEntityServices } from './core-entity-catalog'
-import { noOpInvitationDeliveryPort } from '../invitations/no-op-invitation-delivery'
-import { NotificationTemplateService } from '../notifications/templates/notification-template-service'
-import { createCoreEntityServices } from './core-entity-catalog'
+import type { ServiceArgs } from './service-args'
+import type { CoreEntityServices } from './runtime/core-entity-catalog'
+import { noOpInvitationDeliveryPort } from '../adapters/no-op-invitation-delivery'
+import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
+import { createCoreEntityServices } from './runtime/core-entity-catalog'
 
 export class BaseSchoolService {
   readonly actor: ActorMetadata
@@ -15,7 +15,7 @@ export class BaseSchoolService {
   readonly fileStorage: FileStoragePort
   readonly invitationDelivery: InvitationDeliveryPort
   readonly templateService: NotificationTemplateService
-  readonly authContactResolver?: import('../ports/auth-contact-resolver').AuthContactResolverPort
+  readonly authContactResolver?: import('../ports/gateways/auth-contact-resolver').AuthContactResolverPort
   readonly inviteBaseUrl?: string
   readonly accountInvitationsEnabled: boolean
   readonly entities: CoreEntityServices

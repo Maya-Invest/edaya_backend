@@ -1,10 +1,10 @@
 import type { SchoolRepositories } from '../../ports'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { parseDomain, zodDate } from '../utils'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export const classSubjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),

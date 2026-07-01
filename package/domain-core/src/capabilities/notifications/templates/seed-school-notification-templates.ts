@@ -1,5 +1,5 @@
-import type { SchoolRepositories } from '../../ports'
-import { SchoolNotificationTemplates } from '../../domains/messaging/school-notification-templates'
+import type { SchoolRepositories } from '../../../ports'
+import { SchoolNotificationTemplates } from '../../../domain/messaging/school-notification-templates'
 import { buildDefaultNotificationTemplateDocument } from './defaults/manifest'
 import { NOTIFICATION_TEMPLATE_KEYS } from './keys'
 import { mergeSchoolNotificationTemplateDocument } from './merge-school-notification-templates'

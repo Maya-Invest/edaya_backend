@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AcademicYear } from '../../../../src/domains/school/academic-year'
+import { AcademicYear } from '../../../../src/domain/school/academic-year'
 
 describe('AcademicYear entity containment and chronology', () => {
   const startDate = new Date('2026-09-01T00:00:00Z')

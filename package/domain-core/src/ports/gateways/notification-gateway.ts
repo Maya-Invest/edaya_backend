@@ -2,7 +2,7 @@ import type {
   AnnouncementPriority,
   MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
-} from '../domains'
+} from '../../domain'
 
 export type NotificationKind = 'ad_hoc' | 'event' | 'job'
 

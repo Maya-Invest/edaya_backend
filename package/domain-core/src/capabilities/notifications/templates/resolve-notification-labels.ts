@@ -1,6 +1,6 @@
-import type { CalendarEvent } from '../../domains'
-import type { SchoolRepositories } from '../../ports'
-import { CalendarEventScopeKind } from '../../domains'
+import type { CalendarEvent } from '../../../domain'
+import type { SchoolRepositories } from '../../../ports'
+import { CalendarEventScopeKind } from '../../../domain'
 
 export async function resolveClassGroupName(
   repositories: Partial<Pick<SchoolRepositories, 'classGroups'>>,

@@ -1,12 +1,12 @@
-import type { ScopeGrant } from '../../authorization'
-import type { EntityConfigFactory } from '../../shared'
+import type { ScopeGrant } from '../../capabilities/authorization'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
+import { Permission } from '../../capabilities/authorization'
 
-import { directPermissionEntityConfig } from '../../shared'
-import { refineEndsAtNotBeforeStartsAtOptional } from '../../value_object/date-time-range'
-import { scopeGrantSchema } from '../../value_object/scope-grant'
-import { parseDomain, zodDate } from '../utils'
+import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
+import { scopeGrantSchema } from '../../domain/value-objects/scope-grant'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export { scopeGrantSchema }
 

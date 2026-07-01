@@ -1,4 +1,4 @@
-import type { StaffRoleAssignment } from '../../../src/domains'
+import type { StaffRoleAssignment } from '../../../src/domain'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
@@ -7,8 +7,8 @@ import {
   Permission,
   resolveEffectiveGrants,
   scopeGrantCovers,
-} from '../../../src/authorization'
-import { AccessRole, School, StaffMember, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domains'
+} from '../../../src/capabilities/authorization'
+import { AccessRole, School, StaffMember, StaffRoleAssignment as StaffRoleAssignmentEntity } from '../../../src/domain'
 
 function createRepos(assignments: unknown[] = [], ownerSubjectId?: string, staffSubjectId?: string): SchoolRepositories {
   const roleStore = new Map<string, AccessRole>()

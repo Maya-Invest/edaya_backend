@@ -1,18 +1,18 @@
-import type { ActorMetadata, EffectiveGrants } from '../../../src/authorization'
+import type { ActorMetadata, EffectiveGrants } from '../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, mock, test } from 'bun:test'
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, resolveEffectiveGrants, STUDENT_PORTAL_PERMISSIONS } from '../../../src/capabilities/authorization'
 import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
   checkClassGroupAccess as checkAcademicClassGroupAccess,
   checkReportCardResultAccess,
-} from '../../../src/authorization/policy/resolvers/academic'
+} from '../../../src/capabilities/authorization/policy/resolvers/academic'
 import {
   checkAttendanceAccess as checkSchedulingAttendanceAccess,
   checkSessionAccess as checkSchedulingSessionAccess,
-} from '../../../src/authorization/policy/resolvers/scheduling'
-import { AccessRole, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domains'
+} from '../../../src/capabilities/authorization/policy/resolvers/scheduling'
+import { AccessRole, StaffRoleAssignment, StudentClassEnrollmentStatus } from '../../../src/domain'
 import { TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')

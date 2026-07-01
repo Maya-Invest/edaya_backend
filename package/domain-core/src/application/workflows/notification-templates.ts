@@ -1,15 +1,15 @@
-import type { SchoolNotificationTemplates } from '../../domains/messaging/school-notification-templates'
-import type { NotificationTemplateKey } from '../../notifications/templates/keys'
-import type { SchoolNotificationTemplateDocumentPatch } from '../../notifications/templates/merge-school-notification-templates'
+import type { SchoolNotificationTemplates } from '../../domain/messaging/school-notification-templates'
+import type { NotificationTemplateKey } from '../../capabilities/notifications/templates/keys'
+import type { SchoolNotificationTemplateDocumentPatch } from '../../capabilities/notifications/templates/merge-school-notification-templates'
 import type { BaseSchoolService } from '../base-school-service'
-import { Permission } from '../../authorization'
-import { SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '../../domains/messaging/school-notification-templates'
-import { buildDefaultNotificationTemplateDocument } from '../../notifications/templates/defaults/manifest'
+import { Permission } from '../../capabilities/authorization'
+import { SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '../../domain/messaging/school-notification-templates'
+import { buildDefaultNotificationTemplateDocument } from '../../capabilities/notifications/templates/defaults/manifest'
 import {
   mergeSchoolNotificationTemplateDocument,
-} from '../../notifications/templates/merge-school-notification-templates'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../../capabilities/notifications/templates/merge-school-notification-templates'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface UpdateSchoolNotificationTemplatesInput {

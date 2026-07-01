@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { Permission } from '../../../../src/authorization'
-import { StaffRoleAssignment } from '../../../../src/domains/school/staff-role-assignment'
-import { DomainValidationError } from '../../../../src/domains/utils'
+import { Permission } from '../../../../src/capabilities/authorization'
+import { StaffRoleAssignment } from '../../../../src/domain/school/staff-role-assignment'
+import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 describe('StaffRoleAssignment boundary and chronology validation', () => {
   const baseArgs = {

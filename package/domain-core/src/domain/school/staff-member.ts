@@ -1,6 +1,6 @@
-import type { ActorMetadata } from '../../authorization'
+import type { ActorMetadata } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { StaffAccountKind } from './staff-account-kind'
 import { z } from 'zod'
 import {
@@ -8,7 +8,7 @@ import {
   AuthorizationError,
   AuthorizationErrorCode,
   Permission,
-} from '../../authorization'
+} from '../../capabilities/authorization'
 import {
   anyPermissionAction,
   authorizeDeleteByReadAccess,
@@ -18,9 +18,9 @@ import {
   permissionAction,
   read,
   write,
-} from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { parseDomain, zodDate } from '../utils'
+} from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { parseDomain, zodDate } from '../shared/utils'
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'
 
 function refineStaffMember(data: {

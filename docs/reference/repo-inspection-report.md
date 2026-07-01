@@ -1,9 +1,11 @@
 # Repo Inspection Report
 
 Date: 2026-06-16  
-Scope: over-engineering, boundary definition/enforcement, and developer experience for the `maya_school_core` monorepo.
+Scope: over-engineering, boundary definition/enforcement, and developer experience for the `edaya_backend` monorepo.
 
-**Closure audit:** 2026-06-22 — see [Simplification initiative closure](#simplification-initiative-closure-2026-06-22) below. Tracked work: `sprints/repository-simplification-plan.md`.
+> **Note:** Webapp paths cited below (`apps/webapp/…`) refer to the sibling **edaya_web** repo after the frontend split.
+
+**Closure audit:** 2026-06-22 — see [Simplification initiative closure](#simplification-initiative-closure-2026-06-22) below. Tracked work: `docs/sprints/backlog/repository-simplification-plan.md`.
 
 ## Simplification initiative closure (2026-06-22)
 
@@ -21,7 +23,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 | 8 — Webapp refresh boundary too broad | **Partial** | Route-scoped loading + targeted report-card refresh (Phase 5–6); domain `invalidate[]` still a future improvement |
 | 9 — Unpaginated `list({})` fan-out | **Resolved** | Zero raw `.list({})`; intentional catalogs use `schoolWideEntityList(reason)` (Phase 5) |
 | 10 — Verification scripts mutate by default | **Resolved** | `verify` / `fix` split, non-mutating `generated:check`, CI workflow (Phase 0) |
-| 11 — Documentation drift (SPA vs SSR) | **Resolved** | README, `docs/local-dev.md`, API client README aligned (Phase 0–1) |
+| 11 — Documentation drift (SPA vs SSR) | **Resolved** | README, `docs/reference/local-dev.md`, API client README aligned (Phase 0–1) |
 | 12 — Environment file hygiene | **Resolved** | `doctor` script, `.env.staging` untracked, duplicate example removed (Phase 0) |
 
 ### Post-initiative metrics (2026-06-22)
@@ -321,7 +323,7 @@ Split scripts:
 ### Evidence
 
 - Root README describes `SSR / dev proxy` and says server code calls the API.
-- `docs/local-dev.md` correctly says the webapp is a static SPA with `ssr = false`.
+- `docs/reference/local-dev.md` correctly says the webapp is a static SPA with `ssr = false`.
 - `apps/webapp/src/routes/+layout.ts` sets `ssr = false` and `prerender = true`.
 
 ### Impact
@@ -398,7 +400,7 @@ Update root README and API client README to match current browser SPA behavior:
 ## Reference files
 
 - `README.md`
-- `docs/local-dev.md`
+- `docs/reference/local-dev.md`
 - `tooling/repo/ci/check-boundaries.ts`
 - `apps/api/src/runtime/README.md`
 - `package/domain-core/src/services/base-school-service.ts`

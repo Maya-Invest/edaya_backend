@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { GuardianStudentLink } from '../../../../src/domains/students/guardian-student-link'
-import { DomainValidationError } from '../../../../src/domains/utils'
+import { GuardianStudentLink } from '../../../../src/domain/students/guardian-student-link'
+import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 describe('Guardian student link default values and validation', () => {
   const baseArgs = {

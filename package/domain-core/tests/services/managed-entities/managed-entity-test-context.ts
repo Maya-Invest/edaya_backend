@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '../../../src/authorization'
+import type { ActorMetadata } from '../../../src/capabilities/authorization'
 import type { BaseRepositoryInterface } from '../../../src/ports'
 import { createStore } from '../../support/create-test-app'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'

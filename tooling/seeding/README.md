@@ -33,7 +33,7 @@ bun seed:remote --clean
 2. Seed: `bun seed` (or `bun seed:init` — identical)
 3. Log in at http://localhost:5173/login
 
-After `rm -rf .data`, **stop `bun dev` first**, then restart before seeding. See [docs/local-dev.md](../../docs/local-dev.md).
+After `rm -rf .data`, **stop `bun dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
 
 ## Architecture
 

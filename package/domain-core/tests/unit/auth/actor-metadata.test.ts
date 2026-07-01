@@ -9,7 +9,7 @@ import {
   createSystemActorMetadata,
   isInteractiveActor,
   resolveAuditActorId,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import { effectiveGrantsForRoles, portalEffectiveGrantsForGuardian, portalEffectiveGrantsForStudent } from '../../support/effective-grants'
 
 describe('actor metadata', () => {

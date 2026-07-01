@@ -1,4 +1,4 @@
-import type { InvitationDeliveryInput, InvitationDeliveryPort } from '../ports/invitation-delivery'
+import type { InvitationDeliveryInput, InvitationDeliveryPort } from '../ports/gateways/invitation-delivery'
 
 export const noOpInvitationDeliveryPort: InvitationDeliveryPort = {
   deliver: async () => {},

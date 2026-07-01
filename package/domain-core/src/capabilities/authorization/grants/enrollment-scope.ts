@@ -1,5 +1,5 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import { StudentClassEnrollmentStatus } from '../../domains/students/student-class-enrollment-status'
+import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
+import { StudentClassEnrollmentStatus } from '../../../domain/students/student-class-enrollment-status'
 
 export async function activeClassGroupIdsByStudent(
   repositories: SchoolRepositories,

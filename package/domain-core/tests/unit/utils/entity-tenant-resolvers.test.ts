@@ -10,7 +10,7 @@ import {
   resolveSchoolIdFromFilter,
   resolveSessionSchoolId,
   resolveStringFilterValue,
-} from '../../../src/shared/entity/tenant'
+} from '../../../src/application/entities/entity-config/tenant'
 
 describe('entity tenant resolvers', () => {
   const repositories = {

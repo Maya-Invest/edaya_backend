@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import { SchoolNotificationTemplates } from '../../src/domains/messaging/school-notification-templates'
+import { SchoolNotificationTemplates } from '../../src/domain/messaging/school-notification-templates'
 import {
   buildDefaultNotificationTemplateDocument,
-} from '../../src/notifications/templates/defaults/manifest'
-import { NotificationTemplateService } from '../../src/notifications/templates/notification-template-service'
-import { renderTemplateString } from '../../src/notifications/templates/render'
-import { seedSchoolNotificationTemplates } from '../../src/notifications/templates/seed-school-notification-templates'
+} from '../../src/capabilities/notifications/templates/defaults/manifest'
+import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
+import { renderTemplateString } from '../../src/capabilities/notifications/templates/render'
+import { seedSchoolNotificationTemplates } from '../../src/capabilities/notifications/templates/seed-school-notification-templates'
 import { createStore } from '../support/create-test-app'
 
 describe('notification template render', () => {

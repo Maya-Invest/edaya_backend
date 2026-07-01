@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { createInMemoryFileStorage } from '../../../src/storage/in-memory-file-storage'
+import { createInMemoryFileStorage } from '../../../src/adapters/in-memory-file-storage'
 
 describe('createInMemoryFileStorage', () => {
   it('stores and heads objects', async () => {

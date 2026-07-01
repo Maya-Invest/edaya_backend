@@ -1,19 +1,31 @@
 # Agent guidance
 
-## UI architecture
+Backend monorepo (`edaya_backend`): API, cron, domain packages, adaptors, seeding, and integration tests.
 
-When working on `apps/webapp` screens, layouts, drawers, or modals, follow:
+Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI work there, follow `edaya_web/AGENTS.md` and `edaya_web/docs/specs/`.
 
-- **[specs/app-shell-spec.md](specs/app-shell-spec.md)** — interaction patterns (list, drawer, modals)
-- **[specs/design-language-spec.md](specs/design-language-spec.md)** — visual design (colors, typography, components)
-- **[specs/data-loading-spec.md](specs/data-loading-spec.md)** — route-scoped loading, entity store, optimistic mutations
+## Architecture
 
-Key rules (summary):
+- **Ports and adapters** — business rules in `@edaya/core`; Postgres in `@edaya/adaptor-postgres`; platform migrations in `@edaya/integration-migrations`; HTTP/runtime wiring in `apps/api`.
+- **Boundary rule** — `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `apps/` or `tooling/`.
 
-- List + URL-backed detail drawer + mutation modals
-- Drawer is read-only; edits via action buttons → modals
-- Sub-collection tabs: read-only lists; add/edit always modal
-- Pragmatic inline toggles only for boolean/single-value fields
-- Use `DataState` for loading/empty/error; toast on mutations
+## Key docs
 
-Cursor rule: `.cursor/rules/app-shell.mdc` (applies when editing `apps/webapp/**`).
+| Topic | Path |
+|-------|------|
+| Monorepo layout | [README.md](README.md) |
+| API folder structure | [docs/reference/api-folder-structure.md](docs/reference/api-folder-structure.md) |
+| API runtimes | [docs/reference/api-runtimes.md](docs/reference/api-runtimes.md) |
+| Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
+| Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
+| Package boundaries | [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md) |
+
+## Verification
+
+Before opening a PR:
+
+```sh
+bun run verify
+```
+
+Package-scoped iteration: `bun --filter @edaya/core test`, `bun --filter @edaya/api test`, etc.

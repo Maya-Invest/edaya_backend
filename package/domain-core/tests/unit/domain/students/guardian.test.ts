@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { Guardian } from '../../../../src/domains/students/guardian'
-import { GuardianContactMethod, GuardianContactMethodType } from '../../../../src/domains/students/guardian-contact-method'
+import { Guardian } from '../../../../src/domain/students/guardian'
+import { GuardianContactMethod, GuardianContactMethodType } from '../../../../src/domain/students/guardian-contact-method'
 
 describe('Guardian entity', () => {
   const baseArgs = {

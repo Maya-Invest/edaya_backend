@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'bun:test'
 import {
   buildDefaultNotificationTemplateDocument,
-} from '../../src/notifications/templates/defaults/manifest'
+} from '../../src/capabilities/notifications/templates/defaults/manifest'
 import {
   schoolNotificationTemplateDocumentSchema,
-} from '../../src/notifications/templates/document-schema'
+} from '../../src/capabilities/notifications/templates/document-schema'
 import {
   NOTIFICATION_TEMPLATE_KEYS,
-} from '../../src/notifications/templates/keys'
+} from '../../src/capabilities/notifications/templates/keys'
 
 describe('schoolNotificationTemplateDocumentSchema', () => {
   test('accepts the platform default document with all catalog keys', async () => {

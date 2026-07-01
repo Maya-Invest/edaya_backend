@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { AttendanceMode, ClassGroup } from '../../../../src/domains/school/class-group'
+import { AttendanceMode, ClassGroup } from '../../../../src/domain/school/class-group'
 
 describe('ClassGroup entity', () => {
   const baseArgs = {

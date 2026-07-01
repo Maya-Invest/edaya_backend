@@ -1,13 +1,10 @@
 import { describe, expect, test } from 'bun:test'
-import { IncidentInvolvementRole, IncidentKind, IncidentStatus } from '../../src/domains'
-import { SchoolNotificationTemplates } from '../../src/domains/messaging/school-notification-templates'
-import {
-  handleIncidentRecorded,
-  INCIDENT_RECORDED_EVENT_KEY,
-  RecordingNotificationGateway,
-} from '../../src/notifications'
-import { buildDefaultNotificationTemplateDocument } from '../../src/notifications/templates/defaults/manifest'
-import { NotificationTemplateService } from '../../src/notifications/templates/notification-template-service'
+import { IncidentInvolvementRole, IncidentKind, IncidentStatus } from '../../src/domain'
+import { SchoolNotificationTemplates } from '../../src/domain/messaging/school-notification-templates'
+import { handleIncidentRecorded, INCIDENT_RECORDED_EVENT_KEY } from '../../src/capabilities/notifications'
+import { RecordingNotificationGateway } from '../../src/adapters'
+import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
+import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
 
 describe('templated notification handlers', () => {
   test('handleIncidentRecorded uses a patched school template document', async () => {

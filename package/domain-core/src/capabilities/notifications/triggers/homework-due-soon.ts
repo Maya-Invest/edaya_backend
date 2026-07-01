@@ -1,6 +1,6 @@
-import type { HomeworkAssignment } from '../../domains'
+import type { HomeworkAssignment } from '../../../domain'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
-import { resolveClassGroupStudentAndGuardianRecipients } from '../recipient-resolvers'
+import { resolveClassGroupStudentAndGuardianRecipients } from '../delivery/recipient-resolvers'
 import { formatNotificationDueLabel } from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import {

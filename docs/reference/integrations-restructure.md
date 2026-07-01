@@ -2,26 +2,27 @@
 
 Shared libraries live under **`package/`**; **apps** wire them at runtime; **tooling/** holds harnesses.
 
+Web frontends (`@edaya/webapp`, `@edaya/saas-admin`) live in the sibling **[edaya_web](../../../edaya_web)** repo.
+
 ## Layout
 
 ```text
-apps/
-  api/                              Hono HTTP, OpenAPI, runtime, Worker host wiring
-  cron/                             Scheduled jobs (Node + Worker)
-  webapp/                           SvelteKit static SPA (Cloudflare Pages)
-
-package/
-  domain-core/                      Domain, services, authorization, ports
-  adaptor-postgres/                 School Drizzle schema, SQL, repos, runMigrations()
-  adaptor-novu/                     Novu notification gateway adapter
-  generated-api-client/             Typed client generated from OpenAPI
-  integration-migrations/           School + auth migration apply (Neon / Hyperdrive + D1)
-
-tooling/
-  repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
-  fixtures/                         Shared seed IDs and fixture records
-  seeding/                          HTTP seed orchestration (@edaya/seeding)
-  integration-tests/                Integration tests + smoke (staging, Novu)
+edaya_backend/
+  apps/
+    api/                            Hono HTTP, OpenAPI, runtime, Worker host wiring
+    cron/                           Scheduled jobs (Node + Worker)
+  package/
+    domain-core/                    Domain, services, authorization, ports
+    adaptor-postgres/               School Drizzle schema, SQL, repos, runMigrations()
+    adaptor-novu/                   Novu notification gateway adapter
+    adaptor-r2/                     R2 file storage adapter
+    generated-api-client/           Typed client generated from OpenAPI
+    integration-migrations/         School + auth migration apply (Neon / Hyperdrive + D1)
+  tooling/
+    repo/                           @edaya/repo — CI, OpenAPI codegen, dev tools
+    fixtures/                       Shared seed IDs and fixture records
+    seeding/                        HTTP seed orchestration (@edaya/seeding)
+    integration-tests/              Integration tests + smoke (staging, Novu)
 ```
 
 ## Boundary rules
@@ -33,7 +34,7 @@ tooling/
 | `tooling/seeding` | HTTP seed scripts against running API (`seed:init`, `seed:all`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Platform migration scripts, seed data |
 
-**Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` never depend on `package/integration-*`. `apps/api` depends on integration packages. `tooling/seeding` calls the API over HTTP. Integration packages may reference adaptor paths for migration SQL only.
+**Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `package/integration-*`. `apps/api` depends on integration packages. `tooling/seeding` calls the API over HTTP. Integration packages may reference adaptor paths for migration SQL only.
 
 ## Package map
 
@@ -41,7 +42,6 @@ tooling/
 |---------|------|------|
 | `@edaya/api` | `apps/api` | Hono API (Node + Worker) |
 | `@edaya/cron` | `apps/cron` | Cron runtime (Node + Worker) |
-| `@edaya/webapp` | `apps/webapp` | SvelteKit UI |
 | `@edaya/core` | `package/domain-core` | Domain + ports |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/api-client` | `package/generated-api-client` | Typed API SDK |
@@ -57,17 +57,20 @@ tooling/
 
 | Before | After |
 |--------|-------|
+| `maya_school_core/` | `edaya_backend/` (folder); `@edaya/solution` (root package) |
+| `testing/` | `tooling/` |
 | `@edaya/adaptor-cloudflare` | Inlined into `apps/api/src/runtime/` and `apps/api/src/http/` |
 | `@edaya/adaptor-betterauth` | Auth persistence in `@edaya/integration-migrations` |
 | `@edaya/adaptor-neon` | `@edaya/adaptor-postgres` + `@edaya/integration-migrations` (school apply) |
 | `@edaya/neon-migrations` + `@edaya/betterauth-d1-migrations` | `@edaya/integration-migrations` |
 | `packages/` + `integrations/` | Unified under `package/` |
+| `apps/webapp` | Moved to **edaya_web** repo |
 
 ## Root scripts
 
 | Script | Package / target |
 |--------|------------------|
-| `bun dev` | Turbo — API + webapp watch |
+| `bun dev` | `@edaya/api` watch mode |
 | `bun dev:worker` | `@edaya/api` `dev:worker` |
 | `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
 | `bun db:generate` | `@edaya/adaptor-postgres` |
@@ -80,12 +83,12 @@ tooling/
 | `bun db:migrate:auth:remote` | `@edaya/integration-migrations` (`auth:migrate:remote`) |
 | `bun db:migrate:staging` | `@edaya/integration-migrations` (`school:migrate:staging`) |
 | `bun db:migrate:auth:staging` | `@edaya/integration-migrations` (`auth:migrate:staging`) |
-| `bun openapi:generate` | API export → webapp schema → API client regen |
+| `bun run generated:update` | Export OpenAPI + regenerate `@edaya/api-client` bindings |
 | `bun deploy:api` | `@edaya/api` `deploy:worker` |
 | `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
-| `bun deploy:webapp` | `@edaya/webapp` `deploy` |
-| `bun deploy:webapp:staging` | `@edaya/webapp` `deploy:staging` |
 | `bun smoke:staging` | `@edaya/integration-tests` |
+
+Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
 
 ## Auth schema pipeline
 

@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { describe, expect, test } from 'bun:test'
-import { loadAccountInvitationDefaultFiles } from '../../src/notifications/templates/defaults/load-default-files'
-import { buildDefaultNotificationTemplateDocument } from '../../src/notifications/templates/defaults/manifest'
-import { NOTIFICATION_TEMPLATE_KEYS } from '../../src/notifications/templates/keys'
+import { loadAccountInvitationDefaultFiles } from '../../src/capabilities/notifications/templates/defaults/load-default-files'
+import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
+import { NOTIFICATION_TEMPLATE_KEYS } from '../../src/capabilities/notifications/templates/keys'
 
-const defaultsDir = resolve(import.meta.dirname, '../../src/notifications/templates/defaults')
+const defaultsDir = resolve(import.meta.dirname, '../../src/capabilities/notifications/templates/defaults')
 
 async function readOnDiskDefault(relativePath: string): Promise<string> {
   return (await readFile(resolve(defaultsDir, relativePath), 'utf8')).trim()

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test'
-import { MessageDeliveryRecipientKind } from '../../src/domains'
+import { MessageDeliveryRecipientKind } from '../../src/domain'
 import {
   noOpNotificationGateway,
   RecordingNotificationGateway,
-} from '../../src/notifications'
+} from '../../src/adapters'
 
 describe('notification gateway adapters', () => {
   test('noOpNotificationGateway resolves enqueue, cancel, and subscriber sync', async () => {

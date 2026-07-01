@@ -9,9 +9,9 @@ import type {
   ReportCardDefinitionSection,
   ReportCardDefinitionSectionInput,
   StudentClassEnrollment,
-} from '../../domains'
+} from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, Permission } from '../../authorization'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import {
   Assessment as AssessmentEntity,
   AssessmentResult as AssessmentResultEntity,
@@ -24,16 +24,16 @@ import {
   ReportCardResult,
   ReportCardResultSection,
   ReportCardResultStatus,
-} from '../../domains'
-import { normalizeDate, roundTo2 } from '../../domains/utils'
+} from '../../domain'
+import { normalizeDate, roundTo2 } from '../../domain/shared/utils'
 import {
   ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
   REPORT_CARD_PUBLISHED_EVENT_KEY,
   runWorkflowNotifications,
-} from '../../notifications'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { AttendanceSummary } from '../../value_object/attendance-summary'
+} from '../../capabilities/notifications'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { AttendanceSummary } from '../../domain/value-objects/attendance-summary'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface PublishReportCardResultInput {

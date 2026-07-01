@@ -7,7 +7,7 @@ import {
   ActorAssuranceLevel,
   AuthorizationError,
   createStaffActorMetadata,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import {
   ClassGroup,
   ClassSubject,
@@ -24,7 +24,7 @@ import {
   StudentNote,
   Subject,
   SubjectMatter,
-} from '../../../src/domains'
+} from '../../../src/domain'
 import { createTestApp } from '../../support/create-test-app'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'

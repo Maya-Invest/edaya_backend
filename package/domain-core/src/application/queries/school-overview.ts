@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '../ports'
+import type { SchoolRepositories } from '../../ports'
 import {
   AttendanceJustificationStatus,
   AttendanceStatus,
@@ -9,7 +9,7 @@ import {
   ReportCardResultStatus,
   StudentClassEnrollmentStatus,
   StudentDisciplinaryActionStatus,
-} from '../domains'
+} from '../../domain'
 
 export interface GetSchoolOverviewInput {
   schoolId: string

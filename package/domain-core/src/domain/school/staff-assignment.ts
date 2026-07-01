@@ -1,12 +1,12 @@
-import type { AuthorizationPolicy } from '../../authorization'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 
-import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../shared'
-import { parseDomain, zodDate } from '../utils'
+import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveClassSubjectSchoolId, resolveSessionSchoolId, write } from '../../application/entities/entity-config'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export const staffAssignmentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),

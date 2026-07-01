@@ -1,6 +1,6 @@
-import type { ScopeType } from '../authorization/permissions/scope-type'
+import type { ScopeType } from '../../capabilities/authorization/permissions/scope-type'
 import { z } from 'zod'
-import { Permission } from '../authorization/permissions/permission'
+import { Permission } from '../../capabilities/authorization/permissions/permission'
 
 export const scopeGrantSchema = z.object({
   permission: z.nativeEnum(Permission),

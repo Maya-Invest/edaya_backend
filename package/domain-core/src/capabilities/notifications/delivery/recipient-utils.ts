@@ -1,6 +1,6 @@
-import type { SchoolRepositories } from '../ports'
-import type { NotificationRecipient } from '../ports/notification-gateway'
-import { MessageDeliveryRecipientKind } from '../domains'
+import type { SchoolRepositories } from '../../../ports'
+import type { NotificationRecipient } from '../../../ports/gateways/notification-gateway'
+import { MessageDeliveryRecipientKind } from '../../../domain'
 
 export async function resolveRecipientSubjectId(
   repositories: SchoolRepositories,

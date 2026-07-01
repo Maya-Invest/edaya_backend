@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseDomain, zodDate } from '../utils'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export const serviceApiKeySchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),

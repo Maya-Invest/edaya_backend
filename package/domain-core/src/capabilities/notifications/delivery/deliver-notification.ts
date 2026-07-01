@@ -1,12 +1,12 @@
-import type { AnnouncementPriority } from '../domains'
-import type { SchoolRepositories } from '../ports'
+import type { AnnouncementPriority } from '../../../domain'
+import type { SchoolRepositories } from '../../../ports'
 import type {
   NotificationEnqueueInput,
   NotificationGatewayPort,
   NotificationKind,
   NotificationRecipient,
-} from '../ports/notification-gateway'
-import { MessageDelivery } from '../domains'
+} from '../../../ports/gateways/notification-gateway'
+import { MessageDelivery } from '../../../domain'
 import { resolveRecipientSubjectId, uniqueNotificationRecipients } from './recipient-utils'
 
 export function buildNotificationDeliveryId(sourceKey: string, subjectId: string): string {

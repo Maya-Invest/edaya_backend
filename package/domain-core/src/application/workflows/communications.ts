@@ -5,9 +5,9 @@ import type {
   Guardian,
   MessageDeliveryStatus,
   StaffMember,
-} from '../../domains'
+} from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, isInteractiveActor, Permission } from '../../authorization'
+import { denyResourceAccess, isInteractiveActor, Permission } from '../../capabilities/authorization'
 import {
   Announcement,
   AnnouncementStatus,
@@ -19,7 +19,7 @@ import {
   StaffMember as StaffMemberEntity,
   StudentClassEnrollmentStatus,
   AnnouncementTargetKind as TargetKind,
-} from '../../domains'
+} from '../../domain'
 import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
   buildGuardianRecipientProfile,
@@ -28,9 +28,9 @@ import {
   ensureNotificationRecipientForActor,
   runWorkflowNotifications,
   scheduleNotificationRecipientUpsert,
-} from '../../notifications'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../../capabilities/notifications'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface PublishAnnouncementInput {

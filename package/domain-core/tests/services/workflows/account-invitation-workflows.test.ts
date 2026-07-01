@@ -1,5 +1,5 @@
-import type { EffectiveGrants } from '../../../src/authorization'
-import type { AccountInvitation } from '../../../src/domains/access/account-invitation'
+import type { EffectiveGrants } from '../../../src/capabilities/authorization'
+import type { AccountInvitation } from '../../../src/domain/access/account-invitation'
 import { describe, expect, mock, test } from 'bun:test'
 import {
   AccountInvitationKind,
@@ -11,10 +11,10 @@ import {
   RecordingNotificationGateway,
   StaffMember,
 } from '../../../src'
-import { SchoolNotificationTemplates } from '../../../src/domains/messaging/school-notification-templates'
-import { hashInvitationToken } from '../../../src/invitations/invitation-token'
-import { buildDefaultNotificationTemplateDocument } from '../../../src/notifications/templates/defaults/manifest'
-import { SchoolService } from '../../../src/services'
+import { SchoolNotificationTemplates } from '../../../src/domain/messaging/school-notification-templates'
+import { hashInvitationToken } from '../../../src/capabilities/invitations/invitation-token'
+import { buildDefaultNotificationTemplateDocument } from '../../../src/capabilities/notifications/templates/defaults/manifest'
+import { SchoolService } from '../../../src/application'
 import { testFileStorage } from '../../support/test-file-storage'
 
 function actorWithPermissions(permissions: readonly Permission[]) {
@@ -116,7 +116,7 @@ function createInvitationContext() {
     authorizationPolicy: {
       checkClassGroupAccess: mock(async () => {}),
       checkSessionAccess: mock(async () => {}),
-    } as unknown as import('../../../src/authorization').AuthorizationPolicy,
+    } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
     actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
     atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
     notificationGateway: new RecordingNotificationGateway(),
@@ -220,7 +220,7 @@ describe('AccountInvitationServiceWorkflow', () => {
       authorizationPolicy: {
         checkClassGroupAccess: mock(async () => {}),
         checkSessionAccess: mock(async () => {}),
-      } as unknown as import('../../../src/authorization').AuthorizationPolicy,
+      } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
       actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
       atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
       notificationGateway: new RecordingNotificationGateway(),

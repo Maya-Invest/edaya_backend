@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { Student, StudentStatus } from '../../../../src/domains/students/student'
+import { Student, StudentStatus } from '../../../../src/domain/students/student'
 
 describe('Student copyWith', () => {
   const baseArgs = {

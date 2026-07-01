@@ -1,14 +1,14 @@
-import type { AuthorizationPolicy } from '../../authorization'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, readByIds, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { Money } from '../../value_object/money'
-import { StudentFeeSummary } from '../../value_object/student-fee-summary'
-import { parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { Money } from '../../domain/value-objects/money'
+import { StudentFeeSummary } from '../../domain/value-objects/student-fee-summary'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum FeeStatus {
   Pending = 'pending',
@@ -205,7 +205,7 @@ export class StudentFee {
   }
 }
 
-export { StudentFeeSummary } from '../../value_object/student-fee-summary'
+export { StudentFeeSummary } from '../../domain/value-objects/student-fee-summary'
 
 export function buildStudentFeeSummary(studentFees: readonly StudentFee[], fallbackCurrency = 'XAF'): StudentFeeSummary {
   const currency = studentFees[0]?.expectedAmount.currency ?? fallbackCurrency

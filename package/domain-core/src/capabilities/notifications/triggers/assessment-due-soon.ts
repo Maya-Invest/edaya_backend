@@ -1,7 +1,7 @@
-import type { Assessment } from '../../domains'
+import type { Assessment } from '../../../domain'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
-import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../domains'
-import { cancelNotificationDeliveries } from '../deliver-notification'
+import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
+import { cancelNotificationDeliveries } from '../delivery/deliver-notification'
 import { formatNotificationDueLabel } from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
 import {

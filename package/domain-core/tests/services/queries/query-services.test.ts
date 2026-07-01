@@ -1,8 +1,8 @@
-import type { AuthorizationPolicy } from '../../../src/authorization'
+import type { AuthorizationPolicy } from '../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import { noOpNotificationGateway, SchoolService } from '../../../src'
-import { AuthorizationError } from '../../../src/authorization'
+import { AuthorizationError } from '../../../src/capabilities/authorization'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 

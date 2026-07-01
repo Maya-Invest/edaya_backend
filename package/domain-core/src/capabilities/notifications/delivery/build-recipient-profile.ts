@@ -1,6 +1,6 @@
-import type { Guardian, GuardianStudentLink, StaffMember, Student } from '../domains'
-import type { NotificationRecipientProfile } from '../ports/notification-gateway'
-import { GuardianContactMethodType, MessageDeliveryRecipientKind } from '../domains'
+import type { Guardian, GuardianStudentLink, StaffMember, Student } from '../../../domain'
+import type { NotificationRecipientProfile } from '../../../ports/gateways/notification-gateway'
+import { GuardianContactMethodType, MessageDeliveryRecipientKind } from '../../../domain'
 import {
   guardianFallbackEmail,
   guardianFallbackPhone,

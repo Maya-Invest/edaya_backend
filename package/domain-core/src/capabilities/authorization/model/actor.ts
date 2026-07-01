@@ -1,6 +1,6 @@
-import type { StaffAccountKind } from '../../domains/school/staff-account-kind'
+import type { StaffAccountKind } from '../../../domain/school/staff-account-kind'
 import type { EffectiveGrants } from './effective-grants'
-import { DomainValidationError } from '../../domains/utils'
+import { DomainValidationError } from '../../../domain/shared/utils'
 
 export enum ActorAssuranceLevel {
   Standard = 'standard',

@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '../../../src/authorization'
+import type { ActorMetadata } from '../../../src/capabilities/authorization'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
 import {
@@ -8,7 +8,7 @@ import {
   createGuardianActorMetadata,
   createStaffActorMetadata,
   Permission,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import { effectiveGrantsForRoles, portalEffectiveGrantsForGuardian } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')

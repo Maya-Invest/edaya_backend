@@ -1,9 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test'
-import { createRepositoryAuthorizationPolicy } from '../../src/authorization'
-import { runCronJobs } from '../../src/cron/cron-job-runner'
-import { AssessmentKind } from '../../src/domains'
-import { RecordingNotificationGateway } from '../../src/notifications'
-import { SchoolApplication } from '../../src/services'
+import { createRepositoryAuthorizationPolicy } from '../../src/capabilities/authorization'
+import { runCronJobs } from '../../src/capabilities/scheduling-jobs/cron-job-runner'
+import { AssessmentKind } from '../../src/domain'
+import { RecordingNotificationGateway } from '../../src/adapters'
+import { SchoolApplication } from '../../src/application'
 import { testFileStorage } from '../support/test-file-storage'
 
 describe('runCronJobs', () => {

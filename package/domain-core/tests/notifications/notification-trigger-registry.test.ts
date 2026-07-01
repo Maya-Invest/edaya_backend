@@ -1,18 +1,18 @@
-import type { ActorMetadata } from '../../src/authorization'
-import type { Assessment } from '../../src/domains'
+import type { ActorMetadata } from '../../src/capabilities/authorization'
+import type { Assessment } from '../../src/domain'
 import { describe, expect, test } from 'bun:test'
-import { AssessmentKind, MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../src/domains'
+import { AssessmentKind, MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../src/domain'
 import {
   assessmentDueSoonDeliverAfter,
   assessmentDueSoonIdempotencyKey,
   assessmentDueSoonPredicate,
   assessmentDueSoonTrigger,
   notificationTriggerRegistry,
-  RecordingNotificationGateway,
   registerNotificationTriggers,
   withNotificationPostSaveHook,
-} from '../../src/notifications'
-import { NotificationTemplateService } from '../../src/notifications/templates/notification-template-service'
+} from '../../src/capabilities/notifications'
+import { RecordingNotificationGateway } from '../../src/adapters'
+import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
 
 function createTestTemplateService(): NotificationTemplateService {
   return new NotificationTemplateService({

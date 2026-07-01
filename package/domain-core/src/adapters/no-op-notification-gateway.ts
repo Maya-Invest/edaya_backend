@@ -1,4 +1,4 @@
-import type { NotificationGatewayPort } from '../ports/notification-gateway'
+import type { NotificationGatewayPort } from '../ports/gateways/notification-gateway'
 
 export const noOpNotificationGateway: NotificationGatewayPort = {
   enqueue: async () => {},

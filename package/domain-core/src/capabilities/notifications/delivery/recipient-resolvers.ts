@@ -1,12 +1,12 @@
-import type { CalendarEvent, Guardian, GuardianStudentLink } from '../domains'
-import type { SchoolRepositories } from '../ports'
-import type { NotificationRecipient } from '../ports/notification-gateway'
+import type { CalendarEvent, Guardian, GuardianStudentLink } from '../../../domain'
+import type { SchoolRepositories } from '../../../ports'
+import type { NotificationRecipient } from '../../../ports/gateways/notification-gateway'
 import {
   ActivityEnrollmentStatus,
   CalendarEventScopeKind,
   MessageDeliveryRecipientKind,
   StudentClassEnrollmentStatus,
-} from '../domains'
+} from '../../../domain'
 import { uniqueNotificationRecipients } from './recipient-utils'
 
 async function resolveStudentRecipients(

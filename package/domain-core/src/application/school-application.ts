@@ -1,6 +1,6 @@
-import type { ActorMetadata } from '../authorization'
+import type { ActorMetadata } from '../capabilities/authorization'
 import type { FileStoragePort, SchoolRepositories } from '../ports'
-import type { ServiceArgs } from '../shared/service-args'
+import type { ServiceArgs } from './service-args'
 import { SchoolService } from './school-service'
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>

@@ -1,7 +1,7 @@
-import type { AnnouncementPriority } from '../../domains/messaging/announcement'
-import { AnnouncementPriority as AnnouncementPriorityEnum } from '../../domains/messaging/announcement'
-import { AttendanceStatus } from '../../domains/scheduling/attendance-record'
-import { IncidentKind } from '../../domains/students/incident'
+import type { AnnouncementPriority } from '../../../domain/messaging/announcement'
+import { AnnouncementPriority as AnnouncementPriorityEnum } from '../../../domain/messaging/announcement'
+import { AttendanceStatus } from '../../../domain/scheduling/attendance-record'
+import { IncidentKind } from '../../../domain/students/incident'
 
 const NOTIFICATION_LOCALE = 'fr-FR'
 

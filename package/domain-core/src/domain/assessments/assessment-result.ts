@@ -1,13 +1,13 @@
-import type { AuthorizationPolicy } from '../../authorization'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
-import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../domains'
-import { config, indirectTenant, permissionAction, read, unique, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { parseDomain, roundTo2, zodDate } from '../utils'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../domain'
+import { config, indirectTenant, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
 export enum DeadlineComplianceStatus {
   Met = 'met',

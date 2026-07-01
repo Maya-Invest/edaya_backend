@@ -1,4 +1,4 @@
-import type { FileStoragePort } from '../ports/file-storage'
+import type { FileStoragePort } from '../ports/gateways/file-storage'
 
 export const noOpFileStorage: FileStoragePort = {
   putObject: async () => ({ sizeBytes: 0 }),

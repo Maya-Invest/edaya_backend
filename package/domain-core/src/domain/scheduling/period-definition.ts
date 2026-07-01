@@ -1,10 +1,10 @@
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { directPermissionEntityConfig } from '../../shared'
-import { zodTimeOfDay } from '../../value_object/time-of-day'
-import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../value_object/time-range'
-import { parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
+import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export const periodDefinitionBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),

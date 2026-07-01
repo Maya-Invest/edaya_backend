@@ -11,9 +11,9 @@ import type {
   StaffAssignmentInput,
   StaffMember,
   StaffMemberInput,
-} from '../../domains'
+} from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, Permission } from '../../authorization'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import {
   AcademicPeriod as AcademicPeriodEntity,
   AcademicYear as AcademicYearEntity,
@@ -25,20 +25,20 @@ import {
   School as SchoolEntity,
   StaffAssignment as StaffAssignmentEntity,
   StaffMember as StaffMemberEntity,
-} from '../../domains'
-import { AccountInvitationKind } from '../../domains/access/account-invitation'
+} from '../../domain'
+import { AccountInvitationKind } from '../../domain/access/account-invitation'
 import {
   scheduleAccountInvitationIfEligible,
-} from '../../invitations'
+} from '../../capabilities/invitations'
 import {
   buildStaffRecipientProfile,
   scheduleNotificationRecipientRemove,
   scheduleNotificationRecipientUpsert,
-} from '../../notifications'
-import { seedSchoolNotificationTemplates } from '../../notifications/templates/seed-school-notification-templates'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { requireSchool } from '../../shared/require-school'
+} from '../../capabilities/notifications'
+import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { requireSchool } from '../require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
 

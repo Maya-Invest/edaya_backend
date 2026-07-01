@@ -15,8 +15,8 @@ import {
   StudentClassEnrollmentStatus,
   StudentFee,
   StudentStatus,
-} from '../../src/domains'
-import { buildSchoolOverview } from '../../src/queries/school-overview'
+} from '../../src/domain'
+import { buildSchoolOverview } from '../../src/application/queries/school-overview'
 
 function createOverviewRepos(
   overrides: Record<string, { list?: () => Promise<unknown[]>, findById?: () => Promise<unknown> }> = {},

@@ -1,5 +1,5 @@
-import type { Announcement, MessageDelivery } from '../../domains'
-import type { WorkflowNotificationContext } from '../workflow-notification-runner'
+import type { Announcement, MessageDelivery } from '../../../domain'
+import type { WorkflowNotificationContext } from '../delivery/workflow-notification-runner'
 import {
   labelAnnouncementPriority,
   truncateNotificationText,

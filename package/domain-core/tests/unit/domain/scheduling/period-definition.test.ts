@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { PeriodDefinition } from '../../../../src/domains/scheduling/period-definition'
+import { PeriodDefinition } from '../../../../src/domain/scheduling/period-definition'
 
 describe('PeriodDefinition entity', () => {
   const baseArgs = {

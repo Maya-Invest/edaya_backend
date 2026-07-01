@@ -1,6 +1,6 @@
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
-import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '../../../src/authorization'
+import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '../../../src/capabilities/authorization'
 import {
   AcademicYear,
   Announcement,
@@ -28,8 +28,8 @@ import {
   validateSessionSave,
   validateStaffAssignmentSave,
   validateStudentSave,
-} from '../../../src/domains'
-import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
+} from '../../../src/domain'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import { createTestApp } from '../../support/create-test-app'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'

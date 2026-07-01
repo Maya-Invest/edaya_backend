@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { EffectiveGrants } from '../model/effective-grants'
 import type { AuthorizationRepository } from './authorization-repository'
 import { resolveActorGrants } from './resolve-actor-grants'

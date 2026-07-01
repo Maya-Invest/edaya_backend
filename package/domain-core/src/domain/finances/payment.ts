@@ -1,14 +1,14 @@
-import type { AuthorizationPolicy } from '../../authorization'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
-import { AttachmentOwnerKind, FeeStatus } from '../../domains'
-import { anyPermissionAction, config, dateTime, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { Money } from '../../value_object/money'
-import { parseDomain, zodDate } from '../utils'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { AttachmentOwnerKind, FeeStatus } from '../../domain'
+import { anyPermissionAction, config, dateTime, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { Money } from '../../domain/value-objects/money'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum PaymentMethod {
   Cash = 'cash',

@@ -1,4 +1,4 @@
-import type { NotificationEnqueueInput } from '../../ports/notification-gateway'
+import type { NotificationEnqueueInput } from '../../../ports/gateways/notification-gateway'
 import type { NotificationTemplateKey } from './keys'
 import type { NotificationTemplateService } from './notification-template-service'
 

@@ -1,4 +1,4 @@
-import type { StaffAssignment } from '../../domains/school/staff-assignment'
+import type { StaffAssignment } from '../../../domain/school/staff-assignment'
 import type { ScopeGrant } from '../model/scope-grant'
 import { ASSIGNMENT_SCOPED_PERMISSIONS } from './system-role-permissions'
 

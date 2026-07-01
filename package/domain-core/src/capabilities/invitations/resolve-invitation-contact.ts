@@ -1,7 +1,7 @@
-import type { Guardian, StaffMember, Student } from '../domains'
-import { AccountInvitationContactChannel } from '../domains/access/account-invitation'
-import { GuardianContactMethodType } from '../domains/students/guardian-contact-method'
-import { guardianFallbackEmail, staffFallbackEmail } from '../notifications/resolve-notification-contact'
+import type { Guardian, StaffMember, Student } from '../../domain'
+import { AccountInvitationContactChannel } from '../../domain/access/account-invitation'
+import { GuardianContactMethodType } from '../../domain/students/guardian-contact-method'
+import { guardianFallbackEmail, staffFallbackEmail } from '../notifications/delivery/resolve-notification-contact'
 
 export function normalizeInvitationEmail(value: string | undefined): string | undefined {
   const trimmed = value?.trim().toLowerCase()

@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '../../ports'
+import type { SchoolRepositories } from '../../../ports'
 
 export interface SchoolNotificationContext {
   schoolName: string

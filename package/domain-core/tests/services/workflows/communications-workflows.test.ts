@@ -4,21 +4,18 @@ import {
   mock,
   test,
 } from 'bun:test'
-import { AuthorizationError, createSystemActorMetadata } from '../../../src/authorization'
+import { AuthorizationError, createSystemActorMetadata } from '../../../src/capabilities/authorization'
 import {
   AnnouncementStatus,
   MessageDelivery,
   MessageDeliveryRecipientKind,
   MessageDeliveryStatus,
   AnnouncementTargetKind as TargetKind,
-} from '../../../src/domains'
-import {
-  ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
-  noOpNotificationGateway,
-  RecordingNotificationGateway,
-} from '../../../src/notifications'
-import { SchoolService } from '../../../src/services'
-import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
+} from '../../../src/domain'
+import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
+import { noOpNotificationGateway, RecordingNotificationGateway } from '../../../src/adapters'
+import { SchoolService } from '../../../src/application'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import { testFileStorage } from '../../support/test-file-storage'
 import {
   createCommunicationsContext,

@@ -1,8 +1,8 @@
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
-import { parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum MessageDeliveryChannel {
   App = 'app',

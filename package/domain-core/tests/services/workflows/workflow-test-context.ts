@@ -1,8 +1,8 @@
-import type { AuthorizationPolicy } from '../../../src/authorization'
+import type { AuthorizationPolicy } from '../../../src/capabilities/authorization'
 import type {
   AttendanceRecord,
   MessageDelivery,
-} from '../../../src/domains'
+} from '../../../src/domain'
 import type { AtomicExecutionPort, NotificationGatewayPort, SchoolRepositories } from '../../../src/ports'
 import { mock } from 'bun:test'
 import {
@@ -32,9 +32,9 @@ import {
   StudentFee,
   StudentStatus,
   AnnouncementTargetKind as TargetKind,
-} from '../../../src/domains'
-import { noOpNotificationGateway } from '../../../src/notifications'
-import { SchoolService } from '../../../src/services'
+} from '../../../src/domain'
+import { noOpNotificationGateway } from '../../../src/adapters'
+import { SchoolService } from '../../../src/application'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 

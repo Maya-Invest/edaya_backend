@@ -52,7 +52,7 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
-} from './domains'
+} from '../../domain'
 
 export interface CoreEntityMap {
   schools: School

@@ -284,7 +284,7 @@ Responsibilities of a transport implementation:
 - Serialize/deserialize JSON
 - Map non-2xx responses to `ApiError`
 
-The package does **not** ship framework-specific adapters. Each consumer provides its own. The webapp's browser adapter lives at `apps/webapp/src/lib/api/browser-transport.ts`.
+The package does **not** ship framework-specific adapters. Each consumer provides its own. The webapp's browser adapter lives in **edaya_web** at `apps/webapp/src/lib/api/browser-transport.ts`.
 
 ---
 
@@ -310,20 +310,21 @@ catch (error) {
 
 ## Code generation
 
-Bindings are regenerated as part of the monorepo OpenAPI pipeline:
+Bindings are regenerated as part of the backend OpenAPI pipeline:
 
 ```bash
-# from the repo root
-bun run openapi:generate
+# from edaya_backend root
+bun run generated:update
 ```
 
-This runs three steps in order:
+This runs two steps in order:
 
 | Step | Script | Output |
 |------|--------|--------|
-| 1. Export OpenAPI spec | `bun run export-openapi` | `apps/webapp/src/lib/api/openapi.json` (includes `info.x-edaya-client-bindings`) |
-| 2. Generate TypeScript types | `apps/webapp openapi:generate` | `apps/webapp/src/lib/api/schema.d.ts` |
-| 3. Generate client bindings | `tooling/repo/openapi/generate-bindings.ts` | `package/generated-api-client/src/generated/client-bindings.ts` |
+| 1. Export OpenAPI spec | `bun run export-openapi` | `tooling/repo/fixtures/openapi.json` (includes `info.x-edaya-client-bindings`) |
+| 2. Generate client bindings | `tooling/repo/openapi/generate-bindings.ts` | `package/generated-api-client/src/generated/client-bindings.ts` |
+
+**edaya_web** generates `schema.d.ts` and syncs a web copy of bindings from the exported spec (`bun run openapi:generate` there). See [docs/reference/cross-repo-workflow.md](../../docs/reference/cross-repo-workflow.md).
 
 The exported OpenAPI document embeds client bindings under `info.x-edaya-client-bindings`. The Flutter `edaya_mobile` repo consumes that extension to generate its Dart client — no shared checkout required.
 
@@ -343,7 +344,7 @@ The codegen script (`tooling/repo/openapi/generate-bindings.ts`) reads `info.x-e
 
 1. Add the entity to `coreEntities` in `apps/api/src/lib/school-api/registry/index.ts`
 2. Add corresponding Zod schemas in `entities.schemas.ts`
-3. Run `bun run openapi:generate`
+3. Run `bun run generated:update`
 4. Use the new resource immediately:
 
    ```ts
@@ -354,7 +355,7 @@ The codegen script (`tooling/repo/openapi/generate-bindings.ts`) reads `info.x-e
 
 1. Add the command to `coreCommands` in the registry
 2. Add request/response schemas in `commands.schemas.ts` and `command-response.schemas.ts`
-3. Run `bun run openapi:generate`
+3. Run `bun run generated:update`
 4. Call it:
 
    ```ts
@@ -394,9 +395,9 @@ generated-api-client/
 
 ---
 
-## Webapp integration
+## Consumer integration
 
-The static SvelteKit webapp wires the client in `apps/webapp/src/lib/api/school-client.ts`:
+**edaya_web** wires the client in `apps/webapp/src/lib/api/school-client.ts`:
 
 ```ts
 import { getBrowserSchoolClient } from '$lib/api/school-client'
@@ -405,13 +406,7 @@ const client = getBrowserSchoolClient()
 const students = await client.entities.students.list({})
 ```
 
-The webapp transport forwards:
-
-- browser cookies through `credentials: 'include'` (session auth)
-- `X-Academic-Year-Id` when present
-- `PUBLIC_API_URL` as the browser base URL, or same-origin paths when it is empty
-
-In local development, same-origin requests are forwarded by Vite to the private `API_URL` proxy target.
+The webapp transport forwards browser cookies (`credentials: 'include'`), `X-Academic-Year-Id`, and uses `PUBLIC_API_URL` or same-origin paths in local dev (Vite proxy). See **edaya_web** docs for details.
 
 ---
 
@@ -422,7 +417,7 @@ In local development, same-origin requests are forwarded by Vite to the private 
 | `src/entity-resource.ts` | Yes — when entity operation semantics change |
 | `src/create-client.ts` | Yes — when adding new client namespaces |
 | `src/transport.ts` | Yes — when the transport contract changes |
-| `src/generated/client-bindings.ts` | **No** — regenerate via `openapi:generate` |
+| `src/generated/client-bindings.ts` | **No** — regenerate via `bun run generated:update` |
 | `apps/api/src/lib/school-api/registry/` | Yes — this is the source of truth for API surface |
 
 ---
@@ -437,15 +432,11 @@ In local development, same-origin requests are forwarded by Vite to the private 
 
 ## Development
 
-Type-check and test the package:
+Type-check this package:
 
 ```bash
-bun run --cwd package/generated-api-client check
-bun run --cwd package/generated-api-client test
+bun --filter @edaya/api-client check
+bun --filter @edaya/api-client test
 ```
 
-Type-check the webapp (includes client usage):
-
-```bash
-bun run --cwd apps/webapp check
-```
+Webapp type-check runs from **edaya_web** (`bun --filter @edaya/webapp check`).

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   ReportCardDefinition,
   ReportCardDefinitionStatus,
-} from '../../../../src/domains/assessments/report-card-definition'
+} from '../../../../src/domain/assessments/report-card-definition'
 
 describe('ReportCardDefinition entity', () => {
   const baseArgs = {

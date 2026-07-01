@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '../../ports'
+import type { SchoolRepositories } from '../../../ports'
 import { resolveSchoolContext } from './resolve-school-context'
 
 export async function resolveSchoolName(

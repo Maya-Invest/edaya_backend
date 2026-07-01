@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { Incident, IncidentKind, IncidentStatus } from '../../../../src/domains/students/incident'
+import { Incident, IncidentKind, IncidentStatus } from '../../../../src/domain/students/incident'
 
 describe('Incident entity gravity and status validation', () => {
   const baseArgs = {

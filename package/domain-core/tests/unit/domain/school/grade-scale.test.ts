@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { GradeScale } from '../../../../src/domains/school/grade-scale'
+import { GradeScale } from '../../../../src/domain/school/grade-scale'
 
 describe('GradeScale entity', () => {
   const baseArgs = {

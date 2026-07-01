@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { ResourceAssignment } from '../../../../src/domains/school/resource-assignment'
-import { DomainValidationError } from '../../../../src/domains/utils'
+import { ResourceAssignment } from '../../../../src/domain/school/resource-assignment'
+import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 describe('ResourceAssignment target bounds and validation', () => {
   const baseArgs = {

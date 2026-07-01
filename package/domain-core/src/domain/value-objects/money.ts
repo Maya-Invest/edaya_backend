@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseDomain } from '../domains/utils'
+import { parseDomain } from '../../domain/shared/utils'
 
 export const moneySchema = z.object({
   amount: z.number().int().nonnegative('amount must be a non-negative integer'),

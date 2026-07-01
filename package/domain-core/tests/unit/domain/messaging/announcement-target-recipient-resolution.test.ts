@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AnnouncementTarget, AnnouncementTargetKind } from '../../../../src/domains/messaging/announcement-target'
+import { AnnouncementTarget, AnnouncementTargetKind } from '../../../../src/domain/messaging/announcement-target'
 
 describe('AnnouncementTarget entity recipient resolution', () => {
   it('instantiates successfully with valid broadcast targets and no targetId', () => {

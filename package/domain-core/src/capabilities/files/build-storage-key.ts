@@ -1,4 +1,4 @@
-import type { AttachmentOwnerKind } from '../domains/school/attachment'
+import type { AttachmentOwnerKind } from '../../domain/school/attachment'
 import { sanitizeFileName } from './sanitize-file-name'
 
 export type StoragePurpose = 'uploads' | 'generated/report-card' | 'generated/incident-report'

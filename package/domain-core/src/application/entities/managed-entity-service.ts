@@ -1,6 +1,6 @@
-import type { ActorMetadata } from '../authorization'
-import type { AtomicExecutionPort, BaseRepositoryInterface, Filter, QueryOptions, SchoolRepositories } from '../ports'
-import { AuthorizationError, AuthorizationErrorCode } from '../authorization'
+import type { ActorMetadata } from '../../capabilities/authorization'
+import type { AtomicExecutionPort, BaseRepositoryInterface, Filter, QueryOptions, SchoolRepositories } from '../../ports'
+import { AuthorizationError, AuthorizationErrorCode } from '../../capabilities/authorization'
 
 export interface EntityTenantResolver<T> {
   resolve: (entity: T, repositories: SchoolRepositories) => Promise<string | undefined> | string | undefined

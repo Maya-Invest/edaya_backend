@@ -5,7 +5,7 @@ import type {
   NotificationGatewayPort,
   NotificationRecipient,
   NotificationRecipientProfile,
-} from '../ports/notification-gateway'
+} from '../ports/gateways/notification-gateway'
 
 export class RecordingNotificationGateway implements NotificationGatewayPort {
   readonly enqueued: NotificationEnqueueInput[] = []

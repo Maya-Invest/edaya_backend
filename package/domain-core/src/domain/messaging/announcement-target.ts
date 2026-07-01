@@ -1,9 +1,9 @@
 import type { SchoolRepositories } from '../../ports'
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
-import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../shared'
-import { parseDomain, zodDate } from '../utils'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AnnouncementTargetKind {
   School = 'school',

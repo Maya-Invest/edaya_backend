@@ -4,7 +4,7 @@ import {
   AttendanceRecord,
   AttendanceStatus,
   buildSessionAttendanceSummary,
-} from '../../../../src/domains/scheduling/attendance-record'
+} from '../../../../src/domain/scheduling/attendance-record'
 
 describe('Attendance record status transitions and validation', () => {
   const baseArgs = {

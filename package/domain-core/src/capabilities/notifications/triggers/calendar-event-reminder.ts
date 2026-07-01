@@ -1,7 +1,7 @@
-import type { CalendarEvent } from '../../domains'
+import type { CalendarEvent } from '../../../domain'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
-import { CalendarEventKind } from '../../domains'
-import { resolveCalendarEventRecipients } from '../recipient-resolvers'
+import { CalendarEventKind } from '../../../domain'
+import { resolveCalendarEventRecipients } from '../delivery/recipient-resolvers'
 import {
   formatNotificationDate,
   formatNotificationDateRange,

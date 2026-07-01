@@ -6,7 +6,7 @@ import {
   AuthorizationError,
   Permission,
   scopeGrantSubsetCovers,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 describe('service account delegation', () => {

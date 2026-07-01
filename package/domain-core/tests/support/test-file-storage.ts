@@ -1,1 +1,1 @@
-export { noOpFileStorage as testFileStorage } from '../../src/storage/no-op-file-storage'
+export { noOpFileStorage as testFileStorage } from '../../src/adapters/no-op-file-storage'

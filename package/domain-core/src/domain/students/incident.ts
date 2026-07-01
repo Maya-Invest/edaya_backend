@@ -1,13 +1,13 @@
-import type { AuthorizationPolicy } from '../../authorization'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
+import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../authorization'
-import { AttachmentOwnerKind } from '../../domains'
-import { config, dateTime, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { parseDomain, zodDate } from '../utils'
+import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../capabilities/authorization'
+import { AttachmentOwnerKind } from '../../domain'
+import { config, dateTime, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum IncidentKind {
   Positive = 'positive',

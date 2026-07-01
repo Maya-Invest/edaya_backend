@@ -1,12 +1,12 @@
-import type { Guardian, StaffMember, Student } from '../domains'
-import type { BaseSchoolService } from '../services/base-school-service'
+import type { Guardian, StaffMember, Student } from '../../domain'
+import type { BaseSchoolService } from '../../application/base-school-service'
 import { Permission } from '../authorization'
 import {
   AccountInvitationContactChannel,
   AccountInvitationKind,
-} from '../domains/access/account-invitation'
-import { AccountInvitationServiceWorkflow } from '../services/service-workflows/account-invitation'
-import { permissionAction } from '../shared'
+} from '../../domain/access/account-invitation'
+import { AccountInvitationServiceWorkflow } from '../../application/workflows/account-invitation'
+import { permissionAction } from '../../application/entities/entity-config'
 import { resolveStudentInvitationEmail } from './resolve-invitation-contact'
 
 export interface ScheduleAccountInvitationInput {

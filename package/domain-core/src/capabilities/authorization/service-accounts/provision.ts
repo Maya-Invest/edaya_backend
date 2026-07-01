@@ -1,7 +1,7 @@
-import type { ScopeGrant } from '../../authorization'
-import type { StaffActorMetadata } from '../../authorization/model/actor'
-import type { StaffMember } from '../../domains'
-import type { SchoolRepositories } from '../../ports'
+import type { ScopeGrant } from '../'
+import type { StaffActorMetadata } from '../model/actor'
+import type { StaffMember } from '../../../domain'
+import type { SchoolRepositories } from '../../../ports'
 import { randomUUID } from 'node:crypto'
 import {
   assertDelegatedPermissionsSubset,
@@ -10,10 +10,10 @@ import {
   encodeApiKey,
   generateApiKey,
   Permission,
-} from '../../authorization'
-import { ServiceApiKey, StaffMember as StaffMemberEntity, StaffRoleAssignment } from '../../domains'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../'
+import { ServiceApiKey, StaffMember as StaffMemberEntity, StaffRoleAssignment } from '../../../domain'
+import { permissionAction } from '../../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../../domain/shared/business-rule-error'
 
 export interface CreateServiceAccountInput {
   serviceId: string

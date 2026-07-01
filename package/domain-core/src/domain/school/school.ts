@@ -1,10 +1,10 @@
-import type { BaseRepositoryInterface } from '../../ports/base-repository'
-import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../services/managed-entity-service'
-import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../shared'
+import type { BaseRepositoryInterface } from '../../ports/repositories/base-repository'
+import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../shared'
-import { parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../application/entities/entity-config'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SchoolType {
   Primary = 'primary',

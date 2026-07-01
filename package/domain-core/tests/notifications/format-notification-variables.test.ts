@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { AttendanceStatus } from '../../src/domains/scheduling/attendance-record'
-import { IncidentKind } from '../../src/domains/students/incident'
+import { AttendanceStatus } from '../../src/domain/scheduling/attendance-record'
+import { IncidentKind } from '../../src/domain/students/incident'
 import {
   formatNotificationDate,
   formatNotificationDateRange,
@@ -11,7 +11,7 @@ import {
   labelAttendanceStatus,
   labelIncidentKind,
   truncateNotificationText,
-} from '../../src/notifications/templates/format-notification-variables'
+} from '../../src/capabilities/notifications/templates/format-notification-variables'
 
 describe('format notification variables', () => {
   test('formats dates and times in the school timezone', () => {

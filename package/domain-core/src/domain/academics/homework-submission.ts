@@ -1,12 +1,12 @@
-import type { AuthorizationPolicy } from '../../authorization'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../authorization'
-import { StudentClassEnrollmentStatus } from '../../domains'
-import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../shared'
-import { parseDomain, zodDate } from '../utils'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { StudentClassEnrollmentStatus } from '../../domain'
+import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export enum HomeworkSubmissionStatus {
   Submitted = 'submitted',

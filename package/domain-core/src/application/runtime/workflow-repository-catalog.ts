@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '../ports/school-repositories'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 
 export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears'],

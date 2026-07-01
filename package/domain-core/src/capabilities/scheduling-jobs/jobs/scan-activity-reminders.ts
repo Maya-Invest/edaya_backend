@@ -1,13 +1,13 @@
-import type { ExtracurricularActivity } from '../../domains'
+import type { ExtracurricularActivity } from '../../../domain'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { resolveActivityEnrollmentRecipients } from '../../notifications/recipient-resolvers'
-import { enqueueTemplatedNotification } from '../../notifications/templates/enqueue-templated-notification'
-import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
+import { resolveActivityEnrollmentRecipients } from '../../notifications/delivery/recipient-resolvers'
+import { enqueueTemplatedNotification } from '../../../capabilities/notifications/templates/enqueue-templated-notification'
+import { resolveSchoolName } from '../../../capabilities/notifications/templates/resolve-school-name'
 import {
   ACTIVITY_REMINDER_EVENT_KEY,
   activityReminderDeliverAfter,
   activityReminderIdempotencyKey,
-} from '../../notifications/triggers/activity-reminder'
+} from '../../../capabilities/notifications/triggers/activity-reminder'
 import { isInJobNotificationWindow } from '../due-window'
 
 export async function scanActivityReminders(

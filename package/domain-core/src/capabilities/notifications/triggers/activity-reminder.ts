@@ -1,6 +1,6 @@
-import type { ExtracurricularActivity } from '../../domains'
+import type { ExtracurricularActivity } from '../../../domain'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
-import { resolveActivityEnrollmentRecipients } from '../recipient-resolvers'
+import { resolveActivityEnrollmentRecipients } from '../delivery/recipient-resolvers'
 import {
   formatNotificationDate,
   formatNotificationDateRange,

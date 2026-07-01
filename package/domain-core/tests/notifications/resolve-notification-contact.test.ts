@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { MessageDeliveryRecipientKind } from '../../src/domains'
-import { enrichRecipientProfile, resolveNotificationEmail, resolveNotificationPhone } from '../../src/notifications/resolve-notification-contact'
+import { MessageDeliveryRecipientKind } from '../../src/domain'
+import { enrichRecipientProfile, resolveNotificationEmail, resolveNotificationPhone } from '../../src/capabilities/notifications/delivery/resolve-notification-contact'
 
 describe('resolveNotificationContact', () => {
   test('prefers explicit notification email over auth and fallback', () => {

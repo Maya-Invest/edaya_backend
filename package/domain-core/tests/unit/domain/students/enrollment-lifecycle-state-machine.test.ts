@@ -4,7 +4,7 @@ import {
   ProgressionDecision,
   StudentClassEnrollment,
   StudentClassEnrollmentStatus,
-} from '../../../../src/domains/students/student-class-enrollment'
+} from '../../../../src/domain/students/student-class-enrollment'
 
 describe('Student class enrollment state transitions and validation', () => {
   const baseArgs = {

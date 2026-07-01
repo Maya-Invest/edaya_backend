@@ -1,9 +1,9 @@
-import type { AuthorizationPolicy } from '../../../src/authorization'
+import type { AuthorizationPolicy } from '../../../src/capabilities/authorization'
 import type { AtomicExecutionPort, SchoolRepositories } from '../../../src/ports'
 import { describe, expect, test } from 'bun:test'
 import { SchoolApplication, SchoolService } from '../../../src'
-import { createSystemActorMetadata } from '../../../src/authorization'
-import { noOpNotificationGateway } from '../../../src/notifications'
+import { createSystemActorMetadata } from '../../../src/capabilities/authorization'
+import { noOpNotificationGateway } from '../../../src/adapters'
 import { testFileStorage } from '../../support/test-file-storage'
 
 describe('SchoolApplication', () => {

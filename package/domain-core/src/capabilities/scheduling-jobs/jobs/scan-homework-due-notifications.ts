@@ -1,13 +1,13 @@
-import type { HomeworkAssignment } from '../../domains'
+import type { HomeworkAssignment } from '../../../domain'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { resolveClassGroupStudentAndGuardianRecipients } from '../../notifications/recipient-resolvers'
-import { enqueueTemplatedNotification } from '../../notifications/templates/enqueue-templated-notification'
-import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
+import { resolveClassGroupStudentAndGuardianRecipients } from '../../notifications/delivery/recipient-resolvers'
+import { enqueueTemplatedNotification } from '../../../capabilities/notifications/templates/enqueue-templated-notification'
+import { resolveSchoolName } from '../../../capabilities/notifications/templates/resolve-school-name'
 import {
   HOMEWORK_DUE_SOON_EVENT_KEY,
   homeworkDueSoonDeliverAfter,
   homeworkDueSoonIdempotencyKey,
-} from '../../notifications/triggers/homework-due-soon'
+} from '../../../capabilities/notifications/triggers/homework-due-soon'
 import { isInJobNotificationWindow } from '../due-window'
 
 export async function scanHomeworkDueNotifications(

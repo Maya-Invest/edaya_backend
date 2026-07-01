@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { resolveCronJobKeys } from '../../src/cron/resolve-cron-job-keys'
+import { resolveCronJobKeys } from '../../src/capabilities/scheduling-jobs/resolve-cron-job-keys'
 
 describe('resolveCronJobKeys', () => {
   test('maps known cron expressions to job keys', () => {

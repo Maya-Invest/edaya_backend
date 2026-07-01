@@ -7,9 +7,9 @@ import type {
   StudentInput,
   StudentNote,
   StudentNoteInput,
-} from '../../domains'
+} from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
+import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
 import {
   EnrollmentEndReason,
   Guardian,
@@ -21,18 +21,18 @@ import {
   StudentHealthProfile as StudentHealthProfileEntity,
   StudentNote as StudentNoteEntity,
   StudentStatus,
-} from '../../domains'
-import { AccountInvitationKind } from '../../domains/access/account-invitation'
+} from '../../domain'
+import { AccountInvitationKind } from '../../domain/access/account-invitation'
 import {
   resolveStudentInvitationEmail,
   scheduleAccountInvitationIfEligible,
-} from '../../invitations'
+} from '../../capabilities/invitations'
 import {
   buildGuardianRecipientProfile,
   scheduleNotificationRecipientUpsert,
-} from '../../notifications'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../../capabilities/notifications'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface EnrollStudentInput {

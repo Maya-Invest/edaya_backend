@@ -1,5 +1,5 @@
-import type { StaffActorMetadata } from '../../src/authorization'
-import { ActorAssuranceLevel, createBootstrapStaffActorMetadata, createStaffActorMetadata, ELEVATED_STAFF_PERMISSIONS } from '../../src/authorization'
+import type { StaffActorMetadata } from '../../src/capabilities/authorization'
+import { ActorAssuranceLevel, createBootstrapStaffActorMetadata, createStaffActorMetadata, ELEVATED_STAFF_PERMISSIONS } from '../../src/capabilities/authorization'
 
 const TEST_NOW = new Date('2026-01-01T00:00:00Z')
 

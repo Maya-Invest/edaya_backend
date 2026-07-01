@@ -1,8 +1,8 @@
-import type { EntityConfigFactory } from '../../shared'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { directPermissionEntityConfig } from '../../shared'
-import { parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { parseDomain, zodDate } from '../shared/utils'
 
 export type AccessRoleStatus = 'active' | 'inactive'
 

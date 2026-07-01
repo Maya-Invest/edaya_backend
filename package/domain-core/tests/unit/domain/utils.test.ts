@@ -4,7 +4,7 @@ import {
   DomainValidationError,
   isSameDate,
   parseDomain,
-} from '../../../src/domains/utils'
+} from '../../../src/domain/shared/utils'
 
 describe('Utils', () => {
   test('isSameDate compares UTC year, month, and day', () => {

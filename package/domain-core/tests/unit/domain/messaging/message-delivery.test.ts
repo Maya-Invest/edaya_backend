@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { buildDeliverySummary, MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '../../../../src/domains/messaging/message-delivery'
+import { buildDeliverySummary, MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '../../../../src/domain/messaging/message-delivery'
 
 describe('MessageDelivery entity', () => {
   const baseArgs = {

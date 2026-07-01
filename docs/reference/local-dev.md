@@ -7,7 +7,7 @@ The webapp is a **static SPA** (`ssr = false`) that calls the API from the brows
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (repo `packageManager`: `bun@1.3.14`)
-- From the **edaya** repo root: `bun install`
+- From the **edaya_backend** repo root: `bun install`
 - **edaya_web** checked out as a sibling directory for the webapp UI
 
 ## First-time setup
@@ -24,8 +24,8 @@ cp apps/webapp/.env.example apps/webapp/.env
 ## Start API + webapp
 
 ```sh
-# Terminal 1 — API on http://localhost:9999 (from edaya/)
-cd edaya && bun --filter @edaya/api dev
+# Terminal 1 — API on http://localhost:9999 (from edaya_backend/)
+cd edaya_backend && bun --filter @edaya/api dev
 
 # Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
 cd edaya_web && bun --filter @edaya/webapp dev
@@ -47,7 +47,7 @@ cd edaya_web && bun --filter @edaya/webapp dev
 - **Vite proxy (dev)** — `vite.config.ts` forwards `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` to `API_URL` (default `http://localhost:9999`).
 - **Bootstrap** — `bootstrapSession()` loads Better Auth session + `/core/authorization/effective-grants` on app start. List/read data flows through `$lib/api/*-data.ts` and `$lib/queries/*`.
 
-See [webapp-migration-plan.md](../sprints/done/webapp-migration-plan.md) for the completed mock → API migration.
+See [webapp-migration-plan.md](../sprints/archive/webapp-migration-plan.md) for the completed mock → API migration (edaya_web).
 
 ## API runtimes
 
@@ -228,10 +228,12 @@ bun --filter @edaya/core lint
 bun --filter @edaya/core check
 bun --filter @edaya/core test
 
-bun --filter @edaya/webapp lint
-bun --filter @edaya/webapp check
-bun --filter @edaya/webapp test
+bun --filter @edaya/api lint
+bun --filter @edaya/api check
+bun --filter @edaya/api test
 ```
+
+Webapp tests run from **edaya_web** (`bun --filter @edaya/webapp test`).
 
 Before opening a pull request, run `bun run verify`.
 

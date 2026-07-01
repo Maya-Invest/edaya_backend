@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { isInJobNotificationWindow } from '../../src/cron/due-window'
+import { isInJobNotificationWindow } from '../../src/capabilities/scheduling-jobs/due-window'
 
 describe('isInJobNotificationWindow', () => {
   test('returns true when asOf is inside deliver window', () => {

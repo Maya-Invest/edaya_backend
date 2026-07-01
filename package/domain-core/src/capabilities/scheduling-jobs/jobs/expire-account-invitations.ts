@@ -1,5 +1,5 @@
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { AccountInvitationStatus } from '../../domains/access/account-invitation'
+import { AccountInvitationStatus } from '../../../domain/access/account-invitation'
 
 export async function expireAccountInvitations(context: SchoolCronJobContext): Promise<CronJobResult> {
   const { service, asOf } = context

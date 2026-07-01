@@ -1,11 +1,11 @@
-import type { AuthorizationPolicy } from '../../authorization'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../services/managed-entity-service'
-import type { EntityConfigFactory } from '../../shared'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../authorization'
-import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
-import { normalizeDate, parseDomain, zodDate } from '../utils'
+import { Permission } from '../../capabilities/authorization'
+import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
 
 export enum AttendanceStatus {
   Present = 'present',

@@ -1,4 +1,4 @@
-import type { StaffAccountKind } from '../../domains/school/staff-account-kind'
+import type { StaffAccountKind } from '../../../domain/school/staff-account-kind'
 import { ActorAssuranceLevel } from '../model/actor'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { Permission } from './permission'

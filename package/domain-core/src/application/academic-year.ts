@@ -1,5 +1,5 @@
-import type { AcademicYear } from '../domains'
-import type { SchoolRepositories } from '../ports/school-repositories'
+import type { AcademicYear } from '../domain'
+import type { SchoolRepositories } from '../ports/repositories/school-repositories'
 
 /**
  * Resolves the active academic year for a school.

@@ -1,8 +1,8 @@
-import type { Guardian, Incident, StudentIncidentInvolvement } from '../../domains'
-import type { WorkflowNotificationContext } from '../workflow-notification-runner'
-import { MessageDeliveryRecipientKind } from '../../domains'
-import { deliverNotification } from '../deliver-notification'
-import { uniqueNotificationRecipients } from '../recipient-utils'
+import type { Guardian, Incident, StudentIncidentInvolvement } from '../../../domain'
+import type { WorkflowNotificationContext } from '../delivery/workflow-notification-runner'
+import { MessageDeliveryRecipientKind } from '../../../domain'
+import { deliverNotification } from '../delivery/deliver-notification'
+import { uniqueNotificationRecipients } from '../delivery/recipient-utils'
 import {
   formatNotificationDate,
   formatPersonName,

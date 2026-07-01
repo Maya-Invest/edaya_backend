@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { School, SchoolType } from '../../../../src/domains/school/school'
+import { School, SchoolType } from '../../../../src/domain/school/school'
 
 describe('School entity', () => {
   const baseArgs = {

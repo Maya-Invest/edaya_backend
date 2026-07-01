@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { Announcement, AnnouncementPriority, AnnouncementStatus } from '../../../../src/domains/messaging/announcement'
+import { Announcement, AnnouncementPriority, AnnouncementStatus } from '../../../../src/domain/messaging/announcement'
 
 describe('Announcement entity', () => {
   test('instantiates successfully with valid inputs', () => {

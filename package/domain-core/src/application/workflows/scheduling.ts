@@ -1,6 +1,6 @@
-import type { AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput, SessionInput } from '../../domains'
+import type { AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput, SessionInput } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../authorization'
+import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
 import {
   AttendanceJustificationStatus,
   AttendanceMode,
@@ -12,14 +12,14 @@ import {
   Session,
   SessionKind,
   StudentClassEnrollmentStatus,
-} from '../../domains'
-import { normalizeDate } from '../../domains/utils'
+} from '../../domain'
+import { normalizeDate } from '../../domain/shared/utils'
 import {
   ATTENDANCE_RECORDED_EVENT_KEY,
   runWorkflowNotifications,
-} from '../../notifications'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../../capabilities/notifications'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 function generateUniqueId(): string {

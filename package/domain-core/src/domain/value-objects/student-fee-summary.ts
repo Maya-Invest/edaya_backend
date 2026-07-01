@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseDomain } from '../domains/utils'
+import { parseDomain } from '../../domain/shared/utils'
 import { Money, moneySchema } from './money'
 
 export const studentFeeSummarySchema = z.object({

@@ -1,34 +1,34 @@
-import type { Guardian, StaffMember, Student } from '../../domains'
+import type { Guardian, StaffMember, Student } from '../../domain'
 import type { LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor'
 import type { BaseSchoolService } from '../base-school-service'
-import type { InvitationWorkflowRepositories } from '../workflow-repository-catalog'
+import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
-import { denyResourceAccess, Permission } from '../../authorization'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import {
   AccountInvitation,
   AccountInvitationContactChannel,
   AccountInvitationKind,
   AccountInvitationStatus,
-} from '../../domains/access/account-invitation'
-import { ACCOUNT_INVITATION_TTL_MS } from '../../invitations/constants'
+} from '../../domain/access/account-invitation'
+import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import {
   buildInvitationUrl,
   generateInvitationToken,
   hashInvitationToken,
-} from '../../invitations/invitation-token'
+} from '../../capabilities/invitations/invitation-token'
 import {
   normalizeInvitationEmail,
   resolveInvitationContact,
   resolveInviteeDisplayName,
   resolveStudentInvitationEmail,
-} from '../../invitations/resolve-invitation-contact'
-import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../notifications/templates/keys'
-import { renderInvitationEmailContent } from '../../notifications/templates/render-enqueue-content'
-import { resolveSchoolName } from '../../notifications/templates/resolve-school-name'
-import { permissionAction } from '../../shared'
-import { BusinessRuleViolationError } from '../../shared/business-rule-error'
+} from '../../capabilities/invitations/resolve-invitation-contact'
+import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../capabilities/notifications/templates/keys'
+import { renderInvitationEmailContent } from '../../capabilities/notifications/templates/render-enqueue-content'
+import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
+import { permissionAction } from '../../application/entities/entity-config'
+import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
-import { pickWorkflowRepositories } from '../workflow-repository-catalog'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface SendAccountInvitationInput {

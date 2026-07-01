@@ -1,6 +1,6 @@
-import type { NotificationDeliveryStatusLookup } from '../../ports/notification-gateway'
+import type { NotificationDeliveryStatusLookup } from '../../../ports/gateways/notification-gateway'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { MessageDeliveryStatus } from '../../domains'
+import { MessageDeliveryStatus } from '../../../domain'
 
 const RECONCILE_BATCH_SIZE = 50
 const RECONCILE_DELIVERY_LIMIT = 500

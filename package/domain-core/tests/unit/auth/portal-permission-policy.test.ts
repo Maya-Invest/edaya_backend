@@ -7,7 +7,7 @@ import {
   GUARDIAN_PORTAL_PERMISSIONS,
   Permission,
   STUDENT_PORTAL_PERMISSIONS,
-} from '../../../src/authorization'
+} from '../../../src/capabilities/authorization'
 import { portalEffectiveGrantsForGuardian, portalEffectiveGrantsForStudent } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')

@@ -1,7 +1,7 @@
-import type { NotificationEnqueueInput } from '../../ports/notification-gateway'
-import type { BaseSchoolService } from '../../services/base-school-service'
+import type { NotificationEnqueueInput } from '../../../ports/gateways/notification-gateway'
+import type { BaseSchoolService } from '../../../application/base-school-service'
 import type { NotificationTemplateKey } from './keys'
-import { deliverNotificationFromEnqueueInput } from '../deliver-notification'
+import { deliverNotificationFromEnqueueInput } from '../delivery/deliver-notification'
 import { renderNotificationEnqueueContent } from './render-enqueue-content'
 
 export type EnqueueTemplatedNotificationInput

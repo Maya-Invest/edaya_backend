@@ -12,12 +12,10 @@ import {
   CalendarEventScopeKind,
   DayOfWeek,
   MessageDeliveryRecipientKind,
-} from '../../../src/domains'
-import {
-  ATTENDANCE_RECORDED_EVENT_KEY,
-  RecordingNotificationGateway,
-} from '../../../src/notifications'
-import { BusinessRuleViolationError } from '../../../src/shared/business-rule-error'
+} from '../../../src/domain'
+import { ATTENDANCE_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
+import { RecordingNotificationGateway } from '../../../src/adapters'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,
   createSchedulingContext,

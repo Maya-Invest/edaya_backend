@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseDomain } from '../domains/utils'
+import { parseDomain } from '../../domain/shared/utils'
 
 export const attendanceSummaryBaseSchema = z.object({
   presentCount: z.number().int().nonnegative('presentCount must be a non-negative integer'),

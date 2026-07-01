@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { SubjectMatter } from '../../../../src/domains/academics/subject-matter'
+import { SubjectMatter } from '../../../../src/domain/academics/subject-matter'
 
 describe('SubjectMatter entity validation and sequence', () => {
   it('instantiates successfully with valid inputs', () => {

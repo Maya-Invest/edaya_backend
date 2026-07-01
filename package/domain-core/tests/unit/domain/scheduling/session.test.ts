@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { Session, SessionKind } from '../../../../src/domains/scheduling/session'
+import { Session, SessionKind } from '../../../../src/domain/scheduling/session'
 
 describe('Session entity', () => {
   const baseArgs = {

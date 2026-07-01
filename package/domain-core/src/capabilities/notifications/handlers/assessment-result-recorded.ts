@@ -1,7 +1,7 @@
-import type { Assessment, AssessmentResult, Student } from '../../domains'
-import type { WorkflowNotificationContext } from '../workflow-notification-runner'
-import { deliverNotification } from '../deliver-notification'
-import { resolveStudentAndAcademicGuardianRecipients } from '../recipient-resolvers'
+import type { Assessment, AssessmentResult, Student } from '../../../domain'
+import type { WorkflowNotificationContext } from '../delivery/workflow-notification-runner'
+import { deliverNotification } from '../delivery/deliver-notification'
+import { resolveStudentAndAcademicGuardianRecipients } from '../delivery/recipient-resolvers'
 import {
   formatPersonName,
   formatScoreDisplay,

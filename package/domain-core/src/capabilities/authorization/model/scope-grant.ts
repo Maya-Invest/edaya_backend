@@ -1,2 +1,2 @@
-export type { ScopeGrant, ScopeGrantInput } from '../../value_object/scope-grant'
-export { scopeGrantSchema } from '../../value_object/scope-grant'
+export type { ScopeGrant, ScopeGrantInput } from '../../../domain/value-objects/scope-grant'
+export { scopeGrantSchema } from '../../../domain/value-objects/scope-grant'
