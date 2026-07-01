@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization'
 import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { Permission } from '../../capabilities/authorization'
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
 import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
 import { parseDomain, zodDate } from '../shared/utils'

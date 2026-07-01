@@ -4,7 +4,10 @@ import {
   mock,
   test,
 } from 'bun:test'
+import { noOpNotificationGateway, RecordingNotificationGateway } from '../../../src/adapters'
+import { SchoolService } from '../../../src/application'
 import { AuthorizationError, createSystemActorMetadata } from '../../../src/capabilities/authorization'
+import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import {
   AnnouncementStatus,
   MessageDelivery,
@@ -12,9 +15,6 @@ import {
   MessageDeliveryStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/domain'
-import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
-import { noOpNotificationGateway, RecordingNotificationGateway } from '../../../src/adapters'
-import { SchoolService } from '../../../src/application'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import { testFileStorage } from '../../support/test-file-storage'
 import {

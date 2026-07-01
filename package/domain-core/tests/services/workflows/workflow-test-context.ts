@@ -5,6 +5,8 @@ import type {
 } from '../../../src/domain'
 import type { AtomicExecutionPort, NotificationGatewayPort, SchoolRepositories } from '../../../src/ports'
 import { mock } from 'bun:test'
+import { noOpNotificationGateway } from '../../../src/adapters'
+import { SchoolService } from '../../../src/application'
 import {
   AcademicYear,
   Announcement,
@@ -33,8 +35,6 @@ import {
   StudentStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/domain'
-import { noOpNotificationGateway } from '../../../src/adapters'
-import { SchoolService } from '../../../src/application'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 

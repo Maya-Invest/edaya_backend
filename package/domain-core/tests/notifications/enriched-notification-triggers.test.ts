@@ -1,5 +1,14 @@
 import type { Assessment, CalendarEvent, ExtracurricularActivity, HomeworkAssignment } from '../../src/domain'
 import { describe, expect, test } from 'bun:test'
+import { RecordingNotificationGateway } from '../../src/adapters'
+import {
+  activityReminderTrigger,
+  assessmentDueSoonTrigger,
+  calendarEventReminderTrigger,
+  homeworkDueSoonTrigger,
+} from '../../src/capabilities/notifications'
+import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
+import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
 import {
   AssessmentKind,
   CalendarEventKind,
@@ -8,15 +17,6 @@ import {
   StudentClassEnrollmentStatus,
 } from '../../src/domain'
 import { SchoolNotificationTemplates } from '../../src/domain/messaging/school-notification-templates'
-import {
-  activityReminderTrigger,
-  assessmentDueSoonTrigger,
-  calendarEventReminderTrigger,
-  homeworkDueSoonTrigger,
-} from '../../src/capabilities/notifications'
-import { RecordingNotificationGateway } from '../../src/adapters'
-import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
-import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
 
 async function createDefaultTemplateService(): Promise<NotificationTemplateService> {
   const templates = await buildDefaultNotificationTemplateDocument()

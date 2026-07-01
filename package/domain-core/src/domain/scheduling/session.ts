@@ -1,8 +1,8 @@
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
 import { parseDomain, zodDate } from '../shared/utils'
 

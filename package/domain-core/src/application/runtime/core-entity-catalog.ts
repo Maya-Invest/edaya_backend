@@ -1,7 +1,8 @@
-import type { CoreEntityKey, CoreEntityMap } from './core-entity-map'
 import type { EntityConfigFactory, EntityConfigFactoryInput } from '../entities/entity-config'
 import type { ServiceArgs } from '../service-args'
-import { CORE_ENTITY_KEYS } from './core-entity-map'
+import type { CoreEntityKey, CoreEntityMap } from './core-entity-map'
+import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry'
+import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
 import {
   academicPeriodConfig,
   academicYearConfig,
@@ -57,9 +58,8 @@ import {
   subjectConfig,
   subjectMatterConfig,
 } from '../../domain'
-import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry'
-import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
 import { ManagedEntityService } from '../entities/managed-entity-service'
+import { CORE_ENTITY_KEYS } from './core-entity-map'
 
 export type CoreEntityConfigFactoryMap = {
   readonly [Key in CoreEntityKey]: EntityConfigFactory<CoreEntityMap[Key]>

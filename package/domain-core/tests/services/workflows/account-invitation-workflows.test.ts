@@ -11,10 +11,10 @@ import {
   RecordingNotificationGateway,
   StaffMember,
 } from '../../../src'
-import { SchoolNotificationTemplates } from '../../../src/domain/messaging/school-notification-templates'
+import { SchoolService } from '../../../src/application'
 import { hashInvitationToken } from '../../../src/capabilities/invitations/invitation-token'
 import { buildDefaultNotificationTemplateDocument } from '../../../src/capabilities/notifications/templates/defaults/manifest'
-import { SchoolService } from '../../../src/application'
+import { SchoolNotificationTemplates } from '../../../src/domain/messaging/school-notification-templates'
 import { testFileStorage } from '../../support/test-file-storage'
 
 function actorWithPermissions(permissions: readonly Permission[]) {

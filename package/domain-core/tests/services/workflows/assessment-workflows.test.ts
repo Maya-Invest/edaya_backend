@@ -3,9 +3,9 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { ReportCardResultStatus } from '../../../src/domain'
-import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import { RecordingNotificationGateway } from '../../../src/adapters'
+import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
+import { ReportCardResultStatus } from '../../../src/domain'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,

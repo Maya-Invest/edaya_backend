@@ -1,4 +1,4 @@
-import type { SeedApplication } from '../types'
+import type { SeedApplication } from '../support/types'
 import type { HttpSeedClient } from './client'
 import {
   ActorAssuranceLevel,

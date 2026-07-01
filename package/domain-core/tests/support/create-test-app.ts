@@ -56,6 +56,9 @@ import type {
   SubjectMatter,
 } from '../../src/domain'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
+import { noOpNotificationGateway } from '../../src/adapters'
+import { SchoolApplication } from '../../src/application'
+import { buildSchoolOverview } from '../../src/application/queries/school-overview'
 import {
   ActorAssuranceLevel,
   createRepositoryAuthorizationPolicy,
@@ -63,9 +66,6 @@ import {
   DefaultAuthorizationRepository,
 } from '../../src/capabilities/authorization'
 import { AccountInvitationStatus, StaffMember } from '../../src/domain'
-import { noOpNotificationGateway } from '../../src/adapters'
-import { buildSchoolOverview } from '../../src/application/queries/school-overview'
-import { SchoolApplication } from '../../src/application'
 import { effectiveGrantsForRoles } from './effective-grants'
 import { matchesFilter } from './filter-matcher'
 import { testFileStorage } from './test-file-storage'

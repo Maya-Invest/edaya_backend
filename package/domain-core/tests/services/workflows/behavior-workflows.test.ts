@@ -3,9 +3,9 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { IncidentInvolvementRole } from '../../../src/domain'
-import { INCIDENT_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import { RecordingNotificationGateway } from '../../../src/adapters'
+import { INCIDENT_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
+import { IncidentInvolvementRole } from '../../../src/domain'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,

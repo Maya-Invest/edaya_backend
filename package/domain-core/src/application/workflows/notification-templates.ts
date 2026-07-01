@@ -1,14 +1,14 @@
-import type { SchoolNotificationTemplates } from '../../domain/messaging/school-notification-templates'
 import type { NotificationTemplateKey } from '../../capabilities/notifications/templates/keys'
 import type { SchoolNotificationTemplateDocumentPatch } from '../../capabilities/notifications/templates/merge-school-notification-templates'
+import type { SchoolNotificationTemplates } from '../../domain/messaging/school-notification-templates'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
-import { SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '../../domain/messaging/school-notification-templates'
 import { buildDefaultNotificationTemplateDocument } from '../../capabilities/notifications/templates/defaults/manifest'
 import {
   mergeSchoolNotificationTemplateDocument,
 } from '../../capabilities/notifications/templates/merge-school-notification-templates'
-import { permissionAction } from '../../application/entities/entity-config'
+import { SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '../../domain/messaging/school-notification-templates'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 

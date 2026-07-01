@@ -1,9 +1,9 @@
-import type { BaseRepositoryInterface } from '../../ports/repositories/base-repository'
-import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
 import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../application/entities/entity-config'
+import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
+import type { BaseRepositoryInterface } from '../../ports/repositories/base-repository'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization'
 import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../application/entities/entity-config'
+import { Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SchoolType {

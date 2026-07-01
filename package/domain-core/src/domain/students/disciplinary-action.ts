@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization'
 import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum DisciplinaryActionKind {

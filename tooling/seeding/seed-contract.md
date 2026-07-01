@@ -1,6 +1,6 @@
 # Seeding contract inventory
 
-This inventory captures the seeding port architecture and the domain commands used by `tooling/seeding/src`.
+This inventory captures the seeding port architecture and the domain commands used by `tooling/seeding/src/domains/`.
 
 ## Local dev (HTTP-only)
 

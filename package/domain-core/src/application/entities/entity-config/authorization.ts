@@ -1,5 +1,5 @@
-import type { ActorMetadata, AuthorizationPolicy, AuthorizationRequest, Permission } from '../../../capabilities/authorization'
 import type { EntityReadAuthorization, EntityWriteAuthorization } from '../../../application/entities/managed-entity-service'
+import type { ActorMetadata, AuthorizationPolicy, AuthorizationRequest, Permission } from '../../../capabilities/authorization'
 import { authorize } from '../../../capabilities/authorization'
 import { unique } from './helper-utils'
 

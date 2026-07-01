@@ -336,6 +336,54 @@
           "timeZone"
         ]
       },
+      "OnboardingAccountStatusResponse": {
+        "type": "object",
+        "properties": {
+          "wizardCompleted": {
+            "type": "boolean"
+          },
+          "maxReachedStep": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  3
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  4
+                ]
+              }
+            ]
+          },
+          "schoolStepSubmitted": {
+            "type": "boolean"
+          },
+          "structureStepSubmitted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "wizardCompleted",
+          "maxReachedStep",
+          "schoolStepSubmitted",
+          "structureStepSubmitted"
+        ]
+      },
       "OnboardingApplyStructureTemplateResponse": {
         "type": "object",
         "properties": {
@@ -350,13 +398,25 @@
           },
           "classSubjectCount": {
             "type": "integer"
+          },
+          "gradeScaleCount": {
+            "type": "integer"
+          },
+          "reportCardDefinitionCount": {
+            "type": "integer"
+          },
+          "reportCardSectionCount": {
+            "type": "integer"
           }
         },
         "required": [
           "gradeLevelCount",
           "classGroupCount",
           "subjectCount",
-          "classSubjectCount"
+          "classSubjectCount",
+          "gradeScaleCount",
+          "reportCardDefinitionCount",
+          "reportCardSectionCount"
         ]
       },
       "OnboardingApplyStructureTemplateRequest": {
@@ -547,6 +607,39 @@
           "templates",
           "levels"
         ]
+      },
+      "OnboardingCompleteWizardRequest": {
+        "type": "object",
+        "properties": {
+          "maxReachedStep": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  3
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  4
+                ]
+              }
+            ]
+          }
+        }
       },
       "OnboardingInviteStaffMembersResponse": {
         "type": "object",
@@ -1729,6 +1822,15 @@
             "type": "boolean",
             "default": true
           },
+          "onboardingWizardCompletedAt": {
+            "nullable": true
+          },
+          "onboardingMaxReachedStep": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 4
+          },
           "createdAt": {}
         },
         "required": [
@@ -1808,6 +1910,15 @@
             "type": "boolean",
             "default": true
           },
+          "onboardingWizardCompletedAt": {
+            "nullable": true
+          },
+          "onboardingMaxReachedStep": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 4
+          },
           "createdAt": {},
           "sendAccountInvitation": {
             "type": "boolean"
@@ -1856,6 +1967,15 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
+          },
+          "onboardingWizardCompletedAt": {
+            "nullable": true
+          },
+          "onboardingMaxReachedStep": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 4
           },
           "staffId": {
             "type": "string",
@@ -9694,6 +9814,125 @@
         }
       }
     },
+    "/core/onboarding/account-status": {
+      "get": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Get onboarding progress for the current staff account",
+        "operationId": "onboarding.accountStatus",
+        "x-edaya-kind": "onboarding",
+        "x-edaya-client-key": "accountStatus",
+        "x-edaya-client-path": "onboarding/account-status",
+        "x-edaya-response-schema": "OnboardingAccountStatusResponse",
+        "responses": {
+          "200": {
+            "description": "Onboarding account status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingAccountStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/onboarding/apply-structure-template": {
       "post": {
         "tags": [
@@ -9723,6 +9962,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OnboardingApplyStructureTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/complete-wizard": {
+      "post": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Mark the onboarding wizard complete for the current staff account",
+        "operationId": "onboarding.completeWizard",
+        "x-edaya-kind": "onboarding",
+        "x-edaya-client-key": "completeWizard",
+        "x-edaya-client-path": "onboarding/complete-wizard",
+        "x-edaya-request-schema": "OnboardingCompleteWizardRequest",
+        "x-edaya-response-schema": "OnboardingAccountStatusResponse",
+        "requestBody": {
+          "description": "Optional onboarding completion payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingCompleteWizardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated onboarding account status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingAccountStatusResponse"
                 }
               }
             }

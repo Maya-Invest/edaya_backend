@@ -1,9 +1,9 @@
-import type { ScopeGrant } from '../../capabilities/authorization'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { ScopeGrant } from '../../capabilities/authorization'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization'
-
 import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+
+import { Permission } from '../../capabilities/authorization'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
 import { scopeGrantSchema } from '../../domain/value-objects/scope-grant'
 import { parseDomain, zodDate } from '../shared/utils'

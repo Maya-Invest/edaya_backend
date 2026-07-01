@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
 import { existsSync } from 'node:fs'
 import path from 'node:path'
@@ -15,8 +16,8 @@ if (existsSync(stagingEnvPath)) {
   expand(config({ path: stagingEnvPath }))
 }
 
-if (!process.env.SEED_API_URL?.trim()) {
-  process.env.SEED_API_URL = process.env.STAGING_API_URL ?? 'https://api-staging.edaya.softilab.dev'
+if (!process.env['SEED_API_URL']?.trim()) {
+  process.env['SEED_API_URL'] = process.env['STAGING_API_URL'] ?? 'https://api-staging.edaya.softilab.dev'
 }
 
 process.exit(await runSeedHttpCli(['bun', 'seed-smoke-staging', 'smoke']))

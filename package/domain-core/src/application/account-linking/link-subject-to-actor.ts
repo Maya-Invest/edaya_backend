@@ -1,13 +1,13 @@
 import type { Guardian, StaffMember, Student } from '../../domain'
 import type { SchoolRepositories } from '../../ports'
 import type { BaseSchoolService } from '../base-school-service'
-import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity } from '../../domain'
 import {
   buildGuardianRecipientProfile,
   buildStaffRecipientProfile,
   buildStudentRecipientProfile,
   scheduleNotificationRecipientUpsert,
 } from '../../capabilities/notifications'
+import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 
 export interface LinkSubjectToActorInput {

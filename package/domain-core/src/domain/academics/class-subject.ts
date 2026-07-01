@@ -1,8 +1,8 @@
-import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 

@@ -1,6 +1,7 @@
 import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
 import {
   ClassSubject,
@@ -8,9 +9,8 @@ import {
   ClassSubjectMatterStatus,
   ClassSubjectProgress,
 } from '../../domain'
-import { roundTo2 } from '../../domain/shared/utils'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { roundTo2 } from '../../domain/shared/utils'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import {
   removeMirroredClassSubjects,

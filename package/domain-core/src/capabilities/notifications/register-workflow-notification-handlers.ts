@@ -1,3 +1,4 @@
+import { workflowNotificationRunner } from './delivery/workflow-notification-runner'
 import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
   handleAnnouncementPublished,
@@ -18,7 +19,6 @@ import {
   handleReportCardPublished,
   REPORT_CARD_PUBLISHED_EVENT_KEY,
 } from './handlers/report-card-published'
-import { workflowNotificationRunner } from './delivery/workflow-notification-runner'
 
 export function registerWorkflowNotificationHandlers(): void {
   if (!workflowNotificationRunner.hasHandlers(ANNOUNCEMENT_PUBLISHED_EVENT_KEY)) {

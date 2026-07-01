@@ -3,13 +3,8 @@ import type { LinkSubjectToActorResult } from '../account-linking/link-subject-t
 import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import {
-  AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-} from '../../domain/access/account-invitation'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import {
   buildInvitationUrl,
@@ -25,7 +20,12 @@ import {
 import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../capabilities/notifications/templates/keys'
 import { renderInvitationEmailContent } from '../../capabilities/notifications/templates/render-enqueue-content'
 import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
-import { permissionAction } from '../../application/entities/entity-config'
+import {
+  AccountInvitation,
+  AccountInvitationContactChannel,
+  AccountInvitationKind,
+  AccountInvitationStatus,
+} from '../../domain/access/account-invitation'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'

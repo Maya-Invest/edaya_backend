@@ -4,7 +4,12 @@ import type {
   IncidentInvolvementRole,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import {
+  INCIDENT_RECORDED_EVENT_KEY,
+  runWorkflowNotifications,
+} from '../../capabilities/notifications'
 import {
   DisciplinaryActionKind,
   Incident as IncidentEntity,
@@ -14,11 +19,6 @@ import {
   StudentDisciplinaryActionStatus,
   StudentIncidentInvolvement,
 } from '../../domain'
-import {
-  INCIDENT_RECORDED_EVENT_KEY,
-  runWorkflowNotifications,
-} from '../../capabilities/notifications'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 

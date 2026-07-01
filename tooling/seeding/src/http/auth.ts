@@ -1,4 +1,4 @@
-import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../types'
+import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../support/types'
 import type { HttpSeedClient } from './client'
 import { isTransientHttpStatus } from './client'
 import { repairStagingAuthUser, shouldRepairStaleStagingAuthUsers } from './repair-staging-auth-user'

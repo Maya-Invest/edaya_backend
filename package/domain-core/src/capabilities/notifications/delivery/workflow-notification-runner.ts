@@ -1,8 +1,8 @@
+import type { BaseSchoolService } from '../../../application/base-school-service'
 import type { ActorMetadata } from '../../../capabilities/authorization'
 import type { NotificationTemplateService } from '../../../capabilities/notifications/templates/notification-template-service'
 import type { SchoolRepositories } from '../../../ports'
 import type { NotificationGatewayPort } from '../../../ports/gateways/notification-gateway'
-import type { BaseSchoolService } from '../../../application/base-school-service'
 
 export interface WorkflowNotificationContext {
   notificationGateway: NotificationGatewayPort

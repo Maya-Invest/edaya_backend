@@ -42,7 +42,9 @@ type AuthorizationClients<TSchemas extends Record<string, unknown>> = {
 
 type OnboardingClients<TSchemas extends Record<string, unknown>> = {
   registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => Promise<SchemaName<TSchemas, 'School'>>
+  accountStatus: () => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
   applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingApplyStructureTemplateResponse'>>
+  completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
   inviteStaffMembers: (payload: SchemaName<TSchemas, 'OnboardingInviteStaffMembersRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingInviteStaffMembersResponse'>>
 }
 
@@ -124,7 +126,9 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
   } as AuthorizationClients<TSchemas>,
     onboarding: {
     registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/register-school'), { body: payload }),
+    accountStatus: () => transport.request('GET', resolveClientRoutePath('onboarding/account-status')),
     applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/apply-structure-template'), { body: payload }),
+    completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/complete-wizard'), { body: payload }),
     inviteStaffMembers: (payload: SchemaName<TSchemas, 'OnboardingInviteStaffMembersRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/invite-staff-members'), { body: payload }),
   } as OnboardingClients<TSchemas>,
     files: {

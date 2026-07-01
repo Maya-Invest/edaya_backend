@@ -1,8 +1,8 @@
-import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AnnouncementTargetKind {

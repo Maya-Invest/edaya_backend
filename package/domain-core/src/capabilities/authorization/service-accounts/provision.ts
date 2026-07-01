@@ -1,7 +1,7 @@
 import type { ScopeGrant } from '../'
-import type { StaffActorMetadata } from '../model/actor'
 import type { StaffMember } from '../../../domain'
 import type { SchoolRepositories } from '../../../ports'
+import type { StaffActorMetadata } from '../model/actor'
 import { randomUUID } from 'node:crypto'
 import {
   assertDelegatedPermissionsSubset,
@@ -11,8 +11,8 @@ import {
   generateApiKey,
   Permission,
 } from '../'
-import { ServiceApiKey, StaffMember as StaffMemberEntity, StaffRoleAssignment } from '../../../domain'
 import { permissionAction } from '../../../application/entities/entity-config'
+import { ServiceApiKey, StaffMember as StaffMemberEntity, StaffRoleAssignment } from '../../../domain'
 import { BusinessRuleViolationError } from '../../../domain/shared/business-rule-error'
 
 export interface CreateServiceAccountInput {

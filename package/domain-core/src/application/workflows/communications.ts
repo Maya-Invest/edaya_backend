@@ -7,7 +7,17 @@ import type {
   StaffMember,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, isInteractiveActor, Permission } from '../../capabilities/authorization'
+import {
+  ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
+  buildGuardianRecipientProfile,
+  buildNotificationDeliveryId,
+  buildStaffRecipientProfile,
+  ensureNotificationRecipientForActor,
+  runWorkflowNotifications,
+  scheduleNotificationRecipientUpsert,
+} from '../../capabilities/notifications'
 import {
   Announcement,
   AnnouncementStatus,
@@ -20,16 +30,6 @@ import {
   StudentClassEnrollmentStatus,
   AnnouncementTargetKind as TargetKind,
 } from '../../domain'
-import {
-  ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
-  buildGuardianRecipientProfile,
-  buildNotificationDeliveryId,
-  buildStaffRecipientProfile,
-  ensureNotificationRecipientForActor,
-  runWorkflowNotifications,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 

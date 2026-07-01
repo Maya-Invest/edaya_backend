@@ -9,7 +9,16 @@ import type {
   StudentNoteInput,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import {
+  resolveStudentInvitationEmail,
+  scheduleAccountInvitationIfEligible,
+} from '../../capabilities/invitations'
+import {
+  buildGuardianRecipientProfile,
+  scheduleNotificationRecipientUpsert,
+} from '../../capabilities/notifications'
 import {
   EnrollmentEndReason,
   Guardian,
@@ -23,15 +32,6 @@ import {
   StudentStatus,
 } from '../../domain'
 import { AccountInvitationKind } from '../../domain/access/account-invitation'
-import {
-  resolveStudentInvitationEmail,
-  scheduleAccountInvitationIfEligible,
-} from '../../capabilities/invitations'
-import {
-  buildGuardianRecipientProfile,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { BaseServiceWorkflow } from './base-service-workflow'
 

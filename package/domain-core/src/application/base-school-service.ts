@@ -1,7 +1,7 @@
 import type { ActorMetadata, AuthorizationPolicy } from '../capabilities/authorization'
 import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort, SchoolRepositories } from '../ports'
-import type { ServiceArgs } from './service-args'
 import type { CoreEntityServices } from './runtime/core-entity-catalog'
+import type { ServiceArgs } from './service-args'
 import { noOpInvitationDeliveryPort } from '../adapters/no-op-invitation-delivery'
 import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
 import { createCoreEntityServices } from './runtime/core-entity-catalog'

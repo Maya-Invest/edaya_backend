@@ -20,9 +20,9 @@ import type {
   StructureTemplateId,
 } from "./templates/types";
 import {
+  type AppliedStructureLevelSubjects,
   applyReportCardsFromTemplate,
   collectLevelSubjects,
-  type AppliedStructureLevelSubjects,
 } from "./apply-report-cards-from-template";
 
 export interface ApplyStructureLevelInput {

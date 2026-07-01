@@ -1,8 +1,8 @@
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization'
 import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 

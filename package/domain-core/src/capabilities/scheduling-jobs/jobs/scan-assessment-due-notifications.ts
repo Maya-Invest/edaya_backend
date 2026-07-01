@@ -1,6 +1,5 @@
 import type { Assessment } from '../../../domain'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
 import { enqueueTemplatedNotification } from '../../../capabilities/notifications/templates/enqueue-templated-notification'
 import { resolveSchoolName } from '../../../capabilities/notifications/templates/resolve-school-name'
 import {
@@ -8,6 +7,7 @@ import {
   assessmentDueSoonDeliverAfter,
   assessmentDueSoonIdempotencyKey,
 } from '../../../capabilities/notifications/triggers/assessment-due-soon'
+import { MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '../../../domain'
 import { isInJobNotificationWindow } from '../due-window'
 
 export async function scanAssessmentDueNotifications(

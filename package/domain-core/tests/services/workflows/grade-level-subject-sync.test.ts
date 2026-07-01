@@ -1,5 +1,7 @@
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, it } from 'bun:test'
+import { noOpNotificationGateway } from '../../../src/adapters'
+import { SchoolService } from '../../../src/application'
 import {
   ClassGroup,
   GradeLevel,
@@ -8,8 +10,6 @@ import {
   SubjectColor,
   SubjectMatter,
 } from '../../../src/domain'
-import { noOpNotificationGateway } from '../../../src/adapters'
-import { SchoolService } from '../../../src/application'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 

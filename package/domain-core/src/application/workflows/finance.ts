@@ -1,8 +1,8 @@
 import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
 import { Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '../../domain'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AssignFeeToStudentInput {

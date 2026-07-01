@@ -1,14 +1,8 @@
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { ActorMetadata } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { StaffAccountKind } from './staff-account-kind'
 import { z } from 'zod'
-import {
-  actorHasAnyPermission,
-  AuthorizationError,
-  AuthorizationErrorCode,
-  Permission,
-} from '../../capabilities/authorization'
 import {
   anyPermissionAction,
   authorizeDeleteByReadAccess,
@@ -19,6 +13,12 @@ import {
   read,
   write,
 } from '../../application/entities/entity-config'
+import {
+  actorHasAnyPermission,
+  AuthorizationError,
+  AuthorizationErrorCode,
+  Permission,
+} from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'

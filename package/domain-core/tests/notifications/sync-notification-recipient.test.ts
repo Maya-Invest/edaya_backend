@@ -10,15 +10,15 @@ import {
   MessageDeliveryRecipientKind,
   StaffMember,
 } from '../../src'
-import { buildStaffRecipientProfile } from '../../src/capabilities/notifications/delivery/build-recipient-profile'
 import { RecordingNotificationGateway } from '../../src/adapters/recording-notification-gateway'
+import { BaseSchoolService } from '../../src/application/base-school-service'
+import { buildStaffRecipientProfile } from '../../src/capabilities/notifications/delivery/build-recipient-profile'
 import {
   ensureNotificationRecipientForActor,
   resolveNotificationRecipientProfileForActor,
   scheduleNotificationRecipientBackfillForActor,
   upsertNotificationRecipient,
 } from '../../src/capabilities/notifications/delivery/sync-notification-recipient'
-import { BaseSchoolService } from '../../src/application/base-school-service'
 import { createStore } from '../support/create-test-app'
 import { effectiveGrantsForRoles } from '../support/effective-grants'
 import { testFileStorage } from '../support/test-file-storage'

@@ -1,5 +1,5 @@
-import type { NotificationEnqueueInput } from '../../../ports/gateways/notification-gateway'
 import type { BaseSchoolService } from '../../../application/base-school-service'
+import type { NotificationEnqueueInput } from '../../../ports/gateways/notification-gateway'
 import type { NotificationTemplateKey } from './keys'
 import { deliverNotificationFromEnqueueInput } from '../delivery/deliver-notification'
 import { renderNotificationEnqueueContent } from './render-enqueue-content'

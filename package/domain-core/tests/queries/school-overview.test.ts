@@ -1,5 +1,6 @@
 import type { SchoolRepositories } from '../../src/ports'
 import { describe, expect, test } from 'bun:test'
+import { buildSchoolOverview } from '../../src/application/queries/school-overview'
 import {
   AttendanceJustificationStatus,
   AttendanceRecord,
@@ -16,7 +17,6 @@ import {
   StudentFee,
   StudentStatus,
 } from '../../src/domain'
-import { buildSchoolOverview } from '../../src/application/queries/school-overview'
 
 function createOverviewRepos(
   overrides: Record<string, { list?: () => Promise<unknown[]>, findById?: () => Promise<unknown> }> = {},

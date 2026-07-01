@@ -1,7 +1,6 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/core";
 import {
-  GradeScale,
   ReportCardDefinitionKind,
   ReportCardDefinitionSectionKind,
   ReportCardDefinitionSectionRole,
@@ -75,7 +74,7 @@ function buildGradeScaleRanges(maxScore: number, passingGrade: number) {
     {
       letter: "A",
       minScore: roundTo2(passingGrade + step * 2),
-      maxScore: maxScore,
+      maxScore,
       isPassing: true,
       interpretation: "Très bien",
     },
@@ -104,7 +103,7 @@ async function ensureGradeScale(
 
   const service = application.forActor(actor);
   const gradeScaleId = randomUUID();
-  await service.assessmentsWorkflow.createGradeScale(new GradeScale({
+  await service.assessmentsWorkflow.createGradeScale({
     id: gradeScaleId,
     schoolId: actor.schoolId!,
     name: `Sur ${structure.gradingScale}`,
@@ -114,7 +113,7 @@ async function ensureGradeScale(
     description: `Barème ${structure.gradingScale} — seuil de réussite à ${structure.passingGrade}.`,
     isDefault: gradeScaleByTemplateId.size === 0,
     ranges: buildGradeScaleRanges(structure.gradingScale, structure.passingGrade),
-  }));
+  });
 
   gradeScaleByTemplateId.set(template.id, gradeScaleId);
   return gradeScaleId;

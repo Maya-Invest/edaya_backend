@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
 import type { HttpDevSeedScope } from '../src/http/index.ts'
 import process from 'node:process'
@@ -10,20 +11,20 @@ import {
   runHttpDevSeeds,
 } from '../src/http/index.ts'
 import { waitForApi } from '../src/http/wait-for-api.ts'
-import { loadSeedEnvFiles } from '../src/load-seed-env.ts'
+import { loadSeedEnvFiles } from '../src/support/load-seed-env.ts'
 
 const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
 const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
 
 function resolveAppOrigin(baseUrl: string): string {
-  const explicit = process.env.SEED_APP_ORIGIN?.trim()
+  const explicit = process.env['SEED_APP_ORIGIN']?.trim()
   if (explicit) {
     return explicit.replace(/\/+$/, '')
   }
 
   if (baseUrl.includes('api-staging.')) {
     return (
-      process.env.STAGING_APP_ORIGIN?.trim().replace(/\/+$/, '')
+      process.env['STAGING_APP_ORIGIN']?.trim().replace(/\/+$/, '')
       || DEFAULT_STAGING_APP_ORIGIN
     )
   }
@@ -33,8 +34,8 @@ function resolveAppOrigin(baseUrl: string): string {
 
 export function resolveSeedHttpConfig() {
   loadSeedEnvFiles()
-  const baseUrl = process.env.SEED_API_URL ?? process.env.BETTER_AUTH_URL ?? 'http://localhost:9999'
-  const schoolId = process.env.SEED_SCHOOL_ID?.trim() || SEED_SCHOOL_ID
+  const baseUrl = process.env['SEED_API_URL'] ?? process.env['BETTER_AUTH_URL'] ?? 'http://localhost:9999'
+  const schoolId = process.env['SEED_SCHOOL_ID']?.trim() || SEED_SCHOOL_ID
   return {
     baseUrl,
     appOrigin: resolveAppOrigin(baseUrl),

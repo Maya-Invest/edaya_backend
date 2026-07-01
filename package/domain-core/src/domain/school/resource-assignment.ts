@@ -1,10 +1,10 @@
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'

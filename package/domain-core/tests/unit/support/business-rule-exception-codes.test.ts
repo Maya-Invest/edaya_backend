@@ -1,7 +1,7 @@
 import type { School } from '../../../src'
 import { describe, expect, test } from 'bun:test'
-import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import { requireSchool } from '../../../src/application/require-school'
+import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import { createStore } from '../../support/create-test-app'
 
 describe('Business rule exception shape and code verification', () => {

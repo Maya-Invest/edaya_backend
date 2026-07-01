@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { AttachmentOwnerKind } from '../../../src/domain/school/attachment'
 import { buildStorageKey } from '../../../src/capabilities/files/build-storage-key'
 import { sanitizeFileName } from '../../../src/capabilities/files/sanitize-file-name'
+import { AttachmentOwnerKind } from '../../../src/domain/school/attachment'
 
 describe('buildStorageKey', () => {
   it('builds a multi-segment key with sanitized file name', () => {

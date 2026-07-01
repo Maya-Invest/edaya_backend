@@ -3,6 +3,8 @@ import {
   expect,
   test,
 } from 'bun:test'
+import { RecordingNotificationGateway } from '../../../src/adapters'
+import { ATTENDANCE_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import {
   AttendanceJustificationStatus,
   AttendanceMode,
@@ -13,8 +15,6 @@ import {
   DayOfWeek,
   MessageDeliveryRecipientKind,
 } from '../../../src/domain'
-import { ATTENDANCE_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
-import { RecordingNotificationGateway } from '../../../src/adapters'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,

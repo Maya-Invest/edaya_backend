@@ -1,6 +1,6 @@
+import type { EntityTenantResolver } from '../../../application/entities/managed-entity-service'
 import type { Filter, QueryOptions } from '../../../ports/repositories/base-repository'
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
-import type { EntityTenantResolver } from '../../../application/entities/managed-entity-service'
 import type { EntityWithSchoolId } from './config'
 
 export async function resolveClassSubjectSchoolId(repositories: SchoolRepositories, classSubjectId: string): Promise<string | undefined> {

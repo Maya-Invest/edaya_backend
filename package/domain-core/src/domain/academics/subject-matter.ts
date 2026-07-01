@@ -1,9 +1,9 @@
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import { z } from 'zod'
-import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../capabilities/authorization'
 import { config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const subjectMatterSchema = z.object({

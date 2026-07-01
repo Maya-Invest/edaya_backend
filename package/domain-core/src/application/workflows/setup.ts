@@ -13,7 +13,17 @@ import type {
   StaffMemberInput,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  scheduleAccountInvitationIfEligible,
+} from '../../capabilities/invitations'
+import {
+  buildStaffRecipientProfile,
+  scheduleNotificationRecipientRemove,
+  scheduleNotificationRecipientUpsert,
+} from '../../capabilities/notifications'
+import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
 import {
   AcademicPeriod as AcademicPeriodEntity,
   AcademicYear as AcademicYearEntity,
@@ -27,16 +37,6 @@ import {
   StaffMember as StaffMemberEntity,
 } from '../../domain'
 import { AccountInvitationKind } from '../../domain/access/account-invitation'
-import {
-  scheduleAccountInvitationIfEligible,
-} from '../../capabilities/invitations'
-import {
-  buildStaffRecipientProfile,
-  scheduleNotificationRecipientRemove,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { requireSchool } from '../require-school'
 import { BaseServiceWorkflow } from './base-service-workflow'

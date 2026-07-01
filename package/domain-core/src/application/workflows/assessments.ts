@@ -11,7 +11,13 @@ import type {
   StudentClassEnrollment,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
+import { permissionAction } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
+  REPORT_CARD_PUBLISHED_EVENT_KEY,
+  runWorkflowNotifications,
+} from '../../capabilities/notifications'
 import {
   Assessment as AssessmentEntity,
   AssessmentResult as AssessmentResultEntity,
@@ -25,14 +31,8 @@ import {
   ReportCardResultSection,
   ReportCardResultStatus,
 } from '../../domain'
-import { normalizeDate, roundTo2 } from '../../domain/shared/utils'
-import {
-  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-  REPORT_CARD_PUBLISHED_EVENT_KEY,
-  runWorkflowNotifications,
-} from '../../capabilities/notifications'
-import { permissionAction } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+import { normalizeDate, roundTo2 } from '../../domain/shared/utils'
 import { AttendanceSummary } from '../../domain/value-objects/attendance-summary'
 import { BaseServiceWorkflow } from './base-service-workflow'
 

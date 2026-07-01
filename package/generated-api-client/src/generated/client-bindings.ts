@@ -752,11 +752,22 @@ export const clientBindings = {
         "requestSchemaName": "OnboardingRegisterSchoolRequest",
         "responseSchemaName": "School"
       },
+      "accountStatus": {
+        "method": "GET",
+        "path": "onboarding/account-status",
+        "responseSchemaName": "OnboardingAccountStatusResponse"
+      },
       "applyStructureTemplate": {
         "method": "POST",
         "path": "onboarding/apply-structure-template",
         "requestSchemaName": "OnboardingApplyStructureTemplateRequest",
         "responseSchemaName": "OnboardingApplyStructureTemplateResponse"
+      },
+      "completeWizard": {
+        "method": "POST",
+        "path": "onboarding/complete-wizard",
+        "requestSchemaName": "OnboardingCompleteWizardRequest",
+        "responseSchemaName": "OnboardingAccountStatusResponse"
       },
       "inviteStaffMembers": {
         "method": "POST",

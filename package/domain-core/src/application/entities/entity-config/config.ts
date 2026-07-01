@@ -1,9 +1,9 @@
+import type { EntityReadAuthorization, ManagedEntityServiceConfig } from '../../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy, Permission } from '../../../capabilities/authorization'
+import type { NotificationGatewayPort } from '../../../ports/gateways/notification-gateway'
 import type { AtomicExecutionPort } from '../../../ports/platform/atomic-execution'
 import type { BaseRepositoryInterface } from '../../../ports/repositories/base-repository'
-import type { NotificationGatewayPort } from '../../../ports/gateways/notification-gateway'
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
-import type { EntityReadAuthorization, ManagedEntityServiceConfig } from '../../../application/entities/managed-entity-service'
 import { authorizeDeleteByReadAccess, authorizeExistingById, noopReadAccess, permissionAction, read, write } from './authorization'
 import { directSchoolTenant } from './tenant'
 

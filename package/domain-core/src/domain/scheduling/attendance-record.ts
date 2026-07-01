@@ -1,9 +1,9 @@
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization'
 import { config, dateTime, indirectTenant, permissionAction, read, resolveSessionSchoolId, unique, write } from '../../application/entities/entity-config'
+import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
 

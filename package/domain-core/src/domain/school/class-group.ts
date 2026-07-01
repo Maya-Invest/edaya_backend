@@ -1,9 +1,9 @@
-import type { SchoolRepositories } from '../../ports'
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
+import { directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { CalendarEventScopeKind, StudentClassEnrollmentStatus } from '../../domain'
-import { directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 

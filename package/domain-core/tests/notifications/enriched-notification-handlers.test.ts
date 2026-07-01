@@ -1,11 +1,11 @@
 import type { AttendanceRecord } from '../../src/domain'
 import { describe, expect, test } from 'bun:test'
-import { AttendanceStatus } from '../../src/domain'
-import { SchoolNotificationTemplates } from '../../src/domain/messaging/school-notification-templates'
-import { ATTENDANCE_RECORDED_EVENT_KEY, handleAttendanceRecorded } from '../../src/capabilities/notifications'
 import { RecordingNotificationGateway } from '../../src/adapters'
+import { ATTENDANCE_RECORDED_EVENT_KEY, handleAttendanceRecorded } from '../../src/capabilities/notifications'
 import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
 import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
+import { AttendanceStatus } from '../../src/domain'
+import { SchoolNotificationTemplates } from '../../src/domain/messaging/school-notification-templates'
 
 describe('enriched notification handlers', () => {
   test('handleAttendanceRecorded renders student, session, and class context', async () => {

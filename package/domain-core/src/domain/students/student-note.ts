@@ -1,11 +1,11 @@
+import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
 import type { StudentClassEnrollment } from '../../domain'
 import type { SchoolRepositories } from '../../ports'
-import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { actorGrantCoversAny, denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { dateTime, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
+import { actorGrantCoversAny, denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum StudentNoteVisibility {

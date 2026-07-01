@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  buildGuardianRecipientProfile,
+  buildStaffRecipientProfile,
+} from '../../src/capabilities/notifications/delivery/build-recipient-profile'
+import {
   Guardian,
   GuardianContactMethod,
   GuardianContactMethodType,
@@ -7,10 +11,6 @@ import {
   MessageDeliveryRecipientKind,
   StaffMember,
 } from '../../src/domain'
-import {
-  buildGuardianRecipientProfile,
-  buildStaffRecipientProfile,
-} from '../../src/capabilities/notifications/delivery/build-recipient-profile'
 
 describe('build recipient profiles', () => {
   test('buildStaffRecipientProfile returns undefined without subjectId', () => {

@@ -1,8 +1,8 @@
-import type { ActorMetadata } from '../../capabilities/authorization'
+import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
 import type { CoreEntityKey } from '../../application/runtime/core-entity-map'
+import type { ActorMetadata } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import type { NotificationEnqueueInput, NotificationGatewayPort } from '../../ports/gateways/notification-gateway'
-import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
 import type { NotificationTemplateService } from './templates/notification-template-service'
 import { deliverNotificationFromEnqueueInput } from './delivery/deliver-notification'
 

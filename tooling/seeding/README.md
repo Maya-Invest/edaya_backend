@@ -37,10 +37,21 @@ After `rm -rf .data`, **stop `bun dev` first**, then restart before seeding. See
 
 ## Architecture
 
-- **HTTP adapters** (`src/*/http.ts`) — call `/core/*` routes; used by CLI and staging.
-- **In-process adapters** (`src/*/in-process.ts`) — used only when tests pass a `SeedApplication` directly (faster/isolated integration tests). Not used for local dev CLI.
-- **Ports** (`src/*/port.ts`) — shared workflow contracts between HTTP and in-process adapters.
-- **Bootstrap** (`src/http/bootstrap-http-core-session.ts`) — signs in as the school owner, calls `register-school` when needed, then provisions the seeding service account.
+```text
+src/
+  domains/<vertical>/   port.ts, workflow.ts, http.ts, in-process.ts
+  orchestration/        Scope routing (auth → access → school)
+  bootstrap/            Minimal school, auth provision/link
+  http/                 Client, catalog, bootstrap session, validation
+  cleanup/              Local and staging wipe
+  support/              Types, env, errors
+```
+
+- **HTTP adapters** (`domains/*/http.ts`) — call `/core/*` routes; used by CLI and staging.
+- **In-process adapters** (`domains/*/in-process.ts`) — used only when tests pass a `SeedApplication` directly (faster/isolated integration tests). Not used for local dev CLI.
+- **Ports** (`domains/*/port.ts`) — shared workflow contracts between HTTP and in-process adapters.
+- **Bootstrap** (`http/bootstrap-http-core-session.ts`) — signs in as the school owner, calls `register-school` when needed, then provisions the seeding service account.
 
 Seeding API keys come from `@edaya/dev-fixtures` school profiles (`seedingApiKey`). No `.env` secret required for local dev.
 
+See [src/README.md](src/README.md) for layer rules and [seed-contract.md](seed-contract.md) for the operation inventory.

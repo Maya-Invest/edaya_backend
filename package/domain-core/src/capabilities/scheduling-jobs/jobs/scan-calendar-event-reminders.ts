@@ -1,7 +1,5 @@
 import type { CalendarEvent } from '../../../domain'
 import type { CronJobResult, SchoolCronJobContext } from '../cron-job-context'
-import { CalendarEventKind } from '../../../domain'
-import { resolveCalendarEventRecipients } from '../../notifications/delivery/recipient-resolvers'
 import { enqueueTemplatedNotification } from '../../../capabilities/notifications/templates/enqueue-templated-notification'
 import { resolveSchoolName } from '../../../capabilities/notifications/templates/resolve-school-name'
 import {
@@ -9,6 +7,8 @@ import {
   calendarEventReminderDeliverAfter,
   calendarEventReminderIdempotencyKey,
 } from '../../../capabilities/notifications/triggers/calendar-event-reminder'
+import { CalendarEventKind } from '../../../domain'
+import { resolveCalendarEventRecipients } from '../../notifications/delivery/recipient-resolvers'
 import { isInJobNotificationWindow } from '../due-window'
 
 export async function scanCalendarEventReminders(

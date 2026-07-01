@@ -1,5 +1,5 @@
-import type { SystemActorMetadata } from '../../capabilities/authorization'
 import type { SchoolService } from '../../application/school-service'
+import type { SystemActorMetadata } from '../../capabilities/authorization'
 
 export interface SchoolCronJobContext {
   readonly asOf: Date

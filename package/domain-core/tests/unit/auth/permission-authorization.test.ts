@@ -1,5 +1,6 @@
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
+import { anyPermissionAction, permissionAction } from '../../../src/application/entities/entity-config'
 import {
   AuthorizationError,
 
@@ -8,7 +9,6 @@ import {
   Permission,
   permissionDefinitions,
 } from '../../../src/capabilities/authorization'
-import { anyPermissionAction, permissionAction } from '../../../src/application/entities/entity-config'
 import { effectiveGrantsForRoles } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
