@@ -1,19 +1,14 @@
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
+import { demoDataset, demoSchoolOwnerStaffId, integrationDataset } from '@edaya/fixtures'
+import {
+  INTEGRATION_LIGHT_GUARDIANS,
+  INTEGRATION_LIGHT_STUDENTS,
+} from '@edaya/fixtures/integration/narrative'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
-  INTEGRATION_LIGHT_GUARDIANS,
-  INTEGRATION_LIGHT_STUDENTS,
-  SEED_ACADEMIC_PERIODS,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CLASSES,
-  SEED_GRADE_LEVELS,
-  SEED_PERIOD_DEFINITIONS,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-  SEED_STAFF,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
 import { seedIntegrationLightPopulation } from '../domains/population/workflow'
 import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'
@@ -58,7 +53,7 @@ export async function runIntegrationLightSchoolSeed(
   const seedApplication = requireSeedApplication(application, 'application')
   const schoolStructurePort = createInProcessSchoolStructureSeedPort(seedApplication)
   const populationPort = createInProcessPopulationSeedPort(seedApplication)
-  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort)
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, demoDataset)
 
   if (structureInspection.status === 'skipped') {
     return {
@@ -71,7 +66,7 @@ export async function runIntegrationLightSchoolSeed(
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
     const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-      account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+      account => account.staffId === demoSchoolOwnerStaffId,
     )
     if (ownerAccount) {
       ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
@@ -81,19 +76,21 @@ export async function runIntegrationLightSchoolSeed(
   await seedDevSchoolStructure(schoolStructurePort, {
     demoSchoolExists: structureInspection.demoSchoolExists,
     ownerSubjectId,
-  })
-  await seedIntegrationLightPopulation(populationPort)
+  }, demoDataset)
+  await seedIntegrationLightPopulation(populationPort, integrationDataset)
+
+  const entities = demoDataset.entities
 
   return {
     status: 'seeded',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    gradeLevels: SEED_GRADE_LEVELS.length,
-    classes: SEED_CLASSES.length,
-    staff: SEED_STAFF.length,
+    schoolId: demoDataset.schoolId,
+    academicYearId: entities.academicYear?.id ?? '',
+    gradeLevels: entities.gradeLevels?.length ?? 0,
+    classes: entities.classGroups?.length ?? 0,
+    staff: entities.staffMembers?.length ?? 0,
     students: INTEGRATION_LIGHT_STUDENTS.length,
     guardians: INTEGRATION_LIGHT_GUARDIANS.length,
-    academicPeriods: SEED_ACADEMIC_PERIODS.length,
-    periodDefinitions: SEED_PERIOD_DEFINITIONS.length,
+    academicPeriods: entities.academicPeriods?.length ?? 0,
+    periodDefinitions: entities.periodDefinitions?.length ?? 0,
   }
 }

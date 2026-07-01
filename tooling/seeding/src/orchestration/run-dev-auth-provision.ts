@@ -1,9 +1,9 @@
 import type { AuthProvisioner } from '../support/types'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
 
 const AUTH_REQUEST_PAUSE_MS = 250
 const STAGING_AUTH_REQUEST_PAUSE_MS = 750

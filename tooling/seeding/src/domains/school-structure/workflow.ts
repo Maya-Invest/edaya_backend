@@ -1,16 +1,6 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { SchoolStructureSeedPort } from './port'
 import { AcademicPeriodType } from '@edaya/core'
-import {
-  SEED_ACADEMIC_PERIODS,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CLASSES,
-  SEED_GRADE_LEVELS,
-  SEED_PERIOD_DEFINITIONS,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_PROFILE,
-  SEED_STAFF,
-  splitDisplayName,
-} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
 
 export type DevSchoolStructureInspection
@@ -22,11 +12,22 @@ export interface SeedDevSchoolStructureOptions {
   ownerSubjectId?: string
 }
 
+function isoDateString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value
+  }
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10)
+  }
+  throw new Error(`Expected ISO date string or Date, received ${String(value)}`)
+}
+
 export async function inspectDevSchoolStructure(
   port: SchoolStructureSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevSchoolStructureInspection> {
-  const state = await port.inspectSeedState(SEED_SCHOOL_ID)
-  const demoSchoolExists = state.schoolIds.includes(SEED_SCHOOL_ID)
+  const state = await port.inspectSeedState(dataset.schoolId)
+  const demoSchoolExists = state.schoolIds.includes(dataset.schoolId)
 
   if ((demoSchoolExists && state.studentCount > 0) || (!demoSchoolExists && state.schoolIds.length > 0)) {
     return { status: 'skipped', schoolCount: state.schoolIds.length }
@@ -38,88 +39,116 @@ export async function inspectDevSchoolStructure(
 export async function seedDevSchoolStructure(
   port: SchoolStructureSeedPort,
   options: SeedDevSchoolStructureOptions,
+  dataset: FixtureDataset,
 ): Promise<void> {
   const seedSubjectId = (id: string) => `subject-${id}`
+  const school = dataset.entities.school
+  const academicYear = dataset.entities.academicYear
+  const gradeLevels = dataset.entities.gradeLevels ?? []
+  const academicPeriods = dataset.entities.academicPeriods ?? []
+  const periodDefinitions = dataset.entities.periodDefinitions ?? []
+  const staffMembers = dataset.entities.staffMembers ?? []
+  const classGroups = dataset.entities.classGroups ?? []
+
+  if (!school) {
+    throw new Error('Fixture dataset must include school for school-structure seeding')
+  }
+  if (!academicYear) {
+    throw new Error('Fixture dataset must include academicYear for school-structure seeding')
+  }
 
   if (!options.demoSchoolExists) {
     await port.registerSchool({
-      ...SEED_SCHOOL_PROFILE,
+      id: school.id,
+      name: school.name,
+      timeZone: school.timeZone,
+      city: school.city ?? undefined,
+      country: school.country ?? undefined,
       ...(options.ownerSubjectId ? { ownerSubjectId: options.ownerSubjectId } : {}),
     })
   }
 
-  for (const gradeLevel of SEED_GRADE_LEVELS) {
+  for (const gradeLevel of gradeLevels) {
     await port.saveGradeLevel({
-      ...gradeLevel,
-      schoolId: SEED_SCHOOL_ID,
+      id: gradeLevel.id,
+      schoolId: dataset.schoolId,
+      name: gradeLevel.name,
+      order: gradeLevel.order,
+      cycle: gradeLevel.cycle ?? undefined,
     })
   }
 
   await port.createAcademicYear({
-    id: SEED_ACADEMIC_YEAR_ID,
-    schoolId: SEED_SCHOOL_ID,
-    name: '2025 — 2026',
-    startDate: seedDateTime('2025-09-01'),
-    endDate: seedDateTime('2026-07-03'),
+    id: academicYear.id,
+    schoolId: dataset.schoolId,
+    name: academicYear.name,
+    startDate: seedDateTime(isoDateString(academicYear.startDate)),
+    endDate: seedDateTime(isoDateString(academicYear.endDate)),
   })
 
-  for (const period of SEED_ACADEMIC_PERIODS) {
+  for (const period of academicPeriods) {
     await port.createAcademicPeriod({
       id: period.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      schoolId: dataset.schoolId,
+      academicYearId: academicYear.id,
       name: period.name,
       type: AcademicPeriodType.Trimester,
-      startDate: seedDateTime(period.startDate),
-      endDate: seedDateTime(period.endDate),
+      startDate: seedDateTime(isoDateString(period.startDate)),
+      endDate: seedDateTime(isoDateString(period.endDate)),
     })
     await port.publishAcademicPeriod(period.id)
   }
 
-  for (const slot of SEED_PERIOD_DEFINITIONS) {
+  for (const slot of periodDefinitions) {
     await port.savePeriodDefinition({
-      ...slot,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      id: slot.id,
+      schoolId: dataset.schoolId,
+      academicYearId: academicYear.id,
+      label: slot.label,
+      order: slot.order,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      isBreak: slot.isBreak ?? false,
     })
   }
 
-  const director = SEED_STAFF[0]
+  const director = staffMembers[0]
+  if (!director) {
+    throw new Error('Fixture dataset staffMembers must include a director at index 0')
+  }
   if (!(await port.staffMemberExists(director.id))) {
-    const directorName = splitDisplayName(director.name)
     await port.registerStaffMember({
       id: director.id,
-      schoolId: SEED_SCHOOL_ID,
-      firstName: directorName.firstName,
-      lastName: directorName.lastName,
-      email: director.email,
+      schoolId: dataset.schoolId,
+      firstName: director.firstName,
+      lastName: director.lastName,
+      email: director.email ?? undefined,
       subjectId: seedSubjectId(director.id),
       sendAccountInvitation: false,
     })
   }
 
-  for (const member of SEED_STAFF.slice(1)) {
-    const { firstName, lastName } = splitDisplayName(member.name)
+  for (const member of staffMembers.slice(1)) {
     await port.registerStaffMember({
       id: member.id,
-      schoolId: SEED_SCHOOL_ID,
-      firstName,
-      lastName,
-      email: member.email,
+      schoolId: dataset.schoolId,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email ?? undefined,
       subjectId: seedSubjectId(member.id),
       sendAccountInvitation: false,
     })
   }
 
-  for (const classGroup of SEED_CLASSES) {
+  for (const classGroup of classGroups) {
     await port.createClassGroup({
       id: classGroup.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      schoolId: dataset.schoolId,
+      academicYearId: classGroup.academicYearId,
       gradeLevelId: classGroup.gradeLevelId,
       name: classGroup.name,
-      capacity: classGroup.capacity,
-      homeroomStaffId: 'homeroomStaffId' in classGroup ? classGroup.homeroomStaffId : undefined,
+      capacity: classGroup.capacity ?? undefined,
+      homeroomStaffId: classGroup.homeroomStaffId ?? undefined,
     })
   }
 }

@@ -1,9 +1,9 @@
+import { demoSchoolOwnerStaffId } from '../datasets/demo/people'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-} from '../scenarios/demo-central/core'
+} from '../meta/dev-auth-fixtures'
 
 export { DEV_AUTH_PASSWORD }
 
@@ -42,7 +42,7 @@ export function initialsForName(name: string): string {
 export function resolveDevDemoStaffRole(
   staffId: string,
 ): { role: DevDemoLoginRole, accessRoleId?: string } {
-  if (staffId === SEED_SCHOOL_OWNER_STAFF_ID) {
+  if (staffId === demoSchoolOwnerStaffId) {
     return {
       role: 'owner',
       accessRoleId: DEV_AUTH_STAFF_ACCESS_ROLE_IDS[

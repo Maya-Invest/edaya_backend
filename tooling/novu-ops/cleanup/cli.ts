@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 import { createBootstrapNovuClient } from "../bootstrap/lib/client";
 import { loadBootstrapEnv } from "../bootstrap/lib/env";
+import type { SubscriberCleanupSelector } from "../src/subscriber-cleanup";
 import {
   deleteNovuSubscribers,
   hasSubscriberCleanupSelector,
   listAllNovuSubscribers,
   selectNovuSubscribersForCleanup,
-  type SubscriberCleanupSelector,
 } from "../src/subscriber-cleanup";
 
 type Command = "apply" | "plan";

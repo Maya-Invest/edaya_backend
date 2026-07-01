@@ -3,16 +3,18 @@ import type {
   AttendanceSeedPort,
   AttendanceSeedRecord,
 } from './port'
-import {
-  countSeedAttendanceRecords,
-  SEED_ABSENCE_RECORDS,
-  SEED_PENDING_JUSTIFICATION_RECORD_IDS,
-} from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
+import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { describe, expect, test } from 'bun:test'
 import { seedDevAttendance } from './workflow'
 
 describe('attendance seed port workflow', () => {
   test('seeds lesson sessions and marks configured justifications pending', async () => {
+    const attendanceSessions = demoDataset.extensions?.attendanceSessions
+    if (!attendanceSessions) {
+      throw new Error('demoDataset must include attendanceSessions extension')
+    }
+
     const lessonSessions: AttendanceLessonSessionSeedInput[] = []
     const records: AttendanceSeedRecord[] = []
     const pending: Array<{ id: string, fallbackReason: string }> = []
@@ -29,12 +31,13 @@ describe('attendance seed port workflow', () => {
       },
     }
 
-    const count = await seedDevAttendance(port)
+    const count = await seedDevAttendance(port, demoDataset)
+    const expectedAttendance = resolveExpectedCounts(demoDataset).attendance
 
-    expect(count).toBe(countSeedAttendanceRecords())
-    expect(lessonSessions).toHaveLength(SEED_ABSENCE_RECORDS.length + 1)
-    expect(records).toHaveLength(countSeedAttendanceRecords())
-    expect(pending.map(record => record.id)).toEqual([...new Set(SEED_PENDING_JUSTIFICATION_RECORD_IDS)])
+    expect(count).toBe(expectedAttendance ?? 0)
+    expect(lessonSessions).toHaveLength(attendanceSessions.absenceSessions.length + 1)
+    expect(records).toHaveLength(expectedAttendance ?? 0)
+    expect(pending.map(record => record.id)).toEqual([...new Set(attendanceSessions.pendingJustificationRecordIds)])
     expect(pending.every(record => record.fallbackReason.length > 0)).toBe(true)
   })
 })

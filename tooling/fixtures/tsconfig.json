@@ -10,10 +10,11 @@
   },
   "include": [
     "src/**/*",
+    "test/**/*",
     "data/**/*.json"
   ],
   "exclude": [
     "node_modules",
-    "src/**/*.test.ts"
+    "test/**/*.test.ts"
   ]
 }

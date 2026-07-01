@@ -1,5 +1,6 @@
-import { ApiError, type Transport } from '../generated/api-client'
+import type { Transport } from '../generated/api-client'
 import type { HttpSeedClient } from './client'
+import { ApiError } from '../generated/api-client'
 
 export interface SeedTransportOptions {
   serviceAccountApiKey?: string

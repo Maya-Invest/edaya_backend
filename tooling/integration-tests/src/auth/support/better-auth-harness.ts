@@ -1,6 +1,7 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { AuthSessionProvider, SessionActorBindings } from './session-actor-harness'
 import type { BetterAuthEnv } from '@/runtime/shared/adapters/better-auth'
+import { runMigrations as runAuthMigrations } from '@edaya/adaptor-auth'
 import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
@@ -13,7 +14,6 @@ import {
   SchoolApplication,
   StaffMember,
 } from '@edaya/core'
-import { runMigrations as runAuthMigrations } from '@edaya/adaptor-auth'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { Database } from 'bun:sqlite'

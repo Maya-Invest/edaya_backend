@@ -1,11 +1,11 @@
 import type { AuthProvisioner } from '../../support/types'
 import type { AuthLinkSeedPort } from './port'
+import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { describe, expect, test } from 'bun:test'
 import { syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
 
@@ -110,7 +110,7 @@ describe('auth-link seed port workflow', () => {
     expect(memory.replacedStaff).toEqual([DEV_AUTH_STAFF_ACCOUNTS[0]?.staffId])
     expect(memory.replacedGuardians).toEqual([DEV_AUTH_GUARDIAN_ACCOUNTS[0]?.guardianId])
 
-    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID)
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoSchoolOwnerStaffId)
     expect(memory.state.ownerSubjectId).toBe(owner ? subjectIdForEmail(owner.email) : undefined)
 
     const second = await syncDevStaffAuthAndOwner(memory.port, auth)

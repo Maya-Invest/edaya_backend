@@ -1,7 +1,7 @@
 import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'

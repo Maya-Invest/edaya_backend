@@ -6,27 +6,23 @@ import type {
   SubjectSeedRecord,
 } from './port'
 import { SubjectCategory, SubjectColor } from '@edaya/core'
-import {
-  SEED_GRADE_LEVEL_SUBJECT_MATTERS,
-  SEED_GRADE_LEVEL_SUBJECTS,
-  SEED_SUBJECT_CATALOG,
-  SEED_SUBJECT_MATTERS,
-} from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
+import { buildFixtureCurriculumPlan } from '../../support/curriculum-plan'
 import { seedDevCurriculum } from './workflow'
 
 describe('curriculum seed port workflow', () => {
   test('seeds validated subject and grade-level curriculum records', async () => {
-    const subjects: SubjectSeedRecord[] = []
-    const matters: SubjectMatterSeedRecord[] = []
+    const seededSubjects: SubjectSeedRecord[] = []
+    const seededMatters: SubjectMatterSeedRecord[] = []
     const offerings: GradeLevelSubjectSeedRecord[] = []
     const assignments: GradeLevelSubjectMatterSeedRecord[] = []
     const port: CurriculumSeedPort = {
       saveSubject: async (record) => {
-        subjects.push(record)
+        seededSubjects.push(record)
       },
       saveSubjectMatter: async (record) => {
-        matters.push(record)
+        seededMatters.push(record)
       },
       offerSubjectToGradeLevel: async (record) => {
         offerings.push(record)
@@ -36,17 +32,21 @@ describe('curriculum seed port workflow', () => {
       },
     }
 
-    await seedDevCurriculum(port)
+    await seedDevCurriculum(port, demoDataset)
 
-    expect(subjects).toHaveLength(SEED_SUBJECT_CATALOG.length)
-    const firstSubject = subjects[0]
+    const curriculumPlan = buildFixtureCurriculumPlan(demoDataset.entities)
+    const fixtureSubjects = demoDataset.entities.subjects ?? []
+    const fixtureSubjectMatters = demoDataset.entities.subjectMatters ?? []
+
+    expect(seededSubjects).toHaveLength(fixtureSubjects.length)
+    const firstSubject = seededSubjects[0]
     if (!firstSubject) {
       throw new Error('Expected seeded subjects')
     }
     expect(Object.values(SubjectCategory)).toContain(firstSubject.category)
     expect(Object.values(SubjectColor)).toContain(firstSubject.color)
-    expect(matters).toHaveLength(SEED_SUBJECT_MATTERS.length)
-    expect(offerings).toHaveLength(SEED_GRADE_LEVEL_SUBJECTS.length)
-    expect(assignments).toHaveLength(SEED_GRADE_LEVEL_SUBJECT_MATTERS.length)
+    expect(seededMatters).toHaveLength(fixtureSubjectMatters.length)
+    expect(offerings).toHaveLength(curriculumPlan.gradeLevelSubjects.length)
+    expect(assignments).toHaveLength(curriculumPlan.gradeLevelSubjectMatters.length)
   })
 })

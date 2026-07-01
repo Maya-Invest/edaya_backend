@@ -1,21 +1,38 @@
+import type { ActivityEnrollmentInput, ActivityInput } from '@edaya/core'
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { ActivitiesSeedPort } from './port'
-import { ActivityCategory, ActivityEnrollmentStatus } from '@edaya/core'
-import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '@edaya/fixtures'
-import { seedDateTime } from '../../support/seed-date'
 
-const ACTIVITY_CATEGORY_BY_SEED = {
-  Sport: ActivityCategory.Sport,
-  Arts: ActivityCategory.Arts,
-  Science: ActivityCategory.Science,
-  Language: ActivityCategory.Language,
-  Wellbeing: ActivityCategory.Wellbeing,
-} as const
+function isoDateTime(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+  return String(value)
+}
 
-const ENROLLMENT_STATUS_BY_SEED = {
-  approved: ActivityEnrollmentStatus.Approved,
-  pending: ActivityEnrollmentStatus.Pending,
-  denied: ActivityEnrollmentStatus.Denied,
-} as const
+function activitySeedRecord(activity: ActivityInput) {
+  return {
+    id: activity.id,
+    schoolId: activity.schoolId,
+    name: activity.name,
+    category: activity.category,
+    coach: activity.coach,
+    schedule: activity.schedule,
+    participants: activity.participants,
+    capacity: activity.capacity,
+    description: activity.description,
+    startDate: isoDateTime(activity.startDate),
+    endDate: isoDateTime(activity.endDate),
+  }
+}
+
+function enrollmentSeedRecord(enrollment: ActivityEnrollmentInput) {
+  return {
+    id: enrollment.id,
+    activityId: enrollment.activityId,
+    studentId: enrollment.studentId,
+    status: enrollment.status,
+  }
+}
 
 export interface DevActivitiesSeedCounts {
   activities: number
@@ -24,34 +41,21 @@ export interface DevActivitiesSeedCounts {
 
 export async function seedDevActivities(
   port: ActivitiesSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevActivitiesSeedCounts> {
-  for (const activity of SEED_EXTRACURRICULAR_ACTIVITIES) {
-    await port.saveActivity({
-      id: activity.id,
-      schoolId: activity.schoolId,
-      name: activity.name,
-      category: ACTIVITY_CATEGORY_BY_SEED[activity.category],
-      coach: activity.coach,
-      schedule: activity.schedule,
-      participants: activity.participants,
-      capacity: activity.capacity,
-      description: activity.description,
-      startDate: seedDateTime(activity.startDate),
-      endDate: seedDateTime(activity.endDate),
-    })
+  const activities = dataset.entities.activities ?? []
+  const enrollments = dataset.entities.activityEnrollments ?? []
+
+  for (const activity of activities) {
+    await port.saveActivity(activitySeedRecord(activity))
   }
 
-  for (const enrollment of SEED_ACTIVITY_ENROLLMENTS) {
-    await port.saveEnrollment({
-      id: enrollment.id,
-      activityId: enrollment.activityId,
-      studentId: enrollment.studentId,
-      status: ENROLLMENT_STATUS_BY_SEED[enrollment.status],
-    })
+  for (const enrollment of enrollments) {
+    await port.saveEnrollment(enrollmentSeedRecord(enrollment))
   }
 
   return {
-    activities: SEED_EXTRACURRICULAR_ACTIVITIES.length,
-    activityEnrollments: SEED_ACTIVITY_ENROLLMENTS.length,
+    activities: activities.length,
+    activityEnrollments: enrollments.length,
   }
 }

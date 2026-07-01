@@ -8,14 +8,8 @@ import type {
   SchoolStructureSeedPort,
   SchoolStructureStaffRecord,
 } from './port'
-import {
-  SEED_ACADEMIC_PERIODS,
-  SEED_CLASSES,
-  SEED_GRADE_LEVELS,
-  SEED_PERIOD_DEFINITIONS,
-  SEED_SCHOOL_ID,
-  SEED_STAFF,
-} from '@edaya/fixtures'
+import { bulkDataset, demoDataset } from '@edaya/fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { describe, expect, test } from 'bun:test'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from './workflow'
 
@@ -92,7 +86,7 @@ function createMemoryPort(options: MemoryPortOptions = {}): {
 describe('school-structure seed port workflow', () => {
   test('seeds the complete foundation from serializable records', async () => {
     const memory = createMemoryPort()
-    const inspection = await inspectDevSchoolStructure(memory.port)
+    const inspection = await inspectDevSchoolStructure(memory.port, demoDataset)
 
     expect(inspection).toEqual({ status: 'ready', demoSchoolExists: false })
     if (inspection.status !== 'ready') {
@@ -102,37 +96,41 @@ describe('school-structure seed port workflow', () => {
     await seedDevSchoolStructure(memory.port, {
       demoSchoolExists: inspection.demoSchoolExists,
       ownerSubjectId: 'subject-owner',
-    })
+    }, bulkDataset)
 
     expect(memory.schools).toHaveLength(1)
     expect(memory.schools[0]?.ownerSubjectId).toBe('subject-owner')
-    expect(memory.gradeLevels).toHaveLength(SEED_GRADE_LEVELS.length)
+    expect(memory.gradeLevels).toHaveLength(demoDataset.entities.gradeLevels?.length ?? 0)
     expect(memory.academicYears).toHaveLength(1)
     expect(memory.academicYears[0]?.startDate).toBe('2025-09-01T12:00:00.000Z')
-    expect(memory.academicPeriods).toHaveLength(SEED_ACADEMIC_PERIODS.length)
-    expect(memory.publishedPeriodIds).toEqual(SEED_ACADEMIC_PERIODS.map(period => period.id))
-    expect(memory.periodDefinitions).toHaveLength(SEED_PERIOD_DEFINITIONS.length)
-    expect(memory.staff).toHaveLength(SEED_STAFF.length)
-    expect(memory.classGroups).toHaveLength(SEED_CLASSES.length)
+    const { academicPeriods, periodDefinitions, staffMembers } = demoDataset.entities
+    expect(memory.academicPeriods).toHaveLength(academicPeriods?.length ?? 0)
+    expect(memory.publishedPeriodIds).toEqual((academicPeriods ?? []).map(period => period.id))
+    expect(memory.periodDefinitions).toHaveLength(periodDefinitions?.length ?? 0)
+    expect(memory.staff).toHaveLength(staffMembers?.length ?? 0)
+    expect(memory.classGroups).toHaveLength(bulkDataset.entities.classGroups?.length ?? 0)
   })
 
   test('repairs a partial demo without replacing its existing director or school', async () => {
-    const directorId = SEED_STAFF[0].id
+    const directorId = demoDataset.entities.staffMembers?.[0]?.id
+    if (!directorId) {
+      throw new Error('Seed staff fixtures must include a director at index 0')
+    }
     const memory = createMemoryPort({
       schoolIds: [SEED_SCHOOL_ID],
       existingStaffIds: [directorId],
     })
-    const inspection = await inspectDevSchoolStructure(memory.port)
+    const inspection = await inspectDevSchoolStructure(memory.port, demoDataset)
 
     expect(inspection).toEqual({ status: 'ready', demoSchoolExists: true })
     if (inspection.status !== 'ready') {
       throw new Error('Expected partial school structure to be ready')
     }
 
-    await seedDevSchoolStructure(memory.port, inspection)
+    await seedDevSchoolStructure(memory.port, inspection, demoDataset)
 
     expect(memory.schools).toHaveLength(0)
-    expect(memory.staff).toHaveLength(SEED_STAFF.length - 1)
+    expect(memory.staff).toHaveLength((demoDataset.entities.staffMembers?.length ?? 0) - 1)
     expect(memory.staff.some(member => member.id === directorId)).toBe(false)
   })
 
@@ -140,11 +138,11 @@ describe('school-structure seed port workflow', () => {
     const populatedDemo = createMemoryPort({ schoolIds: [SEED_SCHOOL_ID], studentCount: 1 })
     const otherSchool = createMemoryPort({ schoolIds: ['another-school'] })
 
-    expect(await inspectDevSchoolStructure(populatedDemo.port)).toEqual({
+    expect(await inspectDevSchoolStructure(populatedDemo.port, demoDataset)).toEqual({
       status: 'skipped',
       schoolCount: 1,
     })
-    expect(await inspectDevSchoolStructure(otherSchool.port)).toEqual({
+    expect(await inspectDevSchoolStructure(otherSchool.port, demoDataset)).toEqual({
       status: 'skipped',
       schoolCount: 1,
     })

@@ -1,89 +1,65 @@
-import type { SeedTodayAttendanceRecord } from '@edaya/fixtures'
+import type { AttendanceRecordInput } from '@edaya/core'
+import type { FixtureAttendanceSession, FixtureDataset } from '@edaya/fixtures'
 import type { AttendanceSeedPort } from './port'
-import { AttendanceStatus } from '@edaya/core'
-import {
-  SEED_ABSENCE_RECORDS,
-  SEED_PENDING_JUSTIFICATION_RECORD_IDS,
-  SEED_SCHOOL_ID,
-  SEED_TODAY_ATTENDANCE,
-} from '@edaya/fixtures'
 
-const ATTENDANCE_STATUS_BY_SEED = {
-  present: AttendanceStatus.Present,
-  absent: AttendanceStatus.Absent,
-  late: AttendanceStatus.Late,
-} as const
+function attendanceSeedRecord(record: AttendanceRecordInput) {
+  const lessonSessionId = record.lessonSessionId
+  if (typeof lessonSessionId !== 'string' || lessonSessionId.length === 0) {
+    throw new Error(`Attendance record ${record.id} is missing lessonSessionId`)
+  }
+  return {
+    id: record.id,
+    studentId: record.studentId,
+    lessonSessionId,
+    status: record.status,
+  }
+}
 
 async function seedAttendanceSession(
   port: AttendanceSeedPort,
-  session: {
-    scheduleId: string
-    classGroupId: string
-    classSubjectId: string
-    date: string
-    startTime: string
-    endTime: string
-    records: readonly SeedTodayAttendanceRecord[]
-  },
+  schoolId: string,
+  session: FixtureAttendanceSession,
 ): Promise<number> {
   const { lessonSessionId } = await port.ensureLessonSession({
-    scheduleId: session.scheduleId,
-    schoolId: SEED_SCHOOL_ID,
-    classGroupId: session.classGroupId,
-    classSubjectId: session.classSubjectId,
-    title: 'Attendance session',
-    date: session.date,
-    startTime: session.startTime,
-    endTime: session.endTime,
+    scheduleId: session.session.scheduleId,
+    schoolId,
+    classGroupId: session.session.classGroupId,
+    classSubjectId: session.session.classSubjectId,
+    title: session.session.title,
+    date: session.session.date,
+    startTime: session.session.startTime,
+    endTime: session.session.endTime,
   })
 
   for (const record of session.records) {
-    await port.recordAttendance({
-      id: record.id,
-      studentId: record.studentId,
-      lessonSessionId,
-      status: ATTENDANCE_STATUS_BY_SEED[record.status],
-    })
+    const seedRecord = attendanceSeedRecord(record)
+    if (seedRecord.lessonSessionId !== lessonSessionId) {
+      throw new Error(`Attendance record ${record.id} lessonSessionId does not match materialized session`)
+    }
+    await port.recordAttendance(seedRecord)
   }
 
   return session.records.length
 }
 
-export async function seedDevAttendance(port: AttendanceSeedPort): Promise<number> {
-  let recordCount = 0
-
-  for (const absence of SEED_ABSENCE_RECORDS) {
-    const scheduleId = absence.scheduleId
-    const { lessonSessionId } = await port.ensureLessonSession({
-      scheduleId,
-      schoolId: SEED_SCHOOL_ID,
-      classGroupId: absence.classGroupId,
-      classSubjectId: absence.classSubjectId,
-      title: 'Absence session',
-      date: absence.date,
-      startTime: absence.startTime,
-      endTime: absence.endTime,
-    })
-    await port.recordAttendance({
-      id: absence.id,
-      studentId: absence.studentId,
-      lessonSessionId,
-      status: AttendanceStatus.Absent,
-    })
-    recordCount += 1
+export async function seedDevAttendance(
+  port: AttendanceSeedPort,
+  dataset: FixtureDataset,
+): Promise<number> {
+  const attendanceSessions = dataset.extensions?.attendanceSessions
+  if (!attendanceSessions) {
+    return 0
   }
 
-  recordCount += await seedAttendanceSession(port, {
-    scheduleId: SEED_TODAY_ATTENDANCE.scheduleId,
-    classGroupId: SEED_TODAY_ATTENDANCE.classGroupId,
-    classSubjectId: SEED_TODAY_ATTENDANCE.classSubjectId,
-    date: SEED_TODAY_ATTENDANCE.date,
-    startTime: SEED_TODAY_ATTENDANCE.startTime,
-    endTime: SEED_TODAY_ATTENDANCE.endTime,
-    records: SEED_TODAY_ATTENDANCE.records,
-  })
+  let recordCount = 0
 
-  for (const recordId of new Set<string>(SEED_PENDING_JUSTIFICATION_RECORD_IDS)) {
+  for (const absenceSession of attendanceSessions.absenceSessions) {
+    recordCount += await seedAttendanceSession(port, dataset.schoolId, absenceSession)
+  }
+
+  recordCount += await seedAttendanceSession(port, dataset.schoolId, attendanceSessions.todaySession)
+
+  for (const recordId of new Set<string>(attendanceSessions.pendingJustificationRecordIds)) {
     await port.markJustificationPending(recordId, 'Awaiting parent justification')
   }
 

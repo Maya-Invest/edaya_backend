@@ -4,10 +4,8 @@ import type { AuthenticatedRouteContext } from './api-route-harness'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
 import type { ApiRuntime } from '@/runtime'
-import {
-  DEV_AUTH_PASSWORD,
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-} from '@edaya/fixtures'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
+import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import {
   createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,

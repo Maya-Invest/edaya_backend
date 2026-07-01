@@ -1,6 +1,8 @@
-import { createSchoolClient, type SchoolClient } from '../generated/api-client'
+import type { SchoolClient } from '../generated/api-client'
 import type { HttpSeedClient } from './client'
-import { createSeedTransport, type SeedTransportOptions } from './seed-transport'
+import type { SeedTransportOptions } from './seed-transport'
+import { createSchoolClient } from '../generated/api-client'
+import { createSeedTransport } from './seed-transport'
 
 type SeedSchemas = Record<string, unknown>
 

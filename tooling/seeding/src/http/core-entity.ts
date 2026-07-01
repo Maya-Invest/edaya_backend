@@ -1,6 +1,6 @@
-import { ApiError } from '../generated/api-client'
 import type { SeedCommandKey, SeedEntityKey } from './catalog'
 import type { HttpSeedClient } from './client'
+import { ApiError } from '../generated/api-client'
 import { createSeedSchoolClient } from './school-client'
 
 export interface CoreHttpRequestOptions {

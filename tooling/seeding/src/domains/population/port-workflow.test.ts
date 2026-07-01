@@ -5,7 +5,7 @@ import type {
   PopulationSeedPort,
   StudentSeedRecord,
 } from './port'
-import { SEED_GUARDIANS, SEED_STUDENTS } from '@edaya/fixtures'
+import { bulkDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevPopulation } from './workflow'
 
@@ -30,15 +30,13 @@ describe('population seed port workflow', () => {
       },
     }
 
-    await seedDevPopulation(port)
+    await seedDevPopulation(port, bulkDataset)
 
-    expect(students).toHaveLength(SEED_STUDENTS.length)
+    expect(students).toHaveLength(bulkDataset.entities.students?.length ?? 0)
     expect(students[0]?.birthDate).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
-    expect(enrollments).toHaveLength(SEED_STUDENTS.length)
-    expect(guardians).toHaveLength(SEED_GUARDIANS.length)
-    expect(links).toHaveLength(
-      SEED_GUARDIANS.reduce((count, guardian) => count + guardian.studentIds.length, 0),
-    )
+    expect(enrollments).toHaveLength(bulkDataset.entities.enrollments?.length ?? 0)
+    expect(guardians).toHaveLength(bulkDataset.entities.guardians?.length ?? 0)
+    expect(links).toHaveLength(bulkDataset.entities.guardianLinks?.length ?? 0)
     expect(links.every(link => link.isPrimary && link.legalGuardian)).toBe(true)
   })
 })

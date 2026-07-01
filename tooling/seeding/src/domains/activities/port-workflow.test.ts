@@ -4,7 +4,7 @@ import type {
   ActivitySeedRecord,
 } from './port'
 import { ActivityCategory, ActivityEnrollmentStatus } from '@edaya/core'
-import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevActivities } from './workflow'
 
@@ -21,11 +21,11 @@ describe('activities seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevActivities(port)
+    const counts = await seedDevActivities(port, demoDataset)
 
     expect(counts).toEqual({
-      activities: SEED_EXTRACURRICULAR_ACTIVITIES.length,
-      activityEnrollments: SEED_ACTIVITY_ENROLLMENTS.length,
+      activities: demoDataset.entities.activities?.length ?? 0,
+      activityEnrollments: demoDataset.entities.activityEnrollments?.length ?? 0,
     })
     expect(activities.map(record => record.category)).toContain(ActivityCategory.Science)
     expect(activities[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)

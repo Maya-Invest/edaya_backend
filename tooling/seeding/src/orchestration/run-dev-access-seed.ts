@@ -12,16 +12,18 @@ import {
   Permission,
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
+import { bulkDataset, demoDataset } from '@edaya/fixtures'
 import {
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CLASS_SUBJECTS,
-  SEED_SCHOOL_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'
 import { SeedPortError } from '../support/seed-port-error'
+
+const accessSeedAcademicYearId = bulkDataset.entities.academicYear?.id
+  ?? (() => { throw new Error('bulkDataset must include academicYear for access seeding') })()
 
 /** Entity list endpoints used by the webapp shell loaders. */
 const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [
@@ -201,7 +203,7 @@ function createStaffRoleAssignment(
     id: `sra-${staffId}`,
     staffId,
     schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
+    academicYearId: accessSeedAcademicYearId,
     roleIds: [roleId],
     scopeGrants,
     status: 'active',
@@ -288,13 +290,8 @@ export async function runDevAccessAssignmentsSeedWithPort(
 
   let classSubjectStaffAssignments = 0
   if (options?.includeClassSubjectStaffAssignments !== false) {
-    for (const offering of SEED_CLASS_SUBJECTS) {
-      await port.saveStaffAssignment({
-        id: `sa-${offering.teacherId}-${offering.id}`,
-        staffId: offering.teacherId,
-        responsibility: 'Teacher',
-        classSubjectId: offering.id,
-      })
+    for (const assignment of demoDataset.extensions?.classSubjectStaffAssignments ?? []) {
+      await port.saveStaffAssignment(assignment)
       classSubjectStaffAssignments += 1
     }
   }

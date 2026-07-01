@@ -1,14 +1,12 @@
 import type { HttpSeedClient } from './client'
+import { demoDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-  SEED_SCHOOL_PROFILE,
-  SEED_STAFF,
-  splitDisplayName,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { splitDisplayName } from '@edaya/fixtures/shared/people'
 import { HttpAuthProvisioner } from './auth'
 import { isTransientHttpStatus } from './client'
 
@@ -66,7 +64,7 @@ async function trySignIn(client: HttpSeedClient, email: string): Promise<boolean
 async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
   const onboardingStaffIds = [
     MINIMAL_AUTH_FIXTURE_STAFF_ID,
-    SEED_SCHOOL_OWNER_STAFF_ID,
+    demoSchoolOwnerStaffId,
     ...BOOTSTRAP_SIGN_IN_STAFF_IDS,
   ]
 
@@ -84,16 +82,16 @@ async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
   }
 
   const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+    account => account.staffId === demoSchoolOwnerStaffId,
   )
-  const ownerMember = SEED_STAFF.find(member => member.id === SEED_SCHOOL_OWNER_STAFF_ID)
+  const ownerMember = demoDataset.entities.staffMembers?.find(member => member.id === demoSchoolOwnerStaffId)
   if (ownerAccount && ownerMember) {
     client.clearCookies()
     const provisioner = new HttpAuthProvisioner(client)
     await provisioner.ensureUser({
       email: ownerAccount.email,
       password: DEV_AUTH_PASSWORD,
-      name: ownerMember.name,
+      name: `${ownerMember.firstName} ${ownerMember.lastName}`,
     })
     if (await trySignIn(client, ownerAccount.email)) {
       return
@@ -114,7 +112,9 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
     return
   }
 
-  const ownerMember = SEED_STAFF.find(member => member.id === MINIMAL_AUTH_FIXTURE_STAFF_ID)
+  const ownerMember = demoDataset.entities.staffMembers?.find(
+    member => member.id === MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  )
   const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
     account => account.staffId === MINIMAL_AUTH_FIXTURE_STAFF_ID,
   )
@@ -122,7 +122,8 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
     throw new Error('Dev owner fixture is missing from seed data')
   }
 
-  const ownerName = splitDisplayName(ownerMember.name)
+  const ownerName = splitDisplayName(`${ownerMember.firstName} ${ownerMember.lastName}`)
+  const school = demoDataset.entities.school
   const { response, body } = await client.jsonRequest('/core/onboarding/register-school', {
     method: 'POST',
     headers: {
@@ -131,10 +132,10 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
     },
     body: JSON.stringify({
       id: SEED_SCHOOL_ID,
-      name: SEED_SCHOOL_PROFILE.name,
-      timeZone: SEED_SCHOOL_PROFILE.timeZone,
-      country: SEED_SCHOOL_PROFILE.country,
-      city: SEED_SCHOOL_PROFILE.city,
+      name: school?.name,
+      timeZone: school?.timeZone,
+      country: school?.country,
+      city: school?.city,
       ownerStaffId: MINIMAL_AUTH_FIXTURE_STAFF_ID,
       ownerFirstName: ownerName.firstName,
       ownerLastName: ownerName.lastName,

@@ -1,14 +1,13 @@
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner } from '../support/types'
+import { demoDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-  SEED_STAFF,
-  splitDisplayName,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { splitDisplayName } from '@edaya/fixtures/shared/people'
 
 export interface DevStaffAuthSyncResult {
   linkedStaff: number
@@ -38,7 +37,7 @@ async function ensureDevAuthStaffMembers(
   port: AuthLinkSeedPort,
 ): Promise<void> {
   for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
-    const seedMember = SEED_STAFF.find(member => member.id === account.staffId)
+    const seedMember = demoDataset.entities.staffMembers?.find(member => member.id === account.staffId)
     if (!seedMember) {
       continue
     }
@@ -48,7 +47,7 @@ async function ensureDevAuthStaffMembers(
       continue
     }
 
-    const { firstName, lastName } = splitDisplayName(seedMember.name)
+    const { firstName, lastName } = splitDisplayName(`${seedMember.firstName} ${seedMember.lastName}`)
     await port.registerStaffMember({
       id: account.staffId,
       schoolId: SEED_SCHOOL_ID,
@@ -143,7 +142,7 @@ export async function resolveDevSchoolOwnerSubjectId(
   }
 
   const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+    account => account.staffId === demoSchoolOwnerStaffId,
   )
   if (!ownerAccount) {
     return undefined
@@ -154,7 +153,7 @@ export async function resolveDevSchoolOwnerSubjectId(
     return fromAuth
   }
 
-  const ownerStaff = await port.findStaffById(SEED_SCHOOL_OWNER_STAFF_ID)
+  const ownerStaff = await port.findStaffById(demoSchoolOwnerStaffId)
   return ownerStaff?.subjectId
 }
 
@@ -162,7 +161,7 @@ export function ownerSubjectIdFromAuthProvision(
   provision: { accounts: Array<{ email: string, subjectId: string }> },
 ): string | undefined {
   const ownerEmail = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+    account => account.staffId === demoSchoolOwnerStaffId,
   )?.email
   if (!ownerEmail) {
     return undefined

@@ -1,21 +1,8 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { FinanceSeedPort } from './port'
 import { FeeCategory, PaymentMethod } from '@edaya/core'
-import {
-  resolveSeedReferenceDate,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CURRENCY,
-  SEED_FEES,
-  SEED_PAYMENTS,
-  SEED_SCHOOL_ID,
-  SEED_STUDENT_FEES,
-} from '@edaya/fixtures'
+import { resolveSeedReferenceDate } from '@edaya/fixtures/meta/dates'
 import { seedDateTime } from '../../support/seed-date'
-
-const FEE_CATEGORY_BY_SEED = {
-  tuition: FeeCategory.Tuition,
-  transport: FeeCategory.Transport,
-  other: FeeCategory.Other,
-} as const
 
 export interface DevFinanceSeedCounts {
   fees: number
@@ -25,51 +12,55 @@ export interface DevFinanceSeedCounts {
 
 export async function seedDevFinance(
   port: FinanceSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevFinanceSeedCounts> {
   const referenceDate = seedDateTime(resolveSeedReferenceDate())
+  const fees = dataset.entities.fees ?? []
+  const studentFees = dataset.entities.studentFees ?? []
+  const payments = dataset.entities.payments ?? []
 
-  for (const fee of SEED_FEES) {
+  for (const fee of fees) {
     await port.createFee({
       id: fee.id,
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      schoolId: fee.schoolId,
+      academicYearId: fee.academicYearId,
       name: fee.name,
-      category: FEE_CATEGORY_BY_SEED[fee.category],
+      category: fee.category ?? FeeCategory.Tuition,
       defaultAmount: fee.defaultAmount,
-      currency: SEED_CURRENCY,
-      installments: fee.installments.map(installment => ({
+      currency: fee.currency,
+      installments: (fee.installments ?? []).map(installment => ({
         label: installment.label,
         percentage: installment.percentage,
-        dueDate: installment.dueDate ? seedDateTime(installment.dueDate) : undefined,
+        dueDate: installment.dueDate ? seedDateTime(String(installment.dueDate).slice(0, 10)) : undefined,
       })),
     })
   }
 
-  for (const studentFee of SEED_STUDENT_FEES) {
+  for (const studentFee of studentFees) {
     await port.assignFeeToStudent({
       id: studentFee.id,
       studentId: studentFee.studentId,
       feeId: studentFee.feeId,
-      expectedAmount: studentFee.total,
-      dueDate: seedDateTime(studentFee.dueDate),
+      expectedAmount: studentFee.expectedAmount,
+      dueDate: seedDateTime(String(studentFee.dueDate).slice(0, 10)),
       referenceDate,
     })
   }
 
-  for (const payment of SEED_PAYMENTS) {
+  for (const payment of payments) {
     await port.recordPayment({
       id: payment.id,
       studentFeeId: payment.studentFeeId,
       amount: payment.amount,
-      paymentDate: seedDateTime(payment.paymentDate),
-      method: PaymentMethod.BankTransfer,
+      paymentDate: seedDateTime(String(payment.paymentDate).slice(0, 10)),
+      method: payment.method ?? PaymentMethod.BankTransfer,
       referenceDate,
     })
   }
 
   return {
-    fees: SEED_FEES.length,
-    studentFees: SEED_STUDENT_FEES.length,
-    payments: SEED_PAYMENTS.length,
+    fees: fees.length,
+    studentFees: studentFees.length,
+    payments: payments.length,
   }
 }

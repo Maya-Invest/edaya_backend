@@ -1,8 +1,31 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import process from 'node:process'
+import { DayOfWeek } from '@edaya/core'
 
 /** Narrative "today" for dev fixtures — dashboard KPIs and rolling windows anchor here. */
 export const SEED_REFERENCE_DATE = '2026-06-16'
+
+/** Reference Monday for concrete timetable sessions (week aligned with mock planning). */
+export const DEMO_SCHEDULING_REFERENCE_WEEK_START = '2026-05-11' as const
+
+const PLANNING_DAY_OFFSET: Partial<Record<DayOfWeek, number>> = {
+  [DayOfWeek.Monday]: 0,
+  [DayOfWeek.Tuesday]: 1,
+  [DayOfWeek.Wednesday]: 2,
+  [DayOfWeek.Thursday]: 3,
+  [DayOfWeek.Friday]: 4,
+}
+
+/** Concrete session date for a recurring slot in the reference planning week. */
+export function planningSessionDateForDayOfWeek(dayOfWeek: DayOfWeek): string {
+  const offset = PLANNING_DAY_OFFSET[dayOfWeek]
+  if (offset === undefined) {
+    throw new Error(`Unsupported planning dayOfWeek: ${dayOfWeek}`)
+  }
+  const base = parseSeedDate(DEMO_SCHEDULING_REFERENCE_WEEK_START)
+  base.setUTCDate(base.getUTCDate() + offset)
+  return base.toISOString().slice(0, 10)
+}
 
 /** Reference date when deriving fee status during dev finance seed. */
 export const SEED_FINANCE_REFERENCE_DATE = SEED_REFERENCE_DATE

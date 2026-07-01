@@ -1,24 +1,7 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { SchoolLifeSeedPort } from './port'
-import {
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  IncidentInvolvementRole,
-  IncidentKind,
-} from '@edaya/core'
-import {
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_ALL_CALENDAR_EVENTS,
-  SEED_INCIDENTS,
-  SEED_SCHOOL_ID,
-} from '@edaya/fixtures'
+import { CalendarEventScopeKind } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
-
-const CALENDAR_KIND_BY_SEED = {
-  holiday: CalendarEventKind.Holiday,
-  vacation: CalendarEventKind.Break,
-  closure: CalendarEventKind.Other,
-  ceremony: CalendarEventKind.Event,
-} as const
 
 export interface DevSchoolLifeSeedCounts {
   calendarEvents: number
@@ -27,22 +10,32 @@ export interface DevSchoolLifeSeedCounts {
 
 export async function seedDevSchoolLife(
   port: SchoolLifeSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevSchoolLifeSeedCounts> {
+  const academicYearId = dataset.entities.academicYear?.id
+  if (!academicYearId) {
+    throw new Error('Fixture dataset is missing academicYear')
+  }
+
+  const calendarEvents = dataset.extensions?.calendarEvents ?? []
+  const incidents = dataset.entities.incidents ?? []
+  const studentInvolvements = dataset.entities.studentIncidentInvolvements ?? []
+
   let calendarEventCount = 0
 
-  for (const event of SEED_ALL_CALENDAR_EVENTS) {
+  for (const event of calendarEvents) {
     const baseRecord = {
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      schoolId: dataset.schoolId,
+      academicYearId,
       title: event.title,
       description: event.description,
       startDate: seedDateTime(event.startDate),
       endDate: seedDateTime(event.endDate),
-      kind: CALENDAR_KIND_BY_SEED[event.mockType],
-      isNonSchoolDay: event.mockType !== 'ceremony',
+      kind: event.kind,
+      isNonSchoolDay: event.isNonSchoolDay,
     }
 
-    if (event.scope === 'all') {
+    if (event.scope === 'school') {
       await port.createCalendarEvent({
         ...baseRecord,
         id: event.id,
@@ -63,29 +56,37 @@ export async function seedDevSchoolLife(
     }
   }
 
-  for (const incident of SEED_INCIDENTS) {
+  const involvementsByIncidentId = new Map(
+    studentInvolvements.map(involvement => [involvement.incidentId, involvement]),
+  )
+
+  for (const incident of incidents) {
     await port.recordIncident({
       id: incident.id,
-      schoolId: SEED_SCHOOL_ID,
-      classGroupId: incident.classGroupId,
+      schoolId: incident.schoolId,
+      classGroupId: incident.classGroupId ?? undefined,
       title: incident.title,
       description: incident.description,
-      date: seedDateTime(incident.date),
-      kind: incident.kind === 'major_infraction'
-        ? IncidentKind.MajorInfraction
-        : IncidentKind.MinorInfraction,
-      reporterId: 'st7',
+      date: seedDateTime(String(incident.date).slice(0, 10)),
+      kind: incident.kind,
+      reporterId: incident.reporterId,
     })
+
+    const involvement = involvementsByIncidentId.get(incident.id)
+    if (!involvement) {
+      throw new Error(`Missing student involvement for incident ${incident.id}`)
+    }
+
     await port.addStudentInvolvement({
-      id: `inv-${incident.id}-${incident.studentId}`,
-      incidentId: incident.id,
-      studentId: incident.studentId,
-      role: IncidentInvolvementRole.Subject,
+      id: involvement.id,
+      incidentId: involvement.incidentId,
+      studentId: involvement.studentId,
+      role: involvement.role,
     })
   }
 
   return {
     calendarEvents: calendarEventCount,
-    incidents: SEED_INCIDENTS.length,
+    incidents: incidents.length,
   }
 }

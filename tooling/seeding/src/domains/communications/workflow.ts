@@ -1,56 +1,7 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { CommunicationsSeedPort } from './port'
-import {
-  AnnouncementPriority,
-  AnnouncementStatus,
-  AnnouncementTargetKind,
-  MessageDeliveryRecipientKind,
-  MessageDeliveryStatus,
-} from '@edaya/core'
-import {
-  SEED_ANNOUNCEMENT_MATERIALIZE_PLANS,
-  SEED_ANNOUNCEMENT_TARGETS,
-  SEED_ANNOUNCEMENTS,
-  SEED_MESSAGE_DELIVERIES,
-} from '@edaya/fixtures'
+import { AnnouncementPriority, AnnouncementStatus, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
-
-const ANNOUNCEMENT_STATUS_BY_SEED = {
-  draft: AnnouncementStatus.Draft,
-  published: AnnouncementStatus.Published,
-  archived: AnnouncementStatus.Archived,
-} as const
-
-const ANNOUNCEMENT_PRIORITY_BY_SEED = {
-  normal: AnnouncementPriority.Normal,
-  important: AnnouncementPriority.Important,
-  urgent: AnnouncementPriority.Urgent,
-} as const
-
-const ANNOUNCEMENT_TARGET_KIND_BY_SEED = {
-  school: AnnouncementTargetKind.School,
-  all_staff: AnnouncementTargetKind.AllStaff,
-  all_guardians: AnnouncementTargetKind.AllGuardians,
-  all_students: AnnouncementTargetKind.AllStudents,
-  class_group: AnnouncementTargetKind.ClassGroup,
-  grade_level: AnnouncementTargetKind.GradeLevel,
-  staff_member: AnnouncementTargetKind.StaffMember,
-  guardian: AnnouncementTargetKind.Guardian,
-  student: AnnouncementTargetKind.Student,
-} as const
-
-const RECIPIENT_KIND_BY_SEED = {
-  staff: MessageDeliveryRecipientKind.Staff,
-  guardian: MessageDeliveryRecipientKind.Guardian,
-  student: MessageDeliveryRecipientKind.Student,
-} as const
-
-const DELIVERY_STATUS_BY_SEED = {
-  pending: MessageDeliveryStatus.Pending,
-  sent: MessageDeliveryStatus.Sent,
-  failed: MessageDeliveryStatus.Failed,
-  read: MessageDeliveryStatus.Read,
-  cancelled: MessageDeliveryStatus.Cancelled,
-} as const
 
 function seedDateAndMinute(timestamp: string): string {
   return `${timestamp.slice(0, 16)}:00.000Z`
@@ -64,73 +15,78 @@ export interface DevCommunicationsSeedCounts {
 
 export async function seedDevCommunications(
   port: CommunicationsSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevCommunicationsSeedCounts> {
-  for (const announcement of SEED_ANNOUNCEMENTS) {
+  const announcements = dataset.entities.announcements ?? []
+  const announcementTargets = dataset.entities.announcementTargets ?? []
+  const announcementMaterializePlans = dataset.extensions?.announcementMaterializePlans ?? []
+  const messageDeliveries = dataset.entities.messageDeliveries ?? []
+
+  for (const announcement of announcements) {
+    const status = announcement.status
+      ?? (announcement.publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
     await port.createAnnouncement({
       id: announcement.id,
       schoolId: announcement.schoolId,
       title: announcement.title,
       content: announcement.content,
-      createdBy: announcement.createdBy,
-      status: ANNOUNCEMENT_STATUS_BY_SEED[announcement.status],
-      priority: ANNOUNCEMENT_PRIORITY_BY_SEED[announcement.priority ?? 'normal'],
-      createdAt: seedDateTime(announcement.createdAt),
-      publishedAt: announcement.publishedAt ? seedDateTime(announcement.publishedAt) : undefined,
-      expiresAt: announcement.expiresAt ? seedDateTime(announcement.expiresAt) : undefined,
+      createdBy: announcement.createdBy ?? '',
+      status,
+      priority: announcement.priority ?? AnnouncementPriority.Normal,
+      createdAt: seedDateTime(String(announcement.createdAt).slice(0, 10)),
+      publishedAt: announcement.publishedAt ? seedDateTime(String(announcement.publishedAt).slice(0, 10)) : undefined,
+      expiresAt: announcement.expiresAt ? seedDateTime(String(announcement.expiresAt).slice(0, 10)) : undefined,
     })
   }
 
-  for (const target of SEED_ANNOUNCEMENT_TARGETS) {
+  for (const target of announcementTargets) {
     await port.addTarget({
       id: target.id,
       announcementId: target.announcementId,
-      targetKind: ANNOUNCEMENT_TARGET_KIND_BY_SEED[target.targetKind],
-      targetId: target.targetId,
+      targetKind: target.targetKind,
+      targetId: target.targetId ?? undefined,
     })
   }
 
-  for (const announcement of SEED_ANNOUNCEMENTS) {
-    if (announcement.status === 'published') {
+  for (const announcement of announcements) {
+    const status = announcement.status
+      ?? (announcement.publishedAt ? AnnouncementStatus.Published : AnnouncementStatus.Draft)
+    if (status === AnnouncementStatus.Published) {
       await port.publishAnnouncement({
         announcementId: announcement.id,
-        publishedAt: announcement.publishedAt ? seedDateTime(announcement.publishedAt) : undefined,
+        publishedAt: announcement.publishedAt ? seedDateTime(String(announcement.publishedAt).slice(0, 10)) : undefined,
       })
     }
   }
 
   let messageDeliveryCount = 0
-  for (const plan of SEED_ANNOUNCEMENT_MATERIALIZE_PLANS) {
+  for (const plan of announcementMaterializePlans) {
     messageDeliveryCount += await port.materializeDeliveries({
       announcementId: plan.announcementId,
     })
   }
 
-  for (const delivery of SEED_MESSAGE_DELIVERIES) {
-    const announcement = SEED_ANNOUNCEMENTS.find(record => record.id === delivery.announcementId)
-    if (!announcement) {
-      throw new Error(`Missing announcement for delivery seed ${delivery.id}`)
-    }
-
+  for (const delivery of messageDeliveries) {
     await port.recordDelivery({
       id: delivery.id,
-      schoolId: announcement.schoolId,
-      title: announcement.title,
-      body: announcement.content,
-      announcementId: delivery.announcementId,
+      schoolId: delivery.schoolId,
+      title: delivery.title,
+      body: delivery.body,
+      announcementId: delivery.announcementId ?? '',
       subjectId: delivery.subjectId,
-      recipientKind: RECIPIENT_KIND_BY_SEED[delivery.recipientKind],
-      recipientId: delivery.recipientId,
-      status: DELIVERY_STATUS_BY_SEED[delivery.status],
-      sentAt: delivery.sentAt ? seedDateAndMinute(delivery.sentAt) : undefined,
-      readAt: delivery.readAt ? seedDateAndMinute(delivery.readAt) : undefined,
-      failureReason: delivery.failureReason,
+      recipientKind: delivery.recipientKind ?? MessageDeliveryRecipientKind.Guardian,
+      recipientId: delivery.recipientId ?? '',
+      status: delivery.status ?? MessageDeliveryStatus.Pending,
+      sentAt: delivery.sentAt ? seedDateAndMinute(String(delivery.sentAt)) : undefined,
+      readAt: delivery.readAt ? seedDateAndMinute(String(delivery.readAt)) : undefined,
+      failureReason: delivery.failureReason ?? undefined,
     })
     messageDeliveryCount += 1
   }
 
   return {
-    announcements: SEED_ANNOUNCEMENTS.length,
-    announcementTargets: SEED_ANNOUNCEMENT_TARGETS.length,
+    announcements: announcements.length,
+    announcementTargets: announcementTargets.length,
     messageDeliveries: messageDeliveryCount,
   }
 }

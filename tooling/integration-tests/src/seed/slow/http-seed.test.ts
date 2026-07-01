@@ -1,11 +1,11 @@
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  resolveSeedingApiKeyForSchool,
-  SEED_SCHOOL_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import {
   provisionSeedingServiceAccountInProcess,
   runHttpDevSeeds,

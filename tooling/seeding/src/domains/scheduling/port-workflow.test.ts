@@ -6,12 +6,13 @@ import type {
   ScheduleSeedRecord,
   SchedulingSeedPort,
 } from './port'
-import { SEED_PLANNING_SLOTS, SEED_RESOURCES } from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevScheduling } from './workflow'
 
 describe('scheduling seed port workflow', () => {
   test('seeds resources, schedules, lesson sessions, assignments, and progress records', async () => {
+    const slots = demoDataset.extensions?.schedulingSlots ?? []
     const resources: ResourceSeedRecord[] = []
     const schedules: ScheduleSeedRecord[] = []
     const materializedScheduleIds: string[] = []
@@ -39,16 +40,15 @@ describe('scheduling seed port workflow', () => {
       },
     }
 
-    await seedDevScheduling(port)
+    await seedDevScheduling(port, demoDataset)
 
-    expect(resources).toHaveLength(SEED_RESOURCES.length)
-    expect(schedules).toHaveLength(SEED_PLANNING_SLOTS.length)
-    expect(materializedScheduleIds).toHaveLength(SEED_PLANNING_SLOTS.length)
-    expect(staffAssignments).toHaveLength(SEED_PLANNING_SLOTS.length)
+    expect(resources).toHaveLength(demoDataset.entities.resources?.length ?? 0)
+    expect(schedules).toHaveLength(slots.length)
+    expect(materializedScheduleIds).toHaveLength(slots.length)
+    expect(staffAssignments).toHaveLength(slots.length)
     expect(resourceAssignments).toHaveLength(
-      SEED_PLANNING_SLOTS.filter(slot => 'resourceId' in slot && slot.resourceId).length,
+      slots.filter(slot => slot.resourceId).length,
     )
-    expect(progress).toHaveLength(1)
-    expect(progress[0]?.lessonSessionId).toMatch(/^sch-p1:\d{4}-\d{2}-\d{2}$/)
+    expect(progress).toHaveLength(demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
   })
 })

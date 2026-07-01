@@ -1,9 +1,7 @@
 /* eslint-disable no-console -- CLI progress and result reporting intentionally writes to stdout. */
-import {
-  DEV_AUTH_PASSWORD,
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  SEED_SCHOOL_ID,
-} from '@edaya/fixtures'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
+import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { HttpSeedClient, signInViaHttp } from '@edaya/seeding/http'
 import { loadSmokeStagingEnv } from './load-smoke-env'
 

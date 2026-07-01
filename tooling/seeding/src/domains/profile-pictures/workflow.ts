@@ -1,18 +1,15 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { ProfilePicturesSeedPort } from './port'
 import { readFile } from 'node:fs/promises'
 import { AttachmentOwnerKind } from '@edaya/core'
+import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   buildSeedProfileAttachmentId,
   createRandomProfilePictureAllocator,
   resolveProfilePicturePath,
-  SEED_GUARDIANS,
   SEED_PROFILE_PHOTO_FILE_NAME,
   SEED_PROFILE_PHOTO_MIME_TYPE,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-  SEED_STAFF,
-  SEED_STUDENTS,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/shared/profile-pictures'
 
 const PROFILE_PHOTO_UPLOAD_CONCURRENCY = 8
 
@@ -42,6 +39,7 @@ async function mapWithConcurrency<T>(
 
 async function seedProfilePhotoForOwner(
   port: ProfilePicturesSeedPort,
+  schoolId: string,
   ownerKind: AttachmentOwnerKind,
   ownerId: string,
   pickPictureFile: () => string,
@@ -60,14 +58,14 @@ async function seedProfilePhotoForOwner(
 
   const uploaded = await port.uploadProfilePhoto({
     attachmentId,
-    schoolId: SEED_SCHOOL_ID,
+    schoolId,
     ownerKind,
     ownerId,
     fileName: SEED_PROFILE_PHOTO_FILE_NAME,
     mimeType: SEED_PROFILE_PHOTO_MIME_TYPE,
     sizeBytes: body.byteLength,
     body,
-    uploadedById: SEED_SCHOOL_OWNER_STAFF_ID,
+    uploadedById: demoSchoolOwnerStaffId,
   })
 
   await setPhotoUrl(uploaded.photoUrl)
@@ -76,20 +74,24 @@ async function seedProfilePhotoForOwner(
 export async function seedDevProfilePictures(
   port: ProfilePicturesSeedPort,
   _options: SeedDevProfilePicturesOptions,
+  dataset: FixtureDataset,
 ): Promise<{ profilePhotos: number }> {
   const pickPictureFile = createRandomProfilePictureAllocator()
+  const staffMembers = dataset.entities.staffMembers ?? []
+  const students = dataset.entities.students ?? []
+  const guardians = dataset.entities.guardians ?? []
   const targets = [
-    ...SEED_STAFF.map(staff => ({
+    ...staffMembers.map(staff => ({
       ownerKind: AttachmentOwnerKind.Staff,
       ownerId: staff.id,
       setPhotoUrl: (photoUrl: string) => port.setStaffPhotoUrl(staff.id, photoUrl),
     })),
-    ...SEED_STUDENTS.map(student => ({
+    ...students.map(student => ({
       ownerKind: AttachmentOwnerKind.Student,
       ownerId: student.id,
       setPhotoUrl: (photoUrl: string) => port.setStudentPhotoUrl(student.id, photoUrl),
     })),
-    ...SEED_GUARDIANS.map(guardian => ({
+    ...guardians.map(guardian => ({
       ownerKind: AttachmentOwnerKind.Guardian,
       ownerId: guardian.id,
       setPhotoUrl: (photoUrl: string) => port.setGuardianPhotoUrl(guardian.id, photoUrl),
@@ -99,6 +101,7 @@ export async function seedDevProfilePictures(
   await mapWithConcurrency(targets, PROFILE_PHOTO_UPLOAD_CONCURRENCY, async (target) => {
     await seedProfilePhotoForOwner(
       port,
+      dataset.schoolId,
       target.ownerKind,
       target.ownerId,
       pickPictureFile,

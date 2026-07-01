@@ -5,14 +5,14 @@ import {
   createServiceAccount,
   createStaffActorMetadata,
 } from '@edaya/core'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-  resolveSeedingApiKeyForSchool,
-  SEED_SCHOOL_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { signInViaHttp } from './auth'
 
 export const SEEDING_SERVICE_ID = 'seeding'

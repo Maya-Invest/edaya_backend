@@ -1,13 +1,13 @@
 import type { AuthSessionProvider } from '@/http/dependencies/session-actor'
 import type { AppBindings } from '@/http/types'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
 import {
   createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,

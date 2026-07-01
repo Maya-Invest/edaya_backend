@@ -3,7 +3,8 @@
 
 import type { HttpDevSeedScope } from '../src/http/index.ts'
 import process from 'node:process'
-import { resolveSeedingApiKeyForSchool, SEED_SCHOOL_ID } from '@edaya/fixtures'
+import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import {
   HttpSeedClient,
   logHttpDevSeedResults,

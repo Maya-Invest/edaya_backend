@@ -1,6 +1,10 @@
 import antfu from '@antfu/eslint-config'
 
 export default antfu({
+  ignores: [
+    '**/tooling/integration-tests/src/generated/**',
+    '**/tooling/seeding/src/generated/**',
+  ],
   rules: {
     'no-new': 'off',
   },

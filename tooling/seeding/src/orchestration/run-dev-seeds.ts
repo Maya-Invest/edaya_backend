@@ -20,9 +20,7 @@ import type { DevAccessSeedResult } from './run-dev-access-seed'
 import type { DevAuthLinkResult } from './run-dev-auth-link'
 import type { DevAuthProvisionResult } from './run-dev-auth-provision'
 import type { DevSchoolSeedResult } from './run-dev-school-seed'
-import {
-  DEV_AUTH_PASSWORD,
-} from '@edaya/fixtures'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'

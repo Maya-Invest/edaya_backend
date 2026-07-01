@@ -1,18 +1,7 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { StudentSupportSeedPort } from './port'
 import { StudentNoteCategory } from '@edaya/core'
-import { SEED_PEDAGOGICAL_NOTES, SEED_STUDENT_HEALTH_PROFILES } from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
-
-const NOTE_CATEGORY_BY_SEED = {
-  Comportement: StudentNoteCategory.Behavior,
-  Travail: StudentNoteCategory.Work,
-  Progression: StudentNoteCategory.Progress,
-  Encouragement: StudentNoteCategory.Encouragement,
-} as const
-
-function joinHealthList(values: readonly string[]): string | undefined {
-  return values.length > 0 ? values.join(', ') : undefined
-}
 
 export interface DevStudentSupportSeedCounts {
   studentHealthProfiles: number
@@ -21,33 +10,37 @@ export interface DevStudentSupportSeedCounts {
 
 export async function seedDevStudentSupport(
   port: StudentSupportSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevStudentSupportSeedCounts> {
-  for (const profile of SEED_STUDENT_HEALTH_PROFILES) {
+  const studentHealthProfiles = dataset.entities.studentHealthProfiles ?? []
+  const studentNotes = dataset.entities.studentNotes ?? []
+
+  for (const profile of studentHealthProfiles) {
     await port.upsertStudentHealthProfile({
       id: profile.id,
       studentId: profile.studentId,
-      bloodType: profile.bloodType,
-      allergies: joinHealthList(profile.allergies) ?? 'Aucune',
-      medicalConditions: joinHealthList(profile.chronicConditions) ?? 'Aucune',
-      medications: joinHealthList(profile.medications),
-      clinicalNotes: profile.notes,
-      lastVisit: seedDateTime(profile.lastVisit),
+      bloodType: profile.bloodType ?? undefined,
+      allergies: profile.allergies ?? 'Aucune',
+      medicalConditions: profile.medicalConditions ?? 'Aucune',
+      medications: profile.medications ?? undefined,
+      clinicalNotes: profile.clinicalNotes ?? undefined,
+      lastVisit: profile.lastVisit ? seedDateTime(String(profile.lastVisit).slice(0, 10)) : undefined,
     })
   }
 
-  for (const note of SEED_PEDAGOGICAL_NOTES) {
+  for (const note of studentNotes) {
     await port.createStudentNote({
       id: note.id,
       studentId: note.studentId,
-      authorStaffId: note.authorId,
-      category: NOTE_CATEGORY_BY_SEED[note.category] ?? StudentNoteCategory.Work,
-      body: note.content,
-      createdAt: seedDateTime(note.date),
+      authorStaffId: note.authorStaffId,
+      category: note.category ?? StudentNoteCategory.Work,
+      body: note.body,
+      createdAt: seedDateTime(String(note.createdAt).slice(0, 10)),
     })
   }
 
   return {
-    studentHealthProfiles: SEED_STUDENT_HEALTH_PROFILES.length,
-    studentNotes: SEED_PEDAGOGICAL_NOTES.length,
+    studentHealthProfiles: studentHealthProfiles.length,
+    studentNotes: studentNotes.length,
   }
 }

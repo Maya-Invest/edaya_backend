@@ -3,64 +3,73 @@
  * Used for documentation, completeness checks, and the HTTP validation harness (`bun seed:validate`).
  */
 
-export interface SeedEntityManifestEntry {
+import type { FixtureDatasetPurpose } from '../datasets/types'
+
+interface SeedEntityManifestEntryShape {
   entity: string
   fixtureFile: string
   loader: string
-  status: 'seeded' | 'partial' | 'missing'
+  status: SeedEntityManifestStatus
+  /** Typed dataset when the entity is covered by a purpose-driven fixture set. */
+  dataset?: FixtureDatasetPurpose
   notes?: string
 }
 
-export const SEED_ENTITY_MANIFEST: readonly SeedEntityManifestEntry[] = [
-  { entity: 'schools', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'academic-years', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'academic-periods', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'grade-levels', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'period-definitions', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'class-groups', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'staff-members', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'students', fixtureFile: 'scenarios/demo-central/core.ts + scenarios/generators/population-generator.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: '1000 students across narrative + bulk classes' },
-  { entity: 'enrollments', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'guardians', fixtureFile: 'scenarios/demo-central/core.ts + scenarios/generators/population-generator.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: '~991 guardians (narrative + bulk)' },
-  { entity: 'guardian-links', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'subjects', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'subject-matters', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'class-subjects', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'class-subject-matters', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'resources', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'schedules', fixtureFile: 'scenarios/demo-central/domains/scheduling.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Classes 6a, 6b, 5a' },
-  { entity: 'lesson-sessions', fixtureFile: 'scenarios/demo-central/domains/scheduling.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Classes 6a, 6b, 5a' },
-  { entity: 'staff-assignments', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-access-seed', status: 'seeded', notes: 'Homeroom + class-subject teachers' },
-  { entity: 'resource-assignments', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'partial' },
-  { entity: 'class-subject-progress', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'assessments', fixtureFile: 'scenarios/demo-central/domains/assessments.ts + scenarios/demo-central/domains/homework.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'In-class + homework consolidated; all trimesters; classes 6a, 6b, 5a, 4a, 3a, term-s' },
-  { entity: 'assessment-results', fixtureFile: 'scenarios/demo-central/domains/assessments.ts + scenarios/demo-central/domains/homework.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Scores + homework submission compliance' },
-  { entity: 'activities', fixtureFile: 'scenarios/demo-central/domains/activities.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'activity-enrollments', fixtureFile: 'scenarios/demo-central/domains/activities.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'calendar-events', fixtureFile: 'scenarios/demo-central/domains/calendar.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'incidents', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'student-incident-involvements', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'attendance', fixtureFile: 'scenarios/demo-central/domains/attendance.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'student-health-profiles', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'partial' },
-  { entity: 'student-notes', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-school-seed', status: 'partial' },
-  { entity: 'fees', fixtureFile: 'scenarios/demo-central/domains/finance.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'student-fees', fixtureFile: 'scenarios/demo-central/domains/finance.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'payments', fixtureFile: 'scenarios/demo-central/domains/finance.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'grade-scales', fixtureFile: 'scenarios/demo-central/domains/report-cards.ts', loader: 'seed-report-cards', status: 'seeded' },
-  { entity: 'definitions', fixtureFile: 'scenarios/demo-central/domains/report-cards.ts', loader: 'seed-report-cards', status: 'seeded' },
-  { entity: 'sections', fixtureFile: 'scenarios/demo-central/domains/report-cards.ts', loader: 'seed-report-cards', status: 'seeded' },
-  { entity: 'results', fixtureFile: 'scenarios/demo-central/domains/report-cards.ts', loader: 'seed-report-cards', status: 'seeded', notes: '6a T1–T3 + term-s' },
-  { entity: 'access-roles', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-access-seed', status: 'seeded' },
-  { entity: 'staff-role-assignments', fixtureFile: 'scenarios/demo-central/core.ts', loader: 'run-dev-access-seed', status: 'seeded' },
-  { entity: 'announcements', fixtureFile: 'scenarios/demo-central/domains/communications.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Published + draft' },
-  { entity: 'announcement-targets', fixtureFile: 'scenarios/demo-central/domains/communications.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'message-deliveries', fixtureFile: 'scenarios/demo-central/domains/communications.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Materialized + explicit statuses' },
-  { entity: 'disciplinary-actions', fixtureFile: 'scenarios/demo-central/domains/discipline.ts', loader: 'run-dev-school-seed', status: 'seeded' },
-  { entity: 'student-disciplinary-actions', fixtureFile: 'scenarios/demo-central/domains/discipline.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Linked to incidents i1–i3' },
-  { entity: 'attachments', fixtureFile: 'scenarios/demo-central/domains/attachments.ts', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Incidents, health, finance, academics' },
-  { entity: 'profile-photos', fixtureFile: 'shared/profile-pictures.ts + assets/profile-pictures/pic####.jpg', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Staff, students, guardians via file storage' },
-]
+export type SeedEntityManifestStatus = 'seeded' | 'partial' | 'missing'
 
-export function seedManifestEntitiesByStatus(status: SeedEntityManifestEntry['status']): SeedEntityManifestEntry[] {
-  return SEED_ENTITY_MANIFEST.filter(entry => entry.status === status)
+export const SEED_ENTITY_MANIFEST = [
+  { entity: 'schools', fixtureFile: 'demoDataset.entities.school', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'academic-years', fixtureFile: 'demoDataset.entities.academicYear', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'academic-periods', fixtureFile: 'demoDataset.entities.academicPeriods', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'grade-levels', fixtureFile: 'demoDataset.entities.gradeLevels', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'period-definitions', fixtureFile: 'demoDataset.entities.periodDefinitions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'class-groups', fixtureFile: 'bulkDataset.entities.classGroups', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk', notes: 'Foundation + extended + bulk classes' },
+  { entity: 'staff-members', fixtureFile: 'demoDataset.entities.staffMembers', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'students', fixtureFile: 'bulkDataset.entities.students', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk', notes: '1000 students across narrative + bulk classes' },
+  { entity: 'enrollments', fixtureFile: 'bulkDataset.entities.enrollments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk' },
+  { entity: 'guardians', fixtureFile: 'bulkDataset.entities.guardians', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk', notes: '~991 guardians (narrative + bulk)' },
+  { entity: 'guardian-links', fixtureFile: 'bulkDataset.entities.guardianLinks', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk' },
+  { entity: 'subjects', fixtureFile: 'bulkDataset.entities.subjects', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk' },
+  { entity: 'subject-matters', fixtureFile: 'bulkDataset.entities.subjectMatters', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk' },
+  { entity: 'class-subjects', fixtureFile: 'bulkDataset.entities.classSubjects', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk' },
+  { entity: 'class-subject-matters', fixtureFile: 'datasets/demo/people.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'resources', fixtureFile: 'demoDataset.entities.resources', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'schedules', fixtureFile: 'demoDataset.entities.schedules', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Classes 6a, 6b, 5a' },
+  { entity: 'lesson-sessions', fixtureFile: 'demoDataset.extensions.schedulingSlots', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Classes 6a, 6b, 5a' },
+  { entity: 'staff-assignments', fixtureFile: 'datasets/demo/people.ts', loader: 'run-dev-access-seed', status: 'seeded', dataset: 'demo', notes: 'Homeroom + class-subject teachers' },
+  { entity: 'resource-assignments', fixtureFile: 'demoDataset.entities.resources', loader: 'run-dev-school-seed', status: 'partial', dataset: 'demo' },
+  { entity: 'class-subject-progress', fixtureFile: 'demoDataset.extensions.schedulingSessionProgressAnchor', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'assessments', fixtureFile: 'bulkDataset.entities.inClassAssessments + homeworkAssessments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk', notes: 'In-class + homework; all trimesters' },
+  { entity: 'assessment-results', fixtureFile: 'bulkDataset.extensions.assessmentResultScores + homeworkSubmissions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'bulk', notes: 'Scores + homework submission compliance' },
+  { entity: 'activities', fixtureFile: 'demoDataset.entities.activities', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'activity-enrollments', fixtureFile: 'demoDataset.entities.activityEnrollments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'calendar-events', fixtureFile: 'demoDataset.extensions.calendarEvents', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'incidents', fixtureFile: 'demoDataset.entities.incidents', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'student-incident-involvements', fixtureFile: 'demoDataset.entities.studentIncidentInvolvements', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'attendance', fixtureFile: 'demoDataset.entities.attendanceRecords + extensions.attendanceSessions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Absence sessions + reference-date class attendance' },
+  { entity: 'student-health-profiles', fixtureFile: 'demoDataset.entities.studentHealthProfiles', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'student-notes', fixtureFile: 'demoDataset.entities.studentNotes', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'fees', fixtureFile: 'demoDataset.entities.fees', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'student-fees', fixtureFile: 'demoDataset.entities.studentFees', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'payments', fixtureFile: 'demoDataset.entities.payments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'grade-scales', fixtureFile: 'demoDataset.entities.gradeScales', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo' },
+  { entity: 'definitions', fixtureFile: 'demoDataset.extensions.reportCardDefinitionFixtures', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo' },
+  { entity: 'sections', fixtureFile: 'demoDataset.extensions.reportCardDefinitionFixtures', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo' },
+  { entity: 'results', fixtureFile: 'demoDataset.extensions.reportCardResults', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo', notes: '6a T1–T3 + term-s' },
+  { entity: 'access-roles', fixtureFile: 'meta/dev-auth-fixtures.ts', loader: 'run-dev-access-seed', status: 'seeded' },
+  { entity: 'staff-role-assignments', fixtureFile: 'meta/dev-auth-fixtures.ts', loader: 'run-dev-access-seed', status: 'seeded' },
+  { entity: 'announcements', fixtureFile: 'demoDataset.entities.announcements', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Published + draft' },
+  { entity: 'announcement-targets', fixtureFile: 'demoDataset.entities.announcementTargets', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'message-deliveries', fixtureFile: 'demoDataset.entities.messageDeliveries + extensions.announcementMaterializePlans', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Materialized + explicit statuses' },
+  { entity: 'disciplinary-actions', fixtureFile: 'demoDataset.entities.disciplinaryActions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'student-disciplinary-actions', fixtureFile: 'demoDataset.entities.studentDisciplinaryActions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Linked to incidents i1–i3' },
+  { entity: 'attachments', fixtureFile: 'demoDataset.entities.attachments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Incidents, health, finance, academics' },
+  { entity: 'profile-photos', fixtureFile: 'shared/profile-pictures.ts + assets/profile-pictures/pic####.jpg', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Staff, students, guardians via file storage' },
+] as const satisfies readonly SeedEntityManifestEntryShape[]
+
+export type SeedEntitySlug = (typeof SEED_ENTITY_MANIFEST)[number]['entity']
+export type SeedEntityManifestEntry = (typeof SEED_ENTITY_MANIFEST)[number]
+
+export function seedManifestEntitiesByStatus(status: SeedEntityManifestStatus): SeedEntityManifestEntry[] {
+  return [...SEED_ENTITY_MANIFEST.filter(entry => entry.status === status)]
 }

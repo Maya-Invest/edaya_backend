@@ -1,22 +1,7 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { DisciplineSeedPort } from './port'
 import { DisciplinaryActionKind, StudentDisciplinaryActionStatus } from '@edaya/core'
-import {
-  SEED_DISCIPLINARY_ACTIONS,
-  SEED_SCHOOL_ID,
-  SEED_STUDENT_DISCIPLINARY_ACTIONS,
-} from '@edaya/fixtures'
 import { seedDateTime } from '../../support/seed-date'
-
-const DISCIPLINARY_KIND_BY_SEED = {
-  sanction: DisciplinaryActionKind.Sanction,
-  reward: DisciplinaryActionKind.Reward,
-} as const
-
-const STUDENT_DISCIPLINARY_STATUS_BY_SEED = {
-  active: StudentDisciplinaryActionStatus.Active,
-  completed: StudentDisciplinaryActionStatus.Completed,
-  cancelled: StudentDisciplinaryActionStatus.Cancelled,
-} as const
 
 export interface DevDisciplineSeedCounts {
   disciplinaryActions: number
@@ -25,43 +10,48 @@ export interface DevDisciplineSeedCounts {
 
 export async function seedDevDiscipline(
   port: DisciplineSeedPort,
+  dataset: FixtureDataset,
 ): Promise<DevDisciplineSeedCounts> {
-  for (const action of SEED_DISCIPLINARY_ACTIONS) {
+  const disciplinaryActions = dataset.entities.disciplinaryActions ?? []
+  const studentDisciplinaryActions = dataset.entities.studentDisciplinaryActions ?? []
+
+  for (const action of disciplinaryActions) {
     await port.saveDisciplinaryAction({
       id: action.id,
       schoolId: action.schoolId,
       name: action.name,
-      kind: DISCIPLINARY_KIND_BY_SEED[action.kind],
-      severity: action.severity,
-      defaultDurationDays: action.defaultDurationDays,
-      description: action.description,
+      kind: action.kind ?? DisciplinaryActionKind.Sanction,
+      severity: action.severity ?? undefined,
+      defaultDurationDays: action.defaultDurationDays ?? undefined,
+      description: action.description ?? '',
     })
   }
 
-  for (const applied of SEED_STUDENT_DISCIPLINARY_ACTIONS) {
+  for (const applied of studentDisciplinaryActions) {
     await port.applyDisciplinaryAction({
       id: applied.id,
-      schoolId: SEED_SCHOOL_ID,
+      schoolId: applied.schoolId,
       incidentId: applied.incidentId,
       studentId: applied.studentId,
       disciplinaryActionId: applied.disciplinaryActionId,
       assignedByStaffId: applied.assignedByStaffId,
-      startsAt: applied.startsAt ? seedDateTime(applied.startsAt) : undefined,
-      endsAt: applied.endsAt ? seedDateTime(applied.endsAt) : undefined,
-      notes: applied.notes,
-      createdAt: seedDateTime(applied.createdAt),
+      startsAt: applied.startsAt ? seedDateTime(String(applied.startsAt).slice(0, 10)) : undefined,
+      endsAt: applied.endsAt ? seedDateTime(String(applied.endsAt).slice(0, 10)) : undefined,
+      notes: applied.notes ?? undefined,
+      createdAt: seedDateTime(String(applied.createdAt).slice(0, 10)),
     })
 
-    if (applied.status !== 'active') {
+    const status = applied.status ?? StudentDisciplinaryActionStatus.Active
+    if (status !== StudentDisciplinaryActionStatus.Active) {
       await port.updateStudentDisciplinaryActionStatus({
         studentDisciplinaryActionId: applied.id,
-        status: STUDENT_DISCIPLINARY_STATUS_BY_SEED[applied.status],
+        status,
       })
     }
   }
 
   return {
-    disciplinaryActions: SEED_DISCIPLINARY_ACTIONS.length,
-    studentDisciplinaryActions: SEED_STUDENT_DISCIPLINARY_ACTIONS.length,
+    disciplinaryActions: disciplinaryActions.length,
+    studentDisciplinaryActions: studentDisciplinaryActions.length,
   }
 }

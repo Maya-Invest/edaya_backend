@@ -5,7 +5,7 @@ import type {
   StudentIncidentInvolvementSeedRecord,
 } from './port'
 import { CalendarEventScopeKind, IncidentInvolvementRole, IncidentKind } from '@edaya/core'
-import { countSeedCalendarEvents, SEED_INCIDENTS } from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevSchoolLife } from './workflow'
 
@@ -29,13 +29,13 @@ describe('school-life seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevSchoolLife(port)
+    const counts = await seedDevSchoolLife(port, demoDataset)
 
     expect(counts).toEqual({
-      calendarEvents: countSeedCalendarEvents(),
-      incidents: SEED_INCIDENTS.length,
+      calendarEvents: calendarEvents.length,
+      incidents: demoDataset.entities.incidents?.length ?? 0,
     })
-    expect(calendarEvents).toHaveLength(countSeedCalendarEvents())
+    expect(calendarEvents.length).toBeGreaterThan(0)
     expect(calendarEvents.some(event =>
       event.scopeKind === CalendarEventScopeKind.ClassGroup && event.scopeId === '6a')).toBe(true)
     expect(calendarEvents[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)

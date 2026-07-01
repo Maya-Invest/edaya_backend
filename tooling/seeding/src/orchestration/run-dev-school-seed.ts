@@ -15,27 +15,12 @@ import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
+import { bulkDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
-  countSeedAssessmentResults,
-  countSeedAssessments,
-  countSeedPlanningSlots,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
-  SEED_ACADEMIC_PERIODS,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CLASS_SUBJECT_MATTERS,
-  SEED_CLASS_SUBJECTS,
-  SEED_CLASSES,
-  SEED_GRADE_LEVELS,
-  SEED_GUARDIANS,
-  SEED_PERIOD_DEFINITIONS,
-  SEED_RESOURCES,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_OWNER_STAFF_ID,
-  SEED_STAFF,
-  SEED_STUDENTS,
-  SEED_SUBJECT_CATALOG,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
 import { seedDevActivities } from '../domains/activities/workflow'
@@ -68,6 +53,7 @@ import { createInProcessSchoolStructureSeedPort } from '../domains/school-struct
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from '../domains/school-structure/workflow'
 import { createInProcessStudentSupportSeedPort } from '../domains/student-support/in-process'
 import { seedDevStudentSupport } from '../domains/student-support/workflow'
+import { buildFixtureCurriculumPlan } from '../support/curriculum-plan'
 
 export type DevSchoolSeedResult
   = | { status: 'skipped', reason: 'already-seeded', schoolCount: number }
@@ -183,7 +169,7 @@ export async function runDevSchoolSeed(
       application: requireSeedApplication(application, 'profilePicturesPort'),
       apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
     })
-  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort)
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, bulkDataset)
 
   if (structureInspection.status === 'skipped') {
     if (options?.auth) {
@@ -205,7 +191,7 @@ export async function runDevSchoolSeed(
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
     const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-      account => account.staffId === SEED_SCHOOL_OWNER_STAFF_ID,
+      account => account.staffId === demoSchoolOwnerStaffId,
     )
     if (ownerAccount) {
       ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
@@ -215,28 +201,28 @@ export async function runDevSchoolSeed(
   await seedDevSchoolStructure(schoolStructurePort, {
     demoSchoolExists: structureInspection.demoSchoolExists,
     ownerSubjectId,
-  })
+  }, bulkDataset)
 
-  await seedDevPopulation(populationPort)
-  await seedDevCurriculum(curriculumPort)
-  await seedDevScheduling(schedulingPort)
-  await seedDevAssessments(assessmentsPort)
-  const activitiesCounts = await seedDevActivities(activitiesPort)
-  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort)
+  await seedDevPopulation(populationPort, bulkDataset)
+  await seedDevCurriculum(curriculumPort, bulkDataset)
+  await seedDevScheduling(schedulingPort, bulkDataset)
+  await seedDevAssessments(assessmentsPort, bulkDataset)
+  const activitiesCounts = await seedDevActivities(activitiesPort, bulkDataset)
+  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, bulkDataset)
 
-  const disciplineCounts = await seedDevDiscipline(disciplinePort)
+  const disciplineCounts = await seedDevDiscipline(disciplinePort, bulkDataset)
 
-  const attendanceRecordCount = await seedDevAttendance(attendancePort)
-  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort)
+  const attendanceRecordCount = await seedDevAttendance(attendancePort, bulkDataset)
+  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort, bulkDataset)
 
-  const reportCardCounts = await seedDevReportCards(reportCardsPort)
-  const financeCounts = await seedDevFinance(financePort)
+  const reportCardCounts = await seedDevReportCards(reportCardsPort, bulkDataset)
+  const financeCounts = await seedDevFinance(financePort, bulkDataset)
 
-  const communicationsCounts = await seedDevCommunications(communicationsPort)
-  const attachmentCounts = await seedDevAttachments(attachmentsPort)
+  const communicationsCounts = await seedDevCommunications(communicationsPort, bulkDataset)
+  const attachmentCounts = await seedDevAttachments(attachmentsPort, bulkDataset)
   const profilePictureCounts = await seedDevProfilePictures(profilePicturesPort, {
     apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
-  })
+  }, bulkDataset)
   if (options?.auth) {
     await syncDevStaffAuthAndOwner(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
@@ -247,28 +233,32 @@ export async function runDevSchoolSeed(
     )
   }
 
+  const entities = bulkDataset.entities
+  const curriculumPlan = buildFixtureCurriculumPlan(entities)
+  const fixtureCounts = resolveExpectedCounts(bulkDataset)
+
   return {
     status: 'seeded',
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: SEED_ACADEMIC_YEAR_ID,
-    gradeLevels: SEED_GRADE_LEVELS.length,
-    classes: SEED_CLASSES.length,
-    staff: SEED_STAFF.length,
-    students: SEED_STUDENTS.length,
-    guardians: SEED_GUARDIANS.length,
-    academicPeriods: SEED_ACADEMIC_PERIODS.length,
-    subjects: SEED_SUBJECT_CATALOG.length,
-    classSubjects: SEED_CLASS_SUBJECTS.length,
-    periodDefinitions: SEED_PERIOD_DEFINITIONS.length,
+    schoolId: bulkDataset.schoolId,
+    academicYearId: entities.academicYear?.id ?? '',
+    gradeLevels: entities.gradeLevels?.length ?? 0,
+    classes: entities.classGroups?.length ?? 0,
+    staff: entities.staffMembers?.length ?? 0,
+    students: entities.students?.length ?? 0,
+    guardians: entities.guardians?.length ?? 0,
+    academicPeriods: entities.academicPeriods?.length ?? 0,
+    subjects: entities.subjects?.length ?? 0,
+    classSubjects: entities.classSubjects?.length ?? 0,
+    periodDefinitions: entities.periodDefinitions?.length ?? 0,
     fees: financeCounts.fees,
     studentFees: financeCounts.studentFees,
     payments: financeCounts.payments,
-    classSubjectMatters: SEED_CLASS_SUBJECT_MATTERS.length,
-    resources: SEED_RESOURCES.length,
-    schedules: countSeedPlanningSlots(),
-    lessonSessions: countSeedPlanningSlots(),
-    assessments: countSeedAssessments(),
-    assessmentResults: countSeedAssessmentResults(),
+    classSubjectMatters: curriculumPlan.gradeLevelSubjectMatters.length,
+    resources: fixtureCounts.resources ?? 0,
+    schedules: fixtureCounts.schedules ?? 0,
+    lessonSessions: fixtureCounts['lesson-sessions'] ?? 0,
+    assessments: fixtureCounts.assessments ?? 0,
+    assessmentResults: fixtureCounts['assessment-results'] ?? 0,
     activities: activitiesCounts.activities,
     activityEnrollments: activitiesCounts.activityEnrollments,
     calendarEvents: schoolLifeCounts.calendarEvents,

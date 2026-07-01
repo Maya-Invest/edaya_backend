@@ -1,43 +1,9 @@
-import type { SeedEntityManifestEntry } from './entity-manifest'
-import {
-  countSeedGuardians,
-  countSeedStudents,
-  SEED_ACADEMIC_PERIODS,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CLASS_SUBJECT_MATTERS,
-  SEED_CLASS_SUBJECTS,
-  SEED_CLASSES,
-  SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
-  SEED_GRADE_LEVEL_SUBJECT_MATTERS,
-  SEED_GRADE_LEVEL_SUBJECTS,
-  SEED_GRADE_LEVELS,
-  SEED_GUARDIANS,
-  SEED_INCIDENTS,
-  SEED_PEDAGOGICAL_NOTES,
-  SEED_PERIOD_DEFINITIONS,
-  SEED_RESOURCES,
-  SEED_SCHOOL_ID,
-  SEED_STAFF,
-  SEED_STUDENT_HEALTH_PROFILES,
-  SEED_SUBJECT_CATALOG,
-  SEED_SUBJECT_MATTERS,
-} from '../scenarios/demo-central/core'
-import { SEED_ACTIVITY_ENROLLMENTS, SEED_EXTRACURRICULAR_ACTIVITIES } from '../scenarios/demo-central/domains/activities'
-import { countSeedAttachments } from '../scenarios/demo-central/domains/attachments'
-import { countSeedAttendanceRecords } from '../scenarios/demo-central/domains/attendance'
-import { countSeedCalendarEvents } from '../scenarios/demo-central/domains/calendar'
-import {
-  countSeedAnnouncements,
-  countSeedAnnouncementTargets,
-  countSeedMessageDeliveriesMinimum,
-} from '../scenarios/demo-central/domains/communications'
-import { countSeedDisciplinaryActions, countSeedStudentDisciplinaryActions } from '../scenarios/demo-central/domains/discipline'
-import { SEED_FEES, SEED_PAYMENTS, SEED_STUDENT_FEES } from '../scenarios/demo-central/domains/finance'
-import { SEED_GRADE_SCALES, SEED_REPORT_CARD_DEFINITIONS, SEED_REPORT_CARD_RESULTS } from '../scenarios/demo-central/domains/report-cards'
-import { countSeedPlanningSlots } from '../scenarios/demo-central/domains/scheduling'
-import { countSeedAssessmentResults, countSeedAssessments } from '../scenarios/demo-central/domains/seed-assessment-counts'
-import { SEED_REFERENCE_DATE } from './dates'
+import type { SeedEntityManifestStatus } from './entity-manifest'
+import { bulkDataset } from '../datasets/bulk'
+import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from '../shared/ids'
+import { SEED_DASHBOARD_ACADEMIC_PERIOD_ID, SEED_REFERENCE_DATE } from './dates'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'
+import { resolveExpectedCounts } from './fixture-counts'
 
 /** Maps manifest entity slugs to generated API entity keys used by HTTP validation. */
 export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
@@ -94,7 +60,7 @@ export interface SeedValidationTarget {
   entity: string
   serviceName: string
   minCount: number
-  status: SeedEntityManifestEntry['status']
+  status: SeedEntityManifestStatus
 }
 
 export interface SeedQueryValidationTarget {
@@ -104,78 +70,13 @@ export interface SeedQueryValidationTarget {
   minCount?: number
 }
 
-function countSeedGuardianLinks(): number {
-  return SEED_GUARDIANS.reduce((total, guardian) => total + guardian.studentIds.length, 0)
-}
-
-function countSeedReportCardSections(): number {
-  return SEED_REPORT_CARD_DEFINITIONS.reduce((total, definition) => {
-    return total + definition.sections.reduce((sectionTotal, section) => {
-      return sectionTotal + 1 + section.subjectIds.length
-    }, 0)
-  }, 0)
-}
-
-/** Expected minimum persisted row counts keyed by manifest entity slug. */
-export function resolveSeedExpectedCounts(): Record<string, number> {
-  return {
-    'schools': 1,
-    'academic-years': 1,
-    'academic-periods': SEED_ACADEMIC_PERIODS.length,
-    'grade-levels': SEED_GRADE_LEVELS.length,
-    'period-definitions': SEED_PERIOD_DEFINITIONS.length,
-    'class-groups': SEED_CLASSES.length,
-    'staff-members': SEED_STAFF.length,
-    'students': countSeedStudents(),
-    'enrollments': countSeedStudents(),
-    'guardians': countSeedGuardians(),
-    'guardian-links': countSeedGuardianLinks(),
-    'subjects': SEED_SUBJECT_CATALOG.length,
-    'subject-matters': SEED_SUBJECT_MATTERS.length,
-    'grade-level-subjects': SEED_GRADE_LEVEL_SUBJECTS.length,
-    'grade-level-subject-matters': SEED_GRADE_LEVEL_SUBJECT_MATTERS.length,
-    'class-subjects': SEED_CLASS_SUBJECTS.length,
-    'class-subject-matters': SEED_CLASS_SUBJECT_MATTERS.length,
-    'resources': SEED_RESOURCES.length,
-    'schedules': countSeedPlanningSlots(),
-    'lesson-sessions': countSeedPlanningSlots(),
-    'staff-assignments': 5 + SEED_CLASS_SUBJECTS.length,
-    'resource-assignments': 0,
-    'class-subject-progress': 1,
-    'assessments': countSeedAssessments(),
-    'assessment-results': countSeedAssessmentResults(),
-    'activities': SEED_EXTRACURRICULAR_ACTIVITIES.length,
-    'activity-enrollments': SEED_ACTIVITY_ENROLLMENTS.length,
-    'calendar-events': countSeedCalendarEvents(),
-    'incidents': SEED_INCIDENTS.length,
-    'student-incident-involvements': SEED_INCIDENTS.length,
-    'attendance': countSeedAttendanceRecords(),
-    'student-health-profiles': SEED_STUDENT_HEALTH_PROFILES.length,
-    'student-notes': SEED_PEDAGOGICAL_NOTES.length,
-    'fees': SEED_FEES.length,
-    'student-fees': SEED_STUDENT_FEES.length,
-    'payments': SEED_PAYMENTS.length,
-    'grade-scales': SEED_GRADE_SCALES.length,
-    'definitions': SEED_REPORT_CARD_DEFINITIONS.length,
-    'sections': countSeedReportCardSections(),
-    'results': SEED_REPORT_CARD_RESULTS.length,
-    'access-roles': 4,
-    'staff-role-assignments': 7,
-    'announcements': countSeedAnnouncements(),
-    'announcement-targets': countSeedAnnouncementTargets(),
-    'message-deliveries': countSeedMessageDeliveriesMinimum(),
-    'disciplinary-actions': countSeedDisciplinaryActions(),
-    'student-disciplinary-actions': countSeedStudentDisciplinaryActions(),
-    'attachments': countSeedAttachments(),
-    'profile-photos': SEED_STAFF.length + countSeedStudents() + countSeedGuardians(),
-  }
-}
+export { resolveExpectedCounts } from './fixture-counts'
 
 export function buildSeedValidationTargets(): SeedValidationTarget[] {
-  const counts = resolveSeedExpectedCounts()
+  const counts = resolveExpectedCounts(bulkDataset)
 
   return SEED_ENTITY_MANIFEST
-    .filter(entry => entry.status !== 'missing')
+    .filter(entry => (entry.status as SeedEntityManifestStatus) !== 'missing')
     .map((entry) => {
       const serviceName = SEED_ENTITY_TO_SERVICE_NAME[entry.entity]
       if (!serviceName) {
@@ -200,7 +101,7 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
       path: '/core/queries/get-school-overview',
       payload: {
         schoolId: SEED_SCHOOL_ID,
-        academicYearId: SEED_ACADEMIC_YEAR_ID,
+        academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
         academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
         referenceDate: SEED_REFERENCE_DATE,
       },
@@ -216,7 +117,7 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
       path: '/core/queries/get-published-report-card-count',
       payload: {
         schoolId: SEED_SCHOOL_ID,
-        academicYearId: SEED_ACADEMIC_YEAR_ID,
+        academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
         academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
       },
       minCount: 1,

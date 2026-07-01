@@ -1,85 +1,89 @@
+import type { FixtureDataset, FixtureSchedulingSlot } from '@edaya/fixtures'
 import type { SchedulingSeedPort } from './port'
-import { DayOfWeek, ResourceKind } from '@edaya/core'
-import {
-  planningSessionDate,
-  SEED_PLANNING_SLOTS,
-  SEED_RESOURCES,
-  SEED_SCHOOL_ID,
-  SEED_SESSION_PROGRESS,
-} from '@edaya/fixtures'
+import { planningSessionDateForDayOfWeek } from '@edaya/fixtures/meta/dates'
 import { seedDateAndTime } from '../../support/seed-date'
 
-const DAY_OF_WEEK_BY_SEED = {
-  Mon: DayOfWeek.Monday,
-  Tue: DayOfWeek.Tuesday,
-  Wed: DayOfWeek.Wednesday,
-  Thu: DayOfWeek.Thursday,
-  Fri: DayOfWeek.Friday,
-} as const
-
-const RESOURCE_KIND_BY_SEED = {
-  location: ResourceKind.Location,
-  equipment: ResourceKind.Equipment,
-  vehicle: ResourceKind.Vehicle,
-} as const
-
-function lessonSessionIdForSlot(scheduleId: string, day: keyof typeof DAY_OF_WEEK_BY_SEED): string {
-  return `${scheduleId}:${planningSessionDate(day)}`
+function lessonSessionIdForSlot(
+  scheduleId: string,
+  dayOfWeek: NonNullable<FixtureSchedulingSlot['schedule']['dayOfWeek']>,
+): string {
+  return `${scheduleId}:${planningSessionDateForDayOfWeek(dayOfWeek)}`
 }
 
-export async function seedDevScheduling(port: SchedulingSeedPort): Promise<void> {
-  for (const resource of SEED_RESOURCES) {
+export async function seedDevScheduling(
+  port: SchedulingSeedPort,
+  dataset: FixtureDataset,
+): Promise<void> {
+  const resources = dataset.entities.resources ?? []
+  const slots = dataset.extensions?.schedulingSlots ?? []
+  const anchor = dataset.extensions?.schedulingSessionProgressAnchor
+
+  for (const resource of resources) {
     await port.saveResource({
       id: resource.id,
-      schoolId: SEED_SCHOOL_ID,
+      schoolId: resource.schoolId,
       name: resource.name,
-      kind: RESOURCE_KIND_BY_SEED[resource.kind],
-      capacity: 'capacity' in resource ? resource.capacity : undefined,
-      description: resource.description,
+      kind: resource.kind,
+      capacity: resource.capacity ?? undefined,
+      description: typeof resource.description === 'string' ? resource.description : undefined,
     })
   }
 
-  for (const slot of SEED_PLANNING_SLOTS) {
+  for (const slot of slots) {
+    const { schedule } = slot
+    if (!schedule.dayOfWeek) {
+      throw new Error(`Scheduling slot ${slot.slotId} is missing dayOfWeek`)
+    }
+
     await port.createSchedule({
-      id: slot.scheduleId,
-      schoolId: SEED_SCHOOL_ID,
-      classGroupId: slot.classGroupId,
-      classSubjectId: slot.classSubjectId,
-      title: slot.title,
-      isRecurring: true,
-      dayOfWeek: DAY_OF_WEEK_BY_SEED[slot.day],
-      startTime: slot.startTime,
-      endTime: slot.endTime,
+      id: schedule.id,
+      schoolId: schedule.schoolId,
+      classGroupId: schedule.classGroupId,
+      classSubjectId: schedule.classSubjectId ?? undefined,
+      title: schedule.title,
+      isRecurring: schedule.isRecurring,
+      dayOfWeek: schedule.dayOfWeek,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
     })
   }
 
-  for (const slot of SEED_PLANNING_SLOTS) {
-    await port.materializeSchedule({ scheduleId: slot.scheduleId })
-    const lessonSessionId = lessonSessionIdForSlot(slot.scheduleId, slot.day)
+  for (const slot of slots) {
+    const { schedule, teacherId, resourceId } = slot
+    if (!schedule.dayOfWeek) {
+      throw new Error(`Scheduling slot ${slot.slotId} is missing dayOfWeek`)
+    }
+
+    await port.materializeSchedule({ scheduleId: schedule.id })
+    const lessonSessionId = lessonSessionIdForSlot(schedule.id, schedule.dayOfWeek)
 
     await port.assignStaffToLessonSession({
-      id: `sa-${lessonSessionId}-${slot.teacherId}`,
-      staffId: slot.teacherId,
+      id: `sa-${lessonSessionId}-${teacherId}`,
+      staffId: teacherId,
       responsibility: 'Teacher',
       lessonSessionId,
     })
 
-    if ('resourceId' in slot && slot.resourceId) {
+    if (resourceId) {
       await port.assignResourceToLessonSession({
-        id: `ra-${lessonSessionId}-${slot.resourceId}`,
-        resourceId: slot.resourceId,
+        id: `ra-${lessonSessionId}-${resourceId}`,
+        resourceId,
         lessonSessionId,
       })
     }
   }
 
-  const progressLessonSessionId = lessonSessionIdForSlot('sch-p1', 'Mon')
+  if (!anchor) {
+    return
+  }
+
+  const progressLessonSessionId = lessonSessionIdForSlot(anchor.scheduleId, anchor.dayOfWeek)
   await port.recordLessonSessionProgress({
-    id: SEED_SESSION_PROGRESS.id,
-    classSubjectMatterId: SEED_SESSION_PROGRESS.classSubjectMatterId,
+    id: anchor.progress.id,
+    classSubjectMatterId: anchor.progress.classSubjectMatterId,
     lessonSessionId: progressLessonSessionId,
-    completedPercentage: SEED_SESSION_PROGRESS.completedPercentage,
-    notes: SEED_SESSION_PROGRESS.notes,
-    recordedAt: seedDateAndTime(planningSessionDate('Mon'), '09:00'),
+    completedPercentage: anchor.progress.completedPercentage,
+    notes: anchor.progress.notes,
+    recordedAt: seedDateAndTime(planningSessionDateForDayOfWeek(anchor.dayOfWeek), anchor.recordedAtTime),
   })
 }

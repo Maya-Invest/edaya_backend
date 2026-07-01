@@ -1,18 +1,23 @@
 import { buildSchoolOverview } from '@edaya/core'
+import { bulkDataset } from '@edaya/fixtures'
 import {
-  buildSeedValidationTargets,
-  countSeedGuardians,
-  countSeedStudents,
-  DEV_AUTH_STAFF_ACCOUNTS,
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   parseSeedDate,
   resolveSeedReferenceDate,
-  SEED_ACADEMIC_YEAR_ID,
-  SEED_CLASS_STUDENT_IDS,
   SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
-  SEED_SCHOOL_ID,
-  SEED_TARGET_STUDENT_COUNT,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dates'
+import {
+  DEV_AUTH_STAFF_ACCOUNTS,
+  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import {
+  buildClassStudentIds,
+  countGuardians,
+  countStudents,
+} from '@edaya/fixtures/meta/fixture-counts'
+import {
+  buildSeedValidationTargets,
+} from '@edaya/fixtures/meta/validation-harness'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { isSeedEntityKey, seedEntityPublicName } from '@edaya/seeding/http'
 import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
@@ -61,9 +66,8 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
   it('seeds population targets with class distribution and staff assignments', async () => {
     const { app, seedResult, authHeaders } = getContext()
-    expect(seedResult.students).toBe(SEED_TARGET_STUDENT_COUNT)
-    expect(seedResult.students).toBe(countSeedStudents())
-    expect(seedResult.guardians).toBe(countSeedGuardians())
+    expect(seedResult.students).toBe(countStudents(bulkDataset))
+    expect(seedResult.guardians).toBe(countGuardians(bulkDataset))
 
     const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
     const [studentsCountResponse, guardiansCountResponse, enrollmentsCountResponse, staffAssignmentsResponse, studentsResponse, guardiansResponse] = await Promise.all([
@@ -95,7 +99,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       app.request(createAppRequest('/core/entities/guardians/list', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ $limit: countSeedGuardians() }),
+        body: JSON.stringify({ $limit: countGuardians(bulkDataset) }),
       })),
     ])
 
@@ -115,13 +119,13 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       await staffAssignmentsResponse.json(),
     )
 
-    expect(studentsCount).toBe(SEED_TARGET_STUDENT_COUNT)
-    expect(guardiansCount).toBeGreaterThanOrEqual(countSeedGuardians())
-    expect(enrollmentsCount).toBe(SEED_TARGET_STUDENT_COUNT)
+    expect(studentsCount).toBe(countStudents(bulkDataset))
+    expect(guardiansCount).toBeGreaterThanOrEqual(countGuardians(bulkDataset))
+    expect(enrollmentsCount).toBe(countStudents(bulkDataset))
     expect(students.some(student => student.id === 's30')).toBe(true)
     expect(guardians.some(guardian => guardian.id === 'g9')).toBe(true)
 
-    for (const [classGroupId, studentIds] of Object.entries(SEED_CLASS_STUDENT_IDS)) {
+    for (const [classGroupId, studentIds] of Object.entries(buildClassStudentIds(bulkDataset))) {
       for (const studentId of studentIds) {
         const enrollmentResponse = await app.request(createAppRequest('/core/entities/enrollments/one', {
           method: 'POST',
@@ -144,7 +148,7 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     const referenceDate = parseSeedDate(resolveSeedReferenceDate())
     const overview = await buildSchoolOverview(application.repositories, {
       schoolId: SEED_SCHOOL_ID,
-      academicYearId: SEED_ACADEMIC_YEAR_ID,
+      academicYearId: bulkDataset.entities.academicYear?.id ?? '',
       academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
       referenceDate,
     })

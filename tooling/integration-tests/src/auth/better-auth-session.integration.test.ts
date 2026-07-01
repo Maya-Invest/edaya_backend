@@ -1,10 +1,10 @@
 import { Guardian, StaffMember } from '@edaya/core'
+import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
-  DEV_AUTH_PASSWORD,
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/fixtures'
+} from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/adapters/auth-otp-mailer'

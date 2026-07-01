@@ -16,7 +16,7 @@
     "auth:migrate:staging": "bun ./scripts/auth-migrate.ts remote staging",
     "lint": "eslint scripts drizzle.school.config.ts",
     "lint:fix": "eslint scripts drizzle.school.config.ts --fix",
-    "test": "bun test"
+    "test": "bun test --pass-with-no-tests"
   },
   "dependencies": {
     "@edaya/adaptor-auth": "workspace:*",

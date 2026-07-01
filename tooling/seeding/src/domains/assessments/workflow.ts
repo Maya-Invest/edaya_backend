@@ -1,52 +1,62 @@
+import type { AssessmentInput, AssessmentResultInput } from '@edaya/core'
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { AssessmentsSeedPort } from './port'
-import { AssessmentKind, buildInClassAssessmentWindow, DeadlineComplianceStatus } from '@edaya/core'
-import {
-  SEED_ASSESSMENT_RESULT_SCORES,
-  SEED_ASSESSMENTS,
-  SEED_HOMEWORK_ASSIGNMENTS,
-  SEED_HOMEWORK_SUBMISSIONS,
-  seedPeriodIdForDate,
-} from '@edaya/fixtures'
-import { seedDateTime } from '../../support/seed-date'
 
-const ASSESSMENT_KIND_BY_SEED = {
-  quiz: AssessmentKind.Quiz,
-  homework: AssessmentKind.Homework,
-  project: AssessmentKind.Project,
-  other: AssessmentKind.Other,
-} as const
+function isoDateTime(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined
+  }
+  if (typeof value === 'string') {
+    return value
+  }
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+  return undefined
+}
 
-const HOMEWORK_KIND_BY_SEED = {
-  homework: AssessmentKind.Homework,
-  project: AssessmentKind.Homework,
-  reading: AssessmentKind.Homework,
-  lab: AssessmentKind.Homework,
-} as const
+function assessmentSeedRecord(assessment: AssessmentInput) {
+  return {
+    id: assessment.id,
+    classGroupId: assessment.classGroupId,
+    classSubjectId: assessment.classSubjectId,
+    periodId: assessment.periodId,
+    title: assessment.title,
+    kind: assessment.kind,
+    maxScore: assessment.maxScore,
+    coefficient: assessment.coefficient ?? 1,
+    description: assessment.description ?? undefined,
+    attachments: assessment.attachments?.map(attachment => ({ ...attachment })),
+    startsAt: isoDateTime(assessment.startsAt),
+    endsAt: isoDateTime(assessment.endsAt),
+    dueAt: isoDateTime(assessment.dueAt),
+    completedAt: isoDateTime(assessment.completedAt),
+  }
+}
 
-const SUBMISSION_STATUS_BY_SEED = {
-  submitted: DeadlineComplianceStatus.Met,
-  late: DeadlineComplianceStatus.Late,
-  missing: DeadlineComplianceStatus.Missed,
-} as const
+function assessmentResultSeedRecord(result: AssessmentResultInput) {
+  return {
+    id: result.id,
+    assessmentId: result.assessmentId,
+    studentId: result.studentId,
+    score: result.score ?? undefined,
+    status: result.status ?? undefined,
+  }
+}
 
-export async function seedDevAssessments(port: AssessmentsSeedPort): Promise<void> {
-  for (const assessment of SEED_ASSESSMENTS) {
-    const assessmentDate = seedDateTime(assessment.date)
-    const { startsAt, endsAt } = buildInClassAssessmentWindow(new Date(assessmentDate))
-    await port.createAssessment({
-      id: assessment.id,
-      classGroupId: assessment.classGroupId,
-      classSubjectId: assessment.classSubjectId,
-      periodId: seedPeriodIdForDate(assessment.date),
-      title: assessment.title,
-      kind: ASSESSMENT_KIND_BY_SEED[assessment.kind],
-      maxScore: assessment.maxScore,
-      coefficient: assessment.coefficient,
-      startsAt: startsAt.toISOString(),
-      endsAt: endsAt.toISOString(),
-    })
+export async function seedDevAssessments(
+  port: AssessmentsSeedPort,
+  dataset: FixtureDataset,
+): Promise<void> {
+  const inClassAssessments = dataset.entities.inClassAssessments ?? []
+  const resultScores = dataset.extensions?.assessmentResultScores ?? {}
+  const homeworkAssessments = dataset.entities.homeworkAssessments ?? []
+  const homeworkSubmissions = dataset.entities.homeworkSubmissions ?? []
 
-    const scores = SEED_ASSESSMENT_RESULT_SCORES[assessment.id] ?? {}
+  for (const assessment of inClassAssessments) {
+    await port.createAssessment(assessmentSeedRecord(assessment))
+
+    const scores = resultScores[assessment.id] ?? {}
     for (const [studentId, score] of Object.entries(scores)) {
       if (score === undefined) {
         continue
@@ -60,28 +70,11 @@ export async function seedDevAssessments(port: AssessmentsSeedPort): Promise<voi
     }
   }
 
-  for (const assignment of SEED_HOMEWORK_ASSIGNMENTS) {
-    await port.createAssessment({
-      id: assignment.id,
-      classGroupId: assignment.classGroupId,
-      classSubjectId: assignment.classSubjectId,
-      periodId: seedPeriodIdForDate(assignment.dueDate),
-      title: assignment.title,
-      kind: HOMEWORK_KIND_BY_SEED[assignment.type],
-      maxScore: 20,
-      coefficient: 1,
-      description: assignment.description,
-      attachments: assignment.attachments.map(attachment => ({ ...attachment })),
-      dueAt: seedDateTime(assignment.dueDate),
-    })
+  for (const assessment of homeworkAssessments) {
+    await port.createAssessment(assessmentSeedRecord(assessment))
   }
 
-  for (const submission of SEED_HOMEWORK_SUBMISSIONS) {
-    await port.recordAssessmentResult({
-      id: submission.id,
-      assessmentId: submission.homeworkAssignmentId,
-      studentId: submission.studentId,
-      status: SUBMISSION_STATUS_BY_SEED[submission.status],
-    })
+  for (const submission of homeworkSubmissions) {
+    await port.recordAssessmentResult(assessmentResultSeedRecord(submission))
   }
 }

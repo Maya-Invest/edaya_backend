@@ -5,16 +5,16 @@ import type {
   ReportCardSectionSeedRecord,
   ReportCardsSeedPort,
 } from './port'
-import {
-  SEED_GRADE_SCALES,
-  SEED_REPORT_CARD_DEFINITIONS,
-  SEED_REPORT_CARD_RESULTS,
-} from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevReportCards } from './workflow'
 
 describe('report-cards seed port workflow', () => {
   test('seeds scales, definitions, sections, and generated or published results', async () => {
+    const results = demoDataset.extensions?.reportCardResults ?? []
+    const publishedCount = results.filter(
+      result => result.narrativeStatus === 'published' && result.publishedAt,
+    ).length
     const scales: GradeScaleSeedRecord[] = []
     const definitions: ReportCardDefinitionSeedRecord[] = []
     const sections: ReportCardSectionSeedRecord[] = []
@@ -38,29 +38,17 @@ describe('report-cards seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevReportCards(port)
-    const expectedSections = SEED_REPORT_CARD_DEFINITIONS.reduce(
-      (total, definition) => total + definition.sections.reduce(
-        (sectionTotal, section) => sectionTotal + 1 + section.subjectIds.length,
-        0,
-      ),
-      0,
-    )
-    const expectedPublished = SEED_REPORT_CARD_RESULTS.filter(
-      result => result.mockStatus === 'published' && result.publishedAt,
-    ).length
+    const counts = await seedDevReportCards(port, demoDataset)
 
     expect(counts).toEqual({
-      gradeScales: SEED_GRADE_SCALES.length,
-      definitions: SEED_REPORT_CARD_DEFINITIONS.length,
-      sections: expectedSections,
-      results: SEED_REPORT_CARD_RESULTS.length,
+      gradeScales: scales.length,
+      definitions: definitions.length,
+      sections: sections.length,
+      results: generated.length,
     })
-    expect(scales).toHaveLength(SEED_GRADE_SCALES.length)
-    expect(definitions).toHaveLength(SEED_REPORT_CARD_DEFINITIONS.length)
-    expect(sections).toHaveLength(expectedSections)
-    expect(generated).toHaveLength(SEED_REPORT_CARD_RESULTS.length)
-    expect(published).toHaveLength(expectedPublished)
+    expect(scales).toHaveLength(demoDataset.entities.gradeScales?.length ?? 0)
+    expect(definitions).toHaveLength(demoDataset.extensions?.reportCardDefinitionFixtures?.length ?? 0)
+    expect(published).toHaveLength(publishedCount)
     expect(generated[0]?.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
   })
 })

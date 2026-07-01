@@ -14,7 +14,11 @@ export default antfu(
   },
   {
     rules: {
+      "antfu/no-top-level-await": "off",
+      "node/prefer-global/process": "off",
+      "no-console": "off",
       "perfectionist/sort-imports": ["off"],
+      "ts/explicit-function-return-type": "off",
       "unicorn/filename-case": [
         "error",
         {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { SEED_GUARDIANS, SEED_SCHOOL_ID, splitDisplayName } from "@edaya/fixtures";
+import { demoDataset } from "@edaya/fixtures";
+import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { Guardian, StaffMember } from "@edaya/core";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 
@@ -27,13 +28,12 @@ describe("serializeCommandResult", () => {
   });
 
   it("flattens linkActorSubject responses", () => {
-    const guardianFixture = SEED_GUARDIANS[0];
-    const { firstName, lastName } = splitDisplayName(guardianFixture.name);
+    const guardianFixture = demoDataset.entities.guardians![0]!;
     const guardian = new Guardian({
       id: "g9",
       schoolId: SEED_SCHOOL_ID,
-      firstName,
-      lastName,
+      firstName: guardianFixture.firstName,
+      lastName: guardianFixture.lastName,
       email: guardianFixture.email,
       phone: guardianFixture.phone,
       subjectId: "auth-user-2",

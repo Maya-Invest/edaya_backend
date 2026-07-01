@@ -4,7 +4,8 @@ import type {
   StaffAssignmentSeedRecord,
   StaffRoleAssignmentSeedRecord,
 } from './port'
-import { SEED_CLASS_SUBJECTS, SEED_SCHOOL_ID } from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
+import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { describe, expect, test } from 'bun:test'
 import {
   runDevAccessAssignmentsSeedWithPort,
@@ -51,7 +52,7 @@ describe('access seed port workflow', () => {
       status: 'seeded',
       roles: 4,
       assignments: 8,
-      staffAssignments: 5 + SEED_CLASS_SUBJECTS.length,
+      staffAssignments: 5 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
     })
     expect(memory.roles.map(role => role.id)).toEqual([
       'role-teacher',
@@ -61,7 +62,9 @@ describe('access seed port workflow', () => {
     ])
     expect(new Set(memory.roleAssignments.map(assignment => assignment.id)).size).toBe(8)
     expect(memory.roleAssignments.find(assignment => assignment.staffId === 'st6')?.scopeGrants).toHaveLength(2)
-    expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(SEED_CLASS_SUBJECTS.length)
+    expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(
+      demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0,
+    )
   })
 
   test('skips assignments and rejects roles when the school is missing', async () => {

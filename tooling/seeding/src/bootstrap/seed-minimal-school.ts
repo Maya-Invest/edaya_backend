@@ -3,67 +3,50 @@ import {
   createBootstrapStaffActorMetadata,
   Guardian,
 } from '@edaya/core'
-import {
-  DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_STAFF_ACCOUNTS,
-  SEED_GUARDIANS,
-  SEED_SCHOOL_ID,
-  SEED_SCHOOL_PROFILE,
-  SEED_STAFF,
-  splitDisplayName,
-} from '@edaya/fixtures'
-
-function findSeedStaff(staffId: string) {
-  const staff = SEED_STAFF.find(entry => entry.id === staffId)
-  if (!staff) {
-    throw new Error(`Seed staff fixture ${staffId} not found`)
-  }
-  return staff
-}
-
-function findSeedGuardian(guardianId: string) {
-  const guardian = SEED_GUARDIANS.find(entry => entry.id === guardianId)
-  if (!guardian) {
-    throw new Error(`Seed guardian fixture ${guardianId} not found`)
-  }
-  return guardian
-}
+import { minimalDataset } from '@edaya/fixtures'
+import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from '@edaya/fixtures/meta/dev-auth-fixtures'
 
 /** Seeds the minimal school + staff + guardian fixtures used by Better Auth integration tests. */
 export async function seedMinimalSchool(application: SeedApplication): Promise<void> {
+  const { school, staffMembers, guardians } = minimalDataset.entities
+  const staffMember = staffMembers?.[0]
+  const guardian = guardians?.[0]
+
+  if (!school || !staffMember || !guardian) {
+    throw new Error('Minimal fixture dataset is missing required school, staff, or guardian records')
+  }
+
   const existingSchools = await application.repositories.schools.list()
   if (existingSchools.length > 0) {
     return
   }
 
   const actor = createBootstrapStaffActorMetadata({
-    schoolId: SEED_SCHOOL_ID,
+    schoolId: school.id,
     requestId: 'auth-integration-seed',
     staffMemberId: 'auth-integration-seed',
   })
   const service = application.forActor(actor)
 
-  await service.setupWorkflow.registerSchool(SEED_SCHOOL_PROFILE)
+  await service.setupWorkflow.registerSchool(school)
 
-  const staffFixture = findSeedStaff(DEV_AUTH_STAFF_ACCOUNTS[0].staffId)
-  const { firstName: staffFirstName, lastName: staffLastName } = splitDisplayName(staffFixture.name)
+  const staffFixture = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === staffMember.id)
   await service.setupWorkflow.registerStaffMember({
-    id: staffFixture.id,
-    schoolId: SEED_SCHOOL_ID,
-    firstName: staffFirstName,
-    lastName: staffLastName,
-    email: staffFixture.email,
+    id: staffMember.id,
+    schoolId: school.id,
+    firstName: staffMember.firstName,
+    lastName: staffMember.lastName,
+    email: staffFixture?.email ?? staffMember.email,
     sendAccountInvitation: false,
   })
 
-  const guardianFixture = findSeedGuardian(DEV_AUTH_GUARDIAN_ACCOUNTS[0].guardianId)
-  const { firstName: guardianFirstName, lastName: guardianLastName } = splitDisplayName(guardianFixture.name)
+  const guardianFixture = DEV_AUTH_GUARDIAN_ACCOUNTS.find(account => account.guardianId === guardian.id)
   await application.repositories.guardians.save(new Guardian({
-    id: guardianFixture.id,
-    schoolId: SEED_SCHOOL_ID,
-    firstName: guardianFirstName,
-    lastName: guardianLastName,
-    email: guardianFixture.email,
-    phone: guardianFixture.phone,
+    id: guardian.id,
+    schoolId: school.id,
+    firstName: guardian.firstName,
+    lastName: guardian.lastName,
+    email: guardianFixture?.email ?? guardian.email,
+    phone: guardian.phone,
   }))
 }

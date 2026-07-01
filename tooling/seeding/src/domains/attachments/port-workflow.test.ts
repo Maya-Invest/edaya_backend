@@ -1,6 +1,6 @@
 import type { AttachmentSeedRecord, AttachmentsSeedPort } from './port'
 import { AttachmentOwnerKind } from '@edaya/core'
-import { SEED_ATTACHMENTS } from '@edaya/fixtures'
+import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevAttachments } from './workflow'
 
@@ -11,9 +11,9 @@ describe('attachments seed port workflow', () => {
       saveAttachment: async record => void attachments.push(record),
     }
 
-    const counts = await seedDevAttachments(port)
+    const counts = await seedDevAttachments(port, demoDataset)
 
-    expect(counts).toEqual({ attachments: SEED_ATTACHMENTS.length })
+    expect(counts).toEqual({ attachments: demoDataset.entities.attachments?.length ?? 0 })
     expect(attachments.map(record => record.ownerKind)).toContain(AttachmentOwnerKind.Incident)
     expect(attachments.map(record => record.ownerKind))
       .toContain(AttachmentOwnerKind.StudentDisciplinaryAction)

@@ -1,77 +1,58 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type { CurriculumSeedPort } from './port'
-import {
-  SubjectCategory,
-  SubjectColor,
-} from '@edaya/core'
-import {
-  SEED_CLASS_SUBJECT_IDS_BY_GRADE_LEVEL_SUBJECT,
-  SEED_CLASS_SUBJECT_MATTER_IDS_BY_GRADE_LEVEL_MATTER,
-  SEED_GRADE_LEVEL_SUBJECT_MATTERS,
-  SEED_GRADE_LEVEL_SUBJECTS,
-  SEED_SCHOOL_ID,
-  SEED_SUBJECT_CATALOG,
-  SEED_SUBJECT_MATTERS,
-} from '@edaya/fixtures'
+import { buildFixtureCurriculumPlan } from '../../support/curriculum-plan'
 
-const SUBJECT_CATEGORY_BY_SEED: Readonly<Record<string, SubjectCategory>> = {
-  'Arts': SubjectCategory.Arts,
-  'Langues': SubjectCategory.Languages,
-  'Littéraire': SubjectCategory.Literary,
-  'Scientifique': SubjectCategory.Scientific,
-  'Sciences humaines': SubjectCategory.Humanities,
-  'Sport': SubjectCategory.Sport,
-}
+export async function seedDevCurriculum(
+  port: CurriculumSeedPort,
+  dataset: FixtureDataset,
+): Promise<void> {
+  const subjects = dataset.entities.subjects ?? []
+  const subjectMatters = dataset.entities.subjectMatters ?? []
+  const curriculumPlan = buildFixtureCurriculumPlan(dataset.entities)
 
-const SUBJECT_COLOR_BY_SEED: Readonly<Record<string, SubjectColor>> = {
-  mint: SubjectColor.Mint,
-  sky: SubjectColor.Sky,
-  warm: SubjectColor.Warm,
-}
-
-function subjectCategory(value: string): SubjectCategory {
-  const category = SUBJECT_CATEGORY_BY_SEED[value]
-  if (!category) {
-    throw new Error(`Unsupported seed subject category: ${value}`)
-  }
-  return category
-}
-
-function subjectColor(value: string): SubjectColor {
-  const color = SUBJECT_COLOR_BY_SEED[value]
-  if (!color) {
-    throw new Error(`Unsupported seed subject color: ${value}`)
-  }
-  return color
-}
-
-export async function seedDevCurriculum(port: CurriculumSeedPort): Promise<void> {
-  for (const subject of SEED_SUBJECT_CATALOG) {
+  for (const subject of subjects) {
+    if (!subject.category || !subject.color) {
+      throw new Error(`Fixture subject ${subject.id} must include category and color`)
+    }
     await port.saveSubject({
       id: subject.id,
-      schoolId: SEED_SCHOOL_ID,
+      schoolId: dataset.schoolId,
       name: subject.name,
-      code: subject.code,
-      defaultCoefficient: subject.defaultCoefficient,
-      category: subjectCategory(subject.category),
-      color: subjectColor(subject.color),
+      code: subject.code ?? undefined,
+      defaultCoefficient: subject.defaultCoefficient ?? undefined,
+      category: subject.category,
+      color: subject.color,
     })
   }
 
-  for (const matter of SEED_SUBJECT_MATTERS) {
-    await port.saveSubjectMatter({ ...matter })
+  for (const matter of subjectMatters) {
+    await port.saveSubjectMatter({
+      id: matter.id,
+      subjectId: matter.subjectId,
+      name: matter.name,
+      description: matter.description ?? undefined,
+      sequenceOrder: matter.sequenceOrder,
+      estimatedHours: matter.estimatedHours ?? undefined,
+    })
   }
 
-  for (const offering of SEED_GRADE_LEVEL_SUBJECTS) {
+  for (const offering of curriculumPlan.gradeLevelSubjects) {
     await port.offerSubjectToGradeLevel({
-      ...offering,
-      classSubjectIdsByClassGroupId: SEED_CLASS_SUBJECT_IDS_BY_GRADE_LEVEL_SUBJECT[offering.id],
+      id: offering.id,
+      gradeLevelId: offering.gradeLevelId,
+      academicYearId: offering.academicYearId,
+      subjectId: offering.subjectId,
+      coefficient: offering.coefficient,
+      classSubjectIdsByClassGroupId: offering.classSubjectIdsByClassGroupId,
     })
   }
 
-  for (const link of SEED_GRADE_LEVEL_SUBJECT_MATTERS) {
+  for (const link of curriculumPlan.gradeLevelSubjectMatters) {
     await port.assignMatterToGradeLevelSubject({
-      ...link,
-      classSubjectMatterIdsByClassGroupId: SEED_CLASS_SUBJECT_MATTER_IDS_BY_GRADE_LEVEL_MATTER[link.id],
+      id: link.id,
+      gradeLevelSubjectId: link.gradeLevelSubjectId,
+      subjectMatterId: link.subjectMatterId,
+      classSubjectMatterIdsByClassGroupId: link.classSubjectMatterIdsByClassGroupId,
     })
   }
 }
