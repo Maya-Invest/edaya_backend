@@ -11,6 +11,7 @@ NODE_ENV = "development"
 LOG_LEVEL = "info"
 RUNTIME = "worker"
 
+#
 # Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
 # Optional: NOVU_SECRET_KEY, NOVU_API_URL (Novu Cloud notification dispatch)
 # Hyperdrive local origin DB — loaded by `wrangler dev --env-file .dev.vars` (see dev:worker script).
@@ -23,7 +24,10 @@ id = "62c00eeda7d047fc9951daf7db430070"
 # Daily at 06:00 UTC — process due notification jobs
 # Every 5 minutes — reconcile pending message deliveries with Novu
 [[triggers]]
-crons = ["0 6 * * *", "*/5 * * * *"]
+crons = [
+  "0 6 * * *",
+  "*/5 * * * *"
+]
 
 [env.production]
 name = "edaya-cron"
@@ -38,7 +42,10 @@ binding = "HYPERDRIVE"
 id = "62c00eeda7d047fc9951daf7db430070"
 
 [[env.production.triggers]]
-crons = ["0 6 * * *", "*/5 * * * *"]
+crons = [
+  "0 6 * * *",
+  "*/5 * * * *"
+]
 
 [env.staging]
 name = "edaya-cron-staging"
@@ -53,4 +60,7 @@ LOG_LEVEL = "info"
 RUNTIME = "worker"
 
 [[env.staging.triggers]]
-crons = ["0 6 * * *", "*/5 * * * *"]
+crons = [
+  "0 6 * * *",
+  "*/5 * * * *"
+]
