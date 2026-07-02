@@ -15,6 +15,7 @@ src/
     minimal/                 Auth smoke — school, owner staff, primary guardian
     integration/             Fast integration tests — students g1–g6 / s1–s6
     demo/                    Full dev school — school.ts, people.ts, domains/
+    demo-ci/                 Collège ivoirien (Abidjan) — French labels
     bulk/                    demo + procedural 1000-student population
   onboarding/                Structure templates (CI primaire / collège / lycée)
   meta/                      Dates, manifest, validation harness, dev login
@@ -30,6 +31,7 @@ Records use `satisfies *Input` from `@edaya/core` so schema changes fail at comp
 | `minimalDataset` | `@edaya/fixtures` | Better Auth / register-school smoke (`st8`, `g1`) |
 | `integrationDataset` | `@edaya/fixtures` | Six auth-linked guardian/student pairs for fast tests |
 | `demoDataset` | `@edaya/fixtures` | Full dev school structure and domain entities |
+| `demoCiDataset` | `@edaya/fixtures` | Collège ivoirien (Abidjan) — labels en français |
 | `bulkDataset` | `@edaya/fixtures` | `demoDataset` merged with 1000-student bulk population |
 
 Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
@@ -38,10 +40,11 @@ Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
 
 | Import | Contents |
 |--------|----------|
-| `@edaya/fixtures` | `minimalDataset`, `integrationDataset`, `demoDataset`, `bulkDataset`, `FixtureDataset` types, `demoSchoolOwnerStaffId` |
+| `@edaya/fixtures` | `minimalDataset`, `integrationDataset`, `demoDataset`, `demoCiDataset`, `bulkDataset`, `FixtureDataset` types, `demoSchoolOwnerStaffId`, `demoCiSchoolOwnerStaffId` |
 | `@edaya/fixtures/datasets/minimal` | `minimalDataset` only |
 | `@edaya/fixtures/datasets/integration` | `integrationDataset` only |
 | `@edaya/fixtures/datasets/demo` | `demoDataset` only |
+| `@edaya/fixtures/datasets/demo-ci` | `demoCiDataset` only |
 | `@edaya/fixtures/datasets/bulk` | `bulkDataset` only |
 | `demoDataset.extensions.classSubjectStaffAssignments` | `@edaya/fixtures` | Class-subject teacher assignments for access seeding |
 | `@edaya/fixtures/onboarding` | CI structure templates, registry, country resolver |

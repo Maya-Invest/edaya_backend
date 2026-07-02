@@ -1,8 +1,6 @@
 /* eslint-disable dot-notation -- Record<string, unknown> responses require bracket access for tsc */
 import type { CoreHttpRequestOptions } from './core-entity'
-import { bulkDataset } from '@edaya/fixtures'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { countStudents } from '@edaya/fixtures/meta/fixture-counts'
 import {
   assertSeedManifestComplete,
@@ -97,15 +95,16 @@ async function validateQueryTarget(
   }
 
   if (target.name === 'get-school-overview') {
+    const context = resolveDevSeedContext()
     const kpis = body?.['kpis'] as { studentCount?: number } | undefined
     const studentCount = kpis?.['studentCount'] ?? 0
-    if (studentCount < countStudents(bulkDataset)) {
+    if (studentCount < countStudents(context.dataset)) {
       return {
         name: target.name,
         path: target.path,
         status: 'failed',
         httpStatus: response.status,
-        reason: `Overview studentCount ${studentCount} < ${countStudents(bulkDataset)}`,
+        reason: `Overview studentCount ${studentCount} < ${countStudents(context.dataset)}`,
       }
     }
   }
@@ -137,9 +136,10 @@ export async function runHttpSeedValidation(
   assertSeedManifestComplete()
 
   if (options.useStaffSession !== false && !options.serviceAccountApiKey) {
+    const context = resolveDevSeedContext()
     await signInViaHttp(options.client, {
-      email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-      password: DEV_AUTH_PASSWORD,
+      email: context.minimalStaffEmail,
+      password: context.authPassword,
     })
   }
 

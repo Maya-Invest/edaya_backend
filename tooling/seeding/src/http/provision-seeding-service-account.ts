@@ -5,14 +5,8 @@ import {
   createServiceAccount,
   createStaffActorMetadata,
 } from '@edaya/core'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import {
-  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { signInViaHttp } from './auth'
 
 export const SEEDING_SERVICE_ID = 'seeding'
@@ -33,8 +27,9 @@ export async function provisionSeedingServiceAccountInProcess(
     apiKey?: string
   } = {},
 ): Promise<ProvisionSeedingServiceAccountResult> {
-  const schoolId = input.schoolId ?? SEED_SCHOOL_ID
-  const creatorStaffId = input.creatorStaffId ?? MINIMAL_AUTH_FIXTURE_STAFF_ID
+  const context = resolveDevSeedContext()
+  const schoolId = input.schoolId ?? context.schoolId
+  const creatorStaffId = input.creatorStaffId ?? context.minimalStaffId
   const apiKey = input.apiKey ?? resolveSeedingApiKeyForSchool(schoolId)
 
   const existing = await application.repositories.staffMembers.findOne({
@@ -74,10 +69,11 @@ export async function provisionSeedingServiceAccountInProcess(
     effectiveGrants: grants,
   })
 
+  const elevatedRoleStaffId = context.datasetId === 'ci' ? 'ci-st5' : 'st5'
   const result = await createServiceAccount(application.repositories, actor, {
     serviceId: SEEDING_SERVICE_ID,
     displayName: 'Seeding Integration',
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+    roleIds: [context.staffAccessRoleIds[elevatedRoleStaffId]!],
     elevated: true,
     apiKey,
   })
@@ -99,12 +95,13 @@ export async function provisionSeedingServiceAccountHttp(
     apiKey?: string
   } = {},
 ): Promise<ProvisionSeedingServiceAccountResult> {
-  const schoolId = input.schoolId ?? SEED_SCHOOL_ID
+  const context = resolveDevSeedContext()
+  const schoolId = input.schoolId ?? context.schoolId
   const apiKey = input.apiKey ?? resolveSeedingApiKeyForSchool(schoolId)
 
   await signInViaHttp(client, {
-    email: input.email ?? MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-    password: input.password ?? DEV_AUTH_PASSWORD,
+    email: input.email ?? context.minimalStaffEmail,
+    password: input.password ?? context.authPassword,
   })
 
   const listResponse = await client.jsonRequest<Array<{ serviceId: string, id: string }>>('/core/service-accounts')
@@ -129,7 +126,7 @@ export async function provisionSeedingServiceAccountHttp(
     body: JSON.stringify({
       serviceId: SEEDING_SERVICE_ID,
       displayName: 'Seeding Integration',
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS[MINIMAL_AUTH_FIXTURE_STAFF_ID]],
+      roleIds: [context.staffAccessRoleIds[context.minimalStaffId]!],
       elevated: true,
       apiKey,
     }),
@@ -151,7 +148,7 @@ export async function provisionSeedingServiceAccountHttp(
 }
 
 export function logProvisionedServiceAccountKey(result: ProvisionSeedingServiceAccountResult): void {
-  const schoolLabel = result.schoolId ?? SEED_SCHOOL_ID
+  const schoolLabel = result.schoolId ?? resolveDevSeedContext().schoolId
 
   if (result.status === 'created' && result.apiKey) {
     // eslint-disable-next-line no-console

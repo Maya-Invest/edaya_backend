@@ -4,7 +4,7 @@
 import type { HttpDevSeedScope } from '../src/http/index.ts'
 import process from 'node:process'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { resolveActiveSeedSchoolId } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import {
   HttpSeedClient,
   logHttpDevSeedResults,
@@ -36,7 +36,7 @@ function resolveAppOrigin(baseUrl: string): string {
 export function resolveSeedHttpConfig() {
   loadSeedEnvFiles()
   const baseUrl = process.env['SEED_API_URL'] ?? process.env['BETTER_AUTH_URL'] ?? 'http://localhost:9999'
-  const schoolId = process.env['SEED_SCHOOL_ID']?.trim() || SEED_SCHOOL_ID
+  const schoolId = resolveActiveSeedSchoolId()
   return {
     baseUrl,
     appOrigin: resolveAppOrigin(baseUrl),

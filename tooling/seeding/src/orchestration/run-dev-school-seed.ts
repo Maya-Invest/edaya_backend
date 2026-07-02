@@ -15,11 +15,7 @@ import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
-import { bulkDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
-import {
-  DEV_AUTH_PASSWORD,
-  DEV_AUTH_STAFF_ACCOUNTS,
-} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
@@ -169,7 +165,9 @@ export async function runDevSchoolSeed(
       application: requireSeedApplication(application, 'profilePicturesPort'),
       apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
     })
-  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, bulkDataset)
+  const seedContext = resolveDevSeedContext()
+  const seedDataset = seedContext.dataset
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, seedDataset)
 
   if (structureInspection.status === 'skipped') {
     if (options?.auth) {
@@ -190,39 +188,39 @@ export async function runDevSchoolSeed(
 
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
-    const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-      account => account.staffId === demoSchoolOwnerStaffId,
+    const ownerAccount = seedContext.staffAccounts.find(
+      account => account.staffId === seedContext.ownerStaffId,
     )
     if (ownerAccount) {
-      ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
+      ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, seedContext.authPassword)
     }
   }
 
   await seedDevSchoolStructure(schoolStructurePort, {
     demoSchoolExists: structureInspection.demoSchoolExists,
     ownerSubjectId,
-  }, bulkDataset)
+  }, seedDataset)
 
-  await seedDevPopulation(populationPort, bulkDataset)
-  await seedDevCurriculum(curriculumPort, bulkDataset)
-  await seedDevScheduling(schedulingPort, bulkDataset)
-  await seedDevAssessments(assessmentsPort, bulkDataset)
-  const activitiesCounts = await seedDevActivities(activitiesPort, bulkDataset)
-  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, bulkDataset)
+  await seedDevPopulation(populationPort, seedDataset)
+  await seedDevCurriculum(curriculumPort, seedDataset)
+  await seedDevScheduling(schedulingPort, seedDataset)
+  await seedDevAssessments(assessmentsPort, seedDataset)
+  const activitiesCounts = await seedDevActivities(activitiesPort, seedDataset)
+  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, seedDataset)
 
-  const disciplineCounts = await seedDevDiscipline(disciplinePort, bulkDataset)
+  const disciplineCounts = await seedDevDiscipline(disciplinePort, seedDataset)
 
-  const attendanceRecordCount = await seedDevAttendance(attendancePort, bulkDataset)
-  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort, bulkDataset)
+  const attendanceRecordCount = await seedDevAttendance(attendancePort, seedDataset)
+  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort, seedDataset)
 
-  const reportCardCounts = await seedDevReportCards(reportCardsPort, bulkDataset)
-  const financeCounts = await seedDevFinance(financePort, bulkDataset)
+  const reportCardCounts = await seedDevReportCards(reportCardsPort, seedDataset)
+  const financeCounts = await seedDevFinance(financePort, seedDataset)
 
-  const communicationsCounts = await seedDevCommunications(communicationsPort, bulkDataset)
-  const attachmentCounts = await seedDevAttachments(attachmentsPort, bulkDataset)
+  const communicationsCounts = await seedDevCommunications(communicationsPort, seedDataset)
+  const attachmentCounts = await seedDevAttachments(attachmentsPort, seedDataset)
   const profilePictureCounts = await seedDevProfilePictures(profilePicturesPort, {
     apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
-  }, bulkDataset)
+  }, seedDataset)
   if (options?.auth) {
     await syncDevStaffAuthAndOwner(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
@@ -233,13 +231,13 @@ export async function runDevSchoolSeed(
     )
   }
 
-  const entities = bulkDataset.entities
+  const entities = seedDataset.entities
   const curriculumPlan = buildFixtureCurriculumPlan(entities)
-  const fixtureCounts = resolveExpectedCounts(bulkDataset)
+  const fixtureCounts = resolveExpectedCounts(seedDataset)
 
   return {
     status: 'seeded',
-    schoolId: bulkDataset.schoolId,
+    schoolId: seedDataset.schoolId,
     academicYearId: entities.academicYear?.id ?? '',
     gradeLevels: entities.gradeLevels?.length ?? 0,
     classes: entities.classGroups?.length ?? 0,
