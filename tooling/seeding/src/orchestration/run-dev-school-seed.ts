@@ -15,7 +15,7 @@ import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
-import { bulkDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { demoSchoolOwnerStaffId, devSeedDataset } from '@edaya/fixtures'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
@@ -169,7 +169,7 @@ export async function runDevSchoolSeed(
       application: requireSeedApplication(application, 'profilePicturesPort'),
       apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
     })
-  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, bulkDataset)
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, devSeedDataset)
 
   if (structureInspection.status === 'skipped') {
     if (options?.auth) {
@@ -201,28 +201,28 @@ export async function runDevSchoolSeed(
   await seedDevSchoolStructure(schoolStructurePort, {
     demoSchoolExists: structureInspection.demoSchoolExists,
     ownerSubjectId,
-  }, bulkDataset)
+  }, devSeedDataset)
 
-  await seedDevPopulation(populationPort, bulkDataset)
-  await seedDevCurriculum(curriculumPort, bulkDataset)
-  await seedDevScheduling(schedulingPort, bulkDataset)
-  await seedDevAssessments(assessmentsPort, bulkDataset)
-  const activitiesCounts = await seedDevActivities(activitiesPort, bulkDataset)
-  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, bulkDataset)
+  await seedDevPopulation(populationPort, devSeedDataset)
+  await seedDevCurriculum(curriculumPort, devSeedDataset)
+  await seedDevScheduling(schedulingPort, devSeedDataset)
+  await seedDevAssessments(assessmentsPort, devSeedDataset)
+  const activitiesCounts = await seedDevActivities(activitiesPort, devSeedDataset)
+  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, devSeedDataset)
 
-  const disciplineCounts = await seedDevDiscipline(disciplinePort, bulkDataset)
+  const disciplineCounts = await seedDevDiscipline(disciplinePort, devSeedDataset)
 
-  const attendanceRecordCount = await seedDevAttendance(attendancePort, bulkDataset)
-  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort, bulkDataset)
+  const attendanceRecordCount = await seedDevAttendance(attendancePort, devSeedDataset)
+  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort, devSeedDataset)
 
-  const reportCardCounts = await seedDevReportCards(reportCardsPort, bulkDataset)
-  const financeCounts = await seedDevFinance(financePort, bulkDataset)
+  const reportCardCounts = await seedDevReportCards(reportCardsPort, devSeedDataset)
+  const financeCounts = await seedDevFinance(financePort, devSeedDataset)
 
-  const communicationsCounts = await seedDevCommunications(communicationsPort, bulkDataset)
-  const attachmentCounts = await seedDevAttachments(attachmentsPort, bulkDataset)
+  const communicationsCounts = await seedDevCommunications(communicationsPort, devSeedDataset)
+  const attachmentCounts = await seedDevAttachments(attachmentsPort, devSeedDataset)
   const profilePictureCounts = await seedDevProfilePictures(profilePicturesPort, {
     apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
-  }, bulkDataset)
+  }, devSeedDataset)
   if (options?.auth) {
     await syncDevStaffAuthAndOwner(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
@@ -233,13 +233,13 @@ export async function runDevSchoolSeed(
     )
   }
 
-  const entities = bulkDataset.entities
+  const entities = devSeedDataset.entities
   const curriculumPlan = buildFixtureCurriculumPlan(entities)
-  const fixtureCounts = resolveExpectedCounts(bulkDataset)
+  const fixtureCounts = resolveExpectedCounts(devSeedDataset)
 
   return {
     status: 'seeded',
-    schoolId: bulkDataset.schoolId,
+    schoolId: devSeedDataset.schoolId,
     academicYearId: entities.academicYear?.id ?? '',
     gradeLevels: entities.gradeLevels?.length ?? 0,
     classes: entities.classGroups?.length ?? 0,

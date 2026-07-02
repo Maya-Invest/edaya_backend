@@ -8,7 +8,7 @@ import type {
   SchoolStructureSeedPort,
   SchoolStructureStaffRecord,
 } from './port'
-import { bulkDataset, demoDataset } from '@edaya/fixtures'
+import { demoDataset, devSeedDataset } from '@edaya/fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { describe, expect, test } from 'bun:test'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from './workflow'
@@ -96,7 +96,7 @@ describe('school-structure seed port workflow', () => {
     await seedDevSchoolStructure(memory.port, {
       demoSchoolExists: inspection.demoSchoolExists,
       ownerSubjectId: 'subject-owner',
-    }, bulkDataset)
+    }, devSeedDataset)
 
     expect(memory.schools).toHaveLength(1)
     expect(memory.schools[0]?.ownerSubjectId).toBe('subject-owner')
@@ -108,7 +108,7 @@ describe('school-structure seed port workflow', () => {
     expect(memory.publishedPeriodIds).toEqual((academicPeriods ?? []).map(period => period.id))
     expect(memory.periodDefinitions).toHaveLength(periodDefinitions?.length ?? 0)
     expect(memory.staff).toHaveLength(staffMembers?.length ?? 0)
-    expect(memory.classGroups).toHaveLength(bulkDataset.entities.classGroups?.length ?? 0)
+    expect(memory.classGroups).toHaveLength(devSeedDataset.entities.classGroups?.length ?? 0)
   })
 
   test('repairs a partial demo without replacing its existing director or school', async () => {

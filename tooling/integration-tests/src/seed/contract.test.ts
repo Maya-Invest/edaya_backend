@@ -1,5 +1,5 @@
 import { buildSchoolOverview } from '@edaya/core'
-import { bulkDataset } from '@edaya/fixtures'
+import { devSeedDataset } from '@edaya/fixtures'
 import {
   parseSeedDate,
   resolveSeedReferenceDate,
@@ -66,8 +66,8 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
   it('seeds population targets with class distribution and staff assignments', async () => {
     const { app, seedResult, authHeaders } = getContext()
-    expect(seedResult.students).toBe(countStudents(bulkDataset))
-    expect(seedResult.guardians).toBe(countGuardians(bulkDataset))
+    expect(seedResult.students).toBe(countStudents(devSeedDataset))
+    expect(seedResult.guardians).toBe(countGuardians(devSeedDataset))
 
     const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
     const [studentsCountResponse, guardiansCountResponse, enrollmentsCountResponse, staffAssignmentsResponse, studentsResponse, guardiansResponse] = await Promise.all([
@@ -99,7 +99,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       app.request(createAppRequest('/core/entities/guardians/list', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ $limit: countGuardians(bulkDataset) }),
+        body: JSON.stringify({ $limit: countGuardians(devSeedDataset) }),
       })),
     ])
 
@@ -119,13 +119,13 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       await staffAssignmentsResponse.json(),
     )
 
-    expect(studentsCount).toBe(countStudents(bulkDataset))
-    expect(guardiansCount).toBeGreaterThanOrEqual(countGuardians(bulkDataset))
-    expect(enrollmentsCount).toBe(countStudents(bulkDataset))
+    expect(studentsCount).toBe(countStudents(devSeedDataset))
+    expect(guardiansCount).toBeGreaterThanOrEqual(countGuardians(devSeedDataset))
+    expect(enrollmentsCount).toBe(countStudents(devSeedDataset))
     expect(students.some(student => student.id === 's30')).toBe(true)
     expect(guardians.some(guardian => guardian.id === 'g9')).toBe(true)
 
-    for (const [classGroupId, studentIds] of Object.entries(buildClassStudentIds(bulkDataset))) {
+    for (const [classGroupId, studentIds] of Object.entries(buildClassStudentIds(devSeedDataset))) {
       for (const studentId of studentIds) {
         const enrollmentResponse = await app.request(createAppRequest('/core/entities/enrollments/one', {
           method: 'POST',
@@ -148,7 +148,7 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     const referenceDate = parseSeedDate(resolveSeedReferenceDate())
     const overview = await buildSchoolOverview(application.repositories, {
       schoolId: SEED_SCHOOL_ID,
-      academicYearId: bulkDataset.entities.academicYear?.id ?? '',
+      academicYearId: devSeedDataset.entities.academicYear?.id ?? '',
       academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
       referenceDate,
     })

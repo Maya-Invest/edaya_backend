@@ -14,6 +14,12 @@ const DEFAULT_ENV_FILES = [
   path.join(repoRoot, 'apps/api/.env'),
 ] as const
 
+function loadEnvFile(envFile: string, override = false): void {
+  if (existsSync(envFile)) {
+    expand(config({ path: envFile, override }))
+  }
+}
+
 /** Load seed CLI env files into `process.env` (skipped when `NODE_ENV=production`). */
 export function loadSeedEnvFiles(): void {
   if (process.env['NODE_ENV'] === 'production') {
@@ -27,13 +33,11 @@ export function loadSeedEnvFiles(): void {
   }
 
   for (const envFile of DEFAULT_ENV_FILES) {
-    if (existsSync(envFile)) {
-      expand(config({ path: envFile }))
-    }
+    loadEnvFile(envFile)
   }
+}
 
-  const stagingEnvFile = path.join(packageRoot, '.env.staging')
-  if (existsSync(stagingEnvFile)) {
-    expand(config({ path: stagingEnvFile, override: true }))
-  }
+/** Staging-only overrides — call from `seed:remote`, staging cleanup, etc. */
+export function loadStagingSeedEnvFiles(): void {
+  loadEnvFile(path.join(packageRoot, '.env.staging'), true)
 }

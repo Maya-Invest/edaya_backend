@@ -1,5 +1,5 @@
 import type { SeedEntityManifestStatus } from './entity-manifest'
-import { bulkDataset } from '../datasets/bulk'
+import { demoDataset } from '../datasets/demo'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from '../shared/ids'
 import { SEED_DASHBOARD_ACADEMIC_PERIOD_ID, SEED_REFERENCE_DATE } from './dates'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'
@@ -73,7 +73,7 @@ export interface SeedQueryValidationTarget {
 export { resolveExpectedCounts } from './fixture-counts'
 
 export function buildSeedValidationTargets(): SeedValidationTarget[] {
-  const counts = resolveExpectedCounts(bulkDataset)
+  const counts = resolveExpectedCounts(demoDataset)
 
   return SEED_ENTITY_MANIFEST
     .filter(entry => (entry.status as SeedEntityManifestStatus) !== 'missing')

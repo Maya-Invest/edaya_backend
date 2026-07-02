@@ -3,7 +3,7 @@
 import type { CleanupOptions } from './parse-cleanup-args'
 import process from 'node:process'
 import { createInterface } from 'node:readline/promises'
-import { loadSeedEnvFiles } from '../support/load-seed-env'
+import { loadSeedEnvFiles, loadStagingSeedEnvFiles } from '../support/load-seed-env'
 import { resolveRepoRoot } from '../support/resolve-repo-root'
 import { probeLocalApiReachable } from './probe-local-api'
 import { wipeLocalData } from './wipe-local-data'
@@ -46,6 +46,9 @@ function resolveStagingDatabaseUrl(): string {
 
 export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
   loadSeedEnvFiles()
+  if (options.target === 'staging') {
+    loadStagingSeedEnvFiles()
+  }
   const repoRoot = resolveRepoRoot(import.meta.url)
 
   if (options.target === 'local') {

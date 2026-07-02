@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { bulkDataset } from '../../src/datasets/bulk'
+import { demoDataset } from '../../src/datasets/demo'
 import { seedManifestEntitiesByStatus } from '../../src/meta/entity-manifest'
 import { countStudents } from '../../src/meta/fixture-counts'
 import {
@@ -15,12 +15,12 @@ describe('seed validation harness', () => {
   })
 
   it('maps manifest entities to expected fixture counts', () => {
-    const counts = resolveExpectedCounts(bulkDataset)
+    const counts = resolveExpectedCounts(demoDataset)
     const targets = buildSeedValidationTargets()
 
     expect(targets.length).toBeGreaterThan(40)
-    expect(counts.students).toBe(countStudents(bulkDataset))
-    expect(targets.find(target => target.entity === 'students')?.minCount).toBe(countStudents(bulkDataset))
-    expect(targets.find(target => target.entity === 'guardians')?.minCount).toBeGreaterThanOrEqual(900)
+    expect(counts.students).toBe(countStudents(demoDataset))
+    expect(targets.find(target => target.entity === 'students')?.minCount).toBe(countStudents(demoDataset))
+    expect(targets.find(target => target.entity === 'guardians')?.minCount).toBeGreaterThanOrEqual(20)
   })
 })

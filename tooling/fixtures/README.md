@@ -29,8 +29,9 @@ Records use `satisfies *Input` from `@edaya/core` so schema changes fail at comp
 |---------|--------|---------|
 | `minimalDataset` | `@edaya/fixtures` | Better Auth / register-school smoke (`st8`, `g1`) |
 | `integrationDataset` | `@edaya/fixtures` | Six auth-linked guardian/student pairs for fast tests |
-| `demoDataset` | `@edaya/fixtures` | Full dev school structure and domain entities |
-| `bulkDataset` | `@edaya/fixtures` | `demoDataset` merged with 1000-student bulk population |
+| `demoDataset` | `@edaya/fixtures` | Full dev school structure and domain entities (**default for `bun seed`**) |
+| `devSeedDataset` | `@edaya/fixtures` | Alias of `demoDataset` — used by seed orchestration and validation |
+| `bulkDataset` | `@edaya/fixtures` | `demoDataset` merged with 1000-student bulk population (opt-in scale tests) |
 
 Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
 
@@ -38,7 +39,7 @@ Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
 
 | Import | Contents |
 |--------|----------|
-| `@edaya/fixtures` | `minimalDataset`, `integrationDataset`, `demoDataset`, `bulkDataset`, `FixtureDataset` types, `demoSchoolOwnerStaffId` |
+| `@edaya/fixtures` | `minimalDataset`, `integrationDataset`, `demoDataset`, `devSeedDataset`, `bulkDataset`, `FixtureDataset` types, `demoSchoolOwnerStaffId` |
 | `@edaya/fixtures/datasets/minimal` | `minimalDataset` only |
 | `@edaya/fixtures/datasets/integration` | `integrationDataset` only |
 | `@edaya/fixtures/datasets/demo` | `demoDataset` only |
@@ -51,7 +52,7 @@ Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
 
 ## Related packages
 
-- `@edaya/seeding` — loads fixture data through HTTP or in-process ports; always passes an explicit `FixtureDataset`
+- `@edaya/seeding` — loads `devSeedDataset` (`demoDataset`) through HTTP or in-process ports by default
 - `apps/api` — consumes `@edaya/fixtures/onboarding` for onboarding routes
 
 See `tooling/seeding/README.md` for seed commands and `src/meta/entity-manifest.ts` for entity coverage.

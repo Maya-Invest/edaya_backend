@@ -1,5 +1,5 @@
 export { bulkDataset } from './datasets/bulk'
-export { demoDataset } from './datasets/demo'
+export { demoDataset, demoDataset as devSeedDataset } from './datasets/demo'
 export { demoSchoolOwnerStaffId } from './datasets/demo/people'
 export { integrationDataset } from './datasets/integration'
 export { minimalDataset } from './datasets/minimal'

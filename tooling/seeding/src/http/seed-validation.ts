@@ -1,6 +1,6 @@
 /* eslint-disable dot-notation -- Record<string, unknown> responses require bracket access for tsc */
 import type { CoreHttpRequestOptions } from './core-entity'
-import { bulkDataset } from '@edaya/fixtures'
+import { devSeedDataset } from '@edaya/fixtures'
 import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { countStudents } from '@edaya/fixtures/meta/fixture-counts'
@@ -99,13 +99,13 @@ async function validateQueryTarget(
   if (target.name === 'get-school-overview') {
     const kpis = body?.['kpis'] as { studentCount?: number } | undefined
     const studentCount = kpis?.['studentCount'] ?? 0
-    if (studentCount < countStudents(bulkDataset)) {
+    if (studentCount < countStudents(devSeedDataset)) {
       return {
         name: target.name,
         path: target.path,
         status: 'failed',
         httpStatus: response.status,
-        reason: `Overview studentCount ${studentCount} < ${countStudents(bulkDataset)}`,
+        reason: `Overview studentCount ${studentCount} < ${countStudents(devSeedDataset)}`,
       }
     }
   }

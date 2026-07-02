@@ -12,7 +12,7 @@ import {
   Permission,
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
-import { bulkDataset, demoDataset } from '@edaya/fixtures'
+import { demoDataset, devSeedDataset } from '@edaya/fixtures'
 import {
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
@@ -22,8 +22,8 @@ import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'
 import { SeedPortError } from '../support/seed-port-error'
 
-const accessSeedAcademicYearId = bulkDataset.entities.academicYear?.id
-  ?? (() => { throw new Error('bulkDataset must include academicYear for access seeding') })()
+const accessSeedAcademicYearId = devSeedDataset.entities.academicYear?.id
+  ?? (() => { throw new Error('devSeedDataset must include academicYear for access seeding') })()
 
 /** Entity list endpoints used by the webapp shell loaders. */
 const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [

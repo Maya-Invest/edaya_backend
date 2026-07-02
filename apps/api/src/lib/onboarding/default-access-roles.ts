@@ -19,6 +19,7 @@ const WEBAPP_READ_PERMISSIONS: readonly Permission[] = [
   Permission.QUERY_CLASS_DIRECTORY_READ,
   Permission.QUERY_CLASS_CURRICULUM_READ,
   Permission.QUERY_STUDENT_DIRECTORY_READ,
+  Permission.QUERY_ENROLLMENT_HISTORY_READ,
   Permission.QUERY_OVERVIEW_READ,
   Permission.STAFF_READ,
   Permission.GRADE_READ,
@@ -27,6 +28,7 @@ const WEBAPP_READ_PERMISSIONS: readonly Permission[] = [
   Permission.QUERY_CALENDAR_READ,
   Permission.QUERY_ATTENDANCE_READ,
   Permission.QUERY_STUDENT_DETAIL_READ,
+  Permission.QUERY_REPORT_CARD_DETAIL_READ,
 ];
 
 const EDUCATOR_PERMISSIONS: readonly Permission[] = [

@@ -6,7 +6,7 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 
 | Script | Purpose |
 |--------|---------|
-| `bun seed:all` / `bun seed:init` | Full demo seed through `/core/*` (same entry point) |
+| `bun seed:all` / `bun seed:init` | Full demo seed (`devSeedDataset`) through `/core/*` (same entry point) |
 | `bun seed:auth` | Better Auth accounts only |
 | `bun seed:auth:link` | Re-link auth subjects to staff/guardian records |
 | `bun seed:smoke` | Sign-in + `/core/authorization/effective-grants` |
