@@ -1,3 +1,4 @@
+/* eslint-disable node/no-process-env -- test harness reads optional R2 credentials from the developer environment */
 import { isR2FileStorageConfigured } from "@edaya/adaptor-r2";
 import { type Environment, parseEnv } from "@/runtime";
 import { loadDotenvFiles } from "@/runtime/shared/env/local-loader";

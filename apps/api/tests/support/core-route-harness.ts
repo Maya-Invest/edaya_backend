@@ -40,7 +40,7 @@ import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
 setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
 
-export { createPgliteTestEnv, pgliteEnv, isR2ConfiguredForTests } from "./pglite-env";
+export { createPgliteTestEnv, isR2ConfiguredForTests, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency } from "@/http/dependencies/session-actor";
 
 /** Backward-compatible aliases used by integration-tests. */
