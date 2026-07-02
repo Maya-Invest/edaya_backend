@@ -1,5 +1,11 @@
 import type { DatabaseHandle } from "@/runtime/types";
 
+/** Required for Hyperdrive query caching (see Cloudflare postgres.js docs). */
+export const postgresDriverOptions = {
+  prepare: true,
+  fetch_types: false,
+} as const;
+
 export async function createPgliteSchoolDatabase(dataDir: string | null): Promise<DatabaseHandle> {
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
@@ -22,7 +28,7 @@ export async function createPostgresSchoolDatabase(
   const { default: postgres } = await import("postgres");
 
   const sqlClient = postgres(databaseUrl, {
-    prepare: false,
+    ...postgresDriverOptions,
     ...options.max === undefined ? {} : { max: options.max },
   });
   return {
