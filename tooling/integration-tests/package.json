@@ -17,14 +17,14 @@
     "lint:fix": "eslint src smoke --fix"
   },
   "devDependencies": {
+    "@edaya/adaptor-auth": "workspace:*",
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/api": "workspace:*",
-    "@edaya/adaptor-auth": "workspace:*",
+    "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
     "@edaya/core": "workspace:*",
     "@edaya/fixtures": "workspace:*",
     "@edaya/seeding": "workspace:*",
-    "@edaya/client-codegen": "file:../../../edaya-client-codegen",
     "@electric-sql/pglite": "^0.4.6",
     "@types/bun": "^1.3.14",
     "better-auth": "^1.6.16",
