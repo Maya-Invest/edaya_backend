@@ -27,6 +27,12 @@ import { isSameDate, normalizeDate } from '../../domain/shared/utils'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { assertNoClassGroupScheduleConflict } from './schedule-conflicts'
 
+function nextUtcCalendarDate(date: Date): Date {
+  const nextDate = new Date(date)
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+  return normalizeDate(nextDate)
+}
+
 const dayOfWeekMap: Record<number, DayOfWeek> = {
   0: DayOfWeek.Sunday,
   1: DayOfWeek.Monday,
@@ -718,10 +724,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
         || (event.scopeKind === CalendarEventScopeKind.ClassGroup && event.scopeId === classGroup.id)
         || (event.scopeKind === CalendarEventScopeKind.GradeLevel && event.scopeId === classGroup.gradeLevelId)
       if (event.isNonSchoolDay && appliesToClass) {
-        const current = new Date(event.startDate)
-        while (current <= event.endDate) {
+        let current = normalizeDate(event.startDate)
+        const eventEndDate = normalizeDate(event.endDate)
+        while (current <= eventEndDate) {
           nonSchoolDates.add(current.toDateString())
-          current.setDate(current.getDate() + 1)
+          current = nextUtcCalendarDate(current)
         }
       }
     }
@@ -769,9 +776,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private nextCalendarDate(date: Date): Date {
-    const nextDate = new Date(date)
-    nextDate.setDate(nextDate.getDate() + 1)
-    return normalizeDate(nextDate)
+    return nextUtcCalendarDate(date)
   }
 
   private async findCancelledLessonSession(scheduleId: string, date: Date): Promise<LessonSession | undefined> {

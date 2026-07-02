@@ -125,6 +125,35 @@ describe('SchoolService scheduling workflows', () => {
     expect(savedLessonSessions.has('sched-fri:2026-05-29')).toBe(false)
   })
 
+  test('materializeSchedule completes across a full academic year including DST spring-forward', async () => {
+    const { savedLessonSessions, service } = createSchedulingContext({
+      schedules: [
+        {
+          id: 'sched-mon',
+          schoolId: 'sch1',
+          classGroupId: 'cg_daily',
+          scheduleKind: ScheduleKind.Lesson,
+          title: 'Math',
+          isRecurring: true,
+          dayOfWeek: DayOfWeek.Monday,
+          startTime: '08:00',
+          endTime: '09:00',
+          classSubjectId: 'cs1',
+        },
+      ],
+      academicYear: {
+        startDate: new Date('2025-09-01T00:00:00Z'),
+        endDate: new Date('2026-07-03T00:00:00Z'),
+      },
+    })
+
+    const result = await service.schedulingWorkflow.materializeSchedule({ scheduleId: 'sched-mon' })
+
+    expect(result.length).toBeGreaterThan(40)
+    expect(savedLessonSessions.has('sched-mon:2026-03-09')).toBe(true)
+    expect(savedLessonSessions.has('sched-mon:2026-03-16')).toBe(true)
+  })
+
   test('recordDailyAttendance creates a daily attendance occurrence and record through managed services', async () => {
     const { mockAtomic, mockPolicy, mockRepos, savedDailyAttendances, service } = createSchedulingContext()
 

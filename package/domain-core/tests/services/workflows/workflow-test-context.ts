@@ -665,6 +665,10 @@ export function createSchedulingContext({
   activeEnrollment = true,
   schedules = [],
   calendarEvents = [],
+  academicYear = {
+    startDate: new Date('2026-01-01T00:00:00Z'),
+    endDate: new Date('2026-12-31T00:00:00Z'),
+  },
   notificationGateway = noOpNotificationGateway,
 }: {
   classGroupAttendanceMode?: AttendanceMode
@@ -673,6 +677,7 @@ export function createSchedulingContext({
   activeEnrollment?: boolean
   schedules?: any[]
   calendarEvents?: any[]
+  academicYear?: { startDate: Date, endDate: Date }
   notificationGateway?: NotificationGatewayPort
 } = {}) {
   const savedLessonSessions = new Map<string, LessonSession>([
@@ -777,8 +782,8 @@ export function createSchedulingContext({
       findById: mock(async () => ({
         id: 'ay1',
         schoolId: 'sch1',
-        startDate: new Date('2026-01-01T00:00:00Z'),
-        endDate: new Date('2026-12-31T00:00:00Z'),
+        startDate: academicYear.startDate,
+        endDate: academicYear.endDate,
       })),
     },
     classSubjects: {
