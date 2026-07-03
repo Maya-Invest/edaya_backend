@@ -19,6 +19,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@edaya/adaptor-auth": "workspace:*",
+        "@edaya/adaptor-local-fs": "workspace:*",
         "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
@@ -86,6 +87,17 @@
         "@types/bun": "^1.3.14",
         "better-auth": "^1.6.16",
         "drizzle-kit": "^0.30.4",
+      },
+    },
+    "package/adaptor-local-fs": {
+      "name": "@edaya/adaptor-local-fs",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/core": "workspace:*",
+        "hono": "^4.7.9",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
       },
     },
     "package/adaptor-novu": {
@@ -185,6 +197,20 @@
         "zod": "^3.24.4",
       },
     },
+    "tooling/local-files": {
+      "name": "@edaya/local-files",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/adaptor-local-fs": "workspace:*",
+        "dotenv": "^16.5.0",
+        "dotenv-expand": "^11.0.7",
+        "hono": "^4.7.9",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^6.0.2",
+      },
+    },
     "tooling/novu-ops": {
       "name": "@edaya/novu-ops",
       "version": "0.0.1",
@@ -204,6 +230,8 @@
         "@edaya/adaptor-r2": "workspace:*",
         "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
         "@electric-sql/pglite": "^0.4.6",
+        "dotenv": "^16.5.0",
+        "dotenv-expand": "^11.0.7",
       },
       "devDependencies": {
         "@types/bun": "^1.3.14",
@@ -352,6 +380,8 @@
 
     "@edaya/adaptor-auth": ["@edaya/adaptor-auth@workspace:package/adaptor-auth"],
 
+    "@edaya/adaptor-local-fs": ["@edaya/adaptor-local-fs@workspace:package/adaptor-local-fs"],
+
     "@edaya/adaptor-novu": ["@edaya/adaptor-novu@workspace:package/adaptor-novu"],
 
     "@edaya/adaptor-postgres": ["@edaya/adaptor-postgres@workspace:package/adaptor-postgres"],
@@ -371,6 +401,8 @@
     "@edaya/fixtures": ["@edaya/fixtures@workspace:tooling/fixtures"],
 
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:tooling/integration-tests"],
+
+    "@edaya/local-files": ["@edaya/local-files@workspace:tooling/local-files"],
 
     "@edaya/novu-ops": ["@edaya/novu-ops@workspace:tooling/novu-ops"],
 
@@ -1681,6 +1713,8 @@
     "@better-auth/core/zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "@cspotcode/source-map-support/@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
+
+    "@edaya/repo/@edaya/client-codegen": ["@edaya/client-codegen@github:Maya-Invest/edaya-client-codegen#b8c0d72", { "dependencies": { "openapi-typescript": "^7.13.0" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }, "Maya-Invest-edaya-client-codegen-b8c0d72", "sha512-wI6aD2otzngJx2dGz+iKgQXzP8tsZQQb4HJGyf/Nmcl2pPbkTjBkgFaPJrEHYp/VC3IGGQOyWW64rf2KFPDdFA=="],
 
     "@es-joy/jsdoccomment/comment-parser": ["comment-parser@1.4.5", "", {}, "sha512-aRDkn3uyIlCFfk5NUA+VdwMmMsh8JGhc4hapfV4yxymHGQ3BVskMQfoXGpCo5IoBuQ9tS5iiVKhCpTcB4pW4qw=="],
 

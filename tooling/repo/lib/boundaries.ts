@@ -40,7 +40,7 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     pattern: /from ["']@\//,
     searchPath: 'package/domain-core/src',
   },
-  ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-r2'].map(
+  ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports adaptor-auth',
       pattern: /from ["']@edaya\/adaptor-auth/,

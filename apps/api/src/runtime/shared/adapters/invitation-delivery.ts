@@ -6,7 +6,7 @@ import type { Environment } from "@/runtime/shared/env/schema";
 export function resolveInvitationDelivery(
   env: Environment | undefined,
 ): InvitationDeliveryPort {
-  if (!env?.NOVU_SECRET_KEY) {
+  if (!env || env.RUNTIME === "in-memory" || !env.NOVU_SECRET_KEY) {
     return noOpInvitationDeliveryPort;
   }
 

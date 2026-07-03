@@ -59,6 +59,12 @@ export const EnvSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   /** R2 bucket name — separate bucket per environment */
   R2_BUCKET_NAME: z.string().min(1).optional(),
+  /** Local dev file storage service base URL (default http://localhost:9200) */
+  LOCAL_FILES_URL: z.string().url().optional(),
+  /** Local dev file storage root directory (default .data/files) */
+  LOCAL_FILES_ROOT: z.string().min(1).optional(),
+  /** Shared secret for local file storage tokens and internal API (defaults to BETTER_AUTH_SECRET) */
+  LOCAL_FILES_SECRET: z.string().min(1).optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema> & {

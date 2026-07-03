@@ -22,7 +22,7 @@ const remoteDatabaseName = wranglerEnv === 'staging' ? 'edaya-auth-staging' : 'e
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = path.resolve(packageRoot, '../..')
-const apiWrangler = path.resolve(repoRoot, 'apps/api/wrangler.toml')
+const apiWrangler = path.resolve(repoRoot, 'apps/api/wrangler.jsonc')
 
 function run(label: string, command: string, args: string[]) {
   console.log(`\n> ${label}`)

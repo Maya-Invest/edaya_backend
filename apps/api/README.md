@@ -8,14 +8,14 @@ Hono API for Edaya Core (`@edaya/api`).
 
 ```sh
 cp .env.example .env   # from apps/api
-bun dev                # http://localhost:9999
+bun dev                # http://localhost:9999 (+ local-files on :9200)
 ```
 
-**Worker runtime** (Cloudflare):
+**Worker-local smoke** (Miniflare — same wiring as production):
 
 ```sh
 cp .dev.vars.example .dev.vars
-bun run dev:worker
+bun run dev:worker-local
 ```
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
@@ -32,7 +32,9 @@ GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authori
 
 Default dev credentials (after `bun run seed:auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 
-Set `RUNTIME=local` in `.env` (default). School data and auth SQLite live under repo-root `.data/` (gitignored). Startup migrations run automatically for PGlite; Postgres on the local profile requires `RUN_MIGRATIONS_ON_STARTUP=true`. Tests use `RUNTIME=in-memory` with ephemeral PGlite. Workers require a real Postgres URL.
+`RUNTIME=local` uses persisted PGlite (`.data/school`) and SQLite auth (`.data/auth.sqlite`). Tests use `RUNTIME=in-memory` with ephemeral storage. Vendor adaptors (Hyperdrive Postgres, D1, R2) are for `RUNTIME=worker` via `bun dev:worker-local` or deploy.
+
+See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundaries.md).
 
 ## Build & deploy
 

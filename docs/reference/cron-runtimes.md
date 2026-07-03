@@ -5,7 +5,7 @@ Scheduled jobs are defined in `@edaya/core` (`package/domain-core/src/cron/`). `
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
 | **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `cd apps/cron && bun dev` or `bun run dev:cron` (root) |
-| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.toml` `[vars]` + secrets) | `cd apps/cron && bun run dev:worker` |
+| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.toml` `[vars]` + secrets) | `bun dev:cron:worker-local` |
 
 ## Environment variables
 
@@ -14,7 +14,7 @@ Same schema for both profiles (`apps/cron/src/runtime/shared/env/schema.ts`):
 | Variable | local | worker |
 |----------|-------|--------|
 | `RUNTIME` | `local` (default) | `worker` |
-| `DATABASE_URL` | `pglite:.data/school` (persisted dev), `pglite` (in-memory), or `postgres://…` | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
+| `DATABASE_URL` | `pglite:.data/school` (persisted dev only) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `LOG_LEVEL` | `.env` | `[vars]` |
 | `RUN_MIGRATIONS_ON_STARTUP` | optional override | N/A (migrations pre-applied) |
 | `CRON_JOB_KEYS` | optional comma-separated filter | N/A (resolved from cron trigger) |
@@ -36,7 +36,7 @@ Runs all registered cron jobs once and exits. School DB migrations run on startu
 
 ```sh
 cp apps/api/.dev.vars apps/cron/.dev.vars   # reuse Hyperdrive local connection string
-cd apps/cron && bun run dev:worker
+cd apps/cron && bun run dev:worker-local
 ```
 
 - **`wrangler.toml`** — `[vars]`, Hyperdrive binding, `[[triggers]]` crons

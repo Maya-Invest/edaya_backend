@@ -18,6 +18,7 @@ edaya_backend/
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
+│   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
 │   └── generated-api-client/             @edaya/api-client — typed API SDK
 └── tooling/
@@ -81,7 +82,7 @@ flowchart TB
 |---------|-------|------------|---------------|
 | **local** | `apps/api/src/entries/local.ts` | `.env` (dotenv) | `cd apps/api && bun dev` |
 | **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
-| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.toml` + `.dev.vars` | `cd apps/api && bun run dev:worker` |
+| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun dev:worker-local` |
 
 `local` uses persisted PGlite by default (`DATABASE_URL=pglite:.data/school`). `in-memory` uses ephemeral PGlite for fast tests. Workers require a real Postgres URL via Hyperdrive.
 
@@ -93,7 +94,7 @@ flowchart TB
 - `apps/api/src/http/` — Hono app, dependency injection middleware
 - `package/domain-core/src/` — domains, entities, authorization, services, ports
 
-More detail: [docs/reference/api-folder-structure.md](./docs/reference/api-folder-structure.md), [docs/reference/api-runtimes.md](./docs/reference/api-runtimes.md), [docs/reference/cross-repo-workflow.md](./docs/reference/cross-repo-workflow.md).
+More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-boundaries.md), [docs/reference/api-runtimes.md](./docs/reference/api-runtimes.md), [docs/reference/cross-repo-workflow.md](./docs/reference/cross-repo-workflow.md).
 
 ## Workspace packages
 
@@ -162,7 +163,7 @@ cd apps/api && bun dev          # Node API
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-cd apps/api && bun run dev:worker
+bun dev:worker-local
 ```
 
 See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database options, dev seed, and troubleshooting.
@@ -184,7 +185,7 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | `bun run deploy:api:staging` | Deploy API to Cloudflare Workers (staging) |
 | `bun run seed:smoke:staging` | Sign-in + effective-grants smoke against staging URL |
 | `cd apps/api && bun dev` | API only (Node, port 9999) |
-| `bun run dev:worker` | API only (Cloudflare Worker) |
+| `bun dev:worker-local` | API worker-local smoke (Miniflare; alias: `bun dev:worker`) |
 | `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
 | `bun run deploy:api` | Deploy API to Cloudflare Workers (production) |
 
@@ -285,7 +286,7 @@ Tests are split by layer. Run everything with `bun run test` (repository tooling
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | `pglite:.data/school` (persisted dev), `pglite` (in-memory tests), or `postgres://…` |
+| `DATABASE_URL` | `pglite:.data/school` (local), `pglite` (in-memory tests); Postgres via Hyperdrive on `worker` |
 | `BETTER_AUTH_SECRET` | Auth signing secret |
 | `BETTER_AUTH_URL` | Public API URL for auth callbacks |
 | `TRUSTED_ORIGINS` | CORS / auth origins (e.g. webapp URL) |

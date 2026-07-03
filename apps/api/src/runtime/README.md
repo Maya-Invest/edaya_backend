@@ -2,7 +2,7 @@
 
 Three runtime profiles: **in-memory** (tests), **local** (dev), **worker** (Cloudflare). Shared wiring lives under `shared/`.
 
-See [docs/reference/api-runtimes.md](../../../../docs/reference/api-runtimes.md) for env vars and commands.
+See [docs/reference/runtime-boundaries.md](../../../../docs/reference/runtime-boundaries.md) for the adapter contract and [api-runtimes.md](../../../../docs/reference/api-runtimes.md) for env vars and commands.
 
 ## Public API
 

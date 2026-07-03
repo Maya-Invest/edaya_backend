@@ -40,7 +40,7 @@ export function resolveNotificationGateway(
   env: Environment | undefined,
   logger?: Logger,
 ): NotificationGatewayPort {
-  if (!env || env.LOG_LEVEL === "silent") {
+  if (!env || env.LOG_LEVEL === "silent" || env.RUNTIME === "in-memory") {
     return noOpNotificationGateway;
   }
 

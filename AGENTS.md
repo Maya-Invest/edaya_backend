@@ -16,6 +16,7 @@ Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI wor
 | Monorepo layout | [README.md](README.md) |
 | API folder structure | [docs/reference/api-folder-structure.md](docs/reference/api-folder-structure.md) |
 | API runtimes | [docs/reference/api-runtimes.md](docs/reference/api-runtimes.md) |
+| Runtime boundaries | [docs/reference/runtime-boundaries.md](docs/reference/runtime-boundaries.md) |
 | Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
 | Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
 | Package boundaries | [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md) |

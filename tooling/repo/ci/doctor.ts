@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 import process from 'node:process'
 import { $ } from 'bun'
+import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const expectedEnvExamples = [
@@ -34,4 +35,14 @@ if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0) {
 }
 else {
   console.log('Repository environment file checks passed.')
+}
+
+const runtimeBoundaryViolations = findRuntimeBoundaryViolations(repoRoot)
+if (runtimeBoundaryViolations.length > 0) {
+  console.error('Runtime boundary checks failed:')
+  runtimeBoundaryViolations.forEach(violation => console.error(`  - ${violation.label}: ${violation.message}`))
+  process.exitCode = 1
+}
+else {
+  console.log('Runtime boundary checks passed.')
 }

@@ -2,13 +2,15 @@
 
 The API runs as one of three **profiles**: `in-memory`, `local`, or `worker`. Each profile declares which adapters to wire (school DB, auth DB, file storage, notifications). Configuration is validated through the same `EnvSchema`; only **how** env values are loaded differs.
 
+**Contract:** [runtime-boundaries.md](./runtime-boundaries.md) — adapter matrix and bootstrap rules.
+
 Scheduled cron jobs use a separate app: see [cron-runtimes.md](./cron-runtimes.md).
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `cd apps/api && bun dev` |
+| **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `bun dev` (root) |
 | **in-memory** | *(tests only)* | harness env | `bun test` in `apps/api` |
-| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.toml` `[vars]` + secrets) | `cd apps/api && bun run dev:worker` |
+| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun dev:worker-local` (alias: `bun dev:worker`) |
 
 ## Environment variables
 
@@ -17,15 +19,16 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | Variable | in-memory / local | worker |
 |----------|-------------------|--------|
 | `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
-| `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory), or `postgres://…` | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
+| `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `AUTH_DATABASE_PATH` | ignored on `in-memory`; `.data/auth.sqlite` on `local` | N/A — uses `AUTH_DB` D1 binding |
-| `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite, off for Postgres | N/A — migrations are pre-applied |
+| `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite | N/A — migrations are pre-applied |
 | `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
 | `COOKIE_DOMAIN` | optional `.env` | `[vars]` (production split-domain) |
 | `GRANTS_CACHE_TTL_MS` | optional `.env` | optional secret / `[vars]` |
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
+| `LOCAL_FILES_*` | local profile only | ignored |
 
 `dotenv` is **only** used by process profiles (`local` / `in-memory`) in non-production environments (`runtime/shared/env/local-loader.ts`).
 
@@ -35,22 +38,24 @@ On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdriv
 
 | Adapter | in-memory | local | worker |
 |---------|-----------|-------|--------|
-| School DB | PGlite (ephemeral) | PGlite (`.data/`) or Postgres | Postgres via Hyperdrive |
+| School DB | PGlite (ephemeral) | PGlite persisted (`.data/school`) | Postgres via Hyperdrive |
 | Auth DB | SQLite `:memory:` | SQLite file | D1 `AUTH_DB` |
-| Migrations on startup | yes | PGlite yes; Postgres explicit | no |
-| File storage (no R2) | no-op | local dev filesystem | no-op |
-| Notifications (no Novu) | no-op | message-delivery log | no-op |
+| Migrations on startup | yes | yes (PGlite default) | no |
+| File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun dev` | R2 (required) |
+| Notifications | no-op | Novu* or log/no-op | Novu* or no-op |
 
-Novu and R2 upgrade adapters on any profile when their env vars are set.
+\*Novu is the documented vendor exception on `local` and `worker`. See [runtime-boundaries.md](./runtime-boundaries.md).
+
+Bootstrap resolvers do not upgrade adaptors when unrelated vendor env vars are present.
 
 ## Local dev
 
 ```sh
 cp apps/api/.env.example apps/api/.env
-cd apps/api && bun dev
+bun dev
 ```
 
-Set `RUNTIME=local` (default). School data and auth SQLite live under repo-root `.data/` (gitignored).
+Set `RUNTIME=local` (default). `bun dev` starts the API and `@edaya/local-files` together. School data and auth SQLite live under repo-root `.data/` (gitignored).
 
 Production containers using the local entry should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 
@@ -58,10 +63,12 @@ Production containers using the local entry should inject env vars directly — 
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-cd apps/api && bun run dev:worker
+cd apps/api && bun run dev:worker-local
 ```
 
-- **`wrangler.toml`** — non-secret `[vars]` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive + D1 bindings
+Worker-local smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
+
+- **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive + D1 bindings
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
 - **School DB** — Postgres connection via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev)
 - **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/adaptor-auth/drizzle/auth/`

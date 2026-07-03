@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "bun src/entries/local.ts",
-    "dev:worker": "wrangler dev --env-file .dev.vars",
+    "dev:worker-local": "wrangler dev --env-file .dev.vars",
+    "dev:worker": "bun run dev:worker-local",
     "start": "node dist/local.js",
     "deploy:worker": "wrangler deploy --env production",
     "deploy:worker:dry-run": "wrangler deploy --env production --dry-run",

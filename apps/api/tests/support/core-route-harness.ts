@@ -9,6 +9,7 @@ import {
 } from "@/http/dependencies/session-actor";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
+import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ApiRuntime } from "@/runtime/types";
 import { resetApiRuntimesForTests } from "@/runtime/local/registry";
@@ -36,11 +37,15 @@ import {
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
+import {
+  createLocalProfileTestEnv,
+  startEmbeddedLocalFilesServer,
+} from "./embedded-local-files";
 
 const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
 setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
 
-export { createPgliteTestEnv, isR2ConfiguredForTests, pgliteEnv } from "./pglite-env";
+export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency } from "@/http/dependencies/session-actor";
 
 /** Backward-compatible aliases used by integration-tests. */
@@ -109,6 +114,11 @@ export interface CoreRouteTestAppOptions {
   sessionActor?: ReturnType<typeof createSessionActorDependency>;
   /** When false, caller must close the runtime (e.g. shared beforeAll fixtures). */
   autoCleanup?: boolean;
+  /**
+   * Use RUNTIME=local with an embedded local-files server (for HTTP upload integration tests).
+   * Default: in-memory runtime.
+   */
+  withEmbeddedLocalFiles?: boolean;
 }
 
 export function wrapAuthWithVerifiedAssurance(auth: AuthSessionProvider): AuthSessionProvider {
@@ -174,8 +184,23 @@ export function createCoreRouteTestDependencies(
 export async function createCoreRouteTestApp(
   options: CoreRouteTestAppOptions = {},
 ): Promise<AuthenticatedRouteContext> {
-  const env = createIsolatedPgliteTestEnv();
-  const runtime = await buildInMemoryApiRuntime(env);
+  let embeddedLocalFiles: ReturnType<typeof startEmbeddedLocalFilesServer> | undefined;
+  const env = options.withEmbeddedLocalFiles
+    ? (() => {
+        embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.BETTER_AUTH_SECRET);
+        return createLocalProfileTestEnv(embeddedLocalFiles);
+      })()
+    : createIsolatedPgliteTestEnv();
+
+  if (embeddedLocalFiles) {
+    onTestFinished(async () => {
+      embeddedLocalFiles?.stop();
+    });
+  }
+
+  const runtime = env.RUNTIME === "local"
+    ? await buildLocalApiRuntime(env)
+    : await buildInMemoryApiRuntime(env);
   if (options.autoCleanup !== false) {
     registerTestRuntimeCleanup(runtime);
   }

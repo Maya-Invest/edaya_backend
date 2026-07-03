@@ -24,8 +24,8 @@ cp apps/webapp/.env.example apps/webapp/.env
 ## Start API + webapp
 
 ```sh
-# Terminal 1 — API on http://localhost:9999 (from edaya_backend/)
-cd edaya_backend && bun --filter @edaya/api dev
+# Terminal 1 — API on http://localhost:9999 + local file storage on http://localhost:9200 (from edaya_backend/)
+cd edaya_backend && bun dev
 
 # Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
 cd edaya_web && bun --filter @edaya/webapp dev
@@ -51,81 +51,35 @@ See [webapp-migration-plan.md](../sprints/archive/webapp-migration-plan.md) for 
 
 ## API runtimes
 
-The API uses explicit **profiles** (`local`, `in-memory`, `worker`). Local dev runs the `local` profile (`RUNTIME=local` in `apps/api/.env`, default).
+The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtime-boundaries.md](./runtime-boundaries.md) for the adapter contract.
 
 | Profile | Command | School DB | Auth DB |
 |---------|---------|-----------|---------|
-| **local** | `cd apps/api && bun dev` | PGlite `.data/school` (default) or Postgres | SQLite `.data/auth.sqlite` |
-| **worker** | `cd apps/api && bun run dev:worker` | Postgres via Hyperdrive | D1 |
+| **local** | `bun dev` | PGlite `.data/school` | SQLite `.data/auth.sqlite` |
+| **worker** | `bun dev:worker-local` | Postgres via Hyperdrive | D1 |
 
-Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` auth). Workers use `wrangler.toml` + `.dev.vars` instead of dotenv. See [api-runtimes.md](./api-runtimes.md).
+Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` auth). Workers use `wrangler.jsonc` + `.dev.vars` instead of dotenv. See [api-runtimes.md](./api-runtimes.md).
 
-## API database options (local profile)
+## API database (local profile)
 
-Set `RUNTIME=local` (default). Override `DATABASE_URL` only when you need Postgres instead of PGlite:
+`RUNTIME=local` with `DATABASE_URL=pglite:.data/school` (default). Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), both under repo-root `.data/`.
 
-| `DATABASE_URL` | Use case |
-|----------------|----------|
-| `pglite:.data/school` | Default local dev — PGlite persisted under repo-root `.data/` (gitignored) |
-| `postgres://…` | Real Postgres (Docker, Neon); set `RUN_MIGRATIONS_ON_STARTUP=true` on first boot |
+## File storage (local dev)
 
-Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), also under repo-root `.data/`.
+`bun dev` starts the API and **`@edaya/local-files`** together. Uploads persist under repo-root `.data/files/` (gitignored).
 
-## File storage (R2)
+| Variable | Default |
+|----------|---------|
+| `LOCAL_FILES_URL` | `http://localhost:9200` |
+| `LOCAL_FILES_ROOT` | `.data/files` |
+| `LOCAL_FILES_PORT` | `9200` (service only) |
+| `LOCAL_FILES_SECRET` | `BETTER_AUTH_SECRET` |
 
-Local `bun dev` uses the same `@edaya/adaptor-r2` presigned-URL flow as staging and production when R2 credentials are present. No Worker R2 bindings and no `wrangler dev` required.
+Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentId}/content`. The browser PUTs to `LOCAL_FILES_URL` (CORS allows origins from `TRUSTED_ORIGINS`).
 
-1. Create the dev bucket once: `wrangler r2 bucket create edaya-files-dev`
-2. Create an R2 API token (Object Read & Write) in the Cloudflare dashboard
-3. Add to `apps/api/.dev.vars` (shared with `wrangler dev`):
+### Worker-local smoke (R2, Hyperdrive, D1)
 
-```env
-R2_BUCKET_NAME=edaya-files-dev
-R2_ENDPOINT=https://<jurisdiction-host>.r2.cloudflarestorage.com
-R2_ACCESS_KEY_ID=...
-R2_SECRET_ACCESS_KEY=...
-# Optional — your Cloudflare account id from the dashboard; may differ from the endpoint hostname
-R2_ACCOUNT_ID=...
-```
-
-`R2_ENDPOINT` is the jurisdiction-specific S3 API URL from the R2 dashboard and is used for all presigned uploads/downloads. It does **not** need to share the same id as `R2_ACCOUNT_ID`. When `R2_ENDPOINT` is unset, the API falls back to `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`.
-
-`bun dev` loads `.env` then `.dev.vars` automatically. On startup you should see `Using R2 file storage` in API logs.
-
-Without R2 credentials, local dev uses in-memory file storage (uploads do not persist across restarts).
-
-### R2 TLS troubleshooting
-
-Quick credential test (loads `apps/api/.dev.vars`, prints a `curl` PUT, runs it, then cleans up):
-
-```sh
-bun run test:r2
-# print curl only, without running it:
-bun run test:r2 -- --curl-only
-```
-
-Verify your account endpoint:
-
-```sh
-curl -I "$R2_ENDPOINT"
-# or, when R2_ENDPOINT is unset:
-curl -I "https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com"
-```
-
-| Result | Meaning |
-|--------|---------|
-| HTTP response (any status) | TLS is provisioned — R2 presigned uploads should work |
-| `SSL alert handshake failure` or connection refused | Account-scoped TLS not provisioned yet — wait or contact Cloudflare support |
-
-Profile photos and uploads use `/core/files/{attachmentId}/content`.
-
-The webapp uploads directly to R2 presigned URLs from the browser. Configure bucket CORS once per bucket (allows `http://localhost:5173` by default, plus any origins in `TRUSTED_ORIGINS`):
-
-```sh
-bun run configure:r2-cors
-```
-
-Uses `wrangler r2 bucket cors set` when you are logged in (`wrangler login`); falls back to the S3 API with your R2 token. Re-run after adding staging/production app URLs to `TRUSTED_ORIGINS`.
+To exercise vendor adaptors locally, use **`bun dev:worker-local`** with credentials in `apps/api/.dev.vars` — not `bun dev`. See [api-runtimes.md](./api-runtimes.md).
 
 ## Browse local database tables
 

@@ -9,10 +9,13 @@
     "tooling/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --filter=@edaya/api",
-    "dev:worker": "bun --filter @edaya/api dev:worker",
+    "dev": "bun tooling/repo/dev/start-local-dev.ts",
+    "dev:local-files": "bun --filter @edaya/local-files dev",
+    "dev:worker-local": "bun --filter @edaya/api dev:worker-local",
+    "dev:worker": "bun run dev:worker-local",
     "dev:cron": "bun --filter @edaya/cron dev",
-    "dev:cron:worker": "bun --filter @edaya/cron dev:worker",
+    "dev:cron:worker-local": "bun --filter @edaya/cron dev:worker-local",
+    "dev:cron:worker": "bun run dev:cron:worker-local",
     "seed": "bun --filter @edaya/seeding seed:all",
     "seed:auth": "bun --filter @edaya/seeding seed:auth",
     "seed:auth:link": "bun --filter @edaya/seeding seed:auth:link",

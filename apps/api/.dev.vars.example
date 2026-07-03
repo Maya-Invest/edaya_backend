@@ -1,42 +1,36 @@
+# -----------------------------------------------------------------------------
+# Edaya API — secrets for `bun dev:worker-local` (worker-local smoke via Miniflare)
+# Copy to `.dev.vars` (gitignored). Loaded by wrangler (`--env-file`) and dotenv.
+# Non-secret defaults live in `wrangler.jsonc` [vars] or `.env`.
+# `bun dev` (RUNTIME=local) does not use R2 or Hyperdrive — see runtime-boundaries.md.
+# -----------------------------------------------------------------------------
+
+# --- Required ---
 BETTER_AUTH_SECRET=dev-secret-change-in-production
 
-# Production Worker secrets (Cloudflare dashboard or `wrangler secret put --env production`):
-#   wrangler secret put BETTER_AUTH_SECRET --env production
-# Optional:
-#   wrangler secret put SYSTEM_ACTOR_SECRET --env production
-
-# Hyperdrive origin DB for `bun run dev:worker`.
-# Wrangler reads this via --env-file (see package.json dev:worker script).
+# --- Hyperdrive (worker-local dev) ---
+# Origin Postgres for the Hyperdrive binding in wrangler.jsonc.
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
 
-# Optional Node / wrangler fallback when Hyperdrive binding is unavailable
-# DATABASE_URL=postgres://admin:admin@localhost:5432/edaya
-
-# Optional local SQLite file for Better Auth on the Node runtime
-# AUTH_DATABASE_PATH=.data/auth.sqlite
-
-# Optional: run once before first wrangler dev
-# bun run db:migrate:dev        # Neon school DB + local D1 auth
-# bun run db:migrate:auth:remote # production D1 auth only
-
-# R2 file storage — S3-compatible API only (no wrangler [[r2_buckets]] binding).
-# Loaded by `bun dev` (Node) and `wrangler dev --env-file .dev.vars` (Worker).
-# Buckets: edaya-files-dev | -staging | -production. Create an R2 API token (Object Read & Write).
+# --- R2 file storage (required on RUNTIME=worker) ---
+# Buckets: edaya-files-dev | -staging | -production. R2_BUCKET_NAME defaults in wrangler.jsonc.
 # R2_ENDPOINT=https://<jurisdiction-host>.r2.cloudflarestorage.com
-# R2_ACCOUNT_ID=   # optional; dashboard account id — may differ from the endpoint hostname
+# R2_ACCOUNT_ID=                          # optional when R2_ENDPOINT is set
 # R2_ACCESS_KEY_ID=
 # R2_SECRET_ACCESS_KEY=
-# R2_BUCKET_NAME is set per env in wrangler.toml [vars]; override here only if needed:
-# R2_BUCKET_NAME=edaya-files-dev
+# R2_BUCKET_NAME=edaya-files-dev          # override wrangler [vars] if needed
+#
+# Deployed: wrangler secret put R2_ACCESS_KEY_ID --env staging
 
-# Staging / production Worker secrets (same R2 keys or per-env tokens):
-#   wrangler secret put R2_ACCOUNT_ID --env staging
-#   wrangler secret put R2_ACCESS_KEY_ID --env staging
-#   wrangler secret put R2_SECRET_ACCESS_KEY --env staging
+# --- Novu Cloud (notifications + auth emails) ---
+# NOVU_SECRET_KEY=
+# NOVU_API_URL=https://eu.api.novu.co
+# NOVU_WEBHOOK_SECRET=whsec_...
+# Apply workflows once: bun novu:bootstrap:apply
 
-# Dev bootstrap — enabled by default when NODE_ENV=development.
-# POST /core/onboarding/register-school (authenticated, unlinked users only)
-# ALLOW_PUBLIC_SCHOOL_REGISTRATION=true
+# --- Optional ---
+# GRANTS_CACHE_TTL_MS=300000
 
-# Auth emails (OTP sign-in + signup verification) require NOVU_SECRET_KEY and Novu email integration.
-# Apply workflows once: bun novu:bootstrap:apply (includes auth.otp + auth.email_verification)
+# --- One-time setup before first `dev:worker-local` ---
+# bun run db:migrate:dev                 # Neon school DB + local D1 auth
+# bun run db:migrate:auth:remote         # production D1 auth only

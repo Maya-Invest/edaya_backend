@@ -12,7 +12,10 @@ export interface ResolvedAuthEmailDelivery {
 }
 
 export function isAuthEmailDeliveryConfigured(env: Environment | undefined): boolean {
-  return Boolean(env?.NOVU_SECRET_KEY?.trim());
+  if (!env || env.RUNTIME === "in-memory") {
+    return false;
+  }
+  return Boolean(env.NOVU_SECRET_KEY?.trim());
 }
 
 export function shouldRequireEmailVerification(env: Environment | undefined): boolean {
@@ -28,7 +31,7 @@ export function shouldRequireEmailVerification(env: Environment | undefined): bo
 export function resolveAuthEmailDelivery(
   env: Environment | undefined,
 ): ResolvedAuthEmailDelivery {
-  if (!env?.NOVU_SECRET_KEY) {
+  if (!env || env.RUNTIME === "in-memory" || !env.NOVU_SECRET_KEY) {
     return { mode: "log", port: null };
   }
 

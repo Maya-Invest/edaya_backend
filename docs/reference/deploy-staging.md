@@ -26,13 +26,13 @@ bunx wrangler hyperdrive create edaya-staging \
   --connection-string="$STAGING_DATABASE_URL"
 ```
 
-Copy the returned config `id` into `apps/api/wrangler.toml` → `[[env.staging.hyperdrive]].id` (replace placeholder `…000001`).
+Copy the returned config `id` into `apps/api/wrangler.jsonc` → `env.staging.hyperdrive[0].id` (replace placeholder `…000001`).
 
 **Do not commit** `STAGING_DATABASE_URL` — store it in `tooling/seeding/.env.staging` (gitignored) or your secret manager.
 
 ### 3. D1 auth database (staging)
 
-**Created:** `edaya-auth-staging` · `database_id = 2e55cf53-1b89-453f-ac17-3aab83fd8488` (already in `wrangler.toml`).
+**Created:** `edaya-auth-staging` · `database_id = 2e55cf53-1b89-453f-ac17-3aab83fd8488` (already in `wrangler.jsonc`).
 
 Auth migrations applied:
 
@@ -56,7 +56,7 @@ Attach routes in Cloudflare for:
 | `api-staging.edaya.softilab.dev` | `edaya-api-staging` |
 | `app-staging.edaya.softilab.dev` | `edaya-webapp-staging` |
 
-Routes are declared in `wrangler.toml`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
+Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
 
 ### 5. Wrangler secrets (API staging)
 
@@ -173,7 +173,7 @@ Reads `tooling/seeding/.env.staging` when present, or env vars:
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Deploy fails on Hyperdrive/D1 | Placeholder IDs still in `wrangler.toml` |
+| Deploy fails on Hyperdrive/D1 | Placeholder IDs still in `wrangler.jsonc` |
 | S5 sign-in fails on seed | Auth users missing — re-run `seed:init` (provisions auth before session bootstrap) |
 | `MISSING_OR_NULL_ORIGIN` on seed | Ensure `STAGING_APP_ORIGIN` is set in `tooling/seeding/.env.staging` (seed CLI sends it as `Origin`) |
 | `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale D1 row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
