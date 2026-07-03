@@ -3,5 +3,6 @@ import type { ScopeType } from './scope-type'
 
 export interface PermissionDefinition {
   permission: Permission
-  allowedScopes: readonly ScopeType[]
+  /** When omitted, permission is tenant-wide within the school (`scopeIds: ""`). */
+  scope?: ScopeType
 }

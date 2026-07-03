@@ -2,42 +2,59 @@ import type { PermissionDefinition } from './permission-definition'
 import type { ScopeType } from './scope-type'
 import { Permission } from './permission'
 
-const SCHOOL_ONLY: readonly ScopeType[] = ['school']
-const SCHOOL_AND_YEAR: readonly ScopeType[] = ['school', 'academic_year']
-const CLASS_SCOPED: readonly ScopeType[] = ['school', 'class_group', 'course_assignment', 'session']
-const TEACHING_SCOPED: readonly ScopeType[] = ['school', 'class_group', 'course_assignment']
-
 function buildDefinition(
   permission: Permission,
-  allowedScopes: readonly ScopeType[] = SCHOOL_ONLY,
+  scope?: ScopeType,
 ): PermissionDefinition {
-  return {
-    permission,
-    allowedScopes,
-  }
+  return scope ? { permission, scope } : { permission }
 }
 
-const ALLOWED_SCOPE_OVERRIDES: Partial<Record<Permission, readonly ScopeType[]>> = {
-  [Permission.GRADE_INPUT]: TEACHING_SCOPED,
-  [Permission.ATTENDANCE_RECORD]: [...TEACHING_SCOPED, 'session'],
-  [Permission.PAYMENT_RECORD]: SCHOOL_ONLY,
-  [Permission.COMMUNICATION_SEND]: ['school', 'class_group', 'student_group'],
-  [Permission.ACADEMIC_PROGRAM_READ]: ['school', 'academic_year', 'class_group'],
-  [Permission.ACADEMIC_PROGRAM_UPDATE]: ['school', 'academic_year', 'class_group'],
-  [Permission.ENROLLMENT_CREATE]: SCHOOL_AND_YEAR,
-  [Permission.STUDENT_READ]: ['school', 'class_group', 'student'],
-  [Permission.ATTENDANCE_READ]: CLASS_SCOPED,
-  [Permission.GRADE_READ]: CLASS_SCOPED,
-  [Permission.TIMETABLE_READ]: CLASS_SCOPED,
-  [Permission.TIMETABLE_CREATE]: CLASS_SCOPED,
-  [Permission.TIMETABLE_UPDATE]: CLASS_SCOPED,
-  [Permission.QUERY_STUDENT_DETAIL_READ]: ['school', 'student'],
+const PERMISSION_SCOPE_OVERRIDES: Partial<Record<Permission, ScopeType>> = {
+  // Class-group scoped
+  [Permission.ACADEMIC_PROGRAM_READ]: 'class_group',
+  [Permission.ACADEMIC_PROGRAM_UPDATE]: 'class_group',
+  [Permission.ACADEMIC_PROGRAM_ASSIGN]: 'class_group',
+  [Permission.QUERY_CLASS_DIRECTORY_READ]: 'class_group',
+  [Permission.QUERY_CLASS_CURRICULUM_READ]: 'class_group',
+  [Permission.ATTENDANCE_READ]: 'class_group',
+  [Permission.GRADE_READ]: 'class_group',
+  [Permission.TIMETABLE_READ]: 'class_group',
+  [Permission.TIMETABLE_CREATE]: 'class_group',
+  [Permission.TIMETABLE_UPDATE]: 'class_group',
+  [Permission.CLASS_LOGBOOK_READ]: 'class_group',
+  [Permission.COMMUNICATION_SEND]: 'class_group',
+  [Permission.QUERY_ATTENDANCE_READ]: 'class_group',
+  [Permission.QUERY_TIMETABLE_READ]: 'class_group',
+  [Permission.QUERY_CURRICULUM_PROGRESS_READ]: 'class_group',
+
+  // Class-subject scoped (teaching)
+  [Permission.GRADE_INPUT]: 'class_subject',
+  [Permission.GRADE_UPDATE]: 'class_subject',
+  [Permission.ATTENDANCE_RECORD]: 'class_subject',
+  [Permission.CLASS_LOGBOOK_CREATE]: 'class_subject',
+  [Permission.CLASS_LOGBOOK_UPDATE]: 'class_subject',
+  [Permission.DISCIPLINE_CREATE]: 'class_subject',
+  [Permission.EXAM_CONFIG_CREATE]: 'class_subject',
+  [Permission.EXAM_CONFIG_UPDATE]: 'class_subject',
+  [Permission.EXAM_CONFIG_READ]: 'class_subject',
+
+  // Portal query surfaces (computed grants; catalog marks student scope)
+  [Permission.QUERY_STUDENT_DETAIL_READ]: 'student',
+  [Permission.QUERY_ENROLLMENT_HISTORY_READ]: 'student',
+  [Permission.QUERY_REPORT_CARD_DETAIL_READ]: 'student',
+  [Permission.QUERY_COMMUNICATIONS_READ]: 'student',
+  [Permission.QUERY_CALENDAR_READ]: 'student',
+  [Permission.QUERY_OVERDUE_FEES_READ]: 'student',
+  [Permission.QUERY_GUARDIAN_SELF_READ]: 'student',
+
+  // Platform bootstrap
+  [Permission.PLATFORM_REGISTER_SCHOOL]: 'platform',
 }
 
 export function buildPermissionDefinitions(): Record<Permission, PermissionDefinition> {
   const definitions = {} as Record<Permission, PermissionDefinition>
   for (const permission of Object.values(Permission)) {
-    definitions[permission] = buildDefinition(permission, ALLOWED_SCOPE_OVERRIDES[permission])
+    definitions[permission] = buildDefinition(permission, PERMISSION_SCOPE_OVERRIDES[permission])
   }
   return definitions
 }

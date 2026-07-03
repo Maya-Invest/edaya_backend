@@ -181,6 +181,21 @@ export const staffRoleAssignmentScopeGrants = pgTable('staff_role_assignment_sco
   scopeEntityIds: jsonb('scope_entity_ids').notNull(),
 })
 
+export const staffPermissionAssignments = pgTable('staff_permission_assignments', {
+  id: text('id').primaryKey(),
+  staffId: text('staff_id').notNull(),
+  schoolId: text('school_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  permission: text('permission').notNull(),
+  scopeIds: text('scope_ids').notNull().default(''),
+  status: text('status').notNull(),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
+  sourceStaffAssignmentId: text('source_staff_assignment_id'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_assignments', table))
+
 // 8. Attachment Table
 export const attachments = pgTable('attachments', {
   id: text('id').primaryKey(),

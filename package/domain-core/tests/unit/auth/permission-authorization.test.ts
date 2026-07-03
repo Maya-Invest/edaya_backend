@@ -28,7 +28,6 @@ describe('permission catalog', () => {
   test('defines metadata for every permission', () => {
     for (const permission of Object.values(Permission)) {
       expect(permissionDefinitions[permission].permission).toBe(permission)
-      expect(permissionDefinitions[permission].allowedScopes.length).toBeGreaterThan(0)
     }
   })
 })

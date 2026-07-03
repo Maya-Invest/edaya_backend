@@ -3,6 +3,12 @@ import { createRouter } from "@/http/create-app";
 import type { AppBindings } from "@/http/types";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
+  getPermissionCatalogHandler,
+  getPermissionCatalogRoute,
+  postScopeRenderHandler,
+  postScopeRenderRoute,
+} from "@/routes/authorization.routes";
+import {
   createServiceAccountHandler,
   createServiceAccountRoute,
   listServiceAccountsHandler,
@@ -77,6 +83,8 @@ const router = createRouter()
 // Mount routes from route builders
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
+  .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
+  .openapi(postScopeRenderRoute, postScopeRenderHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)

@@ -7,6 +7,7 @@ const SPECIALIZED_ENTITY_STORE_KEYS = [
   'accountInvitations',
   'schoolNotificationTemplates',
   'staffRoleAssignments',
+  'staffPermissionAssignments',
 ] as const
 
 function keyDifference(actual: readonly string[], expected: readonly string[]) {

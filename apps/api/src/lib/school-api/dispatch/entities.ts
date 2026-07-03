@@ -68,7 +68,7 @@ function withAuthorizationCacheInvalidation(name: string, service: EntityReadSer
     });
   }
 
-  if (name === "staffRoleAssignments") {
+  if (name === "staffRoleAssignments" || name === "staffPermissionAssignments") {
     return wrapWriteService(service, {
       afterSave: entity => invalidateStaffGrant(entity),
       afterBatchSave: entities => entities.forEach(invalidateStaffGrant),

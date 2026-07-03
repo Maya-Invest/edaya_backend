@@ -15,6 +15,17 @@ const manualClientRoutes: Pick<
       path: "authorization/effective-grants",
       responseSchemaName: "EffectiveGrantsResponse",
     },
+    permissionCatalog: {
+      method: "GET",
+      path: "authorization/permission-catalog",
+      responseSchemaName: "PermissionCatalogResponse",
+    },
+    scopeRender: {
+      method: "POST",
+      path: "authorization/scope/render",
+      requestSchemaName: "ScopeRenderRequest",
+      responseSchemaName: "ScopeRenderResponse",
+    },
   },
   onboarding: {
     registerSchool: {

@@ -5,6 +5,7 @@ import { isInteractiveActor } from '../model/actor'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { assertHumanOnlyPermission, assertPermissionAssurance } from '../permissions/permission-assurance'
 import { permissionDefinitions } from '../permissions/permission-definitions'
+import { requestScopeAllowedForCatalogScope } from '../scope/scope-request-compat'
 
 export interface AuthorizeArgs {
   actor: ActorMetadata
@@ -35,17 +36,21 @@ function assertActorSchool(actor: ActorMetadata, schoolId: string): void {
 function assertScopeCompatibleWithPermission(request: AuthorizationRequest): void {
   const definition = permissionDefinitions[request.permission]
 
-  if (request.scopeType && !definition.allowedScopes.includes(request.scopeType)) {
-    throw new AuthorizationError(
-      AuthorizationErrorCode.Forbidden,
-      `Scope type "${request.scopeType}" is not allowed for permission "${request.permission}"`,
-    )
-  }
-
   if (request.scopeEntityId && !request.scopeType) {
     throw new AuthorizationError(
       AuthorizationErrorCode.Forbidden,
       'scopeEntityId requires scopeType',
+    )
+  }
+
+  if (!request.scopeType) {
+    return
+  }
+
+  if (!requestScopeAllowedForCatalogScope(definition.scope, request.scopeType)) {
+    throw new AuthorizationError(
+      AuthorizationErrorCode.Forbidden,
+      `Scope type "${request.scopeType}" is not allowed for permission "${request.permission}"`,
     )
   }
 }
@@ -79,7 +84,7 @@ function assertGrantsCapability(
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
-  if (!scopeGrantCovers(grants.scopeGrants, {
+  if (!scopeGrantCovers(grants, {
     permission: request.permission,
     schoolId: request.schoolId,
     scopeType: request.scopeType,

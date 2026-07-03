@@ -6,6 +6,7 @@ import { mergeScopeGrants } from '../grants/scope-grant-covers'
 import { scopeGrantsFromStaffAssignments } from '../grants/staff-assignment-scope'
 import { ASSIGNMENT_SCOPED_PERMISSION_SET, ELEVATED_STAFF_PERMISSIONS } from '../grants/system-role-permissions'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
+import { resolveStaffGrantsFromPermissionAssignments } from './resolve-staff-permission-assignments-grants'
 
 export interface ResolveEffectiveGrantsArgs {
   staffMemberId: string
@@ -13,6 +14,8 @@ export interface ResolveEffectiveGrantsArgs {
   repositories: SchoolRepositories
   academicYearId?: string
   now?: Date
+  /** When true, resolve from `StaffPermissionAssignment` rows instead of legacy roles. */
+  useStaffPermissionAssignments?: boolean
 }
 
 export async function resolveEffectiveGrants(
@@ -29,6 +32,19 @@ export async function resolveEffectiveGrants(
 export async function tryResolveEffectiveGrantsFromPersistence(
   args: ResolveEffectiveGrantsArgs,
 ): Promise<EffectiveGrants | undefined> {
+  if (args.useStaffPermissionAssignments && args.academicYearId) {
+    const fromPermissionAssignments = await resolveStaffGrantsFromPermissionAssignments({
+      staffMemberId: args.staffMemberId,
+      schoolId: args.schoolId,
+      academicYearId: args.academicYearId,
+      repositories: args.repositories,
+      now: args.now,
+    })
+    if (fromPermissionAssignments) {
+      return fromPermissionAssignments
+    }
+  }
+
   if (!hasAccessControlRepositories(args.repositories)) {
     return undefined
   }

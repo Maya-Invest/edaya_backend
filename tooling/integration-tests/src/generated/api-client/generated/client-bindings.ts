@@ -53,6 +53,11 @@ export const clientBindings = {
         "schemaName": "StaffRoleAssignment",
         "allowDirectSave": true
       },
+      "staffPermissionAssignments": {
+        "publicName": "staff-permission-assignments",
+        "schemaName": "StaffPermissionAssignment",
+        "allowDirectSave": true
+      },
       "attachments": {
         "publicName": "attachments",
         "schemaName": "Attachment",
@@ -768,6 +773,17 @@ export const clientBindings = {
         "method": "GET",
         "path": "authorization/effective-grants",
         "responseSchemaName": "EffectiveGrantsResponse"
+      },
+      "permissionCatalog": {
+        "method": "GET",
+        "path": "authorization/permission-catalog",
+        "responseSchemaName": "PermissionCatalogResponse"
+      },
+      "scopeRender": {
+        "method": "POST",
+        "path": "authorization/scope/render",
+        "requestSchemaName": "ScopeRenderRequest",
+        "responseSchemaName": "ScopeRenderResponse"
       }
     },
     "onboarding": {

@@ -1,6 +1,10 @@
+import type { EffectiveGrants } from '../model/effective-grants'
 import type { ScopeGrant } from '../model/scope-grant'
 import type { Permission } from '../permissions/permission'
-import type { ScopeType } from '../permissions/scope-type'
+import type { AuthorizationScopeType } from '../permissions/scope-type'
+import { legacyScopeToResourcePath } from '../scope/legacy-scope-path'
+import { scopePathCovers } from '../scope/scope-path-covers'
+import { permissionDefinitions } from '../permissions/permission-definitions'
 
 export function mergeScopeGrants(grants: readonly ScopeGrant[]): ScopeGrant[] {
   const merged = new Map<string, ScopeGrant>()
@@ -27,11 +31,11 @@ export function mergeScopeGrants(grants: readonly ScopeGrant[]): ScopeGrant[] {
 }
 
 export function scopeGrantCovers(
-  grants: readonly ScopeGrant[],
+  grants: EffectiveGrants | readonly ScopeGrant[],
   args: {
     permission: Permission
     schoolId: string
-    scopeType?: ScopeType
+    scopeType?: AuthorizationScopeType
     scopeEntityId?: string
     isElevated: boolean
   },
@@ -44,7 +48,23 @@ export function scopeGrantCovers(
     return true
   }
 
-  const hasSchoolGrant = grants.some(grant =>
+  const scopeGrants = Array.isArray(grants) ? grants : grants.scopeGrants
+  const scopeIdsByPermission = Array.isArray(grants) ? undefined : grants.scopeIdsByPermission
+  const scopeIds = scopeIdsByPermission?.[args.permission]
+
+  if (scopeIds !== undefined) {
+    const definition = permissionDefinitions[args.permission]
+    if (!definition.scope) {
+      return true
+    }
+    if (!args.scopeEntityId) {
+      return true
+    }
+    const resourcePath = legacyScopeToResourcePath(args.scopeType, args.scopeEntityId)
+    return scopePathCovers(scopeIds, resourcePath, definition.scope)
+  }
+
+  const hasSchoolGrant = scopeGrants.some(grant =>
     grant.permission === args.permission
     && grant.scopeType === 'school'
     && (grant.scopeEntityIds.length === 0 || grant.scopeEntityIds.includes(args.schoolId)),
@@ -53,7 +73,7 @@ export function scopeGrantCovers(
     return true
   }
 
-  const matching = grants.filter(grant =>
+  const matching = scopeGrants.filter(grant =>
     grant.permission === args.permission && grant.scopeType === args.scopeType)
 
   if (matching.length === 0) {

@@ -253,6 +253,13 @@
       "when": 1781104996437,
       "tag": "0035_cron_job_schedules",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1781104996438,
+      "tag": "0036_staff_permission_assignments",
+      "breakpoints": true
     }
   ]
 }

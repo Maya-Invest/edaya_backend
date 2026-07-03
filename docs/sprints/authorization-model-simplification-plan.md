@@ -434,19 +434,19 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 
 ### Phase 1 — Scope engine (3–5 days)
 
-- [ ] New `ScopeType` enum
-- [ ] `parseScopeIds` / `serializeScopeIds` + property tests
+- [x] New `ScopeType` enum
+- [x] `parseScopeIds` / `serializeScopeIds` + property tests
 - [ ] `resolveResourcePath(entity)` helpers
-- [ ] `scopePathCovers(grantScopeIds, resourcePath, permissionScope?)`
-- [ ] Slim catalog: `{ permission, scope? }`
+- [x] `scopePathCovers(grantScopeIds, resourcePath, permissionScope?)`
+- [x] Slim catalog: `{ permission, scope? }`
 
 ### Phase 2 — `StaffPermissionAssignment` (4–6 days)
 
-- [ ] Domain entity + Zod + entity config
-- [ ] Postgres table + store + repository slot
-- [ ] `resolveStaffGrantsFromPermissionAssignments` behind feature flag
-- [ ] `GET authorization/permission-catalog`
-- [ ] `POST authorization/scope/render` (parse + batch entity labels)
+- [x] Domain entity + Zod + entity config
+- [x] Postgres table + store + repository slot
+- [x] `resolveStaffGrantsFromPermissionAssignments` behind feature flag
+- [x] `GET authorization/permission-catalog`
+- [x] `POST authorization/scope/render` (parse + batch entity labels)
 
 ### Phase 3 — StaffAssignment sync (3–4 days)
 
@@ -522,3 +522,67 @@ Wildcard `:*` applies per §3.4 at the appropriate segment.
 - Cross-worker distributed cache invalidation
 - Per-school customizable permission enums
 - Optional `EffectiveGrants.grants[]`-only shape (deferred)
+
+---
+
+## 11. UI actions (deferred — `edaya_web`)
+
+> **Status:** Draft for Phase 7. Backend APIs above are ready for integration; legacy roles UI may break until this work ships.
+
+### 11.1 Replace Access Roles with permission matrix
+
+| Area | Action |
+|------|--------|
+| **Navigation** | Replace “Access Roles” sidebar entry with “Staff permissions” (or merge into staff detail). |
+| **List screen** | Staff-centric list: staff member → academic year → permission rows (`staffPermissionAssignments` query). |
+| **Detail drawer** | Read-only summary per row: permission key (i18n label), rendered scope (`POST authorization/scope/render`), source badge (`manual` vs `synced from assignment`). |
+| **Create / edit** | Modal (not drawer): permission picker from `GET authorization/permission-catalog`, scope builder per `permission.scope`, academic year selector (required). |
+| **Delete** | Modal confirm; block delete on rows with `sourceStaffAssignmentId` (derived rows are read-only). |
+
+### 11.2 Permission picker + scope builder
+
+1. Load catalog via `GET authorization/permission-catalog`.
+2. Map `permission` → i18n label (`packages/.../l10n` keys matching enum value).
+3. When `scope` is omitted: hide scope UI; persist `scopeIds: ""`.
+4. When `scope` is set: show scope builder filtered by grain:
+   - `class_group` → class group multi-select (comma-separated roots).
+   - `class_subject` → class group → class subject cascade; optional `:*` wildcard toggle on class group node.
+   - `activity` → activity picker; class-bounded path when activity is class-scoped.
+5. **Compose `scopeIds` client-side** (grammar §3.4); no compose API.
+6. On save, server validates via entity Zod + `validateScopeIds`; surface field errors on `scopeIds`.
+
+### 11.3 Scope display
+
+- After list/detail load, batch-call `POST authorization/scope/render` with `{ permission, scopeIds }[]`.
+- Render `clauses[].label` in table column; show `missing: true` segments as stale-grant warning.
+- Tenant-wide rows: show “Whole school” when `tenantWide: true`.
+
+### 11.4 Staff assignment sync UI (Phase 3)
+
+| Area | Action |
+|------|--------|
+| **Assignment form** | Add `permissions[]` multi-select (filtered by assignment target type + catalog). |
+| **Derived rows** | After save, show linked `StaffPermissionAssignment` rows as read-only in staff permission tab. |
+| **Placement-only** | Empty `permissions[]` = org placement only; explain that no capability grants are synced. |
+
+### 11.5 Service accounts (Phase 4)
+
+- Replace `roleIds` picker with same permission matrix component (subset UX).
+- Delegation modal: creator’s grants constrain selectable permissions/scopes.
+
+### 11.6 i18n checklist
+
+- [ ] Add ARB keys for every `Permission` enum value (EN + FR).
+- [ ] Scope grain labels: `grade_level`, `class_group`, `class_subject`, `activity`, `student`.
+- [ ] Wildcard copy: “All subjects in {classGroup}”.
+
+### 11.7 Client codegen
+
+- Regenerate `edaya_api_client` after OpenAPI includes `staffPermissionAssignments`, `permission-catalog`, `scope/render`.
+- Remove `accessRoles` / `staffRoleAssignments` client surfaces after Phase 6 cutover.
+
+### 11.8 Files likely touched (`edaya_web`)
+
+- `apps/webapp/src/lib/data/access-roles-data.ts` → permission assignments data module.
+- Staff admin routes under `(app)/settings/access/` (or equivalent).
+- Role modals → permission assignment modals per app-shell spec (list + drawer + modals).

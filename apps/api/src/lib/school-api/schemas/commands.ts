@@ -48,6 +48,7 @@ import {
   staffAssignmentSchema,
   staffMemberSchema,
   staffRoleAssignmentSchema,
+  staffPermissionAssignmentSchema,
   studentClassEnrollmentSchema,
   studentDisciplinaryActionSchema,
   StudentDisciplinaryActionStatus,
@@ -226,6 +227,9 @@ export const accessRoleConfigCommandSchema = objectFromSchema(accessRoleSchema)
 
 export const staffRoleAssignmentConfigCommandSchema = objectFromSchema(staffRoleAssignmentSchema)
   .openapi("StaffRoleAssignmentConfigCommand");
+
+export const staffPermissionAssignmentConfigCommandSchema = objectFromSchema(staffPermissionAssignmentSchema)
+  .openapi("StaffPermissionAssignmentConfigCommand");
 
 export const assignResourceToClassCommandSchema = objectFromSchema(resourceAssignmentSchema)
   .omit({ lessonSessionId: true, activitySessionId: true, assessmentId: true })

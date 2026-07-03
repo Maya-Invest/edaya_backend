@@ -41,6 +41,7 @@ import type {
   SchoolNotificationTemplates,
   StaffAssignment,
   StaffMember,
+  StaffPermissionAssignment,
   StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
@@ -64,6 +65,7 @@ export interface CoreEntityMap {
   accessRoles: AccessRole
   accountInvitations: AccountInvitation
   staffRoleAssignments: StaffRoleAssignment
+  staffPermissionAssignments: StaffPermissionAssignment
   attachments: Attachment
   resources: Resource
   resourceAssignments: ResourceAssignment
@@ -131,6 +133,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'accessRoles',
   'accountInvitations',
   'staffRoleAssignments',
+  'staffPermissionAssignments',
   'attachments',
   'resources',
   'resourceAssignments',

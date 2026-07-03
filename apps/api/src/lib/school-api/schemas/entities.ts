@@ -51,6 +51,7 @@ import {
   staffAssignmentSchema,
   staffMemberSchema,
   staffRoleAssignmentSchema,
+  staffPermissionAssignmentSchema,
   studentClassEnrollmentSchema,
   studentDisciplinaryActionSchema,
   studentFeeSchema,
@@ -109,6 +110,7 @@ import type {
   StaffAssignmentInput,
   StaffMemberInput,
   StaffRoleAssignmentInput,
+  StaffPermissionAssignmentInput,
   StudentClassEnrollmentInput,
   StudentDisciplinaryActionInput,
   StudentFeeInput,
@@ -142,6 +144,7 @@ export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentInput
 export const scopeGrantResponseSchema = valueSchema<ScopeGrant>(unwrapShape(scopeGrantSchema));
 export const accessRoleResponseSchema = responseSchema<AccessRoleInput>("AccessRole", unwrapShape(accessRoleSchema));
 export const staffRoleAssignmentResponseSchema = responseSchema<StaffRoleAssignmentInput>("StaffRoleAssignment", unwrapShape(staffRoleAssignmentSchema));
+export const staffPermissionAssignmentResponseSchema = responseSchema<StaffPermissionAssignmentInput>("StaffPermissionAssignment", unwrapShape(staffPermissionAssignmentSchema));
 export const attachmentResponseSchema = responseSchema<AttachmentInput>("Attachment", unwrapShape(attachmentSchema));
 export const resourceResponseSchema = responseSchema<ResourceInput>("Resource", unwrapShape(resourceSchema));
 export const resourceAssignmentResponseSchema = responseSchema<ResourceAssignmentInput>("ResourceAssignment", unwrapShape(resourceAssignmentSchema));
@@ -289,6 +292,16 @@ export const staffRoleAssignmentQuerySchema = createQueryOptionsSchema({
   schoolId: field.string(),
   academicYearId: field.string(),
   status: field.string(),
+});
+
+export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({
+  id: field.string(),
+  staffId: field.string(),
+  schoolId: field.string(),
+  academicYearId: field.string(),
+  permission: field.string(),
+  status: field.string(),
+  sourceStaffAssignmentId: field.string(),
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({
