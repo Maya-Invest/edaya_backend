@@ -1,6 +1,6 @@
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
-import { actorGrantCoversAny, actorHasAnyPermission } from '../../grants/actor-grant-checks'
+import { actorGrantCoversAny, actorHasAnyPermission, actorHasSchoolWideGrant } from '../../grants/actor-grant-checks'
 import { activeClassGroupIdsByStudent } from '../../grants/enrollment-scope'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import { Permission } from '../../permissions'
@@ -9,7 +9,7 @@ import {
   GUARDIAN_ADMIN_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_STUDENT_NOTE_ACCESS_PERMISSIONS,
   STUDENT_DIRECT_ACCESS_PERMISSIONS,
-} from '../../permissions/groups'
+} from './permission-sets'
 
 export async function checkStudentAccess(
   actor: ActorMetadata,
@@ -17,6 +17,10 @@ export async function checkStudentAccess(
   repos: SchoolRepositories,
 ): Promise<void> {
   if (studentIds.length === 0) {
+    return
+  }
+
+  if (actor.kind === 'staff' && actorHasSchoolWideGrant(actor, STUDENT_DIRECT_ACCESS_PERMISSIONS)) {
     return
   }
 
@@ -78,11 +82,9 @@ export async function checkGuardianAccess(
       continue
     }
 
-    const hasStaffPermission = actorGrantCoversAny(
+    const hasStaffPermission = actorHasSchoolWideGrant(
       actor,
       GUARDIAN_ADMIN_ACCESS_PERMISSIONS,
-      'school',
-      actor.schoolId,
     )
 
     if (!hasStaffPermission) {
@@ -104,11 +106,9 @@ export async function checkStudentNoteAccess(
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
-  const hasGeneral = actorGrantCoversAny(
+  const hasGeneral = actorHasSchoolWideGrant(
     actor,
     SCHOOL_WIDE_STUDENT_NOTE_ACCESS_PERMISSIONS,
-    'school',
-    actor.schoolId,
   )
 
   if (hasGeneral) {

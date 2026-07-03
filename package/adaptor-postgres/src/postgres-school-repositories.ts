@@ -1,17 +1,15 @@
-import type { AcademicPeriod, AcademicYear, AccessRole, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffRoleAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolRepositories, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
 import { buildSchoolOverview, DefaultAuthorizationRepository } from '@edaya/core'
 import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
-import { PostgresAccessRoleStore } from './stores/access-role-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
 import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
-import { PostgresStaffRoleAssignmentStore } from './stores/staff-role-assignment-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly authorization: DefaultAuthorizationRepository
@@ -26,8 +24,6 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly accountInvitations: PostgresAccountInvitationStore
   public readonly cronJobSchedules: PostgresCronJobScheduleStore
   public readonly schoolNotificationTemplates: PostgresSchoolNotificationTemplatesStore
-  public readonly accessRoles: PostgresStore<AccessRole>
-  public readonly staffRoleAssignments: PostgresStore<StaffRoleAssignment>
   public readonly staffPermissionAssignments: PostgresStore<StaffPermissionAssignment>
   public readonly attachments: PostgresStore<Attachment>
   public readonly resources: PostgresStore<Resource>
@@ -127,8 +123,6 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.studentIncidentInvolvements = stores.studentIncidentInvolvements
     this.incidents = stores.incidents
 
-    this.accessRoles = new PostgresAccessRoleStore(db)
-    this.staffRoleAssignments = new PostgresStaffRoleAssignmentStore(db)
     this.staffPermissionAssignments = new PostgresStaffPermissionAssignmentStore(db)
     this.authorization = new DefaultAuthorizationRepository(this)
 

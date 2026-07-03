@@ -1,0 +1,60 @@
+import { describe, expect, test } from 'bun:test'
+import {
+  buildScopeIdsByPermissionFromLegacyAccess,
+  expandLegacyStaffAccessToPermissionRows,
+  Permission,
+} from '../../../src/capabilities/authorization'
+
+describe('legacy staff access migration', () => {
+  test('expands role permissions with tenant-wide defaults and explicit scope grants', () => {
+    const rows = expandLegacyStaffAccessToPermissionRows({
+      accessRoles: [{
+        id: 'role-teacher',
+        permissions: [Permission.GRADE_READ, Permission.GRADE_INPUT, Permission.PAYMENT_READ],
+      }],
+      roleAssignments: [{
+        staffId: 'staff-1',
+        schoolId: 'school-1',
+        academicYearId: 'year-1',
+        roleIds: ['role-teacher'],
+        scopeGrants: [{
+          permission: Permission.GRADE_INPUT,
+          scopeType: 'class_group',
+          scopeEntityIds: ['class-1'],
+        }],
+        status: 'active',
+      }],
+      defaultAcademicYearId: 'year-1',
+    })
+
+    expect(rows).toContainEqual(expect.objectContaining({
+      permission: Permission.GRADE_INPUT,
+      scopeIds: 'class-1',
+    }))
+    expect(rows).toContainEqual(expect.objectContaining({
+      permission: Permission.PAYMENT_READ,
+      scopeIds: '',
+    }))
+    expect(rows.some(row => row.permission === Permission.GRADE_READ)).toBe(false)
+  })
+
+  test('merges school and class scope grants without losing class paths', () => {
+    const scopeIdsByPermission = buildScopeIdsByPermissionFromLegacyAccess(
+      [Permission.ATTENDANCE_RECORD],
+      [
+        {
+          permission: Permission.ATTENDANCE_RECORD,
+          scopeType: 'school',
+          scopeEntityIds: ['school-1'],
+        },
+        {
+          permission: Permission.ATTENDANCE_RECORD,
+          scopeType: 'class_group',
+          scopeEntityIds: ['class-1', 'class-2'],
+        },
+      ],
+    )
+
+    expect(scopeIdsByPermission.get(Permission.ATTENDANCE_RECORD)).toBe('class-1,class-2')
+  })
+})

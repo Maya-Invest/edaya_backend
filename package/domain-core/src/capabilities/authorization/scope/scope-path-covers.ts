@@ -27,7 +27,7 @@ export function scopePathCovers(
     : resourcePath.split(':').map(segment => segment.trim()).filter(Boolean)
 
   if (resourceSegments.length === 0) {
-    return grant.clauses.length > 0
+    return false
   }
 
   return grant.clauses.some(clause =>

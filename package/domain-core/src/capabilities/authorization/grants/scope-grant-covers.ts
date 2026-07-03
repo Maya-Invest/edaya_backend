@@ -2,9 +2,9 @@ import type { EffectiveGrants } from '../model/effective-grants'
 import type { ScopeGrant } from '../model/scope-grant'
 import type { Permission } from '../permissions/permission'
 import type { AuthorizationScopeType } from '../permissions/scope-type'
+import { permissionDefinitions } from '../permissions/permission-definitions'
 import { legacyScopeToResourcePath } from '../scope/legacy-scope-path'
 import { scopePathCovers } from '../scope/scope-path-covers'
-import { permissionDefinitions } from '../permissions/permission-definitions'
 
 export function mergeScopeGrants(grants: readonly ScopeGrant[]): ScopeGrant[] {
   const merged = new Map<string, ScopeGrant>()
@@ -30,6 +30,12 @@ export function mergeScopeGrants(grants: readonly ScopeGrant[]): ScopeGrant[] {
   return [...merged.values()]
 }
 
+function isLegacyScopeGrantList(
+  grants: EffectiveGrants | readonly ScopeGrant[],
+): grants is readonly ScopeGrant[] {
+  return Array.isArray(grants)
+}
+
 export function scopeGrantCovers(
   grants: EffectiveGrants | readonly ScopeGrant[],
   args: {
@@ -48,23 +54,30 @@ export function scopeGrantCovers(
     return true
   }
 
-  const scopeGrants = Array.isArray(grants) ? grants : grants.scopeGrants
-  const scopeIdsByPermission = Array.isArray(grants) ? undefined : grants.scopeIdsByPermission
-  const scopeIds = scopeIdsByPermission?.[args.permission]
-
-  if (scopeIds !== undefined) {
-    const definition = permissionDefinitions[args.permission]
-    if (!definition.scope) {
-      return true
+  if (!isLegacyScopeGrantList(grants)) {
+    const scopeIds = grants.scopeIdsByPermission?.[args.permission]
+    if (scopeIds !== undefined) {
+      const definition = permissionDefinitions[args.permission]
+      if (!definition.scope) {
+        if (!args.scopeType || args.scopeEntityId === undefined) {
+          return true
+        }
+        if (args.scopeType === 'school') {
+          return true
+        }
+        return false
+      }
+      if (!args.scopeEntityId) {
+        return true
+      }
+      const resourcePath = legacyScopeToResourcePath(args.scopeType, args.scopeEntityId)
+      return scopePathCovers(scopeIds, resourcePath, definition.scope)
     }
-    if (!args.scopeEntityId) {
-      return true
-    }
-    const resourcePath = legacyScopeToResourcePath(args.scopeType, args.scopeEntityId)
-    return scopePathCovers(scopeIds, resourcePath, definition.scope)
   }
 
-  const hasSchoolGrant = scopeGrants.some(grant =>
+  const scopeGrants: readonly ScopeGrant[] = isLegacyScopeGrantList(grants) ? grants : grants.scopeGrants
+
+  const hasSchoolGrant = scopeGrants.some((grant: ScopeGrant) =>
     grant.permission === args.permission
     && grant.scopeType === 'school'
     && (grant.scopeEntityIds.length === 0 || grant.scopeEntityIds.includes(args.schoolId)),

@@ -27,6 +27,7 @@ export interface ScheduleSeedRecord {
 export interface LessonSessionStaffAssignmentSeedRecord {
   id: string
   staffId: string
+  academicYearId: string
   responsibility: string
   lessonSessionId: string
 }

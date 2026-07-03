@@ -1,4 +1,5 @@
-export * from './groups'
+export * from './assignment-scoped-permissions'
+export * from './catalog-queries'
 export * from './permission'
 export * from './permission-assurance'
 export * from './permission-definition'

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  buildSchoolWidePermissionAssignments,
   createAppRequest,
   createCoreRouteTestApp,
   createSessionActorDependency,
@@ -8,15 +9,24 @@ import {
   seedDevSchoolAndAuthLinks,
   signInDirector,
   signInThroughApp,
+  TEST_ACADEMIC_YEAR_ID,
+  withAcademicYearHeaders,
   wrapAuthWithVerifiedAssurance,
 } from "../support/core-route-harness";
 import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
 import {
-  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
 } from "@edaya/fixtures/meta/dev-auth-fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { Permission, TEACHER_PERMISSIONS } from "@edaya/core";
+
+function teacherClassSubjectAssignments() {
+  return TEACHER_PERMISSIONS.map(permission => ({
+    permission,
+    scopeIds: "6a:math",
+    academicYearId: TEST_ACADEMIC_YEAR_ID,
+  }));
+}
 
 describe("service account routes", () => {
   it("authenticates service accounts with API keys against /core/entities/schools/list", async () => {
@@ -26,16 +36,15 @@ describe("service account routes", () => {
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "integration-seeding",
       displayName: "Integration Seeding",
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
       elevated: true,
     });
 
     const response = await app.request(createAppRequest("/core/entities/schools/list", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "authorization": `Bearer ${apiKey}`,
-      },
+      }),
       body: JSON.stringify({}),
     }));
 
@@ -72,15 +81,18 @@ describe("service account routes", () => {
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "narrow-teacher",
       displayName: "Teacher Integration",
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
+      permissionAssignments: [
+        { permission: Permission.QUERY_WORKSPACE_READ, scopeIds: "", academicYearId: TEST_ACADEMIC_YEAR_ID },
+        { permission: Permission.GRADE_READ, scopeIds: "6a", academicYearId: TEST_ACADEMIC_YEAR_ID },
+      ],
     });
 
     const response = await app.request(createAppRequest("/core/entities/staff-members/list", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "authorization": `Bearer ${apiKey}`,
-      },
+      }),
       body: JSON.stringify({}),
     }));
 
@@ -97,7 +109,7 @@ describe("service account routes", () => {
     await provisionServiceAccountForTests(application, {
       serviceId: "listed-bot",
       displayName: "Listed Bot",
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+      elevated: true,
     });
 
     const cookies = await signInDirector(app);
@@ -123,14 +135,14 @@ describe("service account routes", () => {
     const cookies = await signInDirector(app);
     const response = await app.request(createAppRequest("/core/service-accounts", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "cookie": cookies.join("; "),
-      },
+      }),
       body: JSON.stringify({
         serviceId: "http-created",
         displayName: "HTTP Created Bot",
-        roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+        elevated: true,
       }),
     }));
 
@@ -167,14 +179,14 @@ describe("service account routes", () => {
 
     const response = await app.request(createAppRequest("/core/service-accounts", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "cookie": cookies.join("; "),
-      },
+      }),
       body: JSON.stringify({
         serviceId: "custom-key-bot",
         displayName: "Custom Key Bot",
-        roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+        elevated: true,
         apiKey: customApiKey,
       }),
     }));
@@ -213,7 +225,7 @@ describe("service account routes", () => {
     await grantServiceAccountCreate(application, teacherStaffId, [
       Permission.SERVICE_ACCOUNT_CREATE,
       ...TEACHER_PERMISSIONS,
-    ]);
+    ], "6a:math");
 
     const cookies = await signInThroughApp(app, {
       email: teacherAccount.email,
@@ -221,14 +233,17 @@ describe("service account routes", () => {
 
     const response = await app.request(createAppRequest("/core/service-accounts", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "cookie": cookies.join("; "),
-      },
+      }),
       body: JSON.stringify({
         serviceId: "over-privileged-bot",
         displayName: "Over Privileged Bot",
-        roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
+        permissionAssignments: buildSchoolWidePermissionAssignments([
+          Permission.PAYMENT_RECORD,
+          Permission.FINANCIAL_CONFIG_CONFIGURE,
+        ]),
       }),
     }));
 
@@ -242,15 +257,15 @@ describe("service account routes", () => {
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "teacher-command-bot",
       displayName: "Teacher Command Bot",
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
+      permissionAssignments: teacherClassSubjectAssignments(),
     });
 
     const response = await app.request(createAppRequest("/core/commands/create-academic-year", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "authorization": `Bearer ${apiKey}`,
-      },
+      }),
       body: JSON.stringify({
         id: "academic-year-403-test",
         schoolId: SEED_SCHOOL_ID,
@@ -273,10 +288,10 @@ describe("service account routes", () => {
     const cookies = await signInDirector(app);
     const response = await app.request(createAppRequest("/core/commands/materialize-deliveries", {
       method: "POST",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "cookie": cookies.join("; "),
-      },
+      }),
       body: JSON.stringify({
         announcementId: "announcement-1",
       }),
@@ -295,16 +310,16 @@ describe("service account routes", () => {
     const { staffMember } = await provisionServiceAccountForTests(application, {
       serviceId: "updatable-bot",
       displayName: "Updatable Bot",
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1],
+      permissionAssignments: teacherClassSubjectAssignments(),
     });
 
     const cookies = await signInDirector(app);
     const response = await app.request(createAppRequest(`/core/service-accounts/${staffMember.id}`, {
       method: "PATCH",
-      headers: {
+      headers: withAcademicYearHeaders({
         "content-type": "application/json",
         "cookie": cookies.join("; "),
-      },
+      }),
       body: JSON.stringify({
         displayName: "Renamed Integration Bot",
       }),
@@ -324,7 +339,6 @@ describe("service account routes", () => {
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "dual-auth",
       displayName: "Dual Auth Bot",
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
       elevated: true,
     });
 

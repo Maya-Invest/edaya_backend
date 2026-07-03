@@ -7,7 +7,7 @@ import {
 } from "../support/core-route-harness";
 
 describe("onboarding invite-staff-members route", () => {
-  it("creates access roles and registers invited staff with assignments", async () => {
+  it("creates permission assignments and registers invited staff", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     const email = "staff-owner@school.edu";
     const subjectId = await signUpAuthUser(runtime, {
@@ -63,23 +63,20 @@ describe("onboarding invite-staff-members route", () => {
     }));
 
     expect(response.status).toBe(200);
-    const summary = await response.json() as { invitedCount: number; accessRolesEnsured: number };
+    const summary = await response.json() as { invitedCount: number; permissionAssignmentsEnsured: number };
     expect(summary.invitedCount).toBe(2);
-    expect(summary.accessRolesEnsured).toBeGreaterThan(0);
+    expect(summary.permissionAssignmentsEnsured).toBeGreaterThan(0);
 
     const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
     const schoolId = ownerStaff?.schoolId;
     expect(schoolId).toBeTruthy();
 
-    const roles = await application.repositories.accessRoles.list({ schoolId: schoolId! });
-    expect(roles.some(role => role.id === "role-teacher")).toBe(true);
+    const roles = await application.repositories.staffPermissionAssignments.list({ schoolId: schoolId! });
+    expect(roles.length).toBeGreaterThan(0);
 
     const invitedStaff = await application.repositories.staffMembers.list({ schoolId: schoolId! });
     expect(invitedStaff.some(member => member.email === "prof@school.edu")).toBe(true);
     expect(invitedStaff.some(member => member.email === "cpe@school.edu")).toBe(true);
-
-    const assignments = await application.repositories.staffRoleAssignments.list({ schoolId: schoolId! });
-    expect(assignments.length).toBeGreaterThanOrEqual(2);
   });
 
   it("rejects inviting the school owner email", async () => {

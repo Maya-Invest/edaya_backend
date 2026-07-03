@@ -1,6 +1,6 @@
 import type { StaffAssignment } from '../../../domain/school/staff-assignment'
-import { StaffPermissionAssignment } from '../../../domain/school/staff-permission-assignment'
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
+import { StaffPermissionAssignment } from '../../../domain/school/staff-permission-assignment'
 import {
   resolveStaffAssignmentTarget,
   scopeIdsForStaffAssignmentPermission,

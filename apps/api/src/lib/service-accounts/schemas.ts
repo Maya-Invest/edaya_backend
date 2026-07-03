@@ -1,6 +1,5 @@
 import { Permission } from "@edaya/core";
 import { z } from "zod";
-import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/entities";
 
 export const serviceAccountPermissionAssignmentRequestSchema = z.object({
   permission: z.nativeEnum(Permission),
@@ -11,29 +10,20 @@ export const serviceAccountPermissionAssignmentRequestSchema = z.object({
 export const createServiceAccountRequestSchema = z.object({
   serviceId: z.string().trim().min(1),
   displayName: z.string().trim().min(1),
-  /** @deprecated Prefer permissionAssignments */
-  roleIds: z.array(z.string().trim().min(1)).optional(),
-  scopeGrants: z.array(scopeGrantResponseSchema).optional(),
   permissionAssignments: z.array(serviceAccountPermissionAssignmentRequestSchema).optional(),
   elevated: z.boolean().optional(),
   apiKey: z.string().trim().min(1).optional(),
 }).refine(
   data => data.elevated === true
-    || (data.roleIds !== undefined && data.roleIds.length > 0)
     || (data.permissionAssignments !== undefined && data.permissionAssignments.length > 0),
-  { message: "roleIds or permissionAssignments are required unless elevated" },
+  { message: "permissionAssignments are required unless elevated" },
 ).openapi("CreateServiceAccountRequest");
 
 export const updateServiceAccountRequestSchema = z.object({
   displayName: z.string().trim().min(1).optional(),
-  /** @deprecated Prefer permissionAssignments */
-  roleIds: z.array(z.string().trim().min(1)).min(1).optional(),
-  scopeGrants: z.array(scopeGrantResponseSchema).optional(),
   permissionAssignments: z.array(serviceAccountPermissionAssignmentRequestSchema).optional(),
 }).refine(
   data => data.displayName !== undefined
-    || data.roleIds !== undefined
-    || data.scopeGrants !== undefined
     || data.permissionAssignments !== undefined,
   { message: "At least one field must be provided" },
 ).openapi("UpdateServiceAccountRequest");

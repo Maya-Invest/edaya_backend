@@ -140,7 +140,7 @@ const onboardingStaffInviteRequestSchema = z.object({
 
 const onboardingStaffInviteResponseSchema = z.object({
   invitedCount: z.number().int(),
-  accessRolesEnsured: z.number().int(),
+  permissionAssignmentsEnsured: z.number().int(),
 }).openapi("OnboardingInviteStaffMembersResponse");
 
 const onboardingAccountStatusSchema = z.object({

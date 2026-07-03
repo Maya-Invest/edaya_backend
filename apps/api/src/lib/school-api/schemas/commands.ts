@@ -2,7 +2,6 @@ import { z } from "@hono/zod-openapi";
 import {
   academicPeriodSchema,
   academicYearSchema,
-  accessRoleSchema,
   AccountInvitationContactChannel,
   AccountInvitationKind,
   announcementSchema,
@@ -47,7 +46,6 @@ import {
   SchoolType,
   staffAssignmentSchema,
   staffMemberSchema,
-  staffRoleAssignmentSchema,
   staffPermissionAssignmentSchema,
   studentClassEnrollmentSchema,
   studentDisciplinaryActionSchema,
@@ -221,12 +219,6 @@ export const assignStaffToLessonSessionCommandSchema = objectFromSchema(staffAss
     lessonSessionId: field.id(),
   })
   .openapi("AssignStaffToLessonSessionCommand");
-
-export const accessRoleConfigCommandSchema = objectFromSchema(accessRoleSchema)
-  .openapi("AccessRoleConfigCommand");
-
-export const staffRoleAssignmentConfigCommandSchema = objectFromSchema(staffRoleAssignmentSchema)
-  .openapi("StaffRoleAssignmentConfigCommand");
 
 export const staffPermissionAssignmentConfigCommandSchema = objectFromSchema(staffPermissionAssignmentSchema)
   .openapi("StaffPermissionAssignmentConfigCommand");

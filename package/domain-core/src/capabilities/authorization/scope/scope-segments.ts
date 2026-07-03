@@ -1,4 +1,4 @@
-import type { ScopeType, StaffGrantScopeType } from '../permissions/scope-type'
+import type { PlatformScopeType, PortalScopeType, ScopeType, StaffGrantScopeType } from '../permissions/scope-type'
 
 export interface ScopeSegmentBounds {
   readonly min: number

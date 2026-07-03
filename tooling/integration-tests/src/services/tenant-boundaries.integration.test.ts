@@ -1,6 +1,5 @@
 import {
   AcademicPeriodType,
-  AccessRole,
   ActorAssuranceLevel,
   AnnouncementTargetKind,
   AssessmentKind,
@@ -18,11 +17,9 @@ import {
   IncidentInvolvementRole,
   IncidentKind,
   PaymentMethod,
-  Permission,
   Resource,
   ResourceKind,
   StaffMember,
-  StaffRoleAssignment,
   StudentNoteVisibility,
   StudentStatus,
   Subject,
@@ -93,24 +90,6 @@ describeIntegration('tenant boundary safeguards', () => {
       schoolId: 'school-b',
       firstName: 'School B',
       lastName: 'Administrator',
-    }))
-    await schoolBApp.baseService.repositories.accessRoles.save(new AccessRole({
-      id: 'role-admin-b',
-      schoolId: 'school-b',
-      name: 'Admin',
-      permissions: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
-    }))
-    await schoolBApp.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-      id: 'assignment-admin-b',
-      staffId: 'school-b-admin',
-      schoolId: 'school-b',
-      roleIds: ['role-admin-b'],
-      scopeGrants: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL).map(permission => ({
-        permission,
-        scopeType: 'school',
-        scopeEntityIds: ['school-b'],
-      })),
-      status: 'active',
     }))
     await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC' })
     await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC' })
@@ -402,6 +381,7 @@ describeIntegration('tenant boundary safeguards', () => {
     await expect(saveStaffAssignment(app, {
       id: 'invalid-assignment',
       staffId: 'staff-b',
+      academicYearId: 'year-a',
       classGroupId: 'class-a',
       responsibility: 'teacher',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
@@ -409,6 +389,7 @@ describeIntegration('tenant boundary safeguards', () => {
       await expect(saveStaffAssignment(app, {
         id: `probe-${classGroupId}`,
         staffId: 'staff-b',
+        academicYearId: 'year-a',
         classGroupId,
         responsibility: 'teacher',
       })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })

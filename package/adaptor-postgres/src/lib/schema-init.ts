@@ -3,11 +3,7 @@ import { sql } from 'drizzle-orm'
 /** Tables cleared in dependency-safe order (children before parents where practical). */
 export const CLEAR_TABLE_ORDER = [
   'cron_job_schedules',
-  'access_role_permissions',
-  'staff_role_assignment_roles',
-  'staff_role_assignment_scope_grants',
-  'staff_role_assignments',
-  'access_roles',
+  'staff_permission_assignments',
   'service_api_keys',
   'account_invitations',
   'school_notification_templates',

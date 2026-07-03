@@ -17,6 +17,8 @@ export async function seedDevScheduling(
   const resources = dataset.entities.resources ?? []
   const slots = dataset.extensions?.schedulingSlots ?? []
   const anchor = dataset.extensions?.schedulingSessionProgressAnchor
+  const academicYearId = dataset.entities.academicYear?.id
+    ?? (() => { throw new Error('Fixture dataset must include academicYear for scheduling seed') })()
 
   for (const resource of resources) {
     await port.saveResource({
@@ -60,6 +62,7 @@ export async function seedDevScheduling(
     await port.assignStaffToLessonSession({
       id: `sa-${lessonSessionId}-${teacherId}`,
       staffId: teacherId,
+      academicYearId,
       responsibility: 'Teacher',
       lessonSessionId,
     })

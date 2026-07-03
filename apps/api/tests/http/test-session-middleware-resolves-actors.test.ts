@@ -8,7 +8,7 @@ import {
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { buildPortalScopeGrants, DefaultAuthorizationRepository, STUDENT_PORTAL_PERMISSIONS } from "@edaya/core";
+import { buildPortalScopeIdsByPermission, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, STUDENT_PORTAL_PERMISSIONS, TEACHER_PERMISSIONS } from "@edaya/core";
 
 describe("session Middleware ActorMetadata Construction", () => {
   const getSession = mock();
@@ -146,18 +146,13 @@ describe("session Middleware ActorMetadata Construction", () => {
     getSession.mockResolvedValueOnce(mockSession as any);
 
     const findStaffMock = mock().mockResolvedValueOnce(mockStaff);
-    const findStaffByIdMock = mock().mockResolvedValueOnce(mockStaff);
-    const listStaffAssignmentsMock = mock().mockResolvedValueOnce([{
-      id: "assignment-1",
-      staffId: "staff-1",
-      role: "teacher",
-      classGroupId: "class-1",
-      createdAt: new Date(),
-    }]);
+    const findStaffByIdMock = mock().mockResolvedValue(mockStaff);
+    const accessControl = mockAccessControlForStaff("staff-1", "school-1");
+    const listPermissionAssignmentsMock = accessControl.staffPermissionAssignments.list;
     const mockRepos = {
       staffMembers: { findOne: findStaffMock, findById: findStaffByIdMock },
-      staffAssignments: { list: listStaffAssignmentsMock },
-      ...mockAccessControlForStaff("staff-1", "school-1"),
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...accessControl,
       guardians: { findOne: mock().mockResolvedValueOnce(null) },
       students: { findOne: mock().mockResolvedValueOnce(null) },
     };
@@ -166,6 +161,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     const res = await app.request("/test-protected", {
       headers: {
         "x-request-id": "req-fixed",
+        "x-academic-year-id": "year-2026",
       },
     });
     const body = (await res.json()) as any;
@@ -173,7 +169,11 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(res.status).toBe(200);
     expect(findStaffMock).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(findStaffByIdMock).toHaveBeenCalledWith("staff-1");
-    expect(listStaffAssignmentsMock).toHaveBeenCalledWith({ staffId: "staff-1" });
+    expect(listPermissionAssignmentsMock).toHaveBeenCalledWith(expect.objectContaining({
+      staffId: "staff-1",
+      academicYearId: "year-2026",
+      status: "active",
+    }));
     expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(body.actor).toEqual({
@@ -187,13 +187,10 @@ describe("session Middleware ActorMetadata Construction", () => {
       effectiveGrants: {
         permissions: {},
         isElevated: false,
-        scopeGrants: [
-          { permission: "GRADE_INPUT", scopeType: "class_group", scopeEntityIds: ["class-1"] },
-          { permission: "ATTENDANCE_RECORD", scopeType: "class_group", scopeEntityIds: ["class-1"] },
-          { permission: "CLASS_LOGBOOK_CREATE", scopeType: "class_group", scopeEntityIds: ["class-1"] },
-          { permission: "CLASS_LOGBOOK_UPDATE", scopeType: "class_group", scopeEntityIds: ["class-1"] },
-          { permission: "DISCIPLINE_CREATE", scopeType: "class_group", scopeEntityIds: ["class-1"] },
-        ],
+        scopeGrants: [],
+        scopeIdsByPermission: Object.fromEntries(
+          TEACHER_PERMISSIONS.map(permission => [permission, "class-1:subject-1"]),
+        ),
       },
     });
   });
@@ -218,7 +215,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     const mockRepos = {
       staffMembers: {
         findOne: mock().mockResolvedValueOnce(mockStaff),
-        findById: mock().mockResolvedValueOnce(mockStaff),
+        findById: mock().mockResolvedValue(mockStaff),
       },
       staffAssignments: { list: mock().mockResolvedValueOnce([]) },
       ...mockAccessControlForStaff("staff-verified", "school-1"),
@@ -227,7 +224,9 @@ describe("session Middleware ActorMetadata Construction", () => {
     };
 
     const app = setupMockApp(mockRepos);
-    const res = await app.request("/test-protected");
+    const res = await app.request("/test-protected", {
+      headers: { "x-academic-year-id": "year-2026" },
+    });
     const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
@@ -251,31 +250,30 @@ describe("session Middleware ActorMetadata Construction", () => {
       isActive: true,
     };
     const findStaffByIdMock = mock().mockResolvedValue(mockStaff);
-    const listStaffAssignmentsMock = mock().mockResolvedValue([{
-      id: "assignment-cached",
-      staffId: "staff-cached",
-      role: "teacher",
-      classGroupId: "class-1",
-      createdAt: new Date(),
-    }]);
+    const accessControl = mockAccessControlForStaff("staff-cached", "school-1");
+    const listPermissionAssignmentsMock = accessControl.staffPermissionAssignments.list;
     const mockRepos = {
       staffMembers: {
         findOne: mock().mockResolvedValue(mockStaff),
         findById: findStaffByIdMock,
       },
-      staffAssignments: { list: listStaffAssignmentsMock },
-      ...mockAccessControlForStaff("staff-cached", "school-1"),
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...accessControl,
       guardians: { findOne: mock().mockResolvedValue(null) },
       students: { findOne: mock().mockResolvedValue(null) },
     };
 
     const app = setupMockApp(mockRepos);
-    await app.request("/test-protected");
-    await app.request("/test-protected");
+    await app.request("/test-protected", {
+      headers: { "x-academic-year-id": "year-2026" },
+    });
+    await app.request("/test-protected", {
+      headers: { "x-academic-year-id": "year-2026" },
+    });
 
     expect(mockRepos.staffMembers.findOne).toHaveBeenCalledTimes(2);
-    expect(findStaffByIdMock).toHaveBeenCalledTimes(1);
-    expect(listStaffAssignmentsMock).toHaveBeenCalledTimes(1);
+    expect(findStaffByIdMock).toHaveBeenCalledTimes(2);
+    expect(listPermissionAssignmentsMock).toHaveBeenCalledTimes(1);
   });
 
   it("should refresh cached staff effective grants after staff invalidation", async () => {
@@ -295,31 +293,26 @@ describe("session Middleware ActorMetadata Construction", () => {
       isActive: true,
     };
     const findStaffByIdMock = mock().mockResolvedValue(mockStaff);
-    const listStaffAssignmentsMock = mock().mockResolvedValue([{
-      id: "assignment-invalidated",
-      staffId: "staff-invalidated",
-      role: "teacher",
-      classGroupId: "class-1",
-      createdAt: new Date(),
-    }]);
+    const accessControl = mockAccessControlForStaff("staff-invalidated", "school-1");
+    const listPermissionAssignmentsMock = accessControl.staffPermissionAssignments.list;
     const mockRepos = {
       staffMembers: {
         findOne: mock().mockResolvedValue(mockStaff),
         findById: findStaffByIdMock,
       },
-      staffAssignments: { list: listStaffAssignmentsMock },
-      ...mockAccessControlForStaff("staff-invalidated", "school-1"),
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...accessControl,
       guardians: { findOne: mock().mockResolvedValue(null) },
       students: { findOne: mock().mockResolvedValue(null) },
     };
 
     const app = setupMockApp(mockRepos);
-    await app.request("/test-protected");
+    await app.request("/test-protected", { headers: { "x-academic-year-id": "year-2026" } });
     invalidateEffectiveGrantsCacheForStaff("staff-invalidated", "school-1");
-    await app.request("/test-protected");
+    await app.request("/test-protected", { headers: { "x-academic-year-id": "year-2026" } });
 
-    expect(findStaffByIdMock).toHaveBeenCalledTimes(2);
-    expect(listStaffAssignmentsMock).toHaveBeenCalledTimes(2);
+    expect(findStaffByIdMock).toHaveBeenCalledTimes(4);
+    expect(listPermissionAssignmentsMock).toHaveBeenCalledTimes(2);
   });
 
   it("should expire cached staff effective grants at assignment endsAt", async () => {
@@ -329,7 +322,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       roles: ["teacher"],
       isActive: true,
     };
-    const accessControl = mockAccessControlForStaff("staff-temporary", "school-1", {
+    const accessControl = mockAccessControlForStaff("staff-temporary", "school-1", "year-2026", {
       endsAt: new Date("2026-01-01T00:01:00Z"),
     });
     const mockRepos = {
@@ -344,6 +337,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     await resolveCachedEffectiveGrants({
       staffMemberId: "staff-temporary",
       schoolId: "school-1",
+      academicYearId: "year-2026",
       subjectId: "auth-user-temporary",
       sessionId: "session-temporary",
       authenticatedAt: new Date("2026-01-01T00:00:00Z"),
@@ -355,6 +349,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     await expect(resolveCachedEffectiveGrants({
       staffMemberId: "staff-temporary",
       schoolId: "school-1",
+      academicYearId: "year-2026",
       subjectId: "auth-user-temporary",
       sessionId: "session-temporary",
       authenticatedAt: new Date("2026-01-01T00:00:00Z"),
@@ -362,7 +357,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       now: new Date("2026-01-01T00:01:00Z"),
       ttlMs: 10 * 60 * 1000,
     })).rejects.toThrow();
-    expect(mockRepos.staffMembers.findById).toHaveBeenCalledTimes(2);
+    expect(mockRepos.staffMembers.findById).toHaveBeenCalledTimes(4);
   });
 
   it("should construct GuardianActorMetadata when user matches a guardian record", async () => {
@@ -417,6 +412,7 @@ describe("session Middleware ActorMetadata Construction", () => {
         isElevated: false,
         permissions: {},
         scopeGrants: [],
+        scopeIdsByPermission: buildPortalScopeIdsByPermission(GUARDIAN_PORTAL_PERMISSIONS, {}),
       },
     });
   });
@@ -473,7 +469,8 @@ describe("session Middleware ActorMetadata Construction", () => {
       effectiveGrants: {
         isElevated: false,
         permissions: {},
-        scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, {
+        scopeGrants: [],
+        scopeIdsByPermission: buildPortalScopeIdsByPermission(STUDENT_PORTAL_PERMISSIONS, {
           studentIds: ["student-1"],
         }),
       },
@@ -576,37 +573,24 @@ function createMockRepos() {
   };
 }
 
-function mockAccessControlForStaff(staffId: string, schoolId: string, assignmentOverrides: Record<string, unknown> = {}) {
-  const roleId = `system_role:${schoolId}:teacher`;
-  const accessRole = {
-    id: roleId,
-    schoolId,
-    name: "Teacher",
-    permissions: [
-      "GRADE_INPUT",
-      "ATTENDANCE_RECORD",
-      "CLASS_LOGBOOK_CREATE",
-      "CLASS_LOGBOOK_UPDATE",
-      "DISCIPLINE_CREATE",
-    ],
-    status: "active",
-  };
-  const assignment = {
-    id: `role_assignment:${schoolId}:${staffId}`,
-    staffId,
-    schoolId,
-    roleIds: [roleId],
-    scopeGrants: [],
-    status: "active",
-    ...assignmentOverrides,
-  };
-
+function mockAccessControlForStaff(
+  staffId: string,
+  schoolId: string,
+  academicYearId = "year-2026",
+  permissionOverrides: { endsAt?: Date } = {},
+) {
   return {
-    accessRoles: {
-      findByIds: mock().mockResolvedValue([accessRole]),
-    },
-    staffRoleAssignments: {
-      list: mock().mockResolvedValue([assignment]),
+    staffPermissionAssignments: {
+      list: mock().mockResolvedValue(TEACHER_PERMISSIONS.map((permission, index) => ({
+        id: `spa-${staffId}-${index}`,
+        staffId,
+        schoolId,
+        academicYearId,
+        permission,
+        scopeIds: "class-1:subject-1",
+        status: "active",
+        ...permissionOverrides,
+      }))),
     },
   };
 }

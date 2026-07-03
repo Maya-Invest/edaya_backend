@@ -176,8 +176,12 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
               return entity?.name;
             }
             case "grade_level_subject": {
-              const entity = await repositories.gradeLevelSubjects.findById(entityId);
-              return entity?.name;
+              const gradeLevelSubject = await repositories.gradeLevelSubjects.findById(entityId);
+              if (!gradeLevelSubject) {
+                return undefined;
+              }
+              const subject = await repositories.subjects.findById(gradeLevelSubject.subjectId);
+              return subject?.name;
             }
             case "activity": {
               const entity = await repositories.activities.findById(entityId);
@@ -194,7 +198,24 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
       });
     }));
 
-    return c.json({ items }, HttpStatusCodes.OK);
+    return c.json({
+      items: items.map(item => ({
+        scopeIds: item.scopeIds,
+        ...(item.permission ? { permission: item.permission } : {}),
+        tenantWide: item.tenantWide,
+        clauses: item.clauses.map(clause => ({
+          raw: clause.raw,
+          label: clause.label,
+          wildcard: clause.wildcard,
+          segments: clause.segments.map(segment => ({
+            id: segment.id,
+            scope: segment.scope,
+            label: segment.label,
+            ...(segment.missing ? { missing: true } : {}),
+          })),
+        })),
+      })),
+    }, HttpStatusCodes.OK);
   }
   catch (err) {
     return c.json({ message: getErrorMessage(err) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);

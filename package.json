@@ -50,6 +50,7 @@
     "db:migrate:full": "bun --filter @edaya/db-migrate migrate:full",
     "db:migrate:hyperdrive": "bun --filter @edaya/db-migrate migrate:hyperdrive",
     "db:migrate:staging": "bun --filter @edaya/db-migrate migrate:staging",
+    "db:migrate:staff-access": "bun --filter @edaya/db-migrate migrate:staff-access",
     "db:migrate:all": "bun run db:migrate:full",
     "db:migrate:dev": "bun run db:migrate:hyperdrive",
     "db:generate:auth": "bun --filter @edaya/adaptor-auth auth:db:generate",

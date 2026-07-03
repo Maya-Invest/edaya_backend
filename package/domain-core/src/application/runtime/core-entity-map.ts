@@ -1,7 +1,6 @@
 import type {
   AcademicPeriod,
   AcademicYear,
-  AccessRole,
   AccountInvitation,
   Activity,
   ActivityEnrollment,
@@ -42,7 +41,6 @@ import type {
   StaffAssignment,
   StaffMember,
   StaffPermissionAssignment,
-  StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -62,9 +60,7 @@ export interface CoreEntityMap {
   gradeLevels: GradeLevel
   staffMembers: StaffMember
   staffAssignments: StaffAssignment
-  accessRoles: AccessRole
   accountInvitations: AccountInvitation
-  staffRoleAssignments: StaffRoleAssignment
   staffPermissionAssignments: StaffPermissionAssignment
   attachments: Attachment
   resources: Resource
@@ -130,9 +126,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'gradeLevels',
   'staffMembers',
   'staffAssignments',
-  'accessRoles',
   'accountInvitations',
-  'staffRoleAssignments',
   'staffPermissionAssignments',
   'attachments',
   'resources',

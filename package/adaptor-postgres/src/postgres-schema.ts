@@ -144,45 +144,6 @@ export const staffAssignments = pgTable('staff_assignments', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('staff_assignments', table))
 
-export const accessRoles = pgTable('access_roles', {
-  id: text('id').primaryKey(),
-  schoolId: text('school_id').notNull(),
-  name: text('name').notNull(),
-  description: text('description'),
-  status: text('status').notNull(),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('access_roles', table))
-
-export const accessRolePermissions = pgTable('access_role_permissions', {
-  roleId: text('role_id').notNull(),
-  permission: text('permission').notNull(),
-}, table => definePerformanceIndexes('access_role_permissions', table))
-
-export const staffRoleAssignments = pgTable('staff_role_assignments', {
-  id: text('id').primaryKey(),
-  staffId: text('staff_id').notNull(),
-  schoolId: text('school_id').notNull(),
-  academicYearId: text('academic_year_id'),
-  status: text('status').notNull(),
-  startsAt: timestamp('starts_at', { mode: 'date' }),
-  endsAt: timestamp('ends_at', { mode: 'date' }),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('staff_role_assignments', table))
-
-export const staffRoleAssignmentRoles = pgTable('staff_role_assignment_roles', {
-  assignmentId: text('assignment_id').notNull(),
-  roleId: text('role_id').notNull(),
-}, table => definePerformanceIndexes('staff_role_assignment_roles', table))
-
-export const staffRoleAssignmentScopeGrants = pgTable('staff_role_assignment_scope_grants', {
-  assignmentId: text('assignment_id').notNull(),
-  permission: text('permission').notNull(),
-  scopeType: text('scope_type').notNull(),
-  scopeEntityIds: jsonb('scope_entity_ids').notNull(),
-})
-
 export const staffPermissionAssignments = pgTable('staff_permission_assignments', {
   id: text('id').primaryKey(),
   staffId: text('staff_id').notNull(),

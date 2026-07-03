@@ -1,4 +1,4 @@
-import type { AttendanceJustificationStatus, SchoolService, StudentFee } from '@edaya/core'
+import type { AttendanceJustificationStatus, SchoolRepositories, SchoolService, StudentFee } from '@edaya/core'
 import {
   AcademicPeriod,
   Announcement,
@@ -24,6 +24,7 @@ import {
   LessonSession,
   OccurrenceStatus,
   Permission,
+  permissionRowsFromTemplatePermissions,
   ReportCardDefinition,
   resolveAuditActorId,
   ResourceAssignment,
@@ -31,12 +32,39 @@ import {
   School,
   StaffAssignment,
   StaffMember,
+  StaffPermissionAssignment,
   Student,
   StudentHealthProfile,
   StudentNote,
 } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
+
+export async function seedStaffPermissionTemplate(
+  repositories: SchoolRepositories,
+  input: {
+    staffId: string
+    schoolId: string
+    academicYearId: string
+    permissions: readonly Permission[]
+    idPrefix?: string
+  },
+): Promise<void> {
+  const rows = permissionRowsFromTemplatePermissions(
+    input.staffId,
+    input.schoolId,
+    input.academicYearId,
+    input.permissions,
+  )
+
+  for (const [index, row] of rows.entries()) {
+    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      id: `${input.idPrefix ?? `spa-${input.staffId}`}-${index}`,
+      ...row,
+      status: 'active',
+    }))
+  }
+}
 
 async function ensureActorStaffMember(app: SchoolService): Promise<void> {
   const actor = app.baseService.actor

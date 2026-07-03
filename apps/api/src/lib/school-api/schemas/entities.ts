@@ -2,7 +2,6 @@ import { z } from "@hono/zod-openapi";
 import {
   academicPeriodSchema,
   academicYearSchema,
-  accessRoleSchema,
   AccountInvitationKind,
   accountInvitationSchema,
   AccountInvitationStatus,
@@ -50,7 +49,6 @@ import {
   scopeGrantSchema,
   staffAssignmentSchema,
   staffMemberSchema,
-  staffRoleAssignmentSchema,
   staffPermissionAssignmentSchema,
   studentClassEnrollmentSchema,
   studentDisciplinaryActionSchema,
@@ -65,7 +63,6 @@ import {
 import type {
   AcademicPeriodInput,
   AcademicYearInput,
-  AccessRoleInput,
   AccountInvitationInput,
   ActivityEnrollmentInput,
   ActivityInput,
@@ -109,7 +106,6 @@ import type {
   ScopeGrant,
   StaffAssignmentInput,
   StaffMemberInput,
-  StaffRoleAssignmentInput,
   StaffPermissionAssignmentInput,
   StudentClassEnrollmentInput,
   StudentDisciplinaryActionInput,
@@ -142,8 +138,6 @@ export const accountInvitationResponseSchema = responseSchema<AccountInvitationI
 );
 export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentInput>("StaffAssignment", unwrapShape(staffAssignmentSchema));
 export const scopeGrantResponseSchema = valueSchema<ScopeGrant>(unwrapShape(scopeGrantSchema));
-export const accessRoleResponseSchema = responseSchema<AccessRoleInput>("AccessRole", unwrapShape(accessRoleSchema));
-export const staffRoleAssignmentResponseSchema = responseSchema<StaffRoleAssignmentInput>("StaffRoleAssignment", unwrapShape(staffRoleAssignmentSchema));
 export const staffPermissionAssignmentResponseSchema = responseSchema<StaffPermissionAssignmentInput>("StaffPermissionAssignment", unwrapShape(staffPermissionAssignmentSchema));
 export const attachmentResponseSchema = responseSchema<AttachmentInput>("Attachment", unwrapShape(attachmentSchema));
 export const resourceResponseSchema = responseSchema<ResourceInput>("Resource", unwrapShape(resourceSchema));
@@ -272,27 +266,12 @@ export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   responsibility: field.string(),
 });
 
-export const accessRoleQuerySchema = createQueryOptionsSchema({
-  id: field.string(),
-  schoolId: field.string(),
-  name: field.string(),
-  status: field.string(),
-});
-
 export const accountInvitationQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   kind: z.nativeEnum(AccountInvitationKind),
   targetId: field.id(),
   status: z.nativeEnum(AccountInvitationStatus),
-});
-
-export const staffRoleAssignmentQuerySchema = createQueryOptionsSchema({
-  id: field.string(),
-  staffId: field.string(),
-  schoolId: field.string(),
-  academicYearId: field.string(),
-  status: field.string(),
 });
 
 export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({

@@ -8,7 +8,7 @@ import {
   STUDENT_PORTAL_PERMISSIONS,
   TEACHER_PERMISSIONS,
 } from '../../src/capabilities/authorization'
-import { buildPortalScopeGrants } from '../../src/capabilities/authorization/grants/portal-scope-grants'
+import { buildPortalScopeIdsByPermission } from '../../src/capabilities/authorization/grants/portal-scope-ids'
 
 export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'
 
@@ -38,7 +38,8 @@ export function portalEffectiveGrantsForStudent(
 ): EffectiveGrants {
   return {
     permissions: STUDENT_PORTAL_PERMISSIONS,
-    scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, {
+    scopeGrants: [],
+    scopeIdsByPermission: buildPortalScopeIdsByPermission(STUDENT_PORTAL_PERMISSIONS, {
       studentIds: [studentId],
       classGroupIds: [...classGroupIds],
     }),
@@ -52,7 +53,8 @@ export function portalEffectiveGrantsForGuardian(
 ): EffectiveGrants {
   return {
     permissions: GUARDIAN_PORTAL_PERMISSIONS,
-    scopeGrants: buildPortalScopeGrants(GUARDIAN_PORTAL_PERMISSIONS, {
+    scopeGrants: [],
+    scopeIdsByPermission: buildPortalScopeIdsByPermission(GUARDIAN_PORTAL_PERMISSIONS, {
       studentIds: [...studentIds],
       classGroupIds: [...classGroupIds],
     }),

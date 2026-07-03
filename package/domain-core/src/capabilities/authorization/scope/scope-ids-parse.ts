@@ -34,7 +34,7 @@ export function parseScopeIds(scopeIds: string): ParsedScopeIds {
       return {
         paths: paths.map((path) => {
           const segments = path.split(':').map(segment => segment.trim())
-          if (segments.length === 0 || segments.some(segment => segment === '')) {
+          if (segments.length === 0 || segments.includes('')) {
             throw new ScopeIdsParseError(`Invalid path "${path}"`)
           }
 

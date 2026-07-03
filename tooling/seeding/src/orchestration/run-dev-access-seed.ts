@@ -1,15 +1,17 @@
 import type {
-  AccessRoleSeedRecord,
+  AccessRolePresetRecord,
   AccessSeedPort,
   StaffAssignmentSeedRecord,
-  StaffRoleAssignmentSeedRecord,
+  StaffRoleAssignmentPresetRecord,
 } from '../domains/access/port'
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import {
+  ASSIGNMENT_SCOPED_PERMISSIONS,
   COORDINATOR_PERMISSIONS,
   ELEVATED_STAFF_PERMISSIONS,
   Permission,
+  permissionRowsFromTemplatePermissions,
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
 import { demoDataset, devSeedDataset } from '@edaya/fixtures'
@@ -112,7 +114,7 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
   return [...new Set(groups.flat())]
 }
 
-const ACCESS_ROLE_RECORDS: readonly AccessRoleSeedRecord[] = [
+const ACCESS_ROLE_PRESETS: readonly AccessRolePresetRecord[] = [
   {
     id: 'role-teacher',
     schoolId: SEED_SCHOOL_ID,
@@ -194,32 +196,62 @@ const SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS = [
   },
 ] as const
 
-function createStaffRoleAssignment(
+function createStaffRolePreset(
   staffId: string,
   roleId: string,
-  scopeGrants: StaffRoleAssignmentSeedRecord['scopeGrants'] = [],
-): StaffRoleAssignmentSeedRecord {
+  scopeGrants: StaffRoleAssignmentPresetRecord['scopeGrants'] = [],
+): StaffRoleAssignmentPresetRecord {
   return {
-    id: `sra-${staffId}`,
     staffId,
     schoolId: SEED_SCHOOL_ID,
     academicYearId: accessSeedAcademicYearId,
-    roleIds: [roleId],
+    roleId,
     scopeGrants,
     status: 'active',
   }
 }
 
-const STAFF_ROLE_ASSIGNMENT_RECORDS: readonly StaffRoleAssignmentSeedRecord[] = [
-  createStaffRoleAssignment('st1', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1),
-  createStaffRoleAssignment('st2', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st2),
-  createStaffRoleAssignment('st3', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st3),
-  createStaffRoleAssignment('st4', 'role-teacher'),
-  createStaffRoleAssignment('st8', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st8),
-  createStaffRoleAssignment('st5', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5),
-  createStaffRoleAssignment('st6', 'role-educator', SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS),
-  createStaffRoleAssignment('st7', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st7, SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS),
+const STAFF_ROLE_ASSIGNMENT_PRESETS: readonly StaffRoleAssignmentPresetRecord[] = [
+  createStaffRolePreset('st1', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st1),
+  createStaffRolePreset('st2', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st2),
+  createStaffRolePreset('st3', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st3),
+  createStaffRolePreset('st4', 'role-teacher'),
+  createStaffRolePreset('st8', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st8),
+  createStaffRolePreset('st5', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5),
+  createStaffRolePreset('st6', 'role-educator', SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS),
+  createStaffRolePreset('st7', DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st7, SCHOOL_DISCIPLINE_AND_ATTENDANCE_GRANTS),
 ]
+
+async function seedStaffPermissionAssignments(port: AccessSeedPort): Promise<number> {
+  const presetsById = new Map(ACCESS_ROLE_PRESETS.map(role => [role.id, role]))
+  let count = 0
+
+  for (const assignment of STAFF_ROLE_ASSIGNMENT_PRESETS) {
+    const role = presetsById.get(assignment.roleId)
+    if (!role) {
+      continue
+    }
+
+    const rows = permissionRowsFromTemplatePermissions(
+      assignment.staffId,
+      assignment.schoolId,
+      assignment.academicYearId,
+      role.permissions,
+      assignment.scopeGrants ?? [],
+    )
+
+    for (const [index, row] of rows.entries()) {
+      await port.saveStaffPermissionAssignment({
+        id: `spa-${assignment.staffId}-${row.permission}-${index}`,
+        ...row,
+        status: 'active',
+      })
+      count += 1
+    }
+  }
+
+  return count
+}
 
 const BASE_STAFF_ASSIGNMENT_RECORDS: readonly StaffAssignmentSeedRecord[] = [
   { id: 'sa-st1-6a', staffId: 'st1', academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, responsibility: 'Mathematics', classGroupId: '6a' },
@@ -231,7 +263,7 @@ const BASE_STAFF_ASSIGNMENT_RECORDS: readonly StaffAssignmentSeedRecord[] = [
 
 export type DevAccessSeedResult
   = | { status: 'skipped', reason: 'school-not-seeded' }
-    | { status: 'seeded', roles: number, assignments: number, staffAssignments: number }
+    | { status: 'seeded', permissionAssignments: number, staffAssignments: number }
 
 export interface RunDevAccessSeedOptions {
   auth?: AuthProvisioner
@@ -245,18 +277,11 @@ export interface RunDevAccessSeedOptions {
   includeClassSubjectStaffAssignments?: boolean
 }
 
-/** Access roles only — used before service-account provisioning in HTTP bootstrap. */
-export async function runDevAccessRolesSeedWithPort(port: AccessSeedPort): Promise<void> {
-  if (!(await port.schoolExists(SEED_SCHOOL_ID))) {
-    throw new Error('Cannot seed access roles before school exists')
-  }
-
-  for (const role of ACCESS_ROLE_RECORDS) {
-    await port.saveAccessRole(role)
-  }
+/** @deprecated Access roles are code presets; permission rows are seeded directly. */
+export async function runDevAccessRolesSeedWithPort(_port: AccessSeedPort): Promise<void> {
 }
 
-/** Staff role + class assignments — run after school structure exists. */
+/** Staff permission + class assignments — run after school structure exists. */
 export async function runDevAccessAssignmentsSeedWithPort(
   port: AccessSeedPort,
   options?: RunDevAccessSeedOptions,
@@ -280,12 +305,13 @@ export async function runDevAccessAssignmentsSeedWithPort(
     )
   }
 
-  for (const assignment of STAFF_ROLE_ASSIGNMENT_RECORDS) {
-    await port.saveStaffRoleAssignment(assignment)
-  }
+  const permissionAssignments = await seedStaffPermissionAssignments(port)
 
   for (const assignment of BASE_STAFF_ASSIGNMENT_RECORDS) {
-    await port.saveStaffAssignment(assignment)
+    await port.saveStaffAssignment({
+      ...assignment,
+      permissions: assignment.permissions ?? [...ASSIGNMENT_SCOPED_PERMISSIONS],
+    })
   }
 
   let classSubjectStaffAssignments = 0
@@ -298,8 +324,7 @@ export async function runDevAccessAssignmentsSeedWithPort(
 
   return {
     status: 'seeded',
-    roles: ACCESS_ROLE_RECORDS.length,
-    assignments: STAFF_ROLE_ASSIGNMENT_RECORDS.length,
+    permissionAssignments,
     staffAssignments: BASE_STAFF_ASSIGNMENT_RECORDS.length + classSubjectStaffAssignments,
   }
 }

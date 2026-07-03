@@ -1,4 +1,4 @@
-import { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS } from '../permissions/groups'
+import { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS } from '../permissions/assignment-scoped-permissions'
 import { Permission } from '../permissions/permission'
 
 export { ASSIGNMENT_SCOPED_PERMISSION_SET, ASSIGNMENT_SCOPED_PERMISSIONS }

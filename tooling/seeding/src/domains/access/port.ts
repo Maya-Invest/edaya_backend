@@ -1,19 +1,12 @@
 import type { Permission, ScopeGrantInput } from '@edaya/core'
 
-export interface AccessRoleSeedRecord {
-  id: string
-  schoolId: string
-  name: string
-  permissions: readonly Permission[]
-}
-
-export interface StaffRoleAssignmentSeedRecord {
+export interface StaffPermissionAssignmentSeedRecord {
   id: string
   staffId: string
   schoolId: string
   academicYearId: string
-  roleIds: readonly string[]
-  scopeGrants: readonly ScopeGrantInput[]
+  permission: Permission
+  scopeIds: string
   status: 'active'
 }
 
@@ -30,7 +23,24 @@ export interface StaffAssignmentSeedRecord {
 
 export interface AccessSeedPort {
   schoolExists: (schoolId: string) => Promise<boolean>
-  saveAccessRole: (record: AccessRoleSeedRecord) => Promise<void>
-  saveStaffRoleAssignment: (record: StaffRoleAssignmentSeedRecord) => Promise<void>
+  saveStaffPermissionAssignment: (record: StaffPermissionAssignmentSeedRecord) => Promise<void>
   saveStaffAssignment: (record: StaffAssignmentSeedRecord) => Promise<void>
+}
+
+/** @deprecated Preset permission list used when expanding dev seeds. */
+export interface AccessRolePresetRecord {
+  id: string
+  schoolId: string
+  name: string
+  permissions: readonly Permission[]
+}
+
+/** @deprecated Used only to expand preset rows into permission assignments. */
+export interface StaffRoleAssignmentPresetRecord {
+  staffId: string
+  schoolId: string
+  academicYearId: string
+  roleId: string
+  scopeGrants?: readonly ScopeGrantInput[]
+  status: 'active'
 }

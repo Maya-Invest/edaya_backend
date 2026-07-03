@@ -19,11 +19,8 @@ export function createHttpAccessSeedPort(options: CreateHttpAccessSeedPortOption
   return {
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await postEntityFindById(requestOptions, 'schools', schoolId))),
-    saveAccessRole: record => withSeedPortError('access.saveAccessRole', async () => {
-      await postEntitySave(requestOptions, 'accessRoles', record)
-    }),
-    saveStaffRoleAssignment: record => withSeedPortError('access.saveStaffRoleAssignment', async () => {
-      await postEntitySave(requestOptions, 'staffRoleAssignments', record)
+    saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
+      await postEntitySave(requestOptions, 'staffPermissionAssignments', record)
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       await postEntitySave(requestOptions, 'staffAssignments', record)

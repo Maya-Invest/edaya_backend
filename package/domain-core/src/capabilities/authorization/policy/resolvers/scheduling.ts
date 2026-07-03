@@ -1,13 +1,17 @@
 import type { AttendanceRecord } from '../../../../domain/scheduling/attendance-record'
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
-import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
+import {
+  actorGrantCoversAnyResourcePath,
+  actorHasSchoolWideGrant,
+} from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
+import { resourcePathForActivity, resourcePathForClassSubject } from '../../scope/resolve-resource-path'
+import { checkClassGroupAccess } from './academic'
 import {
   SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
   SESSION_TEACHING_ACCESS_PERMISSIONS,
-} from '../../permissions/groups'
-import { checkClassGroupAccess } from './academic'
+} from './permission-sets'
 import { checkStudentAccess } from './student'
 
 export async function checkActivitySessionAccess(
@@ -19,44 +23,30 @@ export async function checkActivitySessionAccess(
     return
   }
 
-  if (actorGrantCoversAny(
-    actor,
-    SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
-    'school',
-    actor.schoolId,
-  )) {
+  if (actorHasSchoolWideGrant(actor, SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS)) {
     return
   }
 
   const uniqueIds = [...new Set(activitySessionIds)]
-  const sessionsNeedingClassGroupLookup: string[] = []
-
-  for (const activitySessionId of uniqueIds) {
-    const canAccessSession = actorGrantCoversAny(
-      actor,
-      SESSION_TEACHING_ACCESS_PERMISSIONS,
-      'session',
-      activitySessionId,
-    )
-
-    if (canAccessSession) {
-      continue
-    }
-
-    sessionsNeedingClassGroupLookup.push(activitySessionId)
-  }
-
-  if (sessionsNeedingClassGroupLookup.length === 0) {
-    return
-  }
-
-  const activitySessions = await repos.activitySessions.findByIds(sessionsNeedingClassGroupLookup)
-  if (activitySessions.length !== sessionsNeedingClassGroupLookup.length) {
+  const activitySessions = await repos.activitySessions.findByIds(uniqueIds)
+  if (activitySessions.length !== uniqueIds.length) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
-  const classGroupIds = [...new Set(activitySessions.map(session => session.classGroupId))]
-  await checkClassGroupAccess(actor, classGroupIds, repos)
+  const classGroupIds = new Set<string>()
+  for (const session of activitySessions) {
+    const resourcePath = resourcePathForActivity(session.activityId, session.classGroupId)
+    if (actorGrantCoversAnyResourcePath(actor, SESSION_TEACHING_ACCESS_PERMISSIONS, resourcePath)) {
+      continue
+    }
+    classGroupIds.add(session.classGroupId)
+  }
+
+  if (classGroupIds.size === 0) {
+    return
+  }
+
+  await checkClassGroupAccess(actor, [...classGroupIds], repos)
 }
 
 export async function checkLessonSessionAccess(
@@ -68,44 +58,30 @@ export async function checkLessonSessionAccess(
     return
   }
 
-  if (actorGrantCoversAny(
-    actor,
-    SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
-    'school',
-    actor.schoolId,
-  )) {
+  if (actorHasSchoolWideGrant(actor, SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS)) {
     return
   }
 
   const uniqueIds = [...new Set(lessonSessionIds)]
-  const sessionsNeedingClassGroupLookup: string[] = []
-
-  for (const lessonSessionId of uniqueIds) {
-    const canAccessSession = actorGrantCoversAny(
-      actor,
-      SESSION_TEACHING_ACCESS_PERMISSIONS,
-      'session',
-      lessonSessionId,
-    )
-
-    if (canAccessSession) {
-      continue
-    }
-
-    sessionsNeedingClassGroupLookup.push(lessonSessionId)
-  }
-
-  if (sessionsNeedingClassGroupLookup.length === 0) {
-    return
-  }
-
-  const lessonSessions = await repos.lessonSessions.findByIds(sessionsNeedingClassGroupLookup)
-  if (lessonSessions.length !== sessionsNeedingClassGroupLookup.length) {
+  const lessonSessions = await repos.lessonSessions.findByIds(uniqueIds)
+  if (lessonSessions.length !== uniqueIds.length) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
-  const classGroupIds = [...new Set(lessonSessions.map(session => session.classGroupId))]
-  await checkClassGroupAccess(actor, classGroupIds, repos)
+  const classGroupIds = new Set<string>()
+  for (const session of lessonSessions) {
+    const resourcePath = resourcePathForClassSubject(session.classGroupId, session.classSubjectId)
+    if (actorGrantCoversAnyResourcePath(actor, SESSION_TEACHING_ACCESS_PERMISSIONS, resourcePath)) {
+      continue
+    }
+    classGroupIds.add(session.classGroupId)
+  }
+
+  if (classGroupIds.size === 0) {
+    return
+  }
+
+  await checkClassGroupAccess(actor, [...classGroupIds], repos)
 }
 
 export async function checkAttendanceRecordAccess(

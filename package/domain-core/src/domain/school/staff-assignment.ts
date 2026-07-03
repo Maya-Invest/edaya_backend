@@ -7,13 +7,13 @@ import { config, indirectTenant, noopReadAccess, permissionAction, read, resolve
 
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import {
-  deleteSyncedStaffAssignmentPermissions,
-  syncStaffAssignmentPermissions,
-} from '../../capabilities/authorization/sync/staff-assignment-permission-sync'
-import {
   resolveStaffAssignmentTarget,
   validateStaffAssignmentPermissionSelection,
 } from '../../capabilities/authorization/sync/staff-assignment-permission-rules'
+import {
+  deleteSyncedStaffAssignmentPermissions,
+  syncStaffAssignmentPermissions,
+} from '../../capabilities/authorization/sync/staff-assignment-permission-sync'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const staffAssignmentBaseSchema = z.object({

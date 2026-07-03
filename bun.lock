@@ -131,6 +131,7 @@
       "dependencies": {
         "@edaya/adaptor-auth": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
+        "@edaya/core": "workspace:*",
         "@electric-sql/pglite": "^0.3.14",
         "drizzle-orm": "^0.39.0",
         "postgres": "^3.4.4",

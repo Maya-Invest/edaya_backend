@@ -3,10 +3,8 @@ import { describe, expect, test } from 'bun:test'
 import { createEntityStores } from './entity-stores'
 
 const SPECIALIZED_ENTITY_STORE_KEYS = [
-  'accessRoles',
   'accountInvitations',
   'schoolNotificationTemplates',
-  'staffRoleAssignments',
   'staffPermissionAssignments',
 ] as const
 

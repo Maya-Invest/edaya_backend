@@ -25,14 +25,15 @@ import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from "@edaya/fixtures/meta/dev-auth-fixtures";
-import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
+import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
-  AccessRole,
   ActorAssuranceLevel,
+  ASSIGNMENT_SCOPED_PERMISSIONS,
   createServiceAccount,
   createStaffActorMetadata,
   Permission,
-  StaffRoleAssignment,
+  type ServiceAccountPermissionAssignmentInput,
+  StaffPermissionAssignment,
 } from "@edaya/core";
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";
@@ -238,9 +239,10 @@ export async function provisionServiceAccountForTests(
   input: {
     serviceId: string;
     displayName: string;
-    roleIds: readonly string[];
+    permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[];
     elevated?: boolean;
     creatorStaffId?: string;
+    apiKey?: string;
   },
 ) {
   const creatorStaffId = input.creatorStaffId ?? MINIMAL_AUTH_FIXTURE_STAFF_ID;
@@ -252,6 +254,7 @@ export async function provisionServiceAccountForTests(
   const grants = await application.repositories.authorization.resolveEffectiveGrants({
     staffMemberId: creatorStaffId,
     schoolId: SEED_SCHOOL_ID,
+    academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
   });
 
   const actor = createStaffActorMetadata({
@@ -275,43 +278,16 @@ export async function signInDirector(
 }
 
 export async function grantAccessControlAssign(application: ApiSchoolApplication, staffId: string) {
-  await application.repositories.accessRoles.save(new AccessRole({
-    id: `role-access-control-${staffId}`,
-    schoolId: SEED_SCHOOL_ID,
-    name: "Access control admin",
-    permissions: [Permission.ACCESS_CONTROL_ASSIGN],
-  }));
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: `assignment-access-control-${staffId}`,
-    staffId,
-    schoolId: SEED_SCHOOL_ID,
-    roleIds: [`role-access-control-${staffId}`],
-    scopeGrants: [],
-    status: "active",
-  }));
+  await grantStaffPermissionAssignments(application, staffId, [Permission.ACCESS_CONTROL_ASSIGN]);
 }
 
 export async function grantServiceAccountCreate(
   application: ApiSchoolApplication,
   staffId: string,
   permissions: readonly Permission[] = [Permission.SERVICE_ACCOUNT_CREATE],
+  scopeIds = "",
 ) {
-  await application.repositories.accessRoles.save(new AccessRole({
-    id: `role-service-account-create-${staffId}`,
-    schoolId: SEED_SCHOOL_ID,
-    name: "Service account provisioner",
-    permissions: [...permissions],
-  }));
-
-  await application.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: `assignment-service-account-create-${staffId}`,
-    staffId,
-    schoolId: SEED_SCHOOL_ID,
-    roleIds: [`role-service-account-create-${staffId}`],
-    scopeGrants: [],
-    status: "active",
-  }));
+  await grantStaffPermissionAssignments(application, staffId, permissions, scopeIds);
 }
 
 export function createAppRequest(path: string, init?: RequestInit): Request {
@@ -371,3 +347,44 @@ export async function signUpAuthUser(
 }
 
 export { resetApiRuntimesForTests };
+
+export const TEST_ACADEMIC_YEAR_ID = DEMO_CENTRAL_ACADEMIC_YEAR_ID;
+
+export function withAcademicYearHeaders(headers: Record<string, string> = {}): Record<string, string> {
+  return {
+    ...headers,
+    "x-academic-year-id": TEST_ACADEMIC_YEAR_ID,
+  };
+}
+
+export function buildSchoolWidePermissionAssignments(
+  permissions: readonly Permission[],
+  academicYearId = TEST_ACADEMIC_YEAR_ID,
+): ServiceAccountPermissionAssignmentInput[] {
+  return permissions.map(permission => ({
+    permission,
+    scopeIds: "",
+    academicYearId,
+  }));
+}
+
+async function grantStaffPermissionAssignments(
+  application: ApiSchoolApplication,
+  staffId: string,
+  permissions: readonly Permission[],
+  scopeIds = "",
+  academicYearId = TEST_ACADEMIC_YEAR_ID,
+): Promise<void> {
+  for (const [index, permission] of permissions.entries()) {
+    const assignmentScoped = ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission);
+    await application.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      id: `spa-grant-${staffId}-${permission}-${index}`,
+      staffId,
+      schoolId: SEED_SCHOOL_ID,
+      academicYearId,
+      permission,
+      scopeIds: assignmentScoped ? scopeIds : "",
+      status: "active",
+    }));
+  }
+}

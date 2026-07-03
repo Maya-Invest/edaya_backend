@@ -53,7 +53,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     expect(failures).toEqual([])
   })
 
-  it('lets seeded teachers list students after access roles are provisioned', async () => {
+  it('lets seeded non-owner staff list students after permission assignments are provisioned', async () => {
     const { app, authHeaders } = getContext()
     const response = await app.request(createAppRequest('/core/entities/students/list', {
       method: 'POST',

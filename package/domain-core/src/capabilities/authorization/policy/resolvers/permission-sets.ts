@@ -1,20 +1,5 @@
-import { Permission } from './permission'
-
-/**
- * Single registry for permission groups used by grant resolution and policy resolvers.
- * Add new groups here rather than duplicating lists across modules.
- */
-
-/** Permissions derived from `StaffAssignment` rows (class / course / session). */
-export const ASSIGNMENT_SCOPED_PERMISSIONS: readonly Permission[] = [
-  Permission.GRADE_INPUT,
-  Permission.ATTENDANCE_RECORD,
-  Permission.CLASS_LOGBOOK_CREATE,
-  Permission.CLASS_LOGBOOK_UPDATE,
-  Permission.DISCIPLINE_CREATE,
-]
-
-export const ASSIGNMENT_SCOPED_PERMISSION_SET = new Set(ASSIGNMENT_SCOPED_PERMISSIONS)
+import { ASSIGNMENT_SCOPED_PERMISSIONS } from '../../permissions/assignment-scoped-permissions'
+import { Permission } from '../../permissions/permission'
 
 /** Permissions checked for direct student-level resource access. */
 export const STUDENT_DIRECT_ACCESS_PERMISSIONS: readonly Permission[] = [

@@ -1,13 +1,10 @@
-import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ActorMetadata } from "@edaya/core";
 import {
-  AccessRole,
   COORDINATOR_PERMISSIONS,
   Permission,
   TEACHER_PERMISSIONS,
 } from "@edaya/core";
 
-export interface DefaultAccessRoleTemplate {
+export interface StaffInvitePermissionPreset {
   id: string;
   name: string;
   description: string;
@@ -45,7 +42,7 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
   return [...new Set(groups.flat())];
 }
 
-export const DEFAULT_ACCESS_ROLE_TEMPLATES: readonly DefaultAccessRoleTemplate[] = [
+export const STAFF_INVITE_PERMISSION_PRESETS: readonly StaffInvitePermissionPreset[] = [
   {
     id: "role-teacher",
     name: "Professeur",
@@ -81,27 +78,9 @@ export const DEFAULT_ACCESS_ROLE_TEMPLATES: readonly DefaultAccessRoleTemplate[]
   },
 ];
 
-export async function ensureDefaultAccessRoles(
-  application: ApiSchoolApplication,
-  actor: ActorMetadata,
-): Promise<void> {
-  const schoolId = actor.schoolId;
-  const service = application.forActor(actor);
-  const existing = await application.repositories.accessRoles.list({ schoolId });
-  const existingIds = new Set(existing.map(role => role.id));
+/** @deprecated Use STAFF_INVITE_PERMISSION_PRESETS */
+export const DEFAULT_ACCESS_ROLE_TEMPLATES = STAFF_INVITE_PERMISSION_PRESETS;
 
-  for (const template of DEFAULT_ACCESS_ROLE_TEMPLATES) {
-    if (existingIds.has(template.id)) {
-      continue;
-    }
-
-    await service.baseService.entities.accessRoles.save(new AccessRole({
-      id: template.id,
-      schoolId,
-      name: template.name,
-      description: template.description,
-      permissions: [...template.permissions],
-      status: "active",
-    }), { moduleChecked: true });
-  }
+export function getStaffInvitePermissionPreset(roleId: string): StaffInvitePermissionPreset | undefined {
+  return STAFF_INVITE_PERMISSION_PRESETS.find(preset => preset.id === roleId);
 }

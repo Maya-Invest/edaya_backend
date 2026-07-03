@@ -267,6 +267,13 @@
       "when": 1781104996439,
       "tag": "0037_staff_assignment_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1781104996440,
+      "tag": "0038_drop_legacy_access_control",
+      "breakpoints": true
     }
   ]
 }

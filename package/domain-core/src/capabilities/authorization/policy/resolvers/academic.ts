@@ -1,11 +1,11 @@
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
-import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
+import { actorGrantCoversAny, actorHasSchoolWideGrant } from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import {
   CLASS_GROUP_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
-} from '../../permissions/groups'
+} from './permission-sets'
 import { checkStudentAccess } from './student'
 
 export async function checkClassGroupAccess(
@@ -40,12 +40,7 @@ export async function checkAssessmentAccess(
     return
   }
 
-  if (actorGrantCoversAny(
-    actor,
-    SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
-    'school',
-    actor.schoolId,
-  )) {
+  if (actorHasSchoolWideGrant(actor, SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS)) {
     return
   }
 

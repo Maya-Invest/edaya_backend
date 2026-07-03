@@ -2,8 +2,8 @@ import type { EntityConfigFactory } from '../../application/entities/entity-conf
 import { z } from 'zod'
 import { directPermissionEntityConfig } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
-import { validateScopeIds } from '../../capabilities/authorization/scope/scope-ids-validate'
 import { permissionDefinitions } from '../../capabilities/authorization/permissions/permission-definitions'
+import { validateScopeIds } from '../../capabilities/authorization/scope/scope-ids-validate'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -24,11 +24,18 @@ export const staffPermissionAssignmentBaseSchema = z.object({
   updatedAt: zodDate().optional(),
 })
 
-function refineStaffPermissionAssignment(
-  data: z.infer<typeof staffPermissionAssignmentBaseSchema>,
+function refineStaffPermissionAssignmentScope(
+  data: { permission?: Permission, scopeIds?: string, startsAt?: Date, endsAt?: Date },
   ctx: z.RefinementCtx,
 ) {
-  refineEndsAtNotBeforeStartsAtOptional(data, ctx)
+  refineEndsAtNotBeforeStartsAtOptional(
+    { startsAt: data.startsAt, endsAt: data.endsAt },
+    ctx,
+  )
+
+  if (data.permission === undefined || data.scopeIds === undefined) {
+    return
+  }
 
   try {
     validateScopeIds(data.scopeIds, permissionDefinitions[data.permission].scope)
@@ -42,18 +49,18 @@ function refineStaffPermissionAssignment(
   }
 }
 
-export const staffPermissionAssignmentSchema = staffPermissionAssignmentBaseSchema.superRefine(refineStaffPermissionAssignment)
+export const staffPermissionAssignmentSchema = staffPermissionAssignmentBaseSchema.superRefine(refineStaffPermissionAssignmentScope)
 export type StaffPermissionAssignmentData = z.infer<typeof staffPermissionAssignmentSchema>
 export type StaffPermissionAssignmentInput = z.input<typeof staffPermissionAssignmentSchema>
 
 export const staffPermissionAssignmentCreateSchema = staffPermissionAssignmentBaseSchema
   .omit({ createdAt: true, updatedAt: true })
-  .superRefine(refineStaffPermissionAssignment)
+  .superRefine(refineStaffPermissionAssignmentScope)
 
 export const staffPermissionAssignmentUpdateSchema = staffPermissionAssignmentBaseSchema
   .partial()
   .required({ id: true })
-  .superRefine(refineStaffPermissionAssignment)
+  .superRefine(refineStaffPermissionAssignmentScope)
 
 /** Direct staff capability grant (replaces role assignment rows in the target model). */
 export class StaffPermissionAssignment {

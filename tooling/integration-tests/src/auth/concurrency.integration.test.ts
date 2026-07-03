@@ -1,6 +1,6 @@
 import {
-  AccessRole,
   ActorAssuranceLevel,
+  ASSIGNMENT_SCOPED_PERMISSIONS,
   AttendanceStatus,
   createGuardianActorMetadata,
   createStaffActorMetadata,
@@ -9,7 +9,6 @@ import {
   PaymentMethod,
   Permission,
   resolveEffectiveGrants,
-  StaffRoleAssignment,
   Subject,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
@@ -25,6 +24,7 @@ import {
   saveStaffAssignment,
   saveStaffMember,
   saveStudent,
+  seedStaffPermissionTemplate,
 } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
@@ -64,57 +64,17 @@ async function createConcurrencyFixture() {
     firstName: 'Mariama',
     lastName: 'Ba',
   })
-  await app.baseService.repositories.accessRoles.save(new AccessRole({
-    id: 'teacher-access',
+  await seedStaffPermissionTemplate(schoolRepositories, {
+    staffId: 'accountant',
     schoolId: 'school',
-    name: 'Teacher access',
-    permissions: [
-      Permission.ATTENDANCE_RECORD,
-      Permission.CLASS_LOGBOOK_CREATE,
-      Permission.CLASS_LOGBOOK_UPDATE,
-      Permission.DISCIPLINE_CREATE,
-      Permission.GRADE_INPUT,
-    ],
-  }))
-  await app.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'teacher-access-assignment',
-    staffId: 'teacher',
-    schoolId: 'school',
-    roleIds: ['teacher-access'],
-  }))
-  await app.baseService.repositories.accessRoles.save(new AccessRole({
-    id: 'accountant-access',
-    schoolId: 'school',
-    name: 'Accountant access',
+    academicYearId: 'year',
     permissions: [
       Permission.FINANCIAL_CONFIG_READ,
       Permission.PAYMENT_READ,
       Permission.PAYMENT_RECORD,
     ],
-  }))
-  await app.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'accountant-access-assignment',
-    staffId: 'accountant',
-    schoolId: 'school',
-    roleIds: ['accountant-access'],
-    scopeGrants: [
-      {
-        permission: Permission.FINANCIAL_CONFIG_READ,
-        scopeType: 'school',
-        scopeEntityIds: ['school'],
-      },
-      {
-        permission: Permission.PAYMENT_READ,
-        scopeType: 'school',
-        scopeEntityIds: ['school'],
-      },
-      {
-        permission: Permission.PAYMENT_RECORD,
-        scopeType: 'school',
-        scopeEntityIds: ['school'],
-      },
-    ],
-  }))
+    idPrefix: 'spa-accountant',
+  })
 
   // Register student and guardian
   await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
@@ -147,20 +107,26 @@ async function createConcurrencyFixture() {
   await saveStaffAssignment(app, {
     id: 'teacher-subject',
     staffId: 'teacher',
+    academicYearId: 'year',
     classSubjectId: classSubject.id,
     responsibility: 'teacher',
+    permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
   await saveStaffAssignment(app, {
     id: 'teacher-class',
     staffId: 'teacher',
+    academicYearId: 'year',
     classGroupId: 'class',
     responsibility: 'teacher',
+    permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
   await saveStaffAssignment(app, {
     id: 'teacher-session',
     staffId: 'teacher',
+    academicYearId: 'year',
     lessonSessionId: session.id,
     responsibility: 'teacher',
+    permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
 
   await saveFee(app, {
@@ -188,12 +154,14 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
     const teacherGrants = await resolveEffectiveGrants({
       staffMemberId: 'teacher',
       schoolId: 'school',
+      academicYearId: 'year',
       repositories: schoolRepositories,
     })
 
     const accountantGrants = await resolveEffectiveGrants({
       staffMemberId: 'accountant',
       schoolId: 'school',
+      academicYearId: 'year',
       repositories: schoolRepositories,
     })
 

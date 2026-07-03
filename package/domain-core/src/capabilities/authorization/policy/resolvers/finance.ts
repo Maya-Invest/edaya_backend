@@ -1,8 +1,8 @@
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
-import { actorGrantCoversAny } from '../../grants/actor-grant-checks'
+import { actorHasSchoolWideGrant } from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
-import { FEE_ACCESS_PERMISSIONS, STUDENT_FEE_STAFF_ACCESS_PERMISSIONS } from '../../permissions/groups'
+import { FEE_ACCESS_PERMISSIONS, STUDENT_FEE_STAFF_ACCESS_PERMISSIONS } from './permission-sets'
 import { checkStudentAccess } from './student'
 
 export async function checkFeeAccess(
@@ -14,7 +14,8 @@ export async function checkFeeAccess(
     return
   }
 
-  const hasAccess = actorGrantCoversAny(actor, FEE_ACCESS_PERMISSIONS, 'school', actor.schoolId)
+  const hasAccess = actor.kind === 'staff'
+    && actorHasSchoolWideGrant(actor, FEE_ACCESS_PERMISSIONS)
 
   if (!hasAccess) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
@@ -30,7 +31,8 @@ export async function checkStudentFeeAccess(
     return
   }
 
-  const hasStaffAccess = actorGrantCoversAny(actor, STUDENT_FEE_STAFF_ACCESS_PERMISSIONS, 'school', actor.schoolId)
+  const hasStaffAccess = actor.kind === 'staff'
+    && actorHasSchoolWideGrant(actor, STUDENT_FEE_STAFF_ACCESS_PERMISSIONS)
 
   if (hasStaffAccess) {
     return

@@ -33,19 +33,11 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('staff_assignments_staff_id_idx').on(col(table, 'staffId')),
         index('staff_assignments_class_group_id_idx').on(col(table, 'classGroupId')),
       ]
-    case 'access_roles':
-      return [index('access_roles_school_id_idx').on(col(table, 'schoolId'))]
-    case 'access_role_permissions':
-      return [index('access_role_permissions_role_id_idx').on(col(table, 'roleId'))]
-    case 'staff_role_assignments':
+    case 'staff_permission_assignments':
       return [
-        index('staff_role_assignments_staff_id_idx').on(col(table, 'staffId')),
-        index('staff_role_assignments_school_id_idx').on(col(table, 'schoolId')),
-      ]
-    case 'staff_role_assignment_roles':
-      return [
-        index('staff_role_assignment_roles_assignment_id_idx').on(col(table, 'assignmentId')),
-        index('staff_role_assignment_roles_role_id_idx').on(col(table, 'roleId')),
+        index('staff_permission_assignments_staff_id_idx').on(col(table, 'staffId')),
+        index('staff_permission_assignments_school_id_idx').on(col(table, 'schoolId')),
+        index('staff_permission_assignments_academic_year_id_idx').on(col(table, 'academicYearId')),
       ]
     case 'attachments':
       return [

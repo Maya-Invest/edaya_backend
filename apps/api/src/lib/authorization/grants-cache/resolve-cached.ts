@@ -30,9 +30,9 @@ export function resolveGrantsCacheTtlMs(env?: Pick<Environment, "GRANTS_CACHE_TT
 }
 
 export function useStaffPermissionAssignmentsFromEnv(
-  env?: Pick<Environment, "USE_STAFF_PERMISSION_ASSIGNMENTS">,
+  _env?: Pick<Environment, "USE_STAFF_PERMISSION_ASSIGNMENTS">,
 ): boolean {
-  return env?.USE_STAFF_PERMISSION_ASSIGNMENTS ?? false;
+  return true;
 }
 
 export async function resolveCachedEffectiveGrants({

@@ -295,7 +295,7 @@ export function logDevSeedResults(
   if (results.access) {
     if (results.access.status === 'seeded') {
       // eslint-disable-next-line no-console
-      console.log(`Access seed loaded: ${results.access.roles} roles, ${results.access.assignments} assignments`)
+      console.log(`Access seed loaded: ${results.access.permissionAssignments} permission rows, ${results.access.staffAssignments} staff assignments`)
     }
     else {
       // eslint-disable-next-line no-console

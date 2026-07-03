@@ -6,6 +6,7 @@ import type { ApiSchoolApplication } from '@/lib/school-api/application'
 import type { ApiRuntime } from '@/runtime'
 import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import {
   createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,
@@ -181,6 +182,7 @@ export async function provisionSeededRouteTestContext(
       return {
         'content-type': 'application/json',
         'cookie': cookies.join('; '),
+        'x-academic-year-id': DEMO_CENTRAL_ACADEMIC_YEAR_ID,
       }
     },
   }

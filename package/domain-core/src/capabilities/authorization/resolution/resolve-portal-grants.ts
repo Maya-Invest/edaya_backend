@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../../ports/repositories/school-repo
 import type { EffectiveGrants } from '../model/effective-grants'
 import { uniqueActiveClassGroupIds } from '../grants/enrollment-scope'
 import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../grants/portal-permission-sets'
-import { buildPortalScopeGrants } from '../grants/portal-scope-grants'
+import { buildPortalScopeIdsByPermission } from '../grants/portal-scope-ids'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 
 export async function resolveGuardianGrants(args: {
@@ -21,7 +21,11 @@ export async function resolveGuardianGrants(args: {
 
   return {
     permissions: GUARDIAN_PORTAL_PERMISSIONS,
-    scopeGrants: buildPortalScopeGrants(GUARDIAN_PORTAL_PERMISSIONS, { studentIds, classGroupIds }),
+    scopeGrants: [],
+    scopeIdsByPermission: buildPortalScopeIdsByPermission(GUARDIAN_PORTAL_PERMISSIONS, {
+      studentIds,
+      classGroupIds,
+    }),
     isElevated: false,
   }
 }
@@ -40,7 +44,8 @@ export async function resolveStudentGrants(args: {
 
   return {
     permissions: STUDENT_PORTAL_PERMISSIONS,
-    scopeGrants: buildPortalScopeGrants(STUDENT_PORTAL_PERMISSIONS, {
+    scopeGrants: [],
+    scopeIdsByPermission: buildPortalScopeIdsByPermission(STUDENT_PORTAL_PERMISSIONS, {
       studentIds: [args.studentId],
       ...(activeClassGroupId ? { classGroupIds: [activeClassGroupId] } : {}),
     }),

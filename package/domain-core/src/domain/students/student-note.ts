@@ -5,7 +5,7 @@ import type { StudentClassEnrollment } from '../../domain'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
 import { dateTime, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { actorGrantCoversAny, denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { actorHasSchoolWideGrant, denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum StudentNoteVisibility {
@@ -133,11 +133,9 @@ function requireStaffActorId(actor: ActorMetadata): string {
 }
 
 function hasFullStudentRecordAccess(actor: ActorMetadata): boolean {
-  return actorGrantCoversAny(
+  return actorHasSchoolWideGrant(
     actor,
     [Permission.QUERY_STUDENT_DETAIL_READ],
-    'school',
-    actor.schoolId,
   )
 }
 

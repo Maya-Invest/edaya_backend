@@ -59,16 +59,7 @@ export function getEntityWriteService(service: SchoolService, name: ConfigComman
 }
 
 function withAuthorizationCacheInvalidation(name: string, service: EntityReadService & EntityWriteService): EntityWriteService {
-  if (name === "accessRoles") {
-    return wrapWriteService(service, {
-      afterSave: () => clearEffectiveGrantsCache(),
-      afterBatchSave: () => clearEffectiveGrantsCache(),
-      afterDelete: () => clearEffectiveGrantsCache(),
-      afterBatchDelete: () => clearEffectiveGrantsCache(),
-    });
-  }
-
-  if (name === "staffRoleAssignments" || name === "staffPermissionAssignments") {
+  if (name === "staffPermissionAssignments") {
     return wrapWriteService(service, {
       afterSave: entity => invalidateStaffGrant(entity),
       afterBatchSave: entities => entities.forEach(invalidateStaffGrant),

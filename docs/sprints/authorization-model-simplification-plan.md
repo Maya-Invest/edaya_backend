@@ -418,7 +418,7 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 1. For each active `StaffRoleAssignment`: expand roles → permissions; map `scopeGrants` to new `scopeIds` (strip prefixes if any legacy data).
 2. Tenant permissions → `scopeIds: ""`, no `sourceStaffAssignmentId`.
 3. Backfill `StaffAssignment.permissions` from former `ASSIGNMENT_SCOPED_PERMISSIONS` where implicit; run sync.
-4. Feature flag `USE_STAFF_PERMISSION_ASSIGNMENTS` until staging validated.
+4. Feature flag `USE_STAFF_PERMISSION_ASSIGNMENTS` removed after cutover (always on).
 5. Drop `accessRoles` / `staffRoleAssignments` tables and API after cutover.
 
 ---
@@ -463,14 +463,14 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 
 ### Phase 5 — Portal + policy resolvers (4–5 days)
 
-- [ ] Portal grant builder (opaque ids, no prefixes)
-- [ ] Refactor scheduling / student / academic resolvers to path matcher
-- [ ] Remove `groups.ts`
+- [x] Portal grant builder (opaque ids, no prefixes)
+- [x] Refactor scheduling / student / academic resolvers to path matcher
+- [x] Remove `groups.ts`
 
 ### Phase 6 — Migration + cutover (3–5 days)
 
-- [ ] Migration script + seed updates
-- [ ] Remove `AccessRole`, `StaffRoleAssignment`
+- [x] Migration script + seed updates
+- [x] Remove `AccessRole`, `StaffRoleAssignment` (API entities + SQL drop)
 - [ ] OpenAPI + `edaya_web` roles UI → permission matrix
 
 ### Phase 7 — UI + docs (parallel)

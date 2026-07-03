@@ -9,11 +9,14 @@ import {
   createBootstrapStaffActorMetadata,
   Permission,
   permissionAction,
+  permissionRowsFromTemplatePermissions,
   StaffMember,
-  StaffRoleAssignment,
+  StaffPermissionAssignment,
 } from "@edaya/core";
 import { randomUUID } from "node:crypto";
-import { ensureDefaultAccessRoles } from "./default-access-roles";
+import {
+  getStaffInvitePermissionPreset,
+} from "./default-access-roles";
 import {
   ACCESS_ROLE_ID_BY_INVITE_ROLE,
   isOnboardingStaffInviteRoleKey,
@@ -35,7 +38,7 @@ export interface InviteStaffMembersOptions {
 
 export interface InviteStaffMembersResult {
   invitedCount: number;
-  accessRolesEnsured: number;
+  permissionAssignmentsEnsured: number;
 }
 
 function parseInvites(input: InviteStaffMembersInput): InviteStaffMemberInput[] {
@@ -117,12 +120,12 @@ async function assertCanManageOnboardingInvites(
   }
 
   // Onboarding owner before access roles are assigned (same pattern as apply-structure-template).
-  const roleAssignments = await application.repositories.staffRoleAssignments.list({
+  const permissionAssignments = await application.repositories.staffPermissionAssignments.list({
     schoolId: actor.schoolId,
     staffId: staff.id,
     status: "active",
   });
-  if (roleAssignments.length === 0) {
+  if (permissionAssignments.length === 0) {
     return;
   }
 
@@ -181,7 +184,7 @@ export async function inviteStaffMembers(
 ): Promise<InviteStaffMembersResult> {
   const invites = parseInvites(input);
   if (!invites.length) {
-    return { invitedCount: 0, accessRolesEnsured: 0 };
+    return { invitedCount: 0, permissionAssignmentsEnsured: 0 };
   }
 
   if (actor.kind !== "staff") {
@@ -205,19 +208,26 @@ export async function inviteStaffMembers(
   const academicYears = await application.repositories.academicYears.list({ schoolId });
   const academicYear = academicYears.find(year => year.isActive) ?? academicYears[0];
 
-  let accessRolesEnsured = 0;
+  let permissionAssignmentsEnsured = 0;
   let invitedCount = 0;
 
   await service.baseService.atomicExecution.execute(async () => {
-    const beforeRoles = await application.repositories.accessRoles.list({ schoolId });
-    await ensureDefaultAccessRoles(application, elevatedActor);
-    const afterRoles = await application.repositories.accessRoles.list({ schoolId });
-    accessRolesEnsured = afterRoles.length - beforeRoles.length;
-
     for (const invite of invites) {
       const { firstName, lastName } = namesFromInviteEmail(invite.email);
       const staffId = randomUUID();
-      const accessRoleId = ACCESS_ROLE_ID_BY_INVITE_ROLE[invite.role];
+      const preset = getStaffInvitePermissionPreset(ACCESS_ROLE_ID_BY_INVITE_ROLE[invite.role]);
+      if (!preset) {
+        throw new BusinessRuleViolationError(
+          "STAFF_INVITE_INVALID_ROLE",
+          `No permission preset for invite role: ${invite.role}`,
+        );
+      }
+      if (!academicYear) {
+        throw new BusinessRuleViolationError(
+          "STAFF_INVITE_ACADEMIC_YEAR_REQUIRED",
+          "An active academic year is required before inviting staff",
+        );
+      }
 
       await service.baseService.entities.staffMembers.save(new StaffMember({
         id: staffId,
@@ -229,15 +239,21 @@ export async function inviteStaffMembers(
         accountKind: "human",
       }), { moduleChecked: true });
 
-      await service.baseService.entities.staffRoleAssignments.save(new StaffRoleAssignment({
-        id: randomUUID(),
+      const permissionRows = permissionRowsFromTemplatePermissions(
         staffId,
         schoolId,
-        ...(academicYear ? { academicYearId: academicYear.id } : {}),
-        roleIds: [accessRoleId],
-        scopeGrants: [],
-        status: "active",
-      }), { moduleChecked: true });
+        academicYear.id,
+        preset.permissions,
+      );
+      for (const [index, row] of permissionRows.entries()) {
+        await service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({
+          id: randomUUID(),
+          ...row,
+          status: "active",
+        }), { moduleChecked: true });
+        permissionAssignmentsEnsured += 1;
+        void index;
+      }
 
       await service.accountInvitationWorkflow.sendAccountInvitation({
         kind: AccountInvitationKind.Staff,
@@ -250,5 +266,5 @@ export async function inviteStaffMembers(
     }
   });
 
-  return { invitedCount, accessRolesEnsured };
+  return { invitedCount, permissionAssignmentsEnsured };
 }

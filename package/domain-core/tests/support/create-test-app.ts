@@ -2,7 +2,6 @@ import type { ActorMetadata } from '../../src/capabilities/authorization'
 import type {
   AcademicPeriod,
   AcademicYear,
-  AccessRole,
   AccountInvitation,
   AccountInvitationKind,
   Activity,
@@ -44,7 +43,6 @@ import type {
   ServiceApiKey,
   StaffAssignment,
   StaffPermissionAssignment,
-  StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -261,8 +259,6 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       return rows[0]
     },
   }
-  const accessRoles = createStore<AccessRole>(transactionParticipants)
-  const staffRoleAssignments = createStore<StaffRoleAssignment>(transactionParticipants)
   const staffPermissionAssignments = createStore<StaffPermissionAssignment>(transactionParticipants)
   const subjects = createStore<Subject>(transactionParticipants)
   const subjectMatters = createStore<SubjectMatter>(transactionParticipants)
@@ -335,8 +331,6 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       markDispatched: async () => {},
     },
     schoolNotificationTemplates,
-    accessRoles,
-    staffRoleAssignments,
     staffPermissionAssignments,
     attachments,
     resources,

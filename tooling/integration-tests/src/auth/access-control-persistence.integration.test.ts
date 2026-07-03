@@ -1,9 +1,8 @@
 import {
-  AccessRole,
   Permission,
   StaffAssignment,
   StaffMember,
-  StaffRoleAssignment,
+  StaffPermissionAssignment,
 } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -28,31 +27,23 @@ describeIntegration('access control persistence', () => {
       classGroupId: 'class-6a',
     }))
 
-    await repos.accessRoles.save(new AccessRole({
-      id: 'role-teacher-1',
-      schoolId: 'school',
-      name: 'Teacher',
-      permissions: [Permission.ATTENDANCE_RECORD],
-    }))
-
-    await repos.staffRoleAssignments.save(new StaffRoleAssignment({
-      id: 'assignment-teacher-1',
+    await repos.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      id: 'spa-teacher-attendance',
       staffId: 'staff-teacher-1',
       schoolId: 'school',
-      roleIds: ['role-teacher-1'],
-      scopeGrants: [],
+      academicYearId: 'year-1',
+      permission: Permission.ATTENDANCE_RECORD,
+      scopeIds: 'class-6a:*',
       status: 'active',
     }))
 
     const grants = await repos.authorization.resolveEffectiveGrants({
       staffMemberId: 'staff-teacher-1',
       schoolId: 'school',
+      academicYearId: 'year-1',
     })
 
     expect(grants.permissions.has(Permission.ATTENDANCE_RECORD)).toBe(true)
-    expect(grants.scopeGrants.some(grant =>
-      grant.permission === Permission.ATTENDANCE_RECORD
-      && grant.scopeType === 'class_group'
-      && grant.scopeEntityIds.includes('class-6a'))).toBe(true)
+    expect(grants.scopeIdsByPermission?.[Permission.ATTENDANCE_RECORD]).toBe('class-6a:*')
   })
 })

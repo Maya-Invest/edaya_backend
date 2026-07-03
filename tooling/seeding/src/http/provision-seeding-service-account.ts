@@ -7,7 +7,6 @@ import {
 } from '@edaya/core'
 import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
-  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
@@ -77,7 +76,6 @@ export async function provisionSeedingServiceAccountInProcess(
   const result = await createServiceAccount(application.repositories, actor, {
     serviceId: SEEDING_SERVICE_ID,
     displayName: 'Seeding Integration',
-    roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS.st5],
     elevated: true,
     apiKey,
   })
@@ -129,7 +127,6 @@ export async function provisionSeedingServiceAccountHttp(
     body: JSON.stringify({
       serviceId: SEEDING_SERVICE_ID,
       displayName: 'Seeding Integration',
-      roleIds: [DEV_AUTH_STAFF_ACCESS_ROLE_IDS[MINIMAL_AUTH_FIXTURE_STAFF_ID]],
       elevated: true,
       apiKey,
     }),

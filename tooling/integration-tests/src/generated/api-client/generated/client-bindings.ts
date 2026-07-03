@@ -38,20 +38,10 @@ export const clientBindings = {
         "schemaName": "StaffAssignment",
         "allowDirectSave": true
       },
-      "accessRoles": {
-        "publicName": "access-roles",
-        "schemaName": "AccessRole",
-        "allowDirectSave": true
-      },
       "accountInvitations": {
         "publicName": "account-invitations",
         "schemaName": "AccountInvitation",
         "allowDirectSave": false
-      },
-      "staffRoleAssignments": {
-        "publicName": "staff-role-assignments",
-        "schemaName": "StaffRoleAssignment",
-        "allowDirectSave": true
       },
       "staffPermissionAssignments": {
         "publicName": "staff-permission-assignments",

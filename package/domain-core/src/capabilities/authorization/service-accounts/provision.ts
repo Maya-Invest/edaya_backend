@@ -1,12 +1,9 @@
-import type { ScopeGrant } from '../'
 import type { StaffMember } from '../../../domain'
 import type { SchoolRepositories } from '../../../ports'
 import type { StaffActorMetadata } from '../model/actor'
 import { randomUUID } from 'node:crypto'
 import {
   assertDelegatedPermissionAssignmentsSubset,
-  assertDelegatedPermissionsSubset,
-  assertDelegatedScopeGrantsSubset,
   assertOwnerServiceAccountAllowed,
   encodeApiKey,
   generateApiKey,
@@ -17,7 +14,6 @@ import {
   ServiceApiKey,
   StaffMember as StaffMemberEntity,
   StaffPermissionAssignment,
-  StaffRoleAssignment,
 } from '../../../domain'
 import { BusinessRuleViolationError } from '../../../domain/shared/business-rule-error'
 
@@ -30,8 +26,6 @@ export interface ServiceAccountPermissionAssignmentInput {
 export interface CreateServiceAccountInput {
   serviceId: string
   displayName: string
-  roleIds?: readonly string[]
-  scopeGrants?: readonly ScopeGrant[]
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
   elevated?: boolean
   /** When set, stores this key instead of generating a random one (dev/seeding only). */
@@ -45,8 +39,6 @@ export interface CreateServiceAccountResult {
 
 export interface UpdateServiceAccountInput {
   displayName?: string
-  roleIds?: readonly string[]
-  scopeGrants?: readonly ScopeGrant[]
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
 }
 
@@ -59,8 +51,6 @@ export async function createServiceAccount(
 
   const schoolId = actor.schoolId
   const elevated = input.elevated ?? false
-  const roleIds = input.roleIds ?? []
-  const scopeGrants = input.scopeGrants ?? []
   const permissionAssignments = input.permissionAssignments ?? []
   assertOwnerServiceAccountAllowed(actor.effectiveGrants, elevated)
 
@@ -74,10 +64,10 @@ export async function createServiceAccount(
     }
   }
 
-  if (!elevated && roleIds.length === 0 && permissionAssignments.length === 0) {
+  if (!elevated && permissionAssignments.length === 0) {
     throw new BusinessRuleViolationError(
       'SERVICE_ACCOUNT_GRANTS_REQUIRED',
-      'roleIds or permissionAssignments are required unless elevated',
+      'permissionAssignments are required unless elevated',
     )
   }
 
@@ -86,15 +76,6 @@ export async function createServiceAccount(
       actor.effectiveGrants,
       permissionAssignments,
       schoolId,
-    )
-  }
-  else if (roleIds.length > 0) {
-    await assertServiceAccountRoleDelegation(
-      repositories,
-      actor,
-      schoolId,
-      roleIds,
-      scopeGrants,
     )
   }
 
@@ -123,17 +104,6 @@ export async function createServiceAccount(
     isActive: true,
   })
 
-  const staffRoleAssignment = roleIds.length > 0
-    ? new StaffRoleAssignment({
-        id: randomUUID(),
-        staffId: staffMember.id,
-        schoolId,
-        roleIds: [...roleIds],
-        scopeGrants: [...scopeGrants],
-        status: 'active',
-      })
-    : null
-
   const generated = input.apiKey
     ? encodeApiKey(input.apiKey)
     : generateApiKey()
@@ -147,9 +117,6 @@ export async function createServiceAccount(
   })
 
   await repositories.staffMembers.save(staffMember)
-  if (staffRoleAssignment) {
-    await repositories.staffRoleAssignments.save(staffRoleAssignment)
-  }
   if (permissionAssignments.length > 0) {
     await saveServiceAccountPermissionAssignments(
       repositories,
@@ -211,26 +178,6 @@ async function replaceServiceAccountPermissionAssignments(
   )
 }
 
-async function assertServiceAccountRoleDelegation(
-  repositories: SchoolRepositories,
-  actor: StaffActorMetadata,
-  schoolId: string,
-  roleIds: readonly string[],
-  scopeGrants: readonly ScopeGrant[],
-): Promise<void> {
-  const roles = await repositories.accessRoles.findByIds([...roleIds])
-  if (roles.length !== roleIds.length || roles.some(role => role.schoolId !== schoolId)) {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_ROLE_NOT_FOUND',
-      'One or more access roles are missing for this school',
-    )
-  }
-
-  const requestedPermissions = [...new Set(roles.flatMap(role => [...role.permissions]))]
-  assertDelegatedPermissionsSubset(actor.effectiveGrants, requestedPermissions)
-  assertDelegatedScopeGrantsSubset(actor.effectiveGrants, scopeGrants, schoolId)
-}
-
 function splitDisplayName(displayName: string): { firstName: string, lastName: string } {
   const [firstName, ...rest] = displayName.trim().split(/\s+/)
   return {
@@ -249,8 +196,6 @@ export async function updateServiceAccount(
 
   if (
     input.displayName === undefined
-    && input.roleIds === undefined
-    && input.scopeGrants === undefined
     && input.permissionAssignments === undefined
   ) {
     throw new BusinessRuleViolationError(
@@ -272,13 +217,6 @@ export async function updateServiceAccount(
     )
   }
 
-  const roleAssignments = await repositories.staffRoleAssignments.list({
-    staffId: staffMemberId,
-    schoolId: actor.schoolId,
-    status: 'active',
-  })
-  const activeAssignment = roleAssignments[0]
-
   if (input.permissionAssignments !== undefined) {
     assertDelegatedPermissionAssignmentsSubset(
       actor.effectiveGrants,
@@ -291,40 +229,6 @@ export async function updateServiceAccount(
       actor.schoolId,
       input.permissionAssignments,
     )
-  }
-
-  if (input.roleIds !== undefined || input.scopeGrants !== undefined) {
-    if (!activeAssignment) {
-      throw new BusinessRuleViolationError(
-        'SERVICE_ACCOUNT_ROLE_ASSIGNMENT_NOT_FOUND',
-        'Active service account role assignment not found for this school',
-      )
-    }
-
-    const nextRoleIds = input.roleIds ?? activeAssignment.roleIds
-    const nextScopeGrants = input.scopeGrants ?? activeAssignment.scopeGrants
-
-    await assertServiceAccountRoleDelegation(
-      repositories,
-      actor,
-      actor.schoolId,
-      nextRoleIds,
-      nextScopeGrants,
-    )
-
-    const updatedAssignment = new StaffRoleAssignment({
-      id: activeAssignment.id,
-      staffId: activeAssignment.staffId,
-      schoolId: activeAssignment.schoolId,
-      academicYearId: activeAssignment.academicYearId,
-      roleIds: [...nextRoleIds],
-      scopeGrants: [...nextScopeGrants],
-      status: activeAssignment.status,
-      startsAt: activeAssignment.startsAt,
-      endsAt: activeAssignment.endsAt,
-      createdAt: activeAssignment.createdAt,
-    })
-    await repositories.staffRoleAssignments.save(updatedAssignment)
   }
 
   let updatedStaffMember = existing

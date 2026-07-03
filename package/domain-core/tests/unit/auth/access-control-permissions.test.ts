@@ -9,7 +9,7 @@ import {
   createStaffActorMetadata,
   Permission,
 } from '../../../src/capabilities/authorization'
-import { accessRoleConfig, staffRoleAssignmentConfig } from '../../../src/domain'
+import { staffPermissionAssignmentConfig } from '../../../src/domain'
 
 function actorWithPermissions(permissions: readonly Permission[]): ActorMetadata {
   const grants: EffectiveGrants = {
@@ -35,8 +35,7 @@ function actorWithPermissions(permissions: readonly Permission[]): ActorMetadata
 
 function createConfigInput() {
   const repositories = {
-    accessRoles: {},
-    staffRoleAssignments: {},
+    staffPermissionAssignments: {},
   } as SchoolRepositories
 
   return {
@@ -50,18 +49,8 @@ function createConfigInput() {
 }
 
 describe('access-control entity permissions', () => {
-  test('access roles separate read from configure', async () => {
-    const config = accessRoleConfig(createConfigInput())
-    const reader = actorWithPermissions([Permission.ACCESS_CONTROL_READ])
-    const configurer = actorWithPermissions([Permission.ACCESS_CONTROL_CONFIGURE])
-
-    expect(config.read.checkModule(reader)).toBeUndefined()
-    expect(() => config.write.checkModule(reader)).toThrow(AuthorizationError)
-    expect(config.write.checkModule(configurer)).toBeUndefined()
-  })
-
-  test('staff role assignments separate read from assign', async () => {
-    const config = staffRoleAssignmentConfig(createConfigInput())
+  test('staff permission assignments separate read from assign', async () => {
+    const config = staffPermissionAssignmentConfig(createConfigInput())
     const reader = actorWithPermissions([Permission.ACCESS_CONTROL_READ])
     const assigner = actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN])
 

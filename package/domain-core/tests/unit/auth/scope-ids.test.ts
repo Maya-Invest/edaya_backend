@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { Permission, scopeGrantCovers } from '../../../src/capabilities/authorization'
 import { parseScopeIds, serializeScopeIds } from '../../../src/capabilities/authorization/scope/scope-ids-parse'
 import { validateScopeIds } from '../../../src/capabilities/authorization/scope/scope-ids-validate'
 import { scopePathCovers } from '../../../src/capabilities/authorization/scope/scope-path-covers'
@@ -45,11 +46,59 @@ describe('scopePathCovers', () => {
     expect(scopePathCovers('cg-1', 'cg-2', 'class_group')).toBe(false)
   })
 
+  test('scoped grant does not cover empty resource path', () => {
+    expect(scopePathCovers('cg-1', '', 'class_group')).toBe(false)
+  })
+
   test('wildcard grant covers descendants', () => {
     expect(scopePathCovers('cg-1:*', 'cg-1:cs-1', 'class_subject')).toBe(true)
   })
 
   test('leaf id matches class subject grant path', () => {
     expect(scopePathCovers('cg-1:cs-1', 'cs-1', 'class_subject')).toBe(true)
+  })
+})
+
+describe('scopeGrantCovers tenant-wide paths', () => {
+  test('tenant-wide scopeIds do not cover scoped resource checks', () => {
+    const grants = {
+      permissions: new Set([Permission.PAYMENT_READ]),
+      scopeGrants: [],
+      scopeIdsByPermission: { [Permission.PAYMENT_READ]: '' },
+      isElevated: false,
+    }
+
+    expect(scopeGrantCovers(grants, {
+      permission: Permission.PAYMENT_READ,
+      schoolId: 'school-1',
+      scopeType: 'school',
+      scopeEntityId: 'school-1',
+      isElevated: false,
+    })).toBe(true)
+
+    expect(scopeGrantCovers(grants, {
+      permission: Permission.PAYMENT_READ,
+      schoolId: 'school-1',
+      scopeType: 'student',
+      scopeEntityId: 'student-1',
+      isElevated: false,
+    })).toBe(false)
+  })
+
+  test('scoped scopeIds do not satisfy school-wide resource checks', () => {
+    const grants = {
+      permissions: new Set([Permission.GRADE_READ]),
+      scopeGrants: [],
+      scopeIdsByPermission: { [Permission.GRADE_READ]: 'class-1' },
+      isElevated: false,
+    }
+
+    expect(scopeGrantCovers(grants, {
+      permission: Permission.GRADE_READ,
+      schoolId: 'school-1',
+      scopeType: 'school',
+      scopeEntityId: 'school-1',
+      isElevated: false,
+    })).toBe(false)
   })
 })

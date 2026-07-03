@@ -1,10 +1,11 @@
 import type { EffectiveGrants } from '../model/effective-grants'
 import type { ScopeGrant } from '../model/scope-grant'
 import type { Permission } from '../permissions/permission'
+import type { DelegatedPermissionAssignment } from './permission-assignment-subset'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { Permission as PermissionEnum } from '../permissions/permission'
 import {
-  type DelegatedPermissionAssignment,
+
   delegatedPermissionAssignmentSubsetCovers,
 } from './permission-assignment-subset'
 import { scopeGrantSubsetCovers } from './scope-grant-subset'

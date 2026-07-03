@@ -1,8 +1,8 @@
 import {
   AcademicPeriodType,
-  AccessRole,
   ACCOUNTANT_PERMISSIONS,
   ActorAssuranceLevel,
+  ASSIGNMENT_SCOPED_PERMISSIONS,
   AttendanceStatus,
   AuthorizationErrorCode,
   authorize,
@@ -11,7 +11,6 @@ import {
   GradeLevel,
   Permission,
   StaffMember,
-  StaffRoleAssignment,
   Subject,
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
@@ -29,6 +28,7 @@ import {
   saveStaffAssignment,
   saveStaffMember,
   saveStudent,
+  seedStaffPermissionTemplate,
   updateSchool,
 } from '../utils/core-service-helpers'
 import { effectiveGrantsForRoles } from '../utils/effective-grants'
@@ -76,48 +76,27 @@ async function setupBaselineFixture() {
     firstName: 'Charlie',
     lastName: 'Brown',
   })
-  await schoolRepositories.accessRoles.save(new AccessRole({
-    id: 'role-coordinator',
-    schoolId: 'school',
-    name: 'Coordinator',
-    permissions: [...COORDINATOR_PERMISSIONS],
-  }))
-  await schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'assignment-coordinator',
+  await seedStaffPermissionTemplate(schoolRepositories, {
     staffId: 'coordinator-staff',
     schoolId: 'school',
-    roleIds: ['role-coordinator'],
-    scopeGrants: [],
-    status: 'active',
-  }))
-  await schoolRepositories.accessRoles.save(new AccessRole({
-    id: 'role-teacher',
-    schoolId: 'school',
-    name: 'Teacher',
-    permissions: [...TEACHER_PERMISSIONS],
-  }))
-  await schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'assignment-teacher',
+    academicYearId: 'acad-year',
+    permissions: COORDINATOR_PERMISSIONS,
+    idPrefix: 'spa-coordinator',
+  })
+  await seedStaffPermissionTemplate(schoolRepositories, {
     staffId: 'teacher-staff',
     schoolId: 'school',
-    roleIds: ['role-teacher'],
-    scopeGrants: [],
-    status: 'active',
-  }))
-  await schoolRepositories.accessRoles.save(new AccessRole({
-    id: 'role-accountant',
-    schoolId: 'school',
-    name: 'Accountant',
-    permissions: [...ACCOUNTANT_PERMISSIONS],
-  }))
-  await schoolRepositories.staffRoleAssignments.save(new StaffRoleAssignment({
-    id: 'assignment-accountant',
+    academicYearId: 'acad-year',
+    permissions: TEACHER_PERMISSIONS,
+    idPrefix: 'spa-teacher',
+  })
+  await seedStaffPermissionTemplate(schoolRepositories, {
     staffId: 'accountant-staff',
     schoolId: 'school',
-    roleIds: ['role-accountant'],
-    scopeGrants: [],
-    status: 'active',
-  }))
+    academicYearId: 'acad-year',
+    permissions: ACCOUNTANT_PERMISSIONS,
+    idPrefix: 'spa-accountant',
+  })
 
   // Create students & guardians
   await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
@@ -139,15 +118,19 @@ async function setupBaselineFixture() {
   await saveStaffAssignment(app, {
     id: 'assignment-1',
     staffId: 'teacher-staff',
+    academicYearId: 'acad-year',
     classSubjectId: classSubject.id,
     responsibility: 'teacher',
+    permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
 
   await saveStaffAssignment(app, {
     id: 'teacher-class-assign',
     staffId: 'teacher-staff',
+    academicYearId: 'acad-year',
     classGroupId: 'class-7a',
     responsibility: 'teacher',
+    permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
 
   // Create session
@@ -165,8 +148,10 @@ async function setupBaselineFixture() {
   await saveStaffAssignment(app, {
     id: 'staff-session-1',
     staffId: 'teacher-staff',
+    academicYearId: 'acad-year',
     lessonSessionId: session.id,
     responsibility: 'teacher',
+    permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
 
   return { app, repositories, schoolRepositories, forActor, classSubject, session }
@@ -184,6 +169,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'coordinator-staff',
         schoolId: 'school',
+        academicYearId: 'acad-year',
       }),
       requestId: 'req-coord',
       authenticatedAt: new Date(),
@@ -230,6 +216,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'accountant-staff',
         schoolId: 'school',
+        academicYearId: 'acad-year',
       }),
       requestId: 'req-acct',
       authenticatedAt: new Date(),
@@ -264,6 +251,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'teacher-staff',
         schoolId: 'school',
+        academicYearId: 'acad-year',
       }),
       requestId: 'req-teacher',
       authenticatedAt: new Date(),
@@ -316,24 +304,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       firstName: 'Strong',
       lastName: 'Admin',
     }))
-    await app.baseService.repositories.accessRoles.save(new AccessRole({
-      id: 'role-admin-foreign',
-      schoolId: 'strong-school',
-      name: 'Admin',
-      permissions: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
-    }))
-    await app.baseService.repositories.staffRoleAssignments.save(new StaffRoleAssignment({
-      id: 'assignment-admin-foreign',
-      staffId: 'strong-admin',
-      schoolId: 'strong-school',
-      roleIds: ['role-admin-foreign'],
-      scopeGrants: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL).map(permission => ({
-        permission,
-        scopeType: 'school',
-        scopeEntityIds: ['strong-school'],
-      })),
-      status: 'active',
-    }))
 
     const strongForeignAdminApp = forActor(createStaffActorMetadata({
       subjectId: 'strong-admin-user',
@@ -385,6 +355,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
         staffMemberId: 'teacher-staff',
         schoolId: 'school',
+        academicYearId: 'acad-year',
       }),
       requestId: 'req-unauth',
       authenticatedAt: new Date(),

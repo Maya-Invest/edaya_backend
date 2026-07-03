@@ -1,3 +1,4 @@
+import type { StaffPermissionAssignment } from '../../../src/domain/school/staff-permission-assignment'
 import { describe, expect, test } from 'bun:test'
 import { Permission } from '../../../src/capabilities/authorization'
 import {
@@ -7,7 +8,6 @@ import {
 } from '../../../src/capabilities/authorization/sync/staff-assignment-permission-rules'
 import { syncStaffAssignmentPermissions } from '../../../src/capabilities/authorization/sync/staff-assignment-permission-sync'
 import { StaffAssignment } from '../../../src/domain/school/staff-assignment'
-import { StaffPermissionAssignment } from '../../../src/domain/school/staff-permission-assignment'
 
 function assignment(overrides: Record<string, unknown> = {}) {
   return new StaffAssignment({
@@ -105,8 +105,8 @@ describe('syncStaffAssignmentPermissions', () => {
 
     const rows = await repos.staffPermissionAssignments.list({ sourceStaffAssignmentId: 'sa-1' })
     expect(rows).toHaveLength(2)
-    expect(rows.find(row => row.permission === Permission.GRADE_INPUT)?.scopeIds).toBe('cg-1:*')
-    expect(rows.every(row => row.sourceStaffAssignmentId === 'sa-1')).toBe(true)
+    expect(rows.find((row: StaffPermissionAssignment) => row.permission === Permission.GRADE_INPUT)?.scopeIds).toBe('cg-1:*')
+    expect(rows.every((row: StaffPermissionAssignment) => row.sourceStaffAssignmentId === 'sa-1')).toBe(true)
   })
 
   test('replaces derived rows when permissions change', async () => {

@@ -40,8 +40,10 @@ async function renderPath(
 
   for (let index = 0; index < path.segments.length; index++) {
     const segment = path.segments[index]
-    if (segment === '*') {
-      wildcard = true
+    if (segment === undefined || segment === '*') {
+      if (segment === '*') {
+        wildcard = true
+      }
       continue
     }
     const scope = catalogScope

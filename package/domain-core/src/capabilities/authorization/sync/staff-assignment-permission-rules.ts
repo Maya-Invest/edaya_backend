@@ -1,10 +1,10 @@
 import type { StaffAssignment } from '../../../domain/school/staff-assignment'
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { ScopeType } from '../permissions/scope-type'
+import { BusinessRuleViolationError } from '../../../domain/shared/business-rule-error'
 import { Permission } from '../permissions/permission'
 import { permissionDefinitions } from '../permissions/permission-definitions'
 import { validateScopeIds } from '../scope/scope-ids-validate'
-import { BusinessRuleViolationError } from '../../../domain/shared/business-rule-error'
 
 export type StaffAssignmentTargetKind
   = | 'class_group'
@@ -45,7 +45,7 @@ export async function resolveStaffAssignmentTarget(
   if (assignment.classGroupId) {
     const classGroup = await repositories.classGroups.findById(assignment.classGroupId)
     if (!classGroup) {
-      throw new BusinessRuleViolationError('StaffAssignment classGroupId does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_CLASS_GROUP_NOT_FOUND', 'StaffAssignment classGroupId does not exist')
     }
     return {
       kind: 'class_group',
@@ -57,11 +57,11 @@ export async function resolveStaffAssignmentTarget(
   if (assignment.classSubjectId) {
     const classSubject = await repositories.classSubjects.findById(assignment.classSubjectId)
     if (!classSubject) {
-      throw new BusinessRuleViolationError('StaffAssignment classSubjectId does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_CLASS_SUBJECT_NOT_FOUND', 'StaffAssignment classSubjectId does not exist')
     }
     const classGroup = await repositories.classGroups.findById(classSubject.classGroupId)
     if (!classGroup) {
-      throw new BusinessRuleViolationError('StaffAssignment class subject class group does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_CLASS_GROUP_NOT_FOUND', 'StaffAssignment class subject class group does not exist')
     }
     return {
       kind: 'class_subject',
@@ -74,7 +74,7 @@ export async function resolveStaffAssignmentTarget(
   if (assignment.lessonSessionId) {
     const session = await repositories.lessonSessions.findById(assignment.lessonSessionId)
     if (!session) {
-      throw new BusinessRuleViolationError('StaffAssignment lessonSessionId does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_LESSON_SESSION_NOT_FOUND', 'StaffAssignment lessonSessionId does not exist')
     }
     return {
       kind: 'lesson_session',
@@ -87,7 +87,7 @@ export async function resolveStaffAssignmentTarget(
   if (assignment.activitySessionId) {
     const session = await repositories.activitySessions.findById(assignment.activitySessionId)
     if (!session) {
-      throw new BusinessRuleViolationError('StaffAssignment activitySessionId does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_ACTIVITY_SESSION_NOT_FOUND', 'StaffAssignment activitySessionId does not exist')
     }
     return {
       kind: 'activity_session',
@@ -100,11 +100,11 @@ export async function resolveStaffAssignmentTarget(
   if (assignment.assessmentId) {
     const assessment = await repositories.assessments.findById(assignment.assessmentId)
     if (!assessment) {
-      throw new BusinessRuleViolationError('StaffAssignment assessmentId does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_ASSESSMENT_NOT_FOUND', 'StaffAssignment assessmentId does not exist')
     }
     const classGroup = await repositories.classGroups.findById(assessment.classGroupId)
     if (!classGroup) {
-      throw new BusinessRuleViolationError('StaffAssignment assessment class group does not exist')
+      throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_ASSESSMENT_CLASS_GROUP_NOT_FOUND', 'StaffAssignment assessment class group does not exist')
     }
     return {
       kind: 'assessment',
@@ -114,7 +114,7 @@ export async function resolveStaffAssignmentTarget(
     }
   }
 
-  throw new BusinessRuleViolationError('StaffAssignment must target exactly one placement entity')
+  throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_TARGET_REQUIRED', 'StaffAssignment must target exactly one placement entity')
 }
 
 export function assertPermissionAllowedOnStaffAssignmentTarget(
@@ -123,6 +123,7 @@ export function assertPermissionAllowedOnStaffAssignmentTarget(
 ): void {
   if (targetKind === 'assessment' && !ASSESSMENT_STAFF_ASSIGNMENT_PERMISSION_SET.has(permission)) {
     throw new BusinessRuleViolationError(
+      'STAFF_ASSIGNMENT_PERMISSION_NOT_ALLOWED',
       `Permission "${permission}" is not allowed on assessment StaffAssignment targets`,
     )
   }
@@ -130,12 +131,14 @@ export function assertPermissionAllowedOnStaffAssignmentTarget(
   const catalogScope = permissionDefinitions[permission].scope
   if (!catalogScope) {
     throw new BusinessRuleViolationError(
+      'STAFF_ASSIGNMENT_TENANT_PERMISSION',
       `Tenant-wide permission "${permission}" cannot be granted through StaffAssignment`,
     )
   }
 
   if (!TARGET_ALLOWED_SCOPES[targetKind].includes(catalogScope)) {
     throw new BusinessRuleViolationError(
+      'STAFF_ASSIGNMENT_SCOPE_MISMATCH',
       `Permission "${permission}" scope "${catalogScope}" is not valid for StaffAssignment target "${targetKind}"`,
     )
   }
@@ -165,6 +168,7 @@ export function scopeIdsForStaffAssignmentPermission(
   }
 
   throw new BusinessRuleViolationError(
+    'STAFF_ASSIGNMENT_SCOPE_UNRESOLVED',
     `Unable to resolve scopeIds for permission "${permission}" on target "${target.kind}"`,
   )
 }
