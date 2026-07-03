@@ -1,36 +1,27 @@
-import { spawnSync } from 'node:child_process'
-import path from 'node:path'
-
-const STAGING_AUTH_D1 = 'edaya-auth-staging'
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
+import process from 'node:process'
 
 const WIPE_AUTH_SQL = [
-  'DELETE FROM session;',
-  'DELETE FROM account;',
-  'DELETE FROM verification;',
-  'DELETE FROM user;',
+  'DELETE FROM auth.session;',
+  'DELETE FROM auth.account;',
+  'DELETE FROM auth.verification;',
+  'DELETE FROM auth."user";',
 ].join(' ')
 
-export function wipeStagingAuthDatabase(repoRoot: string): void {
-  const apiDir = path.join(repoRoot, 'apps/api')
-  const result = spawnSync('bunx', [
-    'wrangler',
-    'd1',
-    'execute',
-    STAGING_AUTH_D1,
-    '--env',
-    'staging',
-    '--remote',
-    '--command',
-    WIPE_AUTH_SQL,
-  ], {
-    cwd: apiDir,
-    stdio: ['inherit', 'pipe', 'pipe'],
-  })
+export async function wipeStagingAuthDatabase(): Promise<void> {
+  const databaseUrl = process.env['STAGING_DATABASE_URL'] ?? process.env['DATABASE_URL']
 
-  if (result.status !== 0) {
-    const stderr = result.stderr?.toString().trim()
-    throw new Error(
-      `Failed to wipe staging Better Auth D1 (${STAGING_AUTH_D1}): ${stderr || `wrangler exited ${result.status ?? 1}`}`,
-    )
+  if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
+    throw new Error('Set STAGING_DATABASE_URL (or DATABASE_URL) to the Neon staging branch connection string.')
+  }
+
+  const postgres = (await import('postgres')).default
+  const sql = postgres(databaseUrl, { max: 1 })
+
+  try {
+    await sql.unsafe(WIPE_AUTH_SQL)
+  }
+  finally {
+    await sql.end({ timeout: 5 })
   }
 }

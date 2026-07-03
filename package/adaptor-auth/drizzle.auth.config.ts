@@ -1,35 +1,21 @@
-import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'drizzle-kit'
 
-const packageRoot = path.dirname(fileURLToPath(import.meta.url))
-const repoRoot = path.resolve(packageRoot, '../..')
+const databaseUrl = process.env.DATABASE_URL
 
-function resolveRepoLocalPath(pathValue: string): string {
-  if (path.isAbsolute(pathValue)) {
-    return pathValue
-  }
-  if (pathValue === '.data' || pathValue.startsWith('.data/')) {
-    return path.resolve(repoRoot, pathValue)
-  }
-  return path.resolve(process.cwd(), pathValue)
-}
-
-const authPath = process.env.AUTH_DATABASE_PATH ?? '.data/auth.sqlite'
-
-if (authPath === ':memory:') {
+if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
   throw new Error(
-    'File-backed auth database required. Set AUTH_DATABASE_PATH=.data/auth.sqlite in apps/api/.env.',
+    'Postgres DATABASE_URL required. Set DATABASE_URL=postgres://… or use pglite:.data/school for local generation.',
   )
 }
 
 export default defineConfig({
   schema: './src/schema.ts',
   out: './drizzle/auth',
-  dialect: 'sqlite',
+  dialect: 'postgresql',
   strict: true,
-  dbCredentials: {
-    url: resolveRepoLocalPath(authPath),
-  },
+  dbCredentials: databaseUrl.startsWith('postgres') || databaseUrl.startsWith('pglite')
+    ? { url: databaseUrl }
+    : undefined,
+  schemaFilter: ['auth'],
 })

@@ -11,10 +11,11 @@ export async function buildInMemoryApiRuntime(env: Environment): Promise<ApiRunt
   }
 
   const runMigrations = true;
-  const [schoolHandle, authHandle] = await Promise.all([
-    createPgliteSchoolDatabase(null),
-    createAuthDatabase({ runMigrations }),
-  ]);
+  const schoolHandle = await createPgliteSchoolDatabase(null);
+  const authHandle = await createAuthDatabase(schoolHandle, {
+    runMigrations,
+    databaseUrl: env.DATABASE_URL,
+  });
 
   return createApiRuntime({
     env,

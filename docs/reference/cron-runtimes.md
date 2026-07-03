@@ -73,8 +73,6 @@ bun run deploy:api          # production
 bun run deploy:api:staging  # staging
 ```
 
-`deploy:cron` / `deploy:cron:staging` are aliases for the same commands.
-
 After first deploy with merged cron, remove legacy `edaya-cron` workers in Cloudflare to avoid duplicate schedules.
 
 ## Architecture

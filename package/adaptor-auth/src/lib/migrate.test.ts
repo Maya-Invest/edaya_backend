@@ -1,31 +1,31 @@
-import { Database } from 'bun:sqlite'
+import { PGlite } from '@electric-sql/pglite'
 import { describe, expect, it } from 'bun:test'
 import { sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/bun-sqlite'
+import { drizzle } from 'drizzle-orm/pglite'
 import { runMigrations } from './migrate'
 
 describe('runMigrations', () => {
-  it('creates Better Auth tables on SQLite', async () => {
-    const sqlite = new Database(':memory:')
-    const db = drizzle(sqlite)
+  it('creates Better Auth tables in the auth schema on PGlite', async () => {
+    const pglite = new PGlite()
+    const db = drizzle(pglite)
 
-    await runMigrations(db, { driver: 'sqlite' })
+    await runMigrations(db, { driver: 'pglite' })
 
-    const tables = await db.all<{ name: string }>(sql`
-      SELECT name
-      FROM sqlite_master
-      WHERE type = 'table'
-        AND name IN ('user', 'session', 'account', 'verification')
-      ORDER BY name
+    const tables = await db.execute<{ table_name: string }>(sql`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'auth'
+        AND table_name IN ('user', 'session', 'account', 'verification')
+      ORDER BY table_name
     `)
 
-    expect(tables.map(row => row.name)).toEqual([
+    expect(tables.rows.map(row => row.table_name)).toEqual([
       'account',
       'session',
       'user',
       'verification',
     ])
 
-    sqlite.close()
+    await pglite.close()
   })
 })

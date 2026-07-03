@@ -1,8 +1,8 @@
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
 import { createBetterAuth, type Environment } from "@/runtime";
 
 const testEnv = {
@@ -23,17 +23,17 @@ function collectSetCookieHeaders(response: Response): string[] {
 
 describe("createBetterAuth", () => {
   let auth: ReturnType<typeof createBetterAuth>;
-  let sqlite: Database;
+  let pglite: PGlite;
 
   beforeEach(async () => {
-    sqlite = new Database(":memory:");
-    const db = drizzle(sqlite);
-    await runAuthMigrations(db, { driver: "sqlite" });
+    pglite = new PGlite();
+    const db = drizzle(pglite);
+    await runAuthMigrations(db, { driver: "pglite" });
     auth = createBetterAuth(db, testEnv);
   });
 
   afterEach(async () => {
-    sqlite.close();
+    await pglite.close();
   });
 
   it("signs up a user and returns a session", async () => {

@@ -133,8 +133,7 @@ export const periodDefinitionResponseSchema = responseSchema<PeriodDefinitionInp
 export const gradeLevelResponseSchema = responseSchema<GradeLevelInput>("GradeLevel", unwrapShape(gradeLevelSchema));
 export const staffMemberResponseSchema = responseSchema<StaffMemberInput>("StaffMember", unwrapShape(staffMemberSchema));
 
-const accountInvitationShape = unwrapShape(accountInvitationSchema);
-delete accountInvitationShape.tokenHash;
+const { tokenHash: _accountInvitationTokenHash, ...accountInvitationShape } = unwrapShape(accountInvitationSchema);
 export const accountInvitationResponseSchema = responseSchema<AccountInvitationInput>(
   "AccountInvitation",
   accountInvitationShape,

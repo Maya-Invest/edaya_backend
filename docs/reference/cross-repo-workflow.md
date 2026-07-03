@@ -15,15 +15,15 @@ When API routes or registry metadata change in **this repo**:
 
 ```sh
 bun run export-openapi          # tooling/repo/fixtures/openapi.json
-bun run generated:update        # package/generated-api-client/src/generated/*
+bun run openapi:generate          # package/generated-api-client/src/generated/*
 bun run verify
 ```
 
 | Step | Script | Output |
 |------|--------|--------|
 | Export spec | `bun run export-openapi` | `tooling/repo/fixtures/openapi.json` |
-| Generate bindings | `bun run generated:update` | `package/generated-api-client/src/generated/client-bindings.ts` |
-| Drift check | `bun run generated:check` | Compares temp output to tracked files (non-mutating) |
+| Generate bindings | `bun run openapi:generate` | `package/generated-api-client/src/generated/client-bindings.ts` |
+| Drift check | `bun run openapi:check` | Compares temp output to tracked files (non-mutating) |
 
 Bindings are embedded in the OpenAPI document under `info.x-edaya-client-bindings`. The export step reads route metadata from `apps/api/src/lib/school-api/client-bindings.ts`.
 

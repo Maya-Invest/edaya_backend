@@ -9,6 +9,7 @@ import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/adapters/auth-otp-mailer'
 import {
+  closeAuthIntegrationContext,
   collectSetCookieHeaders,
   countAccountRowsForUser,
   countAuthTableRows,
@@ -32,8 +33,7 @@ describe('Better Auth session integration', () => {
     while (contexts.length > 0) {
       const context = contexts.pop()
       if (context) {
-        context.authSqlite.close()
-        await context.pglite.close()
+        await closeAuthIntegrationContext(context)
       }
     }
   })

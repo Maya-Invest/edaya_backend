@@ -14,5 +14,7 @@ describe("createBetterAuth schema guard", () => {
     expect(source).toMatch(/@edaya\/adaptor-auth(\/schema)?/);
     expect(source).toContain("authSchema");
     expect(source).toMatch(/schema:\s*authSchema/);
+    expect(source).toContain("provider: \"pg\"");
+    expect(source).toContain("schemaName: \"auth\"");
   });
 });

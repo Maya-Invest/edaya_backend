@@ -1,7 +1,7 @@
-import { describe, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { describe, expect, test } from 'bun:test'
 import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 
 const VALID_WRANGLER = `

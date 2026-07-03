@@ -68,7 +68,7 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
       let signUpResult = await this.signUp(account, attempts)
       if (!signUpResult.subjectId && this.shouldRepairStaleUser(signInResult, attempts)) {
-        repairStagingAuthUser(account.email)
+        await repairStagingAuthUser(account.email)
         attempts.push('repaired stale staging auth user')
         signUpResult = await this.signUp(account, attempts)
       }

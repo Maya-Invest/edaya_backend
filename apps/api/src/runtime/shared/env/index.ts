@@ -12,5 +12,4 @@ export {
   EnvSchema,
   parseEnv,
   parseRuntimeEnv,
-  readAuthDbBinding,
 } from "@/runtime/shared/env/schema";

@@ -1,11 +1,11 @@
 import indexRouter from "@/app-router";
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { Database } from "bun:sqlite";
 import createApp from "@/http/create-app";
 import { createBetterAuth, parseEnv } from "@/runtime";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
-import { drizzle } from "drizzle-orm/bun-sqlite";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
 
 const stagingEnv = parseEnv({
   RUNTIME: "in-memory",
@@ -30,16 +30,17 @@ function collectSetCookieHeaders(response: Response): string[] {
 }
 
 describe("staging CORS and cross-subdomain auth cookies", () => {
-  let sqlite: Database;
+  let pglite: PGlite;
+  let db: ReturnType<typeof drizzle>;
 
   beforeEach(async () => {
-    sqlite = new Database(":memory:");
-    const db = drizzle(sqlite);
-    await runAuthMigrations(db, { driver: "sqlite" });
+    pglite = new PGlite();
+    db = drizzle(pglite);
+    await runAuthMigrations(db, { driver: "pglite" });
   });
 
   afterEach(async () => {
-    sqlite.close();
+    await pglite.close();
   });
 
   it("allows credentialed requests from the trusted SPA origin", async () => {
@@ -61,7 +62,6 @@ describe("staging CORS and cross-subdomain auth cookies", () => {
   });
 
   it("sets Better Auth session cookies on the configured parent domain", async () => {
-    const db = drizzle(sqlite);
     const auth = createBetterAuth(db, stagingEnv);
 
     const signUpResponse = await auth.handler(new Request("https://api.edaya.test/auth/sign-up/email", {

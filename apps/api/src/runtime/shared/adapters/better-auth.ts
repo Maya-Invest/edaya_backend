@@ -38,9 +38,10 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
 
   return {
     database: drizzleAdapter(db as never, {
-      provider: "sqlite",
+      provider: "pg",
       schema: authSchema,
-    }),
+      schemaName: "auth",
+    } as Parameters<typeof drizzleAdapter>[1]),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/auth",

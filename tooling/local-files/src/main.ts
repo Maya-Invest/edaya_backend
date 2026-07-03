@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 /* eslint-disable no-console */
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import process from "node:process";
@@ -30,13 +31,13 @@ function resolveRootDir(value: string | undefined): string {
   return resolve(repoRoot, root);
 }
 
-const port = Number(process.env.LOCAL_FILES_PORT ?? "9200");
+const port = Number(process.env["LOCAL_FILES_PORT"] ?? "9200");
 const config = resolveLocalFileStorageConfig({
-  LOCAL_FILES_URL: process.env.LOCAL_FILES_URL ?? `http://localhost:${port}`,
-  LOCAL_FILES_ROOT: resolveRootDir(process.env.LOCAL_FILES_ROOT),
-  LOCAL_FILES_SECRET: process.env.LOCAL_FILES_SECRET,
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-  TRUSTED_ORIGINS: process.env.TRUSTED_ORIGINS,
+  LOCAL_FILES_URL: process.env["LOCAL_FILES_URL"] ?? `http://localhost:${port}`,
+  LOCAL_FILES_ROOT: resolveRootDir(process.env["LOCAL_FILES_ROOT"]),
+  LOCAL_FILES_SECRET: process.env["LOCAL_FILES_SECRET"],
+  BETTER_AUTH_SECRET: process.env["BETTER_AUTH_SECRET"],
+  TRUSTED_ORIGINS: process.env["TRUSTED_ORIGINS"],
 });
 const app = createLocalFileStorageApp(config);
 

@@ -9,8 +9,9 @@ const db = {} as never
 
 export default betterAuth({
   database: drizzleAdapter(db, {
-    provider: 'sqlite',
-  }),
+    provider: 'pg',
+    schemaName: 'auth',
+  } as Parameters<typeof drizzleAdapter>[1]),
   secret: 'cli-schema-generation-secret-32-chars-min',
   baseURL: 'http://localhost:9999',
   basePath: '/auth',

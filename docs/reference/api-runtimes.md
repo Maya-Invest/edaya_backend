@@ -20,7 +20,6 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 |----------|-------------------|--------|
 | `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
-| `AUTH_DATABASE_PATH` | ignored on `in-memory`; `.data/auth.sqlite` on `local` | N/A — uses `AUTH_DB` D1 binding |
 | `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite | N/A — migrations are pre-applied |
 | `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
@@ -39,7 +38,7 @@ On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdriv
 | Adapter | in-memory | local | worker |
 |---------|-----------|-------|--------|
 | School DB | PGlite (ephemeral) | PGlite persisted (`.data/school`) | Postgres via Hyperdrive |
-| Auth DB | SQLite `:memory:` | SQLite file | D1 `AUTH_DB` |
+| Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB) | Postgres `auth` schema via Hyperdrive |
 | Migrations on startup | yes | yes (PGlite default) | no |
 | File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun dev` | R2 (required) |
 | Notifications | no-op | Novu* or log/no-op | Novu* or no-op |
@@ -68,14 +67,13 @@ cd apps/api && bun run dev:worker-local
 
 Worker-local smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
 
-- **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive + D1 bindings
+- **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive binding
 - **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
-- **School DB** — Postgres connection via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev)
-- **Auth DB** — D1 binding `AUTH_DB`; SQL migrations in `package/adaptor-auth/drizzle/auth/`
+- **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev); auth tables in the `auth` schema
 
-Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB and D1.
+Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
 
-**Staging:** `bun run deploy:api:staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive, D1, and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
+**Staging:** `bun run deploy:api:staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
 
 ## Architecture
 

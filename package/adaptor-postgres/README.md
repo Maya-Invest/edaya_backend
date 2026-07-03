@@ -24,7 +24,7 @@ bun db:browser:school
 bun db:browser:auth
 ```
 
-Apply migrations with `@edaya/db-migrate` (`bun db:migrate`, `bun db:migrate:dev`).
+Apply migrations with `@edaya/db-migrate` (`bun db:migrate`, `bun db:migrate:hyperdrive`).
 
 ## Runtime usage
 

@@ -10,19 +10,21 @@ BETTER_AUTH_SECRET=dev-secret-change-in-production
 
 # --- Hyperdrive (worker-local dev) ---
 # Origin Postgres for the Hyperdrive binding in wrangler.jsonc.
+# WARNING: default `bun dev:worker-local` uses the production Hyperdrive ID from wrangler.jsonc.
+# Point this at the Neon branch that matches the Hyperdrive config you are testing.
+# Prefer staging smoke: `cd apps/api && wrangler dev --env staging --env-file .dev.vars`
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
 
 # --- R2 file storage (required on RUNTIME=worker) ---
-# Buckets: edaya-files-dev | -staging | -production. R2_BUCKET_NAME defaults in wrangler.jsonc.
-# R2_ENDPOINT=https://<jurisdiction-host>.r2.cloudflarestorage.com
-# R2_ACCOUNT_ID=                          # optional when R2_ENDPOINT is set
+# Buckets: edaya-files-dev | edaya-files-staging | edaya-files-production
+# R2_BUCKET_NAME defaults in wrangler.jsonc [vars] per deploy profile.
+# R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+# R2_ACCOUNT_ID=
 # R2_ACCESS_KEY_ID=
 # R2_SECRET_ACCESS_KEY=
-# R2_BUCKET_NAME=edaya-files-dev          # override wrangler [vars] if needed
-#
-# Deployed: wrangler secret put R2_ACCESS_KEY_ID --env staging
+# R2_BUCKET_NAME=edaya-files-dev
 
-# --- Novu Cloud (notifications + auth emails + scheduled cron jobs) ---
+# --- Novu Cloud (notifications, auth emails, cron jobs) ---
 # NOVU_SECRET_KEY=
 # NOVU_API_URL=https://eu.api.novu.co
 # NOVU_WEBHOOK_SECRET=whsec_...
@@ -31,6 +33,25 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # --- Optional ---
 # GRANTS_CACHE_TTL_MS=300000
 
-# --- One-time setup before first `dev:worker-local` ---
-# bun run db:migrate:dev                 # Neon school DB + local D1 auth
-# bun run db:migrate:auth:remote         # production D1 auth only
+# --- Cron / queues ---
+# CRON_JOBS is a Wrangler queue binding (wrangler.jsonc) — not an env var here.
+# Local `bun dev:cron` runs inline; worker deploy uses Cloudflare Queues.
+
+# --- One-time setup before first worker-local smoke ---
+# bun run db:migrate:hyperdrive       # Neon school + auth (Hyperdrive origin from .dev.vars)
+# bun run db:migrate:staging           # Neon staging branch
+
+# --- Wrangler secrets (deployed workers only; run from apps/api) ---
+# Staging:
+#   bunx wrangler secret put BETTER_AUTH_SECRET --env staging
+#   bunx wrangler secret put R2_ACCESS_KEY_ID --env staging
+#   bunx wrangler secret put R2_SECRET_ACCESS_KEY --env staging
+#   bunx wrangler secret put NOVU_SECRET_KEY --env staging
+#   bunx wrangler secret put NOVU_WEBHOOK_SECRET --env staging
+# Production (unique values — never reuse staging):
+#   bunx wrangler secret put BETTER_AUTH_SECRET --env production
+#   bunx wrangler secret put R2_ACCESS_KEY_ID --env production
+#   bunx wrangler secret put R2_SECRET_ACCESS_KEY --env production
+#   bunx wrangler secret put NOVU_SECRET_KEY --env production
+#   bunx wrangler secret put NOVU_WEBHOOK_SECRET --env production
+# R2_ENDPOINT and R2_ACCOUNT_ID can be set as vars or secrets if not in wrangler [vars].

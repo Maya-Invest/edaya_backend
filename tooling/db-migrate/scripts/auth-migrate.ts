@@ -1,59 +1,29 @@
 #!/usr/bin/env bun
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
-import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-
-const target = process.argv[2]
-const wranglerEnv = process.argv[3] ?? 'production'
-
-if (target !== 'local' && target !== 'remote') {
-  console.error('Usage: bun ./scripts/auth-migrate.ts <local|remote> [production|staging]')
-  process.exit(1)
-}
-
-if (wranglerEnv !== 'production' && wranglerEnv !== 'staging') {
-  console.error('Wrangler environment must be "production" or "staging".')
-  process.exit(1)
-}
-
-const remoteDatabaseName = wranglerEnv === 'staging' ? 'edaya-auth-staging' : 'edaya'
+import { config } from 'dotenv'
+import { expand } from 'dotenv-expand'
+import { applyAuthMigrations } from './lib/apply-auth-migrations'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = path.resolve(packageRoot, '../..')
-const apiWrangler = path.resolve(repoRoot, 'apps/api/wrangler.jsonc')
+const apiEnvPath = path.resolve(repoRoot, 'apps/api/.env')
 
-function run(label: string, command: string, args: string[]) {
-  console.log(`\n> ${label}`)
-  const result = spawnSync(command, args, {
-    cwd: repoRoot,
-    env: process.env,
-    stdio: 'inherit',
-  })
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1)
-  }
+if (existsSync(apiEnvPath)) {
+  expand(config({ path: apiEnvPath }))
 }
 
-const isRemote = target === 'remote'
+const databaseUrl = process.env['DATABASE_URL']
 
-run(
-  isRemote
-    ? `Applying Better Auth D1 migrations (remote, ${wranglerEnv})`
-    : 'Applying Better Auth D1 migrations (local)',
-  'bunx',
-  [
-    'wrangler',
-    'd1',
-    'migrations',
-    'apply',
-    remoteDatabaseName,
-    ...(isRemote ? ['--remote', '--env', wranglerEnv] : ['--local']),
-    '--config',
-    apiWrangler,
-  ],
-)
+if (!databaseUrl || databaseUrl === 'memory') {
+  console.error('Set DATABASE_URL in apps/api/.env before running auth-only migrations.')
+  process.exit(1)
+}
 
-console.log(`\nBetter Auth D1 migrations applied ${isRemote ? `remotely (${wranglerEnv})` : 'locally'}.`)
+console.log('\n> Applying Better Auth migrations (auth schema only)')
+await applyAuthMigrations(databaseUrl)
+console.log('\nBetter Auth migrations applied.')

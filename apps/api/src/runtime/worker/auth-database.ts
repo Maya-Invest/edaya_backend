@@ -1,19 +1,10 @@
-/// <reference types="@cloudflare/workers-types" />
-
-import { readAuthDbBinding } from "@/runtime/shared/env/schema";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { DatabaseHandle } from "@/runtime/types";
+import { createPostgresAuthDatabase } from "@/runtime/shared/auth-database";
 
-export async function createAuthDatabase(env: Environment, bindings?: Record<string, unknown>): Promise<DatabaseHandle> {
-  const authDb = env.AUTH_DB ?? (bindings ? readAuthDbBinding(bindings) : undefined);
-  if (!authDb) {
-    throw new Error("AUTH_DB D1 binding is required on the worker runtime.");
-  }
-
-  const { drizzle } = await import("drizzle-orm/d1");
-  return {
-    db: drizzle(authDb),
-    sqlClient: null,
-    dispose: async () => {},
-  };
+export async function createAuthDatabase(
+  env: Environment,
+  options: { runMigrations?: boolean } = {},
+): Promise<DatabaseHandle> {
+  return createPostgresAuthDatabase(env.DATABASE_URL, options);
 }

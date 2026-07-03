@@ -7,7 +7,6 @@ import { parseRuntimeEnv } from "@/runtime/shared/env/schema";
 import type { Environment } from "@/runtime/shared/env/schema";
 import {
   resolveRepoLocalDatabaseUrl,
-  resolveRepoLocalDataPath,
 } from "@/runtime/shared/env/repo-root";
 
 function resolveApiRoot(): string {
@@ -17,7 +16,6 @@ function resolveApiRoot(): string {
 function normalizeLocalDataPaths(env: Environment): Environment {
   return {
     ...env,
-    AUTH_DATABASE_PATH: resolveRepoLocalDataPath(env.AUTH_DATABASE_PATH),
     DATABASE_URL: resolveRepoLocalDatabaseUrl(env.DATABASE_URL),
   };
 }

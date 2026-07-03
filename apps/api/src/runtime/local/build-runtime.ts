@@ -12,10 +12,8 @@ export async function buildLocalApiRuntime(env: Environment): Promise<ApiRuntime
   }
 
   const runMigrations = runMigrationsOnStartup(env);
-  const [schoolHandle, authHandle] = await Promise.all([
-    createSchoolDatabase(env),
-    createAuthDatabase(env, { runMigrations }),
-  ]);
+  const schoolHandle = await createSchoolDatabase(env);
+  const authHandle = await createAuthDatabase(schoolHandle, env, { runMigrations });
 
   return createApiRuntime({
     env,

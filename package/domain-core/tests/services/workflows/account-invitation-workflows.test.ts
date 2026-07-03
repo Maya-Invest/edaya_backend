@@ -1,6 +1,6 @@
 import type { EffectiveGrants } from '../../../src/capabilities/authorization'
 import type { AccountInvitation } from '../../../src/domain/access/account-invitation'
-import { describe, expect, mock, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   AccountInvitationKind,
   AccountInvitationStatus,
@@ -56,17 +56,17 @@ function createInvitationContext() {
 
   const mockRepos = {
     schools: {
-      findById: mock(async (id: string) => id === 'sch1' ? { id: 'sch1' } : undefined),
+      findById: async (id: string) => id === 'sch1' ? { id: 'sch1' } : undefined,
     },
     staffMembers: {
-      findById: mock(async (id: string) => savedStaff.find(entry => entry.id === id)),
-      findOne: mock(async (query: { subjectId?: string }) => {
+      findById: async (id: string) => savedStaff.find(entry => entry.id === id),
+      findOne: async (query: { subjectId?: string }) => {
         if (!query?.subjectId) {
           return undefined
         }
         return savedStaff.find(entry => entry.subjectId === query.subjectId)
-      }),
-      save: mock(async (entity: StaffMember) => {
+      },
+      save: async (entity: StaffMember) => {
         const index = savedStaff.findIndex(entry => entry.id === entity.id)
         if (index >= 0) {
           savedStaff[index] = entity
@@ -74,32 +74,32 @@ function createInvitationContext() {
         else {
           savedStaff.push(entity)
         }
-      }),
+      },
     },
     guardians: {
-      findById: mock(async () => undefined),
-      findOne: mock(async () => undefined),
-      save: mock(async () => {}),
+      findById: async () => undefined,
+      findOne: async () => undefined,
+      save: async () => {},
     },
     students: {
-      findById: mock(async () => undefined),
-      findOne: mock(async () => undefined),
-      save: mock(async () => {}),
+      findById: async () => undefined,
+      findOne: async () => undefined,
+      save: async () => {},
     },
     guardianLinks: {
-      list: mock(async () => []),
+      list: async () => [],
     },
     accountInvitations: {
-      findById: mock(async (id: string) => savedInvitations.find(entry => entry.id === id)),
-      findByTokenHash: mock(async (tokenHash: string) => savedInvitations.find(entry => entry.tokenHash === tokenHash)),
-      findPendingByTarget: mock(async (schoolId: string, kind: AccountInvitationKind, targetId: string) =>
+      findById: async (id: string) => savedInvitations.find(entry => entry.id === id),
+      findByTokenHash: async (tokenHash: string) => savedInvitations.find(entry => entry.tokenHash === tokenHash),
+      findPendingByTarget: async (schoolId: string, kind: AccountInvitationKind, targetId: string) =>
         savedInvitations.find(entry =>
           entry.schoolId === schoolId
           && entry.kind === kind
           && entry.targetId === targetId
           && entry.status === AccountInvitationStatus.Pending,
-        )),
-      save: mock(async (entity: AccountInvitation) => {
+        ),
+      save: async (entity: AccountInvitation) => {
         const index = savedInvitations.findIndex(entry => entry.id === entity.id)
         if (index >= 0) {
           savedInvitations[index] = entity
@@ -107,15 +107,15 @@ function createInvitationContext() {
         else {
           savedInvitations.push(entity)
         }
-      }),
+      },
     },
   } as unknown as import('../../../src/ports').SchoolRepositories
 
   const service = new SchoolService({
     repositories: mockRepos,
     authorizationPolicy: {
-      checkClassGroupAccess: mock(async () => {}),
-      checkLessonSessionAccess: mock(async () => {}),
+      checkClassGroupAccess: async () => {},
+      checkLessonSessionAccess: async () => {},
     } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
     actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
     atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
@@ -177,49 +177,49 @@ describe('AccountInvitationServiceWorkflow', () => {
     const savedInvitations: AccountInvitation[] = []
     const mockRepos = {
       schools: {
-        findById: mock(async (id: string) => id === 'sch1' ? { id: 'sch1', name: 'Edaya School' } : undefined),
+        findById: async (id: string) => id === 'sch1' ? { id: 'sch1', name: 'Edaya School' } : undefined,
       },
       staffMembers: {
-        findById: mock(async (id: string) => id === 'st9' ? staffMember : undefined),
-        findOne: mock(async () => undefined),
-        save: mock(async () => {}),
+        findById: async (id: string) => id === 'st9' ? staffMember : undefined,
+        findOne: async () => undefined,
+        save: async () => {},
       },
       guardians: {
-        findById: mock(async () => undefined),
-        findOne: mock(async () => undefined),
-        save: mock(async () => {}),
+        findById: async () => undefined,
+        findOne: async () => undefined,
+        save: async () => {},
       },
       students: {
-        findById: mock(async () => undefined),
-        findOne: mock(async () => undefined),
-        save: mock(async () => {}),
+        findById: async () => undefined,
+        findOne: async () => undefined,
+        save: async () => {},
       },
       guardianLinks: {
-        list: mock(async () => []),
+        list: async () => [],
       },
       schoolNotificationTemplates: {
-        findById: mock(async () => new SchoolNotificationTemplates({
+        findById: async () => new SchoolNotificationTemplates({
           schoolId: 'sch1',
           templates,
           createdAt: new Date('2026-01-01T00:00:00Z'),
           updatedAt: new Date('2026-01-01T00:00:00Z'),
-        })),
+        }),
       },
       accountInvitations: {
-        findById: mock(async () => undefined),
-        findByTokenHash: mock(async () => undefined),
-        findPendingByTarget: mock(async () => undefined),
-        save: mock(async (entity: AccountInvitation) => {
+        findById: async () => undefined,
+        findByTokenHash: async () => undefined,
+        findPendingByTarget: async () => undefined,
+        save: async (entity: AccountInvitation) => {
           savedInvitations.push(entity)
-        }),
+        },
       },
     } as unknown as import('../../../src/ports').SchoolRepositories
 
     const service = new SchoolService({
       repositories: mockRepos,
       authorizationPolicy: {
-        checkClassGroupAccess: mock(async () => {}),
-        checkLessonSessionAccess: mock(async () => {}),
+        checkClassGroupAccess: async () => {},
+        checkLessonSessionAccess: async () => {},
       } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
       actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
       atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },

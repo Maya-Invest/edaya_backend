@@ -73,28 +73,30 @@ interface DbBrowserBackend {
   close: () => Promise<void>
 }
 
-async function createAuthBackend(dbPath: string): Promise<DbBrowserBackend> {
-  const { Database } = await import('bun:sqlite')
-  const db = new Database(dbPath, { readonly: true })
+async function createAuthBackend(dataDir: string): Promise<DbBrowserBackend> {
+  const { PGlite } = await import('@electric-sql/pglite')
+  const db = new PGlite(dataDir)
 
   return {
-    label: dbPath,
+    label: `${dataDir} (auth schema)`,
     async listTables() {
-      return db.query(`
-        SELECT name
-        FROM sqlite_master
-        WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+      const result = await db.query(`
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'auth'
         ORDER BY 1
-      `).all().map(row => String(row.name))
+      `)
+      return result.rows.map(row => String(row.table_name))
     },
     async getRows(table, offset, limit) {
-      const quoted = `"${table.replaceAll('"', '""')}"`
-      const total = Number(db.query(`SELECT count(*) AS c FROM ${quoted}`).get()?.c ?? 0)
-      const rows = db.query(`SELECT * FROM ${quoted} LIMIT ? OFFSET ?`).all(limit, offset) as Record<string, unknown>[]
-      return { total, rows }
+      const quoted = `auth."${table.replaceAll('"', '""')}"`
+      const countResult = await db.query(`SELECT count(*)::int AS c FROM ${quoted}`)
+      const total = Number(countResult.rows[0]?.c ?? 0)
+      const rowsResult = await db.query(`SELECT * FROM ${quoted} LIMIT $1 OFFSET $2`, [limit, offset])
+      return { total, rows: rowsResult.rows as Record<string, unknown>[] }
     },
     async close() {
-      db.close()
+      await db.close()
     },
   }
 }
@@ -129,13 +131,26 @@ async function createSchoolBackend(dataDir: string): Promise<DbBrowserBackend> {
 
 async function createBackend(): Promise<DbBrowserBackend> {
   if (target === 'auth') {
-    const authPath = resolveRepoLocalPath(process.env.AUTH_DATABASE_PATH ?? '.data/auth.sqlite')
-    if (!existsSync(authPath)) {
-      console.error(`Auth database not found: ${authPath}`)
+    const databaseUrl = process.env.DATABASE_URL
+    if (!databaseUrl?.startsWith('pglite:')) {
+      console.error('Auth browser only supports local PGlite. Set DATABASE_URL=pglite:.data/school in apps/api/.env.')
+      process.exit(1)
+    }
+
+    const dataDir = databaseUrl.slice('pglite:'.length).trim()
+    if (!dataDir || dataDir === 'pglite') {
+      console.error('Auth browser needs a persisted PGlite path, e.g. DATABASE_URL=pglite:.data/school')
+      process.exit(1)
+    }
+
+    const resolvedDir = resolveRepoLocalPath(dataDir)
+    if (!existsSync(resolvedDir)) {
+      console.error(`School/auth database not found: ${resolvedDir}`)
       console.error('Start the API and run `bun seed:init` first.')
       process.exit(1)
     }
-    return createAuthBackend(authPath)
+
+    return createAuthBackend(resolvedDir)
   }
 
   const databaseUrl = process.env.DATABASE_URL

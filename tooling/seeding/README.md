@@ -6,7 +6,7 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 
 | Script | Purpose |
 |--------|---------|
-| `bun seed:all` / `bun seed:init` | Full demo seed (`devSeedDataset`) through `/core/*` (same entry point) |
+| `bun seed:init` | Full demo seed (`devSeedDataset`) through `/core/*` |
 | `bun seed:auth` | Better Auth accounts only |
 | `bun seed:auth:link` | Re-link auth subjects to staff/guardian records |
 | `bun seed:smoke` | Sign-in + `/core/authorization/effective-grants` |
@@ -15,7 +15,7 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 | `bun seed:clean` | Wipe local `.data/` (stop `bun dev` first) |
 | `bun seed:clean:staging` | Wipe Neon staging + Better Auth D1 (destructive) |
 
-From the repo root: `bun seed`, `bun seed:init`, etc.
+From the repo root: `bun seed`, `bun seed:init`, etc. (`seed` is a short alias for `seed:init`; `seed:all` is deprecated).
 
 Optional wipe before seeding:
 

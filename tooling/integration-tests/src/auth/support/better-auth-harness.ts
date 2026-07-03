@@ -16,9 +16,7 @@ import {
 } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
-import { Database } from 'bun:sqlite'
 import { sql } from 'drizzle-orm'
-import { drizzle as drizzleBunSqlite } from 'drizzle-orm/bun-sqlite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { Hono } from 'hono'
 import { buildBetterAuthConfig } from '@/runtime/shared/adapters/better-auth'
@@ -40,12 +38,11 @@ export interface AuthService {
   api: AuthSessionProvider['api']
 }
 
-export type AuthDb = ReturnType<typeof drizzleBunSqlite>
+export type AuthDb = ReturnType<typeof drizzlePglite>
 export type SchoolDb = ReturnType<typeof drizzlePglite>
 
 export interface AuthIntegrationContext {
   pglite: PGlite
-  authSqlite: Database
   db: SchoolDb
   authDb: AuthDb
   repositories: PostgresSchoolRepositories
@@ -75,11 +72,10 @@ export function collectSetCookieHeaders(response: Response): string[] {
 export async function createAuthIntegrationContext(): Promise<AuthIntegrationContext> {
   const pglite = new PGlite()
   const db = drizzlePglite(pglite)
-  const authSqlite = new Database(':memory:')
-  const authDb = drizzleBunSqlite(authSqlite)
+  const authDb = db
   const repositories = new PostgresSchoolRepositories(db)
 
-  await runAuthMigrations(authDb, { driver: 'sqlite' })
+  await runAuthMigrations(authDb, { driver: 'pglite' })
   await repositories.init({ driver: 'pglite' })
 
   const application = new SchoolApplication({
@@ -101,7 +97,6 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
 
   return {
     pglite,
-    authSqlite,
     db,
     authDb,
     repositories,
@@ -283,28 +278,29 @@ export async function countAuthTableRows(
   authDb: AuthDb,
   table: 'user' | 'account' | 'session',
 ): Promise<number> {
-  const rows = await authDb.all<{ count: number }>(sql.raw(`SELECT COUNT(*) AS count FROM "${table}"`))
-  return rows[0]?.count ?? 0
+  const rows = await authDb.execute<{ count: number }>(
+    sql.raw(`SELECT COUNT(*)::int AS count FROM auth."${table}"`),
+  )
+  return rows.rows[0]?.count ?? 0
 }
 
 export async function findUserByEmail(
   authDb: AuthDb,
   email: string,
 ): Promise<{ id: string, email: string } | null> {
-  const rows = await authDb.all<{ id: string, email: string }>(
-    sql`SELECT id, email FROM "user" WHERE email = ${email}`,
+  const rows = await authDb.execute<{ id: string, email: string }>(
+    sql`SELECT id, email FROM auth."user" WHERE email = ${email}`,
   )
-  return rows[0] ?? null
+  return rows.rows[0] ?? null
 }
 
 export async function countAccountRowsForUser(authDb: AuthDb, userId: string): Promise<number> {
-  const rows = await authDb.all<{ count: number }>(
-    sql`SELECT COUNT(*) AS count FROM "account" WHERE user_id = ${userId}`,
+  const rows = await authDb.execute<{ count: number }>(
+    sql`SELECT COUNT(*)::int AS count FROM auth.account WHERE user_id = ${userId}`,
   )
-  return rows[0]?.count ?? 0
+  return rows.rows[0]?.count ?? 0
 }
 
 export async function closeAuthIntegrationContext(context: AuthIntegrationContext): Promise<void> {
-  context.authSqlite.close()
   await context.pglite.close()
 }

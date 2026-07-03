@@ -32,7 +32,7 @@ GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authori
 
 Default dev credentials (after `bun run seed:auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 
-`RUNTIME=local` uses persisted PGlite (`.data/school`) and SQLite auth (`.data/auth.sqlite`). Tests use `RUNTIME=in-memory` with ephemeral storage. Vendor adaptors (Hyperdrive Postgres, D1, R2) are for `RUNTIME=worker` via `bun dev:worker-local` or deploy.
+`RUNTIME=local` uses persisted PGlite (`.data/school`) with Better Auth in the `auth` schema. Tests use `RUNTIME=in-memory` with ephemeral storage. Vendor adaptors (Hyperdrive Postgres, R2) are for `RUNTIME=worker` via `bun dev:worker-local` or deploy.
 
 See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundaries.md).
 
@@ -45,10 +45,9 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 
 Before first production deploy:
 
-1. Apply school migrations to the Hyperdrive origin DB: `bun run db:migrate:dev` (from repo root)
-2. Apply Better Auth migrations to D1: `bun run db:migrate:auth:remote`
-3. Set `BETTER_AUTH_SECRET`: `wrangler secret put BETTER_AUTH_SECRET --env production`
-4. Dry-run: `bun run deploy:worker:dry-run`
-5. Deploy: `bun run deploy:worker`
+1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun run db:migrate:hyperdrive` (from repo root)
+2. Set `BETTER_AUTH_SECRET`: `wrangler secret put BETTER_AUTH_SECRET --env production`
+3. Dry-run: `bun run deploy:worker:dry-run`
+4. Deploy: `bun run deploy:worker`
 
 See [docs/reference/local-dev.md](../../docs/reference/local-dev.md) and [docs/reference/api-runtimes.md](../../docs/reference/api-runtimes.md).

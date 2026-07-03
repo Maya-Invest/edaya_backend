@@ -8,6 +8,7 @@ import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const expectedEnvExamples = [
   'apps/api/.env.example',
+  'apps/api/.dev.vars.example',
   'tooling/seeding/.env.example',
   'tooling/seeding/.env.staging.example',
 ]

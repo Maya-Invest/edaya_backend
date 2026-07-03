@@ -5,9 +5,9 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { applyAuthMigrations } from './lib/apply-auth-migrations'
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const databaseUrl = process.env['DATABASE_URL']
 
 if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
@@ -15,10 +15,10 @@ if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
   process.exit(1)
 }
 
-function run(label: string, args: string[]) {
-  console.log(`\n> ${label}`)
-  const result = spawnSync('bun', args, {
-    cwd: repoRoot,
+function runSchoolMigrations() {
+  console.log('\n> Applying school schema migrations')
+  const result = spawnSync('bun', ['run', 'migrate'], {
+    cwd: packageRoot,
     env: process.env,
     stdio: 'inherit',
   })
@@ -28,7 +28,8 @@ function run(label: string, args: string[]) {
   }
 }
 
-run('Applying school schema migrations', ['run', 'db:migrate'])
-run('Applying Better Auth D1 migrations (local)', ['run', 'db:migrate:auth'])
+runSchoolMigrations()
 
+console.log('\n> Applying Better Auth migrations')
+await applyAuthMigrations(databaseUrl)
 console.log('\nSchool and auth migrations applied.')

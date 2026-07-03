@@ -19,7 +19,7 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 | Concern | `in-memory` | `local` | `worker` |
 |---------|-------------|---------|----------|
 | School DB | PGlite ephemeral (`pglite`) | PGlite persisted (`pglite:.data/school`) | Postgres (Hyperdrive binding or `DATABASE_URL`) |
-| Auth DB | SQLite `:memory:` | SQLite file (`.data/auth.sqlite`) | D1 `AUTH_DB` |
+| Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB as school) | Postgres `auth` schema via Hyperdrive |
 | File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files` | R2 (`@edaya/adaptor-r2`) |
 | Notifications | no-op | Novu* or log/no-op | Novu* or no-op |
 | Invitation delivery | no-op | Novu* or no-op | Novu* or no-op |
@@ -49,7 +49,7 @@ Positive requirements only (fail when the profile cannot boot):
 1. `@edaya/api` — `RUNTIME=local`, PGlite + SQLite + local-fs client
 2. `@edaya/local-files` — HTTP file service on port 9200
 
-Vendor smoke (Postgres via Hyperdrive, D1, R2) uses **`bun dev:worker-local`** with `apps/api/.dev.vars` — not `bun dev`.
+Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun dev:worker-local`** with `apps/api/.dev.vars` — not `bun dev`.
 
 ## Cron
 
@@ -71,7 +71,7 @@ Cron does not use file storage (`noOpFileStorage`).
 | Package | Role |
 |---------|------|
 | `@edaya/adaptor-postgres` | School persistence (PGlite + Postgres drivers) |
-| `@edaya/adaptor-auth` | Better Auth persistence (SQLite + D1) |
+| `@edaya/adaptor-auth` | Better Auth persistence (Postgres `auth` schema) |
 | `@edaya/adaptor-local-fs` | Local dev `FileStoragePort` + Hono upload app |
 | `@edaya/local-files` | Dev-only file HTTP service (`tooling/local-files`) |
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |

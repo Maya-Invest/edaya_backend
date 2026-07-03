@@ -7,7 +7,7 @@ import { isBetterAuthPath } from "./utils";
 export const authDependency: DependencyModule<AppBindings> = {
   name: "auth",
   async resolve(c) {
-    if (isBetterAuthPath(c) && c.env.AUTH_DB) {
+    if (isBetterAuthPath(c) && c.env.RUNTIME === "worker") {
       c.set("auth", await resolveWorkerAuthService(c.env));
       return;
     }

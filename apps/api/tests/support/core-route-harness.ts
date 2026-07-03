@@ -74,7 +74,6 @@ const activeTestRuntimes = new Set<ApiRuntime>();
 function createIsolatedPgliteTestEnv(): Environment {
   return createPgliteTestEnv({
     DATABASE_URL: "pglite",
-    AUTH_DATABASE_PATH: ":memory:",
   });
 }
 

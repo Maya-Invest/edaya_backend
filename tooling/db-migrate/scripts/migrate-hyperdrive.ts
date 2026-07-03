@@ -32,9 +32,12 @@ if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
 
 process.env['DATABASE_URL'] = databaseUrl
 
-const scriptPath = path.resolve(packageRoot, 'scripts/school-migrate-all.ts')
+console.log('\n> Applying school + auth migrations (Hyperdrive origin from .dev.vars)')
+console.log('> Confirm the connection string targets the Neon branch you intend to migrate.')
+
+const scriptPath = path.resolve(packageRoot, 'scripts/migrate-full.ts')
 const result = Bun.spawnSync(['bun', scriptPath], {
-  cwd: repoRoot,
+  cwd: packageRoot,
   env: process.env,
   stdio: ['inherit', 'inherit', 'inherit'],
 })

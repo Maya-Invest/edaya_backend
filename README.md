@@ -63,16 +63,16 @@ flowchart TB
   PG -.->|implements ports| Core
   DbMigrate --> PG
   DbMigrate --> Auth
-  DbMigrate -.->|school:migrate:all| DbMigrate
+  DbMigrate -.->|migrate:full| DbMigrate
   PG --> SchoolDB[(Postgres / PGlite)]
-  Auth --> AuthDB[(D1 / SQLite)]
+  Auth --> AuthDB[(Postgres auth schema)]
 ```
 
 ### Request flow
 
 1. **Web clients** — Static browser SPAs in **edaya_web** call the API through `@edaya/api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
-3. **Runtime** — Opens the school Postgres DB and auth store (D1 or local SQLite), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
+3. **Runtime** — Opens the school Postgres DB and auth store (same Neon/PGlite, `auth` schema), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
 4. **Core** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
 
 ### API runtimes
@@ -119,8 +119,8 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 |---------|------|------|
 | `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
-| `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (`seed:all`, `seed:init`, …) |
-| `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive + D1) |
+| `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (`seed:init`, …) |
+| `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive) |
 | `@edaya/novu-ops` | `tooling/novu-ops` | Novu workflow bootstrap + subscriber cleanup CLI |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
 
@@ -175,8 +175,8 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | Command | Description |
 |---------|-------------|
 | `bun dev` | Start API in watch mode |
-| `bun seed` | Run all dev seeds via HTTP (`@edaya/seeding seed:all`) |
-| `bun run seed:init` | Alias for `bun seed` — full HTTP demo seed (fresh clone / after `rm -rf .data`) |
+| `bun seed` | Short alias for `seed:init` — full HTTP demo seed |
+| `bun run seed:init` | Full HTTP demo seed (fresh clone / after `rm -rf .data`) |
 | `bun run seed:auth` | Provision Better Auth user accounts only |
 | `bun run seed:smoke` | Minimal smoke seed for quick verification |
 | `bun run seed:remote` | Seed a remote API instance |
@@ -189,20 +189,21 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 ### Database
 
-Root scripts use the `db:*` prefix. `@edaya/db-migrate` exposes `school:*` and `auth:*` scripts (e.g. `bun --filter @edaya/db-migrate school:migrate:dev`).
+Root scripts use the `db:*` prefix (`@edaya/db-migrate` implements `migrate:*`).
 
 | Command | Description |
 |---------|-------------|
-| `bun run db:generate` | Generate school schema SQL migrations (`@edaya/adaptor-postgres`) |
-| `bun run db:migrate` | Apply school schema migrations (`@edaya/db-migrate`) |
-| `bun run db:migrate:all` | Apply school + local D1 auth migrations (dev bootstrap) |
-| `bun run db:migrate:dev` | Load `apps/api/.dev.vars` and migrate Hyperdrive origin + local D1 auth |
-| `bun run db:migrate:staging` | Apply school migrations to Neon staging branch (`STAGING_DATABASE_URL`) |
-| `bun run db:generate:auth` | Generate auth schema SQL migrations (`@edaya/adaptor-auth`) |
-| `bun run db:migrate:auth` | Apply Better Auth migrations to local D1 |
-| `bun run db:migrate:auth:remote` | Apply Better Auth migrations to remote D1 (production) |
-| `bun run db:migrate:auth:staging` | Apply Better Auth migrations to remote D1 (staging) |
-| `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI config |
+| `bun run db:generate` | Generate school schema SQL migrations |
+| `bun run db:migrate` | Apply school schema only (`DATABASE_URL=postgres://…`) |
+| `bun run db:migrate:full` | Apply school + auth on `DATABASE_URL` |
+| `bun run db:migrate:hyperdrive` | Load `.dev.vars` → migrate Hyperdrive origin Neon (school + auth) |
+| `bun run db:migrate:staging` | Migrate Neon staging branch (school + auth) |
+| `bun run db:generate:auth` | Generate auth SQL migrations |
+| `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI |
+
+Local PGlite (`bun dev`) migrates on startup — no command needed.
+
+Deprecated aliases: `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:hyperdrive`.
 
 Package-level extras (run from adaptor package or with `bun --filter`):
 
@@ -217,10 +218,10 @@ Package-level extras (run from adaptor package or with `bun --filter`):
 
 | Command | Description |
 |---------|-------------|
-| `bun run generated:update` | Export OpenAPI and update tracked API client bindings |
-| `bun run generated:check` | Generate in a temporary directory and fail if tracked artifacts drift |
-| `bun run openapi:generate` | Compatibility alias for updating all tracked OpenAPI artifacts |
-| `bun run openapi:check` | Compatibility alias for `generated:check` |
+| `bun run openapi:generate` | Export OpenAPI and update tracked API client bindings |
+| `bun run openapi:check` | Fail if tracked generated artifacts drift |
+| `bun run generated:update` | Alias for `openapi:generate` |
+| `bun run generated:check` | Alias for `openapi:check` |
 | `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/adaptor-auth) |
 | `bun run export-openapi` | Export OpenAPI JSON only |
 | `bun tooling/repo/openapi/generate-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
@@ -242,7 +243,6 @@ TypeScript schema types for web apps are generated in **edaya_web** (`bun run op
 | `bun run test:coverage` | Tests with coverage (where supported) |
 | `bun run build` | Build deployable API bundle |
 | `bun run verify` | Complete non-mutating CI verification path |
-| `bun run fullcheck` | Compatibility alias for `verify` |
 
 ### Per-package shortcuts
 

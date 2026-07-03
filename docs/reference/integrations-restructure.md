@@ -21,7 +21,7 @@ edaya_backend/
     repo/                           @edaya/repo — CI, OpenAPI codegen, dev tools
     fixtures/                       Shared seed IDs and fixture records
     seeding/                        HTTP seed orchestration (@edaya/seeding)
-    db-migrate/                     School + auth migration CLI (Neon / Hyperdrive + D1)
+    db-migrate/                     School + auth migration CLI (Neon / Hyperdrive)
     novu-ops/                       Novu workflow bootstrap + subscriber cleanup CLI
     integration-tests/              Integration tests + smoke (staging, Novu)
 ```
@@ -33,9 +33,9 @@ edaya_backend/
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
 | `package/adaptor-auth` | Auth Drizzle schema, auth SQL, auth `runMigrations()` | Better Auth runtime config (lives in `apps/api`) |
 | `package/adaptor-novu` | Novu `NotificationGatewayPort` adapter, delivery ports | Workflow bootstrap, subscriber cleanup CLI |
-| `tooling/db-migrate` | School `drizzle-kit migrate`, Hyperdrive dev bootstrap, D1 Wrangler apply | School SQL source files (those live in adaptor-postgres) |
+| `tooling/db-migrate` | Postgres `drizzle-kit migrate`, Hyperdrive / staging bootstrap | School SQL source files (those live in adaptor-postgres) |
 | `tooling/novu-ops` | Novu workflow bootstrap, subscriber cleanup | Runtime notification gateway |
-| `tooling/seeding` | HTTP seed scripts against running API (`seed:init`, `seed:all`, …) | API route handlers |
+| `tooling/seeding` | HTTP seed scripts against running API (`seed:init`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Migration CLI scripts, Novu ops CLI, seed data |
 
 **Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth`. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
@@ -82,18 +82,16 @@ edaya_backend/
 | `bun dev:worker-local` | `@edaya/api` `dev:worker-local` |
 | `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
 | `bun db:generate` | `@edaya/adaptor-postgres` |
-| `bun db:migrate` | `@edaya/db-migrate` (`school:migrate`) |
-| `bun db:migrate:all` | `@edaya/db-migrate` (`school:migrate:all`) |
-| `bun db:migrate:dev` | `@edaya/db-migrate` (`school:migrate:dev`) |
+| `bun db:migrate` | `@edaya/db-migrate` (`migrate`) — school only |
+| `bun db:migrate:full` | `@edaya/db-migrate` (`migrate:full`) — school + auth |
+| `bun db:migrate:hyperdrive` | `@edaya/db-migrate` (`migrate:hyperdrive`) |
 | `bun db:generate:auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
 | `bun auth:generate-schema` | `@edaya/adaptor-auth` |
-| `bun db:migrate:auth` | `@edaya/db-migrate` (`auth:migrate:local`) |
-| `bun db:migrate:auth:remote` | `@edaya/db-migrate` (`auth:migrate:remote`) |
-| `bun db:migrate:staging` | `@edaya/db-migrate` (`school:migrate:staging`) |
-| `bun db:migrate:auth:staging` | `@edaya/db-migrate` (`auth:migrate:staging`) |
+| `bun db:migrate:staging` | `@edaya/db-migrate` (`migrate:staging`) |
 | `bun novu:bootstrap` / `bun novu:bootstrap:apply` / `bun novu:bootstrap:validate` | `@edaya/novu-ops` |
 | `bun novu:cleanup` / `bun novu:cleanup:apply` | `@edaya/novu-ops` |
-| `bun run generated:update` | Export OpenAPI + regenerate `@edaya/api-client` bindings |
+| `bun run openapi:generate` | Export OpenAPI + regenerate client bindings |
+| `bun run openapi:check` | Drift check for generated artifacts |
 | `bun deploy:api` | `@edaya/api` `deploy:worker` |
 | `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
 | `bun smoke:staging` | `@edaya/integration-tests` |
@@ -104,12 +102,12 @@ Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cros
 
 1. `auth:generate-schema` — Better Auth CLI → `package/adaptor-auth/src/schema.ts`
 2. `db:generate:auth` — Drizzle Kit → `package/adaptor-auth/drizzle/auth/*.sql`
-3. Node runtime — `runMigrations()` on API startup (SQLite file)
-4. Worker deploy — D1 migrations via `auth:migrate:local` / `auth:migrate:remote` (Wrangler)
+3. Node / worker runtime — `runMigrations()` on startup (PGlite) or pre-applied on Neon
+4. Neon deploy — `db:migrate:hyperdrive` / `db:migrate:staging` (school + `auth` schema)
 
 ## School migration pipeline
 
 1. `db:generate` — Drizzle Kit in `@edaya/adaptor-postgres`
-2. `db:migrate` — apply to a configured Postgres URL
-3. `db:migrate:dev` — Neon dev bootstrap + school + auth orchestration
-4. `db:migrate:all` — school + auth in one pass
+2. `db:migrate` — apply school schema to `DATABASE_URL`
+3. `db:migrate:hyperdrive` — Hyperdrive origin from `.dev.vars` (school + auth)
+4. `db:migrate:full` — school + auth on explicit `DATABASE_URL`

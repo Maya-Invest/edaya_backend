@@ -8,6 +8,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
+import { applyAuthMigrations } from './lib/apply-auth-migrations'
 import { repairDrizzleMigrationJournal } from './repair-drizzle-journal'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -30,13 +31,17 @@ process.env['DATABASE_URL'] = databaseUrl
 
 await repairDrizzleMigrationJournal(databaseUrl)
 
-const result = spawnSync('bun', ['run', 'db:migrate'], {
-  cwd: repoRoot,
-  env: {
-    ...process.env,
-    DATABASE_URL: databaseUrl,
-  },
+console.log('\n> Applying school schema migrations (staging)')
+const schoolResult = spawnSync('bun', ['run', 'migrate'], {
+  cwd: packageRoot,
+  env: process.env,
   stdio: 'inherit',
 })
 
-process.exit(result.status ?? 1)
+if (schoolResult.status !== 0) {
+  process.exit(schoolResult.status ?? 1)
+}
+
+console.log('\n> Applying Better Auth migrations (staging)')
+await applyAuthMigrations(databaseUrl)
+console.log('\nStaging school and auth migrations applied.')

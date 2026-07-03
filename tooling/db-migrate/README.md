@@ -1,34 +1,35 @@
 # @edaya/db-migrate
 
-Database migration CLI for EDAYA: school Postgres (Neon / Hyperdrive) and Better Auth D1/SQLite apply scripts.
+Database migration CLI for EDAYA: school Postgres (Neon / Hyperdrive) and Better Auth Postgres (`auth` schema).
 
-| Area | Schema source | SQL migrations | Apply |
-|------|---------------|----------------|-------|
-| **School** | `@edaya/adaptor-postgres` | `package/adaptor-postgres/drizzle/` | `school:migrate*` scripts |
-| **Auth** | `@edaya/adaptor-auth` | `package/adaptor-auth/drizzle/auth/` | `auth:migrate*` scripts |
+| Area | Schema source | SQL migrations |
+|------|---------------|----------------|
+| **School** | `@edaya/adaptor-postgres` | `package/adaptor-postgres/drizzle/` |
+| **Auth** | `@edaya/adaptor-auth` | `package/adaptor-auth/drizzle/auth/` |
 
-## School migrations
-
-```sh
-# Apply school schema migrations (requires DATABASE_URL)
-DATABASE_URL=postgres://... bun run school:migrate
-
-# Apply school + Better Auth D1 migrations (local dev bootstrap)
-DATABASE_URL=postgres://... bun run school:migrate:all
-
-# Load apps/api/.dev.vars and migrate Hyperdrive origin DB (+ local D1 auth)
-bun run school:migrate:dev
-```
-
-From the monorepo root: `bun db:migrate`, `bun db:migrate:all`, `bun db:migrate:dev`, `bun db:migrate:staging`.
-
-Schema generation stays in `@edaya/adaptor-postgres` (`bun db:generate`).
-
-## Auth migrations
+## Commands (package)
 
 ```sh
-bun run auth:migrate:local     # Apply migrations to local D1 (wrangler dev)
-bun run auth:migrate:remote    # Apply migrations to remote D1 (production)
+# School schema only (requires DATABASE_URL=postgres://…)
+bun run migrate
+
+# School + auth on DATABASE_URL
+DATABASE_URL=postgres://… bun run migrate:full
+
+# Hyperdrive origin from apps/api/.dev.vars (school + auth)
+bun run migrate:hyperdrive
+
+# Neon staging branch (school + auth; loads tooling/seeding/.env.staging)
+bun run migrate:staging
+
+# Auth schema only — package maintainer / PGlite repair (loads apps/api/.env)
+bun run migrate:auth
 ```
 
-From the monorepo root: `bun db:migrate:auth`, `bun db:migrate:auth:remote`, `bun db:migrate:auth:staging`.
+From the monorepo root: `bun db:migrate`, `bun db:migrate:full`, `bun db:migrate:hyperdrive`, `bun db:migrate:staging`.
+
+Local PGlite (`bun dev`) applies both schemas on startup — no migrate command needed.
+
+Schema generation: `bun db:generate` (school), `bun db:generate:auth` / `bun auth:generate-schema` (auth).
+
+**Deprecated root aliases:** `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:hyperdrive`.

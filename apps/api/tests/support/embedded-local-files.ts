@@ -47,7 +47,6 @@ export function createLocalProfileTestEnv(
   return createPgliteTestEnv({
     RUNTIME: "local",
     DATABASE_URL: `pglite:${join(localFiles.dataRoot, "school")}`,
-    AUTH_DATABASE_PATH: join(localFiles.dataRoot, "auth.sqlite"),
     LOCAL_FILES_URL: localFiles.baseUrl,
     LOCAL_FILES_ROOT: localFiles.rootDir,
     LOG_LEVEL: "silent",

@@ -6,14 +6,12 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "school:migrate": "drizzle-kit migrate --config drizzle.school.config.ts",
-    "school:migrate:all": "bun ./scripts/school-migrate-all.ts",
-    "school:migrate:dev": "bun ./scripts/school-migrate-dev.ts",
-    "school:migrate:staging": "bun ./scripts/school-migrate-staging.ts",
-    "school:repair-journal": "bun ./scripts/repair-drizzle-journal.ts",
-    "auth:migrate:local": "bun ./scripts/auth-migrate.ts local",
-    "auth:migrate:remote": "bun ./scripts/auth-migrate.ts remote",
-    "auth:migrate:staging": "bun ./scripts/auth-migrate.ts remote staging",
+    "migrate": "drizzle-kit migrate --config drizzle.school.config.ts",
+    "migrate:full": "bun ./scripts/migrate-full.ts",
+    "migrate:hyperdrive": "bun ./scripts/migrate-hyperdrive.ts",
+    "migrate:staging": "bun ./scripts/migrate-staging.ts",
+    "migrate:auth": "bun ./scripts/auth-migrate.ts",
+    "repair-journal": "bun ./scripts/repair-drizzle-journal.ts",
     "lint": "eslint scripts drizzle.school.config.ts",
     "lint:fix": "eslint scripts drizzle.school.config.ts --fix",
     "test": "bun test --pass-with-no-tests"
@@ -21,13 +19,14 @@
   "dependencies": {
     "@edaya/adaptor-auth": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
+    "@electric-sql/pglite": "^0.3.14",
+    "drizzle-orm": "^0.39.0",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7",
-    "drizzle-kit": "^0.30.4",
-    "wrangler": "^4.99.0"
+    "drizzle-kit": "^0.30.4"
   }
 }

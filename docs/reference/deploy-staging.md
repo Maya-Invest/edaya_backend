@@ -8,7 +8,7 @@ Isolated Cloudflare staging environment for validating deploys before production
 
 ## One-time Cloudflare + Neon setup
 
-Complete these steps once before the first staging deploy. **Do not reuse production Hyperdrive or D1 IDs.**
+Complete these steps once before the first staging deploy. **Do not reuse production Hyperdrive IDs.**
 
 ### 1. Neon staging branch
 
@@ -30,24 +30,7 @@ Copy the returned config `id` into `apps/api/wrangler.jsonc` → `env.staging.hy
 
 **Do not commit** `STAGING_DATABASE_URL` — store it in `tooling/seeding/.env.staging` (gitignored) or your secret manager.
 
-### 3. D1 auth database (staging)
-
-**Created:** `edaya-auth-staging` · `database_id = 2e55cf53-1b89-453f-ac17-3aab83fd8488` (already in `wrangler.jsonc`).
-
-Auth migrations applied:
-
-```sh
-bun run db:migrate:auth:staging
-```
-
-To recreate manually:
-
-```sh
-cd apps/api
-bunx wrangler d1 create edaya-auth-staging
-```
-
-### 4. Custom domains
+### 3. Custom domains
 
 Attach routes in Cloudflare for:
 
@@ -58,7 +41,7 @@ Attach routes in Cloudflare for:
 
 Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
 
-### 5. Wrangler secrets (API staging)
+### 4. Wrangler secrets (API staging)
 
 ```sh
 cd apps/api
@@ -72,13 +55,10 @@ Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value).
 ## First-time bootstrap
 
 ```sh
-# 1. School schema on Neon staging branch (includes 0014_service_accounts.sql)
+# 1. School + auth schema on Neon staging branch
 STAGING_DATABASE_URL=postgres://… bun run db:migrate:staging
 
-# 2. Better Auth D1 on staging
-bun run db:migrate:auth:staging
-
-# 3. Deploy API + webapp
+# 2. Deploy API + webapp
 bun run deploy:api:staging
 bun run deploy:webapp:staging
 
@@ -106,14 +86,14 @@ bun run seed:smoke:staging
 ### Local gate (every change)
 
 ```sh
-bun run fullcheck   # includes openapi:check
+bun run verify   # includes openapi:check
 ```
 
 ### Staging deploy
 
 ```sh
 STAGING_DATABASE_URL=postgres://… bun run db:migrate:staging   # when schema changed
-bun run db:migrate:auth:staging                                 # when auth schema changed
+bun run db:migrate:staging                                      # school + auth schema when either changed
 bun run deploy:api:staging
 bun run deploy:webapp:staging
 SEED_API_URL=https://api-staging.edaya.softilab.dev bun run seed:remote   # if seed data needed
@@ -123,7 +103,7 @@ bun run smoke:staging
 ### Production promotion (after staging green)
 
 ```sh
-bun run fullcheck
+bun run verify
 bun run deploy:api
 bun run deploy:webapp
 ```
@@ -162,8 +142,7 @@ Reads `tooling/seeding/.env.staging` when present, or env vars:
 |---------|-------------|
 | `bun run deploy:api:staging` | Deploy API Worker (`--env staging`) |
 | `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy |
-| `bun run db:migrate:staging` | School migrations → `STAGING_DATABASE_URL` |
-| `bun run db:migrate:auth:staging` | D1 auth migrations → staging D1 |
+| `bun run db:migrate:staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
 | `bun run seed:remote` | Full HTTP seed against `SEED_API_URL` |
 | `bun run smoke:staging` | Tier 1 HTTP smoke against staging |
 
@@ -173,10 +152,10 @@ Reads `tooling/seeding/.env.staging` when present, or env vars:
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Deploy fails on Hyperdrive/D1 | Placeholder IDs still in `wrangler.jsonc` |
+| Deploy fails on Hyperdrive | Placeholder ID still in `wrangler.jsonc` |
 | S5 sign-in fails on seed | Auth users missing — re-run `seed:init` (provisions auth before session bootstrap) |
 | `MISSING_OR_NULL_ORIGIN` on seed | Ensure `STAGING_APP_ORIGIN` is set in `tooling/seeding/.env.staging` (seed CLI sends it as `Origin`) |
-| `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale D1 row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
+| `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale auth row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
 | `sign-in 503` / Worker exceeded resource limits | Redeploy API staging after auth lazy-load fix: `bun run deploy:api:staging` |
 | `account_kind` does not exist | School migration `0014_service_accounts` not applied — run `db:migrate:staging` |
 | `db:migrate:staging` succeeds but schema still old | Orphan row in `drizzle.__drizzle_migrations` with a future `created_at` blocks pending files — re-run `db:migrate:staging` (auto-repairs orphans) or delete unknown-hash rows manually |

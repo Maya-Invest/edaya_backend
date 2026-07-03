@@ -55,14 +55,14 @@ The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtim
 
 | Profile | Command | School DB | Auth DB |
 |---------|---------|-----------|---------|
-| **local** | `bun dev` | PGlite `.data/school` | SQLite `.data/auth.sqlite` |
-| **worker** | `bun dev:worker-local` | Postgres via Hyperdrive | D1 |
+| **local** | `bun dev` | PGlite `.data/school` | PGlite `auth` schema (same DB) |
+| **worker** | `bun dev:worker-local` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
 
 Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` auth). Workers use `wrangler.jsonc` + `.dev.vars` instead of dotenv. See [api-runtimes.md](./api-runtimes.md).
 
 ## API database (local profile)
 
-`RUNTIME=local` with `DATABASE_URL=pglite:.data/school` (default). Auth uses SQLite at `AUTH_DATABASE_PATH` (default `.data/auth.sqlite`), both under repo-root `.data/`.
+`RUNTIME=local` with `DATABASE_URL=pglite:.data/school` (default). Better Auth tables live in the `auth` schema on the same PGlite database under repo-root `.data/`.
 
 ## File storage (local dev)
 
@@ -77,7 +77,7 @@ Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` au
 
 Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentId}/content`. The browser PUTs to `LOCAL_FILES_URL` (CORS allows origins from `TRUSTED_ORIGINS`).
 
-### Worker-local smoke (R2, Hyperdrive, D1)
+### Worker-local smoke (R2, Hyperdrive)
 
 To exercise vendor adaptors locally, use **`bun dev:worker-local`** with credentials in `apps/api/.dev.vars` — not `bun dev`. See [api-runtimes.md](./api-runtimes.md).
 
@@ -214,7 +214,8 @@ Quick health checks:
 ```sh
 curl -s http://localhost:9999/            # expect {"message":"Edaya Core API"}
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 200
-sqlite3 .data/auth.sqlite 'select count(*) from user;'               # expect 27 after seed
+# Auth users (PGlite auth schema — use db-browser or psql against .data/school)
+# bun run db:browser:auth
 bun seed:smoke                                                       # sign-in + effective-grants
 ```
 
