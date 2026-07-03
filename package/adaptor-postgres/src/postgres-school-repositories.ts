@@ -6,6 +6,7 @@ import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
 import { PostgresAccessRoleStore } from './stores/access-role-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
+import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
 import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
@@ -22,6 +23,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly staffAssignments: PostgresStore<StaffAssignment>
   public readonly serviceApiKeys: PostgresServiceApiKeyStore
   public readonly accountInvitations: PostgresAccountInvitationStore
+  public readonly cronJobSchedules: PostgresCronJobScheduleStore
   public readonly schoolNotificationTemplates: PostgresSchoolNotificationTemplatesStore
   public readonly accessRoles: PostgresStore<AccessRole>
   public readonly staffRoleAssignments: PostgresStore<StaffRoleAssignment>
@@ -79,6 +81,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.staffAssignments = stores.staffAssignments
     this.serviceApiKeys = new PostgresServiceApiKeyStore(db)
     this.accountInvitations = new PostgresAccountInvitationStore(db)
+    this.cronJobSchedules = new PostgresCronJobScheduleStore(db)
     this.schoolNotificationTemplates = new PostgresSchoolNotificationTemplatesStore(db)
     this.attachments = stores.attachments
     this.resources = stores.resources

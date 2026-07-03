@@ -2,6 +2,7 @@ import type { GetSchoolOverviewInput, SchoolOverview } from '../../application/q
 import type { CoreEntityMap } from '../../application/runtime/core-entity-map'
 import type { AuthorizationRepository } from '../../capabilities/authorization/resolution/authorization-repository'
 import type { School } from '../../domain'
+import type { CronJobSchedulePort } from '../platform/cron-job-schedule'
 import type { AccountInvitationRepository } from './account-invitation-repository'
 import type { BaseRepositoryInterface } from './base-repository'
 import type { SchoolNotificationTemplatesRepository } from './school-notification-templates-repository'
@@ -13,6 +14,7 @@ export type CoreEntityRepositories = {
 
 export interface SchoolRepositories extends CoreEntityRepositories {
   readonly authorization: AuthorizationRepository
+  readonly cronJobSchedules: CronJobSchedulePort
   readonly serviceApiKeys: ServiceApiKeyRepository
   readonly accountInvitations: AccountInvitationRepository
   readonly schoolNotificationTemplates: SchoolNotificationTemplatesRepository

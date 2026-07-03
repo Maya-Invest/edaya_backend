@@ -102,5 +102,55 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     });
   }
 
+  if (existsSync(resolve(repoRoot, "apps/cron"))) {
+    violations.push({
+      label: "legacy cron app",
+      message: "apps/cron must be removed; scheduled cron runs on @edaya/api worker",
+    });
+  }
+
+  const wrangler = readRepoFile(repoRoot, "apps/api/wrangler.jsonc");
+  if (!wrangler) {
+    violations.push({
+      label: "wrangler cron",
+      message: "apps/api/wrangler.jsonc is required for worker cron configuration",
+    });
+  }
+  else {
+    if (/0 2 \* \* \*/.test(wrangler) || /0 6 \* \* \*/.test(wrangler)) {
+      violations.push({
+        label: "wrangler cron",
+        message: "apps/api/wrangler.jsonc must use a single heartbeat cron (*/5 * * * *), not per-job triggers",
+      });
+    }
+
+    const cronBlocks = [...wrangler.matchAll(/"crons"\s*:\s*\[([^\]]*)\]/g)];
+    if (cronBlocks.length === 0) {
+      violations.push({
+        label: "wrangler cron",
+        message: "apps/api/wrangler.jsonc must declare triggers.crons heartbeat",
+      });
+    }
+    else {
+      for (const [, block] of cronBlocks) {
+        const expressions = [...block.matchAll(/"([^"]+)"/g)].map(match => match[1]);
+        if (expressions.length !== 1 || expressions[0] !== "*/5 * * * *") {
+          violations.push({
+            label: "wrangler cron",
+            message: `each wrangler triggers.crons must contain only "*/5 * * * *" (found: ${expressions.join(", ") || "none"})`,
+          });
+          break;
+        }
+      }
+    }
+
+    if (!wrangler.includes('"binding": "CRON_JOBS"')) {
+      violations.push({
+        label: "wrangler cron queue",
+        message: "apps/api/wrangler.jsonc must declare CRON_JOBS queue producer binding",
+      });
+    }
+  }
+
   return violations;
 }

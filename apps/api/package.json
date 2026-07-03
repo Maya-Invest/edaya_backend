@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/entries/local.ts ../../package/adaptor-postgres/src/postgres-store.ts",
+    "dev:cron": "bun src/entries/cron-local.ts",
     "dev:worker-local": "wrangler dev --env-file .dev.vars",
     "dev:worker": "bun run dev:worker-local",
     "start": "node dist/node.js",

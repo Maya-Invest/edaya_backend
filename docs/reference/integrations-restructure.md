@@ -9,8 +9,7 @@ Web frontends (`@edaya/webapp`, `@edaya/saas-admin`) live in the sibling **[eday
 ```text
 edaya_backend/
   apps/
-    api/                            Hono HTTP, OpenAPI, runtime, Worker host wiring
-    cron/                           Scheduled jobs (Node + Worker)
+    api/                            Hono HTTP, OpenAPI, scheduled cron, runtime, Worker host wiring
   package/
     domain-core/                    Domain, services, authorization, ports
     adaptor-postgres/               School Drizzle schema, SQL, repos, runMigrations()
@@ -45,8 +44,7 @@ edaya_backend/
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/api` | `apps/api` | Hono API (Node + Worker) |
-| `@edaya/cron` | `apps/cron` | Cron runtime (Node + Worker) |
+| `@edaya/api` | `apps/api` | Hono API + scheduled cron (Node + Worker) |
 | `@edaya/core` | `package/domain-core` | Domain + ports |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth persistence |

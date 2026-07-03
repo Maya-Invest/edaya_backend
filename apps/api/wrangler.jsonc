@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
+  // Worker runtime only (`RUNTIME=worker`): `bun dev:worker-local` (Miniflare) and deploy.
+  // Local dev (`bun dev`) uses `.env` + PGlite/SQLite/local-files — not this file.
+  // See docs/reference/runtime-boundaries.md.
   "name": "edaya-api",
   "main": "src/entries/worker.ts",
   "compatibility_date": "2024-09-23",
@@ -35,6 +38,7 @@
   // - R2_ACCESS_KEY_ID,
   // - R2_SECRET_ACCESS_KEY
   //
+  // Default profile below = worker-local smoke (`bun dev:worker-local`).
   // Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
   // Staging (`wrangler deploy --env staging`):
   //   Replace placeholder Hyperdrive + D1 IDs below before first deploy — see docs/deploy-staging.md
@@ -65,6 +69,27 @@
       "migrations_dir": "../../package/adaptor-auth/drizzle/auth"
     }
   ],
+  // Scheduled cron heartbeat — see docs/reference/cron-runtimes.md
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "CRON_JOBS",
+        "queue": "edaya-cron-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "edaya-cron-jobs",
+        "max_batch_size": 10,
+        "max_retries": 3
+      }
+    ]
+  },
   "env": {
     // Production (`wrangler deploy --env production`):
     "production": {
@@ -98,7 +123,27 @@
           "pattern": "api.edaya.softilab.dev",
           "custom_domain": true
         }
-      ]
+      ],
+      "triggers": {
+        "crons": [
+          "*/5 * * * *"
+        ]
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "CRON_JOBS",
+            "queue": "edaya-cron-jobs-production"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "edaya-cron-jobs-production",
+            "max_batch_size": 10,
+            "max_retries": 3
+          }
+        ]
+      }
     },
     // Staging (`wrangler deploy --env staging`):
     "staging": {
@@ -133,7 +178,27 @@
           "pattern": "staging.api.edaya.softilab.dev",
           "custom_domain": true
         }
-      ]
+      ],
+      "triggers": {
+        "crons": [
+          "*/5 * * * *"
+        ]
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "CRON_JOBS",
+            "queue": "edaya-cron-jobs-staging"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "edaya-cron-jobs-staging",
+            "max_batch_size": 10,
+            "max_retries": 3
+          }
+        ]
+      }
     }
   }
 }

@@ -328,6 +328,10 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     staffAssignments,
     serviceApiKeys,
     accountInvitations,
+    cronJobSchedules: {
+      listDue: async () => [],
+      markDispatched: async () => {},
+    },
     schoolNotificationTemplates,
     accessRoles,
     staffRoleAssignments,

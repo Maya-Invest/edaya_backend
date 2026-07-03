@@ -1,6 +1,6 @@
 # Agent guidance
 
-Backend monorepo (`edaya_backend`): API, cron, domain packages, adaptors, seeding, and integration tests.
+Backend monorepo (`edaya_backend`): API (including scheduled cron), domain packages, adaptors, seeding, and integration tests.
 
 Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI work there, follow `edaya_web/AGENTS.md` and `edaya_web/docs/specs/`.
 

@@ -7,6 +7,9 @@ import { expireAccountInvitations } from './jobs/expire-account-invitations'
 import { processDueNotifications } from './jobs/process-due-notifications'
 import { reconcilePendingDeliveries } from './jobs/reconcile-pending-deliveries'
 
+/** Minimal application surface required to run scheduled cron jobs. */
+export type CronApplication = Pick<SchoolApplication, 'repositories' | 'forActor'>
+
 export interface CronJobSchoolResult {
   schoolId: string
   jobKey: CronJobKey
@@ -24,8 +27,38 @@ const CRON_JOB_HANDLERS = {
   expireAccountInvitations,
 } as const satisfies Record<CronJobKey, (context: SchoolCronJobContext) => Promise<CronJobResult>>
 
+export async function runCronJobForSchool(
+  application: CronApplication,
+  options: {
+    jobKey: CronJobKey
+    schoolId: string
+    asOf: Date
+    requestId: string
+  },
+): Promise<CronJobSchoolResult> {
+  const actor = createSystemActorMetadata({
+    systemId: 'cron',
+    schoolId: options.schoolId,
+    requestId: options.requestId,
+    reason: 'scheduled cron job',
+  })
+  const service = application.forActor(actor)
+  const context: SchoolCronJobContext = {
+    asOf: options.asOf,
+    actor,
+    service,
+  }
+  const result = await CRON_JOB_HANDLERS[options.jobKey](context)
+
+  return {
+    schoolId: options.schoolId,
+    jobKey: options.jobKey,
+    result,
+  }
+}
+
 export async function runCronJobs(
-  application: SchoolApplication,
+  application: CronApplication,
   options: {
     asOf: Date
     jobKeys?: readonly CronJobKey[]
@@ -37,22 +70,14 @@ export async function runCronJobs(
   const results: CronJobSchoolResult[] = []
 
   for (const school of schools) {
-    const actor = createSystemActorMetadata({
-      systemId: 'cron',
-      schoolId: school.id,
-      requestId: `${options.requestIdPrefix ?? 'cron'}:${school.id}:${options.asOf.toISOString()}`,
-      reason: 'scheduled cron job',
-    })
-    const service = application.forActor(actor)
-    const context: SchoolCronJobContext = {
-      asOf: options.asOf,
-      actor,
-      service,
-    }
-
     for (const jobKey of jobKeys) {
-      const result = await CRON_JOB_HANDLERS[jobKey](context)
-      results.push({ schoolId: school.id, jobKey, result })
+      const result = await runCronJobForSchool(application, {
+        jobKey,
+        schoolId: school.id,
+        asOf: options.asOf,
+        requestId: `${options.requestIdPrefix ?? 'cron'}:${school.id}:${options.asOf.toISOString()}`,
+      })
+      results.push(result)
     }
   }
 

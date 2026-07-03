@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
+import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 import { z } from "zod";
 
@@ -65,10 +66,13 @@ export const EnvSchema = z.object({
   LOCAL_FILES_ROOT: z.string().min(1).optional(),
   /** Shared secret for local file storage tokens and internal API (defaults to BETTER_AUTH_SECRET) */
   LOCAL_FILES_SECRET: z.string().min(1).optional(),
+  /** Local one-shot cron (`bun dev:cron`): comma-separated job keys; default runs all registered jobs */
+  CRON_JOB_KEYS: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof EnvSchema> & {
   AUTH_DB?: D1Database;
+  CRON_JOBS?: CronJobsQueueBinding;
 };
 
 export function parseEnv(data: Record<string, unknown>) {
@@ -90,6 +94,14 @@ export function readAuthDbBinding(source: RuntimeBindings): D1Database | undefin
   return undefined;
 }
 
+export function readCronJobsQueueBinding(source: RuntimeBindings): CronJobsQueueBinding | undefined {
+  const binding = source.CRON_JOBS;
+  if (binding && typeof binding === "object" && "send" in binding && typeof binding.send === "function") {
+    return binding as CronJobsQueueBinding;
+  }
+  return undefined;
+}
+
 export function parseRuntimeEnv(
   source: RuntimeBindings,
   runtime: RuntimeKind = inferRuntimeKind(source),
@@ -97,5 +109,11 @@ export function parseRuntimeEnv(
   const bindings = prepareRuntimeBindings(source, runtime);
   const env = parseEnv(bindings);
   const authDb = readAuthDbBinding(source);
-  return authDb ? { ...env, AUTH_DB: authDb } : env;
+  const cronJobs = readCronJobsQueueBinding(source);
+
+  return {
+    ...env,
+    ...(authDb ? { AUTH_DB: authDb } : {}),
+    ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
+  };
 }

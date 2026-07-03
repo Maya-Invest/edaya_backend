@@ -1,6 +1,6 @@
 # Runtime boundaries
 
-The API and cron apps wire adapters from **`RUNTIME` only**. Each profile has a fixed adapter matrix; bootstrap code does not upgrade adaptors when unrelated vendor env vars are present (for example, `R2_*` in `.dev.vars` is ignored by `bun dev`).
+The API worker wires adapters from **`RUNTIME` only**. Scheduled cron jobs run on the same worker (`scheduled()` handler). Each profile has a fixed adapter matrix; bootstrap code does not upgrade adaptors when unrelated vendor env vars are present (for example, `R2_*` in `.dev.vars` is ignored by `bun dev`).
 
 See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runtimes.md) for commands and env loading.
 
@@ -64,7 +64,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun run doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun dev`, in-memory Novu gates).
+`bun run doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun dev`, in-memory Novu gates, single heartbeat cron + `CRON_JOBS` queue in `wrangler.jsonc`, no legacy `apps/cron` package).
 
 ## Related packages
 

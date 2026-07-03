@@ -1,4 +1,5 @@
 export * from './in-memory-file-storage'
+export * from './inline-cron-job-dispatcher'
 export * from './no-op-file-storage'
 export * from './no-op-invitation-delivery'
 export * from './no-op-notification-gateway'

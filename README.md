@@ -1,6 +1,6 @@
 # Edaya Core
 
-Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`), **cron** jobs, shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
+Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
 
 Web frontends live in the separate **[edaya_web](../edaya_web)** repo (`@edaya/webapp`, `@edaya/saas-admin`).
 
@@ -11,8 +11,7 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 ```text
 edaya_backend/
 ├── apps/
-│   ├── api/                              @edaya/api — Hono API (Node + Cloudflare Worker)
-│   └── cron/                             @edaya/cron — scheduled jobs (Node + Worker)
+│   └── api/                              @edaya/api — Hono API + scheduled cron (Node + Worker)
 ├── package/
 │   ├── domain-core/                      @edaya/core — domain, services, ports
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
@@ -102,8 +101,7 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, dev seed, Worker host wiring |
-| `@edaya/cron` | `apps/cron` | Scheduled jobs (Node + Cloudflare Workers) |
+| `@edaya/api` | `apps/api` | Hono HTTP API (Node + Cloudflare Workers), OpenAPI, scheduled cron, dev seed, Worker host wiring |
 
 ### Package workspace
 

@@ -4,7 +4,7 @@ The API runs as one of three **profiles**: `in-memory`, `local`, or `worker`. Ea
 
 **Contract:** [runtime-boundaries.md](./runtime-boundaries.md) — adapter matrix and bootstrap rules.
 
-Scheduled cron jobs use a separate app: see [cron-runtimes.md](./cron-runtimes.md).
+Scheduled cron jobs run on the API worker (`scheduled()` handler). See [cron-runtimes.md](./cron-runtimes.md).
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|

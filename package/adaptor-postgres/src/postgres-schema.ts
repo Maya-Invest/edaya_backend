@@ -95,6 +95,17 @@ export const serviceApiKeys = pgTable('service_api_keys', {
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('service_api_keys', table))
 
+export const cronJobSchedules = pgTable('cron_job_schedules', {
+  id: text('id').primaryKey(),
+  jobKey: text('job_key').notNull(),
+  cronExpression: text('cron_expression').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  nextRunAt: timestamp('next_run_at', { mode: 'date' }).notNull(),
+  lastDispatchedAt: timestamp('last_dispatched_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('cron_job_schedules', table))
+
 export const accountInvitations = pgTable('account_invitations', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
