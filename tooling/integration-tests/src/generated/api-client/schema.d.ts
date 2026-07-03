@@ -1448,6 +1448,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/resolve-incident-with-outcomes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** resolve-incident-with-outcomes */
+        post: operations["commands.resolveIncidentWithOutcomes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-fee": {
         parameters: {
             query?: never;
@@ -6803,6 +6820,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/class-activity-enrollments/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Class Activity Enrollments */
+        get: operations["entities.classActivityEnrollments.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.save"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.batchSave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/class-activity-enrollments/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Class Activity Enrollments */
+        post: operations["entities.classActivityEnrollments.batchDelete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/assessments/list": {
         parameters: {
             query?: never;
@@ -10456,6 +10609,34 @@ export interface components {
             resolutionNotes?: string;
             resolvedAt?: string | null;
         };
+        ResolveIncidentWithOutcomesResponse: {
+            incident: components["schemas"]["Incident"];
+            involvements: components["schemas"]["StudentIncidentInvolvement"][];
+            sanctions: components["schemas"]["StudentDisciplinaryAction"][];
+        };
+        ResolveIncidentInvolvementCommandValue: {
+            id: string;
+            studentId: string;
+            /** @enum {string} */
+            role: "subject" | "witness" | "victim";
+            notes?: string;
+            createdAt?: string | null;
+        };
+        ResolveIncidentSanctionCommandValue: {
+            id: string;
+            studentId: string;
+            disciplinaryActionId: string;
+            startsAt?: unknown;
+            endsAt?: unknown;
+            notes?: string | null;
+            createdAt?: string | null;
+        };
+        ResolveIncidentWithOutcomesCommand: {
+            incidentId: string;
+            resolutionNotes?: string;
+            involvedStudents: components["schemas"]["ResolveIncidentInvolvementCommandValue"][];
+            sanctions?: components["schemas"]["ResolveIncidentSanctionCommandValue"][];
+        };
         Fee: {
             id: string;
             schoolId: string;
@@ -11368,55 +11549,65 @@ export interface components {
         ActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ActivityEnrollment"][];
         };
+        ClassActivityEnrollment: {
+            id: string;
+            activityId: string;
+            classGroupId: string;
+            createdAt?: unknown;
+        };
         Filter_36: Record<string, never>;
+        ClassActivityEnrollmentsBatchSave: {
+            entities: components["schemas"]["ClassActivityEnrollment"][];
+        };
+        Filter_37: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_37: Record<string, never>;
+        Filter_38: Record<string, never>;
         AssessmentResultsBatchSave: {
             entities: components["schemas"]["AssessmentResult"][];
         };
-        Filter_38: Record<string, never>;
+        Filter_39: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_39: Record<string, never>;
+        Filter_40: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_40: Record<string, never>;
+        Filter_41: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
-        Filter_41: Record<string, never>;
+        Filter_42: Record<string, never>;
         ReportCardResultsBatchSave: {
             entities: components["schemas"]["ReportCardResult"][];
         };
-        Filter_42: Record<string, never>;
+        Filter_43: Record<string, never>;
         StudentsBatchSave: {
             entities: components["schemas"]["Student"][];
         };
-        Filter_43: Record<string, never>;
+        Filter_44: Record<string, never>;
         StudentEnrollmentsBatchSave: {
             entities: components["schemas"]["StudentClassEnrollment"][];
         };
-        Filter_44: Record<string, never>;
+        Filter_45: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_45: Record<string, never>;
+        Filter_46: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_46: Record<string, never>;
+        Filter_47: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_47: Record<string, never>;
+        Filter_48: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_48: Record<string, never>;
+        Filter_49: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
@@ -11434,15 +11625,15 @@ export interface components {
             description?: string | null;
             createdAt?: unknown;
         };
-        Filter_49: Record<string, never>;
+        Filter_50: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_50: Record<string, never>;
+        Filter_51: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_51: Record<string, never>;
+        Filter_52: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };
@@ -17846,6 +18037,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Incident"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.resolveIncidentWithOutcomes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description resolve-incident-with-outcomes payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResolveIncidentWithOutcomesCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed resolve-incident-with-outcomes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolveIncidentWithOutcomesResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -45028,6 +45297,703 @@ export interface operations {
             };
         };
     };
+    "entities.classActivityEnrollments.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_36"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassActivityEnrollment"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_36"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassActivityEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Class Activity Enrollments not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_36"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassActivityEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Class Activity Enrollments not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments entity */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ClassActivityEnrollment"];
+            };
+        };
+        responses: {
+            /** @description Saved Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassActivityEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Use a domain command for this entity */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityDelete"];
+            };
+        };
+        responses: {
+            /** @description Deleted Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.batchSave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments batch save request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ClassActivityEnrollmentsBatchSave"];
+            };
+        };
+        responses: {
+            /** @description Batch saved Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ids: string[];
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Use a domain command for this entity */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.classActivityEnrollments.batchDelete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Class Activity Enrollments batch delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityBatchDelete"];
+            };
+        };
+        responses: {
+            /** @description Batch deleted Class Activity Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "entities.assessments.list": {
         parameters: {
             query?: never;
@@ -45038,7 +46004,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45124,7 +46090,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45221,7 +46187,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45735,7 +46701,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45821,7 +46787,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45918,7 +46884,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46432,7 +47398,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46518,7 +47484,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46615,7 +47581,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47129,7 +48095,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47215,7 +48181,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47312,7 +48278,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47826,7 +48792,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47912,7 +48878,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48009,7 +48975,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48523,7 +49489,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48609,7 +49575,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48706,7 +49672,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49220,7 +50186,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49306,7 +50272,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49403,7 +50369,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49917,7 +50883,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50003,7 +50969,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50100,7 +51066,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50614,7 +51580,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50700,7 +51666,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50797,7 +51763,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51311,7 +52277,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51397,7 +52363,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51494,7 +52460,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52008,7 +52974,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52094,7 +53060,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52191,7 +53157,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52705,7 +53671,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52791,7 +53757,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52888,7 +53854,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53402,7 +54368,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53488,7 +54454,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53585,7 +54551,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54099,7 +55065,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54185,7 +55151,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54282,7 +55248,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54796,7 +55762,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54882,7 +55848,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54979,7 +55945,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55493,7 +56459,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55579,7 +56545,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55676,7 +56642,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */

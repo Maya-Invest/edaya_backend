@@ -12,6 +12,7 @@ import type {
   Attendance,
   AttendanceRecord,
   CalendarEvent,
+  ClassActivityEnrollment,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
@@ -72,6 +73,7 @@ import {
   CalendarEvent as CalendarEventCtor,
   CalendarEventKind,
   CalendarEventScopeKind,
+  ClassActivityEnrollment as ClassActivityEnrollmentCtor,
   ClassGroup as ClassGroupCtor,
   ClassSubject as ClassSubjectCtor,
   ClassSubjectMatter as ClassSubjectMatterCtor,
@@ -220,6 +222,7 @@ export interface EntityStores {
   classSubjectProgress: PostgresStore<ClassSubjectProgress>
   activities: PostgresStore<Activity>
   activityEnrollments: PostgresStore<ActivityEnrollment>
+  classActivityEnrollments: PostgresStore<ClassActivityEnrollment>
   assessments: PostgresStore<Assessment>
   assessmentResults: PostgresStore<AssessmentResult>
   gradeScales: PostgresStore<GradeScale>
@@ -859,6 +862,8 @@ export function createEntityStores(db: any): EntityStores {
     ),
 
     activityEnrollments: defaultStore(db, schema.activityEnrollments, ActivityEnrollmentCtor),
+
+    classActivityEnrollments: defaultStore(db, schema.classActivityEnrollments, ClassActivityEnrollmentCtor),
 
     assessments: customStore(
       db,

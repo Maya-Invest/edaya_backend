@@ -29,6 +29,7 @@ import {
   guardianContactMethodSchema,
   guardianSchema,
   guardianStudentLinkSchema,
+  IncidentInvolvementRole,
   incidentSchema,
   messageDeliverySchema,
   NOTIFICATION_TEMPLATE_KEYS,
@@ -604,6 +605,35 @@ export const resolveIncidentCommandSchema = z.object({
   resolutionNotes: optionalText(),
   resolvedAt: field.optionalDate(),
 }).openapi("ResolveIncidentCommand");
+
+const resolveIncidentInvolvementCommandSchema = z.object({
+  id: field.id(),
+  studentId: field.id(),
+  role: z.nativeEnum(IncidentInvolvementRole),
+  notes: optionalText(),
+  createdAt: field.optionalDate(),
+}).openapi("ResolveIncidentInvolvementCommandValue");
+
+const resolveIncidentSanctionCommandSchema = objectFromSchema(studentDisciplinaryActionSchema)
+  .pick({
+    id: true,
+    studentId: true,
+    disciplinaryActionId: true,
+    startsAt: true,
+    endsAt: true,
+    notes: true,
+  })
+  .extend({
+    createdAt: field.optionalDate(),
+  })
+  .openapi("ResolveIncidentSanctionCommandValue");
+
+export const resolveIncidentWithOutcomesCommandSchema = z.object({
+  incidentId: field.id(),
+  resolutionNotes: optionalText(),
+  involvedStudents: z.array(resolveIncidentInvolvementCommandSchema).min(1),
+  sanctions: z.array(resolveIncidentSanctionCommandSchema).optional(),
+}).openapi("ResolveIncidentWithOutcomesCommand");
 
 const feeInstallmentTemplateCommandSchema = namedObjectSchema("FeeInstallmentTemplateCommandValue", {
   label: field.text(),

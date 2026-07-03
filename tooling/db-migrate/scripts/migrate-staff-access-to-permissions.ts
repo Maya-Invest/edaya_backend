@@ -66,7 +66,48 @@ interface AcademicYearRow {
 
 const sql = postgres(databaseUrl, { max: 1 })
 
+async function legacyAccessTablesExist(): Promise<boolean> {
+  const rows = await sql<{ exists: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = 'access_roles'
+    ) AS exists
+  `
+  return rows[0]?.exists ?? false
+}
+
+async function staffPermissionTableExists(): Promise<boolean> {
+  const rows = await sql<{ exists: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = 'staff_permission_assignments'
+    ) AS exists
+  `
+  return rows[0]?.exists ?? false
+}
+
 try {
+  if (!(await legacyAccessTablesExist())) {
+    console.log(JSON.stringify({
+      dryRun,
+      skipped: true,
+      reason: 'legacy access control tables absent — cutover already applied or fresh database',
+    }, null, 2))
+    process.exit(0)
+  }
+
+  if (!(await staffPermissionTableExists())) {
+    console.error(
+      'staff_permission_assignments table is missing. '
+      + 'Apply school migrations through 0036 first (bun run db:migrate:full).',
+    )
+    process.exit(1)
+  }
+
   const accessRolePermissions = await sql<AccessRolePermissionRow[]>`
     SELECT role_id, permission
     FROM access_role_permissions

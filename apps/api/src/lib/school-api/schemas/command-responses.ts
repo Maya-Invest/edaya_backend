@@ -43,6 +43,12 @@ import {
   studentResponseSchema,
 } from "./entities";
 
+export const resolveIncidentWithOutcomesResponseSchema = z.object({
+  incident: incidentResponseSchema,
+  involvements: z.array(studentIncidentInvolvementResponseSchema),
+  sanctions: z.array(studentDisciplinaryActionResponseSchema),
+}).openapi("ResolveIncidentWithOutcomesResponse");
+
 export const commandMessageResponseSchema = z.object({
   message: z.string(),
 }).openapi("CommandMessageResponse");
@@ -157,6 +163,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   applyDisciplinaryAction: studentDisciplinaryActionResponseSchema,
   updateStudentDisciplinaryActionStatus: studentDisciplinaryActionResponseSchema,
   resolveIncident: incidentResponseSchema,
+  resolveIncidentWithOutcomes: resolveIncidentWithOutcomesResponseSchema,
   createFee: feeResponseSchema,
   assignFeeToStudent: studentFeeResponseSchema,
   recordPayment: paymentResponseSchema,

@@ -16,6 +16,7 @@ import {
   attendanceRecordSchema,
   attendanceSchema,
   calendarEventSchema,
+  classActivityEnrollmentSchema,
   classGroupSchema,
   classSubjectMatterSchema,
   classSubjectProgressSchema,
@@ -76,6 +77,7 @@ import type {
   AttendanceRecordInput,
   AttendanceSummary,
   CalendarEventInput,
+  ClassActivityEnrollmentInput,
   ClassGroupInput,
   ClassSubjectInput,
   ClassSubjectMatterInput,
@@ -182,6 +184,7 @@ export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatte
 export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressInput>("ClassSubjectProgress", unwrapShape(classSubjectProgressSchema));
 export const activityResponseSchema = responseSchema<ActivityInput>("Activity", unwrapShape(activitySchema));
 export const activityEnrollmentResponseSchema = responseSchema<ActivityEnrollmentInput>("ActivityEnrollment", unwrapShape(activityEnrollmentSchema));
+export const classActivityEnrollmentResponseSchema = responseSchema<ClassActivityEnrollmentInput>("ClassActivityEnrollment", unwrapShape(classActivityEnrollmentSchema));
 export const assessmentResponseSchema = responseSchema<AssessmentInput>("Assessment", unwrapShape(assessmentSchema));
 export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>("AssessmentResult", unwrapShape(assessmentResultSchema));
 export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema));
@@ -475,6 +478,12 @@ export const activityEnrollmentQuerySchema = createQueryOptionsSchema({
   activityId: field.id(),
   studentId: field.id(),
   status: field.string(),
+});
+
+export const classActivityEnrollmentQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  activityId: field.id(),
+  classGroupId: field.id(),
 });
 
 export const assessmentQuerySchema = createQueryOptionsSchema({

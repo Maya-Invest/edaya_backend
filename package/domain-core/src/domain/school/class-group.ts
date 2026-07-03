@@ -119,9 +119,10 @@ async function validateClassGroupDelete(
   classGroup: ClassGroup,
   repositories: SchoolRepositories,
 ): Promise<void> {
-  const [enrollments, classSubjects, lessonSessions, attendances, schedules, assessments, incidents, resourceAssignments, calendarEvents] = await Promise.all([
+  const [enrollments, classSubjects, classActivityEnrollments, lessonSessions, attendances, schedules, assessments, incidents, resourceAssignments, calendarEvents] = await Promise.all([
     repositories.enrollments.list({ classGroupId: classGroup.id }),
     repositories.classSubjects.list({ classGroupId: classGroup.id }),
+    repositories.classActivityEnrollments.list({ classGroupId: classGroup.id }),
     repositories.lessonSessions.list({ classGroupId: classGroup.id }),
     repositories.attendances.list({ classGroupId: classGroup.id }),
     repositories.schedules.list({ classGroupId: classGroup.id }),
@@ -133,6 +134,7 @@ async function validateClassGroupDelete(
   if (
     enrollments.length > 0
     || classSubjects.length > 0
+    || classActivityEnrollments.length > 0
     || lessonSessions.length > 0
     || attendances.length > 0
     || schedules.length > 0

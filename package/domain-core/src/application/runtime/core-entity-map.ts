@@ -13,6 +13,7 @@ import type {
   Attendance,
   AttendanceRecord,
   CalendarEvent,
+  ClassActivityEnrollment,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
@@ -88,6 +89,7 @@ export interface CoreEntityMap {
   classSubjectProgress: ClassSubjectProgress
   activities: Activity
   activityEnrollments: ActivityEnrollment
+  classActivityEnrollments: ClassActivityEnrollment
   assessments: Assessment
   assessmentResults: AssessmentResult
   gradeScales: GradeScale
@@ -154,6 +156,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'classSubjectProgress',
   'activities',
   'activityEnrollments',
+  'classActivityEnrollments',
   'assessments',
   'assessmentResults',
   'gradeScales',

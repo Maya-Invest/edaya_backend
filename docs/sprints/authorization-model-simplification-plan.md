@@ -419,7 +419,7 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 2. Tenant permissions → `scopeIds: ""`, no `sourceStaffAssignmentId`.
 3. Backfill `StaffAssignment.permissions` from former `ASSIGNMENT_SCOPED_PERMISSIONS` where implicit; run sync.
 4. Feature flag `USE_STAFF_PERMISSION_ASSIGNMENTS` removed after cutover (always on). ✅
-5. Drop `accessRoles` / `staffRoleAssignments` tables and API after cutover.
+5. `bun run db:migrate:full` runs legacy staff-access data migration before migration `0038` when `access_roles` still exists. ✅
 
 ---
 

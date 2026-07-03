@@ -479,6 +479,14 @@ export const activityEnrollments = pgTable('activity_enrollments', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('activity_enrollments', table))
 
+// 29b. Class Activity Enrollment Table
+export const classActivityEnrollments = pgTable('class_activity_enrollments', {
+  id: text('id').primaryKey(),
+  activityId: text('activity_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('class_activity_enrollments', table))
+
 // 30. Class Subject Matter Table
 export const classSubjectMatters = pgTable('class_subject_matters', {
   id: text('id').primaryKey(),

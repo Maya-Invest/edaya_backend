@@ -123,6 +123,11 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('activity_enrollments_activity_id_idx').on(col(table, 'activityId')),
         index('activity_enrollments_student_id_idx').on(col(table, 'studentId')),
       ]
+    case 'class_activity_enrollments':
+      return [
+        index('class_activity_enrollments_activity_id_idx').on(col(table, 'activityId')),
+        index('class_activity_enrollments_class_group_id_idx').on(col(table, 'classGroupId')),
+      ]
     case 'class_subject_matters':
       return [index('class_subject_matters_class_subject_id_idx').on(col(table, 'classSubjectId'))]
     case 'assessments':

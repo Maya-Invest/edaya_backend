@@ -1,15 +1,12 @@
 #!/usr/bin/env bun
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
-import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
-import { applyAuthMigrations } from './lib/apply-auth-migrations'
-import { repairDrizzleMigrationJournal } from './repair-drizzle-journal'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = path.resolve(packageRoot, '../..')
@@ -29,19 +26,13 @@ if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
 
 process.env['DATABASE_URL'] = databaseUrl
 
-await repairDrizzleMigrationJournal(databaseUrl)
+console.log('\n> Applying school + auth migrations (staging)')
 
-console.log('\n> Applying school schema migrations (staging)')
-const schoolResult = spawnSync('bun', ['run', 'migrate'], {
+const scriptPath = path.resolve(packageRoot, 'scripts/migrate-full.ts')
+const result = Bun.spawnSync(['bun', scriptPath], {
   cwd: packageRoot,
   env: process.env,
-  stdio: 'inherit',
+  stdio: ['inherit', 'inherit', 'inherit'],
 })
 
-if (schoolResult.status !== 0) {
-  process.exit(schoolResult.status ?? 1)
-}
-
-console.log('\n> Applying Better Auth migrations (staging)')
-await applyAuthMigrations(databaseUrl)
-console.log('\nStaging school and auth migrations applied.')
+process.exit(result.exitCode ?? 1)

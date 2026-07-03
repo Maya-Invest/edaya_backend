@@ -178,6 +178,11 @@ export const clientBindings = {
         "schemaName": "ActivityEnrollment",
         "allowDirectSave": true
       },
+      "classActivityEnrollments": {
+        "publicName": "class-activity-enrollments",
+        "schemaName": "ClassActivityEnrollment",
+        "allowDirectSave": true
+      },
       "assessments": {
         "publicName": "assessments",
         "schemaName": "Assessment",
@@ -579,6 +584,11 @@ export const clientBindings = {
         "publicName": "resolve-incident",
         "requestSchemaName": "ResolveIncidentCommand",
         "responseSchemaName": "Incident"
+      },
+      "resolveIncidentWithOutcomes": {
+        "publicName": "resolve-incident-with-outcomes",
+        "requestSchemaName": "ResolveIncidentWithOutcomesCommand",
+        "responseSchemaName": "ResolveIncidentWithOutcomesResponse"
       },
       "createFee": {
         "publicName": "create-fee",

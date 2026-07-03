@@ -6,6 +6,7 @@ import { denyResourceAccess, Permission } from '../../capabilities/authorization
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
 import { refineTimeRangeStrictAfter } from '../../domain/value-objects/time-range'
+import { isActivityAvailableForClassGroup } from '../school-life/class-activity-enrollment'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ScheduleKind {
@@ -149,6 +150,17 @@ export async function validateScheduleSave(
     const activity = await repositories.activities.findById(schedule.activityId)
     if (!activity || activity.schoolId !== schedule.schoolId) {
       throw new BusinessRuleViolationError('ACTIVITY_REQUIRED', `Activity ${schedule.activityId} is not valid for this school`)
+    }
+    const available = await isActivityAvailableForClassGroup(
+      schedule.activityId,
+      schedule.classGroupId,
+      repositories,
+    )
+    if (!available) {
+      throw new BusinessRuleViolationError(
+        'ACTIVITY_NOT_ENROLLED_IN_CLASS',
+        `Activity ${schedule.activityId} is not enrolled in class group ${schedule.classGroupId}`,
+      )
     }
   }
 }

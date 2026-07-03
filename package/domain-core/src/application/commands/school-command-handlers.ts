@@ -37,6 +37,7 @@ import type {
   BehaviorServiceWorkflow,
   RecordIncidentInput,
   ResolveIncidentInput,
+  ResolveIncidentWithOutcomesInput,
   UpdateStudentDisciplinaryActionStatusInput,
 } from '../workflows/behavior'
 import type {
@@ -238,6 +239,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     applyDisciplinaryAction: payload => workflows.behavior.applyDisciplinaryAction(payload as ApplyDisciplinaryActionInput),
     updateStudentDisciplinaryActionStatus: payload => workflows.behavior.updateStudentDisciplinaryActionStatus(payload as UpdateStudentDisciplinaryActionStatusInput),
     resolveIncident: payload => workflows.behavior.resolveIncident(payload as ResolveIncidentInput),
+    resolveIncidentWithOutcomes: payload => workflows.behavior.resolveIncidentWithOutcomes(payload as ResolveIncidentWithOutcomesInput),
     // finance
     createFee: payload => workflows.finance.createFee(payload as CreateFeeInput),
     assignFeeToStudent: payload => workflows.finance.assignFeeToStudent(payload as AssignFeeToStudentInput),

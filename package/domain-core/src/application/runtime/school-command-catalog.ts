@@ -87,6 +87,7 @@ export type SchoolCommandKey
     | 'applyDisciplinaryAction'
     | 'updateStudentDisciplinaryActionStatus'
     | 'resolveIncident'
+    | 'resolveIncidentWithOutcomes'
     | 'createFee'
     | 'assignFeeToStudent'
     | 'recordPayment'
@@ -194,6 +195,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'applyDisciplinaryAction',
   'updateStudentDisciplinaryActionStatus',
   'resolveIncident',
+  'resolveIncidentWithOutcomes',
   'createFee',
   'assignFeeToStudent',
   'recordPayment',

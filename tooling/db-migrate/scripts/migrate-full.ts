@@ -6,6 +6,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { applyAuthMigrations } from './lib/apply-auth-migrations'
+import { runLegacyAccessCutoverIfNeeded } from './lib/legacy-access-cutover'
+import { repairDrizzleMigrationJournal } from './repair-drizzle-journal'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const databaseUrl = process.env['DATABASE_URL']
@@ -26,6 +28,19 @@ function runSchoolMigrations() {
   if (result.status !== 0) {
     process.exit(result.status ?? 1)
   }
+}
+
+await repairDrizzleMigrationJournal(databaseUrl)
+
+const cutover = await runLegacyAccessCutoverIfNeeded(databaseUrl)
+if (cutover.skipped) {
+  console.log(`\n> Staff access cutover skipped: ${cutover.reason}`)
+}
+else {
+  console.log('\n> Staff access cutover complete', {
+    schemaTagsApplied: cutover.schemaTagsApplied,
+    dataMigrationRan: cutover.dataMigrationRan,
+  })
 }
 
 runSchoolMigrations()

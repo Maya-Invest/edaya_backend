@@ -15,6 +15,7 @@ import type {
   Attendance,
   AttendanceRecord,
   CalendarEvent,
+  ClassActivityEnrollment,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
@@ -269,6 +270,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
   const activities = createStore<Activity>(transactionParticipants)
   const activityEnrollments = createStore<ActivityEnrollment>(transactionParticipants)
+  const classActivityEnrollments = createStore<ClassActivityEnrollment>(transactionParticipants)
   const lessonSessions = createStore<LessonSession>(transactionParticipants)
   const activitySessions = createStore<ActivitySession>(transactionParticipants)
   const attendances = createStore<Attendance>(transactionParticipants)
@@ -376,6 +378,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     classSubjectProgress,
     activities,
     activityEnrollments,
+    classActivityEnrollments,
 
     // assessments
     assessments,

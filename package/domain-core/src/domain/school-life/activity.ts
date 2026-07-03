@@ -103,8 +103,11 @@ async function validateActivityDelete(
   activity: Activity,
   repositories: SchoolRepositories,
 ): Promise<void> {
-  const enrollments = await repositories.activityEnrollments.list({ activityId: activity.id })
-  if (enrollments.length > 0) {
+  const [studentEnrollments, classEnrollments] = await Promise.all([
+    repositories.activityEnrollments.list({ activityId: activity.id }),
+    repositories.classActivityEnrollments.list({ activityId: activity.id }),
+  ])
+  if (studentEnrollments.length > 0 || classEnrollments.length > 0) {
     throw new BusinessRuleViolationError(
       'ACTIVITY_HAS_DEPENDENCIES',
       `Cannot delete activity ${activity.id}: enrollments still exist`,

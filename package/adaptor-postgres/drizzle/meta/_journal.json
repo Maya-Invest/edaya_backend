@@ -274,6 +274,13 @@
       "when": 1781104996440,
       "tag": "0038_drop_legacy_access_control",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1781104996441,
+      "tag": "0039_class_activity_enrollments",
+      "breakpoints": true
     }
   ]
 }
