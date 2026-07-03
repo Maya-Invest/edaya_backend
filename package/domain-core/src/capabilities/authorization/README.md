@@ -51,9 +51,9 @@ Each permission has metadata in `permissionDefinitions` (`permissions/permission
 
 | Field | Purpose |
 |-------|---------|
-| `label` / `description` | UI and admin tooling |
 | `allowedScopes` | Which `ScopeType` values may appear on an `AuthorizationRequest` for this permission |
-| `defaultScope` | Typical scope when assigning the permission to a role |
+
+Permission labels and descriptions live in client i18n (keyed by `Permission` enum value), not in core.
 
 Permissions are grouped for reuse in `permissions/groups.ts` (assignment-scoped, resolver, finance, etc.). **Add new groups there** instead of duplicating permission lists across resolvers.
 
@@ -272,7 +272,7 @@ authorization/
 ## Adding a new permission
 
 1. Add enum value to `permissions/permission.ts`.
-2. Add definition (label, `allowedScopes`, `defaultScope`) in `permissions/build-permission-definitions.ts` / generated `permission-definitions.ts`.
+2. Add `allowedScopes` override in `permissions/build-permission-definitions.ts` when the permission is not school-only.
 3. If assurance-sensitive, add to `PERMISSION_ASSURANCE` in `permissions/permission-assurance.ts`.
 4. Assign to role templates in `grants/system-role-permissions.ts` and/or portal sets if needed.
 5. Add to relevant group in `permissions/groups.ts` if resolvers should recognize it.
