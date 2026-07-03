@@ -5,7 +5,10 @@ compatibility_flags = [ "nodejs_compat" ]
 
 [[rules]]
 type = "Text"
-globs = [ "**/*.txt", "**/*.html" ]
+globs = [
+  "**/*.txt",
+  "**/*.html"
+]
 fallthrough = true
 
 [alias]
@@ -21,6 +24,7 @@ RUNTIME = "worker"
 BETTER_AUTH_URL = "http://localhost:9999"
 TRUSTED_ORIGINS = "http://localhost:5173,http://localhost:4173"
 R2_BUCKET_NAME = "edaya-files-dev"
+ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
 
 # Secrets and connection strings belong in `.dev.vars` (local) or the Worker dashboard (deployed).
 # Staging (`wrangler deploy --env staging`):
@@ -49,6 +53,8 @@ database_name = "edaya"
 database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
 migrations_dir = "../../package/adaptor-auth/drizzle/auth"
 
+# Production (`wrangler deploy --env production`):
+
 [env.production]
 name = "edaya-api"
 
@@ -65,6 +71,18 @@ R2_BUCKET_NAME = "edaya-files-production"
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "62c00eeda7d047fc9951daf7db430070"
+
+[[env.production.d1_databases]]
+binding = "AUTH_DB"
+database_name = "edaya"
+database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
+migrations_dir = "../../package/adaptor-auth/drizzle/auth"
+
+[[env.production.routes]]
+pattern = "api.edaya.softilab.dev"
+custom_domain = true
+
+# Staging (`wrangler deploy --env staging`):
 
 [env.staging]
 name = "edaya-api-staging"
@@ -84,16 +102,6 @@ COOKIE_DOMAIN = "softilab.dev"
 ALLOW_PUBLIC_SCHOOL_REGISTRATION = "true"
 R2_BUCKET_NAME = "edaya-files-staging"
 
-[[env.production.d1_databases]]
-binding = "AUTH_DB"
-database_name = "edaya"
-database_id = "8686559f-38ed-4ce3-9580-81b3cf2e95b9"
-migrations_dir = "../../package/adaptor-auth/drizzle/auth"
-
-[[env.production.routes]]
-pattern = "api.edaya.softilab.dev"
-custom_domain = true
-
 # Replace with staging D1 database ID after `wrangler d1 create edaya-auth-staging`.
 [[env.staging.d1_databases]]
 binding = "AUTH_DB"
@@ -102,5 +110,5 @@ database_id = "2e55cf53-1b89-453f-ac17-3aab83fd8488"
 migrations_dir = "../../package/adaptor-auth/drizzle/auth"
 
 [[env.staging.routes]]
-pattern = "api-staging.edaya.softilab.dev"
+pattern = "staging.api.edaya.softilab.dev"
 custom_domain = true
