@@ -12,7 +12,6 @@ export class DefaultAuthorizationRepository implements AuthorizationRepository {
     schoolId: string
     academicYearId?: string
     now?: Date
-    useStaffPermissionAssignments?: boolean
   }): Promise<EffectiveGrants> {
     return resolveEffectiveGrants({
       ...args,
@@ -26,7 +25,6 @@ export class DefaultAuthorizationRepository implements AuthorizationRepository {
     schoolId: string
     academicYearId?: string
     now?: Date
-    useStaffPermissionAssignments?: boolean
   }): Promise<EffectiveGrants> {
     return resolveActorGrants({
       ...args,

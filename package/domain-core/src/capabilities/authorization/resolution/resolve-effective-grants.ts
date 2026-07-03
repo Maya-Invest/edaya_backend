@@ -10,8 +10,6 @@ export interface ResolveEffectiveGrantsArgs {
   repositories: SchoolRepositories
   academicYearId?: string
   now?: Date
-  /** @deprecated Legacy flag — staff grants always resolve from permission assignments. */
-  useStaffPermissionAssignments?: boolean
 }
 
 export async function resolveEffectiveGrants(
@@ -50,15 +48,33 @@ export async function tryResolveEffectiveGrantsFromPersistence(
     }
   }
 
-  if (!args.academicYearId) {
+  const academicYearId = args.academicYearId ?? await resolveDefaultStaffAcademicYearId(args)
+  if (!academicYearId) {
     return undefined
   }
 
   return resolveStaffGrantsFromPermissionAssignments({
     staffMemberId: args.staffMemberId,
     schoolId: args.schoolId,
-    academicYearId: args.academicYearId,
+    academicYearId,
     repositories: args.repositories,
     now: args.now,
   })
+}
+
+async function resolveDefaultStaffAcademicYearId(
+  args: ResolveEffectiveGrantsArgs,
+): Promise<string | undefined> {
+  const list = args.repositories.academicYears?.list
+  if (!list) {
+    return undefined
+  }
+
+  const years = await list({ schoolId: args.schoolId })
+  if (years.length === 0) {
+    return undefined
+  }
+
+  const activeYear = years.find(year => year.isActive)
+  return activeYear?.id ?? years[0]?.id
 }

@@ -8,7 +8,7 @@ import {
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { buildPortalScopeIdsByPermission, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, Permission, STUDENT_PORTAL_PERMISSIONS, TEACHER_PERMISSIONS } from "@edaya/core";
+import { buildPortalScopeIdsByPermission, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS, TEACHER_PERMISSIONS } from "@edaya/core";
 
 describe("session Middleware ActorMetadata Construction", () => {
   const getSession = mock();

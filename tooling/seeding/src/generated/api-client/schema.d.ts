@@ -8999,6 +8999,9 @@ export interface components {
                     scopeType: "platform" | "school" | "academic_year" | "class_group" | "subject" | "course_assignment" | "session" | "student" | "student_group";
                     scopeEntityIds: string[];
                 }[];
+                scopeIdsByPermission: {
+                    [key: string]: string;
+                };
                 isElevated: boolean;
                 /** Format: date-time */
                 expiresAt?: string;

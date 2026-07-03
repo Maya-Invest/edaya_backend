@@ -18,7 +18,12 @@ interface PermissionListFilter {
   status?: string
 }
 
-function createRepos(assignments: unknown[] = [], ownerSubjectId?: string, staffSubjectId?: string): SchoolRepositories {
+function createRepos(
+  assignments: unknown[] = [],
+  ownerSubjectId?: string,
+  staffSubjectId?: string,
+  academicYears: Array<{ id: string, schoolId: string, name: string, isActive: boolean }> = [],
+): SchoolRepositories {
   const permissionStore = new Map<string, StaffPermissionAssignment>()
 
   return {
@@ -40,6 +45,9 @@ function createRepos(assignments: unknown[] = [], ownerSubjectId?: string, staff
     },
     staffAssignments: {
       list: mock(async () => assignments),
+    },
+    academicYears: {
+      list: mock(async () => academicYears),
     },
     staffPermissionAssignments: {
       list: mock(async (filter: PermissionListFilter = {}) => [...permissionStore.values()].filter((row) => {
@@ -281,5 +289,23 @@ describe('resolveEffectiveGrants', () => {
       academicYearId: ACADEMIC_YEAR_ID,
       repositories,
     })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('falls back to the active academic year when the header is omitted', async () => {
+    const repositories = createRepos([], undefined, undefined, [
+      { id: 'year-1', schoolId: 'school-1', name: '2025-2026', isActive: true },
+    ])
+    await savePermission(repositories, {
+      id: 'spa-read',
+      permission: Permission.PAYMENT_READ,
+    })
+
+    const grants = await resolveEffectiveGrants({
+      staffMemberId: 'staff-1',
+      schoolId: 'school-1',
+      repositories,
+    })
+
+    expect(grants.permissions.has(Permission.PAYMENT_READ)).toBe(true)
   })
 })

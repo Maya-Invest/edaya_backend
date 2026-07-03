@@ -1,0 +1,41 @@
+import { describe, expect, test } from "bun:test";
+import { Permission } from "@edaya/core";
+import { serializeEffectiveGrants } from "@/lib/authorization/serialize-grants";
+
+describe("serializeEffectiveGrants", () => {
+  test("includes scopeIdsByPermission and derives legacy scopeGrants for mobile consumers", () => {
+    const serialized = serializeEffectiveGrants({
+      permissions: new Set([Permission.QUERY_STUDENT_DETAIL_READ]),
+      scopeGrants: [],
+      scopeIdsByPermission: {
+        [Permission.QUERY_STUDENT_DETAIL_READ]: "s1,s2",
+      },
+      isElevated: false,
+    });
+
+    expect(serialized.scopeIdsByPermission).toEqual({
+      QUERY_STUDENT_DETAIL_READ: "s1,s2",
+    });
+    expect(serialized.scopeGrants).toEqual([{
+      permission: Permission.QUERY_STUDENT_DETAIL_READ,
+      scopeType: "student",
+      scopeEntityIds: ["s1", "s2"],
+    }]);
+  });
+
+  test("merges persisted legacy scopeGrants with derived grants", () => {
+    const serialized = serializeEffectiveGrants({
+      permissions: new Set([Permission.STUDENT_READ]),
+      scopeGrants: [{
+        permission: Permission.STUDENT_READ,
+        scopeType: "school",
+        scopeEntityIds: ["school-1"],
+      }],
+      scopeIdsByPermission: {},
+      isElevated: false,
+    });
+
+    expect(serialized.scopeGrants).toHaveLength(1);
+    expect(serialized.scopeIdsByPermission).toEqual({});
+  });
+});

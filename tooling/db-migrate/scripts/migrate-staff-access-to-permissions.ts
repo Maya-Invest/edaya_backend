@@ -19,10 +19,9 @@ if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
 
 const dryRun = process.argv.includes('--dry-run')
 
-interface AccessRoleRow {
-  id: string
-  school_id: string
-  permissions: Permission[]
+interface AccessRolePermissionRow {
+  role_id: string
+  permission: Permission
 }
 
 interface StaffRoleAssignmentRow {
@@ -30,17 +29,26 @@ interface StaffRoleAssignmentRow {
   staff_id: string
   school_id: string
   academic_year_id: string | null
-  role_ids: string[]
-  scope_grants: ScopeGrant[]
   status: 'active' | 'inactive' | 'expired'
   starts_at: Date | null
   ends_at: Date | null
 }
 
+interface StaffRoleAssignmentRoleRow {
+  assignment_id: string
+  role_id: string
+}
+
+interface StaffRoleAssignmentScopeGrantRow {
+  assignment_id: string
+  permission: Permission
+  scope_type: ScopeGrant['scopeType']
+  scope_entity_ids: string[]
+}
+
 interface StaffAssignmentRow {
   id: string
   staff_id: string
-  school_id: string
   academic_year_id: string | null
   class_group_id: string | null
   class_subject_id: string | null
@@ -59,10 +67,17 @@ interface AcademicYearRow {
 const sql = postgres(databaseUrl, { max: 1 })
 
 try {
-  const accessRoles = await sql<AccessRoleRow[]>`
-    SELECT id, school_id, permissions
-    FROM access_roles
+  const accessRolePermissions = await sql<AccessRolePermissionRow[]>`
+    SELECT role_id, permission
+    FROM access_role_permissions
   `
+
+  const accessRoles = [...accessRolePermissions.reduce((roles, row) => {
+    const existing = roles.get(row.role_id) ?? { id: row.role_id, permissions: [] as Permission[] }
+    existing.permissions.push(row.permission)
+    roles.set(row.role_id, existing)
+    return roles
+  }, new Map<string, { id: string, permissions: Permission[] }>()).values()]
 
   const roleAssignments = await sql<StaffRoleAssignmentRow[]>`
     SELECT
@@ -70,14 +85,40 @@ try {
       staff_id,
       school_id,
       academic_year_id,
-      role_ids,
-      scope_grants,
       status,
       starts_at,
       ends_at
     FROM staff_role_assignments
     WHERE status = 'active'
   `
+
+  const assignmentRoles = await sql<StaffRoleAssignmentRoleRow[]>`
+    SELECT assignment_id, role_id
+    FROM staff_role_assignment_roles
+  `
+
+  const assignmentScopeGrants = await sql<StaffRoleAssignmentScopeGrantRow[]>`
+    SELECT assignment_id, permission, scope_type, scope_entity_ids
+    FROM staff_role_assignment_scope_grants
+  `
+
+  const roleIdsByAssignment = assignmentRoles.reduce((map, row) => {
+    const existing = map.get(row.assignment_id) ?? []
+    existing.push(row.role_id)
+    map.set(row.assignment_id, existing)
+    return map
+  }, new Map<string, string[]>())
+
+  const scopeGrantsByAssignment = assignmentScopeGrants.reduce((map, row) => {
+    const existing = map.get(row.assignment_id) ?? []
+    existing.push({
+      permission: row.permission,
+      scopeType: row.scope_type,
+      scopeEntityIds: row.scope_entity_ids ?? [],
+    })
+    map.set(row.assignment_id, existing)
+    return map
+  }, new Map<string, ScopeGrant[]>())
 
   const academicYears = await sql<AcademicYearRow[]>`
     SELECT id, school_id, is_active
@@ -101,8 +142,8 @@ try {
       staffId: row.staff_id,
       schoolId: row.school_id,
       ...(row.academic_year_id ? { academicYearId: row.academic_year_id } : {}),
-      roleIds: row.role_ids,
-      scopeGrants: row.scope_grants ?? [],
+      roleIds: roleIdsByAssignment.get(row.id) ?? [],
+      scopeGrants: scopeGrantsByAssignment.get(row.id) ?? [],
       status: row.status,
       ...(row.starts_at ? { startsAt: row.starts_at } : {}),
       ...(row.ends_at ? { endsAt: row.ends_at } : {}),
@@ -172,7 +213,6 @@ try {
     SELECT
       id,
       staff_id,
-      school_id,
       academic_year_id,
       class_group_id,
       class_subject_id,
@@ -204,7 +244,7 @@ try {
     if (!dryRun) {
       await sql`
         UPDATE staff_assignments
-        SET permissions = ${sql.array([...ASSIGNMENT_SCOPED_PERMISSIONS])}
+        SET permissions = ${JSON.stringify([...ASSIGNMENT_SCOPED_PERMISSIONS])}::jsonb
         WHERE id = ${assignment.id}
       `
     }

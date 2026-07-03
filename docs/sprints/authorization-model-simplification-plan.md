@@ -418,7 +418,7 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 1. For each active `StaffRoleAssignment`: expand roles → permissions; map `scopeGrants` to new `scopeIds` (strip prefixes if any legacy data).
 2. Tenant permissions → `scopeIds: ""`, no `sourceStaffAssignmentId`.
 3. Backfill `StaffAssignment.permissions` from former `ASSIGNMENT_SCOPED_PERMISSIONS` where implicit; run sync.
-4. Feature flag `USE_STAFF_PERMISSION_ASSIGNMENTS` removed after cutover (always on).
+4. Feature flag `USE_STAFF_PERMISSION_ASSIGNMENTS` removed after cutover (always on). ✅
 5. Drop `accessRoles` / `staffRoleAssignments` tables and API after cutover.
 
 ---
@@ -436,7 +436,7 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 
 - [x] New `ScopeType` enum
 - [x] `parseScopeIds` / `serializeScopeIds` + property tests
-- [ ] `resolveResourcePath(entity)` helpers
+- [x] `resolveResourcePath(entity)` helpers
 - [x] `scopePathCovers(grantScopeIds, resourcePath, permissionScope?)`
 - [x] Slim catalog: `{ permission, scope? }`
 
@@ -471,14 +471,14 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 
 - [x] Migration script + seed updates
 - [x] Remove `AccessRole`, `StaffRoleAssignment` (API entities + SQL drop)
-- [ ] OpenAPI + `edaya_web` roles UI → permission matrix
+- [x] OpenAPI + `edaya_web` roles UI → permission matrix
 
 ### Phase 7 — UI + docs (parallel)
 
-- [ ] i18n permission catalog (labels; keys from `permission-catalog` API)
-- [ ] Assignment permission picker
-- [ ] Scope display via `scope/render` in permission matrix + assignment detail
-- [ ] Update `authorization/README.md`
+- [x] i18n permission catalog (labels; keys from `permission-catalog` API)
+- [x] Assignment permission picker (staff assignment form)
+- [x] Scope display via `scope/render` in permission matrix + assignment detail
+- [x] Update `authorization/README.md`
 
 **Estimate:** ~4–6 weeks backend-focused; UI trails by one phase.
 
@@ -529,7 +529,7 @@ Wildcard `:*` applies per §3.4 at the appropriate segment.
 
 ## 11. UI actions (deferred — `edaya_web`)
 
-> **Status:** Draft for Phase 7. Backend APIs above are ready for integration; legacy roles UI may break until this work ships.
+> **Status:** Phase 7 shipped. Scope builder and staff-assignment `permissions[]` picker are in the webapp staff drawer.
 
 ### 11.1 Replace Access Roles with permission matrix
 
@@ -574,14 +574,14 @@ Wildcard `:*` applies per §3.4 at the appropriate segment.
 
 ### 11.6 i18n checklist
 
-- [ ] Add ARB keys for every `Permission` enum value (EN + FR).
-- [ ] Scope grain labels: `grade_level`, `class_group`, `class_subject`, `activity`, `student`.
-- [ ] Wildcard copy: “All subjects in {classGroup}”.
+- [x] Add ARB keys for every `Permission` enum value (EN + FR).
+- [x] Scope grain labels: `grade_level`, `class_group`, `class_subject`, `activity`, `student`.
+- [x] Wildcard copy: “All subjects in {classGroup}”.
 
 ### 11.7 Client codegen
 
-- Regenerate `edaya_api_client` after OpenAPI includes `staffPermissionAssignments`, `permission-catalog`, `scope/render`.
-- Remove `accessRoles` / `staffRoleAssignments` client surfaces after Phase 6 cutover.
+- Regenerate `edaya_api_client` after OpenAPI includes `staffPermissionAssignments`, `permission-catalog`, `scope/render`. ✅
+- Remove `accessRoles` / `staffRoleAssignments` client surfaces after Phase 6 cutover. ✅
 
 ### 11.8 Files likely touched (`edaya_web`)
 

@@ -1,6 +1,5 @@
 import type { CoreEntityKey, SchoolService } from "@edaya/core";
 import {
-  clearEffectiveGrantsCache,
   invalidateEffectiveGrantsCacheForActor,
   invalidateEffectiveGrantsCacheForStaff,
 } from "@/lib/authorization/grants-cache/resolve-cached";

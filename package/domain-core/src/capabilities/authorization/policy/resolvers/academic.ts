@@ -1,7 +1,15 @@
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
-import { actorGrantCoversAny, actorHasSchoolWideGrant } from '../../grants/actor-grant-checks'
+import {
+  actorGrantCoversAny,
+  actorGrantCoversAnyResourcePath,
+  actorHasSchoolWideGrant,
+} from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
+import {
+  resourcePathForClassGroup,
+  resourcePathForClassSubject,
+} from '../../scope/resolve-resource-path'
 import {
   CLASS_GROUP_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
@@ -18,7 +26,11 @@ export async function checkClassGroupAccess(
   }
 
   for (const classGroupId of classGroupIds) {
-    const canAccess = actorGrantCoversAny(
+    const canAccess = actorGrantCoversAnyResourcePath(
+      actor,
+      CLASS_GROUP_ACCESS_PERMISSIONS,
+      resourcePathForClassGroup(classGroupId),
+    ) || actorGrantCoversAny(
       actor,
       CLASS_GROUP_ACCESS_PERMISSIONS,
       'class_group',
@@ -48,8 +60,22 @@ export async function checkAssessmentAccess(
   if (assessments.length !== assessmentIds.length) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
-  const classGroupIds = [...new Set(assessments.map(a => a.classGroupId))]
-  await checkClassGroupAccess(actor, classGroupIds, repos)
+
+  for (const assessment of assessments) {
+    const classSubjectPath = assessment.classSubjectId
+      ? resourcePathForClassSubject(assessment.classGroupId, assessment.classSubjectId)
+      : null
+    const classGroupPath = resourcePathForClassGroup(assessment.classGroupId)
+    const canAccess = (classSubjectPath
+      ? actorGrantCoversAnyResourcePath(actor, CLASS_GROUP_ACCESS_PERMISSIONS, classSubjectPath)
+      : false)
+      || actorGrantCoversAnyResourcePath(actor, CLASS_GROUP_ACCESS_PERMISSIONS, classGroupPath)
+      || actorGrantCoversAny(actor, CLASS_GROUP_ACCESS_PERMISSIONS, 'class_group', assessment.classGroupId)
+
+    if (!canAccess) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+  }
 }
 
 export async function checkReportCardResultAccess(

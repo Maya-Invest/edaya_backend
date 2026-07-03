@@ -1,9 +1,14 @@
-import type { EffectiveGrants, InteractiveActorMetadata, ScopeGrant } from "@edaya/core";
-import { isInteractiveActor } from "@edaya/core";
+import type { EffectiveGrants, InteractiveActorMetadata, Permission, ScopeGrant } from "@edaya/core";
+import {
+  isInteractiveActor,
+  legacyScopeGrantsFromScopeIdsByPermission,
+  mergeScopeGrants,
+} from "@edaya/core";
 
 export interface SerializedEffectiveGrants {
   permissions: string[];
   scopeGrants: ScopeGrant[];
+  scopeIdsByPermission: Record<string, string>;
   isElevated: boolean;
   expiresAt?: string;
 }
@@ -16,14 +21,34 @@ export interface SerializedActorAuthorization {
   effectiveGrants: SerializedEffectiveGrants;
 }
 
+function serializeScopeIdsByPermission(
+  scopeIdsByPermission: EffectiveGrants["scopeIdsByPermission"],
+): Record<string, string> {
+  if (!scopeIdsByPermission) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(scopeIdsByPermission).filter(
+      (entry): entry is [Permission, string] => entry[1] !== undefined,
+    ),
+  );
+}
+
 export function serializeEffectiveGrants(grants: EffectiveGrants): SerializedEffectiveGrants {
+  const scopeGrants = mergeScopeGrants([
+    ...grants.scopeGrants,
+    ...legacyScopeGrantsFromScopeIdsByPermission(grants.scopeIdsByPermission),
+  ]);
+
   return {
     permissions: [...grants.permissions],
-    scopeGrants: grants.scopeGrants.map(({ permission, scopeType, scopeEntityIds }) => ({
+    scopeGrants: scopeGrants.map(({ permission, scopeType, scopeEntityIds }) => ({
       permission,
       scopeType,
       scopeEntityIds: [...scopeEntityIds],
     })),
+    scopeIdsByPermission: serializeScopeIdsByPermission(grants.scopeIdsByPermission),
     isElevated: grants.isElevated,
     ...(grants.expiresAt ? { expiresAt: grants.expiresAt.toISOString() } : {}),
   };

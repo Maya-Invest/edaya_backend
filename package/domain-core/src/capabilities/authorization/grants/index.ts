@@ -1,5 +1,6 @@
 export * from './actor-grant-checks'
 export * from './enrollment-scope'
+export * from './legacy-scope-grants-from-scope-ids'
 export * from './portal-permission-sets'
 export * from './portal-scope-ids'
 export * from './scope-grant-covers'

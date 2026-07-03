@@ -20,6 +20,7 @@ const effectiveGrantsResponseSchema = z.object({
   effectiveGrants: z.object({
     permissions: z.array(z.string()),
     scopeGrants: z.array(scopeGrantResponseSchema),
+    scopeIdsByPermission: z.record(z.string()),
     isElevated: z.boolean(),
     expiresAt: z.string().datetime().optional(),
   }),

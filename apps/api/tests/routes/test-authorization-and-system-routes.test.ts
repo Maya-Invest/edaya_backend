@@ -63,6 +63,7 @@ describe("authorization routes", () => {
       effectiveGrants: {
         permissions: string[];
         scopeGrants: unknown[];
+        scopeIdsByPermission: Record<string, string>;
         isElevated: boolean;
       };
     };
@@ -72,6 +73,7 @@ describe("authorization routes", () => {
     expect(body.actorId).toBe("staff-1");
     expect(body.effectiveGrants.permissions).toContain("STUDENT_READ");
     expect(body.effectiveGrants.scopeGrants).toHaveLength(1);
+    expect(body.effectiveGrants.scopeIdsByPermission).toEqual({});
 
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(gateway.upserted).toHaveLength(0);

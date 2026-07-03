@@ -191,6 +191,12 @@
                   ]
                 }
               },
+              "scopeIdsByPermission": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
               "isElevated": {
                 "type": "boolean"
               },
@@ -202,6 +208,7 @@
             "required": [
               "permissions",
               "scopeGrants",
+              "scopeIdsByPermission",
               "isElevated"
             ]
           }

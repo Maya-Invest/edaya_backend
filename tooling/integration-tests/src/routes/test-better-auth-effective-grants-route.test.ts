@@ -28,6 +28,7 @@ describeWithLightSchool('better auth effective grants route', (getContext) => {
       effectiveGrants: {
         permissions: string[]
         scopeGrants: unknown[]
+        scopeIdsByPermission: Record<string, string>
         isElevated: boolean
       }
     }
@@ -39,6 +40,7 @@ describeWithLightSchool('better auth effective grants route', (getContext) => {
     expect(body.assuranceLevel).toBe('verified')
     expect(Array.isArray(body.effectiveGrants.permissions)).toBe(true)
     expect(Array.isArray(body.effectiveGrants.scopeGrants)).toBe(true)
+    expect(body.effectiveGrants.scopeIdsByPermission).toEqual({})
   })
 
   it('returns 401 when the session cookie is missing', async () => {

@@ -1,11 +1,11 @@
 # Authorization model
 
-Edaya Core uses a **two-layer** authorization model. Every interactive request carries an `ActorMetadata` value with **preloaded effective grants**. Services then enforce access in two distinct steps:
+Edaya Core uses a **two-layer** authorization model. Every interactive request carries an `ActorMetadata` value with **preloaded effective grants**. Services enforce access in two steps:
 
 1. **Capability layer** — synchronous `authorize()` checks that the actor holds the required `Permission` and that their scope grants cover the requested scope.
 2. **Resource layer** — asynchronous `AuthorizationPolicy` resolvers that verify the actor’s relationship to specific entities (students, class groups, sessions, fees, etc.) after those entities have been loaded.
 
-Grant resolution (turning database roles, assignments, and portal links into `EffectiveGrants`) happens **once per session** in the API middleware and is cached. The core engine never hits the database during `authorize()`.
+Grant resolution happens **once per session** in the API middleware and is cached. The core engine never hits the database during `authorize()`.
 
 All public symbols are re-exported from `@edaya/core` via `authorization/index.ts`.
 
@@ -51,21 +51,34 @@ Each permission has metadata in `permissionDefinitions` (`permissions/permission
 
 | Field | Purpose |
 |-------|---------|
-| `allowedScopes` | Which `ScopeType` values may appear on an `AuthorizationRequest` for this permission |
+| `scope` | Optional `ScopeType` grain for path-based grants (`class_group`, `class_subject`, `activity`, `student`, …). Omitted = tenant-wide. |
+| `allowedScopes` | Legacy `ScopeType` values accepted on `AuthorizationRequest` (being phased out in favour of path matching). |
 
-Permission labels and descriptions live in client i18n (keyed by `Permission` enum value), not in core.
+Permission labels live in client i18n (keyed by `Permission` enum value), not in core.
 
-Permissions are grouped for reuse in `permissions/groups.ts` (assignment-scoped, resolver, finance, etc.). **Add new groups there** instead of duplicating permission lists across resolvers.
+Resolver permission sets live in `policy/resolvers/permission-sets.ts` (replaces the old `permissions/groups.ts` buckets).
 
-### ScopeType
+### ScopeType and `scopeIds`
 
-Where a permission applies (`permissions/scope-type.ts`):
+Staff grants are stored on `StaffPermissionAssignment` rows:
 
-`platform` · `school` · `academic_year` · `class_group` · `subject` · `course_assignment` · `session` · `student` · `student_group`
+| Field | Purpose |
+|-------|---------|
+| `permission` | Which capability is granted |
+| `scopeIds` | Opaque path string (grammar §3 in sprint plan); empty when permission is tenant-wide |
+| `academicYearId` | Year filter at resolution time (not encoded in `scopeIds`) |
+| `sourceStaffAssignmentId` | When set, row is synced from a `StaffAssignment` and is read-only in admin UI |
 
-`course_assignment` maps to class-subject / teaching assignments (`StaffAssignment.classSubjectId`).
+**Path grammar** (segment order per `ScopeType`):
 
-### ScopeGrant
+- `class_group` → `{classGroupId}`
+- `class_subject` → `{classGroupId}:{classSubjectId}` or `{classGroupId}:*` wildcard
+- `activity` → `{activityId}` or `{classGroupId}:{activityId}`
+- `student` → `{studentId}`
+
+Helpers: `parseScopeIds` / `serializeScopeIds`, `scopePathCovers`, `resolveResourcePath` family in `scope/`.
+
+### ScopeGrant (legacy bridge)
 
 ```ts
 interface ScopeGrant {
@@ -75,18 +88,17 @@ interface ScopeGrant {
 }
 ```
 
-A scope grant says: “this actor may exercise `permission` within `scopeType` for these entity IDs.”
-
-Multiple grants are merged by `(permission, scopeType)` via `mergeScopeGrants()` in `grants/scope-grant-covers.ts`.
+`EffectiveGrants.scopeGrants` is still populated for API backward compatibility. New resolution prefers `scopeIdsByPermission` and path matching via `scopePathCovers`.
 
 ### EffectiveGrants
 
 ```ts
 interface EffectiveGrants {
   permissions: ReadonlySet<Permission>
-  scopeGrants: readonly ScopeGrant[]
-  isElevated: boolean // school owner / principal: school-wide, no per-entity scopes
-  expiresAt?: Date // earliest assignment expiry; bounds API cache TTL
+  scopeGrants: readonly ScopeGrant[]           // legacy API shape
+  scopeIdsByPermission?: Partial<Record<Permission, string>>  // merged paths per permission
+  isElevated: boolean                          // school owner / elevated service account
+  expiresAt?: Date                             // earliest assignment expiry; bounds API cache TTL
 }
 ```
 
@@ -101,7 +113,7 @@ Attached to every interactive actor as `actor.effectiveGrants`. **Must be suppli
 | `student` | Student portal | `studentId`, `effectiveGrants` |
 | `system` | Background jobs, migrations | `systemId`, `reason` — bypasses grant checks |
 
-Factory functions in `model/actor.ts` (`createStaffActorMetadata`, etc.) produce frozen, validated objects. `resolveAuditActorId(actor)` returns the ID used in audit trails.
+Factory functions in `model/actor.ts` produce frozen, validated objects.
 
 **Assurance levels** (`ActorAssuranceLevel`: `standard` · `verified` · `strong`) gate sensitive permissions independently of grants. See `permissions/permission-assurance.ts`.
 
@@ -116,7 +128,7 @@ interface AuthorizationRequest {
 }
 ```
 
-Passed to `authorize()`. `scopeType` / `scopeEntityId` are optional; when omitted, holding the permission (with any scope) is sufficient. When provided, `scopeGrantCovers()` must match.
+Passed to `authorize()`. When `scopeIdsByPermission` is present on grants, `scopeGrantCovers` delegates to `scopePathCovers` for path-based matching.
 
 ---
 
@@ -124,26 +136,15 @@ Passed to `authorize()`. `scopeType` / `scopeEntityId` are optional; when omitte
 
 Entry point: `engine/authorize.ts`.
 
-```ts
-authorize({ actor, request })
-```
-
 Checks performed (in order):
 
-1. **School match** — `actor.schoolId === request.schoolId` (system actors included).
-2. **Scope compatibility** — `request.scopeType` must be listed in `permissionDefinitions[permission].allowedScopes`; `scopeEntityId` requires `scopeType`.
+1. **School match** — `actor.schoolId === request.schoolId`.
+2. **Scope compatibility** — legacy `scopeType` / `scopeEntityId` validation against `permissionDefinitions`.
 3. **Grants** (skipped for `system` actors):
-   - Actor must be interactive (`staff` | `guardian` | `student`).
+   - Interactive actor required.
    - `assertPermissionAssurance(assuranceLevel, permission)`.
    - `permissions` set must contain `request.permission`.
-   - `scopeGrantCovers(scopeGrants, { permission, schoolId, scopeType, scopeEntityId, isElevated })`.
-
-`scopeGrantCovers` rules (`grants/scope-grant-covers.ts`):
-
-- **`isElevated`** → always allowed (school-wide principal / owner).
-- **No `scopeType` on request** → allowed if permission is present.
-- **School-scoped grant** for the permission → allowed for any entity in that school.
-- Otherwise → must match `(scopeType, scopeEntityId)` on a grant.
+   - `scopeGrantCovers(...)` — prefers `scopeIdsByPermission` + `scopePathCovers` when available.
 
 Throws `AuthorizationError` with code `AuthorizationErrorCode.Forbidden`.
 
@@ -151,78 +152,84 @@ Throws `AuthorizationError` with code `AuthorizationErrorCode.Forbidden`.
 
 | Helper | Module | Role |
 |--------|--------|------|
-| `permissionAction(permission, scope?)` | `shared/entity/authorization.ts` | Returns `(actor) => authorize(...)` for entity read/write gates |
+| `permissionAction(permission, scope?)` | `shared/entity/authorization.ts` | Returns `(actor) => authorize(...)` for entity gates |
 | `anyPermissionAction(permissions, scope?)` | same | Succeeds if **any** listed permission passes |
-| `actorHasAnyPermission(actor, permissions)` | `grants/actor-grant-checks.ts` | Non-throwing; used in resolvers |
-| `actorGrantCoversAny(actor, permissions, scopeType, id)` | same | Permission + scope coverage for one entity |
+| `actorHasAnyPermission(actor, permissions)` | `grants/actor-grant-checks.ts` | Non-throwing |
+| `actorGrantCoversResourcePath(actor, permission, path)` | same | Path-based grant check |
+| `actorGrantCoversAnyResourcePath(actor, permissions, path)` | same | Any permission + path |
+| `actorHasSchoolWideGrant(actor, permissions)` | same | Elevated or tenant-wide / legacy school scope |
 
 ---
 
 ## Grant resolution
 
-Resolution lives in `resolution/` and is exposed through `SchoolRepositories.authorization` (`AuthorizationRepository` interface).
+Resolution lives in `resolution/` and is exposed through `SchoolRepositories.authorization`.
 
 ### Staff (`resolveEffectiveGrants`)
 
 1. Load active `StaffMember` for the school.
-2. **School owner** (`school.ownerSubjectId` matches staff `subjectId`) → `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`, empty scope grants.
-3. Load active `StaffRoleAssignment` rows (optionally filtered by `academicYearId` and validity window).
-4. Union permissions from linked active `AccessRole` records.
-5. Build scope grants from:
-   - explicit `assignment.scopeGrants` on role assignments,
-   - `scopeGrantsFromStaffAssignments()` (class group / course / session from `StaffAssignment` rows),
-   - auto **school-scoped** grants for permissions **not** in `ASSIGNMENT_SCOPED_PERMISSION_SET`.
-6. Set `expiresAt` to the earliest `endsAt` among active assignments (cache bound).
+2. **School owner** or **elevated service account** → `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`.
+3. Resolve `academicYearId` from request header or fall back to the school’s active academic year.
+4. Load active `StaffPermissionAssignment` rows for `(staffId, schoolId, academicYearId)`.
+5. Merge rows per permission (`scopeIds` joined with `;`); manual and synced rows stay separate in DB but merge at resolution.
+6. Build `scopeIdsByPermission`, `permissions` set, legacy `scopeGrants` bridge, and `expiresAt`.
 
 Throws `AuthorizationError` if no valid grants can be resolved.
+
+**StaffAssignment sync:** when a `StaffAssignment` carries `permissions[]`, a workflow creates/updates linked `StaffPermissionAssignment` rows (`sourceStaffAssignmentId` set). Placement-only assignments (`permissions: []`) sync nothing.
 
 ### Guardian / student portals
 
 `resolveGuardianGrants` / `resolveStudentGrants` (`resolution/resolve-portal-grants.ts`):
 
-- Fixed read-only permission sets: `GUARDIAN_PORTAL_PERMISSIONS`, `STUDENT_PORTAL_PERMISSIONS` (`grants/portal-permission-sets.ts`).
-- Scope grants built via `buildPortalScopeGrants()` from linked students and active class enrollments (`grants/enrollment-scope.ts`).
+- Fixed read-only permission sets from `grants/portal-permission-sets.ts`.
+- Scope grants built from linked students and active class enrollments (`grants/enrollment-scope.ts`).
 
 ### Dispatcher
 
-`resolveActorGrants({ actorId, actorType, schoolId, repositories })` routes to staff, guardian, or student resolution.
-
-`DefaultAuthorizationRepository` wraps these functions for injection into `SchoolRepositories` (e.g. Postgres adaptor).
+`resolveActorGrants({ actorId, actorType, schoolId, repositories, academicYearId? })` routes to staff, guardian, or student resolution.
 
 ---
 
 ## Resource layer: `AuthorizationPolicy`
 
-Interface: `policy/types.ts`. Factory: `createRepositoryAuthorizationPolicy()` in `policy/repository-policy.ts`.
+Interface: `policy/types.ts`. Factory: `createRepositoryAuthorizationPolicy()`.
 
-Resolvers run **after** entities are known. They combine preloaded grants with live repository relationships:
+Resolvers combine preloaded grants with live repository relationships:
 
 | Resolver | Typical use |
 |----------|-------------|
-| `checkStudentAccess` | Student records, enrollments, indirect class-group teaching access |
+| `checkStudentAccess` | Student records; direct student paths or class-group teaching scope |
 | `checkGuardianAccess` | Guardian records; self-access for portal actors |
 | `checkClassGroupAccess` | Class-scoped resources |
-| `checkAssessmentAccess` | Assessments and academic configuration |
-| `checkReportCardResultAccess` | Published report cards |
+| `checkAssessmentAccess` | Assessments (class-subject path) |
 | `checkSessionAccess` / `checkAttendanceAccess` | Timetable and attendance |
 | `checkFeeAccess` / `checkStudentFeeAccess` | Finance entities |
-| `checkStudentNoteAccess` / `checkStudentHealthAccess` | Sensitive student data |
 
-Resolver implementations live in `policy/resolvers/` (`student.ts`, `academic.ts`, `scheduling.ts`, `finance.ts`). They use permission groups from `permissions/groups.ts` and `actorGrantCoversAny()` before falling back to enrollment / assignment graph lookups.
+Implementations in `policy/resolvers/` use `actorGrantCoversAnyResourcePath` and `resolveResourcePath` helpers before falling back to enrollment / assignment graph lookups.
 
 **System actors** short-circuit all resolvers (allowed).
 
 ---
 
-## Entity configuration pattern
+## Admin APIs
 
-Domain entity configs (`domains/*/foo.ts`) wire authorization through `shared/entity/authorization.ts`:
+| Endpoint | Purpose |
+|----------|---------|
+| `GET authorization/permission-catalog` | `{ permission, scope? }[]` for UI pickers |
+| `POST authorization/scope/render` | Human labels for `scopeIds` paths |
+| `staffPermissionAssignments` entity | CRUD for manual grants |
+| `GET authorization/effective-grants` | Current actor grants (`scopeIdsByPermission` + legacy `scopeGrants`) |
+
+---
+
+## Entity configuration pattern
 
 ```ts
 const authorization = {
   read: read(
-    permissionAction(Permission.STUDENT_READ), // capability gate (sync)
-    (actor, entities) => policy.checkStudentAccess(actor, ids), // resource gate (async)
+    permissionAction(Permission.STUDENT_READ),
+    (actor, entities) => policy.checkStudentAccess(actor, ids),
   ),
   write: write(
     permissionAction(Permission.STUDENT_UPDATE),
@@ -232,11 +239,6 @@ const authorization = {
 }
 ```
 
-- **`checkModule`** (historical name) → capability check via `permissionAction` / `anyPermissionAction`.
-- **`checkAccess` / `authorizeSave` / `authorizeDelete`** → resource checks, often delegating to `AuthorizationPolicy`.
-
-Some entities use `noopReadAccess` / `noopSaveAccess` when capability checks alone are sufficient (e.g. school-wide configuration entities).
-
 Workflows receive `{ actor, authorizationPolicy }` and pass them into managed entity services.
 
 ---
@@ -245,11 +247,11 @@ Workflows receive `{ actor, authorizationPolicy }` and pass them into managed en
 
 | Location | Responsibility |
 |----------|----------------|
-| `apps/api/src/middlewares/dependencies/actor.ts` | Session → identity → cached grants → `ActorMetadata` on request context |
-| `apps/api/src/lib/authorization-grants-cache.ts` | In-memory cache keyed by session; TTL capped by `grants.expiresAt` |
-| `invalidateEffectiveGrantsCacheForActor()` | Call when roles or assignments change |
+| `apps/api/src/http/dependencies/session-actor.ts` | Session → identity → cached grants → `ActorMetadata` |
+| `apps/api/src/lib/authorization/grants-cache/` | In-memory cache; TTL capped by `grants.expiresAt` |
+| `invalidateEffectiveGrantsCacheForActor()` | Call when permission assignments change |
 
-Middleware requires exactly one identity per auth subject (staff **xor** guardian **xor** student). Grants are resolved via `repositories.authorization.resolveActorGrants()`.
+Staff requests should send `X-Academic-Year-Id` so grants resolve for the correct year. When omitted, resolution falls back to the active academic year.
 
 ---
 
@@ -257,37 +259,26 @@ Middleware requires exactly one identity per auth subject (staff **xor** guardia
 
 ```
 authorization/
-├── model/           Actor types, EffectiveGrants, ScopeGrant, errors, request
-├── permissions/     Permission enum, definitions, assurance, groups
-├── grants/          Scope helpers, portal sets, assignment → scope mapping
-├── resolution/      resolve* functions, AuthorizationRepository, DefaultAuthorizationRepository
+├── model/           Actor types, EffectiveGrants, ScopeGrant, errors
+├── permissions/     Permission enum, definitions, assurance, catalog
+├── scope/           scopeIds grammar, path matching, resolveResourcePath
+├── grants/          Scope helpers, portal sets, actor grant checks
+├── resolution/      resolve* functions, AuthorizationRepository
 ├── engine/          authorize() — synchronous capability gate
 └── policy/          AuthorizationPolicy factory and entity resolvers
 ```
-
-**Dependency direction:** `engine` and `policy` depend on `model`, `permissions`, and `grants`. `resolution` depends on `ports/school-repositories` (type-only for repository interfaces) and domain data via repositories. `authorization/` does not depend on `ports/authorization-repository` (removed); the port surface is the `SchoolRepositories.authorization` slot.
 
 ---
 
 ## Adding a new permission
 
 1. Add enum value to `permissions/permission.ts`.
-2. Add `allowedScopes` override in `permissions/build-permission-definitions.ts` when the permission is not school-only.
-3. If assurance-sensitive, add to `PERMISSION_ASSURANCE` in `permissions/permission-assurance.ts`.
-4. Assign to role templates in `grants/system-role-permissions.ts` and/or portal sets if needed.
-5. Add to relevant group in `permissions/groups.ts` if resolvers should recognize it.
-6. Wire entity config: `permissionAction(Permission.YOUR_PERMISSION)` and optional policy resolver.
-7. Extend API Zod schemas if the permission is exposed in access-control admin UI.
-
----
-
-## Adding a resource check
-
-1. Add method to `AuthorizationPolicy` in `policy/types.ts`.
-2. Implement resolver in `policy/resolvers/` (reuse `actorGrantCoversAny`, batch `findByIds`, enrollment helpers).
-3. Register in `createRepositoryAuthorizationPolicy()`.
-4. Call from entity config `checkAccess` / `authorizeSave` / workflow.
-5. Add unit tests under `package/domain-core/tests/unit/auth/`.
+2. Add `scope` and `allowedScopes` in `permissions/build-permission-definitions.ts`.
+3. If assurance-sensitive, add to `PERMISSION_ASSURANCE`.
+4. Add to portal sets or code presets in seeding if needed.
+5. Add to `policy/resolvers/permission-sets.ts` when resolvers should recognize it.
+6. Wire entity config: `permissionAction(...)` and optional policy resolver.
+7. Add i18n keys in `edaya_web` (`permission.{ENUM}`) and regenerate OpenAPI if exposed in admin UI.
 
 ---
 
@@ -299,24 +290,23 @@ authorization/
 | Grant resolution | `tests/unit/auth/effective-grants.test.ts` |
 | Policy resolvers | `tests/unit/auth/repository-authorization-policy.test.ts` |
 | Portal grants | `tests/unit/auth/portal-permission-policy.test.ts` |
-| Actor factories | `tests/unit/auth/actor-metadata.test.ts` |
-| Test grant fixtures | `tests/support/effective-grants.ts` |
+| Scope path matching | `tests/unit/auth/scope-path-covers.test.ts` |
 
-Integration tests under `tooling/integration-tests/src/auth/` exercise persistence-backed resolution and concurrency.
+Integration tests under `tooling/integration-tests/src/auth/` exercise persistence-backed resolution.
 
 ---
 
 ## Design principles
 
-1. **One path for all actors** — staff, guardian, and student all use `authorize()` with preloaded grants; differences are only in how grants are resolved.
+1. **One path for all actors** — staff, guardian, and student all use `authorize()` with preloaded grants.
 2. **Fail closed** — missing grants, scope mismatch, or failed assurance → `AuthorizationError`.
-3. **Separate capability from relationship** — holding `STUDENT_READ` at school scope does not automatically grant access to every student; `checkStudentAccess` enforces enrollment and teaching relationships.
-4. **Elevated staff** — school owners bypass scope checks but still go through resolvers that explicitly allow elevated paths where needed.
-5. **No DB in the hot path** — `authorize()` is synchronous and grant-backed; only resolvers and resolution touch repositories.
+3. **Separate capability from relationship** — holding `STUDENT_READ` at school scope does not automatically grant every student; `checkStudentAccess` enforces enrollment and teaching relationships.
+4. **Elevated staff** — school owners bypass scope checks via `isElevated`.
+5. **No DB in the hot path** — `authorize()` is synchronous; only resolvers and resolution touch repositories.
 
 ---
 
 ## Related documentation
 
-- `sprints/done/authorization-cleanup-plan.md` — phased refactor history and performance notes.
+- `docs/sprints/authorization-model-simplification-plan.md` — migration plan and path grammar.
 - `domains/README.md` — how entity configs attach authorization to managed entities.

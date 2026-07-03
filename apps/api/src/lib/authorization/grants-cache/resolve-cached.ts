@@ -22,17 +22,10 @@ export interface ResolveCachedEffectiveGrantsArgs {
   repositories: SchoolRepositories;
   now?: Date;
   ttlMs?: number;
-  useStaffPermissionAssignments?: boolean;
 }
 
 export function resolveGrantsCacheTtlMs(env?: Pick<Environment, "GRANTS_CACHE_TTL_MS">): number {
   return env?.GRANTS_CACHE_TTL_MS ?? DEFAULT_TTL_MS;
-}
-
-export function useStaffPermissionAssignmentsFromEnv(
-  _env?: Pick<Environment, "USE_STAFF_PERMISSION_ASSIGNMENTS">,
-): boolean {
-  return true;
 }
 
 export async function resolveCachedEffectiveGrants({
@@ -47,7 +40,6 @@ export async function resolveCachedEffectiveGrants({
   repositories,
   now = new Date(),
   ttlMs = DEFAULT_TTL_MS,
-  useStaffPermissionAssignments = false,
 }: ResolveCachedEffectiveGrantsArgs): Promise<EffectiveGrants> {
   const finalActorId = actorId ?? staffMemberId;
   if (!finalActorId) {
@@ -81,7 +73,6 @@ export async function resolveCachedEffectiveGrants({
     schoolId,
     ...(academicYearId ? { academicYearId } : {}),
     now,
-    useStaffPermissionAssignments,
   });
 
   const ttlExpiresAt = now.getTime() + ttlMs;
