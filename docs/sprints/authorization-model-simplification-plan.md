@@ -450,14 +450,16 @@ Unchanged: `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`
 
 ### Phase 3 — StaffAssignment sync (3–4 days)
 
-- [ ] `permissions: Permission[]` on `StaffAssignment`
-- [ ] `validateScopeIds` on `StaffPermissionAssignment` + assignment sync save
-- [ ] Cache invalidation hooks
+- [x] `permissions: Permission[]` on `StaffAssignment`
+- [x] `academicYearId` on `StaffAssignment`
+- [x] `validateScopeIds` on `StaffPermissionAssignment` + assignment sync save
+- [x] Sync workflow (`postSave` / `postDelete` hooks)
+- [x] Cache invalidation hooks (existing `staffAssignments` path)
 
 ### Phase 4 — Service accounts (2–3 days)
 
-- [ ] Provision / update / delegation on new rows
-- [ ] Deprecate `roleIds` on service account API
+- [x] Provision / update / delegation on new rows
+- [x] Deprecate `roleIds` on service account API
 
 ### Phase 5 — Portal + policy resolvers (4–5 days)
 

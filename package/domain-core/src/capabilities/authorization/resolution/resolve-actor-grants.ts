@@ -10,6 +10,7 @@ export interface ResolveActorGrantsArgs {
   repositories: SchoolRepositories
   academicYearId?: string
   now?: Date
+  useStaffPermissionAssignments?: boolean
 }
 
 export async function resolveActorGrants(args: ResolveActorGrantsArgs): Promise<EffectiveGrants> {
@@ -21,6 +22,7 @@ export async function resolveActorGrants(args: ResolveActorGrantsArgs): Promise<
         repositories: args.repositories,
         academicYearId: args.academicYearId,
         now: args.now,
+        useStaffPermissionAssignments: args.useStaffPermissionAssignments,
       })
     case 'guardian':
       return resolveGuardianGrants({

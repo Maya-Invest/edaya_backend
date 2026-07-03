@@ -43,6 +43,7 @@ import type {
   SchoolNotificationTemplates,
   ServiceApiKey,
   StaffAssignment,
+  StaffPermissionAssignment,
   StaffRoleAssignment,
   Student,
   StudentClassEnrollment,
@@ -262,6 +263,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   }
   const accessRoles = createStore<AccessRole>(transactionParticipants)
   const staffRoleAssignments = createStore<StaffRoleAssignment>(transactionParticipants)
+  const staffPermissionAssignments = createStore<StaffPermissionAssignment>(transactionParticipants)
   const subjects = createStore<Subject>(transactionParticipants)
   const subjectMatters = createStore<SubjectMatter>(transactionParticipants)
   const gradeLevelSubjects = createStore<GradeLevelSubject>(transactionParticipants)
@@ -335,6 +337,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     schoolNotificationTemplates,
     accessRoles,
     staffRoleAssignments,
+    staffPermissionAssignments,
     attachments,
     resources,
     resourceAssignments,

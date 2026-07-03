@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  assertDelegatedPermissionAssignmentsSubset,
   assertDelegatedPermissionsSubset,
   assertDelegatedScopeGrantsSubset,
   assertOwnerServiceAccountAllowed,
   AuthorizationError,
+  delegatedPermissionAssignmentSubsetCovers,
   Permission,
   scopeGrantSubsetCovers,
 } from '../../../src/capabilities/authorization'
@@ -65,6 +67,29 @@ describe('service account delegation', () => {
       permission: Permission.GRADE_INPUT,
       scopeType: 'class_group',
       scopeEntityIds: ['unknown-class'],
+    }], 'school-1')).toThrow(AuthorizationError)
+  })
+
+  test('permission assignments must be subset of creator grants', () => {
+    const creator = effectiveGrantsForRoles(['teacher'])
+
+    expect(delegatedPermissionAssignmentSubsetCovers(creator, {
+      permission: Permission.GRADE_INPUT,
+      scopeIds: 'class-math',
+    }, 'school-1')).toBe(true)
+
+    expect(delegatedPermissionAssignmentSubsetCovers(creator, {
+      permission: Permission.PAYMENT_RECORD,
+      scopeIds: '',
+    }, 'school-1')).toBe(false)
+  })
+
+  test('rejects permission assignments outside creator coverage', () => {
+    const creator = effectiveGrantsForRoles(['teacher'])
+
+    expect(() => assertDelegatedPermissionAssignmentsSubset(creator, [{
+      permission: Permission.PAYMENT_RECORD,
+      scopeIds: '',
     }], 'school-1')).toThrow(AuthorizationError)
   })
 

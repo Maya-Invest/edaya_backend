@@ -137,8 +137,9 @@ export const createServiceAccountHandler: AppRouteHandler<typeof createServiceAc
     const result = await createServiceAccount(c.get("schoolApp").repositories, actor, {
       serviceId: body.serviceId,
       displayName: body.displayName,
-      roleIds: body.roleIds,
+      ...(body.roleIds !== undefined ? { roleIds: body.roleIds } : {}),
       ...(body.scopeGrants ? { scopeGrants: body.scopeGrants } : {}),
+      ...(body.permissionAssignments ? { permissionAssignments: body.permissionAssignments } : {}),
       ...(body.elevated !== undefined ? { elevated: body.elevated } : {}),
       ...(body.apiKey ? { apiKey: body.apiKey } : {}),
     });
@@ -181,6 +182,7 @@ export const updateServiceAccountHandler: AppRouteHandler<typeof updateServiceAc
       ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
       ...(body.roleIds !== undefined ? { roleIds: body.roleIds } : {}),
       ...(body.scopeGrants !== undefined ? { scopeGrants: body.scopeGrants } : {}),
+      ...(body.permissionAssignments !== undefined ? { permissionAssignments: body.permissionAssignments } : {}),
     });
 
     return c.json(serializeServiceAccount(updated), HttpStatusCodes.OK);

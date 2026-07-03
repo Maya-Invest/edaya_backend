@@ -211,14 +211,14 @@ describe('entity config edge gates', () => {
   })
 
   test('validates staff assignment targets through class group, class subject, and lesson session paths', async () => {
-    await validateStaffAssignmentSave({ id: 'a1', staffId: 'staff-1', classGroupId: 'class-1' } as any, undefined, repositories())
-    await validateStaffAssignmentSave({ id: 'a2', staffId: 'staff-1', classSubjectId: 'subject-1' } as any, undefined, repositories())
-    await validateStaffAssignmentSave({ id: 'a3', staffId: 'staff-1', lessonSessionId: 'session-1' } as any, undefined, repositories())
+    await validateStaffAssignmentSave({ id: 'a1', staffId: 'staff-1', academicYearId: 'year-1', classGroupId: 'class-1' } as any, undefined, repositories())
+    await validateStaffAssignmentSave({ id: 'a2', staffId: 'staff-1', academicYearId: 'year-1', classSubjectId: 'subject-1' } as any, undefined, repositories())
+    await validateStaffAssignmentSave({ id: 'a3', staffId: 'staff-1', academicYearId: 'year-1', lessonSessionId: 'session-1' } as any, undefined, repositories())
 
-    await expect(validateStaffAssignmentSave({ id: 'a4', staffId: 'missing', classGroupId: 'class-1' } as any, undefined, repositories({
+    await expect(validateStaffAssignmentSave({ id: 'a4', staffId: 'missing', academicYearId: 'year-1', classGroupId: 'class-1' } as any, undefined, repositories({
       staffMembers: { findById: mock(async () => undefined) } as any,
     }))).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(validateStaffAssignmentSave({ id: 'a5', staffId: 'staff-1', classSubjectId: 'missing-subject' } as any, undefined, repositories({
+    await expect(validateStaffAssignmentSave({ id: 'a5', staffId: 'staff-1', academicYearId: 'year-1', classSubjectId: 'missing-subject' } as any, undefined, repositories({
       classSubjects: { findById: mock(async () => undefined) } as any,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })

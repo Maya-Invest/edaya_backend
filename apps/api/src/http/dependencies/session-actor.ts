@@ -9,7 +9,7 @@ import {
   type SchoolRepositories,
 } from "@edaya/core";
 import { randomUUID } from "node:crypto";
-import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
+import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs, useStaffPermissionAssignmentsFromEnv } from "@/lib/authorization/grants-cache/resolve-cached";
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
@@ -144,6 +144,7 @@ async function resolveActorIdentity(
   session: NormalizedAuthSession["session"],
   academicYearId: string | undefined,
   ttlMs: number,
+  useStaffPermissionAssignments: boolean,
 ): Promise<ActorIdentity | null> {
   const [staff, guardian, student] = await Promise.all([
     repos.staffMembers.findOne({ subjectId }),
@@ -204,6 +205,7 @@ async function resolveActorIdentity(
       authenticatedAt: session.createdAt,
       repositories: repos,
       ttlMs,
+      useStaffPermissionAssignments,
     });
 
     return {
@@ -222,6 +224,7 @@ async function resolveServiceActorIdentity(
   academicYearId: string | undefined,
   ttlMs: number,
   requestId: string,
+  useStaffPermissionAssignments: boolean,
 ): Promise<Extract<ActorIdentity, { kind: "staff" }> | null> {
   const keyRecord = await repos.serviceApiKeys.findActiveByHash(hashApiKey(apiKey));
   if (!keyRecord) {
@@ -243,6 +246,7 @@ async function resolveServiceActorIdentity(
       authenticatedAt: new Date(),
       repositories: repos,
       ttlMs,
+      useStaffPermissionAssignments,
     });
 
     return {
@@ -339,6 +343,7 @@ export function createSessionActorDependency(
       const requestId = resolveRequestId(c.req.header("x-request-id"));
       const academicYearId = resolveAcademicYearId(c.req.header("x-academic-year-id"));
       const ttlMs = resolveGrantsCacheTtlMs(c.env);
+      const useStaffPermissionAssignments = useStaffPermissionAssignmentsFromEnv(c.env);
       const repos = c.var.schoolApp.repositories;
       const bearerApiKey = parseBearerApiKey(c.req.header("authorization"));
 
@@ -356,6 +361,7 @@ export function createSessionActorDependency(
           session.session,
           academicYearId,
           ttlMs,
+          useStaffPermissionAssignments,
         );
         if (identity) {
           const interactiveContext = {
@@ -384,6 +390,7 @@ export function createSessionActorDependency(
           academicYearId,
           ttlMs,
           requestId,
+          useStaffPermissionAssignments,
         );
         if (identity) {
           c.set("actor", createActorFromIdentity(identity, {

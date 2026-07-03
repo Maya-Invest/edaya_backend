@@ -6,6 +6,7 @@ export interface AuthorizationRepository {
     schoolId: string
     academicYearId?: string
     now?: Date
+    useStaffPermissionAssignments?: boolean
   }) => Promise<EffectiveGrants>
   resolveActorGrants: (args: {
     actorId: string
@@ -13,5 +14,6 @@ export interface AuthorizationRepository {
     schoolId: string
     academicYearId?: string
     now?: Date
+    useStaffPermissionAssignments?: boolean
   }) => Promise<EffectiveGrants>
 }

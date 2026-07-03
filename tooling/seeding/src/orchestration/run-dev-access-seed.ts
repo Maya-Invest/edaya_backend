@@ -16,7 +16,7 @@ import { demoDataset, devSeedDataset } from '@edaya/fixtures'
 import {
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'
@@ -222,11 +222,11 @@ const STAFF_ROLE_ASSIGNMENT_RECORDS: readonly StaffRoleAssignmentSeedRecord[] = 
 ]
 
 const BASE_STAFF_ASSIGNMENT_RECORDS: readonly StaffAssignmentSeedRecord[] = [
-  { id: 'sa-st1-6a', staffId: 'st1', responsibility: 'Mathematics', classGroupId: '6a' },
-  { id: 'sa-st1-5a', staffId: 'st1', responsibility: 'Mathematics', classGroupId: '5a' },
-  { id: 'sa-st3-6a', staffId: 'st3', responsibility: 'Homeroom', classGroupId: '6a' },
-  { id: 'sa-st2-6b', staffId: 'st2', responsibility: 'Homeroom', classGroupId: '6b' },
-  { id: 'sa-st3-5a', staffId: 'st3', responsibility: 'Homeroom', classGroupId: '5a' },
+  { id: 'sa-st1-6a', staffId: 'st1', academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, responsibility: 'Mathematics', classGroupId: '6a' },
+  { id: 'sa-st1-5a', staffId: 'st1', academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, responsibility: 'Mathematics', classGroupId: '5a' },
+  { id: 'sa-st3-6a', staffId: 'st3', academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, responsibility: 'Homeroom', classGroupId: '6a' },
+  { id: 'sa-st2-6b', staffId: 'st2', academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, responsibility: 'Homeroom', classGroupId: '6b' },
+  { id: 'sa-st3-5a', staffId: 'st3', academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, responsibility: 'Homeroom', classGroupId: '5a' },
 ]
 
 export type DevAccessSeedResult

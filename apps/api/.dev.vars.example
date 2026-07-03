@@ -32,6 +32,7 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 
 # --- Optional ---
 # GRANTS_CACHE_TTL_MS=300000
+# USE_STAFF_PERMISSION_ASSIGNMENTS=false
 
 # --- Cron / queues ---
 # CRON_JOBS is a Wrangler queue binding (wrangler.jsonc) — not an env var here.

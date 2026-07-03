@@ -6,12 +6,22 @@ import { z } from 'zod'
 import { config, indirectTenant, noopReadAccess, permissionAction, read, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId, write } from '../../application/entities/entity-config'
 
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  deleteSyncedStaffAssignmentPermissions,
+  syncStaffAssignmentPermissions,
+} from '../../capabilities/authorization/sync/staff-assignment-permission-sync'
+import {
+  resolveStaffAssignmentTarget,
+  validateStaffAssignmentPermissionSelection,
+} from '../../capabilities/authorization/sync/staff-assignment-permission-rules'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const staffAssignmentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   staffId: z.string().trim().min(1, 'staffId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   responsibility: z.string().trim().min(1, 'responsibility must not be blank'),
+  permissions: z.nativeEnum(Permission).array().default([]).transform(arr => Object.freeze([...new Set(arr)])),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   lessonSessionId: z.string().trim().min(1, 'lessonSessionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -40,25 +50,30 @@ function refineStaffAssignment(
 }
 
 export const staffAssignmentSchema = staffAssignmentBaseSchema.superRefine(refineStaffAssignment)
-export type StaffAssignmentData = z.infer<typeof staffAssignmentSchema>
-export type StaffAssignmentInput = z.input<typeof staffAssignmentSchema>
+export type StaffAssignmentData = Omit<z.infer<typeof staffAssignmentSchema>, 'permissions'> & {
+  readonly permissions: readonly Permission[]
+}
+export type StaffAssignmentInput = z.input<typeof staffAssignmentBaseSchema>
 
 export const staffAssignmentCreateSchema = staffAssignmentBaseSchema.omit({ createdAt: true }).superRefine(refineStaffAssignment)
 export const staffAssignmentUpdateSchema = staffAssignmentBaseSchema.partial().required({ id: true }).superRefine(refineStaffAssignment)
 
 /**
  * Assigns a staff member (with a free-form responsibility label) to a class, subject, or occurrence.
+ * Optional `permissions` sync derived `StaffPermissionAssignment` rows on save/delete.
  */
 export class StaffAssignment {
   readonly data: StaffAssignmentData
 
   constructor(args: StaffAssignmentInput) {
-    this.data = parseDomain(staffAssignmentSchema, args)
+    this.data = parseDomain(staffAssignmentSchema, args) as StaffAssignmentData
   }
 
   get id() { return this.data.id }
   get staffId() { return this.data.staffId }
+  get academicYearId() { return this.data.academicYearId }
   get responsibility() { return this.data.responsibility }
+  get permissions() { return this.data.permissions }
   get classGroupId() { return this.data.classGroupId }
   get classSubjectId() { return this.data.classSubjectId }
   get lessonSessionId() { return this.data.lessonSessionId }
@@ -75,6 +90,14 @@ export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ re
     write: write(permissionAction(Permission.ACCESS_CONTROL_ASSIGN), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
     gates: {
       preSave: validateStaffAssignmentSave,
+    },
+    hooks: {
+      postSave: async (assignment, _existing, repos) => {
+        await syncStaffAssignmentPermissions(assignment, repos)
+      },
+      postDelete: async (assignment, repos) => {
+        await deleteSyncedStaffAssignmentPermissions(assignment.id, repos)
+      },
     },
     atomicExecution,
   })
@@ -134,6 +157,16 @@ export async function validateStaffAssignmentSave(
   const targetSchoolId = await resolveStaffAssignmentTargetSchoolId(assignment, repositories)
   if (!targetSchoolId || staffMember.schoolId !== targetSchoolId) {
     denyResourceAccess()
+  }
+
+  const academicYear = await repositories.academicYears.findById(assignment.academicYearId)
+  if (!academicYear || academicYear.schoolId !== staffMember.schoolId) {
+    denyResourceAccess()
+  }
+
+  if ((assignment.permissions?.length ?? 0) > 0) {
+    const target = await resolveStaffAssignmentTarget(assignment, repositories)
+    validateStaffAssignmentPermissionSelection(assignment, target)
   }
 }
 

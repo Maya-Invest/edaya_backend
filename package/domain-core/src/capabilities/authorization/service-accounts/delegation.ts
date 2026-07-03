@@ -3,6 +3,10 @@ import type { ScopeGrant } from '../model/scope-grant'
 import type { Permission } from '../permissions/permission'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { Permission as PermissionEnum } from '../permissions/permission'
+import {
+  type DelegatedPermissionAssignment,
+  delegatedPermissionAssignmentSubsetCovers,
+} from './permission-assignment-subset'
 import { scopeGrantSubsetCovers } from './scope-grant-subset'
 
 export function assertDelegatedPermissionsSubset(
@@ -52,6 +56,30 @@ export function assertDelegatedScopeGrantsSubset(
       throw new AuthorizationError(
         AuthorizationErrorCode.Forbidden,
         `Creator scope grants do not cover requested scope for ${requested.permission}`,
+      )
+    }
+  }
+}
+
+export function assertDelegatedPermissionAssignmentsSubset(
+  creatorGrants: EffectiveGrants,
+  requestedAssignments: readonly DelegatedPermissionAssignment[],
+  schoolId: string,
+): void {
+  assertDelegatedPermissionsSubset(
+    creatorGrants,
+    requestedAssignments.map(assignment => assignment.permission),
+  )
+
+  if (creatorGrants.isElevated) {
+    return
+  }
+
+  for (const requested of requestedAssignments) {
+    if (!delegatedPermissionAssignmentSubsetCovers(creatorGrants, requested, schoolId)) {
+      throw new AuthorizationError(
+        AuthorizationErrorCode.Forbidden,
+        `Creator grants do not cover requested scope for ${requested.permission}`,
       )
     }
   }

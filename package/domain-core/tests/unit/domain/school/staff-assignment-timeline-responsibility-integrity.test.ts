@@ -7,6 +7,7 @@ describe('StaffAssignment entity timeline and responsibility integrity', () => {
   const baseArgs = {
     id: 'assignment-1',
     staffId: 'staff-1',
+    academicYearId: 'year-1',
     responsibility: 'teacher',
   }
 

@@ -20,7 +20,9 @@ export interface StaffRoleAssignmentSeedRecord {
 export interface StaffAssignmentSeedRecord {
   id: string
   staffId: string
+  academicYearId: string
   responsibility: string
+  permissions?: readonly Permission[]
   classGroupId?: string
   classSubjectId?: string
   lessonSessionId?: string

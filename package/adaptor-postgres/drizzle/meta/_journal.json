@@ -260,6 +260,13 @@
       "when": 1781104996438,
       "tag": "0036_staff_permission_assignments",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1781104996439,
+      "tag": "0037_staff_assignment_permissions",
+      "breakpoints": true
     }
   ]
 }

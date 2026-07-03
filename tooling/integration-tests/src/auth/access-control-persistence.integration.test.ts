@@ -23,6 +23,7 @@ describeIntegration('access control persistence', () => {
     await repos.staffAssignments.save(new StaffAssignment({
       id: 'teaching-assign-1',
       staffId: 'staff-teacher-1',
+      academicYearId: 'year-1',
       responsibility: 'teacher',
       classGroupId: 'class-6a',
     }))

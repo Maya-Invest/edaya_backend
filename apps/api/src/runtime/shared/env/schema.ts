@@ -32,6 +32,8 @@ export const EnvSchema = z.object({
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   COOKIE_DOMAIN: z.string().optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
+  /** When true, resolve staff grants from StaffPermissionAssignment rows instead of access roles. */
+  USE_STAFF_PERMISSION_ASSIGNMENTS: envBooleanSchema.optional(),
   /** Novu Cloud secret key — when set, notifications dispatch via @edaya/adaptor-novu */
   NOVU_SECRET_KEY: z.string().min(1).optional(),
   /** Optional Novu API base URL (e.g. https://eu.api.novu.co) */

@@ -343,7 +343,9 @@ export function createEntityStores(db: any): EntityStores {
       (entity: StaffAssignment) => ({
         id: entity.id,
         staffId: entity.staffId,
+        academicYearId: entity.academicYearId ?? null,
         role: entity.responsibility,
+        permissions: [...entity.permissions],
         classGroupId: entity.classGroupId ?? null,
         classSubjectId: entity.classSubjectId ?? null,
         lessonSessionId: entity.lessonSessionId ?? null,
@@ -354,7 +356,9 @@ export function createEntityStores(db: any): EntityStores {
       row => new StaffAssignmentCtor({
         id: row.id,
         staffId: row.staffId,
+        academicYearId: row.academicYearId ?? undefined,
         responsibility: row.role,
+        permissions: Array.isArray(row.permissions) ? row.permissions : [],
         classGroupId: row.classGroupId ?? undefined,
         classSubjectId: row.classSubjectId ?? undefined,
         lessonSessionId: row.lessonSessionId ?? undefined,

@@ -133,7 +133,9 @@ export const schoolNotificationTemplates = pgTable('school_notification_template
 export const staffAssignments = pgTable('staff_assignments', {
   id: text('id').primaryKey(),
   staffId: text('staff_id').notNull(),
+  academicYearId: text('academic_year_id'),
   role: text('role').notNull(),
+  permissions: jsonb('permissions').notNull().default([]),
   classGroupId: text('class_group_id'),
   classSubjectId: text('class_subject_id'),
   lessonSessionId: text('lesson_session_id'),

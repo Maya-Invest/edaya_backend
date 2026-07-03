@@ -263,6 +263,7 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
 export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   staffId: field.id(),
+  academicYearId: field.id(),
   classGroupId: field.id(),
   classSubjectId: field.id(),
   lessonSessionId: field.id(),
