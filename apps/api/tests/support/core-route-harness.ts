@@ -39,6 +39,7 @@ import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 import {
   createLocalProfileTestEnv,
+  type EmbeddedLocalFilesServer,
   startEmbeddedLocalFilesServer,
 } from "./embedded-local-files";
 
@@ -67,6 +68,8 @@ export interface AuthenticatedRouteContext {
   runtime: ApiRuntime;
   application: ApiSchoolApplication;
   env: Environment;
+  /** Present when `withEmbeddedLocalFiles` is true; stop via `stop()` when using `autoCleanup: false`. */
+  localFiles?: EmbeddedLocalFilesServer;
 }
 
 const activeTestRuntimes = new Set<ApiRuntime>();
@@ -191,7 +194,7 @@ export async function createCoreRouteTestApp(
       })()
     : createIsolatedPgliteTestEnv();
 
-  if (embeddedLocalFiles) {
+  if (embeddedLocalFiles && options.autoCleanup !== false) {
     onTestFinished(async () => {
       embeddedLocalFiles?.stop();
     });
@@ -216,7 +219,7 @@ export async function createCoreRouteTestApp(
   ));
   app.route("/", indexRouter);
 
-  return { app, runtime, application, env };
+  return { app, runtime, application, env, localFiles: embeddedLocalFiles };
 }
 
 export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, runtime: ApiRuntime) {

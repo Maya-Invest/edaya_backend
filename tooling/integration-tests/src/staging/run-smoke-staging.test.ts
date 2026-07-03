@@ -39,6 +39,12 @@ describe('loadSmokeStagingEnv', () => {
 })
 
 describe('runSmokeStaging', () => {
+  const originalFetch = globalThis.fetch
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
   it('passes tier-1 checks against a mocked healthy staging API', async () => {
     process.env.SMOKE_STAGING_LOAD_ENV_FILE = '0'
     process.env.STAGING_API_URL = 'https://api-staging.test'

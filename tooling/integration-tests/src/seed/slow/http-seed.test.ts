@@ -89,26 +89,37 @@ describe('runHttpDevSeeds', () => {
 
   // Pure HTTP profile-picture upload uses embedded local-files (RUNTIME=local).
   it('seeds the full demo school through HTTP session bootstrap without in-process application access', async () => {
-    const { app } = await createCoreRouteTestApp({ withEmbeddedLocalFiles: true })
+    const { app, runtime, localFiles } = await createCoreRouteTestApp({
+      withEmbeddedLocalFiles: true,
+      // Keep this runtime out of the shared harness registry so parallel route
+      // integration tests cannot close it mid-seed via resetCoreRouteTestHarness().
+      autoCleanup: false,
+    })
     const client = createHttpClientForApp(app)
 
-    const results = await runHttpDevSeeds({
-      client,
-      scope: 'all',
-      provisionServiceAccount: true,
-    })
+    try {
+      const results = await runHttpDevSeeds({
+        client,
+        scope: 'all',
+        provisionServiceAccount: true,
+      })
 
-    expect(results.authProvision?.status).toBe('seeded')
-    expect(results.school?.status).toBe('seeded')
-    expect(results.access?.status).toBe('seeded')
+      expect(results.authProvision?.status).toBe('seeded')
+      expect(results.school?.status).toBe('seeded')
+      expect(results.access?.status).toBe('seeded')
 
-    const smoke = await runHttpDevSeeds({
-      client,
-      scope: 'smoke',
-      serviceAccountApiKey: resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID),
-      provisionServiceAccount: false,
-    })
-    expect(smoke.smoke?.status).toBe('passed')
+      const smoke = await runHttpDevSeeds({
+        client,
+        scope: 'smoke',
+        serviceAccountApiKey: resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID),
+        provisionServiceAccount: false,
+      })
+      expect(smoke.smoke?.status).toBe('passed')
+    }
+    finally {
+      await runtime.close()
+      localFiles?.stop()
+    }
   }, 120_000)
 
   it('seeds the full demo school through service account HTTP routes', async () => {
