@@ -126,6 +126,7 @@
         "TRUSTED_ORIGINS": "https://app-staging.edaya.softilab.dev",
         "COOKIE_DOMAIN": "softilab.dev",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
+        "REQUIRE_EMAIL_VERIFICATION": "false",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
       "routes": [
