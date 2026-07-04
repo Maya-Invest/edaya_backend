@@ -107,8 +107,8 @@ bun run smoke:staging
 
 ```sh
 bun run verify
-bun run deploy:api
-bun run deploy:webapp
+bun run deploy:api:production
+bun run deploy:webapp:production
 ```
 
 ---

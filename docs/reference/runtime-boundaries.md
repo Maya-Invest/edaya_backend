@@ -12,7 +12,7 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 |---------|---------|---------|
 | **`local`** | Day-to-day development | `bun dev` |
 | **`in-memory`** | Fast automated tests | `bun test` (harness sets env) |
-| **`worker`** | Staging / production deploy; optional local smoke | `bun run deploy:api*`, `bun dev:worker:staging` |
+| **`worker`** | Staging / production deploy; optional local smoke | `bun run deploy:api:production`, `bun run deploy:api:staging`, `bun dev:worker` |
 
 **worker** is not a separate `RUNTIME` value. It means `RUNTIME=worker` executed through `wrangler dev` (Miniflare) with `.dev.vars` and Cloudflare bindings — same adapter wiring as a deployed Worker.
 
@@ -51,7 +51,7 @@ Positive requirements only (fail when the profile cannot boot):
 1. `@edaya/api` — `RUNTIME=local`, PGlite + SQLite + local-fs client
 2. `@edaya/local-files` — HTTP file service on port 9200
 
-Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun dev:worker:staging`** with `apps/api/.dev.vars` — not `bun dev`.
+Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun dev:worker`** with `apps/api/.dev.vars` — not `bun dev`.
 
 ## Cron
 

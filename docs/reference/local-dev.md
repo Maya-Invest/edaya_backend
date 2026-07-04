@@ -56,7 +56,7 @@ The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtim
 | Profile | Command | School DB | Auth DB |
 |---------|---------|-----------|---------|
 | **local** | `bun dev` | PGlite `.data/school` | PGlite `auth` schema (same DB) |
-| **worker** | `bun dev:worker:staging` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
+| **worker** | `bun dev:worker` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
 
 Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun dev`). See [api-runtimes.md](./api-runtimes.md).
 
@@ -83,7 +83,7 @@ Optional — exercises the same adaptors as deployed workers. Requires `apps/api
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-bun dev:worker:staging
+bun dev:worker
 ```
 
 Point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` at the **staging** Neon branch. Production is deploy-only; use `wrangler dev --env production` manually only when required.

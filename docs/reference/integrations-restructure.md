@@ -79,21 +79,22 @@ edaya_backend/
 | Script | Package / target |
 |--------|------------------|
 | `bun dev` | `@edaya/api` watch mode |
-| `bun dev:worker:staging` | `@edaya/api` `dev:worker:staging` |
+| `bun dev:worker` | `@edaya/api` `dev:worker` |
 | `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
 | `bun db:generate` | `@edaya/adaptor-postgres` |
-| `bun db:migrate` | `@edaya/db-migrate` (`migrate`) — school only |
-| `bun db:migrate:full` | `@edaya/db-migrate` (`migrate:full`) — school + auth |
-| `bun db:migrate:production` | `@edaya/db-migrate` (`migrate:production`) |
-| `bun db:migrate:staging` | `@edaya/db-migrate` (`migrate:staging`) |
+| `bun db:migrate:local` | `@edaya/db-migrate` — school + auth (local) |
+| `bun db:migrate:staging` | `@edaya/db-migrate` — school + auth (staging) |
+| `bun db:migrate:production` | `@edaya/db-migrate` — school + auth (production) |
+| `bun db:migrate:*:pg` | `@edaya/db-migrate` — school only (`local` / `staging` / `production`) |
+| `bun db:migrate:*:auth` | `@edaya/db-migrate` — auth only (`local` / `staging` / `production`) |
 | `bun db:generate:auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
 | `bun auth:generate-schema` | `@edaya/adaptor-auth` |
 | `bun novu:bootstrap` / `bun novu:bootstrap:apply` / `bun novu:bootstrap:validate` | `@edaya/novu-ops` |
 | `bun novu:cleanup` / `bun novu:cleanup:apply` | `@edaya/novu-ops` |
 | `bun run openapi:generate` | Export OpenAPI + regenerate client bindings |
 | `bun run openapi:check` | Drift check for generated artifacts |
-| `bun deploy:api` | `@edaya/api` `deploy:worker` |
-| `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
+| `bun deploy:api:production` | `@edaya/api` `deploy:production` |
+| `bun deploy:api:staging` | `@edaya/api` `deploy:staging` |
 | `bun smoke:staging` | `@edaya/integration-tests` |
 
 Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
@@ -108,6 +109,6 @@ Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cros
 ## School migration pipeline
 
 1. `db:generate` — Drizzle Kit in `@edaya/adaptor-postgres`
-2. `db:migrate` — apply school schema to `DATABASE_URL`
-3. `db:migrate:production` — Neon production from `tooling/seeding/.env.production` (school + auth)
-4. `db:migrate:full` — school + auth on explicit `DATABASE_URL`
+2. `db:migrate:local` / `db:migrate:staging` / `db:migrate:production` — school + auth
+3. `db:migrate:*:pg` — school schema only
+4. `db:migrate:*:auth` — auth schema only

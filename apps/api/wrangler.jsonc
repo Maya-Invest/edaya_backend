@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // Worker runtime only (`RUNTIME=worker`): optional `bun dev:worker:staging` and deploy.
+  // Worker runtime only (`RUNTIME=worker`): optional `bun dev:worker` and deploy.
   // Local dev (`bun dev`) uses `.env` + PGlite/SQLite/local-files — not this file.
   // See docs/reference/runtime-boundaries.md.
   "name": "edaya-api",
@@ -21,31 +21,12 @@
     "port": 9999
   },
   //
-  // Optional worker smoke: `bun dev:worker:staging` (staging Hyperdrive + R2).
-  // Hyperdrive + R2 bindings live under env.staging / env.production only (no root Hyperdrive).
-  // Deploy secrets: see secrets.staging.json.example / secrets.prod.json.example
-  // Hyperdrive local origin for wrangler dev: CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE in `.dev.vars`
-  // Scheduled cron heartbeat — see docs/reference/cron-runtimes.md
-  "triggers": {
-    "crons": [
-      "*/5 * * * *"
-    ]
-  },
-  "queues": {
-    "producers": [
-      {
-        "binding": "CRON_JOBS",
-        "queue": "edaya-cron-jobs"
-      }
-    ],
-    "consumers": [
-      {
-        "queue": "edaya-cron-jobs",
-        "max_batch_size": 10,
-        "max_retries": 3
-      }
-    ]
-  },
+  // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
+  // [env.*] bindings — HYPERDRIVE (Postgres), CRON_JOBS (queue)
+  // Secrets          — BETTER_AUTH_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
+  //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+  // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE (wrangler dev)
+  // Local .env only  — PORT, DATABASE_URL, LOCAL_FILES_*, CRON_JOB_KEYS, SEED_ON_START, GRAPHQL_*
   "observability": {
     "logs": {
       "enabled": true,
@@ -53,8 +34,61 @@
     }
   },
   "env": {
+    // Staging (`wrangler deploy --env staging`):
+    "staging": {
+      "name": "edaya-api-staging",
+      // Replace with staging Hyperdrive config ID (Neon staging branch) before first deploy.
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "c6b9a94e449647d78f7c49591ba301e6"
+        }
+      ],
+      "vars": {
+        "NODE_ENV": "production",
+        "LOG_LEVEL": "info",
+        "RUNTIME": "worker",
+        "BETTER_AUTH_URL": "https://api-staging.edaya.softilab.dev",
+        "TRUSTED_ORIGINS": "https://app-staging.edaya.softilab.dev",
+        "WEBAPP_ORIGIN": "https://app-staging.edaya.softilab.dev",
+        "COOKIE_DOMAIN": "softilab.dev",
+        "GRANTS_CACHE_TTL_MS": "300000",
+        "NOVU_API_URL": "https://eu.api.novu.co",
+        "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
+        "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "REQUIRE_EMAIL_VERIFICATION": "false",
+        "AUTH_EMAIL_LOG_OTP": "false",
+        "R2_BUCKET_NAME": "edaya-files-staging"
+      },
+      "routes": [
+        {
+          "pattern": "api-staging.edaya.softilab.dev",
+          "custom_domain": true
+        }
+      ],
+      "triggers": {
+        "crons": [
+          "*/5 * * * *"
+        ]
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "CRON_JOBS",
+            "queue": "edaya-cron-jobs-staging"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "edaya-cron-jobs-staging",
+            "max_batch_size": 10,
+            "max_retries": 3
+          }
+        ]
+      }
+    },
     // Production (`wrangler deploy --env production`):
-    "production": {
+    "prod": {
       "name": "edaya-api-prod",
       "vars": {
         "NODE_ENV": "production",
@@ -62,8 +96,14 @@
         "RUNTIME": "worker",
         "BETTER_AUTH_URL": "https://api-prod.edaya.softilab.dev",
         "TRUSTED_ORIGINS": "https://app-prod.edaya.softilab.dev",
+        "WEBAPP_ORIGIN": "https://app-prod.edaya.softilab.dev",
         "COOKIE_DOMAIN": "softilab.dev",
+        "GRANTS_CACHE_TTL_MS": "300000",
+        "NOVU_API_URL": "https://eu.api.novu.co",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
+        "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "REQUIRE_EMAIL_VERIFICATION": "true",
+        "AUTH_EMAIL_LOG_OTP": "false",
         "R2_BUCKET_NAME": "edaya-files-production"
       },
       "hyperdrive": [
@@ -98,54 +138,7 @@
           }
         ]
       }
-    },
-    // Staging (`wrangler deploy --env staging`):
-    "staging": {
-      "name": "edaya-api-staging",
-      // Replace with staging Hyperdrive config ID (Neon staging branch) before first deploy.
-      "hyperdrive": [
-        {
-          "binding": "HYPERDRIVE",
-          "id": "c6b9a94e449647d78f7c49591ba301e6"
-        }
-      ],
-      "vars": {
-        "NODE_ENV": "production",
-        "LOG_LEVEL": "info",
-        "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://api-staging.edaya.softilab.dev",
-        "TRUSTED_ORIGINS": "https://app-staging.edaya.softilab.dev",
-        "COOKIE_DOMAIN": "softilab.dev",
-        "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "false",
-        "R2_BUCKET_NAME": "edaya-files-staging"
-      },
-      "routes": [
-        {
-          "pattern": "api-staging.edaya.softilab.dev",
-          "custom_domain": true
-        }
-      ],
-      "triggers": {
-        "crons": [
-          "*/5 * * * *"
-        ]
-      },
-      "queues": {
-        "producers": [
-          {
-            "binding": "CRON_JOBS",
-            "queue": "edaya-cron-jobs-staging"
-          }
-        ],
-        "consumers": [
-          {
-            "queue": "edaya-cron-jobs-staging",
-            "max_batch_size": 10,
-            "max_retries": 3
-          }
-        ]
-      }
     }
+
   }
 }

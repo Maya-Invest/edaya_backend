@@ -5,7 +5,7 @@ Scheduled jobs are defined in `@edaya/core` (`package/domain-core/src/capabiliti
 | Profile | Entry | Env source | Command |
 |---------|-------|------------|---------|
 | **local** | `apps/api/src/entries/cron-local.ts` | `apps/api/.env` | `bun cron:local` (root) |
-| **worker** | `apps/api/src/entries/worker.ts` (`scheduled` + `queue`) | `wrangler.jsonc` + Wrangler secrets | `bun run deploy:api*` |
+| **worker** | `apps/api/src/entries/worker.ts` (`scheduled` + `queue`) | `wrangler.jsonc` + Wrangler secrets | `bun run deploy:api:production`, `bun run deploy:api:staging` |
 
 ## Environment variables
 
@@ -68,8 +68,8 @@ Queue names per deploy profile:
 Deploy with the API worker:
 
 ```sh
-bun run deploy:api:staging  # staging
-bun run deploy:api          # production
+bun run deploy:api:staging    # staging
+bun run deploy:api:production # production
 ```
 
 ## Architecture

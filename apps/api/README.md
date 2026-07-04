@@ -17,10 +17,10 @@ bun dev                # http://localhost:9999 + local-files on :9200
 
 ```sh
 cp .dev.vars.example .dev.vars
-bun run dev:worker:staging
+bun run dev:worker
 ```
 
-Production worker profile: deploy only (`bun run deploy:worker`). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env production --env-file .dev.vars`.
+Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun run deploy:api:production` from repo root). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env production --env-file .dev.vars`.
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
@@ -44,7 +44,7 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 
 | Target     | Command                 | Output                                                                   |
 | ---------- | ----------------------- | ------------------------------------------------------------------------ |
-| **Worker** | `bun run deploy:worker` | Wrangler bundles `src/entries/worker.ts` → `api-prod.edaya.softilab.dev` |
+| **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api-prod.edaya.softilab.dev` |
 
 `bun run build` produces a Node bundle of the **local** entry (`dist/node.js`) for CI/typecheck only — not used in production deploy.
 
@@ -52,7 +52,7 @@ Before first production deploy:
 
 1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun run db:migrate:production` (from repo root)
 2. Upload secrets: `cp secrets.prod.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env production`
-3. Dry-run: `bun run deploy:worker:dry-run`
-4. Deploy: `bun run deploy:worker`
+3. Dry-run: `bun run deploy:production:dry-run`
+4. Deploy: `bun run deploy:production` (or `bun run deploy:api:production` from repo root)
 
 See [docs/reference/local-dev.md](../../docs/reference/local-dev.md) and [docs/reference/api-runtimes.md](../../docs/reference/api-runtimes.md).

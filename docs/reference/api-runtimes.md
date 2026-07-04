@@ -10,7 +10,7 @@ Scheduled cron jobs run on the API worker (`scheduled()` handler). See [cron-run
 |---------|-------|------------|---------------|
 | **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `bun dev` (root) |
 | **in-memory** | *(tests only)* | harness env | `bun test` in `apps/api` |
-| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun dev:worker:staging` (optional) |
+| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun dev:worker` (optional) |
 
 ## Environment variables
 
@@ -62,7 +62,7 @@ Production containers using the local entry should inject env vars directly — 
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-cd apps/api && bun run dev:worker:staging
+cd apps/api && bun run dev:worker
 ```
 
 worker smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
@@ -71,7 +71,7 @@ worker smoke uses the same adapter wiring as production (`RUNTIME=worker` via Mi
 - **`.dev.vars`** — Wrangler-only secrets (gitignored); loaded by `wrangler dev --env-file` and deploy — **not** by `bun dev`
 - **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` for local wrangler dev); auth tables in the `auth` schema
 
-Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
+Deploy with `bun run deploy:api:production` (root) or `bun run deploy:production` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
 
 **Staging:** `bun run deploy:api:staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
 
