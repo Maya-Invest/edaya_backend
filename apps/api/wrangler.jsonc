@@ -62,8 +62,8 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://api.edaya.softilab.dev",
-        "TRUSTED_ORIGINS": "https://app.edaya.softilab.dev",
+        "BETTER_AUTH_URL": "https://api-prod.edaya.softilab.dev",
+        "TRUSTED_ORIGINS": "https://app-prod.edaya.softilab.dev",
         "COOKIE_DOMAIN": "softilab.dev",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "R2_BUCKET_NAME": "edaya-files-production"
