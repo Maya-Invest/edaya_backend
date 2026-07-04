@@ -7,6 +7,7 @@ import type {
   StudentInput,
 } from '@edaya/core'
 import type { FixtureDataset } from '../types'
+import { DEV_STAFF_CI_NAME_PARTS } from '../../meta/dev-staff-display-names'
 import { CI_FIRST_NAMES, CI_LAST_NAMES } from '../bulk/name-pools'
 
 const CI_SCHOOL: SchoolInput = {
@@ -17,16 +18,7 @@ const CI_SCHOOL: SchoolInput = {
   country: 'Côte d\'Ivoire',
 }
 
-const STAFF_CI_NAMES: Record<string, { firstName: string, lastName: string }> = {
-  st8: { firstName: 'Kouassi', lastName: 'Yann' },
-  st5: { firstName: 'Jean-Baptiste', lastName: 'Aka' },
-  st1: { firstName: 'Mme', lastName: 'Touré' },
-  st2: { firstName: 'M.', lastName: 'Diomandé' },
-  st3: { firstName: 'Mme', lastName: 'Assi' },
-  st4: { firstName: 'M.', lastName: 'Gbé' },
-  st6: { firstName: 'Mme', lastName: 'Zongo' },
-  st7: { firstName: 'M.', lastName: 'Bamba' },
-}
+const STAFF_CI_NAMES = DEV_STAFF_CI_NAME_PARTS
 
 const NARRATIVE_STUDENT_CI_NAMES: Record<string, { firstName: string, lastName: string }> = {
   s1: { firstName: 'Aminata', lastName: 'Koné' },

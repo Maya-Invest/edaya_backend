@@ -4,7 +4,9 @@ import {
 import { createR2FileStorageFromEnv, isR2FileStorageConfigured, resolveR2EndpointFromEnv } from "@edaya/adaptor-r2";
 import type { FileStoragePort, LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
+import { isPersistedLocalDataDeployment } from "@/dev/persisted-local-data";
 import { createLocalDevFileStorage } from "@/runtime/shared/adapters/local-dev-file-storage";
+import { resolveRepoLocalDataPath } from "@/runtime/shared/env/repo-root";
 
 export function resolveFileStorage(
   env: Environment | undefined,
@@ -27,10 +29,17 @@ export function resolveFileStorage(
   }
 
   if (env.RUNTIME === "in-memory" || env.RUNTIME === "local") {
+    const persistDir = env.RUNTIME === "local" && isPersistedLocalDataDeployment(env)
+      ? resolveRepoLocalDataPath(".data/files")
+      : undefined;
     if (env.LOG_LEVEL !== "silent") {
-      logger?.info("R2 not configured — using in-memory file storage");
+      logger?.info(
+        persistDir
+          ? "R2 not configured — using persisted local file storage (.data/files)"
+          : "R2 not configured — using in-memory file storage",
+      );
     }
-    return createLocalDevFileStorage(env.BETTER_AUTH_URL);
+    return createLocalDevFileStorage(env.BETTER_AUTH_URL, { persistDir });
   }
 
   if (env.LOG_LEVEL === "silent") {

@@ -5,7 +5,7 @@ import { resolveRepoLocalDataPath } from "@/runtime/shared/env/repo-root";
 import {
   isPersistedLocalDataDeployment,
   resolveSeedOnStart,
-} from "@/dev/local-startup-seed";
+} from "@/dev/persisted-local-data";
 
 const originalEnv = { ...process.env };
 

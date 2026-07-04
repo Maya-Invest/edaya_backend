@@ -22,7 +22,7 @@ import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import { readLocalDevMemoryObject } from "@/runtime/shared/adapters/local-dev-file-storage";
+import { readLocalDevStoredObject } from "@/runtime/shared/adapters/local-dev-file-storage";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -312,7 +312,7 @@ export const getMemoryFileHandler: AppRouteHandler<typeof getMemoryFileRoute> = 
   try {
     const { storageKey } = validatedParam(c) as { storageKey: string };
     const key = decodeURIComponent(storageKey);
-    const stored = readLocalDevMemoryObject(c.var.schoolApp.fileStorage, key);
+    const stored = await readLocalDevStoredObject(c.var.schoolApp.fileStorage, key);
     if (!stored) {
       return c.json({ message: "Object not found" }, HttpStatusCodes.NOT_FOUND);
     }

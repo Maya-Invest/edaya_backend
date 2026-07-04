@@ -3,6 +3,7 @@ import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { HttpSeedClient } from './client'
 import type { HttpSeedValidationResult } from './seed-validation'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { DEV_DEMO_LOGIN_ACCOUNTS } from '@edaya/fixtures/demo-login'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createHttpAccessSeedPort } from '../domains/access/http'
@@ -102,6 +103,7 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
     || arg === 'auth'
     || arg === 'auth:link'
     || arg === 'access'
+    || arg === 'profile-pictures'
     || arg === 'smoke'
     || arg === 'service-account'
     || arg === 'validate'
@@ -110,7 +112,7 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
   }
 
   throw new Error(
-    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|service-account|smoke|validate|all]`,
+    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|profile-pictures|service-account|smoke|validate|all]`,
   )
 }
 
@@ -178,6 +180,31 @@ async function runHttpSmokeSeed(
   }
 }
 
+export async function runHttpVerifyDemoStaffGrants(
+  baseUrl: string,
+  appOrigin: string,
+): Promise<{ status: 'passed' | 'failed', failures: string[] }> {
+  const { HttpSeedClient } = await import('./client')
+  const context = resolveDevSeedContext()
+  const failures: string[] = []
+
+  for (const account of DEV_DEMO_LOGIN_ACCOUNTS) {
+    const client = new HttpSeedClient({ baseUrl, appOrigin })
+    await signInViaHttp(client, {
+      email: account.email,
+      password: context.authPassword,
+    })
+    const grants = await client.jsonRequest('/core/authorization/effective-grants')
+    if (!grants.response.ok) {
+      failures.push(`${account.email} (${grants.response.status})`)
+    }
+  }
+
+  return failures.length === 0
+    ? { status: 'passed', failures }
+    : { status: 'failed', failures }
+}
+
 async function canUseSeedingServiceAccount(
   client: HttpSeedClient,
   apiKey: string,
@@ -230,6 +257,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     authProvision: null,
     authLink: null,
     access: null,
+    profilePhotos: null,
     smoke: null,
     validation: null,
   }
@@ -517,6 +545,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   results.authProvision = authProvision ?? domainResults.authProvision
   results.authLink = domainResults.authLink
   results.access = domainResults.access
+  results.profilePhotos = domainResults.profilePhotos
 
   if (scope === 'all') {
     await maybeProvisionSeedingServiceAccount({

@@ -1,4 +1,5 @@
 import type { FixtureDataset } from '@edaya/fixtures'
+import type { DevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import type { ProfilePicturesSeedPort } from './port'
 import { readFile } from 'node:fs/promises'
 import { AttachmentOwnerKind } from '@edaya/core'
@@ -110,4 +111,27 @@ export async function seedDevProfilePictures(
   })
 
   return { profilePhotos: targets.length }
+}
+
+/** Re-seeds profile photos for demo login staff only (fast startup repair). */
+export async function seedDevDemoStaffProfilePictures(
+  port: ProfilePicturesSeedPort,
+  context: Pick<DevSeedContext, 'schoolId' | 'staffAccounts' | 'dataset'>,
+): Promise<number> {
+  const pickPictureFile = createRandomProfilePictureAllocator()
+  const demoStaffIds = new Set(context.staffAccounts.map(account => account.staffId))
+  const staffMembers = (context.dataset.entities.staffMembers ?? []).filter(member => demoStaffIds.has(member.id))
+
+  await mapWithConcurrency(staffMembers, PROFILE_PHOTO_UPLOAD_CONCURRENCY, async (staff) => {
+    await seedProfilePhotoForOwner(
+      port,
+      context.schoolId,
+      AttachmentOwnerKind.Staff,
+      staff.id,
+      pickPictureFile,
+      photoUrl => port.setStaffPhotoUrl(staff.id, photoUrl),
+    )
+  })
+
+  return staffMembers.length
 }

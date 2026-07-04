@@ -3,6 +3,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'
@@ -78,7 +79,7 @@ export async function runDevAccessAssignmentsSeedWithPort(
   }
 
   let classSubjectStaffAssignments = 0
-  if (options?.includeClassSubjectStaffAssignments !== false && context.datasetId === 'central') {
+  if (options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID) {
     for (const assignment of demoDataset.extensions?.classSubjectStaffAssignments ?? []) {
       await port.saveStaffAssignment(assignment)
       classSubjectStaffAssignments += 1

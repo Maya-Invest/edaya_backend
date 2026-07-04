@@ -43,10 +43,22 @@ describe("dev demo login accounts", () => {
     expect(accounts.find(account => account.staffId === "st5")).toMatchObject({
       role: "directeur",
       email: "c.moreau@school.edu",
+      name: "Jean-Baptiste Aka",
+      initials: "JA",
+    });
+    expect(accounts.find(account => account.staffId === "st1")).toMatchObject({
+      name: "Mme Touré",
+      initials: "MT",
+    });
+    expect(accounts.find(account => account.staffId === "st3")).toMatchObject({
+      name: "Mme Assi",
+      initials: "MA",
     });
     expect(accounts.find(account => account.staffId === "st7")).toMatchObject({
       role: "educateur",
       email: "t.evrard@school.edu",
+      name: "M. Bamba",
+      initials: "MB",
     });
     expect(accounts.some(account => account.staffId === "st2")).toBe(false);
   });

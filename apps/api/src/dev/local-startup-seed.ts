@@ -1,59 +1,17 @@
 /* eslint-disable node/no-process-env */
-import path from "node:path";
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { resolveSeedingApiKeyForSchool } from "@edaya/fixtures/meta/school-profiles";
 import type { Environment } from "@/runtime/shared/env/schema";
-import { resolveRepoLocalDataPath } from "@/runtime/shared/env/repo-root";
 import { getApiRuntime } from "@/runtime/local/registry";
+import {
+  isPersistedLocalDataDeployment,
+  resolveSeedOnStart,
+} from "@/dev/persisted-local-data";
 
 const WIPE_AND_RESEED_HINT
   = "Stop bun dev, run `cd edaya_backend && bun seed:clean --yes`, then restart bun dev.";
 
-function usesRepoLocalDataPath(pathValue: string): boolean {
-  if (pathValue === ".data" || pathValue.startsWith(".data/")) {
-    return true;
-  }
-
-  const repoDataRoot = resolveRepoLocalDataPath(".data");
-  const normalized = path.normalize(pathValue);
-  return normalized.startsWith(`${repoDataRoot}${path.sep}`)
-    || normalized.includes(`${path.sep}.data${path.sep}`)
-    || normalized.endsWith(`${path.sep}.data`);
-}
-
-/** True when the API uses persisted PGlite + auth SQLite under repo-root `.data/`. */
-export function isPersistedLocalDataDeployment(
-  env: Pick<Environment, "RUNTIME" | "DATABASE_URL" | "AUTH_DATABASE_PATH">,
-): boolean {
-  if (env.RUNTIME !== "local") {
-    return false;
-  }
-
-  if (!env.DATABASE_URL.startsWith("pglite:")) {
-    return false;
-  }
-
-  const schoolDataDir = env.DATABASE_URL.slice("pglite:".length).trim();
-  if (!schoolDataDir || schoolDataDir === "pglite" || !usesRepoLocalDataPath(schoolDataDir)) {
-    return false;
-  }
-
-  return usesRepoLocalDataPath(env.AUTH_DATABASE_PATH);
-}
-
-export function resolveSeedOnStart(
-  env: Pick<Environment, "NODE_ENV" | "RUNTIME" | "DATABASE_URL" | "AUTH_DATABASE_PATH">,
-): boolean {
-  const raw = process.env.SEED_ON_START?.trim().toLowerCase();
-  if (raw === "false" || raw === "0" || raw === "no") {
-    return false;
-  }
-  if (raw === "true" || raw === "1" || raw === "yes") {
-    return isPersistedLocalDataDeployment(env);
-  }
-
-  return env.NODE_ENV === "development" && isPersistedLocalDataDeployment(env);
-}
+export { isPersistedLocalDataDeployment, resolveSeedOnStart } from "@/dev/persisted-local-data";
 
 async function isLocalDataAlreadySeeded(env: Environment): Promise<boolean> {
   const context = resolveDevSeedContext();
@@ -121,51 +79,76 @@ async function runHttpStartupSeed(env: Environment): Promise<void> {
   logHttpDevSeedResults(results);
 }
 
-/** Re-links Better Auth dev accounts when `.data` already contains school fixtures. */
-async function runHttpStartupAuthLinkRepair(env: Environment): Promise<void> {
+/** Re-links auth, access roles, and profile photos when `.data` already contains fixtures. */
+async function runInProcessStartupRepair(env: Environment): Promise<void> {
   const {
-    HttpSeedClient,
-    logHttpDevSeedResults,
-    runHttpDevSeeds,
+    createHandlerAuthProvisioner,
+    createInProcessAuthLinkSeedPort,
+    createInProcessAccessSeedPort,
+    createInProcessProfilePicturesSeedPort,
+    logDevSeedResults,
+    runDevAccessSeedWithPort,
+    runDevAuthLinkWithPort,
+    seedDevDemoStaffProfilePictures,
+  } = await import("@edaya/seeding");
+  const {
+    runHttpVerifyDemoStaffGrants,
     waitForApi,
   } = await import("@edaya/seeding/http");
+  const { localDevFileStorageHasObjects } = await import("@/runtime/shared/adapters/local-dev-file-storage");
+  const { resolveRepoLocalDataPath } = await import("@/runtime/shared/env/repo-root");
 
   const context = resolveDevSeedContext();
-  const baseUrl = env.BETTER_AUTH_URL;
-  const appOrigin = resolveLocalSeedAppOrigin(env);
-  const serviceAccountApiKey = resolveSeedingApiKeyForSchool(context.schoolId);
+  const runtime = await getApiRuntime(env);
+  const application = await runtime.getSchoolApplication();
+  const auth = createHandlerAuthProvisioner(runtime.getAuth(), env.BETTER_AUTH_URL);
+  const authLinkPort = createInProcessAuthLinkSeedPort(application);
+  const accessPort = createInProcessAccessSeedPort(application);
 
-  await waitForApi(baseUrl);
-
-  const client = new HttpSeedClient({ baseUrl, appOrigin });
-  const linkResults = await runHttpDevSeeds({
-    client,
-    scope: "auth:link",
-    serviceAccountApiKey,
+  const authLink = await runDevAuthLinkWithPort(authLinkPort, auth);
+  const access = await runDevAccessSeedWithPort(accessPort, {
+    auth,
+    authLinkPort,
   });
-  logHttpDevSeedResults({ ...linkResults, smoke: null, validation: null });
 
-  const smokeClient = new HttpSeedClient({ baseUrl, appOrigin });
-  const smokeResults = await runHttpDevSeeds({
-    client: smokeClient,
-    scope: "smoke",
-    serviceAccountApiKey,
-  });
-  logHttpDevSeedResults({
+  let profilePhotos: number | null = null;
+  const filesDir = resolveRepoLocalDataPath(".data/files");
+  const hasPersistedFiles = await localDevFileStorageHasObjects(filesDir);
+  if (!hasPersistedFiles) {
+    try {
+      const profilePicturesPort = createInProcessProfilePicturesSeedPort({
+        application,
+        apiBaseUrl: env.BETTER_AUTH_URL,
+      });
+      profilePhotos = await seedDevDemoStaffProfilePictures(profilePicturesPort, context);
+    }
+    catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("SEED_ON_START: demo staff profile photo repair failed:", error);
+    }
+  }
+
+  logDevSeedResults({
     school: null,
     authProvision: null,
-    authLink: null,
-    access: null,
-    smoke: smokeResults.smoke,
-    validation: null,
+    authLink,
+    access,
+    profilePhotos,
   });
 
-  if (smokeResults.smoke?.status === "failed") {
+  await waitForApi(env.BETTER_AUTH_URL);
+  const verification = await runHttpVerifyDemoStaffGrants(
+    env.BETTER_AUTH_URL,
+    resolveLocalSeedAppOrigin(env),
+  );
+  if (verification.status === "failed") {
     throw new Error(
-      `Dev staff sign-in check failed for ${context.minimalStaffEmail}: `
-      + `${smokeResults.smoke.reason ?? "unknown reason"}. ${WIPE_AND_RESEED_HINT}`,
+      `Dev demo staff sign-in check failed for: ${verification.failures.join(", ")}. ${WIPE_AND_RESEED_HINT}`,
     );
   }
+
+  // eslint-disable-next-line no-console
+  console.log("SEED_ON_START: all demo staff accounts verified (sign-in + effective-grants).");
 }
 
 /** Seeds repo-root `.data/` through the local API (same flow as `bun seed:init`). */
@@ -176,8 +159,8 @@ export async function maybeRunLocalStartupSeed(env: Environment): Promise<void> 
 
   if (await isLocalDataAlreadySeeded(env)) {
     // eslint-disable-next-line no-console
-    console.log("SEED_ON_START: local .data already seeded, re-linking dev auth accounts…");
-    await runHttpStartupAuthLinkRepair(env);
+    console.log("SEED_ON_START: local .data already seeded, repairing dev auth/access/photos…");
+    await runInProcessStartupRepair(env);
     return;
   }
 

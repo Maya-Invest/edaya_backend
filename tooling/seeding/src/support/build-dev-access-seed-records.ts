@@ -4,6 +4,7 @@ import type {
   StaffRoleAssignmentSeedRecord,
 } from '../domains/access/port'
 import type { DevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { DEMO_CI_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import {
   COORDINATOR_PERMISSIONS,
   ELEVATED_STAFF_PERMISSIONS,
@@ -192,7 +193,7 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
     },
   ]
 
-  if (context.datasetId === 'ci') {
+  if (context.schoolId === DEMO_CI_SCHOOL_ID) {
     const roles = context.staffAccessRoleIds
     return [
       createStaffRoleAssignment(context, 'ci-st1', roles['ci-st1']!),
@@ -218,7 +219,7 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
 }
 
 function buildBaseStaffAssignmentRecords(context: DevSeedContext): readonly StaffAssignmentSeedRecord[] {
-  if (context.datasetId === 'ci') {
+  if (context.schoolId === DEMO_CI_SCHOOL_ID) {
     return [
       { id: 'sa-ci-st1-6a', staffId: 'ci-st1', responsibility: 'Mathématiques', classGroupId: 'ci-6a' },
       { id: 'sa-ci-st1-5a', staffId: 'ci-st1', responsibility: 'Mathématiques', classGroupId: 'ci-5a' },

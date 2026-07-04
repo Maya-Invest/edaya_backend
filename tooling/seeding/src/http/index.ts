@@ -46,6 +46,7 @@ export {
   logHttpDevSeedResults,
   parseHttpDevSeedScope,
   runHttpDevSeeds,
+  runHttpVerifyDemoStaffGrants,
   type RunHttpDevSeedsOptions,
   type RunHttpDevSeedsResults,
 } from './run-http-dev-seeds'

@@ -21,6 +21,7 @@ import type { DevAuthLinkResult } from './run-dev-auth-link'
 import type { DevAuthProvisionResult } from './run-dev-auth-provision'
 import type { DevSchoolSeedResult } from './run-dev-school-seed'
 import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
@@ -43,8 +44,9 @@ import { runDevAccessSeedWithPort } from './run-dev-access-seed'
 import { runDevAuthLinkWithPort } from './run-dev-auth-link'
 import { runDevAuthProvision } from './run-dev-auth-provision'
 import { runDevSchoolSeed } from './run-dev-school-seed'
+import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
 
-export type DevSeedScope = 'school' | 'auth' | 'auth:link' | 'access' | 'all'
+export type DevSeedScope = 'school' | 'auth' | 'auth:link' | 'access' | 'profile-pictures' | 'all'
 
 export interface RunDevSeedsOptions {
   scope: DevSeedScope
@@ -100,6 +102,7 @@ export interface RunDevSeedsResults {
   authProvision: DevAuthProvisionResult | null
   authLink: DevAuthLinkResult | null
   access: DevAccessSeedResult | null
+  profilePhotos: number | null
 }
 
 export interface LogDevSeedResultsOptions {
@@ -113,11 +116,11 @@ export function parseDevSeedScope(argv: string[]): DevSeedScope {
     return 'all'
   }
 
-  if (arg === 'school' || arg === 'auth' || arg === 'auth:link' || arg === 'access') {
+  if (arg === 'school' || arg === 'auth' || arg === 'auth:link' || arg === 'access' || arg === 'profile-pictures') {
     return arg
   }
 
-  throw new Error(`Unknown seed scope: ${arg}. Usage: bun seed.ts [school|auth|auth:link|access|all]`)
+  throw new Error(`Unknown seed scope: ${arg}. Usage: bun seed.ts [school|auth|auth:link|access|profile-pictures|all]`)
 }
 
 export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSeedsResults> {
@@ -170,6 +173,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     authProvision: null,
     authLink: null,
     access: null,
+    profilePhotos: null,
   }
 
   if (scope === 'all') {
@@ -256,6 +260,19 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     )
   }
 
+  if (scope === 'profile-pictures') {
+    if (!profilePicturesPort) {
+      throw new Error('profilePicturesPort must be provided for profile-pictures seed scope')
+    }
+    const context = resolveDevSeedContext()
+    const counts = await seedDevProfilePictures(
+      profilePicturesPort,
+      { apiBaseUrl: options.apiBaseUrl ?? '' },
+      context.dataset,
+    )
+    results.profilePhotos = counts.profilePhotos
+  }
+
   return results
 }
 
@@ -301,6 +318,11 @@ export function logDevSeedResults(
       // eslint-disable-next-line no-console
       console.log('Access seed skipped:', results.access.reason)
     }
+  }
+
+  if (results.profilePhotos !== null) {
+    // eslint-disable-next-line no-console
+    console.log(`Profile photos seeded: ${results.profilePhotos}`)
   }
 
   if (options.isEphemeralDatabase) {
