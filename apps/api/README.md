@@ -45,7 +45,7 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 
 Before first production deploy:
 
-1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun run db:migrate:hyperdrive` (from repo root)
+1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun run db:migrate:production` (from repo root)
 2. Set `BETTER_AUTH_SECRET`: `wrangler secret put BETTER_AUTH_SECRET --env production`
 3. Dry-run: `bun run deploy:worker:dry-run`
 4. Deploy: `bun run deploy:worker`

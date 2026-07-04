@@ -5,6 +5,14 @@
 # `bun dev` (RUNTIME=local) does not use R2 or Hyperdrive — see runtime-boundaries.md.
 # -----------------------------------------------------------------------------
 
+"NODE_ENV": "development",
+"LOG_LEVEL": "info",
+"RUNTIME": "worker",
+"BETTER_AUTH_URL": "http://localhost:9999",
+"TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:4173",
+"R2_BUCKET_NAME": "edaya-files-dev",
+"ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true"
+
 # --- Required ---
 
 BETTER_AUTH_SECRET=dev-secret-change-in-production
@@ -40,7 +48,7 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # Local `bun dev:cron` runs inline; worker deploy uses Cloudflare Queues.
 
 # --- One-time setup before first worker-local smoke ---
-# bun run db:migrate:hyperdrive       # Neon school + auth (Hyperdrive origin from .dev.vars)
+# bun run db:migrate:production       # Neon school + auth (from tooling/seeding/.env.production)
 # bun run db:migrate:staging           # Neon staging branch
 
 # --- Wrangler secrets (deployed workers only; run from apps/api) ---

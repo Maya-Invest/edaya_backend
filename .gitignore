@@ -33,6 +33,7 @@ build/
 .env.production.local
 .env.*.local
 .env.staging
+.env.production
 !.env.example
 
 # Local dev databases (PGlite + auth SQLite)

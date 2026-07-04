@@ -84,10 +84,10 @@ edaya_backend/
 | `bun db:generate` | `@edaya/adaptor-postgres` |
 | `bun db:migrate` | `@edaya/db-migrate` (`migrate`) — school only |
 | `bun db:migrate:full` | `@edaya/db-migrate` (`migrate:full`) — school + auth |
-| `bun db:migrate:hyperdrive` | `@edaya/db-migrate` (`migrate:hyperdrive`) |
+| `bun db:migrate:production` | `@edaya/db-migrate` (`migrate:production`) |
+| `bun db:migrate:staging` | `@edaya/db-migrate` (`migrate:staging`) |
 | `bun db:generate:auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
 | `bun auth:generate-schema` | `@edaya/adaptor-auth` |
-| `bun db:migrate:staging` | `@edaya/db-migrate` (`migrate:staging`) |
 | `bun novu:bootstrap` / `bun novu:bootstrap:apply` / `bun novu:bootstrap:validate` | `@edaya/novu-ops` |
 | `bun novu:cleanup` / `bun novu:cleanup:apply` | `@edaya/novu-ops` |
 | `bun run openapi:generate` | Export OpenAPI + regenerate client bindings |
@@ -103,11 +103,11 @@ Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cros
 1. `auth:generate-schema` — Better Auth CLI → `package/adaptor-auth/src/schema.ts`
 2. `db:generate:auth` — Drizzle Kit → `package/adaptor-auth/drizzle/auth/*.sql`
 3. Node / worker runtime — `runMigrations()` on startup (PGlite) or pre-applied on Neon
-4. Neon deploy — `db:migrate:hyperdrive` / `db:migrate:staging` (school + `auth` schema)
+4. Neon deploy — `db:migrate:production` / `db:migrate:staging` (school + `auth` schema)
 
 ## School migration pipeline
 
 1. `db:generate` — Drizzle Kit in `@edaya/adaptor-postgres`
 2. `db:migrate` — apply school schema to `DATABASE_URL`
-3. `db:migrate:hyperdrive` — Hyperdrive origin from `.dev.vars` (school + auth)
+3. `db:migrate:production` — Neon production from `tooling/seeding/.env.production` (school + auth)
 4. `db:migrate:full` — school + auth on explicit `DATABASE_URL`

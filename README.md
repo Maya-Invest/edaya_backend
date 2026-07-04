@@ -196,14 +196,14 @@ Root scripts use the `db:*` prefix (`@edaya/db-migrate` implements `migrate:*`).
 | `bun run db:generate` | Generate school schema SQL migrations |
 | `bun run db:migrate` | Apply school schema only (`DATABASE_URL=postgres://…`) |
 | `bun run db:migrate:full` | Apply school + auth on `DATABASE_URL` |
-| `bun run db:migrate:hyperdrive` | Load `.dev.vars` → migrate Hyperdrive origin Neon (school + auth) |
-| `bun run db:migrate:staging` | Migrate Neon staging branch (school + auth) |
+| `bun run db:migrate:production` | Migrate Neon production branch (`tooling/seeding/.env.production`) |
+| `bun run db:migrate:staging` | Migrate Neon staging branch (`tooling/seeding/.env.staging`) |
 | `bun run db:generate:auth` | Generate auth SQL migrations |
 | `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI |
 
 Local PGlite (`bun dev`) migrates on startup — no command needed.
 
-Deprecated aliases: `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:hyperdrive`.
+Deprecated aliases: `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:production`, `db:migrate:hyperdrive` → `db:migrate:production` (`.dev.vars` fallback).
 
 Package-level extras (run from adaptor package or with `bun --filter`):
 

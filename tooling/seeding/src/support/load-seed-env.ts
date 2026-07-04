@@ -37,6 +37,11 @@ export function loadSeedEnvFiles(): void {
   }
 }
 
+/** Production overrides — call from production migrate CLI, etc. */
+export function loadProductionSeedEnvFiles(): void {
+  loadEnvFile(path.join(packageRoot, '.env.production'), true)
+}
+
 /** Staging-only overrides — call from `seed:remote`, staging cleanup, etc. */
 export function loadStagingSeedEnvFiles(): void {
   loadEnvFile(path.join(packageRoot, '.env.staging'), true)

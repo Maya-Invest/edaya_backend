@@ -11,6 +11,7 @@ const expectedEnvExamples = [
   'apps/api/.dev.vars.example',
   'tooling/seeding/.env.example',
   'tooling/seeding/.env.staging.example',
+  'tooling/seeding/.env.production.example',
 ]
 
 const trackedEnvOutput = await $`git -C ${repoRoot} ls-files -- ${'*.env*'}`.text()
