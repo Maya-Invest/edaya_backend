@@ -20,6 +20,7 @@
   "dev": {
     "port": 9999
   },
+  //
   // Default profile = worker-local (`bun dev:worker-local`) — shares production Hyperdrive ID below.
   // Safer staging smoke: `wrangler dev --env staging --env-file .dev.vars`
   // Deploy secrets: see apps/api/.dev.vars.example (`wrangler secret put …`)
