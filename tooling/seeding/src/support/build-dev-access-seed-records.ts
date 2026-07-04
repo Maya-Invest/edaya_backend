@@ -192,7 +192,7 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
     },
   ]
 
-  if (context.datasetId === 'ci') {
+  if (context.datasetId === 'demo-ci') {
     const roles = context.staffAccessRoleIds
     return [
       createStaffRoleAssignment(context, 'ci-st1', roles['ci-st1']!),
@@ -221,7 +221,7 @@ function buildBaseStaffAssignmentRecords(context: DevSeedContext): readonly Staf
   const academicYearId = context.dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Seed dataset must include academicYear for access seeding') })()
 
-  if (context.datasetId === 'ci') {
+  if (context.datasetId === 'demo-ci') {
     return [
       { id: 'sa-ci-st1-6a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-6a' },
       { id: 'sa-ci-st1-5a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-5a' },

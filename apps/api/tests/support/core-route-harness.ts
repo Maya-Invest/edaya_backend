@@ -21,10 +21,7 @@ import {
   runIntegrationLightSchoolSeed,
 } from "@edaya/seeding";
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
-import {
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from "@edaya/fixtures/meta/dev-auth-fixtures";
+import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
   ActorAssuranceLevel,
@@ -46,6 +43,9 @@ import {
 
 const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
 setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
+
+// Route integration tests seed `demoDataset` (sch-edaya-central / st*), not the dev default.
+process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";
 
 export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency } from "@/http/dependencies/session-actor";
@@ -245,7 +245,8 @@ export async function provisionServiceAccountForTests(
     apiKey?: string;
   },
 ) {
-  const creatorStaffId = input.creatorStaffId ?? MINIMAL_AUTH_FIXTURE_STAFF_ID;
+  const context = resolveDevSeedContext();
+  const creatorStaffId = input.creatorStaffId ?? context.minimalStaffId;
   const staff = await application.repositories.staffMembers.findById(creatorStaffId);
   if (!staff?.subjectId) {
     throw new Error(`Staff member ${creatorStaffId} is not linked to an auth subject`);
@@ -272,7 +273,7 @@ export async function provisionServiceAccountForTests(
 
 export async function signInDirector(
   app: Hono<AppBindings>,
-  email: string = MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  email: string = resolveDevSeedContext().minimalStaffEmail,
 ): Promise<string[]> {
   return signInThroughApp(app, { email });
 }

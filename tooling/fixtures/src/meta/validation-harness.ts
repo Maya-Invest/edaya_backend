@@ -98,8 +98,8 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
   const context = resolveDevSeedContext()
   const schoolId = context.schoolId
   const academicYearId = context.dataset.entities.academicYear?.id
-    ?? (context.datasetId === 'ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
-  const academicPeriodId = context.datasetId === 'ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
+    ?? (context.datasetId === 'demo-ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
+  const academicPeriodId = context.datasetId === 'demo-ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
   const expectsFinanceAndReportCards = context.datasetId === 'central'
 
   return [

@@ -1,11 +1,6 @@
-import { demoSchoolOwnerStaffId } from '../datasets/demo/people'
-import {
-  DEV_AUTH_PASSWORD,
-  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
-  DEV_AUTH_STAFF_ACCOUNTS,
-} from '../meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from './resolve-dev-seed-context'
 
-export { DEV_AUTH_PASSWORD }
+export { DEV_AUTH_PASSWORD } from './dev-auth-fixtures'
 
 export type DevDemoLoginRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur'
 
@@ -41,19 +36,16 @@ export function initialsForName(name: string): string {
 
 export function resolveDevDemoStaffRole(
   staffId: string,
+  context = resolveDevSeedContext(),
 ): { role: DevDemoLoginRole, accessRoleId?: string } {
-  if (staffId === demoSchoolOwnerStaffId) {
+  if (staffId === context.ownerStaffId) {
     return {
       role: 'owner',
-      accessRoleId: DEV_AUTH_STAFF_ACCESS_ROLE_IDS[
-        staffId as keyof typeof DEV_AUTH_STAFF_ACCESS_ROLE_IDS
-      ],
+      accessRoleId: context.staffAccessRoleIds[staffId],
     }
   }
 
-  const accessRoleId = DEV_AUTH_STAFF_ACCESS_ROLE_IDS[
-    staffId as keyof typeof DEV_AUTH_STAFF_ACCESS_ROLE_IDS
-  ]
+  const accessRoleId = context.staffAccessRoleIds[staffId]
   const role = accessRoleId && ACCESS_ROLE_TO_DEMO_ROLE[accessRoleId]
     ? ACCESS_ROLE_TO_DEMO_ROLE[accessRoleId]
     : 'professeur'
@@ -62,10 +54,11 @@ export function resolveDevDemoStaffRole(
 }
 
 export function buildDevDemoLoginAccounts(): DevDemoLoginAccount[] {
+  const context = resolveDevSeedContext()
   let teacherAccountIncluded = false
 
-  const accounts = DEV_AUTH_STAFF_ACCOUNTS.flatMap((account) => {
-    const { role, accessRoleId } = resolveDevDemoStaffRole(account.staffId)
+  const accounts = context.staffAccounts.flatMap((account) => {
+    const { role, accessRoleId } = resolveDevDemoStaffRole(account.staffId, context)
     if (!accessRoleId) {
       return []
     }
