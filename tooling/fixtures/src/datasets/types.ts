@@ -41,7 +41,7 @@ import type {
   SubjectMatterInput,
 } from '@edaya/core'
 
-export type FixtureDatasetPurpose = 'minimal' | 'integration' | 'demo' | 'bulk'
+export type FixtureDatasetPurpose = 'minimal' | 'integration' | 'demo' | 'demo-ci' | 'bulk'
 
 export interface FixtureAttendanceSession {
   session: {

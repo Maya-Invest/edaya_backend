@@ -20,6 +20,7 @@ import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
@@ -57,47 +58,47 @@ import { buildFixtureCurriculumPlan } from '../support/curriculum-plan'
 
 export type DevSchoolSeedResult
   = | { status: 'skipped', reason: 'already-seeded', schoolCount: number }
-    | {
-      status: 'seeded'
-      schoolId: string
-      academicYearId: string
-      gradeLevels: number
-      classes: number
-      staff: number
-      students: number
-      guardians: number
-      academicPeriods: number
-      subjects: number
-      classSubjects: number
-      periodDefinitions: number
-      fees: number
-      studentFees: number
-      payments: number
-      classSubjectMatters: number
-      resources: number
-      schedules: number
-      lessonSessions: number
-      assessments: number
-      assessmentResults: number
-      activities: number
-      activityEnrollments: number
-      calendarEvents: number
-      incidents: number
-      attendanceRecords: number
-      studentHealthProfiles: number
-      studentNotes: number
-      gradeScales: number
-      reportCardDefinitions: number
-      reportCardSections: number
-      reportCardResults: number
-      disciplinaryActions: number
-      studentDisciplinaryActions: number
-      announcements: number
-      announcementTargets: number
-      messageDeliveries: number
-      attachments: number
-      profilePhotos: number
-    }
+  | {
+    status: 'seeded'
+    schoolId: string
+    academicYearId: string
+    gradeLevels: number
+    classes: number
+    staff: number
+    students: number
+    guardians: number
+    academicPeriods: number
+    subjects: number
+    classSubjects: number
+    periodDefinitions: number
+    fees: number
+    studentFees: number
+    payments: number
+    classSubjectMatters: number
+    resources: number
+    schedules: number
+    lessonSessions: number
+    assessments: number
+    assessmentResults: number
+    activities: number
+    activityEnrollments: number
+    calendarEvents: number
+    incidents: number
+    attendanceRecords: number
+    studentHealthProfiles: number
+    studentNotes: number
+    gradeScales: number
+    reportCardDefinitions: number
+    reportCardSections: number
+    reportCardResults: number
+    disciplinaryActions: number
+    studentDisciplinaryActions: number
+    announcements: number
+    announcementTargets: number
+    messageDeliveries: number
+    attachments: number
+    profilePhotos: number
+  }
 
 export interface RunDevSchoolSeedOptions {
   ownerSubjectId?: string
@@ -169,7 +170,10 @@ export async function runDevSchoolSeed(
       application: requireSeedApplication(application, 'profilePicturesPort'),
       apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
     })
-  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, devSeedDataset)
+
+  const seedContext = resolveDevSeedContext()
+  const seedDataset = seedContext.dataset
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, seedDataset)
 
   if (structureInspection.status === 'skipped') {
     if (options?.auth) {
@@ -190,11 +194,11 @@ export async function runDevSchoolSeed(
 
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
-    const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-      account => account.staffId === demoSchoolOwnerStaffId,
+    const ownerAccount = seedContext.staffAccounts.find(
+      account => account.staffId === seedContext.ownerStaffId,
     )
     if (ownerAccount) {
-      ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
+      ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, seedContext.authPassword)
     }
   }
 
@@ -233,13 +237,13 @@ export async function runDevSchoolSeed(
     )
   }
 
-  const entities = devSeedDataset.entities
+  const entities = seedDataset.entities
   const curriculumPlan = buildFixtureCurriculumPlan(entities)
-  const fixtureCounts = resolveExpectedCounts(devSeedDataset)
+  const fixtureCounts = resolveExpectedCounts(seedDataset)
 
   return {
     status: 'seeded',
-    schoolId: devSeedDataset.schoolId,
+    schoolId: seedDataset.schoolId,
     academicYearId: entities.academicYear?.id ?? '',
     gradeLevels: entities.gradeLevels?.length ?? 0,
     classes: entities.classGroups?.length ?? 0,

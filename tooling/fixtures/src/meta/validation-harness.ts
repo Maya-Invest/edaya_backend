@@ -1,9 +1,10 @@
 import type { SeedEntityManifestStatus } from './entity-manifest'
 import { demoDataset } from '../datasets/demo'
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from '../shared/ids'
+import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '../shared/ids'
 import { SEED_DASHBOARD_ACADEMIC_PERIOD_ID, SEED_REFERENCE_DATE } from './dates'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'
 import { resolveExpectedCounts } from './fixture-counts'
+import { resolveDevSeedContext } from './resolve-dev-seed-context'
 
 /** Maps manifest entity slugs to generated API entity keys used by HTTP validation. */
 export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
@@ -72,7 +73,8 @@ export interface SeedQueryValidationTarget {
 export { resolveExpectedCounts } from './fixture-counts'
 
 export function buildSeedValidationTargets(): SeedValidationTarget[] {
-  const counts = resolveExpectedCounts(demoDataset)
+  const context = resolveDevSeedContext()
+  const counts = resolveExpectedCounts(context.dataset)
 
   return SEED_ENTITY_MANIFEST
     .filter(entry => (entry.status as SeedEntityManifestStatus) !== 'missing')
@@ -94,32 +96,39 @@ export function buildSeedValidationTargets(): SeedValidationTarget[] {
 }
 
 export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
+  const context = resolveDevSeedContext()
+  const schoolId = context.schoolId
+  const academicYearId = context.dataset.entities.academicYear?.id
+    ?? (context.datasetId === 'ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
+  const academicPeriodId = context.datasetId === 'ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
+  const expectsFinanceAndReportCards = context.datasetId === 'central'
+
   return [
     {
       name: 'get-school-overview',
       path: '/core/queries/get-school-overview',
       payload: {
-        schoolId: SEED_SCHOOL_ID,
-        academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
-        academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
+        schoolId,
+        academicYearId,
+        academicPeriodId,
         referenceDate: SEED_REFERENCE_DATE,
       },
     },
     {
       name: 'get-overdue-fee-count',
       path: '/core/queries/get-overdue-fee-count',
-      payload: { schoolId: SEED_SCHOOL_ID },
-      minCount: 1,
+      payload: { schoolId },
+      minCount: expectsFinanceAndReportCards ? 1 : 0,
     },
     {
       name: 'get-published-report-card-count',
       path: '/core/queries/get-published-report-card-count',
       payload: {
-        schoolId: SEED_SCHOOL_ID,
-        academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
-        academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
+        schoolId,
+        academicYearId,
+        academicPeriodId,
       },
-      minCount: 1,
+      minCount: expectsFinanceAndReportCards ? 1 : 0,
     },
   ]
 }

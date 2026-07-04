@@ -19,6 +19,12 @@ import {
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import type { AccessSeedPort } from '../domains/access/port'
+import type { AuthLinkSeedPort } from '../domains/auth-link/port'
+import type { AuthProvisioner, SeedApplication } from '../support/types'
+import { demoDataset } from '@edaya/fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'
@@ -263,7 +269,7 @@ const BASE_STAFF_ASSIGNMENT_RECORDS: readonly StaffAssignmentSeedRecord[] = [
 
 export type DevAccessSeedResult
   = | { status: 'skipped', reason: 'school-not-seeded' }
-    | { status: 'seeded', permissionAssignments: number, staffAssignments: number }
+  | { status: 'seeded', permissionAssignments: number, staffAssignments: number }
 
 export interface RunDevAccessSeedOptions {
   auth?: AuthProvisioner
@@ -277,8 +283,18 @@ export interface RunDevAccessSeedOptions {
   includeClassSubjectStaffAssignments?: boolean
 }
 
-/** @deprecated Access roles are code presets; permission rows are seeded directly. */
-export async function runDevAccessRolesSeedWithPort(_port: AccessSeedPort): Promise<void> {
+/** Access roles only — used before service-account provisioning in HTTP bootstrap. */
+export async function runDevAccessRolesSeedWithPort(port: AccessSeedPort): Promise<void> {
+  const context = resolveDevSeedContext()
+  const { accessRoleRecords } = buildDevAccessSeedRecords(context)
+
+  if (!(await port.schoolExists(context.schoolId))) {
+    throw new Error('Cannot seed access roles before school exists')
+  }
+
+  for (const role of accessRoleRecords) {
+    await port.saveAccessRole(role)
+  }
 }
 
 /** Staff permission + class assignments — run after school structure exists. */
@@ -286,11 +302,17 @@ export async function runDevAccessAssignmentsSeedWithPort(
   port: AccessSeedPort,
   options?: RunDevAccessSeedOptions,
 ): Promise<DevAccessSeedResult> {
+  const context = resolveDevSeedContext()
+  const {
+    staffRoleAssignmentRecords,
+    baseStaffAssignmentRecords,
+  } = buildDevAccessSeedRecords(context)
+
   if (options?.beforeAssignments) {
     await options.beforeAssignments()
   }
 
-  if (!(await port.schoolExists(SEED_SCHOOL_ID))) {
+  if (!(await port.schoolExists(context.schoolId))) {
     return { status: 'skipped', reason: 'school-not-seeded' }
   }
 
@@ -315,7 +337,7 @@ export async function runDevAccessAssignmentsSeedWithPort(
   }
 
   let classSubjectStaffAssignments = 0
-  if (options?.includeClassSubjectStaffAssignments !== false) {
+  if (options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID) {
     for (const assignment of demoDataset.extensions?.classSubjectStaffAssignments ?? []) {
       await port.saveStaffAssignment(assignment)
       classSubjectStaffAssignments += 1
@@ -341,9 +363,9 @@ export function runDevAccessAssignmentsSeed(
     createInProcessAccessSeedPort(application),
     options?.auth
       ? {
-          ...options,
-          authLinkPort: options.authLinkPort ?? createInProcessAuthLinkSeedPort(application),
-        }
+        ...options,
+        authLinkPort: options.authLinkPort ?? createInProcessAuthLinkSeedPort(application),
+      }
       : options,
   )
 }
@@ -365,9 +387,9 @@ export async function runDevAccessSeed(
     port,
     options?.auth
       ? {
-          ...options,
-          authLinkPort: options.authLinkPort ?? createInProcessAuthLinkSeedPort(application),
-        }
+        ...options,
+        authLinkPort: options.authLinkPort ?? createInProcessAuthLinkSeedPort(application),
+      }
       : options,
   )
 }

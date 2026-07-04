@@ -16,6 +16,10 @@
       "types": "./src/meta/dev-auth-fixtures.ts",
       "import": "./src/meta/dev-auth-fixtures.ts"
     },
+    "./meta/resolve-dev-seed-context": {
+      "types": "./src/meta/resolve-dev-seed-context.ts",
+      "import": "./src/meta/resolve-dev-seed-context.ts"
+    },
     "./meta/fixture-counts": {
       "types": "./src/meta/fixture-counts.ts",
       "import": "./src/meta/fixture-counts.ts"
@@ -63,6 +67,10 @@
     "./datasets/demo": {
       "types": "./src/datasets/demo/index.ts",
       "import": "./src/datasets/demo/index.ts"
+    },
+    "./datasets/demo-ci": {
+      "types": "./src/datasets/demo-ci/index.ts",
+      "import": "./src/datasets/demo-ci/index.ts"
     },
     "./datasets/integration": {
       "types": "./src/datasets/integration/index.ts",

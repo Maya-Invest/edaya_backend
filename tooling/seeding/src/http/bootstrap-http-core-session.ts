@@ -1,16 +1,8 @@
 import type { HttpSeedClient } from './client'
-import { demoDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import {
-  DEV_AUTH_STAFF_ACCOUNTS,
-  MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { splitDisplayName } from '@edaya/fixtures/shared/people'
 import { HttpAuthProvisioner } from './auth'
 import { isTransientHttpStatus } from './client'
-
-const BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st1', 'st3', 'st7'] as const
 
 async function probeCoreAccess(client: HttpSeedClient): Promise<'authorized' | 'unauthorized'> {
   const { response } = await client.jsonRequest('/core/entities/schools/list', {
@@ -33,7 +25,7 @@ async function probeCoreAccess(client: HttpSeedClient): Promise<'authorized' | '
   return 'authorized'
 }
 
-async function trySignIn(client: HttpSeedClient, email: string): Promise<boolean> {
+async function trySignIn(client: HttpSeedClient, email: string, password: string): Promise<boolean> {
   client.clearCookies()
   const response = await client.request('/auth/sign-in/email', {
     method: 'POST',
@@ -42,7 +34,7 @@ async function trySignIn(client: HttpSeedClient, email: string): Promise<boolean
     },
     body: JSON.stringify({
       email,
-      password: DEV_AUTH_PASSWORD,
+      password,
     }),
   })
 
@@ -62,10 +54,11 @@ async function trySignIn(client: HttpSeedClient, email: string): Promise<boolean
 
 /** Sign in with the dev owner account that will register the school. */
 async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
+  const context = resolveDevSeedContext()
   const onboardingStaffIds = [
-    MINIMAL_AUTH_FIXTURE_STAFF_ID,
-    demoSchoolOwnerStaffId,
-    ...BOOTSTRAP_SIGN_IN_STAFF_IDS,
+    context.minimalStaffId,
+    context.ownerStaffId,
+    ...context.bootstrapSignInStaffIds,
   ]
 
   const seen = new Set<string>()
@@ -75,25 +68,25 @@ async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
     }
     seen.add(staffId)
 
-    const account = DEV_AUTH_STAFF_ACCOUNTS.find(entry => entry.staffId === staffId)
-    if (account && await trySignIn(client, account.email)) {
+    const account = context.staffAccounts.find(entry => entry.staffId === staffId)
+    if (account && await trySignIn(client, account.email, context.authPassword)) {
       return
     }
   }
 
-  const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === demoSchoolOwnerStaffId,
+  const ownerAccount = context.staffAccounts.find(
+    account => account.staffId === context.ownerStaffId,
   )
-  const ownerMember = demoDataset.entities.staffMembers?.find(member => member.id === demoSchoolOwnerStaffId)
+  const ownerMember = context.dataset.entities.staffMembers?.find(member => member.id === context.ownerStaffId)
   if (ownerAccount && ownerMember) {
     client.clearCookies()
     const provisioner = new HttpAuthProvisioner(client)
     await provisioner.ensureUser({
       email: ownerAccount.email,
-      password: DEV_AUTH_PASSWORD,
+      password: context.authPassword,
       name: `${ownerMember.firstName} ${ownerMember.lastName}`,
     })
-    if (await trySignIn(client, ownerAccount.email)) {
+    if (await trySignIn(client, ownerAccount.email, context.authPassword)) {
       return
     }
   }
@@ -106,24 +99,26 @@ async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
 
 /** Establish a linked staff actor for session-backed /core/* seeding via onboarding. */
 export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<void> {
+  const context = resolveDevSeedContext()
+
   await signInForOnboarding(client)
 
   if (await probeCoreAccess(client) === 'authorized') {
     return
   }
 
-  const ownerMember = demoDataset.entities.staffMembers?.find(
-    member => member.id === MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  const ownerMember = context.dataset.entities.staffMembers?.find(
+    member => member.id === context.minimalStaffId,
   )
-  const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === MINIMAL_AUTH_FIXTURE_STAFF_ID,
+  const ownerAccount = context.staffAccounts.find(
+    account => account.staffId === context.minimalStaffId,
   )
   if (!ownerMember || !ownerAccount) {
     throw new Error('Dev owner fixture is missing from seed data')
   }
 
   const ownerName = splitDisplayName(`${ownerMember.firstName} ${ownerMember.lastName}`)
-  const school = demoDataset.entities.school
+  const school = context.dataset.entities.school
   const { response, body } = await client.jsonRequest('/core/onboarding/register-school', {
     method: 'POST',
     headers: {
@@ -131,12 +126,12 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
       'x-request-id': 'http-seed-bootstrap',
     },
     body: JSON.stringify({
-      id: SEED_SCHOOL_ID,
+      id: context.schoolId,
       name: school?.name,
       timeZone: school?.timeZone,
       country: school?.country,
       city: school?.city,
-      ownerStaffId: MINIMAL_AUTH_FIXTURE_STAFF_ID,
+      ownerStaffId: context.minimalStaffId,
       ownerFirstName: ownerName.firstName,
       ownerLastName: ownerName.lastName,
       ownerEmail: ownerAccount.email,

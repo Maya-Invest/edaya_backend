@@ -1,5 +1,13 @@
-/** School profiles for multi-school UI demo. Only Campus Central is fully seeded in PGLite. */
+/** School profiles for multi-school UI demo. */
 export const SEED_SCHOOL_PROFILES = [
+  {
+    id: 'sch-edaya-ci-cocody',
+    name: 'École Edaya — Cocody',
+    shortName: 'Cocody',
+    city: 'Abidjan',
+    timeZone: 'Africa/Abidjan',
+    seedingApiKey: 'sk_live_dev_edaya_ci_cocody_seeding_integration_key',
+  },
   {
     id: 'sch-edaya-central',
     name: 'EDAYA — Campus Central',

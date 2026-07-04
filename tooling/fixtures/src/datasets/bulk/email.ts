@@ -7,6 +7,15 @@ const GUARDIAN_EMAIL_DOMAINS = [
   'live.ca',
 ] as const
 
+const CI_GUARDIAN_EMAIL_DOMAINS = [
+  'mail.ci',
+  'gmail.com',
+  'yahoo.fr',
+  'outlook.fr',
+  'hotmail.fr',
+  'live.fr',
+] as const
+
 function slugifyEmailPart(value: string): string {
   return value
     .normalize('NFD')
@@ -15,15 +24,15 @@ function slugifyEmailPart(value: string): string {
     .replace(/[^a-z0-9]+/g, '')
 }
 
-/** Realistic guardian inbox — aligned with narrative fixtures (e.g. n.martin@mail.com). */
-export function buildBulkGuardianEmail(
+function buildGuardianEmailFromDomains(
   parentFirstName: string,
   lastName: string,
   studentNumber: number,
+  domains: readonly string[],
 ): string {
   const first = slugifyEmailPart(parentFirstName)
   const last = slugifyEmailPart(lastName)
-  const domain = GUARDIAN_EMAIL_DOMAINS[studentNumber % GUARDIAN_EMAIL_DOMAINS.length]!
+  const domain = domains[studentNumber % domains.length]!
   const tag = String(studentNumber)
 
   switch (studentNumber % 4) {
@@ -36,4 +45,22 @@ export function buildBulkGuardianEmail(
     default:
       return `${first}${tag}@${domain}`
   }
+}
+
+/** Realistic guardian inbox — aligned with narrative fixtures (e.g. n.martin@mail.com). */
+export function buildBulkGuardianEmail(
+  parentFirstName: string,
+  lastName: string,
+  studentNumber: number,
+): string {
+  return buildGuardianEmailFromDomains(parentFirstName, lastName, studentNumber, GUARDIAN_EMAIL_DOMAINS)
+}
+
+/** Ivorian guardian inbox — prefers `@mail.ci` with French webmail fallbacks. */
+export function buildBulkGuardianEmailCi(
+  parentFirstName: string,
+  lastName: string,
+  studentNumber: number,
+): string {
+  return buildGuardianEmailFromDomains(parentFirstName, lastName, studentNumber, CI_GUARDIAN_EMAIL_DOMAINS)
 }

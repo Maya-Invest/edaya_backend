@@ -102,7 +102,9 @@ Opens automatically at `http://127.0.0.1:8191` (auth) or `http://127.0.0.1:8192`
 
 ## Dev database seed
 
-Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `tooling/seeding/`. School data persists under repo-root `.data/` when using `DATABASE_URL=pglite:.data/school`.
+Seeding targets the **same local deployment** as `bun dev`: school data in `.data/school` (PGlite) and auth in `.data/auth.sqlite`. With `DATABASE_URL=pglite:.data/school` (default), **`bun dev` auto-seeds on startup** when the database is empty (`SEED_ON_START`, default `true` in development). No second terminal required for a fresh clone.
+
+You can still run HTTP seeds manually against the running API (`bun seed:init`) — useful after partial wipes or to re-sync auth links.
 
 ### Fresh clone or after wiping `.data/`
 
@@ -115,9 +117,9 @@ Seeding is **HTTP-only** via `@edaya/seeding` — seed logic lives in `tooling/s
 rm -rf .data
 
 # 3. Start API + webapp
-bun dev          # terminal 1 — wait until http://localhost:9999/ returns 200
+bun dev          # terminal 1 — waits for .data seed, then http://localhost:9999/
 
-# 4. Seed through HTTP (terminal 2)
+# 4. (Optional) Re-seed through HTTP if you disabled SEED_ON_START
 bun seed:init
 ```
 

@@ -51,6 +51,10 @@ import {
   getFileContentRoute,
   getFileDownloadUrlHandler,
   getFileDownloadUrlRoute,
+  getMemoryFileHandler,
+  getMemoryFileRoute,
+  putMemoryFileHandler,
+  putMemoryFileRoute,
 } from "@/routes/file-storage.routes";
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
@@ -101,6 +105,8 @@ router
   .openapi(acceptInvitationRoute, acceptInvitationHandler)
   .openapi(createFileUploadIntentRoute, createFileUploadIntentHandler)
   .openapi(getFileDownloadUrlRoute, getFileDownloadUrlHandler)
+  .openapi(putMemoryFileRoute, putMemoryFileHandler)
+  .openapi(getMemoryFileRoute, getMemoryFileHandler)
   .openapi(getFileContentRoute, getFileContentHandler);
 
 // Mount routes from route factories

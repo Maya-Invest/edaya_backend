@@ -1,5 +1,6 @@
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
+import type { Environment } from "@/runtime/shared/env/schema";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
@@ -21,6 +22,7 @@ import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
+import { readLocalDevStoredObject } from "@/runtime/shared/adapters/local-dev-file-storage";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -113,6 +115,47 @@ export const getFileContentRoute = createRoute({
       description: "Redirect to presigned object storage URL",
     },
     [HttpStatusCodes.NOT_FOUND]: jsonContent(commandMessageSchema, "Attachment not found"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const putMemoryFileRoute = createRoute({
+  method: "put",
+  path: schoolApiPath("files", "memory", "{storageKey}"),
+  tags: ["Files"],
+  summary: "Upload bytes to local in-memory object storage (dev without R2)",
+  request: {
+    params: z.object({
+      storageKey: z.string().min(1),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.NO_CONTENT]: {
+      description: "Object stored",
+    },
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(commandMessageSchema, "Not available"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const getMemoryFileRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("files", "memory", "{storageKey}"),
+  tags: ["Files"],
+  summary: "Download bytes from local in-memory object storage (dev without R2)",
+  request: {
+    params: z.object({
+      storageKey: z.string().min(1),
+    }),
+    query: z.object({
+      fileName: z.string().optional(),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: {
+      description: "Stored object bytes",
+    },
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(commandMessageSchema, "Object not found"),
     ...coreRouteErrorResponses,
   },
 });
@@ -232,6 +275,59 @@ function contentDispositionForAttachment(
     disposition: inline ? "inline" : "attachment",
   };
 }
+
+function isLocalMemoryFileStorageEnabled(env: Environment): boolean {
+  return env.RUNTIME === "local" || env.RUNTIME === "in-memory";
+}
+
+export const putMemoryFileHandler: AppRouteHandler<typeof putMemoryFileRoute> = async (c) => {
+  if (!isLocalMemoryFileStorageEnabled(c.env)) {
+    return c.json({ message: "Not Found" }, HttpStatusCodes.NOT_FOUND);
+  }
+
+  try {
+    const { storageKey } = validatedParam(c) as { storageKey: string };
+    const key = decodeURIComponent(storageKey);
+    const body = new Uint8Array(await c.req.arrayBuffer());
+    const contentType = c.req.header("content-type") ?? "application/octet-stream";
+
+    await c.var.schoolApp.fileStorage.putObject({
+      key,
+      body,
+      contentType,
+    });
+
+    return c.body(null, HttpStatusCodes.NO_CONTENT);
+  }
+  catch (error) {
+    return routeErrorResponse(c, error);
+  }
+};
+
+export const getMemoryFileHandler: AppRouteHandler<typeof getMemoryFileRoute> = async (c) => {
+  if (!isLocalMemoryFileStorageEnabled(c.env)) {
+    return c.json({ message: "Not Found" }, HttpStatusCodes.NOT_FOUND);
+  }
+
+  try {
+    const { storageKey } = validatedParam(c) as { storageKey: string };
+    const key = decodeURIComponent(storageKey);
+    const stored = await readLocalDevStoredObject(c.var.schoolApp.fileStorage, key);
+    if (!stored) {
+      return c.json({ message: "Object not found" }, HttpStatusCodes.NOT_FOUND);
+    }
+
+    const fileName = c.req.query("fileName") ?? "file";
+    const inline = stored.contentType.toLowerCase().startsWith("image/");
+    return c.body(Buffer.from(stored.body), HttpStatusCodes.OK, {
+      "Content-Type": stored.contentType,
+      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${fileName.replace(/"/g, "")}"`,
+    });
+  }
+  catch (error) {
+    return routeErrorResponse(c, error);
+  }
+};
 
 export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> = async (c) => {
   try {

@@ -1,12 +1,6 @@
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner } from '../support/types'
-import { demoDataset, demoSchoolOwnerStaffId } from '@edaya/fixtures'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import {
-  DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_STAFF_ACCOUNTS,
-} from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { splitDisplayName } from '@edaya/fixtures/shared/people'
 
 export interface DevStaffAuthSyncResult {
@@ -24,8 +18,10 @@ export interface DevStaffAuthSyncOptions {
 export async function assignDevSchoolOwnerSubjectId(
   port: AuthLinkSeedPort,
   ownerSubjectId: string,
+  schoolId?: string,
 ): Promise<void> {
-  const currentSchool = await port.findSchoolById(SEED_SCHOOL_ID)
+  const activeSchoolId = schoolId ?? resolveDevSeedContext().schoolId
+  const currentSchool = await port.findSchoolById(activeSchoolId)
   if (!currentSchool || currentSchool.ownerSubjectId === ownerSubjectId) {
     return
   }
@@ -36,8 +32,9 @@ export async function assignDevSchoolOwnerSubjectId(
 async function ensureDevAuthStaffMembers(
   port: AuthLinkSeedPort,
 ): Promise<void> {
-  for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
-    const seedMember = demoDataset.entities.staffMembers?.find(member => member.id === account.staffId)
+  const context = resolveDevSeedContext()
+  for (const account of context.staffAccounts) {
+    const seedMember = context.dataset.entities.staffMembers?.find(member => member.id === account.staffId)
     if (!seedMember) {
       continue
     }
@@ -50,7 +47,7 @@ async function ensureDevAuthStaffMembers(
     const { firstName, lastName } = splitDisplayName(`${seedMember.firstName} ${seedMember.lastName}`)
     await port.registerStaffMember({
       id: account.staffId,
-      schoolId: SEED_SCHOOL_ID,
+      schoolId: context.schoolId,
       firstName,
       lastName,
       email: account.email,
@@ -63,11 +60,12 @@ async function linkDevAuthStaffAndGuardians(
   auth: AuthProvisioner,
   options: DevStaffAuthSyncOptions = {},
 ): Promise<Pick<DevStaffAuthSyncResult, 'linkedStaff' | 'linkedGuardians'>> {
+  const context = resolveDevSeedContext()
   const linkGuardians = options.linkGuardians ?? true
   let linkedStaff = 0
   let linkedGuardians = 0
 
-  for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
+  for (const account of context.staffAccounts) {
     const staff = await port.findStaffById(account.staffId)
     if (!staff) {
       continue
@@ -75,7 +73,7 @@ async function linkDevAuthStaffAndGuardians(
 
     const { subjectId } = await auth.ensureUser({
       email: account.email,
-      password: DEV_AUTH_PASSWORD,
+      password: context.authPassword,
       name: account.name,
     }, { preserveSession: true })
 
@@ -100,7 +98,7 @@ async function linkDevAuthStaffAndGuardians(
     return { linkedStaff, linkedGuardians }
   }
 
-  for (const account of DEV_AUTH_GUARDIAN_ACCOUNTS) {
+  for (const account of context.guardianAccounts) {
     const guardian = await port.findGuardianById(account.guardianId)
     if (!guardian) {
       continue
@@ -108,7 +106,7 @@ async function linkDevAuthStaffAndGuardians(
 
     const { subjectId } = await auth.ensureUser({
       email: account.email,
-      password: DEV_AUTH_PASSWORD,
+      password: context.authPassword,
       name: account.name,
     }, { preserveSession: true })
 
@@ -137,31 +135,33 @@ export async function resolveDevSchoolOwnerSubjectId(
   auth: AuthProvisioner,
   ownerSubjectId?: string,
 ): Promise<string | undefined> {
+  const context = resolveDevSeedContext()
   if (ownerSubjectId) {
     return ownerSubjectId
   }
 
-  const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === demoSchoolOwnerStaffId,
+  const ownerAccount = context.staffAccounts.find(
+    account => account.staffId === context.ownerStaffId,
   )
   if (!ownerAccount) {
     return undefined
   }
 
-  const fromAuth = await auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
+  const fromAuth = await auth.lookupSubjectIdByEmail(ownerAccount.email, context.authPassword)
   if (fromAuth) {
     return fromAuth
   }
 
-  const ownerStaff = await port.findStaffById(demoSchoolOwnerStaffId)
+  const ownerStaff = await port.findStaffById(context.ownerStaffId)
   return ownerStaff?.subjectId
 }
 
 export function ownerSubjectIdFromAuthProvision(
   provision: { accounts: Array<{ email: string, subjectId: string }> },
 ): string | undefined {
-  const ownerEmail = DEV_AUTH_STAFF_ACCOUNTS.find(
-    account => account.staffId === demoSchoolOwnerStaffId,
+  const context = resolveDevSeedContext()
+  const ownerEmail = context.staffAccounts.find(
+    account => account.staffId === context.ownerStaffId,
   )?.email
   if (!ownerEmail) {
     return undefined
@@ -179,7 +179,8 @@ export async function syncDevStaffAuthAndOwner(
   ownerSubjectId?: string,
   options: DevStaffAuthSyncOptions = {},
 ): Promise<DevStaffAuthSyncResult | null> {
-  const school = await port.findSchoolById(SEED_SCHOOL_ID)
+  const context = resolveDevSeedContext()
+  const school = await port.findSchoolById(context.schoolId)
   if (!school) {
     return null
   }
@@ -189,7 +190,7 @@ export async function syncDevStaffAuthAndOwner(
 
   const resolvedOwnerSubjectId = await resolveDevSchoolOwnerSubjectId(port, auth, ownerSubjectId)
   if (resolvedOwnerSubjectId) {
-    await assignDevSchoolOwnerSubjectId(port, resolvedOwnerSubjectId)
+    await assignDevSchoolOwnerSubjectId(port, resolvedOwnerSubjectId, context.schoolId)
   }
 
   return {

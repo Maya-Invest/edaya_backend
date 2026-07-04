@@ -2,10 +2,9 @@ import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from 
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { HttpSeedClient } from './client'
 import type { HttpSeedValidationResult } from './seed-validation'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { DEV_DEMO_LOGIN_ACCOUNTS } from '@edaya/fixtures/demo-login'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createHttpAccessSeedPort } from '../domains/access/http'
 import { createInProcessAccessSeedPort } from '../domains/access/in-process'
@@ -104,6 +103,7 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
     || arg === 'auth'
     || arg === 'auth:link'
     || arg === 'access'
+    || arg === 'profile-pictures'
     || arg === 'smoke'
     || arg === 'service-account'
     || arg === 'validate'
@@ -112,7 +112,7 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
   }
 
   throw new Error(
-    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|service-account|smoke|validate|all]`,
+    `Unknown HTTP seed scope: ${arg}. Usage: bun seed-http.ts [school|auth|auth:link|access|profile-pictures|service-account|smoke|validate|all]`,
   )
 }
 
@@ -140,70 +140,69 @@ async function runHttpSmokeSeed(
   client: HttpSeedClient,
   options: Pick<RunHttpDevSeedsOptions, 'application' | 'serviceAccountApiKey'>,
 ): Promise<HttpSmokeSeedResult> {
-  if (options.serviceAccountApiKey) {
-    const hasSchools = await hasSeededSchools(
-      client,
-      options.application,
-      options.serviceAccountApiKey,
-    )
-    if (!hasSchools) {
-      return {
-        status: 'failed',
-        signInStatus: 0,
-        reason: 'School database is empty; run school seed first',
-      }
-    }
+  const seedContext = resolveDevSeedContext()
 
-    const grants = await client.jsonRequest('/core/authorization/effective-grants', {
+  await signInViaHttp(client, {
+    email: seedContext.minimalStaffEmail,
+    password: seedContext.authPassword,
+  })
+
+  const staffGrants = await client.jsonRequest('/core/authorization/effective-grants')
+  if (!staffGrants.response.ok) {
+    return {
+      status: 'failed',
+      signInStatus: 200,
+      effectiveGrantsStatus: staffGrants.response.status,
+      reason: `Effective grants request failed for ${seedContext.minimalStaffEmail}`,
+    }
+  }
+
+  if (options.serviceAccountApiKey) {
+    const serviceGrants = await client.jsonRequest('/core/authorization/effective-grants', {
       headers: {
         authorization: `Bearer ${options.serviceAccountApiKey}`,
       },
     })
-    if (!grants.response.ok) {
+    if (!serviceGrants.response.ok) {
       return {
         status: 'failed',
-        signInStatus: 0,
-        effectiveGrantsStatus: grants.response.status,
+        signInStatus: 200,
+        effectiveGrantsStatus: serviceGrants.response.status,
         reason: 'Effective grants request failed for seeding service account',
       }
-    }
-
-    return {
-      status: 'passed',
-      signInStatus: 0,
-      effectiveGrantsStatus: grants.response.status,
-    }
-  }
-
-  await signInViaHttp(client, {
-    email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-    password: DEV_AUTH_PASSWORD,
-  })
-
-  const hasSchools = await hasSeededSchools(client, options.application, undefined)
-  if (!hasSchools) {
-    return {
-      status: 'failed',
-      signInStatus: 200,
-      reason: 'School database is empty after sign-in; run school seed first',
-    }
-  }
-
-  const grants = await client.jsonRequest('/core/authorization/effective-grants')
-  if (!grants.response.ok) {
-    return {
-      status: 'failed',
-      signInStatus: 200,
-      effectiveGrantsStatus: grants.response.status,
-      reason: `Effective grants request failed for ${MINIMAL_AUTH_FIXTURE_STAFF_EMAIL}`,
     }
   }
 
   return {
     status: 'passed',
     signInStatus: 200,
-    effectiveGrantsStatus: grants.response.status,
+    effectiveGrantsStatus: staffGrants.response.status,
   }
+}
+
+export async function runHttpVerifyDemoStaffGrants(
+  baseUrl: string,
+  appOrigin: string,
+): Promise<{ status: 'passed' | 'failed', failures: string[] }> {
+  const { HttpSeedClient } = await import('./client')
+  const context = resolveDevSeedContext()
+  const failures: string[] = []
+
+  for (const account of DEV_DEMO_LOGIN_ACCOUNTS) {
+    const client = new HttpSeedClient({ baseUrl, appOrigin })
+    await signInViaHttp(client, {
+      email: account.email,
+      password: context.authPassword,
+    })
+    const grants = await client.jsonRequest('/core/authorization/effective-grants')
+    if (!grants.response.ok) {
+      failures.push(`${account.email} (${grants.response.status})`)
+    }
+  }
+
+  return failures.length === 0
+    ? { status: 'passed', failures }
+    : { status: 'failed', failures }
 }
 
 async function canUseSeedingServiceAccount(
@@ -239,7 +238,8 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   const { client, scope, log } = options
   const auth = options.auth ?? new HttpAuthProvisioner(client)
 
-  const profileSeedingApiKey = resolveSeedingApiKeyForSchool(SEED_SCHOOL_ID)
+  const seedContext = resolveDevSeedContext()
+  const profileSeedingApiKey = resolveSeedingApiKeyForSchool(seedContext.schoolId)
   let serviceAccountApiKey: string | undefined = options.serviceAccountApiKey ?? profileSeedingApiKey
   if (serviceAccountApiKey && scope !== 'auth') {
     const valid = await isServiceAccountApiKeyValid(client, serviceAccountApiKey)
@@ -257,6 +257,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     authProvision: null,
     authLink: null,
     access: null,
+    profilePhotos: null,
     smoke: null,
     validation: null,
   }
@@ -337,7 +338,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
     await runDevAccessRolesSeedWithPort(createHttpAccessSeedPort({ client }))
 
     const provision = await provisionSeedingServiceAccountHttp(client, {
-      schoolId: SEED_SCHOOL_ID,
+      schoolId: seedContext.schoolId,
       apiKey: seedingApiKey,
     })
     logProvisionedServiceAccountKey(provision)
@@ -482,9 +483,10 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
       : undefined,
     beforeAccessAssignments: httpSessionAccessPort && serviceAccountApiKey
       ? async () => {
+        const context = resolveDevSeedContext()
         await signInViaHttp(client, {
-          email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-          password: DEV_AUTH_PASSWORD,
+          email: context.minimalStaffEmail,
+          password: context.authPassword,
         })
       }
       : undefined,
@@ -543,6 +545,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
   results.authProvision = authProvision ?? domainResults.authProvision
   results.authLink = domainResults.authLink
   results.access = domainResults.access
+  results.profilePhotos = domainResults.profilePhotos
 
   if (scope === 'all') {
     await maybeProvisionSeedingServiceAccount({

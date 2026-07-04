@@ -50,6 +50,7 @@ export type {
   RunDevSeedsResults,
 } from './orchestration/run-dev-seeds'
 export { logDevSeedResults, parseDevSeedScope, runDevSeeds } from './orchestration/run-dev-seeds'
+export { seedDevDemoStaffProfilePictures, seedDevProfilePictures } from './domains/profile-pictures/workflow'
 export type { IntegrationLightSchoolSeedResult, RunIntegrationLightSchoolSeedOptions } from './orchestration/run-integration-light-school-seed'
 
 export { runIntegrationLightSchoolSeed } from './orchestration/run-integration-light-school-seed'

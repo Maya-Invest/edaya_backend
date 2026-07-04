@@ -1,5 +1,4 @@
 import {
-  createInMemoryFileStorage,
   noOpFileStorage,
 } from "@edaya/core";
 import {
@@ -13,6 +12,9 @@ import {
 } from "@edaya/adaptor-r2";
 import type { FileStoragePort, LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
+import { isPersistedLocalDataDeployment } from "@/dev/persisted-local-data";
+import { createLocalDevFileStorage } from "@/runtime/shared/adapters/local-dev-file-storage";
+import { resolveRepoLocalDataPath } from "@/runtime/shared/env/repo-root";
 
 export function resolveFileStorage(
   env: Environment | undefined,
