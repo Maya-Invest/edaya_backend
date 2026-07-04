@@ -65,8 +65,8 @@
   },
   "env": {
     // Production (`wrangler deploy --env production`):
-    "production": {
-      "name": "edaya-api",
+    "prod": {
+      "name": "edaya-api-prod",
       "vars": {
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
@@ -85,7 +85,7 @@
       ],
       "routes": [
         {
-          "pattern": "api.edaya.softilab.dev",
+          "pattern": "api-prod.edaya.softilab.dev",
           "custom_domain": true
         }
       ],
@@ -98,12 +98,12 @@
         "producers": [
           {
             "binding": "CRON_JOBS",
-            "queue": "edaya-cron-jobs-production"
+            "queue": "edaya-cron-jobs-prod"
           }
         ],
         "consumers": [
           {
-            "queue": "edaya-cron-jobs-production",
+            "queue": "edaya-cron-jobs-prod",
             "max_batch_size": 10,
             "max_retries": 3
           }

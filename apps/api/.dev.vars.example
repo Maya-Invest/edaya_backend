@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 # --- Required ---
+
 BETTER_AUTH_SECRET=dev-secret-change-in-production
 
 # --- Hyperdrive (worker-local dev) ---
@@ -31,6 +32,7 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # Apply workflows once: bun novu:bootstrap:apply
 
 # --- Optional ---
+
 # GRANTS_CACHE_TTL_MS=300000
 
 # --- Cron / queues ---
@@ -42,16 +44,12 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # bun run db:migrate:staging           # Neon staging branch
 
 # --- Wrangler secrets (deployed workers only; run from apps/api) ---
-# Staging:
+# Template: cp secrets.json.example secrets.json — fill values, then bulk upload:
+#   bunx wrangler secret bulk secrets.json --env staging
+#   bunx wrangler secret bulk secrets.json --env production
+# Use unique secrets per environment (never reuse staging values in production).
+# Or set individually:
 #   bunx wrangler secret put BETTER_AUTH_SECRET --env staging
-#   bunx wrangler secret put R2_ACCESS_KEY_ID --env staging
-#   bunx wrangler secret put R2_SECRET_ACCESS_KEY --env staging
-#   bunx wrangler secret put NOVU_SECRET_KEY --env staging
-#   bunx wrangler secret put NOVU_WEBHOOK_SECRET --env staging
-# Production (unique values — never reuse staging):
-#   bunx wrangler secret put BETTER_AUTH_SECRET --env production
-#   bunx wrangler secret put R2_ACCESS_KEY_ID --env production
-#   bunx wrangler secret put R2_SECRET_ACCESS_KEY --env production
-#   bunx wrangler secret put NOVU_SECRET_KEY --env production
-#   bunx wrangler secret put NOVU_WEBHOOK_SECRET --env production
-# R2_ENDPOINT and R2_ACCOUNT_ID can be set as vars or secrets if not in wrangler [vars].
+# Non-secrets (BETTER_AUTH_URL, TRUSTED_ORIGINS, R2_BUCKET_NAME, …) live in wrangler.jsonc [vars].
+# Do not include CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_* — local dev only.
+# R2_ENDPOINT or R2_ACCOUNT_ID is required; R2_BUCKET_NAME is already in wrangler [vars].

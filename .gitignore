@@ -57,3 +57,5 @@ mobile/**/*.iml
 !.vscode/settings.json
 !.vscode/extensions.json
 !.vscode/launch.json
+apps/api/secrets.prod.json
+apps/api/secrets.staging.json
