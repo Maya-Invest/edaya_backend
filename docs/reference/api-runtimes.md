@@ -10,7 +10,7 @@ Scheduled cron jobs run on the API worker (`scheduled()` handler). See [cron-run
 |---------|-------|------------|---------------|
 | **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `bun dev` (root) |
 | **in-memory** | *(tests only)* | harness env | `bun test` in `apps/api` |
-| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun dev:worker-local` (alias: `bun dev:worker`) |
+| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun dev:worker:staging` (optional) |
 
 ## Environment variables
 
@@ -21,7 +21,7 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite | N/A — migrations are pre-applied |
-| `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
+| `BETTER_AUTH_SECRET` | `.env` | Worker secret (`.dev.vars` / dashboard) |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
 | `COOKIE_DOMAIN` | optional `.env` | `[vars]` (production split-domain) |
@@ -29,7 +29,7 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
 | `LOCAL_FILES_*` | local profile only | ignored |
 
-`dotenv` is **only** used by process profiles (`local` / `in-memory`) in non-production environments (`runtime/shared/env/local-loader.ts`).
+`dotenv` is **only** used by process profiles (`local` / `in-memory`) in non-production environments (`runtime/shared/env/local-loader.ts`), loading **`apps/api/.env` only**.
 
 On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdrive binding when present (`runtime/shared/env/hyperdrive.ts`). Any `pglite` / `file://` URL is rejected on Worker.
 
@@ -62,14 +62,14 @@ Production containers using the local entry should inject env vars directly — 
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-cd apps/api && bun run dev:worker-local
+cd apps/api && bun run dev:worker:staging
 ```
 
-Worker-local smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
+worker smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
 
 - **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive binding
-- **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
-- **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev); auth tables in the `auth` schema
+- **`.dev.vars`** — Wrangler-only secrets (gitignored); loaded by `wrangler dev --env-file` and deploy — **not** by `bun dev`
+- **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` for local wrangler dev); auth tables in the `auth` schema
 
 Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
 

@@ -14,13 +14,9 @@ import dotenvExpand from "dotenv-expand";
 
 const repoRoot = resolve(import.meta.dirname, "../..");
 const apiEnvFile = resolve(repoRoot, "apps/api/.env");
-const apiDevVarsFile = resolve(repoRoot, "apps/api/.dev.vars");
 
 if (existsSync(apiEnvFile)) {
   dotenvExpand.expand(dotenv.config({ path: apiEnvFile }));
-}
-if (existsSync(apiDevVarsFile)) {
-  dotenvExpand.expand(dotenv.config({ path: apiDevVarsFile, override: true }));
 }
 
 function resolveRootDir(value: string | undefined): string {

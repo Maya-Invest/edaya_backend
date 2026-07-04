@@ -281,6 +281,13 @@
       "when": 1781104996441,
       "tag": "0039_class_activity_enrollments",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1781104996442,
+      "tag": "0040_class_group_profile_fields",
+      "breakpoints": true
     }
   ]
 }

@@ -45,10 +45,13 @@ Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in th
 
 ```sh
 cd apps/api
+cp secrets.staging.json.example secrets.staging.json   # fill values
+bunx wrangler secret bulk secrets.staging.json --env staging
+# Or individually:
 bunx wrangler secret put BETTER_AUTH_SECRET --env staging
 ```
 
-Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value).
+Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value). Staging uses the **dev** Novu API key (same as local `.env`).
 
 ---
 

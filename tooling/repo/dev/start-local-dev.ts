@@ -11,12 +11,8 @@ const apiRoot = resolve(repoRoot, 'apps/api')
 
 function loadApiEnv(): void {
   const envFile = resolve(apiRoot, '.env')
-  const devVarsFile = resolve(apiRoot, '.dev.vars')
   if (existsSync(envFile)) {
     dotenvExpand.expand(dotenv.config({ path: envFile }))
-  }
-  if (existsSync(devVarsFile)) {
-    dotenvExpand.expand(dotenv.config({ path: devVarsFile, override: true }))
   }
 }
 

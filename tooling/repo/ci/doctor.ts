@@ -13,6 +13,10 @@ const expectedEnvExamples = [
   'tooling/seeding/.env.staging.example',
   'tooling/seeding/.env.production.example',
 ]
+const expectedSecretExamples = [
+  'apps/api/secrets.staging.json.example',
+  'apps/api/secrets.prod.json.example',
+]
 
 const trackedEnvOutput = await $`git -C ${repoRoot} ls-files -- ${'*.env*'}`.text()
 const trackedEnvFiles = trackedEnvOutput
@@ -23,8 +27,9 @@ const unexpectedTrackedEnvFiles = trackedEnvFiles.filter((path) => {
   return name !== '.env.example' && !/^\.env\..+\.example$/.test(name)
 })
 const missingEnvExamples = expectedEnvExamples.filter(path => !existsSync(resolve(repoRoot, path)))
+const missingSecretExamples = expectedSecretExamples.filter(path => !existsSync(resolve(repoRoot, path)))
 
-if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0) {
+if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0 || missingSecretExamples.length > 0) {
   if (unexpectedTrackedEnvFiles.length > 0) {
     console.error('Tracked runtime environment files:')
     unexpectedTrackedEnvFiles.forEach(path => console.error(`  - ${path}`))
@@ -32,6 +37,10 @@ if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0) {
   if (missingEnvExamples.length > 0) {
     console.error('Missing environment examples:')
     missingEnvExamples.forEach(path => console.error(`  - ${path}`))
+  }
+  if (missingSecretExamples.length > 0) {
+    console.error('Missing Wrangler secret examples:')
+    missingSecretExamples.forEach(path => console.error(`  - ${path}`))
   }
   process.exitCode = 1
 }

@@ -79,7 +79,7 @@ edaya_backend/
 | Script | Package / target |
 |--------|------------------|
 | `bun dev` | `@edaya/api` watch mode |
-| `bun dev:worker-local` | `@edaya/api` `dev:worker-local` |
+| `bun dev:worker:staging` | `@edaya/api` `dev:worker:staging` |
 | `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
 | `bun db:generate` | `@edaya/adaptor-postgres` |
 | `bun db:migrate` | `@edaya/db-migrate` (`migrate`) — school only |

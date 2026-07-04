@@ -88,7 +88,7 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 | Script | Command |
 |--------|---------|
 | `dev` | `bun --watch src/entries/local.ts` |
-| `dev:worker-local` | `wrangler dev --env-file .dev.vars` (`dev:worker` alias) |
+| `dev:worker:staging` | `wrangler dev --env staging --env-file .dev.vars` |
 | `build` | `tsup` → `dist/node.js` from `src/entries/local.ts` |
 | `start` | `node dist/node.js` |
 | `deploy:worker` | `wrangler deploy --env production` |

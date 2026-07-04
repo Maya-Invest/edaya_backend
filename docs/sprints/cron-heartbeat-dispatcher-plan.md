@@ -310,7 +310,7 @@ Queue names suffixed per env (`edaya-cron-jobs-staging`, etc.) following existin
 **Acceptance criteria (Phase 1):**
 
 - [ ] `bun run verify` green
-- [ ] `bun run dev:cron` runs heartbeat tick and executes all three jobs for all schools
+- [ ] `bun run cron:local` runs heartbeat tick and executes all three jobs for all schools
 - [ ] `CRON_JOB_KEYS` filter still works for debugging
 - [ ] Only one cron expression in `wrangler.jsonc`
 - [ ] `resolve-cron-job-keys.ts` deleted

@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // Worker runtime only (`RUNTIME=worker`): `bun dev:worker-local` (Miniflare) and deploy.
+  // Worker runtime only (`RUNTIME=worker`): optional `bun dev:worker:staging` and deploy.
   // Local dev (`bun dev`) uses `.env` + PGlite/SQLite/local-files — not this file.
   // See docs/reference/runtime-boundaries.md.
   "name": "edaya-api",
@@ -21,19 +21,10 @@
     "port": 9999
   },
   //
-  // Default profile = worker-local (`bun dev:worker-local`) — shares production Hyperdrive ID below.
-  // Safer staging smoke: `wrangler dev --env staging --env-file .dev.vars`
-  // Deploy secrets: see apps/api/.dev.vars.example (`wrangler secret put …`)
-  // Before first production deploy: `bun run db:migrate:production`
-  // Cron: heartbeat + CRON_JOBS queue — docs/reference/cron-runtimes.md
-  // Hyperdrive local origin: CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE in `.dev.vars`
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "62c00eeda7d047fc9951daf7db430070"
-      // Do not commit credentials here. Set localConnectionString via the env var above or `.dev.vars`.
-    }
-  ],
+  // Optional worker smoke: `bun dev:worker:staging` (staging Hyperdrive + R2).
+  // Hyperdrive + R2 bindings live under env.staging / env.production only (no root Hyperdrive).
+  // Deploy secrets: see secrets.staging.json.example / secrets.prod.json.example
+  // Hyperdrive local origin for wrangler dev: CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE in `.dev.vars`
   // Scheduled cron heartbeat — see docs/reference/cron-runtimes.md
   "triggers": {
     "crons": [
@@ -57,13 +48,13 @@
   },
   "observability": {
     "logs": {
-      "enabled": false,
+      "enabled": true,
       "invocation_logs": true
     }
   },
   "env": {
     // Production (`wrangler deploy --env production`):
-    "prod": {
+    "production": {
       "name": "edaya-api-prod",
       "vars": {
         "NODE_ENV": "production",

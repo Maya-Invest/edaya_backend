@@ -34,5 +34,7 @@ test.db
 .vercel
 dist
 .dev.vars
-*secrets*.json
+secrets.json
+secrets.staging.json
+secrets.prod.json
 .wrangler

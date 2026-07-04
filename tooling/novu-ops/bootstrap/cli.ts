@@ -98,7 +98,7 @@ main().catch((error) => {
     console.error("Novu rejected NOVU_SECRET_KEY. Check:");
     console.error("  1. Novu dashboard → Settings → API Keys → Secret Key (not Application Identifier)");
     console.error("  2. Same region as NOVU_API_URL (EU workspace → https://eu.api.novu.co)");
-    console.error("  3. Key stored in apps/api/.dev.vars — not mixed with R2 or other tokens");
+    console.error("  3. Key stored in apps/api/.env (local dev) or Wrangler secrets (deployed workers)");
     process.exit(1);
   }
   console.error(message);

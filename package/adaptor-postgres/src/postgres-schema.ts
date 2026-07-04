@@ -422,6 +422,9 @@ export const classGroups = pgTable('class_groups', {
   gradeLevelId: text('grade_level_id').notNull(),
   name: text('name').notNull(),
   academicYearId: text('academic_year_id').notNull(),
+  capacity: integer('capacity'),
+  attendanceMode: text('attendance_mode').notNull().default('session'),
+  homeroomStaffId: text('homeroom_staff_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('class_groups', table))
 

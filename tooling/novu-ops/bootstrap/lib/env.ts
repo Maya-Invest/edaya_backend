@@ -18,12 +18,10 @@ function readEnv(name: string): string | undefined {
 }
 
 export async function loadApiDotEnv(repoRoot: string): Promise<void> {
-  for (const fileName of [".env", ".dev.vars"]) {
-    const envPath = resolve(repoRoot, "apps/api", fileName);
-    const text = await Bun.file(envPath).text().catch(() => "");
-    const override = fileName === ".dev.vars";
+  const envPath = resolve(repoRoot, "apps/api", ".env");
+  const text = await Bun.file(envPath).text().catch(() => "");
 
-    for (const line of text.split("\n")) {
+  for (const line of text.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) {
         continue;
@@ -41,11 +39,10 @@ export async function loadApiDotEnv(repoRoot: string): Promise<void> {
       if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
         value = value.slice(1, -1);
       }
-      if (override || !(key in process.env) || !process.env[key]?.trim()) {
+      if (!(key in process.env) || !process.env[key]?.trim()) {
         process.env[key] = value;
       }
     }
-  }
 }
 
 export function validateNovuSecretKeyHint(secretKey: string): string | undefined {
@@ -68,7 +65,7 @@ export async function loadBootstrapEnv(
 
   const secretKey = readEnv("NOVU_SECRET_KEY");
   if (!secretKey) {
-    throw new Error("NOVU_SECRET_KEY is required (set in env, apps/api/.env, or apps/api/.dev.vars)");
+    throw new Error("NOVU_SECRET_KEY is required (set in env or apps/api/.env)");
   }
 
   return {

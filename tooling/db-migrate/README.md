@@ -25,9 +25,6 @@ bun run migrate:staging
 # Neon production branch (school + auth; loads tooling/seeding/.env.production)
 bun run migrate:production
 
-# Deprecated alias — prefers .env.production, falls back to apps/api/.dev.vars
-bun run migrate:hyperdrive
-
 # Auth schema only — package maintainer / PGlite repair (loads apps/api/.env)
 bun run migrate:auth
 ```
@@ -46,5 +43,3 @@ For databases that still have `access_roles` / `staff_role_assignments`:
 `USE_STAFF_PERMISSION_ASSIGNMENTS` was removed — grant resolution always uses `staff_permission_assignments`.
 
 Schema generation: `bun db:generate` (school), `bun db:generate:auth` / `bun auth:generate-schema` (auth).
-
-**Deprecated root aliases:** `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:production`, `db:migrate:hyperdrive` → `db:migrate:production` (with `.dev.vars` fallback).

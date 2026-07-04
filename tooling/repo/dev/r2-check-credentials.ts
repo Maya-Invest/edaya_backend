@@ -6,14 +6,16 @@ import {
   isR2FileStorageConfigured,
   resolveR2EndpointFromEnv,
 } from '@edaya/adaptor-r2'
-import { loadLocalProcessEnv } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
+import { parseRuntimeEnv } from '../../../apps/api/src/runtime/shared/env/schema.ts'
+import { loadWranglerDevVars } from './load-wrangler-dev-vars.ts'
 
 const TEST_BODY = 'r2-credential-check'
 const TEST_CONTENT_TYPE = 'text/plain'
 
 async function main() {
   const curlOnly = process.argv.includes('--curl-only')
-  const env = loadLocalProcessEnv()
+  loadWranglerDevVars()
+  const env = parseRuntimeEnv(process.env)
 
   if (!isR2FileStorageConfigured(env)) {
     console.error('R2 is not configured. Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME in apps/api/.dev.vars')

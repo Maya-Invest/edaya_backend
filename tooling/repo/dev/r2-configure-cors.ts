@@ -12,7 +12,8 @@ import {
   resolveR2EndpointFromEnv,
 } from '@edaya/adaptor-r2'
 import { trustedOriginsFromEnv } from '../../../apps/api/src/http/cors.ts'
-import { loadLocalProcessEnv } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
+import { parseRuntimeEnv } from '../../../apps/api/src/runtime/shared/env/schema.ts'
+import { loadWranglerDevVars } from './load-wrangler-dev-vars.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
@@ -38,7 +39,8 @@ function configureWithWrangler(bucketName: string, corsFile: string): boolean {
 }
 
 async function main() {
-  const env = loadLocalProcessEnv()
+  loadWranglerDevVars()
+  const env = parseRuntimeEnv(process.env)
 
   if (!isR2FileStorageConfigured(env)) {
     console.error(

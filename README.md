@@ -79,9 +79,9 @@ flowchart TB
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `apps/api/src/entries/local.ts` | `.env` (dotenv) | `cd apps/api && bun dev` |
+| **local** | `apps/api/src/entries/local.ts` | `apps/api/.env` | `bun dev` (root — API + local-files) |
 | **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
-| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun dev:worker-local` |
+| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun dev:worker:staging` (optional smoke) |
 
 `local` uses persisted PGlite by default (`DATABASE_URL=pglite:.data/school`). `in-memory` uses ephemeral PGlite for fast tests. Workers require a real Postgres URL via Hyperdrive.
 
@@ -151,17 +151,13 @@ bun dev   # API only
 
 Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
 
-Or run the API alone:
+`bun dev` from the repo root starts the API **and** `@edaya/local-files` (required for uploads). Running `cd apps/api && bun dev` alone starts the API without the file server.
 
-```sh
-cd apps/api && bun dev          # Node API
-```
-
-**Worker runtime** (API on Cloudflare):
+**worker smoke** (Miniflare — optional, hits remote Neon/R2):
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-bun dev:worker-local
+bun dev:worker:staging
 ```
 
 See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database options, dev seed, and troubleshooting.
@@ -174,7 +170,7 @@ All root scripts run across the monorepo via Turborepo unless noted.
 
 | Command | Description |
 |---------|-------------|
-| `bun dev` | Start API in watch mode |
+| `bun dev` | API + local file storage (watch mode) |
 | `bun seed` | Short alias for `seed:init` — full HTTP demo seed |
 | `bun run seed:init` | Full HTTP demo seed (fresh clone / after `rm -rf .data`) |
 | `bun run seed:auth` | Provision Better Auth user accounts only |
@@ -182,9 +178,8 @@ All root scripts run across the monorepo via Turborepo unless noted.
 | `bun run seed:remote` | Seed a remote API instance |
 | `bun run deploy:api:staging` | Deploy API to Cloudflare Workers (staging) |
 | `bun run seed:smoke:staging` | Sign-in + effective-grants smoke against staging URL |
-| `cd apps/api && bun dev` | API only (Node, port 9999) |
-| `bun dev:worker-local` | API worker-local smoke (Miniflare; alias: `bun dev:worker`) |
-| `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
+| `bun dev:worker:staging` | Optional Worker smoke via Miniflare (staging Hyperdrive + R2) |
+| `bun run cron:local` | One-shot cron tick against local PGlite (optional `CRON_JOB_KEYS`) |
 | `bun run deploy:api` | Deploy API to Cloudflare Workers (production) |
 
 ### Database
@@ -202,8 +197,6 @@ Root scripts use the `db:*` prefix (`@edaya/db-migrate` implements `migrate:*`).
 | `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI |
 
 Local PGlite (`bun dev`) migrates on startup — no command needed.
-
-Deprecated aliases: `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:production`, `db:migrate:hyperdrive` → `db:migrate:production` (`.dev.vars` fallback).
 
 Package-level extras (run from adaptor package or with `bun --filter`):
 
@@ -239,7 +232,6 @@ TypeScript schema types for web apps are generated in **edaya_web** (`bun run op
 | `bun run check` | TypeScript / Svelte type checks |
 | `bun run quality` | `lint` + `check` per package |
 | `bun run test` | Repository-tooling, unit, and integration tests |
-| `bun run test:remote` | Integration tests against a real Postgres database |
 | `bun run test:coverage` | Tests with coverage (where supported) |
 | `bun run build` | Build deployable API bundle |
 | `bun run verify` | Complete non-mutating CI verification path |

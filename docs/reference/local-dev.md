@@ -13,7 +13,7 @@ The webapp is a **static SPA** (`ssr = false`) that calls the API from the brows
 ## First-time setup
 
 ```sh
-# API — persisted PGlite + auth SQLite under repo-root .data/
+# API — persisted PGlite under repo-root `.data/` (school + auth schema)
 cp apps/api/.env.example apps/api/.env
 
 # Webapp — in edaya_web
@@ -56,9 +56,9 @@ The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtim
 | Profile | Command | School DB | Auth DB |
 |---------|---------|-----------|---------|
 | **local** | `bun dev` | PGlite `.data/school` | PGlite `auth` schema (same DB) |
-| **worker** | `bun dev:worker-local` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
+| **worker** | `bun dev:worker:staging` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
 
-Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` auth). Workers use `wrangler.jsonc` + `.dev.vars` instead of dotenv. See [api-runtimes.md](./api-runtimes.md).
+Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun dev`). See [api-runtimes.md](./api-runtimes.md).
 
 ## API database (local profile)
 
@@ -77,9 +77,41 @@ Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite + `:memory:` au
 
 Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentId}/content`. The browser PUTs to `LOCAL_FILES_URL` (CORS allows origins from `TRUSTED_ORIGINS`).
 
-### Worker-local smoke (R2, Hyperdrive)
+### worker smoke (R2, Hyperdrive)
 
-To exercise vendor adaptors locally, use **`bun dev:worker-local`** with credentials in `apps/api/.dev.vars` — not `bun dev`. See [api-runtimes.md](./api-runtimes.md).
+Optional — exercises the same adaptors as deployed workers. Requires `apps/api/.dev.vars` (Wrangler secrets; **not** read by `bun dev`).
+
+```sh
+cp apps/api/.dev.vars.example apps/api/.dev.vars
+bun dev:worker:staging
+```
+
+Point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` at the **staging** Neon branch. Production is deploy-only; use `wrangler dev --env production` manually only when required.
+
+See [api-runtimes.md](./api-runtimes.md).
+
+## Environment credentials matrix
+
+| Concern | Local dev (`bun dev`) | Staging | Production |
+|---------|----------------------|---------|------------|
+| **Env file** | `apps/api/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
+| **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
+| **File storage** | `@edaya/local-files` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
+| **Novu** | Dev key in `.env` | Dev key (`secrets.staging.json`) | Prod key (`secrets.prod.json`) |
+| **Auth secret** | `BETTER_AUTH_SECRET` in `.env` | Unique Wrangler secret | Unique Wrangler secret |
+
+**Wrangler secret templates** (from `apps/api/`):
+
+```sh
+cp secrets.staging.json.example secrets.staging.json   # fill staging R2 + dev Novu
+cp secrets.prod.json.example secrets.prod.json         # fill production R2 + prod Novu
+bunx wrangler secret bulk secrets.staging.json --env staging
+bunx wrangler secret bulk secrets.prod.json --env production
+```
+
+**Neon connection strings** (migrations only — not in Wrangler): `tooling/seeding/.env.staging` → `STAGING_DATABASE_URL`; `tooling/seeding/.env.production` → `PRODUCTION_DATABASE_URL`.
+
+**Hyperdrive local origin** (worker smoke only): `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `apps/api/.dev.vars` must match the Neon branch for the `--env` you choose.
 
 ## Browse local database tables
 
@@ -102,7 +134,7 @@ Opens automatically at `http://127.0.0.1:8191` (auth) or `http://127.0.0.1:8192`
 
 ## Dev database seed
 
-Seeding targets the **same local deployment** as `bun dev`: school data in `.data/school` (PGlite) and auth in `.data/auth.sqlite`. With `DATABASE_URL=pglite:.data/school` (default), **`bun dev` auto-seeds on startup** when the database is empty (`SEED_ON_START`, default `true` in development). No second terminal required for a fresh clone.
+Seeding targets the **same local deployment** as `bun dev`: school data and auth both live in PGlite (`.data/school`, `auth` schema). With `DATABASE_URL=pglite:.data/school` (default), **`bun dev` auto-seeds on startup** when the database is empty (`SEED_ON_START`, default `true` in development). No second terminal required for a fresh clone.
 
 You can still run HTTP seeds manually against the running API (`bun seed:init`) — useful after partial wipes or to re-sync auth links.
 
@@ -158,7 +190,7 @@ In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/f
 
 Better Auth can send **real emails** when Novu is configured:
 
-1. Set `NOVU_SECRET_KEY` (and optional `NOVU_API_URL`) in `apps/api/.env` or `.dev.vars`
+1. Set `NOVU_SECRET_KEY` (and optional `NOVU_API_URL`) in `apps/api/.env`
 2. Configure an email integration in the Novu dashboard (e.g. Custom SMTP)
 3. Apply Novu workflows (includes `auth.otp` and `auth.email_verification`):
 
@@ -174,6 +206,8 @@ bun novu:bootstrap:apply
 When Novu is set, `REQUIRE_EMAIL_VERIFICATION` defaults to **true** (override with `REQUIRE_EMAIL_VERIFICATION=false`). OTP and verification links are still logged in the API console in development unless `AUTH_EMAIL_LOG_OTP=false`.
 
 **Quick test:** use login **OTP email** on `/login` with your real address, or sign up (Phase 1 UI) once available — you should receive the message in your inbox.
+
+To flush pending notification deliveries locally: `CRON_JOB_KEYS=processDueNotifications bun run cron:local` (requires seeded `.data/`). See [cron-runtimes.md](./cron-runtimes.md).
 
 ## Testing
 
