@@ -1,8 +1,8 @@
 import type { StudentInput } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { bulkCiDataset } from '../../../src/datasets/bulk/index-ci'
 import { BULK_TARGET_STUDENT_COUNT } from '../../../src/datasets/bulk/constants'
 import { generateBulkPopulation } from '../../../src/datasets/bulk/generator'
+import { bulkCiDataset } from '../../../src/datasets/bulk/index-ci'
 import { CI_LAST_NAMES } from '../../../src/datasets/bulk/name-pools'
 import {
   bulkCiClassGroups,

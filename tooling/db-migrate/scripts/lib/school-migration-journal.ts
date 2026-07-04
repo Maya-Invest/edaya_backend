@@ -1,8 +1,8 @@
+import type postgres from 'postgres'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type postgres from 'postgres'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 export const schoolMigrationsFolder = path.resolve(repoRoot, 'package/adaptor-postgres/drizzle')

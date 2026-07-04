@@ -1,6 +1,6 @@
-import process from 'node:process'
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 import {

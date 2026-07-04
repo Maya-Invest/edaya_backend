@@ -2,8 +2,8 @@ import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from 
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { HttpSeedClient } from './client'
 import type { HttpSeedValidationResult } from './seed-validation'
-import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { DEV_DEMO_LOGIN_ACCOUNTS } from '@edaya/fixtures/demo-login'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createHttpAccessSeedPort } from '../domains/access/http'
@@ -450,6 +450,7 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions): Promise<
         authProvision: results.authProvision,
         authLink: results.authLink,
         access: results.access,
+        profilePhotos: results.profilePhotos,
       }, log)
     }
 

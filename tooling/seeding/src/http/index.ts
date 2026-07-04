@@ -46,9 +46,9 @@ export {
   logHttpDevSeedResults,
   parseHttpDevSeedScope,
   runHttpDevSeeds,
-  runHttpVerifyDemoStaffGrants,
   type RunHttpDevSeedsOptions,
   type RunHttpDevSeedsResults,
+  runHttpVerifyDemoStaffGrants,
 } from './run-http-dev-seeds'
 export { createSeedSchoolClient, type SeedSchoolClient } from './school-client'
 export { createSeedTransport, type SeedTransportOptions } from './seed-transport'

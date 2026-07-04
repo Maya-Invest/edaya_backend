@@ -146,7 +146,7 @@ function localizeGuardian(guardian: GuardianInput, index: number): GuardianInput
 }
 
 function localizeStaffMember(staff: StaffMemberInput): StaffMemberInput {
-  const localized = STAFF_CI_NAMES[staff.id]
+  const localized = STAFF_CI_NAMES[staff.id as keyof typeof STAFF_CI_NAMES]
   if (!localized) {
     return staff
   }
@@ -169,7 +169,7 @@ export function localizeDemoDatasetForCi(demo: FixtureDataset<'demo'>): FixtureD
       })),
       guardianLinks: demo.entities.guardianLinks?.map((link: GuardianStudentLinkInput) => ({
         ...link,
-        relationship: localizeRelationship(link.relationship),
+        relationship: localizeRelationship(link.relationship ?? ''),
       })),
     },
   }

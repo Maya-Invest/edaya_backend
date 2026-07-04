@@ -8,9 +8,9 @@ import {
 } from '../../grants/actor-grant-checks'
 import { activeClassGroupIdsByStudent } from '../../grants/enrollment-scope'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
-import { resourcePathForClassGroup, resourcePathForStudent } from '../../scope/resolve-resource-path'
 import { Permission } from '../../permissions'
 import { permissionDefinitions } from '../../permissions/permission-definitions'
+import { resourcePathForClassGroup, resourcePathForStudent } from '../../scope/resolve-resource-path'
 import {
   CLASS_GROUP_TEACHING_ACCESS_PERMISSIONS,
   GUARDIAN_ADMIN_ACCESS_PERMISSIONS,

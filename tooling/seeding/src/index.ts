@@ -24,6 +24,7 @@ export { createInProcessPopulationSeedPort } from './domains/population/in-proce
 export type { PopulationSeedPort } from './domains/population/port'
 export { createInProcessProfilePicturesSeedPort } from './domains/profile-pictures/in-process'
 export type { ProfilePicturesSeedPort } from './domains/profile-pictures/port'
+export { seedDevDemoStaffProfilePictures, seedDevProfilePictures } from './domains/profile-pictures/workflow'
 export { createInProcessReportCardsSeedPort } from './domains/report-cards/in-process'
 export type { ReportCardsSeedPort } from './domains/report-cards/port'
 export { createInProcessSchedulingSeedPort } from './domains/scheduling/in-process'
@@ -32,8 +33,8 @@ export { createInProcessSchoolLifeSeedPort } from './domains/school-life/in-proc
 export type { SchoolLifeSeedPort } from './domains/school-life/port'
 export { createInProcessSchoolStructureSeedPort } from './domains/school-structure/in-process'
 export type { SchoolStructureSeedPort } from './domains/school-structure/port'
-export { createInProcessStudentSupportSeedPort } from './domains/student-support/in-process'
 
+export { createInProcessStudentSupportSeedPort } from './domains/student-support/in-process'
 export type { StudentSupportSeedPort } from './domains/student-support/port'
 export type { DevAccessSeedResult } from './orchestration/run-dev-access-seed'
 export { runDevAccessSeed, runDevAccessSeedWithPort } from './orchestration/run-dev-access-seed'
@@ -50,7 +51,6 @@ export type {
   RunDevSeedsResults,
 } from './orchestration/run-dev-seeds'
 export { logDevSeedResults, parseDevSeedScope, runDevSeeds } from './orchestration/run-dev-seeds'
-export { seedDevDemoStaffProfilePictures, seedDevProfilePictures } from './domains/profile-pictures/workflow'
 export type { IntegrationLightSchoolSeedResult, RunIntegrationLightSchoolSeedOptions } from './orchestration/run-integration-light-school-seed'
 
 export { runIntegrationLightSchoolSeed } from './orchestration/run-integration-light-school-seed'

@@ -35,6 +35,7 @@ import { createInProcessDisciplineSeedPort } from '../domains/discipline/in-proc
 import { createInProcessFinanceSeedPort } from '../domains/finance/in-process'
 import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/in-process'
+import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
 import { createInProcessReportCardsSeedPort } from '../domains/report-cards/in-process'
 import { createInProcessSchedulingSeedPort } from '../domains/scheduling/in-process'
 import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/in-process'
@@ -44,7 +45,6 @@ import { runDevAccessSeedWithPort } from './run-dev-access-seed'
 import { runDevAuthLinkWithPort } from './run-dev-auth-link'
 import { runDevAuthProvision } from './run-dev-auth-provision'
 import { runDevSchoolSeed } from './run-dev-school-seed'
-import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
 
 export type DevSeedScope = 'school' | 'auth' | 'auth:link' | 'access' | 'profile-pictures' | 'all'
 

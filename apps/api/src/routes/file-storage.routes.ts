@@ -1,4 +1,5 @@
 import type { AppRouteHandler } from "@/http/types";
+import { Buffer } from "node:buffer";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";

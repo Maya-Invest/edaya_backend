@@ -311,7 +311,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   private async persistStudentInvolvementUpsert(
     { id, incidentId, studentId, role, notes, createdAt }: AddStudentInvolvementInput,
     incident: Incident,
-  ): Promise<{ involvement: StudentIncidentInvolvement; created: boolean }> {
+  ): Promise<{ involvement: StudentIncidentInvolvement, created: boolean }> {
     await this.requireStudentInIncidentScope(studentId, incident)
     const existing = (await this.baseService.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
     if (existing) {

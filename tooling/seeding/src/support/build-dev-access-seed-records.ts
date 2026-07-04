@@ -1,10 +1,10 @@
-import type {
-  AccessRoleSeedRecord,
-  StaffAssignmentSeedRecord,
-  StaffRoleAssignmentSeedRecord,
-} from '../domains/access/port'
+/* eslint-disable dot-notation -- staffAccessRoleIds is Record<string, string> for tsc */
 import type { DevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
-import { DEMO_CI_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import type {
+  AccessRolePresetRecord,
+  StaffAssignmentSeedRecord,
+  StaffRoleAssignmentPresetRecord,
+} from '../domains/access/port'
 import {
   COORDINATOR_PERMISSIONS,
   ELEVATED_STAFF_PERMISSIONS,
@@ -88,7 +88,7 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
   return [...new Set(groups.flat())]
 }
 
-function buildAccessRoleRecords(schoolId: string): readonly AccessRoleSeedRecord[] {
+function buildAccessRoleRecords(schoolId: string): readonly AccessRolePresetRecord[] {
   return [
     {
       id: 'role-teacher',
@@ -163,23 +163,22 @@ function createStaffRoleAssignment(
   context: DevSeedContext,
   staffId: string,
   roleId: string,
-  scopeGrants: StaffRoleAssignmentSeedRecord['scopeGrants'] = [],
-): StaffRoleAssignmentSeedRecord {
+  scopeGrants: StaffRoleAssignmentPresetRecord['scopeGrants'] = [],
+): StaffRoleAssignmentPresetRecord {
   const academicYearId = context.dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Seed dataset must include academicYear for access seeding') })()
 
   return {
-    id: `sra-${staffId}`,
     staffId,
     schoolId: context.schoolId,
     academicYearId,
-    roleIds: [roleId],
+    roleId,
     scopeGrants,
     status: 'active',
   }
 }
 
-function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly StaffRoleAssignmentSeedRecord[] {
+function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly StaffRoleAssignmentPresetRecord[] {
   const schoolDisciplineAndAttendanceGrants = [
     {
       permission: Permission.DISCIPLINE_CREATE,
@@ -193,7 +192,7 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
     },
   ]
 
-  if (context.schoolId === DEMO_CI_SCHOOL_ID) {
+  if (context.datasetId === 'ci') {
     const roles = context.staffAccessRoleIds
     return [
       createStaffRoleAssignment(context, 'ci-st1', roles['ci-st1']!),
@@ -219,22 +218,25 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
 }
 
 function buildBaseStaffAssignmentRecords(context: DevSeedContext): readonly StaffAssignmentSeedRecord[] {
-  if (context.schoolId === DEMO_CI_SCHOOL_ID) {
+  const academicYearId = context.dataset.entities.academicYear?.id
+    ?? (() => { throw new Error('Seed dataset must include academicYear for access seeding') })()
+
+  if (context.datasetId === 'ci') {
     return [
-      { id: 'sa-ci-st1-6a', staffId: 'ci-st1', responsibility: 'Mathématiques', classGroupId: 'ci-6a' },
-      { id: 'sa-ci-st1-5a', staffId: 'ci-st1', responsibility: 'Mathématiques', classGroupId: 'ci-5a' },
-      { id: 'sa-ci-st3-6a', staffId: 'ci-st3', responsibility: 'Professeur principal', classGroupId: 'ci-6a' },
-      { id: 'sa-ci-st2-6b', staffId: 'ci-st2', responsibility: 'Professeur principal', classGroupId: 'ci-6b' },
-      { id: 'sa-ci-st3-5a', staffId: 'ci-st3', responsibility: 'Professeur principal', classGroupId: 'ci-5a' },
+      { id: 'sa-ci-st1-6a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-6a' },
+      { id: 'sa-ci-st1-5a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-5a' },
+      { id: 'sa-ci-st3-6a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6a' },
+      { id: 'sa-ci-st2-6b', staffId: 'ci-st2', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6b' },
+      { id: 'sa-ci-st3-5a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-5a' },
     ]
   }
 
   return [
-    { id: 'sa-st1-6a', staffId: 'st1', responsibility: 'Mathematics', classGroupId: '6a' },
-    { id: 'sa-st1-5a', staffId: 'st1', responsibility: 'Mathematics', classGroupId: '5a' },
-    { id: 'sa-st3-6a', staffId: 'st3', responsibility: 'Homeroom', classGroupId: '6a' },
-    { id: 'sa-st2-6b', staffId: 'st2', responsibility: 'Homeroom', classGroupId: '6b' },
-    { id: 'sa-st3-5a', staffId: 'st3', responsibility: 'Homeroom', classGroupId: '5a' },
+    { id: 'sa-st1-6a', staffId: 'st1', academicYearId, responsibility: 'Mathematics', classGroupId: '6a' },
+    { id: 'sa-st1-5a', staffId: 'st1', academicYearId, responsibility: 'Mathematics', classGroupId: '5a' },
+    { id: 'sa-st3-6a', staffId: 'st3', academicYearId, responsibility: 'Homeroom', classGroupId: '6a' },
+    { id: 'sa-st2-6b', staffId: 'st2', academicYearId, responsibility: 'Homeroom', classGroupId: '6b' },
+    { id: 'sa-st3-5a', staffId: 'st3', academicYearId, responsibility: 'Homeroom', classGroupId: '5a' },
   ]
 }
 

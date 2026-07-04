@@ -9,11 +9,10 @@ import {
 
 const originalEnv = { ...process.env };
 
-const persistedLocalEnv: Pick<Environment, "NODE_ENV" | "RUNTIME" | "DATABASE_URL" | "AUTH_DATABASE_PATH"> = {
+const persistedLocalEnv: Pick<Environment, "NODE_ENV" | "RUNTIME" | "DATABASE_URL"> = {
   NODE_ENV: "development",
   RUNTIME: "local",
   DATABASE_URL: `pglite:${resolveRepoLocalDataPath(".data/school")}`,
-  AUTH_DATABASE_PATH: resolveRepoLocalDataPath(".data/auth.sqlite"),
 };
 
 afterEach(() => {
@@ -21,7 +20,7 @@ afterEach(() => {
 });
 
 describe("isPersistedLocalDataDeployment", () => {
-  it("matches repo-root .data PGlite + auth sqlite", () => {
+  it("matches repo-root .data PGlite", () => {
     expect(isPersistedLocalDataDeployment(persistedLocalEnv)).toBe(true);
   });
 

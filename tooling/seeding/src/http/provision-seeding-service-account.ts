@@ -5,11 +5,6 @@ import {
   createServiceAccount,
   createStaffActorMetadata,
 } from '@edaya/core'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import {
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { signInViaHttp } from './auth'
@@ -74,11 +69,9 @@ export async function provisionSeedingServiceAccountInProcess(
     effectiveGrants: grants,
   })
 
-  const elevatedRoleStaffId = context.datasetId === 'ci' ? 'ci-st5' : 'st5'
   const result = await createServiceAccount(application.repositories, actor, {
     serviceId: SEEDING_SERVICE_ID,
     displayName: 'Seeding Integration',
-    roleIds: [context.staffAccessRoleIds[elevatedRoleStaffId]!],
     elevated: true,
     apiKey,
   })
@@ -131,7 +124,6 @@ export async function provisionSeedingServiceAccountHttp(
     body: JSON.stringify({
       serviceId: SEEDING_SERVICE_ID,
       displayName: 'Seeding Integration',
-      roleIds: [context.staffAccessRoleIds[context.minimalStaffId]!],
       elevated: true,
       apiKey,
     }),

@@ -6,7 +6,7 @@ describe("resolveFileStorage", () => {
   it("uses local-fs on the local runtime regardless of R2 env", async () => {
     const storage = resolveFileStorage(createPgliteTestEnv({
       RUNTIME: "local",
-      DATABASE_URL: "pglite:.data/school",
+      DATABASE_URL: "pglite:ephemeral-local-fs-test",
       LOG_LEVEL: "info",
       R2_BUCKET_NAME: "edaya-files-dev",
       R2_ENDPOINT: "https://example.r2.cloudflarestorage.com",

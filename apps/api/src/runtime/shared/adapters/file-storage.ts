@@ -1,4 +1,5 @@
 import {
+  createInMemoryFileStorage,
   noOpFileStorage,
 } from "@edaya/core";
 import {
@@ -26,6 +27,20 @@ export function resolveFileStorage(
 
   switch (env.RUNTIME) {
     case "local": {
+      if (isPersistedLocalDataDeployment(env)) {
+        const persistDir = resolveRepoLocalDataPath(env.LOCAL_FILES_ROOT ?? ".data/files");
+        if (env.LOG_LEVEL !== "silent") {
+          logger?.info(
+            {
+              baseUrl: env.BETTER_AUTH_URL,
+              rootDir: persistDir,
+            },
+            "Using persisted local dev file storage",
+          );
+        }
+        return createLocalDevFileStorage(env.BETTER_AUTH_URL, { persistDir });
+      }
+
       const localConfig = resolveLocalFileStorageConfig(env);
       if (env.LOG_LEVEL !== "silent") {
         logger?.info(

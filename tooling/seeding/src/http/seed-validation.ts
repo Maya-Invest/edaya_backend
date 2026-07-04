@@ -1,10 +1,7 @@
 /* eslint-disable dot-notation -- Record<string, unknown> responses require bracket access for tsc */
 import type { CoreHttpRequestOptions } from './core-entity'
-import { devSeedDataset } from '@edaya/fixtures'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { countStudents } from '@edaya/fixtures/meta/fixture-counts'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import {
   assertSeedManifestComplete,
   buildSeedQueryValidationTargets,

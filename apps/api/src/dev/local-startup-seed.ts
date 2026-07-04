@@ -1,12 +1,8 @@
-/* eslint-disable node/no-process-env */
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { resolveSeedingApiKeyForSchool } from "@edaya/fixtures/meta/school-profiles";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { getApiRuntime } from "@/runtime/local/registry";
-import {
-  isPersistedLocalDataDeployment,
-  resolveSeedOnStart,
-} from "@/dev/persisted-local-data";
+import { resolveSeedOnStart } from "@/dev/persisted-local-data";
 
 const WIPE_AND_RESEED_HINT
   = "Stop bun dev, run `cd edaya_backend && bun seed:clean --yes`, then restart bun dev.";

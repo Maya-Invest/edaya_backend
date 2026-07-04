@@ -1,24 +1,8 @@
 import type { ScopeGrant } from '../model/scope-grant'
 import type { Permission } from '../permissions/permission'
-import type { ScopeType } from '../permissions/scope-type'
 import { permissionDefinitions } from '../permissions/permission-definitions'
 import { parseScopeIds } from '../scope/scope-ids-parse'
 import { mergeScopeGrants } from './scope-grant-covers'
-
-type LegacyScopeType = ScopeGrant['scopeType']
-
-function legacyScopeTypeForCatalogScope(catalogScope: ScopeType): LegacyScopeType | undefined {
-  switch (catalogScope) {
-    case 'student':
-      return 'student'
-    case 'class_group':
-      return 'class_group'
-    case 'class_subject':
-      return 'course_assignment'
-    default:
-      return undefined
-  }
-}
 
 function collectStudentEntityIds(scopeIds: string): string[] {
   const ids = new Set<string>()

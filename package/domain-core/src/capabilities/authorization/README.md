@@ -95,10 +95,10 @@ interface ScopeGrant {
 ```ts
 interface EffectiveGrants {
   permissions: ReadonlySet<Permission>
-  scopeGrants: readonly ScopeGrant[]           // legacy API shape
-  scopeIdsByPermission?: Partial<Record<Permission, string>>  // merged paths per permission
-  isElevated: boolean                          // school owner / elevated service account
-  expiresAt?: Date                             // earliest assignment expiry; bounds API cache TTL
+  scopeGrants: readonly ScopeGrant[] // legacy API shape
+  scopeIdsByPermission?: Partial<Record<Permission, string>> // merged paths per permission
+  isElevated: boolean // school owner / elevated service account
+  expiresAt?: Date // earliest assignment expiry; bounds API cache TTL
 }
 ```
 

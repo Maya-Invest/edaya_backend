@@ -69,8 +69,8 @@ export async function checkAssessmentAccess(
     const canAccess = (classSubjectPath
       ? actorGrantCoversAnyResourcePath(actor, CLASS_GROUP_ACCESS_PERMISSIONS, classSubjectPath)
       : false)
-      || actorGrantCoversAnyResourcePath(actor, CLASS_GROUP_ACCESS_PERMISSIONS, classGroupPath)
-      || actorGrantCoversAny(actor, CLASS_GROUP_ACCESS_PERMISSIONS, 'class_group', assessment.classGroupId)
+    || actorGrantCoversAnyResourcePath(actor, CLASS_GROUP_ACCESS_PERMISSIONS, classGroupPath)
+    || actorGrantCoversAny(actor, CLASS_GROUP_ACCESS_PERMISSIONS, 'class_group', assessment.classGroupId)
 
     if (!canAccess) {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)

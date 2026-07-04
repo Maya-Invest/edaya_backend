@@ -1,5 +1,4 @@
 import type { SeedEntityManifestStatus } from './entity-manifest'
-import { demoDataset } from '../datasets/demo'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '../shared/ids'
 import { SEED_DASHBOARD_ACADEMIC_PERIOD_ID, SEED_REFERENCE_DATE } from './dates'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'

@@ -8,8 +8,8 @@ import {
   validateClassActivityEnrollmentSave,
   validateScheduleSave,
 } from '../../../../src/domain'
-import { BusinessRuleViolationError } from '../../../../src/domain/shared/business-rule-error'
 import { DayOfWeek } from '../../../../src/domain/scheduling/schedule'
+import { BusinessRuleViolationError } from '../../../../src/domain/shared/business-rule-error'
 
 function repositories(overrides: Record<string, unknown> = {}) {
   return {

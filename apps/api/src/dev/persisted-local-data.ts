@@ -15,9 +15,9 @@ function usesRepoLocalDataPath(pathValue: string): boolean {
     || normalized.endsWith(`${path.sep}.data`);
 }
 
-/** True when the API uses persisted PGlite + auth SQLite under repo-root `.data/`. */
+/** True when the API uses persisted PGlite under repo-root `.data/`. */
 export function isPersistedLocalDataDeployment(
-  env: Pick<Environment, "RUNTIME" | "DATABASE_URL" | "AUTH_DATABASE_PATH">,
+  env: Pick<Environment, "RUNTIME" | "DATABASE_URL">,
 ): boolean {
   if (env.RUNTIME !== "local") {
     return false;
@@ -28,15 +28,11 @@ export function isPersistedLocalDataDeployment(
   }
 
   const schoolDataDir = env.DATABASE_URL.slice("pglite:".length).trim();
-  if (!schoolDataDir || schoolDataDir === "pglite" || !usesRepoLocalDataPath(schoolDataDir)) {
-    return false;
-  }
-
-  return usesRepoLocalDataPath(env.AUTH_DATABASE_PATH);
+  return Boolean(schoolDataDir && schoolDataDir !== "pglite" && usesRepoLocalDataPath(schoolDataDir));
 }
 
 export function resolveSeedOnStart(
-  env: Pick<Environment, "NODE_ENV" | "RUNTIME" | "DATABASE_URL" | "AUTH_DATABASE_PATH">,
+  env: Pick<Environment, "NODE_ENV" | "RUNTIME" | "DATABASE_URL">,
 ): boolean {
   const raw = process.env.SEED_ON_START?.trim().toLowerCase();
   if (raw === "false" || raw === "0" || raw === "no") {
