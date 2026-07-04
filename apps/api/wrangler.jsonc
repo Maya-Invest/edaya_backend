@@ -54,6 +54,12 @@
       }
     ]
   },
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
+  },
   "env": {
     // Production (`wrangler deploy --env production`):
     "prod": {
