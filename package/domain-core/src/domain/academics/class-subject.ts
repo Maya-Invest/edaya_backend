@@ -1,7 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, anyPermissionAction, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -51,7 +52,7 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
   config({
     repository: repositories.classSubjects,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    read: read(anyPermissionAction([...CLASS_SUBJECT_READ_PERMISSIONS]), noopReadAccess),
     write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateClassSubjectSave,

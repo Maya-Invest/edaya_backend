@@ -1,5 +1,6 @@
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { EffectiveGrants } from '../model/effective-grants'
+import { findActiveAcademicYear } from '../../../application/academic-year'
 import { ELEVATED_STAFF_PERMISSIONS } from '../grants/system-role-permissions'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { resolveStaffGrantsFromPermissionAssignments } from './resolve-staff-permission-assignments-grants'
@@ -65,16 +66,11 @@ export async function tryResolveEffectiveGrantsFromPersistence(
 async function resolveDefaultStaffAcademicYearId(
   args: ResolveEffectiveGrantsArgs,
 ): Promise<string | undefined> {
-  const list = args.repositories.academicYears?.list
-  if (!list) {
+  const academicYears = args.repositories.academicYears
+  if (!academicYears) {
     return undefined
   }
 
-  const years = await list({ schoolId: args.schoolId })
-  if (years.length === 0) {
-    return undefined
-  }
-
-  const activeYear = years.find(year => year.isActive)
-  return activeYear?.id ?? years[0]?.id
+  const year = await findActiveAcademicYear(academicYears, args.schoolId)
+  return year?.id
 }

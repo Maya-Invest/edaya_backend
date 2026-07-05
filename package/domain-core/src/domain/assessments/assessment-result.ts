@@ -3,7 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { config, indirectTenant, anyPermissionAction, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { ASSESSMENT_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
@@ -59,7 +60,7 @@ export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ 
   config({
     repository: repositories.assessmentResults,
     tenant: assessmentResultTenant(),
-    read: read(permissionAction(Permission.GRADE_READ), async (actor, entities, repos) => {
+    read: read(anyPermissionAction([...ASSESSMENT_ACCESS_PERMISSIONS]), async (actor, entities, repos) => {
       const assessments = await repos.assessments.findByIds(unique(entities.map(entity => entity.assessmentId)))
       await policy.checkAssessmentAccess(actor, unique(assessments.map(assessment => assessment.id)))
     }),

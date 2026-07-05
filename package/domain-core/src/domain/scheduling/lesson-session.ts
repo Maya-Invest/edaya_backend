@@ -1,7 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
+import { anyPermissionAction, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
+import { TIMETABLE_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
@@ -93,7 +94,7 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
     repository: repositories.lessonSessions,
     tenant: classGroupLinkedTenant('classGroupId'),
     read: read(
-      permissionAction(Permission.QUERY_TIMETABLE_READ),
+      anyPermissionAction([...TIMETABLE_ACCESS_PERMISSIONS]),
       readByIds((actor, ids) => policy.checkLessonSessionAccess(actor, ids)),
     ),
     write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),

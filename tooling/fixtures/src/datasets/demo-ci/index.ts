@@ -18,6 +18,12 @@ import {
   demoCiSubjectMatters,
   demoCiSubjects,
 } from './school'
+import {
+  demoCiClassResourceAssignments,
+  demoCiResources,
+  demoCiSchedules,
+  demoCiSchedulingSlots,
+} from './domains/scheduling'
 
 export const demoCiDataset = {
   purpose: 'demo-ci',
@@ -37,5 +43,11 @@ export const demoCiDataset = {
     subjects: demoCiSubjects,
     subjectMatters: demoCiSubjectMatters,
     classSubjects: demoCiClassSubjects,
+    resources: demoCiResources,
+    schedules: demoCiSchedules,
+  },
+  extensions: {
+    schedulingSlots: demoCiSchedulingSlots,
+    classResourceAssignments: demoCiClassResourceAssignments,
   },
 } satisfies FixtureDataset<'demo-ci'>

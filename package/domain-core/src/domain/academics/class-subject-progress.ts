@@ -3,7 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../application/entities/entity-config'
+import { config, indirectTenant, anyPermissionAction, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../application/entities/entity-config'
+import { LOGBOOK_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -61,7 +62,7 @@ export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgres
   config({
     repository: repositories.classSubjectProgress,
     tenant: classSubjectProgressTenant(),
-    read: read(permissionAction(Permission.CLASS_LOGBOOK_READ), async (actor, entities) => {
+    read: read(anyPermissionAction([...LOGBOOK_ACCESS_PERMISSIONS]), async (actor, entities) => {
       await policy.checkLessonSessionAccess(actor, unique(entities.map(entity => entity.lessonSessionId)))
     }),
     write: write(permissionAction(Permission.CLASS_LOGBOOK_CREATE), authorizeClassSubjectProgress(policy), authorizeClassSubjectProgressDelete(policy)),

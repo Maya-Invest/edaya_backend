@@ -1,7 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
+import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
+import { CLASS_GROUP_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { CalendarEventScopeKind, StudentClassEnrollmentStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
@@ -76,6 +77,7 @@ export const classGroupConfig: EntityConfigFactory<ClassGroup> = (input) => {
     Permission.SCHOOL_STRUCTURE_CONFIGURE,
     readByIds((actor, ids) => input.policy.checkClassGroupAccess(actor, ids)),
   )
+  config.read.checkModule = anyPermissionAction([...CLASS_GROUP_ACCESS_PERMISSIONS])
   return {
     ...config,
     gates: {

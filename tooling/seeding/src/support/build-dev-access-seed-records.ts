@@ -223,8 +223,8 @@ function buildBaseStaffAssignmentRecords(context: DevSeedContext): readonly Staf
 
   if (context.datasetId === 'demo-ci') {
     return [
-      { id: 'sa-ci-st1-6a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-6a' },
-      { id: 'sa-ci-st1-5a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-5a' },
+      { id: 'sa-ci-st1-6a-math', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classSubjectId: 'ci-cs-6a-math' },
+      { id: 'sa-ci-st1-5a-math', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classSubjectId: 'ci-cs-5a-math' },
       { id: 'sa-ci-st3-6a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6a' },
       { id: 'sa-ci-st2-6b', staffId: 'ci-st2', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6b' },
       { id: 'sa-ci-st3-5a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-5a' },

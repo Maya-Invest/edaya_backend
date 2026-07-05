@@ -1,0 +1,114 @@
+import type { ResourceAssignmentInput, ResourceInput, ScheduleInput } from '@edaya/core'
+import type { FixtureSchedulingSlot } from '../../types'
+import { DayOfWeek, ResourceKind } from '@edaya/core'
+import { DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
+
+export const demoCiResources = [
+  {
+    id: 'ci-r-salle-6a',
+    schoolId: DEMO_CI_SCHOOL_ID,
+    name: 'Salle 6ème A',
+    kind: ResourceKind.Location,
+    capacity: 35,
+    description: 'Bâtiment principal · RDC',
+  },
+  {
+    id: 'ci-r-salle-5a',
+    schoolId: DEMO_CI_SCHOOL_ID,
+    name: 'Salle 5ème A',
+    kind: ResourceKind.Location,
+    capacity: 35,
+    description: 'Bâtiment principal · 1er étage',
+  },
+  {
+    id: 'ci-r-lab-pc',
+    schoolId: DEMO_CI_SCHOOL_ID,
+    name: 'Laboratoire PC',
+    kind: ResourceKind.Location,
+    capacity: 24,
+    description: 'Bâtiment sciences',
+  },
+] as const satisfies readonly ResourceInput[]
+
+export const demoCiClassResourceAssignments = [
+  {
+    id: 'ci-ra-6a-salle',
+    resourceId: 'ci-r-salle-6a',
+    classGroupId: 'ci-6a',
+  },
+  {
+    id: 'ci-ra-5a-salle',
+    resourceId: 'ci-r-salle-5a',
+    classGroupId: 'ci-5a',
+  },
+] as const satisfies readonly ResourceAssignmentInput[]
+
+/** Recurring lesson slots for Mme Touré (ci-st1) — math in 6ème A and 5ème A. */
+export const demoCiSchedulingSlots = [
+  {
+    slotId: 'ci-p-6a-math-mon',
+    teacherId: 'ci-st1',
+    resourceId: 'ci-r-salle-6a',
+    schedule: {
+      id: 'sch-ci-6a-math-mon',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      classGroupId: 'ci-6a',
+      classSubjectId: 'ci-cs-6a-math',
+      title: 'Mathématiques — fractions',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Monday,
+      startTime: '08:15',
+      endTime: '09:00',
+    },
+  },
+  {
+    slotId: 'ci-p-6a-math-wed',
+    teacherId: 'ci-st1',
+    resourceId: undefined,
+    schedule: {
+      id: 'sch-ci-6a-math-wed',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      classGroupId: 'ci-6a',
+      classSubjectId: 'ci-cs-6a-math',
+      title: 'Mathématiques — géométrie',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Wednesday,
+      startTime: '09:15',
+      endTime: '10:00',
+    },
+  },
+  {
+    slotId: 'ci-p-5a-math-tue',
+    teacherId: 'ci-st1',
+    resourceId: 'ci-r-salle-5a',
+    schedule: {
+      id: 'sch-ci-5a-math-tue',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      classGroupId: 'ci-5a',
+      classSubjectId: 'ci-cs-5a-math',
+      title: 'Mathématiques — équations',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Tuesday,
+      startTime: '08:15',
+      endTime: '09:00',
+    },
+  },
+  {
+    slotId: 'ci-p-5a-math-thu',
+    teacherId: 'ci-st1',
+    resourceId: 'ci-r-lab-pc',
+    schedule: {
+      id: 'sch-ci-5a-math-thu',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      classGroupId: 'ci-5a',
+      classSubjectId: 'ci-cs-5a-math',
+      title: 'Mathématiques — probabilités',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Thursday,
+      startTime: '10:00',
+      endTime: '10:45',
+    },
+  },
+] as const satisfies readonly FixtureSchedulingSlot[]
+
+export const demoCiSchedules = demoCiSchedulingSlots.map(slot => slot.schedule) as readonly ScheduleInput[]

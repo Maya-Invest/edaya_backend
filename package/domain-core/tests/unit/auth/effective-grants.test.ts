@@ -308,4 +308,29 @@ describe('resolveEffectiveGrants', () => {
 
     expect(grants.permissions.has(Permission.PAYMENT_READ)).toBe(true)
   })
+
+  test('resolves default academic year when list is a class method', async () => {
+    class AcademicYearStore {
+      async list(filter: { schoolId?: string } = {}) {
+        return filter.schoolId === 'school-1'
+          ? [{ id: 'year-1', schoolId: 'school-1', name: '2025-2026', isActive: true }]
+          : []
+      }
+    }
+
+    const repositories = createRepos()
+    repositories.academicYears = new AcademicYearStore() as unknown as SchoolRepositories['academicYears']
+    await savePermission(repositories, {
+      id: 'spa-read',
+      permission: Permission.PAYMENT_READ,
+    })
+
+    const grants = await resolveEffectiveGrants({
+      staffMemberId: 'staff-1',
+      schoolId: 'school-1',
+      repositories,
+    })
+
+    expect(grants.permissions.has(Permission.PAYMENT_READ)).toBe(true)
+  })
 })

@@ -1,6 +1,7 @@
 import type { GradeLevelInput, SubjectInput } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 import { demoCiDataset } from '../../../src/datasets/demo-ci/index'
+import { demoCiSchedulingSlots } from '../../../src/datasets/demo-ci/domains/scheduling'
 import { demoCiStaffMembers } from '../../../src/datasets/demo-ci/people'
 import {
   demoCiClassGroups,
@@ -22,6 +23,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiSubjects).toHaveLength(8)
     expect(demoCiClassSubjects).toHaveLength(19)
     expect(demoCiDataset.entities.students).toHaveLength(12)
+    expect(demoCiSchedulingSlots).toHaveLength(4)
+    expect(demoCiDataset.extensions?.schedulingSlots).toHaveLength(4)
   })
 
   it('uses French subject and grade level labels', () => {

@@ -8,7 +8,9 @@ Import : `demoCiDataset` depuis `@edaya/fixtures` ou `@edaya/fixtures/datasets/d
 demo-ci/
 ├── index.ts    # demoCiDataset (12 élèves — smoke / tests)
 ├── school.ts   # école, trimestres, niveaux collège, matières MENA-CI
-└── people.ts   # élèves, personnel, parents (noms ivoiriens)
+├── people.ts   # élèves, personnel, parents (noms ivoiriens)
+└── domains/
+    └── scheduling.ts  # emploi du temps Mme Touré (ci-st1)
 ```
 
 | Élément | Valeur |
@@ -29,7 +31,7 @@ Le seed dev utilise **`demoCiDataset`** par défaut (`sch-edaya-ci-cocody`, 12 �
 |--------|------|
 | `a.kone@ecole-ci.edaya.dev` | Propriétaire (ci-st8) |
 | `j.aka@ecole-ci.edaya.dev` | Directeur (ci-st5) |
-| `a.toure@ecole-ci.edaya.dev` | Enseignante (ci-st1) |
+| `a.toure@ecole-ci.edaya.dev` | Enseignante (ci-st1) — maths en 6ème A et 5ème A |
 
 Mot de passe : `DevPassword1!`
 

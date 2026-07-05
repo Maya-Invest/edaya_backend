@@ -3,7 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { config, indirectTenant, anyPermissionAction, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { ENROLLMENT_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -230,7 +231,7 @@ export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrol
   config({
     repository: repositories.enrollments,
     tenant: studentLinkedTenant(),
-    read: read(permissionAction(Permission.QUERY_ENROLLMENT_HISTORY_READ), async (actor, entities) => {
+    read: read(anyPermissionAction([...ENROLLMENT_ACCESS_PERMISSIONS]), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
     write: write(permissionAction(Permission.ENROLLMENT_CREATE), authorizeStudentLinked(policy), authorizeStudentLinkedDelete(policy)),

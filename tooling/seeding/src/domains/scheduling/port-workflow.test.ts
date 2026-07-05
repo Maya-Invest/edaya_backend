@@ -7,7 +7,7 @@ import type {
   ScheduleSeedRecord,
   SchedulingSeedPort,
 } from './port'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset, demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevScheduling } from './workflow'
 
@@ -57,5 +57,31 @@ describe('scheduling seed port workflow', () => {
       slots.filter(slot => slot.resourceId).length,
     )
     expect(progress).toHaveLength(demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
+  })
+
+  test('seeds demo-ci math slots for ci-st1', async () => {
+    const slots = demoCiDataset.extensions?.schedulingSlots ?? []
+    const schedules: ScheduleSeedRecord[] = []
+    const staffAssignments: LessonSessionStaffAssignmentSeedRecord[] = []
+    const port: SchedulingSeedPort = {
+      saveResource: async () => {},
+      assignResourceToClass: async () => {},
+      createSchedule: async (record) => {
+        schedules.push(record)
+      },
+      materializeSchedule: async () => {},
+      assignStaffToLessonSession: async (record) => {
+        staffAssignments.push(record)
+      },
+      assignResourceToLessonSession: async () => {},
+      recordLessonSessionProgress: async () => {},
+    }
+
+    await seedDevScheduling(port, demoCiDataset)
+
+    expect(slots).toHaveLength(4)
+    expect(schedules).toHaveLength(4)
+    expect(staffAssignments).toHaveLength(4)
+    expect(staffAssignments.every(record => record.staffId === 'ci-st1')).toBe(true)
   })
 })

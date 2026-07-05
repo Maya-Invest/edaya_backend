@@ -3,9 +3,10 @@ import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-ov
 import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
 import { AuthorizationError, AuthorizationErrorCode, Permission } from '../capabilities/authorization'
+import { TIMETABLE_ACCESS_PERMISSIONS } from '../capabilities/authorization/policy/resolvers/permission-sets'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
-import { permissionAction } from './entities/entity-config'
+import { anyPermissionAction, permissionAction } from './entities/entity-config'
 import { buildClassGroupTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
@@ -86,7 +87,7 @@ export class SchoolService {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     }
     this.checkActorSchool(classGroup.schoolId)
-    permissionAction(Permission.QUERY_TIMETABLE_READ)(this.baseService.actor)
+    anyPermissionAction([...TIMETABLE_ACCESS_PERMISSIONS])(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkClassGroupAccess(
       this.baseService.actor,
       [input.classGroupId],

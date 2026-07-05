@@ -1,6 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { directPermissionEntityConfig, anyPermissionAction } from '../../application/entities/entity-config'
+import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -74,10 +75,13 @@ export class Subject {
   }
 }
 
-export const subjectConfig: EntityConfigFactory<Subject> = input =>
-  directPermissionEntityConfig(
+export const subjectConfig: EntityConfigFactory<Subject> = (input) => {
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.subjects,
     Permission.QUERY_CLASS_CURRICULUM_READ,
     Permission.ACADEMIC_PROGRAM_UPDATE,
   )
+  config.read.checkModule = anyPermissionAction([...CLASS_SUBJECT_READ_PERMISSIONS])
+  return config
+}

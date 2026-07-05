@@ -3,7 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
+import { config, indirectTenant, anyPermissionAction, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
+import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -58,7 +59,7 @@ export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> =
   config({
     repository: repositories.classSubjectMatters,
     tenant: classSubjectMatterTenant(),
-    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
+    read: read(anyPermissionAction([...CURRICULUM_READ_PERMISSIONS]), noopReadAccess),
     write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
     gates: {
       preSave: validateClassSubjectMatterSave,
