@@ -85,7 +85,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
 
   const localLoader = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/env/local-loader.ts')
   if (localLoader) {
-    if (localLoader.includes('loadEnvFile(".dev.vars")') || localLoader.includes("loadEnvFile('.dev.vars')")) {
+    if (localLoader.includes('loadEnvFile(".dev.vars")') || localLoader.includes('loadEnvFile(\'.dev.vars\')')) {
       violations.push({
         label: 'local env loader',
         message: 'local-loader.ts must not load apps/api/.dev.vars (Wrangler-only)',

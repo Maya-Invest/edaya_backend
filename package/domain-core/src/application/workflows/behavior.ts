@@ -1,4 +1,6 @@
 import type {
+  DisciplinaryAction,
+  DisciplinaryActionInput,
   Incident,
   IncidentInput,
   IncidentInvolvementRole,
@@ -11,6 +13,7 @@ import {
   runWorkflowNotifications,
 } from '../../capabilities/notifications'
 import {
+  DisciplinaryAction as DisciplinaryActionEntity,
   DisciplinaryActionKind,
   Incident as IncidentEntity,
   IncidentStatus,
@@ -88,9 +91,19 @@ export interface ResolveIncidentWithOutcomesResult {
   sanctions: StudentDisciplinaryAction[]
 }
 
+export type ConfigureDisciplinaryActionInput = DisciplinaryActionInput & { schoolId?: string }
+
 export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async configureDisciplinaryAction(input: DisciplinaryActionInput & { schoolId?: string }): Promise<DisciplinaryAction> {
+    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+    this.checkActorSchool(schoolId)
+    const action = new DisciplinaryActionEntity({ ...input, schoolId })
+    await this.baseService.entities.disciplinaryActions.save(action)
+    return action
   }
 
   async recordIncident(input: RecordIncidentInput): Promise<Incident> {

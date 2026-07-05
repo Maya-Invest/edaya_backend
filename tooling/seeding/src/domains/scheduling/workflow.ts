@@ -31,6 +31,17 @@ export async function seedDevScheduling(
     })
   }
 
+  for (const assignment of dataset.extensions?.classResourceAssignments ?? []) {
+    if (!assignment.classGroupId) {
+      throw new Error(`Class resource assignment ${assignment.id} is missing classGroupId`)
+    }
+    await port.assignResourceToClass({
+      id: assignment.id,
+      resourceId: assignment.resourceId,
+      classGroupId: assignment.classGroupId,
+    })
+  }
+
   for (const slot of slots) {
     const { schedule } = slot
     if (!schedule.dayOfWeek) {

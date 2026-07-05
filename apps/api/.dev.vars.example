@@ -41,7 +41,7 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # --- Not used in Wrangler / worker ---
 # PORT= / DATABASE_URL=pglite: / RUN_MIGRATIONS_ON_STARTUP= / LOCAL_FILES_* / CRON_JOB_KEYS= / AUTH_EMAIL_LOG_OTP=
 #   → local only: `apps/api/.env`
-# SEED_ON_START= / GRAPHQL_* / LOCAL_FILES_PORT=
+# GRAPHQL_* / LOCAL_FILES_PORT=
 #   → local only
 
 # Upload deploy secrets (from apps/api):

@@ -2067,6 +2067,435 @@
           "academicPeriodId"
         ]
       },
+      "GradeLevel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "cycle": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "name",
+          "order"
+        ]
+      },
+      "GradeLevelConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "cycle": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "name",
+          "order"
+        ]
+      },
+      "PeriodDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "endTime": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "isBreak": {
+            "type": "boolean",
+            "default": false
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "academicYearId",
+          "label",
+          "order",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "PeriodDefinitionConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "endTime": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "isBreak": {
+            "type": "boolean",
+            "default": false
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "academicYearId",
+          "label",
+          "order",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "Resource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "location",
+              "equipment",
+              "vehicle",
+              "other"
+            ]
+          },
+          "capacity": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "name",
+          "kind"
+        ]
+      },
+      "ResourceConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "location",
+              "equipment",
+              "vehicle",
+              "other"
+            ]
+          },
+          "capacity": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ]
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Sport",
+              "Arts",
+              "Science",
+              "Language",
+              "Wellbeing"
+            ]
+          },
+          "coach": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schedule": {
+            "type": "string",
+            "minLength": 1
+          },
+          "participants": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {},
+          "endDate": {},
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "name",
+          "category",
+          "coach",
+          "schedule",
+          "participants",
+          "capacity",
+          "description",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "ActivityConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Sport",
+              "Arts",
+              "Science",
+              "Language",
+              "Wellbeing"
+            ]
+          },
+          "coach": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schedule": {
+            "type": "string",
+            "minLength": 1
+          },
+          "participants": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {},
+          "endDate": {},
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "coach",
+          "schedule",
+          "participants",
+          "capacity",
+          "description",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "ActivityEnrollment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "activityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "pending",
+              "denied"
+            ]
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "activityId",
+          "studentId",
+          "status"
+        ]
+      },
+      "ActivityEnrollmentConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "activityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "pending",
+              "denied"
+            ]
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "activityId",
+          "studentId",
+          "status"
+        ]
+      },
       "ClassGroup": {
         "type": "object",
         "properties": {
@@ -2675,6 +3104,88 @@
         ]
       },
       "LinkActorSubjectCommand": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "staffMemberId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "guardianId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "subjectId"
+        ]
+      },
+      "RelinkActorSubjectResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "staff"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/StaffMember"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "guardian"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Guardian"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "student"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Student"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          }
+        ]
+      },
+      "RelinkActorSubjectCommand": {
         "type": "object",
         "properties": {
           "subjectId": {
@@ -3570,6 +4081,348 @@
           "academicYearId",
           "responsibility",
           "lessonSessionId"
+        ]
+      },
+      "StaffPermissionAssignment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "staffId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "permission": {
+            "type": "string",
+            "enum": [
+              "SCHOOL_STRUCTURE_READ",
+              "SCHOOL_STRUCTURE_CONFIGURE",
+              "SCHOOL_LIFECYCLE_MANAGE",
+              "STAFF_READ",
+              "STAFF_CREATE",
+              "STAFF_UPDATE",
+              "STAFF_ARCHIVE",
+              "ACCESS_CONTROL_READ",
+              "ACCESS_CONTROL_CONFIGURE",
+              "ACCESS_CONTROL_ASSIGN",
+              "SERVICE_ACCOUNT_READ",
+              "SERVICE_ACCOUNT_CREATE",
+              "SERVICE_ACCOUNT_UPDATE",
+              "SERVICE_ACCOUNT_REVOKE",
+              "SERVICE_ACCOUNT_ROTATE_KEY",
+              "ACADEMIC_PROGRAM_READ",
+              "ACADEMIC_PROGRAM_CREATE",
+              "ACADEMIC_PROGRAM_UPDATE",
+              "ACADEMIC_PROGRAM_DELETE",
+              "ACADEMIC_PROGRAM_ASSIGN",
+              "STUDENT_READ",
+              "STUDENT_CREATE",
+              "STUDENT_UPDATE",
+              "STUDENT_ARCHIVE",
+              "STUDENT_HEALTH_READ",
+              "STUDENT_HEALTH_UPDATE",
+              "PARENT_READ",
+              "PARENT_CREATE",
+              "PARENT_UPDATE",
+              "PARENT_ARCHIVE",
+              "ENROLLMENT_READ",
+              "ENROLLMENT_CREATE",
+              "ENROLLMENT_UPDATE",
+              "ENROLLMENT_ARCHIVE",
+              "DISCIPLINE_READ",
+              "DISCIPLINE_CREATE",
+              "DISCIPLINE_UPDATE",
+              "DISCIPLINE_VALIDATE",
+              "DISCIPLINE_ARCHIVE",
+              "ATTENDANCE_READ",
+              "ATTENDANCE_RECORD",
+              "ATTENDANCE_UPDATE",
+              "ATTENDANCE_JUSTIFY",
+              "ATTENDANCE_VALIDATE",
+              "EXAM_CONFIG_READ",
+              "EXAM_CONFIG_CREATE",
+              "EXAM_CONFIG_UPDATE",
+              "EXAM_CONFIG_CONFIGURE",
+              "EXAM_CONFIG_LOCK",
+              "EXAM_CONFIG_UNLOCK",
+              "GRADE_READ",
+              "GRADE_INPUT",
+              "GRADE_UPDATE",
+              "GRADE_VALIDATE",
+              "GRADE_LOCK",
+              "GRADE_UNLOCK",
+              "GRADE_PUBLISH",
+              "REPORT_CARD_READ",
+              "REPORT_CARD_CONFIGURE",
+              "REPORT_CARD_GENERATE",
+              "REPORT_CARD_LOCK",
+              "REPORT_CARD_UNLOCK",
+              "REPORT_CARD_SIGN",
+              "REPORT_CARD_PUBLISH",
+              "REPORT_CARD_EXPORT",
+              "CLASS_LOGBOOK_READ",
+              "CLASS_LOGBOOK_CREATE",
+              "CLASS_LOGBOOK_UPDATE",
+              "CLASS_LOGBOOK_VALIDATE",
+              "TIMETABLE_READ",
+              "TIMETABLE_CREATE",
+              "TIMETABLE_UPDATE",
+              "TIMETABLE_PUBLISH",
+              "TIMETABLE_LOCK",
+              "TIMETABLE_UNLOCK",
+              "FINANCIAL_CONFIG_READ",
+              "FINANCIAL_CONFIG_CONFIGURE",
+              "FINANCIAL_CONFIG_UPDATE",
+              "PAYMENT_READ",
+              "PAYMENT_RECORD",
+              "PAYMENT_CANCEL",
+              "PAYMENT_REVERSE",
+              "PAYMENT_EXPORT",
+              "FINANCIAL_REPORT_READ",
+              "FINANCIAL_REPORT_EXPORT",
+              "COMMUNICATION_READ",
+              "COMMUNICATION_CREATE",
+              "COMMUNICATION_UPDATE",
+              "COMMUNICATION_SEND",
+              "COMMUNICATION_APPROVE",
+              "COMMUNICATION_DELETE",
+              "RESOURCE_READ",
+              "RESOURCE_CONFIGURE",
+              "ATTACHMENT_READ",
+              "ATTACHMENT_CONFIGURE",
+              "QUERY_WORKSPACE_READ",
+              "QUERY_OVERVIEW_READ",
+              "QUERY_STUDENT_DIRECTORY_READ",
+              "QUERY_STUDENT_DETAIL_READ",
+              "QUERY_ENROLLMENT_HISTORY_READ",
+              "QUERY_REPORT_CARD_DETAIL_READ",
+              "QUERY_COMMUNICATIONS_READ",
+              "QUERY_CALENDAR_READ",
+              "QUERY_CURRICULUM_PROGRESS_READ",
+              "QUERY_CLASS_DIRECTORY_READ",
+              "QUERY_CLASS_CURRICULUM_READ",
+              "QUERY_TIMETABLE_READ",
+              "QUERY_ATTENDANCE_READ",
+              "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
+              "QUERY_GUARDIAN_SELF_READ",
+              "QUERY_OVERDUE_FEES_READ",
+              "PLATFORM_REGISTER_SCHOOL"
+            ]
+          },
+          "scopeIds": {
+            "type": "string",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "expired"
+            ],
+            "default": "active"
+          },
+          "startsAt": {
+            "nullable": true
+          },
+          "endsAt": {
+            "nullable": true
+          },
+          "sourceStaffAssignmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {},
+          "updatedAt": {}
+        },
+        "required": [
+          "id",
+          "staffId",
+          "schoolId",
+          "academicYearId",
+          "permission"
+        ]
+      },
+      "StaffPermissionAssignmentConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "staffId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "permission": {
+            "type": "string",
+            "enum": [
+              "SCHOOL_STRUCTURE_READ",
+              "SCHOOL_STRUCTURE_CONFIGURE",
+              "SCHOOL_LIFECYCLE_MANAGE",
+              "STAFF_READ",
+              "STAFF_CREATE",
+              "STAFF_UPDATE",
+              "STAFF_ARCHIVE",
+              "ACCESS_CONTROL_READ",
+              "ACCESS_CONTROL_CONFIGURE",
+              "ACCESS_CONTROL_ASSIGN",
+              "SERVICE_ACCOUNT_READ",
+              "SERVICE_ACCOUNT_CREATE",
+              "SERVICE_ACCOUNT_UPDATE",
+              "SERVICE_ACCOUNT_REVOKE",
+              "SERVICE_ACCOUNT_ROTATE_KEY",
+              "ACADEMIC_PROGRAM_READ",
+              "ACADEMIC_PROGRAM_CREATE",
+              "ACADEMIC_PROGRAM_UPDATE",
+              "ACADEMIC_PROGRAM_DELETE",
+              "ACADEMIC_PROGRAM_ASSIGN",
+              "STUDENT_READ",
+              "STUDENT_CREATE",
+              "STUDENT_UPDATE",
+              "STUDENT_ARCHIVE",
+              "STUDENT_HEALTH_READ",
+              "STUDENT_HEALTH_UPDATE",
+              "PARENT_READ",
+              "PARENT_CREATE",
+              "PARENT_UPDATE",
+              "PARENT_ARCHIVE",
+              "ENROLLMENT_READ",
+              "ENROLLMENT_CREATE",
+              "ENROLLMENT_UPDATE",
+              "ENROLLMENT_ARCHIVE",
+              "DISCIPLINE_READ",
+              "DISCIPLINE_CREATE",
+              "DISCIPLINE_UPDATE",
+              "DISCIPLINE_VALIDATE",
+              "DISCIPLINE_ARCHIVE",
+              "ATTENDANCE_READ",
+              "ATTENDANCE_RECORD",
+              "ATTENDANCE_UPDATE",
+              "ATTENDANCE_JUSTIFY",
+              "ATTENDANCE_VALIDATE",
+              "EXAM_CONFIG_READ",
+              "EXAM_CONFIG_CREATE",
+              "EXAM_CONFIG_UPDATE",
+              "EXAM_CONFIG_CONFIGURE",
+              "EXAM_CONFIG_LOCK",
+              "EXAM_CONFIG_UNLOCK",
+              "GRADE_READ",
+              "GRADE_INPUT",
+              "GRADE_UPDATE",
+              "GRADE_VALIDATE",
+              "GRADE_LOCK",
+              "GRADE_UNLOCK",
+              "GRADE_PUBLISH",
+              "REPORT_CARD_READ",
+              "REPORT_CARD_CONFIGURE",
+              "REPORT_CARD_GENERATE",
+              "REPORT_CARD_LOCK",
+              "REPORT_CARD_UNLOCK",
+              "REPORT_CARD_SIGN",
+              "REPORT_CARD_PUBLISH",
+              "REPORT_CARD_EXPORT",
+              "CLASS_LOGBOOK_READ",
+              "CLASS_LOGBOOK_CREATE",
+              "CLASS_LOGBOOK_UPDATE",
+              "CLASS_LOGBOOK_VALIDATE",
+              "TIMETABLE_READ",
+              "TIMETABLE_CREATE",
+              "TIMETABLE_UPDATE",
+              "TIMETABLE_PUBLISH",
+              "TIMETABLE_LOCK",
+              "TIMETABLE_UNLOCK",
+              "FINANCIAL_CONFIG_READ",
+              "FINANCIAL_CONFIG_CONFIGURE",
+              "FINANCIAL_CONFIG_UPDATE",
+              "PAYMENT_READ",
+              "PAYMENT_RECORD",
+              "PAYMENT_CANCEL",
+              "PAYMENT_REVERSE",
+              "PAYMENT_EXPORT",
+              "FINANCIAL_REPORT_READ",
+              "FINANCIAL_REPORT_EXPORT",
+              "COMMUNICATION_READ",
+              "COMMUNICATION_CREATE",
+              "COMMUNICATION_UPDATE",
+              "COMMUNICATION_SEND",
+              "COMMUNICATION_APPROVE",
+              "COMMUNICATION_DELETE",
+              "RESOURCE_READ",
+              "RESOURCE_CONFIGURE",
+              "ATTACHMENT_READ",
+              "ATTACHMENT_CONFIGURE",
+              "QUERY_WORKSPACE_READ",
+              "QUERY_OVERVIEW_READ",
+              "QUERY_STUDENT_DIRECTORY_READ",
+              "QUERY_STUDENT_DETAIL_READ",
+              "QUERY_ENROLLMENT_HISTORY_READ",
+              "QUERY_REPORT_CARD_DETAIL_READ",
+              "QUERY_COMMUNICATIONS_READ",
+              "QUERY_CALENDAR_READ",
+              "QUERY_CURRICULUM_PROGRESS_READ",
+              "QUERY_CLASS_DIRECTORY_READ",
+              "QUERY_CLASS_CURRICULUM_READ",
+              "QUERY_TIMETABLE_READ",
+              "QUERY_ATTENDANCE_READ",
+              "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
+              "QUERY_GUARDIAN_SELF_READ",
+              "QUERY_OVERDUE_FEES_READ",
+              "PLATFORM_REGISTER_SCHOOL"
+            ]
+          },
+          "scopeIds": {
+            "type": "string",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "expired"
+            ],
+            "default": "active"
+          },
+          "startsAt": {
+            "nullable": true
+          },
+          "endsAt": {
+            "nullable": true
+          },
+          "sourceStaffAssignmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {},
+          "updatedAt": {}
+        },
+        "required": [
+          "id",
+          "staffId",
+          "schoolId",
+          "academicYearId",
+          "permission"
         ]
       },
       "ResourceAssignment": {
@@ -4868,6 +5721,201 @@
             "minLength": 1
           }
         }
+      },
+      "Subject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "shortName": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "defaultCoefficient": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Scientifique",
+              "Littéraire",
+              "Langues",
+              "Sciences humaines",
+              "Sport",
+              "Arts"
+            ],
+            "default": "Scientifique"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "mint",
+              "sky",
+              "warm"
+            ],
+            "default": "mint"
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "name"
+        ]
+      },
+      "SubjectConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "shortName": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "defaultCoefficient": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Scientifique",
+              "Littéraire",
+              "Langues",
+              "Sciences humaines",
+              "Sport",
+              "Arts"
+            ],
+            "default": "Scientifique"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "mint",
+              "sky",
+              "warm"
+            ],
+            "default": "mint"
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "SubjectMatter": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "sequenceOrder": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "estimatedHours": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "subjectId",
+          "name",
+          "sequenceOrder"
+        ]
+      },
+      "SubjectMatterConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "sequenceOrder": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "estimatedHours": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "subjectId",
+          "name",
+          "sequenceOrder"
+        ]
       },
       "ClassSubject": {
         "type": "object",
@@ -6568,6 +7616,97 @@
           "role"
         ]
       },
+      "DisciplinaryAction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sanction",
+              "reward"
+            ],
+            "default": "sanction"
+          },
+          "severity": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "defaultDurationDays": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "name"
+        ]
+      },
+      "DisciplinaryActionConfigCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sanction",
+              "reward"
+            ],
+            "default": "sanction"
+          },
+          "severity": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "defaultDurationDays": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "StudentDisciplinaryAction": {
         "type": "object",
         "properties": {
@@ -8246,6 +9385,28 @@
           "reason"
         ]
       },
+      "RequestAttendanceJustificationCommand": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "attendanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "studentId",
+          "attendanceId",
+          "reason"
+        ]
+      },
       "Announcement": {
         "type": "object",
         "properties": {
@@ -9431,54 +10592,6 @@
           "entities"
         ]
       },
-      "PeriodDefinition": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "label": {
-            "type": "string",
-            "minLength": 1
-          },
-          "order": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "startTime": {
-            "type": "string",
-            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
-          },
-          "endTime": {
-            "type": "string",
-            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
-          },
-          "isBreak": {
-            "type": "boolean",
-            "default": false
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "academicYearId",
-          "label",
-          "order",
-          "startTime",
-          "endTime"
-        ]
-      },
       "Filter_4": {
         "type": "object"
       },
@@ -9494,40 +10607,6 @@
         },
         "required": [
           "entities"
-        ]
-      },
-      "GradeLevel": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "order": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "cycle": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "name",
-          "order"
         ]
       },
       "Filter_5": {
@@ -9598,177 +10677,6 @@
           "entities"
         ]
       },
-      "StaffPermissionAssignment": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "staffId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "permission": {
-            "type": "string",
-            "enum": [
-              "SCHOOL_STRUCTURE_READ",
-              "SCHOOL_STRUCTURE_CONFIGURE",
-              "SCHOOL_LIFECYCLE_MANAGE",
-              "STAFF_READ",
-              "STAFF_CREATE",
-              "STAFF_UPDATE",
-              "STAFF_ARCHIVE",
-              "ACCESS_CONTROL_READ",
-              "ACCESS_CONTROL_CONFIGURE",
-              "ACCESS_CONTROL_ASSIGN",
-              "SERVICE_ACCOUNT_READ",
-              "SERVICE_ACCOUNT_CREATE",
-              "SERVICE_ACCOUNT_UPDATE",
-              "SERVICE_ACCOUNT_REVOKE",
-              "SERVICE_ACCOUNT_ROTATE_KEY",
-              "ACADEMIC_PROGRAM_READ",
-              "ACADEMIC_PROGRAM_CREATE",
-              "ACADEMIC_PROGRAM_UPDATE",
-              "ACADEMIC_PROGRAM_DELETE",
-              "ACADEMIC_PROGRAM_ASSIGN",
-              "STUDENT_READ",
-              "STUDENT_CREATE",
-              "STUDENT_UPDATE",
-              "STUDENT_ARCHIVE",
-              "STUDENT_HEALTH_READ",
-              "STUDENT_HEALTH_UPDATE",
-              "PARENT_READ",
-              "PARENT_CREATE",
-              "PARENT_UPDATE",
-              "PARENT_ARCHIVE",
-              "ENROLLMENT_READ",
-              "ENROLLMENT_CREATE",
-              "ENROLLMENT_UPDATE",
-              "ENROLLMENT_ARCHIVE",
-              "DISCIPLINE_READ",
-              "DISCIPLINE_CREATE",
-              "DISCIPLINE_UPDATE",
-              "DISCIPLINE_VALIDATE",
-              "DISCIPLINE_ARCHIVE",
-              "ATTENDANCE_READ",
-              "ATTENDANCE_RECORD",
-              "ATTENDANCE_UPDATE",
-              "ATTENDANCE_JUSTIFY",
-              "ATTENDANCE_VALIDATE",
-              "EXAM_CONFIG_READ",
-              "EXAM_CONFIG_CREATE",
-              "EXAM_CONFIG_UPDATE",
-              "EXAM_CONFIG_CONFIGURE",
-              "EXAM_CONFIG_LOCK",
-              "EXAM_CONFIG_UNLOCK",
-              "GRADE_READ",
-              "GRADE_INPUT",
-              "GRADE_UPDATE",
-              "GRADE_VALIDATE",
-              "GRADE_LOCK",
-              "GRADE_UNLOCK",
-              "GRADE_PUBLISH",
-              "REPORT_CARD_READ",
-              "REPORT_CARD_CONFIGURE",
-              "REPORT_CARD_GENERATE",
-              "REPORT_CARD_LOCK",
-              "REPORT_CARD_UNLOCK",
-              "REPORT_CARD_SIGN",
-              "REPORT_CARD_PUBLISH",
-              "REPORT_CARD_EXPORT",
-              "CLASS_LOGBOOK_READ",
-              "CLASS_LOGBOOK_CREATE",
-              "CLASS_LOGBOOK_UPDATE",
-              "CLASS_LOGBOOK_VALIDATE",
-              "TIMETABLE_READ",
-              "TIMETABLE_CREATE",
-              "TIMETABLE_UPDATE",
-              "TIMETABLE_PUBLISH",
-              "TIMETABLE_LOCK",
-              "TIMETABLE_UNLOCK",
-              "FINANCIAL_CONFIG_READ",
-              "FINANCIAL_CONFIG_CONFIGURE",
-              "FINANCIAL_CONFIG_UPDATE",
-              "PAYMENT_READ",
-              "PAYMENT_RECORD",
-              "PAYMENT_CANCEL",
-              "PAYMENT_REVERSE",
-              "PAYMENT_EXPORT",
-              "FINANCIAL_REPORT_READ",
-              "FINANCIAL_REPORT_EXPORT",
-              "COMMUNICATION_READ",
-              "COMMUNICATION_CREATE",
-              "COMMUNICATION_UPDATE",
-              "COMMUNICATION_SEND",
-              "COMMUNICATION_APPROVE",
-              "COMMUNICATION_DELETE",
-              "RESOURCE_READ",
-              "RESOURCE_CONFIGURE",
-              "ATTACHMENT_READ",
-              "ATTACHMENT_CONFIGURE",
-              "QUERY_WORKSPACE_READ",
-              "QUERY_OVERVIEW_READ",
-              "QUERY_STUDENT_DIRECTORY_READ",
-              "QUERY_STUDENT_DETAIL_READ",
-              "QUERY_ENROLLMENT_HISTORY_READ",
-              "QUERY_REPORT_CARD_DETAIL_READ",
-              "QUERY_COMMUNICATIONS_READ",
-              "QUERY_CALENDAR_READ",
-              "QUERY_CURRICULUM_PROGRESS_READ",
-              "QUERY_CLASS_DIRECTORY_READ",
-              "QUERY_CLASS_CURRICULUM_READ",
-              "QUERY_TIMETABLE_READ",
-              "QUERY_ATTENDANCE_READ",
-              "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
-              "QUERY_GUARDIAN_SELF_READ",
-              "QUERY_OVERDUE_FEES_READ",
-              "PLATFORM_REGISTER_SCHOOL"
-            ]
-          },
-          "scopeIds": {
-            "type": "string",
-            "default": ""
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "active",
-              "inactive",
-              "expired"
-            ],
-            "default": "active"
-          },
-          "startsAt": {
-            "nullable": true
-          },
-          "endsAt": {
-            "nullable": true
-          },
-          "sourceStaffAssignmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {},
-          "updatedAt": {}
-        },
-        "required": [
-          "id",
-          "staffId",
-          "schoolId",
-          "academicYearId",
-          "permission"
-        ]
-      },
       "Filter_9": {
         "type": "object"
       },
@@ -9801,50 +10709,6 @@
         },
         "required": [
           "entities"
-        ]
-      },
-      "Resource": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "location",
-              "equipment",
-              "vehicle",
-              "other"
-            ]
-          },
-          "capacity": {
-            "type": "integer",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "name",
-          "kind"
         ]
       },
       "Filter_11": {
@@ -10134,66 +10998,6 @@
           "entities"
         ]
       },
-      "Subject": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "shortName": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "code": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "defaultCoefficient": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "Scientifique",
-              "Littéraire",
-              "Langues",
-              "Sciences humaines",
-              "Sport",
-              "Arts"
-            ],
-            "default": "Scientifique"
-          },
-          "color": {
-            "type": "string",
-            "enum": [
-              "mint",
-              "sky",
-              "warm"
-            ],
-            "default": "mint"
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "name"
-        ]
-      },
       "Filter_26": {
         "type": "object"
       },
@@ -10209,46 +11013,6 @@
         },
         "required": [
           "entities"
-        ]
-      },
-      "SubjectMatter": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "subjectId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "sequenceOrder": {
-            "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "estimatedHours": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "subjectId",
-          "name",
-          "sequenceOrder"
         ]
       },
       "Filter_27": {
@@ -10370,70 +11134,6 @@
           "entities"
         ]
       },
-      "Activity": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "Sport",
-              "Arts",
-              "Science",
-              "Language",
-              "Wellbeing"
-            ]
-          },
-          "coach": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schedule": {
-            "type": "string",
-            "minLength": 1
-          },
-          "participants": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "capacity": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "description": {
-            "type": "string",
-            "minLength": 1
-          },
-          "startDate": {},
-          "endDate": {},
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "name",
-          "category",
-          "coach",
-          "schedule",
-          "participants",
-          "capacity",
-          "description",
-          "startDate",
-          "endDate"
-        ]
-      },
       "Filter_34": {
         "type": "object"
       },
@@ -10449,38 +11149,6 @@
         },
         "required": [
           "entities"
-        ]
-      },
-      "ActivityEnrollment": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "activityId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "studentId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "approved",
-              "pending",
-              "denied"
-            ]
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "activityId",
-          "studentId",
-          "status"
         ]
       },
       "Filter_35": {
@@ -10759,54 +11427,6 @@
         },
         "required": [
           "entities"
-        ]
-      },
-      "DisciplinaryAction": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "sanction",
-              "reward"
-            ],
-            "default": "sanction"
-          },
-          "severity": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "defaultDurationDays": {
-            "type": "integer",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "name"
         ]
       },
       "Filter_50": {
@@ -14450,6 +15070,656 @@
         }
       }
     },
+    "/core/commands/configure-grade-level": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-grade-level",
+        "operationId": "commands.configureGradeLevel",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureGradeLevel",
+        "x-edaya-command-public-name": "configure-grade-level",
+        "x-edaya-request-schema": "GradeLevelConfigCommand",
+        "x-edaya-response-schema": "GradeLevel",
+        "requestBody": {
+          "description": "configure-grade-level payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeLevelConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-grade-level",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-period-definition": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-period-definition",
+        "operationId": "commands.configurePeriodDefinition",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configurePeriodDefinition",
+        "x-edaya-command-public-name": "configure-period-definition",
+        "x-edaya-request-schema": "PeriodDefinitionConfigCommand",
+        "x-edaya-response-schema": "PeriodDefinition",
+        "requestBody": {
+          "description": "configure-period-definition payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PeriodDefinitionConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-period-definition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeriodDefinition"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-resource": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-resource",
+        "operationId": "commands.configureResource",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureResource",
+        "x-edaya-command-public-name": "configure-resource",
+        "x-edaya-request-schema": "ResourceConfigCommand",
+        "x-edaya-response-schema": "Resource",
+        "requestBody": {
+          "description": "configure-resource payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-activity": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-activity",
+        "operationId": "commands.configureActivity",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureActivity",
+        "x-edaya-command-public-name": "configure-activity",
+        "x-edaya-request-schema": "ActivityConfigCommand",
+        "x-edaya-response-schema": "Activity",
+        "requestBody": {
+          "description": "configure-activity payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/enroll-student-in-activity": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "enroll-student-in-activity",
+        "operationId": "commands.enrollStudentInActivity",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "enrollStudentInActivity",
+        "x-edaya-command-public-name": "enroll-student-in-activity",
+        "x-edaya-request-schema": "ActivityEnrollmentConfigCommand",
+        "x-edaya-response-schema": "ActivityEnrollment",
+        "requestBody": {
+          "description": "enroll-student-in-activity payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityEnrollmentConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed enroll-student-in-activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityEnrollment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/create-class-group": {
       "post": {
         "tags": [
@@ -15129,6 +16399,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LinkActorSubjectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/relink-actor-subject": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "relink-actor-subject",
+        "operationId": "commands.relinkActorSubject",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "relinkActorSubject",
+        "x-edaya-command-public-name": "relink-actor-subject",
+        "x-edaya-request-schema": "RelinkActorSubjectCommand",
+        "x-edaya-response-schema": "RelinkActorSubjectResponse",
+        "requestBody": {
+          "description": "relink-actor-subject payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelinkActorSubjectCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed relink-actor-subject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelinkActorSubjectResponse"
                 }
               }
             }
@@ -16039,6 +17439,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StaffAssignment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/assign-staff-permission": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "assign-staff-permission",
+        "operationId": "commands.assignStaffPermission",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "assignStaffPermission",
+        "x-edaya-command-public-name": "assign-staff-permission",
+        "x-edaya-request-schema": "StaffPermissionAssignmentConfigCommand",
+        "x-edaya-response-schema": "StaffPermissionAssignment",
+        "requestBody": {
+          "description": "assign-staff-permission payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffPermissionAssignmentConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed assign-staff-permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermissionAssignment"
                 }
               }
             }
@@ -18870,6 +20400,266 @@
         }
       }
     },
+    "/core/commands/configure-subject": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-subject",
+        "operationId": "commands.configureSubject",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureSubject",
+        "x-edaya-command-public-name": "configure-subject",
+        "x-edaya-request-schema": "SubjectConfigCommand",
+        "x-edaya-response-schema": "Subject",
+        "requestBody": {
+          "description": "configure-subject payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-subject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-subject-matter": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-subject-matter",
+        "operationId": "commands.configureSubjectMatter",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureSubjectMatter",
+        "x-edaya-command-public-name": "configure-subject-matter",
+        "x-edaya-request-schema": "SubjectMatterConfigCommand",
+        "x-edaya-response-schema": "SubjectMatter",
+        "requestBody": {
+          "description": "configure-subject-matter payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectMatterConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-subject-matter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectMatter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/offer-subject-to-class": {
       "post": {
         "tags": [
@@ -21499,6 +23289,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StudentIncidentInvolvement"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-disciplinary-action": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-disciplinary-action",
+        "operationId": "commands.configureDisciplinaryAction",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureDisciplinaryAction",
+        "x-edaya-command-public-name": "configure-disciplinary-action",
+        "x-edaya-request-schema": "DisciplinaryActionConfigCommand",
+        "x-edaya-response-schema": "DisciplinaryAction",
+        "requestBody": {
+          "description": "configure-disciplinary-action payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryActionConfigCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-disciplinary-action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisciplinaryAction"
                 }
               }
             }
@@ -24485,6 +26405,136 @@
         "responses": {
           "200": {
             "description": "Executed review-attendance-justification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Attendance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/request-attendance-justification": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "request-attendance-justification",
+        "operationId": "commands.requestAttendanceJustification",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "requestAttendanceJustification",
+        "x-edaya-command-public-name": "request-attendance-justification",
+        "x-edaya-request-schema": "RequestAttendanceJustificationCommand",
+        "x-edaya-response-schema": "Attendance",
+        "requestBody": {
+          "description": "request-attendance-justification payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestAttendanceJustificationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed request-attendance-justification",
             "content": {
               "application/json": {
                 "schema": {

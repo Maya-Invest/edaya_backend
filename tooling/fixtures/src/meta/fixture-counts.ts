@@ -96,6 +96,12 @@ function countSchedulingSlots(dataset: FixtureDataset): number {
   return countArray(dataset.entities.schedules)
 }
 
+function countResourceAssignments(dataset: FixtureDataset): number {
+  const classLevel = countArray(dataset.extensions?.classResourceAssignments)
+  const lessonSession = dataset.extensions?.schedulingSlots?.filter(slot => slot.resourceId).length ?? 0
+  return classLevel + lessonSession
+}
+
 function countAttendanceRecords(dataset: FixtureDataset): number {
   const attendanceRecords = dataset.entities.attendanceRecords
   if (attendanceRecords) {
@@ -194,7 +200,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'schedules': countSchedulingSlots(dataset),
     'lesson-sessions': countSchedulingSlots(dataset),
     'staff-assignments': 5 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
-    'resource-assignments': 0,
+    'resource-assignments': countResourceAssignments(dataset),
     'class-subject-progress': 1,
     'assessments': countAssessments(dataset),
     'assessment-results': countAssessmentResults(dataset),

@@ -4,6 +4,8 @@ import {
   academicYearSchema,
   AccountInvitationContactChannel,
   AccountInvitationKind,
+  activityEnrollmentSchema,
+  activitySchema,
   announcementSchema,
   announcementTargetSchema,
   assessmentResultSchema,
@@ -85,6 +87,26 @@ export const subjectMatterConfigCommandSchema = objectFromSchema(subjectMatterSc
 export const disciplinaryActionConfigCommandSchema = objectFromSchema(disciplinaryActionSchema)
   .omit({ schoolId: true })
   .openapi("DisciplinaryActionConfigCommand");
+
+export const activityConfigCommandSchema = objectFromSchema(activitySchema)
+  .omit({ schoolId: true })
+  .openapi("ActivityConfigCommand");
+
+export const activityEnrollmentConfigCommandSchema = objectFromSchema(activityEnrollmentSchema)
+  .openapi("ActivityEnrollmentConfigCommand");
+
+export const relinkActorSubjectCommandSchema = z.object({
+  subjectId: field.id(),
+  staffMemberId: field.id().optional(),
+  guardianId: field.id().optional(),
+  studentId: field.id().optional(),
+}).openapi("RelinkActorSubjectCommand");
+
+export const requestAttendanceJustificationCommandSchema = z.object({
+  studentId: field.id(),
+  attendanceId: field.id(),
+  reason: field.text(),
+}).openapi("RequestAttendanceJustificationCommand");
 
 export const registerSchoolCommandSchema = objectFromSchema(schoolSchema)
   .extend({

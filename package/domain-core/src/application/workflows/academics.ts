@@ -1,4 +1,4 @@
-import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput } from '../../domain'
+import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
 import { permissionAction } from '../../application/entities/entity-config'
@@ -8,6 +8,8 @@ import {
   ClassSubjectMatter,
   ClassSubjectMatterStatus,
   ClassSubjectProgress,
+  Subject as SubjectEntity,
+  SubjectMatter as SubjectMatterEntity,
 } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { roundTo2 } from '../../domain/shared/utils'
@@ -67,9 +69,26 @@ export type AssignMatterToGradeLevelSubjectInput = GradeLevelSubjectMatterInput 
   classSubjectMatterIdsByClassGroupId?: Record<string, string>
 }
 
+export type ConfigureSubjectInput = SubjectInput & { schoolId?: string }
+export type ConfigureSubjectMatterInput = SubjectMatterInput
+
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
+  }
+
+  async configureSubject(input: SubjectInput & { schoolId?: string }): Promise<Subject> {
+    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+    this.checkActorSchool(schoolId)
+    const subject = new SubjectEntity({ ...input, schoolId })
+    await this.baseService.entities.subjects.save(subject)
+    return subject
+  }
+
+  async configureSubjectMatter(input: SubjectMatterInput): Promise<SubjectMatter> {
+    const subjectMatter = new SubjectMatterEntity(input)
+    await this.baseService.entities.subjectMatters.save(subjectMatter)
+    return subjectMatter
   }
 
   async offerSubjectToGradeLevel(input: OfferSubjectToGradeLevelInput): Promise<GradeLevelSubject> {

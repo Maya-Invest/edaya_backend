@@ -116,6 +116,7 @@ export interface RunDevSchoolSeedOptions {
   profilePicturesPort?: ProfilePicturesSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
+  skipProfilePhotos?: boolean
 }
 
 function requireSeedApplication(
@@ -219,9 +220,11 @@ export async function runDevSchoolSeed(
 
   const communicationsCounts = await seedDevCommunications(communicationsPort, seedDataset)
   const attachmentCounts = await seedDevAttachments(attachmentsPort, seedDataset)
-  const profilePictureCounts = await seedDevProfilePictures(profilePicturesPort, {
-    apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
-  }, seedDataset)
+  const profilePictureCounts = options?.skipProfilePhotos
+    ? { profilePhotos: 0 }
+    : await seedDevProfilePictures(profilePicturesPort, {
+        apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
+      }, seedDataset)
   if (options?.auth) {
     await syncDevStaffAuthAndOwner(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(

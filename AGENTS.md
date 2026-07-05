@@ -18,6 +18,7 @@ Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI wor
 | API runtimes | [docs/reference/api-runtimes.md](docs/reference/api-runtimes.md) |
 | Runtime boundaries | [docs/reference/runtime-boundaries.md](docs/reference/runtime-boundaries.md) |
 | Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
+| Repo CLI (`bun repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
 | Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
 | Package boundaries | [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md) |
 
@@ -26,7 +27,7 @@ Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI wor
 Before opening a PR:
 
 ```sh
-bun run verify
+bun repo verify
 ```
 
 Package-scoped iteration: `bun --filter @edaya/core test`, `bun --filter @edaya/api test`, etc.

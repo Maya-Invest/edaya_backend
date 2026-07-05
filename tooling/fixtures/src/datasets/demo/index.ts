@@ -27,6 +27,7 @@ import {
   demoReportCardResults,
 } from './domains/report-cards'
 import {
+  demoClassResourceAssignments,
   demoResources,
   demoSchedules,
   demoSchedulingSessionProgressAnchor,
@@ -118,5 +119,6 @@ export const demoDataset = {
     reportCardResults: demoReportCardResults,
     announcementMaterializePlans: demoAnnouncementMaterializePlans,
     classSubjectStaffAssignments: demoClassSubjectStaffAssignments,
+    classResourceAssignments: demoClassResourceAssignments,
   },
 } satisfies FixtureDataset<'demo'>

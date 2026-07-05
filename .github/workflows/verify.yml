@@ -21,4 +21,4 @@ jobs:
         run: bun install
 
       - name: Verify
-        run: bun run verify
+        run: bun repo verify

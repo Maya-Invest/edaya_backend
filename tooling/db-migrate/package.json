@@ -6,17 +6,6 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "migrate": "drizzle-kit migrate --config drizzle.school.config.ts",
-    "migrate:local": "bun ./scripts/migrate-target.ts local full",
-    "migrate:local:pg": "bun ./scripts/migrate-target.ts local pg",
-    "migrate:local:auth": "bun ./scripts/migrate-target.ts local auth",
-    "migrate:staging": "bun ./scripts/migrate-target.ts staging full",
-    "migrate:staging:pg": "bun ./scripts/migrate-target.ts staging pg",
-    "migrate:staging:auth": "bun ./scripts/migrate-target.ts staging auth",
-    "migrate:production": "bun ./scripts/migrate-target.ts production full",
-    "migrate:production:pg": "bun ./scripts/migrate-target.ts production pg",
-    "migrate:production:auth": "bun ./scripts/migrate-target.ts production auth",
-    "repair-journal": "bun ./scripts/repair-drizzle-journal.ts",
     "lint": "eslint scripts drizzle.school.config.ts",
     "lint:fix": "eslint scripts drizzle.school.config.ts --fix",
     "test": "bun test --pass-with-no-tests"

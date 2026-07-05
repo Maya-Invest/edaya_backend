@@ -1,11 +1,12 @@
 #!/usr/bin/env bun
 
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
+import type { MigrationScope, MigrationTarget } from './lib/resolve-migration-target'
 import process from 'node:process'
 import { applyAuthMigrations } from './lib/apply-auth-migrations'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import {
-  type MigrationScope,
-  type MigrationTarget,
+
   resolveMigrationTarget,
 } from './lib/resolve-migration-target'
 
@@ -14,16 +15,16 @@ function parseTarget(value: string | undefined): MigrationTarget {
     return value
   }
 
-  console.error('Usage: migrate-target.ts <local|staging|production> <full|pg|auth>')
+  console.error('Usage: migrate-target.ts <local|staging|production> <full|school|auth>')
   process.exit(1)
 }
 
 function parseScope(value: string | undefined): MigrationScope {
-  if (value === 'full' || value === 'pg' || value === 'auth') {
+  if (value === 'full' || value === 'school' || value === 'auth') {
     return value
   }
 
-  console.error('Usage: migrate-target.ts <local|staging|production> <full|pg|auth>')
+  console.error('Usage: migrate-target.ts <local|staging|production> <full|school|auth>')
   process.exit(1)
 }
 
@@ -35,7 +36,7 @@ process.env['DATABASE_URL'] = resolved.databaseUrl
 
 const scopeLabel = scope === 'full'
   ? 'school + auth'
-  : scope === 'pg'
+  : scope === 'school'
     ? 'school'
     : 'auth'
 
@@ -45,7 +46,7 @@ if (target === 'production' && scope !== 'auth') {
   console.log('> Confirm the connection string targets the Neon branch you intend to migrate.')
 }
 
-if (scope === 'pg' || scope === 'full') {
+if (scope === 'school' || scope === 'full') {
   await applySchoolMigrations(resolved.databaseUrl)
 }
 

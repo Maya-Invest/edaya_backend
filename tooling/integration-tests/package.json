@@ -6,13 +6,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "bun test src/auth src/routes src/services src/runtime src/adaptor src/seed/contract.test.ts --parallel=1",
-    "test:seeds": "bun test src/seed/slow --parallel=1",
-    "test:invitation-link": "bun test src/routes/test-account-invitation-link.integration.test.ts --parallel=1",
-    "test:full": "bun test --parallel=1",
-    "smoke:staging": "bun ./scripts/smoke-staging.ts",
-    "novu:smoke": "bun smoke/novu-e2e.ts",
-    "generate:client": "edaya-codegen generate --input ${OPENAPI_INPUT:-../../tooling/repo/fixtures/openapi.json} --client-dir src/generated/api-client",
+    "test": "bun test src/auth src/routes src/services src/runtime src/adaptor src/seed/contract.test.ts src/seed/http --parallel=1",
+    "test:slow": "bun test src/seed/slow --parallel=1",
     "lint": "eslint src smoke",
     "lint:fix": "eslint src smoke --fix"
   },

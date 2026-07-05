@@ -93,6 +93,12 @@ export interface ReviewAttendanceJustificationInput {
   reason?: string
 }
 
+export interface RequestAttendanceJustificationInput {
+  studentId: string
+  attendanceId: string
+  reason: string
+}
+
 export interface CancelLessonSessionInput {
   lessonSessionId: string
 }
@@ -552,6 +558,23 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       reason,
       justifiedAt: new Date(),
       justifiedByStaffId: resolveAuditActorId(this.baseService.actor),
+    })
+    await this.baseService.entities.attendance.save(record)
+    return record
+  }
+
+  async requestAttendanceJustification({
+    studentId,
+    attendanceId,
+    reason,
+  }: RequestAttendanceJustificationInput): Promise<AttendanceRecord> {
+    const existing = await this.baseService.repositories.attendance.findById(attendanceId)
+    if (!existing || existing.studentId !== studentId) {
+      denyResourceAccess()
+    }
+    const record = existing.copyWith({
+      justificationStatus: AttendanceJustificationStatus.Pending,
+      reason,
     })
     await this.baseService.entities.attendance.save(record)
     return record

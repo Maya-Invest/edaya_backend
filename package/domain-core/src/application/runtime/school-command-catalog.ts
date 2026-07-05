@@ -5,6 +5,11 @@ export type SchoolCommandKey
     | 'activateAcademicYear'
     | 'createAcademicPeriod'
     | 'publishAcademicPeriod'
+    | 'configureGradeLevel'
+    | 'configurePeriodDefinition'
+    | 'configureResource'
+    | 'configureActivity'
+    | 'enrollStudentInActivity'
     | 'createClassGroup'
     | 'updateClassGroupConfiguration'
     | 'registerStaffMember'
@@ -13,16 +18,20 @@ export type SchoolCommandKey
     | 'assignStaffToClass'
     | 'assignStaffToClassSubject'
     | 'assignStaffToLessonSession'
+    | 'assignStaffPermission'
     | 'assignResourceToClass'
     | 'assignResourceToLessonSession'
     | 'removeResourceAssignment'
     | 'registerAttachment'
     | 'removeAttachment'
     | 'linkActorSubject'
+    | 'relinkActorSubject'
     | 'sendAccountInvitation'
     | 'resendAccountInvitation'
     | 'revokeAccountInvitation'
     | 'acceptAccountInvitation'
+    | 'configureSubject'
+    | 'configureSubjectMatter'
     | 'offerSubjectToClass'
     | 'assignMatterToClassSubject'
     | 'offerSubjectToGradeLevel'
@@ -70,6 +79,7 @@ export type SchoolCommandKey
     | 'recordLessonSessionAttendance'
     | 'recordClassDailyAttendance'
     | 'reviewAttendanceJustification'
+    | 'requestAttendanceJustification'
     | 'createAnnouncement'
     | 'addTarget'
     | 'publishAnnouncement'
@@ -84,6 +94,7 @@ export type SchoolCommandKey
     | 'resetSchoolNotificationTemplates'
     | 'recordIncident'
     | 'addStudentInvolvement'
+    | 'configureDisciplinaryAction'
     | 'applyDisciplinaryAction'
     | 'updateStudentDisciplinaryActionStatus'
     | 'resolveIncident'
@@ -113,6 +124,11 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'activateAcademicYear',
   'createAcademicPeriod',
   'publishAcademicPeriod',
+  'configureGradeLevel',
+  'configurePeriodDefinition',
+  'configureResource',
+  'configureActivity',
+  'enrollStudentInActivity',
   'createClassGroup',
   'updateClassGroupConfiguration',
   'registerStaffMember',
@@ -121,16 +137,20 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'assignStaffToClass',
   'assignStaffToClassSubject',
   'assignStaffToLessonSession',
+  'assignStaffPermission',
   'assignResourceToClass',
   'assignResourceToLessonSession',
   'removeResourceAssignment',
   'registerAttachment',
   'removeAttachment',
   'linkActorSubject',
+  'relinkActorSubject',
   'sendAccountInvitation',
   'resendAccountInvitation',
   'revokeAccountInvitation',
   'acceptAccountInvitation',
+  'configureSubject',
+  'configureSubjectMatter',
   'offerSubjectToClass',
   'assignMatterToClassSubject',
   'offerSubjectToGradeLevel',
@@ -178,6 +198,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'recordLessonSessionAttendance',
   'recordClassDailyAttendance',
   'reviewAttendanceJustification',
+  'requestAttendanceJustification',
   'createAnnouncement',
   'addTarget',
   'publishAnnouncement',
@@ -192,6 +213,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'resetSchoolNotificationTemplates',
   'recordIncident',
   'addStudentInvolvement',
+  'configureDisciplinaryAction',
   'applyDisciplinaryAction',
   'updateStudentDisciplinaryActionStatus',
   'resolveIncident',

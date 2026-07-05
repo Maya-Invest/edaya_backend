@@ -11,25 +11,30 @@
     "./http": {
       "types": "./src/http/index.ts",
       "import": "./src/http/index.ts"
+    },
+    "./transport/http": {
+      "types": "./src/transport/http/index.ts",
+      "import": "./src/transport/http/index.ts"
+    },
+    "./diagnostics": {
+      "types": "./src/diagnostics/index.ts",
+      "import": "./src/diagnostics/index.ts"
+    },
+    "./bootstrap": {
+      "types": "./src/bootstrap/index.ts",
+      "import": "./src/bootstrap/index.ts"
+    },
+    "./runtime": {
+      "types": "./src/runtime/index.ts",
+      "import": "./src/runtime/index.ts"
     }
   },
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "bun test src --dots",
+    "test": "bun test src tests --dots",
     "lint": "eslint src scripts",
-    "lint:fix": "eslint src scripts --fix",
-    "seed:init": "bun scripts/seed-http.ts all",
-    "seed:all": "bun run seed:init",
-    "seed:auth": "bun scripts/seed-http.ts auth",
-    "seed:auth:link": "bun scripts/seed-http.ts auth:link",
-    "seed:smoke": "bun scripts/seed-http.ts smoke",
-    "seed:validate": "bun scripts/seed-http.ts validate",
-    "seed:clean": "bun scripts/cleanup-seed-data.ts --local",
-    "seed:clean:staging": "bun scripts/cleanup-seed-data.ts --staging",
-    "seed:remote": "bun scripts/seed-remote.ts",
-    "seed:smoke:staging": "bun scripts/seed-smoke-staging.ts",
-    "generate:client": "edaya-codegen generate --input ${OPENAPI_INPUT:-../../tooling/repo/fixtures/openapi.json} --client-dir src/generated/api-client"
+    "lint:fix": "eslint src scripts --fix"
   },
   "dependencies": {
     "@edaya/core": "workspace:*",

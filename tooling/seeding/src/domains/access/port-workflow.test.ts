@@ -4,13 +4,16 @@ import type {
   StaffPermissionAssignmentSeedRecord,
 } from './port'
 import { demoDataset } from '@edaya/fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import {
   runDevAccessAssignmentsSeedWithPort,
   runDevAccessRolesSeedWithPort,
   runDevAccessSeedWithPort,
 } from '../../orchestration/run-dev-access-seed'
+
+/* eslint-disable-next-line dot-notation -- process.env index signature */
+process.env['SEED_DATASET'] = 'demo'
 
 function createMemoryPort(schoolExists = true): {
   port: AccessSeedPort
@@ -20,9 +23,11 @@ function createMemoryPort(schoolExists = true): {
   const permissionAssignments: StaffPermissionAssignmentSeedRecord[] = []
   const staffAssignments: StaffAssignmentSeedRecord[] = []
 
+  const schoolId = resolveDevSeedContext().schoolId
+
   return {
     port: {
-      schoolExists: async schoolId => schoolExists && schoolId === SEED_SCHOOL_ID,
+      schoolExists: async id => schoolExists && id === schoolId,
       saveStaffPermissionAssignment: async (record) => {
         permissionAssignments.push(record)
       },

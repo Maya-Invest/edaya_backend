@@ -5,9 +5,12 @@ import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import { syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
+
+/* eslint-disable-next-line dot-notation -- process.env index signature */
+process.env['SEED_DATASET'] = 'demo'
 
 function subjectIdForEmail(email: string): string {
   return `subject:${email}`
@@ -54,9 +57,12 @@ function createMemoryPort(): {
   const replacedGuardians: string[] = []
 
   const port: AuthLinkSeedPort = {
-    findSchoolById: async id => id === SEED_SCHOOL_ID
-      ? { id, ownerSubjectId: state.ownerSubjectId }
-      : undefined,
+    findSchoolById: async (id) => {
+      const schoolId = resolveDevSeedContext().schoolId
+      return id === schoolId
+        ? { id, ownerSubjectId: state.ownerSubjectId }
+        : undefined
+    },
     setSchoolOwnerSubjectId: async (_schoolId, subjectId) => {
       state.ownerSubjectId = subjectId
     },

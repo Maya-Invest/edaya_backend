@@ -17,11 +17,8 @@ export function isLocalDatabaseUrl(databaseUrl: string | undefined): boolean {
 }
 
 function isStagingSeedEnvironment(): boolean {
-  const apiUrl = process.env['SEED_API_URL']
-    ?? process.env['STAGING_API_URL']
-    ?? ''
-
-  return apiUrl.includes('api-staging.')
+  const apiUrl = process.env['SEED_REMOTE_API_URL'] ?? ''
+  return apiUrl.includes('api-staging.') || apiUrl.includes('staging')
 }
 
 /** Block obvious production Neon URLs unless the operator explicitly opts in. */

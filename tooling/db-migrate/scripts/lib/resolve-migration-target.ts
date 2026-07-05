@@ -5,15 +5,17 @@ import { fileURLToPath } from 'node:url'
 import { isPgliteDatabase } from '@edaya/adaptor-postgres'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
+import { loadRepoEnvFile } from '../../../repo/lib/load-repo-env'
 
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 export type MigrationTarget = 'local' | 'staging' | 'production'
-export type MigrationScope = 'full' | 'pg' | 'auth'
+export type MigrationScope = 'full' | 'school' | 'auth'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const repoRoot = path.resolve(packageRoot, '../..')
 
-function loadEnvFile(relativePath: string): void {
-  const envPath = path.resolve(repoRoot, relativePath)
+function loadApiEnvFile(): void {
+  const envPath = path.resolve(repoRoot, 'apps/api/.env')
   if (existsSync(envPath)) {
     expand(config({ path: envPath }))
   }
@@ -49,13 +51,11 @@ function fail(message: string, hints: string[] = []): never {
 export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: string, label: string } {
   switch (target) {
     case 'local':
-      loadEnvFile('apps/api/.env')
+      loadApiEnvFile()
       break
     case 'staging':
-      loadEnvFile('tooling/seeding/.env.staging')
-      break
     case 'production':
-      loadEnvFile('tooling/seeding/.env.production')
+      loadRepoEnvFile(repoRoot)
       break
   }
 
@@ -75,7 +75,7 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
           ]
         : [
             'Set PRODUCTION_DATABASE_URL (or DATABASE_URL) to the Neon production branch connection string.',
-            'Example: cp tooling/seeding/.env.production.example tooling/seeding/.env.production',
+            'Example: PRODUCTION_DATABASE_URL=postgres://… in repo root `.env`',
           ]
     fail(`Missing database URL for ${target} migrations.`, hints)
   }
@@ -83,7 +83,7 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
   if ((target === 'staging' || target === 'production') && isPgliteDatabase(databaseUrl)) {
     fail(
       `${target} migrations require a Postgres connection string, not PGlite.`,
-      [`Set ${target === 'staging' ? 'STAGING_DATABASE_URL' : 'PRODUCTION_DATABASE_URL'} in tooling/seeding/.env.${target}.`],
+      [`Set ${target === 'staging' ? 'STAGING_DATABASE_URL' : 'PRODUCTION_DATABASE_URL'} in repo root .env.`],
     )
   }
 

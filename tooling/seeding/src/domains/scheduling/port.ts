@@ -24,6 +24,12 @@ export interface ScheduleSeedRecord {
   endTime: string
 }
 
+export interface ClassResourceAssignmentSeedRecord {
+  id: string
+  resourceId: string
+  classGroupId: string
+}
+
 export interface LessonSessionStaffAssignmentSeedRecord {
   id: string
   staffId: string
@@ -52,6 +58,7 @@ export interface SchedulingSeedPort {
   createSchedule: (record: ScheduleSeedRecord) => Promise<void>
   materializeSchedule: (input: { scheduleId: string }) => Promise<void>
   assignStaffToLessonSession: (record: LessonSessionStaffAssignmentSeedRecord) => Promise<void>
+  assignResourceToClass: (record: ClassResourceAssignmentSeedRecord) => Promise<void>
   assignResourceToLessonSession: (record: LessonSessionResourceAssignmentSeedRecord) => Promise<void>
   recordLessonSessionProgress: (record: LessonSessionProgressSeedRecord) => Promise<void>
 }

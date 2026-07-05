@@ -95,6 +95,9 @@ export interface RunDevSeedsOptions {
   profilePicturesPort?: ProfilePicturesSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
+  /** Skip profile photo uploads (local file storage unavailable or explicit opt-out). */
+  skipProfilePhotos?: boolean
+  profilePhotosSkipReason?: string
 }
 
 export interface RunDevSeedsResults {
@@ -103,6 +106,8 @@ export interface RunDevSeedsResults {
   authLink: DevAuthLinkResult | null
   access: DevAccessSeedResult | null
   profilePhotos: number | null
+  profilePhotosSkipped?: boolean
+  profilePhotosSkipReason?: string
 }
 
 export interface LogDevSeedResultsOptions {
@@ -110,7 +115,7 @@ export interface LogDevSeedResultsOptions {
 }
 
 export function parseDevSeedScope(argv: string[]): DevSeedScope {
-  const arg = argv[2]
+  const arg = argv.slice(2).find(entry => !entry.startsWith('-'))
 
   if (!arg || arg === 'all') {
     return 'all'
@@ -203,7 +208,13 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       attachmentsPort,
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
+      skipProfilePhotos: options.skipProfilePhotos,
     })
+    if (options.skipProfilePhotos) {
+      results.profilePhotos = 0
+      results.profilePhotosSkipped = true
+      results.profilePhotosSkipReason = options.profilePhotosSkipReason
+    }
     results.access = await runDevAccessSeedWithPort(
       accessSeedPort,
       {
@@ -237,7 +248,13 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       attachmentsPort,
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
+      skipProfilePhotos: options.skipProfilePhotos,
     })
+    if (options.skipProfilePhotos) {
+      results.profilePhotos = 0
+      results.profilePhotosSkipped = true
+      results.profilePhotosSkipReason = options.profilePhotosSkipReason
+    }
   }
 
   if (scope === 'auth') {
@@ -261,6 +278,12 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
   }
 
   if (scope === 'profile-pictures') {
+    if (options.skipProfilePhotos) {
+      results.profilePhotos = 0
+      results.profilePhotosSkipped = true
+      results.profilePhotosSkipReason = options.profilePhotosSkipReason
+      return results
+    }
     if (!profilePicturesPort) {
       throw new Error('profilePicturesPort must be provided for profile-pictures seed scope')
     }
@@ -320,7 +343,11 @@ export function logDevSeedResults(
     }
   }
 
-  if (results.profilePhotos !== null) {
+  if (results.profilePhotosSkipped) {
+    // eslint-disable-next-line no-console
+    console.log(`Profile photos skipped${results.profilePhotosSkipReason ? `: ${results.profilePhotosSkipReason}` : ''}`)
+  }
+  else if (results.profilePhotos !== null) {
     // eslint-disable-next-line no-console
     console.log(`Profile photos seeded: ${results.profilePhotos}`)
   }

@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto'
  *
  * Prerequisites:
  *   - API running: cd apps/api && bun dev  (or bun dev from repo root)
- *   - Seed data: bun seed:smoke  (or bun seed:init)
+ *   - Seed data: bun seed  (or bun seed:doctor to verify)
  *   - apps/api/.env: NOVU_SECRET_KEY (+ NOVU_API_URL for EU)
  *   - Novu dashboard: workflow trigger ids `announcement.published` and `account_invitation`
  *     (or run `bun novu:bootstrap:apply`)
@@ -208,7 +208,7 @@ async function main() {
   const deliveries = await listDeliveries(client, announcementId)
   if (deliveries.length === 0) {
     fail(
-      'No MessageDelivery rows — guardians may lack linked subjectId. Run: bun seed:auth:link',
+      'No MessageDelivery rows — guardians may lack linked subjectId. Run: bun seed --scope auth:link',
     )
   }
 

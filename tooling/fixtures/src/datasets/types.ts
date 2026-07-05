@@ -25,6 +25,7 @@ import type {
   PeriodDefinitionInput,
   ReportCardDefinitionInput,
   ReportCardDefinitionSectionRole,
+  ResourceAssignmentInput,
   ResourceInput,
   ScheduleInput,
   SchoolInput,
@@ -151,6 +152,7 @@ export interface FixtureDatasetExtensions {
   reportCardResults?: readonly FixtureReportCardResult[]
   announcementMaterializePlans?: readonly FixtureAnnouncementMaterializePlan[]
   classSubjectStaffAssignments?: readonly StaffAssignmentInput[]
+  classResourceAssignments?: readonly ResourceAssignmentInput[]
 }
 
 export interface FixtureDatasetEntities {

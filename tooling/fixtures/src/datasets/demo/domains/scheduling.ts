@@ -1,4 +1,4 @@
-import type { ResourceInput, ScheduleInput } from '@edaya/core'
+import type { ResourceAssignmentInput, ResourceInput, ScheduleInput } from '@edaya/core'
 import type { FixtureSchedulingSessionProgressAnchor, FixtureSchedulingSlot } from '../../types'
 import { DayOfWeek, ResourceKind } from '@edaya/core'
 import { DEMO_CENTRAL_SCHOOL_ID } from '../../../shared/ids'
@@ -60,6 +60,25 @@ export const demoResources = [
     description: 'Lab — Physics',
   },
 ] as const satisfies readonly ResourceInput[]
+
+/** Default homeroom / shared resources for foundation classes (6a, 6b, 5a). */
+export const demoClassResourceAssignments = [
+  {
+    id: 'ra-6a-r6',
+    resourceId: 'r6',
+    classGroupId: '6a',
+  },
+  {
+    id: 'ra-6b-r1',
+    resourceId: 'r1',
+    classGroupId: '6b',
+  },
+  {
+    id: 'ra-5a-r4',
+    resourceId: 'r4',
+    classGroupId: '5a',
+  },
+] as const satisfies readonly ResourceAssignmentInput[]
 
 export const demoSchedules = [
   {

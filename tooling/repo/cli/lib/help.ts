@@ -1,0 +1,28 @@
+export function repoCliUsage(): string {
+  return [
+    'Usage: bun repo <command> [options]',
+    '',
+    'Development:',
+    '  dev                          Start API + @edaya/local-files',
+    '  seed [options]               HTTP seed CLI',
+    '  db <subcommand>              migrate | generate | browser',
+    '',
+    'Validation:',
+    '  check openapi|boundaries     Read-only checks',
+    '  verify                       Pre-PR pipeline',
+    '  doctor                       Repo hygiene',
+    '',
+    'Operations:',
+    '  smoke-test staging|novu|r2   Live environment smoke checks',
+    '  deploy api staging|production',
+    '  novu bootstrap|cleanup [action]',
+    '  openapi export|generate',
+    '',
+    'Examples:',
+    '  bun repo seed clean --staging',
+    '  bun repo db migrate local',
+    '  bun repo check openapi',
+    '  bun repo smoke-test staging',
+    '  bun repo verify',
+  ].join('\n')
+}

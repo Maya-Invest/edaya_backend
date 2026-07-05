@@ -16,31 +16,31 @@ export function parseCleanupArgs(argv: string[]): CleanupOptions {
     throw new Error('Use either --local or --staging, not both.')
   }
 
-  const schoolOnly = args.includes('--school-only')
-  const authOnly = args.includes('--auth-only')
-  if (schoolOnly && authOnly) {
-    throw new Error('Use either --school-only or --auth-only, not both.')
+  const hasSchool = args.includes('--school')
+  const hasAuth = args.includes('--auth')
+  if (hasSchool && hasAuth) {
+    throw new Error('Use either --school or --auth, not both.')
   }
 
   return {
     target: hasStaging ? 'staging' : 'local',
     yes: args.includes('--yes') || args.includes('-y'),
-    school: !authOnly,
-    auth: !schoolOnly,
+    school: !hasAuth,
+    auth: !hasSchool,
   }
 }
 
 export function cleanupUsage(): string {
   return [
-    'Usage: bun seed:clean [--local|--staging] [--yes] [--school-only|--auth-only]',
+    'Usage: bun seed clean [--local|--staging] [--yes] [--school|--auth]',
     '',
     'Targets:',
-    '  --local     Wipe repo-root .data/ (PGlite school DB + auth.sqlite). Default.',
-    '  --staging   Wipe Neon staging school DB + Better Auth D1 (requires STAGING_DATABASE_URL).',
+    '  --local     Wipe repo-root .data/ (PGlite school DB + auth). Default.',
+    '  --staging   Wipe Neon staging school DB + auth (requires STAGING_DATABASE_URL).',
     '',
     'Options:',
     '  --yes, -y   Skip confirmation prompt.',
-    '  --school-only  Truncate Neon public tables only (staging).',
-    '  --auth-only    Delete Better Auth users/sessions only (staging).',
+    '  --school    Truncate Neon public tables only (staging).',
+    '  --auth      Delete Better Auth users/sessions only (staging).',
   ].join('\n')
 }

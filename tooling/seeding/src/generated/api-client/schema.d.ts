@@ -648,6 +648,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/configure-grade-level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-grade-level */
+        post: operations["commands.configureGradeLevel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-period-definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-period-definition */
+        post: operations["commands.configurePeriodDefinition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-resource": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-resource */
+        post: operations["commands.configureResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-activity */
+        post: operations["commands.configureActivity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/enroll-student-in-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** enroll-student-in-activity */
+        post: operations["commands.enrollStudentInActivity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-class-group": {
         parameters: {
             query?: never;
@@ -744,6 +829,23 @@ export interface paths {
         put?: never;
         /** link-actor-subject */
         post: operations["commands.linkActorSubject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/relink-actor-subject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** relink-actor-subject */
+        post: operations["commands.relinkActorSubject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -863,6 +965,23 @@ export interface paths {
         put?: never;
         /** assign-staff-to-lesson-session */
         post: operations["commands.assignStaffToLessonSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/assign-staff-permission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** assign-staff-permission */
+        post: operations["commands.assignStaffPermission"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1226,6 +1345,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/configure-subject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-subject */
+        post: operations["commands.configureSubject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-subject-matter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-subject-matter */
+        post: operations["commands.configureSubjectMatter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/offer-subject-to-class": {
         parameters: {
             query?: never;
@@ -1577,6 +1730,23 @@ export interface paths {
         put?: never;
         /** add-student-involvement */
         post: operations["commands.addStudentInvolvement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-disciplinary-action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-disciplinary-action */
+        post: operations["commands.configureDisciplinaryAction"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1968,6 +2138,23 @@ export interface paths {
         put?: never;
         /** review-attendance-justification */
         post: operations["commands.reviewAttendanceJustification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/request-attendance-justification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** request-attendance-justification */
+        post: operations["commands.requestAttendanceJustification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9679,6 +9866,109 @@ export interface components {
         PublishAcademicPeriodCommand: {
             academicPeriodId: string;
         };
+        GradeLevel: {
+            id: string;
+            schoolId: string;
+            name: string;
+            order: number;
+            cycle?: string | null;
+            createdAt?: unknown;
+        };
+        GradeLevelConfigCommand: {
+            id: string;
+            schoolId: string;
+            name: string;
+            order: number;
+            cycle?: string | null;
+            createdAt?: unknown;
+        };
+        PeriodDefinition: {
+            id: string;
+            schoolId: string;
+            academicYearId: string;
+            label: string;
+            order: number;
+            startTime: string;
+            endTime: string;
+            /** @default false */
+            isBreak: boolean;
+            createdAt?: unknown;
+        };
+        PeriodDefinitionConfigCommand: {
+            id: string;
+            academicYearId: string;
+            label: string;
+            order: number;
+            startTime: string;
+            endTime: string;
+            /** @default false */
+            isBreak: boolean;
+            createdAt?: unknown;
+        };
+        Resource: {
+            id: string;
+            schoolId: string;
+            name: string;
+            description?: string | null;
+            /** @enum {string} */
+            kind: "location" | "equipment" | "vehicle" | "other";
+            capacity?: number | null;
+            createdAt?: unknown;
+        };
+        ResourceConfigCommand: {
+            id: string;
+            name: string;
+            description?: string | null;
+            /** @enum {string} */
+            kind: "location" | "equipment" | "vehicle" | "other";
+            capacity?: number | null;
+            createdAt?: unknown;
+        };
+        Activity: {
+            id: string;
+            schoolId: string;
+            name: string;
+            /** @enum {string} */
+            category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
+            coach: string;
+            schedule: string;
+            participants: number;
+            capacity: number;
+            description: string;
+            startDate: unknown;
+            endDate: unknown;
+            createdAt?: unknown;
+        };
+        ActivityConfigCommand: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
+            coach: string;
+            schedule: string;
+            participants: number;
+            capacity: number;
+            description: string;
+            startDate: unknown;
+            endDate: unknown;
+            createdAt?: unknown;
+        };
+        ActivityEnrollment: {
+            id: string;
+            activityId: string;
+            studentId: string;
+            /** @enum {string} */
+            status: "approved" | "pending" | "denied";
+            createdAt?: unknown;
+        };
+        ActivityEnrollmentConfigCommand: {
+            id: string;
+            activityId: string;
+            studentId: string;
+            /** @enum {string} */
+            status: "approved" | "pending" | "denied";
+            createdAt?: unknown;
+        };
         ClassGroup: {
             id: string;
             schoolId: string;
@@ -9848,6 +10138,25 @@ export interface components {
             guardianId?: string;
             studentId?: string;
         };
+        RelinkActorSubjectResponse: {
+            /** @enum {string} */
+            kind: "staff";
+            entity: components["schemas"]["StaffMember"];
+        } | {
+            /** @enum {string} */
+            kind: "guardian";
+            entity: components["schemas"]["Guardian"];
+        } | {
+            /** @enum {string} */
+            kind: "student";
+            entity: components["schemas"]["Student"];
+        };
+        RelinkActorSubjectCommand: {
+            subjectId: string;
+            staffMemberId?: string;
+            guardianId?: string;
+            studentId?: string;
+        };
         AccountInvitation: {
             id: string;
             schoolId: string;
@@ -9953,6 +10262,46 @@ export interface components {
             permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL")[];
             lessonSessionId: string;
             createdAt?: unknown;
+        };
+        StaffPermissionAssignment: {
+            id: string;
+            staffId: string;
+            schoolId: string;
+            academicYearId: string;
+            /** @enum {string} */
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL";
+            /** @default  */
+            scopeIds: string;
+            /**
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "inactive" | "expired";
+            startsAt?: unknown;
+            endsAt?: unknown;
+            sourceStaffAssignmentId?: string | null;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
+        StaffPermissionAssignmentConfigCommand: {
+            id: string;
+            staffId: string;
+            schoolId: string;
+            academicYearId: string;
+            /** @enum {string} */
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL";
+            /** @default  */
+            scopeIds: string;
+            /**
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "inactive" | "expired";
+            startsAt?: unknown;
+            endsAt?: unknown;
+            sourceStaffAssignmentId?: string | null;
+            createdAt?: unknown;
+            updatedAt?: unknown;
         };
         ResourceAssignment: {
             id: string;
@@ -10311,6 +10660,61 @@ export interface components {
             receivesAttendanceAlerts: boolean;
             contactRestrictions?: string | null;
             notes?: string | null;
+        };
+        Subject: {
+            id: string;
+            schoolId: string;
+            name: string;
+            shortName?: string | null;
+            code?: string | null;
+            defaultCoefficient?: number | null;
+            /**
+             * @default Scientifique
+             * @enum {string}
+             */
+            category: "Scientifique" | "Littéraire" | "Langues" | "Sciences humaines" | "Sport" | "Arts";
+            /**
+             * @default mint
+             * @enum {string}
+             */
+            color: "mint" | "sky" | "warm";
+            createdAt?: unknown;
+        };
+        SubjectConfigCommand: {
+            id: string;
+            name: string;
+            shortName?: string | null;
+            code?: string | null;
+            defaultCoefficient?: number | null;
+            /**
+             * @default Scientifique
+             * @enum {string}
+             */
+            category: "Scientifique" | "Littéraire" | "Langues" | "Sciences humaines" | "Sport" | "Arts";
+            /**
+             * @default mint
+             * @enum {string}
+             */
+            color: "mint" | "sky" | "warm";
+            createdAt?: unknown;
+        };
+        SubjectMatter: {
+            id: string;
+            subjectId: string;
+            name: string;
+            description?: string | null;
+            sequenceOrder: number;
+            estimatedHours?: number | null;
+            createdAt?: unknown;
+        };
+        SubjectMatterConfigCommand: {
+            id: string;
+            subjectId: string;
+            name: string;
+            description?: string | null;
+            sequenceOrder: number;
+            estimatedHours?: number | null;
+            createdAt?: unknown;
         };
         ClassSubject: {
             id: string;
@@ -10754,6 +11158,33 @@ export interface components {
             notes?: string | null;
             createdAt?: unknown;
         };
+        DisciplinaryAction: {
+            id: string;
+            schoolId: string;
+            name: string;
+            /**
+             * @default sanction
+             * @enum {string}
+             */
+            kind: "sanction" | "reward";
+            severity?: number | null;
+            defaultDurationDays?: number | null;
+            description?: string | null;
+            createdAt?: unknown;
+        };
+        DisciplinaryActionConfigCommand: {
+            id: string;
+            name: string;
+            /**
+             * @default sanction
+             * @enum {string}
+             */
+            kind: "sanction" | "reward";
+            severity?: number | null;
+            defaultDurationDays?: number | null;
+            description?: string | null;
+            createdAt?: unknown;
+        };
         StudentDisciplinaryAction: {
             id: string;
             schoolId: string;
@@ -11192,6 +11623,11 @@ export interface components {
             notes?: string;
             reviewedAt?: string | null;
         };
+        RequestAttendanceJustificationCommand: {
+            studentId: string;
+            attendanceId: string;
+            reason: string;
+        };
         Announcement: {
             id: string;
             schoolId: string;
@@ -11497,29 +11933,9 @@ export interface components {
         AcademicPeriodsBatchSave: {
             entities: components["schemas"]["AcademicPeriod"][];
         };
-        PeriodDefinition: {
-            id: string;
-            schoolId: string;
-            academicYearId: string;
-            label: string;
-            order: number;
-            startTime: string;
-            endTime: string;
-            /** @default false */
-            isBreak: boolean;
-            createdAt?: unknown;
-        };
         Filter_4: Record<string, never>;
         PeriodDefinitionsBatchSave: {
             entities: components["schemas"]["PeriodDefinition"][];
-        };
-        GradeLevel: {
-            id: string;
-            schoolId: string;
-            name: string;
-            order: number;
-            cycle?: string | null;
-            createdAt?: unknown;
         };
         Filter_5: Record<string, never>;
         GradeLevelsBatchSave: {
@@ -11537,26 +11953,6 @@ export interface components {
         AccountInvitationsBatchSave: {
             entities: components["schemas"]["AccountInvitation"][];
         };
-        StaffPermissionAssignment: {
-            id: string;
-            staffId: string;
-            schoolId: string;
-            academicYearId: string;
-            /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL";
-            /** @default  */
-            scopeIds: string;
-            /**
-             * @default active
-             * @enum {string}
-             */
-            status: "active" | "inactive" | "expired";
-            startsAt?: unknown;
-            endsAt?: unknown;
-            sourceStaffAssignmentId?: string | null;
-            createdAt?: unknown;
-            updatedAt?: unknown;
-        };
         Filter_9: Record<string, never>;
         StaffPermissionAssignmentsBatchSave: {
             entities: components["schemas"]["StaffPermissionAssignment"][];
@@ -11564,16 +11960,6 @@ export interface components {
         Filter_10: Record<string, never>;
         AttachmentsBatchSave: {
             entities: components["schemas"]["Attachment"][];
-        };
-        Resource: {
-            id: string;
-            schoolId: string;
-            name: string;
-            description?: string | null;
-            /** @enum {string} */
-            kind: "location" | "equipment" | "vehicle" | "other";
-            capacity?: number | null;
-            createdAt?: unknown;
         };
         Filter_11: Record<string, never>;
         ResourcesBatchSave: {
@@ -11644,37 +12030,9 @@ export interface components {
         SchoolNotificationTemplatesBatchSave: {
             entities: components["schemas"]["SchoolNotificationTemplates"][];
         };
-        Subject: {
-            id: string;
-            schoolId: string;
-            name: string;
-            shortName?: string | null;
-            code?: string | null;
-            defaultCoefficient?: number | null;
-            /**
-             * @default Scientifique
-             * @enum {string}
-             */
-            category: "Scientifique" | "Littéraire" | "Langues" | "Sciences humaines" | "Sport" | "Arts";
-            /**
-             * @default mint
-             * @enum {string}
-             */
-            color: "mint" | "sky" | "warm";
-            createdAt?: unknown;
-        };
         Filter_26: Record<string, never>;
         SubjectsBatchSave: {
             entities: components["schemas"]["Subject"][];
-        };
-        SubjectMatter: {
-            id: string;
-            subjectId: string;
-            name: string;
-            description?: string | null;
-            sequenceOrder: number;
-            estimatedHours?: number | null;
-            createdAt?: unknown;
         };
         Filter_27: Record<string, never>;
         SubjectMattersBatchSave: {
@@ -11704,32 +12062,9 @@ export interface components {
         ClassSubjectProgressBatchSave: {
             entities: components["schemas"]["ClassSubjectProgress"][];
         };
-        Activity: {
-            id: string;
-            schoolId: string;
-            name: string;
-            /** @enum {string} */
-            category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
-            coach: string;
-            schedule: string;
-            participants: number;
-            capacity: number;
-            description: string;
-            startDate: unknown;
-            endDate: unknown;
-            createdAt?: unknown;
-        };
         Filter_34: Record<string, never>;
         ActivitiesBatchSave: {
             entities: components["schemas"]["Activity"][];
-        };
-        ActivityEnrollment: {
-            id: string;
-            activityId: string;
-            studentId: string;
-            /** @enum {string} */
-            status: "approved" | "pending" | "denied";
-            createdAt?: unknown;
         };
         Filter_35: Record<string, never>;
         ActivityEnrollmentsBatchSave: {
@@ -11796,20 +12131,6 @@ export interface components {
         Filter_49: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
-        };
-        DisciplinaryAction: {
-            id: string;
-            schoolId: string;
-            name: string;
-            /**
-             * @default sanction
-             * @enum {string}
-             */
-            kind: "sanction" | "reward";
-            severity?: number | null;
-            defaultDurationDays?: number | null;
-            description?: string | null;
-            createdAt?: unknown;
         };
         Filter_50: Record<string, never>;
         DisciplinaryActionsBatchSave: {
@@ -13756,6 +14077,396 @@ export interface operations {
             };
         };
     };
+    "commands.configureGradeLevel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-grade-level payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GradeLevelConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-grade-level */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeLevel"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configurePeriodDefinition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-period-definition payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PeriodDefinitionConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-period-definition */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodDefinition"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureResource": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-resource payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResourceConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-resource */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Resource"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureActivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-activity payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ActivityConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-activity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Activity"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.enrollStudentInActivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description enroll-student-in-activity payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ActivityEnrollmentConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed enroll-student-in-activity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.createClassGroup": {
         parameters: {
             query?: never;
@@ -14167,6 +14878,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LinkActorSubjectResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.relinkActorSubject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description relink-actor-subject payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RelinkActorSubjectCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed relink-actor-subject */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelinkActorSubjectResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -14713,6 +15502,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffAssignment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.assignStaffPermission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description assign-staff-permission payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StaffPermissionAssignmentConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed assign-staff-permission */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermissionAssignment"];
                 };
             };
             /** @description Invalid request payload */
@@ -16408,6 +17275,162 @@ export interface operations {
             };
         };
     };
+    "commands.configureSubject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-subject payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubjectConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-subject */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subject"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureSubjectMatter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-subject-matter payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubjectMatterConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-subject-matter */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectMatter"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.offerSubjectToClass": {
         parameters: {
             query?: never;
@@ -17989,6 +19012,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentIncidentInvolvement"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureDisciplinaryAction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-disciplinary-action payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DisciplinaryActionConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-disciplinary-action */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisciplinaryAction"];
                 };
             };
             /** @description Invalid request payload */
@@ -19777,6 +20878,84 @@ export interface operations {
         };
         responses: {
             /** @description Executed review-attendance-justification */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attendance"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.requestAttendanceJustification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description request-attendance-justification payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RequestAttendanceJustificationCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed request-attendance-justification */
             200: {
                 headers: {
                     [name: string]: unknown;

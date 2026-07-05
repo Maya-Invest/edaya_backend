@@ -45,6 +45,7 @@ const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
 setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
 
 // Route integration tests seed `demoDataset` (sch-edaya-central / st*), not the dev default.
+// eslint-disable-next-line node/no-process-env -- test harness pins dataset for route integration tests
 process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";
 
 export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";

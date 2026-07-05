@@ -2,9 +2,19 @@ import type {
   AcademicPeriod,
   AcademicPeriodInput,
   AcademicYear,
+  Activity,
+  ActivityEnrollment,
+  ActivityEnrollmentInput,
+  ActivityInput,
   AttachmentInput,
   ClassGroupInput,
+  GradeLevel,
+  GradeLevelInput,
+  PeriodDefinition,
+  PeriodDefinitionInput,
+  Resource,
   ResourceAssignmentInput,
+  ResourceInput,
   School,
   SchoolInput,
   StaffAssignment,
@@ -27,11 +37,16 @@ import { seedSchoolNotificationTemplates } from '../../capabilities/notification
 import {
   AcademicPeriod as AcademicPeriodEntity,
   AcademicYear as AcademicYearEntity,
+  ActivityEnrollment as ActivityEnrollmentEntity,
+  Activity as ActivityEntity,
   Attachment,
   AttachmentStatus,
   ClassGroup,
+  GradeLevel as GradeLevelEntity,
   MessageDeliveryRecipientKind,
+  PeriodDefinition as PeriodDefinitionEntity,
   ResourceAssignment,
+  Resource as ResourceEntity,
   School as SchoolEntity,
   StaffAssignment as StaffAssignmentEntity,
   StaffMember as StaffMemberEntity,
@@ -99,6 +114,12 @@ export interface RemoveResourceAssignmentInput {
 }
 
 export type RegisterAttachmentInput = AttachmentInput
+
+export type ConfigureGradeLevelInput = GradeLevelInput
+export type ConfigurePeriodDefinitionInput = PeriodDefinitionInput & { schoolId?: string }
+export type ConfigureResourceInput = ResourceInput & { schoolId?: string }
+export type ConfigureActivityInput = ActivityInput & { schoolId?: string }
+export type EnrollStudentInActivityInput = ActivityEnrollmentInput
 
 export interface RemoveAttachmentInput {
   attachmentId?: string
@@ -325,6 +346,45 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
     }
     return staffMember
+  }
+
+  async configureGradeLevel(input: GradeLevelInput): Promise<GradeLevel> {
+    this.checkActorSchool(input.schoolId)
+    return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity(input))
+  }
+
+  async configurePeriodDefinition(input: PeriodDefinitionInput & { schoolId?: string }): Promise<PeriodDefinition> {
+    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+    this.checkActorSchool(schoolId)
+    return this.saveConstructed(
+      this.baseService.entities.periodDefinitions,
+      new PeriodDefinitionEntity({ ...input, schoolId }),
+    )
+  }
+
+  async configureResource(input: ResourceInput & { schoolId?: string }): Promise<Resource> {
+    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+    this.checkActorSchool(schoolId)
+    return this.saveConstructed(
+      this.baseService.entities.resources,
+      new ResourceEntity({ ...input, schoolId }),
+    )
+  }
+
+  async configureActivity(input: ActivityInput & { schoolId?: string }): Promise<Activity> {
+    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+    this.checkActorSchool(schoolId)
+    return this.saveConstructed(
+      this.baseService.entities.activities,
+      new ActivityEntity({ ...input, schoolId }),
+    )
+  }
+
+  async enrollStudentInActivity(input: ActivityEnrollmentInput): Promise<ActivityEnrollment> {
+    return this.saveConstructed(
+      this.baseService.entities.activityEnrollments,
+      new ActivityEnrollmentEntity(input),
+    )
   }
 
   async assignStaffToClass(input: AssignStaffInput): Promise<StaffAssignment> {

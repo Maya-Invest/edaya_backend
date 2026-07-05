@@ -87,7 +87,7 @@ export function buildSeedValidationTargets(): SeedValidationTarget[] {
       return {
         entity: entry.entity,
         serviceName,
-        minCount: entry.status === 'partial' && minCount === 0 ? 0 : minCount,
+        minCount: (entry.status as SeedEntityManifestStatus) === 'partial' && minCount === 0 ? 0 : minCount,
         status: entry.status,
       }
     })

@@ -12,11 +12,11 @@ Database migration CLI for EDAYA: school Postgres (Neon / Hyperdrive / PGlite) a
 | Command | Scope | Environment |
 |---------|-------|-------------|
 | `bun db:migrate:local` | school + auth | `apps/api/.env` (`pglite:.data/school`) |
-| `bun db:migrate:staging` | school + auth | `tooling/seeding/.env.staging` |
-| `bun db:migrate:production` | school + auth | `tooling/seeding/.env.production` |
-| `bun db:migrate:local:pg` | school only | local |
-| `bun db:migrate:staging:pg` | school only | staging |
-| `bun db:migrate:production:pg` | school only | production |
+| `bun db:migrate:staging` | school + auth | repo root `.env` (`STAGING_DATABASE_URL`) |
+| `bun db:migrate:production` | school + auth | repo root `.env` (`PRODUCTION_DATABASE_URL`) |
+| `bun db:migrate:local:school` | school only | local |
+| `bun db:migrate:staging:school` | school only | staging |
+| `bun db:migrate:production:school` | school only | production |
 | `bun db:migrate:local:auth` | auth only | local |
 | `bun db:migrate:staging:auth` | auth only | staging |
 | `bun db:migrate:production:auth` | auth only | production |

@@ -66,6 +66,25 @@ export async function linkSubjectToActor(
   schoolId: string,
   input: LinkSubjectToActorInput,
 ): Promise<LinkSubjectToActorResult> {
+  return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: false })
+}
+
+export async function relinkSubjectToActor(
+  baseService: BaseSchoolService,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks'>,
+  schoolId: string,
+  input: LinkSubjectToActorInput,
+): Promise<LinkSubjectToActorResult> {
+  return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: true })
+}
+
+async function replaceActorSubject(
+  baseService: BaseSchoolService,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks'>,
+  schoolId: string,
+  input: LinkSubjectToActorInput,
+  options: { allowReplace: boolean },
+): Promise<LinkSubjectToActorResult> {
   const targetCount = [input.staffMemberId, input.guardianId, input.studentId].filter(Boolean).length
   if (targetCount !== 1) {
     throw new BusinessRuleViolationError(
@@ -81,7 +100,9 @@ export async function linkSubjectToActor(
     if (!existing || existing.schoolId !== schoolId) {
       throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Staff member not found in school')
     }
-    assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+    if (!options.allowReplace) {
+      assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+    }
     const staffMember = new StaffMemberEntity({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -104,7 +125,9 @@ export async function linkSubjectToActor(
     if (!existing || existing.schoolId !== schoolId) {
       throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Guardian not found in school')
     }
-    assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+    if (!options.allowReplace) {
+      assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+    }
     const guardian = new GuardianEntity({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -132,7 +155,9 @@ export async function linkSubjectToActor(
   if (!existing || existing.schoolId !== schoolId) {
     throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Student not found in school')
   }
-  assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+  if (!options.allowReplace) {
+    assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+  }
   const student = existing.copyWith({ subjectId: input.subjectId })
   await baseService.entities.students.save(student, { moduleChecked: true })
   scheduleNotificationRecipientUpsert(baseService, buildStudentRecipientProfile(student))

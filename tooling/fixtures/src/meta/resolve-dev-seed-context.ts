@@ -7,7 +7,7 @@ import { demoDataset } from '../datasets/demo'
 import { demoCiDataset } from '../datasets/demo-ci'
 import { demoCiSchoolOwnerStaffId } from '../datasets/demo-ci/people'
 import { demoSchoolOwnerStaffId } from '../datasets/demo/people'
-import { DEMO_CI_SCHOOL_ID, DEMO_CENTRAL_SCHOOL_ID } from '../shared/ids'
+import { DEMO_CENTRAL_SCHOOL_ID, DEMO_CI_SCHOOL_ID } from '../shared/ids'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,

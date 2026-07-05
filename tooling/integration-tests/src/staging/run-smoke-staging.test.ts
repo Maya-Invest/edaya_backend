@@ -13,21 +13,21 @@ afterEach(() => {
 
 describe('loadSmokeStagingEnv', () => {
   it('defaults staging URLs when env vars are unset', () => {
-    delete process.env.STAGING_API_URL
-    delete process.env.STAGING_APP_ORIGIN
-    delete process.env.SEED_API_URL
+    delete process.env.SEED_REMOTE_API_URL
+    delete process.env.SEED_REMOTE_APP_ORIGIN
 
-    const env = loadSmokeStagingEnv()
+    const env = loadSmokeStagingEnv({ loadEnvFile: false })
     expect(env.apiUrl).toBe('https://api-staging.edaya.softilab.dev')
     expect(env.appOrigin).toBe('https://app-staging.edaya.softilab.dev')
   })
 
-  it('prefers STAGING_API_URL over SEED_API_URL', () => {
-    process.env.STAGING_API_URL = 'https://api-staging.example.com/'
-    process.env.SEED_API_URL = 'https://api.example.com'
+  it('uses SEED_REMOTE_API_URL when set', () => {
+    process.env.SEED_REMOTE_API_URL = 'https://api-staging.example.com/'
+    process.env.SEED_REMOTE_APP_ORIGIN = 'https://app-staging.example.com'
 
-    const env = loadSmokeStagingEnv()
+    const env = loadSmokeStagingEnv({ loadEnvFile: false })
     expect(env.apiUrl).toBe('https://api-staging.example.com')
+    expect(env.appOrigin).toBe('https://app-staging.example.com')
   })
 
   it('uses the school profile seeding API key by default', () => {
@@ -47,8 +47,8 @@ describe('runSmokeStaging', () => {
 
   it('passes tier-1 checks against a mocked healthy staging API', async () => {
     process.env.SMOKE_STAGING_LOAD_ENV_FILE = '0'
-    process.env.STAGING_API_URL = 'https://api-staging.test'
-    process.env.STAGING_APP_ORIGIN = 'https://app-staging.test'
+    process.env.SEED_REMOTE_API_URL = 'https://api-staging.test'
+    process.env.SEED_REMOTE_APP_ORIGIN = 'https://app-staging.test'
 
     const fetchImpl: HttpFetch = async (input, init) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
@@ -105,7 +105,7 @@ describe('runSmokeStaging', () => {
       return new Response('not found', { status: 404 })
     }
 
-    const env = loadSmokeStagingEnv()
+    const env = loadSmokeStagingEnv({ loadEnvFile: false })
     const client = new HttpSeedClient({ baseUrl: env.apiUrl, fetch: fetchImpl })
 
     // Patch runSmokeStaging to use our client by testing through the exported helpers indirectly:

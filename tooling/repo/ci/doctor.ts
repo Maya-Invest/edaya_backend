@@ -9,9 +9,7 @@ const repoRoot = resolve(import.meta.dirname, '../../..')
 const expectedEnvExamples = [
   'apps/api/.env.example',
   'apps/api/.dev.vars.example',
-  'tooling/seeding/.env.example',
-  'tooling/seeding/.env.staging.example',
-  'tooling/seeding/.env.production.example',
+  '.env.example',
 ]
 const expectedSecretExamples = [
   'apps/api/secrets.staging.json.example',
