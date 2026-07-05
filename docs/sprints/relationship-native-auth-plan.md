@@ -519,7 +519,7 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 - [ ] Homeroom teacher for 7A can record daily attendance for 7A; cannot input Math grades without a subject assignment
 - [ ] Ended assignment no longer in scope; row still queryable for history
 - [ ] `ClassGroup.homeroomTeacherId` synced from active homeroom assignment
-- [ ] `StaffAssignment` sync not used for teachers
+- [ ] Teacher with no active assignments: session OK, empty scope, writes return `403`
 
 ---
 
@@ -600,11 +600,12 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 | **1** | A | Multi-profile linking + `X-Actor-Kind` session resolution |
 | **2** | B | Scope types, actor metadata split, `resolveActorScope` dispatch, cache |
 | **3** | C | `GuardianScope`, `StudentScope`, capability gates, remove portal permission synthesis |
-| **4** | D | `Teacher`, `TeacherAssignment`, `TeachingScope`, capability gates, teacher invitation |
+| **4a** | D1 | `Teacher` entity, assignments, scope resolution, invitation |
+| **4b** | D2 | Teaching/homeroom capability gates (domain-by-domain) |
 | **5** | E | Staff catalog `class_group` deepest; remove teacher/guardian portal perms; `StaffAssignment` cleanup |
 | **6** | F | Migration script, seeds, mobile headers, parity tests, docs |
 
-Phases **3 and 4** may run in parallel across two workstreams after phase 2.
+Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows **4a** (or overlaps once D1 is stable).
 
 ---
 
@@ -625,6 +626,9 @@ Phases **3 and 4** may run in parallel across two workstreams after phase 2.
 | 9 | Multi-profile via `X-Actor-Kind` | Zero friction when each app knows its kind |
 | 10 | GuardianScope before Teacher entity | Read-only proof of pattern on live app |
 | 11 | Staff-only catalog cleanup last | Requires all portal actors off permissions |
+| 12 | Empty scope is valid session, no capabilities at gates | Teacher/guardian between assignments or links; not a auth error |
+| 13 | Split assessment CRUD from grade input in entity gates | Today both use `GRADE_INPUT`; teacher path needs distinct capabilities |
+| 14 | Fold D: D1 (entity + scope) before D2 (write gates) | Authenticate and load scope before domain gate migration |
 
 ---
 
