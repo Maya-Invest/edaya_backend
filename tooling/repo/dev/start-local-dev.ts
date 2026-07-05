@@ -25,7 +25,7 @@ const children = [
     stderr: 'inherit',
     env: process.env,
   }),
-  Bun.spawn(['bun', '--filter', '@edaya/local-files', 'dev'], {
+  Bun.spawn(['bun', '--filter', '@edaya/local-files-server', 'dev'], {
     cwd: repoRoot,
     stdin: 'inherit',
     stdout: 'inherit',

@@ -5,7 +5,7 @@ import process from 'node:process'
 import { runSeedCleanup } from '../src/cleanup/run-seed-cleanup.ts'
 import { loadSeedEnvFiles } from '../src/support/load-seed-env.ts'
 import { parseSeedCliArgs, seedCliUsage, seedInvocationTarget } from '../src/support/parse-seed-cli.ts'
-import { resolveRemoteSeedApiUrl } from '../src/support/resolve-seed-env.ts'
+import { resolveStagingSeedApiUrl } from '../src/support/resolve-seed-env.ts'
 import { runSeedHttpCli } from './run-seed-http-cli.ts'
 
 loadSeedEnvFiles()
@@ -27,9 +27,9 @@ if (invocation.kind === 'help') {
 }
 
 const target = seedInvocationTarget(invocation)
-if (target === 'staging' && !process.env['SEED_REMOTE_API_URL']?.trim()) {
+if (target === 'staging' && !process.env['SEED_STAGING_API_URL']?.trim()) {
   console.warn(
-    `SEED_REMOTE_API_URL is unset; defaulting to ${resolveRemoteSeedApiUrl()}. `
+    `SEED_STAGING_API_URL is unset; defaulting to ${resolveStagingSeedApiUrl()}. `
     + 'Set it in repo root .env to override the default staging API URL.',
   )
 }

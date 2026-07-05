@@ -17,7 +17,7 @@ export function isLocalDatabaseUrl(databaseUrl: string | undefined): boolean {
 }
 
 function isStagingSeedEnvironment(): boolean {
-  const apiUrl = process.env['SEED_REMOTE_API_URL'] ?? ''
+  const apiUrl = process.env['SEED_STAGING_API_URL'] ?? ''
   return apiUrl.includes('api-staging.') || apiUrl.includes('staging')
 }
 

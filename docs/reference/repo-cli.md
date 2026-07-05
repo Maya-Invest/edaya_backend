@@ -43,7 +43,7 @@ bun repo
 
 ### `bun repo dev`
 
-Starts `@edaya/api` and `@edaya/local-files` (watch mode). Loads `apps/api/.env`.
+Starts `@edaya/api` and `@edaya/local-files-server` (watch mode). Loads `apps/api/.env`.
 
 Alias: `bun dev`
 

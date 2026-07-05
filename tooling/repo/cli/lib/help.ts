@@ -3,7 +3,7 @@ export function repoCliUsage(): string {
     'Usage: bun repo <command> [options]',
     '',
     'Development:',
-    '  dev                          Start API + @edaya/local-files',
+    '  dev                          Start API + @edaya/local-files-server',
     '  seed [options]               HTTP seed CLI',
     '  db <subcommand>              migrate | generate | browser',
     '',

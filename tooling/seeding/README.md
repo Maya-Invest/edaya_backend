@@ -36,8 +36,8 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env
 | `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-06-16` in `@edaya/fixtures` |
 | `SEED_API_URL` | `bun seed`, `bun seed:doctor`, … | `BETTER_AUTH_URL` → `http://localhost:9999` |
 | `SEED_APP_ORIGIN` | Local Better Auth `Origin` header | `http://localhost:5173` |
-| `SEED_REMOTE_API_URL` | `bun seed --staging` | `https://api-staging.edaya.softilab.dev` |
-| `SEED_REMOTE_APP_ORIGIN` | Remote Better Auth `Origin` header | `https://app-staging.edaya.softilab.dev` |
+| `SEED_STAGING_API_URL` | `bun seed --staging` | `https://api-staging.edaya.softilab.dev` |
+| `SEED_STAGING_APP_ORIGIN` | Staging Better Auth `Origin` header | `https://app-staging.edaya.softilab.dev` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 
@@ -59,7 +59,7 @@ After `rm -rf .data`, **stop `bun dev` first**, then restart before seeding. See
 
 ### Profile photos
 
-Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`@edaya/local-files`** on port **9200**, started automatically by `bun dev`.
+Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`@edaya/local-files-server`** on port **9200**, started automatically by `bun dev`.
 
 | Situation | Behavior |
 |-----------|----------|

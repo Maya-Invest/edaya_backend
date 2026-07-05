@@ -114,8 +114,8 @@ Reads repo root `.env` when present, or env vars:
 
 | Variable | Default |
 |----------|---------|
-| `SEED_REMOTE_API_URL` | `https://api-staging.edaya.softilab.dev` |
-| `SEED_REMOTE_APP_ORIGIN` | `https://app-staging.edaya.softilab.dev` |
+| `SEED_STAGING_API_URL` | `https://api-staging.edaya.softilab.dev` |
+| `SEED_STAGING_APP_ORIGIN` | `https://app-staging.edaya.softilab.dev` |
 | `SMOKE_STAFF_EMAIL` | dev fixture director email |
 | `SMOKE_STAFF_PASSWORD` | dev fixture password |
 
@@ -141,7 +141,7 @@ Reads repo root `.env` when present, or env vars:
 | `bun run deploy:api:staging` | Deploy API Worker (`--env staging`) |
 | `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy |
 | `bun run db:migrate:staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
-| `bun run seed:staging` | Full HTTP seed against `SEED_REMOTE_API_URL` |
+| `bun run seed:staging` | Full HTTP seed against `SEED_STAGING_API_URL` |
 | `bun run smoke:staging` | Tier 1 HTTP smoke against staging |
 
 ---
@@ -152,7 +152,7 @@ Reads repo root `.env` when present, or env vars:
 |---------|--------------|
 | Deploy fails on Hyperdrive | Placeholder ID still in `wrangler.jsonc` |
 | S5 sign-in fails on seed | Auth users missing — re-run `seed:init` (provisions auth before session bootstrap) |
-| `MISSING_OR_NULL_ORIGIN` on seed | Ensure `SEED_REMOTE_APP_ORIGIN` is set in repo root `.env` (seed CLI sends it as `Origin`) |
+| `MISSING_OR_NULL_ORIGIN` on seed | Ensure `SEED_STAGING_APP_ORIGIN` is set in repo root `.env` (seed CLI sends it as `Origin`) |
 | `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale auth row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
 | `sign-in 503` / Worker exceeded resource limits | Redeploy API staging after auth lazy-load fix: `bun run deploy:api:staging` |
 | `account_kind` does not exist | School migration `0014_service_accounts` not applied — run `db:migrate:staging` |

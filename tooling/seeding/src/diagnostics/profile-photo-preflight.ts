@@ -65,7 +65,7 @@ export async function resolveProfilePhotoSeedPlan(options: {
     return { seedProfilePhotos: true }
   }
 
-  const reason = `Local file storage is not reachable at ${localFilesUrl}. Start \`bun dev\` (API + @edaya/local-files) or pass --skip-profile-photos.`
+  const reason = `Local file storage is not reachable at ${localFilesUrl}. Start \`bun dev\` (API + @edaya/local-files-server) or pass --skip-profile-photos.`
 
   if (options.requirePhotoUpload) {
     throw new Error(reason)

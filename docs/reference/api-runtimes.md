@@ -54,7 +54,7 @@ cp apps/api/.env.example apps/api/.env
 bun dev
 ```
 
-Set `RUNTIME=local` (default). `bun dev` starts the API and `@edaya/local-files` together. School data and auth SQLite live under repo-root `.data/` (gitignored).
+Set `RUNTIME=local` (default). `bun dev` starts the API and `@edaya/local-files-server` together. School data and auth SQLite live under repo-root `.data/` (gitignored).
 
 Production containers using the local entry should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 

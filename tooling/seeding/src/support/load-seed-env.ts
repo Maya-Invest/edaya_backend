@@ -3,7 +3,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
-import { loadSeedEnvFiles as loadRepoSeedEnvFiles } from '../../../repo/lib/load-repo-env'
+import { loadSeedEnvFiles as loadRepoSeedEnvFiles } from './load-repo-env'
 import { resolveRepoRoot } from './resolve-repo-root'
 
 const repoRoot = resolveRepoRoot()

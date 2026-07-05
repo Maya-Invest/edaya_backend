@@ -152,7 +152,7 @@ bun dev   # API only
 
 Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
 
-`bun dev` from the repo root starts the API **and** `@edaya/local-files` (required for uploads). Running `cd apps/api && bun dev` alone starts the API without the file server.
+`bun dev` from the repo root starts the API **and** `@edaya/local-files-server` (required for uploads). Running `cd apps/api && bun dev` alone starts the API without the file server.
 
 **worker smoke** (Miniflare — optional, hits remote Neon/R2):
 

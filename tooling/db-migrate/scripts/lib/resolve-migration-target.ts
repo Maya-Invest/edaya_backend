@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url'
 import { isPgliteDatabase } from '@edaya/adaptor-postgres'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
-import { loadRepoEnvFile } from '../../../repo/lib/load-repo-env'
 
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 export type MigrationTarget = 'local' | 'staging' | 'production'
@@ -18,6 +17,20 @@ function loadApiEnvFile(): void {
   const envPath = path.resolve(repoRoot, 'apps/api/.env')
   if (existsSync(envPath)) {
     expand(config({ path: envPath }))
+  }
+}
+
+function loadRepoEnvFile(): void {
+  const rootEnv = path.resolve(repoRoot, '.env')
+  const legacySeedingEnv = path.resolve(repoRoot, 'tooling/seeding/.env')
+
+  if (existsSync(rootEnv)) {
+    expand(config({ path: rootEnv }))
+    return
+  }
+
+  if (existsSync(legacySeedingEnv)) {
+    expand(config({ path: legacySeedingEnv }))
   }
 }
 
@@ -55,7 +68,7 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
       break
     case 'staging':
     case 'production':
-      loadRepoEnvFile(repoRoot)
+      loadRepoEnvFile()
       break
   }
 

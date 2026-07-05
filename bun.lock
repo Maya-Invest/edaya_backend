@@ -177,8 +177,8 @@
         "zod": "^3.24.4",
       },
     },
-    "tooling/local-files": {
-      "name": "@edaya/local-files",
+    "tooling/local-files-server": {
+      "name": "@edaya/local-files-server",
       "version": "0.0.1",
       "dependencies": {
         "@edaya/adaptor-local-fs": "workspace:*",
@@ -380,7 +380,7 @@
 
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:tooling/integration-tests"],
 
-    "@edaya/local-files": ["@edaya/local-files@workspace:tooling/local-files"],
+    "@edaya/local-files-server": ["@edaya/local-files-server@workspace:tooling/local-files-server"],
 
     "@edaya/novu-ops": ["@edaya/novu-ops@workspace:tooling/novu-ops"],
 

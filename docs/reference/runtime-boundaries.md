@@ -49,7 +49,7 @@ Positive requirements only (fail when the profile cannot boot):
 `bun dev` starts:
 
 1. `@edaya/api` — `RUNTIME=local`, PGlite + SQLite + local-fs client
-2. `@edaya/local-files` — HTTP file service on port 9200
+2. `@edaya/local-files-server` — HTTP file service on port 9200
 
 Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun dev:worker`** with `apps/api/.dev.vars` — not `bun dev`.
 
@@ -75,6 +75,6 @@ Cron does not use file storage (`noOpFileStorage`).
 | `@edaya/adaptor-postgres` | School persistence (PGlite + Postgres drivers) |
 | `@edaya/adaptor-auth` | Better Auth persistence (Postgres `auth` schema) |
 | `@edaya/adaptor-local-fs` | Local dev `FileStoragePort` + Hono upload app |
-| `@edaya/local-files` | Dev-only file HTTP service (`tooling/local-files`) |
+| `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files`) |
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
 | `@edaya/adaptor-novu` | Notifications (non-`in-memory` profiles) |

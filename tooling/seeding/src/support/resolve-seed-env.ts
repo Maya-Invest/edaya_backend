@@ -3,8 +3,8 @@ import process from 'node:process'
 
 export const DEFAULT_LOCAL_API_URL = 'http://localhost:9999'
 export const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
-export const DEFAULT_REMOTE_API_URL = 'https://api-staging.edaya.softilab.dev'
-export const DEFAULT_REMOTE_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
+export const DEFAULT_STAGING_API_URL = 'https://api-staging.edaya.softilab.dev'
+export const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
 
 export type SeedHttpTarget = 'local' | 'staging'
 
@@ -20,9 +20,9 @@ export function resolveLocalSeedApiUrl(): string {
 }
 
 /** Staging API base URL (`bun seed --staging`, `bun smoke:staging`). */
-export function resolveRemoteSeedApiUrl(): string {
-  const configured = process.env['SEED_REMOTE_API_URL']?.trim()
-  return normalizeUrl(configured || DEFAULT_REMOTE_API_URL)
+export function resolveStagingSeedApiUrl(): string {
+  const configured = process.env['SEED_STAGING_API_URL']?.trim()
+  return normalizeUrl(configured || DEFAULT_STAGING_API_URL)
 }
 
 /** Trusted webapp `Origin` for local Better Auth sign-in. */
@@ -31,16 +31,16 @@ export function resolveLocalAppOrigin(): string {
   return normalizeUrl(configured || DEFAULT_LOCAL_APP_ORIGIN)
 }
 
-/** Trusted webapp `Origin` for remote Better Auth sign-in. */
-export function resolveRemoteAppOrigin(): string {
-  const configured = process.env['SEED_REMOTE_APP_ORIGIN']?.trim()
-  return normalizeUrl(configured || DEFAULT_REMOTE_APP_ORIGIN)
+/** Trusted webapp `Origin` for staging Better Auth sign-in. */
+export function resolveStagingAppOrigin(): string {
+  const configured = process.env['SEED_STAGING_APP_ORIGIN']?.trim()
+  return normalizeUrl(configured || DEFAULT_STAGING_APP_ORIGIN)
 }
 
 export function resolveSeedApiUrl(target: SeedHttpTarget): string {
-  return target === 'staging' ? resolveRemoteSeedApiUrl() : resolveLocalSeedApiUrl()
+  return target === 'staging' ? resolveStagingSeedApiUrl() : resolveLocalSeedApiUrl()
 }
 
 export function resolveSeedAppOrigin(target: SeedHttpTarget): string {
-  return target === 'staging' ? resolveRemoteAppOrigin() : resolveLocalAppOrigin()
+  return target === 'staging' ? resolveStagingAppOrigin() : resolveLocalAppOrigin()
 }

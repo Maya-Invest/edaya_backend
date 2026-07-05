@@ -105,7 +105,7 @@ export function seedCliUsage(): string {
     '  bun seed --scope <name>  Granular scope',
     '',
     'Options:',
-    '  --staging                Target SEED_REMOTE_API_URL (default: local SEED_API_URL)',
+    '  --staging                Target SEED_STAGING_API_URL (default: local SEED_API_URL)',
     '  --scope <name>           Granular scope (default: all)',
     `                           ${SEED_CLI_SCOPES.join(', ')}`,
     '  --clean                  Wipe before seeding (local or staging when --staging)',

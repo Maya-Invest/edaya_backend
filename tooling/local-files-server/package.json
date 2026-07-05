@@ -1,5 +1,5 @@
 {
-  "name": "@edaya/local-files",
+  "name": "@edaya/local-files-server",
   "type": "module",
   "version": "0.0.1",
   "private": true,

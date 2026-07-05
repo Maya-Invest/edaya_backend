@@ -4,10 +4,10 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
-import { loadRepoEnvFile } from '../../../repo/lib/load-repo-env'
+import { loadRepoEnvFile } from '../../../seeding/src/support/load-repo-env'
 import {
-  resolveRemoteAppOrigin,
-  resolveRemoteSeedApiUrl,
+  resolveStagingAppOrigin,
+  resolveStagingSeedApiUrl,
 } from '../../../seeding/src/support/resolve-seed-env'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -27,8 +27,8 @@ export function loadSmokeStagingEnv(options?: { loadEnvFile?: boolean }): SmokeS
     loadRepoEnvFile(repoRoot)
   }
 
-  const apiUrl = resolveRemoteSeedApiUrl()
-  const appOrigin = resolveRemoteAppOrigin()
+  const apiUrl = resolveStagingSeedApiUrl()
+  const appOrigin = resolveStagingAppOrigin()
   const schoolId = process.env['SEED_SCHOOL_ID']?.trim() || SEED_SCHOOL_ID
 
   return {

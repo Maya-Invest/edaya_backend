@@ -3,9 +3,9 @@ import type { CleanupTarget } from './parse-cleanup-args'
 import process from 'node:process'
 
 export function inferCleanupTargetFromEnv(): CleanupTarget {
-  const remoteApiUrl = process.env['SEED_REMOTE_API_URL'] ?? ''
+  const stagingApiUrl = process.env['SEED_STAGING_API_URL'] ?? ''
 
-  if (remoteApiUrl.includes('api-staging.') || remoteApiUrl.includes('staging')) {
+  if (stagingApiUrl.includes('api-staging.') || stagingApiUrl.includes('staging')) {
     return 'staging'
   }
 

@@ -13,17 +13,17 @@ afterEach(() => {
 
 describe('loadSmokeStagingEnv', () => {
   it('defaults staging URLs when env vars are unset', () => {
-    delete process.env.SEED_REMOTE_API_URL
-    delete process.env.SEED_REMOTE_APP_ORIGIN
+    delete process.env.SEED_STAGING_API_URL
+    delete process.env.SEED_STAGING_APP_ORIGIN
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
     expect(env.apiUrl).toBe('https://api-staging.edaya.softilab.dev')
     expect(env.appOrigin).toBe('https://app-staging.edaya.softilab.dev')
   })
 
-  it('uses SEED_REMOTE_API_URL when set', () => {
-    process.env.SEED_REMOTE_API_URL = 'https://api-staging.example.com/'
-    process.env.SEED_REMOTE_APP_ORIGIN = 'https://app-staging.example.com'
+  it('uses SEED_STAGING_API_URL when set', () => {
+    process.env.SEED_STAGING_API_URL = 'https://api-staging.example.com/'
+    process.env.SEED_STAGING_APP_ORIGIN = 'https://app-staging.example.com'
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
     expect(env.apiUrl).toBe('https://api-staging.example.com')
@@ -47,8 +47,8 @@ describe('runSmokeStaging', () => {
 
   it('passes tier-1 checks against a mocked healthy staging API', async () => {
     process.env.SMOKE_STAGING_LOAD_ENV_FILE = '0'
-    process.env.SEED_REMOTE_API_URL = 'https://api-staging.test'
-    process.env.SEED_REMOTE_APP_ORIGIN = 'https://app-staging.test'
+    process.env.SEED_STAGING_API_URL = 'https://api-staging.test'
+    process.env.SEED_STAGING_APP_ORIGIN = 'https://app-staging.test'
 
     const fetchImpl: HttpFetch = async (input, init) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
