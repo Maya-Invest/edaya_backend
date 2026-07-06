@@ -4,8 +4,15 @@ import {
   demoCiClassResourceAssignments,
   demoCiResources,
   demoCiSchedules,
+  demoCiSchedulingSessionProgressAnchors,
   demoCiSchedulingSlots,
 } from './domains/scheduling'
+import {
+  demoCiGradeScales,
+  demoCiReportCardDefinitionFixtures,
+  demoCiReportCardGradeScaleFixtures,
+  demoCiReportCardResults,
+} from './domains/report-cards'
 import {
   demoCiEnrollments,
   demoCiGuardianLinks,
@@ -48,9 +55,14 @@ export const demoCiDataset = {
     classSubjects: demoCiClassSubjects,
     resources: demoCiResources,
     schedules: demoCiSchedules,
+    gradeScales: demoCiGradeScales,
   },
   extensions: {
     schedulingSlots: demoCiSchedulingSlots,
     classResourceAssignments: demoCiClassResourceAssignments,
+    schedulingSessionProgressAnchors: demoCiSchedulingSessionProgressAnchors,
+    reportCardGradeScaleFixtures: demoCiReportCardGradeScaleFixtures,
+    reportCardDefinitionFixtures: demoCiReportCardDefinitionFixtures,
+    reportCardResults: demoCiReportCardResults,
   },
 } satisfies FixtureDataset<'demo-ci'>

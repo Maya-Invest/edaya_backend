@@ -89,17 +89,30 @@ export async function seedDevScheduling(
     }
   }
 
-  if (!anchor) {
+  if (!anchor && !(dataset.extensions?.schedulingSessionProgressAnchors?.length)) {
     return
   }
 
-  const progressLessonSessionId = lessonSessionIdForSlot(anchor.scheduleId, anchor.dayOfWeek)
-  await port.recordLessonSessionProgress({
-    id: anchor.progress.id,
-    classSubjectMatterId: anchor.progress.classSubjectMatterId,
-    lessonSessionId: progressLessonSessionId,
-    completedPercentage: anchor.progress.completedPercentage,
-    notes: anchor.progress.notes,
-    recordedAt: seedDateAndTime(planningSessionDateForDayOfWeek(anchor.dayOfWeek), anchor.recordedAtTime),
-  })
+  const progressAnchors = [
+    ...(dataset.extensions?.schedulingSessionProgressAnchors ?? []),
+    ...(anchor ? [anchor] : []),
+  ]
+
+  for (const progressAnchor of progressAnchors) {
+    const progressLessonSessionId = lessonSessionIdForSlot(
+      progressAnchor.scheduleId,
+      progressAnchor.dayOfWeek,
+    )
+    await port.recordLessonSessionProgress({
+      id: progressAnchor.progress.id,
+      classSubjectMatterId: progressAnchor.progress.classSubjectMatterId,
+      lessonSessionId: progressLessonSessionId,
+      completedPercentage: progressAnchor.progress.completedPercentage,
+      notes: progressAnchor.progress.notes,
+      recordedAt: seedDateAndTime(
+        planningSessionDateForDayOfWeek(progressAnchor.dayOfWeek),
+        progressAnchor.recordedAtTime,
+      ),
+    })
+  }
 }

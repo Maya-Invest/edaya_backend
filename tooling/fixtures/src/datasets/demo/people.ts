@@ -12,6 +12,7 @@ import type {
 } from '@edaya/core'
 import { SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, DEMO_CENTRAL_SCHOOL_ID } from '../../shared/ids'
+import { buildSubjectMattersForSubject, centralSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
 
 export const demoStudents = [
   {
@@ -991,22 +992,16 @@ export const demoExtendedSubjects = [
 ] as const satisfies readonly SubjectInput[]
 
 export const demoExtendedSubjectMatters = [
-  {
-    id: 'sm-advmath',
-    subjectId: 'subj-advmath',
-    name: 'Core programme',
-    description: 'Calculus, linear algebra and probability.',
-    sequenceOrder: 1,
-    estimatedHours: 8,
-  },
-  {
-    id: 'sm-phys',
-    subjectId: 'subj-phys',
-    name: 'Core programme',
-    description: 'Mechanics, electromagnetism, organic chemistry.',
-    sequenceOrder: 1,
-    estimatedHours: 6,
-  },
+  ...buildSubjectMattersForSubject(
+    'subj-advmath',
+    'sm-advmath-',
+    centralSubjectMatterCatalog['subj-advmath'],
+  ),
+  ...buildSubjectMattersForSubject(
+    'subj-phys',
+    'sm-phys-',
+    centralSubjectMatterCatalog['subj-phys'],
+  ),
 ] as const satisfies readonly SubjectMatterInput[]
 
 export const demoExtendedClassSubjects = [

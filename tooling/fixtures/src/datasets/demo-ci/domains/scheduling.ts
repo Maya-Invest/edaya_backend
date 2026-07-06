@@ -1,5 +1,5 @@
 import type { ResourceAssignmentInput, ResourceInput, ScheduleInput } from '@edaya/core'
-import type { FixtureSchedulingSlot } from '../../types'
+import type { FixtureSchedulingSessionProgressAnchor, FixtureSchedulingSlot } from '../../types'
 import { DayOfWeek, ResourceKind } from '@edaya/core'
 import { DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 
@@ -126,5 +126,41 @@ export const demoCiSchedulingSlots = [
     },
   },
 ] as const satisfies readonly FixtureSchedulingSlot[]
+
+export const demoCiSchedulingSessionProgressAnchors = [
+  {
+    progress: {
+      id: 'ci-csp-6a-math-fractions',
+      classSubjectMatterId: 'csm-ci-cs-6a-math-ci-sm-math-fractions',
+      completedPercentage: 60,
+      notes: 'Exercices sur les fractions irréductibles et les pourcentages.',
+    },
+    scheduleId: 'sch-ci-6a-math-mon',
+    dayOfWeek: DayOfWeek.Monday,
+    recordedAtTime: '08:45',
+  },
+  {
+    progress: {
+      id: 'ci-csp-6a-math-geometrie',
+      classSubjectMatterId: 'csm-ci-cs-6a-math-ci-sm-math-geometrie',
+      completedPercentage: 25,
+      notes: 'Construction de triangles avec règle et compas.',
+    },
+    scheduleId: 'sch-ci-6a-math-wed',
+    dayOfWeek: DayOfWeek.Wednesday,
+    recordedAtTime: '09:45',
+  },
+  {
+    progress: {
+      id: 'ci-csp-6b-fr-lecture',
+      classSubjectMatterId: 'csm-ci-cs-6b-fr-ci-sm-fr-lecture',
+      completedPercentage: 40,
+      notes: 'Analyse d\'un texte narratif — repérage des personnages.',
+    },
+    scheduleId: 'sch-ci-6b-fr-mon',
+    dayOfWeek: DayOfWeek.Monday,
+    recordedAtTime: '08:45',
+  },
+] as const satisfies readonly FixtureSchedulingSessionProgressAnchor[]
 
 export const demoCiSchedules = demoCiSchedulingSlots.map(slot => slot.schedule) as readonly ScheduleInput[]

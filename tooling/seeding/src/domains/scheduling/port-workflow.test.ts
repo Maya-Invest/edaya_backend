@@ -56,13 +56,17 @@ describe('scheduling seed port workflow', () => {
     expect(resourceAssignments).toHaveLength(
       slots.filter(slot => slot.resourceId).length,
     )
-    expect(progress).toHaveLength(demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
+    expect(progress).toHaveLength(
+      (demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
+      + (demoDataset.extensions?.schedulingSessionProgressAnchors?.length ?? 0),
+    )
   })
 
   test('seeds demo-ci math slots for ci-t1 without lesson-session staff assignments', async () => {
     const slots = demoCiDataset.extensions?.schedulingSlots ?? []
     const schedules: ScheduleSeedRecord[] = []
     const staffAssignments: LessonSessionStaffAssignmentSeedRecord[] = []
+    const progress: LessonSessionProgressSeedRecord[] = []
     const port: SchedulingSeedPort = {
       saveResource: async () => {},
       assignResourceToClass: async () => {},
@@ -74,14 +78,19 @@ describe('scheduling seed port workflow', () => {
         staffAssignments.push(record)
       },
       assignResourceToLessonSession: async () => {},
-      recordLessonSessionProgress: async () => {},
+      recordLessonSessionProgress: async (record) => {
+        progress.push(record)
+      },
     }
 
     await seedDevScheduling(port, demoCiDataset)
 
-    expect(slots).toHaveLength(4)
-    expect(schedules).toHaveLength(4)
+    expect(slots).toHaveLength(5)
+    expect(schedules).toHaveLength(5)
     expect(staffAssignments).toHaveLength(0)
     expect(slots.every(slot => slot.teacherId === 'ci-t1')).toBe(true)
+    expect(progress).toHaveLength(
+      demoCiDataset.extensions?.schedulingSessionProgressAnchors?.length ?? 0,
+    )
   })
 })

@@ -151,6 +151,7 @@ export interface FixtureDatasetExtensions {
   }
   schedulingSlots?: readonly FixtureSchedulingSlot[]
   schedulingSessionProgressAnchor?: FixtureSchedulingSessionProgressAnchor
+  schedulingSessionProgressAnchors?: readonly FixtureSchedulingSessionProgressAnchor[]
   calendarEvents?: readonly FixtureCalendarEvent[]
   reportCardGradeScaleFixtures?: readonly FixtureReportCardGradeScale[]
   reportCardDefinitionFixtures?: readonly FixtureReportCardDefinition[]

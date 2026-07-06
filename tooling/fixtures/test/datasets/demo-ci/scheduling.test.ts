@@ -9,17 +9,17 @@ import {
 } from '../../../src/datasets/demo-ci/domains/scheduling'
 
 describe('demo-ci scheduling', () => {
-  it('defines recurring math slots for ci-t1 in 6ème A and 5ème A', () => {
+  it('defines recurring teaching slots for ci-t1 across collège classes', () => {
     expect(demoCiResources).toHaveLength(3)
     expect(demoCiClassResourceAssignments).toHaveLength(2)
-    expect(demoCiSchedulingSlots).toHaveLength(4)
-    expect(demoCiSchedules).toHaveLength(4)
+    expect(demoCiSchedulingSlots).toHaveLength(5)
+    expect(demoCiSchedules).toHaveLength(5)
 
     const teacherIds = new Set(demoCiSchedulingSlots.map(slot => slot.teacherId))
     expect(teacherIds).toEqual(new Set(['ci-t1']))
 
     const classGroupIds = new Set(demoCiSchedulingSlots.map(slot => slot.schedule.classGroupId))
-    expect(classGroupIds).toEqual(new Set(['ci-6a', 'ci-5a']))
+    expect(classGroupIds).toEqual(new Set(['ci-6a', 'ci-5a', 'ci-6b']))
   })
 
   it('typed schedules satisfy ScheduleInput', () => {

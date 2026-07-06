@@ -49,6 +49,29 @@ describe('SchoolService academics workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
+  test('recordLessonSessionProgress rounds class-subject aggregate across multiple matters', async () => {
+    const { mockRepos, service } = createContext({
+      matterList: [
+        { id: 'csm1', completedPercentage: 0 },
+        { id: 'csm2', completedPercentage: 0 },
+        { id: 'csm3', completedPercentage: 0 },
+        { id: 'csm4', completedPercentage: 0 },
+      ],
+    })
+
+    await service.academicsWorkflow.recordLessonSessionProgress({
+      id: 'csp1',
+      classSubjectMatterId: 'csm1',
+      lessonSessionId: 'sess1',
+      completedPercentage: 35,
+    })
+
+    expect(mockRepos.classSubjects.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'cs1',
+      completedPercentage: 9,
+    }))
+  })
+
   test('recordLessonSessionProgress rejects progress decreases', async () => {
     const { service } = createContext({ matterCompletedPercentage: 80 })
 

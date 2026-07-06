@@ -12,7 +12,6 @@ import {
   SubjectMatter as SubjectMatterEntity,
 } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
-import { roundTo2 } from '../../domain/shared/utils'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import {
   removeMirroredClassSubjects,
@@ -357,7 +356,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       normalizedMatters.push(updatedMatter)
     }
     const total = normalizedMatters.reduce((sum, matter) => sum + matter.completedPercentage, 0)
-    const completedPercentage = roundTo2(total / normalizedMatters.length)
+    const completedPercentage = Math.round(total / normalizedMatters.length)
     await this.baseService.entities.classSubjects.save(new ClassSubject({
       id: classSubject.id,
       classGroupId: classSubject.classGroupId,

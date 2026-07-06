@@ -537,9 +537,9 @@ export const demoSchedulingSlots = [
 export const demoSchedulingSessionProgressAnchor = {
   progress: {
     id: 'csp-p1',
-    classSubjectMatterId: 'csm-cs-6a-math',
-    completedPercentage: 25,
-    notes: 'Introduced algebra basics.',
+    classSubjectMatterId: 'csm-cs-6a-math-sm-math-algebra',
+    completedPercentage: 35,
+    notes: 'Introduced linear equations and balance method.',
   },
   scheduleId: 'sch-p1',
   dayOfWeek: DayOfWeek.Monday,

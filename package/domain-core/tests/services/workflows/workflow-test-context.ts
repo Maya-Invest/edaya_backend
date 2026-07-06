@@ -44,21 +44,32 @@ export const actor = createElevatedTestStaffActor('sch1', 'user1')
 export function createContext({
   existingProgress,
   matterCompletedPercentage = 0,
+  matterList,
 }: {
   existingProgress?: unknown
   matterCompletedPercentage?: number
+  matterList?: Array<{ id: string, completedPercentage: number }>
 } = {}) {
+  const defaultMatter = {
+    id: 'csm1',
+    classSubjectId: 'cs1',
+    subjectMatterId: 'sm1',
+    completedPercentage: matterCompletedPercentage,
+    updatedAt: new Date('2026-01-01T08:00:00Z'),
+  }
+  const mattersForList = matterList ?? [
+    { id: 'other-matter', completedPercentage: 50 },
+  ]
+
   const mockRepos = {
     classSubjectMatters: {
-      findById: mock(async () => ({
-        id: 'csm1',
-        classSubjectId: 'cs1',
-        subjectMatterId: 'sm1',
-        completedPercentage: matterCompletedPercentage,
-        updatedAt: new Date('2026-01-01T08:00:00Z'),
-      })),
+      findById: mock(async () => defaultMatter),
       findOne: mock(async () => undefined),
-      list: mock(async () => [{ id: 'other-matter', completedPercentage: 50 }]),
+      list: mock(async () => mattersForList.map(matter => ({
+        ...defaultMatter,
+        id: matter.id,
+        completedPercentage: matter.completedPercentage,
+      }))),
       save: mock(async () => {}),
     },
     classSubjects: {

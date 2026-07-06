@@ -24,6 +24,7 @@ demo-ci/
 | Élèves | 12 |
 | Personnel | 5 |
 | Enseignants portail | 2 (`ci-t1`, `ci-t2`) |
+| Bulletins (T1) | 12 résultats — 6ème A (6), 6ème B (4), 5ème A (2) |
 
 ## Seed dev local (défaut)
 

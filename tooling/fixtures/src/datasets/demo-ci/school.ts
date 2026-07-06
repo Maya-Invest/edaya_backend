@@ -11,6 +11,7 @@ import type {
 } from '@edaya/core'
 import { SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
+import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
 
 export const demoCiSchool = {
   id: DEMO_CI_SCHOOL_ID,
@@ -95,16 +96,19 @@ export const demoCiSubjects = [
   { id: 'ci-subj-eps', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation Physique et Sportive', code: 'EPS', defaultCoefficient: 1, category: SubjectCategory.Sport, color: SubjectColor.Mint },
 ] as const satisfies readonly SubjectInput[]
 
-export const demoCiSubjectMatters = [
-  { id: 'ci-sm-fr', subjectId: 'ci-subj-fr', name: 'Programme officiel', description: 'Lecture, grammaire et expression écrite selon le programme du MENA-CI.', sequenceOrder: 1, estimatedHours: 5 },
-  { id: 'ci-sm-math', subjectId: 'ci-subj-math', name: 'Programme officiel', description: 'Arithmétique, géométrie plane et initiation aux probabilités.', sequenceOrder: 1, estimatedHours: 5 },
-  { id: 'ci-sm-pc', subjectId: 'ci-subj-pc', name: 'Programme officiel', description: 'Forces, matière et électricité de base.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-svt', subjectId: 'ci-subj-svt', name: 'Programme officiel', description: 'Fonctionnement du corps humain et environnement ivoirien.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-ang', subjectId: 'ci-subj-ang', name: 'Programme officiel', description: 'Compréhension orale et écrite, vocabulaire scolaire.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-hg', subjectId: 'ci-subj-hg', name: 'Programme officiel', description: 'Histoire de l\'Afrique et géographie de la Côte d\'Ivoire.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-edhc', subjectId: 'ci-subj-edhc', name: 'Programme officiel', description: 'Citoyenneté, droits de l\'enfant et vie en société.', sequenceOrder: 1, estimatedHours: 2 },
-  { id: 'ci-sm-eps', subjectId: 'ci-subj-eps', name: 'Programme officiel', description: 'Athlétisme, sports collectifs et éducation à la santé.', sequenceOrder: 1, estimatedHours: 2 },
-] as const satisfies readonly SubjectMatterInput[]
+export const demoCiSubjectMatters = buildCatalogSubjectMatters(
+  ciCollegeSubjectMatterCatalog,
+  {
+    'ci-subj-fr': 'ci-sm-fr-',
+    'ci-subj-math': 'ci-sm-math-',
+    'ci-subj-pc': 'ci-sm-pc-',
+    'ci-subj-svt': 'ci-sm-svt-',
+    'ci-subj-ang': 'ci-sm-ang-',
+    'ci-subj-hg': 'ci-sm-hg-',
+    'ci-subj-edhc': 'ci-sm-edhc-',
+    'ci-subj-eps': 'ci-sm-eps-',
+  },
+) satisfies readonly SubjectMatterInput[]
 
 export const demoCiClassSubjects = [
   { id: 'ci-cs-6a-fr', classGroupId: 'ci-6a', subjectId: 'ci-subj-fr', coefficient: 3 },

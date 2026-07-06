@@ -8,6 +8,7 @@ import {
   demoCiClassSubjects,
   demoCiGradeLevels,
   demoCiSchool,
+  demoCiSubjectMatters,
   demoCiSubjects,
 } from '../../../src/datasets/demo-ci/school'
 
@@ -23,10 +24,16 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.entities.teachers).toHaveLength(2)
     expect(demoCiDataset.entities.teacherAssignments).toHaveLength(3)
     expect(demoCiSubjects).toHaveLength(8)
+    expect(demoCiSubjectMatters.length).toBeGreaterThan(8)
+    expect(demoCiSubjectMatters.some(matter => matter.name === 'Fractions et proportions')).toBe(true)
     expect(demoCiClassSubjects).toHaveLength(19)
     expect(demoCiDataset.entities.students).toHaveLength(12)
-    expect(demoCiSchedulingSlots).toHaveLength(4)
-    expect(demoCiDataset.extensions?.schedulingSlots).toHaveLength(4)
+    expect(demoCiSchedulingSlots).toHaveLength(5)
+    expect(demoCiDataset.extensions?.schedulingSlots).toHaveLength(5)
+    expect(demoCiDataset.extensions?.schedulingSessionProgressAnchors).toHaveLength(3)
+    expect(demoCiDataset.entities.gradeScales).toHaveLength(1)
+    expect(demoCiDataset.extensions?.reportCardDefinitionFixtures).toHaveLength(2)
+    expect(demoCiDataset.extensions?.reportCardResults).toHaveLength(12)
   })
 
   it('uses French subject and grade level labels', () => {
