@@ -60,10 +60,16 @@ export interface ReportCardResultSeedRecord {
   publishedAt?: string
 }
 
+export interface ReportCardTeacherCommentSeedRecord {
+  id: string
+  teacherComment: string
+}
+
 export interface ReportCardsSeedPort {
   createGradeScale: (record: GradeScaleSeedRecord) => Promise<void>
   createReportCardDefinition: (record: ReportCardDefinitionSeedRecord) => Promise<void>
   createReportCardSection: (record: ReportCardSectionSeedRecord) => Promise<void>
   generateReportCardResult: (record: ReportCardResultSeedRecord) => Promise<void>
+  saveReportCardTeacherComment: (record: ReportCardTeacherCommentSeedRecord) => Promise<void>
   publishReportCardResult: (record: ReportCardResultSeedRecord) => Promise<void>
 }

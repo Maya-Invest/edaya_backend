@@ -33,6 +33,13 @@ export function createHttpReportCardsSeedPort(
       withSeedPortError('reportCards.generateReportCardResult', async () => {
         await postCoreCommand(requestOptions, 'generateReportCardResult', record)
       }),
+    saveReportCardTeacherComment: record =>
+      withSeedPortError('reportCards.saveReportCardTeacherComment', async () => {
+        await postCoreCommand(requestOptions, 'writeHomeroomReportComment', {
+          id: record.id,
+          teacherComment: record.teacherComment,
+        })
+      }),
     publishReportCardResult: record =>
       withSeedPortError('reportCards.publishReportCardResult', async () => {
         await postCoreCommand(requestOptions, 'publishReportCardResult', record)

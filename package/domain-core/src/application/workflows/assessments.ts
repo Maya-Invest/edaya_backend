@@ -28,10 +28,13 @@ import {
   buildGroupResultFromChildren,
   buildSubjectAverageFromAssessments,
   buildSubjectAverageFromPriorReportCards,
+  childReportCardDefinitionSections,
+  dedupeReportCardDefinitionSections,
   evaluateAggregationPublishReadiness,
   listAssessmentResultsForStudentAndPeriods,
   listPublishedPeriodIds,
   loadPriorReportCardResults,
+  rootReportCardDefinitionSections,
 } from './report-card-aggregation'
 
 export interface PublishReportCardResultInput {
@@ -50,6 +53,11 @@ export interface GenerateReportCardResultInput {
   reportCardDefinitionId?: string
   generatedAt?: Date
   aggregation?: ReportCardAggregation
+}
+
+export interface WriteHomeroomReportCommentInput {
+  id: string
+  teacherComment: string
 }
 
 export type CreateGradeScaleInput = GradeScaleInput
@@ -146,6 +154,37 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const reportCard = await this.buildReportCardResult(input)
     await this.baseService.entities.results.save(reportCard, { moduleChecked: true })
     return reportCard
+  }
+
+  async writeHomeroomReportComment(input: WriteHomeroomReportCommentInput): Promise<ReportCardResult> {
+    const existing = await this.requireEntity(this.baseService.entities.results, input.id)
+    const student = await this.requireStudent(existing.studentId)
+    this.checkActorSchool(student.schoolId)
+    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [existing.id])
+
+    const updated = new ReportCardResult({
+      id: existing.id,
+      reportCardDefinitionId: existing.reportCardDefinitionId,
+      studentId: existing.studentId,
+      classGroupId: existing.classGroupId,
+      periodId: existing.periodId,
+      sectionResults: [...(existing.sectionResults ?? [])],
+      attendanceSummary: existing.attendanceSummary,
+      assessmentResultCount: existing.assessmentResultCount,
+      overallAverage: existing.overallAverage,
+      rank: existing.rank,
+      classSize: existing.classSize,
+      passThreshold: existing.passThreshold,
+      teacherComment: input.teacherComment.trim(),
+      principalComment: existing.principalComment,
+      status: existing.status,
+      generatedAt: existing.generatedAt,
+      publishedAt: existing.publishedAt,
+      aggregation: existing.aggregation,
+    })
+    await this.baseService.entities.results.save(updated, { moduleChecked: true })
+    return updated
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
@@ -245,6 +284,11 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       attendanceSummary: resolvedAttendanceSummary,
       assessmentResultCount: assessmentResultCount ?? periodAssessmentResults.length,
       overallAverage: overallAverage === undefined ? undefined : Math.round(overallAverage),
+      rank: existing?.rank,
+      classSize: existing?.classSize,
+      passThreshold: existing?.passThreshold,
+      teacherComment: existing?.teacherComment,
+      principalComment: existing?.principalComment,
       status: canPublish ? (existing?.status ?? ReportCardResultStatus.Draft) : ReportCardResultStatus.Draft,
       generatedAt: existing?.generatedAt ?? generatedAt,
       publishedAt: existing?.publishedAt,
@@ -272,8 +316,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     canPublish: boolean
   }> {
     const period = await this.requirePeriod(periodId)
-    const allSections = (await this.baseService.repositories.sections.list({ reportCardDefinitionId }))
-      .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+    const allSections = dedupeReportCardDefinitionSections(
+      await this.baseService.repositories.sections.list({ reportCardDefinitionId }),
+    ).sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
     const classSubjects = (await this.baseService.repositories.classSubjects.list({ classGroupId }))
       .filter(classSubject => classSubject.isOffered !== false)
     const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
@@ -314,7 +359,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
       }
       const nextVisited = new Set(visited).add(section.id)
-      const childSections = allSections.filter(item => item.parentSectionId === section.id)
+      const childSections = childReportCardDefinitionSections(allSections, section.id)
       if (section.kind === ReportCardDefinitionSectionKind.Subject) {
         const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
         if (!classSubject) {
@@ -351,7 +396,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const sectionResults: ReportCardResultSection[] = []
     let rootSumWeights = 0
     let rootSumWeightedPoints = 0
-    for (const root of allSections.filter(section => !section.parentSectionId)) {
+    for (const root of rootReportCardDefinitionSections(allSections)) {
       const result = await computeNode(root)
       if (result) {
         sectionResults.push(result)
@@ -451,7 +496,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
       }
       const nextVisited = new Set(visited).add(section.id)
-      const childSections = allSections.filter(item => item.parentSectionId === section.id)
+      const childSections = childReportCardDefinitionSections(allSections, section.id)
       if (section.kind === ReportCardDefinitionSectionKind.Subject) {
         const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
         if (!classSubject)
@@ -488,7 +533,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const sectionResults: ReportCardResultSection[] = []
     let rootSumWeights = 0
     let rootSumWeightedPoints = 0
-    for (const root of allSections.filter(section => !section.parentSectionId)) {
+    for (const root of rootReportCardDefinitionSections(allSections)) {
       const result = await computeNode(root)
       if (result) {
         sectionResults.push(result)

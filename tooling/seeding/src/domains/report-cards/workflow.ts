@@ -99,6 +99,13 @@ export async function seedDevReportCards(
     }
     await port.generateReportCardResult(record)
 
+    if (result.homeroomComment?.trim()) {
+      await port.saveReportCardTeacherComment({
+        id: result.id,
+        teacherComment: result.homeroomComment.trim(),
+      })
+    }
+
     if (result.narrativeStatus === 'published' && result.publishedAt) {
       await port.publishReportCardResult({
         ...record,

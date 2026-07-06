@@ -610,6 +610,11 @@ export const clientBindings = {
         "requestSchemaName": "GenerateReportCardResultCommand",
         "responseSchemaName": "ReportCardResult"
       },
+      "writeHomeroomReportComment": {
+        "publicName": "write-homeroom-report-comment",
+        "requestSchemaName": "WriteHomeroomReportCommentCommand",
+        "responseSchemaName": "ReportCardResult"
+      },
       "publishReportCardResult": {
         "publicName": "publish-report-card-result",
         "requestSchemaName": "PublishReportCardResultCommand",

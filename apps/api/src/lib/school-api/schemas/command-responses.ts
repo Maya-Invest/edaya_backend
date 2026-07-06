@@ -203,6 +203,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   recordAssessmentResultCompliance: assessmentResultResponseSchema,
   listClassSubjectAssessmentResultsForPeriod: assessmentResultCommandListResponseSchema,
   generateReportCardResult: resultResponseSchema,
+  writeHomeroomReportComment: resultResponseSchema,
   publishReportCardResult: resultResponseSchema,
   recordIncident: incidentResponseSchema,
   addStudentInvolvement: studentIncidentInvolvementResponseSchema,

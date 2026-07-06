@@ -1685,6 +1685,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/write-homeroom-report-comment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** write-homeroom-report-comment */
+        post: operations["commands.writeHomeroomReportComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/publish-report-card-result": {
         parameters: {
             query?: never;
@@ -11399,6 +11416,10 @@ export interface components {
             } | null;
             periodId: string;
         };
+        WriteHomeroomReportCommentCommand: {
+            id: string;
+            teacherComment: string;
+        };
         PublishReportCardResultCommand: {
             id: string;
             studentId: string;
@@ -19100,6 +19121,84 @@ export interface operations {
         };
         responses: {
             /** @description Executed generate-report-card-result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCardResult"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.writeHomeroomReportComment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description write-homeroom-report-comment payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WriteHomeroomReportCommentCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed write-homeroom-report-comment */
             200: {
                 headers: {
                     [name: string]: unknown;

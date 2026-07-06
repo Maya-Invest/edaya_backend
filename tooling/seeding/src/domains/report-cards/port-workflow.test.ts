@@ -33,6 +33,7 @@ describe('report-cards seed port workflow', () => {
       generateReportCardResult: async (record) => {
         generated.push(record)
       },
+      saveReportCardTeacherComment: async () => {},
       publishReportCardResult: async (record) => {
         published.push(record)
       },

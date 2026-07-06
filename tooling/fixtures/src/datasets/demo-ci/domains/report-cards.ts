@@ -10,6 +10,7 @@ import {
   ReportCardDefinitionStatus,
 } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
+import { demoCiClassRosters } from '../rosters'
 
 export const demoCiGradeScales = [
   {
@@ -37,97 +38,68 @@ export const demoCiReportCardGradeScaleFixtures = [
   },
 ] as const satisfies readonly FixtureReportCardGradeScale[]
 
-const demoCiSixthGradeSections = [
-  {
-    id: 'ci-rcs-6-fond',
-    name: 'Matières fondamentales',
-    role: ReportCardDefinitionSectionRole.Subjects,
-    order: 1,
-    weight: 2,
-    coefficient: 2,
-    subjectIds: ['ci-subj-fr', 'ci-subj-math', 'ci-subj-hg'],
-  },
-  {
-    id: 'ci-rcs-6-sci',
-    name: 'Sciences & langues',
-    role: ReportCardDefinitionSectionRole.Subjects,
-    order: 2,
-    weight: 2,
-    coefficient: 1.5,
-    subjectIds: ['ci-subj-svt', 'ci-subj-ang', 'ci-subj-edhc'],
-  },
-  {
-    id: 'ci-rcs-6-eps',
-    name: 'EPS',
-    role: ReportCardDefinitionSectionRole.Subjects,
-    order: 3,
-    weight: 1,
-    coefficient: 1,
-    subjectIds: ['ci-subj-eps'],
-  },
-  {
-    id: 'ci-rcs-6-synth',
-    name: 'Synthèse trimestrielle',
-    role: ReportCardDefinitionSectionRole.Summary,
-    order: 4,
-    weight: 0,
-    subjectIds: [],
-  },
-  {
-    id: 'ci-rcs-6-appr',
-    name: 'Appréciations',
-    role: ReportCardDefinitionSectionRole.Comments,
-    order: 5,
-    weight: 0,
-    subjectIds: [],
-  },
-] as const
+function buildSections(
+  prefix: string,
+  includeEdhc: boolean,
+): readonly {
+  id: string
+  name: string
+  role: ReportCardDefinitionSectionRole
+  order: number
+  weight: number
+  coefficient?: number
+  subjectIds: readonly string[]
+}[] {
+  const sciSubjects = includeEdhc
+    ? ['ci-subj-svt', 'ci-subj-ang', 'ci-subj-edhc']
+    : ['ci-subj-pc', 'ci-subj-svt', 'ci-subj-ang']
 
-const demoCiFifthGradeSections = [
-  {
-    id: 'ci-rcs-5-fond',
-    name: 'Matières fondamentales',
-    role: ReportCardDefinitionSectionRole.Subjects,
-    order: 1,
-    weight: 2,
-    coefficient: 2,
-    subjectIds: ['ci-subj-fr', 'ci-subj-math', 'ci-subj-hg'],
-  },
-  {
-    id: 'ci-rcs-5-sci',
-    name: 'Sciences & langues',
-    role: ReportCardDefinitionSectionRole.Subjects,
-    order: 2,
-    weight: 2,
-    coefficient: 1.5,
-    subjectIds: ['ci-subj-pc', 'ci-subj-svt', 'ci-subj-ang'],
-  },
-  {
-    id: 'ci-rcs-5-eps',
-    name: 'EPS',
-    role: ReportCardDefinitionSectionRole.Subjects,
-    order: 3,
-    weight: 1,
-    coefficient: 1,
-    subjectIds: ['ci-subj-eps'],
-  },
-  {
-    id: 'ci-rcs-5-synth',
-    name: 'Synthèse trimestrielle',
-    role: ReportCardDefinitionSectionRole.Summary,
-    order: 4,
-    weight: 0,
-    subjectIds: [],
-  },
-  {
-    id: 'ci-rcs-5-appr',
-    name: 'Appréciations',
-    role: ReportCardDefinitionSectionRole.Comments,
-    order: 5,
-    weight: 0,
-    subjectIds: [],
-  },
-] as const
+  return [
+    {
+      id: `${prefix}-fond`,
+      name: 'Matières fondamentales',
+      role: ReportCardDefinitionSectionRole.Subjects,
+      order: 1,
+      weight: 2,
+      coefficient: 2,
+      subjectIds: ['ci-subj-fr', 'ci-subj-math', 'ci-subj-hg'],
+    },
+    {
+      id: `${prefix}-sci`,
+      name: 'Sciences & langues',
+      role: ReportCardDefinitionSectionRole.Subjects,
+      order: 2,
+      weight: 2,
+      coefficient: 1.5,
+      subjectIds: sciSubjects,
+    },
+    {
+      id: `${prefix}-eps`,
+      name: 'EPS',
+      role: ReportCardDefinitionSectionRole.Subjects,
+      order: 3,
+      weight: 1,
+      coefficient: 1,
+      subjectIds: ['ci-subj-eps'],
+    },
+    {
+      id: `${prefix}-synth`,
+      name: 'Synthèse trimestrielle',
+      role: ReportCardDefinitionSectionRole.Summary,
+      order: 4,
+      weight: 0,
+      subjectIds: [],
+    },
+    {
+      id: `${prefix}-appr`,
+      name: 'Appréciations',
+      role: ReportCardDefinitionSectionRole.Comments,
+      order: 5,
+      weight: 0,
+      subjectIds: [],
+    },
+  ]
+}
 
 export const demoCiReportCardDefinitionFixtures = [
   {
@@ -144,7 +116,7 @@ export const demoCiReportCardDefinitionFixtures = [
       isDefault: true,
       description: 'Bulletin trimestriel — 6ème',
     },
-    sections: demoCiSixthGradeSections,
+    sections: buildSections('ci-rcs-6', true),
   },
   {
     narrativeStatus: 'published',
@@ -160,95 +132,91 @@ export const demoCiReportCardDefinitionFixtures = [
       isDefault: true,
       description: 'Bulletin trimestriel — 5ème',
     },
-    sections: demoCiFifthGradeSections,
+    sections: buildSections('ci-rcs-5', false),
+  },
+  {
+    narrativeStatus: 'published',
+    definition: {
+      id: 'ci-rcd-4',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
+      gradeLevelId: 'ci-gl-4',
+      gradeScaleId: 'ci-gs-20',
+      name: 'Bulletin trimestriel — 4ème',
+      kind: ReportCardDefinitionKind.Default,
+      status: ReportCardDefinitionStatus.Published,
+      isDefault: true,
+      description: 'Bulletin trimestriel — 4ème',
+    },
+    sections: buildSections('ci-rcs-4', false),
+  },
+  {
+    narrativeStatus: 'published',
+    definition: {
+      id: 'ci-rcd-3',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
+      gradeLevelId: 'ci-gl-3',
+      gradeScaleId: 'ci-gs-20',
+      name: 'Bulletin trimestriel — 3ème',
+      kind: ReportCardDefinitionKind.Default,
+      status: ReportCardDefinitionStatus.Published,
+      isDefault: true,
+      description: 'Bulletin trimestriel — 3ème',
+    },
+    sections: buildSections('ci-rcs-3', false),
   },
 ] as const satisfies readonly FixtureReportCardDefinition[]
 
-function ciTrimesterOneResult({
-  id,
-  studentId,
-  classGroupId,
-  reportCardDefinitionId,
-  classRank,
-  classSize,
-  narrativeStatus,
-  homeroomComment = '',
-}: {
-  id: string
-  studentId: string
-  classGroupId: string
-  reportCardDefinitionId: string
-  classRank: number
-  classSize: number
-  narrativeStatus: 'published' | 'generated'
-  homeroomComment?: string
-}): FixtureReportCardResult {
-  return {
-    id,
-    studentId,
-    classGroupId,
-    periodId: 'ci-2025-t1',
-    reportCardDefinitionId,
-    gradeScaleId: 'ci-gs-20',
-    narrativeStatus,
-    overallAverage: 12 + classRank,
-    classRank,
-    classSize,
-    homeroomComment,
-    generatedAt: '2025-12-15',
-    publishedAt: narrativeStatus === 'published' ? '2025-12-19' : undefined,
-    sectionMarks: {},
-  }
+const classReportCardDefinition: Record<string, string> = {
+  'ci-6a': 'ci-rcd-6',
+  'ci-6b': 'ci-rcd-6',
+  'ci-5a': 'ci-rcd-5',
+  'ci-4a': 'ci-rcd-4',
+  'ci-3a': 'ci-rcd-3',
 }
 
-/** Trimestre 1 — bulletins pour les classes du compte enseignant démo (6ème A/B, 5ème A). */
-export const demoCiReportCardResults = [
-  ...[
-    ['ci-rcr-s1-t1', 'ci-s1', 'ci-6a', 1, 6, 'published', 'Bon début d\'année.'],
-    ['ci-rcr-s2-t1', 'ci-s2', 'ci-6a', 2, 6, 'published', 'Travail régulier.'],
-    ['ci-rcr-s3-t1', 'ci-s3', 'ci-6a', 3, 6, 'published', ''],
-    ['ci-rcr-s4-t1', 'ci-s4', 'ci-6a', 4, 6, 'published', ''],
-    ['ci-rcr-s5-t1', 'ci-s5', 'ci-6a', 5, 6, 'generated', ''],
-    ['ci-rcr-s6-t1', 'ci-s6', 'ci-6a', 6, 6, 'published', ''],
-  ].map(([id, studentId, classGroupId, classRank, classSize, narrativeStatus, homeroomComment]) =>
-    ciTrimesterOneResult({
-      id,
-      studentId,
-      classGroupId,
-      reportCardDefinitionId: 'ci-rcd-6',
-      classRank: Number(classRank),
-      classSize: Number(classSize),
-      narrativeStatus: narrativeStatus as 'published' | 'generated',
-      homeroomComment,
-    })),
-  ...[
-    ['ci-rcr-s7-t1', 'ci-s7', 'ci-6b', 1, 4, 'published', 'Élève sérieux.'],
-    ['ci-rcr-s8-t1', 'ci-s8', 'ci-6b', 2, 4, 'published', ''],
-    ['ci-rcr-s9-t1', 'ci-s9', 'ci-6b', 3, 4, 'published', ''],
-    ['ci-rcr-s10-t1', 'ci-s10', 'ci-6b', 4, 4, 'generated', ''],
-  ].map(([id, studentId, classGroupId, classRank, classSize, narrativeStatus, homeroomComment]) =>
-    ciTrimesterOneResult({
-      id,
-      studentId,
-      classGroupId,
-      reportCardDefinitionId: 'ci-rcd-6',
-      classRank: Number(classRank),
-      classSize: Number(classSize),
-      narrativeStatus: narrativeStatus as 'published' | 'generated',
-      homeroomComment,
-    })),
-  ...[
-    ['ci-rcr-s11-t1', 'ci-s11', 'ci-5a', 1, 2, 'published', 'Bonne adaptation en 5ème.'],
-    ['ci-rcr-s12-t1', 'ci-s12', 'ci-5a', 2, 2, 'published', ''],
-  ].map(([id, studentId, classGroupId, classRank, classSize, narrativeStatus, homeroomComment]) =>
-    ciTrimesterOneResult({
-      id,
-      studentId,
-      classGroupId,
-      reportCardDefinitionId: 'ci-rcd-5',
-      classRank: Number(classRank),
-      classSize: Number(classSize),
-      narrativeStatus: narrativeStatus as 'published' | 'generated',
-      homeroomComment,
-    })),
-] as const satisfies readonly FixtureReportCardResult[]
+const homeroomComments: Partial<Record<string, string>> = {
+  'ci-s1': 'Bon début d\'année.',
+  'ci-s2': 'Travail régulier.',
+  'ci-s7': 'Élève sérieux.',
+  'ci-s11': 'Bonne adaptation en 5ème.',
+  'ci-s19': 'Progrès notables en 4ème.',
+  'ci-s23': 'Bon niveau en 3ème, à confirmer au brevet.',
+}
+
+function buildTrimesterOneResults(): FixtureReportCardResult[] {
+  const results: FixtureReportCardResult[] = []
+
+  for (const [classGroupId, studentIds] of Object.entries(demoCiClassRosters)) {
+    const classSize = studentIds.length
+    const reportCardDefinitionId = classReportCardDefinition[classGroupId]!
+
+    for (const [index, studentId] of studentIds.entries()) {
+      const classRank = index + 1
+      const narrativeStatus = classRank === classSize && classSize > 2 ? 'generated' : 'published'
+
+      results.push({
+        id: `ci-rcr-${studentId.replace('ci-s', 's')}-t1`,
+        studentId,
+        classGroupId,
+        periodId: 'ci-2025-t1',
+        reportCardDefinitionId,
+        gradeScaleId: 'ci-gs-20',
+        narrativeStatus,
+        overallAverage: 12 + classRank,
+        classRank,
+        classSize,
+        homeroomComment: homeroomComments[studentId] ?? '',
+        generatedAt: '2025-12-15',
+        publishedAt: narrativeStatus === 'published' ? '2025-12-19' : undefined,
+        sectionMarks: {},
+      })
+    }
+  }
+
+  return results
+}
+
+/** Trimestre 1 — bulletins pour les 30 élèves du collège. */
+export const demoCiReportCardResults = buildTrimesterOneResults() as readonly FixtureReportCardResult[]

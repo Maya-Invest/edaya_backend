@@ -50,6 +50,7 @@ export type SchoolCommandKey
     | 'recordAssessmentResultCompliance'
     | 'listClassSubjectAssessmentResultsForPeriod'
     | 'generateReportCardResult'
+    | 'writeHomeroomReportComment'
     | 'publishReportCardResult'
     | 'registerStudent'
     | 'enrollStudent'
@@ -169,6 +170,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'recordAssessmentResultCompliance',
   'listClassSubjectAssessmentResultsForPeriod',
   'generateReportCardResult',
+  'writeHomeroomReportComment',
   'publishReportCardResult',
   'registerStudent',
   'enrollStudent',

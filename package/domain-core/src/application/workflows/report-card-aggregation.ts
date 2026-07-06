@@ -17,6 +17,52 @@ export interface AggregationPublishReadiness {
   missingOrDraftReportCardPeriodIds: string[]
 }
 
+export function dedupeReportCardDefinitionSections(
+  sections: readonly ReportCardDefinitionSection[],
+): ReportCardDefinitionSection[] {
+  const byId = new Map<string, ReportCardDefinitionSection>()
+  for (const section of sections) {
+    if (!byId.has(section.id)) {
+      byId.set(section.id, section)
+    }
+  }
+  return [...byId.values()]
+}
+
+export function rootReportCardDefinitionSections(
+  sections: readonly ReportCardDefinitionSection[],
+): ReportCardDefinitionSection[] {
+  const byName = new Map<string, ReportCardDefinitionSection>()
+  for (const section of dedupeReportCardDefinitionSections(sections)) {
+    if (section.parentSectionId) {
+      continue
+    }
+    if (!byName.has(section.name)) {
+      byName.set(section.name, section)
+    }
+  }
+  return [...byName.values()]
+}
+
+export function childReportCardDefinitionSections(
+  sections: readonly ReportCardDefinitionSection[],
+  parentSectionId: string,
+): ReportCardDefinitionSection[] {
+  const seenSubjectIds = new Set<string>()
+  return dedupeReportCardDefinitionSections(sections)
+    .filter(section => section.parentSectionId === parentSectionId)
+    .filter((section) => {
+      if (section.kind !== ReportCardDefinitionSectionKind.Subject || !section.subjectId) {
+        return true
+      }
+      if (seenSubjectIds.has(section.subjectId)) {
+        return false
+      }
+      seenSubjectIds.add(section.subjectId)
+      return true
+    })
+}
+
 export function findSectionAverage(
   sectionResults: readonly ReportCardResultSection[],
   sectionId: string,

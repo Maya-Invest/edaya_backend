@@ -33,6 +33,7 @@ import type {
   ListClassSubjectAssessmentResultsForPeriodInput,
   PublishReportCardResultInput,
   RecordAssessmentResultInput,
+  WriteHomeroomReportCommentInput,
 } from '../workflows/assessments'
 import type {
   AddStudentInvolvementInput,
@@ -206,6 +207,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     recordAssessmentResultCompliance: payload => workflows.assessments.recordAssessmentResultCompliance(payload as RecordAssessmentResultInput),
     listClassSubjectAssessmentResultsForPeriod: payload => workflows.assessments.listClassSubjectAssessmentResultsForPeriod(payload as ListClassSubjectAssessmentResultsForPeriodInput),
     generateReportCardResult: payload => workflows.assessments.generateReportCardResult(payload as GenerateReportCardResultInput),
+    writeHomeroomReportComment: payload => workflows.assessments.writeHomeroomReportComment(payload as WriteHomeroomReportCommentInput),
     publishReportCardResult: payload => workflows.assessments.publishReportCardResult(payload as PublishReportCardResultInput),
     // student
     registerStudent: payload => workflows.student.registerStudent(payload as RegisterStudentInput),

@@ -86,6 +86,25 @@ describe('SchoolService assessment workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
+  test('writeHomeroomReportComment updates only the teacher comment on draft cards', async () => {
+    const { savedReportCards, service } = createReportCardContext()
+
+    await service.assessmentsWorkflow.generateReportCardResult({
+      id: 'rc1',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+    })
+
+    const result = await service.assessmentsWorkflow.writeHomeroomReportComment({
+      id: 'rc1',
+      teacherComment: 'Bon début d\'année.',
+    })
+
+    expect(result.teacherComment).toBe('Bon début d\'année.')
+    expect(savedReportCards.get('rc1')?.teacherComment).toBe('Bon début d\'année.')
+  })
+
   test('publishReportCardResult publishes generated report cards through managed service', async () => {
     const { mockAtomic, mockPolicy, mockRepos, service } = createReportCardContext()
 

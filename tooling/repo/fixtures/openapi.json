@@ -7512,6 +7512,23 @@
           "periodId"
         ]
       },
+      "WriteHomeroomReportCommentCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherComment": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "teacherComment"
+        ]
+      },
       "PublishReportCardResultCommand": {
         "type": "object",
         "properties": {
@@ -23122,6 +23139,136 @@
         "responses": {
           "200": {
             "description": "Executed generate-report-card-result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportCardResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/write-homeroom-report-comment": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "write-homeroom-report-comment",
+        "operationId": "commands.writeHomeroomReportComment",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "writeHomeroomReportComment",
+        "x-edaya-command-public-name": "write-homeroom-report-comment",
+        "x-edaya-request-schema": "WriteHomeroomReportCommentCommand",
+        "x-edaya-response-schema": "ReportCardResult",
+        "requestBody": {
+          "description": "write-homeroom-report-comment payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteHomeroomReportCommentCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed write-homeroom-report-comment",
             "content": {
               "application/json": {
                 "schema": {

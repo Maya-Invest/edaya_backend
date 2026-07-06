@@ -598,6 +598,11 @@ export const generateReportCardResultCommandSchema = objectFromSchema(reportCard
   })
   .openapi("GenerateReportCardResultCommand");
 
+export const writeHomeroomReportCommentCommandSchema = z.object({
+  id: field.id(),
+  teacherComment: field.text(),
+}).openapi("WriteHomeroomReportCommentCommand");
+
 export const publishReportCardResultCommandSchema = z.object({
   id: field.id(),
   studentId: field.id(),
