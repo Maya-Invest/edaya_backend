@@ -149,6 +149,7 @@ export async function seedDevSchoolStructure(
       name: classGroup.name,
       capacity: classGroup.capacity ?? undefined,
       homeroomStaffId: classGroup.homeroomStaffId ?? undefined,
+      attendanceMode: classGroup.attendanceMode,
     })
   }
 }

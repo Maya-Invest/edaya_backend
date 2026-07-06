@@ -3,6 +3,7 @@ import type {
   AcademicYearInput,
   ActivityEnrollmentInput,
   ActivityInput,
+  ClassActivityEnrollmentInput,
   AnnouncementInput,
   AnnouncementTargetInput,
   AssessmentInput,
@@ -186,6 +187,7 @@ export interface FixtureDatasetEntities {
   attendanceRecords?: readonly AttendanceRecordInput[]
   activities?: readonly ActivityInput[]
   activityEnrollments?: readonly ActivityEnrollmentInput[]
+  classActivityEnrollments?: readonly ClassActivityEnrollmentInput[]
   fees?: readonly FeeInput[]
   studentFees?: readonly StudentFeeInput[]
   payments?: readonly PaymentInput[]

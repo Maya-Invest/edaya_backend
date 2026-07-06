@@ -114,7 +114,7 @@
       ],
       "routes": [
         {
-          "pattern": "api-prod.edaya.softilab.dev",
+          "pattern": "api.edaya.softilab.dev",
           "custom_domain": true
         }
       ],

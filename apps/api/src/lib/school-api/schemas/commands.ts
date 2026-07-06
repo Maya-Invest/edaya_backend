@@ -211,6 +211,21 @@ export const linkActorSubjectCommandSchema = z.object({
   }
 }).openapi("LinkActorSubjectCommand");
 
+export const unlinkActorSubjectCommandSchema = z.object({
+  staffMemberId: field.id().optional(),
+  guardianId: field.id().optional(),
+  studentId: field.id().optional(),
+  teacherId: field.id().optional(),
+}).superRefine((data, ctx) => {
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId, data.teacherId].filter(Boolean).length;
+  if (targetCount !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Exactly one of staffMemberId, guardianId, studentId, or teacherId is required",
+    });
+  }
+}).openapi("UnlinkActorSubjectCommand");
+
 export const sendAccountInvitationCommandSchema = z.object({
   kind: field.enumValue(AccountInvitationKind),
   targetId: field.id(),

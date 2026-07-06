@@ -12,8 +12,8 @@ describe('demo-ci scheduling', () => {
   it('defines recurring teaching slots for ci-t1 across collège classes', () => {
     expect(demoCiResources).toHaveLength(3)
     expect(demoCiClassResourceAssignments).toHaveLength(2)
-    expect(demoCiSchedulingSlots).toHaveLength(5)
-    expect(demoCiSchedules).toHaveLength(5)
+    expect(demoCiSchedulingSlots).toHaveLength(6)
+    expect(demoCiSchedules).toHaveLength(6)
 
     const teacherIds = new Set(demoCiSchedulingSlots.map(slot => slot.teacherId))
     expect(teacherIds).toEqual(new Set(['ci-t1']))

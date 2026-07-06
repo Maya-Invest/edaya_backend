@@ -218,6 +218,7 @@ export const coreCommands = [
   command("update-staff-member-profile", "updateStaffMemberProfile", commandSchemas.updateStaffMemberProfileCommandSchema),
   command("link-actor-subject", "linkActorSubject", commandSchemas.linkActorSubjectCommandSchema),
   command("relink-actor-subject", "relinkActorSubject", commandSchemas.relinkActorSubjectCommandSchema),
+  command("unlink-actor-subject", "unlinkActorSubject", commandSchemas.unlinkActorSubjectCommandSchema),
   command("send-account-invitation", "sendAccountInvitation", commandSchemas.sendAccountInvitationCommandSchema),
   command("resend-account-invitation", "resendAccountInvitation", commandSchemas.resendAccountInvitationCommandSchema),
   command("revoke-account-invitation", "revokeAccountInvitation", commandSchemas.revokeAccountInvitationCommandSchema),

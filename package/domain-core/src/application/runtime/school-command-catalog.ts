@@ -26,6 +26,7 @@ export type SchoolCommandKey
     | 'removeAttachment'
     | 'linkActorSubject'
     | 'relinkActorSubject'
+    | 'unlinkActorSubject'
     | 'sendAccountInvitation'
     | 'resendAccountInvitation'
     | 'revokeAccountInvitation'
@@ -146,6 +147,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'removeAttachment',
   'linkActorSubject',
   'relinkActorSubject',
+  'unlinkActorSubject',
   'sendAccountInvitation',
   'resendAccountInvitation',
   'revokeAccountInvitation',

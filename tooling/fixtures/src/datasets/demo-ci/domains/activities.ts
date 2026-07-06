@@ -1,4 +1,4 @@
-import type { ActivityEnrollmentInput, ActivityInput } from '@edaya/core'
+import type { ActivityEnrollmentInput, ActivityInput, ClassActivityEnrollmentInput } from '@edaya/core'
 import { ActivityCategory, ActivityEnrollmentStatus } from '@edaya/core'
 import { DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 
@@ -87,3 +87,12 @@ export const demoCiActivityEnrollments = [
   { id: 'ci-ae-theatre-s14', activityId: 'ci-act-theatre', studentId: 'ci-s14', status: ActivityEnrollmentStatus.Pending },
   { id: 'ci-ae-theatre-s28', activityId: 'ci-act-theatre', studentId: 'ci-s28', status: ActivityEnrollmentStatus.Approved },
 ] as const satisfies readonly ActivityEnrollmentInput[]
+
+/** Links school activities to class groups for class timetable display. */
+export const demoCiClassActivityEnrollments = [
+  {
+    id: 'ci-cae-6a-anglais',
+    activityId: 'ci-act-anglais',
+    classGroupId: 'ci-6a',
+  },
+] as const satisfies readonly ClassActivityEnrollmentInput[]

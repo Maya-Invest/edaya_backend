@@ -212,9 +212,9 @@ export async function runDevSchoolSeed(
   await seedDevPopulation(populationPort, seedDataset)
   await seedDevCurriculum(curriculumPort, seedDataset)
   await seedDevTeachers(teachersPort, seedDataset)
+  const activitiesCounts = await seedDevActivities(activitiesPort, seedDataset)
   await seedDevScheduling(schedulingPort, seedDataset)
   await seedDevAssessments(assessmentsPort, seedDataset)
-  const activitiesCounts = await seedDevActivities(activitiesPort, seedDataset)
   const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, seedDataset)
 
   const disciplineCounts = await seedDevDiscipline(disciplinePort, seedDataset)

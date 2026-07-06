@@ -6,8 +6,10 @@ import {
   buildStaffRecipientProfile,
   buildStudentRecipientProfile,
   buildTeacherRecipientProfile,
+  scheduleNotificationRecipientRemove,
   scheduleNotificationRecipientUpsert,
 } from '../../capabilities/notifications'
+import { MessageDeliveryRecipientKind } from '../../domain/messaging/message-delivery'
 import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 
@@ -84,22 +86,147 @@ export function assertEntitySubjectLinkable(
   }
 }
 
+export type UnlinkSubjectFromActorInput = Omit<LinkSubjectToActorInput, 'subjectId'>
+
 export async function linkSubjectToActor(
   baseService: BaseSchoolService,
   repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
   schoolId: string,
   input: LinkSubjectToActorInput,
 ): Promise<LinkSubjectToActorResult> {
-  return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: false })
+  return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: true })
 }
 
+/** @deprecated Use {@link linkSubjectToActor} — link now replaces an existing entity subject when needed. */
 export async function relinkSubjectToActor(
   baseService: BaseSchoolService,
   repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
   schoolId: string,
   input: LinkSubjectToActorInput,
 ): Promise<LinkSubjectToActorResult> {
-  return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: true })
+  return linkSubjectToActor(baseService, repositories, schoolId, input)
+}
+
+export async function unlinkSubjectFromActor(
+  baseService: BaseSchoolService,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
+  schoolId: string,
+  input: UnlinkSubjectFromActorInput,
+): Promise<LinkSubjectToActorResult> {
+  const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
+  if (targetCount !== 1) {
+    throw new BusinessRuleViolationError(
+      'LINK_ACTOR_SUBJECT_AMBIGUOUS',
+      'Exactly one of staffMemberId, guardianId, studentId, or teacherId is required',
+    )
+  }
+
+  if (input.staffMemberId) {
+    const existing = await repositories.staffMembers.findById(input.staffMemberId)
+    if (!existing || existing.schoolId !== schoolId) {
+      throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Staff member not found in school')
+    }
+    if (!existing.subjectId) {
+      return { kind: 'staff', entity: existing }
+    }
+    const staffMember = new StaffMemberEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      email: existing.email,
+      notificationEmail: existing.notificationEmail,
+      notificationPhone: existing.notificationPhone,
+      subjectId: undefined,
+      isActive: existing.isActive,
+      createdAt: existing.createdAt,
+    })
+    await baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
+    scheduleNotificationRecipientRemove(baseService, schoolId, {
+      kind: MessageDeliveryRecipientKind.Staff,
+      id: existing.id,
+      subjectId: existing.subjectId,
+    })
+    return { kind: 'staff', entity: staffMember }
+  }
+
+  if (input.guardianId) {
+    const existing = await repositories.guardians.findById(input.guardianId)
+    if (!existing || existing.schoolId !== schoolId) {
+      throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Guardian not found in school')
+    }
+    if (!existing.subjectId) {
+      return { kind: 'guardian', entity: existing }
+    }
+    const guardian = new GuardianEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      email: existing.email,
+      phone: existing.phone,
+      notificationEmail: existing.notificationEmail,
+      notificationPhone: existing.notificationPhone,
+      subjectId: undefined,
+      contactMethods: [...existing.contactMethods],
+      hasAccess: existing.hasAccess,
+      createdAt: existing.createdAt,
+    })
+    await baseService.entities.guardians.save(guardian, { moduleChecked: true })
+    scheduleNotificationRecipientRemove(baseService, schoolId, {
+      kind: MessageDeliveryRecipientKind.Guardian,
+      id: existing.id,
+      subjectId: existing.subjectId,
+    })
+    return { kind: 'guardian', entity: guardian }
+  }
+
+  if (input.teacherId) {
+    const existing = await repositories.teachers.findById(input.teacherId)
+    if (!existing || existing.schoolId !== schoolId) {
+      throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Teacher not found in school')
+    }
+    if (!existing.subjectId) {
+      return { kind: 'teacher', entity: existing }
+    }
+    const teacher = new TeacherEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      photoUrl: existing.photoUrl,
+      email: existing.email,
+      phone: existing.phone,
+      notificationEmail: existing.notificationEmail,
+      notificationPhone: existing.notificationPhone,
+      subjectId: undefined,
+      isActive: existing.isActive,
+      createdAt: existing.createdAt,
+    })
+    await baseService.entities.teachers.save(teacher, { moduleChecked: true })
+    scheduleNotificationRecipientRemove(baseService, schoolId, {
+      kind: MessageDeliveryRecipientKind.Teacher,
+      id: existing.id,
+      subjectId: existing.subjectId,
+    })
+    return { kind: 'teacher', entity: teacher }
+  }
+
+  const existing = await repositories.students.findById(input.studentId!)
+  if (!existing || existing.schoolId !== schoolId) {
+    throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Student not found in school')
+  }
+  if (!existing.subjectId) {
+    return { kind: 'student', entity: existing }
+  }
+  const student = existing.copyWith({ subjectId: undefined })
+  await baseService.entities.students.save(student, { moduleChecked: true })
+  scheduleNotificationRecipientRemove(baseService, schoolId, {
+    kind: MessageDeliveryRecipientKind.Student,
+    id: existing.id,
+    subjectId: existing.subjectId,
+  })
+  return { kind: 'student', entity: student }
 }
 
 async function replaceActorSubject(

@@ -40,7 +40,8 @@ Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-
 3. **Teacher teaching/homeroom `anyOf` is data** — encoded once per operation, not copy-pasted per entity.
 4. **Resource policy dispatches by `actor.kind`** — strategies are small files; no `isPortalActor`.
 5. **Business gates stay auth-free** — `preSave` / `preDelete` immutability rules remain separate.
-6. **Tests follow the same seams** — operation matrix tests, per-strategy policy tests, thin compose smoke; no entity-domain auth unit tests.
+6. **Portal rules are per-kind, not per-generic-portal** — `GuardianOperationRule` and `StudentOperationRule` are independent fields even when capabilities match today; no shared portal fallback.
+7. **Tests follow the same seams** — operation matrix tests, per-strategy policy tests, thin compose smoke; no entity-domain auth unit tests.
 
 ---
 
@@ -76,14 +77,16 @@ flowchart TB
 
 ### 3.1 Operation type (layer 1 vocabulary)
 
+Portal actors each have their **own capability enum** (`TeachingCapability`, `HomeroomCapability`, `GuardianCapability`, `StudentCapability`). Guardian and student portals share many read operations today but are modeled as **independent rule fields** so a future student portal can diverge without refactoring the operation catalog.
+
 ```typescript
 /** Declarative cross-actor gate. Defined in authorization/operations/*.ts */
 type OperationDefinition = {
   readonly id: string
   readonly staff?: StaffOperationRule
   readonly teacher?: TeacherOperationRule
-  readonly guardian?: PortalOperationRule<GuardianCapability>
-  readonly student?: PortalOperationRule<StudentCapability>
+  readonly guardian?: GuardianOperationRule
+  readonly student?: StudentOperationRule
 }
 
 type StaffOperationRule = {
@@ -91,15 +94,29 @@ type StaffOperationRule = {
   readonly scopeFrom?: OperationTargetKey   // optional request-scope binding
 }
 
-type TeacherOperationRule =
-  | { readonly capability: TeachingCapability; readonly target: OperationTargetKey }
-  | { readonly capability: HomeroomCapability; readonly target: OperationTargetKey }
-  | { readonly anyOf: readonly TeacherOperationRule[] }
-
-type PortalOperationRule<C extends string> = {
+/** Structural primitive — one capability + optional target binding. */
+type PortalOperationRule<C extends PortalCapability> = {
   readonly capability: C
   readonly target?: OperationTargetKey
 }
+
+/** Named aliases per portal kind — do not share a single portal rule type at call sites. */
+type GuardianOperationRule = PortalOperationRule<GuardianCapability>
+type StudentOperationRule = PortalOperationRule<StudentCapability>
+
+/** Teacher uses teaching + homeroom enums; anyOf encodes subject-vs-class reach. */
+type TeacherPortalCapability = TeachingCapability | HomeroomCapability
+
+type TeacherOperationRule =
+  | PortalOperationRule<TeachingCapability>
+  | PortalOperationRule<HomeroomCapability>
+  | { readonly anyOf: readonly TeacherOperationRule[] }
+
+type PortalCapability =
+  | TeachingCapability
+  | HomeroomCapability
+  | GuardianCapability
+  | StudentCapability
 
 type OperationTargetKey =
   | 'student'
@@ -113,6 +130,40 @@ type OperationContext = {
   readonly classGroupId?: string
   readonly classSubjectId?: string
 }
+```
+
+#### Portal rule independence (locked)
+
+| Rule | Rationale |
+|------|-----------|
+| `guardian` and `student` are separate optional fields | Student portal can add capabilities (e.g. `SubmitAssignment`, `ReadOwnDiscipline`) without touching guardian rules |
+| No implicit “portal fallback” | If an operation applies to both guardian and student, **both** `guardian` and `student` rules must be declared explicitly in the operation definition |
+| `defineOperation` validates enum kind | `guardian.capability` must be `GuardianCapability`; `student.capability` must be `StudentCapability` — caught at define time, not runtime |
+| Teacher stays `TeacherOperationRule` | Teaching/homeroom `anyOf` is unique; aliased as `PortalOperationRule<TeachingCapability \| HomeroomCapability>` internally but not merged with link-based portal kinds |
+| Staff-only operations omit portal fields | e.g. `access-control.assign` has `staff` only — no empty guardian/student stubs |
+
+Example — shared read today, divergent tomorrow:
+
+```typescript
+export const GradeOperations = defineOperationFamily({
+  read: {
+    id: 'grades.read',
+    staff: { permission: Permission.GRADE_READ },
+    teacher: {
+      anyOf: [
+        { capability: TeachingCapability.ReadSubjectGrades, target: 'classSubject' },
+        { capability: HomeroomCapability.ReadClassGradesOverview, target: 'classGroup' },
+      ],
+    },
+    guardian: { capability: GuardianCapability.ReadGrades, target: 'student' },
+    student: { capability: StudentCapability.ReadGrades },  // self-scoped; no target key
+  },
+  // Future student-only operation — guardian field omitted entirely:
+  // requestRegrade: {
+  //   id: 'grades.request-regrade',
+  //   student: { capability: StudentCapability.RequestGradeReview },
+  // },
+})
 ```
 
 Public API:
@@ -236,24 +287,26 @@ package/domain-core/src/capabilities/authorization/
 
 Operations are grouped by domain fold. Each row becomes one `OperationDefinition` (read and write are separate operations).
 
-| Group | Operation ID | Replaces (module gate) | Staff permission | Portal capability |
-|-------|--------------|------------------------|------------------|-------------------|
-| **Grades** | `grades.read` | `permissionAction(GRADE_READ)`, teacher read | `GRADE_READ` | Guardian/Student `ReadGrades`; Teacher teaching/homeroom read |
-| | `grades.input` | `gradeInputWriteModule` | `GRADE_INPUT` | Teacher `InputGrade` (classSubject) |
-| **Assessments** | `assessments.read` | `ASSESSMENT_ACCESS_PERMISSIONS` | various read perms | Teacher roster read |
-| | `assessments.manage` | `assessmentWriteModule`, `authorizeTeacherAssessmentSave/Delete` | `GRADE_INPUT` / structure perms | Teacher create/update subject assessment |
-| **Attendance** | `attendance.read` | `permissionAction(ATTENDANCE_READ)` | `ATTENDANCE_READ` | Teacher subject/class read |
-| | `attendance.record` | `attendanceRecordWriteModule` | `ATTENDANCE_RECORD` | Teacher session or daily (anyOf) |
-| **Discipline** | `discipline.read` | `disciplineReadModule` | `DISCIPLINE_READ` | Teacher assignment gate |
-| | `discipline.create` | `disciplineCreateModule` | `DISCIPLINE_CREATE` | Teacher subject or class incident |
-| **Report cards** | `report-cards.read` | `reportCardReadModule` | `QUERY_REPORT_CARD_DETAIL_READ` | Teacher overview / subject |
-| | `report-cards.comment` | `reportCardCommentWriteModule` | `REPORT_CARD_PUBLISH` (staff) | Teacher comment capabilities |
-| **Workspace** | `workspace.read` | `workspaceReadModule` | `QUERY_WORKSPACE_READ` | Portal `ReadWorkspaceShell` |
-| **Attachments** | `attachments.read` | `attachmentReadModule` | `ATTACHMENT_READ` | Portal `ReadAttachments` |
-| **Finance** | `payments.read` | `permissionAction(PAYMENT_READ)` | `PAYMENT_READ` | Guardian/Student `ReadPayments` |
-| **Scheduling** | `timetable.read` | `permissionAction(QUERY_TIMETABLE_READ)` | `QUERY_TIMETABLE_READ` | Portal + teacher |
-| **Access control** | `access-control.assign` | `permissionAction(ACCESS_CONTROL_ASSIGN)` | staff only | — |
-| **Teacher self** | `teacher.self-read` | `teacherSelfReadModule` | staff perms OR teacher pass-through | teacher always allowed |
+| Group | Operation ID | Replaces (module gate) | Staff | Guardian | Student | Teacher |
+|-------|--------------|------------------------|-------|----------|---------|---------|
+| **Grades** | `grades.read` | `permissionAction(GRADE_READ)`, teacher read | `GRADE_READ` | `ReadGrades` + student target | `ReadGrades` (self) | teaching/homeroom `anyOf` read |
+| | `grades.input` | `gradeInputWriteModule` | `GRADE_INPUT` | — | — | `InputGrade` (classSubject) |
+| **Assessments** | `assessments.read` | `ASSESSMENT_ACCESS_PERMISSIONS` | various read perms | — | — | roster read |
+| | `assessments.manage` | `assessmentWriteModule`, `authorizeTeacherAssessmentSave/Delete` | `GRADE_INPUT` / structure | — | — | create/update subject assessment |
+| **Attendance** | `attendance.read` | `permissionAction(ATTENDANCE_READ)` | `ATTENDANCE_READ` | `ReadAttendance` | `ReadAttendance` | subject/class `anyOf` |
+| | `attendance.record` | `attendanceRecordWriteModule` | `ATTENDANCE_RECORD` | — | — | session or daily `anyOf` |
+| **Discipline** | `discipline.read` | `disciplineReadModule` | `DISCIPLINE_READ` | — | — | assignment gate |
+| | `discipline.create` | `disciplineCreateModule` | `DISCIPLINE_CREATE` | — | — | subject or class incident |
+| **Report cards** | `report-cards.read` | `reportCardReadModule` | `QUERY_REPORT_CARD_DETAIL_READ` | `ReadReportCard` | `ReadReportCard` | overview / subject |
+| | `report-cards.comment` | `reportCardCommentWriteModule` | `REPORT_CARD_PUBLISH` | — | — | comment capabilities |
+| **Workspace** | `workspace.read` | `workspaceReadModule` | `QUERY_WORKSPACE_READ` | `ReadWorkspaceShell` | `ReadWorkspaceShell` | assignment gate |
+| **Attachments** | `attachments.read` | `attachmentReadModule` | `ATTACHMENT_READ` | `ReadAttachments` | `ReadAttachments` | assignment gate |
+| **Finance** | `payments.read` | `permissionAction(PAYMENT_READ)` | `PAYMENT_READ` | `ReadPayments` | `ReadPayments` | — |
+| **Scheduling** | `timetable.read` | `permissionAction(QUERY_TIMETABLE_READ)` | `QUERY_TIMETABLE_READ` | `ReadTimetable` | `ReadTimetable` | subject/class read |
+| **Access control** | `access-control.assign` | `permissionAction(ACCESS_CONTROL_ASSIGN)` | `ACCESS_CONTROL_ASSIGN` | — | — | — |
+| **Teacher self** | `teacher.self-read` | `teacherSelfReadModule` | staff perms OR pass-through | — | — | always allowed |
+
+**Note:** Guardian and student columns are declared independently even when values match today. New student-only capabilities are added to `StudentCapability` and wired only on the `student` field — no guardian stub required.
 
 Full enumeration of entity configs using `permissionAction` / `anyPermissionAction` (~55 files) is migrated fold-by-fold in §6.
 
@@ -332,12 +385,12 @@ flowchart TD
 
 | Task | Path / action |
 |------|----------------|
-| G1.1 | Implement `operations/define-operation.ts` — builder, validation (at least one actor path), `OperationRef` registry |
-| G1.2 | Implement `gates/operation-module.ts` — staff `authorize`, portal `assertCapability`, teacher `anyOf` |
+| G1.1 | Implement `operations/define-operation.ts` — builder, `OperationRef` registry; validate capability enum matches rule field (`GuardianOperationRule` → `GuardianCapability`, etc.) |
+| G1.2 | Implement `gates/operation-module.ts` — staff `authorize`; dispatch `guardian` / `student` / `teacher` rules independently; teacher `anyOf` |
 | G1.3 | Wire `OperationContext` resolution from entity fields |
 | G1.4 | Implement `gates/resource-gate.ts` — `resourceGate`, `resourceGateForSave`, `resourceGateForDelete` |
 | G1.5 | Unit tests: `tests/unit/auth/operations/operation-module.test.ts` |
-| G1.6 | Unit tests: `tests/unit/auth/operations/define-operation.test.ts` — invalid defs rejected at import/define time |
+| G1.6 | Unit tests: `tests/unit/auth/operations/define-operation.test.ts` — invalid defs rejected at define time (wrong capability enum on rule field; guardian/student cross-wiring) |
 | G1.7 | Export from `@edaya/core` authorization index |
 
 **Acceptance**
@@ -530,8 +583,11 @@ describeOperationMatrix(GradeOperations.read, [
   { actor: () => AuthFixtures.staff.withPermissions([Permission.GRADE_READ]), expect: 'allow' },
   { actor: () => AuthFixtures.teacher.subject('cs-math'), expect: 'allow', context: { classSubjectId: 'cs-math' } },
   { actor: () => AuthFixtures.teacher.unassigned(), expect: 'deny' },
+  // Guardian and student are separate matrix concerns — same operation, different rule fields:
   { actor: () => AuthFixtures.guardian.linkedTo('student-1'), expect: 'allow', context: { studentId: 'student-1' } },
   { actor: () => AuthFixtures.guardian.linkedTo('student-2'), expect: 'deny', context: { studentId: 'student-1' } },
+  { actor: () => AuthFixtures.student.enrolledIn('class-1'), expect: 'allow' },
+  // Future: student-only operation rows omit guardian fixtures entirely
 ])
 ```
 
@@ -595,6 +651,7 @@ Prevents silent behavior drift while entity configs still partially migrated.
 | No new `*Module()` helpers in `entity-config/authorization.ts` | G1 |
 | No `isPortalActor` outside strategies | G4 |
 | Operations must have ≥1 actor path defined | G1 (AST check on `defineOperation` calls) |
+| `student` rule must not use `GuardianCapability` (and vice versa) | G1 (`define-operation` runtime validation) |
 | Every `OperationRef` has a matrix test file | G4 (registry cross-check) |
 
 ### 7.8 What we explicitly do not add

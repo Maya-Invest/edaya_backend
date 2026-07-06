@@ -1,6 +1,7 @@
 import type {
   DayOfWeek,
   ResourceKind,
+  ScheduleKind,
 } from '@edaya/core'
 
 export interface ResourceSeedRecord {
@@ -16,7 +17,9 @@ export interface ScheduleSeedRecord {
   id: string
   schoolId: string
   classGroupId: string
+  scheduleKind?: ScheduleKind
   classSubjectId?: string
+  activityId?: string
   title: string
   isRecurring: boolean
   dayOfWeek: DayOfWeek

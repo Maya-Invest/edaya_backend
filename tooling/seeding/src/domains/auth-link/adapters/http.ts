@@ -63,7 +63,7 @@ export function createHttpAuthLinkSeedPort(options: CreateHttpAuthLinkSeedPortOp
       await postCoreCommand(requestOptions, 'registerStaffMember', input)
     }),
     replaceStaffSubjectId: (staffId, subjectId) => withSeedPortError('replaceStaffSubjectId', async () => {
-      await postCoreCommand(requestOptions, 'relinkActorSubject', { subjectId, staffMemberId: staffId })
+      await postCoreCommand(requestOptions, 'linkActorSubject', { subjectId, staffMemberId: staffId })
     }),
     findGuardianById: id => withSeedPortError('findGuardianById', async () => {
       const guardian = await findEntity(id, 'guardians', 'findGuardianById')
@@ -78,7 +78,7 @@ export function createHttpAuthLinkSeedPort(options: CreateHttpAuthLinkSeedPortOp
         : undefined
     }),
     replaceGuardianSubjectId: (guardianId, subjectId) => withSeedPortError('replaceGuardianSubjectId', async () => {
-      await postCoreCommand(requestOptions, 'relinkActorSubject', { subjectId, guardianId })
+      await postCoreCommand(requestOptions, 'linkActorSubject', { subjectId, guardianId })
     }),
     linkActorSubject: input => withSeedPortError('linkActorSubject', async () => {
       await postCoreCommand(requestOptions, 'linkActorSubject', input)

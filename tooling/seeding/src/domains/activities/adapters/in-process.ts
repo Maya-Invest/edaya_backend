@@ -1,6 +1,6 @@
 import type { SeedApplication } from '../../../support/types'
 import type { ActivitiesSeedPort } from '../port'
-import { Activity, ActivityEnrollment } from '@edaya/core'
+import { Activity, ActivityEnrollment, ClassActivityEnrollment } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -21,6 +21,12 @@ export function createInProcessActivitiesSeedPort(
       await service.baseService.entities.activityEnrollments.save(new ActivityEnrollment(record), {
         moduleChecked: true,
       })
+    }),
+    saveClassActivityEnrollment: record => withSeedPortError('activities.saveClassActivityEnrollment', async () => {
+      await service.baseService.entities.classActivityEnrollments.save(new ClassActivityEnrollment({
+        ...record,
+        createdAt: new Date(),
+      }), { moduleChecked: true })
     }),
   }
 }

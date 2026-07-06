@@ -1,5 +1,6 @@
 import type { FixtureDataset, FixtureSchedulingSlot } from '@edaya/fixtures'
 import type { SchedulingSeedPort } from './port'
+import { ScheduleKind } from '@edaya/core'
 import { planningSessionDateForDayOfWeek } from '@edaya/fixtures/meta/dates'
 import { seedDateAndTime } from '../../support/seed-date'
 
@@ -52,7 +53,9 @@ export async function seedDevScheduling(
       id: schedule.id,
       schoolId: schedule.schoolId,
       classGroupId: schedule.classGroupId,
+      scheduleKind: schedule.scheduleKind,
       classSubjectId: schedule.classSubjectId ?? undefined,
+      activityId: schedule.activityId ?? undefined,
       title: schedule.title,
       isRecurring: schedule.isRecurring,
       dayOfWeek: schedule.dayOfWeek,
@@ -68,6 +71,11 @@ export async function seedDevScheduling(
     }
 
     await port.materializeSchedule({ scheduleId: schedule.id })
+
+    if (schedule.scheduleKind === ScheduleKind.Activity || schedule.activityId) {
+      continue
+    }
+
     const lessonSessionId = lessonSessionIdForSlot(schedule.id, schedule.dayOfWeek)
 
     if (lessonSessionStaffId) {

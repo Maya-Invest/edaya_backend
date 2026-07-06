@@ -181,6 +181,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     // accessControl
     linkActorSubject: payload => workflows.accessControl.linkActorSubject(payload as LinkActorSubjectInput),
     relinkActorSubject: payload => workflows.accessControl.relinkActorSubject(payload as LinkActorSubjectInput),
+    unlinkActorSubject: payload => workflows.accessControl.unlinkActorSubject(payload as Omit<LinkActorSubjectInput, 'subjectId'>),
     sendAccountInvitation: payload => workflows.accountInvitation.sendAccountInvitation(payload as SendAccountInvitationInput),
     resendAccountInvitation: payload => workflows.accountInvitation.resendAccountInvitation(payload as ResendAccountInvitationInput),
     revokeAccountInvitation: payload => workflows.accountInvitation.revokeAccountInvitation(payload as RevokeAccountInvitationInput),

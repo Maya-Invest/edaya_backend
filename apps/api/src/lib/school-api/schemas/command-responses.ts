@@ -129,6 +129,24 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
       entity: teacherResponseSchema,
     }),
   ]).openapi("RelinkActorSubjectResponse"),
+  unlinkActorSubject: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("staff"),
+      entity: staffMemberResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("guardian"),
+      entity: guardianResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("student"),
+      entity: studentResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
+    }),
+  ]).openapi("UnlinkActorSubjectResponse"),
   assignStaffPermission: staffPermissionAssignmentResponseSchema,
   configureSubject: subjectResponseSchema,
   configureSubjectMatter: subjectMatterResponseSchema,

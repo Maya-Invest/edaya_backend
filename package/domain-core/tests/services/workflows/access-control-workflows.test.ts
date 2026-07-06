@@ -232,4 +232,45 @@ describe('SchoolService access-control workflows', () => {
     expect(result.entity.subjectId).toBe('auth-user-1')
     expect(mockRepos.staffMembers.save).toHaveBeenCalled()
   })
+
+  test('linkActorSubject replaces an existing entity subject when relinking', async () => {
+    const { mockRepos, service } = createAccessControlContext()
+    mockRepos.staffMembers.findById = mock(async () => new StaffMember({
+      id: 'st1',
+      schoolId: 'sch1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      subjectId: 'auth-user-old',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    }))
+
+    const result = await service.accessControlWorkflow.linkActorSubject({
+      subjectId: 'auth-user-new',
+      staffMemberId: 'st1',
+    })
+
+    expect(result.entity.subjectId).toBe('auth-user-new')
+    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+  })
+
+  test('unlinkActorSubject clears the auth subject from a linked staff member', async () => {
+    const { mockRepos, service } = createAccessControlContext()
+    mockRepos.staffMembers.findById = mock(async () => new StaffMember({
+      id: 'st1',
+      schoolId: 'sch1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      subjectId: 'auth-user-1',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    }))
+
+    const result = await service.accessControlWorkflow.unlinkActorSubject({
+      staffMemberId: 'st1',
+    })
+
+    expect(result.entity.subjectId).toBeUndefined()
+    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+  })
 })

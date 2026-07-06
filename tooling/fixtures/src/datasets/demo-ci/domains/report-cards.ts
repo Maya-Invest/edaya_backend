@@ -185,7 +185,7 @@ const homeroomComments: Partial<Record<string, string>> = {
   'ci-s23': 'Bon niveau en 3ème, à confirmer au brevet.',
 }
 
-function buildTrimesterOneResults(): FixtureReportCardResult[] {
+function buildTrimesterResults(periodId: string, periodSuffix: string, generatedAt: string, publishedAt: string): FixtureReportCardResult[] {
   const results: FixtureReportCardResult[] = []
 
   for (const [classGroupId, studentIds] of Object.entries(demoCiClassRosters)) {
@@ -197,10 +197,10 @@ function buildTrimesterOneResults(): FixtureReportCardResult[] {
       const narrativeStatus = classRank === classSize && classSize > 2 ? 'generated' : 'published'
 
       results.push({
-        id: `ci-rcr-${studentId.replace('ci-s', 's')}-t1`,
+        id: `ci-rcr-${studentId.replace('ci-s', 's')}-${periodSuffix}`,
         studentId,
         classGroupId,
-        periodId: 'ci-2025-t1',
+        periodId,
         reportCardDefinitionId,
         gradeScaleId: 'ci-gs-20',
         narrativeStatus,
@@ -208,8 +208,8 @@ function buildTrimesterOneResults(): FixtureReportCardResult[] {
         classRank,
         classSize,
         homeroomComment: homeroomComments[studentId] ?? '',
-        generatedAt: '2025-12-15',
-        publishedAt: narrativeStatus === 'published' ? '2025-12-19' : undefined,
+        generatedAt,
+        publishedAt: narrativeStatus === 'published' ? publishedAt : undefined,
         sectionMarks: {},
       })
     }
@@ -218,5 +218,9 @@ function buildTrimesterOneResults(): FixtureReportCardResult[] {
   return results
 }
 
-/** Trimestre 1 — bulletins pour les 30 élèves du collège. */
-export const demoCiReportCardResults = buildTrimesterOneResults() as readonly FixtureReportCardResult[]
+/** Trimestres 1–3 — bulletins pour les 30 élèves du collège. */
+export const demoCiReportCardResults = [
+  ...buildTrimesterResults('ci-2025-t1', 't1', '2025-12-15', '2025-12-19'),
+  ...buildTrimesterResults('ci-2025-t2', 't2', '2026-03-24', '2026-03-28'),
+  ...buildTrimesterResults('ci-2025-t3', 't3', '2026-06-30', '2026-07-04'),
+] as const satisfies readonly FixtureReportCardResult[]

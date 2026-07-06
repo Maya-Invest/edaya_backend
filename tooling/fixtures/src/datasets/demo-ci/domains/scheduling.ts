@@ -1,6 +1,6 @@
 import type { ResourceAssignmentInput, ResourceInput, ScheduleInput } from '@edaya/core'
 import type { FixtureSchedulingSessionProgressAnchor, FixtureSchedulingSlot } from '../../types'
-import { DayOfWeek, ResourceKind } from '@edaya/core'
+import { DayOfWeek, ResourceKind, ScheduleKind } from '@edaya/core'
 import { DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 
 export const demoCiResources = [
@@ -123,6 +123,23 @@ export const demoCiSchedulingSlots = [
       dayOfWeek: DayOfWeek.Monday,
       startTime: '08:15',
       endTime: '09:00',
+    },
+  },
+  {
+    slotId: 'ci-p-6a-anglais-mon',
+    teacherId: 'ci-t1',
+    resourceId: undefined,
+    schedule: {
+      id: 'sch-ci-6a-anglais-mon',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      classGroupId: 'ci-6a',
+      scheduleKind: ScheduleKind.Activity,
+      activityId: 'ci-act-anglais',
+      title: 'Conversation anglaise',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Monday,
+      startTime: '13:00',
+      endTime: '14:00',
     },
   },
 ] as const satisfies readonly FixtureSchedulingSlot[]

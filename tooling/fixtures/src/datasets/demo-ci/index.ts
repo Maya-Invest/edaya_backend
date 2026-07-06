@@ -1,6 +1,6 @@
 import type { FixtureDataset } from '../types'
 import { DEMO_CI_SCHOOL_ID } from '../../shared/ids'
-import { demoCiActivities, demoCiActivityEnrollments } from './domains/activities'
+import { demoCiActivities, demoCiActivityEnrollments, demoCiClassActivityEnrollments } from './domains/activities'
 import {
   demoCiAssessmentResultScores,
   demoCiInClassAssessments,
@@ -86,6 +86,7 @@ export const demoCiDataset = {
     attendanceRecords: demoCiAttendanceRecords,
     activities: demoCiActivities,
     activityEnrollments: demoCiActivityEnrollments,
+    classActivityEnrollments: demoCiClassActivityEnrollments,
     fees: demoCiFees,
     studentFees: demoCiStudentFees,
     payments: demoCiPayments,

@@ -297,7 +297,12 @@ export function reportCardReadModule(): (actor: ActorMetadata) => void {
       teacherWithAssignmentAction()(actor)
       return
     }
-    permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ)(actor)
+    anyPermissionAction([
+      Permission.QUERY_REPORT_CARD_DETAIL_READ,
+      Permission.GRADE_READ,
+      Permission.REPORT_CARD_GENERATE,
+      Permission.REPORT_CARD_CONFIGURE,
+    ])(actor)
   }
 }
 

@@ -37,6 +37,7 @@ function enrollmentSeedRecord(enrollment: ActivityEnrollmentInput) {
 export interface DevActivitiesSeedCounts {
   activities: number
   activityEnrollments: number
+  classActivityEnrollments: number
 }
 
 export async function seedDevActivities(
@@ -45,9 +46,18 @@ export async function seedDevActivities(
 ): Promise<DevActivitiesSeedCounts> {
   const activities = dataset.entities.activities ?? []
   const enrollments = dataset.entities.activityEnrollments ?? []
+  const classActivityEnrollments = dataset.entities.classActivityEnrollments ?? []
 
   for (const activity of activities) {
     await port.saveActivity(activitySeedRecord(activity))
+  }
+
+  for (const enrollment of classActivityEnrollments) {
+    await port.saveClassActivityEnrollment({
+      id: enrollment.id,
+      activityId: enrollment.activityId,
+      classGroupId: enrollment.classGroupId,
+    })
   }
 
   for (const enrollment of enrollments) {
@@ -57,5 +67,6 @@ export async function seedDevActivities(
   return {
     activities: activities.length,
     activityEnrollments: enrollments.length,
+    classActivityEnrollments: classActivityEnrollments.length,
   }
 }

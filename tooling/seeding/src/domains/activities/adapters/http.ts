@@ -2,7 +2,7 @@ import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { ActivitiesSeedPort } from '../port'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand } from '../../../transport/http/core-entity'
+import { postCoreCommand, postEntitySave } from '../../../transport/http/core-entity'
 
 export interface CreateHttpActivitiesSeedPortOptions {
   client: HttpSeedClient
@@ -24,6 +24,12 @@ export function createHttpActivitiesSeedPort(
     }),
     saveEnrollment: record => withSeedPortError('activities.saveEnrollment', async () => {
       await postCoreCommand(requestOptions, 'enrollStudentInActivity', record)
+    }),
+    saveClassActivityEnrollment: record => withSeedPortError('activities.saveClassActivityEnrollment', async () => {
+      await postEntitySave(requestOptions, 'classActivityEnrollments', {
+        ...record,
+        createdAt: new Date().toISOString(),
+      })
     }),
   }
 }

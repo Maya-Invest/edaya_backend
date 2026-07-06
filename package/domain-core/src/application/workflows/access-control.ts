@@ -5,7 +5,7 @@ import { permissionAction } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { StaffPermissionAssignment as StaffPermissionAssignmentEntity } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
-import { linkSubjectToActor, relinkSubjectToActor } from '../account-linking/link-subject-to-actor'
+import { linkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -51,6 +51,10 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async relinkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
+    return this.linkActorSubject(input)
+  }
+
+  async unlinkActorSubject(input: Omit<LinkActorSubjectInput, 'subjectId'>): Promise<LinkActorSubjectResult> {
     await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(this.baseService.actor)
 
     const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
@@ -61,7 +65,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
       )
     }
 
-    return relinkSubjectToActor(
+    return unlinkSubjectFromActor(
       this.baseService,
       this.repositories,
       this.baseService.actor.schoolId,

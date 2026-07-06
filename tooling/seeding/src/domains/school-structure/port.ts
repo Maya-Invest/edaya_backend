@@ -1,4 +1,4 @@
-import type { AcademicPeriodType, SchoolType } from '@edaya/core'
+import type { AcademicPeriodType, AttendanceMode, SchoolType } from '@edaya/core'
 
 export interface SchoolStructureSeedState {
   schoolIds: readonly string[]
@@ -70,6 +70,7 @@ export interface ClassGroupSeedRecord {
   name: string
   capacity?: number
   homeroomStaffId?: string
+  attendanceMode?: AttendanceMode
 }
 
 export interface SchoolStructureSeedPort {
