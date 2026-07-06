@@ -27,13 +27,15 @@ const PERMISSION_SCOPE_OVERRIDES: Partial<Record<Permission, ScopeType>> = {
   [Permission.QUERY_TIMETABLE_READ]: 'class_group',
   [Permission.QUERY_CURRICULUM_PROGRESS_READ]: 'class_group',
 
-  // Class-subject scoped (teaching)
-  [Permission.GRADE_INPUT]: 'class_subject',
-  [Permission.GRADE_UPDATE]: 'class_subject',
-  [Permission.ATTENDANCE_RECORD]: 'class_subject',
-  [Permission.CLASS_LOGBOOK_CREATE]: 'class_subject',
-  [Permission.CLASS_LOGBOOK_UPDATE]: 'class_subject',
-  [Permission.DISCIPLINE_CREATE]: 'class_subject',
+  // Class-group scoped (staff coordinators: class-wide teaching writes)
+  [Permission.GRADE_INPUT]: 'class_group',
+  [Permission.GRADE_UPDATE]: 'class_group',
+  [Permission.ATTENDANCE_RECORD]: 'class_group',
+  [Permission.CLASS_LOGBOOK_CREATE]: 'class_group',
+  [Permission.CLASS_LOGBOOK_UPDATE]: 'class_group',
+  [Permission.DISCIPLINE_CREATE]: 'class_group',
+
+  // Class-subject scoped (exam configuration)
   [Permission.EXAM_CONFIG_CREATE]: 'class_subject',
   [Permission.EXAM_CONFIG_UPDATE]: 'class_subject',
   [Permission.EXAM_CONFIG_READ]: 'class_subject',

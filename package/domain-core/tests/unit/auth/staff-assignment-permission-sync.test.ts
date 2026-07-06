@@ -75,7 +75,7 @@ describe('staff assignment permission rules', () => {
     const target = await resolveStaffAssignmentTarget(assignment(), repositories())
     expect(target.kind).toBe('class_group')
     expect(scopeIdsForStaffAssignmentPermission(Permission.GRADE_READ, target)).toBe('cg-1')
-    expect(scopeIdsForStaffAssignmentPermission(Permission.GRADE_INPUT, target)).toBe('cg-1:*')
+    expect(scopeIdsForStaffAssignmentPermission(Permission.GRADE_INPUT, target)).toBe('cg-1')
   })
 
   test('resolves class subject scope paths', async () => {
@@ -83,7 +83,8 @@ describe('staff assignment permission rules', () => {
       assignment({ classGroupId: undefined, classSubjectId: 'cs-1' }),
       repositories(),
     )
-    expect(scopeIdsForStaffAssignmentPermission(Permission.GRADE_INPUT, target)).toBe('cg-1:cs-1')
+    expect(scopeIdsForStaffAssignmentPermission(Permission.GRADE_INPUT, target)).toBe('cg-1')
+    expect(scopeIdsForStaffAssignmentPermission(Permission.EXAM_CONFIG_CREATE, target)).toBe('cg-1:cs-1')
   })
 
   test('rejects tenant-wide permissions on assignments', () => {
@@ -105,7 +106,7 @@ describe('syncStaffAssignmentPermissions', () => {
 
     const rows = await repos.staffPermissionAssignments.list({ sourceStaffAssignmentId: 'sa-1' })
     expect(rows).toHaveLength(2)
-    expect(rows.find((row: StaffPermissionAssignment) => row.permission === Permission.GRADE_INPUT)?.scopeIds).toBe('cg-1:*')
+    expect(rows.find((row: StaffPermissionAssignment) => row.permission === Permission.GRADE_INPUT)?.scopeIds).toBe('cg-1')
     expect(rows.every((row: StaffPermissionAssignment) => row.sourceStaffAssignmentId === 'sa-1')).toBe(true)
   })
 

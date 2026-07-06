@@ -428,6 +428,36 @@ export const classGroups = pgTable('class_groups', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('class_groups', table))
 
+export const teachers = pgTable('teachers', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  photoUrl: text('photo_url'),
+  email: text('email'),
+  phone: text('phone'),
+  notificationEmail: text('notification_email'),
+  notificationPhone: text('notification_phone'),
+  subjectId: text('subject_id'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('teachers', table))
+
+export const teacherAssignments = pgTable('teacher_assignments', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  kind: text('kind').notNull(),
+  classSubjectId: text('class_subject_id'),
+  classGroupId: text('class_group_id'),
+  responsibility: text('responsibility'),
+  status: text('status').notNull().default('active'),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('teacher_assignments', table))
+
 export const gradeLevelSubjects = pgTable('grade_level_subjects', {
   id: text('id').primaryKey(),
   gradeLevelId: text('grade_level_id').notNull(),

@@ -23,18 +23,14 @@ describe("dev demo login accounts", () => {
       role: "educateur",
       accessRoleId: "role-educator",
     });
-    expect(resolveDevDemoStaffRole("ci-st1")).toMatchObject({
-      role: "professeur",
-      accessRoleId: "role-teacher",
-    });
   });
 
-  it("builds five login accounts with one teacher representative", () => {
+  it("builds four staff login accounts without portal teachers", () => {
     const accounts = buildDevDemoLoginAccounts();
 
     expect(accounts).toEqual(DEV_DEMO_LOGIN_ACCOUNTS);
-    expect(accounts).toHaveLength(5);
-    expect(accounts.map(account => account.staffId)).toEqual(["ci-st8", "ci-st5", "ci-st1", "ci-st3", "ci-st7"]);
+    expect(accounts).toHaveLength(4);
+    expect(accounts.map(account => account.staffId)).toEqual(["ci-st8", "ci-st5", "ci-st3", "ci-st7"]);
     expect(accounts.find(account => account.staffId === "ci-st8")).toMatchObject({
       role: "owner",
       email: "a.kone@ecole-ci.edaya.dev",
@@ -46,10 +42,6 @@ describe("dev demo login accounts", () => {
       name: "Jean-Baptiste Aka",
       initials: "JA",
     });
-    expect(accounts.find(account => account.staffId === "ci-st1")).toMatchObject({
-      name: "Mme Touré",
-      initials: "MT",
-    });
     expect(accounts.find(account => account.staffId === "ci-st3")).toMatchObject({
       name: "Mme Assi",
       initials: "MA",
@@ -60,6 +52,7 @@ describe("dev demo login accounts", () => {
       name: "Mme Zongo",
       initials: "MZ",
     });
+    expect(accounts.some(account => account.staffId === "ci-st1")).toBe(false);
     expect(accounts.some(account => account.staffId === "ci-st2")).toBe(false);
   });
 });

@@ -1,13 +1,14 @@
-import type { Guardian, StaffMember, Student } from '../../domain'
+import type { Guardian, StaffMember, Student, Teacher } from '../../domain'
 import type { SchoolRepositories } from '../../ports'
 import type { BaseSchoolService } from '../base-school-service'
 import {
   buildGuardianRecipientProfile,
   buildStaffRecipientProfile,
   buildStudentRecipientProfile,
+  buildTeacherRecipientProfile,
   scheduleNotificationRecipientUpsert,
 } from '../../capabilities/notifications'
-import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity } from '../../domain'
+import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 
 export interface LinkSubjectToActorInput {
@@ -15,36 +16,59 @@ export interface LinkSubjectToActorInput {
   staffMemberId?: string
   guardianId?: string
   studentId?: string
+  teacherId?: string
 }
 
 export type LinkSubjectToActorResult
   = | { kind: 'staff', entity: StaffMember }
     | { kind: 'guardian', entity: Guardian }
     | { kind: 'student', entity: Student }
+    | { kind: 'teacher', entity: Teacher }
 
 export async function assertSubjectIdAvailable(
-  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students'>,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'teachers'>,
+  schoolId: string,
   subjectId: string,
   input: LinkSubjectToActorInput,
 ): Promise<void> {
-  const [staff, guardian, student] = await Promise.all([
-    repositories.staffMembers.findOne({ subjectId }),
-    repositories.guardians.findOne({ subjectId }),
-    repositories.students.findOne({ subjectId }),
-  ])
+  if (input.staffMemberId) {
+    const existing = await repositories.staffMembers.findOne({ subjectId, schoolId })
+    if (existing && existing.id !== input.staffMemberId) {
+      throw new BusinessRuleViolationError(
+        'SUBJECT_ID_ALREADY_LINKED',
+        `Auth subject ${subjectId} is already linked to staff ${existing.id} in school ${schoolId}`,
+      )
+    }
+  }
 
-  const conflicts = [
-    staff && staff.id !== input.staffMemberId ? { kind: 'staff' as const, id: staff.id } : null,
-    guardian && guardian.id !== input.guardianId ? { kind: 'guardian' as const, id: guardian.id } : null,
-    student && student.id !== input.studentId ? { kind: 'student' as const, id: student.id } : null,
-  ].filter((entry): entry is { kind: 'staff' | 'guardian' | 'student', id: string } => entry !== null)
+  if (input.guardianId) {
+    const existing = await repositories.guardians.findOne({ subjectId, schoolId })
+    if (existing && existing.id !== input.guardianId) {
+      throw new BusinessRuleViolationError(
+        'SUBJECT_ID_ALREADY_LINKED',
+        `Auth subject ${subjectId} is already linked to guardian ${existing.id} in school ${schoolId}`,
+      )
+    }
+  }
 
-  if (conflicts.length > 0) {
-    const [conflict] = conflicts
-    throw new BusinessRuleViolationError(
-      'SUBJECT_ID_ALREADY_LINKED',
-      `Auth subject ${subjectId} is already linked to ${conflict?.kind} ${conflict?.id}`,
-    )
+  if (input.studentId) {
+    const existing = await repositories.students.findOne({ subjectId, schoolId })
+    if (existing && existing.id !== input.studentId) {
+      throw new BusinessRuleViolationError(
+        'SUBJECT_ID_ALREADY_LINKED',
+        `Auth subject ${subjectId} is already linked to student ${existing.id} in school ${schoolId}`,
+      )
+    }
+  }
+
+  if (input.teacherId) {
+    const existing = await repositories.teachers.findOne({ subjectId, schoolId })
+    if (existing && existing.id !== input.teacherId) {
+      throw new BusinessRuleViolationError(
+        'SUBJECT_ID_ALREADY_LINKED',
+        `Auth subject ${subjectId} is already linked to teacher ${existing.id} in school ${schoolId}`,
+      )
+    }
   }
 }
 
@@ -62,7 +86,7 @@ export function assertEntitySubjectLinkable(
 
 export async function linkSubjectToActor(
   baseService: BaseSchoolService,
-  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks'>,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
   schoolId: string,
   input: LinkSubjectToActorInput,
 ): Promise<LinkSubjectToActorResult> {
@@ -71,7 +95,7 @@ export async function linkSubjectToActor(
 
 export async function relinkSubjectToActor(
   baseService: BaseSchoolService,
-  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks'>,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
   schoolId: string,
   input: LinkSubjectToActorInput,
 ): Promise<LinkSubjectToActorResult> {
@@ -80,20 +104,20 @@ export async function relinkSubjectToActor(
 
 async function replaceActorSubject(
   baseService: BaseSchoolService,
-  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks'>,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
   schoolId: string,
   input: LinkSubjectToActorInput,
   options: { allowReplace: boolean },
 ): Promise<LinkSubjectToActorResult> {
-  const targetCount = [input.staffMemberId, input.guardianId, input.studentId].filter(Boolean).length
+  const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
   if (targetCount !== 1) {
     throw new BusinessRuleViolationError(
       'LINK_ACTOR_SUBJECT_AMBIGUOUS',
-      'Exactly one of staffMemberId, guardianId, or studentId is required',
+      'Exactly one of staffMemberId, guardianId, studentId, or teacherId is required',
     )
   }
 
-  await assertSubjectIdAvailable(repositories, input.subjectId, input)
+  await assertSubjectIdAvailable(repositories, schoolId, input.subjectId, input)
 
   if (input.staffMemberId) {
     const existing = await repositories.staffMembers.findById(input.staffMemberId)
@@ -149,6 +173,33 @@ async function replaceActorSubject(
       buildGuardianRecipientProfile(guardian, links),
     )
     return { kind: 'guardian', entity: guardian }
+  }
+
+  if (input.teacherId) {
+    const existing = await repositories.teachers.findById(input.teacherId)
+    if (!existing || existing.schoolId !== schoolId) {
+      throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Teacher not found in school')
+    }
+    if (!options.allowReplace) {
+      assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
+    }
+    const teacher = new TeacherEntity({
+      id: existing.id,
+      schoolId: existing.schoolId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      photoUrl: existing.photoUrl,
+      email: existing.email,
+      phone: existing.phone,
+      notificationEmail: existing.notificationEmail,
+      notificationPhone: existing.notificationPhone,
+      subjectId: input.subjectId,
+      isActive: existing.isActive,
+      createdAt: existing.createdAt,
+    })
+    await baseService.entities.teachers.save(teacher, { moduleChecked: true })
+    scheduleNotificationRecipientUpsert(baseService, buildTeacherRecipientProfile(teacher))
+    return { kind: 'teacher', entity: teacher }
   }
 
   const existing = await repositories.students.findById(input.studentId!)

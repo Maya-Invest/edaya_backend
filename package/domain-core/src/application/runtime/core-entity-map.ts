@@ -51,6 +51,8 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
+  Teacher,
+  TeacherAssignment,
 } from '../../domain'
 
 export interface CoreEntityMap {
@@ -61,6 +63,8 @@ export interface CoreEntityMap {
   gradeLevels: GradeLevel
   staffMembers: StaffMember
   staffAssignments: StaffAssignment
+  teachers: Teacher
+  teacherAssignments: TeacherAssignment
   accountInvitations: AccountInvitation
   staffPermissionAssignments: StaffPermissionAssignment
   attachments: Attachment
@@ -128,6 +132,8 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'gradeLevels',
   'staffMembers',
   'staffAssignments',
+  'teachers',
+  'teacherAssignments',
   'accountInvitations',
   'staffPermissionAssignments',
   'attachments',

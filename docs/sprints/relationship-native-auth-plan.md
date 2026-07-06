@@ -1,7 +1,8 @@
 # Relationship-Native Authorization — Sprint Plan
 
-> **Status:** Design locked  
+> **Status:** Fold F complete (pending `bun repo verify`)  
 > **Created:** 2026-07-05  
+> **Last updated:** 2026-07-05  
 > **Scope:** Multi-profile auth, relationship scopes for portal actors (teacher, guardian, student), staff-only permission catalog  
 > **Out of scope:** Step-up assurance product, distributed grants cache, per-school custom capability catalogs, webapp teacher UI  
 > **Related:** [authorization-model-simplification-plan.md](./authorization-model-simplification-plan.md), [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md)
@@ -9,6 +10,32 @@
 This plan replaces the current **portal-permission synthesis** model (`GUARDIAN_PORTAL_PERMISSIONS` → `EffectiveGrants` → `authorize()`) and **teacher-as-staff** model (`StaffAssignment` sync → `StaffPermissionAssignment`) with **relationship-native scopes** and a **staff-only** `Permission` catalog.
 
 Portal actors get fixed capabilities from relationships. Staff keep configurable permissions.
+
+---
+
+## Implementation progress
+
+| Phase | Fold | Status | Notes |
+|-------|------|--------|-------|
+| 1 | A — Multi-profile auth | ✅ Done | `X-Actor-Kind`, per-kind linking, session resolution |
+| 2 | B — Scope framework | ✅ Done | `TeacherActorScope`, `GuardianScope`, `StudentScope`, `resolveActorScope` |
+| 3 | C — Guardian + Student | ✅ Done | Capability gates; portal grant synthesis removed |
+| 4a | D1 — Teacher entity + scope | ✅ Done | `Teacher`, `TeacherAssignment`, migration, invitations |
+| 4b | D2 — Teaching/homeroom gates | ✅ Done | Attendance, assessment, grades, logbook, discipline, report cards, timetable read |
+| 5 | E — Staff-only catalog | ✅ Done | E1–E3; `Professeur` preset removed |
+| 6 | F — Fixtures + clients | ✅ Done | No data migration; demo-ci teachers, mobile headers, parity tests |
+
+**D2 report-card commenting (shipped):** Teachers comment on **draft** report cards only; staff keeps publish/full edit.
+
+| Actor | Comment target | Capability |
+|-------|----------------|------------|
+| Subject teacher | Subject section `comment` | `WriteSubjectReportComment` |
+| Homeroom teacher | Card `teacherComment` | `WriteHomeroomReportComment` |
+| Homeroom teacher | Group/aggregation section `comment` | `WriteGroupReportComment` |
+
+Implementation: `report-card-comment-access.ts`, `reportCardReadModule` / `reportCardCommentWriteModule`, `checkReportCardResultAccess` teacher read scope. Unit tests in `report-card-comment-access.test.ts`.
+
+**Timetable (locked for v1):** Subject teachers with any assignment in a class may **view** the full class timetable (`getClassGroupTimetable`); timetable **writes** remain staff-only (`TIMETABLE_*` permissions).
 
 ---
 
@@ -139,7 +166,8 @@ enum HomeroomCapability {
   ReadClassRoster,
   RecordDailyAttendance,       // class-wide attendance mode
   ReadClassAttendance,
-  WriteHomeroomReportComment,
+  WriteHomeroomReportComment,    // card-level teacherComment
+  WriteGroupReportComment,       // group/aggregation section comments
   CreateClassDisciplineIncident,
   ReadClassGradesOverview,     // read-only, all subjects in class — not input (locked)
   ReadClassTimetable,
@@ -150,13 +178,12 @@ enum HomeroomCapability {
 
 Subject teachers keep **subject-scoped** `TeachingCapability` (grade input, session attendance, logbook for their subject only).
 
-**`ClassGroup.homeroomTeacherId` (migration):**
+**Homeroom on `ClassGroup` (locked):**
 
-Today `ClassGroup.homeroomStaffId` points at `StaffMember`. Replace with `homeroomTeacherId` → `Teacher`.
-
-- **Source of truth:** active `TeacherAssignment` where `kind = homeroom`.
-- **Denormalized:** `homeroomTeacherId` on `ClassGroup` for fast UI lookup (synced on assignment save/end).
-- Coordinators who are homeroom but use webapp: `StaffMember` + `Teacher` with homeroom assignment (multi-profile).
+- **Source of truth:** active `TeacherAssignment` where `kind = homeroom` (per class + academic year).
+- **No `homeroomTeacherId` on `ClassGroup`** — homeroom is resolved from assignments at read/auth time; avoids dual-write drift.
+- **`homeroomStaffId` retained for now** — webapp staff-picker and daily attendance nudge still use it; migrate to assignment-based lookup in a later webapp fold.
+- Coordinators who are homeroom: `StaffMember` + `Teacher` with homeroom assignment (multi-profile).
 
 **Gate logic:**
 
@@ -227,10 +254,10 @@ UNIQUE (entityKind, subjectId, schoolId)   — per Teacher, StaffMember, Guardia
 
 ### Acceptance
 
-- [ ] Same `subjectId` on `StaffMember` + `Teacher` in one school; staff and teacher sessions resolve independently
-- [ ] Two `Teacher` rows with same `subjectId` in the **same school** rejected
-- [ ] Two `Teacher` rows with same `subjectId` in **different schools** allowed
-- [ ] Missing / invalid `X-Actor-Kind` returns clear error (not silent wrong profile)
+- [x] Same `subjectId` on `StaffMember` + `Teacher` in one school; staff and teacher sessions resolve independently
+- [x] Two `Teacher` rows with same `subjectId` in the **same school** rejected
+- [x] Two `Teacher` rows with same `subjectId` in **different schools** allowed
+- [x] Missing / invalid `X-Actor-Kind` returns clear error (not silent wrong profile)
 
 ---
 
@@ -299,9 +326,9 @@ resolveActorScope(args: {
 
 ### Acceptance
 
-- [ ] `TeacherActorMetadata` type exists; no dummy `effectiveGrants` on portal actors
-- [ ] Scope cache separate from grants cache
-- [ ] `assertCapability` module skeleton with kind dispatch
+- [x] `TeacherActorMetadata` type exists; no dummy `effectiveGrants` on portal actors
+- [x] Scope cache separate from grants cache
+- [x] `assertCapability` module skeleton with kind dispatch
 
 ---
 
@@ -374,9 +401,9 @@ resolveStudentScope({ studentId, schoolId, repositories })
 
 ### Acceptance
 
-- [ ] Parity test: every route guardian could hit before, same after (no permission grants on actor)
-- [ ] Guardian mobile works with `X-Actor-Kind: guardian`
-- [ ] `authorize()` never called for guardian/student actors
+- [x] Parity test: every route guardian could hit before, same after (no permission grants on actor)
+- [x] Guardian mobile works with `X-Actor-Kind: guardian`
+- [x] `authorize()` never called for guardian/student actors
 
 ---
 
@@ -422,7 +449,7 @@ TeacherAssignment
 - `kind = subject` → implicit **subject-scoped** `TeachingCapability` set for that `classSubjectId`
 - `kind = homeroom` → implicit **class-scoped** `HomeroomCapability` set for that `classGroupId`
 - `AccountInvitationKind.Teacher`
-- `ClassGroup.homeroomStaffId` → migrate to `homeroomTeacherId`
+- Homeroom placements use `TeacherAssignment.kind = homeroom` only (no denormalized class-group column)
 
 ### TeacherActorScope
 
@@ -457,6 +484,8 @@ enum TeachingCapability {
   ReadSubjectAttendance,
   ReadSubjectLogbook,
   ReadSubjectCurriculum,
+  ReadSubjectReportCard,
+  WriteSubjectReportComment,
 }
 ```
 
@@ -488,8 +517,8 @@ Dual-path gates on:
 - `assessment-result` / grade input → `TeachingCapability.InputGrade` + `classSubjectId`
 - class logbook → subject vs class entries per anchor
 - discipline / incident → subject or class scope per incident type
-- report card homeroom comment → `HomeroomCapability.WriteHomeroomReportComment`
-- timetable query surfaces used by teacher app
+- **report card comments** — subject section → `WriteSubjectReportComment`; card comment → `WriteHomeroomReportComment`; group section → `WriteGroupReportComment`; read → homeroom class or assigned subject on card; staff keeps `REPORT_CARD_PUBLISH`
+- timetable query surfaces used by teacher app (read-only; full class timetable when teacher has any assignment in class)
 
 ```typescript
 if (actor.kind === 'teacher') {
@@ -506,7 +535,14 @@ if (actor.kind === 'teacher') {
 | Sub-phase | Deliverables |
 |-----------|--------------|
 | **D1** | `Teacher`, `TeacherAssignment`, repos, migration, `resolveTeacherScope`, `TeacherActorMetadata`, invitation kind, session + `/me/scope` |
-| **D2** | Teaching/homeroom capability gates per domain (attendance, assessment, grades, logbook, discipline, timetable) |
+| **D2** | Teaching/homeroom capability gates per domain (attendance, assessment, grades, logbook, discipline, report cards, timetable read) |
+
+**Report-card comment rules (locked, D2):**
+
+- Teachers may only update **comment fields** on **existing draft** report cards (`assertCommentOnlyReportCardUpdate`).
+- Published report cards are immutable for everyone at the entity gate.
+- Staff publish / generate / full edit stays on `Permission.REPORT_CARD_PUBLISH`.
+- Module: `report-card-comment-access.ts`; entity config uses `reportCardReadModule` / `reportCardCommentWriteModule`.
 
 Ship D1 before D2 so teacher app can authenticate and load scope before write paths are migrated.
 
@@ -514,18 +550,28 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 
 ### Acceptance
 
-- [ ] Pure teacher: no `StaffMember` row; teacher app authenticates via `X-Actor-Kind: teacher`
-- [ ] Teacher assigned to Math in 7A can input grades for Math only, not French in 7A
-- [ ] Homeroom teacher for 7A can record daily attendance for 7A; cannot input Math grades without a subject assignment
-- [ ] Ended assignment no longer in scope; row still queryable for history
-- [ ] `ClassGroup.homeroomTeacherId` synced from active homeroom assignment
-- [ ] Teacher with no active assignments: session OK, empty scope, writes return `403`
+- [x] Pure teacher: no `StaffMember` row; teacher app authenticates via `X-Actor-Kind: teacher`
+- [x] Teacher assigned to Math in 7A can input grades for Math only, not French in 7A
+- [x] Homeroom teacher for 7A can record daily attendance for 7A; cannot input Math grades without a subject assignment
+- [x] Ended assignment no longer in scope; row still queryable for history
+- [x] Homeroom teacher resolved from active `TeacherAssignment` (no `ClassGroup.homeroomTeacherId`)
+- [x] Teacher with no active assignments: session OK, empty scope, writes return `403`
+- [x] Subject teacher can comment on assigned subject sections only; homeroom teacher can comment on card + group sections
+- [x] Teachers cannot create or publish report cards
 
 ---
 
 ## Fold E — Staff-only permission catalog
 
 **Goal:** `Permission` is configuration for staff only. **Requires C and D complete.**
+
+### Fold E sub-phases
+
+| Sub-phase | Deliverables |
+|-----------|--------------|
+| **E1** | Teaching write permissions → `class_group` scope; staff assignment sync rules; update grant tests | ✅ Done |
+| **E2** | Remove `Professeur` staff invite preset; deprecate `TEACHER_PERMISSIONS`; onboarding uses `AccountInvitationKind.Teacher` | ✅ Done (preset removed; dev seeds retain `role-teacher` until F) |
+| **E3** | Delete `buildPortalScopeIdsByPermission` + legacy portal grant helpers; shrink `permission-sets.ts` | ✅ Done |
 
 ### Catalog changes
 
@@ -551,45 +597,43 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 
 ### Acceptance
 
-- [ ] No code path synthesizes `Permission` grants for teacher, guardian, or student
-- [ ] Staff `GRADE_INPUT` on `class-7a` covers all subjects in 7A
+- [x] Staff teaching write permissions use `class_group` as deepest scope (`GRADE_INPUT`, `ATTENDANCE_RECORD`, logbook, discipline)
+- [x] `Professeur` removed from staff invite presets; teacher onboarding via `AccountInvitationKind.Teacher`
+- [x] No code path synthesizes `Permission` grants for teacher, guardian, or student
+- [x] Staff `GRADE_INPUT` on `class-7a` covers all subjects in 7A
 - [ ] `bun repo verify` green
 
 ---
 
-## Fold F — Migration, fixtures, clients
+## Fold F — Fixtures, seeds, clients (no data migration)
 
-### Data migration
-
-| From | To |
-|------|-----|
-| Staff with teacher preset + teaching assignments | Create `Teacher`, move assignments to `TeacherAssignment`, strip teacher `StaffPermissionAssignment` rows |
-| `ClassGroup.homeroomStaffId` | Map to `homeroomTeacherId` via new `Teacher` record or homeroom assignment |
-| Existing guardians / students | No data change — resolution path only |
+> **Skipped:** production data migration — no live data yet; local databases can be wiped and re-seeded.
 
 ### Seeds / fixtures
 
-- `demo-ci`: teachers as `Teacher` entities, not staff
-- Dev access seed: separate teacher login for teacher app
-- `build-dev-access-seed-records.ts`: remove teacher staff permission rows
+- [x] `demo-ci`: teachers as `Teacher` entities + `TeacherAssignment`, not staff `role-teacher`
+- [x] `demo`: portal teachers (`t1`, `t2`) seeded alongside legacy staff rows for fixture references
+- [x] Dev access seed: teacher auth accounts separate from staff; teaching `StaffAssignment` rows removed
+- [x] `build-dev-access-seed-records.ts`: teacher staff permission / placement rows removed
 
 ### Clients
 
 | Client | Header | Notes |
 |--------|--------|-------|
 | Staff webapp | `X-Actor-Kind: staff` | default if omitted for webapp origin (optional) |
-| Teacher mobile | `X-Actor-Kind: teacher` | `api_config.dart` |
-| Guardian mobile | `X-Actor-Kind: guardian` | already live |
+| Teacher mobile | `X-Actor-Kind: teacher` | `api_config.dart` + `HttpTransport` |
+| Guardian mobile | `X-Actor-Kind: guardian` | `guardian_module.dart` |
 | Codegen | regenerate after API `/me/*` changes | `edaya-client-codegen` |
 
 ### Test plan
 
-- [ ] Multi-profile: coordinator+teacher same subject
-- [ ] Guardian parity: before/after route matrix
-- [ ] Teacher: subject-scoped write; homeroom class-scoped write; no cross-subject leakage
-- [ ] Teacher assignment history: ended row excluded from scope, retained in DB
-- [ ] Staff: class_group scoped teaching unchanged
-- [ ] Integration: session middleware resolves all four kinds
+- [x] Multi-profile: coordinator+teacher same subject (`resolve-interactive-actor-identity`, session middleware)
+- [x] Guardian parity: effective-grants route returns capabilities with empty permission grants
+- [x] Teacher: subject-scoped write; homeroom class-scoped write; no cross-subject leakage (`teacher-capability-gates.test.ts`)
+- [x] Teacher assignment history: ended row excluded from scope, retained in DB (`resolve-teacher-scope.test.ts`)
+- [x] Staff: class_group scoped teaching unchanged (`fold-f-parity.test.ts`, `staff-assignment-permission-sync.test.ts`)
+- [x] Integration: session middleware resolves all four kinds (`test-session-middleware-resolves-actors.test.ts`)
+- [x] HTTP seed catalog includes `teachers` and `teacherAssignments` bindings (`catalog.test.ts`)
 
 ---
 
@@ -601,9 +645,9 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 | **2** | B | Scope types, actor metadata split, `resolveActorScope` dispatch, cache |
 | **3** | C | `GuardianScope`, `StudentScope`, capability gates, remove portal permission synthesis |
 | **4a** | D1 | `Teacher` entity, assignments, scope resolution, invitation |
-| **4b** | D2 | Teaching/homeroom capability gates (domain-by-domain) |
+| **4b** | D2 | Teaching/homeroom capability gates (domain-by-domain, incl. report cards) |
 | **5** | E | Staff catalog `class_group` deepest; remove teacher/guardian portal perms; `StaffAssignment` cleanup |
-| **6** | F | Migration script, seeds, mobile headers, parity tests, docs |
+| **6** | F | Fixtures, seeds, mobile headers, parity tests (no prod migration) |
 
 Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows **4a** (or overlaps once D1 is stable).
 
@@ -616,7 +660,7 @@ Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows 
 | 1 | Teacher separate from staff, no sync | Different product surface (mobile portal vs webapp) |
 | 2 | Subject assignments → subject-scoped capabilities | Teacher of Math cannot grade French in same class |
 | 2b | Subject teachers create/update assessments for their subject | `CreateSubjectAssessment`, `UpdateSubjectAssessment`; lock/configure stays staff |
-| 3 | Homeroom via `kind = homeroom` assignment + `homeroomTeacherId` | Class-wide ops without widening all subject teachers |
+| 3 | Homeroom via `kind = homeroom` `TeacherAssignment` | Class-wide ops without widening all subject teachers; no denormalized class-group column |
 | 3b | Homeroom `ReadClassGradesOverview` is read-only, all subjects in class | Prof principal sees class picture; grade input stays subject-scoped |
 | 4 | Assignment history retained (`status`, `endsAt`) | Teacher changes, audit, retrospective reports |
 | 5 | `subjectId` unique per `(kind, schoolId)` | Multi-profile across kinds; no duplicate teacher accounts per school |
@@ -629,6 +673,9 @@ Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows 
 | 12 | Empty scope is valid session, no capabilities at gates | Teacher/guardian between assignments or links; not a auth error |
 | 13 | Split assessment CRUD from grade input in entity gates | Today both use `GRADE_INPUT`; teacher path needs distinct capabilities |
 | 14 | Fold D: D1 (entity + scope) before D2 (write gates) | Authenticate and load scope before domain gate migration |
+| 15 | Report-card comments split by anchor | Subject / card / group comments; draft-only for teachers; staff publishes |
+| 16 | Timetable read: full class for assigned teachers | View-only; subject teachers see whole class schedule if they teach one subject there |
+| 17 | No `ClassGroup.homeroomTeacherId` | Homeroom from `TeacherAssignment` only; `homeroomStaffId` kept until webapp migrates |
 
 ---
 
@@ -642,7 +689,7 @@ Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows 
 | Mobile breakage on `/me/permissions` | Ship `/me/capabilities` + `/me/scope` first; deprecate old shape |
 | Coordinator+teacher confusion | HR UI shows both records; each app uses its kind |
 | Homeroom vs subject capability overlap | Split enums; gate picks path from resource anchor (session vs class) |
-| `homeroomStaffId` migration | Create Teacher from staff or new record; backfill homeroom assignments |
+| `homeroomStaffId` webapp migration | Assignment query for prof principal display; deprecate staff picker field when ready |
 
 ---
 

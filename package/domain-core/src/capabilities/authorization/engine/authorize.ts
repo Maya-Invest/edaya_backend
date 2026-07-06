@@ -1,5 +1,6 @@
 import type { ActorMetadata } from '../model/actor'
 import type { AuthorizationRequest } from '../model/request'
+import { effectiveGrantsForActor } from '../grants/effective-grants-for-actor'
 import { scopeGrantCovers } from '../grants/scope-grant-covers'
 import { isInteractiveActor } from '../model/actor'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
@@ -13,9 +14,9 @@ export interface AuthorizeArgs {
 }
 
 /**
- * Permission-based authorization entry point.
+ * Permission-based authorization entry point (staff-only).
  *
- * Uses preloaded effective grants on the actor.
+ * Portal actors must use relationship capability gates (`assertCapability`).
  *
  * Resource-level checks remain on `AuthorizationPolicy` resolvers at call sites.
  */
@@ -63,22 +64,29 @@ function assertGrantsCapability(
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
+  if (actor.kind !== 'staff') {
+    throw new AuthorizationError(
+      AuthorizationErrorCode.Forbidden,
+      'authorize() is staff-only; portal actors must use assertCapability()',
+    )
+  }
+
+  const grants = effectiveGrantsForActor(actor)
+
   assertPermissionAssurance(
     actor.assuranceLevel,
     request.permission,
     actor.kind === 'staff' ? actor.accountKind : 'human',
-    actor.kind === 'staff' ? actor.effectiveGrants.isElevated : false,
+    grants.isElevated,
   )
 
   if (actor.kind === 'staff') {
     assertHumanOnlyPermission(
       actor.accountKind,
       request.permission,
-      actor.effectiveGrants.isElevated,
+      grants.isElevated,
     )
   }
-
-  const grants = actor.effectiveGrants
 
   if (!grants.permissions.has(request.permission)) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)

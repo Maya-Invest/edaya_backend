@@ -39,7 +39,7 @@ export function createHttpAuthLinkSeedPort(options: CreateHttpAuthLinkSeedPortOp
     requestId: 'http-auth-link-seed',
   }
 
-  async function findEntity(id: string, serviceName: 'schools' | 'staffMembers' | 'guardians', operation: string): Promise<Record<string, unknown> | undefined> {
+  async function findEntity(id: string, serviceName: 'schools' | 'staffMembers' | 'guardians' | 'teachers', operation: string): Promise<Record<string, unknown> | undefined> {
     return entityRecord(await postEntityFindById(requestOptions, serviceName, id), operation)
   }
 
@@ -69,6 +69,12 @@ export function createHttpAuthLinkSeedPort(options: CreateHttpAuthLinkSeedPortOp
       const guardian = await findEntity(id, 'guardians', 'findGuardianById')
       return guardian
         ? { id: requiredString(guardian, 'id', 'findGuardianById'), subjectId: optionalString(guardian, 'subjectId') }
+        : undefined
+    }),
+    findTeacherById: id => withSeedPortError('findTeacherById', async () => {
+      const teacher = await findEntity(id, 'teachers', 'findTeacherById')
+      return teacher
+        ? { id: requiredString(teacher, 'id', 'findTeacherById'), subjectId: optionalString(teacher, 'subjectId') }
         : undefined
     }),
     replaceGuardianSubjectId: (guardianId, subjectId) => withSeedPortError('replaceGuardianSubjectId', async () => {

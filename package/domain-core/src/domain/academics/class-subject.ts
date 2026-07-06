@@ -1,9 +1,9 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, anyPermissionAction, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { anyPermissionAction, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 

@@ -1,16 +1,25 @@
 import type { AttendanceRecord } from '../../../../domain/scheduling/attendance-record'
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
-import type { ActorMetadata } from '../../model/actor'
+import type { ActorMetadata, TeacherActorMetadata } from '../../model/actor'
+import {
+  assertHomeroomCapability,
+} from '../../capabilities/assert-homeroom-capability'
+import {
+  assertTeachingCapability,
+  teacherScopeCoversClassSubject,
+} from '../../capabilities/assert-teaching-capability'
+import { HomeroomCapability } from '../../capabilities/homeroom-capability'
+import { TeachingCapability } from '../../capabilities/teaching-capability'
 import {
   actorGrantCoversAnyResourcePath,
   actorHasSchoolWideGrant,
 } from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
+import { ASSIGNMENT_SCOPED_PERMISSIONS } from '../../permissions/assignment-scoped-permissions'
 import { resourcePathForActivity, resourcePathForClassSubject } from '../../scope/resolve-resource-path'
 import { checkClassGroupAccess } from './academic'
 import {
   SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
-  SESSION_TEACHING_ACCESS_PERMISSIONS,
 } from './permission-sets'
 import { checkStudentAccess } from './student'
 
@@ -36,7 +45,7 @@ export async function checkActivitySessionAccess(
   const classGroupIds = new Set<string>()
   for (const session of activitySessions) {
     const resourcePath = resourcePathForActivity(session.activityId, session.classGroupId)
-    if (actorGrantCoversAnyResourcePath(actor, SESSION_TEACHING_ACCESS_PERMISSIONS, resourcePath)) {
+    if (actorGrantCoversAnyResourcePath(actor, ASSIGNMENT_SCOPED_PERMISSIONS, resourcePath)) {
       continue
     }
     classGroupIds.add(session.classGroupId)
@@ -58,7 +67,7 @@ export async function checkLessonSessionAccess(
     return
   }
 
-  if (actorHasSchoolWideGrant(actor, SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS)) {
+  if (actor.kind !== 'teacher' && actorHasSchoolWideGrant(actor, SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS)) {
     return
   }
 
@@ -68,10 +77,27 @@ export async function checkLessonSessionAccess(
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
+  if (actor.kind === 'teacher') {
+    for (const session of lessonSessions) {
+      if (teacherScopeCoversClassSubject(actor, session.classSubjectId)) {
+        continue
+      }
+      if (actor.teacherScope.homeroom.classGroupIds.includes(session.classGroupId)) {
+        continue
+      }
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+    return
+  }
+
+  if (actorHasSchoolWideGrant(actor, SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS)) {
+    return
+  }
+
   const classGroupIds = new Set<string>()
   for (const session of lessonSessions) {
     const resourcePath = resourcePathForClassSubject(session.classGroupId, session.classSubjectId)
-    if (actorGrantCoversAnyResourcePath(actor, SESSION_TEACHING_ACCESS_PERMISSIONS, resourcePath)) {
+    if (actorGrantCoversAnyResourcePath(actor, ASSIGNMENT_SCOPED_PERMISSIONS, resourcePath)) {
       continue
     }
     classGroupIds.add(session.classGroupId)
@@ -90,6 +116,11 @@ export async function checkAttendanceRecordAccess(
   repos: SchoolRepositories,
 ): Promise<void> {
   if (records.length === 0) {
+    return
+  }
+
+  if (actor.kind === 'teacher') {
+    await checkTeacherAttendanceRecordAccess(actor, records, repos)
     return
   }
 
@@ -116,5 +147,39 @@ export async function checkAttendanceRecordAccess(
     }
     const classGroupIds = [...new Set(attendances.map(attendance => attendance.classGroupId))]
     await checkClassGroupAccess(actor, classGroupIds, repos)
+  }
+}
+
+async function checkTeacherAttendanceRecordAccess(
+  actor: TeacherActorMetadata,
+  records: readonly AttendanceRecord[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  await checkStudentAccess(actor, [...new Set(records.map(record => record.studentId))], repos)
+
+  for (const record of records) {
+    if (record.lessonSessionId) {
+      const lessonSession = await repos.lessonSessions.findById(record.lessonSessionId)
+      if (!lessonSession) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+      assertTeachingCapability(actor, TeachingCapability.RecordSessionAttendance, {
+        classSubjectId: lessonSession.classSubjectId,
+      })
+      continue
+    }
+
+    if (record.attendanceId) {
+      const attendance = await repos.attendances.findById(record.attendanceId)
+      if (!attendance) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+      assertHomeroomCapability(actor, HomeroomCapability.RecordDailyAttendance, {
+        classGroupId: attendance.classGroupId,
+      })
+      continue
+    }
+
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }

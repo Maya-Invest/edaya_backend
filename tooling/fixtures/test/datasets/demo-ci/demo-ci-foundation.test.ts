@@ -1,7 +1,7 @@
 import type { GradeLevelInput, SubjectInput } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { demoCiDataset } from '../../../src/datasets/demo-ci/index'
 import { demoCiSchedulingSlots } from '../../../src/datasets/demo-ci/domains/scheduling'
+import { demoCiDataset } from '../../../src/datasets/demo-ci/index'
 import { demoCiStaffMembers } from '../../../src/datasets/demo-ci/people'
 import {
   demoCiClassGroups,
@@ -19,7 +19,9 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.entities.school?.timeZone).toBe('Africa/Abidjan')
     expect(demoCiGradeLevels).toHaveLength(4)
     expect(demoCiClassGroups).toHaveLength(3)
-    expect(demoCiStaffMembers).toHaveLength(7)
+    expect(demoCiStaffMembers).toHaveLength(5)
+    expect(demoCiDataset.entities.teachers).toHaveLength(2)
+    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(3)
     expect(demoCiSubjects).toHaveLength(8)
     expect(demoCiClassSubjects).toHaveLength(19)
     expect(demoCiDataset.entities.students).toHaveLength(12)

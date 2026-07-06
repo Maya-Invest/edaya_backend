@@ -49,6 +49,8 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
+  Teacher,
+  TeacherAssignment,
 } from '@edaya/core'
 import type { PostgresStore } from '../postgres-store'
 import {
@@ -120,6 +122,10 @@ import {
   StudentNote as StudentNoteCtor,
   Subject as SubjectCtor,
   SubjectMatter as SubjectMatterCtor,
+  TeacherAssignment as TeacherAssignmentCtor,
+  TeacherAssignmentKind,
+  TeacherAssignmentStatus,
+  Teacher as TeacherCtor,
 } from '@edaya/core'
 import { createDefaultMappers, deserializeJsonb } from '../lib/mappers'
 import { customStore, defaultStore } from '../lib/store-factory'
@@ -197,6 +203,8 @@ export interface EntityStores {
   gradeLevels: PostgresStore<GradeLevel>
   staffMembers: PostgresStore<StaffMember>
   staffAssignments: PostgresStore<StaffAssignment>
+  teachers: PostgresStore<Teacher>
+  teacherAssignments: PostgresStore<TeacherAssignment>
   attachments: PostgresStore<Attachment>
   resources: PostgresStore<Resource>
   resourceAssignments: PostgresStore<ResourceAssignment>
@@ -368,6 +376,72 @@ export function createEntityStores(db: any): EntityStores {
         activitySessionId: row.activitySessionId ?? undefined,
         assessmentId: row.assessmentId ?? undefined,
         createdAt: row.createdAt,
+      }),
+    ),
+
+    teachers: customStore(
+      db,
+      schema.teachers,
+      (entity: Teacher) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        firstName: entity.firstName,
+        lastName: entity.lastName,
+        photoUrl: entity.photoUrl ?? null,
+        email: entity.email ?? null,
+        phone: entity.phone ?? null,
+        notificationEmail: entity.notificationEmail ?? null,
+        notificationPhone: entity.notificationPhone ?? null,
+        subjectId: entity.subjectId ?? null,
+        isActive: entity.isActive,
+        createdAt: entity.createdAt,
+      }),
+      row => new TeacherCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        photoUrl: row.photoUrl,
+        email: row.email,
+        phone: row.phone,
+        notificationEmail: row.notificationEmail,
+        notificationPhone: row.notificationPhone,
+        subjectId: row.subjectId,
+        isActive: row.isActive,
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    teacherAssignments: customStore(
+      db,
+      schema.teacherAssignments,
+      (entity: TeacherAssignment) => ({
+        id: entity.id,
+        teacherId: entity.teacherId,
+        academicYearId: entity.academicYearId,
+        kind: entity.kind,
+        classSubjectId: entity.classSubjectId ?? null,
+        classGroupId: entity.classGroupId ?? null,
+        responsibility: entity.responsibility ?? null,
+        status: entity.status,
+        startsAt: entity.startsAt ?? null,
+        endsAt: entity.endsAt ?? null,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt ?? null,
+      }),
+      row => new TeacherAssignmentCtor({
+        id: row.id,
+        teacherId: row.teacherId,
+        academicYearId: row.academicYearId,
+        kind: enumValue(TeacherAssignmentKind, row.kind, 'teacherAssignments.kind'),
+        classSubjectId: row.classSubjectId ?? undefined,
+        classGroupId: row.classGroupId ?? undefined,
+        responsibility: row.responsibility ?? undefined,
+        status: enumValue(TeacherAssignmentStatus, row.status, 'teacherAssignments.status'),
+        startsAt: row.startsAt ?? undefined,
+        endsAt: row.endsAt ?? undefined,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt ?? undefined,
       }),
     ),
 

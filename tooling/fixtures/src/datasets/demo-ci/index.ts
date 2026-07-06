@@ -1,6 +1,12 @@
 import type { FixtureDataset } from '../types'
 import { DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import {
+  demoCiClassResourceAssignments,
+  demoCiResources,
+  demoCiSchedules,
+  demoCiSchedulingSlots,
+} from './domains/scheduling'
+import {
   demoCiEnrollments,
   demoCiGuardianLinks,
   demoCiGuardians,
@@ -18,12 +24,7 @@ import {
   demoCiSubjectMatters,
   demoCiSubjects,
 } from './school'
-import {
-  demoCiClassResourceAssignments,
-  demoCiResources,
-  demoCiSchedules,
-  demoCiSchedulingSlots,
-} from './domains/scheduling'
+import { demoCiTeacherAssignments, demoCiTeachers } from './teachers'
 
 export const demoCiDataset = {
   purpose: 'demo-ci',
@@ -36,6 +37,8 @@ export const demoCiDataset = {
     periodDefinitions: demoCiPeriodDefinitions,
     classGroups: demoCiClassGroups,
     staffMembers: demoCiStaffMembers,
+    teachers: demoCiTeachers,
+    teacherAssignments: demoCiTeacherAssignments,
     students: demoCiStudents,
     enrollments: demoCiEnrollments,
     guardians: demoCiGuardians,

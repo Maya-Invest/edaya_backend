@@ -1,11 +1,16 @@
 # Authorization model
 
-Edaya Core uses a **two-layer** authorization model. Every interactive request carries an `ActorMetadata` value with **preloaded effective grants**. Services enforce access in two steps:
+Edaya Core uses a **two-layer** authorization model. Every interactive request carries an `ActorMetadata` value:
 
-1. **Capability layer** — synchronous `authorize()` checks that the actor holds the required `Permission` and that their scope grants cover the requested scope.
+- **Staff** — preloaded `effectiveGrants` (permission + scope paths).
+- **Portal actors** (teacher, guardian, student) — preloaded **relationship scopes** (`teacherScope`, `guardianScope`, `studentScope`).
+
+Services enforce access in two steps:
+
+1. **Capability layer** — staff use synchronous `authorize(Permission)`; portal actors use `assertCapability()` (relationship-native gates). Until portal folds C/D land, legacy grant checks may synthesize grants from scope via `effectiveGrantsForActor`.
 2. **Resource layer** — asynchronous `AuthorizationPolicy` resolvers that verify the actor’s relationship to specific entities (students, class groups, sessions, fees, etc.) after those entities have been loaded.
 
-Grant resolution happens **once per session** in the API middleware and is cached. The core engine never hits the database during `authorize()`.
+Grant resolution happens **once per session** in the API middleware (staff grants cache + portal scope cache). The core engine never hits the database during `authorize()`.
 
 All public symbols are re-exported from `@edaya/core` via `authorization/index.ts`.
 

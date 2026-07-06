@@ -16,6 +16,7 @@ import { createHttpSchedulingSeedPort } from '../domains/scheduling/adapters/htt
 import { createHttpSchoolLifeSeedPort } from '../domains/school-life/adapters/http'
 import { createHttpSchoolStructureSeedPort } from '../domains/school-structure/adapters/http'
 import { createHttpStudentSupportSeedPort } from '../domains/student-support/adapters/http'
+import { createHttpTeachersSeedPort } from '../domains/teachers/adapters/http'
 
 export function createHttpDomainSeedPorts(
   client: HttpSeedClient,
@@ -26,6 +27,7 @@ export function createHttpDomainSeedPorts(
     schoolStructurePort: createHttpSchoolStructureSeedPort({ client, serviceAccountApiKey }),
     populationPort: createHttpPopulationSeedPort({ client, serviceAccountApiKey }),
     curriculumPort: createHttpCurriculumSeedPort({ client, serviceAccountApiKey }),
+    teachersPort: createHttpTeachersSeedPort({ client, serviceAccountApiKey }),
     schedulingPort: createHttpSchedulingSeedPort({ client, serviceAccountApiKey }),
     attendancePort: createHttpAttendanceSeedPort({ client, serviceAccountApiKey }),
     assessmentsPort: createHttpAssessmentsSeedPort({ client, serviceAccountApiKey }),

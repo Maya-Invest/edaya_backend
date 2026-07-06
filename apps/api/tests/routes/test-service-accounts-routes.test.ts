@@ -23,7 +23,7 @@ import { Permission, TEACHER_PERMISSIONS } from "@edaya/core";
 function teacherClassSubjectAssignments() {
   return TEACHER_PERMISSIONS.map(permission => ({
     permission,
-    scopeIds: "6a:math",
+    scopeIds: "6a",
     academicYearId: TEST_ACADEMIC_YEAR_ID,
   }));
 }
@@ -220,15 +220,15 @@ describe("service account routes", () => {
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const teacherAccount = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "st2")!;
-    const teacherStaffId = teacherAccount.staffId;
+    const staffAccount = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "st3")!;
+    const teacherStaffId = staffAccount.staffId;
     await grantServiceAccountCreate(application, teacherStaffId, [
       Permission.SERVICE_ACCOUNT_CREATE,
       ...TEACHER_PERMISSIONS,
-    ], "6a:math");
+    ], "6a");
 
     const cookies = await signInThroughApp(app, {
-      email: teacherAccount.email,
+      email: staffAccount.email,
     });
 
     const response = await app.request(createAppRequest("/core/service-accounts", {

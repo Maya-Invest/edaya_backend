@@ -1,7 +1,6 @@
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { EffectiveGrants } from '../model/effective-grants'
 import { resolveEffectiveGrants } from './resolve-effective-grants'
-import { resolveGuardianGrants, resolveStudentGrants } from './resolve-portal-grants'
 
 export interface ResolveActorGrantsArgs {
   actorId: string
@@ -12,27 +11,17 @@ export interface ResolveActorGrantsArgs {
   now?: Date
 }
 
+/** Staff-only grant resolution. Portal actors use `resolveActorScope`. */
 export async function resolveActorGrants(args: ResolveActorGrantsArgs): Promise<EffectiveGrants> {
-  switch (args.actorType) {
-    case 'staff':
-      return resolveEffectiveGrants({
-        staffMemberId: args.actorId,
-        schoolId: args.schoolId,
-        repositories: args.repositories,
-        academicYearId: args.academicYearId,
-        now: args.now,
-      })
-    case 'guardian':
-      return resolveGuardianGrants({
-        guardianId: args.actorId,
-        schoolId: args.schoolId,
-        repositories: args.repositories,
-      })
-    case 'student':
-      return resolveStudentGrants({
-        studentId: args.actorId,
-        schoolId: args.schoolId,
-        repositories: args.repositories,
-      })
+  if (args.actorType !== 'staff') {
+    throw new Error(`resolveActorGrants is staff-only; use resolveActorScope for ${args.actorType}`)
   }
+
+  return resolveEffectiveGrants({
+    staffMemberId: args.actorId,
+    schoolId: args.schoolId,
+    repositories: args.repositories,
+    academicYearId: args.academicYearId,
+    now: args.now,
+  })
 }

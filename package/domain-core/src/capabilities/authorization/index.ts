@@ -1,4 +1,5 @@
 export * from './bootstrap-actor'
+export * from './capabilities'
 export * from './engine'
 export * from './grants'
 export * from './migration'

@@ -26,23 +26,16 @@ describe('legacyScopeGrantsFromScopeIdsByPermission', () => {
     }])
   })
 
-  test('maps class subject paths to course_assignment and wildcard class groups', () => {
+  test('maps class-group teaching write paths to legacy class_group scope grants', () => {
     const grants = legacyScopeGrantsFromScopeIdsByPermission({
-      [Permission.GRADE_INPUT]: '6a:cs-math;5a:*',
+      [Permission.GRADE_INPUT]: '6a;5a',
     })
 
-    expect(grants).toEqual([
-      {
-        permission: Permission.GRADE_INPUT,
-        scopeType: 'course_assignment',
-        scopeEntityIds: ['cs-math'],
-      },
-      {
-        permission: Permission.GRADE_INPUT,
-        scopeType: 'class_group',
-        scopeEntityIds: ['5a'],
-      },
-    ])
+    expect(grants).toEqual([{
+      permission: Permission.GRADE_INPUT,
+      scopeType: 'class_group',
+      scopeEntityIds: ['6a', '5a'],
+    }])
   })
 
   test('skips tenant-wide empty scopeIds', () => {

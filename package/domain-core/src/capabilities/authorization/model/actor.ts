@@ -1,4 +1,5 @@
 import type { StaffAccountKind } from '../../../domain/school/staff-account-kind'
+import type { GuardianScope, StudentScope, TeacherActorScope } from './actor-scope'
 import type { EffectiveGrants } from './effective-grants'
 import { DomainValidationError } from '../../../domain/shared/utils'
 
@@ -9,33 +10,39 @@ export enum ActorAssuranceLevel {
   Service = 'service',
 }
 
-export interface InteractiveActorContext {
+export interface InteractiveActorBase {
   readonly subjectId: string
   readonly schoolId: string
   readonly requestId: string
   readonly sessionId?: string
   readonly authenticatedAt: Date
   readonly assuranceLevel: ActorAssuranceLevel
-  readonly effectiveGrants: EffectiveGrants
   readonly actorId: string
-  readonly kind: 'staff' | 'guardian' | 'student'
 }
 
-export interface StaffActorMetadata extends InteractiveActorContext {
+export interface StaffActorMetadata extends InteractiveActorBase {
   readonly kind: 'staff'
   readonly staffMemberId: string
   readonly accountKind: StaffAccountKind
   readonly effectiveGrants: EffectiveGrants
 }
 
-export interface GuardianActorMetadata extends InteractiveActorContext {
+export interface GuardianActorMetadata extends InteractiveActorBase {
   readonly kind: 'guardian'
   readonly guardianId: string
+  readonly guardianScope: GuardianScope
 }
 
-export interface StudentActorMetadata extends InteractiveActorContext {
+export interface StudentActorMetadata extends InteractiveActorBase {
   readonly kind: 'student'
   readonly studentId: string
+  readonly studentScope: StudentScope
+}
+
+export interface TeacherActorMetadata extends InteractiveActorBase {
+  readonly kind: 'teacher'
+  readonly teacherId: string
+  readonly teacherScope: TeacherActorScope
 }
 
 export interface SystemActorMetadata {
@@ -46,30 +53,42 @@ export interface SystemActorMetadata {
   readonly reason: string
 }
 
-export type InteractiveActorMetadata = StaffActorMetadata | GuardianActorMetadata | StudentActorMetadata
+export type InteractiveActorMetadata
+  = | StaffActorMetadata
+    | GuardianActorMetadata
+    | StudentActorMetadata
+    | TeacherActorMetadata
+
 export type ActorMetadata = InteractiveActorMetadata | SystemActorMetadata
 
-interface InteractiveActorContextInput {
+interface InteractiveActorBaseInput {
   subjectId: string
   schoolId: string
   requestId: string
   sessionId?: string
   authenticatedAt: Date
   assuranceLevel?: ActorAssuranceLevel
+}
+
+export interface StaffActorMetadataInput extends InteractiveActorBaseInput {
+  staffMemberId: string
+  accountKind?: StaffAccountKind
   effectiveGrants: EffectiveGrants
 }
 
-export interface StaffActorMetadataInput extends InteractiveActorContextInput {
-  staffMemberId: string
-  accountKind?: StaffAccountKind
-}
-
-export interface GuardianActorMetadataInput extends InteractiveActorContextInput {
+export interface GuardianActorMetadataInput extends InteractiveActorBaseInput {
   guardianId: string
+  guardianScope: GuardianScope
 }
 
-export interface StudentActorMetadataInput extends InteractiveActorContextInput {
+export interface StudentActorMetadataInput extends InteractiveActorBaseInput {
   studentId: string
+  studentScope: StudentScope
+}
+
+export interface TeacherActorMetadataInput extends InteractiveActorBaseInput {
+  teacherId: string
+  teacherScope: TeacherActorScope
 }
 
 export interface SystemActorMetadataInput {
@@ -81,7 +100,8 @@ export interface SystemActorMetadataInput {
 
 export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffActorMetadata {
   const accountKind = input.accountKind ?? 'human'
-  const context = normalizeInteractiveContext({
+  const staffMemberId = requireNonBlank(input.staffMemberId, 'staffMemberId')
+  const context = normalizeInteractiveBase({
     ...input,
     assuranceLevel: input.assuranceLevel ?? (accountKind === 'service'
       ? ActorAssuranceLevel.Service
@@ -90,9 +110,10 @@ export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffA
   return Object.freeze({
     ...context,
     kind: 'staff',
-    actorId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
-    staffMemberId: requireNonBlank(input.staffMemberId, 'staffMemberId'),
+    actorId: staffMemberId,
+    staffMemberId,
     accountKind,
+    effectiveGrants: input.effectiveGrants,
   })
 }
 
@@ -107,23 +128,38 @@ export function createServiceStaffActorMetadata(
 }
 
 export function createGuardianActorMetadata(input: GuardianActorMetadataInput): GuardianActorMetadata {
-  const context = normalizeInteractiveContext(input)
+  const guardianId = requireNonBlank(input.guardianId, 'guardianId')
+  const context = normalizeInteractiveBase(input)
   return Object.freeze({
     ...context,
     kind: 'guardian',
-    actorId: requireNonBlank(input.guardianId, 'guardianId'),
-    guardianId: requireNonBlank(input.guardianId, 'guardianId'),
+    actorId: guardianId,
+    guardianId,
+    guardianScope: input.guardianScope,
   })
 }
 
 export function createStudentActorMetadata(input: StudentActorMetadataInput): StudentActorMetadata {
-  const context = normalizeInteractiveContext(input)
   const studentId = requireNonBlank(input.studentId, 'studentId')
+  const context = normalizeInteractiveBase(input)
   return Object.freeze({
     ...context,
     kind: 'student',
     actorId: studentId,
     studentId,
+    studentScope: input.studentScope,
+  })
+}
+
+export function createTeacherActorMetadata(input: TeacherActorMetadataInput): TeacherActorMetadata {
+  const teacherId = requireNonBlank(input.teacherId, 'teacherId')
+  const context = normalizeInteractiveBase(input)
+  return Object.freeze({
+    ...context,
+    kind: 'teacher',
+    actorId: teacherId,
+    teacherId,
+    teacherScope: input.teacherScope,
   })
 }
 
@@ -145,10 +181,13 @@ export function isInteractiveActor(actor: unknown): actor is InteractiveActorMet
   if (typeof actor !== 'object' || actor === null || !('kind' in actor)) {
     return false
   }
-  return actor.kind === 'staff' || actor.kind === 'guardian' || actor.kind === 'student'
+  return actor.kind === 'staff'
+    || actor.kind === 'guardian'
+    || actor.kind === 'student'
+    || actor.kind === 'teacher'
 }
 
-function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<InteractiveActorContext, 'actorId' | 'kind'> {
+function normalizeInteractiveBase(input: InteractiveActorBaseInput): InteractiveActorBase {
   return Object.freeze({
     subjectId: requireNonBlank(input.subjectId, 'subjectId'),
     schoolId: requireNonBlank(input.schoolId, 'schoolId'),
@@ -156,7 +195,7 @@ function normalizeInteractiveContext(input: InteractiveActorContextInput): Omit<
     sessionId: input.sessionId ? requireNonBlank(input.sessionId, 'sessionId') : undefined,
     authenticatedAt: requireValidDate(input.authenticatedAt, 'authenticatedAt'),
     assuranceLevel: input.assuranceLevel ?? ActorAssuranceLevel.Standard,
-    effectiveGrants: input.effectiveGrants,
+    actorId: '',
   })
 }
 

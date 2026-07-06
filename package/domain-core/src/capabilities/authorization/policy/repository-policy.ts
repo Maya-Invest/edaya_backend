@@ -13,6 +13,7 @@ import {
   checkStudentFeeAccess,
   checkStudentHealthAccess,
   checkStudentNoteAccess,
+  checkTeacherAccess,
 } from './resolvers'
 
 function resolveRepositories(args: RepositoryAuthorizationPolicyArgs): SchoolRepositories {
@@ -33,6 +34,7 @@ export function createRepositoryAuthorizationPolicy(
   return {
     checkStudentAccess: (actor, studentIds) => checkStudentAccess(actor, studentIds, repositories),
     checkGuardianAccess: (actor, guardianIds) => checkGuardianAccess(actor, guardianIds, repositories),
+    checkTeacherAccess: (actor, teacherIds) => checkTeacherAccess(actor, teacherIds, repositories),
     checkStudentNoteAccess: (actor, noteIds) => checkStudentNoteAccess(actor, noteIds, repositories),
     checkStudentHealthAccess: (actor, profileIds) => checkStudentHealthAccess(actor, profileIds, repositories),
     checkClassGroupAccess: (actor, classGroupIds) => checkClassGroupAccess(actor, classGroupIds, repositories),

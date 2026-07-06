@@ -20,7 +20,7 @@ import {
   upsertNotificationRecipient,
 } from '../../src/capabilities/notifications/delivery/sync-notification-recipient'
 import { createStore } from '../support/create-test-app'
-import { effectiveGrantsForRoles } from '../support/effective-grants'
+import { portalScopeForGuardian } from '../support/effective-grants'
 import { testFileStorage } from '../support/test-file-storage'
 
 function createGuardianActor() {
@@ -30,7 +30,7 @@ function createGuardianActor() {
     guardianId: 'g1',
     requestId: 'req-1',
     authenticatedAt: new Date('2026-01-01T00:00:00Z'),
-    effectiveGrants: effectiveGrantsForRoles([]),
+    guardianScope: portalScopeForGuardian([]),
     assuranceLevel: ActorAssuranceLevel.Standard,
   })
 }

@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../ports/repositories/school-reposit
 
 export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears'],
-  accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks'],
+  accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers'],
   academics: [
     'lessonSessions',
     'classGroups',
@@ -58,7 +58,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'enrollments',
   ],
   finance: ['fees', 'studentFees', 'students', 'payments'],
-  invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'schools'],
+  invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'schools'],
 } as const satisfies Record<string, readonly (keyof SchoolRepositories)[]>
 
 export type WorkflowRepositoryScope = keyof typeof WORKFLOW_REPOSITORY_KEYS

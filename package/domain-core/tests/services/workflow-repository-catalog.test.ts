@@ -5,7 +5,7 @@ import { pickWorkflowRepositories, WORKFLOW_REPOSITORY_KEYS } from '../../src/ap
 describe('workflow repository catalog', () => {
   test('documents repository keys for workflows with narrow direct repository usage', () => {
     expect(WORKFLOW_REPOSITORY_KEYS.setup.length).toBeLessThan(4)
-    expect(WORKFLOW_REPOSITORY_KEYS.accessControl.length).toBeLessThan(5)
+    expect(WORKFLOW_REPOSITORY_KEYS.accessControl.length).toBeLessThanOrEqual(5)
     expect(WORKFLOW_REPOSITORY_KEYS.finance.length).toBeLessThanOrEqual(4)
     expect(WORKFLOW_REPOSITORY_KEYS.invitations.length).toBeGreaterThan(4)
   })
@@ -22,7 +22,7 @@ describe('workflow repository catalog', () => {
     } as unknown as SchoolRepositories
 
     const accessControl = pickWorkflowRepositories('accessControl', repositories)
-    expect(Object.keys(accessControl).sort()).toEqual(['guardianLinks', 'guardians', 'staffMembers', 'students'])
+    expect(Object.keys(accessControl).sort()).toEqual(['guardianLinks', 'guardians', 'staffMembers', 'students', 'teachers'])
     expect(accessControl.staffMembers).toBe(repositories.staffMembers)
 
     const setup = pickWorkflowRepositories('setup', repositories)
@@ -36,6 +36,7 @@ describe('workflow repository catalog', () => {
       'schools',
       'staffMembers',
       'students',
+      'teachers',
     ])
   })
 })

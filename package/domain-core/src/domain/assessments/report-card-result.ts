@@ -4,12 +4,16 @@ import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { ReportCardResultSection } from './report-card-result-section'
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, indirectTenant, read, readByIds, reportCardCommentWriteModule, reportCardReadModule, write } from '../../application/entities/entity-config'
+import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { AttendanceSummary, attendanceSummarySchema } from '../../domain/value-objects/attendance-summary'
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 import { reportCardAggregationSchema } from './report-card-aggregation-config'
+import {
+  assertDraftReportCardForTeacherComment,
+  authorizeTeacherReportCardCommentSave,
+} from './report-card-comment-access'
 import { reportCardResultSectionSchema } from './report-card-result-section'
 
 export enum ReportCardResultStatus {
@@ -147,8 +151,8 @@ export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ 
   config({
     repository: repositories.results,
     tenant: reportCardResultTenant(),
-    read: read(permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor: any, ids: readonly string[]) => policy.checkReportCardResultAccess(actor, ids))),
-    write: write(permissionAction(Permission.REPORT_CARD_PUBLISH), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
+    read: read(reportCardReadModule(), readByIds((actor, ids) => policy.checkReportCardResultAccess(actor, ids))),
+    write: write(reportCardCommentWriteModule(), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
     gates: {
       preSave: validateReportCardResultSave,
       preDelete: validateReportCardResultDelete,
@@ -165,9 +169,12 @@ function reportCardResultTenant(): EntityTenantResolver<ReportCardResult> {
 
 async function validateReportCardResultSave(
   result: ReportCardResult,
-  _existing: ReportCardResult | undefined,
+  existing: ReportCardResult | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (existing) {
+    assertDraftReportCardForTeacherComment(existing)
+  }
   const [student, classGroup, period, definition] = await Promise.all([
     repositories.students.findById(result.studentId),
     repositories.classGroups.findById(result.classGroupId),
@@ -202,8 +209,18 @@ async function validateReportCardResultSave(
 function authorizeReportCardResult(policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardResult>['authorizeSave'] {
   return async (actor, entity, existing) => {
     await policy.checkStudentAccess(actor, [entity.studentId])
-    if (existing)
+
+    if (actor.kind === 'teacher') {
+      if (!existing) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+      authorizeTeacherReportCardCommentSave(actor, existing, entity)
+      return
+    }
+
+    if (existing) {
       await policy.checkReportCardResultAccess(actor, [existing.id])
+    }
   }
 }
 

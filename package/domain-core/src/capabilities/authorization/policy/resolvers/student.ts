@@ -1,6 +1,15 @@
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
 import {
+  guardianScopeCoversStudent,
+} from '../../capabilities/assert-guardian-capability'
+import {
+  studentScopeCoversSelf,
+} from '../../capabilities/assert-student-capability'
+import {
+  teacherCoversClassGroup,
+} from '../../capabilities/assert-teaching-capability'
+import {
   actorGrantCoversAny,
   actorGrantCoversAnyResourcePath,
   actorHasAnyPermission,
@@ -9,10 +18,10 @@ import {
 import { activeClassGroupIdsByStudent } from '../../grants/enrollment-scope'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import { Permission } from '../../permissions'
+import { ASSIGNMENT_SCOPED_PERMISSIONS } from '../../permissions/assignment-scoped-permissions'
 import { permissionDefinitions } from '../../permissions/permission-definitions'
 import { resourcePathForClassGroup, resourcePathForStudent } from '../../scope/resolve-resource-path'
 import {
-  CLASS_GROUP_TEACHING_ACCESS_PERMISSIONS,
   GUARDIAN_ADMIN_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_STUDENT_NOTE_ACCESS_PERMISSIONS,
   STUDENT_DIRECT_ACCESS_PERMISSIONS,
@@ -31,11 +40,41 @@ export async function checkStudentAccess(
     return
   }
 
+  const uniqueStudentIds = [...new Set(studentIds)]
+
+  if (actor.kind === 'guardian') {
+    for (const studentId of uniqueStudentIds) {
+      if (!guardianScopeCoversStudent(actor, studentId)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
+    return
+  }
+
+  if (actor.kind === 'student') {
+    for (const studentId of uniqueStudentIds) {
+      if (!studentScopeCoversSelf(actor, studentId)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
+    return
+  }
+
+  if (actor.kind === 'teacher') {
+    const classGroupByStudent = await activeClassGroupIdsByStudent(repos, uniqueStudentIds)
+    for (const studentId of uniqueStudentIds) {
+      const classGroupId = classGroupByStudent.get(studentId)
+      if (!classGroupId || !await teacherCoversClassGroup(actor, classGroupId, repos)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
+    return
+  }
+
   if (actor.kind === 'staff' && actorHasSchoolWideGrant(actor, STUDENT_DIRECT_ACCESS_PERMISSIONS)) {
     return
   }
 
-  const uniqueStudentIds = [...new Set(studentIds)]
   const needsEnrollmentLookup: string[] = []
 
   for (const studentId of uniqueStudentIds) {
@@ -71,11 +110,11 @@ export async function checkStudentAccess(
 
     const canAccessClass = actorGrantCoversAnyResourcePath(
       actor,
-      CLASS_GROUP_TEACHING_ACCESS_PERMISSIONS,
+      ASSIGNMENT_SCOPED_PERMISSIONS,
       resourcePathForClassGroup(classGroupId),
     ) || actorGrantCoversAny(
       actor,
-      CLASS_GROUP_TEACHING_ACCESS_PERMISSIONS,
+      ASSIGNMENT_SCOPED_PERMISSIONS,
       'class_group',
       classGroupId,
     )

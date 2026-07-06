@@ -123,6 +123,10 @@ async function resolveInviteeName(
     const guardian = await repositories.guardians.findById(invitation.targetId) as Guardian | undefined;
     return guardian ? resolveInviteeDisplayName(guardian) : "Guardian";
   }
+  if (invitation.kind === AccountInvitationKind.Teacher) {
+    const teacher = await repositories.teachers.findById(invitation.targetId);
+    return teacher ? resolveInviteeDisplayName(teacher) : "Teacher";
+  }
   const student = await repositories.students.findById(invitation.targetId) as Student | undefined;
   return student ? resolveInviteeDisplayName(student) : "Student";
 }
@@ -135,7 +139,10 @@ function actorMatchesInvitationTarget(actor: ActorMetadata, invitation: AccountI
       return actor.kind === "guardian" && actor.guardianId === invitation.targetId;
     case AccountInvitationKind.Student:
       return actor.kind === "student" && actor.studentId === invitation.targetId;
+    case AccountInvitationKind.Teacher:
+      return actor.kind === "teacher" && actor.teacherId === invitation.targetId;
   }
+  return false;
 }
 
 function createInvitationSystemService(

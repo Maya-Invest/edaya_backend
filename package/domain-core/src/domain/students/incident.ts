@@ -3,8 +3,15 @@ import type { EntityWriteAuthorization } from '../../application/entities/manage
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, dateTime, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../capabilities/authorization'
+import { config, dateTime, directSchoolTenant, disciplineCreateModule, disciplineReadModule, noopReadAccess, read, write } from '../../application/entities/entity-config'
+import {
+  assertHomeroomCapability,
+  assertTeachingCapability,
+  AuthorizationError,
+  AuthorizationErrorCode,
+  HomeroomCapability,
+  TeachingCapability,
+} from '../../capabilities/authorization'
 import { AttachmentOwnerKind } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -107,8 +114,8 @@ export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, po
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.DISCIPLINE_CREATE), authorizeIncident(policy), authorizeIncidentDelete(policy)),
+    read: read(disciplineReadModule(), noopReadAccess),
+    write: write(disciplineCreateModule(), authorizeIncident(policy), authorizeIncidentDelete(policy)),
     gates: {
       preSave: validateIncidentSave,
       preDelete: validateIncidentDelete,
@@ -117,7 +124,27 @@ export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, po
   })
 
 function authorizeIncident(policy: AuthorizationPolicy): EntityWriteAuthorization<Incident>['authorizeSave'] {
-  return async (actor, entity) => {
+  return async (actor, entity, _existing, repositories) => {
+    if (actor.kind === 'teacher') {
+      if (entity.lessonSessionId) {
+        const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
+        if (!lessonSession) {
+          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+        }
+        assertTeachingCapability(actor, TeachingCapability.CreateSubjectDisciplineIncident, {
+          classSubjectId: lessonSession.classSubjectId,
+        })
+        return
+      }
+      if (entity.classGroupId) {
+        assertHomeroomCapability(actor, HomeroomCapability.CreateClassDisciplineIncident, {
+          classGroupId: entity.classGroupId,
+        })
+        return
+      }
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
     if (entity.classGroupId)
       await policy.checkClassGroupAccess(actor, [entity.classGroupId])
     if (entity.lessonSessionId)
@@ -126,7 +153,27 @@ function authorizeIncident(policy: AuthorizationPolicy): EntityWriteAuthorizatio
 }
 
 function authorizeIncidentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Incident>['authorizeDelete'] {
-  return async (actor, entity) => {
+  return async (actor, entity, repositories) => {
+    if (actor.kind === 'teacher') {
+      if (entity.lessonSessionId) {
+        const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
+        if (!lessonSession) {
+          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+        }
+        assertTeachingCapability(actor, TeachingCapability.CreateSubjectDisciplineIncident, {
+          classSubjectId: lessonSession.classSubjectId,
+        })
+        return
+      }
+      if (entity.classGroupId) {
+        assertHomeroomCapability(actor, HomeroomCapability.CreateClassDisciplineIncident, {
+          classGroupId: entity.classGroupId,
+        })
+        return
+      }
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
     if (entity.classGroupId)
       await policy.checkClassGroupAccess(actor, [entity.classGroupId])
     if (entity.lessonSessionId)

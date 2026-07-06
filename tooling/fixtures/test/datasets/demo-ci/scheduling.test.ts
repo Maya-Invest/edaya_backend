@@ -9,14 +9,14 @@ import {
 } from '../../../src/datasets/demo-ci/domains/scheduling'
 
 describe('demo-ci scheduling', () => {
-  it('defines recurring math slots for ci-st1 in 6ème A and 5ème A', () => {
+  it('defines recurring math slots for ci-t1 in 6ème A and 5ème A', () => {
     expect(demoCiResources).toHaveLength(3)
     expect(demoCiClassResourceAssignments).toHaveLength(2)
     expect(demoCiSchedulingSlots).toHaveLength(4)
     expect(demoCiSchedules).toHaveLength(4)
 
     const teacherIds = new Set(demoCiSchedulingSlots.map(slot => slot.teacherId))
-    expect(teacherIds).toEqual(new Set(['ci-st1']))
+    expect(teacherIds).toEqual(new Set(['ci-t1']))
 
     const classGroupIds = new Set(demoCiSchedulingSlots.map(slot => slot.schedule.classGroupId))
     expect(classGroupIds).toEqual(new Set(['ci-6a', 'ci-5a']))

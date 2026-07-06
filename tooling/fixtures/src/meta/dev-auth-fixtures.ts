@@ -9,10 +9,13 @@ export const DEV_AUTH_PASSWORD = 'DevPassword1!'
 export const DEV_AUTH_STAFF_ACCOUNTS = [
   { staffId: 'st8', email: 'k.yann@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st8 },
   { staffId: 'st5', email: 'c.moreau@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st5 },
-  { staffId: 'st1', email: 'm.dupont@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st1 },
-  { staffId: 'st2', email: 'm.garnier@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st2 },
   { staffId: 'st3', email: 'm.leon@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st3 },
   { staffId: 'st7', email: 't.evrard@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st7 },
+] as const
+
+export const DEV_AUTH_TEACHER_ACCOUNTS = [
+  { teacherId: 't1', email: 'm.dupont@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st1 },
+  { teacherId: 't2', email: 'm.garnier@school.edu', name: DEV_STAFF_CI_DISPLAY_NAMES.st2 },
 ] as const
 
 export const DEV_AUTH_STAFF_ACCESS_ROLE_IDS: Record<
@@ -21,8 +24,6 @@ export const DEV_AUTH_STAFF_ACCESS_ROLE_IDS: Record<
 > = {
   st8: 'role-director',
   st5: 'role-director',
-  st1: 'role-teacher',
-  st2: 'role-teacher',
   st3: 'role-coordinator',
   st7: 'role-educator',
 }

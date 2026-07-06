@@ -2,7 +2,7 @@ import type { ActorMetadata, EffectiveGrants } from '../../../src/capabilities/a
 import type { SchoolRepositories } from '../../../src/ports'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, mock, test } from 'bun:test'
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, DefaultAuthorizationRepository, Permission, permissionRowsFromTemplatePermissions, resolveEffectiveGrants } from '../../../src/capabilities/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationError, createGuardianActorMetadata, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createStudentActorMetadata, DefaultAuthorizationRepository, Permission, permissionRowsFromTemplatePermissions, resolveEffectiveGrants, resolveGuardianScope, resolveStudentScope } from '../../../src/capabilities/authorization'
 import {
   checkAssessmentAccess as checkAcademicAssessmentAccess,
   checkClassGroupAccess as checkAcademicClassGroupAccess,
@@ -13,7 +13,7 @@ import {
   checkLessonSessionAccess as checkSchedulingLessonSessionAccess,
 } from '../../../src/capabilities/authorization/policy/resolvers/scheduling'
 import { AttendanceRecord, AttendanceStatus, StaffPermissionAssignment, StudentClassEnrollmentStatus } from '../../../src/domain'
-import { portalEffectiveGrantsForGuardian, portalEffectiveGrantsForStudent, TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
+import { portalScopeForGuardian, portalScopeForStudent, TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
 
 const TEST_ELEVATED_ROLES = new Set<TestRole>(['admin', 'principal'])
 
@@ -71,7 +71,7 @@ function studentActor(studentId = 'student-1', classGroupId = 'class-1'): ActorM
     schoolId: 'school-1',
     requestId: 'request-1',
     authenticatedAt: now,
-    effectiveGrants: portalEffectiveGrantsForStudent(studentId, [classGroupId]),
+    studentScope: portalScopeForStudent(studentId, classGroupId),
   })
 }
 
@@ -82,7 +82,7 @@ function guardianActor(guardianId = 'guardian-1', studentId = 'student-1', class
     schoolId: 'school-1',
     requestId: 'request-1',
     authenticatedAt: now,
-    effectiveGrants: portalEffectiveGrantsForGuardian([studentId], [classGroupId]),
+    guardianScope: portalScopeForGuardian([studentId], [classGroupId]),
   })
 }
 
@@ -152,9 +152,7 @@ function buildStaffPermissionRows(
       schoolId,
       academicYearId,
       permission,
-      scopeIds: ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission)
-        ? 'unassigned-class:*'
-        : 'unassigned-class',
+      scopeIds: 'unassigned-class',
       status: 'active',
     }))
     return [...fromTemplate, ...coordinatorScoped]
@@ -172,7 +170,7 @@ function buildStaffPermissionRows(
       schoolId,
       academicYearId,
       permission,
-      scopeIds: 'class-1:*',
+      scopeIds: 'class-1',
       status: 'active',
     }))
 
@@ -512,7 +510,7 @@ describe('createRepositoryAuthorizationPolicy', () => {
     ))
   })
 
-  test('resolves actor grants for students and guardians via auth repository', async () => {
+  test('resolveActorGrants is staff-only; portal actors use resolveActorScope', async () => {
     const repos = createRepos({
       students: {
         findById: mock(async id => id === 'student-1' ? { id, schoolId: 'school-1' } : undefined),
@@ -520,24 +518,36 @@ describe('createRepositoryAuthorizationPolicy', () => {
       guardians: {
         findById: mock(async id => id === 'guardian-1' ? { id, schoolId: 'school-1' } : undefined),
       } as any,
+      guardianLinks: {
+        list: mock(async () => [{ guardianId: 'guardian-1', studentId: 'student-1', schoolId: 'school-1' }]),
+      } as any,
+      enrollments: {
+        list: mock(async () => [{ studentId: 'student-1', classGroupId: 'class-1', status: 'active' }]),
+      } as any,
     })
 
-    const studentGrants = await repos.authorization.resolveActorGrants({
+    await expect(repos.authorization.resolveActorGrants({
       actorId: 'student-1',
       actorType: 'student',
       schoolId: 'school-1',
-    })
-    expect(studentGrants.permissions.has(Permission.GRADE_READ)).toBe(true)
-    expect(studentGrants.scopeIdsByPermission?.[Permission.GRADE_READ]).toBe('class-1')
-    expect(studentGrants.scopeIdsByPermission?.[Permission.QUERY_STUDENT_DETAIL_READ]).toBe('student-1')
+    })).rejects.toThrow('staff-only')
 
-    const guardianGrants = await repos.authorization.resolveActorGrants({
-      actorId: 'guardian-1',
-      actorType: 'guardian',
+    const studentScope = await resolveStudentScope({
+      studentId: 'student-1',
       schoolId: 'school-1',
+      repositories: repos,
     })
-    expect(guardianGrants.permissions.has(Permission.GRADE_READ)).toBe(true)
-    expect(guardianGrants.scopeIdsByPermission?.[Permission.QUERY_STUDENT_DETAIL_READ]).toBe('student-1')
-    expect(guardianGrants.scopeIdsByPermission?.[Permission.GRADE_READ]).toBe('class-1')
+
+    expect(studentScope.studentId).toBe('student-1')
+    expect(studentScope.classGroupId).toBe('class-1')
+
+    const guardianScope = await resolveGuardianScope({
+      guardianId: 'guardian-1',
+      schoolId: 'school-1',
+      repositories: repos,
+    })
+
+    expect(guardianScope.studentIds).toEqual(['student-1'])
+    expect(guardianScope.classGroupIds).toEqual(['class-1'])
   })
 })

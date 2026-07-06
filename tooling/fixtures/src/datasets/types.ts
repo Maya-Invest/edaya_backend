@@ -40,6 +40,8 @@ import type {
   StudentNoteInput,
   SubjectInput,
   SubjectMatterInput,
+  TeacherAssignmentInput,
+  TeacherInput,
 } from '@edaya/core'
 
 export type FixtureDatasetPurpose = 'minimal' | 'integration' | 'demo' | 'demo-ci' | 'bulk'
@@ -60,7 +62,10 @@ export interface FixtureAttendanceSession {
 export interface FixtureSchedulingSlot {
   slotId: string
   schedule: ScheduleInput
+  /** Portal teacher (Teacher entity id) responsible for this slot. */
   teacherId: string
+  /** Staff member assigned to the materialized lesson session; omit for portal-only teachers. */
+  lessonSessionStaffId?: string
   resourceId?: string
 }
 
@@ -163,6 +168,8 @@ export interface FixtureDatasetEntities {
   periodDefinitions?: readonly PeriodDefinitionInput[]
   classGroups?: readonly ClassGroupInput[]
   staffMembers?: readonly StaffMemberInput[]
+  teachers?: readonly TeacherInput[]
+  teacherAssignments?: readonly TeacherAssignmentInput[]
   guardians?: readonly GuardianInput[]
   students?: readonly StudentInput[]
   enrollments?: readonly StudentClassEnrollmentInput[]

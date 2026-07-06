@@ -1,4 +1,5 @@
 export * from './actor'
+export * from './actor-scope'
 export * from './effective-grants'
 export * from './errors'
 export * from './request'

@@ -1,14 +1,12 @@
 import type { EffectiveGrants } from '../../src/capabilities/authorization'
+import type { GuardianScope, StudentScope } from '../../src/capabilities/authorization/model/actor-scope'
 import {
   ACCOUNTANT_PERMISSIONS,
   ASSIGNMENT_SCOPED_PERMISSIONS,
   COORDINATOR_PERMISSIONS,
-  GUARDIAN_PORTAL_PERMISSIONS,
   Permission,
-  STUDENT_PORTAL_PERMISSIONS,
   TEACHER_PERMISSIONS,
 } from '../../src/capabilities/authorization'
-import { buildPortalScopeIdsByPermission } from '../../src/capabilities/authorization/grants/portal-scope-ids'
 
 export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'
 
@@ -32,33 +30,23 @@ const fixtureScopeEntityIds = {
   student: ['student', 'student-1', 'student-note', 'student-health', 'student-health-verified'],
 } as const
 
-export function portalEffectiveGrantsForStudent(
+export function portalScopeForStudent(
   studentId: string,
-  classGroupIds: readonly string[] = ['class-1'],
-): EffectiveGrants {
+  classGroupId: string = 'class-1',
+): StudentScope {
   return {
-    permissions: STUDENT_PORTAL_PERMISSIONS,
-    scopeGrants: [],
-    scopeIdsByPermission: buildPortalScopeIdsByPermission(STUDENT_PORTAL_PERMISSIONS, {
-      studentIds: [studentId],
-      classGroupIds: [...classGroupIds],
-    }),
-    isElevated: false,
+    studentId,
+    classGroupId,
   }
 }
 
-export function portalEffectiveGrantsForGuardian(
+export function portalScopeForGuardian(
   studentIds: readonly string[],
   classGroupIds: readonly string[] = ['class-1'],
-): EffectiveGrants {
+): GuardianScope {
   return {
-    permissions: GUARDIAN_PORTAL_PERMISSIONS,
-    scopeGrants: [],
-    scopeIdsByPermission: buildPortalScopeIdsByPermission(GUARDIAN_PORTAL_PERMISSIONS, {
-      studentIds: [...studentIds],
-      classGroupIds: [...classGroupIds],
-    }),
-    isElevated: false,
+    studentIds: [...studentIds],
+    classGroupIds: [...classGroupIds],
   }
 }
 

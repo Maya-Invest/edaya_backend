@@ -50,6 +50,7 @@ import {
   studentResponseSchema,
   subjectMatterResponseSchema,
   subjectResponseSchema,
+  teacherResponseSchema,
 } from "./entities";
 
 export const resolveIncidentWithOutcomesResponseSchema = z.object({
@@ -105,6 +106,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
       kind: z.literal("student"),
       entity: studentResponseSchema,
     }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
+    }),
   ]).openapi("LinkActorSubjectResponse"),
   relinkActorSubject: z.discriminatedUnion("kind", [
     z.object({
@@ -118,6 +123,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     z.object({
       kind: z.literal("student"),
       entity: studentResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
     }),
   ]).openapi("RelinkActorSubjectResponse"),
   assignStaffPermission: staffPermissionAssignmentResponseSchema,
@@ -146,6 +155,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     z.object({
       kind: z.literal("student"),
       entity: studentResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
     }),
   ]).openapi("AcceptAccountInvitationResponse"),
   assignStaffToClass: staffAssignmentResponseSchema,

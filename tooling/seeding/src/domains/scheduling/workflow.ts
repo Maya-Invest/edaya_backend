@@ -62,7 +62,7 @@ export async function seedDevScheduling(
   }
 
   for (const slot of slots) {
-    const { schedule, teacherId, resourceId } = slot
+    const { schedule, lessonSessionStaffId, resourceId } = slot
     if (!schedule.dayOfWeek) {
       throw new Error(`Scheduling slot ${slot.slotId} is missing dayOfWeek`)
     }
@@ -70,13 +70,15 @@ export async function seedDevScheduling(
     await port.materializeSchedule({ scheduleId: schedule.id })
     const lessonSessionId = lessonSessionIdForSlot(schedule.id, schedule.dayOfWeek)
 
-    await port.assignStaffToLessonSession({
-      id: `sa-${lessonSessionId}-${teacherId}`,
-      staffId: teacherId,
-      academicYearId,
-      responsibility: 'Teacher',
-      lessonSessionId,
-    })
+    if (lessonSessionStaffId) {
+      await port.assignStaffToLessonSession({
+        id: `sa-${lessonSessionId}-${lessonSessionStaffId}`,
+        staffId: lessonSessionStaffId,
+        academicYearId,
+        responsibility: 'Teacher',
+        lessonSessionId,
+      })
+    }
 
     if (resourceId) {
       await port.assignResourceToLessonSession({

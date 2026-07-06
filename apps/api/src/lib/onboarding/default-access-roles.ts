@@ -1,7 +1,6 @@
 import {
   COORDINATOR_PERMISSIONS,
   Permission,
-  TEACHER_PERMISSIONS,
 } from "@edaya/core";
 
 export interface StaffInvitePermissionPreset {
@@ -43,12 +42,6 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
 }
 
 export const STAFF_INVITE_PERMISSION_PRESETS: readonly StaffInvitePermissionPreset[] = [
-  {
-    id: "role-teacher",
-    name: "Professeur",
-    description: "Enseignement et suivi pédagogique",
-    permissions: mergePermissions(TEACHER_PERMISSIONS, WEBAPP_READ_PERMISSIONS),
-  },
   {
     id: "role-coordinator",
     name: "Coordination",

@@ -3,6 +3,7 @@ import {
   invalidateEffectiveGrantsCacheForActor,
   invalidateEffectiveGrantsCacheForStaff,
 } from "@/lib/authorization/grants-cache/resolve-cached";
+import { invalidateActorScopeCacheForActor } from "@/lib/authorization/scope-cache/resolve-cached";
 
 export interface EntityReadService {
   list: (...args: any[]) => Promise<unknown[]>;
@@ -112,6 +113,15 @@ function withAuthorizationCacheInvalidation(name: string, service: EntityReadSer
     });
   }
 
+  if (name === "teachers" || name === "teacherAssignments") {
+    return wrapWriteService(service, {
+      afterSave: entity => invalidateTeacherGrant(entity),
+      afterBatchSave: entities => entities.forEach(invalidateTeacherGrant),
+      afterDelete: entity => invalidateTeacherGrant(entity),
+      afterBatchDelete: entities => entities?.forEach(invalidateTeacherGrant),
+    });
+  }
+
   return service;
 }
 
@@ -185,4 +195,15 @@ function invalidateGuardianGrant(entity: unknown): void {
 function invalidateGuardianLinkGrants(entity: unknown): void {
   invalidateGuardianGrant(entity);
   invalidateStudentGrant(entity);
+}
+
+function invalidateTeacherGrant(entity: unknown): void {
+  const candidate = entity as { id?: unknown; teacherId?: unknown; schoolId?: unknown } | undefined;
+  const teacherId = typeof candidate?.teacherId === "string"
+    ? candidate.teacherId
+    : typeof candidate?.id === "string" ? candidate.id : undefined;
+  const schoolId = typeof candidate?.schoolId === "string" ? candidate.schoolId : undefined;
+  if (teacherId) {
+    invalidateActorScopeCacheForActor(teacherId, "teacher", schoolId);
+  }
 }

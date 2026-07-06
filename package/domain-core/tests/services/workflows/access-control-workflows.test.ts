@@ -150,13 +150,36 @@ describe('SchoolService access-control workflows', () => {
     } satisfies Partial<BusinessRuleViolationError>)
   })
 
-  test('linkActorSubject rejects subject ids already linked elsewhere', async () => {
+  test('linkActorSubject allows the same subject on staff when a guardian already uses it in the school', async () => {
     const { mockRepos, service } = createAccessControlContext()
     mockRepos.guardians.findOne = mock(async () => new Guardian({
       id: 'g-other',
       schoolId: 'sch1',
       firstName: 'Other',
       lastName: 'Guardian',
+      subjectId: 'auth-user-1',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    }))
+
+    const result = await service.accessControlWorkflow.linkActorSubject({
+      subjectId: 'auth-user-1',
+      staffMemberId: 'st1',
+    })
+
+    expect(result.kind).toBe('staff')
+    expect(result.entity.subjectId).toBe('auth-user-1')
+    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+  })
+
+  test('linkActorSubject rejects duplicate staff subject ids in the same school', async () => {
+    const { mockRepos, service } = createAccessControlContext()
+    mockRepos.staffMembers.findOne = mock(async () => new StaffMember({
+      id: 'st-other',
+      schoolId: 'sch1',
+      firstName: 'Other',
+      lastName: 'Staff',
+      subjectId: 'auth-user-1',
+      isActive: true,
       createdAt: new Date('2026-01-01T00:00:00Z'),
     }))
 

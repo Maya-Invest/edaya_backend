@@ -1,40 +1,33 @@
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
-import type { EffectiveGrants } from '../model/effective-grants'
+import type { GuardianScope, StudentScope } from '../model/actor-scope'
 import { uniqueActiveClassGroupIds } from '../grants/enrollment-scope'
-import { GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS } from '../grants/portal-permission-sets'
-import { buildPortalScopeIdsByPermission } from '../grants/portal-scope-ids'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 
-export async function resolveGuardianGrants(args: {
+export async function resolveGuardianScope(args: {
   guardianId: string
   schoolId: string
   repositories: SchoolRepositories
-}): Promise<EffectiveGrants> {
+}): Promise<GuardianScope> {
   const guardian = await args.repositories.guardians.findById(args.guardianId)
   if (!guardian || guardian.schoolId !== args.schoolId) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
   const links = await args.repositories.guardianLinks.list({ guardianId: args.guardianId })
-  const studentIds = links.filter(l => l.schoolId === args.schoolId).map(l => l.studentId)
+  const studentIds = links.filter(link => link.schoolId === args.schoolId).map(link => link.studentId)
   const classGroupIds = await uniqueActiveClassGroupIds(args.repositories, studentIds)
 
   return {
-    permissions: GUARDIAN_PORTAL_PERMISSIONS,
-    scopeGrants: [],
-    scopeIdsByPermission: buildPortalScopeIdsByPermission(GUARDIAN_PORTAL_PERMISSIONS, {
-      studentIds,
-      classGroupIds,
-    }),
-    isElevated: false,
+    studentIds,
+    classGroupIds,
   }
 }
 
-export async function resolveStudentGrants(args: {
+export async function resolveStudentScope(args: {
   studentId: string
   schoolId: string
   repositories: SchoolRepositories
-}): Promise<EffectiveGrants> {
+}): Promise<StudentScope> {
   const student = await args.repositories.students.findById(args.studentId)
   if (!student || student.schoolId !== args.schoolId) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
@@ -43,12 +36,7 @@ export async function resolveStudentGrants(args: {
   const [activeClassGroupId] = await uniqueActiveClassGroupIds(args.repositories, [args.studentId])
 
   return {
-    permissions: STUDENT_PORTAL_PERMISSIONS,
-    scopeGrants: [],
-    scopeIdsByPermission: buildPortalScopeIdsByPermission(STUDENT_PORTAL_PERMISSIONS, {
-      studentIds: [args.studentId],
-      ...(activeClassGroupId ? { classGroupIds: [activeClassGroupId] } : {}),
-    }),
-    isElevated: false,
+    studentId: args.studentId,
+    ...(activeClassGroupId ? { classGroupId: activeClassGroupId } : {}),
   }
 }

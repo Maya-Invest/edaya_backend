@@ -9,9 +9,6 @@ export const STUDENT_DIRECT_ACCESS_PERMISSIONS: readonly Permission[] = [
   Permission.PAYMENT_READ,
 ]
 
-export const CLASS_GROUP_TEACHING_ACCESS_PERMISSIONS = ASSIGNMENT_SCOPED_PERMISSIONS
-export const SESSION_TEACHING_ACCESS_PERMISSIONS = ASSIGNMENT_SCOPED_PERMISSIONS
-
 /** Permissions that satisfy `checkClassGroupAccess`. */
 export const CLASS_GROUP_ACCESS_PERMISSIONS: readonly Permission[] = [
   Permission.ACADEMIC_PROGRAM_READ,
@@ -38,7 +35,7 @@ export const SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS: readonly Permission[] = [
 /** Permissions that satisfy timetable query and session read module checks. */
 export const TIMETABLE_ACCESS_PERMISSIONS: readonly Permission[] = [
   ...SCHOOL_WIDE_SESSION_ACCESS_PERMISSIONS,
-  ...SESSION_TEACHING_ACCESS_PERMISSIONS,
+  ...ASSIGNMENT_SCOPED_PERMISSIONS,
 ]
 
 /** Permissions that satisfy assessment read module checks. */
@@ -88,6 +85,11 @@ export const GUARDIAN_ADMIN_ACCESS_PERMISSIONS: readonly Permission[] = [
   Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
   Permission.PARENT_READ,
   Permission.PARENT_UPDATE,
+]
+
+export const TEACHER_ADMIN_ACCESS_PERMISSIONS: readonly Permission[] = [
+  Permission.ACCESS_CONTROL_ASSIGN,
+  Permission.SCHOOL_STRUCTURE_CONFIGURE,
 ]
 
 export const SCHOOL_WIDE_STUDENT_NOTE_ACCESS_PERMISSIONS: readonly Permission[] = [

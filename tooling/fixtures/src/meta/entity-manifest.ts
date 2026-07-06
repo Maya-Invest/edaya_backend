@@ -33,6 +33,8 @@ export const SEED_ENTITY_MANIFEST = [
   { entity: 'subject-matters', fixtureFile: 'demoDataset.entities.subjectMatters', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'class-subjects', fixtureFile: 'demoDataset.entities.classSubjects', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'class-subject-matters', fixtureFile: 'datasets/demo/people.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'teachers', fixtureFile: 'datasets/demo/teachers.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Portal teachers (not staff)' },
+  { entity: 'teacher-assignments', fixtureFile: 'datasets/demo/teachers.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'resources', fixtureFile: 'demoDataset.entities.resources', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'schedules', fixtureFile: 'demoDataset.entities.schedules', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Classes 6a, 6b, 5a' },
   { entity: 'lesson-sessions', fixtureFile: 'demoDataset.extensions.schedulingSlots', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Classes 6a, 6b, 5a' },

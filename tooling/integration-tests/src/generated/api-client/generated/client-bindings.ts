@@ -38,6 +38,16 @@ export const clientBindings = {
         "schemaName": "StaffAssignment",
         "allowDirectSave": true
       },
+      "teachers": {
+        "publicName": "teachers",
+        "schemaName": "Teacher",
+        "allowDirectSave": true
+      },
+      "teacherAssignments": {
+        "publicName": "teacher-assignments",
+        "schemaName": "TeacherAssignment",
+        "allowDirectSave": true
+      },
       "accountInvitations": {
         "publicName": "account-invitations",
         "schemaName": "AccountInvitation",

@@ -22,6 +22,8 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'subject-matters': 'subjectMatters',
   'class-subjects': 'classSubjects',
   'class-subject-matters': 'classSubjectMatters',
+  'teachers': 'teachers',
+  'teacher-assignments': 'teacherAssignments',
   'resources': 'resources',
   'schedules': 'schedules',
   'lesson-sessions': 'lessonSessions',

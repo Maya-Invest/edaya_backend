@@ -79,7 +79,7 @@ export const demoCiPeriodDefinitions = [
 
 export const demoCiClassGroups = [
   { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème A', capacity: 35, homeroomStaffId: 'ci-st3' },
-  { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème B', capacity: 35, homeroomStaffId: 'ci-st2' },
+  { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème B', capacity: 35 },
   { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: '5ème A', capacity: 35, homeroomStaffId: 'ci-st3' },
 ] as const satisfies readonly ClassGroupInput[]
 

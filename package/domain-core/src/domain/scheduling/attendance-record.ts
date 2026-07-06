@@ -4,9 +4,8 @@ import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { AttendanceAnchor } from './attendance-anchor'
 import { z } from 'zod'
-import { config, dateTime, indirectTenant, anyPermissionAction, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { anyPermissionAction, attendanceRecordWriteModule, config, dateTime, indirectTenant, read, unique, write } from '../../application/entities/entity-config'
 import { ATTENDANCE_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
-import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
 import { attendanceAnchorFields, attendanceAnchorKey, refineAttendanceAnchor } from './attendance-anchor'
@@ -197,7 +196,7 @@ export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ 
     read: read(anyPermissionAction([...ATTENDANCE_ACCESS_PERMISSIONS]), async (actor, entities) => {
       await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
     }),
-    write: write(permissionAction(Permission.ATTENDANCE_RECORD), authorizeAttendance(policy), authorizeAttendanceDelete(policy)),
+    write: write(attendanceRecordWriteModule(), authorizeAttendance(policy), authorizeAttendanceDelete(policy)),
     gates: {
       preSave: validateAttendanceSave,
     },

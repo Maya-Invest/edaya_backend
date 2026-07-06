@@ -14,6 +14,7 @@ import type { SchedulingSeedPort } from '../domains/scheduling/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
+import type { TeachersSeedPort } from '../domains/teachers/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
@@ -49,6 +50,8 @@ import { createInProcessSchoolStructureSeedPort } from '../domains/school-struct
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from '../domains/school-structure/workflow'
 import { createInProcessStudentSupportSeedPort } from '../domains/student-support/in-process'
 import { seedDevStudentSupport } from '../domains/student-support/workflow'
+import { createInProcessTeachersSeedPort } from '../domains/teachers/in-process'
+import { seedDevTeachers } from '../domains/teachers/workflow'
 import { buildFixtureCurriculumPlan } from '../support/curriculum-plan'
 
 export type DevSchoolSeedResult
@@ -102,6 +105,7 @@ export interface RunDevSchoolSeedOptions {
   schoolStructurePort?: SchoolStructureSeedPort
   populationPort?: PopulationSeedPort
   curriculumPort?: CurriculumSeedPort
+  teachersPort?: TeachersSeedPort
   schedulingPort?: SchedulingSeedPort
   attendancePort?: AttendanceSeedPort
   assessmentsPort?: AssessmentsSeedPort
@@ -139,6 +143,8 @@ export async function runDevSchoolSeed(
     ?? createInProcessPopulationSeedPort(requireSeedApplication(application, 'populationPort'))
   const curriculumPort = options?.curriculumPort
     ?? createInProcessCurriculumSeedPort(requireSeedApplication(application, 'curriculumPort'))
+  const teachersPort = options?.teachersPort
+    ?? createInProcessTeachersSeedPort(requireSeedApplication(application, 'teachersSeedPort'))
   const schedulingPort = options?.schedulingPort
     ?? createInProcessSchedulingSeedPort(requireSeedApplication(application, 'schedulingPort'))
   const attendancePort = options?.attendancePort
@@ -205,6 +211,7 @@ export async function runDevSchoolSeed(
 
   await seedDevPopulation(populationPort, seedDataset)
   await seedDevCurriculum(curriculumPort, seedDataset)
+  await seedDevTeachers(teachersPort, seedDataset)
   await seedDevScheduling(schedulingPort, seedDataset)
   await seedDevAssessments(assessmentsPort, seedDataset)
   const activitiesCounts = await seedDevActivities(activitiesPort, seedDataset)

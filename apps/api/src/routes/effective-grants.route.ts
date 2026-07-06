@@ -13,7 +13,7 @@ import { schoolApiPath } from "@/lib/school-api/routes/paths";
 const commandMessageSchema = createMessageObjectSchema();
 
 const effectiveGrantsResponseSchema = z.object({
-  kind: z.enum(["staff", "guardian", "student"]),
+  kind: z.enum(["staff", "guardian", "student", "teacher"]),
   actorId: z.string(),
   schoolId: z.string(),
   assuranceLevel: z.enum(["standard", "verified", "strong", "service"]),

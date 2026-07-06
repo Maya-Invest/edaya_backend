@@ -6,6 +6,7 @@ import {
   buildGuardianRecipientProfile,
   buildStaffRecipientProfile,
   buildStudentRecipientProfile,
+  buildTeacherRecipientProfile,
 } from './build-recipient-profile'
 import { enrichRecipientProfile } from './resolve-notification-contact'
 
@@ -58,6 +59,13 @@ export async function resolveNotificationRecipientProfileForActor(
         return undefined
       }
       return buildStudentRecipientProfile(student)
+    }
+    case 'teacher': {
+      const teacher = await repositories.teachers.findById(actor.teacherId)
+      if (!teacher || teacher.schoolId !== actor.schoolId) {
+        return undefined
+      }
+      return buildTeacherRecipientProfile(teacher)
     }
   }
 }

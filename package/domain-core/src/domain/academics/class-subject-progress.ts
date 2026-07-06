@@ -3,9 +3,9 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, anyPermissionAction, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../application/entities/entity-config'
+import { anyPermissionAction, config, indirectTenant, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../application/entities/entity-config'
+import { assertTeachingCapability, denyResourceAccess, Permission, TeachingCapability } from '../../capabilities/authorization'
 import { LOGBOOK_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 import { ClassSubjectMatterStatus } from './class-subject-matter'
@@ -79,15 +79,39 @@ function classSubjectProgressTenant(): EntityTenantResolver<ClassSubjectProgress
   })
 }
 
-function authorizeClassSubjectProgress(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectProgress>['authorizeSave'] {
-  return async (actor, entity) => {
-    await _policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
+function authorizeClassSubjectProgress(policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectProgress>['authorizeSave'] {
+  return async (actor, entity, existing, repositories) => {
+    if (actor.kind === 'teacher') {
+      const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
+      if (!lessonSession) {
+        denyResourceAccess()
+      }
+      assertTeachingCapability(
+        actor,
+        existing ? TeachingCapability.UpdateLogbookEntry : TeachingCapability.CreateLogbookEntry,
+        { classSubjectId: lessonSession.classSubjectId },
+      )
+      return
+    }
+
+    await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
   }
 }
 
-function authorizeClassSubjectProgressDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectProgress>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await _policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
+function authorizeClassSubjectProgressDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectProgress>['authorizeDelete'] {
+  return async (actor, entity, repositories) => {
+    if (actor.kind === 'teacher') {
+      const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
+      if (!lessonSession) {
+        denyResourceAccess()
+      }
+      assertTeachingCapability(actor, TeachingCapability.UpdateLogbookEntry, {
+        classSubjectId: lessonSession.classSubjectId,
+      })
+      return
+    }
+
+    await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
   }
 }
 

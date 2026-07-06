@@ -9,8 +9,9 @@ demo-ci/
 ├── index.ts    # demoCiDataset (12 élèves — smoke / tests)
 ├── school.ts   # école, trimestres, niveaux collège, matières MENA-CI
 ├── people.ts   # élèves, personnel, parents (noms ivoiriens)
+├── teachers.ts # enseignants portail (Teacher + TeacherAssignment)
 └── domains/
-    └── scheduling.ts  # emploi du temps Mme Touré (ci-st1)
+    └── scheduling.ts  # emploi du temps Mme Touré (ci-t1)
 ```
 
 | Élément | Valeur |
@@ -21,7 +22,8 @@ demo-ci/
 | Niveaux | 6ème → 3ème (Collège) |
 | Classes | 6ème A, 6ème B, 5ème A |
 | Élèves | 12 |
-| Personnel | 7 |
+| Personnel | 5 |
+| Enseignants portail | 2 (`ci-t1`, `ci-t2`) |
 
 ## Seed dev local (défaut)
 
@@ -31,7 +33,9 @@ Le seed dev utilise **`demoCiDataset`** par défaut (`sch-edaya-ci-cocody`, 12 �
 |--------|------|
 | `a.kone@ecole-ci.edaya.dev` | Propriétaire (ci-st8) |
 | `j.aka@ecole-ci.edaya.dev` | Directeur (ci-st5) |
-| `a.toure@ecole-ci.edaya.dev` | Enseignante (ci-st1) — maths en 6ème A et 5ème A |
+| `f.assi@ecole-ci.edaya.dev` | Professeur principal / coord. (ci-st3) |
+| `a.toure@ecole-ci.edaya.dev` | Enseignante portail (ci-t1) — maths en 6ème A et 5ème A |
+| `k.diomande@ecole-ci.edaya.dev` | Enseignant portail (ci-t2) — PP 6ème B |
 
 Mot de passe : `DevPassword1!`
 

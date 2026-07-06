@@ -1,6 +1,7 @@
-import type { Guardian, GuardianStudentLink, StaffMember, Student } from '../../../domain'
+import type { Guardian, GuardianStudentLink, StaffMember, Student, Teacher } from '../../../domain'
 import type { NotificationRecipientProfile } from '../../../ports/gateways/notification-gateway'
 import { GuardianContactMethodType, MessageDeliveryRecipientKind } from '../../../domain'
+import { normalizeInvitationEmail } from '../../invitations/resolve-invitation-contact'
 import {
   guardianFallbackEmail,
   guardianFallbackPhone,
@@ -102,6 +103,34 @@ export function buildStudentRecipientProfile(student: Student): NotificationReci
     preferences: {
       allowsNotifications: true,
       channels: {
+        in_app: true,
+      },
+    },
+  }
+}
+
+export function buildTeacherRecipientProfile(teacher: Teacher): NotificationRecipientProfile | undefined {
+  if (!teacher.subjectId || !teacher.isActive) {
+    return undefined
+  }
+
+  const fallbackEmail = normalizeInvitationEmail(teacher.notificationEmail ?? teacher.email)
+
+  return {
+    schoolId: teacher.schoolId,
+    recipient: {
+      kind: MessageDeliveryRecipientKind.Teacher,
+      id: teacher.id,
+      subjectId: teacher.subjectId,
+    },
+    displayName: teacher.fullName,
+    notificationEmail: teacher.notificationEmail,
+    notificationPhone: teacher.notificationPhone,
+    fallbackEmail,
+    preferences: {
+      allowsNotifications: true,
+      channels: {
+        email: Boolean(teacher.notificationEmail ?? fallbackEmail),
         in_app: true,
       },
     },

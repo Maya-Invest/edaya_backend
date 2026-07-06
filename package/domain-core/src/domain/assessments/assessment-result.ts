@@ -3,9 +3,9 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, anyPermissionAction, permissionAction, read, unique, write } from '../../application/entities/entity-config'
+import { anyPermissionAction, config, gradeInputWriteModule, indirectTenant, read, unique, write } from '../../application/entities/entity-config'
+import { assertTeachingCapability, denyResourceAccess, TeachingCapability } from '../../capabilities/authorization'
 import { ASSESSMENT_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { ReportCardResultStatus, StudentClassEnrollmentStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
@@ -64,7 +64,7 @@ export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ 
       const assessments = await repos.assessments.findByIds(unique(entities.map(entity => entity.assessmentId)))
       await policy.checkAssessmentAccess(actor, unique(assessments.map(assessment => assessment.id)))
     }),
-    write: write(permissionAction(Permission.GRADE_INPUT), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
+    write: write(gradeInputWriteModule(), authorizeAssessmentResult(policy), authorizeAssessmentResultDelete(policy)),
     gates: {
       preSave: validateAssessmentResultSave,
       preDelete: validateAssessmentResultDelete,
@@ -127,14 +127,38 @@ export async function validateAssessmentResultSave(
 }
 
 function authorizeAssessmentResult(policy: AuthorizationPolicy): EntityWriteAuthorization<AssessmentResult>['authorizeSave'] {
-  return async (actor, entity) => {
+  return async (actor, entity, _existing, repositories) => {
+    if (actor.kind === 'teacher') {
+      const assessment = await repositories.assessments.findById(entity.assessmentId)
+      if (!assessment) {
+        denyResourceAccess()
+      }
+      assertTeachingCapability(actor, TeachingCapability.InputGrade, {
+        classSubjectId: assessment.classSubjectId,
+      })
+      await policy.checkStudentAccess(actor, [entity.studentId])
+      return
+    }
+
     await policy.checkAssessmentAccess(actor, [entity.assessmentId])
     await policy.checkStudentAccess(actor, [entity.studentId])
   }
 }
 
 function authorizeAssessmentResultDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<AssessmentResult>['authorizeDelete'] {
-  return async (actor, entity) => {
+  return async (actor, entity, repositories) => {
+    if (actor.kind === 'teacher') {
+      const assessment = await repositories.assessments.findById(entity.assessmentId)
+      if (!assessment) {
+        denyResourceAccess()
+      }
+      assertTeachingCapability(actor, TeachingCapability.InputGrade, {
+        classSubjectId: assessment.classSubjectId,
+      })
+      await policy.checkStudentAccess(actor, [entity.studentId])
+      return
+    }
+
     await policy.checkAssessmentAccess(actor, [entity.assessmentId])
     await policy.checkStudentAccess(actor, [entity.studentId])
   }

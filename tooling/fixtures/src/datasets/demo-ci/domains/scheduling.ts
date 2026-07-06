@@ -43,11 +43,11 @@ export const demoCiClassResourceAssignments = [
   },
 ] as const satisfies readonly ResourceAssignmentInput[]
 
-/** Recurring lesson slots for Mme Touré (ci-st1) — math in 6ème A and 5ème A. */
+/** Recurring lesson slots for Mme Touré (ci-t1) — math in 6ème A and 5ème A. */
 export const demoCiSchedulingSlots = [
   {
     slotId: 'ci-p-6a-math-mon',
-    teacherId: 'ci-st1',
+    teacherId: 'ci-t1',
     resourceId: 'ci-r-salle-6a',
     schedule: {
       id: 'sch-ci-6a-math-mon',
@@ -63,7 +63,7 @@ export const demoCiSchedulingSlots = [
   },
   {
     slotId: 'ci-p-6a-math-wed',
-    teacherId: 'ci-st1',
+    teacherId: 'ci-t1',
     resourceId: undefined,
     schedule: {
       id: 'sch-ci-6a-math-wed',
@@ -79,7 +79,7 @@ export const demoCiSchedulingSlots = [
   },
   {
     slotId: 'ci-p-5a-math-tue',
-    teacherId: 'ci-st1',
+    teacherId: 'ci-t1',
     resourceId: 'ci-r-salle-5a',
     schedule: {
       id: 'sch-ci-5a-math-tue',
@@ -95,7 +95,7 @@ export const demoCiSchedulingSlots = [
   },
   {
     slotId: 'ci-p-5a-math-thu',
-    teacherId: 'ci-st1',
+    teacherId: 'ci-t1',
     resourceId: 'ci-r-lab-pc',
     schedule: {
       id: 'sch-ci-5a-math-thu',

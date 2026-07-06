@@ -52,7 +52,7 @@ describe('access seed port workflow', () => {
     }
     expect(result.permissionAssignments).toBeGreaterThan(0)
     expect(result.staffAssignments).toBe(
-      5 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
+      2 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
     )
     expect(memory.permissionAssignments.length).toBe(result.permissionAssignments)
     expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(

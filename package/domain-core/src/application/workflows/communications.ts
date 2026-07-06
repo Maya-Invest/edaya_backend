@@ -548,6 +548,10 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         const student = await this.baseService.repositories.students.findById(recipientId)
         return student?.subjectId
       }
+      case MessageDeliveryRecipientKind.Teacher: {
+        const teacher = await this.baseService.repositories.teachers.findById(recipientId)
+        return teacher?.subjectId
+      }
     }
   }
 
@@ -656,6 +660,8 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         }
         return false
       }
+      case MessageDeliveryRecipientKind.Teacher:
+        return false
     }
   }
 

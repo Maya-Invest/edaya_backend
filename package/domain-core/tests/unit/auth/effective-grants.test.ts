@@ -169,7 +169,7 @@ describe('resolveEffectiveGrants', () => {
     await savePermission(repositories, {
       id: 'spa-attendance-record',
       permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1:subject-1',
+      scopeIds: 'class-1',
     })
 
     const grants = await resolveEffectiveGrants({
@@ -183,15 +183,15 @@ describe('resolveEffectiveGrants', () => {
     expect(scopeGrantCovers(grants, {
       permission: Permission.ATTENDANCE_RECORD,
       schoolId: 'school-1',
-      scopeType: 'class_subject',
-      scopeEntityId: 'subject-1',
+      scopeType: 'class_group',
+      scopeEntityId: 'class-1',
       isElevated: grants.isElevated,
     })).toBe(true)
     expect(scopeGrantCovers(grants, {
       permission: Permission.ATTENDANCE_RECORD,
       schoolId: 'school-1',
-      scopeType: 'class_subject',
-      scopeEntityId: 'subject-2',
+      scopeType: 'class_group',
+      scopeEntityId: 'class-2',
       isElevated: grants.isElevated,
     })).toBe(false)
   })
@@ -201,7 +201,7 @@ describe('resolveEffectiveGrants', () => {
     await savePermission(repositories, {
       id: 'spa-attendance-record',
       permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1:subject-1',
+      scopeIds: 'class-1',
     })
 
     const grants = await resolveEffectiveGrants({
@@ -318,8 +318,10 @@ describe('resolveEffectiveGrants', () => {
       }
     }
 
-    const repositories = createRepos()
-    repositories.academicYears = new AcademicYearStore() as unknown as SchoolRepositories['academicYears']
+    const repositories = {
+      ...createRepos(),
+      academicYears: new AcademicYearStore() as unknown as SchoolRepositories['academicYears'],
+    }
     await savePermission(repositories, {
       id: 'spa-read',
       permission: Permission.PAYMENT_READ,

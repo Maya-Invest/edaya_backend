@@ -23,10 +23,10 @@ export interface StaffAssignmentResolvedTarget {
 
 const TARGET_ALLOWED_SCOPES: Record<StaffAssignmentTargetKind, readonly (ScopeType | undefined)[]> = {
   class_group: ['class_group', 'class_subject'],
-  class_subject: ['class_subject'],
-  lesson_session: ['class_subject'],
+  class_subject: ['class_group', 'class_subject'],
+  lesson_session: ['class_group', 'class_subject'],
   activity_session: ['activity'],
-  assessment: ['class_subject'],
+  assessment: ['class_group', 'class_subject'],
 }
 
 export const ASSESSMENT_STAFF_ASSIGNMENT_PERMISSIONS: readonly Permission[] = [

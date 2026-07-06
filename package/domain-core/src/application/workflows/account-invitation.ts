@@ -1,4 +1,4 @@
-import type { Guardian, StaffMember, Student } from '../../domain'
+import type { Guardian, StaffMember, Student, Teacher } from '../../domain'
 import type { LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor'
 import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -236,6 +236,12 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       return this.requireContact(contactValue, displayNameFor(guardian))
     }
 
+    if (input.kind === AccountInvitationKind.Teacher) {
+      const teacher = await this.requireUnlinkedTeacher(input.targetId)
+      const contactValue = resolveInvitationContact(channel, input.contactValue, undefined, undefined, teacher)
+      return this.requireContact(contactValue, displayNameFor(teacher))
+    }
+
     const student = await this.requireUnlinkedStudent(input.targetId)
     const contactValue = resolveStudentInvitationEmail(input.contactValue)
     return this.requireContact(contactValue, displayNameFor(student))
@@ -290,6 +296,9 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     if (invitation.kind === AccountInvitationKind.Guardian) {
       return { subjectId, guardianId: invitation.targetId }
     }
+    if (invitation.kind === AccountInvitationKind.Teacher) {
+      return { subjectId, teacherId: invitation.targetId }
+    }
     return { subjectId, studentId: invitation.targetId }
   }
 
@@ -307,6 +316,13 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
         throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Guardian not found')
       }
       return { kind: 'guardian', entity: guardian }
+    }
+    if (invitation.kind === AccountInvitationKind.Teacher) {
+      const teacher = await this.repositories.teachers.findById(invitation.targetId)
+      if (!teacher) {
+        throw new BusinessRuleViolationError('INVITATION_TARGET_NOT_FOUND', 'Teacher not found')
+      }
+      return { kind: 'teacher', entity: teacher }
     }
     const student = await this.repositories.students.findById(invitation.targetId)
     if (!student) {
@@ -367,6 +383,17 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     return student
   }
 
+  private async requireUnlinkedTeacher(teacherId: string): Promise<Teacher> {
+    const teacher = await this.requireTeacherInSchool(teacherId)
+    if (teacher.subjectId) {
+      throw new BusinessRuleViolationError(
+        'ACTOR_ALREADY_LINKED',
+        'This teacher is already linked to an auth account',
+      )
+    }
+    return teacher
+  }
+
   private async requireStaffMemberInSchool(staffMemberId: string): Promise<StaffMember> {
     const staffMember = await this.repositories.staffMembers.findById(staffMemberId)
     if (!staffMember || staffMember.schoolId !== this.baseService.actor.schoolId) {
@@ -390,8 +417,16 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     }
     return student
   }
+
+  private async requireTeacherInSchool(teacherId: string): Promise<Teacher> {
+    const teacher = await this.repositories.teachers.findById(teacherId)
+    if (!teacher || teacher.schoolId !== this.baseService.actor.schoolId) {
+      denyResourceAccess()
+    }
+    return teacher
+  }
 }
 
-function displayNameFor(entity: StaffMember | Guardian | Student): string {
+function displayNameFor(entity: StaffMember | Guardian | Student | Teacher): string {
   return resolveInviteeDisplayName(entity)
 }

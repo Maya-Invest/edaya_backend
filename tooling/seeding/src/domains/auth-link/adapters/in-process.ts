@@ -64,6 +64,10 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
       const guardian = await application.repositories.guardians.findById(id)
       return guardian ? { id: guardian.id, subjectId: guardian.subjectId } : undefined
     }),
+    findTeacherById: id => withSeedPortError('findTeacherById', async () => {
+      const teacher = await application.repositories.teachers.findById(id)
+      return teacher ? { id: teacher.id, subjectId: teacher.subjectId } : undefined
+    }),
     replaceGuardianSubjectId: (guardianId, subjectId) => withSeedPortError('replaceGuardianSubjectId', async () => {
       const guardian = await application.repositories.guardians.findById(guardianId)
       if (!guardian) {

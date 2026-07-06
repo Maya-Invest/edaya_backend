@@ -1,8 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig, anyPermissionAction } from '../../application/entities/entity-config'
-import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { anyPermissionAction, directPermissionEntityConfig } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
+import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SubjectCategory {

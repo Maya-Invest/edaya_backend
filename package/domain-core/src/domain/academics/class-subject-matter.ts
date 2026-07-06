@@ -3,9 +3,9 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, anyPermissionAction, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
-import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { anyPermissionAction, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ClassSubjectMatterStatus {

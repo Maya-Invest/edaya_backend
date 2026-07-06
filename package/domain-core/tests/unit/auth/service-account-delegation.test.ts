@@ -75,7 +75,7 @@ describe('service account delegation', () => {
 
     expect(delegatedPermissionAssignmentSubsetCovers(creator, {
       permission: Permission.GRADE_INPUT,
-      scopeIds: 'class-math',
+      scopeIds: 'class-1',
     }, 'school-1')).toBe(true)
 
     expect(delegatedPermissionAssignmentSubsetCovers(creator, {

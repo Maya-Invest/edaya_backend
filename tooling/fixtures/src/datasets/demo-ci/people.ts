@@ -41,8 +41,6 @@ export const demoCiStaffMembers = [
   { id: 'ci-st8', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Aminata', lastName: 'Koné', email: 'a.kone@ecole-ci.edaya.dev' },
   { id: 'ci-st5', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Jean-Baptiste', lastName: 'Aka', email: 'j.aka@ecole-ci.edaya.dev' },
   { id: 'ci-st3', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Assi', email: 'f.assi@ecole-ci.edaya.dev' },
-  { id: 'ci-st1', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Touré', email: 'a.toure@ecole-ci.edaya.dev' },
-  { id: 'ci-st2', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'M.', lastName: 'Diomandé', email: 'k.diomande@ecole-ci.edaya.dev' },
   { id: 'ci-st4', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'M.', lastName: 'Gbé', email: 'p.gbe@ecole-ci.edaya.dev' },
   { id: 'ci-st7', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Zongo', email: 'm.zongo@ecole-ci.edaya.dev' },
 ] as const satisfies readonly StaffMemberInput[]

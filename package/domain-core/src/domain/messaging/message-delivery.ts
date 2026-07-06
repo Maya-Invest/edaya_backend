@@ -16,6 +16,7 @@ export enum MessageDeliveryRecipientKind {
   Staff = 'staff',
   Guardian = 'guardian',
   Student = 'student',
+  Teacher = 'teacher',
 }
 
 export enum MessageDeliveryStatus {

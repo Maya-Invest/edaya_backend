@@ -46,6 +46,7 @@ export { createHttpSchedulingSeedPort } from '../domains/scheduling/adapters/htt
 export { createHttpSchoolLifeSeedPort } from '../domains/school-life/adapters/http'
 export { createHttpSchoolStructureSeedPort } from '../domains/school-structure/adapters/http'
 export { createHttpStudentSupportSeedPort } from '../domains/student-support/adapters/http'
+export { createHttpTeachersSeedPort } from '../domains/teachers/adapters/http'
 export {
   type HttpDevSeedScope,
   type HttpSmokeSeedResult,

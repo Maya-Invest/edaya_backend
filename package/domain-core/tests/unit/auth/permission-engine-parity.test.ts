@@ -1,15 +1,17 @@
 import type { ActorMetadata } from '../../../src/capabilities/authorization'
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
+import { permissionAction } from '../../../src/application/entities/entity-config'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
   authorize,
   createGuardianActorMetadata,
   createStaffActorMetadata,
+  isInteractiveActor,
   Permission,
 } from '../../../src/capabilities/authorization'
-import { effectiveGrantsForRoles, portalEffectiveGrantsForGuardian } from '../../support/effective-grants'
+import { effectiveGrantsForRoles, portalScopeForGuardian } from '../../support/effective-grants'
 
 const now = new Date('2026-01-01T00:00:00Z')
 
@@ -32,7 +34,7 @@ function guardianActor(): ActorMetadata {
     schoolId: 'school-1',
     requestId: 'request-1',
     authenticatedAt: now,
-    effectiveGrants: portalEffectiveGrantsForGuardian(['student-1']),
+    guardianScope: portalScopeForGuardian(['student-1']),
   })
 }
 
@@ -139,13 +141,20 @@ describe('permission engine system role grants', () => {
   for (const parityCase of PARITY_CASES) {
     test(parityCase.label, () => {
       expectAuthorizeResult(
-        () => authorize({
-          actor: parityCase.actor,
-          request: {
-            schoolId: 'school-1',
-            permission: parityCase.permission,
-          },
-        }),
+        () => {
+          if (isInteractiveActor(parityCase.actor) && parityCase.actor.kind !== 'staff') {
+            permissionAction(parityCase.permission)(parityCase.actor)
+            return
+          }
+
+          authorize({
+            actor: parityCase.actor,
+            request: {
+              schoolId: 'school-1',
+              permission: parityCase.permission,
+            },
+          })
+        },
         parityCase.shouldAllow,
       )
     })

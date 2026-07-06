@@ -263,6 +263,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p1',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-p1',
@@ -279,6 +280,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p2',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-p2',
@@ -295,6 +297,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p3',
     teacherId: 'st3',
+    lessonSessionStaffId: 'st3',
     resourceId: undefined,
     schedule: {
       id: 'sch-p3',
@@ -311,6 +314,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p4',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: 'r2',
     schedule: {
       id: 'sch-p4',
@@ -327,6 +331,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5',
     teacherId: 'st7',
+    lessonSessionStaffId: 'st7',
     resourceId: undefined,
     schedule: {
       id: 'sch-p5',
@@ -343,6 +348,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6',
     teacherId: 'st7',
+    lessonSessionStaffId: 'st7',
     resourceId: 'r3',
     schedule: {
       id: 'sch-p6',
@@ -359,6 +365,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p7',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-p7',
@@ -375,6 +382,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p8',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-p8',
@@ -391,6 +399,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-1',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-1',
@@ -407,6 +416,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-2',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-2',
@@ -423,6 +433,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-3',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-3',
@@ -439,6 +450,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-4',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-4',
@@ -455,6 +467,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-1',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-5a-1',
@@ -471,6 +484,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-2',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-5a-2',
@@ -487,6 +501,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-3',
     teacherId: 'st3',
+    lessonSessionStaffId: 'st3',
     resourceId: undefined,
     schedule: {
       id: 'sch-5a-3',
@@ -503,6 +518,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-4',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: 'r2',
     schedule: {
       id: 'sch-5a-4',

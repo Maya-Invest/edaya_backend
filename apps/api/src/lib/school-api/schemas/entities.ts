@@ -60,6 +60,10 @@ import {
   studentSchema,
   subjectMatterSchema,
   subjectSchema,
+  TeacherAssignmentKind,
+  teacherAssignmentSchema,
+  TeacherAssignmentStatus,
+  teacherSchema,
 } from "@edaya/core";
 import type {
   AcademicPeriodInput,
@@ -119,6 +123,8 @@ import type {
   StudentNoteInput,
   SubjectInput,
   SubjectMatterInput,
+  TeacherAssignmentInput,
+  TeacherInput,
 } from "@edaya/core";
 import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
 
@@ -132,6 +138,8 @@ export const academicPeriodResponseSchema = responseSchema<AcademicPeriodInput>(
 export const periodDefinitionResponseSchema = responseSchema<PeriodDefinitionInput>("PeriodDefinition", unwrapShape(periodDefinitionSchema));
 export const gradeLevelResponseSchema = responseSchema<GradeLevelInput>("GradeLevel", unwrapShape(gradeLevelSchema));
 export const staffMemberResponseSchema = responseSchema<StaffMemberInput>("StaffMember", unwrapShape(staffMemberSchema));
+export const teacherResponseSchema = responseSchema<TeacherInput>("Teacher", unwrapShape(teacherSchema));
+export const teacherAssignmentResponseSchema = responseSchema<TeacherAssignmentInput>("TeacherAssignment", unwrapShape(teacherAssignmentSchema));
 
 const { tokenHash: _accountInvitationTokenHash, ...accountInvitationShape } = unwrapShape(accountInvitationSchema);
 export const accountInvitationResponseSchema = responseSchema<AccountInvitationInput>(
@@ -255,6 +263,25 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
   firstName: field.string(),
   lastName: field.string(),
   isActive: field.boolean(),
+});
+
+export const teacherQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  firstName: field.string(),
+  lastName: field.string(),
+  email: field.string(),
+  isActive: field.boolean(),
+});
+
+export const teacherAssignmentQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  teacherId: field.id(),
+  academicYearId: field.id(),
+  kind: z.nativeEnum(TeacherAssignmentKind),
+  classSubjectId: field.id(),
+  classGroupId: field.id(),
+  status: z.nativeEnum(TeacherAssignmentStatus),
 });
 
 export const staffAssignmentQuerySchema = createQueryOptionsSchema({

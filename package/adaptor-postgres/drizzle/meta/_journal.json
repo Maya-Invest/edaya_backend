@@ -288,6 +288,20 @@
       "when": 1781104996442,
       "tag": "0040_class_group_profile_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1781104996443,
+      "tag": "0041_teachers",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1781104996444,
+      "tag": "0042_drop_class_group_homeroom_teacher_id",
+      "breakpoints": true
     }
   ]
 }

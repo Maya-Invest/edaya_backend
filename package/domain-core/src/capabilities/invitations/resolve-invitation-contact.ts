@@ -1,4 +1,4 @@
-import type { Guardian, StaffMember, Student } from '../../domain'
+import type { Guardian, StaffMember, Student, Teacher } from '../../domain'
 import { AccountInvitationContactChannel } from '../../domain/access/account-invitation'
 import { GuardianContactMethodType } from '../../domain/students/guardian-contact-method'
 import { guardianFallbackEmail, staffFallbackEmail } from '../notifications/delivery/resolve-notification-contact'
@@ -19,11 +19,16 @@ export function resolveGuardianInvitationEmail(guardian: Guardian): string | und
   )
 }
 
+export function resolveTeacherInvitationEmail(teacher: Teacher): string | undefined {
+  return normalizeInvitationEmail(teacher.notificationEmail ?? teacher.email)
+}
+
 export function resolveInvitationContact(
   channel: AccountInvitationContactChannel,
   explicitValue: string | undefined,
   staff?: StaffMember,
   guardian?: Guardian,
+  teacher?: Teacher,
 ): string | undefined {
   if (channel === AccountInvitationContactChannel.Phone) {
     const phone = explicitValue?.trim()
@@ -40,6 +45,9 @@ export function resolveInvitationContact(
   if (guardian) {
     return resolveGuardianInvitationEmail(guardian)
   }
+  if (teacher) {
+    return resolveTeacherInvitationEmail(teacher)
+  }
   return undefined
 }
 
@@ -52,6 +60,6 @@ export function resolveStudentInvitationEmail(explicitValue: string | undefined)
   return normalizeInvitationEmail(explicitValue)
 }
 
-export function resolveInviteeDisplayName(entity: StaffMember | Guardian | Student): string {
+export function resolveInviteeDisplayName(entity: StaffMember | Guardian | Student | Teacher): string {
   return `${entity.firstName} ${entity.lastName}`.trim()
 }

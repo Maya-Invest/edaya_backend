@@ -5,6 +5,7 @@ import { splitDisplayName } from '@edaya/fixtures/shared/people'
 
 export interface DevStaffAuthSyncResult {
   linkedStaff: number
+  linkedTeachers: number
   linkedGuardians: number
   ownerSubjectId?: string
 }
@@ -53,6 +54,39 @@ async function ensureDevAuthStaffMembers(
       email: account.email,
     })
   }
+}
+
+async function linkDevAuthTeachers(
+  port: AuthLinkSeedPort,
+  auth: AuthProvisioner,
+): Promise<number> {
+  const context = resolveDevSeedContext()
+  let linkedTeachers = 0
+
+  for (const account of context.teacherAccounts) {
+    const teacher = await port.findTeacherById(account.teacherId)
+    if (!teacher) {
+      continue
+    }
+
+    const { subjectId } = await auth.ensureUser({
+      email: account.email,
+      password: context.authPassword,
+      name: account.name,
+    }, { preserveSession: true })
+
+    if (teacher.subjectId === subjectId) {
+      continue
+    }
+
+    await port.linkActorSubject({
+      subjectId,
+      teacherId: account.teacherId,
+    })
+    linkedTeachers++
+  }
+
+  return linkedTeachers
 }
 
 async function linkDevAuthStaffAndGuardians(
@@ -187,6 +221,7 @@ export async function syncDevStaffAuthAndOwner(
 
   await ensureDevAuthStaffMembers(port)
   const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(port, auth, options)
+  const linkedTeachers = await linkDevAuthTeachers(port, auth)
 
   const resolvedOwnerSubjectId = await resolveDevSchoolOwnerSubjectId(port, auth, ownerSubjectId)
   if (resolvedOwnerSubjectId) {
@@ -195,6 +230,7 @@ export async function syncDevStaffAuthAndOwner(
 
   return {
     linkedStaff,
+    linkedTeachers,
     linkedGuardians,
     ...(resolvedOwnerSubjectId ? { ownerSubjectId: resolvedOwnerSubjectId } : {}),
   }

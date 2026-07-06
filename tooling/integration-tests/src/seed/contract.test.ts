@@ -136,7 +136,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       }
     }
 
-    expect(staffAssignments.some(assignment => assignment.id === 'sa-st2-6b' && assignment.classGroupId === '6b')).toBe(true)
+    expect(staffAssignments.some(assignment => assignment.id === 'sa-st3-6a' && assignment.classGroupId === '6a')).toBe(true)
     expect(staffAssignments.some(assignment => assignment.id === 'sa-st3-5a' && assignment.classGroupId === '5a')).toBe(true)
   })
 })

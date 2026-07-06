@@ -196,6 +196,8 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'grade-level-subject-matters': countGradeLevelSubjectMatters(dataset),
     'class-subjects': countArray(entities.classSubjects),
     'class-subject-matters': countClassSubjectMatters(dataset),
+    'teachers': countArray(entities.teachers),
+    'teacher-assignments': countArray(entities.teacherAssignments),
     'resources': countArray(entities.resources),
     'schedules': countSchedulingSlots(dataset),
     'lesson-sessions': countSchedulingSlots(dataset),

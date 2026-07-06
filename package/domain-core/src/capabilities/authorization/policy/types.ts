@@ -10,6 +10,7 @@ import type { ActorMetadata } from '../model/actor'
 export interface AuthorizationPolicy {
   checkStudentAccess: (actor: ActorMetadata, studentIds: readonly string[]) => Promise<void>
   checkGuardianAccess: (actor: ActorMetadata, guardianIds: readonly string[]) => Promise<void>
+  checkTeacherAccess: (actor: ActorMetadata, teacherIds: readonly string[]) => Promise<void>
   checkStudentNoteAccess: (actor: ActorMetadata, noteIds: readonly string[]) => Promise<void>
   checkStudentHealthAccess: (actor: ActorMetadata, profileIds: readonly string[]) => Promise<void>
   checkClassGroupAccess: (actor: ActorMetadata, classGroupIds: readonly string[]) => Promise<void>

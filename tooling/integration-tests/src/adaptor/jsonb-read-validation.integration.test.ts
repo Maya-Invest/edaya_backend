@@ -82,13 +82,13 @@ describe('[Postgres PGlite] JSONB read validation', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1:*',
+      scopeIds: 'class-1',
       status: 'active',
     }))
 
     await db.execute(sql`
       UPDATE staff_permission_assignments
-      SET scope_ids = 'class-1/invalid'
+      SET scope_ids = 'class-1:math'
       WHERE id = 'spa-corrupt-2'
     `)
 

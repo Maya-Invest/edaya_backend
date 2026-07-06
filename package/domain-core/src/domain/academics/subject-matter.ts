@@ -2,9 +2,9 @@ import type { EntityConfigFactory } from '../../application/entities/entity-conf
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import { z } from 'zod'
-import { config, indirectTenant, anyPermissionAction, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { anyPermissionAction, config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
 import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../capabilities/authorization'
+import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const subjectMatterSchema = z.object({

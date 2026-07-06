@@ -4,6 +4,7 @@ import type { AuthorizationScopeType } from '../permissions/scope-type'
 import { isInteractiveActor } from '../model/actor'
 import { permissionDefinitions } from '../permissions/permission-definitions'
 import { scopePathCovers } from '../scope/scope-path-covers'
+import { effectiveGrantsForActor } from './effective-grants-for-actor'
 import { scopeGrantCovers } from './scope-grant-covers'
 
 export function actorHasAnyPermission(
@@ -14,10 +15,7 @@ export function actorHasAnyPermission(
     return false
   }
 
-  const grants = actor.effectiveGrants
-  if (!grants) {
-    return false
-  }
+  const grants = effectiveGrantsForActor(actor)
 
   if (permissions.length === 0) {
     return grants.isElevated || grants.permissions.size > 0
@@ -36,10 +34,7 @@ export function actorGrantCoversAny(
     return false
   }
 
-  const grants = actor.effectiveGrants
-  if (!grants) {
-    return false
-  }
+  const grants = effectiveGrantsForActor(actor)
 
   return permissions.some(permission =>
     grants.permissions.has(permission)
@@ -61,8 +56,8 @@ export function actorGrantCoversResourcePath(
     return false
   }
 
-  const grants = actor.effectiveGrants
-  if (!grants?.permissions.has(permission)) {
+  const grants = effectiveGrantsForActor(actor)
+  if (!grants.permissions.has(permission)) {
     return false
   }
 
@@ -98,14 +93,11 @@ export function actorHasSchoolWideGrant(
   actor: ActorMetadata,
   permissions: readonly Permission[],
 ): boolean {
-  if (!isInteractiveActor(actor)) {
+  if (!isInteractiveActor(actor) || actor.kind !== 'staff') {
     return false
   }
 
   const grants = actor.effectiveGrants
-  if (!grants) {
-    return false
-  }
 
   if (grants.isElevated) {
     return true

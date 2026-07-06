@@ -15,6 +15,7 @@ import type { SchedulingSeedPort } from '../domains/scheduling/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
+import type { TeachersSeedPort } from '../domains/teachers/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { DevAccessSeedResult } from './run-dev-access-seed'
 import type { DevAuthLinkResult } from './run-dev-auth-link'
@@ -41,6 +42,7 @@ import { createInProcessSchedulingSeedPort } from '../domains/scheduling/in-proc
 import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/in-process'
 import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'
 import { createInProcessStudentSupportSeedPort } from '../domains/student-support/in-process'
+import { createInProcessTeachersSeedPort } from '../domains/teachers/in-process'
 import { runDevAccessSeedWithPort } from './run-dev-access-seed'
 import { runDevAuthLinkWithPort } from './run-dev-auth-link'
 import { runDevAuthProvision } from './run-dev-auth-provision'
@@ -70,6 +72,8 @@ export interface RunDevSeedsOptions {
   populationPort?: PopulationSeedPort
   /** Explicit curriculum adapter; defaults to the in-process application adapter. */
   curriculumPort?: CurriculumSeedPort
+  /** Explicit teacher portal adapter; defaults to the in-process application adapter. */
+  teachersPort?: TeachersSeedPort
   /** Explicit scheduling adapter; defaults to the in-process application adapter. */
   schedulingPort?: SchedulingSeedPort
   /** Explicit attendance adapter; defaults to the in-process application adapter. */
@@ -146,6 +150,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessPopulationSeedPort(requireApplication('populationPort'))
   const curriculumPort = options.curriculumPort
     ?? createInProcessCurriculumSeedPort(requireApplication('curriculumPort'))
+  const teachersPort = options.teachersPort
+    ?? createInProcessTeachersSeedPort(requireApplication('teachersPort'))
   const schedulingPort = options.schedulingPort
     ?? createInProcessSchedulingSeedPort(requireApplication('schedulingPort'))
   const attendancePort = options.attendancePort
@@ -195,6 +201,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       schoolStructurePort,
       populationPort,
       curriculumPort,
+      teachersPort,
       schedulingPort,
       attendancePort,
       assessmentsPort,
@@ -235,6 +242,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       schoolStructurePort,
       populationPort,
       curriculumPort,
+      teachersPort,
       schedulingPort,
       attendancePort,
       assessmentsPort,

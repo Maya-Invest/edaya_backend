@@ -60,6 +60,8 @@ import {
   StudentNote,
   Subject,
   SubjectMatter,
+  Teacher,
+  TeacherAssignment,
 } from "@edaya/core";
 
 export interface CoreCommandConfig {
@@ -166,6 +168,8 @@ const apiEntityDecorations = {
   students: decoration("students", "Students", entitySchemas.studentQuerySchema, entitySchemas.studentResponseSchema, Student, { allowDirectSave: false }),
   enrollments: decoration("enrollments", "Student Enrollments", entitySchemas.enrollmentQuerySchema, entitySchemas.enrollmentResponseSchema, StudentClassEnrollment, { allowDirectSave: false }),
   guardians: decoration("guardians", "Guardians", entitySchemas.guardianQuerySchema, entitySchemas.guardianResponseSchema, Guardian),
+  teachers: decoration("teachers", "Teachers", entitySchemas.teacherQuerySchema, entitySchemas.teacherResponseSchema, Teacher),
+  teacherAssignments: decoration("teacher-assignments", "Teacher Assignments", entitySchemas.teacherAssignmentQuerySchema, entitySchemas.teacherAssignmentResponseSchema, TeacherAssignment),
   guardianLinks: decoration("guardian-links", "Guardian Student Links", entitySchemas.guardianLinkQuerySchema, entitySchemas.guardianLinkResponseSchema, GuardianStudentLink),
   studentNotes: decoration("student-notes", "Student Notes", entitySchemas.studentNoteQuerySchema, entitySchemas.studentNoteResponseSchema, StudentNote),
   studentHealthProfiles: decoration("student-health-profiles", "Student Health Profiles", entitySchemas.studentHealthProfileQuerySchema, entitySchemas.studentHealthProfileResponseSchema, StudentHealthProfile),

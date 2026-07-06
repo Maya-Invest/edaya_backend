@@ -56,6 +56,8 @@ import {
   studentNoteConfig,
   subjectConfig,
   subjectMatterConfig,
+  teacherAssignmentConfig,
+  teacherConfig,
 } from '../../domain'
 import { ManagedEntityService } from '../entities/managed-entity-service'
 import { CORE_ENTITY_KEYS } from './core-entity-map'
@@ -76,6 +78,8 @@ export const CORE_ENTITY_CONFIG_FACTORIES: CoreEntityConfigFactoryMap = {
   gradeLevels: gradeLevelConfig,
   staffMembers: staffMemberConfig,
   staffAssignments: staffAssignmentConfig,
+  teachers: teacherConfig,
+  teacherAssignments: teacherAssignmentConfig,
   accountInvitations: accountInvitationConfig,
   staffPermissionAssignments: staffPermissionAssignmentConfig,
   attachments: attachmentConfig,

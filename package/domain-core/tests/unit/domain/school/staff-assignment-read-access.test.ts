@@ -101,7 +101,10 @@ describe('staff assignment read access', () => {
     const { context, teacherActor } = await seedStaffAssignmentFixture()
 
     const assignments = await context.forActor(teacherActor)
-      .baseService.entities.staffAssignments.list({ staffId: 'teacher-1', academicYearId: 'year-1' })
+      .baseService
+      .entities
+      .staffAssignments
+      .list({ staffId: 'teacher-1', academicYearId: 'year-1' })
 
     expect(assignments.map(assignment => assignment.id)).toEqual(['assignment-1'])
   })
@@ -119,7 +122,10 @@ describe('staff assignment read access', () => {
     const { context, adminActor } = await seedStaffAssignmentFixture()
 
     const assignments = await context.forActor(adminActor)
-      .baseService.entities.staffAssignments.list({ academicYearId: 'year-1' })
+      .baseService
+      .entities
+      .staffAssignments
+      .list({ academicYearId: 'year-1' })
 
     expect(assignments).toHaveLength(2)
   })

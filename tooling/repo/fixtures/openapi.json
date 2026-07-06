@@ -14,7 +14,8 @@
             "enum": [
               "staff",
               "guardian",
-              "student"
+              "student",
+              "teacher"
             ]
           },
           "actorId": {
@@ -1586,7 +1587,8 @@
             "enum": [
               "staff",
               "guardian",
-              "student"
+              "student",
+              "teacher"
             ]
           },
           "targetId": {
@@ -3045,6 +3047,68 @@
           "lastName"
         ]
       },
+      "Teacher": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "notificationEmail": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "notificationPhone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "firstName",
+          "lastName"
+        ]
+      },
       "LinkActorSubjectResponse": {
         "oneOf": [
           {
@@ -3100,6 +3164,24 @@
               "kind",
               "entity"
             ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "teacher"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Teacher"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
           }
         ]
       },
@@ -3119,6 +3201,10 @@
             "minLength": 1
           },
           "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
             "type": "string",
             "minLength": 1
           }
@@ -3182,6 +3268,24 @@
               "kind",
               "entity"
             ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "teacher"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Teacher"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
           }
         ]
       },
@@ -3201,6 +3305,10 @@
             "minLength": 1
           },
           "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
             "type": "string",
             "minLength": 1
           }
@@ -3225,7 +3333,8 @@
             "enum": [
               "staff",
               "guardian",
-              "student"
+              "student",
+              "teacher"
             ]
           },
           "targetId": {
@@ -3305,7 +3414,8 @@
             "enum": [
               "staff",
               "guardian",
-              "student"
+              "student",
+              "teacher"
             ]
           },
           "targetId": {
@@ -3416,6 +3526,24 @@
               },
               "entity": {
                 "$ref": "#/components/schemas/Student"
+              }
+            },
+            "required": [
+              "kind",
+              "entity"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "teacher"
+                ]
+              },
+              "entity": {
+                "$ref": "#/components/schemas/Teacher"
               }
             },
             "required": [
@@ -9636,7 +9764,8 @@
             "enum": [
               "staff",
               "guardian",
-              "student"
+              "student",
+              "teacher"
             ]
           },
           "recipientId": {
@@ -9717,7 +9846,8 @@
             "enum": [
               "staff",
               "guardian",
-              "student"
+              "student",
+              "teacher"
             ]
           },
           "recipientId": {
@@ -10643,7 +10773,7 @@
           "entities"
         ]
       },
-      "Filter_7": {
+      "Filter_9": {
         "type": "object"
       },
       "StaffAssignmentsBatchSave": {
@@ -10660,7 +10790,104 @@
           "entities"
         ]
       },
+      "Filter_7": {
+        "type": "object"
+      },
+      "TeachersBatchSave": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Teacher"
+            }
+          }
+        },
+        "required": [
+          "entities"
+        ]
+      },
+      "TeacherAssignment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "subject",
+              "homeroom"
+            ]
+          },
+          "classSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "responsibility": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended"
+            ],
+            "default": "active"
+          },
+          "startsAt": {
+            "nullable": true
+          },
+          "endsAt": {
+            "nullable": true
+          },
+          "createdAt": {},
+          "updatedAt": {
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "teacherId",
+          "academicYearId",
+          "kind"
+        ]
+      },
       "Filter_8": {
+        "type": "object"
+      },
+      "TeacherAssignmentsBatchSave": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherAssignment"
+            }
+          }
+        },
+        "required": [
+          "entities"
+        ]
+      },
+      "Filter_10": {
         "type": "object"
       },
       "AccountInvitationsBatchSave": {
@@ -10677,7 +10904,7 @@
           "entities"
         ]
       },
-      "Filter_9": {
+      "Filter_11": {
         "type": "object"
       },
       "StaffPermissionAssignmentsBatchSave": {
@@ -10694,7 +10921,7 @@
           "entities"
         ]
       },
-      "Filter_10": {
+      "Filter_12": {
         "type": "object"
       },
       "AttachmentsBatchSave": {
@@ -10711,7 +10938,7 @@
           "entities"
         ]
       },
-      "Filter_11": {
+      "Filter_13": {
         "type": "object"
       },
       "ResourcesBatchSave": {
@@ -10728,7 +10955,7 @@
           "entities"
         ]
       },
-      "Filter_12": {
+      "Filter_14": {
         "type": "object"
       },
       "ResourceAssignmentsBatchSave": {
@@ -10745,7 +10972,7 @@
           "entities"
         ]
       },
-      "Filter_13": {
+      "Filter_15": {
         "type": "object"
       },
       "FeesBatchSave": {
@@ -10762,7 +10989,7 @@
           "entities"
         ]
       },
-      "Filter_14": {
+      "Filter_16": {
         "type": "object"
       },
       "StudentFeesBatchSave": {
@@ -10779,7 +11006,7 @@
           "entities"
         ]
       },
-      "Filter_15": {
+      "Filter_17": {
         "type": "object"
       },
       "PaymentsBatchSave": {
@@ -10796,7 +11023,7 @@
           "entities"
         ]
       },
-      "Filter_16": {
+      "Filter_18": {
         "type": "object"
       },
       "SchedulesBatchSave": {
@@ -10813,7 +11040,7 @@
           "entities"
         ]
       },
-      "Filter_17": {
+      "Filter_19": {
         "type": "object"
       },
       "LessonSessionsBatchSave": {
@@ -10830,7 +11057,7 @@
           "entities"
         ]
       },
-      "Filter_18": {
+      "Filter_20": {
         "type": "object"
       },
       "ActivitySessionsBatchSave": {
@@ -10879,7 +11106,7 @@
           "displayLabel"
         ]
       },
-      "Filter_19": {
+      "Filter_21": {
         "type": "object"
       },
       "AttendancesBatchSave": {
@@ -10896,7 +11123,7 @@
           "entities"
         ]
       },
-      "Filter_20": {
+      "Filter_22": {
         "type": "object"
       },
       "CalendarEventsBatchSave": {
@@ -10913,7 +11140,7 @@
           "entities"
         ]
       },
-      "Filter_21": {
+      "Filter_23": {
         "type": "object"
       },
       "AttendanceRecordsBatchSave": {
@@ -10930,7 +11157,7 @@
           "entities"
         ]
       },
-      "Filter_22": {
+      "Filter_24": {
         "type": "object"
       },
       "AnnouncementsBatchSave": {
@@ -10947,7 +11174,7 @@
           "entities"
         ]
       },
-      "Filter_23": {
+      "Filter_25": {
         "type": "object"
       },
       "AnnouncementTargetsBatchSave": {
@@ -10964,7 +11191,7 @@
           "entities"
         ]
       },
-      "Filter_24": {
+      "Filter_26": {
         "type": "object"
       },
       "MessageDeliveriesBatchSave": {
@@ -10981,7 +11208,7 @@
           "entities"
         ]
       },
-      "Filter_25": {
+      "Filter_27": {
         "type": "object"
       },
       "SchoolNotificationTemplatesBatchSave": {
@@ -10998,7 +11225,7 @@
           "entities"
         ]
       },
-      "Filter_26": {
+      "Filter_28": {
         "type": "object"
       },
       "SubjectsBatchSave": {
@@ -11015,7 +11242,7 @@
           "entities"
         ]
       },
-      "Filter_27": {
+      "Filter_29": {
         "type": "object"
       },
       "SubjectMattersBatchSave": {
@@ -11032,7 +11259,7 @@
           "entities"
         ]
       },
-      "Filter_30": {
+      "Filter_32": {
         "type": "object"
       },
       "GradeLevelSubjectsBatchSave": {
@@ -11049,7 +11276,7 @@
           "entities"
         ]
       },
-      "Filter_31": {
+      "Filter_33": {
         "type": "object"
       },
       "GradeLevelSubjectMattersBatchSave": {
@@ -11066,7 +11293,7 @@
           "entities"
         ]
       },
-      "Filter_28": {
+      "Filter_30": {
         "type": "object"
       },
       "ClassGroupsBatchSave": {
@@ -11083,7 +11310,7 @@
           "entities"
         ]
       },
-      "Filter_29": {
+      "Filter_31": {
         "type": "object"
       },
       "ClassSubjectsBatchSave": {
@@ -11100,7 +11327,7 @@
           "entities"
         ]
       },
-      "Filter_32": {
+      "Filter_34": {
         "type": "object"
       },
       "ClassSubjectMattersBatchSave": {
@@ -11117,7 +11344,7 @@
           "entities"
         ]
       },
-      "Filter_33": {
+      "Filter_35": {
         "type": "object"
       },
       "ClassSubjectProgressBatchSave": {
@@ -11134,7 +11361,7 @@
           "entities"
         ]
       },
-      "Filter_34": {
+      "Filter_36": {
         "type": "object"
       },
       "ActivitiesBatchSave": {
@@ -11151,7 +11378,7 @@
           "entities"
         ]
       },
-      "Filter_35": {
+      "Filter_37": {
         "type": "object"
       },
       "ActivityEnrollmentsBatchSave": {
@@ -11191,7 +11418,7 @@
           "classGroupId"
         ]
       },
-      "Filter_36": {
+      "Filter_38": {
         "type": "object"
       },
       "ClassActivityEnrollmentsBatchSave": {
@@ -11208,7 +11435,7 @@
           "entities"
         ]
       },
-      "Filter_37": {
+      "Filter_39": {
         "type": "object"
       },
       "AssessmentsBatchSave": {
@@ -11225,7 +11452,7 @@
           "entities"
         ]
       },
-      "Filter_38": {
+      "Filter_40": {
         "type": "object"
       },
       "AssessmentResultsBatchSave": {
@@ -11242,7 +11469,7 @@
           "entities"
         ]
       },
-      "Filter_39": {
+      "Filter_41": {
         "type": "object"
       },
       "GradeScalesBatchSave": {
@@ -11259,7 +11486,7 @@
           "entities"
         ]
       },
-      "Filter_40": {
+      "Filter_42": {
         "type": "object"
       },
       "ReportCardDefinitionsBatchSave": {
@@ -11276,7 +11503,7 @@
           "entities"
         ]
       },
-      "Filter_41": {
+      "Filter_43": {
         "type": "object"
       },
       "ReportCardSectionsBatchSave": {
@@ -11293,7 +11520,7 @@
           "entities"
         ]
       },
-      "Filter_42": {
+      "Filter_44": {
         "type": "object"
       },
       "ReportCardResultsBatchSave": {
@@ -11310,7 +11537,7 @@
           "entities"
         ]
       },
-      "Filter_43": {
+      "Filter_45": {
         "type": "object"
       },
       "StudentsBatchSave": {
@@ -11327,7 +11554,7 @@
           "entities"
         ]
       },
-      "Filter_44": {
+      "Filter_46": {
         "type": "object"
       },
       "StudentEnrollmentsBatchSave": {
@@ -11344,7 +11571,7 @@
           "entities"
         ]
       },
-      "Filter_45": {
+      "Filter_47": {
         "type": "object"
       },
       "GuardiansBatchSave": {
@@ -11361,7 +11588,7 @@
           "entities"
         ]
       },
-      "Filter_46": {
+      "Filter_48": {
         "type": "object"
       },
       "GuardianStudentLinksBatchSave": {
@@ -11378,7 +11605,7 @@
           "entities"
         ]
       },
-      "Filter_47": {
+      "Filter_49": {
         "type": "object"
       },
       "StudentNotesBatchSave": {
@@ -11395,7 +11622,7 @@
           "entities"
         ]
       },
-      "Filter_48": {
+      "Filter_50": {
         "type": "object"
       },
       "StudentHealthProfilesBatchSave": {
@@ -11412,7 +11639,7 @@
           "entities"
         ]
       },
-      "Filter_49": {
+      "Filter_51": {
         "type": "object"
       },
       "StudentDisciplinaryActionsBatchSave": {
@@ -11429,7 +11656,7 @@
           "entities"
         ]
       },
-      "Filter_50": {
+      "Filter_52": {
         "type": "object"
       },
       "DisciplinaryActionsBatchSave": {
@@ -11446,7 +11673,7 @@
           "entities"
         ]
       },
-      "Filter_51": {
+      "Filter_53": {
         "type": "object"
       },
       "StudentIncidentInvolvementsBatchSave": {
@@ -11463,7 +11690,7 @@
           "entities"
         ]
       },
-      "Filter_52": {
+      "Filter_54": {
         "type": "object"
       },
       "IncidentsBatchSave": {
@@ -36263,7 +36490,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_7"
+                    "$ref": "#/components/schemas/Filter_9"
                   },
                   {
                     "type": "object",
@@ -36431,7 +36658,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_7"
+                    "$ref": "#/components/schemas/Filter_9"
                   },
                   {
                     "type": "object",
@@ -36617,7 +36844,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_7"
+                    "$ref": "#/components/schemas/Filter_9"
                   },
                   {
                     "type": "object",
@@ -37498,6 +37725,2514 @@
         }
       }
     },
+    "/core/entities/teachers/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List Teachers",
+        "operationId": "entities.teachers.list",
+        "x-edaya-kind": "entity",
+        "x-edaya-entity-key": "teachers",
+        "x-edaya-entity-public-name": "teachers",
+        "x-edaya-response-schema": "Teacher",
+        "x-edaya-allow-direct-save": true,
+        "requestBody": {
+          "description": "Teachers query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_7"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Teacher"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one Teachers",
+        "operationId": "entities.teachers.one",
+        "requestBody": {
+          "description": "Teachers query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_7"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Teacher"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Teachers not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count Teachers",
+        "operationId": "entities.teachers.count",
+        "requestBody": {
+          "description": "Teachers query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_7"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get Teachers",
+        "operationId": "entities.teachers.get",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Teacher"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Teachers not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Save Teachers",
+        "operationId": "entities.teachers.save",
+        "requestBody": {
+          "description": "Teachers entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Teacher"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Teacher"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Delete Teachers",
+        "operationId": "entities.teachers.delete",
+        "requestBody": {
+          "description": "Teachers delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deleted Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/batch-save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch save Teachers",
+        "operationId": "entities.teachers.batchSave",
+        "requestBody": {
+          "description": "Teachers batch save request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeachersBatchSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch saved Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ids"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teachers/batch-delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch delete Teachers",
+        "operationId": "entities.teachers.batchDelete",
+        "requestBody": {
+          "description": "Teachers batch delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityBatchDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch deleted Teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List Teacher Assignments",
+        "operationId": "entities.teacherAssignments.list",
+        "x-edaya-kind": "entity",
+        "x-edaya-entity-key": "teacherAssignments",
+        "x-edaya-entity-public-name": "teacher-assignments",
+        "x-edaya-response-schema": "TeacherAssignment",
+        "x-edaya-allow-direct-save": true,
+        "requestBody": {
+          "description": "Teacher Assignments query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_8"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeacherAssignment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one Teacher Assignments",
+        "operationId": "entities.teacherAssignments.one",
+        "requestBody": {
+          "description": "Teacher Assignments query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_8"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAssignment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Teacher Assignments not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count Teacher Assignments",
+        "operationId": "entities.teacherAssignments.count",
+        "requestBody": {
+          "description": "Teacher Assignments query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_8"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get Teacher Assignments",
+        "operationId": "entities.teacherAssignments.get",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAssignment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Teacher Assignments not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Save Teacher Assignments",
+        "operationId": "entities.teacherAssignments.save",
+        "requestBody": {
+          "description": "Teacher Assignments entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherAssignment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAssignment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Delete Teacher Assignments",
+        "operationId": "entities.teacherAssignments.delete",
+        "requestBody": {
+          "description": "Teacher Assignments delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deleted Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/batch-save": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch save Teacher Assignments",
+        "operationId": "entities.teacherAssignments.batchSave",
+        "requestBody": {
+          "description": "Teacher Assignments batch save request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherAssignmentsBatchSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch saved Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ids"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Use a domain command for this entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/teacher-assignments/batch-delete": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Batch delete Teacher Assignments",
+        "operationId": "entities.teacherAssignments.batchDelete",
+        "requestBody": {
+          "description": "Teacher Assignments batch delete request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreEntityBatchDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch deleted Teacher Assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/entities/account-invitations/list": {
       "post": {
         "tags": [
@@ -37517,7 +40252,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_8"
+                    "$ref": "#/components/schemas/Filter_10"
                   },
                   {
                     "type": "object",
@@ -37685,7 +40420,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_8"
+                    "$ref": "#/components/schemas/Filter_10"
                   },
                   {
                     "type": "object",
@@ -37871,7 +40606,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_8"
+                    "$ref": "#/components/schemas/Filter_10"
                   },
                   {
                     "type": "object",
@@ -38771,7 +41506,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_9"
+                    "$ref": "#/components/schemas/Filter_11"
                   },
                   {
                     "type": "object",
@@ -38939,7 +41674,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_9"
+                    "$ref": "#/components/schemas/Filter_11"
                   },
                   {
                     "type": "object",
@@ -39125,7 +41860,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_9"
+                    "$ref": "#/components/schemas/Filter_11"
                   },
                   {
                     "type": "object",
@@ -40025,7 +42760,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_10"
+                    "$ref": "#/components/schemas/Filter_12"
                   },
                   {
                     "type": "object",
@@ -40193,7 +42928,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_10"
+                    "$ref": "#/components/schemas/Filter_12"
                   },
                   {
                     "type": "object",
@@ -40379,7 +43114,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_10"
+                    "$ref": "#/components/schemas/Filter_12"
                   },
                   {
                     "type": "object",
@@ -41279,7 +44014,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_11"
+                    "$ref": "#/components/schemas/Filter_13"
                   },
                   {
                     "type": "object",
@@ -41447,7 +44182,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_11"
+                    "$ref": "#/components/schemas/Filter_13"
                   },
                   {
                     "type": "object",
@@ -41633,7 +44368,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_11"
+                    "$ref": "#/components/schemas/Filter_13"
                   },
                   {
                     "type": "object",
@@ -42533,7 +45268,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_12"
+                    "$ref": "#/components/schemas/Filter_14"
                   },
                   {
                     "type": "object",
@@ -42701,7 +45436,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_12"
+                    "$ref": "#/components/schemas/Filter_14"
                   },
                   {
                     "type": "object",
@@ -42887,7 +45622,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_12"
+                    "$ref": "#/components/schemas/Filter_14"
                   },
                   {
                     "type": "object",
@@ -43787,7 +46522,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_13"
+                    "$ref": "#/components/schemas/Filter_15"
                   },
                   {
                     "type": "object",
@@ -43955,7 +46690,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_13"
+                    "$ref": "#/components/schemas/Filter_15"
                   },
                   {
                     "type": "object",
@@ -44141,7 +46876,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_13"
+                    "$ref": "#/components/schemas/Filter_15"
                   },
                   {
                     "type": "object",
@@ -45041,7 +47776,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_14"
+                    "$ref": "#/components/schemas/Filter_16"
                   },
                   {
                     "type": "object",
@@ -45209,7 +47944,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_14"
+                    "$ref": "#/components/schemas/Filter_16"
                   },
                   {
                     "type": "object",
@@ -45395,7 +48130,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_14"
+                    "$ref": "#/components/schemas/Filter_16"
                   },
                   {
                     "type": "object",
@@ -46295,7 +49030,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_15"
+                    "$ref": "#/components/schemas/Filter_17"
                   },
                   {
                     "type": "object",
@@ -46463,7 +49198,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_15"
+                    "$ref": "#/components/schemas/Filter_17"
                   },
                   {
                     "type": "object",
@@ -46649,7 +49384,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_15"
+                    "$ref": "#/components/schemas/Filter_17"
                   },
                   {
                     "type": "object",
@@ -47549,7 +50284,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_16"
+                    "$ref": "#/components/schemas/Filter_18"
                   },
                   {
                     "type": "object",
@@ -47717,7 +50452,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_16"
+                    "$ref": "#/components/schemas/Filter_18"
                   },
                   {
                     "type": "object",
@@ -47903,7 +50638,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_16"
+                    "$ref": "#/components/schemas/Filter_18"
                   },
                   {
                     "type": "object",
@@ -48803,7 +51538,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_17"
+                    "$ref": "#/components/schemas/Filter_19"
                   },
                   {
                     "type": "object",
@@ -48971,7 +51706,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_17"
+                    "$ref": "#/components/schemas/Filter_19"
                   },
                   {
                     "type": "object",
@@ -49157,7 +51892,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_17"
+                    "$ref": "#/components/schemas/Filter_19"
                   },
                   {
                     "type": "object",
@@ -50057,7 +52792,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_18"
+                    "$ref": "#/components/schemas/Filter_20"
                   },
                   {
                     "type": "object",
@@ -50225,7 +52960,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_18"
+                    "$ref": "#/components/schemas/Filter_20"
                   },
                   {
                     "type": "object",
@@ -50411,7 +53146,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_18"
+                    "$ref": "#/components/schemas/Filter_20"
                   },
                   {
                     "type": "object",
@@ -51311,7 +54046,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_19"
+                    "$ref": "#/components/schemas/Filter_21"
                   },
                   {
                     "type": "object",
@@ -51479,7 +54214,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_19"
+                    "$ref": "#/components/schemas/Filter_21"
                   },
                   {
                     "type": "object",
@@ -51665,7 +54400,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_19"
+                    "$ref": "#/components/schemas/Filter_21"
                   },
                   {
                     "type": "object",
@@ -52565,7 +55300,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_20"
+                    "$ref": "#/components/schemas/Filter_22"
                   },
                   {
                     "type": "object",
@@ -52733,7 +55468,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_20"
+                    "$ref": "#/components/schemas/Filter_22"
                   },
                   {
                     "type": "object",
@@ -52919,7 +55654,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_20"
+                    "$ref": "#/components/schemas/Filter_22"
                   },
                   {
                     "type": "object",
@@ -53819,7 +56554,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_21"
+                    "$ref": "#/components/schemas/Filter_23"
                   },
                   {
                     "type": "object",
@@ -53987,7 +56722,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_21"
+                    "$ref": "#/components/schemas/Filter_23"
                   },
                   {
                     "type": "object",
@@ -54173,7 +56908,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_21"
+                    "$ref": "#/components/schemas/Filter_23"
                   },
                   {
                     "type": "object",
@@ -55073,7 +57808,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_22"
+                    "$ref": "#/components/schemas/Filter_24"
                   },
                   {
                     "type": "object",
@@ -55241,7 +57976,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_22"
+                    "$ref": "#/components/schemas/Filter_24"
                   },
                   {
                     "type": "object",
@@ -55427,7 +58162,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_22"
+                    "$ref": "#/components/schemas/Filter_24"
                   },
                   {
                     "type": "object",
@@ -56327,7 +59062,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_23"
+                    "$ref": "#/components/schemas/Filter_25"
                   },
                   {
                     "type": "object",
@@ -56495,7 +59230,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_23"
+                    "$ref": "#/components/schemas/Filter_25"
                   },
                   {
                     "type": "object",
@@ -56681,7 +59416,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_23"
+                    "$ref": "#/components/schemas/Filter_25"
                   },
                   {
                     "type": "object",
@@ -57581,7 +60316,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_24"
+                    "$ref": "#/components/schemas/Filter_26"
                   },
                   {
                     "type": "object",
@@ -57749,7 +60484,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_24"
+                    "$ref": "#/components/schemas/Filter_26"
                   },
                   {
                     "type": "object",
@@ -57935,7 +60670,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_24"
+                    "$ref": "#/components/schemas/Filter_26"
                   },
                   {
                     "type": "object",
@@ -58835,7 +61570,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_25"
+                    "$ref": "#/components/schemas/Filter_27"
                   },
                   {
                     "type": "object",
@@ -59003,7 +61738,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_25"
+                    "$ref": "#/components/schemas/Filter_27"
                   },
                   {
                     "type": "object",
@@ -59189,7 +61924,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_25"
+                    "$ref": "#/components/schemas/Filter_27"
                   },
                   {
                     "type": "object",
@@ -60089,7 +62824,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_26"
+                    "$ref": "#/components/schemas/Filter_28"
                   },
                   {
                     "type": "object",
@@ -60257,7 +62992,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_26"
+                    "$ref": "#/components/schemas/Filter_28"
                   },
                   {
                     "type": "object",
@@ -60443,7 +63178,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_26"
+                    "$ref": "#/components/schemas/Filter_28"
                   },
                   {
                     "type": "object",
@@ -61343,7 +64078,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_27"
+                    "$ref": "#/components/schemas/Filter_29"
                   },
                   {
                     "type": "object",
@@ -61511,7 +64246,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_27"
+                    "$ref": "#/components/schemas/Filter_29"
                   },
                   {
                     "type": "object",
@@ -61697,7 +64432,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_27"
+                    "$ref": "#/components/schemas/Filter_29"
                   },
                   {
                     "type": "object",
@@ -62597,7 +65332,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -62765,7 +65500,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -62951,7 +65686,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_30"
+                    "$ref": "#/components/schemas/Filter_32"
                   },
                   {
                     "type": "object",
@@ -63851,7 +66586,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -64019,7 +66754,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -64205,7 +66940,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_31"
+                    "$ref": "#/components/schemas/Filter_33"
                   },
                   {
                     "type": "object",
@@ -65105,7 +67840,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_28"
+                    "$ref": "#/components/schemas/Filter_30"
                   },
                   {
                     "type": "object",
@@ -65273,7 +68008,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_28"
+                    "$ref": "#/components/schemas/Filter_30"
                   },
                   {
                     "type": "object",
@@ -65459,7 +68194,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_28"
+                    "$ref": "#/components/schemas/Filter_30"
                   },
                   {
                     "type": "object",
@@ -66359,7 +69094,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -66527,7 +69262,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -66713,7 +69448,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_29"
+                    "$ref": "#/components/schemas/Filter_31"
                   },
                   {
                     "type": "object",
@@ -67613,7 +70348,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -67781,7 +70516,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -67967,7 +70702,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_32"
+                    "$ref": "#/components/schemas/Filter_34"
                   },
                   {
                     "type": "object",
@@ -68867,7 +71602,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -69035,7 +71770,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -69221,7 +71956,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_33"
+                    "$ref": "#/components/schemas/Filter_35"
                   },
                   {
                     "type": "object",
@@ -70121,7 +72856,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -70289,7 +73024,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -70475,7 +73210,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_34"
+                    "$ref": "#/components/schemas/Filter_36"
                   },
                   {
                     "type": "object",
@@ -71375,7 +74110,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -71543,7 +74278,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -71729,7 +74464,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_35"
+                    "$ref": "#/components/schemas/Filter_37"
                   },
                   {
                     "type": "object",
@@ -72629,7 +75364,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -72797,7 +75532,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -72983,7 +75718,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_36"
+                    "$ref": "#/components/schemas/Filter_38"
                   },
                   {
                     "type": "object",
@@ -73883,7 +76618,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -74051,7 +76786,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -74237,7 +76972,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_37"
+                    "$ref": "#/components/schemas/Filter_39"
                   },
                   {
                     "type": "object",
@@ -75137,7 +77872,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -75305,7 +78040,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -75491,7 +78226,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_38"
+                    "$ref": "#/components/schemas/Filter_40"
                   },
                   {
                     "type": "object",
@@ -76391,7 +79126,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -76559,7 +79294,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -76745,7 +79480,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_39"
+                    "$ref": "#/components/schemas/Filter_41"
                   },
                   {
                     "type": "object",
@@ -77645,7 +80380,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -77813,7 +80548,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -77999,7 +80734,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_40"
+                    "$ref": "#/components/schemas/Filter_42"
                   },
                   {
                     "type": "object",
@@ -78899,7 +81634,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -79067,7 +81802,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -79253,7 +81988,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_41"
+                    "$ref": "#/components/schemas/Filter_43"
                   },
                   {
                     "type": "object",
@@ -80153,7 +82888,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -80321,7 +83056,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -80507,7 +83242,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_42"
+                    "$ref": "#/components/schemas/Filter_44"
                   },
                   {
                     "type": "object",
@@ -81407,7 +84142,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -81575,7 +84310,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -81761,7 +84496,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_43"
+                    "$ref": "#/components/schemas/Filter_45"
                   },
                   {
                     "type": "object",
@@ -82661,7 +85396,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -82829,7 +85564,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -83015,7 +85750,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_44"
+                    "$ref": "#/components/schemas/Filter_46"
                   },
                   {
                     "type": "object",
@@ -83915,7 +86650,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -84083,7 +86818,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -84269,7 +87004,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_45"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -85169,7 +87904,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -85337,7 +88072,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -85523,7 +88258,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_46"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -86423,7 +89158,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -86591,7 +89326,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -86777,7 +89512,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_47"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -87677,7 +90412,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -87845,7 +90580,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -88031,7 +90766,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -88931,7 +91666,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -89099,7 +91834,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -89285,7 +92020,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -90185,7 +92920,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -90353,7 +93088,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -90539,7 +93274,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -91439,7 +94174,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -91607,7 +94342,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -91793,7 +94528,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -92693,7 +95428,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_52"
+                    "$ref": "#/components/schemas/Filter_54"
                   },
                   {
                     "type": "object",
@@ -92861,7 +95596,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_52"
+                    "$ref": "#/components/schemas/Filter_54"
                   },
                   {
                     "type": "object",
@@ -93047,7 +95782,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_52"
+                    "$ref": "#/components/schemas/Filter_54"
                   },
                   {
                     "type": "object",

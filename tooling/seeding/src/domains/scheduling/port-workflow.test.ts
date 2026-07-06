@@ -59,7 +59,7 @@ describe('scheduling seed port workflow', () => {
     expect(progress).toHaveLength(demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
   })
 
-  test('seeds demo-ci math slots for ci-st1', async () => {
+  test('seeds demo-ci math slots for ci-t1 without lesson-session staff assignments', async () => {
     const slots = demoCiDataset.extensions?.schedulingSlots ?? []
     const schedules: ScheduleSeedRecord[] = []
     const staffAssignments: LessonSessionStaffAssignmentSeedRecord[] = []
@@ -81,7 +81,7 @@ describe('scheduling seed port workflow', () => {
 
     expect(slots).toHaveLength(4)
     expect(schedules).toHaveLength(4)
-    expect(staffAssignments).toHaveLength(4)
-    expect(staffAssignments.every(record => record.staffId === 'ci-st1')).toBe(true)
+    expect(staffAssignments).toHaveLength(0)
+    expect(slots.every(slot => slot.teacherId === 'ci-t1')).toBe(true)
   })
 })

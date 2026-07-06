@@ -3,7 +3,7 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, anyPermissionAction, permissionAction, read, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId, write } from '../../application/entities/entity-config'
+import { anyPermissionAction, config, indirectTenant, permissionAction, read, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId, write } from '../../application/entities/entity-config'
 
 import { actorHasAnyPermission, denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { AuthorizationError, AuthorizationErrorCode } from '../../capabilities/authorization/model/errors'

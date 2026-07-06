@@ -100,6 +100,15 @@ export const relinkActorSubjectCommandSchema = z.object({
   staffMemberId: field.id().optional(),
   guardianId: field.id().optional(),
   studentId: field.id().optional(),
+  teacherId: field.id().optional(),
+}).superRefine((data, ctx) => {
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId, data.teacherId].filter(Boolean).length;
+  if (targetCount !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Exactly one of staffMemberId, guardianId, studentId, or teacherId is required",
+    });
+  }
 }).openapi("RelinkActorSubjectCommand");
 
 export const requestAttendanceJustificationCommandSchema = z.object({
@@ -191,12 +200,13 @@ export const linkActorSubjectCommandSchema = z.object({
   staffMemberId: field.id().optional(),
   guardianId: field.id().optional(),
   studentId: field.id().optional(),
+  teacherId: field.id().optional(),
 }).superRefine((data, ctx) => {
-  const targetCount = [data.staffMemberId, data.guardianId, data.studentId].filter(Boolean).length;
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId, data.teacherId].filter(Boolean).length;
   if (targetCount !== 1) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Exactly one of staffMemberId, guardianId, or studentId is required",
+      message: "Exactly one of staffMemberId, guardianId, studentId, or teacherId is required",
     });
   }
 }).openapi("LinkActorSubjectCommand");

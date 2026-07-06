@@ -1,4 +1,4 @@
-import type { Guardian, StaffMember, StaffPermissionAssignment, StaffPermissionAssignmentInput, Student } from '../../domain'
+import type { Guardian, StaffMember, StaffPermissionAssignment, StaffPermissionAssignmentInput, Student, Teacher } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { permissionAction } from '../../application/entities/entity-config'
@@ -14,12 +14,14 @@ export interface LinkActorSubjectInput {
   staffMemberId?: string
   guardianId?: string
   studentId?: string
+  teacherId?: string
 }
 
 export type LinkActorSubjectResult
   = | { kind: 'staff', entity: StaffMember }
     | { kind: 'guardian', entity: Guardian }
     | { kind: 'student', entity: Student }
+    | { kind: 'teacher', entity: Teacher }
 
 export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   private readonly repositories: AccessControlWorkflowRepositories
@@ -32,11 +34,11 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   async linkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
     await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(this.baseService.actor)
 
-    const targetCount = [input.staffMemberId, input.guardianId, input.studentId].filter(Boolean).length
+    const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
     if (targetCount !== 1) {
       throw new BusinessRuleViolationError(
         'LINK_ACTOR_SUBJECT_AMBIGUOUS',
-        'Exactly one of staffMemberId, guardianId, or studentId is required',
+        'Exactly one of staffMemberId, guardianId, studentId, or teacherId is required',
       )
     }
 
@@ -51,11 +53,11 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   async relinkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
     await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(this.baseService.actor)
 
-    const targetCount = [input.staffMemberId, input.guardianId, input.studentId].filter(Boolean).length
+    const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
     if (targetCount !== 1) {
       throw new BusinessRuleViolationError(
         'LINK_ACTOR_SUBJECT_AMBIGUOUS',
-        'Exactly one of staffMemberId, guardianId, or studentId is required',
+        'Exactly one of staffMemberId, guardianId, studentId, or teacherId is required',
       )
     }
 

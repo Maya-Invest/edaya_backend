@@ -13,6 +13,7 @@ import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  DEV_AUTH_TEACHER_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from './dev-auth-fixtures'
@@ -21,6 +22,7 @@ import {
   DEV_CI_AUTH_PASSWORD,
   DEV_CI_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_CI_AUTH_STAFF_ACCOUNTS,
+  DEV_CI_AUTH_TEACHER_ACCOUNTS,
   MINIMAL_CI_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_CI_AUTH_FIXTURE_STAFF_ID,
 } from './dev-auth-fixtures-ci'
@@ -40,6 +42,11 @@ export interface DevAuthGuardianAccount {
   email: string
   name: string
 }
+export interface DevAuthTeacherAccount {
+  teacherId: string
+  email: string
+  name: string
+}
 export interface DevSeedContext {
   datasetId: DevSeedDatasetId
   dataset: FixtureDataset
@@ -49,12 +56,13 @@ export interface DevSeedContext {
   minimalStaffEmail: string
   authPassword: string
   staffAccounts: readonly DevAuthStaffAccount[]
+  teacherAccounts: readonly DevAuthTeacherAccount[]
   guardianAccounts: readonly DevAuthGuardianAccount[]
   staffAccessRoleIds: Record<string, string>
   bootstrapSignInStaffIds: readonly string[]
 }
-const CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st1', 'st3', 'st7'] as const
-const DEMO_CI_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['ci-st5', 'ci-st8', 'ci-st1', 'ci-st3', 'ci-st7'] as const
+const CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st3', 'st7'] as const
+const DEMO_CI_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['ci-st5', 'ci-st8', 'ci-st3', 'ci-st7'] as const
 /** Reads `SEED_DATASET` (`demo-ci` | `ci` | `central` | `demo`). Defaults to `demo-ci` (compact Abidjan collège). */
 export function resolveDevSeedDatasetId(): DevSeedDatasetId {
   const raw = process.env['SEED_DATASET']?.trim().toLowerCase()
@@ -84,6 +92,7 @@ export function resolveDevSeedContext(): DevSeedContext {
       minimalStaffEmail: MINIMAL_CI_AUTH_FIXTURE_STAFF_EMAIL,
       authPassword: DEV_CI_AUTH_PASSWORD,
       staffAccounts: DEV_CI_AUTH_STAFF_ACCOUNTS,
+      teacherAccounts: DEV_CI_AUTH_TEACHER_ACCOUNTS,
       guardianAccounts: DEV_CI_AUTH_GUARDIAN_ACCOUNTS,
       staffAccessRoleIds: DEV_CI_AUTH_STAFF_ACCESS_ROLE_IDS,
       bootstrapSignInStaffIds: DEMO_CI_BOOTSTRAP_SIGN_IN_STAFF_IDS,
@@ -99,6 +108,7 @@ export function resolveDevSeedContext(): DevSeedContext {
       minimalStaffEmail: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       authPassword: DEV_AUTH_PASSWORD,
       staffAccounts: DEV_AUTH_STAFF_ACCOUNTS,
+      teacherAccounts: DEV_AUTH_TEACHER_ACCOUNTS,
       guardianAccounts: DEV_AUTH_GUARDIAN_ACCOUNTS,
       staffAccessRoleIds: DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
       bootstrapSignInStaffIds: CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS,
@@ -115,6 +125,7 @@ export function resolveDevSeedContext(): DevSeedContext {
       minimalStaffEmail: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       authPassword: DEV_AUTH_PASSWORD,
       staffAccounts: syncStaffAuthDisplayNames(dataset, DEV_AUTH_STAFF_ACCOUNTS),
+      teacherAccounts: DEV_AUTH_TEACHER_ACCOUNTS,
       guardianAccounts: syncGuardianAuthDisplayNames(dataset, DEV_AUTH_GUARDIAN_ACCOUNTS),
       staffAccessRoleIds: DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
       bootstrapSignInStaffIds: CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS,
@@ -129,6 +140,7 @@ export function resolveDevSeedContext(): DevSeedContext {
     minimalStaffEmail: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
     authPassword: DEV_AUTH_PASSWORD,
     staffAccounts: DEV_AUTH_STAFF_ACCOUNTS,
+    teacherAccounts: DEV_AUTH_TEACHER_ACCOUNTS,
     guardianAccounts: DEV_AUTH_GUARDIAN_ACCOUNTS,
     staffAccessRoleIds: DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
     bootstrapSignInStaffIds: CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS,

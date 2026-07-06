@@ -4,6 +4,7 @@ import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  DEV_AUTH_TEACHER_ACCOUNTS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
@@ -32,6 +33,7 @@ function createMemoryPort(): {
     ownerSubjectId?: string
     guardians: Map<string, string | undefined>
     staff: Map<string, string | undefined>
+    teachers: Map<string, string | undefined>
   }
 } {
   const firstStaff = DEV_AUTH_STAFF_ACCOUNTS[0]
@@ -43,6 +45,9 @@ function createMemoryPort(): {
     ),
     guardians: new Map<string, string | undefined>(
       DEV_AUTH_GUARDIAN_ACCOUNTS.map(account => [account.guardianId, undefined]),
+    ),
+    teachers: new Map<string, string | undefined>(
+      DEV_AUTH_TEACHER_ACCOUNTS.map(account => [account.teacherId, undefined]),
     ),
   }
   if (firstStaff) {
@@ -86,6 +91,12 @@ function createMemoryPort(): {
       }
       return { id, subjectId: state.guardians.get(id) }
     },
+    findTeacherById: async (id) => {
+      if (!state.teachers.has(id)) {
+        return undefined
+      }
+      return { id, subjectId: state.teachers.get(id) }
+    },
     replaceGuardianSubjectId: async (guardianId, subjectId) => {
       replacedGuardians.push(guardianId)
       state.guardians.set(guardianId, subjectId)
@@ -96,6 +107,9 @@ function createMemoryPort(): {
       }
       if (input.guardianId) {
         state.guardians.set(input.guardianId, input.subjectId)
+      }
+      if (input.teacherId) {
+        state.teachers.set(input.teacherId, input.subjectId)
       }
     },
   }
@@ -111,6 +125,7 @@ describe('auth-link seed port workflow', () => {
     const first = await syncDevStaffAuthAndOwner(memory.port, auth)
 
     expect(first?.linkedStaff).toBe(DEV_AUTH_STAFF_ACCOUNTS.length)
+    expect(first?.linkedTeachers).toBe(DEV_AUTH_TEACHER_ACCOUNTS.length)
     expect(first?.linkedGuardians).toBe(DEV_AUTH_GUARDIAN_ACCOUNTS.length)
     expect(memory.registeredStaff).toHaveLength(1)
     expect(memory.replacedStaff).toEqual([DEV_AUTH_STAFF_ACCOUNTS[0]?.staffId])
@@ -121,6 +136,7 @@ describe('auth-link seed port workflow', () => {
 
     const second = await syncDevStaffAuthAndOwner(memory.port, auth)
     expect(second?.linkedStaff).toBe(0)
+    expect(second?.linkedTeachers).toBe(0)
     expect(second?.linkedGuardians).toBe(0)
   })
 })

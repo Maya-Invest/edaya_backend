@@ -1,6 +1,19 @@
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
 import {
+  assertTeacherCanReadReportCard,
+} from '../../../../domain/assessments/report-card-comment-access'
+import {
+  guardianScopeCoversClassGroup,
+} from '../../capabilities/assert-guardian-capability'
+import {
+  studentScopeCoversClassGroup,
+} from '../../capabilities/assert-student-capability'
+import {
+  teacherCoversClassGroup,
+  teacherScopeCoversClassSubject,
+} from '../../capabilities/assert-teaching-capability'
+import {
   actorGrantCoversAny,
   actorGrantCoversAnyResourcePath,
   actorHasSchoolWideGrant,
@@ -22,6 +35,33 @@ export async function checkClassGroupAccess(
   _repos: SchoolRepositories,
 ): Promise<void> {
   if (classGroupIds.length === 0) {
+    return
+  }
+
+  if (actor.kind === 'guardian') {
+    for (const classGroupId of classGroupIds) {
+      if (!guardianScopeCoversClassGroup(actor, classGroupId)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
+    return
+  }
+
+  if (actor.kind === 'student') {
+    for (const classGroupId of classGroupIds) {
+      if (!studentScopeCoversClassGroup(actor, classGroupId)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
+    return
+  }
+
+  if (actor.kind === 'teacher') {
+    for (const classGroupId of classGroupIds) {
+      if (!await teacherCoversClassGroup(actor, classGroupId, _repos)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
     return
   }
 
@@ -49,6 +89,34 @@ export async function checkAssessmentAccess(
   repos: SchoolRepositories,
 ): Promise<void> {
   if (assessmentIds.length === 0) {
+    return
+  }
+
+  if (actor.kind === 'guardian' || actor.kind === 'student') {
+    const assessments = await repos.assessments.findByIds([...assessmentIds])
+    if (assessments.length !== assessmentIds.length) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
+    await checkClassGroupAccess(
+      actor,
+      [...new Set(assessments.map(assessment => assessment.classGroupId))],
+      repos,
+    )
+    return
+  }
+
+  if (actor.kind === 'teacher') {
+    const assessments = await repos.assessments.findByIds([...assessmentIds])
+    if (assessments.length !== assessmentIds.length) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
+    for (const assessment of assessments) {
+      if (!teacherScopeCoversClassSubject(actor, assessment.classSubjectId)) {
+        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      }
+    }
     return
   }
 
@@ -88,10 +156,17 @@ export async function checkReportCardResultAccess(
   }
 
   const results = await repos.results.findByIds([...reportCardResultIds])
-  const studentIds = [...new Set(results.map(result => result.studentId))]
-  if (studentIds.length === 0) {
+  if (results.length === 0) {
     return
   }
 
+  if (actor.kind === 'teacher') {
+    for (const result of results) {
+      assertTeacherCanReadReportCard(actor, result)
+    }
+    return
+  }
+
+  const studentIds = [...new Set(results.map(result => result.studentId))]
   await checkStudentAccess(actor, studentIds, repos)
 }

@@ -53,6 +53,8 @@ import type {
   StudentNote,
   Subject,
   SubjectMatter,
+  Teacher,
+  TeacherAssignment,
 } from '../../src/domain'
 import type { BaseRepositoryInterface, Filter, SchoolRepositories } from '../../src/ports'
 import { noOpNotificationGateway } from '../../src/adapters'
@@ -230,6 +232,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const guardianLinks = createStore<GuardianStudentLink>(transactionParticipants)
   const staffMembers = createStore<StaffMember>(transactionParticipants)
   const staffAssignments = createStore<StaffAssignment>(transactionParticipants)
+  const teachers = createStore<Teacher>(transactionParticipants)
+  const teacherAssignments = createStore<TeacherAssignment>(transactionParticipants)
   const serviceApiKeyStore = createStore<ServiceApiKey>(transactionParticipants)
   const serviceApiKeys = {
     ...serviceApiKeyStore,
@@ -326,6 +330,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     gradeLevels,
     staffMembers,
     staffAssignments,
+    teachers,
+    teacherAssignments,
     serviceApiKeys,
     accountInvitations,
     cronJobSchedules: {
@@ -442,6 +448,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     guardianStudentLinkRepository: schoolRepositories.guardianLinks,
     staffMemberRepository: schoolRepositories.staffMembers,
     staffAssignmentRepository: schoolRepositories.staffAssignments,
+    teacherRepository: schoolRepositories.teachers,
+    teacherAssignmentRepository: schoolRepositories.teacherAssignments,
     subjectRepository: schoolRepositories.subjects,
     subjectMatterRepository: schoolRepositories.subjectMatters,
     classSubjectRepository: schoolRepositories.classSubjects,
