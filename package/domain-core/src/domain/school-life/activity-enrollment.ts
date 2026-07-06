@@ -50,7 +50,7 @@ export const activityEnrollmentConfig: EntityConfigFactory<ActivityEnrollment> =
   config({
     repository: repositories.activityEnrollments,
     tenant: activityEnrollmentTenant(),
-    read: read(permissionAction(Permission.QUERY_CALENDAR_READ), noopReadAccess),
+    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
     write: write(
       permissionAction(Permission.DISCIPLINE_CREATE),
       authorizeActivityEnrollmentSave(policy),

@@ -88,7 +88,7 @@ export const activityConfig: EntityConfigFactory<Activity> = (input) => {
   const config = directPermissionEntityConfig(
     input,
     input.repositories.activities,
-    Permission.QUERY_CALENDAR_READ,
+    Permission.DISCIPLINE_READ,
     Permission.DISCIPLINE_CREATE,
   )
   return {

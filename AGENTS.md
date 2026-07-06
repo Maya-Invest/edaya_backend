@@ -9,6 +9,10 @@ Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI wor
 - **Ports and adapters** — business rules in `@edaya/core`; Postgres in `@edaya/adaptor-postgres`; auth persistence in `@edaya/adaptor-auth`; Novu gateway in `@edaya/adaptor-novu`; migration CLI in `@edaya/db-migrate`; Novu ops CLI in `@edaya/novu-ops`; HTTP/runtime wiring in `apps/api`.
 - **Boundary rule** — `package/domain-core`, `package/adaptor-postgres`, and adaptor packages never depend on `apps/` or `tooling/`.
 
+## Portal authorization
+
+Staff permission assignments, role presets, scope seeds, and grant resolution affect **portal actors** (teachers, guardians, students) as well as staff workspace users. A change that looks correct for staff webapp routes can still break mobile portal authorization. After permission or seed changes, verify portal actors per [edaya_web demo-accounts.md](../edaya_web/docs/reference/demo-accounts.md) — not only staff API tests.
+
 ## Key docs
 
 | Topic | Path |
