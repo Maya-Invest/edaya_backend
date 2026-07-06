@@ -69,7 +69,7 @@ export const demoCiInClassAssessments = [
 ] as const satisfies readonly AssessmentInput[]
 
 export const demoCiAssessmentResultScores = Object.fromEntries(
-  demoCiInClassAssessments.map(assessment => {
+  demoCiInClassAssessments.map((assessment) => {
     const roster = demoCiClassRosters[assessment.classGroupId as keyof typeof demoCiClassRosters] ?? []
     return [assessment.id, scoreMap(roster)]
   }),
