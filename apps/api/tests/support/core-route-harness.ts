@@ -39,6 +39,7 @@ import {
   createLocalProfileTestEnv,
   type EmbeddedLocalFilesServer,
   startEmbeddedLocalFilesServer,
+  syncProcessEnvLocalFilesUrl,
 } from "./embedded-local-files";
 
 const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
@@ -189,9 +190,17 @@ export async function createCoreRouteTestApp(
   options: CoreRouteTestAppOptions = {},
 ): Promise<AuthenticatedRouteContext> {
   let embeddedLocalFiles: ReturnType<typeof startEmbeddedLocalFilesServer> | undefined;
+  let restoreLocalFilesUrl: (() => void) | undefined;
   const env = options.withEmbeddedLocalFiles
     ? (() => {
         embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.BETTER_AUTH_SECRET);
+        restoreLocalFilesUrl = syncProcessEnvLocalFilesUrl(embeddedLocalFiles.baseUrl);
+        const originalStop = embeddedLocalFiles.stop.bind(embeddedLocalFiles);
+        embeddedLocalFiles.stop = () => {
+          originalStop();
+          restoreLocalFilesUrl?.();
+          restoreLocalFilesUrl = undefined;
+        };
         return createLocalProfileTestEnv(embeddedLocalFiles);
       })()
     : createIsolatedPgliteTestEnv();

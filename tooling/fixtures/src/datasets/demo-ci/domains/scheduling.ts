@@ -109,6 +109,22 @@ export const demoCiSchedulingSlots = [
       endTime: '10:45',
     },
   },
+  {
+    slotId: 'ci-p-6b-fr-mon',
+    teacherId: 'ci-t1',
+    resourceId: undefined,
+    schedule: {
+      id: 'sch-ci-6b-fr-mon',
+      schoolId: DEMO_CI_SCHOOL_ID,
+      classGroupId: 'ci-6b',
+      classSubjectId: 'ci-cs-6b-fr',
+      title: 'Français — lecture',
+      isRecurring: true,
+      dayOfWeek: DayOfWeek.Monday,
+      startTime: '08:15',
+      endTime: '09:00',
+    },
+  },
 ] as const satisfies readonly FixtureSchedulingSlot[]
 
 export const demoCiSchedules = demoCiSchedulingSlots.map(slot => slot.schedule) as readonly ScheduleInput[]

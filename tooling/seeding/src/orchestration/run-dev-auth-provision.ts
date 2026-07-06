@@ -1,9 +1,5 @@
 import type { AuthProvisioner } from '../support/types'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import {
-  DEV_AUTH_GUARDIAN_ACCOUNTS,
-  DEV_AUTH_STAFF_ACCOUNTS,
-} from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 
 const AUTH_REQUEST_PAUSE_MS = 250
 const STAGING_AUTH_REQUEST_PAUSE_MS = 750
@@ -36,18 +32,19 @@ async function pauseBetweenAuthRequests(options: RunDevAuthProvisionOptions): Pr
 }
 
 export type DevAuthProvisionResult
-  = | { status: 'seeded', accounts: Array<{ email: string, subjectId: string, kind: 'staff' | 'guardian' }> }
+  = | { status: 'seeded', accounts: Array<{ email: string, subjectId: string, kind: 'staff' | 'teacher' | 'guardian' }> }
 
 export async function runDevAuthProvision(
   auth: AuthProvisioner,
   options: RunDevAuthProvisionOptions = {},
 ): Promise<DevAuthProvisionResult> {
+  const context = resolveDevSeedContext()
   const accounts: DevAuthProvisionResult['accounts'] = []
 
-  for (const account of DEV_AUTH_STAFF_ACCOUNTS) {
+  for (const account of context.staffAccounts) {
     const { subjectId } = await auth.ensureUser({
       email: account.email,
-      password: DEV_AUTH_PASSWORD,
+      password: context.authPassword,
       name: account.name,
     })
     accounts.push({
@@ -58,10 +55,24 @@ export async function runDevAuthProvision(
     await pauseBetweenAuthRequests(options)
   }
 
-  for (const account of DEV_AUTH_GUARDIAN_ACCOUNTS) {
+  for (const account of context.teacherAccounts) {
     const { subjectId } = await auth.ensureUser({
       email: account.email,
-      password: DEV_AUTH_PASSWORD,
+      password: context.authPassword,
+      name: account.name,
+    })
+    accounts.push({
+      email: account.email,
+      subjectId,
+      kind: 'teacher',
+    })
+    await pauseBetweenAuthRequests(options)
+  }
+
+  for (const account of context.guardianAccounts) {
+    const { subjectId } = await auth.ensureUser({
+      email: account.email,
+      password: context.authPassword,
       name: account.name,
     })
     accounts.push({

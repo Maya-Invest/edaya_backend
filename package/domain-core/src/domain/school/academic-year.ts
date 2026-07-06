@@ -1,6 +1,6 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, workspaceReadModule, write } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
@@ -53,7 +53,7 @@ export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ reposito
   config({
     repository: repositories.academicYears,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.QUERY_WORKSPACE_READ), noopReadAccess),
+    read: read(workspaceReadModule(), noopReadAccess),
     write: write(permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE), noopSaveAccess, noopDeleteAccess),
     gates: {
       preDelete: async (year, repos) => {

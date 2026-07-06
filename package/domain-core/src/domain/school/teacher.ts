@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
+import { directPermissionEntityConfig, readByIds, teacherSelfReadModule } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -70,10 +70,7 @@ export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
       await input.policy.checkTeacherAccess(actor, ids)
     }),
   )
-  config.read.checkModule = anyPermissionAction([
-    Permission.ACCESS_CONTROL_ASSIGN,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  ])
+  config.read.checkModule = teacherSelfReadModule()
   return {
     ...config,
     gates: {

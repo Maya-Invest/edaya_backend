@@ -3,7 +3,7 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { anyPermissionAction, config, indirectTenant, permissionAction, read, write } from '../../application/entities/entity-config'
+import { config, indirectTenant, permissionAction, read, teacherAssignmentReadModule, write } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -102,10 +102,7 @@ export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = (
     repository: repositories.teacherAssignments,
     tenant: teacherAssignmentTenant(),
     read: read(
-      anyPermissionAction([
-        Permission.ACCESS_CONTROL_ASSIGN,
-        Permission.SCHOOL_STRUCTURE_CONFIGURE,
-      ]),
+      teacherAssignmentReadModule(),
       checkTeacherAssignmentReadAccess,
     ),
     write: write(

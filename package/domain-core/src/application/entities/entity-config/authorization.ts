@@ -301,6 +301,41 @@ export function reportCardReadModule(): (actor: ActorMetadata) => void {
   }
 }
 
+export function workspaceReadModule(): (actor: ActorMetadata) => void {
+  return (actor) => {
+    if (actor.kind === 'teacher') {
+      teacherWithAssignmentAction()(actor)
+      return
+    }
+    permissionAction(Permission.QUERY_WORKSPACE_READ)(actor)
+  }
+}
+
+export function teacherSelfReadModule(): (actor: ActorMetadata) => void {
+  return (actor) => {
+    if (actor.kind === 'teacher') {
+      return
+    }
+    anyPermissionAction([
+      Permission.ACCESS_CONTROL_ASSIGN,
+      Permission.SCHOOL_STRUCTURE_CONFIGURE,
+    ])(actor)
+  }
+}
+
+export function teacherAssignmentReadModule(): (actor: ActorMetadata) => void {
+  return (actor) => {
+    if (actor.kind === 'teacher') {
+      teacherWithAssignmentAction()(actor)
+      return
+    }
+    anyPermissionAction([
+      Permission.ACCESS_CONTROL_ASSIGN,
+      Permission.SCHOOL_STRUCTURE_CONFIGURE,
+    ])(actor)
+  }
+}
+
 export function authorizeClassGroupLinkedDelete<T extends { classGroupId: string }>(
   policy: AuthorizationPolicy,
 ): EntityWriteAuthorization<T>['authorizeDelete'] {

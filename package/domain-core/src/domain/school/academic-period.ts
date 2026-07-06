@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { directPermissionEntityConfig, workspaceReadModule } from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
@@ -67,6 +67,7 @@ export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = (input)
     Permission.QUERY_WORKSPACE_READ,
     Permission.SCHOOL_STRUCTURE_CONFIGURE,
   )
+  config.read.checkModule = workspaceReadModule()
   return {
     ...config,
     gates: {

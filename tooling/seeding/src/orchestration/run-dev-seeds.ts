@@ -332,7 +332,11 @@ export function logDevSeedResults(
     if (results.authLink.status === 'seeded') {
       const emails = results.authLink.accounts.map(account => account.email).join(', ')
       // eslint-disable-next-line no-console
-      console.log(`Auth link linked ${results.authLink.linkedStaff} staff and ${results.authLink.linkedGuardians} guardian(s): ${emails}`)
+      console.log(
+        `Auth link linked ${results.authLink.linkedStaff} staff, `
+        + `${results.authLink.linkedTeachers} teacher(s), and `
+        + `${results.authLink.linkedGuardians} guardian(s): ${emails}`,
+      )
     }
     else {
       // eslint-disable-next-line no-console
