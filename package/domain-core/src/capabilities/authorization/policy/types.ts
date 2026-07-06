@@ -1,6 +1,12 @@
 import type { AttendanceRecord } from '../../../domain/scheduling/attendance-record'
+import type { AttachmentOwnerKind } from '../../../domain/school/attachment'
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../model/actor'
+
+export interface AttachmentAccessInput {
+  readonly ownerKind: AttachmentOwnerKind
+  readonly ownerId: string
+}
 
 /**
  * Evaluates actor access after a service has resolved the resource context
@@ -21,6 +27,7 @@ export interface AuthorizationPolicy {
   checkLessonSessionAccess: (actor: ActorMetadata, lessonSessionIds: readonly string[]) => Promise<void>
   checkActivitySessionAccess: (actor: ActorMetadata, activitySessionIds: readonly string[]) => Promise<void>
   checkAttendanceRecordAccess: (actor: ActorMetadata, records: readonly AttendanceRecord[]) => Promise<void>
+  checkAttachmentAccess: (actor: ActorMetadata, attachments: readonly AttachmentAccessInput[]) => Promise<void>
   getRepositories?: () => SchoolRepositories
 }
 

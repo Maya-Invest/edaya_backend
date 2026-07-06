@@ -5,20 +5,61 @@ import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'
 import { FEE_ACCESS_PERMISSIONS, STUDENT_FEE_STAFF_ACCESS_PERMISSIONS } from './permission-sets'
 import { checkStudentAccess } from './student'
 
+function isPortalActor(actor: ActorMetadata): boolean {
+  return actor.kind === 'guardian' || actor.kind === 'student' || actor.kind === 'teacher'
+}
+
 export async function checkFeeAccess(
   actor: ActorMetadata,
   feeIds: readonly string[],
-  _repos: SchoolRepositories,
+  repos: SchoolRepositories,
 ): Promise<void> {
   if (feeIds.length === 0) {
     return
   }
 
-  const hasAccess = actor.kind === 'staff'
-    && actorHasSchoolWideGrant(actor, FEE_ACCESS_PERMISSIONS)
+  if (actor.kind === 'staff' && actorHasSchoolWideGrant(actor, FEE_ACCESS_PERMISSIONS)) {
+    return
+  }
 
-  if (!hasAccess) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  if (isPortalActor(actor)) {
+    await checkPortalFeeCatalogAccess(actor, feeIds, repos)
+    return
+  }
+
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+}
+
+async function checkPortalFeeCatalogAccess(
+  actor: ActorMetadata,
+  feeIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  const uniqueFeeIds = [...new Set(feeIds)]
+
+  for (const feeId of uniqueFeeIds) {
+    const linkedStudentFees = await repos.studentFees.list({ feeId })
+    if (linkedStudentFees.length === 0) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+
+    let canAccessFeeCatalog = false
+    for (const studentFee of linkedStudentFees) {
+      try {
+        await checkStudentFeeAccess(actor, [studentFee.id], repos)
+        canAccessFeeCatalog = true
+        break
+      }
+      catch (error) {
+        if (!(error instanceof AuthorizationError)) {
+          throw error
+        }
+      }
+    }
+
+    if (!canAccessFeeCatalog) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
   }
 }
 

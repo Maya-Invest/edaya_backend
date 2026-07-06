@@ -7,6 +7,7 @@ import {
   AuthorizationError,
   createGuardianActorMetadata,
   createStudentActorMetadata,
+  createTeacherActorMetadata,
   effectiveGrantsForActor,
   GuardianCapability,
   Permission,
@@ -46,6 +47,8 @@ describe('portal capability policy', () => {
   test('permissionAction routes portal reads through capabilities instead of authorize()', () => {
     expect(() => permissionAction(Permission.QUERY_STUDENT_DETAIL_READ)(guardianActor)).not.toThrow()
     expect(() => permissionAction(Permission.QUERY_STUDENT_DETAIL_READ)(studentActor)).not.toThrow()
+    expect(() => permissionAction(Permission.ATTACHMENT_READ)(guardianActor)).not.toThrow()
+    expect(() => permissionAction(Permission.ATTACHMENT_READ)(studentActor)).not.toThrow()
 
     expect(() => permissionAction(Permission.STUDENT_UPDATE)(guardianActor)).toThrow(AuthorizationError)
     expect(() => permissionAction(Permission.PAYMENT_RECORD)(studentActor)).toThrow(AuthorizationError)

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  attachmentReadModule,
   permissionAction,
   teacherAssignmentReadModule,
   teacherSelfReadModule,
@@ -66,6 +67,10 @@ describe('teacher portal read module gates', () => {
     expect(() => permissionAction(Permission.QUERY_STUDENT_DETAIL_READ)(
       teacherActor({ classSubjectIds: [], classGroupIds: ['cg-7a'] }),
     )).not.toThrow()
+  })
+
+  test('attachmentReadModule allows assigned teachers', () => {
+    expect(() => attachmentReadModule()(teacherActor())).not.toThrow()
   })
 
   test('teacher portal actors can record attendance through capabilities', () => {

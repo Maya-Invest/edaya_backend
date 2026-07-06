@@ -12,6 +12,50 @@ import {
   TEACHER_PERMISSIONS,
 } from '@edaya/core'
 
+/** Permissions that require explicit scope entity ids when materialized from role templates. */
+const CLASS_GROUP_SCOPED_PERMISSIONS = [
+  Permission.ACADEMIC_PROGRAM_READ,
+  Permission.ACADEMIC_PROGRAM_UPDATE,
+  Permission.ACADEMIC_PROGRAM_ASSIGN,
+  Permission.QUERY_CLASS_DIRECTORY_READ,
+  Permission.QUERY_CLASS_CURRICULUM_READ,
+  Permission.ATTENDANCE_READ,
+  Permission.GRADE_READ,
+  Permission.TIMETABLE_READ,
+  Permission.TIMETABLE_CREATE,
+  Permission.TIMETABLE_UPDATE,
+  Permission.CLASS_LOGBOOK_READ,
+  Permission.COMMUNICATION_SEND,
+  Permission.QUERY_ATTENDANCE_READ,
+  Permission.QUERY_TIMETABLE_READ,
+  Permission.QUERY_CURRICULUM_PROGRESS_READ,
+  Permission.GRADE_INPUT,
+  Permission.GRADE_UPDATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.CLASS_LOGBOOK_UPDATE,
+  Permission.DISCIPLINE_CREATE,
+] as const
+
+const SCHOOL_LEADERSHIP_ROLE_IDS = new Set(['role-director', 'role-coordinator'])
+
+function buildSchoolLeadershipScopeGrants(context: DevSeedContext): StaffRoleAssignmentPresetRecord['scopeGrants'] {
+  const classGroupIds = context.dataset.entities.classGroups?.map(classGroup => classGroup.id) ?? []
+
+  return CLASS_GROUP_SCOPED_PERMISSIONS.map(permission => ({
+    permission,
+    scopeType: 'class_group' as const,
+    scopeEntityIds: classGroupIds,
+  }))
+}
+
+function scopeGrantsForRole(context: DevSeedContext, roleId: string): StaffRoleAssignmentPresetRecord['scopeGrants'] {
+  if (SCHOOL_LEADERSHIP_ROLE_IDS.has(roleId)) {
+    return buildSchoolLeadershipScopeGrants(context)
+  }
+  return []
+}
+
 const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [
   Permission.QUERY_WORKSPACE_READ,
   Permission.QUERY_CLASS_DIRECTORY_READ,
@@ -195,18 +239,18 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
   if (context.datasetId === 'demo-ci') {
     const roles = context.staffAccessRoleIds
     return [
-      createStaffRoleAssignment(context, 'ci-st3', roles['ci-st3']!),
-      createStaffRoleAssignment(context, 'ci-st8', roles['ci-st8']!),
-      createStaffRoleAssignment(context, 'ci-st5', roles['ci-st5']!),
+      createStaffRoleAssignment(context, 'ci-st3', roles['ci-st3']!, scopeGrantsForRole(context, roles['ci-st3']!)),
+      createStaffRoleAssignment(context, 'ci-st8', roles['ci-st8']!, scopeGrantsForRole(context, roles['ci-st8']!)),
+      createStaffRoleAssignment(context, 'ci-st5', roles['ci-st5']!, scopeGrantsForRole(context, roles['ci-st5']!)),
       createStaffRoleAssignment(context, 'ci-st7', roles['ci-st7']!, schoolDisciplineAndAttendanceGrants),
     ]
   }
 
   const roles = context.staffAccessRoleIds
   return [
-    createStaffRoleAssignment(context, 'st3', roles['st3']!),
-    createStaffRoleAssignment(context, 'st8', roles['st8']!),
-    createStaffRoleAssignment(context, 'st5', roles['st5']!),
+    createStaffRoleAssignment(context, 'st3', roles['st3']!, scopeGrantsForRole(context, roles['st3']!)),
+    createStaffRoleAssignment(context, 'st8', roles['st8']!, scopeGrantsForRole(context, roles['st8']!)),
+    createStaffRoleAssignment(context, 'st5', roles['st5']!, scopeGrantsForRole(context, roles['st5']!)),
     createStaffRoleAssignment(context, 'st6', 'role-educator', schoolDisciplineAndAttendanceGrants),
     createStaffRoleAssignment(context, 'st7', roles['st7']!, schoolDisciplineAndAttendanceGrants),
   ]

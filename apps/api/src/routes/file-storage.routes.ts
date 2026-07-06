@@ -8,6 +8,7 @@ import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import {
   allowsPublicInlineAttachmentContent,
   assertUploadPolicyAllowed,
+  attachmentReadModule,
   Attachment,
   AttachmentOwnerKind,
   AttachmentStatus,
@@ -231,12 +232,14 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
 
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
-    await permissionAction(Permission.ATTACHMENT_READ)(actor);
+    await attachmentReadModule()(actor);
 
     const attachment = await c.var.schoolApp.repositories.attachments.findById(attachmentId);
     if (!attachment || attachment.schoolId !== actor.schoolId) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
+
+    await c.var.schoolApp.forActor(actor).baseService.authorizationPolicy.checkAttachmentAccess([attachment]);
 
     if (!attachment.storageKey) {
       if (attachment.fileUrl) {
@@ -344,10 +347,11 @@ export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> 
       if (!actor) {
         return unauthorizedResponse(c);
       }
-      await permissionAction(Permission.ATTACHMENT_READ)(actor);
+      await attachmentReadModule()(actor);
       if (attachment.schoolId !== actor.schoolId) {
         return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
       }
+      await c.var.schoolApp.forActor(actor).baseService.authorizationPolicy.checkAttachmentAccess([attachment]);
     }
 
     if (!attachment.storageKey) {

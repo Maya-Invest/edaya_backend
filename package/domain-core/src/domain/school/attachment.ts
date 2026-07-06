@@ -1,7 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityReadAuthorization } from '../../application/entities/managed-entity-service'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import {
+  attachmentReadModule,
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  permissionAction,
+  read,
+  write,
+} from '../../application/entities/entity-config'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { resolveAttendanceRecordSchoolId } from '../scheduling/attendance-record-school'
@@ -87,19 +97,25 @@ export class Attachment {
   get createdAt() { return this.data.createdAt }
 }
 
-export const attachmentConfig: EntityConfigFactory<Attachment> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.attachments,
-    Permission.ATTACHMENT_READ,
-    Permission.ATTACHMENT_CONFIGURE,
-  )
-  return {
-    ...config,
+export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess: EntityReadAuthorization<Attachment>['checkAccess'] = async (actor, entities) => {
+    await policy.checkAttachmentAccess(actor, entities)
+  }
+
+  return config({
+    repository: repositories.attachments,
+    tenant: directSchoolTenant(),
+    read: read(attachmentReadModule(), readAccess),
+    write: write(
+      permissionAction(Permission.ATTACHMENT_CONFIGURE),
+      authorizeExistingById(readAccess),
+      authorizeDeleteByReadAccess(readAccess),
+    ),
     gates: {
       preSave: validateAttachmentSave,
     },
-  }
+    atomicExecution,
+  })
 }
 
 export async function validateAttachmentSave(

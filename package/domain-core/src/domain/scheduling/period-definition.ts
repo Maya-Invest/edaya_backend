@@ -1,6 +1,6 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
+import { directPermissionEntityConfig, workspaceReadModule } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
 import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
@@ -59,10 +59,13 @@ export class PeriodDefinition {
   }
 }
 
-export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = input =>
-  directPermissionEntityConfig(
+export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = (input) => {
+  const config = directPermissionEntityConfig(
     input,
     input.repositories.periodDefinitions,
     Permission.QUERY_WORKSPACE_READ,
     Permission.SCHOOL_STRUCTURE_CONFIGURE,
   )
+  config.read.checkModule = workspaceReadModule()
+  return config
+}

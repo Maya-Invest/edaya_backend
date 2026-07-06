@@ -1,3 +1,4 @@
+export * from './attachment'
 export * from './academic'
 export * from './finance'
 export * from './scheduling'

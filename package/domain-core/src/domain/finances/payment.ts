@@ -3,7 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, config, dateTime, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, write } from '../../application/entities/entity-config'
+import { unique } from '../../application/entities/entity-config/helper-utils'
 import { denyResourceAccess, Permission } from '../../capabilities/authorization'
 import { AttachmentOwnerKind, FeeStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
@@ -119,7 +120,13 @@ export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, poli
   config({
     repository: repositories.payments,
     tenant: paymentTenant(),
-    read: read(permissionAction(Permission.PAYMENT_READ), noopReadAccess),
+    read: read(
+      permissionAction(Permission.PAYMENT_READ),
+      async (actor, entities) => {
+        const studentFeeIds = unique(entities.map(entity => entity.studentFeeId))
+        await policy.checkStudentFeeAccess(actor, studentFeeIds)
+      },
+    ),
     write: write(
       anyPermissionAction([Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE]),
       authorizePayment(policy),

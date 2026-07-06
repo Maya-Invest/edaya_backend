@@ -301,6 +301,16 @@ export function reportCardReadModule(): (actor: ActorMetadata) => void {
   }
 }
 
+export function attachmentReadModule(): (actor: ActorMetadata) => void {
+  return (actor) => {
+    if (actor.kind === 'teacher') {
+      teacherWithAssignmentAction()(actor)
+      return
+    }
+    permissionAction(Permission.ATTACHMENT_READ)(actor)
+  }
+}
+
 export function workspaceReadModule(): (actor: ActorMetadata) => void {
   return (actor) => {
     if (actor.kind === 'teacher') {

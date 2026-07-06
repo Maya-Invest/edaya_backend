@@ -3,6 +3,7 @@ import type { AuthorizationPolicy, RepositoryAuthorizationPolicyArgs } from './t
 import {
   checkActivitySessionAccess,
   checkAssessmentAccess,
+  checkAttachmentAccess,
   checkAttendanceRecordAccess,
   checkClassGroupAccess,
   checkFeeAccess,
@@ -45,6 +46,7 @@ export function createRepositoryAuthorizationPolicy(
     checkLessonSessionAccess: (actor, lessonSessionIds) => checkLessonSessionAccess(actor, lessonSessionIds, repositories),
     checkActivitySessionAccess: (actor, activitySessionIds) => checkActivitySessionAccess(actor, activitySessionIds, repositories),
     checkAttendanceRecordAccess: (actor, records) => checkAttendanceRecordAccess(actor, records, repositories),
+    checkAttachmentAccess: (actor, attachments) => checkAttachmentAccess(actor, attachments, repositories),
     getRepositories: () => repositories,
   }
 }

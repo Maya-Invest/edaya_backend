@@ -27,6 +27,7 @@ const directDeleteGateExceptions = new Set([
   'access/account-invitation.ts',
   'messaging/message-delivery.ts',
   'messaging/school-notification-templates.ts',
+  'school/attachment.ts',
   'school/grade-scale.ts',
   'school/school.ts',
 ])

@@ -13,6 +13,7 @@ import {
   checkLessonSessionAccess as checkSchedulingLessonSessionAccess,
 } from '../../../src/capabilities/authorization/policy/resolvers/scheduling'
 import { AttendanceRecord, AttendanceStatus, StaffPermissionAssignment, StudentClassEnrollmentStatus } from '../../../src/domain'
+import { AttachmentOwnerKind } from '../../../src/domain/school/attachment'
 import { portalScopeForGuardian, portalScopeForStudent, TEST_ROLE_PERMISSIONS } from '../../support/effective-grants'
 
 const TEST_ELEVATED_ROLES = new Set<TestRole>(['admin', 'principal'])
@@ -276,7 +277,17 @@ function createRepos(
       save: mock(async () => {}),
     },
     studentFees: {
-      findByIds: mock(async (ids: string[]) => ids.map(id => ({ id, studentId: 'student-1' }))),
+      findByIds: mock(async (ids: string[]) => ids.map(id => ({
+        id,
+        studentId: id === 'student-fee-1' ? 'student-1' : 'student-2',
+        feeId: 'fee-1',
+      }))),
+      list: mock(async (filter: { feeId?: string } = {}) => {
+        if (filter.feeId === 'fee-1') {
+          return [{ id: 'student-fee-1', studentId: 'student-1', feeId: 'fee-1' }]
+        }
+        return []
+      }),
     },
     studentNotes: {
       findById: mock(async (id: string) => id === 'note-1' ? { id, studentId: 'student-1' } : undefined),
@@ -385,14 +396,50 @@ describe('createRepositoryAuthorizationPolicy', () => {
       .checkStudentAccess(accountantActor, ['student-1'])
     await policy.checkStudentFeeAccess(studentActor(), ['student-fee-1'])
     await policy.checkStudentFeeAccess(guardianActor(), ['student-fee-1'])
+    await policy.checkFeeAccess(studentActor(), ['fee-1'])
+    await policy.checkFeeAccess(guardianActor(), ['fee-1'])
 
     const reposCoordinator2 = createRepos({}, ['coordinator'])
     await createRepositoryAuthorizationPolicy({ repositories: reposCoordinator2 })
       .checkStudentFeeAccess(await staffActor(['coordinator'], reposCoordinator2), ['student-fee-1'])
 
-    await expectForbidden(policy.checkFeeAccess(studentActor(), ['fee-1']))
+    await expectForbidden(policy.checkFeeAccess(studentActor('student-2'), ['fee-1']))
     await expectForbidden(policy.checkStudentFeeAccess(studentActor('student-2'), ['student-fee-1']))
     await expectForbidden(policy.checkStudentFeeAccess(guardianActor('guardian-2', 'student-2'), ['student-fee-1']))
+    await expectForbidden(policy.checkFeeAccess(guardianActor('guardian-2', 'student-2'), ['fee-1']))
+  })
+
+  test('resolves attachment access through owner relationships for portal actors', async () => {
+    const repos = createRepos({
+      payments: {
+        findById: mock(async (id: string) => id === 'payment-1'
+          ? { id, studentFeeId: 'student-fee-1' }
+          : undefined),
+      },
+    } as Partial<SchoolRepositories>)
+    const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
+
+    await policy.checkAttachmentAccess(guardianActor(), [{
+      ownerKind: AttachmentOwnerKind.Student,
+      ownerId: 'student-1',
+    }])
+    await policy.checkAttachmentAccess(guardianActor(), [{
+      ownerKind: AttachmentOwnerKind.Payment,
+      ownerId: 'payment-1',
+    }])
+    await policy.checkAttachmentAccess(studentActor(), [{
+      ownerKind: AttachmentOwnerKind.ReportCard,
+      ownerId: 'result-1',
+    }])
+
+    await expectForbidden(policy.checkAttachmentAccess(guardianActor('guardian-2', 'student-2'), [{
+      ownerKind: AttachmentOwnerKind.Student,
+      ownerId: 'student-1',
+    }]))
+    await expectForbidden(policy.checkAttachmentAccess(studentActor(), [{
+      ownerKind: AttachmentOwnerKind.Staff,
+      ownerId: 'staff-1',
+    }]))
   })
 
   test('rejects inactive or cross-school staff before role checks', async () => {

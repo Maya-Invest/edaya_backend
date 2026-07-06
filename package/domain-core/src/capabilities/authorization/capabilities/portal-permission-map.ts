@@ -17,6 +17,7 @@ const GUARDIAN_PERMISSION_CAPABILITY_MAP: Partial<Record<Permission, GuardianCap
   [Permission.QUERY_CALENDAR_READ]: GuardianCapability.ReadCalendar,
   [Permission.QUERY_COMMUNICATIONS_READ]: GuardianCapability.ReadCommunications,
   [Permission.QUERY_CLASS_CURRICULUM_READ]: GuardianCapability.ReadCurriculum,
+  [Permission.ATTACHMENT_READ]: GuardianCapability.ReadAttachments,
 }
 
 const STUDENT_PERMISSION_CAPABILITY_MAP: Partial<Record<Permission, StudentCapability>> = {
@@ -33,6 +34,7 @@ const STUDENT_PERMISSION_CAPABILITY_MAP: Partial<Record<Permission, StudentCapab
   [Permission.QUERY_CALENDAR_READ]: StudentCapability.ReadCalendar,
   [Permission.QUERY_COMMUNICATIONS_READ]: StudentCapability.ReadCommunications,
   [Permission.QUERY_CLASS_CURRICULUM_READ]: StudentCapability.ReadCurriculum,
+  [Permission.ATTACHMENT_READ]: StudentCapability.ReadAttachments,
 }
 
 export function guardianCapabilityForPermission(permission: Permission): GuardianCapability | undefined {

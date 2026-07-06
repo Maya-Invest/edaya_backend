@@ -2,7 +2,7 @@ import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from
 import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
 import type { BaseRepositoryInterface } from '../../ports/repositories/base-repository'
 import { z } from 'zod'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../application/entities/entity-config'
+import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, workspaceReadModule, write } from '../../application/entities/entity-config'
 import { Permission } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -67,8 +67,16 @@ export class School {
   }
 }
 
-export const schoolConfig: EntityConfigFactory<School> = input =>
-  schoolEntityConfig(input, input.repositories.schools, Permission.QUERY_WORKSPACE_READ, Permission.SCHOOL_LIFECYCLE_MANAGE)
+export const schoolConfig: EntityConfigFactory<School> = (input) => {
+  const managedConfig = schoolEntityConfig(
+    input,
+    input.repositories.schools,
+    Permission.QUERY_WORKSPACE_READ,
+    Permission.SCHOOL_LIFECYCLE_MANAGE,
+  )
+  managedConfig.read.checkModule = workspaceReadModule()
+  return managedConfig
+}
 
 export function schoolEntityTenant<T extends EntityWithId>(): EntityTenantResolver<T> {
   return {

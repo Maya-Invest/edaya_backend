@@ -13,6 +13,7 @@ export enum GuardianCapability {
   ReadCommunications = 'ReadCommunications',
   ReadCurriculum = 'ReadCurriculum',
   ReadWorkspaceShell = 'ReadWorkspaceShell',
+  ReadAttachments = 'ReadAttachments',
 }
 
 export const ALL_GUARDIAN_CAPABILITIES: readonly GuardianCapability[] = Object.freeze(

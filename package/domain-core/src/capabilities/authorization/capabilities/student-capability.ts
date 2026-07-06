@@ -12,6 +12,7 @@ export enum StudentCapability {
   ReadCommunications = 'ReadCommunications',
   ReadCurriculum = 'ReadCurriculum',
   ReadWorkspaceShell = 'ReadWorkspaceShell',
+  ReadAttachments = 'ReadAttachments',
 }
 
 export const ALL_STUDENT_CAPABILITIES: readonly StudentCapability[] = Object.freeze(
