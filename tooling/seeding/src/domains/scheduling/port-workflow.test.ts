@@ -57,8 +57,7 @@ describe('scheduling seed port workflow', () => {
       slots.filter(slot => slot.resourceId).length,
     )
     expect(progress).toHaveLength(
-      (demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
-      + (demoDataset.extensions?.schedulingSessionProgressAnchors?.length ?? 0),
+      demoDataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0,
     )
   })
 

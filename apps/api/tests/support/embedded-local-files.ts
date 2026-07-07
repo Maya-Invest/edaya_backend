@@ -1,3 +1,4 @@
+/* eslint-disable node/no-process-env -- test harness syncs LOCAL_FILES_URL for embedded server */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -19,7 +20,8 @@ export function syncProcessEnvLocalFilesUrl(baseUrl: string): () => void {
   return () => {
     if (previous === undefined) {
       delete process.env.LOCAL_FILES_URL;
-    } else {
+    }
+    else {
       process.env.LOCAL_FILES_URL = previous;
     }
   };

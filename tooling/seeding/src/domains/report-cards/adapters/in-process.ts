@@ -1,6 +1,5 @@
 import type { SeedApplication } from '../../../support/types'
 import type { ReportCardsSeedPort } from '../port'
-import { ReportCardResult } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -32,30 +31,10 @@ export function createInProcessReportCardsSeedPort(
       }),
     saveReportCardTeacherComment: record =>
       withSeedPortError('reportCards.saveReportCardTeacherComment', async () => {
-        const existing = await service.entities.results.findById(record.id)
-        if (!existing) {
-          throw new Error(`Report card result ${record.id} was not found`)
-        }
-        await service.entities.results.save(new ReportCardResult({
-          id: existing.id,
-          reportCardDefinitionId: existing.reportCardDefinitionId,
-          studentId: existing.studentId,
-          classGroupId: existing.classGroupId,
-          periodId: existing.periodId,
-          sectionResults: [...existing.sectionResults],
-          attendanceSummary: existing.attendanceSummary,
-          assessmentResultCount: existing.assessmentResultCount,
-          overallAverage: existing.overallAverage,
-          rank: existing.rank,
-          classSize: existing.classSize,
-          passThreshold: existing.passThreshold,
+        await service.assessmentsWorkflow.writeHomeroomReportComment({
+          id: record.id,
           teacherComment: record.teacherComment,
-          principalComment: existing.principalComment,
-          status: existing.status,
-          generatedAt: existing.generatedAt,
-          publishedAt: existing.publishedAt,
-          aggregation: existing.aggregation,
-        }), { moduleChecked: true })
+        })
       }),
     publishReportCardResult: record =>
       withSeedPortError('reportCards.publishReportCardResult', async () => {

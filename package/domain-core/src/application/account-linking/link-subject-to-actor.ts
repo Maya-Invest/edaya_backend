@@ -9,8 +9,8 @@ import {
   scheduleNotificationRecipientRemove,
   scheduleNotificationRecipientUpsert,
 } from '../../capabilities/notifications'
-import { MessageDeliveryRecipientKind } from '../../domain/messaging/message-delivery'
 import { Guardian as GuardianEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '../../domain'
+import { MessageDeliveryRecipientKind } from '../../domain/messaging/message-delivery'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 
 export interface LinkSubjectToActorInput {

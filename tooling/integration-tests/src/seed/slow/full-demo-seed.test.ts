@@ -2,6 +2,7 @@ import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  DEV_AUTH_TEACHER_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
@@ -60,7 +61,7 @@ describe('runHttpDevSeeds', () => {
 
     expect(results.authProvision?.status).toBe('seeded')
     expect(results.authProvision?.accounts.length)
-      .toBe(DEV_AUTH_STAFF_ACCOUNTS.length + DEV_AUTH_GUARDIAN_ACCOUNTS.length)
+      .toBe(DEV_AUTH_STAFF_ACCOUNTS.length + DEV_AUTH_TEACHER_ACCOUNTS.length + DEV_AUTH_GUARDIAN_ACCOUNTS.length)
 
     const signInResponse = await runtime.getAuth().handler(new Request(`${apiPgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
       method: 'POST',

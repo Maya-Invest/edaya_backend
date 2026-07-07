@@ -146,6 +146,6 @@ export const demoCiPendingJustificationRecordIds = [
 ] as const
 
 export const demoCiAttendanceRecords = [
-  ...demoCiAttendanceAbsenceSessions.flatMap(session => session.records),
+  ...(demoCiAttendanceAbsenceSessions as readonly FixtureAttendanceSession[]).flatMap(session => session.records),
   ...demoCiTodayAttendanceSession.records,
-] as const satisfies readonly AttendanceRecordInput[]
+] satisfies readonly AttendanceRecordInput[]

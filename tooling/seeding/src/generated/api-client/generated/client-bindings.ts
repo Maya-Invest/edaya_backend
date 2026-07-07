@@ -365,6 +365,11 @@ export const clientBindings = {
         "requestSchemaName": "RelinkActorSubjectCommand",
         "responseSchemaName": "RelinkActorSubjectResponse"
       },
+      "unlinkActorSubject": {
+        "publicName": "unlink-actor-subject",
+        "requestSchemaName": "UnlinkActorSubjectCommand",
+        "responseSchemaName": "UnlinkActorSubjectResponse"
+      },
       "sendAccountInvitation": {
         "publicName": "send-account-invitation",
         "requestSchemaName": "SendAccountInvitationCommand",

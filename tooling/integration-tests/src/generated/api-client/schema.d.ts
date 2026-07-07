@@ -852,6 +852,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/unlink-actor-subject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** unlink-actor-subject */
+        post: operations["commands.unlinkActorSubject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/send-account-invitation": {
         parameters: {
             query?: never;
@@ -10471,6 +10488,29 @@ export interface components {
             studentId?: string;
             teacherId?: string;
         };
+        UnlinkActorSubjectResponse: {
+            /** @enum {string} */
+            kind: "staff";
+            entity: components["schemas"]["StaffMember"];
+        } | {
+            /** @enum {string} */
+            kind: "guardian";
+            entity: components["schemas"]["Guardian"];
+        } | {
+            /** @enum {string} */
+            kind: "student";
+            entity: components["schemas"]["Student"];
+        } | {
+            /** @enum {string} */
+            kind: "teacher";
+            entity: components["schemas"]["Teacher"];
+        };
+        UnlinkActorSubjectCommand: {
+            staffMemberId?: string;
+            guardianId?: string;
+            studentId?: string;
+            teacherId?: string;
+        };
         AccountInvitation: {
             id: string;
             schoolId: string;
@@ -15305,6 +15345,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RelinkActorSubjectResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.unlinkActorSubject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description unlink-actor-subject payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UnlinkActorSubjectCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed unlink-actor-subject */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnlinkActorSubjectResponse"];
                 };
             };
             /** @description Invalid request payload */

@@ -1,5 +1,5 @@
-export * from './attachment'
 export * from './academic'
+export * from './attachment'
 export * from './finance'
 export * from './scheduling'
 export * from './student'

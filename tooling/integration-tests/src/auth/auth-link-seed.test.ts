@@ -4,6 +4,7 @@ import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  DEV_AUTH_TEACHER_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_GUARDIAN_ID,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
@@ -44,7 +45,9 @@ describe('auth link seed port', () => {
     const result = await runDevAuthProvision(auth)
 
     expect(result.status).toBe('seeded')
-    expect(result.accounts.length).toBe(DEV_AUTH_STAFF_ACCOUNTS.length + DEV_AUTH_GUARDIAN_ACCOUNTS.length)
+    expect(result.accounts.length).toBe(
+      DEV_AUTH_STAFF_ACCOUNTS.length + DEV_AUTH_TEACHER_ACCOUNTS.length + DEV_AUTH_GUARDIAN_ACCOUNTS.length,
+    )
 
     const signInResponse = await runtime.getAuth().handler(new Request(`${apiPgliteEnv.BETTER_AUTH_URL}/auth/sign-in/email`, {
       method: 'POST',

@@ -61,8 +61,8 @@ function countUniqueGradeLevelSubjects(dataset: FixtureDataset): number {
 
 function mattersBySubjectId(
   subjectMatters: NonNullable<FixtureDataset['entities']['subjectMatters']>,
-): Map<string, NonNullable<FixtureDataset['entities']['subjectMatters']>> {
-  const grouped = new Map<string, NonNullable<FixtureDataset['entities']['subjectMatters']>>()
+): Map<string, NonNullable<FixtureDataset['entities']['subjectMatters']>[number][]> {
+  const grouped = new Map<string, NonNullable<FixtureDataset['entities']['subjectMatters']>[number][]>()
   for (const matter of subjectMatters) {
     const existing = grouped.get(matter.subjectId) ?? []
     existing.push(matter)

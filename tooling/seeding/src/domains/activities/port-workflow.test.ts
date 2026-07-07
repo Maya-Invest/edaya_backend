@@ -1,3 +1,4 @@
+import type { FixtureDataset } from '@edaya/fixtures'
 import type {
   ActivitiesSeedPort,
   ActivityEnrollmentSeedRecord,
@@ -27,7 +28,7 @@ describe('activities seed port workflow', () => {
     expect(counts).toEqual({
       activities: demoDataset.entities.activities?.length ?? 0,
       activityEnrollments: demoDataset.entities.activityEnrollments?.length ?? 0,
-      classActivityEnrollments: demoDataset.entities.classActivityEnrollments?.length ?? 0,
+      classActivityEnrollments: (demoDataset.entities as FixtureDataset['entities']).classActivityEnrollments?.length ?? 0,
     })
     expect(activities.map(record => record.category)).toContain(ActivityCategory.Science)
     expect(activities[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)

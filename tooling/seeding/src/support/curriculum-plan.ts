@@ -26,8 +26,8 @@ export function classSubjectMatterSeedId(classSubjectId: string, subjectMatterId
 
 function mattersBySubjectId(
   subjectMatters: NonNullable<FixtureDatasetEntities['subjectMatters']>,
-): Map<string, NonNullable<FixtureDatasetEntities['subjectMatters']>> {
-  const grouped = new Map<string, NonNullable<FixtureDatasetEntities['subjectMatters']>>()
+): Map<string, NonNullable<FixtureDatasetEntities['subjectMatters']>[number][]> {
+  const grouped = new Map<string, NonNullable<FixtureDatasetEntities['subjectMatters']>[number][]>()
   for (const matter of [...subjectMatters].sort((left, right) => {
     const order = left.sequenceOrder - right.sequenceOrder
     if (order !== 0) {

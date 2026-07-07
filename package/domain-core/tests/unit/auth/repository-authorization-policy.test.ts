@@ -416,7 +416,7 @@ describe('createRepositoryAuthorizationPolicy', () => {
           ? { id, studentFeeId: 'student-fee-1' }
           : undefined),
       },
-    } as Partial<SchoolRepositories>)
+    } as unknown as Partial<SchoolRepositories>)
     const policy = createRepositoryAuthorizationPolicy({ repositories: repos })
 
     await policy.checkAttachmentAccess(guardianActor(), [{

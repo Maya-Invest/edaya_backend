@@ -7,7 +7,6 @@ import {
   AuthorizationError,
   createGuardianActorMetadata,
   createStudentActorMetadata,
-  createTeacherActorMetadata,
   effectiveGrantsForActor,
   GuardianCapability,
   Permission,
