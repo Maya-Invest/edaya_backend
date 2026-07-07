@@ -49,15 +49,6 @@ export const COORDINATOR_PERMISSIONS: readonly Permission[] = [
   Permission.TIMETABLE_CREATE,
 ]
 
-/** @deprecated Staff teachers onboard via `Teacher` entity; retained for legacy seeds/tests until Fold F. */
-export const TEACHER_PERMISSIONS: readonly Permission[] = [
-  Permission.CLASS_LOGBOOK_CREATE,
-  Permission.ATTENDANCE_RECORD,
-  Permission.DISCIPLINE_CREATE,
-  Permission.GRADE_INPUT,
-  Permission.CLASS_LOGBOOK_UPDATE,
-]
-
 export const ACCOUNTANT_PERMISSIONS: readonly Permission[] = [
   Permission.PAYMENT_RECORD,
   Permission.PAYMENT_READ,

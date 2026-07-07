@@ -1,16 +1,32 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { AuthLinkSeedPort } from '../auth-link/port'
 import type { CommunicationsSeedPort } from './port'
-import { MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
+import { AnnouncementTargetKind, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 import { seedDateAndMinute } from './workflow'
 
 function resolveInboxProbeAnnouncement(dataset: FixtureDataset) {
   const announcements = dataset.entities.announcements ?? []
+  const targets = dataset.entities.announcementTargets ?? []
+
+  const allGuardiansTarget = targets.find(
+    target => target.targetKind === AnnouncementTargetKind.AllGuardians,
+  )
+  if (allGuardiansTarget) {
+    const match = announcements.find(
+      announcement => announcement.id === allGuardiansTarget.announcementId,
+    )
+    if (match) {
+      return match
+    }
+  }
+
   const match = announcements.find(announcement =>
     announcement.title.includes('Réunion parents-professeurs'),
   )
   if (!match) {
-    throw new Error('Guardian inbox probe seed requires a parent-meeting announcement in the dataset')
+    throw new Error(
+      'Guardian inbox probe seed requires an AllGuardians announcement or parent-meeting announcement in the dataset',
+    )
   }
   return match
 }
@@ -19,6 +35,8 @@ function resolveInboxProbeAnnouncement(dataset: FixtureDataset) {
  * Records unread inbox deliveries keyed to each auth-linked guardian's current subjectId.
  * Fixture deliveries use placeholder `subject-${guardianId}` ids; auth linking replaces the
  * guardian subject before mobile integration tests query the inbox.
+ *
+ * Uses the school-wide guardians announcement when present so every linked guardian is eligible.
  */
 export async function seedAuthLinkedGuardianInboxProbes(
   communicationsPort: CommunicationsSeedPort,

@@ -1,7 +1,6 @@
 export * from './actor-grant-checks'
 export * from './effective-grants-for-actor'
 export * from './enrollment-scope'
-export * from './legacy-scope-grants-from-scope-ids'
 export * from './scope-grant-covers'
 export * from './staff-assignment-scope'
 export * from './system-role-permissions'

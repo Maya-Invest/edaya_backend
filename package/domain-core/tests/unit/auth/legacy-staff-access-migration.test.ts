@@ -9,14 +9,14 @@ describe('legacy staff access migration', () => {
   test('expands role permissions with tenant-wide defaults and explicit scope grants', () => {
     const rows = expandLegacyStaffAccessToPermissionRows({
       accessRoles: [{
-        id: 'role-teacher',
+        id: 'role-dev-sample',
         permissions: [Permission.GRADE_READ, Permission.GRADE_INPUT, Permission.PAYMENT_READ],
       }],
       roleAssignments: [{
         staffId: 'staff-1',
         schoolId: 'school-1',
         academicYearId: 'year-1',
-        roleIds: ['role-teacher'],
+        roleIds: ['role-dev-sample'],
         scopeGrants: [{
           permission: Permission.GRADE_INPUT,
           scopeType: 'class_group',

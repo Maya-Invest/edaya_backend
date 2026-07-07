@@ -3,8 +3,16 @@ import {
   ACCOUNTANT_PERMISSIONS,
   COORDINATOR_PERMISSIONS,
   Permission,
-  TEACHER_PERMISSIONS,
 } from '@edaya/core'
+
+/** Staff teaching-write permissions used in auth test fixtures. */
+const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.DISCIPLINE_CREATE,
+  Permission.GRADE_INPUT,
+  Permission.CLASS_LOGBOOK_UPDATE,
+]
 
 export type TestRole = 'admin' | 'principal' | 'teacher' | 'accountant' | 'counselor' | 'coordinator' | 'supervisor'
 
@@ -13,7 +21,7 @@ export const TEST_ROLE_PERMISSIONS: Record<TestRole, readonly Permission[]> = {
   principal: Object.values(Permission).filter(p => p !== Permission.PLATFORM_REGISTER_SCHOOL),
   coordinator: COORDINATOR_PERMISSIONS,
   accountant: ACCOUNTANT_PERMISSIONS,
-  teacher: TEACHER_PERMISSIONS,
+  teacher: STAFF_TEACHING_WRITE_TEST_PERMISSIONS,
   counselor: [],
   supervisor: [],
 }

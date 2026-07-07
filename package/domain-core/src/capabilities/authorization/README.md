@@ -133,8 +133,8 @@ Helpers: `parseScopeIds` / `serializeScopeIds`, `scopePathCovers`, `resolveResou
 ```ts
 interface EffectiveGrants {
   permissions: ReadonlySet<Permission>
-  scopeGrants: readonly ScopeGrant[] // legacy API shape
-  scopeIdsByPermission?: Partial<Record<Permission, string>> // merged paths per permission
+  scopeGrants: readonly ScopeGrant[] // legacy API pass-through (empty for staff); do not derive from scopeIdsByPermission
+  scopeIdsByPermission?: Partial<Record<Permission, string>> // merged paths per permission — staff/web/mobile clients
   isElevated: boolean // school owner / elevated service account
   expiresAt?: Date // earliest assignment expiry; bounds API cache TTL
 }

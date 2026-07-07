@@ -6,8 +6,6 @@ import {
   ALL_TEACHING_CAPABILITIES,
   effectiveGrantsForActor,
   isInteractiveActor,
-  legacyScopeGrantsFromScopeIdsByPermission,
-  mergeScopeGrants,
 } from "@edaya/core";
 
 export interface SerializedEffectiveGrants {
@@ -43,14 +41,9 @@ function serializeScopeIdsByPermission(
 }
 
 export function serializeEffectiveGrants(grants: EffectiveGrants): SerializedEffectiveGrants {
-  const scopeGrants = mergeScopeGrants([
-    ...grants.scopeGrants,
-    ...legacyScopeGrantsFromScopeIdsByPermission(grants.scopeIdsByPermission),
-  ]);
-
   return {
     permissions: [...grants.permissions],
-    scopeGrants: scopeGrants.map(({ permission, scopeType, scopeEntityIds }) => ({
+    scopeGrants: grants.scopeGrants.map(({ permission, scopeType, scopeEntityIds }) => ({
       permission,
       scopeType,
       scopeEntityIds: [...scopeEntityIds],

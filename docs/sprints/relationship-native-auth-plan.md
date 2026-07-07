@@ -1,11 +1,11 @@
 # Relationship-Native Authorization — Sprint Plan
 
-> **Status:** Fold F complete; enforcement unified via [authorization-operations-plan.md](./authorization-operations-plan.md) (G0–G6 ✅)  
+> **Status:** Fold F complete; enforcement unified via [authorization-operations-plan.md](./authorization-operations-plan.md) (G0–G7 + G6b ✅)  
 > **Created:** 2026-07-05  
 > **Last updated:** 2026-07-07  
 > **Scope:** Multi-profile auth, relationship scopes for portal actors (teacher, guardian, student), staff-only permission catalog  
 > **Out of scope:** Step-up assurance product, distributed grants cache, per-school custom capability catalogs, webapp teacher UI  
-> **Related:** [authorization-model-simplification-plan.md](./authorization-model-simplification-plan.md), [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-operations-plan.md](./authorization-operations-plan.md) (enforcement follow-up — ✅ G0–G6 complete)
+> **Related:** [authorization-model-simplification-plan.md](./authorization-model-simplification-plan.md), [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-operations-plan.md](./authorization-operations-plan.md) (enforcement follow-up — ✅ G0–G7 + G6b complete)
 
 This plan replaces the current **portal-permission synthesis** model (`GUARDIAN_PORTAL_PERMISSIONS` → `EffectiveGrants` → `authorize()`) and **teacher-as-staff** model (`StaffAssignment` sync → `StaffPermissionAssignment`) with **relationship-native scopes** and a **staff-only** `Permission` catalog.
 
@@ -198,20 +198,16 @@ assertHomeroomCapability(actor, HomeroomCapability.RecordDailyAttendance, { clas
 ### Entity gate pattern
 
 ```typescript
-async function gateReadGrades(actor, studentId) {
-  switch (actor.kind) {
-    case 'staff':
-      await permissionAction(Permission.GRADE_READ)(actor)
-      return checkStudentAccess(actor, [studentId])
-    case 'teacher':
-      return assertTeachingOrHomeroomReadGrades(actor, { studentId, classSubjectId })
-    case 'guardian':
-      return assertGuardianCapability(actor, GuardianCapability.ReadGrades, { studentId })
-    case 'student':
-      return assertStudentCapability(actor, StudentCapability.ReadGrades)
-  }
-}
+// Representative entity read config — one operation id, policy strategies per actor kind
+read: read(
+  operationModule(GradeOperations.read),
+  readByIds(async (actor, studentIds) => {
+    await authorizationPolicy.checkStudentAccess(actor, studentIds)
+  }),
+),
 ```
+
+(`operationModule` resolves staff permissions vs portal capabilities internally; no `actor.kind` switch in entity configs.)
 
 ---
 
@@ -570,7 +566,7 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 | Sub-phase | Deliverables |
 |-----------|--------------|
 | **E1** | Teaching write permissions → `class_group` scope; staff assignment sync rules; update grant tests | ✅ Done |
-| **E2** | Remove `Professeur` staff invite preset; deprecate `TEACHER_PERMISSIONS`; onboarding uses `AccountInvitationKind.Teacher` | ✅ Done (preset removed; dev seeds retain `role-teacher` until F) |
+| **E2** | Remove `Professeur` staff invite preset; remove `TEACHER_PERMISSIONS` and `role-teacher` dev seed preset; onboarding uses `AccountInvitationKind.Teacher` | ✅ Done |
 | **E3** | Delete `buildPortalScopeIdsByPermission` + legacy portal grant helpers; shrink `permission-sets.ts` | ✅ Done |
 
 ### Catalog changes
@@ -590,10 +586,10 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 
 ### Delete / shrink
 
-- `TEACHER_PERMISSIONS` staff constant (or staff-coordinator-only if retained)
-- Teacher rows in staff permission seed paths
-- `buildPortalScopeIdsByPermission` entirely if no callers remain
-- Portal permission tests replaced by capability parity tests
+- [x] `TEACHER_PERMISSIONS` staff constant removed (test fixtures use local permission lists)
+- [x] `role-teacher` dev access preset removed; no staff assigned that role in fixtures
+- [x] `buildPortalScopeIdsByPermission` removed
+- [x] Portal permission tests replaced by capability parity tests
 
 ### Acceptance
 
@@ -601,7 +597,7 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 - [x] `Professeur` removed from staff invite presets; teacher onboarding via `AccountInvitationKind.Teacher`
 - [x] No code path synthesizes `Permission` grants for teacher, guardian, or student
 - [x] Staff `GRADE_INPUT` on `class-7a` covers all subjects in 7A
-- [ ] `bun repo verify` green
+- [x] `bun repo verify` green
 
 ---
 
@@ -634,6 +630,7 @@ Coordinators with `GRADE_INPUT` at `class_group` scope use the **staff permissio
 - [x] Staff: class_group scoped teaching unchanged (`fold-f-parity.test.ts`, `staff-assignment-permission-sync.test.ts`)
 - [x] Integration: session middleware resolves all four kinds (`test-session-middleware-resolves-actors.test.ts`)
 - [x] HTTP seed catalog includes `teachers` and `teacherAssignments` bindings (`catalog.test.ts`)
+- [x] Effective-grants API: clients use `scopeIdsByPermission` + portal `scope`/`capabilities`; `scopeGrants` derivation bridge removed (G6b)
 
 ---
 
@@ -686,7 +683,7 @@ Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows 
 | Missed guardian gate during C | Parity test matrix; grep `permissionAction` + guardian |
 | Teacher write gates incomplete in D | List all teaching entities upfront; integration tests per capability |
 | Dual-path gate drift | Shared `gateTeachingAccess(actor, capability, target)` helper |
-| Mobile breakage on `/me/permissions` | Ship `/me/capabilities` + `/me/scope` first; deprecate old shape |
+| Mobile breakage on grant shape | Portal actors use `/me` `scope` + `capabilities`; staff/web use `scopeIdsByPermission`; `scopeGrants` no longer derived for mobile |
 | Coordinator+teacher confusion | HR UI shows both records; each app uses its kind |
 | Homeroom vs subject capability overlap | Split enums; gate picks path from resource anchor (session vs class) |
 | `homeroomStaffId` webapp migration | Assignment query for prof principal display; deprecate staff picker field when ready |
@@ -695,7 +692,8 @@ Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows 
 
 ## 7. References
 
-- Current portal synthesis: `resolution/resolve-portal-grants.ts`, `grants/portal-permission-sets.ts`
-- Current session actor: `apps/api/src/http/dependencies/session-actor.ts`
+- Session actor resolution: `apps/api/src/http/dependencies/session-actor.ts`
+- Effective grants serialization: `apps/api/src/lib/authorization/serialize-grants.ts`
 - Subject linking: `application/account-linking/link-subject-to-actor.ts`
 - Staff assignment sync: `capabilities/authorization/sync/staff-assignment-permission-sync.ts`
+- Deprecation cleanup log: [authorization-operations-plan.md](./authorization-operations-plan.md) Fold G6b

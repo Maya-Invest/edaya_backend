@@ -18,10 +18,18 @@ import {
   DEV_AUTH_STAFF_ACCOUNTS,
 } from "@edaya/fixtures/meta/dev-auth-fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import { Permission, TEACHER_PERMISSIONS } from "@edaya/core";
+import { Permission } from "@edaya/core";
+
+const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.DISCIPLINE_CREATE,
+  Permission.GRADE_INPUT,
+  Permission.CLASS_LOGBOOK_UPDATE,
+];
 
 function teacherClassSubjectAssignments() {
-  return TEACHER_PERMISSIONS.map(permission => ({
+  return STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map(permission => ({
     permission,
     scopeIds: "6a",
     academicYearId: TEST_ACADEMIC_YEAR_ID,
@@ -224,7 +232,7 @@ describe("service account routes", () => {
     const teacherStaffId = staffAccount.staffId;
     await grantServiceAccountCreate(application, teacherStaffId, [
       Permission.SERVICE_ACCOUNT_CREATE,
-      ...TEACHER_PERMISSIONS,
+      ...STAFF_TEACHING_WRITE_TEST_PERMISSIONS,
     ], "6a");
 
     const cookies = await signInThroughApp(app, {

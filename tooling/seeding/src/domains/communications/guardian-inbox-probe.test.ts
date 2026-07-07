@@ -45,7 +45,7 @@ describe('seedAuthLinkedGuardianInboxProbes', () => {
       recipientId: 'ci-g1',
       recipientKind: MessageDeliveryRecipientKind.Guardian,
       status: MessageDeliveryStatus.Sent,
-      announcementId: 'ci-ann-parent-meeting',
+      announcementId: 'ci-ann-rentree',
     })
     expect(deliveries[0]?.readAt).toBeUndefined()
   })

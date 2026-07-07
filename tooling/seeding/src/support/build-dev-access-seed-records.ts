@@ -9,7 +9,6 @@ import {
   COORDINATOR_PERMISSIONS,
   ELEVATED_STAFF_PERMISSIONS,
   Permission,
-  TEACHER_PERMISSIONS,
 } from '@edaya/core'
 
 /** Permissions that require explicit scope entity ids when materialized from role templates. */
@@ -134,24 +133,6 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
 
 function buildAccessRoleRecords(schoolId: string): readonly AccessRolePresetRecord[] {
   return [
-    {
-      id: 'role-teacher',
-      schoolId,
-      name: 'Teacher',
-      permissions: mergePermissions(
-        TEACHER_PERMISSIONS,
-        [Permission.GRADE_READ],
-        DEV_WEBAPP_SHELL_READ_PERMISSIONS,
-        DEV_WEBAPP_PEOPLE_READ_PERMISSIONS,
-        DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS,
-        DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS,
-        DEV_WEBAPP_CALENDAR_READ_PERMISSIONS,
-        DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS,
-        DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS,
-        DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
-        DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
-      ),
-    },
     {
       id: 'role-coordinator',
       schoolId,

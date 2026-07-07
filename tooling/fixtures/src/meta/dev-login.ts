@@ -16,7 +16,6 @@ const ACCESS_ROLE_TO_DEMO_ROLE: Record<string, DevDemoLoginRole> = {
   'role-director': 'directeur',
   'role-coordinator': 'prof_principal',
   'role-educator': 'educateur',
-  'role-teacher': 'professeur',
 }
 
 const DEMO_ROLE_DISPLAY_ORDER: Record<DevDemoLoginRole, number> = {
@@ -55,19 +54,11 @@ export function resolveDevDemoStaffRole(
 
 export function buildDevDemoLoginAccounts(): DevDemoLoginAccount[] {
   const context = resolveDevSeedContext()
-  let teacherAccountIncluded = false
 
   const accounts = context.staffAccounts.flatMap((account) => {
     const { role, accessRoleId } = resolveDevDemoStaffRole(account.staffId, context)
     if (!accessRoleId) {
       return []
-    }
-
-    if (accessRoleId === 'role-teacher') {
-      if (teacherAccountIncluded) {
-        return []
-      }
-      teacherAccountIncluded = true
     }
 
     return [{

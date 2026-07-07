@@ -208,19 +208,6 @@ export async function readLocalDevStoredObject(
   return stored;
 }
 
-/** @deprecated Use {@link readLocalDevStoredObject} */
-export function readLocalDevMemoryObject(
-  fileStorage: FileStoragePort,
-  storageKey: string,
-): LocalDevStoredObject | null {
-  const memoryStorage = fileStorage as ReturnType<typeof createInMemoryFileStorage>;
-  const stored = memoryStorage.objects?.get(storageKey);
-  if (!stored) {
-    return null;
-  }
-  return stored;
-}
-
 export async function localDevFileStorageHasObjects(persistDir: string): Promise<boolean> {
   try {
     const entries = await readdir(persistDir, { recursive: true });

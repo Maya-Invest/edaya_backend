@@ -97,16 +97,6 @@ export async function linkSubjectToActor(
   return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: true })
 }
 
-/** @deprecated Use {@link linkSubjectToActor} — link now replaces an existing entity subject when needed. */
-export async function relinkSubjectToActor(
-  baseService: BaseSchoolService,
-  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
-  schoolId: string,
-  input: LinkSubjectToActorInput,
-): Promise<LinkSubjectToActorResult> {
-  return linkSubjectToActor(baseService, repositories, schoolId, input)
-}
-
 export async function unlinkSubjectFromActor(
   baseService: BaseSchoolService,
   repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,

@@ -75,7 +75,7 @@ if (student.schoolId !== classGroup.schoolId)
   denyResourceAccess()
 
 this.checkActorSchool(classGroup.schoolId)
-await permissionAction(Permission.ENROLLMENT_CREATE)(this.baseService.actor)
+await operationModule(EnrollmentOperations.create)(this.baseService.actor)
 await this.baseService.authorizationPolicy.checkStudentAccess(
   this.baseService.actor,
   [student.id],

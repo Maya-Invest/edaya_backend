@@ -1,6 +1,6 @@
 # Authorization Operations — Sprint Plan
 
-> **Status:** G0–G7 complete  
+> **Status:** G0–G7 + G6b complete  
 > **Created:** 2026-07-06  
 > **Last updated:** 2026-07-07  
 > **Scope:** Unified enforcement layer for staff permissions, teacher capabilities, and guardian/student link scopes  
@@ -8,7 +8,7 @@
 > **Out of scope:** Client UI capability pickers, distributed scope cache, per-school custom operation catalogs, assurance product  
 > **Related:** [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-migration-coverage.test.ts](../../package/domain-core/tests/unit/auth/authorization-migration-coverage.test.ts)
 
-Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-Kind`, scope preload). Enforcement still routes three authorization paths through a staff-shaped API (`permissionAction`, ad-hoc `*WriteModule` helpers, and god-function policy resolvers). This plan introduces an **Operation** catalog and **policy strategies** so entity configs and workflows speak one vocabulary while staff, teacher, and link-based portal actors keep their native credentials.
+Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-Kind`, scope preload). Enforcement previously routed three authorization paths through a staff-shaped API (`permissionAction`, ad-hoc `*WriteModule` helpers, and god-function policy resolvers). This plan introduced an **Operation** catalog and **policy strategies** so entity configs and workflows speak one vocabulary while staff, teacher, and link-based portal actors keep their native credentials.
 
 ---
 
@@ -22,7 +22,7 @@ Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-
 | **G3** — Policy strategies (student + class) | ✅ Done | `policy/compose.ts`, `policy/strategies/*`, focused policy tests |
 | **G4** — Remaining operations | ✅ Done | communications, workspace, access-control ops + entity/workflow migrations; legacy read shims removed |
 | **G5** — Entity + workflow sweep | ✅ Done | All entity configs, workflows, school-service queries migrated; `actor.kind` removed from domain |
-| **G6** — Deprecate shims + docs | ✅ Done | `permissionAction` removed; README rewritten; parity tests deleted |
+| **G6** — Deprecate shims + docs | ✅ Done | `permissionAction` removed; README rewritten; parity tests deleted; G6b legacy cleanup |
 | **G7** — Auth cache lifecycle | ✅ Done | Domain hooks + `AuthCacheInvalidationPort`; API dispatch wrapper removed |
 
 **G2 (complete):**
@@ -462,7 +462,7 @@ package/domain-core/src/capabilities/authorization/
     └── hooks.ts
 ```
 
-`application/entities/entity-config/authorization.ts` becomes thin re-exports from `gates/` during migration, then deprecated.
+`application/entities/entity-config/authorization.ts` is a thin re-export surface from `gates/` (migration complete).
 
 ---
 
@@ -697,7 +697,7 @@ flowchart TD
 
 | Task | Action |
 |------|--------|
-| G6.1 | Mark `permissionAction` `@deprecated` → remove after one release |
+| G6.1 | Remove `permissionAction` shims (no deprecation period) | ✅ Done |
 | G6.2 | Update `authorization/README.md` — operations model, corrected design principles |
 | G6.3 | Add “Adding a new operation” section to README (replaces “Adding a new permission” for entity gates) |
 | G6.4 | Link this plan from `relationship-native-auth-plan.md` as enforcement follow-up |
@@ -708,6 +708,27 @@ flowchart TD
 
 - [x] README no longer claims single `authorize()` path for all actors
 - [x] No deprecated shim exports (`permissionAction` removed)
+- [x] Legacy deprecation cleanup complete — see **Fold G6b** below
+
+---
+
+### Fold G6b — Legacy deprecation cleanup (2026-07-07)
+
+Follow-up after G6 removed runtime shims. Removed dead aliases, mis-tagged seed types, staff-teacher constants, and the mobile `scopeGrants` derivation bridge.
+
+| Phase | Scope | Status |
+|-------|--------|--------|
+| **0** | Dead aliases (`relinkSubjectToActor`, `DEFAULT_ACCESS_ROLE_TEMPLATES`, `readLocalDevMemoryObject`, `findDuplicateClassSubjectScopePathIndex`, `cleanup-seed-data.ts`, mobile `sessionId` getter) | ✅ Done |
+| **1** | Remove incorrect `@deprecated` tags on active dev seed types (`AccessRolePresetRecord`, `StaffRoleAssignmentPresetRecord`) | ✅ Done |
+| **2** | Remove `TEACHER_PERMISSIONS`, orphaned `role-teacher` dev seed preset | ✅ Done |
+| **3** | Drop `legacyScopeGrantsFromScopeIdsByPermission`; webapp scoped checks use `scopeIdsByPermission`; mobile client stops parsing `scopeGrants` | ✅ Done |
+| **4** | Docs/articles — replace `permissionAction` examples; close sprint deprecation notes | ✅ Done |
+
+**Acceptance**
+
+- [x] Zero `@deprecated` / `@Deprecated` in application source (`.ts`, `.tsx`, `.dart`, `.svelte`)
+- [x] `legacy-scope-grants-from-scope-ids.ts` deleted; `serialize-grants.ts` passes through internal grants only
+- [x] Webapp `permission-check.ts` uses `scopeIdsByPermission` path matching
 
 ---
 
@@ -955,16 +976,17 @@ bun repo verify
 
 ## 11. Definition of done (epic)
 
-- [ ] All entity configs and workflows use `operationModule` / `anyOperationModule`
-- [ ] Zero `actor.kind` switches in `src/domain/**`
-- [ ] Policy resolvers decomposed into strategies; `compose.ts` sole dispatcher
-- [ ] `permissionAction` and `*WriteModule` helpers removed or deprecated with no call sites
+- [x] All entity configs and workflows use `operationModule` / `anyOperationModule`
+- [x] Zero `actor.kind` switches in `src/domain/**`
+- [x] Policy resolvers decomposed into strategies; `compose.ts` sole dispatcher
+- [x] `permissionAction` and `*WriteModule` helpers removed with no call sites
 - [ ] Operation matrix tests cover every `OperationRef`
 - [ ] Auth unit test LOC reduced ≥25% vs 2026-07-06 baseline
-- [ ] `authorization/README.md` reflects operations model
+- [x] `authorization/README.md` reflects operations model
 - [x] `bun repo verify` green
 - [ ] Portal actors verified per [edaya_web demo-accounts.md](../../../edaya_web/docs/reference/demo-accounts.md) after G5
-- [ ] Auth cache invalidation owned by `authorization/lifecycle/`; API dispatch free of entity-name invalidation switches (G7)
+- [x] Auth cache invalidation owned by `authorization/lifecycle/`; API dispatch free of entity-name invalidation switches (G7)
+- [x] Legacy deprecation cleanup (G6b): no `@deprecated` markers; no `scopeGrants` derivation bridge
 
 ---
 

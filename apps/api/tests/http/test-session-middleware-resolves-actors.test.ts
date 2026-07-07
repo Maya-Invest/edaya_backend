@@ -9,7 +9,15 @@ import { clearActorScopeCache } from "@/lib/authorization/scope-cache/resolve-ca
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { DefaultAuthorizationRepository, TEACHER_PERMISSIONS } from "@edaya/core";
+import { DefaultAuthorizationRepository, Permission } from "@edaya/core";
+
+const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.DISCIPLINE_CREATE,
+  Permission.GRADE_INPUT,
+  Permission.CLASS_LOGBOOK_UPDATE,
+];
 
 describe("session Middleware ActorMetadata Construction", () => {
   const getSession = mock();
@@ -198,7 +206,7 @@ describe("session Middleware ActorMetadata Construction", () => {
         isElevated: false,
         scopeGrants: [],
         scopeIdsByPermission: Object.fromEntries(
-          TEACHER_PERMISSIONS.map(permission => [permission, "class-1"]),
+          STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map(permission => [permission, "class-1"]),
         ),
       },
     });
@@ -778,7 +786,7 @@ function mockAccessControlForStaff(
 ) {
   return {
     staffPermissionAssignments: {
-      list: mock().mockResolvedValue(TEACHER_PERMISSIONS.map((permission, index) => ({
+      list: mock().mockResolvedValue(STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map((permission, index) => ({
         id: `spa-${staffId}-${index}`,
         staffId,
         schoolId,

@@ -71,9 +71,6 @@ export const STAFF_INVITE_PERMISSION_PRESETS: readonly StaffInvitePermissionPres
   },
 ];
 
-/** @deprecated Use STAFF_INVITE_PERMISSION_PRESETS */
-export const DEFAULT_ACCESS_ROLE_TEMPLATES = STAFF_INVITE_PERMISSION_PRESETS;
-
 export function getStaffInvitePermissionPreset(roleId: string): StaffInvitePermissionPreset | undefined {
   return STAFF_INVITE_PERMISSION_PRESETS.find(preset => preset.id === roleId);
 }
