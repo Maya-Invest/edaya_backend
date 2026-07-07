@@ -59,7 +59,7 @@ function gradeLevelSubjectMatterTenant() {
   })
 }
 
-async function validateGradeLevelSubjectMatterSave(
+export async function validateGradeLevelSubjectMatterSave(
   gradeLevelSubjectMatter: GradeLevelSubjectMatter,
   _existing: GradeLevelSubjectMatter | undefined,
   repositories: SchoolRepositories,

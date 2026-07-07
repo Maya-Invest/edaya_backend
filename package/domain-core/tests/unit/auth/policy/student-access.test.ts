@@ -1,6 +1,16 @@
+import type { GuardianActorMetadata, InteractiveActorMetadata } from '../../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
-import { AuthorizationError, Permission } from '../../../../src/capabilities/authorization'
+import {
+  ALL_GUARDIAN_CAPABILITIES,
+  ALL_STUDENT_CAPABILITIES,
+  assertGuardianCapability,
+  AuthorizationError,
+  effectiveGrantsForActor,
+  GuardianCapability,
+  Permission,
+  StudentCapability,
+} from '../../../../src/capabilities/authorization'
 import { dispatchStudentAccess } from '../../../../src/capabilities/authorization/policy/compose'
 import { checkStudentAccess } from '../../../../src/capabilities/authorization/policy/resolvers/student'
 import { StudentClassEnrollmentStatus } from '../../../../src/domain'
@@ -73,5 +83,30 @@ describe('dispatchStudentAccess', () => {
   test('checkStudentAccess delegates to compose', async () => {
     const actor = AuthFixtures.guardian.linkedTo('student-1')
     await checkStudentAccess(actor, ['student-1'], enrollmentRepos())
+  })
+
+  test('assertGuardianCapability enforces linked student scope when targeted', () => {
+    const actor = AuthFixtures.guardian.linkedTo('student-1') as GuardianActorMetadata
+    expect(() => assertGuardianCapability(
+      actor,
+      GuardianCapability.ReadStudentDetail,
+      { studentId: 'student-1' },
+    )).not.toThrow()
+
+    expect(() => assertGuardianCapability(
+      actor,
+      GuardianCapability.ReadStudentDetail,
+      { studentId: 'student-2' },
+    )).toThrow(AuthorizationError)
+  })
+
+  test('portal capability sets stay explicit and grant-free', () => {
+    const guardian = AuthFixtures.guardian.linkedTo('student-1') as InteractiveActorMetadata
+    const student = AuthFixtures.student.enrolledIn() as InteractiveActorMetadata
+    expect(ALL_GUARDIAN_CAPABILITIES).not.toEqual(ALL_STUDENT_CAPABILITIES)
+    expect(ALL_GUARDIAN_CAPABILITIES).toContain(GuardianCapability.ReadSelfProfile)
+    expect(Object.hasOwn(StudentCapability, 'ReadSelfProfile')).toBe(false)
+    expect(effectiveGrantsForActor(guardian).permissions.size).toBe(0)
+    expect(effectiveGrantsForActor(student).permissions.size).toBe(0)
   })
 })

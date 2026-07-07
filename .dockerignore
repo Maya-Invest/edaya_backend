@@ -1,0 +1,13 @@
+.git
+.github
+.data
+**/.data
+**/node_modules
+**/dist
+**/.turbo
+**/.demo-dry-run
+**/lcov.info
+**/*.log
+below-target-sources.json
+apps/api/.env
+.env

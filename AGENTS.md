@@ -24,6 +24,7 @@ Staff permission assignments, role presets, scope seeds, and grant resolution af
 | Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
 | Repo CLI (`bun repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
 | Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
+| Unit test coverage | [docs/reference/unit-test-coverage.md](docs/reference/unit-test-coverage.md) |
 | Package boundaries | [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md) |
 
 ## Verification

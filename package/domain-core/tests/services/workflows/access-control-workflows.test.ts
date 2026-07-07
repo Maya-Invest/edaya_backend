@@ -18,6 +18,7 @@ import {
   StudentStatus,
 } from '../../../src'
 import { SchoolService } from '../../../src/application'
+import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
 function actorWithPermissions(permissions: readonly Permission[]) {
@@ -88,6 +89,15 @@ function createAccessControlContext(
       findById: mock(async (id: string) => id === 'g1' ? guardian : undefined),
       findOne: mock(async () => undefined),
       save: mock(async () => {}),
+    },
+    teachers: {
+      findById: mock(async () => undefined),
+      findOne: mock(async () => undefined),
+      save: mock(async () => {}),
+    },
+    staffPermissionAssignments: {
+      findById: mock(async () => undefined),
+      save: mock(async (assignment: unknown) => assignment),
     },
     guardianLinks: {
       list: mock(async () => []),
@@ -273,5 +283,58 @@ describe('SchoolService access-control workflows', () => {
 
     expect(result.entity.subjectId).toBeUndefined()
     expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+  })
+
+  test('assignStaffPermission persists permission assignments for the school', async () => {
+    const { mockRepos, service } = createAccessControlContext()
+
+    const assignment = await service.accessControlWorkflow.assignStaffPermission({
+      id: 'spa1',
+      staffId: 'st1',
+      schoolId: 'sch1',
+      academicYearId: 'ay1',
+      permission: Permission.ACCESS_CONTROL_READ,
+      scopeIds: '',
+    })
+
+    expect(assignment.permission).toBe(Permission.ACCESS_CONTROL_READ)
+    expect(mockRepos.staffPermissionAssignments.save).toHaveBeenCalled()
+  })
+
+  test('relinkActorSubject delegates to linkActorSubject', async () => {
+    const { mockRepos, service } = createAccessControlContext()
+
+    const result = await service.accessControlWorkflow.relinkActorSubject({
+      subjectId: 'auth-user-1',
+      staffMemberId: 'st1',
+    })
+
+    expect(result.entity.subjectId).toBe('auth-user-1')
+    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+  })
+
+  test('unlinkActorSubject rejects ambiguous targets', async () => {
+    const { service } = createAccessControlContext()
+
+    await expect(service.accessControlWorkflow.unlinkActorSubject({
+      staffMemberId: 'st1',
+      guardianId: 'g1',
+    })).rejects.toMatchObject({
+      code: 'LINK_ACTOR_SUBJECT_AMBIGUOUS',
+    } satisfies Partial<BusinessRuleViolationError>)
+  })
+
+  test('linkActorSubject links a guardian when caller has ACCESS_CONTROL_ASSIGN', async () => {
+    const elevatedActor = createElevatedTestStaffActor('sch1', 'staff-admin')
+    const { mockRepos, service } = createAccessControlContext(elevatedActor)
+
+    const result = await service.accessControlWorkflow.linkActorSubject({
+      subjectId: 'auth-guardian-1',
+      guardianId: 'g1',
+    })
+
+    expect(result.kind).toBe('guardian')
+    expect(result.entity.subjectId).toBe('auth-guardian-1')
+    expect(mockRepos.guardians.save).toHaveBeenCalled()
   })
 })

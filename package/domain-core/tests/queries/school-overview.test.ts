@@ -2,18 +2,34 @@ import type { SchoolRepositories } from '../../src/ports'
 import { describe, expect, test } from 'bun:test'
 import { buildSchoolOverview } from '../../src/application/queries/school-overview'
 import {
+  AcademicPeriod,
+  AcademicPeriodType,
+  Activity,
+  ActivityCategory,
+  Assessment,
+  AssessmentKind,
+  AssessmentResult,
   AttendanceJustificationStatus,
+  AttendanceMode,
   AttendanceRecord,
   AttendanceStatus,
+  CalendarEvent,
+  CalendarEventKind,
+  ClassGroup,
   FeeStatus,
   Incident,
   IncidentKind,
   IncidentStatus,
+  Payment,
+  PaymentMethod,
+  PaymentStatus,
   ReportCardResult,
   ReportCardResultStatus,
   Student,
   StudentClassEnrollment,
   StudentClassEnrollmentStatus,
+  StudentDisciplinaryAction,
+  StudentDisciplinaryActionStatus,
   StudentFee,
   StudentStatus,
 } from '../../src/domain'
@@ -181,5 +197,335 @@ describe('buildSchoolOverview', () => {
     expect(overview.kpis.publishedReportCardCount).toBe(1)
     expect(overview.kpis.unpublishedReportCardCount).toBe(0)
     expect(overview.actionItems).toEqual([])
+  })
+
+  test('builds upcoming items and class risk rows for the reference week', async () => {
+    const referenceDate = new Date('2026-06-14T00:00:00.000Z')
+    const student = new Student({
+      id: 'student-1',
+      schoolId: 'school-1',
+      firstName: 'Awa',
+      lastName: 'Diallo',
+      birthDate: new Date('2010-01-01'),
+      status: StudentStatus.Active,
+    })
+    const enrollment = new StudentClassEnrollment({
+      id: 'enrollment-1',
+      studentId: 'student-1',
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      enrollmentIndex: 1,
+      status: StudentClassEnrollmentStatus.Active,
+      enrolledAt: new Date('2025-09-01'),
+    })
+    const classGroup = new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Grade 7A',
+      attendanceMode: AttendanceMode.Session,
+      homeroomStaffId: 'staff-1',
+    })
+    const overdueFee = new StudentFee({
+      id: 'fee-1',
+      studentId: 'student-1',
+      feeId: 'catalog-1',
+      academicYearId: 'year-1',
+      expectedAmount: 10_000,
+      paidAmount: 0,
+      currency: 'XOF',
+      status: FeeStatus.Overdue,
+      dueDate: new Date('2026-06-16T00:00:00.000Z'),
+    })
+    const pendingFee = new StudentFee({
+      id: 'fee-2',
+      studentId: 'student-1',
+      feeId: 'catalog-2',
+      academicYearId: 'year-1',
+      expectedAmount: 5_000,
+      paidAmount: 0,
+      currency: 'XOF',
+      status: FeeStatus.Pending,
+      dueDate: new Date('2026-06-18T00:00:00.000Z'),
+    })
+    const calendarEvent = new CalendarEvent({
+      id: 'event-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      title: 'Sports day',
+      startDate: new Date('2026-06-15T00:00:00.000Z'),
+      endDate: new Date('2026-06-15T00:00:00.000Z'),
+      kind: CalendarEventKind.Event,
+    })
+    const holiday = new CalendarEvent({
+      id: 'event-2',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      title: 'Public holiday',
+      startDate: new Date('2026-06-17T00:00:00.000Z'),
+      endDate: new Date('2026-06-17T00:00:00.000Z'),
+      kind: CalendarEventKind.Holiday,
+      isNonSchoolDay: true,
+    })
+    const academicPeriod = new AcademicPeriod({
+      id: 'period-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      name: 'Term 3',
+      type: AcademicPeriodType.Trimester,
+      startDate: new Date('2026-03-01'),
+      endDate: new Date('2026-06-20T00:00:00.000Z'),
+    })
+    const assessment = new Assessment({
+      id: 'assessment-1',
+      classGroupId: 'class-1',
+      classSubjectId: 'cs-1',
+      periodId: 'period-1',
+      title: 'Math exam',
+      kind: AssessmentKind.Quiz,
+      maxScore: 20,
+      startsAt: new Date('2026-06-16T09:00:00.000Z'),
+      endsAt: new Date('2026-06-16T10:00:00.000Z'),
+    })
+    const incident = new Incident({
+      id: 'incident-1',
+      schoolId: 'school-1',
+      title: 'Class disruption',
+      description: 'Noise during lesson',
+      date: new Date('2026-06-13'),
+      kind: IncidentKind.MinorInfraction,
+      reporterId: 'staff-1',
+      status: IncidentStatus.Open,
+      classGroupId: 'class-1',
+    })
+    const presentOnly = [
+      new AttendanceRecord({
+        id: 'attendance-present-1',
+        studentId: 'student-1',
+        lessonSessionId: 'session-1',
+        date: referenceDate,
+        status: AttendanceStatus.Present,
+      }),
+      new AttendanceRecord({
+        id: 'attendance-present-2',
+        studentId: 'student-1',
+        lessonSessionId: 'session-2',
+        date: referenceDate,
+        status: AttendanceStatus.Present,
+      }),
+    ]
+    const assessmentResult = new AssessmentResult({
+      id: 'result-1',
+      studentId: 'student-1',
+      assessmentId: 'assessment-1',
+      score: 18,
+    })
+    const payment = new Payment({
+      id: 'payment-1',
+      studentFeeId: 'fee-2',
+      amount: 2_000,
+      currency: 'XOF',
+      paymentDate: new Date('2026-06-13T00:00:00.000Z'),
+      method: PaymentMethod.Cash,
+      status: PaymentStatus.Recorded,
+    })
+    const activity = new Activity({
+      id: 'activity-1',
+      schoolId: 'school-1',
+      name: 'Chess club',
+      category: ActivityCategory.Arts,
+      coach: 'Coach Sam',
+      schedule: 'Wednesdays',
+      participants: 12,
+      capacity: 20,
+      description: 'Chess club',
+      startDate: new Date('2026-06-01'),
+      endDate: new Date('2026-06-30'),
+    })
+    const discipline = new StudentDisciplinaryAction({
+      id: 'discipline-1',
+      schoolId: 'school-1',
+      incidentId: 'incident-1',
+      studentId: 'student-1',
+      disciplinaryActionId: 'action-1',
+      assignedByStaffId: 'staff-1',
+      startsAt: new Date('2026-06-10'),
+      status: StudentDisciplinaryActionStatus.Active,
+    })
+
+    const overview = await buildSchoolOverview(createOverviewRepos({
+      students: { list: async () => [student] },
+      staffMembers: {
+        list: async () => [{
+          id: 'staff-1',
+          firstName: 'Marie',
+          lastName: 'Konate',
+        }],
+      },
+      studentFees: { list: async () => [overdueFee, pendingFee] },
+      results: { list: async () => [] },
+      incidents: { list: async () => [incident] },
+      attendance: { list: async () => presentOnly },
+      assessments: { list: async () => [assessment] },
+      assessmentResults: { list: async () => [assessmentResult] },
+      enrollments: { list: async () => [enrollment] },
+      calendarEvents: { list: async () => [calendarEvent, holiday] },
+      classGroups: { list: async () => [classGroup] },
+      payments: { list: async () => [payment] },
+      studentDisciplinaryActions: { list: async () => [discipline] },
+      activities: { list: async () => [activity] },
+      academicPeriods: { findById: async () => academicPeriod },
+    }), {
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      academicPeriodId: 'period-1',
+      referenceDate,
+    })
+
+    expect(overview.upcoming.map(item => item.kind)).toEqual([
+      'calendar',
+      'fee_due',
+      'exam',
+      'holiday',
+      'fee_due',
+      'report_card_deadline',
+    ])
+    expect(overview.classRiskRows).toHaveLength(1)
+    expect(overview.classRiskRows[0]).toMatchObject({
+      classGroupId: 'class-1',
+      className: 'Grade 7A',
+      coordinatorName: 'Marie Konate',
+      openIncidentCount: 1,
+      overdueFeeCount: 1,
+      riskLevel: 'watch',
+    })
+    expect(overview.areaHealth.finance.recentPaymentCount).toBe(1)
+    expect(overview.areaHealth.schoolLife.activeActivityCount).toBe(1)
+    expect(overview.areaHealth.schoolLife.unresolvedDisciplineCount).toBe(1)
+    expect(overview.kpis.incompleteGradingClassCount).toBe(0)
+    expect(overview.actionItems.some(item => item.key === 'incomplete_grading')).toBe(false)
+  })
+
+  test('marks classes needing action when incidents and grading thresholds are critical', async () => {
+    const referenceDate = new Date('2026-06-14T00:00:00.000Z')
+    const student = new Student({
+      id: 'student-1',
+      schoolId: 'school-1',
+      firstName: 'Awa',
+      lastName: 'Diallo',
+      birthDate: new Date('2010-01-01'),
+      status: StudentStatus.Active,
+    })
+    const enrollment = new StudentClassEnrollment({
+      id: 'enrollment-1',
+      studentId: 'student-1',
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      enrollmentIndex: 1,
+      status: StudentClassEnrollmentStatus.Active,
+      enrolledAt: new Date('2025-09-01'),
+    })
+    const classGroup = new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Grade 7B',
+      attendanceMode: AttendanceMode.Session,
+    })
+    const incident = new Incident({
+      id: 'incident-1',
+      schoolId: 'school-1',
+      title: 'Emergency',
+      description: 'Emergency in class',
+      date: new Date('2026-06-13'),
+      kind: IncidentKind.Emergency,
+      reporterId: 'staff-1',
+      status: IncidentStatus.Open,
+      classGroupId: 'class-1',
+    })
+    const overdueFees = ['fee-1', 'fee-2', 'fee-3'].map(id => new StudentFee({
+      id,
+      studentId: 'student-1',
+      feeId: `catalog-${id}`,
+      academicYearId: 'year-1',
+      expectedAmount: 1_000,
+      paidAmount: 0,
+      currency: 'XOF',
+      status: FeeStatus.Overdue,
+      dueDate: new Date('2026-06-10'),
+    }))
+    const assessment = new Assessment({
+      id: 'assessment-1',
+      classGroupId: 'class-1',
+      classSubjectId: 'cs-1',
+      periodId: 'period-1',
+      title: 'Final',
+      kind: AssessmentKind.Quiz,
+      maxScore: 20,
+      startsAt: new Date('2026-06-16T09:00:00.000Z'),
+      endsAt: new Date('2026-06-16T10:00:00.000Z'),
+    })
+    const assessmentResult = new AssessmentResult({
+      id: 'result-1',
+      studentId: 'student-1',
+      assessmentId: 'assessment-1',
+      score: 10,
+    })
+
+    const overview = await buildSchoolOverview(createOverviewRepos({
+      students: { list: async () => [student] },
+      staffMembers: { list: async () => [] },
+      studentFees: { list: async () => overdueFees },
+      results: { list: async () => [] },
+      incidents: { list: async () => [incident] },
+      attendance: {
+        list: async () => [new AttendanceRecord({
+          id: 'attendance-1',
+          studentId: 'student-1',
+          lessonSessionId: 'session-1',
+          date: referenceDate,
+          status: AttendanceStatus.Absent,
+        })],
+      },
+      assessments: { list: async () => [assessment] },
+      assessmentResults: { list: async () => [assessmentResult] },
+      enrollments: { list: async () => [enrollment] },
+      calendarEvents: { list: async () => [] },
+      classGroups: { list: async () => [classGroup] },
+    }), {
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      academicPeriodId: 'period-1',
+      referenceDate,
+    })
+
+    expect(overview.classRiskRows[0]?.riskLevel).toBe('needs_action')
+    expect(overview.areaHealth.academics.gradingCompletionPercent).toBe(100)
+  })
+
+  test('falls back to total student count when no active enrollments exist', async () => {
+    const student = new Student({
+      id: 'student-1',
+      schoolId: 'school-1',
+      firstName: 'Awa',
+      lastName: 'Diallo',
+      birthDate: new Date('2010-01-01'),
+      status: StudentStatus.Active,
+    })
+
+    const overview = await buildSchoolOverview(createOverviewRepos({
+      students: { list: async () => [student] },
+      enrollments: { list: async () => [] },
+    }), {
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      academicPeriodId: 'period-1',
+    })
+
+    expect(overview.kpis.studentCount).toBe(1)
+    expect(overview.kpis.attendanceRateToday).toBeNull()
+    expect(overview.classRiskRows).toEqual([])
   })
 })

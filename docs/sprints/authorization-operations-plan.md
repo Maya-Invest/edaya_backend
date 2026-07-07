@@ -6,7 +6,7 @@
 > **Scope:** Unified enforcement layer for staff permissions, teacher capabilities, and guardian/student link scopes  
 > **Depends on:** [relationship-native-auth-plan.md](./relationship-native-auth-plan.md) Fold F (session + scope resolution complete)  
 > **Out of scope:** Client UI capability pickers, distributed scope cache, per-school custom operation catalogs, assurance product  
-> **Related:** [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-migration-coverage.test.ts](../../package/domain-core/tests/unit/auth/authorization-migration-coverage.test.ts)
+> **Related:** [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-migration-guards.test.ts](../../package/domain-core/tests/unit/auth/authorization-migration-guards.test.ts)
 
 Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-Kind`, scope preload). Enforcement previously routed three authorization paths through a staff-shaped API (`permissionAction`, ad-hoc `*WriteModule` helpers, and god-function policy resolvers). This plan introduced an **Operation** catalog and **policy strategies** so entity configs and workflows speak one vocabulary while staff, teacher, and link-based portal actors keep their native credentials.
 
@@ -564,7 +564,7 @@ flowchart TD
 | G0.1 | Add `tests/support/authorization-fixtures.ts` — unified actor builders (staff, teacher, guardian, student, system) |
 | G0.2 | Add `tests/support/operation-matrix.ts` — parametric runner for operation × actor × expect allow/deny |
 | G0.3 | Add `tests/support/policy-fixtures.ts` — minimal in-memory `SchoolRepositories` stubs per strategy |
-| G0.4 | Extend `authorization-migration-coverage.test.ts`: forbid `actor.kind` in `src/domain/**` (allowlist during migration) |
+| G0.4 | Extend `authorization-migration-guards.test.ts`: forbid `actor.kind` in `src/domain/**` (allowlist during migration) |
 | G0.5 | Extend coverage test: forbid new `*WriteModule` / `*ReadModule` exports in `entity-config/authorization.ts` after G1 |
 | G0.6 | Extend coverage test: forbid `isPortalActor` outside `policy/strategies/` (allowlist legacy files until G3) |
 
@@ -686,7 +686,7 @@ flowchart TD
 
 **Acceptance**
 
-- [x] `authorization-migration-coverage` passes with no allowlists
+- [x] `authorization-migration-guards` passes with no allowlists
 - [x] `bun --filter @edaya/core test` green (761 pass)
 - [x] `bun repo verify` green
 - [x] Integration auth tests in `tooling/integration-tests/src/auth/` unchanged behavior
@@ -903,7 +903,7 @@ During G2, temporary test file `grades.operations.parity.test.ts`:
 
 Prevents silent behavior drift while entity configs still partially migrated.
 
-### 7.7 Static guards (CI — extend `authorization-migration-coverage.test.ts`)
+### 7.7 Static guards (CI — extend `authorization-migration-guards.test.ts`)
 
 | Guard | Enforced after |
 |-------|----------------|
@@ -930,7 +930,7 @@ Prevents silent behavior drift while entity configs still partially migrated.
 bun --filter @edaya/core test tests/unit/auth/
 
 # Static guards
-bun --filter @edaya/core test tests/unit/auth/authorization-migration-coverage.test.ts
+bun --filter @edaya/core test tests/unit/auth/authorization-migration-guards.test.ts
 
 # Full verify before PR
 bun repo verify
@@ -980,8 +980,8 @@ bun repo verify
 - [x] Zero `actor.kind` switches in `src/domain/**`
 - [x] Policy resolvers decomposed into strategies; `compose.ts` sole dispatcher
 - [x] `permissionAction` and `*WriteModule` helpers removed with no call sites
-- [ ] Operation matrix tests cover every `OperationRef`
-- [ ] Auth unit test LOC reduced ≥25% vs 2026-07-06 baseline
+- [x] Operation matrix tests cover every `OperationRef` (registry guard in `operation-ref-registry-complete.test.ts`)
+- [x] Auth unit test LOC reduced ≥25% vs 2026-07-06 baseline (4056 → 2675 LOC, −34%)
 - [x] `authorization/README.md` reflects operations model
 - [x] `bun repo verify` green
 - [ ] Portal actors verified per [edaya_web demo-accounts.md](../../../edaya_web/docs/reference/demo-accounts.md) after G5

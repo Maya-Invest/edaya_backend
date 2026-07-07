@@ -1,9 +1,21 @@
 import type { AuthorizationPolicy } from '../../../src/capabilities/authorization'
+import type { ActorMetadata } from '../../../src/capabilities/authorization/model/actor'
 import type {
+  AcademicPeriod,
+  Activity,
+
+  Attachment,
   AttendanceRecord,
+  ClassGroup,
   MessageDelivery,
+  PeriodDefinition,
+  Resource,
+  ResourceAssignment,
+  StaffAssignment,
+  StaffMember,
+  StudentNote,
 } from '../../../src/domain'
-import type { AtomicExecutionPort, NotificationGatewayPort, SchoolRepositories } from '../../../src/ports'
+import type { AtomicExecutionPort, FileStoragePort, NotificationGatewayPort, SchoolRepositories } from '../../../src/ports'
 import { mock } from 'bun:test'
 import { noOpNotificationGateway } from '../../../src/adapters'
 import { SchoolService } from '../../../src/application'
@@ -19,6 +31,8 @@ import {
   Fee,
   FeeCategory,
   FeeStatus,
+  GradeLevel,
+  Guardian,
   GuardianStudentLink,
   IncidentInvolvementRole,
   IncidentKind,
@@ -27,6 +41,8 @@ import {
   PaymentMethod,
   PaymentStatus,
   ReportCardDefinitionSectionKind,
+  School,
+  Student,
   StudentClassEnrollment,
   StudentClassEnrollmentStatus,
   StudentDisciplinaryActionStatus,
@@ -81,6 +97,7 @@ export function createContext({
         completedPercentage: 0,
         createdAt: new Date('2026-01-01T08:00:00Z'),
       })),
+      findOne: mock(async () => undefined),
       save: mock(async () => {}),
     },
     classGroups: {
@@ -93,6 +110,17 @@ export function createContext({
       findById: mock(async () => undefined),
       findOne: mock(async () => existingProgress),
       save: mock(async () => {}),
+    },
+    schools: {
+      findById: mock(async id => ({ id, name: 'School' })),
+    },
+    subjects: {
+      findById: mock(async (id: string) => ({ id, schoolId: 'sch1', name: 'Subject' })),
+      save: mock(async (subject: unknown) => subject),
+    },
+    subjectMatters: {
+      findById: mock(async (id: string) => ({ id, subjectId: 'subj1', name: 'Matter' })),
+      save: mock(async (subjectMatter: unknown) => subjectMatter),
     },
   } as unknown as SchoolRepositories
 
@@ -171,6 +199,263 @@ export function createSetupContext() {
   return { academicYears, mockAtomic, mockPolicy, mockRepos, service }
 }
 
+function createMemoryRepo<T extends { id: string }>() {
+  const store = new Map<string, T>()
+  return {
+    store,
+    repo: {
+      findById: mock(async (id: string) => store.get(id)),
+      findOne: mock(async (filter: Record<string, unknown> = {}) => [...store.values()].find((entity) => {
+        return Object.entries(filter).every(([key, value]) => (entity as Record<string, unknown>)[key] === value)
+      })),
+      list: mock(async (filter: Record<string, unknown> = {}) => [...store.values()].filter((entity) => {
+        return Object.entries(filter).every(([key, value]) => (entity as Record<string, unknown>)[key] === value)
+      })),
+      save: mock(async (entity: T) => {
+        store.set(entity.id, entity)
+      }),
+      delete: mock(async (id: string) => {
+        store.delete(id)
+      }),
+    },
+  }
+}
+
+export function createFullSetupContext({
+  fileStorage = testFileStorage,
+  actorOverride = actor,
+}: {
+  fileStorage?: FileStoragePort
+  actorOverride?: typeof actor
+} = {}) {
+  const setupBase = createSetupContext()
+  const schools = createMemoryRepo<School>()
+  schools.store.set('sch1', new School({
+    id: 'sch1',
+    name: 'School',
+    timeZone: 'UTC',
+    ownerSubjectId: 'owner-subject',
+    createdAt: new Date('2025-01-01T00:00:00Z'),
+  }))
+  const academicPeriods = createMemoryRepo<AcademicPeriod>()
+  const classGroups = createMemoryRepo<ClassGroup>()
+  const staffMembers = createMemoryRepo<StaffMember>()
+  const staffAssignments = createMemoryRepo<StaffAssignment>()
+  const attachments = createMemoryRepo<Attachment>()
+  const resourceAssignments = createMemoryRepo<ResourceAssignment>()
+  const gradeLevels = createMemoryRepo<GradeLevel>()
+  const periodDefinitions = createMemoryRepo<PeriodDefinition>()
+  const resources = createMemoryRepo<Resource>()
+  const activities = createMemoryRepo<Activity>()
+  const activityEnrollments = createMemoryRepo<import('../../../src/domain').ActivityEnrollment>()
+  const schoolNotificationTemplates = createMemoryRepo<import('../../../src/domain').SchoolNotificationTemplates>()
+  const classSubjects = createMemoryRepo<import('../../../src/domain').ClassSubject>()
+
+  gradeLevels.store.set('grade-1', new GradeLevel({
+    id: 'grade-1',
+    schoolId: 'sch1',
+    name: 'Grade 7',
+    order: 7,
+  }))
+
+  const mockRepos = {
+    ...setupBase.mockRepos,
+    schools: {
+      findById: mock(async (id: string) => schools.store.get(id) ?? (id === 'sch1' ? { id, name: 'School' } : undefined)),
+      findOne: schools.repo.findOne,
+      save: schools.repo.save,
+    },
+    academicPeriods: academicPeriods.repo,
+    classGroups: classGroups.repo,
+    staffMembers: staffMembers.repo,
+    staffAssignments: staffAssignments.repo,
+    attachments: attachments.repo,
+    resourceAssignments: resourceAssignments.repo,
+    gradeLevels: gradeLevels.repo,
+    periodDefinitions: periodDefinitions.repo,
+    resources: resources.repo,
+    activities: activities.repo,
+    activityEnrollments: activityEnrollments.repo,
+    schoolNotificationTemplates: schoolNotificationTemplates.repo,
+    gradeLevelSubjects: { list: mock(async () => []) },
+    gradeLevelSubjectMatters: { list: mock(async () => []) },
+    classSubjects: {
+      findOne: classSubjects.repo.findOne,
+      save: classSubjects.repo.save,
+    },
+    classSubjectMatters: {
+      findOne: mock(async () => undefined),
+      save: mock(async () => {}),
+    },
+    students: {
+      findById: mock(async (id: string) => id === 'stu1'
+        ? { id: 'stu1', schoolId: 'sch1' }
+        : undefined),
+    },
+    enrollments: {
+      count: mock(async () => 0),
+      list: mock(async () => []),
+    },
+  } as unknown as SchoolRepositories
+
+  const mockPolicy = {
+    checkAttachmentAccess: mock(async () => {}),
+    checkClassGroupAccess: mock(async () => {}),
+    checkResourceAccess: mock(async () => {}),
+    checkStaffMemberReadAccess: mock(async () => {}),
+  } as unknown as AuthorizationPolicy
+  const mockAtomic: AtomicExecutionPort = {
+    execute: mock(async (operation: () => Promise<any>) => operation()),
+  }
+
+  const service = new SchoolService({
+    repositories: mockRepos,
+    authorizationPolicy: mockPolicy,
+    actor: actorOverride,
+    atomicExecution: mockAtomic,
+    notificationGateway: noOpNotificationGateway,
+    fileStorage,
+  })
+
+  return {
+    academicPeriods,
+    academicYears: setupBase.academicYears,
+    activities,
+    activityEnrollments,
+    attachments,
+    classGroups,
+    gradeLevels,
+    mockAtomic,
+    mockPolicy,
+    mockRepos,
+    periodDefinitions,
+    resourceAssignments,
+    resources,
+    schools,
+    staffAssignments,
+    staffMembers,
+    service,
+  }
+}
+
+export function createStudentAdminContext({
+  inviteBaseUrl,
+  accountInvitationsEnabled = true,
+  actorOverride = actor,
+}: {
+  inviteBaseUrl?: string
+  accountInvitationsEnabled?: boolean
+  actorOverride?: typeof actor
+} = {}) {
+  const students = createMemoryRepo<Student>()
+  students.store.set('stu1', new Student({
+    id: 'stu1',
+    schoolId: 'sch1',
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    birthDate: new Date('2010-01-01'),
+    status: StudentStatus.Active,
+    createdAt: new Date('2025-09-01T00:00:00Z'),
+  }))
+  const guardians = createMemoryRepo<Guardian>()
+  guardians.store.set('gua1', new Guardian({
+    id: 'gua1',
+    schoolId: 'sch1',
+    firstName: 'Grace',
+    lastName: 'Hopper',
+    contactMethods: [],
+    subjectId: 'subject-gua1',
+    createdAt: new Date('2025-09-01T00:00:00Z'),
+  }))
+  const guardianLinks = createMemoryRepo<GuardianStudentLink>()
+  const studentNotes = createMemoryRepo<StudentNote>()
+  const studentHealthProfiles = createMemoryRepo<import('../../../src/domain').StudentHealthProfile>()
+  const enrollments = createMemoryRepo<StudentClassEnrollment>()
+  enrollments.store.set('enr1', new StudentClassEnrollment({
+    id: 'enr1',
+    studentId: 'stu1',
+    classGroupId: 'cg1',
+    academicYearId: 'ay1',
+    enrollmentIndex: 1,
+    status: StudentClassEnrollmentStatus.Active,
+    enrolledAt: new Date('2025-09-01T00:00:00Z'),
+  }))
+  const classGroups = new Map([
+    ['cg1', {
+      id: 'cg1',
+      schoolId: 'sch1',
+      academicYearId: 'ay1',
+      gradeLevelId: 'grade1',
+      name: 'Grade 1',
+      attendanceMode: AttendanceMode.Session,
+    }],
+    ['cg-other', {
+      id: 'cg-other',
+      schoolId: 'other-school',
+      academicYearId: 'ay-other',
+      gradeLevelId: 'grade-other',
+      name: 'Other',
+      attendanceMode: AttendanceMode.Session,
+    }],
+  ])
+
+  const mockRepos = {
+    students: students.repo,
+    guardians: guardians.repo,
+    guardianLinks: guardianLinks.repo,
+    studentNotes: studentNotes.repo,
+    studentHealthProfiles: studentHealthProfiles.repo,
+    enrollments: enrollments.repo,
+    classGroups: {
+      findById: mock(async (id: string) => classGroups.get(id)),
+    },
+    gradeLevels: {
+      findById: mock(async (id: string) => ({
+        id,
+        schoolId: 'sch1',
+        name: id === 'grade1' ? 'Grade 1' : 'Grade 2',
+        order: id === 'grade1' ? 1 : 2,
+      })),
+    },
+  } as unknown as SchoolRepositories
+
+  const mockPolicy = {
+    checkClassGroupAccess: mock(async () => {}),
+    checkGuardianAccess: mock(async () => {}),
+    checkStudentAccess: mock(async () => {}),
+    checkStudentHealthAccess: mock(async () => {}),
+    checkStudentNoteAccess: mock(async () => {}),
+  } as unknown as AuthorizationPolicy
+
+  const mockAtomic: AtomicExecutionPort = {
+    execute: mock(async (operation: () => Promise<any>) => operation()),
+  }
+
+  const service = new SchoolService({
+    repositories: mockRepos,
+    authorizationPolicy: mockPolicy,
+    actor: actorOverride,
+    atomicExecution: mockAtomic,
+    notificationGateway: noOpNotificationGateway,
+    fileStorage: testFileStorage,
+    inviteBaseUrl,
+    accountInvitationsEnabled,
+  })
+
+  return {
+    enrollments,
+    guardianLinks,
+    guardians,
+    mockAtomic,
+    mockPolicy,
+    mockRepos,
+    service,
+    studentHealthProfiles,
+    studentNotes,
+    students,
+  }
+}
+
 export function createReportCardContext({
   existingReportCard,
   notificationGateway = noOpNotificationGateway,
@@ -188,11 +473,11 @@ export function createReportCardContext({
   }
   const mockRepos = {
     academicPeriods: {
-      findById: mock(async () => ({
-        id: 'per1',
+      findById: mock(async (id: string) => ({
+        id,
         schoolId: 'sch1',
         academicYearId: 'ay1',
-        isPublished: academicPeriodPublished,
+        isPublished: academicPeriodPublished && id !== 'per-unpublished',
         startDate: periodStart,
         endDate: periodEnd,
       })),
@@ -214,6 +499,38 @@ export function createReportCardContext({
         coefficient: 1,
         createdAt: new Date('2026-01-15T00:00:00Z'),
       })),
+      findByIds: mock(async (ids: string[]) => ids.map(id => ({
+        id,
+        classGroupId: 'cg1',
+        classSubjectId: 'cs1',
+        periodId: 'per1',
+        title: 'Math test',
+        kind: AssessmentKind.Quiz,
+        maxScore: 100,
+        coefficient: 1,
+        createdAt: new Date('2026-01-15T00:00:00Z'),
+      }))),
+      list: mock(async (filter: { classSubjectId?: string, periodId?: string } = {}) => {
+        const assessment = {
+          id: 'ass1',
+          classGroupId: 'cg1',
+          classSubjectId: 'cs1',
+          periodId: 'per1',
+          title: 'Math test',
+          kind: AssessmentKind.Quiz,
+          maxScore: 100,
+          coefficient: 1,
+          createdAt: new Date('2026-01-15T00:00:00Z'),
+        }
+        if (filter.classSubjectId && filter.classSubjectId !== 'cs1') {
+          return []
+        }
+        if (filter.periodId && filter.periodId !== 'per1') {
+          return []
+        }
+        return [assessment]
+      }),
+      save: mock(async (assessment: unknown) => assessment),
     },
     attendance: {
       list: mock(async () => [
@@ -231,7 +548,22 @@ export function createReportCardContext({
       })),
     },
     classSubjects: {
-      list: mock(async () => [{ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject-math' }]),
+      findById: mock(async () => ({
+        id: 'cs1',
+        classGroupId: 'cg1',
+        subjectId: 'subject-math',
+        coefficient: 1,
+        isOffered: true,
+        completedPercentage: 0,
+      })),
+      list: mock(async () => [{ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject-math', isOffered: true }]),
+    },
+    gradeScales: {
+      findById: mock(async (_id: string) => undefined),
+      save: mock(async (gradeScale: unknown) => gradeScale),
+    },
+    schools: {
+      findById: mock(async id => ({ id, name: 'School' })),
     },
     definitions: {
       findById: mock(async () => ({
@@ -241,6 +573,7 @@ export function createReportCardContext({
         gradeLevelId: 'grade1',
       })),
       findOne: mock(async () => undefined),
+      save: mock(async (definition: unknown) => definition),
     },
     enrollments: {
       findOne: mock(async () => ({ id: 'enr1', studentId: 'stu1', classGroupId: 'cg1', status: StudentClassEnrollmentStatus.Active })),
@@ -253,6 +586,7 @@ export function createReportCardContext({
       save: mock(async reportCard => savedReportCards.set(reportCard.id, reportCard)),
     },
     sections: {
+      findById: mock(async (_id: string) => undefined),
       list: mock(async () => [
         {
           id: 'sec-root',
@@ -273,6 +607,7 @@ export function createReportCardContext({
           subjectId: 'subject-math',
         },
       ]),
+      save: mock(async (section: unknown) => section),
     },
     students: {
       findById: mock(async () => ({
@@ -312,6 +647,7 @@ export function createReportCardContext({
 
   const mockPolicy = {
     checkAssessmentAccess: mock(async () => {}),
+    checkClassGroupAccess: mock(async () => {}),
     checkReportCardResultAccess: mock(async () => {}),
     authorizeReportCardResultSave: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
@@ -681,6 +1017,9 @@ export function createSchedulingContext({
     startDate: new Date('2026-01-01T00:00:00Z'),
     endDate: new Date('2026-12-31T00:00:00Z'),
   },
+  enforceScheduleConflicts = false,
+  extraLessonSessions = {},
+  extraActivitySessions = {},
   notificationGateway = noOpNotificationGateway,
 }: {
   classGroupAttendanceMode?: AttendanceMode
@@ -690,6 +1029,9 @@ export function createSchedulingContext({
   schedules?: any[]
   calendarEvents?: any[]
   academicYear?: { startDate: Date, endDate: Date }
+  enforceScheduleConflicts?: boolean
+  extraLessonSessions?: Record<string, LessonSession>
+  extraActivitySessions?: Record<string, import('../../../src/domain').ActivitySession>
   notificationGateway?: NotificationGatewayPort
 } = {}) {
   const savedLessonSessions = new Map<string, LessonSession>([
@@ -705,8 +1047,11 @@ export function createSchedulingContext({
       startsAt: new Date('2026-05-28T08:00:00Z'),
       endsAt: new Date('2026-05-28T09:00:00Z'),
     })],
+    ...Object.entries(extraLessonSessions),
   ])
-  const savedActivitySessions = new Map<string, any>()
+  const savedActivitySessions = new Map<string, import('../../../src/domain').ActivitySession>([
+    ...Object.entries(extraActivitySessions),
+  ])
   const savedDailyAttendances = new Map<string, any>()
   const savedAttendanceRecords = new Map<string, AttendanceRecord>()
   if (existingAttendance) {
@@ -757,6 +1102,16 @@ export function createSchedulingContext({
     },
     calendarEvents: {
       list: mock(async () => calendarEvents),
+      findById: mock(async (id: string) => calendarEvents.find(event => event.id === id)),
+      save: mock(async (event) => {
+        const index = calendarEvents.findIndex(entry => entry.id === event.id)
+        if (index >= 0) {
+          calendarEvents[index] = event
+        }
+        else {
+          calendarEvents.push(event)
+        }
+      }),
     },
     enrollments: {
       list: mock(async () => activeEnrollment
@@ -766,6 +1121,15 @@ export function createSchedulingContext({
     schedules: {
       list: mock(async () => schedules),
       findById: mock(async (id: string) => schedules.find(schedule => schedule.id === id)),
+      save: mock(async (schedule) => {
+        const index = schedules.findIndex(entry => entry.id === schedule.id)
+        if (index >= 0) {
+          schedules[index] = schedule
+        }
+        else {
+          schedules.push(schedule)
+        }
+      }),
     },
     lessonSessions: {
       findById: mock(async (id: string) => savedLessonSessions.get(id)),
@@ -816,7 +1180,10 @@ export function createSchedulingContext({
       findById: mock(async () => ({ id: 'stu1', schoolId: 'sch1', subjectId: 'subject:stu1' })),
     },
     schools: {
-      findById: mock(async () => ({ id: 'sch1', name: 'School', enforceScheduleConflicts: false })),
+      findById: mock(async () => ({ id: 'sch1', name: 'School', enforceScheduleConflicts })),
+    },
+    assessments: {
+      list: mock(async () => []),
     },
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
@@ -876,12 +1243,14 @@ export function createCommunicationsContext({
   ],
   existingDelivery,
   notificationGateway = noOpNotificationGateway,
+  actorOverride = actor,
 }: {
   announcementStatus?: AnnouncementStatus
   expiresAt?: Date
   targets?: Array<{ id: string, announcementId: string, targetKind: TargetKind, targetId?: string }>
   existingDelivery?: MessageDelivery
   notificationGateway?: NotificationGatewayPort
+  actorOverride?: ActorMetadata
 } = {}) {
   const publishedAt = announcementStatus === AnnouncementStatus.Published
     ? new Date('2026-05-01T00:00:00Z')
@@ -904,10 +1273,14 @@ export function createCommunicationsContext({
   const mockRepos = {
     announcements: {
       findById: mock(async id => savedAnnouncements.get(id)),
-      save: mock(async announcement => savedAnnouncements.set(announcement.id, announcement)),
+      save: mock(async (announcement) => {
+        savedAnnouncements.set(announcement.id, announcement)
+      }),
     },
     announcementTargets: {
+      findById: mock(async () => undefined),
       list: mock(async ({ announcementId }: any = {}) => targets.filter(target => !announcementId || target.announcementId === announcementId)),
+      save: mock(async () => {}),
     },
     classGroups: {
       findById: mock(async id => ({ id, schoolId: 'sch1', gradeLevelId: 'grade1' })),
@@ -925,8 +1298,16 @@ export function createCommunicationsContext({
       }),
     },
     guardians: {
-      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
+      findById: mock(async id => ({
+        id,
+        schoolId: 'sch1',
+        subjectId: `subject:${id}`,
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        contactMethods: [],
+      })),
       list: mock(async () => [{ id: 'gua1', schoolId: 'sch1', subjectId: 'subject:gua1' }]),
+      save: mock(async () => {}),
     },
     guardianLinks: {
       list: mock(async (filter: any = {}) => {
@@ -950,8 +1331,23 @@ export function createCommunicationsContext({
       save: mock(async delivery => savedDeliveries.set(delivery.id, delivery)),
     },
     staffMembers: {
-      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
+      findById: mock(async id => ({
+        id,
+        schoolId: 'sch1',
+        subjectId: id === 'staff-no-subject' ? undefined : `subject:${id}`,
+        firstName: 'Staff',
+        lastName: 'Member',
+        isActive: true,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+      })),
       list: mock(async () => [{ id: 'staff1', schoolId: 'sch1', subjectId: 'subject:staff1' }]),
+      save: mock(async () => {}),
+    },
+    teachers: {
+      findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
+    },
+    schools: {
+      findById: mock(async id => ({ id, name: 'School' })),
     },
     students: {
       findById: mock(async id => ({ id, schoolId: 'sch1', subjectId: `subject:${id}` })),
@@ -960,6 +1356,8 @@ export function createCommunicationsContext({
   } as unknown as SchoolRepositories
 
   const mockPolicy = {
+    checkGuardianAccess: mock(async () => {}),
+    checkStaffMemberReadAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 
   const mockAtomic: AtomicExecutionPort = {
@@ -969,7 +1367,7 @@ export function createCommunicationsContext({
   const service = new SchoolService({
     repositories: mockRepos,
     authorizationPolicy: mockPolicy,
-    actor,
+    actor: actorOverride,
     atomicExecution: mockAtomic,
     notificationGateway,
     fileStorage: testFileStorage,
@@ -983,14 +1381,17 @@ export function createBehaviorContext({
   activeEnrollment = true,
   incidentStatus = IncidentStatus.Open,
   catalogActionSchoolId = 'sch1',
+  lessonSessionScope = false,
   notificationGateway = noOpNotificationGateway,
 }: {
   existingInvolvement?: boolean
   activeEnrollment?: boolean
   incidentStatus?: IncidentStatus
   catalogActionSchoolId?: string
+  lessonSessionScope?: boolean
   notificationGateway?: NotificationGatewayPort
 } = {}) {
+  const catalogActions = new Map<string, any>()
   const incident = {
     id: 'inc1',
     schoolId: 'sch1',
@@ -999,7 +1400,7 @@ export function createBehaviorContext({
     date: new Date('2026-05-01T10:00:00Z'),
     kind: IncidentKind.MinorInfraction,
     reporterId: 'user1',
-    classGroupId: 'cg1',
+    classGroupId: lessonSessionScope ? undefined : 'cg1',
     lessonSessionId: 'sess1',
     status: incidentStatus,
     resolvedAt: incidentStatus === IncidentStatus.Resolved ? new Date('2026-05-01T11:00:00Z') : undefined,
@@ -1036,7 +1437,11 @@ export function createBehaviorContext({
       findById: mock(async id => ({ id, schoolId: 'sch1' })),
     },
     disciplinaryActions: {
-      findById: mock(async id => ({ id, schoolId: catalogActionSchoolId })),
+      findById: mock(async id => catalogActions.get(id) ?? ({ id, schoolId: catalogActionSchoolId })),
+      save: mock(async (action: { id: string }) => {
+        catalogActions.set(action.id, action)
+        return action
+      }),
     },
     enrollments: {
       list: mock(async () => activeEnrollment

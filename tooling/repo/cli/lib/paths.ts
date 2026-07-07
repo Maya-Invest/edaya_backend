@@ -10,6 +10,7 @@ export const paths = {
   dev: path.join(repoRoot, 'tooling/repo/dev/start-local-dev.ts'),
   doctor: path.join(repoRoot, 'tooling/repo/ci/doctor.ts'),
   checkBoundaries: path.join(repoRoot, 'tooling/repo/ci/check-boundaries.ts'),
+  checkTestNaming: path.join(repoRoot, 'tooling/repo/ci/check-test-naming.ts'),
   seed: path.join(repoRoot, 'tooling/seeding/scripts/seed.ts'),
   dbBrowser: path.join(repoRoot, 'tooling/repo/dev/db-browser.ts'),
   openapiCheck: path.join(repoRoot, 'tooling/repo/openapi/check-drift.ts'),

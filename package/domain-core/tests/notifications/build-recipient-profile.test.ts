@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import {
   buildGuardianRecipientProfile,
   buildStaffRecipientProfile,
+  buildStudentRecipientProfile,
+  buildTeacherRecipientProfile,
 } from '../../src/capabilities/notifications/delivery/build-recipient-profile'
 import {
   Guardian,
@@ -10,6 +12,8 @@ import {
   GuardianStudentLink,
   MessageDeliveryRecipientKind,
   StaffMember,
+  Student,
+  Teacher,
 } from '../../src/domain'
 
 describe('build recipient profiles', () => {
@@ -91,6 +95,66 @@ describe('build recipient profiles', () => {
       receivesAcademicReports: true,
       receivesAttendanceAlerts: true,
       channels: { email: true, sms: false, in_app: true },
+    })
+  })
+
+  test('buildGuardianRecipientProfile returns undefined when portal access is disabled', () => {
+    const guardian = new Guardian({
+      id: 'g2',
+      schoolId: 'school-1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      subjectId: 'auth-g2',
+      hasAccess: false,
+    })
+
+    expect(buildGuardianRecipientProfile(guardian, [])).toBeUndefined()
+  })
+
+  test('buildStudentRecipientProfile maps linked students for in-app delivery', () => {
+    const profile = buildStudentRecipientProfile(new Student({
+      id: 's1',
+      schoolId: 'school-1',
+      firstName: 'Alan',
+      lastName: 'Turing',
+      subjectId: 'auth-s1',
+    }))
+
+    expect(profile).toMatchObject({
+      recipient: {
+        kind: MessageDeliveryRecipientKind.Student,
+        id: 's1',
+        subjectId: 'auth-s1',
+      },
+      preferences: {
+        allowsNotifications: true,
+        channels: { in_app: true },
+      },
+    })
+  })
+
+  test('buildTeacherRecipientProfile maps active linked teachers', () => {
+    const profile = buildTeacherRecipientProfile(new Teacher({
+      id: 't1',
+      schoolId: 'school-1',
+      firstName: 'Alan',
+      lastName: 'Turing',
+      email: 'alan@school.edu',
+      subjectId: 'auth-t1',
+      isActive: true,
+    }))
+
+    expect(profile).toMatchObject({
+      recipient: {
+        kind: MessageDeliveryRecipientKind.Teacher,
+        id: 't1',
+        subjectId: 'auth-t1',
+      },
+      fallbackEmail: 'alan@school.edu',
+      preferences: {
+        allowsNotifications: true,
+        channels: { email: true, in_app: true },
+      },
     })
   })
 })

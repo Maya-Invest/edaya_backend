@@ -88,7 +88,7 @@ function authorizeActivityEnrollmentDelete(
   }
 }
 
-async function validateActivityEnrollmentSave(
+export async function validateActivityEnrollmentSave(
   enrollment: ActivityEnrollment,
   _existing: ActivityEnrollment | undefined,
   repositories: SchoolRepositories,

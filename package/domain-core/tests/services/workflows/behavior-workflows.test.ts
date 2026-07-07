@@ -5,8 +5,9 @@ import {
 } from 'bun:test'
 import { RecordingNotificationGateway } from '../../../src/adapters'
 import { INCIDENT_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
-import { IncidentInvolvementRole, IncidentStatus } from '../../../src/domain'
+import { IncidentInvolvementRole, IncidentKind, IncidentStatus, StudentDisciplinaryActionStatus } from '../../../src/domain'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
+import { DisciplinaryActionKind } from '../../../src/domain/students/disciplinary-action'
 import {
   actor,
   createBehaviorContext,
@@ -177,5 +178,97 @@ describe('SchoolService behavior workflows', () => {
         role: IncidentInvolvementRole.Subject,
       }],
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('configureDisciplinaryAction and recordIncident persist catalog and incident records', async () => {
+    const { mockRepos, service } = createBehaviorContext()
+
+    const catalogAction = await service.behaviorWorkflow.configureDisciplinaryAction({
+      id: 'da-catalog',
+      schoolId: 'sch1',
+      name: 'Detention',
+      kind: DisciplinaryActionKind.Sanction,
+    })
+    expect(catalogAction.name).toBe('Detention')
+    expect(mockRepos.disciplinaryActions.save).toHaveBeenCalled()
+
+    const incident = await service.behaviorWorkflow.recordIncident({
+      id: 'inc-new',
+      schoolId: 'sch1',
+      title: 'Noise in hallway',
+      description: 'Students were loud during break',
+      date: new Date('2026-05-02T12:00:00Z'),
+      kind: IncidentKind.MinorInfraction,
+      classGroupId: 'cg1',
+    })
+    expect(incident.reporterId).toBe('user1')
+    expect(mockRepos.incidents.save).toHaveBeenCalled()
+  })
+
+  test('resolveIncident marks an open incident as resolved', async () => {
+    const { incidents, service } = createBehaviorContext()
+
+    const result = await service.behaviorWorkflow.resolveIncident({
+      incidentId: 'inc1',
+      resolutionNotes: 'Discussed expectations',
+    })
+
+    expect(result.status).toBe(IncidentStatus.Resolved)
+    expect(incidents.get('inc1')?.resolutionNotes).toBe('Discussed expectations')
+  })
+
+  test('updateStudentDisciplinaryActionStatus updates sanction status', async () => {
+    const { disciplinaryActions, service } = createBehaviorContext({ existingInvolvement: true })
+
+    await service.behaviorWorkflow.applyDisciplinaryAction({
+      id: 'sda1',
+      incidentId: 'inc1',
+      studentId: 'stu1',
+      disciplinaryActionId: 'da1',
+    })
+
+    const updated = await service.behaviorWorkflow.updateStudentDisciplinaryActionStatus({
+      studentDisciplinaryActionId: 'sda1',
+      status: StudentDisciplinaryActionStatus.Completed,
+    })
+
+    expect(updated.status).toBe(StudentDisciplinaryActionStatus.Completed)
+    expect(disciplinaryActions.get('sda1')?.status).toBe(StudentDisciplinaryActionStatus.Completed)
+  })
+
+  test('resolveIncidentWithOutcomes rejects duplicate students in involvedStudents', async () => {
+    const { service } = createBehaviorContext()
+
+    await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({
+      incidentId: 'inc1',
+      involvedStudents: [
+        { id: 'inv1', studentId: 'stu1', role: IncidentInvolvementRole.Subject },
+        { id: 'inv2', studentId: 'stu1', role: IncidentInvolvementRole.Witness },
+      ],
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('addStudentInvolvement rejects students without active class enrollment', async () => {
+    const { service } = createBehaviorContext({ activeEnrollment: false })
+
+    await expect(service.behaviorWorkflow.addStudentInvolvement({
+      id: 'involvement1',
+      incidentId: 'inc1',
+      studentId: 'stu1',
+      role: IncidentInvolvementRole.Subject,
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('addStudentInvolvement authorizes lesson-session scoped incidents', async () => {
+    const { mockPolicy, service } = createBehaviorContext({ lessonSessionScope: true })
+
+    await service.behaviorWorkflow.addStudentInvolvement({
+      id: 'involvement1',
+      incidentId: 'inc1',
+      studentId: 'stu1',
+      role: IncidentInvolvementRole.Subject,
+    })
+
+    expect(mockPolicy.checkLessonSessionAccess).toHaveBeenCalledWith(actor, ['sess1'])
   })
 })

@@ -62,7 +62,7 @@ function gradeLevelSubjectTenant() {
   })
 }
 
-async function validateGradeLevelSubjectSave(
+export async function validateGradeLevelSubjectSave(
   gradeLevelSubject: GradeLevelSubject,
   existing: GradeLevelSubject | undefined,
   repositories: SchoolRepositories,
@@ -94,7 +94,7 @@ async function validateGradeLevelSubjectSave(
   }
 }
 
-async function validateGradeLevelSubjectDelete(
+export async function validateGradeLevelSubjectDelete(
   gradeLevelSubject: GradeLevelSubject,
   repositories: SchoolRepositories,
 ): Promise<void> {

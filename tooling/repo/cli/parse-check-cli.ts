@@ -1,10 +1,10 @@
-export type CheckTarget = 'openapi' | 'boundaries'
+export type CheckTarget = 'openapi' | 'boundaries' | 'test-naming'
 
 export type ParsedCheckCli
   = | { kind: 'help' }
     | { kind: 'run', target: CheckTarget }
 
-const TARGETS = new Set<CheckTarget>(['openapi', 'boundaries'])
+const TARGETS = new Set<CheckTarget>(['openapi', 'boundaries', 'test-naming'])
 
 export function parseCheckCliArgs(args: readonly string[]): ParsedCheckCli {
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
@@ -28,5 +28,6 @@ export function checkCliUsage(): string {
     'Targets:',
     '  openapi      OpenAPI drift vs committed fixture',
     '  boundaries   Runtime boundary import rules',
+    '  test-naming  Unit test filename conventions (§4 coverage plan)',
   ].join('\n')
 }

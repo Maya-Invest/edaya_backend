@@ -8,5 +8,7 @@ export async function runCheckCommand(parsed: Exclude<ParsedCheckCli, { kind: 'h
       return runBunScript(paths.openapiCheck)
     case 'boundaries':
       return runBunScript(paths.checkBoundaries)
+    case 'test-naming':
+      return runBunScript(paths.checkTestNaming)
   }
 }

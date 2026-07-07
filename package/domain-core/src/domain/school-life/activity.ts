@@ -110,7 +110,7 @@ export const activityConfig: EntityConfigFactory<Activity> = ({ repositories, at
   },
 })
 
-async function validateActivityDelete(
+export async function validateActivityDelete(
   activity: Activity,
   repositories: SchoolRepositories,
 ): Promise<void> {

@@ -1,8 +1,16 @@
 [test]
 pathIgnorePatterns = [
-  "**/dist/**"
+  "**/dist/**",
+  "**/node_modules/**",
+  "package/generated-api-client/**",
+  "tooling/integration-tests/**",
 ]
 coverageThreshold = 0
+coveragePathIgnorePatterns = [
+  "**/index.ts",
+  "package/generated-api-client/**",
+  "tooling/integration-tests/**",
+]
 coverageReporters = [
   "text",
   "lcov"

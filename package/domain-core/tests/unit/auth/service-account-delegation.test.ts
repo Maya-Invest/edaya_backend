@@ -70,6 +70,26 @@ describe('service account delegation', () => {
     }], 'school-1')).toThrow(AuthorizationError)
   })
 
+  test('rejects scope grants when creator lacks the delegated permission', () => {
+    const creator = effectiveGrantsForRoles(['teacher'])
+
+    expect(() => assertDelegatedScopeGrantsSubset(creator, [{
+      permission: Permission.PAYMENT_RECORD,
+      scopeType: 'class_group',
+      scopeEntityIds: ['class-1'],
+    }], 'school-1')).toThrow(AuthorizationError)
+  })
+
+  test('elevated creator skips scope grant subset checks', () => {
+    const creator = effectiveGrantsForRoles(['admin'])
+
+    expect(() => assertDelegatedScopeGrantsSubset(creator, [{
+      permission: Permission.PAYMENT_RECORD,
+      scopeType: 'class_group',
+      scopeEntityIds: ['any-class'],
+    }], 'school-1')).not.toThrow()
+  })
+
   test('permission assignments must be subset of creator grants', () => {
     const creator = effectiveGrantsForRoles(['teacher'])
 
@@ -84,6 +104,25 @@ describe('service account delegation', () => {
     }, 'school-1')).toBe(false)
   })
 
+  test('permission assignments honor creator scopeIdsByPermission when present', () => {
+    const creator = {
+      ...effectiveGrantsForRoles(['teacher']),
+      scopeIdsByPermission: {
+        [Permission.GRADE_INPUT]: 'class-1',
+      },
+    }
+
+    expect(delegatedPermissionAssignmentSubsetCovers(creator, {
+      permission: Permission.GRADE_INPUT,
+      scopeIds: 'class-1',
+    }, 'school-1')).toBe(true)
+
+    expect(delegatedPermissionAssignmentSubsetCovers(creator, {
+      permission: Permission.GRADE_INPUT,
+      scopeIds: 'class-2',
+    }, 'school-1')).toBe(false)
+  })
+
   test('rejects permission assignments outside creator coverage', () => {
     const creator = effectiveGrantsForRoles(['teacher'])
 
@@ -91,6 +130,15 @@ describe('service account delegation', () => {
       permission: Permission.PAYMENT_RECORD,
       scopeIds: '',
     }], 'school-1')).toThrow(AuthorizationError)
+  })
+
+  test('elevated creator skips permission assignment scope subset checks', () => {
+    const creator = effectiveGrantsForRoles(['admin'])
+
+    expect(() => assertDelegatedPermissionAssignmentsSubset(creator, [{
+      permission: Permission.PAYMENT_RECORD,
+      scopeIds: 'any-scope',
+    }], 'school-1')).not.toThrow()
   })
 
   test('only elevated creators can provision owner-level service accounts', () => {

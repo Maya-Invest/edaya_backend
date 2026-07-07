@@ -142,4 +142,48 @@ describe('buildClassGroupTimetable', () => {
 
     expect(timetable.events).toHaveLength(0)
   })
+
+  test('ignores linked assessments when the lesson session is outside the range', async () => {
+    const repos = {
+      lessonSessions: {
+        list: async () => [],
+      },
+      activitySessions: { list: async () => [] },
+      assessments: {
+        list: async () => [assessment({
+          id: 'a-linked-out',
+          lessonSessionId: 'ls-out',
+        })],
+      },
+    } as unknown as SchoolRepositories
+
+    const timetable = await buildClassGroupTimetable(repos, {
+      classGroupId: 'cg-1',
+      startDate: new Date('2026-05-12T00:00:00.000Z'),
+      endDate: new Date('2026-05-14T23:59:59.999Z'),
+    })
+
+    expect(timetable.events).toHaveLength(0)
+  })
+
+  test('ignores linked assessments when the lesson session id is unknown', async () => {
+    const repos = {
+      lessonSessions: { list: async () => [] },
+      activitySessions: { list: async () => [] },
+      assessments: {
+        list: async () => [assessment({
+          id: 'a-missing-lesson',
+          lessonSessionId: 'missing-lesson',
+        })],
+      },
+    } as unknown as SchoolRepositories
+
+    const timetable = await buildClassGroupTimetable(repos, {
+      classGroupId: 'cg-1',
+      startDate: new Date('2026-05-12T00:00:00.000Z'),
+      endDate: new Date('2026-05-14T23:59:59.999Z'),
+    })
+
+    expect(timetable.events).toHaveLength(0)
+  })
 })

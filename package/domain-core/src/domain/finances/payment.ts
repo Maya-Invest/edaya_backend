@@ -256,7 +256,7 @@ function paymentStatusChanged(entity: Payment, existing: Payment): boolean {
     || entity.cancelledById !== existing.cancelledById
 }
 
-async function validatePaymentDelete(
+export async function validatePaymentDelete(
   payment: Payment,
   repositories: SchoolRepositories,
 ): Promise<void> {

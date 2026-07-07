@@ -92,4 +92,57 @@ describe("authorization routes", () => {
     const res = await app.request("/core/authorization/effective-grants");
     expect(res.status).toBe(401);
   });
+
+  it("returns the permission catalog for interactive staff actors", async () => {
+    const app = new Hono<AppBindings>();
+    app.use(async (c, next) => {
+      c.env = baseEnv;
+      c.set("actor", mockActor);
+      c.set("schoolApp", { forActor: () => ({}) } as never);
+      await next();
+    });
+    app.route("/", indexRouter);
+
+    const res = await app.request("/core/authorization/permission-catalog");
+    const body = await res.json() as { items: Array<{ permission: string; scope?: string }> };
+
+    expect(res.status).toBe(200);
+    expect(body.items.length).toBeGreaterThan(0);
+    expect(body.items.some(item => item.permission === "STUDENT_READ")).toBe(true);
+  });
+
+  it("renders scope labels for admin UI batch requests", async () => {
+    const app = new Hono<AppBindings>();
+    app.use(async (c, next) => {
+      c.env = baseEnv;
+      c.set("actor", mockActor);
+      c.set("schoolApp", {
+        forActor: () => ({
+          baseService: {
+            repositories: {
+              classGroups: {
+                findById: async (id: string) => (id === "cg-1" ? { id, name: "6ème A" } : undefined),
+              },
+            },
+          },
+        }),
+      } as never);
+      await next();
+    });
+    app.route("/", indexRouter);
+
+    const res = await app.request("/core/authorization/scope/render", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{ scopeIds: "class_group:cg-1" }],
+      }),
+    });
+    const body = await res.json() as {
+      items: Array<{ scopeIds: string; clauses: Array<{ label: string }> }>;
+    };
+
+    expect(res.status).toBe(200);
+    expect(body.items[0]?.clauses[0]?.label).toContain("6ème A");
+  });
 });

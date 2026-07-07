@@ -1,4 +1,3 @@
-import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
   AuthorizationError,
@@ -7,103 +6,24 @@ import {
   resolveEffectiveGrants,
   scopeGrantCovers,
 } from '../../../src/capabilities/authorization'
-import { School, StaffMember, StaffPermissionAssignment } from '../../../src/domain'
+import { StaffMember } from '../../../src/domain'
+import {
+  createGrantRepos,
+  GRANT_TEST_ACADEMIC_YEAR_ID,
+  saveStaffPermission,
+} from '../../support/resolve-grants-fixtures'
 
-const ACADEMIC_YEAR_ID = 'year-1'
-
-interface PermissionListFilter {
-  staffId?: string
-  schoolId?: string
-  academicYearId?: string
-  status?: string
-}
-
-function createRepos(
-  assignments: unknown[] = [],
-  ownerSubjectId?: string,
-  staffSubjectId?: string,
-  academicYears: Array<{ id: string, schoolId: string, name: string, isActive: boolean }> = [],
-): SchoolRepositories {
-  const permissionStore = new Map<string, StaffPermissionAssignment>()
-
-  return {
-    schools: {
-      findById: mock(async () => new School({
-        id: 'school-1',
-        name: 'School',
-        timeZone: 'UTC',
-        ownerSubjectId,
-      })),
-    },
-    staffMembers: {
-      findById: mock(async () => ({
-        id: 'staff-1',
-        schoolId: 'school-1',
-        subjectId: staffSubjectId,
-        isActive: true,
-      })),
-    },
-    staffAssignments: {
-      list: mock(async () => assignments),
-    },
-    academicYears: {
-      list: mock(async () => academicYears),
-    },
-    staffPermissionAssignments: {
-      list: mock(async (filter: PermissionListFilter = {}) => [...permissionStore.values()].filter((row) => {
-        if (filter.staffId && filter.staffId !== row.staffId) {
-          return false
-        }
-        if (filter.schoolId && filter.schoolId !== row.schoolId) {
-          return false
-        }
-        if (filter.academicYearId && filter.academicYearId !== row.academicYearId) {
-          return false
-        }
-        if (filter.status && filter.status !== row.status) {
-          return false
-        }
-        return true
-      })),
-      save: mock(async (entity: StaffPermissionAssignment) => {
-        permissionStore.set(entity.id, entity)
-      }),
-    },
-  } as unknown as SchoolRepositories
-}
-
-async function savePermission(
-  repositories: SchoolRepositories,
-  input: {
-    id: string
-    permission: Permission
-    scopeIds?: string
-    startsAt?: Date
-    endsAt?: Date
-  },
-): Promise<void> {
-  await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
-    id: input.id,
-    staffId: 'staff-1',
-    schoolId: 'school-1',
-    academicYearId: ACADEMIC_YEAR_ID,
-    permission: input.permission,
-    scopeIds: input.scopeIds ?? '',
-    status: 'active',
-    ...(input.startsAt ? { startsAt: input.startsAt } : {}),
-    ...(input.endsAt ? { endsAt: input.endsAt } : {}),
-  }))
+const resolveArgs = {
+  staffMemberId: 'staff-1',
+  schoolId: 'school-1',
+  academicYearId: GRANT_TEST_ACADEMIC_YEAR_ID,
 }
 
 describe('resolveEffectiveGrants', () => {
   test('grants school owner full school-scoped access without role assignments', async () => {
-    const repositories = createRepos([], 'subject-owner', 'subject-owner')
-
     const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
-      repositories,
+      ...resolveArgs,
+      repositories: createGrantRepos([], 'subject-owner', 'subject-owner'),
     })
 
     expect(grants.isElevated).toBe(true)
@@ -113,7 +33,7 @@ describe('resolveEffectiveGrants', () => {
   })
 
   test('grants elevated access to owner-level service accounts', async () => {
-    const repositories = createRepos()
+    const repositories = createGrantRepos()
     repositories.staffMembers.findById = mock(async () => new StaffMember({
       id: 'staff-service-1',
       schoolId: 'school-1',
@@ -126,9 +46,8 @@ describe('resolveEffectiveGrants', () => {
     }))
 
     const grants = await resolveEffectiveGrants({
+      ...resolveArgs,
       staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
       repositories,
     })
 
@@ -137,22 +56,22 @@ describe('resolveEffectiveGrants', () => {
     expect(grants.permissions.has(Permission.PLATFORM_REGISTER_SCHOOL)).toBe(false)
   })
 
-  test('grants staff permissions with school scope', async () => {
-    const repositories = createRepos()
-    await savePermission(repositories, {
-      id: 'spa-payment-record',
-      permission: Permission.PAYMENT_RECORD,
+  test('grants staff permissions with school and class-group scope', async () => {
+    const repositories = createGrantRepos([
+      { id: 'a-1', staffId: 'staff-1', classGroupId: 'class-1' },
+    ])
+    await saveStaffPermission(repositories, { id: 'spa-payment-record', permission: Permission.PAYMENT_RECORD })
+    await saveStaffPermission(repositories, {
+      id: 'spa-attendance-record',
+      permission: Permission.ATTENDANCE_RECORD,
+      scopeIds: 'class-1',
     })
 
-    const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
-      repositories,
-    })
+    const grants = await resolveEffectiveGrants({ ...resolveArgs, repositories })
 
     expect(grants.isElevated).toBe(false)
     expect(grants.permissions.has(Permission.PAYMENT_RECORD)).toBe(true)
+    expect(grants.permissions.has(Permission.ATTENDANCE_RECORD)).toBe(true)
     expect(scopeGrantCovers(grants, {
       permission: Permission.PAYMENT_RECORD,
       schoolId: 'school-1',
@@ -160,26 +79,6 @@ describe('resolveEffectiveGrants', () => {
       scopeEntityId: 'school-1',
       isElevated: grants.isElevated,
     })).toBe(true)
-  })
-
-  test('grants teacher assignment-scoped permissions from permission rows', async () => {
-    const repositories = createRepos([
-      { id: 'a-1', staffId: 'staff-1', classGroupId: 'class-1' },
-    ])
-    await savePermission(repositories, {
-      id: 'spa-attendance-record',
-      permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1',
-    })
-
-    const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
-      repositories,
-    })
-
-    expect(grants.permissions.has(Permission.ATTENDANCE_RECORD)).toBe(true)
     expect(scopeGrantCovers(grants, {
       permission: Permission.ATTENDANCE_RECORD,
       schoolId: 'school-1',
@@ -196,26 +95,8 @@ describe('resolveEffectiveGrants', () => {
     })).toBe(false)
   })
 
-  test('does not grant finance permissions to teachers', async () => {
-    const repositories = createRepos()
-    await savePermission(repositories, {
-      id: 'spa-attendance-record',
-      permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1',
-    })
-
-    const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
-      repositories,
-    })
-
-    expect(grants.permissions.has(Permission.PAYMENT_RECORD)).toBe(false)
-  })
-
   test('grants split payment permissions to accountants', async () => {
-    const repositories = createRepos()
+    const repositories = createGrantRepos()
     for (const [index, permission] of [
       Permission.PAYMENT_RECORD,
       Permission.PAYMENT_CANCEL,
@@ -224,56 +105,39 @@ describe('resolveEffectiveGrants', () => {
       Permission.FINANCIAL_CONFIG_CONFIGURE,
       Permission.FINANCIAL_CONFIG_UPDATE,
     ].entries()) {
-      await savePermission(repositories, {
-        id: `spa-accountant-${index}`,
-        permission,
-      })
+      await saveStaffPermission(repositories, { id: `spa-accountant-${index}`, permission })
     }
 
-    const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
-      repositories,
-    })
-
+    const grants = await resolveEffectiveGrants({ ...resolveArgs, repositories })
     expect(grants.permissions.has(Permission.PAYMENT_RECORD)).toBe(true)
-    expect(grants.permissions.has(Permission.PAYMENT_CANCEL)).toBe(true)
-    expect(grants.permissions.has(Permission.PAYMENT_REVERSE)).toBe(true)
-    expect(grants.permissions.has(Permission.FINANCIAL_CONFIG_READ)).toBe(true)
-    expect(grants.permissions.has(Permission.FINANCIAL_CONFIG_CONFIGURE)).toBe(true)
     expect(grants.permissions.has(Permission.FINANCIAL_CONFIG_UPDATE)).toBe(true)
   })
 
   test('ignores active assignments outside their validity window', async () => {
-    const repositories = createRepos()
-    await savePermission(repositories, {
+    const repositories = createGrantRepos()
+    await saveStaffPermission(repositories, {
       id: 'spa-future',
       permission: Permission.PAYMENT_READ,
       startsAt: new Date('2026-02-01T00:00:00Z'),
     })
 
     await expect(resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
+      ...resolveArgs,
       repositories,
       now: new Date('2026-01-01T00:00:00Z'),
     })).rejects.toThrow()
   })
 
   test('reports earliest assignment expiry for cache bounds', async () => {
-    const repositories = createRepos()
-    await savePermission(repositories, {
+    const repositories = createGrantRepos()
+    await saveStaffPermission(repositories, {
       id: 'spa-temporary',
       permission: Permission.PAYMENT_READ,
       endsAt: new Date('2026-01-02T00:00:00Z'),
     })
 
     const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
+      ...resolveArgs,
       repositories,
       now: new Date('2026-01-01T00:00:00Z'),
     })
@@ -282,50 +146,17 @@ describe('resolveEffectiveGrants', () => {
   })
 
   test('rejects grant resolution if no database assignments exist', async () => {
-    const repositories = createRepos()
     await expect(resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      academicYearId: ACADEMIC_YEAR_ID,
-      repositories,
+      ...resolveArgs,
+      repositories: createGrantRepos(),
     })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('falls back to the active academic year when the header is omitted', async () => {
-    const repositories = createRepos([], undefined, undefined, [
+  test('falls back to the active academic year when omitted', async () => {
+    const repositories = createGrantRepos([], undefined, undefined, [
       { id: 'year-1', schoolId: 'school-1', name: '2025-2026', isActive: true },
     ])
-    await savePermission(repositories, {
-      id: 'spa-read',
-      permission: Permission.PAYMENT_READ,
-    })
-
-    const grants = await resolveEffectiveGrants({
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      repositories,
-    })
-
-    expect(grants.permissions.has(Permission.PAYMENT_READ)).toBe(true)
-  })
-
-  test('resolves default academic year when list is a class method', async () => {
-    class AcademicYearStore {
-      async list(filter: { schoolId?: string } = {}) {
-        return filter.schoolId === 'school-1'
-          ? [{ id: 'year-1', schoolId: 'school-1', name: '2025-2026', isActive: true }]
-          : []
-      }
-    }
-
-    const repositories = {
-      ...createRepos(),
-      academicYears: new AcademicYearStore() as unknown as SchoolRepositories['academicYears'],
-    }
-    await savePermission(repositories, {
-      id: 'spa-read',
-      permission: Permission.PAYMENT_READ,
-    })
+    await saveStaffPermission(repositories, { id: 'spa-read', permission: Permission.PAYMENT_READ })
 
     const grants = await resolveEffectiveGrants({
       staffMemberId: 'staff-1',

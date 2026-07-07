@@ -1,11 +1,18 @@
 import {
   describe,
   expect,
+  mock,
   test,
 } from 'bun:test'
 import { RecordingNotificationGateway } from '../../../src/adapters'
+import { AuthorizationError, AuthorizationErrorCode } from '../../../src/capabilities/authorization'
 import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
-import { ReportCardResultStatus } from '../../../src/domain'
+import {
+  Assessment,
+  AssessmentKind,
+  ReportCardAggregationSource,
+  ReportCardResultStatus,
+} from '../../../src/domain'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
 import {
   actor,
@@ -196,5 +203,120 @@ describe('SchoolService assessment workflows', () => {
       periodId: 'per1',
       reportCardDefinitionId: 'def1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('createGradeScale and completeAssessment persist assessment catalog entities', async () => {
+    const { mockRepos, service } = createReportCardContext()
+    mockRepos.assessments.findById = mock(async () => new Assessment({
+      id: 'ass1',
+      classGroupId: 'cg1',
+      classSubjectId: 'cs1',
+      periodId: 'per1',
+      title: 'Math test',
+      kind: AssessmentKind.Quiz,
+      maxScore: 100,
+      coefficient: 1,
+      description: 'Math test',
+      startsAt: new Date('2026-02-01T09:00:00Z'),
+      endsAt: new Date('2026-02-01T10:00:00Z'),
+    }))
+
+    const gradeScale = await service.assessmentsWorkflow.createGradeScale({
+      id: 'gs1',
+      schoolId: 'sch1',
+      name: '20-point',
+      minScore: 0,
+      maxScore: 20,
+      ranges: [{ letter: 'A', minScore: 16, maxScore: 20, isPassing: true }],
+    })
+    expect(gradeScale.name).toBe('20-point')
+    expect(mockRepos.gradeScales.save).toHaveBeenCalled()
+
+    mockRepos.assessmentResults.list = mock(async () => [])
+
+    const completed = await service.assessmentsWorkflow.completeAssessment({
+      assessmentId: 'ass1',
+      completedAt: new Date('2026-02-01T10:30:00Z'),
+    })
+    expect(completed.completedAt?.toISOString()).toBe('2026-02-01T10:30:00.000Z')
+    expect(mockRepos.assessments.save).toHaveBeenCalled()
+  })
+
+  test('listClassSubjectAssessmentResultsForPeriod returns assessment results for a class subject', async () => {
+    const { service } = createReportCardContext()
+
+    const results = await service.assessmentsWorkflow.listClassSubjectAssessmentResultsForPeriod({
+      classSubjectId: 'cs1',
+      periodId: 'per1',
+    })
+
+    expect(results).toHaveLength(1)
+    expect(results[0]?.studentId).toBe('stu1')
+  })
+
+  test('recordAssessmentResultCompliance delegates to recordAssessmentResult', async () => {
+    const { service } = createReportCardContext()
+
+    const result = await service.assessmentsWorkflow.recordAssessmentResultCompliance({
+      id: 'ar-compliance',
+      studentId: 'stu1',
+      assessmentId: 'ass1',
+      score: 88,
+    })
+
+    expect(result.score).toBe(88)
+  })
+
+  test('generateReportCardResult uses the default definition when none is provided', async () => {
+    const { mockRepos, service } = createReportCardContext()
+    mockRepos.definitions.findOne = mock(async () => ({
+      id: 'def-default',
+      schoolId: 'sch1',
+      academicYearId: 'ay1',
+      gradeLevelId: 'grade1',
+      isDefault: true,
+    })) as unknown as typeof mockRepos.definitions.findOne
+
+    const result = await service.assessmentsWorkflow.generateReportCardResult({
+      id: 'rc-default',
+      studentId: 'stu1',
+      periodId: 'per1',
+    })
+
+    expect(result.reportCardDefinitionId).toBe('def-default')
+  })
+
+  test('publishReportCardResult rejects aggregated sources that are not ready', async () => {
+    const { service } = createReportCardContext()
+
+    await expect(service.assessmentsWorkflow.publishReportCardResult({
+      id: 'rc-agg',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+      aggregation: {
+        source: ReportCardAggregationSource.ReportCards,
+        sourcePeriodIds: ['per-t1', 'per-unpublished'],
+      },
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('writeHomeroomReportComment rejects actors without report card access', async () => {
+    const { mockPolicy, service } = createReportCardContext()
+    mockPolicy.checkReportCardResultAccess = mock(async () => {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    })
+
+    await service.assessmentsWorkflow.generateReportCardResult({
+      id: 'rc1',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+    })
+
+    await expect(service.assessmentsWorkflow.writeHomeroomReportComment({
+      id: 'rc1',
+      teacherComment: 'Needs improvement',
+    })).rejects.toBeInstanceOf(AuthorizationError)
   })
 })

@@ -6,7 +6,13 @@ import {
 } from 'bun:test'
 import { noOpNotificationGateway, RecordingNotificationGateway } from '../../../src/adapters'
 import { SchoolService } from '../../../src/application'
-import { AuthorizationError, createSystemActorMetadata } from '../../../src/capabilities/authorization'
+import {
+  ActorAssuranceLevel,
+  AuthorizationError,
+  createGuardianActorMetadata,
+  createStaffActorMetadata,
+  createSystemActorMetadata,
+} from '../../../src/capabilities/authorization'
 import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import {
   AnnouncementStatus,
@@ -16,8 +22,10 @@ import {
   AnnouncementTargetKind as TargetKind,
 } from '../../../src/domain'
 import { BusinessRuleViolationError } from '../../../src/domain/shared/business-rule-error'
+import { portalScopeForGuardian } from '../../support/effective-grants'
 import { testFileStorage } from '../../support/test-file-storage'
 import {
+  actor,
   createCommunicationsContext,
 } from './workflow-test-context'
 
@@ -339,5 +347,254 @@ describe('SchoolService communications workflows', () => {
 
     expect(result?.status).toBe(MessageDeliveryStatus.Sent)
     expect(savedDeliveries.get('delivery:ann1:subject:stu1')?.status).toBe(MessageDeliveryStatus.Sent)
+  })
+
+  test('createAnnouncement and addTarget persist draft content and audience', async () => {
+    const { mockRepos, service } = createCommunicationsContext({
+      announcementStatus: AnnouncementStatus.Draft,
+    })
+
+    const announcement = await service.communicationsWorkflow.createAnnouncement({
+      id: 'ann-draft',
+      schoolId: 'sch1',
+      title: 'Draft notice',
+      content: 'Draft body',
+      createdBy: 'user1',
+      status: AnnouncementStatus.Draft,
+    })
+    const target = await service.communicationsWorkflow.addTarget({
+      id: 'target-draft',
+      announcementId: 'ann-draft',
+      targetKind: TargetKind.AllStudents,
+    })
+
+    expect(announcement.status).toBe(AnnouncementStatus.Draft)
+    expect(target.targetKind).toBe(TargetKind.AllStudents)
+    expect(mockRepos.announcements.save).toHaveBeenCalledWith(announcement)
+    expect(mockRepos.announcementTargets.save).toHaveBeenCalledWith(target)
+  })
+
+  test('recordDelivery without announcementId records ad-hoc deliveries', async () => {
+    const { service } = createCommunicationsContext()
+
+    const result = await service.communicationsWorkflow.recordDelivery({
+      id: 'del-adhoc',
+      schoolId: 'sch1',
+      title: 'Manual notice',
+      body: 'Manual body',
+      subjectId: 'subject:staff1',
+      recipientKind: MessageDeliveryRecipientKind.Staff,
+      recipientId: 'staff1',
+      status: MessageDeliveryStatus.Sent,
+      sentAt: new Date('2026-05-02T00:00:00Z'),
+    })
+
+    expect(result.eventKey).toBeUndefined()
+    expect(result.announcementId).toBeUndefined()
+  })
+
+  test('applyDeliveryEvent returns undefined for unknown deliveries and ignores invalid transitions', async () => {
+    const { savedDeliveries, service } = createCommunicationsContext({
+      existingDelivery: new MessageDelivery({
+        id: 'delivery:ann1:subject:stu1',
+        ...deliveryContent,
+        announcementId: 'ann1',
+        subjectId: 'subject:stu1',
+        recipientKind: MessageDeliveryRecipientKind.Student,
+        recipientId: 'stu1',
+        status: MessageDeliveryStatus.Sent,
+        sentAt: new Date('2026-05-02T00:00:00Z'),
+      }),
+    })
+
+    await expect(service.communicationsWorkflow.applyDeliveryEvent({
+      deliveryId: 'missing-delivery',
+      status: MessageDeliveryStatus.Read,
+    })).resolves.toBeUndefined()
+
+    const unchanged = await service.communicationsWorkflow.applyDeliveryEvent({
+      deliveryId: 'delivery:ann1:subject:stu1',
+      status: MessageDeliveryStatus.Sent,
+    })
+
+    expect(unchanged?.status).toBe(MessageDeliveryStatus.Sent)
+    expect(savedDeliveries.get('delivery:ann1:subject:stu1')?.status).toBe(MessageDeliveryStatus.Sent)
+  })
+
+  test('applyDeliveryEvent marks sent deliveries as read', async () => {
+    const { service } = createCommunicationsContext({
+      existingDelivery: new MessageDelivery({
+        id: 'delivery:ann1:subject:stu1',
+        ...deliveryContent,
+        announcementId: 'ann1',
+        subjectId: 'subject:stu1',
+        recipientKind: MessageDeliveryRecipientKind.Student,
+        recipientId: 'stu1',
+        status: MessageDeliveryStatus.Sent,
+        sentAt: new Date('2026-05-02T00:00:00Z'),
+      }),
+    })
+
+    const result = await service.communicationsWorkflow.applyDeliveryEvent({
+      deliveryId: 'delivery:ann1:subject:stu1',
+      status: MessageDeliveryStatus.Read,
+      occurredAt: new Date('2026-05-03T00:00:00Z'),
+    })
+
+    expect(result?.status).toBe(MessageDeliveryStatus.Read)
+    expect(result?.readAt?.toISOString()).toBe('2026-05-03T00:00:00.000Z')
+  })
+
+  test('markDeliveryRead allows the recipient actor to mark their delivery read', async () => {
+    const guardianActor = createGuardianActorMetadata({
+      guardianId: 'gua1',
+      subjectId: 'subject:gua1',
+      schoolId: 'sch1',
+      requestId: 'request',
+      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Strong,
+      guardianScope: portalScopeForGuardian(['stu1'], ['cg1']),
+    })
+    const { service } = createCommunicationsContext({
+      actorOverride: guardianActor,
+      existingDelivery: new MessageDelivery({
+        id: 'delivery:ann1:subject:gua1',
+        ...deliveryContent,
+        announcementId: 'ann1',
+        subjectId: 'subject:gua1',
+        recipientKind: MessageDeliveryRecipientKind.Guardian,
+        recipientId: 'gua1',
+        status: MessageDeliveryStatus.Sent,
+        sentAt: new Date('2026-05-02T00:00:00Z'),
+      }),
+    })
+
+    const result = await service.communicationsWorkflow.markDeliveryRead({
+      deliveryId: 'delivery:ann1:subject:gua1',
+      readAt: new Date('2026-05-03T00:00:00Z'),
+    })
+
+    expect(result.status).toBe(MessageDeliveryStatus.Read)
+  })
+
+  test('markDeliveryRead rejects actors that do not own the delivery subject', async () => {
+    const { service } = createCommunicationsContext({
+      existingDelivery: new MessageDelivery({
+        id: 'delivery:ann1:subject:gua1',
+        ...deliveryContent,
+        announcementId: 'ann1',
+        subjectId: 'subject:gua1',
+        recipientKind: MessageDeliveryRecipientKind.Guardian,
+        recipientId: 'gua1',
+        status: MessageDeliveryStatus.Sent,
+        sentAt: new Date('2026-05-02T00:00:00Z'),
+      }),
+    })
+
+    await expect(service.communicationsWorkflow.markDeliveryRead({
+      deliveryId: 'delivery:ann1:subject:gua1',
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('updateNotificationContact updates staff notification channels', async () => {
+    const staffActor = createStaffActorMetadata({
+      subjectId: 'subject:staff1',
+      staffMemberId: 'staff1',
+      schoolId: 'sch1',
+      requestId: 'request',
+      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Strong,
+      effectiveGrants: actor.effectiveGrants,
+    })
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createCommunicationsContext({
+      actorOverride: staffActor,
+      notificationGateway: gateway,
+    })
+
+    const result = await service.communicationsWorkflow.updateNotificationContact({
+      notificationEmail: ' alerts@school.test ',
+      notificationPhone: ' +22501020304 ',
+    })
+
+    expect(result.notificationEmail).toBe('alerts@school.test')
+    expect(result.notificationPhone).toBe('+22501020304')
+    expect(gateway.upserted.length).toBeGreaterThan(0)
+  })
+
+  test('updateNotificationContact updates guardian notification channels', async () => {
+    const guardianActor = createGuardianActorMetadata({
+      guardianId: 'gua1',
+      subjectId: 'subject:gua1',
+      schoolId: 'sch1',
+      requestId: 'request',
+      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Strong,
+      guardianScope: portalScopeForGuardian(['stu1'], ['cg1']),
+    })
+    const { service } = createCommunicationsContext({ actorOverride: guardianActor })
+
+    const result = await service.communicationsWorkflow.updateNotificationContact({
+      notificationEmail: 'guardian@school.test',
+    })
+
+    expect(result.notificationEmail).toBe('guardian@school.test')
+  })
+
+  test('registerPushDevice and unregisterPushDevice delegate to the notification gateway', async () => {
+    const staffActor = createStaffActorMetadata({
+      subjectId: 'subject:staff1',
+      staffMemberId: 'staff1',
+      schoolId: 'sch1',
+      requestId: 'request',
+      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Strong,
+      effectiveGrants: actor.effectiveGrants,
+    })
+    const gateway = new RecordingNotificationGateway()
+    const { service } = createCommunicationsContext({
+      actorOverride: staffActor,
+      notificationGateway: gateway,
+    })
+
+    await service.communicationsWorkflow.registerPushDevice({
+      token: ' device-token ',
+      provider: 'fcm',
+    })
+    await service.communicationsWorkflow.unregisterPushDevice({ provider: 'fcm' })
+
+    expect(gateway.registeredPushDevices).toEqual([{
+      subjectId: 'subject:staff1',
+      schoolId: 'sch1',
+      token: 'device-token',
+      provider: 'fcm',
+    }])
+    expect(gateway.unregisteredPushDevices).toEqual([{
+      subjectId: 'subject:staff1',
+      provider: 'fcm',
+    }])
+  })
+
+  test('dispatchPublishedAnnouncementNotifications rejects unpublished announcements', async () => {
+    const { service } = createCommunicationsContext({
+      announcementStatus: AnnouncementStatus.Draft,
+    })
+
+    await expect(service.communicationsWorkflow.dispatchPublishedAnnouncementNotifications('ann1'))
+      .rejects
+      .toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('materializeDeliveries skips recipients without linked subject ids', async () => {
+    const { mockRepos, service } = createCommunicationsContext({
+      targets: [{ id: 'target-staff', announcementId: 'ann1', targetKind: TargetKind.StaffMember, targetId: 'staff-no-subject' }],
+    })
+
+    const result = await service.communicationsWorkflow.materializeDeliveries({
+      announcementId: 'ann1',
+    })
+
+    expect(result).toEqual([])
+    expect(mockRepos.messageDeliveries.save).not.toHaveBeenCalled()
   })
 })

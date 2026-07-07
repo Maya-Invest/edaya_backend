@@ -131,7 +131,7 @@ function authorizeClassSubjectProgressDeleteResource(
   }
 }
 
-async function validateClassSubjectProgressSave(
+export async function validateClassSubjectProgressSave(
   progress: ClassSubjectProgress,
   existing: ClassSubjectProgress | undefined,
   repositories: SchoolRepositories,

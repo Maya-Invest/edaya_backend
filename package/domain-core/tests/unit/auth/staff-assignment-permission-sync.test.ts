@@ -93,6 +93,61 @@ describe('staff assignment permission rules', () => {
       { kind: 'class_group', schoolId: 'school-1', classGroupId: 'cg-1' },
     )).toThrow()
   })
+
+  test('resolves lesson session and activity session targets', async () => {
+    const lessonTarget = await resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, lessonSessionId: 'ls-1' }),
+      repositories(),
+    )
+    expect(lessonTarget.kind).toBe('lesson_session')
+    expect(scopeIdsForStaffAssignmentPermission(Permission.EXAM_CONFIG_CREATE, lessonTarget)).toBe('cg-1:cs-1')
+
+    const activityTarget = await resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, activitySessionId: 'as-1' }),
+      repositories(),
+    )
+    expect(activityTarget.kind).toBe('activity_session')
+    expect(() => validateStaffAssignmentPermissionSelection(
+      assignment({ classGroupId: undefined, activitySessionId: 'as-1', permissions: [Permission.CLASS_LOGBOOK_READ] }),
+      activityTarget,
+    )).toThrow()
+  })
+
+  test('resolves assessment targets and rejects disallowed permissions', async () => {
+    const target = await resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, assessmentId: 'exam-1' }),
+      repositories(),
+    )
+    expect(target.kind).toBe('assessment')
+    expect(() => validateStaffAssignmentPermissionSelection(
+      assignment({ classGroupId: undefined, assessmentId: 'exam-1', permissions: [Permission.STAFF_READ] }),
+      target,
+    )).toThrow()
+  })
+
+  test('throws when referenced placement entities are missing', async () => {
+    const repos = repositories()
+    await expect(resolveStaffAssignmentTarget(
+      assignment({ classGroupId: 'missing-cg' }),
+      repos,
+    )).rejects.toThrow()
+    await expect(resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, classSubjectId: 'missing-cs' }),
+      repos,
+    )).rejects.toThrow()
+    await expect(resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, lessonSessionId: 'missing-ls' }),
+      repos,
+    )).rejects.toThrow()
+    await expect(resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, activitySessionId: 'missing-as' }),
+      repos,
+    )).rejects.toThrow()
+    await expect(resolveStaffAssignmentTarget(
+      assignment({ classGroupId: undefined, assessmentId: 'missing-exam' }),
+      repos,
+    )).rejects.toThrow()
+  })
 })
 
 describe('syncStaffAssignmentPermissions', () => {

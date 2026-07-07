@@ -127,7 +127,7 @@ export async function validateClassGroupSave(
   }
 }
 
-async function validateClassGroupDelete(
+export async function validateClassGroupDelete(
   classGroup: ClassGroup,
   repositories: SchoolRepositories,
 ): Promise<void> {

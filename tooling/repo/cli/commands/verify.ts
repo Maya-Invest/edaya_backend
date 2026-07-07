@@ -13,6 +13,7 @@ const VERIFY_STEPS: VerifyStep[] = [
   { label: 'turbo build', run: () => runRepoCommand(['bunx', 'turbo', 'run', 'build']) },
   { label: 'repo check openapi', run: () => runBunScript(paths.openapiCheck) },
   { label: 'repo check boundaries', run: () => runBunScript(paths.checkBoundaries) },
+  { label: 'repo check test-naming', run: () => runBunScript(paths.checkTestNaming) },
   { label: '@edaya/repo test', run: () => runRepoCommand(['bun', '--filter', '@edaya/repo', 'test']) },
   {
     label: 'turbo test',

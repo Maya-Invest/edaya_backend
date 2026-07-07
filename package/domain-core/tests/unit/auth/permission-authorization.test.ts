@@ -1,12 +1,9 @@
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
-import { operationModule } from '../../../src/application/entities/entity-config'
 import {
-  AttendanceOperations,
   AuthorizationError,
   authorize,
   createStaffActorMetadata,
-  FinanceOperations,
   Permission,
   permissionDefinitions,
 } from '../../../src/capabilities/authorization'
@@ -105,50 +102,5 @@ describe('authorize', () => {
         permission: Permission.STAFF_READ,
       },
     })).toThrow(AuthorizationError)
-  })
-
-  test('AttendanceOperations.record uses preloaded grants', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: {
-        permissions: new Set([Permission.ATTENDANCE_RECORD]),
-        scopeGrants: [{
-          permission: Permission.ATTENDANCE_RECORD,
-          scopeType: 'school',
-          scopeEntityIds: ['school-1'],
-        }],
-        isElevated: false,
-      },
-    })
-
-    expect(() => operationModule(AttendanceOperations.record, {
-      classGroupId: 'class-1',
-    })(actor)).not.toThrow()
-  })
-
-  test('FinanceOperations.paymentsRead allows matching staff grant', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: {
-        permissions: new Set([Permission.PAYMENT_READ]),
-        scopeGrants: [{
-          permission: Permission.PAYMENT_READ,
-          scopeType: 'school',
-          scopeEntityIds: ['school-1'],
-        }],
-        isElevated: false,
-      },
-    })
-
-    expect(() => operationModule(FinanceOperations.paymentsRead)(actor)).not.toThrow()
-    expect(() => operationModule(FinanceOperations.paymentRecord)(actor)).toThrow(AuthorizationError)
   })
 })

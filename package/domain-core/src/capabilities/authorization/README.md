@@ -336,7 +336,7 @@ export const MyFeatureOperations = defineOperationFamily({
 3. **Add policy strategy** if layer 2 needs new relationship logic — add a strategy under `policy/strategies/` and register in `compose.ts`; do not branch on `actor.kind` in `src/domain/**`.
 4. **Add operation matrix tests** in `tests/unit/auth/operations/` using `describeOperationMatrix`.
 5. **Add policy tests** in `tests/unit/auth/policy/` or extend `repository-authorization-policy.test.ts`.
-6. **Run static guards** — `authorization-migration-coverage.test.ts` enforces zero `permissionAction` and zero `actor.kind` in domain code.
+6. **Run static guards** — `authorization-migration-guards.test.ts` enforces zero `permissionAction` and zero `actor.kind` in domain code.
 
 For staff-only admin permissions (no portal actor): add enum value, `permissionDefinitions`, assurance if needed, seed presets, and i18n in `edaya_web`.
 
@@ -352,7 +352,7 @@ For staff-only admin permissions (no portal actor): add enum value, `permissionD
 | Policy resolvers | `tests/unit/auth/repository-authorization-policy.test.ts` |
 | Portal grants | `tests/unit/auth/portal-permission-policy.test.ts` |
 | Scope path matching | `tests/unit/auth/scope-path-covers.test.ts` |
-| Migration guards | `tests/unit/auth/authorization-migration-coverage.test.ts` |
+| Migration guards | `tests/unit/auth/authorization-migration-guards.test.ts` |
 
 Integration tests under `tooling/integration-tests/src/auth/` exercise persistence-backed resolution.
 

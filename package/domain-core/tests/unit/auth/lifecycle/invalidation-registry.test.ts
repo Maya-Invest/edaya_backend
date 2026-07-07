@@ -50,6 +50,32 @@ describe('resolveAuthCacheInvalidationEvents', () => {
       schoolId: undefined,
     }])
   })
+
+  test('staff member and assignment entities emit staff grant events', () => {
+    expect(resolveAuthCacheInvalidationEvents('staffMembers', {
+      id: 'staff-1',
+      schoolId: 'school-1',
+    })).toEqual([{ kind: 'staff-grants', staffMemberId: 'staff-1', schoolId: 'school-1' }])
+
+    expect(resolveAuthCacheInvalidationEvents('staffAssignments', {
+      staffId: 'staff-1',
+      schoolId: 'school-1',
+    })).toEqual([{ kind: 'staff-grants', staffMemberId: 'staff-1', schoolId: 'school-1' }])
+  })
+
+  test('portal actor entities emit scope invalidation events', () => {
+    expect(resolveAuthCacheInvalidationEvents('students', { id: 'student-1', schoolId: 'school-1' }))
+      .toEqual([{ kind: 'student-scope', studentId: 'student-1', schoolId: 'school-1' }])
+    expect(resolveAuthCacheInvalidationEvents('guardians', { id: 'guardian-1', schoolId: 'school-1' }))
+      .toEqual([{ kind: 'guardian-scope', guardianId: 'guardian-1', schoolId: 'school-1' }])
+    expect(resolveAuthCacheInvalidationEvents('teachers', { id: 'teacher-1', schoolId: 'school-1' }))
+      .toEqual([{ kind: 'teacher-scope', teacherId: 'teacher-1', schoolId: 'school-1' }])
+  })
+
+  test('ignores invalid entities and unrelated entity keys', () => {
+    expect(resolveAuthCacheInvalidationEvents('staffPermissionAssignments', null)).toEqual([])
+    expect(resolveAuthCacheInvalidationEvents('schools', { id: 'school-1' })).toEqual([])
+  })
 })
 
 describe('invalidateAuthCacheForEvents', () => {

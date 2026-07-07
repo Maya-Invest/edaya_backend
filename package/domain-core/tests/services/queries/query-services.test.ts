@@ -125,4 +125,24 @@ describe('SchoolService query operations', () => {
     expect(result.classGroupId).toBe('cg1')
     expect(result.events).toEqual([])
   })
+
+  test('getClassGroupTimetable rejects missing class groups', async () => {
+    const timetableService = new SchoolService({
+      repositories: {
+        ...mockRepos,
+        classGroups: { findById: mock(async () => undefined) },
+      } as unknown as SchoolRepositories,
+      authorizationPolicy: mockPolicy,
+      actor,
+      atomicExecution: mockAtomic,
+      notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
+    })
+
+    await expect(timetableService.getClassGroupTimetable({
+      classGroupId: 'missing',
+      startDate: new Date('2026-05-01T00:00:00.000Z'),
+      endDate: new Date('2026-05-31T00:00:00.000Z'),
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
 })

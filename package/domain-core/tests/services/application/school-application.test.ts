@@ -63,4 +63,33 @@ describe('SchoolApplication', () => {
     expect(serviceProperties.queries).toBeUndefined()
     expect(serviceProperties.config).toBeUndefined()
   })
+
+  test('delegates auth account lookup to the configured resolver', async () => {
+    const application = new SchoolApplication({
+      authorizationPolicy,
+      repositories,
+      atomicExecution,
+      notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
+      authContactResolver: {
+        resolveBySubjectId: async () => undefined,
+        hasAccountForEmail: async email => email === 'known@school.test',
+      },
+    })
+
+    await expect(application.hasAuthAccountForEmail('known@school.test')).resolves.toBe(true)
+    await expect(application.hasAuthAccountForEmail('unknown@school.test')).resolves.toBe(false)
+  })
+
+  test('returns false when no auth contact resolver is configured', async () => {
+    const application = new SchoolApplication({
+      authorizationPolicy,
+      repositories,
+      atomicExecution,
+      notificationGateway: noOpNotificationGateway,
+      fileStorage: testFileStorage,
+    })
+
+    await expect(application.hasAuthAccountForEmail('anyone@school.test')).resolves.toBe(false)
+  })
 })

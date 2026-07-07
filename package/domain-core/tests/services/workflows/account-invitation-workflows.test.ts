@@ -1,12 +1,18 @@
+import type {
+  Student,
+  Teacher,
+} from '../../../src'
 import type { EffectiveGrants } from '../../../src/capabilities/authorization'
-import type { AccountInvitation } from '../../../src/domain/access/account-invitation'
 import { describe, expect, test } from 'bun:test'
 import {
+  AccountInvitation,
+  AccountInvitationContactChannel,
   AccountInvitationKind,
   AccountInvitationStatus,
   ActorAssuranceLevel,
   createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
+  Guardian,
   Permission,
   RecordingInvitationDeliveryPort,
   RecordingNotificationGateway,
@@ -40,7 +46,11 @@ function actorWithPermissions(permissions: readonly Permission[]) {
   })
 }
 
-function createInvitationContext() {
+function createInvitationContext(options: {
+  guardians?: Guardian[]
+  teachers?: Teacher[]
+  students?: Student[]
+} = {}) {
   const invitationDelivery = new RecordingInvitationDeliveryPort()
   const staffMember = new StaffMember({
     id: 'st9',
@@ -54,6 +64,9 @@ function createInvitationContext() {
 
   const savedInvitations: AccountInvitation[] = []
   const savedStaff: StaffMember[] = [staffMember]
+  const savedGuardians: Guardian[] = options.guardians ?? []
+  const savedTeachers: Teacher[] = options.teachers ?? []
+  const savedStudents: Student[] = options.students ?? []
 
   const mockRepos = {
     schools: {
@@ -78,14 +91,43 @@ function createInvitationContext() {
       },
     },
     guardians: {
-      findById: async () => undefined,
+      findById: async (id: string) => savedGuardians.find(entry => entry.id === id),
       findOne: async () => undefined,
-      save: async () => {},
+      save: async (entity: Guardian) => {
+        const index = savedGuardians.findIndex(entry => entry.id === entity.id)
+        if (index >= 0) {
+          savedGuardians[index] = entity
+        }
+        else {
+          savedGuardians.push(entity)
+        }
+      },
+    },
+    teachers: {
+      findById: async (id: string) => savedTeachers.find(entry => entry.id === id),
+      findOne: async () => undefined,
+      save: async (entity: Teacher) => {
+        const index = savedTeachers.findIndex(entry => entry.id === entity.id)
+        if (index >= 0) {
+          savedTeachers[index] = entity
+        }
+        else {
+          savedTeachers.push(entity)
+        }
+      },
     },
     students: {
-      findById: async () => undefined,
+      findById: async (id: string) => savedStudents.find(entry => entry.id === id),
       findOne: async () => undefined,
-      save: async () => {},
+      save: async (entity: Student) => {
+        const index = savedStudents.findIndex(entry => entry.id === entity.id)
+        if (index >= 0) {
+          savedStudents[index] = entity
+        }
+        else {
+          savedStudents.push(entity)
+        }
+      },
     },
     guardianLinks: {
       list: async () => [],
@@ -321,6 +363,105 @@ describe('AccountInvitationServiceWorkflow', () => {
       .toBe(AccountInvitationStatus.Pending)
     expect(invitationDelivery.revokedInvitationIds).toContain(invitation.id)
     expect(invitationDelivery.deliveries.at(-1)?.invitationId).toBe(result.invitation.id)
+  })
+
+  test('sendAccountInvitation delivers guardian invitations', async () => {
+    const guardian = new Guardian({
+      id: 'gua1',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      email: 'grace@school.edu',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    })
+    const { invitationDelivery, savedInvitations, service } = createInvitationContext({ guardians: [guardian] })
+
+    const result = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Guardian,
+      targetId: 'gua1',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    expect(result.invitation.kind).toBe(AccountInvitationKind.Guardian)
+    expect(savedInvitations[0]?.contactValue).toBe('grace@school.edu')
+    expect(invitationDelivery.deliveries).toHaveLength(1)
+  })
+
+  test('getInvitationPreviewByToken returns a pending invitation', async () => {
+    const { service } = createInvitationContext()
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    const preview = await service.accountInvitationWorkflow.getInvitationPreviewByToken(token)
+    expect(preview.status).toBe(AccountInvitationStatus.Pending)
+  })
+
+  test('acceptAccountInvitation is idempotent for the same subject', async () => {
+    const { service } = createInvitationContext()
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    const first = await service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'auth-user-1',
+      contactEmail: 'p.martin@school.edu',
+    })
+    const second = await service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'auth-user-1',
+      contactEmail: 'p.martin@school.edu',
+    })
+
+    expect(second.entity.subjectId).toBe(first.entity.subjectId)
+  })
+
+  test('acceptAccountInvitation rejects expired invitations', async () => {
+    const { savedInvitations, service } = createInvitationContext()
+    const token = 'expired-token'
+    savedInvitations.push(new AccountInvitation({
+      id: 'inv-expired',
+      schoolId: 'sch1',
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: 'p.martin@school.edu',
+      tokenHash: hashInvitationToken(token),
+      status: AccountInvitationStatus.Pending,
+      expiresAt: new Date('2020-01-01T00:00:00Z'),
+      createdByStaffId: 'staff-admin',
+      createdAt: new Date('2020-01-01T00:00:00Z'),
+    }))
+
+    await expect(service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'auth-user-1',
+      contactEmail: 'p.martin@school.edu',
+    })).rejects.toMatchObject({ code: 'INVITATION_EXPIRED' })
+  })
+
+  test('revokeAccountInvitation rejects already accepted invitations', async () => {
+    const { service } = createInvitationContext()
+    const { invitation, token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    await service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'auth-user-1',
+      contactEmail: 'p.martin@school.edu',
+    })
+
+    await expect(service.accountInvitationWorkflow.revokeAccountInvitation({
+      invitationId: invitation.id,
+    })).rejects.toMatchObject({ code: 'INVITATION_ALREADY_ACCEPTED' })
   })
 })
 

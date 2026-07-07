@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { Permission, scopeGrantCovers } from '../../../src/capabilities/authorization'
+import { mergeScopeGrants } from '../../../src/capabilities/authorization/grants/scope-grant-covers'
 import { parseScopeIds, serializeScopeIds } from '../../../src/capabilities/authorization/scope/scope-ids-parse'
 import { validateScopeIds } from '../../../src/capabilities/authorization/scope/scope-ids-validate'
 import { scopePathCovers } from '../../../src/capabilities/authorization/scope/scope-path-covers'
@@ -100,5 +101,44 @@ describe('scopeGrantCovers tenant-wide paths', () => {
       scopeEntityId: 'school-1',
       isElevated: false,
     })).toBe(false)
+  })
+})
+
+describe('mergeScopeGrants', () => {
+  test('merges duplicate permission and scope type rows', () => {
+    expect(mergeScopeGrants([
+      { permission: Permission.GRADE_INPUT, scopeType: 'class_group', scopeEntityIds: ['cg-1'] },
+      { permission: Permission.GRADE_INPUT, scopeType: 'class_group', scopeEntityIds: ['cg-2'] },
+    ])).toEqual([{
+      permission: Permission.GRADE_INPUT,
+      scopeType: 'class_group',
+      scopeEntityIds: ['cg-1', 'cg-2'],
+    }])
+  })
+})
+
+describe('scopeGrantCovers legacy scope grants', () => {
+  test('matches school-wide legacy scope grants', () => {
+    expect(scopeGrantCovers([
+      { permission: Permission.STUDENT_READ, scopeType: 'school', scopeEntityIds: ['school-1'] },
+    ], {
+      permission: Permission.STUDENT_READ,
+      schoolId: 'school-1',
+      scopeType: 'class_group',
+      scopeEntityId: 'class-1',
+      isElevated: false,
+    })).toBe(true)
+  })
+
+  test('matches explicit class group entity id on legacy grants', () => {
+    expect(scopeGrantCovers([
+      { permission: Permission.GRADE_INPUT, scopeType: 'class_group', scopeEntityIds: ['class-1'] },
+    ], {
+      permission: Permission.GRADE_INPUT,
+      schoolId: 'school-1',
+      scopeType: 'class_group',
+      scopeEntityId: 'class-1',
+      isElevated: false,
+    })).toBe(true)
   })
 })

@@ -2,7 +2,10 @@ import { describe, expect, test } from 'bun:test'
 import {
   buildScopeIdsByPermissionFromLegacyAccess,
   expandLegacyStaffAccessToPermissionRows,
+  mergePermissionScopeIds,
   Permission,
+  permissionRowsFromTemplatePermissions,
+  scopeIdsFromLegacyScopeGrant,
 } from '../../../src/capabilities/authorization'
 
 describe('legacy staff access migration', () => {
@@ -56,5 +59,42 @@ describe('legacy staff access migration', () => {
     )
 
     expect(scopeIdsByPermission.get(Permission.ATTENDANCE_RECORD)).toBe('class-1,class-2')
+  })
+
+  test('scopeIdsFromLegacyScopeGrant returns empty for school-wide grants', () => {
+    expect(scopeIdsFromLegacyScopeGrant({
+      permission: Permission.GRADE_READ,
+      scopeType: 'school',
+      scopeEntityIds: ['school-1'],
+    })).toBe('')
+  })
+
+  test('mergePermissionScopeIds combines distinct scope paths', () => {
+    expect(mergePermissionScopeIds('class-1', 'class-2')).toBe('class-1;class-2')
+    expect(mergePermissionScopeIds(undefined, '')).toBe('')
+    expect(mergePermissionScopeIds('class-1', 'class-1')).toBe('class-1')
+  })
+
+  test('permissionRowsFromTemplatePermissions emits scoped rows for template permissions', () => {
+    const rows = permissionRowsFromTemplatePermissions(
+      'staff-1',
+      'school-1',
+      'year-1',
+      [Permission.GRADE_INPUT, Permission.PAYMENT_READ],
+      [{
+        permission: Permission.GRADE_INPUT,
+        scopeType: 'class_group',
+        scopeEntityIds: ['class-1'],
+      }],
+    )
+
+    expect(rows).toContainEqual(expect.objectContaining({
+      permission: Permission.GRADE_INPUT,
+      scopeIds: 'class-1',
+    }))
+    expect(rows).toContainEqual(expect.objectContaining({
+      permission: Permission.PAYMENT_READ,
+      scopeIds: '',
+    }))
   })
 })

@@ -139,7 +139,7 @@ export async function validateFeeSave(
   }
 }
 
-async function validateFeeDelete(
+export async function validateFeeDelete(
   fee: Fee,
   repositories: SchoolRepositories,
 ): Promise<void> {

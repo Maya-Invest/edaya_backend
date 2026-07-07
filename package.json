@@ -23,6 +23,7 @@
     "quality": "turbo run quality",
     "test:repo": "bun --filter @edaya/repo test",
     "test": "bun run test:repo && turbo run test",
+    "test:integration": "bun --filter @edaya/integration-tests test && bun run test:integration-seeds",
     "test:integration-seeds": "bun --filter @edaya/integration-tests test:slow",
     "test:coverage": "turbo run test -- --coverage",
     "lint": "turbo run lint",
@@ -36,6 +37,7 @@
     "novu:cleanup": "bun repo novu cleanup",
     "novu:cleanup:apply": "bun repo novu cleanup apply",
     "verify": "bun repo verify",
+    "api-dev-container": "bash tooling/api-dev-container/run.sh",
     "deploy:api:production": "bun repo deploy api production",
     "deploy:api:staging": "bun repo deploy api staging",
     "smoke:staging": "bun repo smoke-test staging",
@@ -60,7 +62,8 @@
     "openapi:check": "bun repo check openapi",
     "generated:update": "bun repo openapi generate",
     "generated:check": "bun repo check openapi",
-    "check:boundaries": "bun repo check boundaries"
+    "check:boundaries": "bun repo check boundaries",
+    "check:test-naming": "bun repo check test-naming"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

@@ -67,4 +67,32 @@ describe('assertSubjectIdAvailable', () => {
       { subjectId: 'user-1', staffMemberId: 'staff-1' },
     )).resolves.toBeUndefined()
   })
+
+  test('rejects duplicate guardian, student, and teacher links in the same school', async () => {
+    const duplicate = (id: string) => ({
+      findOne: async () => ({ id, schoolId: 'school-1', subjectId: 'user-1' }),
+    })
+    const empty = { findOne: async () => undefined }
+
+    await expect(assertSubjectIdAvailable(
+      { staffMembers: empty, guardians: duplicate('guardian-other'), students: empty, teachers: empty } as never,
+      'school-1',
+      'user-1',
+      { subjectId: 'user-1', guardianId: 'guardian-1' },
+    )).rejects.toMatchObject({ code: 'SUBJECT_ID_ALREADY_LINKED' } satisfies Partial<BusinessRuleViolationError>)
+
+    await expect(assertSubjectIdAvailable(
+      { staffMembers: empty, guardians: empty, students: duplicate('student-other'), teachers: empty } as never,
+      'school-1',
+      'user-1',
+      { subjectId: 'user-1', studentId: 'student-1' },
+    )).rejects.toMatchObject({ code: 'SUBJECT_ID_ALREADY_LINKED' } satisfies Partial<BusinessRuleViolationError>)
+
+    await expect(assertSubjectIdAvailable(
+      { staffMembers: empty, guardians: empty, students: empty, teachers: duplicate('teacher-other') } as never,
+      'school-1',
+      'user-1',
+      { subjectId: 'user-1', teacherId: 'teacher-1' },
+    )).rejects.toMatchObject({ code: 'SUBJECT_ID_ALREADY_LINKED' } satisfies Partial<BusinessRuleViolationError>)
+  })
 })
