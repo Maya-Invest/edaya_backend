@@ -3,7 +3,7 @@
 # Copy to `.dev.vars` (gitignored). Loaded by `wrangler dev --env-file` and deploy secrets.
 # NOT loaded by `bun dev` — use `apps/api/.env` for local process runtime.
 # Non-secret worker defaults: `wrangler.jsonc` [env.*.vars]
-# Bulk deploy secrets: secrets.staging.json.example / secrets.prod.json.example
+# Bulk deploy secrets: secrets.json.example → secrets.staging.json / secrets.prod.json
 # -----------------------------------------------------------------------------
 
 # --- Wrangler local smoke overrides (optional; staging [vars] apply when --env staging) ---
@@ -45,5 +45,5 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 #   → local only
 
 # Upload deploy secrets (from apps/api):
-#   cp secrets.staging.json.example secrets.staging.json
+#   cp secrets.json.example secrets.staging.json
 #   bunx wrangler secret bulk secrets.staging.json --env staging

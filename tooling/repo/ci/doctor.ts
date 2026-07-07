@@ -12,8 +12,7 @@ const expectedEnvExamples = [
   '.env.example',
 ]
 const expectedSecretExamples = [
-  'apps/api/secrets.staging.json.example',
-  'apps/api/secrets.prod.json.example',
+  'apps/api/secrets.json.example',
 ]
 
 function isAllowedTrackedEnvFile(name: string): boolean {

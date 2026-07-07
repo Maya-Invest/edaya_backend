@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
 import process from 'node:process'
-import { dispatchCompoundCommand } from './dispatch'
 import { runDevContainer } from './commands/dev-container'
+import { dispatchCompoundCommand } from './dispatch'
 import { repoCliUsage } from './lib/help'
 import { runBunScript } from './lib/spawn'
 import { isCompoundRepoCommand, parseRepoCliArgs } from './parse-repo-cli'

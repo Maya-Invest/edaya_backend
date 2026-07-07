@@ -6,7 +6,7 @@ How to run coverage, interpret reports, and add tests in the backend monorepo.
 
 ```sh
 # All packages (via Turbo) — informational lcov reports
-bun test:coverage
+bun run test:coverage
 
 # Raw Turbo (use lcov reporter; text table breaks Turbo on large packages)
 turbo run test -- --coverage --coverage-reporter=lcov
@@ -29,7 +29,7 @@ bun run verify
 | `@edaya/core` | Informational only (no enforced floor yet) | 95% T1 |
 | Other packages | Informational only (root `coverageThreshold = 0`) | See [unit-test-coverage-plan](../sprints/unit-test-coverage-plan.md) |
 
-CI runs `bun test:coverage` as an **informational** job on pull requests. No package fails the build on coverage today.
+CI runs `bun run test:coverage` as an **informational** job on pull requests. No package fails the build on coverage today.
 
 ## Exclusions
 

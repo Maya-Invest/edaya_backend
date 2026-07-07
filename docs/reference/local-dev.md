@@ -106,8 +106,8 @@ See [api-runtimes.md](./api-runtimes.md).
 **Wrangler secret templates** (from `apps/api/`):
 
 ```sh
-cp secrets.staging.json.example secrets.staging.json   # fill staging R2 + dev Novu
-cp secrets.prod.json.example secrets.prod.json         # fill production R2 + prod Novu
+cp secrets.json.example secrets.staging.json   # fill staging R2 + dev Novu
+cp secrets.json.example secrets.prod.json         # fill production R2 + prod Novu
 bunx wrangler secret bulk secrets.staging.json --env staging
 bunx wrangler secret bulk secrets.prod.json --env production
 ```

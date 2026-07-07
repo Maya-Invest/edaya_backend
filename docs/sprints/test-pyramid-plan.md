@@ -352,7 +352,7 @@ Optional `workflow_dispatch` inputs per slice — see §5.3.
 ### 7.3 `_coverage.yml` — unit only
 
 ```yaml
-- run: bun test:coverage
+- run: bun run test:coverage
 ```
 
 Integration coverage remains out of scope.
@@ -362,7 +362,7 @@ Integration coverage remains out of scope.
 ```text
 gate → verify (unit + hygiene)
      → integration (depends on verify)
-     → coverage (parallel, informational)
+     → coverage (after verify, informational)
 ```
 
 ---
